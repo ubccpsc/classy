@@ -59,6 +59,8 @@ export interface IRuntime {
 
 interface IContainerRecord {
     team: string;
+    commit: string;
+    committer: string;
     commitUrl: string;
     timestamp: number;
     repo: string;
@@ -83,6 +85,7 @@ interface IContainerRecord {
     idStamp: string;
     attachments: IAttachment[];
     stdioRef: string;
+    state: string;
 }
 
 interface IGradeReport {
@@ -201,14 +204,31 @@ export default class Container {
 
         Log.info(`Container::init() - Blocking network traffic.`);
         Log.warn(`NOT IMPLEMENTED: Default firewall setting in use. Network traffic is *NOT* being blocked.`);
-        // const iptablesCommnands = [
-        //     "iptables -P INPUT   DROP"
-        //     "iptables -P FORWARD DROP"
-        //     "iptables -P OUTPUT  DROP"
+        // const iptablesCommands = [
+        //     `iptables -P INPUT   DROP`,
+        //     `iptables -P FORWARD DROP`,
+        //     `iptables -P OUTPUT  DROP`,
+        //     `iptables -A INPUT -s 127.0.0.1 -j ACCEPT`,
         // ];
 
-        // // DNS server:
+        // const dnsServers: string[] = [];
+        // for (const server of dnsServers) {
+        //     iptablesCommands.push(`iptables -A OUTPUT -p udp -d ${server} --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT`);
+        //     iptablesCommands.push(`iptables -A INPUT  -p udp -s ${server} --sport 53 -m state --state ESTABLISHED     -j ACCEPT`);
+        //     iptablesCommands.push(`iptables -A OUTPUT -p tcp -d ${server} --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT`);
+        //     iptablesCommands.push(`iptables -A INPUT  -p tcp -s ${server} --sport 53 -m state --state ESTABLISHED     -j ACCEPT`);
+        // }
 
+        // const whitelistedServers: string[] = [];
+        // for (const server of whitelistedServers) {
+        //     iptablesCommands.push(``);
+        //     iptablesCommands.push(``);
+        // }
+
+//         iptables -A OUTPUT -p udp -d $ip --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT
+// iptables -A INPUT  -p udp -s $ip --sport 53 -m state --state ESTABLISHED     -j ACCEPT
+// iptables -A OUTPUT -p tcp -d $ip --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT
+// iptables -A INPUT  -p tcp -s $ip --sport 53 -m state --state ESTABLISHED     -j ACCEPT
 
         // let cmd;
         // let cmdOutput: string;
@@ -284,8 +304,10 @@ export default class Container {
         }
 
         const record: IContainerRecord = {
-            attachments: attachments,
+            attachments,
+            commit: this.runtime.pushInfo.commit,
             commitUrl: this.runtime.pushInfo.commitUrl,
+            committer: this.runtime.userInfo.username,
             container: {
                 exitCode: this.exitCode,
                 image: this.image,
@@ -306,6 +328,7 @@ export default class Container {
             repo,
             report: runReport,
             stdioRef: this.runtime.stdioRef,
+            state: "complete",
             team: this.runtime.teamId,
             timestamp: this.runtime.pushInfo.timestamp,
             user,
