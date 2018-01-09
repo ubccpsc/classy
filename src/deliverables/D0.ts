@@ -194,7 +194,7 @@ export default class D0 extends Deliverable {
         const testNames2: ITestNames = Deliverable.extractTestNames(testReportRun2);
 
         const validTests = testNames1.fail;
-        const invalidTests = testNames2.pass.filter((name: string) => this.testsAllowedPass.indexOf(name) === -1 );
+        const invalidTests = testNames1.pass.filter((name: string) => this.testsAllowedPass.indexOf(name) === -1 );
 
         const scoreCover = parseFloat((Math.pow(Math.min(coverageReport.total.lines.pct + 5, 100) / 100, 2) * 100).toFixed(2));
         const scoreTest = parseFloat((validTests.length / (validTests.length + invalidTests.length) * 100).toFixed(2));
