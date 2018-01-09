@@ -196,7 +196,8 @@ export default class D0 extends Deliverable {
         const validTests = testNames1.fail;
         const invalidTests = testNames1.pass.filter((name: string) => this.testsAllowedPass.indexOf(name) === -1 );
 
-        const scoreCover = parseFloat((Math.pow(Math.min(coverageReport.total.lines.pct + 5, 100) / 100, 2) * 100).toFixed(2));
+        let scoreCover = parseFloat((Math.pow(Math.min(coverageReport.total.lines.pct + 5, 100) / 100, 2) * 100).toFixed(2));
+        scoreCover = parseFloat(Math.max((scoreCover - 50) * 2, 0).toFixed(2));  // this is to offset the high default coverage
         const scoreTest = parseFloat((validTests.length / (validTests.length + invalidTests.length) * 100).toFixed(2));
         const scoreOverall = parseFloat((0.8 * scoreCover + 0.2 * scoreTest).toFixed(2));
 
