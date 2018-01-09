@@ -303,7 +303,7 @@ export default class Container {
     public async sendRecord(record: IContainerRecord): Promise<rp.FullResponse> {
         Log.info(`Container::sendRecord() - START`);
         const options = {
-            body: record,
+            body: { response: record },
             headers: {
                 Accept: `application/json`,
             },
