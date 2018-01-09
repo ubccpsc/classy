@@ -200,9 +200,9 @@ export default class D0 extends Deliverable {
         const scoreTest = parseFloat((validTests.length / (validTests.length + invalidTests.length) * 100).toFixed(2));
         const scoreOverall = parseFloat((0.8 * scoreCover + 0.2 * scoreTest).toFixed(2));
 
-        let feedback = `Your grade is ${scoreOverall}%.\n`;
+        let feedback = `Your grade is ${scoreOverall}%.\n\n`;
         if (invalidTests.length !== 0) {
-            feedback += `The following tests passed unexpectedly:\n-${invalidTests.join("\n-")}`;
+            feedback += `The following tests passed unexpectedly:\n- ${invalidTests.join("\n- ")}`;
         }
 
         // D1 Grading logic
