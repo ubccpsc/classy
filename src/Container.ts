@@ -327,12 +327,11 @@ export default class Container {
 
     private async generateAttachments(report: IGradeReport): Promise<IAttachment[]> {
         const attachments: any[] = [
-            { name: `stdio.txt`, data: "", content_type: `application/plain`, path: `${this.ioDir}/stdio.txt` },
             { name: `docker_SHA.json`, data: "", content_type: `application/json`, path: `${this.ioDir}/dockerSHA.json` },
             { name: `coverage.json`, data: "", content_type: `application/json`, path: `${this.projectDir}/coverage/coverage-summary.json` },
             { name: `testsAgainstInvalid.json`, data: "", content_type: `application/json`, path: `${this.ioDir}/testReportRun1.json` },
             { name: `testsAgainstValid.json`, data: "", content_type: `application/json`, path: `${this.ioDir}/testReportRun2.json` },
-            { name: `report.json`, data: JSON.stringify(report), content_type: `application/json` },
+            { name: `report.json`, data: report, content_type: `application/json` },
         ];
 
         for (const attachment of attachments) {
