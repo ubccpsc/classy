@@ -11,15 +11,15 @@ export default class D0 extends Deliverable {
     private testReportRun2: string;
     private testsAllowedPass: string[];
 
-    constructor() {
-        super();
-        this.coverageReport = `coverage.json`;
-        this.testReportRun1 = `testReportRun1.json`;
-        this.testReportRun2 = `testReportRun2.json`;
-        this.testsAllowedPass = [];
+    constructor(container: Container) {
+        super(container);
+        this.coverageReport = `${container.projectDir}/coverage/coverage-summary.json`;
+        this.testReportRun1 = `${container.ioDir}/testReportRun1.json`;
+        this.testReportRun2 = `${container.ioDir}/testReportRun2.json`;
+        this.testsAllowedPass = [`Should run test queries`];
     }
 
-    public async run(container: Container): Promise<IRunReport> {
+    public async run(): Promise<IRunReport> {
         Log.info(`D0::run() - Running script to test students code.`);
 
         const report: IRunReport = {
@@ -39,35 +39,37 @@ export default class D0 extends Deliverable {
         let src: string;
         let dst: string;
         try {
-            src = `${container.deliverableDir}/package.json`;
-            dst = `${container.projectDir}/package.json`;
+            src = `${this.container.deliverableDir}/package.json`;
+            dst = `${this.container.projectDir}/package.json`;
             Log.trace(`D0::run() - Copying ${src} to ${dst}`);
             await fs.copy(src, dst);
 
-            src = `${container.deliverableDir}/tsconfig.json`;
-            dst = `${container.projectDir}/tsconfig.json`;
+            src = `${this.container.deliverableDir}/tsconfig.json`;
+            dst = `${this.container.projectDir}/tsconfig.json`;
             Log.trace(`D0::run() - Copying ${src} to ${dst}`);
             await fs.copy(src, dst);
 
-            src = `${container.deliverableDir}/tslint.json`;
-            dst = `${container.projectDir}/tslint.json`;
+            src = `${this.container.deliverableDir}/tslint.json`;
+            dst = `${this.container.projectDir}/tslint.json`;
             Log.trace(`D0::run() - Copying ${src} to ${dst}`);
             await fs.copy(src, dst);
 
-            src = `${container.deliverableDir}/node_modules`;
-            dst = `${container.projectDir}/node_modules`;
+            src = `${this.container.deliverableDir}/node_modules`;
+            dst = `${this.container.projectDir}/node_modules`;
             await fs.copy(src, dst);
 
             Log.info(`D0::run() - SUCCESS Copying files.`);
         } catch (err) {
             Log.error(`D0::run() - ERROR Copying files. ${err}`);
-            container.kill(3);
+            report.code = 4;
+            report.feedback = `AutoTest experienced an internal error. Trying committing your code again.`;
+            return report;
         }
 
         let cmd;
         Log.info(`D0::run() - Building student project.`);
         try {
-            cmd = await Util.yarn(`build`, { cwd: container.projectDir });
+            cmd = await Util.yarn(`build`, { cwd: this.container.projectDir });
         } catch (err) {
             cmd = err;
             const feedback = `
@@ -93,7 +95,7 @@ export default class D0 extends Deliverable {
 
         Log.info(`D0::run() - Linting student project.`);
         try {
-            cmd = await Util.yarn(`lint:test`, { cwd: container.projectDir });
+            cmd = await Util.yarn(`lint:test`, { cwd: this.container.projectDir });
         } catch (err) {
             cmd = err;
             const feedback = `
@@ -119,13 +121,12 @@ export default class D0 extends Deliverable {
         }
 
         Log.info(`D0::run() - Running student tests against invalid implementation.`);
-        const env = {
-            MOCHAWESOME_REPORTDIR: container.ioDir,
-            MOCHAWESOME_REPORTFILENAME: this.testReportRun1,
-        };
+        const env = process.env;
+        env[`MOCHAWESOME_REPORTDIR`] = this.container.ioDir;
+        env[`MOCHAWESOME_REPORTFILENAME`] = this.testReportRun1;
 
         try {
-            cmd = await Util.yarn(`autotestcover`, { cwd: container.projectDir, env });
+            cmd = await Util.yarn(`autotestcover`, { cwd: this.container.projectDir, env });
         } catch (err) {
             cmd = err;
             // throw new Error()
@@ -145,7 +146,7 @@ export default class D0 extends Deliverable {
 
             Log.trace(`D0::run() - Building student project with solution src. Errors are ignored.`);
             try {
-                cmd = await Util.yarn(`build`, { cwd: container.projectDir });
+                cmd = await Util.yarn(`build`, { cwd: this.container.projectDir });
             } catch (err) {
                 cmd = err;
             } finally {
@@ -154,7 +155,7 @@ export default class D0 extends Deliverable {
 
             Log.trace(`D0::run() - Running student tests.`);
             env[`MOCHAWESOME_REPORTFILENAME`] = this.testReportRun2;
-            cmd = await Util.yarn(`autotestcover`, { cwd: container.projectDir, env })
+            cmd = await Util.yarn(`autotestcover`, { cwd: this.container.projectDir, env });
         } catch (err) {
             cmd = err;
             // throw new Error()
@@ -189,11 +190,11 @@ export default class D0 extends Deliverable {
         const validTests = testNames1.fail;
         const invalidTests = testNames2.pass.filter((name: string) => this.testsAllowedPass.indexOf(name) === -1 );
 
-        const scoreCover = coverageReport.total.lines.pct;
-        const scoreTest = validTests.length / (validTests.length + invalidTests.length) * 100;
-        const scoreOverall = parseFloat((0.8 * Math.min(scoreCover + 5, 100) + 0.2 * scoreTest).toFixed(2));
+        const scoreCover = parseFloat((Math.pow(Math.min(coverageReport.total.lines.pct + 5, 100) / 100, 2) * 100).toFixed(2));
+        const scoreTest = parseFloat((validTests.length / (validTests.length + invalidTests.length) * 100).toFixed(2));
+        const scoreOverall = parseFloat((0.8 * scoreCover + 0.2 * scoreTest).toFixed(2));
 
-        const feedback = `Your grade is ${scoreOverall}.`;
+        const feedback = `Your grade is ${scoreOverall}%.`;
 
         // D1 Grading logic
         //   const passCount: number = testNames.pass.length;
@@ -213,7 +214,7 @@ export default class D0 extends Deliverable {
         if (!report.feedback) {
             report.feedback = feedback;
         }
-
+        Log.trace(JSON.stringify(report));
         return report;
     }
 }

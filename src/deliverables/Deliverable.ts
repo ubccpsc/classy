@@ -20,7 +20,6 @@ export interface ITestNames {
 }
 
 export default abstract class Deliverable {
-
     protected static extractTestNames(report: any, testNameDelimiter?: string): ITestNames {
         const testNames: ITestNames = {
             fail: [],
@@ -72,6 +71,12 @@ export default abstract class Deliverable {
         return testNames;
     }
 
+    protected container: Container;
+
+    constructor(container: Container) {
+        this.container = container;
+    }
+
     // If this method throws and exception, the message will be treated as the feedback
-    public abstract run(container: Container): Promise<IRunReport>;
+    public abstract run(): Promise<IRunReport>;
 }
