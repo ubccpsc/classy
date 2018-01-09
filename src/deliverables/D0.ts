@@ -168,6 +168,12 @@ export default class D0 extends Deliverable {
             }
         }
 
+        try {
+            await fs.remove(`${this.container.ioDir}/assets`);
+        } catch (err) {
+            Log.error(`D0::run() - Failed to remove ${this.container.ioDir}/assets. ${err}`);
+        }
+
         Log.info(`D0::run() - Computing grade.`);
         let finalReport = report;
         try {
