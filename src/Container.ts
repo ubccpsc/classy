@@ -142,10 +142,10 @@ export default class Container {
         };
         const deliverable = {
             branch: this.runtime.deliverableInfo.deliverableToMark,
-            cloneUrl: this.runtime.deliverableInfo.deliverableUrl
+            cloneUrl: this.runtime.deliverableInfo.solutionsUrl
                         .replace(`https://`, `https://${deliverableGithubKey}@`) + `.git`,
             path: this.deliverableDir,
-            url: this.runtime.deliverableInfo.deliverableUrl,
+            url: this.runtime.deliverableInfo.solutionsUrl,
         };
 
         let cmd;
@@ -201,6 +201,20 @@ export default class Container {
 
         Log.info(`Container::init() - Blocking network traffic.`);
         Log.warn(`NOT IMPLEMENTED: Default firewall setting in use. Network traffic is *NOT* being blocked.`);
+        // const iptablesCommnands = [
+        //     "iptables -P INPUT   DROP"
+        //     "iptables -P FORWARD DROP"
+        //     "iptables -P OUTPUT  DROP"
+        // ];
+
+        // // DNS server:
+
+
+        // let cmd;
+        // let cmdOutput: string;
+        // try {
+        //     cmd = await Util.yarn(`iptables`, [``])
+        // }
 
         Log.info(`Container::init() - Initialization completed successfully.`);
     }
