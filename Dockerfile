@@ -7,7 +7,7 @@ ENV ROOT_DIR=/container
 ENV NODE_PATH=/usr/local/bin/node
 ENV YARN_PATH=/usr/local/bin/yarn
 ENV GIT_PATH=/usr/bin/git
-ENV DB_ENDPOINT=https://portal.cs.ubc.ca:1210/result
+ENV DB_ENDPOINT=https://docker.for.mac.localhost:1310/result
 
 COPY package.json tsconfig.json src/ /container/temp/
 
