@@ -1,0 +1,39 @@
+{
+    "name": "cpsc310container",
+    "description": "AutoTest container for grading the 310 project.",
+    "homepage": "https://github.ubc.ca/cpsc310/cpsc310container",
+    "author": "Nick Bradley",
+    "license": "ECL-2.0",
+    "version": "0.0.1",
+    "engines": {
+        "node": ">= 8.9 < 9"
+    },
+    "devDependencies": {
+        "@types/chai": "4.0.8",
+        "@types/dotenv": "4.0.2",
+        "@types/fs-extra": "5.0.0",
+        "@types/mocha": "2.2.44",
+        "@types/node": "8.0.56",
+        "@types/recursive-readdir": "2.2.0",
+        "@types/request-promise-native": "1.0.10",
+        "chai": "4.1.2",
+        "dotenv": "4.0.0",
+        "mocha": "4.0.1",
+        "jsonschema": "1.2.2",
+        "nyc": "11.3.0",
+        "ts-node": "4.1.0",
+        "tslint": "5.8.0",
+        "typescript": "2.6.2"
+    },
+    "dependencies": {
+        "fs-extra": "5.0.0",
+        "request": "2.83.0",
+        "request-promise-native": "1.0.5"
+    },
+    "scripts": {
+        "build": "tsc",
+        "lint": "tslint -c tsconfig.json 'src/**/*.ts' 'test/**/*.ts'",
+        "test": "mocha --timeout 10000",
+        "start": "node bin/Main.js"
+    }
+}

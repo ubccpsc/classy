@@ -1,0 +1,22 @@
+{
+    "extends": [
+        "tslint:recommended"
+    ],
+    "rules": {
+        "max-line-length": [false, 120],
+        "no-implicit-dependencies": [
+            true,
+            "dev"
+        ],
+        "no-string-literal": false,
+        "only-arrow-functions": false,
+        "space-before-function-paren": [
+            true,
+            {
+                "anonymous": "always",
+                "named": "never",
+                "asyncArrow": "always"
+            }
+        ]
+    }
+}
