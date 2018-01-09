@@ -326,12 +326,12 @@ export default class Container {
     }
 
     private async generateAttachments(report: IGradeReport): Promise<IAttachment[]> {
+        // We read the coverage report as text to avoid MongoDB complaining about '.' in the key name
         const attachments: any[] = [
-            { name: `docker_SHA.json`, data: "", content_type: `application/json`, path: `${this.ioDir}/dockerSHA.json` },
-            { name: `coverage.json`, data: "", content_type: `application/json`, path: `${this.projectDir}/coverage/coverage-summary.json` },
+            { name: `docker_SHA.json`, data: "", content_type: `application/json`, path: `${this.ioDir}/docker_SHA.json` },
+            { name: `coverage.json`, data: "", content_type: `application/text`, path: `${this.projectDir}/coverage/coverage-summary.json` },
             { name: `testsAgainstInvalid.json`, data: "", content_type: `application/json`, path: `${this.ioDir}/testReportRun1.json` },
             { name: `testsAgainstValid.json`, data: "", content_type: `application/json`, path: `${this.ioDir}/testReportRun2.json` },
-            { name: `report.json`, data: report, content_type: `application/json` },
         ];
 
         for (const attachment of attachments) {
