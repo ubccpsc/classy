@@ -12,3 +12,4 @@ test/*.js
 test/*.map
 .DS_Store
 .env
+bin
