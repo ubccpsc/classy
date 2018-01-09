@@ -16,7 +16,7 @@ export default class D0 extends Deliverable {
         this.coverageReport = `${container.projectDir}/coverage/coverage-summary.json`;
         this.testReportRun1 = `${container.ioDir}/testReportRun1.json`;
         this.testReportRun2 = `${container.ioDir}/testReportRun2.json`;
-        this.testsAllowedPass = [`Should run test queries`];
+        this.testsAllowedPass = [`InsightFacade PerformQuery Should run test queries`];
     }
 
     public async run(): Promise<IRunReport> {
@@ -200,9 +200,9 @@ export default class D0 extends Deliverable {
         const scoreTest = parseFloat((validTests.length / (validTests.length + invalidTests.length) * 100).toFixed(2));
         const scoreOverall = parseFloat((0.8 * scoreCover + 0.2 * scoreTest).toFixed(2));
 
-        let feedback = `Your grade is ${scoreOverall}%.`;
+        let feedback = `Your grade is ${scoreOverall}%.\n`;
         if (invalidTests.length !== 0) {
-            feedback += ` The following tests passed unexpectedly:${invalidTests.join("\n-")}`;
+            feedback += `The following tests passed unexpectedly:\n-${invalidTests.join("\n-")}`;
         }
 
         // D1 Grading logic
