@@ -33,4 +33,4 @@ RUN apk add --no-cache git
 RUN apk add --no-cache iptables
 
 # Terminate the container after 10 minutes (=600 seconds)
-CMD timeout -t 600 node /container/grading/bin/Main.js | tee /output/stdio.txt 2>&1
+CMD timeout -t 600 NODE_TLS_REJECT_UNAUTHORIZED='0' node /container/grading/bin/Main.js | tee /output/stdio.txt 2>&1
