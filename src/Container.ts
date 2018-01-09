@@ -1,5 +1,7 @@
-import { spawn } from "child_process";
+/* tslint:disable:no-console */
+import { execSync, fork } from "child_process";
 import * as fs from "fs-extra";
+import * as rp from "request-promise-native";
 import { IRunReport } from "./deliverables/Deliverable";
 import Log from "./Log";
 import Util from "./Util";
@@ -75,11 +77,7 @@ interface IContainerRecord {
     user: string;
     githubFeedback: string;
     idStamp: string;
-    attachments: Array<{
-        name: string;
-        data: string;
-        content_type: string;
-    }>;
+    attachments: IAttachment[];
 }
 
 interface IGradeReport {
@@ -91,7 +89,12 @@ interface IGradeReport {
     errorNames: string[];
     skipNames: string[];
     custom: any[];
-    comment: string;
+}
+
+interface IAttachment {
+    name: string;
+    data: string;
+    content_type: string;
 }
 
 export default class Container {
@@ -146,7 +149,7 @@ export default class Container {
             cmd = await Util.git([`checkout`, project.commit], { cwd: project.path });
         } catch (err) {
             cmd = err;
-            this.kill(2);
+            throw new Error(`Failed to clone student repository.`);
         } finally {
             Log.cmd(cmd.output);
             if (cmd.code === 0) {
@@ -162,7 +165,7 @@ export default class Container {
             cmd = await Util.git([`checkout`, deliverable.branch], { cwd: deliverable.path });
         } catch (err) {
             cmd = err;
-            this.kill(3);
+            throw new Error(`Failed to clone solution repository.`);
         } finally {
             Log.cmd(cmd.output);
             if (cmd.code === 0) {
@@ -178,7 +181,7 @@ export default class Container {
             cmd = await Util.yarn(`install`, { cwd: deliverable.path });
         } catch (err) {
             cmd = err;
-            this.kill(4);
+            throw new Error(`Failed to install packages for the deliverable.`);
         } finally {
             Log.cmd(cmd.output);
             if (cmd.code === 0) {
@@ -203,7 +206,7 @@ export default class Container {
         const options = {
             cwd: `${process.env.ROOT_DIR}/grading`,
             env,
-            // execPath: Container.nodeCmd,
+            execPath: process.env.NODE_PATH,
             gid: 1000,
             silent: true,
             timeout: 5 * 60 * 1000,
@@ -212,9 +215,7 @@ export default class Container {
 
         // fork a child node process
         const childPromise = new Promise<number>((resolve, reject) => {
-            console.log(`RUN ${process.env.NODE_PATH} bin/Main.js`);
-            const cmd = spawn(process.env.NODE_PATH, [`bin/Main.js`], options);
-            // const cmd = fork(`/home/ncbradley/cs310/container/bin/Main.js`, [], options);
+            const cmd = fork(`bin/Main.js`, [], options);
 
             cmd.on(`error`, (err) => {
                 Log.error(`Container::run() - ERROR Creating child node process. ${err}`);
@@ -223,14 +224,10 @@ export default class Container {
 
             cmd.stdout.on(`data`, (data) => {
                 console.log(data.toString());
-                // const stdout = data.toString();
-                // writeBuffer(stdout);
             });
 
             cmd.stderr.on(`data`, (data) => {
                 console.log(data.toString());
-                // const stderr = data.toString();
-                // writeBuffer(stderr);
             });
 
             cmd.on(`close`, (code) => {
@@ -246,22 +243,27 @@ export default class Container {
         return childPromise;
     }
 
-    public async kill(code: number) {
-        this.exitCode = code;
-    }
-
-    public generateRecord(runReport: IRunReport): IContainerRecord {
+    public async generateRecord(runReport: IRunReport): Promise<IContainerRecord> {
         const ref = this.runtime.pushInfo.branch;
         const deliverable = this.runtime.deliverableInfo.deliverableToMark;
         const user = this.runtime.userInfo.username;
         const repo = this.runtime.pushInfo.repo;
 
-        const gradeReport = runReport;
-        delete gradeReport.feedback;
-        delete gradeReport.code;
+        const feedback = runReport.feedback.replace(/^\s+/gm, ``).replace(/\n+$/g, ``);
+        const code = runReport.code;
+
+        delete runReport.feedback;
+        delete runReport.code;
+
+        let attachments: IAttachment[] = [];
+        try {
+            attachments = await this.generateAttachments(runReport as IGradeReport);
+        } catch (err) {
+            Log.warn(`Container::generateRecord() - ERROR Generating attachements. ${err}`);
+        }
 
         const record: IContainerRecord = {
-            attachments: [],
+            attachments: attachments,
             commitUrl: this.runtime.pushInfo.commitUrl,
             container: {
                 exitCode: this.exitCode,
@@ -272,16 +274,16 @@ export default class Container {
             courseNum: this.runtime.courseNum,
             custom: this.runtime.custom,
             deliverable,
-            githubFeedback: runReport.feedback,
+            githubFeedback: feedback,
             gradeRequested: false,
             gradeRequestedTimestamp: -1,
             idStamp: `${new Date().toUTCString()}|${ref}|${deliverable}|${user}|${repo}`,
             orgName: this.runtime.githubOrg,
-            postbackOnComplete: runReport.code !== 0,
+            postbackOnComplete: code !== 0,
             projectUrl: this.runtime.pushInfo.projectUrl,
             ref,
             repo,
-            report: gradeReport,
+            report: runReport,
             team: this.runtime.teamId,
             timestamp: this.runtime.pushInfo.timestamp,
             user,
@@ -292,7 +294,57 @@ export default class Container {
 
     // call the REST endpoint and do other "stuff" here to
     // store the record on the server.
-    public async sendRecord(record: IContainerRecord) {
-        // TODO http request to send info
+    public async sendRecord(record: IContainerRecord): Promise<rp.FullResponse> {
+        Log.info(`Container::sendRecord() - START`);
+        const options = {
+            body: record,
+            headers: {
+                Accept: `application/json`,
+            },
+            json: true,
+            method: `POST`,
+            uri: process.env.DB_ENDPOINT,
+        };
+
+        let response: rp.FullResponse;
+        try {
+            Log.trace(`Container::sendRecord() - Sending record ${JSON.stringify(record)}`);
+            response = await rp(options);
+            Log.info(`Container::sendRecord() - SUCCESS Sending record. Response: ${response}`);
+        } catch (err) {
+            Log.error(`Container::sendRecord() - ERROR Sending record to database. ${err}`);
+            // throw new Error(err);
+        }
+
+        return response;
     }
+
+    private async generateAttachments(report: IGradeReport): Promise<IAttachment[]> {
+        const attachments: any[] = [
+            { name: `stdio.txt`, data: "", content_type: `application/plain`, path: `${this.ioDir}/stdio.txt` },
+            { name: `docker_SHA.json`, data: "", content_type: `application/json`, path: `${this.ioDir}/dockerSHA.json` },
+            { name: `coverage.json`, data: "", content_type: `application/json`, path: `${this.projectDir}/coverage/coverage-summary.json` },
+            { name: `testsAgainstInvalid.json`, data: "", content_type: `application/json`, path: `${this.ioDir}/testReportRun1.json` },
+            { name: `testsAgainstValid.json`, data: "", content_type: `application/json`, path: `${this.ioDir}/testReportRun2.json` },
+            { name: `report.json`, data: JSON.stringify(report), content_type: `application/json` },
+        ];
+
+        for (const attachment of attachments) {
+            if (attachment.path) {
+                try {
+                    if (attachment.content_type === `application/json`) {
+                        attachment.data = await fs.readJson(attachment.path);
+                    } else {
+                        attachment.data = (await fs.readFile(attachment.path)).toString();
+                    }
+                    delete attachment.path;
+                } catch (err) {
+                    Log.warn(`Container::generateAttachments() - ERROR Reading attachment data for ${attachment.name} from ${attachment.path}`);
+                }
+            }
+        }
+
+        return attachments;
+    }
+
 }

@@ -5,7 +5,7 @@ import * as fs from "fs-extra";
 import { IRuntime } from "./Container";
 import DeliverableFactory from "./deliverables/DeliverableFactory";
 
-
+//require('dotenv').config();
 dotenv.config();
 
 /**
@@ -27,12 +27,14 @@ dotenv.config();
         process.exit(1);
     }
 
-    const isFork: boolean = Boolean(process.env.IS_FORK || "false");
+    const isFork: any = process.env.IS_FORK;
+    Log.trace(`Container isForked ${isFork}`);
     if (isFork) {
         // Run as child process to do the grading
-        const deliv = DeliverableFactory.getDeliverable(process.env.deliverable);
-        const runReport = await deliv.run(container);
-        const record = container.generateRecord(runReport);
+        const deliverable = container.runtime.deliverableInfo.deliverableToMark;
+        const deliv = DeliverableFactory.getDeliverable(deliverable, container);
+        const runReport = await deliv.run();
+        const record = await container.generateRecord(runReport);
         await container.sendRecord(record);
     } else {
         let code: number;

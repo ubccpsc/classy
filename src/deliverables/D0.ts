@@ -194,7 +194,10 @@ export default class D0 extends Deliverable {
         const scoreTest = parseFloat((validTests.length / (validTests.length + invalidTests.length) * 100).toFixed(2));
         const scoreOverall = parseFloat((0.8 * scoreCover + 0.2 * scoreTest).toFixed(2));
 
-        const feedback = `Your grade is ${scoreOverall}%.`;
+        let feedback = `Your grade is ${scoreOverall}%.`;
+        if (invalidTests.length !== 0) {
+            feedback += ` The following tests passed unexpectedly:${invalidTests.join("\n-")}`;
+        }
 
         // D1 Grading logic
         //   const passCount: number = testNames.pass.length;

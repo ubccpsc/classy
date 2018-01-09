@@ -1,10 +1,6 @@
 import { spawn, SpawnOptions } from "child_process";
 import Log from "./Log";
 
-// String.prototype.clean = function() {
-//     return this.replace(/^\s+/gm, ``).replace(/\n+$/g, ``);
-// };
-
 interface ISpawnResult {
     code: number;
     output: string;
@@ -14,39 +10,21 @@ interface ISpawnResult {
 export default class Util {
     public static async yarn(name: string, options: SpawnOptions) {
         const yarnCmd = process.env.YARN_PATH;
-        Log.trace(`Util::yarn() - Running command ${yarnCmd} ${name} with options ${options}.`);
+        options["uid"] = 1000;
+        Log.trace(`Util::yarn() - Running command ${yarnCmd} ${name} with options ${JSON.stringify(options)}.`);
         return await Util.bufferedSpawn(yarnCmd, [name], options);
     }
 
     public static async git(commandArgs: string[], options: SpawnOptions): Promise<ISpawnResult> {
         const gitCmd = process.env.GIT_PATH;
-        Log.trace(`Uitl::git() - Running command ${gitCmd} with options ${JSON.stringify(options)}`);
+        options["uid"] = 1000;
+        Log.trace(`Uitl::git() - Running command ${gitCmd} ${commandArgs.join(" ")} with options ${JSON.stringify(options)}`);
         return Util.bufferedSpawn(gitCmd, commandArgs, options);
     }
 
     // should set max size tp be 131072
     // Will grow the buffer up to maxBufferSize; any remaining output will be truncated
     public static async bufferedSpawn(command: string, commandArgs: string[], commandOpts = {}, maxBufferSize = 131072, pageSize = 4096): Promise<ISpawnResult> {
-        if (typeof command !== `string`) {
-            throw new Error(`Argument command must be a string.`);
-        }
-
-        if (!Array.isArray(commandArgs)) {
-            throw new Error(`Argument commandArgs must be an array of strings.`);
-        }
-
-        if (typeof commandOpts !== `object`) {
-            throw new Error(`Argument commandOpts must be an object.`);
-        }
-
-        if (typeof maxBufferSize !== `number`) {
-            throw new Error(`Argument maxBufferSize must be a number.`);
-        }
-
-        if (typeof pageSize !== `number`) {
-            throw new Error(`Argument pageSize must be a number.`);
-        }
-
         // console.log("buffedSpawn", command, commandArgs, commandOpts);
         const maxPages = Math.floor(maxBufferSize / pageSize);
         let overflow = false;
