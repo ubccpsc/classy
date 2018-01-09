@@ -27,7 +27,6 @@ RUN cp --recursive temp/node_modules grading/bin
 
 USER root
 
-RUN rm -rf /container/temp
 RUN chmod -R 777 /root
 
 RUN apk add --no-cache git
