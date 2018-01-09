@@ -125,8 +125,8 @@ export default class Container {
     public async init() {
         Log.info(`Container::init() - Initializing container scripts.`);
 
-        const projectGithubKey = this.runtime.githubKey;
-        const deliverableGithubKey = this.runtime.deliverableInfo.githubKey;
+        const projectGithubKey = this.runtime.githubKeys.orgKey;
+        const deliverableGithubKey = this.runtime.githubKeys.delivKey;
         const project = {
             cloneUrl: this.runtime.pushInfo.projectUrl.replace(`https://`, `https://${projectGithubKey}@`) + `.git`,
             commit: this.runtime.pushInfo.commit,
