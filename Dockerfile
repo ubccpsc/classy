@@ -28,6 +28,7 @@ RUN cp --recursive temp/node_modules grading/bin
 USER root
 
 RUN chmod -R 777 /root
+RUN chmod -R 777 /output
 
 RUN apk add --no-cache git
 RUN apk add --no-cache iptables
