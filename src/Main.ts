@@ -16,7 +16,7 @@ dotenv.config();
 
 
 (async () => {
-    const runtimeConfig: string = `${process.env.IO_DIR}/dockerSHA.json`;
+    const runtimeConfig: string = `${process.env.IO_DIR}/docker_SHA.json`;
     let runtime: IRuntime;
     let container: Container;
     try {
