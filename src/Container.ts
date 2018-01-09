@@ -330,6 +330,7 @@ export default class Container {
         const attachments: any[] = [
             { name: `docker_SHA.json`, data: "", content_type: `application/json`, path: `${this.ioDir}/docker_SHA.json` },
             { name: `coverage.json`, data: "", content_type: `application/text`, path: `${this.projectDir}/coverage/coverage-summary.json` },
+            { name: `coverage-full.json`, data: "", content_type: `application/text`, path: `${this.projectDir}/coverage/coverage-final.json` },
             { name: `testsAgainstInvalid.json`, data: "", content_type: `application/json`, path: `${this.ioDir}/testReportRun1.json` },
             { name: `testsAgainstValid.json`, data: "", content_type: `application/json`, path: `${this.ioDir}/testReportRun2.json` },
         ];
