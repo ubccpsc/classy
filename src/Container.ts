@@ -82,6 +82,7 @@ interface IContainerRecord {
     githubFeedback: string;
     idStamp: string;
     attachments: IAttachment[];
+    stdioRef: string;
 }
 
 interface IGradeReport {
@@ -290,6 +291,7 @@ export default class Container {
             ref,
             repo,
             report: runReport,
+            stdioRef: this.runtime.stdioRef,
             team: this.runtime.teamId,
             timestamp: this.runtime.pushInfo.timestamp,
             user,
