@@ -129,6 +129,8 @@ export default class Container {
     public async init() {
         Log.info(`Container::init() - Initializing container scripts.`);
 
+        execSync(`chmod -R 777 /output`);
+
         const projectGithubKey = this.runtime.githubKeys.orgKey;
         const deliverableGithubKey = this.runtime.githubKeys.delivKey;
         const project = {
