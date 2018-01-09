@@ -45,7 +45,11 @@ export interface IRuntime {
     container: IContainer;
     deliverableInfo: IDeliverableInfo;
     dockerImage: string;
-    githubKey: string;
+    githubKeys: {
+        delivKey: string;
+        solutionsKey: string;
+        orgKey: string;
+    };
     githubOrg: string;
     custom: object;
     teamId: string;
