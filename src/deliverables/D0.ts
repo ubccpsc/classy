@@ -202,7 +202,7 @@ export default class D0 extends Deliverable {
 
         let feedback = `Your grade is ${scoreOverall}%.\n\n`;
         if (invalidTests.length !== 0) {
-            feedback += `The following tests passed unexpectedly:\n- ${invalidTests.join("\n- ")}`;
+            feedback += `\nThe following tests passed unexpectedly:\n- ${invalidTests.join("\n- ")}`;
         }
 
         // D1 Grading logic
