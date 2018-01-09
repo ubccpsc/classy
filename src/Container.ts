@@ -1,4 +1,4 @@
-import { fork } from "child_process";
+import { spawn } from "child_process";
 import * as fs from "fs-extra";
 import { IRunReport } from "./deliverables/Deliverable";
 import Log from "./Log";
@@ -95,7 +95,7 @@ interface IGradeReport {
 }
 
 export default class Container {
-    public static nodeCmd = process.env.NODE_PATH;
+    // public static nodeCmd = ;
     private static scriptVersion: string = "0.0.1";
 
     public runtime: IRuntime;
@@ -123,7 +123,7 @@ export default class Container {
         Log.info(`Container::init() - Initializing container scripts.`);
 
         const projectGithubKey = this.runtime.githubKey;
-        const deliverableGithubKey = this.runtime.githubKey;
+        const deliverableGithubKey = this.runtime.deliverableInfo.githubKey;
         const project = {
             cloneUrl: this.runtime.pushInfo.projectUrl.replace(`https://`, `https://${projectGithubKey}@`) + `.git`,
             commit: this.runtime.pushInfo.commit,
@@ -198,13 +198,12 @@ export default class Container {
     public async run(): Promise<number> {
         Log.info(`Container::run() - Starting new node process as a standard user.`);
         const env = process.env;
-        env[`isFork`] = `true`;
-        env[`deliverable`] = this.runtime.deliverableInfo.deliverableToMark;
+        env[`IS_FORK`] = `true`;
 
         const options = {
-            cwd: `/grading`,
+            cwd: `${process.env.ROOT_DIR}/grading`,
             env,
-            execPath: Container.nodeCmd,
+            // execPath: Container.nodeCmd,
             gid: 1000,
             silent: true,
             timeout: 5 * 60 * 1000,
@@ -212,23 +211,27 @@ export default class Container {
         };
 
         // fork a child node process
-        const childPromise =  new Promise<number>((resolve, reject) => {
-            const cmd = fork(`src/Main.js`, [], options);
+        const childPromise = new Promise<number>((resolve, reject) => {
+            console.log(`RUN ${process.env.NODE_PATH} bin/Main.js`);
+            const cmd = spawn(process.env.NODE_PATH, [`bin/Main.js`], options);
+            // const cmd = fork(`/home/ncbradley/cs310/container/bin/Main.js`, [], options);
 
             cmd.on(`error`, (err) => {
                 Log.error(`Container::run() - ERROR Creating child node process. ${err}`);
                 reject(err);
             });
 
-            // cmd.stdout.on(`data`, (data) => {
-            //     const stdout = data.toString();
-            //     writeBuffer(stdout);
-            // });
+            cmd.stdout.on(`data`, (data) => {
+                console.log(data.toString());
+                // const stdout = data.toString();
+                // writeBuffer(stdout);
+            });
 
-            // cmd.stderr.on(`data`, (data) => {
-            //     const stderr = data.toString();
-            //     writeBuffer(stderr);
-            // });
+            cmd.stderr.on(`data`, (data) => {
+                console.log(data.toString());
+                // const stderr = data.toString();
+                // writeBuffer(stderr);
+            });
 
             cmd.on(`close`, (code) => {
                 if (code === 0) {
