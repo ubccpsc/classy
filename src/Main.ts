@@ -1,20 +1,17 @@
-import Log from "./Log";
-import Container from "./Container";
 import * as dotenv from "dotenv";
 import * as fs from "fs-extra";
+import Container from "./Container";
 import { IRuntime } from "./Container";
 import DeliverableFactory from "./deliverables/DeliverableFactory";
+import Log from "./Log";
 
-//require('dotenv').config();
+// require('dotenv').config();
 dotenv.config();
 
 /**
  * Exit code:
  *   - 1 Error initializing or terminating container logic.
  */
-
-
-
 (async () => {
     const runtimeConfig: string = `${process.env.IO_DIR}/docker_SHA.json`;
     let runtime: IRuntime;
@@ -57,6 +54,5 @@ dotenv.config();
                 process.exit(code);
             }
         }
-
     }
 })();
