@@ -1,9 +1,9 @@
 import * as dotenv from "dotenv";
 import * as fs from "fs-extra";
 import Container from "./Container";
-import { IRuntime } from "./Container";
 import DeliverableFactory from "./deliverables/DeliverableFactory";
 import Log from "./Log";
+import { IRuntime } from "./Types";
 
 // require('dotenv').config();
 dotenv.config();
