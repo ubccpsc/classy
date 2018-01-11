@@ -1,4 +1,4 @@
-import {IPushInfo, ICommentInfo, ICommitInfo, IRequestInfo, IContainerInput} from "../Types";
+import {IPushInfo, ICommentInfo, ICommitInfo, IFeedbackGiven, IContainerInput} from "../Types";
 
 export interface IDataStore {
 
@@ -23,9 +23,9 @@ export interface IDataStore {
     saveOutputRecord(outputInfo: ICommitInfo): void;
     getOutputRecord(commitUrl: string): ICommitInfo|null;
 
-    saveFeedbackGivenRecord(request: IRequestInfo): void;
-    getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): IRequestInfo|null;
-    getFeedbackGivenRecordForCommit(commitUrl: string, userName: string): IRequestInfo|null;
+    saveFeedbackGivenRecord(request: IFeedbackGiven): void;
+    getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): IFeedbackGiven|null;
+    getFeedbackGivenRecordForCommit(commitUrl: string, userName: string): IFeedbackGiven|null;
 }
 
 /**
@@ -36,7 +36,7 @@ export class DummyDataStore implements IDataStore {
     private pushes: IContainerInput[] = [];
     private comments: ICommentInfo[] = [];
     private outputRecords: ICommitInfo[] = [];
-    private requests: IRequestInfo[] = [];
+    private requests: IFeedbackGiven[] = [];
 
     savePush(info: IContainerInput) {
         this.pushes.push(info);
@@ -69,12 +69,12 @@ export class DummyDataStore implements IDataStore {
         return null;
     }
 
-    saveFeedbackGivenRecord(request: IRequestInfo): void {
+    saveFeedbackGivenRecord(request: IFeedbackGiven): void {
         this.requests.push(request);
     }
 
-    getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): IRequestInfo|null {
-        const shortList: IRequestInfo[] = [];
+    getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): IFeedbackGiven|null {
+        const shortList: IFeedbackGiven[] = [];
         for (let req of this.requests) {
             if (req.courseId === courseId && req.delivId === delivId && req.userName === userName) {
                 shortList.push(req);
@@ -83,13 +83,13 @@ export class DummyDataStore implements IDataStore {
         if (shortList.length === 0) {
             return null;
         } else {
-            return Math.max.apply(Math, shortList.map(function (o: IRequestInfo) {
+            return Math.max.apply(Math, shortList.map(function (o: IFeedbackGiven) {
                 return o.timestamp;
             }));
         }
     }
 
-    public getFeedbackGivenRecordForCommit(commitUrl: string, userName: string): IRequestInfo|null {
+    public getFeedbackGivenRecordForCommit(commitUrl: string, userName: string): IFeedbackGiven|null {
         for (let feedback of this.requests) {
             if (feedback.commitUrl === commitUrl && feedback.userName === userName) {
                 return feedback;

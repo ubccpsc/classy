@@ -1,4 +1,4 @@
-import {IPushInfo, ICommentInfo, ICommitInfo, IContainerInput, IRequestInfo} from "../Types";
+import {IPushInfo, ICommentInfo, ICommitInfo, IContainerInput, IFeedbackGiven} from "../Types";
 import {Queue} from "./Queue";
 
 import {DummyDataStore, IDataStore} from "./DataStore";
@@ -25,7 +25,10 @@ export class AutoTestHandler {
     }
 
     /**
-     * Handles push events from Github
+     * Handles push events from Github.
+     *
+     * Persists the event so it can be restarted later if needed.
+     * Schedules the build on the standard queue.
      *
      * @param info
      */
@@ -41,7 +44,23 @@ export class AutoTestHandler {
     }
 
     /**
-     * Handles comment events from Github
+     * Handles comment events from Github.
+     *
+     * Persists the event only if the feedback cannot be given right away and should be given when ready.
+     *
+     * Be careful though: if we give the warning we don't want to post back later!
+     *
+     * If build has not finished; let it finish, comments will appear in handleExecutionComplete:
+     *  0) leave it alone if it is currently executing
+     *  1) move it to the express que if faster
+     *  2) leave it on the standard queue if faster
+     *  3) comment will be remembered so results are automatically posted (if within quota or from TA)
+     *
+     * If build is finished:
+     *  * post back results if previously requested
+     *  * post back results if requested by TA
+     *  * post back results if rate limiting check passes (and record fedback given)
+     *  * post back warning if rate limiting check fails
      *
      * @param info
      */
@@ -54,45 +73,44 @@ export class AutoTestHandler {
                 delivId = this.getDelivId(info.commitUrl); // need to get the default deliverable for that repo
                 info.delivId = delivId;
             }
-            this.saveCommentInfo(info);
+
+            let shouldPost = false; // should the result be given
+            if (this.classPortal.isStaff(this.courseId, info.userName) === true) {
+                shouldPost = true;
+            } else {
+                const requestFeedbackDelay = this.requestFeedbackDelay(delivId, info.userName, info.timestamp);
+                if (requestFeedbackDelay === null) {
+                    shouldPost = true;
+                } else {
+                    shouldPost = false;
+                    const msg = 'You must wait ' + requestFeedbackDelay + ' before requesting feedback.';
+                    this.postResultToGithub(info.commitUrl, msg);
+                }
+            }
 
             let res: ICommitInfo = this.getOutputRecord(info.commitUrl); // for any user
             if (res !== null) {
                 // execution complete
-                let shouldPost = false; // should the result be given
-                let shouldCount = false; // should it count against their quota
-
                 const hasBeenRequestedBefore = this.dataStore.getFeedbackGivenRecordForCommit(info.commitUrl, info.userName); // students often request grades they have previously 'paid' for
                 if (hasBeenRequestedBefore !== null) {
                     // just give it to them again, don't charge for event
                     shouldPost = true;
-                    shouldCount = false;
-                }
-
-                if (this.classPortal.isStaff(this.courseId, info.userName) === true) {
-                    shouldPost = true;
-                    shouldCount = false;
-                } else {
-                    const requestFeedbackDelay = this.requestFeedbackDelay(delivId, info.userName, info.timestamp);
-                    if (requestFeedbackDelay === null) {
-                        shouldPost = true;
-                        shouldCount = true;
-                    } else {
-                        shouldPost = false;
-                        shouldCount = false;
-                        const msg = 'You must wait ' + requestFeedbackDelay + ' before requesting feedback';
-                        this.postResultToGithub(info.commitUrl, msg);
-                    }
                 }
 
                 if (shouldPost === true) {
                     this.postResultToGithub(info.commitUrl, res.output.feedback);
-                }
-                if (shouldCount === true) {
                     this.saveFeedbackGiven(this.courseId, delivId, info.userName, res.input.pushInfo.timestamp, info.commitUrl);
+                    this.saveCommentInfo(info); // user or TA; only for analytics since feedback has been given
                 }
+
             } else {
                 // execution not yet complete
+                if (shouldPost === true) {
+                    const msg = 'Commit has not been procssed yet. Results will be posted when they are ready.';
+                    this.postResultToGithub(info.commitUrl, msg);
+                    this.saveCommentInfo(info); // whether TA or staff
+                }
+
                 const isCurrentlyRunning: boolean = this.isCommitExecuting(info.commitUrl, delivId);
                 if (isCurrentlyRunning === true) {
                     // do nothing, will be handled later when the commit finishes processing
@@ -106,6 +124,7 @@ export class AutoTestHandler {
                     }
                 }
             }
+
         } catch (err) {
             console.error('AutoTestHandler::handleCommentEvent(..) - course: ' + this.courseId + '; ERROR: ' + err.message);
         }
@@ -113,6 +132,11 @@ export class AutoTestHandler {
 
     /**
      * Called when a container completes.
+     *
+     * Persist record.
+     * Post back if specified by container output.
+     * Post back if requested by TA
+     * Post back if requested by user and quota allows (and record feedback given)
      *
      * @param data
      */
@@ -124,12 +148,16 @@ export class AutoTestHandler {
             if (data.output.postbackOnComplete === true) {
                 // do this first, doesn't count against quota
                 this.postResultToGithub(data.commitUrl, data.output.feedback);
+                // NOTE: if the feedback was requested for this build it shouldn't count
+                // since we're not calling saveFeedabck this is right
+                // but if we replay the commit comments, we would see it there, so be careful
             } else if (requestorUsername !== null) {
-                // feedback has een requested
+                // feedback has been previously requested
                 this.postResultToGithub(data.commitUrl, data.output.feedback);
                 this.saveFeedbackGiven(data.input.courseId, data.input.delivId, requestorUsername, data.input.pushInfo.timestamp, data.commitUrl);
             } else {
                 // do nothing
+                console.log('AutoTestHandler::handleExecutionComplete(..) - course: ' + this.courseId + '; commit not requested - no feedback given. url: ' + data.commitUrl);
             }
 
             // when done clear the execution slot and schedule the next
@@ -206,8 +234,7 @@ export class AutoTestHandler {
      * @param commitUrl
      */
     private getDelivId(commitUrl: string): string {
-        // known: this.courseId
-        // TODO
+        return this.classPortal.getDefaultDeliverableId(commitUrl);
     }
 
 
@@ -233,6 +260,7 @@ export class AutoTestHandler {
      * @param feedback
      */
     private postResultToGithub(commitUrl: string, feedback: string): void {
+        console.log('AutoTestHandler::postResultToGithub(..) - course: ' + this.courseId + '; Posting feedback to url: ' + commitUrl);
         // TODO
     }
 
@@ -285,13 +313,23 @@ export class AutoTestHandler {
         } else {
             const record: IRequestInfo = this.dataStore.getLatestFeedbackGivenRecord(this.courseId, delivId, userName);
             if (record === null) {
-                return true; // no prior requests
+                return null; // no prior requests
             } else {
                 const delta = (reqTimestamp - record.timestamp) / 1000;
                 if (delta > this.testDelay) {
                     return null; // enough time has passed
                 } else {
-                    return delta + ' seconds'; // too soon
+                    let hours = Math.floor(delta / 3600);
+                    let minutes = Math.floor((delta - (hours * 3600)) / 60);
+                    let msg = '';
+                    if (hours > 0) {
+                        msg = hours + ' hours and ' + minutes + ' minutes';
+                    } else if (minutes > 0) {
+                        msg = minutes + ' minutes';
+                    } else {
+                        msg = delta + ' seconds';
+                    }
+                    return msg;
                 }
             }
         }

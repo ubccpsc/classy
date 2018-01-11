@@ -11,7 +11,7 @@ export interface IUserInfo {
 }
 
 // all required
-export interface IPushInfo {
+export interface IPushInfo { // TODO: refactor IPushEvent
     branch: string;
     repo: string;
     commit: string;
@@ -20,7 +20,7 @@ export interface IPushInfo {
     timestamp: number;
 }
 
-export interface ICommentInfo {
+export interface ICommentInfo { // TODO: refactor ICommentEvent
     branch: string;
     repo: string;
     commit: string;
@@ -32,7 +32,7 @@ export interface ICommentInfo {
     timestamp: number;
 }
 
-export interface IRequestInfo { // TODO: Refactor to IFeedbackGiven
+export interface IFeedbackGiven { // TODO: Refactor to IFeedbackGiven
     userName: string;
     courseId: string;
     delivId: string;
@@ -57,7 +57,7 @@ export interface IDeliverableInfo {
     githubKey: string;
 }
 
-export interface ICommitInfo {
+export interface ICommitInfo { // refactor ICommitRecord
     commitUrl: string;
     user: IUserInfo;
     input: IContainerInput;
@@ -81,7 +81,7 @@ export interface IContainerInput {
         orgKey: string;
     };
     githubOrg?: string;
-    custom?: object;
+    custom?: {};
     teamId?: string;
     courseNum?: number;
     stdioRef?: string;
@@ -94,7 +94,7 @@ export interface IContainerOutput {
     report: IGradeReport;
     feedback: string; // markdown
     postbackOnComplete: boolean;
-    custom: object;
+    custom: {};
     attachments: IAttachment[];
     state: string; // enum: SUCCESS, FAIL, TIMEOUT, CONSOLEOVERFLOW
 
