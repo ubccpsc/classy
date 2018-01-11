@@ -1,3 +1,6 @@
+// needed / extra from the Container's POV
+
+// not required
 export interface IUserInfo {
     username: string;
     csid: string;
@@ -7,6 +10,7 @@ export interface IUserInfo {
     lname: string;
 }
 
+// all required
 export interface IPushInfo {
     branch: string;
     repo: string;
@@ -16,6 +20,27 @@ export interface IPushInfo {
     timestamp: number;
 }
 
+export interface ICommentInfo {
+    branch: string;
+    repo: string;
+    commit: string;
+    commitUrl: string;
+    projectUrl: string;
+    userName: string;
+    courseId: string;
+    delivId: string|null; // string if specified
+    timestamp: number;
+}
+
+export interface IRequestInfo { // TODO: Refactor to IFeedbackGiven
+    userName: string;
+    courseId: string;
+    delivId: string;
+    timestamp: number;
+    commitUrl: string; // for information only
+}
+
+// don't know what this is
 export interface IContainer {
     branch: string;
     suiteVersion: string;
@@ -23,6 +48,7 @@ export interface IContainer {
     exitcode: number;
 }
 
+// don't know what this is
 export interface IDeliverableInfo {
     solutionsUrl: string;
     deliverableCommit: string;
@@ -31,53 +57,71 @@ export interface IDeliverableInfo {
     githubKey: string;
 }
 
-export interface IRuntime {
-    userInfo: IUserInfo;
+export interface ICommitInfo {
+    commitUrl: string;
+    user: IUserInfo;
+    input: IContainerInput;
+    output: IContainerOutput;
+}
+
+export interface IContainerInput {
+    // needed
     pushInfo: IPushInfo;
-    container: IContainer;
-    deliverableInfo: IDeliverableInfo;
-    dockerImage: string;
-    githubKeys: {
+    courseId: string;
+    delivId: string;
+
+    // extra?
+    deliverableInfo?: IDeliverableInfo;
+    userInfo?: IUserInfo;
+    container?: IContainer;
+    dockerImage?: string;
+    githubKeys?: {
         delivKey: string;
         solutionsKey: string;
         orgKey: string;
     };
-    githubOrg: string;
-    custom: object;
-    teamId: string;
-    courseNum: number;
-    stdioRef: string;
+    githubOrg?: string;
+    custom?: object;
+    teamId?: string;
+    courseNum?: number;
+    stdioRef?: string;
 }
 
-export interface IContainerRecord {
-    team: string;
-    commit: string;
-    committer: string;
-    commitUrl: string;
-    timestamp: number;
-    repo: string;
-    ref: string;
-    report: any; // grade report
+export interface IContainerOutput {
+    // needed
+    commitUrl: string; // key
+    timestamp: number; // time when complete
+    report: IGradeReport;
+    feedback: string; // markdown
+    postbackOnComplete: boolean;
+    custom: object;
+    attachments: IAttachment[];
+    state: string; // enum: SUCCESS, FAIL, TIMEOUT, CONSOLEOVERFLOW
+
+    // if we split the IContainerInput and IContainerOutput we don't need all of these
+    // but having them in a single object on AutoTest is very useful
+    team: string; // needed
+    commit: string; // sha?
+    committer: string; // needed
+    projectUrl: string;
+    courseNum: number;
+    orgName: string;
+    repo: string; // needed
+    ref: string; // is this commitUrl?
+    user: string;
+    deliverable: string;
+
+    // not needed
     container: {
         scriptVersion: string;
         suiteVersion: string;
         image: string;
         exitCode: number;
     };
-    postbackOnComplete: boolean;
-    projectUrl: string;
-    courseNum: number;
-    orgName: string;
-    custom: object;
     gradeRequested: boolean;
     gradeRequestedTimestamp: number;
-    deliverable: string;
-    user: string;
-    githubFeedback: string;
     idStamp: string;
-    attachments: IAttachment[];
-    stdioRef: string;
-    state: string;
+    stdioRef: string; // how will we deal with stdio?
 }
 
 export interface IGradeReport {
