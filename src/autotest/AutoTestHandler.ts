@@ -249,7 +249,13 @@ export class AutoTestHandler {
      * @param timestamp
      */
     private saveFeedbackGiven(courseId: string, delivId: string, userName: string, timestamp: number, commitUrl: string): void {
-        const record: IRequestInfo = {courseId: courseId, delivId: delivId, userName: userName, timestamp: timestamp, commitUrl: commitUrl};
+        const record: IFeedbackGiven = {
+            courseId: courseId,
+            delivId: delivId,
+            userName: userName,
+            timestamp: timestamp,
+            commitUrl: commitUrl
+        };
         this.dataStore.saveFeedbackGivenRecord(record);
     }
 
@@ -311,7 +317,7 @@ export class AutoTestHandler {
         if (this.classPortal.isStaff(this.courseId, userName) === true) {
             return null; // staff can always request
         } else {
-            const record: IRequestInfo = this.dataStore.getLatestFeedbackGivenRecord(this.courseId, delivId, userName);
+            const record: IFeedbackGiven = this.dataStore.getLatestFeedbackGivenRecord(this.courseId, delivId, userName);
             if (record === null) {
                 return null; // no prior requests
             } else {
