@@ -5,7 +5,7 @@ export interface IClassPortal {
      *
      * @param commitUrl
      */
-    getDefaultDeliverableId(commitUrl: string): string;
+    getDefaultDeliverableId(commitUrl: string): string; // Promise<string|null>
 
     /**
      * Is the user staff on the course.
@@ -13,7 +13,7 @@ export interface IClassPortal {
      * @param courseId
      * @param userName
      */
-    isStaff(courseId: string, userName: string): boolean;
+    isStaff(courseId: string, userName: string): boolean; // Promise<boolean>
 
     /**
      * Gets the delay period (in seconds) between AutoTest invocations.
@@ -22,7 +22,8 @@ export interface IClassPortal {
      *
      * @param courseId
      */
-    getTestDelay(courseId: string): number;
+    getTestDelay(courseId: string): number; // Promise<number>
+
 }
 
 export class DummyClassPortal implements IClassPortal {

@@ -1,10 +1,10 @@
 /* tslint:disable:no-console */
-import { execSync, fork } from "child_process";
+import {execSync, fork} from "child_process";
 import * as fs from "fs-extra";
 import * as rp from "request-promise-native";
-import { IRunReport } from "./deliverables/Deliverable";
+import {IRunReport} from "./deliverables/Deliverable";
 import Log from "./Log";
-import { IAttachment, IContainerRecord, IGradeReport, IRuntime } from "./Types";
+import {IAttachment, IContainerRecord, IGradeReport, IRuntime} from "./Types";
 import Util from "./Util";
 
 export default class Container {
@@ -41,24 +41,24 @@ export default class Container {
         const deliverableGithubKey = this.runtime.githubKeys.delivKey;
         const project = {
             cloneUrl: this.runtime.pushInfo.projectUrl.replace(`https://`, `https://${projectGithubKey}@`) + `.git`,
-            commit: this.runtime.pushInfo.commit,
-            path: this.projectDir,
-            url: this.runtime.pushInfo.projectUrl,
+            commit:   this.runtime.pushInfo.commit,
+            path:     this.projectDir,
+            url:      this.runtime.pushInfo.projectUrl,
         };
         const deliverable = {
-            branch: this.runtime.deliverableInfo.deliverableToMark,
+            branch:   this.runtime.deliverableInfo.deliverableToMark,
             cloneUrl: this.runtime.deliverableInfo.solutionsUrl
-                        .replace(`https://`, `https://${deliverableGithubKey}@`) + `.git`,
-            path: this.deliverableDir,
-            url: this.runtime.deliverableInfo.solutionsUrl,
+                          .replace(`https://`, `https://${deliverableGithubKey}@`) + `.git`,
+            path:     this.deliverableDir,
+            url:      this.runtime.deliverableInfo.solutionsUrl,
         };
 
         let cmd;
 
         Log.info(`Container::init() - Configuring student repository.`);
         try {
-            cmd = await Util.git([`clone`, project.cloneUrl, project.path], { cwd: this.rootDir });
-            cmd = await Util.git([`checkout`, project.commit], { cwd: project.path });
+            cmd = await Util.git([`clone`, project.cloneUrl, project.path], {cwd: this.rootDir});
+            cmd = await Util.git([`checkout`, project.commit], {cwd: project.path});
         } catch (err) {
             cmd = err;
             throw new Error(`Failed to clone student repository.`);
@@ -73,8 +73,8 @@ export default class Container {
 
         Log.info(`Container::init() - Configuring reference solution repository.`);
         try {
-            cmd = await Util.git([`clone`, deliverable.cloneUrl, deliverable.path], { cwd: this.rootDir });
-            cmd = await Util.git([`checkout`, deliverable.branch], { cwd: deliverable.path });
+            cmd = await Util.git([`clone`, deliverable.cloneUrl, deliverable.path], {cwd: this.rootDir});
+            cmd = await Util.git([`checkout`, deliverable.branch], {cwd: deliverable.path});
         } catch (err) {
             cmd = err;
             throw new Error(`Failed to clone solution repository.`);
@@ -90,7 +90,7 @@ export default class Container {
 
         Log.info(`Container::init() - Installing node packages for deliverable.`);
         try {
-            cmd = await Util.yarn(`install`, { cwd: deliverable.path });
+            cmd = await Util.yarn(`install`, {cwd: deliverable.path});
         } catch (err) {
             cmd = err;
             throw new Error(`Failed to install packages for the deliverable.`);
@@ -147,13 +147,13 @@ export default class Container {
         env[`IS_FORK`] = `true`;
 
         const options = {
-            cwd: `${process.env.ROOT_DIR}/grading`,
+            cwd:      `${process.env.ROOT_DIR}/grading`,
             env,
             execPath: process.env.NODE_PATH,
-            gid: 1000,
-            silent: true,
-            timeout: 5 * 60 * 1000,
-            uid: 1000,
+            gid:      1000,
+            silent:   true,
+            timeout:  5 * 60 * 1000,
+            uid:      1000,
         };
 
         // fork a child node process
@@ -207,32 +207,32 @@ export default class Container {
 
         const record: IContainerRecord = {
             attachments,
-            commit: this.runtime.pushInfo.commit,
-            commitUrl: this.runtime.pushInfo.commitUrl,
-            committer: this.runtime.userInfo.username,
-            container: {
-                exitCode: this.exitCode,
-                image: this.image,
+            commit:                  this.runtime.pushInfo.commit,
+            commitUrl:               this.runtime.pushInfo.commitUrl,
+            committer:               this.runtime.userInfo.username,
+            container:               {
+                exitCode:      this.exitCode,
+                image:         this.image,
                 scriptVersion: Container.scriptVersion,
-                suiteVersion: this.suiteVersion,
+                suiteVersion:  this.suiteVersion,
             },
-            courseNum: this.runtime.courseNum,
-            custom: this.runtime.custom,
+            courseNum:               this.runtime.courseNum,
+            custom:                  this.runtime.custom,
             deliverable,
-            githubFeedback: feedback,
-            gradeRequested: false,
+            githubFeedback:          feedback,
+            gradeRequested:          false,
             gradeRequestedTimestamp: -1,
-            idStamp: `${new Date().toUTCString()}|${ref}|${deliverable}|${user}|${repo}`,
-            orgName: this.runtime.githubOrg,
-            postbackOnComplete: code !== 0,
-            projectUrl: this.runtime.pushInfo.projectUrl,
+            idStamp:                 `${new Date().toUTCString()}|${ref}|${deliverable}|${user}|${repo}`,
+            orgName:                 this.runtime.githubOrg,
+            postbackOnComplete:      code !== 0,
+            projectUrl:              this.runtime.pushInfo.projectUrl,
             ref,
             repo,
-            report: runReport,
-            state: "complete",
-            stdioRef: this.runtime.stdioRef,
-            team: this.runtime.teamId,
-            timestamp: this.runtime.pushInfo.timestamp,
+            report:                  runReport,
+            state:                   "complete",
+            stdioRef:                this.runtime.stdioRef,
+            team:                    this.runtime.teamId,
+            timestamp:               this.runtime.pushInfo.timestamp,
             user,
         };
 
@@ -244,13 +244,13 @@ export default class Container {
     public async sendRecord(record: IContainerRecord): Promise<rp.FullResponse> {
         Log.info(`Container::sendRecord() - START`);
         const options = {
-            body: { response: record },
+            body:    {response: record},
             headers: {
                 Accept: `application/json`,
             },
-            json: true,
-            method: `POST`,
-            uri: process.env.DB_ENDPOINT,
+            json:    true,
+            method:  `POST`,
+            uri:     process.env.DB_ENDPOINT,
         };
 
         let response: rp.FullResponse;
@@ -269,11 +269,16 @@ export default class Container {
     private async generateAttachments(report: IGradeReport): Promise<IAttachment[]> {
         // We read the coverage report as text to avoid MongoDB complaining about '.' in the key name
         const attachments: any[] = [
-            { name: `docker_SHA.json`, data: "", content_type: `application/json`, path: `${this.ioDir}/docker_SHA.json` },
-            { name: `coverage.json`, data: "", content_type: `application/text`, path: `${this.projectDir}/coverage/coverage-summary.json` },
-            { name: `coverage-full.json`, data: "", content_type: `application/text`, path: `${this.projectDir}/coverage/coverage-final.json` },
-            { name: `testsAgainstInvalid.json`, data: "", content_type: `application/json`, path: `${this.ioDir}/testReportRun1.json` },
-            { name: `testsAgainstValid.json`, data: "", content_type: `application/json`, path: `${this.ioDir}/testReportRun2.json` },
+            {name: `docker_SHA.json`, data: "", content_type: `application/json`, path: `${this.ioDir}/docker_SHA.json`},
+            {name: `coverage.json`, data: "", content_type: `application/text`, path: `${this.projectDir}/coverage/coverage-summary.json`},
+            {
+                name:         `coverage-full.json`,
+                data:         "",
+                content_type: `application/text`,
+                path:         `${this.projectDir}/coverage/coverage-final.json`
+            },
+            {name: `testsAgainstInvalid.json`, data: "", content_type: `application/json`, path: `${this.ioDir}/testReportRun1.json`},
+            {name: `testsAgainstValid.json`, data: "", content_type: `application/json`, path: `${this.ioDir}/testReportRun2.json`},
         ];
 
         for (const attachment of attachments) {
@@ -295,3 +300,4 @@ export default class Container {
     }
 
 }
+

@@ -10,26 +10,30 @@ export interface IDataStore {
      *
      * @param info
      */
-    savePush(info: IContainerInput): void;
+    savePush(info: IContainerInput): void; // Promise<void>
 
     /**
      * Saves comment event (to its own table).
      *
+     * Should only be called _IF_ a response is requested.
+     *
+     * If a user is over quota, their request should not be added here.
+     *
      * @param info
      */
-    saveComment(info: ICommentInfo): void;
+    saveComment(info: ICommentInfo): void; // Promise<void>
 
-    getCommentRecord(commitUrl: string): ICommentInfo | null;
+    getCommentRecord(commitUrl: string): ICommentInfo | null; // Promise<ICommentInfo | null>
 
-    saveOutputRecord(outputInfo: ICommitInfo): void;
+    saveOutputRecord(outputInfo: ICommitInfo): void; // Promise<void>
 
-    getOutputRecord(commitUrl: string): ICommitInfo | null;
+    getOutputRecord(commitUrl: string): ICommitInfo | null;  // Promise<ICommitInfo | null>
 
-    saveFeedbackGivenRecord(request: IFeedbackGiven): void;
+    saveFeedbackGivenRecord(request: IFeedbackGiven): void;  // Promise<void>
 
-    getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): IFeedbackGiven | null;
+    getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): IFeedbackGiven | null;  // Promise<IFeedbackGiven | null>
 
-    getFeedbackGivenRecordForCommit(commitUrl: string, userName: string): IFeedbackGiven | null;
+    getFeedbackGivenRecordForCommit(commitUrl: string, userName: string): IFeedbackGiven | null;  // Promise<IFeedbackGiven | null>
 }
 
 /**
@@ -37,10 +41,10 @@ export interface IDataStore {
  */
 export class DummyDataStore implements IDataStore {
 
-    private pushes: IContainerInput[] = [];
-    private comments: ICommentInfo[] = [];
-    private outputRecords: ICommitInfo[] = [];
-    private requests: IFeedbackGiven[] = [];
+    public pushes: IContainerInput[] = [];
+    public comments: ICommentInfo[] = [];
+    public outputRecords: ICommitInfo[] = [];
+    public requests: IFeedbackGiven[] = [];
 
     public savePush(info: IContainerInput) {
         this.pushes.push(info);

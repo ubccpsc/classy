@@ -2,8 +2,8 @@ import {ICommentInfo, ICommitInfo, IContainerInput, IFeedbackGiven, IPushInfo} f
 import {Queue} from "./Queue";
 
 import Log from "../Log";
-import {DummyClassPortal, IClassPortal} from "./ClassPortal";
-import {DummyDataStore, IDataStore} from "./DataStore";
+import {IClassPortal} from "./ClassPortal";
+import {IDataStore} from "./DataStore";
 
 export class AutoTestHandler {
 
@@ -16,12 +16,13 @@ export class AutoTestHandler {
     private standardExecution: IContainerInput | null = null;
     private expresssExecution: IContainerInput | null = null;
 
-    // TODO: update to real implementations of these interfaces
-    private dataStore: IDataStore = new DummyDataStore();
-    private classPortal: IClassPortal = new DummyClassPortal();
+    private readonly dataStore: IDataStore;
+    private readonly classPortal: IClassPortal;
 
-    constructor(courseId: string) {
+    constructor(courseId: string, dataStore: IDataStore, portal: IClassPortal) {
         this.courseId = courseId;
+        this.dataStore = dataStore;
+        this.classPortal = portal;
         this.testDelay = this.classPortal.getTestDelay(this.courseId);
     }
 
@@ -79,13 +80,13 @@ export class AutoTestHandler {
             if (this.classPortal.isStaff(this.courseId, info.userName) === true) {
                 shouldPost = true;
             } else {
-                const requestFeedbackDelay = this.requestFeedbackDelay(delivId, info.userName, info.timestamp);
+                const requestFeedbackDelay = this.requestFeedbackDelay(delivId, info.userName, info.timestamp); // ts of comment, not push
                 if (requestFeedbackDelay === null) {
                     shouldPost = true;
                 } else {
                     shouldPost = false;
                     const msg = "You must wait " + requestFeedbackDelay + " before requesting feedback.";
-                    this.postResultToGithub(info.commitUrl, msg);
+                    this.postMarkdownToGithub(info.commitUrl, msg);
                 }
             }
 
@@ -99,7 +100,7 @@ export class AutoTestHandler {
                 }
 
                 if (shouldPost === true) {
-                    this.postResultToGithub(info.commitUrl, res.output.feedback);
+                    this.postMarkdownToGithub(info.commitUrl, res.output.feedback);
                     this.saveFeedbackGiven(this.courseId, delivId, info.userName, res.input.pushInfo.timestamp, info.commitUrl);
                     this.saveCommentInfo(info); // user or TA; only for analytics since feedback has been given
                 }
@@ -107,8 +108,10 @@ export class AutoTestHandler {
             } else {
                 // execution not yet complete
                 if (shouldPost === true) {
-                    const msg = "Commit has not been procssed yet. Results will be posted when they are ready.";
-                    this.postResultToGithub(info.commitUrl, msg);
+                    // user has request quota available
+                    let msg = "This commit is still queued for processing against " + delivId + ".";
+                    msg += " Your results will be posted here as soon as they are ready.";
+                    this.postMarkdownToGithub(info.commitUrl, msg);
                     this.saveCommentInfo(info); // whether TA or staff
                 }
 
@@ -148,13 +151,13 @@ export class AutoTestHandler {
             const requestorUsername = this.getRequestor(data.commitUrl);
             if (data.output.postbackOnComplete === true) {
                 // do this first, doesn't count against quota
-                this.postResultToGithub(data.commitUrl, data.output.feedback);
+                this.postMarkdownToGithub(data.commitUrl, data.output.feedback);
                 // NOTE: if the feedback was requested for this build it shouldn't count
                 // since we're not calling saveFeedabck this is right
                 // but if we replay the commit comments, we would see it there, so be careful
             } else if (requestorUsername !== null) {
                 // feedback has been previously requested
-                this.postResultToGithub(data.commitUrl, data.output.feedback);
+                this.postMarkdownToGithub(data.commitUrl, data.output.feedback);
                 this.saveFeedbackGiven(data.input.courseId, data.input.delivId, requestorUsername, data.input.pushInfo.timestamp, data.commitUrl);
             } else {
                 // do nothing
@@ -264,8 +267,8 @@ export class AutoTestHandler {
      * @param commitUrl
      * @param feedback
      */
-    private postResultToGithub(commitUrl: string, feedback: string): void {
-        Log.info("AutoTestHandler::postResultToGithub(..) - course: " + this.courseId + "; Posting feedback to url: " + commitUrl);
+    private postMarkdownToGithub(commitUrl: string, feedback: string): void {
+        Log.info("AutoTestHandler::postMarkdownToGithub(..) - course: " + this.courseId + "; Posting markdown to url: " + commitUrl);
         // TODO
     }
 
