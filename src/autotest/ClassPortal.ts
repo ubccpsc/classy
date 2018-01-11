@@ -26,17 +26,16 @@ export interface IClassPortal {
 }
 
 export class DummyClassPortal implements IClassPortal {
-    isStaff(courseId: string, userName: string): boolean {
-        return userName.indexOf('a') >= 0;
+    public isStaff(courseId: string, userName: string): boolean {
+        return userName.indexOf("a") >= 0;
 
     }
 
-    getDefaultDeliverableId(commitUrl: string): string {
-        return 'd0'; // TEST
+    public getDefaultDeliverableId(commitUrl: string): string {
+        return "d0"; // TEST
     }
 
-    getTestDelay(courseId: string): number {
+    public getTestDelay(courseId: string): number {
         return 60; // TEST
     }
 }
-

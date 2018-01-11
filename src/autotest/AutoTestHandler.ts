@@ -1,8 +1,9 @@
-import {IPushInfo, ICommentInfo, ICommitInfo, IContainerInput, IFeedbackGiven} from "../Types";
+import {ICommentInfo, ICommitInfo, IContainerInput, IFeedbackGiven, IPushInfo} from "../Types";
 import {Queue} from "./Queue";
 
-import {DummyDataStore, IDataStore} from "./DataStore";
+import Log from "../Log";
 import {DummyClassPortal, IClassPortal} from "./ClassPortal";
+import {DummyDataStore, IDataStore} from "./DataStore";
 
 export class AutoTestHandler {
 
@@ -12,8 +13,8 @@ export class AutoTestHandler {
     private standardQueue = new Queue();
     private expressQueue = new Queue();
     // these could be arrays if we wanted a thread pool model
-    private standardExecution: IContainerInput|null = null;
-    private expresssExecution: IContainerInput|null = null;
+    private standardExecution: IContainerInput | null = null;
+    private expresssExecution: IContainerInput | null = null;
 
     // TODO: update to real implementations of these interfaces
     private dataStore: IDataStore = new DummyDataStore();
@@ -35,11 +36,11 @@ export class AutoTestHandler {
     public handlePushEvent(info: IPushInfo) {
         try {
             const delivId: string = this.getDelivId(info.projectUrl); // current default deliverable
-            const input: IContainerInput = {courseId: this.courseId, delivId: delivId, pushInfo: info};
+            const input: IContainerInput = {courseId: this.courseId, delivId, pushInfo: info};
             this.savePushInfo(input);
             this.standardQueue.push(input);
         } catch (err) {
-            console.error('AutoTestHandler::handlePushEvent(..) - course: ' + this.courseId + '; ERROR: ' + err.message);
+            Log.error("AutoTestHandler::handlePushEvent(..) - course: " + this.courseId + "; ERROR: " + err.message);
         }
     }
 
@@ -83,12 +84,12 @@ export class AutoTestHandler {
                     shouldPost = true;
                 } else {
                     shouldPost = false;
-                    const msg = 'You must wait ' + requestFeedbackDelay + ' before requesting feedback.';
+                    const msg = "You must wait " + requestFeedbackDelay + " before requesting feedback.";
                     this.postResultToGithub(info.commitUrl, msg);
                 }
             }
 
-            let res: ICommitInfo = this.getOutputRecord(info.commitUrl); // for any user
+            const res: ICommitInfo = this.getOutputRecord(info.commitUrl); // for any user
             if (res !== null) {
                 // execution complete
                 const hasBeenRequestedBefore = this.dataStore.getFeedbackGivenRecordForCommit(info.commitUrl, info.userName); // students often request grades they have previously 'paid' for
@@ -106,7 +107,7 @@ export class AutoTestHandler {
             } else {
                 // execution not yet complete
                 if (shouldPost === true) {
-                    const msg = 'Commit has not been procssed yet. Results will be posted when they are ready.';
+                    const msg = "Commit has not been procssed yet. Results will be posted when they are ready.";
                     this.postResultToGithub(info.commitUrl, msg);
                     this.saveCommentInfo(info); // whether TA or staff
                 }
@@ -126,7 +127,7 @@ export class AutoTestHandler {
             }
 
         } catch (err) {
-            console.error('AutoTestHandler::handleCommentEvent(..) - course: ' + this.courseId + '; ERROR: ' + err.message);
+            Log.error("AutoTestHandler::handleCommentEvent(..) - course: " + this.courseId + "; ERROR: " + err.message);
         }
     }
 
@@ -157,7 +158,7 @@ export class AutoTestHandler {
                 this.saveFeedbackGiven(data.input.courseId, data.input.delivId, requestorUsername, data.input.pushInfo.timestamp, data.commitUrl);
             } else {
                 // do nothing
-                console.log('AutoTestHandler::handleExecutionComplete(..) - course: ' + this.courseId + '; commit not requested - no feedback given. url: ' + data.commitUrl);
+                Log.info("AutoTestHandler::handleExecutionComplete(..) - course: " + this.courseId + "; commit not requested - no feedback given. url: " + data.commitUrl);
             }
 
             // when done clear the execution slot and schedule the next
@@ -169,30 +170,29 @@ export class AutoTestHandler {
             }
             this.tick();
         } catch (err) {
-            console.error('AutoTestHandler::handleExecutionComplete(..) - course: ' + this.courseId + '; ERROR: ' + err.message);
+            Log.error("AutoTestHandler::handleExecutionComplete(..) - course: " + this.courseId + "; ERROR: " + err.message);
         }
     }
 
     public tick() {
         try {
-            if (typeof this.standardExecution === null) {
-                let info = this.standardQueue.pop();
+            if (this.standardExecution === null) {
+                const info = this.standardQueue.pop();
                 if (info !== null) {
                     this.invokeContainer(info);
                 }
             }
 
-            if (typeof this.expresssExecution === null) {
-                let info = this.expressQueue.pop();
+            if (this.expresssExecution === null) {
+                const info = this.expressQueue.pop();
                 if (info !== null) {
                     this.invokeContainer(info);
                 }
             }
         } catch (err) {
-            console.error('AutoTestHandler::tick() - course: ' + this.courseId + '; ERROR: ' + err.message);
+            Log.error("AutoTestHandler::tick() - course: " + this.courseId + "; ERROR: " + err.message);
         }
     }
-
 
     /**
      * Saves pushInfo in its own table in the database, in case we need to refer to it later
@@ -221,7 +221,7 @@ export class AutoTestHandler {
     private invokeContainer(input: IContainerInput) {
         // execute with docker
 
-        let finalInfo: ICommitInfo; // TODO: call docker etc.
+        const finalInfo: ICommitInfo = null; // TODO: call docker etc.
         // TODO: must handle container timeout
         // TODO: must do something with stdio
         // TODO: must handle all attachments / other files
@@ -237,7 +237,6 @@ export class AutoTestHandler {
         return this.classPortal.getDefaultDeliverableId(commitUrl);
     }
 
-
     private getOutputRecord(commitUrl: string): ICommitInfo | null {
         return this.dataStore.getOutputRecord(commitUrl);
     }
@@ -250,11 +249,11 @@ export class AutoTestHandler {
      */
     private saveFeedbackGiven(courseId: string, delivId: string, userName: string, timestamp: number, commitUrl: string): void {
         const record: IFeedbackGiven = {
-            courseId: courseId,
-            delivId: delivId,
-            userName: userName,
-            timestamp: timestamp,
-            commitUrl: commitUrl
+            commitUrl,
+            courseId,
+            delivId,
+            timestamp,
+            userName,
         };
         this.dataStore.saveFeedbackGivenRecord(record);
     }
@@ -266,10 +265,9 @@ export class AutoTestHandler {
      * @param feedback
      */
     private postResultToGithub(commitUrl: string, feedback: string): void {
-        console.log('AutoTestHandler::postResultToGithub(..) - course: ' + this.courseId + '; Posting feedback to url: ' + commitUrl);
+        Log.info("AutoTestHandler::postResultToGithub(..) - course: " + this.courseId + "; Posting feedback to url: " + commitUrl);
         // TODO
     }
-
 
     /**
      * Return the username that requested the result for the given commitUrl (or null)
@@ -313,7 +311,7 @@ export class AutoTestHandler {
      *
      * Empty string means yes.
      */
-    private requestFeedbackDelay(delivId: string, userName: string, reqTimestamp: number): string|null {
+    private requestFeedbackDelay(delivId: string, userName: string, reqTimestamp: number): string | null {
         if (this.classPortal.isStaff(this.courseId, userName) === true) {
             return null; // staff can always request
         } else {
@@ -325,15 +323,15 @@ export class AutoTestHandler {
                 if (delta > this.testDelay) {
                     return null; // enough time has passed
                 } else {
-                    let hours = Math.floor(delta / 3600);
-                    let minutes = Math.floor((delta - (hours * 3600)) / 60);
-                    let msg = '';
+                    const hours = Math.floor(delta / 3600);
+                    const minutes = Math.floor((delta - (hours * 3600)) / 60);
+                    let msg = "";
                     if (hours > 0) {
-                        msg = hours + ' hours and ' + minutes + ' minutes';
+                        msg = hours + " hours and " + minutes + " minutes";
                     } else if (minutes > 0) {
-                        msg = minutes + ' minutes';
+                        msg = minutes + " minutes";
                     } else {
-                        msg = delta + ' seconds';
+                        msg = delta + " seconds";
                     }
                     return msg;
                 }

@@ -1,4 +1,4 @@
-import {IPushInfo, ICommentInfo, ICommitInfo, IContainerInput} from "../Types";
+import {IContainerInput} from "../Types";
 
 export class Queue {
 
@@ -8,16 +8,16 @@ export class Queue {
         this.data.push(info);
     }
 
-    public pop(): IContainerInput|null {
+    public pop(): IContainerInput | null {
         if (this.data.length > 0) {
             return this.data.shift();
         }
         return null;
     }
 
-    public remove(commitUrl: string): IContainerInput|null {
+    public remove(commitUrl: string): IContainerInput | null {
         for (let i = 0; i < this.data.length; i++) {
-            let info = this.data[i];
+            const info = this.data[i];
             if (info.pushInfo.commitUrl === commitUrl) {
                 this.data.splice(i, 1);
                 return info;
@@ -28,7 +28,7 @@ export class Queue {
 
     public indexOf(commitUrl: string): number {
         for (let i = 0; i < this.data.length; i++) {
-            let info = this.data[i];
+            const info = this.data[i];
             if (info.pushInfo.commitUrl === commitUrl) {
                 return i;
             }
@@ -40,4 +40,3 @@ export class Queue {
         return this.data.length;
     }
 }
-

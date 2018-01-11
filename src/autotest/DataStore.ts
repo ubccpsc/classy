@@ -1,4 +1,4 @@
-import {IPushInfo, ICommentInfo, ICommitInfo, IFeedbackGiven, IContainerInput} from "../Types";
+import {ICommentInfo, ICommitInfo, IContainerInput, IFeedbackGiven} from "../Types";
 
 export interface IDataStore {
 
@@ -18,14 +18,18 @@ export interface IDataStore {
      * @param info
      */
     saveComment(info: ICommentInfo): void;
-    getCommentRecord(commitUrl: string): ICommentInfo|null;
+
+    getCommentRecord(commitUrl: string): ICommentInfo | null;
 
     saveOutputRecord(outputInfo: ICommitInfo): void;
-    getOutputRecord(commitUrl: string): ICommitInfo|null;
+
+    getOutputRecord(commitUrl: string): ICommitInfo | null;
 
     saveFeedbackGivenRecord(request: IFeedbackGiven): void;
-    getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): IFeedbackGiven|null;
-    getFeedbackGivenRecordForCommit(commitUrl: string, userName: string): IFeedbackGiven|null;
+
+    getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): IFeedbackGiven | null;
+
+    getFeedbackGivenRecordForCommit(commitUrl: string, userName: string): IFeedbackGiven | null;
 }
 
 /**
@@ -38,7 +42,7 @@ export class DummyDataStore implements IDataStore {
     private outputRecords: ICommitInfo[] = [];
     private requests: IFeedbackGiven[] = [];
 
-    savePush(info: IContainerInput) {
+    public savePush(info: IContainerInput) {
         this.pushes.push(info);
     }
 
@@ -47,21 +51,20 @@ export class DummyDataStore implements IDataStore {
     }
 
     public getCommentRecord(commitUrl: string) {
-        for (let record of this.comments) {
+        for (const record of this.comments) {
             if (record.commitUrl === commitUrl) {
                 return record;
             }
         }
         return null;
     }
-
 
     public saveOutputRecord(outputInfo: ICommitInfo) {
         this.outputRecords.push(outputInfo);
     }
 
     public getOutputRecord(commitUrl: string) {
-        for (let record of this.outputRecords) {
+        for (const record of this.outputRecords) {
             if (record.commitUrl === commitUrl) {
                 return record;
             }
@@ -69,13 +72,13 @@ export class DummyDataStore implements IDataStore {
         return null;
     }
 
-    saveFeedbackGivenRecord(request: IFeedbackGiven): void {
+    public saveFeedbackGivenRecord(request: IFeedbackGiven): void {
         this.requests.push(request);
     }
 
-    getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): IFeedbackGiven|null {
+    public getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): IFeedbackGiven | null {
         const shortList: IFeedbackGiven[] = [];
-        for (let req of this.requests) {
+        for (const req of this.requests) {
             if (req.courseId === courseId && req.delivId === delivId && req.userName === userName) {
                 shortList.push(req);
             }
@@ -89,8 +92,8 @@ export class DummyDataStore implements IDataStore {
         }
     }
 
-    public getFeedbackGivenRecordForCommit(commitUrl: string, userName: string): IFeedbackGiven|null {
-        for (let feedback of this.requests) {
+    public getFeedbackGivenRecordForCommit(commitUrl: string, userName: string): IFeedbackGiven | null {
+        for (const feedback of this.requests) {
             if (feedback.commitUrl === commitUrl && feedback.userName === userName) {
                 return feedback;
             }
@@ -98,7 +101,3 @@ export class DummyDataStore implements IDataStore {
         return null;
     }
 }
-
-
-
-
