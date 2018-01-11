@@ -1,4 +1,4 @@
-interface IClassPortal {
+export interface IClassPortal {
 
     /**
      * For a given commitUrl, figure out what the default deliverable is at the current time.
