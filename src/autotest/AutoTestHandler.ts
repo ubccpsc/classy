@@ -36,6 +36,7 @@ export class AutoTestHandler {
      */
     public handlePushEvent(info: IPushInfo) {
         try {
+            Log.info("AutoTestHandler::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitUrl);
             const delivId: string = this.getDelivId(info.projectUrl); // current default deliverable
             const input: IContainerInput = {courseId: this.courseId, delivId, pushInfo: info};
             this.savePushInfo(input);
@@ -203,6 +204,7 @@ export class AutoTestHandler {
      * @param {IContainerInput} info
      */
     private savePushInfo(info: IContainerInput) {
+        Log.trace("AutoTestHandler::savePushInfo(..) - commit: " + info.pushInfo.commitUrl);
         this.dataStore.savePush(info);
     }
 
@@ -212,6 +214,7 @@ export class AutoTestHandler {
      * @param {ICommentInfo} info
      */
     private saveCommentInfo(info: ICommentInfo) {
+        Log.trace("AutoTestHandler::saveCommentInfo(..) - commit: " + info.commitUrl);
         this.dataStore.saveComment(info);
     }
 
@@ -222,13 +225,18 @@ export class AutoTestHandler {
      * @param input
      */
     private invokeContainer(input: IContainerInput) {
-        // execute with docker
+        try {
+            Log.info("AutoTestHandler::invokeContainer(..) - commit: " + input.pushInfo.commitUrl);
 
-        const finalInfo: ICommitInfo = null; // TODO: call docker etc.
-        // TODO: must handle container timeout
-        // TODO: must do something with stdio
-        // TODO: must handle all attachments / other files
-        this.handleExecutionComplete(finalInfo);
+            // execute with docker
+            const finalInfo: ICommitInfo = null; // TODO: call docker etc.
+            // TODO: must handle container timeout
+            // TODO: must do something with stdio
+            // TODO: must handle all attachments / other files
+            this.handleExecutionComplete(finalInfo);
+        } catch (err) {
+            Log.error("AutoTestHandler::invokeContainer(..) - ERROR: " + err.message);
+        }
     }
 
     /**
