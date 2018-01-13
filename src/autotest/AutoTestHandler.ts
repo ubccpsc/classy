@@ -19,6 +19,8 @@ export class AutoTestHandler {
     private readonly dataStore: IDataStore;
     private readonly classPortal: IClassPortal;
 
+    public githubMessages: any[] = []; // only for testing
+
     constructor(courseId: string, dataStore: IDataStore, portal: IClassPortal) {
         this.courseId = courseId;
         this.dataStore = dataStore;
@@ -233,7 +235,12 @@ export class AutoTestHandler {
             // TODO: must handle container timeout
             // TODO: must do something with stdio
             // TODO: must handle all attachments / other files
-            this.handleExecutionComplete(finalInfo);
+            if (finalInfo !== null) {
+                this.handleExecutionComplete(finalInfo);
+            } else {
+                Log.info("AutoTestHandler::invokeContainer(..) - commit: " + input.pushInfo.commitUrl + "; null final info");
+            }
+
         } catch (err) {
             Log.error("AutoTestHandler::invokeContainer(..) - ERROR: " + err.message);
         }
@@ -277,7 +284,7 @@ export class AutoTestHandler {
      */
     private postMarkdownToGithub(commitUrl: string, feedback: string): void {
         Log.info("AutoTestHandler::postMarkdownToGithub(..) - course: " + this.courseId + "; Posting markdown to url: " + commitUrl);
-        // TODO
+        this.githubMessages.push({commitUrl: commitUrl, feedback: feedback});
     }
 
     /**

@@ -1,3 +1,5 @@
+import Log from "../Log";
+
 export interface IClassPortal {
 
     /**
@@ -23,7 +25,6 @@ export interface IClassPortal {
      * @param courseId
      */
     getTestDelay(courseId: string): number; // Promise<number>
-
 }
 
 export class DummyClassPortal implements IClassPortal {

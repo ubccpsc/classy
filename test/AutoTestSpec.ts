@@ -2,8 +2,8 @@ import {expect} from "chai";
 import "mocha";
 import {AutoTestHandler} from "../src/autotest/AutoTestHandler";
 import {DummyClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
-import {DummyDataStore, IDataStore} from "../src/autotest/DataStore";
-import {IPushInfo} from "../src/Types";
+import {DummyDataStore} from "../src/autotest/DataStore";
+import {ICommentInfo, IPushInfo} from "../src/Types";
 
 import * as fs from "fs";
 
@@ -16,12 +16,12 @@ describe("AutoTest", () => {
 
     before(async function () {
         return new Promise(function (resolve, reject) {
-            fs.readFile("test/pushes.json", (err: any, data: any) => {
+            fs.readFile("test/pushes.json", (err: any, data2: any) => {
                 if (err) {
                     reject(err);
                 }
-                pushes = JSON.parse(data);
-                resolve(data);
+                pushes = JSON.parse(data2);
+                resolve(data2);
             });
 
             // setup other vars
@@ -52,10 +52,31 @@ describe("AutoTest", () => {
         expect(data.pushes.length).to.equal(6);
     });
 
-    it("should be able to tick", () => {
+    it("should be able to tick and pull something off the queue", () => {
         expect(data.pushes.length).to.equal(6);
         at.tick();
-        expect(data.pushes.length).to.equal(5);
+        expect(data.pushes.length).to.equal(6); // pushes record should be the same size
+    });
+
+    it("should receive a comment event", () => {
+        expect(at).not.to.equal(null);
+
+        const pe: IPushInfo = pushes[0];
+        const ce: ICommentInfo = {
+            branch:     pe.branch,
+            repo:       pe.repo,
+            commit:     pe.commit,
+            commitUrl:  pe.commitUrl,
+            projectUrl: pe.projectUrl,
+            userName:   "myUser",
+            courseId:   "cs310",
+            delivId:    "d0",
+            timestamp:  1234567891
+        };
+
+        expect(data.comments.length).to.equal(0);
+        at.handleCommentEvent(ce);
+        expect(data.comments.length).to.equal(1);
     });
 
 });

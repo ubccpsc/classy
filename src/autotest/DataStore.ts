@@ -1,4 +1,5 @@
 import {ICommentInfo, ICommitInfo, IContainerInput, IFeedbackGiven} from "../Types";
+import Log from "../Log";
 
 export interface IDataStore {
 
@@ -47,16 +48,18 @@ export class DummyDataStore implements IDataStore {
     public requests: IFeedbackGiven[] = [];
 
     public savePush(info: IContainerInput) {
+        Log.info("DummyDataStore::savePush(..) - start");
         this.pushes.push(info);
     }
 
     public saveComment(info: ICommentInfo) {
+        Log.info("DummyDataStore::saveComment(..) - start");
         this.comments.push(info);
     }
 
     public getCommentRecord(commitUrl: string) {
         for (const record of this.comments) {
-            if (record.commitUrl === commitUrl) {
+            if (record !== null && typeof record.commitUrl !== "undefined" && record.commitUrl === commitUrl) {
                 return record;
             }
         }
@@ -64,12 +67,13 @@ export class DummyDataStore implements IDataStore {
     }
 
     public saveOutputRecord(outputInfo: ICommitInfo) {
+        Log.info("DummyDataStore::saveOutputRecord(..) - start");
         this.outputRecords.push(outputInfo);
     }
 
     public getOutputRecord(commitUrl: string) {
         for (const record of this.outputRecords) {
-            if (record.commitUrl === commitUrl) {
+            if (record !== null && typeof record.commitUrl !== "undefined" && record.commitUrl === commitUrl) {
                 return record;
             }
         }
@@ -83,7 +87,7 @@ export class DummyDataStore implements IDataStore {
     public getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): IFeedbackGiven | null {
         const shortList: IFeedbackGiven[] = [];
         for (const req of this.requests) {
-            if (req.courseId === courseId && req.delivId === delivId && req.userName === userName) {
+            if (req !== null && req.courseId === courseId && req.delivId === delivId && req.userName === userName) {
                 shortList.push(req);
             }
         }
@@ -98,7 +102,7 @@ export class DummyDataStore implements IDataStore {
 
     public getFeedbackGivenRecordForCommit(commitUrl: string, userName: string): IFeedbackGiven | null {
         for (const feedback of this.requests) {
-            if (feedback.commitUrl === commitUrl && feedback.userName === userName) {
+            if (feedback !== null && feedback.commitUrl === commitUrl && feedback.userName === userName) {
                 return feedback;
             }
         }
