@@ -3,7 +3,7 @@ import "mocha";
 import {AutoTestHandler} from "../src/autotest/AutoTestHandler";
 import {DummyClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
 import {DummyDataStore} from "../src/autotest/DataStore";
-import {ICommentInfo, IPushInfo} from "../src/Types";
+import {ICommentInfo, IPushEvent} from "../src/Types";
 
 import * as fs from "fs";
 import Log from "../src/Log";
@@ -11,10 +11,10 @@ import {DummyGithubService, IGithubService} from "../src/autotest/GithubService"
 
 describe("AutoTest", () => {
 
-    let pushes: IPushInfo[];
+    let pushes: IPushEvent[];
     let data: DummyDataStore;
     let portal: IClassPortal;
-    let gh: IGithubService;
+    let gh: DummyGithubService;
     let at: AutoTestHandler;
 
     before(async function () {
@@ -45,7 +45,7 @@ describe("AutoTest", () => {
     it("should receive a push event", () => {
         expect(at).not.to.equal(null);
 
-        const pe: IPushInfo = pushes[0];
+        const pe: IPushEvent = pushes[0];
         expect(data.pushes.length).to.equal(0);
         at.handlePushEvent(pe);
         expect(data.pushes.length).to.equal(1);
@@ -66,7 +66,7 @@ describe("AutoTest", () => {
     it("should receive a comment event", () => {
         expect(at).not.to.equal(null);
 
-        const pe: IPushInfo = pushes[0];
+        const pe: IPushEvent = pushes[0];
         const ce: ICommentInfo = {
             branch:     pe.branch,
             repo:       pe.repo,
@@ -81,8 +81,10 @@ describe("AutoTest", () => {
 
         // chai.spy.on(gh, "postMarkdownToGithub"); // installing spies caused dependency issues
         expect(data.comments.length).to.equal(0);
+        expect(gh.messages.length).to.equal(0);
         at.handleCommentEvent(ce);
         expect(data.comments.length).to.equal(1);
+        expect(gh.messages.length).to.equal(1);
     });
 
 });

@@ -1,4 +1,4 @@
-import {ICommentInfo, ICommitInfo, IContainerInput, IFeedbackGiven, IPushInfo} from "../Types";
+import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven, IPushEvent} from "../Types";
 import {Queue} from "./Queue";
 
 import Log from "../Log";
@@ -6,7 +6,40 @@ import {IClassPortal} from "./ClassPortal";
 import {IDataStore} from "./DataStore";
 import {IGithubService} from "./GithubService";
 
-export class AutoTestHandler {
+export interface IAutoTest {
+    /**
+     * Handles a push event from GitHub. Will place job on queue.
+     *
+     * @param {IPushEvent} push
+     */
+    handlePushEvent(push: IPushEvent): void;
+
+    /**
+     * Handle a comment event from GitHub. Will promote job to
+     * express queue if appropriate. When job is complete, it will
+     * comment back automatically for the user.
+     *
+     * @param {ICommentEvent} comment
+     */
+    handleCommentEvent(comment: ICommentEvent): void;
+
+    /**
+     * Handles the end of an execution job.
+     *
+     * @param {ICommitRecord} data
+     */
+    handleExecutionComplete(data: ICommitRecord): void;
+
+    /**
+     * Updates the internal clock of the handler. This might or might not do anything.
+     *
+     * But if there are execution slots available and the queue has elements it should
+     * start jobs processing.
+     */
+    tick(): void;
+}
+
+export class AutoTest implements IAutoTest {
 
     private readonly courseId: string;
     private readonly testDelay: number;
@@ -38,15 +71,15 @@ export class AutoTestHandler {
      *
      * @param info
      */
-    public handlePushEvent(info: IPushInfo) {
+    public handlePushEvent(info: IPushEvent) {
         try {
-            Log.info("AutoTestHandler::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitUrl);
+            Log.info("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitUrl);
             const delivId: string = this.getDelivId(info.projectUrl); // current default deliverable
             const input: IContainerInput = {courseId: this.courseId, delivId, pushInfo: info};
             this.savePushInfo(input);
             this.standardQueue.push(input);
         } catch (err) {
-            Log.error("AutoTestHandler::handlePushEvent(..) - course: " + this.courseId + "; ERROR: " + err.message);
+            Log.error("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; ERROR: " + err.message);
         }
     }
 
@@ -71,8 +104,9 @@ export class AutoTestHandler {
      *
      * @param info
      */
-    public handleCommentEvent(info: ICommentInfo) {
+    public handleCommentEvent(info: ICommentEvent) {
         try {
+            Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitUrl);
             // update info record
             info.courseId = this.courseId;
             let delivId = info.delivId;
@@ -91,11 +125,11 @@ export class AutoTestHandler {
                 } else {
                     shouldPost = false;
                     const msg = "You must wait " + requestFeedbackDelay + " before requesting feedback.";
-                    this.github.postMarkdownToGithub(info.commitUrl, msg);
+                    this.github.postMarkdownToGithub({url: info.commitUrl, message: msg});
                 }
             }
 
-            const res: ICommitInfo = this.getOutputRecord(info.commitUrl); // for any user
+            const res: ICommitRecord = this.getOutputRecord(info.commitUrl); // for any user
             if (res !== null) {
                 // execution complete
                 const hasBeenRequestedBefore = this.dataStore.getFeedbackGivenRecordForCommit(info.commitUrl, info.userName); // students often request grades they have previously 'paid' for
@@ -105,7 +139,7 @@ export class AutoTestHandler {
                 }
 
                 if (shouldPost === true) {
-                    this.github.postMarkdownToGithub(info.commitUrl, res.output.feedback);
+                    this.github.postMarkdownToGithub({url: info.commitUrl, message: res.output.feedback});
                     this.saveFeedbackGiven(this.courseId, delivId, info.userName, res.input.pushInfo.timestamp, info.commitUrl);
                     this.saveCommentInfo(info); // user or TA; only for analytics since feedback has been given
                 }
@@ -116,7 +150,7 @@ export class AutoTestHandler {
                     // user has request quota available
                     let msg = "This commit is still queued for processing against " + delivId + ".";
                     msg += " Your results will be posted here as soon as they are ready.";
-                    this.github.postMarkdownToGithub(info.commitUrl, msg);
+                    this.github.postMarkdownToGithub({url: info.commitUrl, message: msg});
                     this.saveCommentInfo(info); // whether TA or staff
                 }
 
@@ -135,7 +169,7 @@ export class AutoTestHandler {
             }
 
         } catch (err) {
-            Log.error("AutoTestHandler::handleCommentEvent(..) - course: " + this.courseId + "; ERROR: " + err.message);
+            Log.error("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; ERROR: " + err.message);
         }
     }
 
@@ -149,24 +183,24 @@ export class AutoTestHandler {
      *
      * @param data
      */
-    public handleExecutionComplete(data: ICommitInfo): void {
+    public handleExecutionComplete(data: ICommitRecord): void {
         try {
             this.dataStore.saveOutputRecord(data);
 
             const requestorUsername = this.getRequestor(data.commitUrl);
             if (data.output.postbackOnComplete === true) {
                 // do this first, doesn't count against quota
-                this.github.postMarkdownToGithub(data.commitUrl, data.output.feedback);
+                this.github.postMarkdownToGithub({url: data.commitUrl, message: data.output.feedback});
                 // NOTE: if the feedback was requested for this build it shouldn't count
                 // since we're not calling saveFeedabck this is right
                 // but if we replay the commit comments, we would see it there, so be careful
             } else if (requestorUsername !== null) {
                 // feedback has been previously requested
-                this.github.postMarkdownToGithub(data.commitUrl, data.output.feedback);
+                this.github.postMarkdownToGithub({url: data.commitUrl, message: data.output.feedback});
                 this.saveFeedbackGiven(data.input.courseId, data.input.delivId, requestorUsername, data.input.pushInfo.timestamp, data.commitUrl);
             } else {
                 // do nothing
-                Log.info("AutoTestHandler::handleExecutionComplete(..) - course: " + this.courseId + "; commit not requested - no feedback given. url: " + data.commitUrl);
+                Log.info("AutoTest::handleExecutionComplete(..) - course: " + this.courseId + "; commit not requested - no feedback given. url: " + data.commitUrl);
             }
 
             // when done clear the execution slot and schedule the next
@@ -178,7 +212,7 @@ export class AutoTestHandler {
             }
             this.tick();
         } catch (err) {
-            Log.error("AutoTestHandler::handleExecutionComplete(..) - course: " + this.courseId + "; ERROR: " + err.message);
+            Log.error("AutoTest::handleExecutionComplete(..) - course: " + this.courseId + "; ERROR: " + err.message);
         }
     }
 
@@ -198,7 +232,7 @@ export class AutoTestHandler {
                 }
             }
         } catch (err) {
-            Log.error("AutoTestHandler::tick() - course: " + this.courseId + "; ERROR: " + err.message);
+            Log.error("AutoTest::tick() - course: " + this.courseId + "; ERROR: " + err.message);
         }
     }
 
@@ -208,17 +242,17 @@ export class AutoTestHandler {
      * @param {IContainerInput} info
      */
     private savePushInfo(info: IContainerInput) {
-        Log.trace("AutoTestHandler::savePushInfo(..) - commit: " + info.pushInfo.commitUrl);
+        Log.trace("AutoTest::savePushInfo(..) - commit: " + info.pushInfo.commitUrl);
         this.dataStore.savePush(info);
     }
 
     /**
      * Saves commentInfo in its own table in the database, in case we need to refer to it later
      *
-     * @param {ICommentInfo} info
+     * @param {ICommentEvent} info
      */
-    private saveCommentInfo(info: ICommentInfo) {
-        Log.trace("AutoTestHandler::saveCommentInfo(..) - commit: " + info.commitUrl);
+    private saveCommentInfo(info: ICommentEvent) {
+        Log.trace("AutoTest::saveCommentInfo(..) - commit: " + info.commitUrl);
         this.dataStore.saveComment(info);
     }
 
@@ -230,21 +264,21 @@ export class AutoTestHandler {
      */
     private invokeContainer(input: IContainerInput) {
         try {
-            Log.info("AutoTestHandler::invokeContainer(..) - commit: " + input.pushInfo.commitUrl);
+            Log.info("AutoTest::invokeContainer(..) - commit: " + input.pushInfo.commitUrl);
 
             // execute with docker
-            const finalInfo: ICommitInfo = null; // TODO: call docker etc.
+            const finalInfo: ICommitRecord = null; // TODO: call docker etc.
             // TODO: must handle container timeout
             // TODO: must do something with stdio
             // TODO: must handle all attachments / other files
             if (finalInfo !== null) {
                 this.handleExecutionComplete(finalInfo);
             } else {
-                Log.info("AutoTestHandler::invokeContainer(..) - commit: " + input.pushInfo.commitUrl + "; null final info");
+                Log.info("AutoTest::invokeContainer(..) - commit: " + input.pushInfo.commitUrl + "; null final info");
             }
 
         } catch (err) {
-            Log.error("AutoTestHandler::invokeContainer(..) - ERROR: " + err.message);
+            Log.error("AutoTest::invokeContainer(..) - ERROR: " + err.message);
         }
     }
 
@@ -257,15 +291,18 @@ export class AutoTestHandler {
         return this.classPortal.getDefaultDeliverableId(commitUrl);
     }
 
-    private getOutputRecord(commitUrl: string): ICommitInfo | null {
+    private getOutputRecord(commitUrl: string): ICommitRecord | null {
         return this.dataStore.getOutputRecord(commitUrl);
     }
 
     /**
      * Tracks that feedback was given for the specified user at the specified time.
      *
+     * @param courseId
+     * @param delivId
      * @param userName
      * @param timestamp
+     * @param commitUrl
      */
     private saveFeedbackGiven(courseId: string, delivId: string, userName: string, timestamp: number, commitUrl: string): void {
         const record: IFeedbackGiven = {
@@ -284,7 +321,7 @@ export class AutoTestHandler {
      * @param commitUrl
      */
     private getRequestor(commitUrl: string): string | null {
-        const record: ICommentInfo = this.dataStore.getCommentRecord(commitUrl);
+        const record: ICommentEvent = this.dataStore.getCommentRecord(commitUrl);
         if (record !== null) {
             return record.userName;
         }
@@ -314,11 +351,12 @@ export class AutoTestHandler {
     /**
      * Check to see if the current user is allowed to make a result request
      *
-     * @param commitUrl
+     * Null means yes, string will contain how long (in a human readable format).
+     *
      * @param delivId
      * @param userName
+     * @param reqTimestamp
      *
-     * Empty string means yes.
      */
     private requestFeedbackDelay(delivId: string, userName: string, reqTimestamp: number): string | null {
         if (this.classPortal.isStaff(this.courseId, userName) === true) {

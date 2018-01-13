@@ -1,17 +1,7 @@
-// needed / extra from the Container's POV
-
-// not required
-export interface IUserInfo {
-    username: string;
-    csid: string;
-    snum: string;
-    profileUrl: string;
-    fname: string;
-    lname: string;
-}
-
-// all required
-export interface IPushInfo { // TODO: refactor IPushEvent
+//
+// Types needed from the Container's POV
+//
+export interface IPushEvent {
     branch: string;
     repo: string;
     commit: string;
@@ -20,7 +10,7 @@ export interface IPushInfo { // TODO: refactor IPushEvent
     timestamp: number;
 }
 
-export interface ICommentInfo { // TODO: refactor ICommentEvent
+export interface ICommentEvent {
     branch: string;
     repo: string;
     commit: string;
@@ -28,11 +18,11 @@ export interface ICommentInfo { // TODO: refactor ICommentEvent
     projectUrl: string;
     userName: string;
     courseId: string;
-    delivId: string|null; // string if specified
+    delivId: string | null; // string if specified
     timestamp: number;
 }
 
-export interface IFeedbackGiven { // TODO: Refactor to IFeedbackGiven
+export interface IFeedbackGiven {
     userName: string;
     courseId: string;
     delivId: string;
@@ -40,24 +30,7 @@ export interface IFeedbackGiven { // TODO: Refactor to IFeedbackGiven
     commitUrl: string; // for information only
 }
 
-// don't know what this is
-export interface IContainer {
-    branch: string;
-    suiteVersion: string;
-    image: string;
-    exitcode: number;
-}
-
-// don't know what this is
-export interface IDeliverableInfo {
-    solutionsUrl: string;
-    deliverableCommit: string;
-    deliverableUrl: string;
-    deliverableToMark: string;
-    githubKey: string;
-}
-
-export interface ICommitInfo { // refactor ICommitRecord
+export interface ICommitRecord { // refactor ICommitRecord
     commitUrl: string;
     user: IUserInfo;
     input: IContainerInput;
@@ -66,7 +39,7 @@ export interface ICommitInfo { // refactor ICommitRecord
 
 export interface IContainerInput {
     // needed
-    pushInfo: IPushInfo;
+    pushInfo: IPushEvent;
     courseId: string;
     delivId: string;
 
@@ -122,6 +95,37 @@ export interface IContainerOutput {
     gradeRequestedTimestamp: number;
     idStamp: string;
     stdioRef: string; // how will we deal with stdio?
+}
+
+//
+// These are not required by AutoTest
+//
+
+// not required
+export interface IUserInfo {
+    username: string;
+    csid: string;
+    snum: string;
+    profileUrl: string;
+    fname: string;
+    lname: string;
+}
+
+// don't know what this is
+export interface IContainer {
+    branch: string;
+    suiteVersion: string;
+    image: string;
+    exitcode: number;
+}
+
+// don't know what this is
+export interface IDeliverableInfo {
+    solutionsUrl: string;
+    deliverableCommit: string;
+    deliverableUrl: string;
+    deliverableToMark: string;
+    githubKey: string;
 }
 
 export interface IGradeReport {
