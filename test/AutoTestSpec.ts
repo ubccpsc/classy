@@ -6,15 +6,19 @@ import {DummyDataStore} from "../src/autotest/DataStore";
 import {ICommentInfo, IPushInfo} from "../src/Types";
 
 import * as fs from "fs";
+import Log from "../src/Log";
+import {DummyGithubService, IGithubService} from "../src/autotest/GithubService";
 
 describe("AutoTest", () => {
 
     let pushes: IPushInfo[];
     let data: DummyDataStore;
     let portal: IClassPortal;
+    let gh: IGithubService;
     let at: AutoTestHandler;
 
     before(async function () {
+        Log.test("AutoTest::before() - start");
         return new Promise(function (resolve, reject) {
             fs.readFile("test/pushes.json", (err: any, data2: any) => {
                 if (err) {
@@ -27,8 +31,9 @@ describe("AutoTest", () => {
             // setup other vars
             data = new DummyDataStore();
             portal = new DummyClassPortal();
+            gh = new DummyGithubService();
             const courseId = "cs310";
-            at = new AutoTestHandler(courseId, data, portal);
+            at = new AutoTestHandler(courseId, data, portal, gh);
         });
     });
 
@@ -74,6 +79,7 @@ describe("AutoTest", () => {
             timestamp:  1234567891
         };
 
+        // chai.spy.on(gh, "postMarkdownToGithub"); // installing spies caused dependency issues
         expect(data.comments.length).to.equal(0);
         at.handleCommentEvent(ce);
         expect(data.comments.length).to.equal(1);

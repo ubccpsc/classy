@@ -4,6 +4,7 @@ import {Queue} from "./Queue";
 import Log from "../Log";
 import {IClassPortal} from "./ClassPortal";
 import {IDataStore} from "./DataStore";
+import {IGithubService} from "./GithubService";
 
 export class AutoTestHandler {
 
@@ -18,14 +19,15 @@ export class AutoTestHandler {
 
     private readonly dataStore: IDataStore;
     private readonly classPortal: IClassPortal;
+    private github: IGithubService;
 
-    public githubMessages: any[] = []; // only for testing
-
-    constructor(courseId: string, dataStore: IDataStore, portal: IClassPortal) {
+    constructor(courseId: string, dataStore: IDataStore, portal: IClassPortal, github: IGithubService) {
         this.courseId = courseId;
         this.dataStore = dataStore;
         this.classPortal = portal;
+        this.github = github;
         this.testDelay = this.classPortal.getTestDelay(this.courseId);
+
     }
 
     /**
@@ -89,7 +91,7 @@ export class AutoTestHandler {
                 } else {
                     shouldPost = false;
                     const msg = "You must wait " + requestFeedbackDelay + " before requesting feedback.";
-                    this.postMarkdownToGithub(info.commitUrl, msg);
+                    this.github.postMarkdownToGithub(info.commitUrl, msg);
                 }
             }
 
@@ -103,7 +105,7 @@ export class AutoTestHandler {
                 }
 
                 if (shouldPost === true) {
-                    this.postMarkdownToGithub(info.commitUrl, res.output.feedback);
+                    this.github.postMarkdownToGithub(info.commitUrl, res.output.feedback);
                     this.saveFeedbackGiven(this.courseId, delivId, info.userName, res.input.pushInfo.timestamp, info.commitUrl);
                     this.saveCommentInfo(info); // user or TA; only for analytics since feedback has been given
                 }
@@ -114,7 +116,7 @@ export class AutoTestHandler {
                     // user has request quota available
                     let msg = "This commit is still queued for processing against " + delivId + ".";
                     msg += " Your results will be posted here as soon as they are ready.";
-                    this.postMarkdownToGithub(info.commitUrl, msg);
+                    this.github.postMarkdownToGithub(info.commitUrl, msg);
                     this.saveCommentInfo(info); // whether TA or staff
                 }
 
@@ -154,13 +156,13 @@ export class AutoTestHandler {
             const requestorUsername = this.getRequestor(data.commitUrl);
             if (data.output.postbackOnComplete === true) {
                 // do this first, doesn't count against quota
-                this.postMarkdownToGithub(data.commitUrl, data.output.feedback);
+                this.github.postMarkdownToGithub(data.commitUrl, data.output.feedback);
                 // NOTE: if the feedback was requested for this build it shouldn't count
                 // since we're not calling saveFeedabck this is right
                 // but if we replay the commit comments, we would see it there, so be careful
             } else if (requestorUsername !== null) {
                 // feedback has been previously requested
-                this.postMarkdownToGithub(data.commitUrl, data.output.feedback);
+                this.github.postMarkdownToGithub(data.commitUrl, data.output.feedback);
                 this.saveFeedbackGiven(data.input.courseId, data.input.delivId, requestorUsername, data.input.pushInfo.timestamp, data.commitUrl);
             } else {
                 // do nothing
@@ -274,17 +276,6 @@ export class AutoTestHandler {
             userName,
         };
         this.dataStore.saveFeedbackGivenRecord(record);
-    }
-
-    /**
-     * Posts the feedback (in markdown) back to the github url.
-     *
-     * @param commitUrl
-     * @param feedback
-     */
-    private postMarkdownToGithub(commitUrl: string, feedback: string): void {
-        Log.info("AutoTestHandler::postMarkdownToGithub(..) - course: " + this.courseId + "; Posting markdown to url: " + commitUrl);
-        this.githubMessages.push({commitUrl: commitUrl, feedback: feedback});
     }
 
     /**
