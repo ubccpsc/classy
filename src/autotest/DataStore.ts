@@ -1,5 +1,5 @@
-import {ICommentInfo, ICommitInfo, IContainerInput, IFeedbackGiven} from "../Types";
 import Log from "../Log";
+import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven} from "../Types";
 
 export interface IDataStore {
 
@@ -22,13 +22,13 @@ export interface IDataStore {
      *
      * @param info
      */
-    saveComment(info: ICommentInfo): void; // Promise<void>
+    saveComment(info: ICommentEvent): void; // Promise<void>
 
-    getCommentRecord(commitUrl: string): ICommentInfo | null; // Promise<ICommentInfo | null>
+    getCommentRecord(commitUrl: string): ICommentEvent | null; // Promise<ICommentEvent | null>
 
-    saveOutputRecord(outputInfo: ICommitInfo): void; // Promise<void>
+    saveOutputRecord(outputInfo: ICommitRecord): void; // Promise<void>
 
-    getOutputRecord(commitUrl: string): ICommitInfo | null;  // Promise<ICommitInfo | null>
+    getOutputRecord(commitUrl: string): ICommitRecord | null;  // Promise<ICommitRecord | null>
 
     saveFeedbackGivenRecord(request: IFeedbackGiven): void;  // Promise<void>
 
@@ -43,8 +43,8 @@ export interface IDataStore {
 export class DummyDataStore implements IDataStore {
 
     public pushes: IContainerInput[] = [];
-    public comments: ICommentInfo[] = [];
-    public outputRecords: ICommitInfo[] = [];
+    public comments: ICommentEvent[] = [];
+    public outputRecords: ICommitRecord[] = [];
     public requests: IFeedbackGiven[] = [];
 
     public savePush(info: IContainerInput) {
@@ -52,7 +52,7 @@ export class DummyDataStore implements IDataStore {
         this.pushes.push(info);
     }
 
-    public saveComment(info: ICommentInfo) {
+    public saveComment(info: ICommentEvent) {
         Log.info("DummyDataStore::saveComment(..) - start");
         this.comments.push(info);
     }
@@ -66,7 +66,7 @@ export class DummyDataStore implements IDataStore {
         return null;
     }
 
-    public saveOutputRecord(outputInfo: ICommitInfo) {
+    public saveOutputRecord(outputInfo: ICommitRecord) {
         Log.info("DummyDataStore::saveOutputRecord(..) - start");
         this.outputRecords.push(outputInfo);
     }

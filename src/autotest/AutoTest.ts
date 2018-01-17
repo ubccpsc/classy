@@ -75,9 +75,14 @@ export class AutoTest implements IAutoTest {
         try {
             Log.info("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitUrl);
             const delivId: string = this.getDelivId(info.projectUrl); // current default deliverable
-            const input: IContainerInput = {courseId: this.courseId, delivId, pushInfo: info};
-            this.savePushInfo(input);
-            this.standardQueue.push(input);
+            if (delivId !== null) {
+                const input: IContainerInput = {courseId: this.courseId, delivId, pushInfo: info};
+                this.savePushInfo(input);
+                this.standardQueue.push(input);
+            } else {
+                // no active deliverable, ignore this push event (don't push an error either)
+                Log.warn("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitUrl + " - No active deliverable; push ignored.");
+            }
         } catch (err) {
             Log.error("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; ERROR: " + err.message);
         }
@@ -113,6 +118,13 @@ export class AutoTest implements IAutoTest {
             if (delivId === null) {
                 delivId = this.getDelivId(info.commitUrl); // need to get the default deliverable for that repo
                 info.delivId = delivId;
+            }
+
+            if (delivId === null) {
+                // no deliverable, give warning and abort
+                const msg = "There is no current default deliverable; results will not be posted";
+                this.github.postMarkdownToGithub({url: info.commitUrl, message: msg});
+                return;
             }
 
             let shouldPost = false; // should the result be given
@@ -287,8 +299,12 @@ export class AutoTest implements IAutoTest {
      *
      * @param commitUrl
      */
-    private getDelivId(commitUrl: string): string {
-        return this.classPortal.getDefaultDeliverableId(commitUrl);
+    private getDelivId(commitUrl: string): string | null {
+        let str = this.classPortal.getDefaultDeliverableId(commitUrl);
+        if (typeof str === "undefined") {
+            str = null;
+        }
+        return str;
     }
 
     private getOutputRecord(commitUrl: string): ICommitRecord | null {

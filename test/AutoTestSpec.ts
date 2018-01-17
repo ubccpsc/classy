@@ -1,13 +1,13 @@
-import {expect} from "chai";
-import "mocha";
-import {AutoTestHandler} from "../src/autotest/AutoTestHandler";
+import {AutoTest} from "../src/autotest/AutoTest";
 import {DummyClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
 import {DummyDataStore} from "../src/autotest/DataStore";
-import {ICommentInfo, IPushEvent} from "../src/Types";
-
-import * as fs from "fs";
+import {DummyGithubService} from "../src/autotest/GithubService";
 import Log from "../src/Log";
-import {DummyGithubService, IGithubService} from "../src/autotest/GithubService";
+import {ICommentEvent, IPushEvent} from "../src/Types";
+
+import {expect} from "chai";
+import * as fs from "fs";
+import "mocha";
 
 describe("AutoTest", () => {
 
@@ -15,7 +15,7 @@ describe("AutoTest", () => {
     let data: DummyDataStore;
     let portal: IClassPortal;
     let gh: DummyGithubService;
-    let at: AutoTestHandler;
+    let at: AutoTest;
 
     before(async function () {
         Log.test("AutoTest::before() - start");
@@ -33,7 +33,7 @@ describe("AutoTest", () => {
             portal = new DummyClassPortal();
             gh = new DummyGithubService();
             const courseId = "cs310";
-            at = new AutoTestHandler(courseId, data, portal, gh);
+            at = new AutoTest(courseId, data, portal, gh);
         });
     });
 
@@ -67,7 +67,7 @@ describe("AutoTest", () => {
         expect(at).not.to.equal(null);
 
         const pe: IPushEvent = pushes[0];
-        const ce: ICommentInfo = {
+        const ce: ICommentEvent = {
             branch:     pe.branch,
             repo:       pe.repo,
             commit:     pe.commit,
