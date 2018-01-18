@@ -74,7 +74,7 @@ export class AutoTest implements IAutoTest {
     public handlePushEvent(info: IPushEvent) {
         try {
             Log.info("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitUrl);
-            const delivId: string = this.getDelivId(info.projectUrl); // current default deliverable
+            const delivId: string = this.getDelivId(info.projectUrl); // current default deliverable // async
             if (delivId !== null) {
                 const input: IContainerInput = {courseId: this.courseId, delivId, pushInfo: info};
                 this.savePushInfo(input);
@@ -111,7 +111,15 @@ export class AutoTest implements IAutoTest {
      */
     public handleCommentEvent(info: ICommentEvent) {
         try {
-            Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitUrl);
+            Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitUrl + "; user: " + info.userName);
+
+            // NOTE: need to think a bit harder about which comment events should be saved and which should be dropped
+
+            if (info.userName === "autobot") {
+                Log.info("AutoTest::handleCommentEvent(..) - ignored, comment made by AutoBot");
+                return;
+            }
+
             // update info record
             info.courseId = this.courseId;
             let delivId = info.delivId;
@@ -122,16 +130,22 @@ export class AutoTest implements IAutoTest {
 
             if (delivId === null) {
                 // no deliverable, give warning and abort
-                const msg = "There is no current default deliverable; results will not be posted";
+                const msg = "There is no current default deliverable; results will not be posted.";
                 this.github.postMarkdownToGithub({url: info.commitUrl, message: msg});
                 return;
             }
 
+            // front load the async operations, even if it means we do some operations unnecessairly
+            // could do these all in parallel
+            const isStaff = this.classPortal.isStaff(this.courseId, info.userName); // async
+            const requestFeedbackDelay = this.requestFeedbackDelay(delivId, info.userName, info.timestamp); // ts of comment, not push // async
+            const res: ICommitRecord = this.getOutputRecord(info.commitUrl); // for any user, async
+            const isCurrentlyRunning: boolean = this.isCommitExecuting(info.commitUrl, delivId);
+
             let shouldPost = false; // should the result be given
-            if (this.classPortal.isStaff(this.courseId, info.userName) === true) {
+            if (isStaff === true) {
                 shouldPost = true;
             } else {
-                const requestFeedbackDelay = this.requestFeedbackDelay(delivId, info.userName, info.timestamp); // ts of comment, not push
                 if (requestFeedbackDelay === null) {
                     shouldPost = true;
                 } else {
@@ -141,7 +155,6 @@ export class AutoTest implements IAutoTest {
                 }
             }
 
-            const res: ICommitRecord = this.getOutputRecord(info.commitUrl); // for any user
             if (res !== null) {
                 // execution complete
                 const hasBeenRequestedBefore = this.dataStore.getFeedbackGivenRecordForCommit(info.commitUrl, info.userName); // students often request grades they have previously 'paid' for
@@ -166,7 +179,6 @@ export class AutoTest implements IAutoTest {
                     this.saveCommentInfo(info); // whether TA or staff
                 }
 
-                const isCurrentlyRunning: boolean = this.isCommitExecuting(info.commitUrl, delivId);
                 if (isCurrentlyRunning === true) {
                     // do nothing, will be handled later when the commit finishes processing
                 } else {
@@ -179,7 +191,6 @@ export class AutoTest implements IAutoTest {
                     }
                 }
             }
-
         } catch (err) {
             Log.error("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; ERROR: " + err.message);
         }
@@ -375,10 +386,14 @@ export class AutoTest implements IAutoTest {
      *
      */
     private requestFeedbackDelay(delivId: string, userName: string, reqTimestamp: number): string | null {
-        if (this.classPortal.isStaff(this.courseId, userName) === true) {
+
+        // async operations up front
+        const isStaff = this.classPortal.isStaff(this.courseId, userName);
+        const record: IFeedbackGiven = this.dataStore.getLatestFeedbackGivenRecord(this.courseId, delivId, userName);
+
+        if (isStaff === true) {
             return null; // staff can always request
         } else {
-            const record: IFeedbackGiven = this.dataStore.getLatestFeedbackGivenRecord(this.courseId, delivId, userName);
             if (record === null) {
                 return null; // no prior requests
             } else {
