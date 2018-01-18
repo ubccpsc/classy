@@ -68,7 +68,7 @@ describe("AutoTest", () => {
 
         const pe: IPushEvent = pushes[0];
         const ce: ICommentEvent = {
-            branch:     pe.branch,
+            // branch:     pe.branch,
             repo:       pe.repo,
             commit:     pe.commit,
             commitUrl:  pe.commitUrl,

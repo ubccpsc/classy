@@ -4,20 +4,20 @@
 export interface IPushEvent {
     branch: string;
     repo: string;
-    commit: string;
+    commit: string; // duplicated in the commitUrl but handy for using as a index w/ fewer special chars
     commitUrl: string;
     projectUrl: string;
     timestamp: number;
 }
 
 export interface ICommentEvent {
-    branch: string;
+    // branch: string;
     repo: string;
     commit: string;
     commitUrl: string;
     projectUrl: string;
     userName: string;
-    courseId: string;
+    courseId: string | null; // string once known
     delivId: string | null; // string if specified
     timestamp: number;
 }
