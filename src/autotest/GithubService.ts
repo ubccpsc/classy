@@ -35,6 +35,14 @@ export class GithubService implements IGithubService {
             try {
                 Log.info("GithubService::postMarkdownToGithub(..) - Posting markdown to url: " + message.url + "; message: " + message.message);
 
+                if (typeof message.url === "undefined" || message.url === null) {
+                    throw new Error("GithubService::postMarkdownToGithub(..)  - message.url is required");
+                }
+
+                if (typeof message.message === "undefined" || message.message === null || message.message.length < 1) {
+                    throw new Error("GithubService::postMarkdownToGithub(..)  - message.message is required");
+                }
+
                 const noProtocolUrl = message.url.replace("https://", "");
                 const host = noProtocolUrl.substr(0, noProtocolUrl.indexOf("/"));
                 const path = noProtocolUrl.substr(host.length, noProtocolUrl.length);
