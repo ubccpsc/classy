@@ -15,14 +15,14 @@ export class AutoTestDaemon {
     // private config: IConfig = new AppConfig();
 
     public initServer() {
-        const courseNums = [310]; // this.config.getCourseNums();
+        const courseNums = [333]; // this.config.getCourseNums();
         Log.info("AutoTestDaemon::initServer() - start");
 
         for (const courseNum of courseNums) {
 
             // 1 + because ports under 1000 need 'sudo' priviledges
             // which is a potential security risk
-            const portNum = Number("1" + courseNum);
+            const portNum = Number("11" + courseNum);
 
             // start server
             const s = new Server();
