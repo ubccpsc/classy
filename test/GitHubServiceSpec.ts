@@ -1,0 +1,49 @@
+import {expect} from "chai";
+import "mocha";
+
+import {GithubService, IGithubMessage, IGithubService} from "../src/autotest/GithubService";
+import Log from "../src/util/Log";
+
+describe("GitHub Markdown Service", () => {
+
+    const VALID_URL = "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments";
+    const INVALID_URL = "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2XXXXXINVALID/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments";
+
+    let gh: IGithubService;
+
+    before(function () {
+        gh = new GithubService();
+    });
+
+    it("Should be able to post a valid message.", () => {
+        const post: IGithubMessage = {
+            url:     VALID_URL,
+            message: "Automated Test Suite Message"
+        };
+
+        Log.test("Trying a valid url");
+        return gh.postMarkdownToGithub(post).then(function (res: boolean) {
+            Log.test("Success (expected)");
+            expect(res).to.equal(true);
+        }).catch(function (err) {
+            Log.test("Failure (unexpected)");
+            expect.fail();
+        });
+    });
+
+    it("Posting an invalid message should fail.", () => {
+        const post: IGithubMessage = {
+            url:     INVALID_URL,
+            message: "Automated Test Suite Message"
+        };
+
+        Log.test("Trying an invalid url");
+        return gh.postMarkdownToGithub(post).then(function (res: boolean) {
+            Log.test("Success (unexpected)");
+            expect.fail();
+        }).catch(function (err) {
+            Log.test("Failure (expected)");
+            expect(err).to.equal(false);
+        });
+    });
+});

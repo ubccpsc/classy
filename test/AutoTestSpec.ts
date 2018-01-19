@@ -2,8 +2,8 @@ import {AutoTest} from "../src/autotest/AutoTest";
 import {DummyClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
 import {DummyDataStore} from "../src/autotest/DataStore";
 import {GithubService} from "../src/autotest/GithubService";
-import Log from "../src/util/Log";
 import {ICommentEvent, IPushEvent} from "../src/Types";
+import Log from "../src/util/Log";
 
 import {expect} from "chai";
 import * as fs from "fs";

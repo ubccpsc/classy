@@ -1,9 +1,4 @@
-import {AutoTest} from "../src/autotest/AutoTest";
-import {DummyClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
-import {DummyDataStore} from "../src/autotest/DataStore";
-import {GithubService} from "../src/autotest/GithubService";
 import Log from "../src/util/Log";
-import {ICommentEvent, IPushEvent} from "../src/Types";
 
 import {expect} from "chai";
 import * as fs from "fs";
@@ -131,7 +126,6 @@ describe("GitHub Event Parser", () => {
 
         expect(actual).to.deep.equal(expected);
     });
-
 
     it("Should be able to parse a comment on another branch with one deliverable and a mention.", () => {
         const content = readFile("comment_other-branch_bot_one-deliv.json");
