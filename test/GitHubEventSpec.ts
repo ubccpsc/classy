@@ -20,10 +20,10 @@ describe("GitHub Event Parser", () => {
         const expected = {
             "branch":     "refs/heads/master",
             "repo":       "d1_project9999",
-            "commit":     "bbe3980fff47b7d6a921e9f89c6727bea639589c",
-            "commitUrl":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/bbe3980fff47b7d6a921e9f89c6727bea639589c",
+            "commitSHA":  "bbe3980fff47b7d6a921e9f89c6727bea639589c",
+            "commitURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/bbe3980fff47b7d6a921e9f89c6727bea639589c",
             "org":        "CPSC310-2017W-T2",
-            "projectUrl": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
+            "projectURL": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
             "timestamp":  1516324553000
         };
 
@@ -37,10 +37,10 @@ describe("GitHub Event Parser", () => {
 
         const expected = {
             "branch":     "refs/heads/test2",
-            "commit":     "6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
-            "commitUrl":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
+            "commitSHA":  "6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
+            "commitURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
             "org":        "CPSC310-2017W-T2",
-            "projectUrl": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
+            "projectURL": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
             "repo":       "d1_project9999",
             "timestamp":  1516322017000
         };
@@ -55,10 +55,10 @@ describe("GitHub Event Parser", () => {
 
         const expected = {
             "branch":     "refs/heads/test2",
-            "commit":     "d5f2203cfa1ae43a45932511ce39b2368f1c72ed",
-            "commitUrl":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/d5f2203cfa1ae43a45932511ce39b2368f1c72ed",
+            "commitSHA":  "d5f2203cfa1ae43a45932511ce39b2368f1c72ed",
+            "commitURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/d5f2203cfa1ae43a45932511ce39b2368f1c72ed",
             "org":        "CPSC310-2017W-T2",
-            "projectUrl": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
+            "projectURL": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
             "repo":       "d1_project9999",
             "timestamp":  1516324487000
         };
@@ -73,12 +73,12 @@ describe("GitHub Event Parser", () => {
 
         const expected: any = {
             "botMentioned": true,
-            "commit":       "bbe3980fff47b7d6a921e9f89c6727bea639589c",
-            "commitUrl":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/bbe3980fff47b7d6a921e9f89c6727bea639589c",
+            "commitSHA":    "bbe3980fff47b7d6a921e9f89c6727bea639589c",
+            "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/bbe3980fff47b7d6a921e9f89c6727bea639589c",
             "courseId":     null,
             "delivId":      "d7",
-            "projectUrl":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
-            "repo":         "d1_project9999",
+            // "projectURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
+            // "repo":         "d1_project9999",
             "timestamp":    1516324753000,
             "userName":     "cs310"
         };
@@ -93,10 +93,10 @@ describe("GitHub Event Parser", () => {
 
         const expected: any = {
             "botMentioned": true,
-            "repo":         "d1_project9999",
-            "commit":       "bbe3980fff47b7d6a921e9f89c6727bea639589c",
-            "commitUrl":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/bbe3980fff47b7d6a921e9f89c6727bea639589c",
-            "projectUrl":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
+            // "repo":         "d1_project9999",
+            "commitSHA":    "bbe3980fff47b7d6a921e9f89c6727bea639589c",
+            "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/bbe3980fff47b7d6a921e9f89c6727bea639589c",
+            // "projectURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
             "userName":     "cs310",
             "courseId":     null,
             "delivId":      "d7",
@@ -113,10 +113,10 @@ describe("GitHub Event Parser", () => {
 
         const expected: any = {
             "botMentioned": false,
-            "repo":         "d1_project9999",
-            "commit":       "6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
-            "commitUrl":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
-            "projectUrl":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
+            // "repo":         "d1_project9999",
+            "commitSHA":    "6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
+            "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
+            // "projectURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
             "userName":     "cs310",
             "courseId":     null,
             "delivId":      null,
@@ -134,10 +134,10 @@ describe("GitHub Event Parser", () => {
 
         const expected: any = {
             "botMentioned": true,
-            "repo":         "d1_project9999",
-            "commit":       "d5f2203cfa1ae43a45932511ce39b2368f1c72ed",
-            "commitUrl":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/d5f2203cfa1ae43a45932511ce39b2368f1c72ed",
-            "projectUrl":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
+            // "repo":         "d1_project9999",
+            "commitSHA":    "d5f2203cfa1ae43a45932511ce39b2368f1c72ed",
+            "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/d5f2203cfa1ae43a45932511ce39b2368f1c72ed",
+            // "projectURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
             "userName":     "cs310",
             "courseId":     null,
             "delivId":      "d7",

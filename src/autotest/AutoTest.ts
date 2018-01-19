@@ -74,15 +74,15 @@ export class AutoTest implements IAutoTest {
     public handlePushEvent(info: IPushEvent): Promise<boolean> {
         return new Promise((resolve, reject) => {
             try {
-                Log.info("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitUrl);
-                const delivId: string = this.getDelivId(info.projectUrl); // current default deliverable // async
+                Log.info("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL);
+                const delivId: string = this.getDelivId(info.projectURL); // current default deliverable // async
                 if (delivId !== null) {
                     const input: IContainerInput = {courseId: this.courseId, delivId, pushInfo: info};
                     this.savePushInfo(input);
                     this.standardQueue.push(input);
                 } else {
                     // no active deliverable, ignore this push event (don't push an error either)
-                    Log.warn("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitUrl + " - No active deliverable; push ignored.");
+                    Log.warn("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL + " - No active deliverable; push ignored.");
                 }
                 resolve(true);
             } catch (err) {
@@ -117,7 +117,7 @@ export class AutoTest implements IAutoTest {
         const that = this;
         return new Promise((resolve, reject) => {
             try {
-                Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitUrl + "; user: " + info.userName);
+                Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL + "; user: " + info.userName);
 
                 // NOTE: need to think a bit harder about which comment events should be saved and which should be dropped
 
@@ -130,14 +130,14 @@ export class AutoTest implements IAutoTest {
                 info.courseId = that.courseId;
                 let delivId = info.delivId;
                 if (delivId === null) {
-                    delivId = this.getDelivId(info.commitUrl); // need to get the default deliverable for that repo
+                    delivId = this.getDelivId(info.commitURL); // need to get the default deliverable for that repo
                     info.delivId = delivId;
                 }
 
                 if (delivId === null) {
                     // no deliverable, give warning and abort
                     const msg = "There is no current default deliverable; results will not be posted.";
-                    this.github.postMarkdownToGithub({url: info.commitUrl, message: msg});
+                    this.github.postMarkdownToGithub({url: info.commitURL, message: msg});
                     resolve(true);
                 }
 
@@ -145,8 +145,8 @@ export class AutoTest implements IAutoTest {
                 // could do these all in parallel
                 const isStaff = this.classPortal.isStaff(this.courseId, info.userName); // async
                 const requestFeedbackDelay = this.requestFeedbackDelay(delivId, info.userName, info.timestamp); // ts of comment, not push // async
-                const res: ICommitRecord = this.getOutputRecord(info.commitUrl); // for any user, async
-                const isCurrentlyRunning: boolean = this.isCommitExecuting(info.commitUrl, delivId);
+                const res: ICommitRecord = this.getOutputRecord(info.commitURL); // for any user, async
+                const isCurrentlyRunning: boolean = this.isCommitExecuting(info.commitURL, delivId);
 
                 let shouldPost = false; // should the result be given
                 if (isStaff === true) {
@@ -157,21 +157,21 @@ export class AutoTest implements IAutoTest {
                     } else {
                         shouldPost = false;
                         const msg = "You must wait " + requestFeedbackDelay + " before requesting feedback.";
-                        this.github.postMarkdownToGithub({url: info.commitUrl, message: msg});
+                        this.github.postMarkdownToGithub({url: info.commitURL, message: msg});
                     }
                 }
 
                 if (res !== null) {
                     // execution complete
-                    const hasBeenRequestedBefore = this.dataStore.getFeedbackGivenRecordForCommit(info.commitUrl, info.userName); // students often request grades they have previously 'paid' for
+                    const hasBeenRequestedBefore = this.dataStore.getFeedbackGivenRecordForCommit(info.commitURL, info.userName); // students often request grades they have previously 'paid' for
                     if (hasBeenRequestedBefore !== null) {
                         // just give it to them again, don't charge for event
                         shouldPost = true;
                     }
 
                     if (shouldPost === true) {
-                        this.github.postMarkdownToGithub({url: info.commitUrl, message: res.output.feedback});
-                        this.saveFeedbackGiven(this.courseId, delivId, info.userName, res.input.pushInfo.timestamp, info.commitUrl);
+                        this.github.postMarkdownToGithub({url: info.commitURL, message: res.output.feedback});
+                        this.saveFeedbackGiven(this.courseId, delivId, info.userName, res.input.pushInfo.timestamp, info.commitURL);
                         this.saveCommentInfo(info); // user or TA; only for analytics since feedback has been given
                     }
 
@@ -181,18 +181,18 @@ export class AutoTest implements IAutoTest {
                         // user has request quota available
                         let msg = "This commit is still queued for processing against " + delivId + ".";
                         msg += " Your results will be posted here as soon as they are ready.";
-                        this.github.postMarkdownToGithub({url: info.commitUrl, message: msg});
+                        this.github.postMarkdownToGithub({url: info.commitURL, message: msg});
                         this.saveCommentInfo(info); // whether TA or staff
                     }
 
                     if (isCurrentlyRunning === true) {
                         // do nothing, will be handled later when the commit finishes processing
                     } else {
-                        if (this.expressQueue.length() > this.standardQueue.indexOf(info.commitUrl)) {
+                        if (this.expressQueue.length() > this.standardQueue.indexOf(info.commitURL)) {
                             // faster to just leave it on the standard queue
                         } else {
                             // promote to the express queue
-                            const input = this.standardQueue.remove(info.commitUrl);
+                            const input = this.standardQueue.remove(info.commitURL);
                             this.expressQueue.push(input);
                         }
                     }
@@ -218,27 +218,27 @@ export class AutoTest implements IAutoTest {
         try {
             this.dataStore.saveOutputRecord(data);
 
-            const requestorUsername = this.getRequestor(data.commitUrl);
+            const requestorUsername = this.getRequestor(data.commitURL);
             if (data.output.postbackOnComplete === true) {
                 // do this first, doesn't count against quota
-                this.github.postMarkdownToGithub({url: data.commitUrl, message: data.output.feedback});
+                this.github.postMarkdownToGithub({url: data.commitURL, message: data.output.feedback});
                 // NOTE: if the feedback was requested for this build it shouldn't count
                 // since we're not calling saveFeedabck this is right
                 // but if we replay the commit comments, we would see it there, so be careful
             } else if (requestorUsername !== null) {
                 // feedback has been previously requested
-                this.github.postMarkdownToGithub({url: data.commitUrl, message: data.output.feedback});
-                this.saveFeedbackGiven(data.input.courseId, data.input.delivId, requestorUsername, data.input.pushInfo.timestamp, data.commitUrl);
+                this.github.postMarkdownToGithub({url: data.commitURL, message: data.output.feedback});
+                this.saveFeedbackGiven(data.input.courseId, data.input.delivId, requestorUsername, data.input.pushInfo.timestamp, data.commitURL);
             } else {
                 // do nothing
-                Log.info("AutoTest::handleExecutionComplete(..) - course: " + this.courseId + "; commit not requested - no feedback given. url: " + data.commitUrl);
+                Log.info("AutoTest::handleExecutionComplete(..) - course: " + this.courseId + "; commit not requested - no feedback given. url: " + data.commitURL);
             }
 
             // when done clear the execution slot and schedule the next
-            if (data.commitUrl === this.expresssExecution.pushInfo.commitUrl) {
+            if (data.commitURL === this.expresssExecution.pushInfo.commitURL) {
                 this.expresssExecution = null;
             }
-            if (data.commitUrl === this.standardExecution.pushInfo.commitUrl) {
+            if (data.commitURL === this.standardExecution.pushInfo.commitURL) {
                 this.standardExecution = null;
             }
             this.tick();
@@ -273,7 +273,7 @@ export class AutoTest implements IAutoTest {
      * @param {IContainerInput} info
      */
     private savePushInfo(info: IContainerInput) {
-        Log.trace("AutoTest::savePushInfo(..) - commit: " + info.pushInfo.commitUrl);
+        Log.trace("AutoTest::savePushInfo(..) - commit: " + info.pushInfo.commitURL);
         this.dataStore.savePush(info);
     }
 
@@ -283,7 +283,7 @@ export class AutoTest implements IAutoTest {
      * @param {ICommentEvent} info
      */
     private saveCommentInfo(info: ICommentEvent) {
-        Log.trace("AutoTest::saveCommentInfo(..) - commit: " + info.commitUrl);
+        Log.trace("AutoTest::saveCommentInfo(..) - commit: " + info.commitURL);
         this.dataStore.saveComment(info);
     }
 
@@ -295,7 +295,7 @@ export class AutoTest implements IAutoTest {
      */
     private invokeContainer(input: IContainerInput) {
         try {
-            Log.info("AutoTest::invokeContainer(..) - commit: " + input.pushInfo.commitUrl);
+            Log.info("AutoTest::invokeContainer(..) - commit: " + input.pushInfo.commitURL);
 
             // execute with docker
             const finalInfo: ICommitRecord = null; // TODO: call docker etc.
@@ -305,7 +305,7 @@ export class AutoTest implements IAutoTest {
             if (finalInfo !== null) {
                 this.handleExecutionComplete(finalInfo);
             } else {
-                Log.info("AutoTest::invokeContainer(..) - commit: " + input.pushInfo.commitUrl + "; null final info");
+                Log.info("AutoTest::invokeContainer(..) - commit: " + input.pushInfo.commitURL + "; null final info");
             }
 
         } catch (err) {
@@ -316,18 +316,18 @@ export class AutoTest implements IAutoTest {
     /**
      * Gets the current deliverable id
      *
-     * @param commitUrl
+     * @param commitURL
      */
-    private getDelivId(commitUrl: string): string | null {
-        let str = this.classPortal.getDefaultDeliverableId(commitUrl);
+    private getDelivId(commitURL: string): string | null {
+        let str = this.classPortal.getDefaultDeliverableId(commitURL);
         if (typeof str === "undefined") {
             str = null;
         }
         return str;
     }
 
-    private getOutputRecord(commitUrl: string): ICommitRecord | null {
-        return this.dataStore.getOutputRecord(commitUrl);
+    private getOutputRecord(commitURL: string): ICommitRecord | null {
+        return this.dataStore.getOutputRecord(commitURL);
     }
 
     /**
@@ -337,11 +337,11 @@ export class AutoTest implements IAutoTest {
      * @param delivId
      * @param userName
      * @param timestamp
-     * @param commitUrl
+     * @param commitURL
      */
-    private saveFeedbackGiven(courseId: string, delivId: string, userName: string, timestamp: number, commitUrl: string): void {
+    private saveFeedbackGiven(courseId: string, delivId: string, userName: string, timestamp: number, commitURL: string): void {
         const record: IFeedbackGiven = {
-            commitUrl,
+            commitURL,
             courseId,
             delivId,
             timestamp,
@@ -351,12 +351,12 @@ export class AutoTest implements IAutoTest {
     }
 
     /**
-     * Return the username that requested the result for the given commitUrl (or null)
+     * Return the username that requested the result for the given commitURL (or null)
      *
-     * @param commitUrl
+     * @param commitURL
      */
-    private getRequestor(commitUrl: string): string | null {
-        const record: ICommentEvent = this.dataStore.getCommentRecord(commitUrl);
+    private getRequestor(commitURL: string): string | null {
+        const record: ICommentEvent = this.dataStore.getCommentRecord(commitURL);
         if (record !== null) {
             return record.userName;
         }
@@ -364,19 +364,19 @@ export class AutoTest implements IAutoTest {
     }
 
     /**
-     * Returns whether the commitUrl is currently executing the given deliverable.
+     * Returns whether the commitURL is currently executing the given deliverable.
      *
-     * @param commitUrl
+     * @param commitURL
      * @param delivId
      */
-    private isCommitExecuting(commitUrl: string, delivId: string): boolean {
+    private isCommitExecuting(commitURL: string, delivId: string): boolean {
         if (this.standardExecution !== null) {
-            if (this.standardExecution.pushInfo.commitUrl === commitUrl && this.standardExecution.delivId === delivId) {
+            if (this.standardExecution.pushInfo.commitURL === commitURL && this.standardExecution.delivId === delivId) {
                 return true;
             }
         }
         if (this.expresssExecution !== null) {
-            if (this.expresssExecution.pushInfo.commitUrl === commitUrl && this.expresssExecution.delivId === delivId) {
+            if (this.expresssExecution.pushInfo.commitURL === commitURL && this.expresssExecution.delivId === delivId) {
                 return true;
             }
         }

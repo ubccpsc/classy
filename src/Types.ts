@@ -2,38 +2,41 @@
 // Types needed from the Container's POV
 //
 export interface IPushEvent {
-    branch: string;
-    repo: string;
-    commit: string; // duplicated in the commitUrl but handy for using as a index w/ fewer special chars
-    commitUrl: string;
-    org: string;
-    projectUrl: string;
-    timestamp: number;
+    branch: string; // really refs
+    repo: string; // repo name
+    commitSHA: string; // SHA
+    commitURL: string; // full url to commit
+    org: string; // orgName
+    projectURL: string; // full url to project
+    timestamp: number; // timestamp of push event
 }
 
 export interface ICommentEvent {
-    // branch: string;
-    botMentioned: boolean;
-    repo: string;
-    commit: string;
-    commitUrl: string;
-    projectUrl: string;
+    botMentioned: boolean; // was the bot mentioned (e.g., can ignore comments that don't mention the bot)
+    // repo: string;
+    commitSHA: string;
+    commitURL: string;
+    // projectUrl: string;
     userName: string;
     courseId: string | null; // string once known
     delivId: string | null; // string if specified
-    timestamp: number;
+    timestamp: number; // timestamp of the latest comment update (safer than comment creation)
 }
 
+/**
+ * Feedback key can be considered 'userName : courseId : delivId'
+ */
 export interface IFeedbackGiven {
     userName: string;
     courseId: string;
     delivId: string;
     timestamp: number;
-    commitUrl: string; // for information only
+    commitURL: string; // for information only
 }
 
 export interface ICommitRecord { // refactor ICommitRecord
-    commitUrl: string;
+    commitURL: string;
+    commitSHA: string;
     user: IUserInfo;
     input: IContainerInput;
     output: IContainerOutput;

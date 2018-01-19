@@ -59,7 +59,7 @@ export class DummyDataStore implements IDataStore {
 
     public getCommentRecord(commitUrl: string) {
         for (const record of this.comments) {
-            if (record !== null && typeof record.commitUrl !== "undefined" && record.commitUrl === commitUrl) {
+            if (record !== null && typeof record.commitURL !== "undefined" && record.commitURL === commitUrl) {
                 return record;
             }
         }
@@ -73,7 +73,7 @@ export class DummyDataStore implements IDataStore {
 
     public getOutputRecord(commitUrl: string) {
         for (const record of this.outputRecords) {
-            if (record !== null && typeof record.commitUrl !== "undefined" && record.commitUrl === commitUrl) {
+            if (record !== null && typeof record.commitURL !== "undefined" && record.commitURL === commitUrl) {
                 return record;
             }
         }
@@ -102,7 +102,7 @@ export class DummyDataStore implements IDataStore {
 
     public getFeedbackGivenRecordForCommit(commitUrl: string, userName: string): IFeedbackGiven | null {
         for (const feedback of this.requests) {
-            if (feedback !== null && feedback.commitUrl === commitUrl && feedback.userName === userName) {
+            if (feedback !== null && feedback.commitURL === commitUrl && feedback.userName === userName) {
                 return feedback;
             }
         }

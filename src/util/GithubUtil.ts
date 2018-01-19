@@ -39,9 +39,9 @@ export class GithubUtil {
      * @returns {ICommentEvent}
      */
     public static processComment(payload: any): ICommentEvent {
-        const commitId = payload.comment.commit_id;
-        let commitUrl = payload.comment.html_url;  // this is the comment Url
-        commitUrl = commitUrl.substr(0, commitUrl.lastIndexOf("#")); // strip off the comment reference
+        const commitSHA = payload.comment.commit_id;
+        let commitURL = payload.comment.html_url;  // this is the comment Url
+        commitURL = commitURL.substr(0, commitURL.lastIndexOf("#")); // strip off the comment reference
         const projectUrl = payload.repository.html_url;
         const repoName = payload.repository.name;
         // that.deliverable = GithubUtil.parseDeliverable(payload.repository.name);
@@ -64,12 +64,9 @@ export class GithubUtil {
         const courseId: any = null; // not yet known
         // TODO: check all of these
         const commentEvent: ICommentEvent = {
-            // branch:     branch,
             botMentioned,
-            repo:     repoName,
-            commit:   commitId,
-            commitUrl,
-            projectUrl,
+            commitSHA,
+            commitURL,
             userName: requestor,
             courseId,
             delivId,
@@ -86,42 +83,35 @@ export class GithubUtil {
      * @returns {IPushEvent}
      */
     public static processPush(payload: any): IPushEvent {
-        // TODO: validate result properties; add an interface
-
-        const team = GithubUtil.getTeamOrProject(payload.repository.name);
+        // const team = GithubUtil.getTeamOrProject(payload.repository.name);
         const repo = payload.repository.name;
-        const projectUrl = payload.repository.html_url;
+        const projectURL = payload.repository.html_url;
         // head commit is sometimes null on new branches
-        const headCommitUrl = payload.head_commit === null ? payload.repository.html_url + "/tree/" + String(payload.ref).replace("refs/heads/", "") : payload.head_commit.url;
-        const commitUrl = headCommitUrl;
+        const headCommitURL = payload.head_commit === null ? payload.repository.html_url + "/tree/" + String(payload.ref).replace("refs/heads/", "") : payload.head_commit.url;
+        const commitURL = headCommitURL;
 
         const branch = payload.ref;
-        let commit = "";
+        let commitSHA = "";
         if (typeof payload.commits !== "undefined" && payload.commits.length > 0) {
-            commit = payload.commits[0].id;
+            commitSHA = payload.commits[0].id;
         } else {
             // use this one when creating a new branch (may not have any commits)
-            commit = payload.head_commit.id;
+            commitSHA = payload.head_commit.id;
         }
 
         const user = String(payload.pusher.name).toLowerCase();
-        // const deliverable = GithubUtil.parseDeliverable(payload.repository.name);
-        // const commit = new Commit(payload.after);
         const githubOrg = payload.repository.owner.name;
         // const commentHook = Url.parse(payload.repository.commits_url.replace("{/sha}", "/" + this._commit) + "/comments");
-        const ref = payload.ref;
         const timestamp = payload.repository.pushed_at * 1000;
-
         const org = payload.repository.organization;
 
-        // const controller: PushController = new PushController(currentCourseNum);
         const pushEvent: IPushEvent = {
             branch,
             repo,
-            commit,
-            commitUrl,
+            commitSHA,
+            commitURL,
             org,
-            projectUrl,
+            projectURL,
             timestamp
         };
         return pushEvent;
