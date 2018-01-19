@@ -14,15 +14,22 @@ export class GithubUtil {
     public static parseDeliverable(fullRepoName: string): string | null {
         const deliverable = fullRepoName.match(/^[^_]+(?=_)/);
         if (deliverable) {
-            const val = deliverable.pop();
+            let val = deliverable.pop();
+            val = val.replace("#", ""); // not working
             Log.trace("GithubUtil::parseDeliverable() - input: " + fullRepoName + "; output: " + val);
+
             return val;
         }
         return null;
     }
 
     public static parseDeliverableFromComment(message: any): string | null {
-        // if a deliverable is specified, say it here
+        const matches = message.match("\\S*d\\d+\\S*");
+        if (matches) {
+            const deliv = matches.pop();
+            Log.trace("GithubUtil::parseDeliverableFromComment() - input: " + message + "; output: " + deliv);
+            return deliv;
+        }
         return null;
     }
 
@@ -36,10 +43,10 @@ export class GithubUtil {
         const commitId = payload.comment.commit_id;
         let commitUrl = payload.comment.html_url;  // this is the comment Url
         commitUrl = commitUrl.substr(0, commitUrl.lastIndexOf("#")); // strip off the comment reference
-        const projectUrl = payload.html_url;
+        const projectUrl = payload.repository.html_url;
         const repoName = payload.repository.name;
         // that.deliverable = GithubUtil.parseDeliverable(payload.repository.name);
-        team = GithubUtil.getTeamOrProject(repoName);
+        const team = GithubUtil.getTeamOrProject(repoName);
         const requestor = String(payload.comment.user.login).toLowerCase();
         // that.user = String(payload.comment.user.login).toLowerCase();
         const orgName = payload.organization.login;
@@ -51,18 +58,23 @@ export class GithubUtil {
 
         // that.isRequest = payload.comment.body.toLowerCase().includes(this.config.getMentionTag());
         // that.isProcessed = true;
+        const botMentioned: boolean = message.indexOf("@autobot") >= 0; // should not be hardcoded
 
+        const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can't add requests to a past comment
+
+        const courseId: any = null; // not yet known
         // TODO: check all of these
         const commentEvent: ICommentEvent = {
             // branch:     branch,
-            repo:      repoName,
-            commit:    commitId,
+            botMentioned,
+            repo:     repoName,
+            commit:   commitId,
             commitUrl,
             projectUrl,
-            userName:  requestor,
-            courseId:  null, // not yet known
+            userName: requestor,
+            courseId,
             delivId,
-            timestamp: new Date().getTime() // just create this based on the current time
+            timestamp
         };
 
         return commentEvent;
@@ -84,10 +96,14 @@ export class GithubUtil {
         const headCommitUrl = payload.head_commit === null ? payload.repository.html_url + "/tree/" + String(payload.ref).replace("refs/heads/", "") : payload.head_commit.url;
         const commitUrl = headCommitUrl;
 
+        const branch = payload.ref;
         let commit = "";
         if (typeof payload.commits !== "undefined" && payload.commits.length > 0) {
             commit = payload.commits[0].id;
-        } // is this right?
+        } else {
+            // use this one when creating a new branch (may not have any commits)
+            commit = payload.head_commit.id;
+        }
 
         const user = String(payload.pusher.name).toLowerCase();
         // const deliverable = GithubUtil.parseDeliverable(payload.repository.name);
@@ -97,12 +113,15 @@ export class GithubUtil {
         const ref = payload.ref;
         const timestamp = payload.repository.pushed_at * 1000;
 
+        const org = payload.repository.organization;
+
         // const controller: PushController = new PushController(currentCourseNum);
         const pushEvent: IPushEvent = {
-            branch: "TBDTBD",
+            branch,
             repo,
             commit,
             commitUrl,
+            org,
             projectUrl,
             timestamp
         };

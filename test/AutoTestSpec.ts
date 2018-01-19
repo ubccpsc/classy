@@ -69,14 +69,15 @@ describe("AutoTest", () => {
         const pe: IPushEvent = pushes[0];
         const ce: ICommentEvent = {
             // branch:     pe.branch,
-            repo:       pe.repo,
-            commit:     pe.commit,
-            commitUrl:  pe.commitUrl,
-            projectUrl: pe.projectUrl,
-            userName:   "myUser",
-            courseId:   "cs310",
-            delivId:    "d0",
-            timestamp:  1234567891
+            botMentioned: false,
+            repo:         pe.repo,
+            commit:       pe.commit,
+            commitUrl:    pe.commitUrl,
+            projectUrl:   pe.projectUrl,
+            userName:     "myUser",
+            courseId:     "cs310",
+            delivId:      "d0",
+            timestamp:    1234567891
         };
 
         // chai.spy.on(gh, "postMarkdownToGithub"); // installing spies caused dependency issues

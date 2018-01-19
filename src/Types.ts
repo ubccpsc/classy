@@ -6,12 +6,14 @@ export interface IPushEvent {
     repo: string;
     commit: string; // duplicated in the commitUrl but handy for using as a index w/ fewer special chars
     commitUrl: string;
+    org: string;
     projectUrl: string;
     timestamp: number;
 }
 
 export interface ICommentEvent {
     // branch: string;
+    botMentioned: boolean;
     repo: string;
     commit: string;
     commitUrl: string;
