@@ -14,10 +14,8 @@ export class GithubUtil {
     public static parseDeliverable(fullRepoName: string): string | null {
         const deliverable = fullRepoName.match(/^[^_]+(?=_)/);
         if (deliverable) {
-            let val = deliverable.pop();
-            val = val.replace("#", ""); // not working
+            const val = deliverable.pop();
             Log.trace("GithubUtil::parseDeliverable() - input: " + fullRepoName + "; output: " + val);
-
             return val;
         }
         return null;
@@ -26,7 +24,8 @@ export class GithubUtil {
     public static parseDeliverableFromComment(message: any): string | null {
         const matches = message.match("\\S*d\\d+\\S*");
         if (matches) {
-            const deliv = matches.pop();
+            let deliv = matches.pop();
+            deliv = deliv.replace(/[^a-z0-9]/gi, ""); // replace all non-alphanumeric with empty string
             Log.trace("GithubUtil::parseDeliverableFromComment() - input: " + message + "; output: " + deliv);
             return deliv;
         }
