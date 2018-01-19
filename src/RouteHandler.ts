@@ -71,8 +71,8 @@ export default class RouteHandler {
         const githubEvent: string = req.header("X-GitHub-Event");
         const body = req.body;
         let team: string = "";
-        const serverPort = this.parseServerPort(req);
-        const currentCourseNum = this.parseCourseNum(serverPort);
+        const serverPort = RouteHandler.parseServerPort(req);
+        const currentCourseNum = RouteHandler.parseCourseNum(serverPort);
 
         try {
             const name: string = body.repository.name;
