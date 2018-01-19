@@ -5,6 +5,7 @@ import Log from "../util/Log";
 import {IClassPortal} from "./ClassPortal";
 import {IDataStore} from "./DataStore";
 import {IGithubService} from "./GithubService";
+import {Config} from "../Config";
 
 export interface IAutoTest {
     /**
@@ -121,9 +122,9 @@ export class AutoTest implements IAutoTest {
 
                 // NOTE: need to think a bit harder about which comment events should be saved and which should be dropped
 
-                if (info.userName === "autobot") {
+                if (info.userName === Config.getInstance().getProp("botName")) {
                     Log.info("AutoTest::handleCommentEvent(..) - ignored, comment made by AutoBot");
-                    resolve(true);
+                    return resolve(true);
                 }
 
                 // update info record
@@ -138,7 +139,7 @@ export class AutoTest implements IAutoTest {
                     // no deliverable, give warning and abort
                     const msg = "There is no current default deliverable; results will not be posted.";
                     this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
-                    resolve(true);
+                    return resolve(true);
                 }
 
                 // front load the async operations, even if it means we do some operations unnecessairly
