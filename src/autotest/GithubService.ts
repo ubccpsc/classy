@@ -1,5 +1,5 @@
 import * as https from "https";
-import Log from "../Log";
+import Log from "../util/Log";
 
 export interface IGithubMessage {
     /**

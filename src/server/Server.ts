@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import * as restify from "restify";
 // import {AppConfig, IConfig} from "../Config";
-import Log from "./Log";
+import Log from "../util/Log";
 
 import RouteHandler from "./RouteHandler";
 

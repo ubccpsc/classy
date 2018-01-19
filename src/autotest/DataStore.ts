@@ -1,4 +1,4 @@
-import Log from "../Log";
+import Log from "../util/Log";
 import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven} from "../Types";
 
 export interface IDataStore {

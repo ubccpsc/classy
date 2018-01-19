@@ -2,8 +2,8 @@
  * Created by rtholmes on 2016-06-19.
  */
 
-import Log from "./Log";
-import Server from './Server';
+import Log from "./util/Log";
+import Server from './server/Server';
 // import {IConfig, AppConfig} from './Config';
 // import MongoDB from './db/MongoDB';
 

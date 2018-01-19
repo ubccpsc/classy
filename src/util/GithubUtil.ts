@@ -1,4 +1,4 @@
-import Log from "../Log";
+import Log from "./Log";
 import {ICommentEvent, IPushEvent} from "../Types";
 
 export class GithubUtil {

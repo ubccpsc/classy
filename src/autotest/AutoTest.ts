@@ -1,7 +1,7 @@
 import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven, IPushEvent} from "../Types";
 import {Queue} from "./Queue";
 
-import Log from "../Log";
+import Log from "../util/Log";
 import {IClassPortal} from "./ClassPortal";
 import {IDataStore} from "./DataStore";
 import {IGithubService} from "./GithubService";
