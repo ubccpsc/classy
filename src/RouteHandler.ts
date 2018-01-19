@@ -98,7 +98,13 @@ export default class RouteHandler {
                     const payload: any = body; // JSON.parse(JSON.stringify(body));
                     Log.info("RouteHandler::handleCommentEvent() - payload: " + JSON.stringify(payload, null, 2));
 
-                    const commentEvent = GithubUtil.processComment(payload);
+                    let commentEvent;
+                    try {
+                        commentEvent = GithubUtil.processComment(payload);
+                    } catch (err) {
+                        Log.error("RouteHandler::handleCommentEvent() - ERROR parsing payload; err: " + err.message + "; payload: " + JSON.stringify(payload, null, 2));
+                        throw new Error("Failed to parse comment event payload");
+                    }
 
                     Log.info("RouteHandler::handleCommentEvent() - request: " + JSON.stringify(commentEvent, null, 2));
                     RouteHandler.getAutoTest().handleCommentEvent(commentEvent).then((result: boolean) => { // TODO: validate result properties; add an interface
@@ -117,9 +123,14 @@ export default class RouteHandler {
             case "push":
                 try {
                     const payload = body;
-                    Log.info("RouteHandler::handlePushEvent() - payload: " + JSON.stringify(payload, null, 2));
 
-                    const pushEvent = GithubUtil.processPush(payload);
+                    let pushEvent;
+                    try {
+                        pushEvent = GithubUtil.processPush(payload);
+                    } catch (err) {
+                        Log.error("RouteHandler::handlePushEvent() - ERROR parsing payload; err: " + err.message + "; payload: " + JSON.stringify(payload, null, 2));
+                        throw new Error("Failed to parse push event payload");
+                    }
 
                     Log.info("RouteHandler::handlePushEvent() - request: " + JSON.stringify(pushEvent, null, 2));
                     RouteHandler.getAutoTest().handlePushEvent(pushEvent).then((result: boolean) => {
