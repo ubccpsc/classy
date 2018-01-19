@@ -1,5 +1,5 @@
-import Log from "./Log";
 import {ICommentEvent, IPushEvent} from "../Types";
+import Log from "./Log";
 
 export class GithubUtil {
 
@@ -42,6 +42,9 @@ export class GithubUtil {
         const commitSHA = payload.comment.commit_id;
         let commitURL = payload.comment.html_url;  // this is the comment Url
         commitURL = commitURL.substr(0, commitURL.lastIndexOf("#")); // strip off the comment reference
+
+        const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
+
         const projectUrl = payload.repository.html_url;
         const repoName = payload.repository.name;
         // that.deliverable = GithubUtil.parseDeliverable(payload.repository.name);
@@ -67,6 +70,7 @@ export class GithubUtil {
             botMentioned,
             commitSHA,
             commitURL,
+            postbackURL,
             userName: requestor,
             courseId,
             delivId,
@@ -99,6 +103,8 @@ export class GithubUtil {
             commitSHA = payload.head_commit.id;
         }
 
+        const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
+
         const user = String(payload.pusher.name).toLowerCase();
         const githubOrg = payload.repository.owner.name;
         // const commentHook = Url.parse(payload.repository.commits_url.replace("{/sha}", "/" + this._commit) + "/comments");
@@ -112,6 +118,7 @@ export class GithubUtil {
             commitURL,
             org,
             projectURL,
+            postbackURL,
             timestamp
         };
         return pushEvent;

@@ -8,6 +8,7 @@ export interface IPushEvent {
     commitURL: string; // full url to commit
     org: string; // orgName
     projectURL: string; // full url to project
+    postbackURL: string; // where to send postback results
     timestamp: number; // timestamp of push event
 }
 
@@ -20,6 +21,7 @@ export interface ICommentEvent {
     userName: string;
     courseId: string | null; // string once known
     delivId: string | null; // string if specified
+    postbackURL: string; // where to send postback results
     timestamp: number; // timestamp of the latest comment update (safer than comment creation)
 }
 

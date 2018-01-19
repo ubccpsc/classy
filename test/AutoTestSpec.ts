@@ -77,6 +77,7 @@ describe("AutoTest", () => {
             userName:     "myUser",
             courseId:     "cs310",
             delivId:      "d0",
+            postbackURL:  "postbackUrl!",
             timestamp:    1234567891
         };
 

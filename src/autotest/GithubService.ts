@@ -1,4 +1,3 @@
-import * as https from "https";
 import Log from "../util/Log";
 
 export interface IGithubMessage {
@@ -31,6 +30,7 @@ export class DummyGithubService implements IGithubService {
         Log.info("AutoTestHandler::postMarkdownToGithub(..) - Posting markdown to url: " + message.url + "; message: " + message.message);
         // this.githubMessages.push({commitUrl: commitUrl, feedback: feedback});
         this.messages.push(message);
+
 
         // let hookUrl = url.parse(hook);
         /*
