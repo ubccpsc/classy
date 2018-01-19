@@ -95,6 +95,8 @@ export default class RouteHandler {
                     // const controller: CommitCommentController = new CommitCommentController(currentCourseNum);
                     // use body
                     const payload: any = body; // JSON.parse(JSON.stringify(body));
+                    Log.info("RouteHandler::handleCommentEvent() - payload: " + JSON.stringify(payload, null, 2));
+
                     const commitId = payload.comment.commit_id;
                     let commitUrl = payload.comment.html_url;  // this is the comment Url
                     commitUrl = commitUrl.substr(0, commitUrl.lastIndexOf("#")); // strip off the comment reference
@@ -127,7 +129,6 @@ export default class RouteHandler {
                         timestamp: new Date().getTime() // just create this based on the current time
                     };
 
-                    Log.info("RouteHandler::handleCommentEvent() - payload: " + JSON.stringify(payload, null, 2));
                     Log.info("RouteHandler::handleCommentEvent() - request: " + JSON.stringify(commentEvent, null, 2));
                     RouteHandler.getAutoTest().handleCommentEvent(commentEvent).then((result: boolean) => { // TODO: validate result properties; add an interface
                         Log.info("RouteHandler::commitComment() - success; result: " + result);
@@ -144,16 +145,23 @@ export default class RouteHandler {
 
             case "push":
                 try {
+                    const payload = body;
+                    Log.info("RouteHandler::handlePushEvent() - payload: " + JSON.stringify(payload, null, 2));
 
                     // TODO: validate result properties; add an interface
-                    const payload = body;
+
                     team = GithubUtil.getTeamOrProject(payload.repository.name);
                     const repo = payload.repository.name;
                     const projectUrl = payload.repository.html_url;
                     // head commit is sometimes null on new branches
                     const headCommitUrl = payload.head_commit === null ? payload.repository.html_url + "/tree/" + String(payload.ref).replace("refs/heads/", "") : payload.head_commit.url;
                     const commitUrl = headCommitUrl;
-                    const commit = payload.commits[0].id; // is this right?
+
+                    let commit = "";
+                    if (typeof payload.commits !== "undefined" && payload.commits.length > 0) {
+                        commit = payload.commits[0].id;
+                    } // is this right?
+                    
                     const user = String(payload.pusher.name).toLowerCase();
                     // const deliverable = GithubUtil.parseDeliverable(payload.repository.name);
                     // const commit = new Commit(payload.after);
@@ -171,7 +179,7 @@ export default class RouteHandler {
                         projectUrl,
                         timestamp
                     };
-                    Log.info("RouteHandler::handlePushEvent() - payload: " + JSON.stringify(payload, null, 2));
+
                     Log.info("RouteHandler::handlePushEvent() - request: " + JSON.stringify(pushEvent, null, 2));
                     RouteHandler.getAutoTest().handlePushEvent(pushEvent).then((result: boolean) => {
                         Log.info("RouteHandler::handlePushEvent() - result: " + result);
