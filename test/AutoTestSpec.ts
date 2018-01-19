@@ -37,12 +37,12 @@ describe("AutoTest", () => {
         });
     });
 
-    it("should be able to be instantiated", () => {
+    it("Should be able to be instantiated.", () => {
         expect(at).not.to.equal(null);
         expect(pushes.length).to.equal(9);
     });
 
-    it("should receive a push event", () => {
+    it("Should receive a push event.", () => {
         expect(at).not.to.equal(null);
 
         const pe: IPushEvent = pushes[0];
@@ -57,13 +57,13 @@ describe("AutoTest", () => {
         expect(data.pushes.length).to.equal(6);
     });
 
-    it("should be able to tick and pull something off the queue", () => {
+    it("Should be able to tick and pull something off the queue.", () => {
         expect(data.pushes.length).to.equal(6);
         at.tick();
         expect(data.pushes.length).to.equal(6); // pushes record should be the same size
     });
 
-    it("should receive a comment event", () => {
+    it("Should receive a comment event.", () => {
         expect(at).not.to.equal(null);
 
         const pe: IPushEvent = pushes[0];
