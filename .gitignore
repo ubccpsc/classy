@@ -13,3 +13,4 @@ test/*.map
 .DS_Store
 .env
 bin
+config.priv.json

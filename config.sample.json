@@ -1,0 +1,12 @@
+{
+    "courses": [
+        {
+            "num": 310,
+            "name": "cs310",
+            "org": "CPSC310-2017W-T2",
+            "adminUser": "cs310"
+        }
+    ],
+    "botName": "autobot",
+    "githubToken": "XXX"
+}

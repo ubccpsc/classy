@@ -137,7 +137,7 @@ export class AutoTest implements IAutoTest {
                 if (delivId === null) {
                     // no deliverable, give warning and abort
                     const msg = "There is no current default deliverable; results will not be posted.";
-                    this.github.postMarkdownToGithub({url: info.commitURL, message: msg});
+                    this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
                     resolve(true);
                 }
 
@@ -157,7 +157,7 @@ export class AutoTest implements IAutoTest {
                     } else {
                         shouldPost = false;
                         const msg = "You must wait " + requestFeedbackDelay + " before requesting feedback.";
-                        this.github.postMarkdownToGithub({url: info.commitURL, message: msg});
+                        this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
                     }
                 }
 
@@ -170,7 +170,7 @@ export class AutoTest implements IAutoTest {
                     }
 
                     if (shouldPost === true) {
-                        this.github.postMarkdownToGithub({url: info.commitURL, message: res.output.feedback});
+                        this.github.postMarkdownToGithub({url: info.postbackURL, message: res.output.feedback});
                         this.saveFeedbackGiven(this.courseId, delivId, info.userName, res.input.pushInfo.timestamp, info.commitURL);
                         this.saveCommentInfo(info); // user or TA; only for analytics since feedback has been given
                     }
@@ -181,7 +181,7 @@ export class AutoTest implements IAutoTest {
                         // user has request quota available
                         let msg = "This commit is still queued for processing against " + delivId + ".";
                         msg += " Your results will be posted here as soon as they are ready.";
-                        this.github.postMarkdownToGithub({url: info.commitURL, message: msg});
+                        this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
                         this.saveCommentInfo(info); // whether TA or staff
                     }
 
@@ -221,13 +221,13 @@ export class AutoTest implements IAutoTest {
             const requestorUsername = this.getRequestor(data.commitURL);
             if (data.output.postbackOnComplete === true) {
                 // do this first, doesn't count against quota
-                this.github.postMarkdownToGithub({url: data.commitURL, message: data.output.feedback});
+                this.github.postMarkdownToGithub({url: data.input.pushInfo.postbackURL, message: data.output.feedback});
                 // NOTE: if the feedback was requested for this build it shouldn't count
                 // since we're not calling saveFeedabck this is right
                 // but if we replay the commit comments, we would see it there, so be careful
             } else if (requestorUsername !== null) {
                 // feedback has been previously requested
-                this.github.postMarkdownToGithub({url: data.commitURL, message: data.output.feedback});
+                this.github.postMarkdownToGithub({url: data.input.pushInfo.postbackURL, message: data.output.feedback});
                 this.saveFeedbackGiven(data.input.courseId, data.input.delivId, requestorUsername, data.input.pushInfo.timestamp, data.commitURL);
             } else {
                 // do nothing

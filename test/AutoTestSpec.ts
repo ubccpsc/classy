@@ -69,16 +69,16 @@ describe("AutoTest", () => {
         const pe: IPushEvent = pushes[0];
         const ce: ICommentEvent = {
             // branch:     pe.branch,
-            botMentioned: false,
+            botMentioned:  false,
             // repo:         pe.repo,
-            commitSHA:    pe.commitSHA,
-            commitURL:    pe.commitURL,
+            commitSHA:     pe.commitSHA,
+            commitURL:     pe.commitURL,
             // projectUrl:   pe.projectUrl,
-            userName:     "myUser",
-            courseId:     "cs310",
-            delivId:      "d0",
-            postbackURL:  "postbackUrl!",
-            timestamp:    1234567891
+            userName:      "myUser",
+            courseId:      "cs310",
+            delivId:       "d0",
+            "postbackURL": "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
+            timestamp:     1234567891
         };
 
         // chai.spy.on(gh, "postMarkdownToGithub"); // installing spies caused dependency issues
