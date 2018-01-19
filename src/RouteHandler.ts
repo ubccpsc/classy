@@ -70,23 +70,24 @@ export default class RouteHandler {
         Log.info("RoutHandler::postGithubHook(..) - start");
         const githubEvent: string = req.header("X-GitHub-Event");
         const body = req.body;
-        let team: string = "";
+        // let team: string = "";
         const serverPort = RouteHandler.parseServerPort(req);
         const currentCourseNum = RouteHandler.parseCourseNum(serverPort);
 
         try {
-            const name: string = body.repository.name;
-            team = name.substring(name.indexOf("_") + 1);
+            // const name: string = body.repository.name;
+            // team = name.substring(name.indexOf("_") + 1);
         } catch (err) {
             Log.error("RoutHandler::postGithubHook(..) - ERROR extracting repo name: " + err);
         }
-        Log.info("RouteHandler::postGithubHook() - <RVD> [" + team + "] X-GitHub-Event " + githubEvent + ".");
+        Log.info("RouteHandler::postGithubHook() - <RVD> X-GitHub-Event " + githubEvent + ".");
 
         // enumerate GitHub event
         switch (githubEvent) {
             case "ping":
-                // req;
-                Log.info("RouteHandler::postGithubHook() - <200> [" + team + "] pong.");
+                // github test packet
+
+                Log.info("RouteHandler::postGithubHook() - <200> pong.");
                 res.json(200, "pong");
                 break;
 
@@ -97,37 +98,7 @@ export default class RouteHandler {
                     const payload: any = body; // JSON.parse(JSON.stringify(body));
                     Log.info("RouteHandler::handleCommentEvent() - payload: " + JSON.stringify(payload, null, 2));
 
-                    const commitId = payload.comment.commit_id;
-                    let commitUrl = payload.comment.html_url;  // this is the comment Url
-                    commitUrl = commitUrl.substr(0, commitUrl.lastIndexOf("#")); // strip off the comment reference
-                    const projectUrl = payload.html_url;
-                    const repoName = payload.repository.name;
-                    // that.deliverable = GithubUtil.parseDeliverable(payload.repository.name);
-                    team = GithubUtil.getTeamOrProject(repoName);
-                    const requestor = String(payload.comment.user.login).toLowerCase();
-                    // that.user = String(payload.comment.user.login).toLowerCase();
-                    const orgName = payload.organization.login;
-                    // const commitCommentUrl = payload.comment.html_url;
-                    // that.repo = payload.repository.name;
-                    // const hook = Url.parse(payload.repository.commits_url.replace("{/sha}", "/" + this.commit) + "/comments");
-                    const message = payload.comment.body;
-                    const delivId = GithubUtil.parseDeliverableFromComment(message);
-
-                    // that.isRequest = payload.comment.body.toLowerCase().includes(this.config.getMentionTag());
-                    // that.isProcessed = true;
-
-                    // TODO: check all of these
-                    const commentEvent: ICommentEvent = {
-                        // branch:     branch,
-                        repo:      repoName,
-                        commit:    commitId,
-                        commitUrl,
-                        projectUrl,
-                        userName:  requestor,
-                        courseId:  null, // not yet known
-                        delivId,
-                        timestamp: new Date().getTime() // just create this based on the current time
-                    };
+                    const commentEvent = GithubUtil.processComment(payload);
 
                     Log.info("RouteHandler::handleCommentEvent() - request: " + JSON.stringify(commentEvent, null, 2));
                     RouteHandler.getAutoTest().handleCommentEvent(commentEvent).then((result: boolean) => { // TODO: validate result properties; add an interface
@@ -148,37 +119,7 @@ export default class RouteHandler {
                     const payload = body;
                     Log.info("RouteHandler::handlePushEvent() - payload: " + JSON.stringify(payload, null, 2));
 
-                    // TODO: validate result properties; add an interface
-
-                    team = GithubUtil.getTeamOrProject(payload.repository.name);
-                    const repo = payload.repository.name;
-                    const projectUrl = payload.repository.html_url;
-                    // head commit is sometimes null on new branches
-                    const headCommitUrl = payload.head_commit === null ? payload.repository.html_url + "/tree/" + String(payload.ref).replace("refs/heads/", "") : payload.head_commit.url;
-                    const commitUrl = headCommitUrl;
-
-                    let commit = "";
-                    if (typeof payload.commits !== "undefined" && payload.commits.length > 0) {
-                        commit = payload.commits[0].id;
-                    } // is this right?
-                    
-                    const user = String(payload.pusher.name).toLowerCase();
-                    // const deliverable = GithubUtil.parseDeliverable(payload.repository.name);
-                    // const commit = new Commit(payload.after);
-                    const githubOrg = payload.repository.owner.name;
-                    // const commentHook = Url.parse(payload.repository.commits_url.replace("{/sha}", "/" + this._commit) + "/comments");
-                    const ref = payload.ref;
-                    const timestamp = payload.repository.pushed_at * 1000;
-
-                    // const controller: PushController = new PushController(currentCourseNum);
-                    const pushEvent: IPushEvent = {
-                        branch: "TBDTBD",
-                        repo,
-                        commit,
-                        commitUrl,
-                        projectUrl,
-                        timestamp
-                    };
+                    const pushEvent = GithubUtil.processPush(payload);
 
                     Log.info("RouteHandler::handlePushEvent() - request: " + JSON.stringify(pushEvent, null, 2));
                     RouteHandler.getAutoTest().handlePushEvent(pushEvent).then((result: boolean) => {
@@ -194,7 +135,7 @@ export default class RouteHandler {
                 }
                 break;
             default:
-                Log.warn("RouteHandler::postGithubHook() - [" + team + "] Unhandled GitHub event: " + githubEvent);
+                Log.warn("RouteHandler::postGithubHook() - Unhandled GitHub event: " + githubEvent);
         }
         return next();
     }
