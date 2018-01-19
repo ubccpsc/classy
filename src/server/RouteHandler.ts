@@ -2,7 +2,7 @@ import * as restify from "restify";
 import {AutoTest} from "../autotest/AutoTest";
 import {DummyClassPortal} from "../autotest/ClassPortal";
 import {DummyDataStore} from "../autotest/DataStore";
-import {DummyGithubService} from "../autotest/GithubService";
+import {GithubService} from "../autotest/GithubService";
 // import CommitCommentController from "../controller/github/CommitCommentController";
 // import PushController from "../controller/github/PushController";
 // import ResultController from '../controller/ResultController';
@@ -26,7 +26,7 @@ export default class RouteHandler {
             // TODO: create these in server?
             const data = new DummyDataStore();
             const portal = new DummyClassPortal();
-            const gh = new DummyGithubService();
+            const gh = new GithubService();
             const courseId = "cs310";
 
             RouteHandler.autoTest = new AutoTest(courseId, data, portal, gh);

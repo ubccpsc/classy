@@ -21,19 +21,17 @@ export interface IGithubService {
      * @param commitUrl
      * @param feedback
      */
-    postMarkdownToGithub(message: IGithubMessage): void;
+    postMarkdownToGithub(message: IGithubMessage): Promise<boolean>;
 }
 
-export class DummyGithubService implements IGithubService {
+export class GithubService implements IGithubService {
 
+    // this array is only to make testing easier
     public messages: IGithubMessage[] = [];
 
-    public postMarkdownToGithub(message: IGithubMessage): Promise<number> {
-        return new Promise<number>((fulfill, reject) => {
-            Log.info("AutoTestHandler::postMarkdownToGithub(..) - Posting markdown to url: " + message.url + "; message: " + message.message);
-
-            // for debugging
-            this.messages.push(message);
+    public postMarkdownToGithub(message: IGithubMessage): Promise<boolean> {
+        return new Promise<boolean>((fulfill, reject) => {
+            Log.info("GithubService::postMarkdownToGithub(..) - Posting markdown to url: " + message.url + "; message: " + message.message);
 
             const noProtocolUrl = message.url.replace("https://", "");
             const host = noProtocolUrl.substr(0, noProtocolUrl.indexOf("/"));
@@ -55,12 +53,18 @@ export class DummyGithubService implements IGithubService {
             options.headers["Content-Length"] = Buffer.byteLength(body);
 
             const req = https.request(options, (res) => {
-                Log.trace("AutoTestHandler::postMarkdownToGithub(..) - success; status: " + res.statusCode);
-                fulfill(res.statusCode);
+                Log.trace("GithubService::postMarkdownToGithub(..) - success; status: " + res.statusCode);
+                if (res.statusCode < 300) {
+                    // for debugging; if it works, track it in this array
+                    this.messages.push(message);
+                    fulfill(true);
+                } else {
+                    reject(false);
+                }
             });
             req.on("error", (err) => {
-                Log.error("AutoTestHandler::postMarkdownToGithub(..) - ERROR: " + err);
-                reject(err);
+                Log.error("GithubService::postMarkdownToGithub(..) - failed; ERROR: " + err);
+                reject(false);
             });
             req.write(body);
             req.end();
