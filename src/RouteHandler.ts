@@ -127,7 +127,8 @@ export default class RouteHandler {
                         timestamp: new Date().getTime() // just create this based on the current time
                     };
 
-                    Log.info("RouteHandler::handleCommentEvent() - request: " + JSON.stringify(commentEvent));
+                    Log.info("RouteHandler::handleCommentEvent() - payload: " + JSON.stringify(payload, null, 2));
+                    Log.info("RouteHandler::handleCommentEvent() - request: " + JSON.stringify(commentEvent, null, 2));
                     RouteHandler.getAutoTest().handleCommentEvent(commentEvent).then((result: boolean) => { // TODO: validate result properties; add an interface
                         Log.info("RouteHandler::commitComment() - success; result: " + result);
                         res.json(200, {});
@@ -170,8 +171,8 @@ export default class RouteHandler {
                         projectUrl,
                         timestamp
                     };
-
-                    Log.info("RouteHandler::handlePushEvent() - request: " + JSON.stringify(pushEvent));
+                    Log.info("RouteHandler::handlePushEvent() - payload: " + JSON.stringify(payload, null, 2));
+                    Log.info("RouteHandler::handlePushEvent() - request: " + JSON.stringify(pushEvent, null, 2));
                     RouteHandler.getAutoTest().handlePushEvent(pushEvent).then((result: boolean) => {
                         Log.info("RouteHandler::handlePushEvent() - result: " + result);
                         res.json(202, {body: "Commit has been queued"});
