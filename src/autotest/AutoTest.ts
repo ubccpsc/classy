@@ -6,6 +6,7 @@ import {IClassPortal} from "./ClassPortal";
 import {IDataStore} from "./DataStore";
 import {IGithubService} from "./GithubService";
 import {Config} from "../Config";
+import {DockerInstance} from "./DockerInstance";
 
 export interface IAutoTest {
     /**
@@ -61,7 +62,6 @@ export class AutoTest implements IAutoTest {
         this.classPortal = portal;
         this.github = github;
         this.testDelay = this.classPortal.getTestDelay(this.courseId);
-
     }
 
     /**
@@ -215,21 +215,21 @@ export class AutoTest implements IAutoTest {
      *
      * @param data
      */
-    public handleExecutionComplete(data: ICommitRecord): void {
+    public async handleExecutionComplete(data: ICommitRecord): Promise<void> {
         try {
-            this.dataStore.saveOutputRecord(data);
+            await this.dataStore.saveOutputRecord(data);
 
-            const requestorUsername = this.getRequestor(data.commitURL);
+            const requestorUsername = await this.getRequestor(data.commitURL);
             if (data.output.postbackOnComplete === true) {
                 // do this first, doesn't count against quota
-                this.github.postMarkdownToGithub({url: data.input.pushInfo.postbackURL, message: data.output.feedback});
+                await this.github.postMarkdownToGithub({url: data.input.pushInfo.postbackURL, message: data.output.feedback});
                 // NOTE: if the feedback was requested for this build it shouldn't count
                 // since we're not calling saveFeedabck this is right
                 // but if we replay the commit comments, we would see it there, so be careful
             } else if (requestorUsername !== null) {
                 // feedback has been previously requested
-                this.github.postMarkdownToGithub({url: data.input.pushInfo.postbackURL, message: data.output.feedback});
-                this.saveFeedbackGiven(data.input.courseId, data.input.delivId, requestorUsername, data.input.pushInfo.timestamp, data.commitURL);
+                await this.github.postMarkdownToGithub({url: data.input.pushInfo.postbackURL, message: data.output.feedback});
+                await this.saveFeedbackGiven(data.input.courseId, data.input.delivId, requestorUsername, data.input.pushInfo.timestamp, data.commitURL);
             } else {
                 // do nothing
                 Log.info("AutoTest::handleExecutionComplete(..) - course: " + this.courseId + "; commit not requested - no feedback given. url: " + data.commitURL);
@@ -294,21 +294,17 @@ export class AutoTest implements IAutoTest {
      *
      * @param input
      */
-    private invokeContainer(input: IContainerInput) {
+    private async invokeContainer(input: IContainerInput) {
         try {
             Log.info("AutoTest::invokeContainer(..) - commit: " + input.pushInfo.commitURL);
-
-            // execute with docker
-            const finalInfo: ICommitRecord = null; // TODO: call docker etc.
-            // TODO: must handle container timeout
-            // TODO: must do something with stdio
-            // TODO: must handle all attachments / other files
-            if (finalInfo !== null) {
-                this.handleExecutionComplete(finalInfo);
-            } else {
-                Log.info("AutoTest::invokeContainer(..) - commit: " + input.pushInfo.commitURL + "; null final info");
-            }
-
+            const that = this;
+            const docker = new DockerInstance(input);
+            return docker.execute().then(function (record: ICommitRecord) {
+                Log.info("AutoTest::invokeContainer(..) - complete for commit: " + input.pushInfo.commitURL + "; record: " + JSON.stringify(record));
+                that.handleExecutionComplete(record);
+            }).catch(function (err: any) {
+                Log.error("AutoTest::invokeContainer(..) - ERROR for commit: " + input.pushInfo.commitURL + "; ERROR: " + err);
+            });
         } catch (err) {
             Log.error("AutoTest::invokeContainer(..) - ERROR: " + err.message);
         }

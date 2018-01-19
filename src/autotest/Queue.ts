@@ -15,10 +15,10 @@ export class Queue {
         return null;
     }
 
-    public remove(commitUrl: string): IContainerInput | null {
+    public remove(commitURL: string): IContainerInput | null {
         for (let i = 0; i < this.data.length; i++) {
             const info = this.data[i];
-            if (info.pushInfo.commitURL === commitUrl) {
+            if (info.pushInfo.commitURL === commitURL) {
                 this.data.splice(i, 1);
                 return info;
             }
@@ -26,10 +26,10 @@ export class Queue {
         return null;
     }
 
-    public indexOf(commitUrl: string): number {
+    public indexOf(commitURL: string): number {
         for (let i = 0; i < this.data.length; i++) {
             const info = this.data[i];
-            if (info.pushInfo.commitURL === commitUrl) {
+            if (info.pushInfo.commitURL === commitURL) {
                 return i;
             }
         }

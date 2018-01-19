@@ -39,7 +39,7 @@ export interface IFeedbackGiven {
 export interface ICommitRecord { // refactor ICommitRecord
     commitURL: string;
     commitSHA: string;
-    user: IUserInfo;
+    // user: IUserInfo;
     input: IContainerInput;
     output: IContainerOutput;
 }
@@ -76,32 +76,32 @@ export interface IContainerOutput {
     postbackOnComplete: boolean;
     custom: {};
     attachments: IAttachment[];
-    state: string; // enum: SUCCESS, FAIL, TIMEOUT, CONSOLEOVERFLOW
+    state: string; // enum: SUCCESS, FAIL, TIMEOUT
 
     // if we split the IContainerInput and IContainerOutput we don't need all of these
     // but having them in a single object on AutoTest is very useful
-    team: string; // needed
-    commit: string; // sha?
-    committer: string; // needed
-    projectUrl: string;
-    courseNum: number;
-    orgName: string;
-    repo: string; // needed
-    ref: string; // is this commitUrl?
-    user: string;
-    deliverable: string;
+    team?: string; // needed
+    commit?: string; // sha?
+    committer?: string; // needed
+    projectUrl?: string;
+    courseNum?: number;
+    orgName?: string;
+    repo?: string; // needed
+    ref?: string; // is this commitUrl?
+    user?: string;
+    deliverable?: string;
 
     // not needed
-    container: {
+    container?: {
         scriptVersion: string;
         suiteVersion: string;
         image: string;
         exitCode: number;
     };
-    gradeRequested: boolean;
-    gradeRequestedTimestamp: number;
-    idStamp: string;
-    stdioRef: string; // how will we deal with stdio?
+    gradeRequested?: boolean;
+    gradeRequestedTimestamp?: number;
+    idStamp?: string;
+    stdioRef?: string; // how will we deal with stdio?
 }
 
 //

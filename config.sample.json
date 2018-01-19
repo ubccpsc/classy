@@ -4,9 +4,13 @@
             "num": 310,
             "name": "cs310",
             "org": "CPSC310-2017W-T2",
-            "adminUser": "cs310"
+            "adminUser": "cs310",
+            "dockerId": "cpsc310image",
+            "workspace": "/var/tmp/cs310/",
+            "oracleRepo": "https://github.ubc.ca/cpsc310/cpsc310project-impl.git"
         }
     ],
     "botName": "autobot",
-    "githubToken": "XXX"
+    "githubOrgToken": "XXX",
+    "githubOracleToken": "XXX"
 }
