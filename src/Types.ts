@@ -76,7 +76,7 @@ export interface IContainerOutput {
     postbackOnComplete: boolean;
     custom: {};
     attachments: IAttachment[];
-    state: string; // enum: SUCCESS, FAIL, TIMEOUT
+    state: string; // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
 
     // if we split the IContainerInput and IContainerOutput we don't need all of these
     // but having them in a single object on AutoTest is very useful
@@ -151,3 +151,15 @@ export interface IAttachment {
     data: string;
     content_type: string;
 }
+
+// A subset of the Docker container run options.
+// https://docs.docker.com/engine/reference/commandline/create/#options
+export interface IContainerOptions {
+    env?: object;
+    envFile?: string;
+    volumes?: string[];  // Expands to multiple --volume <string> flags.
+}
+
+// A subset of the Docker inspect output for container objects.
+// https://docs.docker.com/engine/reference/commandline/inspect/
+export type IContainerProperties = object[];
