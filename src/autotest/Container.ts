@@ -1,18 +1,7 @@
 import { ChildProcess, exec, spawn, SpawnOptions } from "child_process";
 import { setTimeout } from "timers";
+import { IContainerOptions, IContainerProperties } from "../Types";
 import Util from "../util/Util";
-
-// A subset of the Docker container run options.
-// https://docs.docker.com/engine/reference/commandline/create/#options
-export interface IContainerOptions {
-    env?: object;
-    envFile?: string;
-    volumes?: string[];  // Expands to multiple --volume <string> flags.
-}
-
-// A subset of the Docker inspect output for container objects.
-// https://docs.docker.com/engine/reference/commandline/inspect/
-type IContainerProperties = object[];
 
 /**
  * Simple wrapper for Docker's container management commands with some basic extensions.
