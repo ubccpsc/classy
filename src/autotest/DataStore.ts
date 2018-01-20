@@ -1,5 +1,9 @@
-import Log from "../util/Log";
 import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven} from "../Types";
+import Log from "../util/Log";
+import Util from "../util/Util";
+
+import * as fs from "fs-extra";
+import {Config} from "../Config";
 
 export interface IDataStore {
 
@@ -47,6 +51,22 @@ export class DummyDataStore implements IDataStore {
     public outputRecords: ICommitRecord[] = [];
     public requests: IFeedbackGiven[] = [];
 
+    private readonly dir = Config.getInstance().getProp("persistDir");
+    private readonly RECORD_PATH = this.dir + "/outputRecords.json";
+    private readonly COMMENT_PATH = this.dir + "/commentRecords.json";
+    private readonly PUSH_PATH = this.dir + "/pushRecords.json";
+    private readonly FEEDBACK_PATH = this.dir + "/feedbackRecords.json";
+
+    constructor() {
+        Log.info("DummyDataStore::<init> - start");
+
+        fs.ensureDirSync(this.dir);
+        fs.ensureFileSync(this.RECORD_PATH); // TODO: if they didn't exist it should be created with []
+        fs.ensureFileSync(this.COMMENT_PATH); // TODO: if they didn't exist it should be created with []
+        fs.ensureFileSync(this.PUSH_PATH); // TODO: if they didn't exist it should be created with []
+        fs.ensureFileSync(this.FEEDBACK_PATH); // TODO: if they didn't exist it should be created with []
+    }
+
     public savePush(info: IContainerInput): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             Log.info("DummyDataStore::savePush(..) - start");
@@ -74,23 +94,39 @@ export class DummyDataStore implements IDataStore {
         });
     }
 
-    public saveOutputRecord(outputInfo: ICommitRecord): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            Log.info("DummyDataStore::saveOutputRecord(..) - start");
-            this.outputRecords.push(outputInfo);
-            resolve();
-        });
+    public async saveOutputRecord(outputInfo: ICommitRecord): Promise<void> {
+        Log.info("DummyDataStore::saveOutputRecord(..) - start");
+        const start = Date.now();
+        const path = this.dir + "/outputRecords.json";
+
+        // read
+        const outRecords = await fs.readJSON(this.RECORD_PATH);
+        // append
+        outRecords.push(outputInfo);
+        // write
+        await fs.writeJSON(path, outRecords);
+
+        Log.info("DummyDataStore::saveOutputRecord(..) - done; took: " + Util.took(start));
     }
 
-    public getOutputRecord(commitUrl: string): Promise<ICommitRecord | null> {
-        return new Promise<ICommitRecord | null>((resolve, reject) => {
-            for (const record of this.outputRecords) {
-                if (record !== null && typeof record.commitURL !== "undefined" && record.commitURL === commitUrl) {
-                    return record;
-                }
+    public async getOutputRecord(commitURL: string): Promise<ICommitRecord | null> {
+        Log.info("DummyDataStore::getOutputRecord(..) - start");
+        const start = Date.now();
+
+        // read
+        const outRecords: ICommitRecord[] = await fs.readJSON(this.RECORD_PATH);
+
+        // find and return
+        for (const record of outRecords) {
+            if (record !== null && typeof record.commitURL !== "undefined" && record.commitURL === commitURL) {
+                Log.info("DummyDataStore::getOutputRecord(..) - found; took: " + Util.took(start));
+                return record;
             }
-            return null;
-        });
+        }
+
+        // not found
+        Log.info("DummyDataStore::getOutputRecord(..) - not found; took: " + Util.took(start));
+        return null;
     }
 
     public saveFeedbackGivenRecord(request: IFeedbackGiven): Promise<void> {

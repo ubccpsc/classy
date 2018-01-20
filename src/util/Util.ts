@@ -1,4 +1,4 @@
-import { spawn, SpawnOptions } from "child_process";
+import {spawn, SpawnOptions} from "child_process";
 import Log from "./Log";
 
 interface ISpawnResult {
@@ -8,6 +8,11 @@ interface ISpawnResult {
 }
 
 export default class Util {
+
+    public static took(start: number): string {
+        return Date.now() - start + " ms";
+    }
+
     public static async yarn(name: string, options: SpawnOptions) {
         const yarnCmd = process.env.YARN_PATH;
         options["uid"] = 1000;
@@ -96,7 +101,7 @@ export default class Util {
 
                 const ret = {
                     code,
-                    output: buf.toString(`utf8`, 0, offset),
+                    output:          buf.toString(`utf8`, 0, offset),
                     outputTruncated: overflow,
                 };
 
