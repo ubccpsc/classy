@@ -1,12 +1,11 @@
+import {Config} from "../Config";
 import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven, IPushEvent} from "../Types";
-import {Queue} from "./Queue";
-
 import Log from "../util/Log";
 import {IClassPortal} from "./ClassPortal";
 import {IDataStore} from "./DataStore";
-import {IGithubService} from "./GithubService";
-import {Config} from "../Config";
 import {DockerInstance} from "./DockerInstance";
+import {IGithubService} from "./GithubService";
+import {Queue} from "./Queue";
 
 export interface IAutoTest {
     /**
@@ -44,7 +43,7 @@ export interface IAutoTest {
 export class AutoTest implements IAutoTest {
 
     private readonly courseId: string;
-    private readonly testDelay: number;
+    // private readonly testDelay: number;
 
     private standardQueue = new Queue();
     private expressQueue = new Queue();
@@ -61,7 +60,6 @@ export class AutoTest implements IAutoTest {
         this.dataStore = dataStore;
         this.classPortal = portal;
         this.github = github;
-        this.testDelay = this.classPortal.getTestDelay(this.courseId);
     }
 
     /**
@@ -72,25 +70,23 @@ export class AutoTest implements IAutoTest {
      *
      * @param info
      */
-    public handlePushEvent(info: IPushEvent): Promise<boolean> {
-        return new Promise((resolve, reject) => {
-            try {
-                Log.info("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL);
-                const delivId: string = this.getDelivId(info.projectURL); // current default deliverable // async
-                if (delivId !== null) {
-                    const input: IContainerInput = {courseId: this.courseId, delivId, pushInfo: info};
-                    this.savePushInfo(input);
-                    this.standardQueue.push(input);
-                } else {
-                    // no active deliverable, ignore this push event (don't push an error either)
-                    Log.warn("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL + " - No active deliverable; push ignored.");
-                }
-                resolve(true);
-            } catch (err) {
-                Log.error("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; ERROR: " + err.message);
-                reject(err);
+    public async handlePushEvent(info: IPushEvent): Promise<boolean> {
+        try {
+            Log.info("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL);
+            const delivId: string = await this.getDelivId(info.projectURL); // current default deliverable // async
+            if (delivId !== null) {
+                const input: IContainerInput = {courseId: this.courseId, delivId, pushInfo: info};
+                this.savePushInfo(input);
+                this.standardQueue.push(input);
+            } else {
+                // no active deliverable, ignore this push event (don't push an error either)
+                Log.warn("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL + " - No active deliverable; push ignored.");
             }
-        });
+            return true;
+        } catch (err) {
+            Log.error("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; ERROR: " + err.message);
+            throw err;
+        }
     }
 
     /**
@@ -114,95 +110,93 @@ export class AutoTest implements IAutoTest {
      *
      * @param info
      */
-    public handleCommentEvent(info: ICommentEvent): Promise<boolean> {
+    public async handleCommentEvent(info: ICommentEvent): Promise<boolean> {
         const that = this;
-        return new Promise((resolve, reject) => {
-            try {
-                Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL + "; user: " + info.userName);
+        try {
+            Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL + "; user: " + info.userName);
 
-                // NOTE: need to think a bit harder about which comment events should be saved and which should be dropped
+            // NOTE: need to think a bit harder about which comment events should be saved and which should be dropped
 
-                if (info.userName === Config.getInstance().getProp("botName")) {
-                    Log.info("AutoTest::handleCommentEvent(..) - ignored, comment made by AutoBot");
-                    return resolve(true);
-                }
+            if (info.userName === Config.getInstance().getProp("botName")) {
+                Log.info("AutoTest::handleCommentEvent(..) - ignored, comment made by AutoBot");
+                return true;
+            }
 
-                // update info record
-                info.courseId = that.courseId;
-                let delivId = info.delivId;
-                if (delivId === null) {
-                    delivId = this.getDelivId(info.commitURL); // need to get the default deliverable for that repo
-                    info.delivId = delivId;
-                }
+            // update info record
+            info.courseId = that.courseId;
+            let delivId = info.delivId;
+            if (delivId === null) {
+                delivId = await this.getDelivId(info.commitURL); // need to get the default deliverable for that repo
+                info.delivId = delivId;
+            }
 
-                if (delivId === null) {
-                    // no deliverable, give warning and abort
-                    const msg = "There is no current default deliverable; results will not be posted.";
-                    this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
-                    return resolve(true);
-                }
+            if (delivId === null) {
+                // no deliverable, give warning and abort
+                const msg = "There is no current default deliverable; results will not be posted.";
+                this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
+                return true;
+            }
 
-                // front load the async operations, even if it means we do some operations unnecessairly
-                // could do these all in parallel
-                const isStaff = this.classPortal.isStaff(this.courseId, info.userName); // async
-                const requestFeedbackDelay = this.requestFeedbackDelay(delivId, info.userName, info.timestamp); // ts of comment, not push // async
-                const res: ICommitRecord = this.getOutputRecord(info.commitURL); // for any user, async
-                const isCurrentlyRunning: boolean = this.isCommitExecuting(info.commitURL, delivId);
+            // front load the async operations, even if it means we do some operations unnecessairly
+            // could do these all in parallel
+            const isStaff = await this.classPortal.isStaff(this.courseId, info.userName); // async
+            const requestFeedbackDelay = await this.requestFeedbackDelay(delivId, info.userName, info.timestamp); // ts of comment, not push // async
+            const res: ICommitRecord = await this.getOutputRecord(info.commitURL); // for any user, async
+            const isCurrentlyRunning: boolean = this.isCommitExecuting(info.commitURL, delivId);
 
-                let shouldPost = false; // should the result be given
-                if (isStaff === true) {
+            let shouldPost = false; // should the result be given
+            if (isStaff === true) {
+                shouldPost = true;
+            } else {
+                if (requestFeedbackDelay === null) {
                     shouldPost = true;
                 } else {
-                    if (requestFeedbackDelay === null) {
-                        shouldPost = true;
-                    } else {
-                        shouldPost = false;
-                        const msg = "You must wait " + requestFeedbackDelay + " before requesting feedback.";
-                        this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
-                    }
+                    shouldPost = false;
+                    const msg = "You must wait " + requestFeedbackDelay + " before requesting feedback.";
+                    this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
                 }
-
-                if (res !== null) {
-                    // execution complete
-                    const hasBeenRequestedBefore = this.dataStore.getFeedbackGivenRecordForCommit(info.commitURL, info.userName); // students often request grades they have previously 'paid' for
-                    if (hasBeenRequestedBefore !== null) {
-                        // just give it to them again, don't charge for event
-                        shouldPost = true;
-                    }
-
-                    if (shouldPost === true) {
-                        this.github.postMarkdownToGithub({url: info.postbackURL, message: res.output.feedback});
-                        this.saveFeedbackGiven(this.courseId, delivId, info.userName, res.input.pushInfo.timestamp, info.commitURL);
-                        this.saveCommentInfo(info); // user or TA; only for analytics since feedback has been given
-                    }
-
-                } else {
-                    // execution not yet complete
-                    if (shouldPost === true) {
-                        // user has request quota available
-                        let msg = "This commit is still queued for processing against " + delivId + ".";
-                        msg += " Your results will be posted here as soon as they are ready.";
-                        this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
-                        this.saveCommentInfo(info); // whether TA or staff
-                    }
-
-                    if (isCurrentlyRunning === true) {
-                        // do nothing, will be handled later when the commit finishes processing
-                    } else {
-                        if (this.expressQueue.length() > this.standardQueue.indexOf(info.commitURL)) {
-                            // faster to just leave it on the standard queue
-                        } else {
-                            // promote to the express queue
-                            const input = this.standardQueue.remove(info.commitURL);
-                            this.expressQueue.push(input);
-                        }
-                    }
-                }
-            } catch (err) {
-                Log.error("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; ERROR: " + err.message);
-                reject(err);
             }
-        });
+
+            if (res !== null) {
+                // execution complete
+                const hasBeenRequestedBefore = this.dataStore.getFeedbackGivenRecordForCommit(info.commitURL, info.userName); // students often request grades they have previously 'paid' for
+                if (hasBeenRequestedBefore !== null) {
+                    // just give it to them again, don't charge for event
+                    shouldPost = true;
+                }
+
+                if (shouldPost === true) {
+                    this.github.postMarkdownToGithub({url: info.postbackURL, message: res.output.feedback});
+                    this.saveFeedbackGiven(this.courseId, delivId, info.userName, res.input.pushInfo.timestamp, info.commitURL);
+                    this.saveCommentInfo(info); // user or TA; only for analytics since feedback has been given
+                }
+
+            } else {
+                // execution not yet complete
+                if (shouldPost === true) {
+                    // user has request quota available
+                    let msg = "This commit is still queued for processing against " + delivId + ".";
+                    msg += " Your results will be posted here as soon as they are ready.";
+                    this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
+                    this.saveCommentInfo(info); // whether TA or staff
+                }
+
+                if (isCurrentlyRunning === true) {
+                    // do nothing, will be handled later when the commit finishes processing
+                } else {
+                    if (this.expressQueue.length() > this.standardQueue.indexOf(info.commitURL)) {
+                        // faster to just leave it on the standard queue
+                    } else {
+                        // promote to the express queue
+                        const input = this.standardQueue.remove(info.commitURL);
+                        this.expressQueue.push(input);
+                    }
+                }
+            }
+        } catch (err) {
+            Log.error("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; ERROR: " + err.message);
+            throw err;
+        }
     }
 
     /**
@@ -315,16 +309,16 @@ export class AutoTest implements IAutoTest {
      *
      * @param commitURL
      */
-    private getDelivId(commitURL: string): string | null {
-        let str = this.classPortal.getDefaultDeliverableId(commitURL);
+    private async getDelivId(commitURL: string): Promise<string | null> {
+        let str = await this.classPortal.getDefaultDeliverableId(commitURL);
         if (typeof str === "undefined") {
             str = null;
         }
         return str;
     }
 
-    private getOutputRecord(commitURL: string): ICommitRecord | null {
-        return this.dataStore.getOutputRecord(commitURL);
+    private async getOutputRecord(commitURL: string): Promise<ICommitRecord | null> {
+        return await this.dataStore.getOutputRecord(commitURL);
     }
 
     /**
@@ -336,7 +330,7 @@ export class AutoTest implements IAutoTest {
      * @param timestamp
      * @param commitURL
      */
-    private saveFeedbackGiven(courseId: string, delivId: string, userName: string, timestamp: number, commitURL: string): void {
+    private async saveFeedbackGiven(courseId: string, delivId: string, userName: string, timestamp: number, commitURL: string): Promise<void> {
         const record: IFeedbackGiven = {
             commitURL,
             courseId,
@@ -344,7 +338,7 @@ export class AutoTest implements IAutoTest {
             timestamp,
             userName,
         };
-        this.dataStore.saveFeedbackGivenRecord(record);
+        await this.dataStore.saveFeedbackGivenRecord(record);
     }
 
     /**
@@ -352,8 +346,8 @@ export class AutoTest implements IAutoTest {
      *
      * @param commitURL
      */
-    private getRequestor(commitURL: string): string | null {
-        const record: ICommentEvent = this.dataStore.getCommentRecord(commitURL);
+    private async getRequestor(commitURL: string): Promise<string | null> {
+        const record: ICommentEvent = await this.dataStore.getCommentRecord(commitURL);
         if (record !== null) {
             return record.userName;
         }
@@ -390,11 +384,12 @@ export class AutoTest implements IAutoTest {
      * @param reqTimestamp
      *
      */
-    private requestFeedbackDelay(delivId: string, userName: string, reqTimestamp: number): string | null {
+    private async requestFeedbackDelay(delivId: string, userName: string, reqTimestamp: number): Promise<string | null> {
 
         // async operations up front
-        const isStaff = this.classPortal.isStaff(this.courseId, userName);
-        const record: IFeedbackGiven = this.dataStore.getLatestFeedbackGivenRecord(this.courseId, delivId, userName);
+        const isStaff = await this.classPortal.isStaff(this.courseId, userName);
+        const record: IFeedbackGiven = await this.dataStore.getLatestFeedbackGivenRecord(this.courseId, delivId, userName);
+        const testDelay = await this.classPortal.getTestDelay(this.courseId); // should cache this
 
         if (isStaff === true) {
             return null; // staff can always request
@@ -403,7 +398,7 @@ export class AutoTest implements IAutoTest {
                 return null; // no prior requests
             } else {
                 const delta = (reqTimestamp - record.timestamp) / 1000;
-                if (delta > this.testDelay) {
+                if (delta > testDelay) {
                     return null; // enough time has passed
                 } else {
                     const hours = Math.floor(delta / 3600);

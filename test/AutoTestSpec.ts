@@ -6,7 +6,7 @@ import {ICommentEvent, IPushEvent} from "../src/Types";
 import Log from "../src/util/Log";
 
 import {expect} from "chai";
-import * as fs from "fs";
+import * as fs from "fs-extra";
 import "mocha";
 
 describe("AutoTest", () => {
@@ -17,24 +17,16 @@ describe("AutoTest", () => {
     let gh: GithubService;
     let at: AutoTest;
 
-    before(async function () {
+    before(function () {
         Log.test("AutoTest::before() - start");
-        return new Promise(function (resolve, reject) {
-            fs.readFile("test/pushes.json", (err: any, data2: any) => {
-                if (err) {
-                    reject(err);
-                }
-                pushes = JSON.parse(data2);
-                resolve(data2);
-            });
 
-            // setup other vars
-            data = new DummyDataStore();
-            portal = new DummyClassPortal();
-            gh = new GithubService();
-            const courseId = "cs310";
-            at = new AutoTest(courseId, data, portal, gh);
-        });
+        pushes = fs.readJSONSync("./test/pushes.json");
+
+        data = new DummyDataStore();
+        portal = new DummyClassPortal();
+        gh = new GithubService();
+        const courseId = "cs310";
+        at = new AutoTest(courseId, data, portal, gh);
     });
 
     it("Should be able to be instantiated.", () => {

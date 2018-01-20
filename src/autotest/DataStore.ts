@@ -53,7 +53,11 @@ export class DummyDataStore implements IDataStore {
     private readonly FEEDBACK_PATH = this.dir + "/feedbackRecords.json";
 
     constructor() {
-        Log.info("DummyDataStore::<init> - start");
+        Log.info("DummyDataStore::<init> - start; dir: " + this.dir);
+
+        if (this.dir === null) {
+            throw new Error("DataStore::<init> - persistDir must be specified in Config");
+        }
 
         fs.ensureDirSync(this.dir);
 
