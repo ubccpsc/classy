@@ -11,7 +11,7 @@ export interface IDataStore {
      *
      * @param info
      */
-    savePush(info: IContainerInput): void; // Promise<void>
+    savePush(info: IContainerInput): Promise<void>;
 
     /**
      * Saves comment event (to its own table).
@@ -22,19 +22,19 @@ export interface IDataStore {
      *
      * @param info
      */
-    saveComment(info: ICommentEvent): void; // Promise<void>
+    saveComment(info: ICommentEvent): Promise<void>;
 
-    getCommentRecord(commitUrl: string): ICommentEvent | null; // Promise<ICommentEvent | null>
+    getCommentRecord(commitUrl: string): Promise<ICommentEvent | null>;
 
-    saveOutputRecord(outputInfo: ICommitRecord): void; // Promise<void>
+    saveOutputRecord(outputInfo: ICommitRecord): Promise<void>;
 
-    getOutputRecord(commitUrl: string): ICommitRecord | null;  // Promise<ICommitRecord | null>
+    getOutputRecord(commitUrl: string): Promise<ICommitRecord | null>;
 
-    saveFeedbackGivenRecord(request: IFeedbackGiven): void;  // Promise<void>
+    saveFeedbackGivenRecord(request: IFeedbackGiven): Promise<void>;
 
-    getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): IFeedbackGiven | null;  // Promise<IFeedbackGiven | null>
+    getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): Promise<IFeedbackGiven | null>;
 
-    getFeedbackGivenRecordForCommit(commitUrl: string, userName: string): IFeedbackGiven | null;  // Promise<IFeedbackGiven | null>
+    getFeedbackGivenRecordForCommit(commitUrl: string, userName: string): Promise<IFeedbackGiven | null>;
 }
 
 /**
@@ -47,65 +47,85 @@ export class DummyDataStore implements IDataStore {
     public outputRecords: ICommitRecord[] = [];
     public requests: IFeedbackGiven[] = [];
 
-    public savePush(info: IContainerInput) {
-        Log.info("DummyDataStore::savePush(..) - start");
-        this.pushes.push(info);
+    public savePush(info: IContainerInput): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            Log.info("DummyDataStore::savePush(..) - start");
+            this.pushes.push(info);
+            resolve();
+        });
     }
 
-    public saveComment(info: ICommentEvent) {
-        Log.info("DummyDataStore::saveComment(..) - start");
-        this.comments.push(info);
+    public saveComment(info: ICommentEvent): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            Log.info("DummyDataStore::saveComment(..) - start");
+            this.comments.push(info);
+            resolve();
+        });
     }
 
-    public getCommentRecord(commitUrl: string) {
-        for (const record of this.comments) {
-            if (record !== null && typeof record.commitURL !== "undefined" && record.commitURL === commitUrl) {
-                return record;
+    public getCommentRecord(commitUrl: string): Promise<ICommentEvent | null> {
+        return new Promise<ICommentEvent | null>((resolve, reject) => {
+            for (const record of this.comments) {
+                if (record !== null && typeof record.commitURL !== "undefined" && record.commitURL === commitUrl) {
+                    resolve(record);
+                }
             }
-        }
-        return null;
+            resolve(null);
+        });
     }
 
-    public saveOutputRecord(outputInfo: ICommitRecord) {
-        Log.info("DummyDataStore::saveOutputRecord(..) - start");
-        this.outputRecords.push(outputInfo);
+    public saveOutputRecord(outputInfo: ICommitRecord): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            Log.info("DummyDataStore::saveOutputRecord(..) - start");
+            this.outputRecords.push(outputInfo);
+            resolve();
+        });
     }
 
-    public getOutputRecord(commitUrl: string) {
-        for (const record of this.outputRecords) {
-            if (record !== null && typeof record.commitURL !== "undefined" && record.commitURL === commitUrl) {
-                return record;
+    public getOutputRecord(commitUrl: string): Promise<ICommitRecord | null> {
+        return new Promise<ICommitRecord | null>((resolve, reject) => {
+            for (const record of this.outputRecords) {
+                if (record !== null && typeof record.commitURL !== "undefined" && record.commitURL === commitUrl) {
+                    return record;
+                }
             }
-        }
-        return null;
-    }
-
-    public saveFeedbackGivenRecord(request: IFeedbackGiven): void {
-        this.requests.push(request);
-    }
-
-    public getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): IFeedbackGiven | null {
-        const shortList: IFeedbackGiven[] = [];
-        for (const req of this.requests) {
-            if (req !== null && req.courseId === courseId && req.delivId === delivId && req.userName === userName) {
-                shortList.push(req);
-            }
-        }
-        if (shortList.length === 0) {
             return null;
-        } else {
-            return Math.max.apply(Math, shortList.map(function (o: IFeedbackGiven) {
-                return o.timestamp;
-            }));
-        }
+        });
     }
 
-    public getFeedbackGivenRecordForCommit(commitUrl: string, userName: string): IFeedbackGiven | null {
-        for (const feedback of this.requests) {
-            if (feedback !== null && feedback.commitURL === commitUrl && feedback.userName === userName) {
-                return feedback;
+    public saveFeedbackGivenRecord(request: IFeedbackGiven): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            this.requests.push(request);
+            resolve();
+        });
+    }
+
+    public getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): Promise<IFeedbackGiven | null> {
+        return new Promise<IFeedbackGiven | null>((resolve, reject) => {
+            const shortList: IFeedbackGiven[] = [];
+            for (const req of this.requests) {
+                if (req !== null && req.courseId === courseId && req.delivId === delivId && req.userName === userName) {
+                    shortList.push(req);
+                }
             }
-        }
-        return null;
+            if (shortList.length === 0) {
+                resolve(null);
+            } else {
+                return Math.max.apply(Math, shortList.map(function (o: IFeedbackGiven) {
+                    resolve(o); // return o.timestamp; // NOTE: this does not seem right
+                }));
+            }
+        });
+    }
+
+    public getFeedbackGivenRecordForCommit(commitUrl: string, userName: string): Promise<IFeedbackGiven | null> {
+        return new Promise<IFeedbackGiven | null>((resolve, reject) => {
+            for (const feedback of this.requests) {
+                if (feedback !== null && feedback.commitURL === commitUrl && feedback.userName === userName) {
+                    return resolve(feedback);
+                }
+            }
+            return resolve(null);
+        });
     }
 }

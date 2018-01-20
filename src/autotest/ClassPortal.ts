@@ -1,5 +1,3 @@
-import Log from "../util/Log";
-
 export interface IClassPortal {
 
     /**
@@ -7,7 +5,7 @@ export interface IClassPortal {
      *
      * @param commitUrl
      */
-    getDefaultDeliverableId(commitUrl: string): string; // Promise<string|null>
+    getDefaultDeliverableId(commitUrl: string): Promise<string | null>;
 
     /**
      * Is the user staff on the course.
@@ -15,7 +13,7 @@ export interface IClassPortal {
      * @param courseId
      * @param userName
      */
-    isStaff(courseId: string, userName: string): boolean; // Promise<boolean>
+    isStaff(courseId: string, userName: string): Promise<boolean>;
 
     /**
      * Gets the delay period (in seconds) between AutoTest invocations.
@@ -24,20 +22,26 @@ export interface IClassPortal {
      *
      * @param courseId
      */
-    getTestDelay(courseId: string): number; // Promise<number>
+    getTestDelay(courseId: string): Promise<number>;
 }
 
 export class DummyClassPortal implements IClassPortal {
-    public isStaff(courseId: string, userName: string): boolean {
-        return userName.indexOf("a") >= 0;
+    public isStaff(courseId: string, userName: string): Promise<boolean> {
+        return new Promise<boolean>((resolve, reject) => {
+            resolve(userName.indexOf("a") >= 0); // TODO: implement
+        });
+    }
+
+    public getDefaultDeliverableId(commitUrl: string): Promise<string | null> {
+        return new Promise<string | null>((resolve, reject) => {
+            resolve("d0"); // TODO: implement
+        });
 
     }
 
-    public getDefaultDeliverableId(commitUrl: string): string {
-        return "d0"; // TEST
-    }
-
-    public getTestDelay(courseId: string): number {
-        return 60; // TEST
+    public getTestDelay(courseId: string): Promise<number> {
+        return new Promise<number>((resolve, reject) => {
+            return 60; // TODO: implement
+        });
     }
 }
