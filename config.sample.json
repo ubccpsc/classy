@@ -1,13 +1,26 @@
 {
     "courses": [
         {
-            "num": 310,
+            "name": "test",
+            "org": "test",
+            "adminUser": "cs310",
+            "dockerId": "cpsc310image",
+            "workspace": "/var/tmp/test/",
+            "oracleRepo": "https://github.ubc.ca/cpsc310/cpsc310project-impl.git",
+            "postback": false,
+            "persistDir": "./data/test/",
+            "port": 11333
+        },
+        {
             "name": "cs310",
             "org": "CPSC310-2017W-T2",
             "adminUser": "cs310",
             "dockerId": "cpsc310image",
             "workspace": "/var/tmp/cs310/",
-            "oracleRepo": "https://github.ubc.ca/cpsc310/cpsc310project-impl.git"
+            "oracleRepo": "https://github.ubc.ca/cpsc310/cpsc310project-impl.git",
+            "postback": false,
+            "persistDir": "./data/cs310/",
+            "port": 11333
         }
     ],
     "botName": "autobot",

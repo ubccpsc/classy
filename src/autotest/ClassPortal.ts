@@ -26,22 +26,16 @@ export interface IClassPortal {
 }
 
 export class DummyClassPortal implements IClassPortal {
-    public isStaff(courseId: string, userName: string): Promise<boolean> {
-        return new Promise<boolean>((resolve, reject) => {
-            resolve(userName.indexOf("a") >= 0); // TODO: implement
-        });
+
+    public async isStaff(courseId: string, userName: string): Promise<boolean> {
+        return userName.indexOf("a") >= 0; // TODO: implement
     }
 
-    public getDefaultDeliverableId(commitUrl: string): Promise<string | null> {
-        return new Promise<string | null>((resolve, reject) => {
-            resolve("d0"); // TODO: implement
-        });
-
+    public async getDefaultDeliverableId(commitUrl: string): Promise<string | null> {
+        return "d0"; // TODO: implement
     }
 
-    public getTestDelay(courseId: string): Promise<number> {
-        return new Promise<number>((resolve, reject) => {
-            return 60; // TODO: implement
-        });
+    public async getTestDelay(courseId: string): Promise<number> {
+        return 60; // TODO: implement
     }
 }

@@ -113,6 +113,7 @@ export class AutoTest implements IAutoTest {
     public async handleCommentEvent(info: ICommentEvent): Promise<boolean> {
         const that = this;
         try {
+            Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + " - start"); // commit: " + info.commitURL + "; user: " + info.userName);
             Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL + "; user: " + info.userName);
 
             // NOTE: need to think a bit harder about which comment events should be saved and which should be dropped
@@ -140,8 +141,8 @@ export class AutoTest implements IAutoTest {
             // front load the async operations, even if it means we do some operations unnecessairly
             // could do these all in parallel
             const isStaff = await this.classPortal.isStaff(this.courseId, info.userName); // async
-            const requestFeedbackDelay = await this.requestFeedbackDelay(delivId, info.userName, info.timestamp); // ts of comment, not push // async
-            const res: ICommitRecord = await this.getOutputRecord(info.commitURL); // for any user, async
+            const requestFeedbackDelay = await this.requestFeedbackDelay(delivId, info.userName, info.timestamp); // ts of comment, not push
+            const res: ICommitRecord = await this.getOutputRecord(info.commitURL); // for any user
             const isCurrentlyRunning: boolean = this.isCommitExecuting(info.commitURL, delivId);
 
             let shouldPost = false; // should the result be given
@@ -159,6 +160,7 @@ export class AutoTest implements IAutoTest {
 
             if (res !== null) {
                 // execution complete
+                Log.trace("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL + "; execution complete");
                 const hasBeenRequestedBefore = this.dataStore.getFeedbackGivenRecordForCommit(info.commitURL, info.userName); // students often request grades they have previously 'paid' for
                 if (hasBeenRequestedBefore !== null) {
                     // just give it to them again, don't charge for event
@@ -173,6 +175,7 @@ export class AutoTest implements IAutoTest {
 
             } else {
                 // execution not yet complete
+                Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL + "; execution not yet complete");
                 if (shouldPost === true) {
                     // user has request quota available
                     let msg = "This commit is still queued for processing against " + delivId + ".";
@@ -211,6 +214,13 @@ export class AutoTest implements IAutoTest {
      */
     public async handleExecutionComplete(data: ICommitRecord): Promise<void> {
         try {
+            Log.info("AutoTest::handleExecutionComplete(..) - start");
+
+            if (data === null) {
+                Log.warn("AutoTest::handleExecutionComplete(..) - null data; skipping");
+                return;
+            }
+
             await this.dataStore.saveOutputRecord(data);
 
             const requestorUsername = await this.getRequestor(data.commitURL);
@@ -385,7 +395,7 @@ export class AutoTest implements IAutoTest {
      *
      */
     private async requestFeedbackDelay(delivId: string, userName: string, reqTimestamp: number): Promise<string | null> {
-
+        Log.info("AutoTest::requestFeedbackDelay( " + delivId + ", " + userName + ", " + reqTimestamp + ". - start");
         // async operations up front
         const isStaff = await this.classPortal.isStaff(this.courseId, userName);
         const record: IFeedbackGiven = await this.dataStore.getLatestFeedbackGivenRecord(this.courseId, delivId, userName);

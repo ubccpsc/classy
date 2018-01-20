@@ -4,8 +4,10 @@ import {expect} from "chai";
 import * as fs from "fs";
 import "mocha";
 import {GithubUtil} from "../src/util/GithubUtil";
+import {Config} from "../src/Config";
 
 describe("GitHub Event Parser", () => {
+    Config.getInstance("test");
 
     it("Should be able to parse a standard push.", () => {
         const content = readFile("push_master-branch.json");

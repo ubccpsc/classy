@@ -4,6 +4,7 @@
 
 import Server from "./server/Server";
 import Log from "./util/Log";
+import {Config} from "./Config";
 // import {IConfig, AppConfig} from './Config';
 // import MongoDB from './db/MongoDB';
 
@@ -15,28 +16,28 @@ export class AutoTestDaemon {
     // private config: IConfig = new AppConfig();
 
     public initServer() {
-        const courseNums = [333]; // this.config.getCourseNums();
         Log.info("AutoTestDaemon::initServer() - start");
 
-        for (const courseNum of courseNums) {
+        const portNum = Number(Config.getInstance().getProp("port"));
 
-            // 1 + because ports under 1000 need 'sudo' priviledges
-            // which is a potential security risk
-            const portNum = Number("11" + courseNum);
-
-            // start server
-            const s = new Server();
-            s.setPort(portNum);
-            s.start().then(function (val: boolean) {
-                Log.info("AutoTestDaemon::initServer() - started: " + val);
-            }).catch(function (err: Error) {
-                Log.error("AutoTestDaemon::initServer() - ERROR: " + err.message);
-            });
-        }
+        // start server
+        const s = new Server();
+        s.setPort(portNum);
+        s.start().then(function (val: boolean) {
+            Log.info("AutoTestDaemon::initServer() - started: " + val);
+        }).catch(function (err: Error) {
+            Log.error("AutoTestDaemon::initServer() - ERROR: " + err.message);
+        });
     }
+
 }
 
 // This ends up starting the whole system and listens on a hardcoded port (4321)
 Log.info("AutoTest Daemon - starting");
-const app = new AutoTestDaemon();
-app.initServer();
+if (process.argv.length < 3) {
+    Log.error("AutoTest Daemon - missing runtime param: node AutoTestDaemon.js <courseName>");
+} else {
+    Config.getInstance(process.argv[2]);
+    const app = new AutoTestDaemon();
+    app.initServer();
+}

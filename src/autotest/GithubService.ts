@@ -62,22 +62,28 @@ export class GithubService implements IGithubService {
                 const body: string = JSON.stringify({body: message.message});
                 options.headers["Content-Length"] = Buffer.byteLength(body);
 
-                const req = https.request(options, (res: any) => {
-                    Log.trace("GithubService::postMarkdownToGithub(..) - response received; status: " + res.statusCode);
-                    if (res.statusCode < 300) {
-                        // for debugging; if it works, track it in this array
-                        this.messages.push(message);
-                        fulfill(true);
-                    } else {
+                if (Config.getInstance().getProp("postback") === true) {
+                    const req = https.request(options, (res: any) => {
+                        Log.trace("GithubService::postMarkdownToGithub(..) - response received; status: " + res.statusCode);
+                        if (res.statusCode < 300) {
+                            // for debugging; if it works, track it in this array
+                            this.messages.push(message);
+                            fulfill(true);
+                        } else {
+                            reject(false);
+                        }
+                    });
+                    req.on("error", (err: any) => {
+                        Log.error("GithubService::postMarkdownToGithub(..) - failed; ERROR: " + err);
                         reject(false);
-                    }
-                });
-                req.on("error", (err: any) => {
-                    Log.error("GithubService::postMarkdownToGithub(..) - failed; ERROR: " + err);
-                    reject(false);
-                });
-                req.write(body);
-                req.end();
+                    });
+                    req.write(body);
+                    req.end();
+                } else {
+                    Log.trace("GithubService::postMarkdownToGithub(..) - send skipped (config.postback === false)");
+                    this.messages.push(message);
+                    fulfill(true);
+                }
             } catch (err) {
                 Log.error("GithubService::postMarkdownToGithub(..) - ERROR: " + err);
                 reject(false);

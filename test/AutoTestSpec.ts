@@ -8,9 +8,11 @@ import Log from "../src/util/Log";
 import {expect} from "chai";
 import * as fs from "fs-extra";
 import "mocha";
+import {Config} from "../src/Config";
 
 describe("AutoTest", () => {
 
+    Config.getInstance("test");
     let pushes: IPushEvent[];
     let data: DummyDataStore;
     let portal: IClassPortal;
@@ -76,12 +78,9 @@ describe("AutoTest", () => {
 
         const pe: IPushEvent = pushes[0];
         const ce: ICommentEvent = {
-            // branch:     pe.branch,
             botMentioned:  false,
-            // repo:         pe.repo,
             commitSHA:     pe.commitSHA,
             commitURL:     pe.commitURL,
-            // projectUrl:   pe.projectUrl,
             userName:      "myUser",
             courseId:      "cs310",
             delivId:       "d0",
@@ -93,7 +92,7 @@ describe("AutoTest", () => {
         // expect(data.comments.length).to.equal(0);
         expect(gh.messages.length).to.equal(0);
         await at.handleCommentEvent(ce);
-        // expect(data.comments.length).to.equal(1);
+        expect(gh.messages.length).to.equal(1);
         // expect(gh.messages.length).to.equal(1); // commented out because it's async and we aren't waiting yet
     });
 
