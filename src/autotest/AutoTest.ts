@@ -227,8 +227,16 @@ export class AutoTest implements IAutoTest {
         try {
             Log.info("AutoTest::handleExecutionComplete(..) - start");
 
-            if (data === null) {
+            if (typeof data === "undefined" || data === null) {
                 Log.warn("AutoTest::handleExecutionComplete(..) - null data; skipping");
+                return;
+            }
+
+            if (typeof data.commitSHA === "undefined" ||
+                typeof data.commitURL === "undefined" ||
+                typeof data.input === "undefined" ||
+                typeof data.output === "undefined") {
+                Log.warn("AutoTest::handleExecutionComplete(..) - missing required field; skipping; data: " + JSON.stringify(data));
                 return;
             }
 
