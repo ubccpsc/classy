@@ -123,6 +123,11 @@ export class AutoTest implements IAutoTest {
                 return true;
             }
 
+            if (info.botMentioned === false) {
+                Log.info("AutoTest::handleCommentEvent(..) - ignored, bot not mentioned");
+                return true;
+            }
+
             // update info record
             info.courseId = that.courseId;
             let delivId = info.delivId;
@@ -144,6 +149,8 @@ export class AutoTest implements IAutoTest {
             const requestFeedbackDelay = await this.requestFeedbackDelay(delivId, info.userName, info.timestamp); // ts of comment, not push
             const res: ICommitRecord = await this.getOutputRecord(info.commitURL); // for any user
             const isCurrentlyRunning: boolean = this.isCommitExecuting(info.commitURL, delivId);
+
+            Log.trace("AutoTest::handleCommentEvent(..) - isStaff: " + isStaff + "; delay: " + requestFeedbackDelay + "; res: " + res + "; running?: " + isCurrentlyRunning);
 
             let shouldPost = false; // should the result be given
             if (isStaff === true) {
