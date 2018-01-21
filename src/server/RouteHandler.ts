@@ -96,7 +96,7 @@ export default class RouteHandler {
                     // const controller: CommitCommentController = new CommitCommentController(currentCourseNum);
                     // use body
                     const payload: any = body; // JSON.parse(JSON.stringify(body));
-                    Log.info("RouteHandler::handleCommentEvent() - payload: " + JSON.stringify(payload, null, 2));
+                    Log.info("RouteHandler::handleCommentEvent() - start");
 
                     let commentEvent;
                     try {
@@ -123,6 +123,8 @@ export default class RouteHandler {
             case "push":
                 try {
                     const payload = body;
+
+                    Log.info("RouteHandler::handlePushtEvent() - start");
 
                     let pushEvent;
                     try {
