@@ -45,7 +45,7 @@ export class DockerInstance {
                 timestamp:          Date.now(),
                 report:             gradeReport,
                 feedback:           "Test Feedback", // markdown
-                postbackOnComplete: true,
+                postbackOnComplete: false,
                 custom:             {},
                 attachments:        [],
                 state:              "SUCCESS" // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
