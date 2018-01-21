@@ -78,6 +78,7 @@ export class AutoTest implements IAutoTest {
                 const input: IContainerInput = {courseId: this.courseId, delivId, pushInfo: info};
                 await this.savePushInfo(input);
                 this.standardQueue.push(input);
+                this.tick(); // tick!
             } else {
                 // no active deliverable, ignore this push event (don't push an error either)
                 Log.warn("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL + " - No active deliverable; push ignored.");
@@ -203,6 +204,9 @@ export class AutoTest implements IAutoTest {
                     }
                 }
             }
+
+            // everything is ready; run the clock
+            this.tick();
         } catch (err) {
             Log.error("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; ERROR: " + err.message);
             throw err;
@@ -257,6 +261,8 @@ export class AutoTest implements IAutoTest {
                 Log.trace("AutoTest::handleExecutionComplete(..) - clear standard slot");
                 this.standardExecution = null;
             }
+
+            // execution done, advance the clock
             this.tick();
         } catch (err) {
             Log.error("AutoTest::handleExecutionComplete(..) - course: " + this.courseId + "; ERROR: " + err.message);
@@ -269,14 +275,14 @@ export class AutoTest implements IAutoTest {
             if (this.standardExecution === null) {
                 const info = this.standardQueue.pop();
                 if (info !== null) {
-                    this.invokeContainer(info);
+                    this.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
                 }
             }
 
             if (this.expresssExecution === null) {
                 const info = this.expressQueue.pop();
                 if (info !== null) {
-                    this.invokeContainer(info);
+                    this.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
                 }
             }
             Log.info("AutoTest::tick(..) - done");
@@ -314,16 +320,16 @@ export class AutoTest implements IAutoTest {
     private async invokeContainer(input: IContainerInput) {
         try {
             Log.info("AutoTest::invokeContainer(..) - commit: " + input.pushInfo.commitURL);
-            const that = this;
+
             const docker = new DockerInstance(input);
-            return docker.execute().then(function (record: ICommitRecord) {
-                Log.info("AutoTest::invokeContainer(..) - complete for commit: " + input.pushInfo.commitURL + "; record: " + JSON.stringify(record));
-                that.handleExecutionComplete(record);
-            }).catch(function (err: any) {
-                Log.error("AutoTest::invokeContainer(..) - ERROR for commit: " + input.pushInfo.commitURL + "; ERROR: " + err);
-            });
+            const record: ICommitRecord = await docker.execute();
+
+            Log.info("AutoTest::invokeContainer(..) - complete for commit: " + input.pushInfo.commitURL + "; record: " + JSON.stringify(record));
+            this.handleExecutionComplete(record);
+
         } catch (err) {
-            Log.error("AutoTest::invokeContainer(..) - ERROR: " + err.message);
+            Log.error("AutoTest::invokeContainer(..) - ERROR for commit: " + input.pushInfo.commitURL + "; ERROR: " + err);
+            // Log.error("AutoTest::invokeContainer(..) - ERROR: " + err.message);
         }
     }
 
