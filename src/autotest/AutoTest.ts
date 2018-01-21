@@ -185,11 +185,20 @@ export class AutoTest implements IAutoTest {
                 // execution not yet complete
                 Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL + "; execution not yet complete");
                 if (shouldPost === true) {
-                    // user has request quota available
-                    let msg = "This commit is still queued for processing against " + delivId + ".";
-                    msg += " Your results will be posted here as soon as they are ready.";
+
+                    // NOTE: it _should_ be on the standard queue here, but if it isn't, could we add it, just to be safe?
+                    const onQueue = this.isOnQueue(info.commitURL);
+                    let msg = "";
+                    if (onQueue === false) {
+                        Log.warn("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL + "; - element not on queue.");
+                        msg = "This commit is has not been queued; please make and push a new commit.";
+                    } else {
+                        // user has request quota available
+                        msg = "This commit is still queued for processing against " + delivId + ".";
+                        msg += " Your results will be posted here as soon as they are ready.";
+                        await this.saveCommentInfo(info); // whether TA or staff
+                    }
                     await this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
-                    await this.saveCommentInfo(info); // whether TA or staff
                 }
 
                 if (isCurrentlyRunning === true) {
@@ -200,7 +209,10 @@ export class AutoTest implements IAutoTest {
                     } else {
                         // promote to the express queue
                         const input = this.standardQueue.remove(info.commitURL);
-                        this.expressQueue.push(input);
+                        if (input !== null) {
+                            this.expressQueue.push(input);
+                        }
+
                     }
                 }
             }
@@ -452,5 +464,25 @@ export class AutoTest implements IAutoTest {
                 }
             }
         }
+    }
+
+    /**
+     * Checks to see of a commitURL is queued or is currently being executed
+     *
+     * @param {string} commitURL
+     * @returns {boolean}
+     */
+    private isOnQueue(commitURL: string): boolean {
+        let onQueue = false;
+        if (this.standardExecution !== null && this.standardExecution.pushInfo.commitURL === commitURL) {
+            onQueue = true;
+        } else if (this.expresssExecution !== null && this.expresssExecution.pushInfo.commitURL === commitURL) {
+            onQueue = true;
+        } else if (this.standardQueue.indexOf(commitURL) >= 0) {
+            onQueue = true;
+        } else if (this.expressQueue.indexOf(commitURL) >= 0) {
+            onQueue = true;
+        }
+        return onQueue;
     }
 }
