@@ -25,10 +25,17 @@ describe("AutoTest", () => {
         pushes = fs.readJSONSync("./test/pushes.json");
 
         data = new DummyDataStore();
+        data.clearData();
+
         portal = new DummyClassPortal();
         gh = new GithubService();
         const courseId = "cs310";
         at = new AutoTest(courseId, data, portal, gh);
+    });
+
+    beforeEach(function () {
+        Log.test("AutoTest::beforeEach() - start");
+        data.clearData();
     });
 
     it("Should be able to be instantiated.", () => {
@@ -40,14 +47,16 @@ describe("AutoTest", () => {
         expect(at).not.to.equal(null);
 
         const pe: IPushEvent = pushes[0];
-        // expect(data.pushes.length).to.equal(0);
+        let allData = await data.getAllData();
+        expect(allData.pushes.length).to.equal(0);
         await at.handlePushEvent(pe);
         await at.handlePushEvent(pushes[1]);
         await at.handlePushEvent(pushes[2]);
         await at.handlePushEvent(pushes[3]);
         await at.handlePushEvent(pushes[4]);
         await at.handlePushEvent(pushes[5]);
-        // expect(data.pushes.length).to.equal(6);
+        allData = await data.getAllData();
+        expect(allData.pushes.length).to.equal(6);
     });
 
     it("Should be able to receive multiple concurrent pushes.", async () => {

@@ -1,4 +1,4 @@
-import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven} from "../Types";
+import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven, IPushEvent} from "../Types";
 import Log from "../util/Log";
 import Util from "../util/Util";
 
@@ -39,6 +39,20 @@ export interface IDataStore {
     getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): Promise<IFeedbackGiven | null>;
 
     getFeedbackGivenRecordForCommit(commitUrl: string, userName: string): Promise<IFeedbackGiven | null>;
+
+    /**
+     * Debugging / testing only, should not be commonly used.
+     *
+     * @returns {Promise<{records: ICommitRecord[]; comments: ICommentEvent[]; pushes: IPushEvent[]; feedback: IFeedbackGiven[]}>}
+     */
+    getAllData(): Promise<{ records: ICommitRecord[], comments: ICommentEvent[], pushes: IPushEvent[], feedback: IFeedbackGiven[] }>;
+
+    /**
+     * Debugging only:
+     *
+     * Should only succeed if Config.getInstance().getProp("name") === test
+     */
+    clearData(): void;
 }
 
 /**
@@ -205,5 +219,44 @@ export class DummyDataStore implements IDataStore {
         }
         Log.info("DummyDataStore::getFeedbackGivenRecordForCommit(..) - not found; took: " + Util.took(start));
         return null;
+    }
+
+    public async getAllData(): Promise<{ records: ICommitRecord[], comments: ICommentEvent[], pushes: IPushEvent[], feedback: IFeedbackGiven[] }> {
+        Log.info("DummyDataStore::getAllData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
+
+        const records: ICommitRecord[] = await fs.readJSON(this.RECORD_PATH);
+        const comments: ICommentEvent[] = await fs.readJSON(this.COMMENT_PATH);
+        const pushes: IPushEvent[] = await fs.readJSON(this.PUSH_PATH);
+        const feedback: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
+
+        return {records, comments, pushes, feedback};
+    }
+
+    public clearData() {
+        Log.info("DummyDataStore::clearData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
+        if (Config.getInstance().getProp("name") === "test") {
+            // do it
+            fs.removeSync(this.RECORD_PATH);
+            fs.removeSync(this.COMMENT_PATH);
+            fs.removeSync(this.PUSH_PATH);
+            fs.removeSync(this.FEEDBACK_PATH);
+
+            if (!fs.existsSync(this.RECORD_PATH)) {
+                fs.writeJSONSync(this.RECORD_PATH, []);
+            }
+            if (!fs.existsSync(this.COMMENT_PATH)) {
+                fs.writeJSONSync(this.COMMENT_PATH, []);
+            }
+            if (!fs.existsSync(this.PUSH_PATH)) {
+                fs.writeJSONSync(this.PUSH_PATH, []);
+            }
+            if (!fs.existsSync(this.FEEDBACK_PATH)) {
+                fs.writeJSONSync(this.FEEDBACK_PATH, []);
+            }
+
+            Log.info("DummyDataStore::clearData() - files removed");
+        } else {
+            throw new Error("DummyDataStore::clearData() - can only be called on test configurations");
+        }
     }
 }

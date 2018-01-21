@@ -73,10 +73,10 @@ export class AutoTest implements IAutoTest {
     public async handlePushEvent(info: IPushEvent): Promise<boolean> {
         try {
             Log.info("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL);
-            const delivId: string = await this.getDelivId(info.projectURL); // current default deliverable // async
+            const delivId: string = await this.getDelivId(info.projectURL); // current default deliverable
             if (delivId !== null) {
                 const input: IContainerInput = {courseId: this.courseId, delivId, pushInfo: info};
-                this.savePushInfo(input);
+                await this.savePushInfo(input);
                 this.standardQueue.push(input);
             } else {
                 // no active deliverable, ignore this push event (don't push an error either)
@@ -139,7 +139,7 @@ export class AutoTest implements IAutoTest {
             if (delivId === null) {
                 // no deliverable, give warning and abort
                 const msg = "There is no current default deliverable; results will not be posted.";
-                this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
+                await this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
                 return true;
             }
 
@@ -161,23 +161,23 @@ export class AutoTest implements IAutoTest {
                 } else {
                     shouldPost = false;
                     const msg = "You must wait " + requestFeedbackDelay + " before requesting feedback.";
-                    this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
+                    await this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
                 }
             }
 
             if (res !== null) {
                 // execution complete
                 Log.trace("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL + "; execution complete");
-                const hasBeenRequestedBefore = this.dataStore.getFeedbackGivenRecordForCommit(info.commitURL, info.userName); // students often request grades they have previously 'paid' for
+                const hasBeenRequestedBefore = await this.dataStore.getFeedbackGivenRecordForCommit(info.commitURL, info.userName); // students often request grades they have previously 'paid' for
                 if (hasBeenRequestedBefore !== null) {
                     // just give it to them again, don't charge for event
                     shouldPost = true;
                 }
 
                 if (shouldPost === true) {
-                    this.github.postMarkdownToGithub({url: info.postbackURL, message: res.output.feedback});
-                    this.saveFeedbackGiven(this.courseId, delivId, info.userName, res.input.pushInfo.timestamp, info.commitURL);
-                    this.saveCommentInfo(info); // user or TA; only for analytics since feedback has been given
+                    await this.github.postMarkdownToGithub({url: info.postbackURL, message: res.output.feedback});
+                    await this.saveFeedbackGiven(this.courseId, delivId, info.userName, res.input.pushInfo.timestamp, info.commitURL);
+                    await this.saveCommentInfo(info); // user or TA; only for analytics since feedback has been given
                 }
 
             } else {
@@ -187,8 +187,8 @@ export class AutoTest implements IAutoTest {
                     // user has request quota available
                     let msg = "This commit is still queued for processing against " + delivId + ".";
                     msg += " Your results will be posted here as soon as they are ready.";
-                    this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
-                    this.saveCommentInfo(info); // whether TA or staff
+                    await this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
+                    await this.saveCommentInfo(info); // whether TA or staff
                 }
 
                 if (isCurrentlyRunning === true) {
@@ -233,12 +233,14 @@ export class AutoTest implements IAutoTest {
             const requestorUsername = await this.getRequestor(data.commitURL);
             if (data.output.postbackOnComplete === true) {
                 // do this first, doesn't count against quota
+                Log.info("AutoTest::handleExecutionComplete(..) - postback: true");
                 await this.github.postMarkdownToGithub({url: data.input.pushInfo.postbackURL, message: data.output.feedback});
                 // NOTE: if the feedback was requested for this build it shouldn't count
                 // since we're not calling saveFeedabck this is right
                 // but if we replay the commit comments, we would see it there, so be careful
             } else if (requestorUsername !== null) {
                 // feedback has been previously requested
+                Log.info("AutoTest::handleExecutionComplete(..) - feedback requested");
                 await this.github.postMarkdownToGithub({url: data.input.pushInfo.postbackURL, message: data.output.feedback});
                 await this.saveFeedbackGiven(data.input.courseId, data.input.delivId, requestorUsername, data.input.pushInfo.timestamp, data.commitURL);
             } else {
@@ -248,9 +250,11 @@ export class AutoTest implements IAutoTest {
 
             // when done clear the execution slot and schedule the next
             if (data.commitURL === this.expresssExecution.pushInfo.commitURL) {
+                Log.trace("AutoTest::handleExecutionComplete(..) - clear express slot");
                 this.expresssExecution = null;
             }
             if (data.commitURL === this.standardExecution.pushInfo.commitURL) {
+                Log.trace("AutoTest::handleExecutionComplete(..) - clear standard slot");
                 this.standardExecution = null;
             }
             this.tick();
@@ -260,6 +264,7 @@ export class AutoTest implements IAutoTest {
     }
 
     public tick() {
+        Log.info("AutoTest::tick(..) - start");
         try {
             if (this.standardExecution === null) {
                 const info = this.standardQueue.pop();
@@ -274,6 +279,7 @@ export class AutoTest implements IAutoTest {
                     this.invokeContainer(info);
                 }
             }
+            Log.info("AutoTest::tick(..) - done");
         } catch (err) {
             Log.error("AutoTest::tick() - course: " + this.courseId + "; ERROR: " + err.message);
         }
@@ -284,9 +290,9 @@ export class AutoTest implements IAutoTest {
      *
      * @param {IContainerInput} info
      */
-    private savePushInfo(info: IContainerInput) {
+    private async savePushInfo(info: IContainerInput) {
         Log.trace("AutoTest::savePushInfo(..) - commit: " + info.pushInfo.commitURL);
-        this.dataStore.savePush(info);
+        await this.dataStore.savePush(info);
     }
 
     /**
@@ -294,9 +300,9 @@ export class AutoTest implements IAutoTest {
      *
      * @param {ICommentEvent} info
      */
-    private saveCommentInfo(info: ICommentEvent) {
+    private async saveCommentInfo(info: ICommentEvent) {
         Log.trace("AutoTest::saveCommentInfo(..) - commit: " + info.commitURL);
-        this.dataStore.saveComment(info);
+        await this.dataStore.saveComment(info);
     }
 
     /**
