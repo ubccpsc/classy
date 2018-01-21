@@ -273,11 +273,11 @@ export class AutoTest implements IAutoTest {
             }
 
             // when done clear the execution slot and schedule the next
-            if (data.commitURL === this.expresssExecution.pushInfo.commitURL) {
+            if (this.expresssExecution !== null && this.expresssExecution.pushInfo.commitURL === data.commitURL) {
                 Log.trace("AutoTest::handleExecutionComplete(..) - clear express slot");
                 this.expresssExecution = null;
             }
-            if (data.commitURL === this.standardExecution.pushInfo.commitURL) {
+            if (this.standardExecution !== null && this.standardExecution.pushInfo.commitURL === data.commitURL) {
                 Log.trace("AutoTest::handleExecutionComplete(..) - clear standard slot");
                 this.standardExecution = null;
             }
