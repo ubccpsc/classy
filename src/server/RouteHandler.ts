@@ -3,18 +3,9 @@ import {AutoTest} from "../autotest/AutoTest";
 import {DummyClassPortal} from "../autotest/ClassPortal";
 import {DummyDataStore} from "../autotest/DataStore";
 import {GithubService} from "../autotest/GithubService";
-// import CommitCommentController from "../controller/github/CommitCommentController";
-// import PushController from "../controller/github/PushController";
-// import ResultController from '../controller/ResultController';
-// import RequestHelper from "../../src/rest/helpers/RequestHelper";
-import Log from "../util/Log";
-import {ICommentEvent, IPushEvent} from "../Types";
 import {GithubUtil} from "../util/GithubUtil";
-
-// import {TestJob} from '../controller/TestJobController';
-// import ResultRecordController from '../controller/ResultRecordController';
-// import StaticHtmlController from '../controller/StaticHtmlController';
-// import ResultRecord, {ResultPayload} from '../model/results/ResultRecord';
+import Log from "../util/Log";
+import Util from "../util/Util";
 
 export default class RouteHandler {
 
@@ -68,6 +59,7 @@ export default class RouteHandler {
      */
     public static postGithubHook(req: restify.Request, res: restify.Response, next: restify.Next) {
         Log.info("RoutHandler::postGithubHook(..) - start");
+        const start = Date.now();
         const githubEvent: string = req.header("X-GitHub-Event");
         const body = req.body;
         // let team: string = "";
@@ -108,10 +100,10 @@ export default class RouteHandler {
 
                     Log.info("RouteHandler::handleCommentEvent() - request: " + JSON.stringify(commentEvent, null, 2));
                     RouteHandler.getAutoTest().handleCommentEvent(commentEvent).then((result: boolean) => { // TODO: validate result properties; add an interface
-                        Log.info("RouteHandler::commitComment() - success; result: " + result);
+                        Log.info("RouteHandler::commitComment() - success; result: " + result + "; took: " + Util.took(start));
                         res.json(200, {});
                     }).catch((err: any) => {
-                        Log.error("RouteHandler::commitComment() - failure; ERROR: " + err);
+                        Log.error("RouteHandler::commitComment() - failure; ERROR: " + err + "; took: " + Util.took(start));
                         res.json(400, "Failed to process commit comment.");
                     });
                 } catch (err) {
@@ -136,10 +128,10 @@ export default class RouteHandler {
 
                     Log.info("RouteHandler::handlePushEvent() - request: " + JSON.stringify(pushEvent, null, 2));
                     RouteHandler.getAutoTest().handlePushEvent(pushEvent).then((result: boolean) => {
-                        Log.info("RouteHandler::handlePushEvent() - result: " + result);
+                        Log.info("RouteHandler::handlePushEvent() - result: " + result + "; took: " + Util.took(start));
                         res.json(202, {body: "Commit has been queued"});
                     }).catch((err: any) => {
-                        Log.error("RouteHandler::handlePushEvent() - error encountered; ERROR: " + err);
+                        Log.error("RouteHandler::handlePushEvent() - error encountered; ERROR: " + err + "; took: " + Util.took(start));
                         res.json(400, "Failed to enqueue commit for testing.");
                     });
                 } catch (err) {
