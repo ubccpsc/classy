@@ -292,14 +292,16 @@ export class AutoTest implements IAutoTest {
     public tick() {
         Log.info("AutoTest::tick(..) - start");
         try {
-            if (this.standardExecution === null) {
+            if (this.standardExecution === null && this.standardQueue.length() > 0) {
+                Log.info("AutoTest::tick(..) - standard queue clear; launching new job");
                 const info = this.standardQueue.pop();
                 if (info !== null) {
                     this.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
                 }
             }
 
-            if (this.expresssExecution === null) {
+            if (this.expresssExecution === null && this.expressQueue.length() > 0) {
+                Log.info("AutoTest::tick(..) - express queue clear; launching new job");
                 const info = this.expressQueue.pop();
                 if (info !== null) {
                     this.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
