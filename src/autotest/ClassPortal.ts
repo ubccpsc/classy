@@ -28,11 +28,11 @@ export interface IClassPortal {
 export class DummyClassPortal implements IClassPortal {
 
     public async isStaff(courseId: string, userName: string): Promise<boolean> {
-        return userName.indexOf("a") >= 0; // TODO: implement
+        return userName === "staff" || userName === "cs310"; // TODO: implement
     }
 
     public async getDefaultDeliverableId(commitUrl: string): Promise<string | null> {
-        return "d0"; // TODO: implement
+        return "d1"; // TODO: implement
     }
 
     /**

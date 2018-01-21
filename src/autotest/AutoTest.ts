@@ -146,8 +146,9 @@ export class AutoTest implements IAutoTest {
 
             // front load the async operations, even if it means we do some operations unnecessairly
             // could do these all in parallel
-            const isStaff = await this.classPortal.isStaff(this.courseId, info.userName); // async
-            const requestFeedbackDelay = await this.requestFeedbackDelay(delivId, info.userName, info.timestamp); // ts of comment, not push
+            const isStaff: boolean = await this.classPortal.isStaff(this.courseId, info.userName); // async
+            const requestFeedbackDelay: string | null = await this.requestFeedbackDelay(delivId, info.userName, info.timestamp); // ts of comment, not push
+            const hasBeenRequestedBefore: IFeedbackGiven = await this.dataStore.getFeedbackGivenRecordForCommit(info.commitURL, info.userName); // students often request grades they have previously 'paid' for
             const res: ICommitRecord = await this.getOutputRecord(info.commitURL); // for any user
             const isCurrentlyRunning: boolean = this.isCommitExecuting(info.commitURL, delivId);
 
@@ -160,21 +161,23 @@ export class AutoTest implements IAutoTest {
                 if (requestFeedbackDelay === null) {
                     shouldPost = true;
                 } else {
-                    shouldPost = false;
-                    const msg = "You must wait " + requestFeedbackDelay + " before requesting feedback.";
-                    await this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
+                    if (hasBeenRequestedBefore !== null) {
+                        // don't give the timeout warning in this instance
+                    } else {
+                        shouldPost = false;
+                        const msg = "You must wait " + requestFeedbackDelay + " before requesting feedback.";
+                        await this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
+                    }
                 }
             }
 
             if (res !== null) {
                 // execution complete
                 Log.trace("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL + "; execution complete");
-                const hasBeenRequestedBefore = await this.dataStore.getFeedbackGivenRecordForCommit(info.commitURL, info.userName); // students often request grades they have previously 'paid' for
                 if (hasBeenRequestedBefore !== null) {
-                    // just give it to them again, don't charge for event
+                    // just give it to them again (saving the feedback given is ok since it is by push timestamp)
                     shouldPost = true;
                 }
-
                 if (shouldPost === true) {
                     await this.github.postMarkdownToGithub({url: info.postbackURL, message: res.output.feedback});
                     await this.saveFeedbackGiven(this.courseId, delivId, info.userName, res.input.pushInfo.timestamp, info.commitURL);
@@ -296,6 +299,7 @@ export class AutoTest implements IAutoTest {
                 Log.info("AutoTest::tick(..) - standard queue clear; launching new job");
                 const info = this.standardQueue.pop();
                 if (info !== null) {
+                    this.standardExecution = info;
                     this.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
                 }
             }
@@ -304,6 +308,7 @@ export class AutoTest implements IAutoTest {
                 Log.info("AutoTest::tick(..) - express queue clear; launching new job");
                 const info = this.expressQueue.pop();
                 if (info !== null) {
+                    this.expresssExecution = info;
                     this.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
                 }
             }

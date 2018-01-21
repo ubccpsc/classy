@@ -1,6 +1,7 @@
 import {Config} from "../Config";
 import {IAttachment, ICommitRecord, IContainerInput, IContainerOutput, IGradeReport} from "../Types";
 import Log from "../util/Log";
+import Util from "../util/Util";
 
 export class DockerInstance {
     private input: IContainerInput;
@@ -22,10 +23,11 @@ export class DockerInstance {
             //      fulfill(null); // should be the ICommitRecord!
             // Log.info("about to timeout");
 
-            const timeout = function (ms: number) {
-                return new Promise((resolve) => setTimeout(resolve, ms));
-            };
-            await timeout(10000);
+            let timeout = 10000;
+            if (Config.getInstance().getProp("name") === "test") {
+                timeout = 20; // don't slow down tests; don't need a lot to get out of order here
+            }
+            await Util.timeout(timeout); // simulate the container taking longer than the rest of the process
 
             Log.info("DockerInstance::execute() - done; commitSHA: " + this.input.pushInfo.commitSHA);
 
@@ -44,7 +46,7 @@ export class DockerInstance {
                 commitUrl:          this.input.pushInfo.commitURL,
                 timestamp:          Date.now(),
                 report:             gradeReport,
-                feedback:           "Test Feedback", // markdown
+                feedback:           "Test execution complete.",
                 postbackOnComplete: false,
                 custom:             {},
                 attachments:        [],
