@@ -104,4 +104,34 @@ describe("AutoTest", () => {
         // expect(gh.messages.length).to.equal(1); // commented out because it's async and we aren't waiting yet
     });
 
+    it("Should be able to receive feedback for a processed push.", async () => {
+        expect(at).not.to.equal(null);
+
+        await at.handlePushEvent(pushes[0]);
+        /*
+                {
+                    "branch": "master",
+                    "commitSHA": "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
+                    "commitURL": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
+                    "projectURL": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/",
+                    "postbackURL": "EMPTY",
+                    "repo": "d0_team999",
+                    "timestamp": 1234567890
+                }
+          */
+        const comment: ICommentEvent = {
+            botMentioned: true, // was the bot mentioned (e.g., can ignore comments that don't mention the bot)
+            commitSHA:    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
+            commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
+            userName:     "cs310test",
+            courseId:     "cs310", // string once known
+            delivId:      "d9", // string if specified
+            postbackURL:  "EMPTY", // where to send postback results
+            timestamp:    1344567890 // timestamp of the latest comment update (safer than comment creation)
+        };
+        await at.handleCommentEvent(comment);
+
+        // should assert something
+    });
+
 });

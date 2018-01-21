@@ -157,6 +157,7 @@ export class DummyDataStore implements IDataStore {
 
         // read
         const outRecords: ICommitRecord[] = await fs.readJSON(this.RECORD_PATH);
+        Log.info("DummyDataStore::getOutputRecord(..) - # records: " + outRecords.length);
         // find and return
         for (const record of outRecords) {
             if (record !== null && typeof record.commitURL !== "undefined" && record.commitURL === commitURL) {
@@ -199,10 +200,12 @@ export class DummyDataStore implements IDataStore {
             Log.info("DummyDataStore::getLatestFeedbackGivenRecord(..) - not found; took: " + Util.took(start));
             return null;
         } else {
-            return Math.max.apply(Math, shortList.map(function (o: IFeedbackGiven) {
+            let ret = null;
+            Math.max.apply(Math, shortList.map(function (o: IFeedbackGiven) {
                 Log.info("DummyDataStore::getLatestFeedbackGivenRecord(..) - found; took: " + Util.took(start));
-                return o;
+                ret = o;
             }));
+            return ret;
         }
     }
 

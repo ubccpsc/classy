@@ -369,7 +369,8 @@ export class AutoTest implements IAutoTest {
     }
 
     private async getOutputRecord(commitURL: string): Promise<ICommitRecord | null> {
-        return await this.dataStore.getOutputRecord(commitURL);
+        const ret = await this.dataStore.getOutputRecord(commitURL);
+        return ret;
     }
 
     /**
@@ -449,7 +450,7 @@ export class AutoTest implements IAutoTest {
                 return null; // no prior requests
             } else {
                 const delta = (reqTimestamp - record.timestamp) / 1000;
-                if (delta > testDelay) {
+                if (delta >= testDelay) {
                     return null; // enough time has passed
                 } else {
                     const hours = Math.floor(delta / 3600);

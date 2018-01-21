@@ -35,7 +35,13 @@ export class DummyClassPortal implements IClassPortal {
         return "d0"; // TODO: implement
     }
 
+    /**
+     * Gets the delay beween test executions in milliseconds
+     *
+     * @param {string} courseId
+     * @returns {Promise<number>}
+     */
     public async getTestDelay(courseId: string): Promise<number> {
-        return 60; // TODO: implement
+        return 12 * 60 * 60 * 1000; // 12h right now // TODO: implement
     }
 }
