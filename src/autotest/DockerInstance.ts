@@ -19,10 +19,8 @@ export class DockerInstance {
             const oracleToken = Config.getInstance().getProp("githubOracleToken");
             const dockerId = Config.getInstance().getProp("dockerId");
             const workspace = Config.getInstance().getProp("workspace");
-            // all disk stuff should be handled before this too
-            //      fulfill(null); // should be the ICommitRecord!
-            // Log.info("about to timeout");
 
+            // TODO: This should really become TestDocker.ts or something that can be instantiated
             let timeout = 10000;
             if (Config.getInstance().getProp("name") === "test") {
                 timeout = 20; // don't slow down tests; don't need a lot to get out of order here
@@ -52,6 +50,12 @@ export class DockerInstance {
                 attachments:        [],
                 state:              "SUCCESS" // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
             };
+
+            // just a hack to test postback events
+            if (this.input.pushInfo.postbackURL === "POSTBACK") {
+                out.postbackOnComplete = true;
+                out.feedback = "Build Problem Encountered.";
+            }
 
             const ret: ICommitRecord = {
                 commitURL: this.input.pushInfo.commitURL,

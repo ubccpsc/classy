@@ -35,6 +35,17 @@ describe("AutoTest", () => {
         "timestamp":   1516472872288
     };
 
+    const pushEventPostback: IPushEvent = {
+        "branch":      "master",
+        "commitSHA":   "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
+        "commitURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
+        "projectURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/",
+        "org":         "CPSC310-2017W-T2",
+        "postbackURL": "POSTBACK",
+        "repo":        "d0_team999",
+        "timestamp":   1516472872288
+    };
+
     const inputRecordA: IContainerInput = {
         "courseId": "cs310",
         "delivId":  "d0",
@@ -118,6 +129,14 @@ describe("AutoTest", () => {
         data.clearData();
     });
 
+    afterEach(async function () {
+        // pause after each test so async issues don't persist
+        // this is a hack, but makes the tests more deterministic
+        Log.test("AutoTest::afterEach() - start");
+        await Util.timeout(100);
+        Log.test("AutoTest::afterEach() - done");
+    });
+
     it("Should be able to be instantiated.", () => {
         expect(at).not.to.equal(null);
         expect(pushes.length).to.equal(9);
@@ -154,10 +173,9 @@ describe("AutoTest", () => {
         await Promise.all(arr);
         const allData = await data.getAllData();
         // expect(allData.pushes.length).to.equal(6);
-        await Util.timeout(100); // just wait
     });
 
-    it("Should receive a comment event.", async () => {
+    it("Should be able to receive a comment event.", async () => {
         expect(at).not.to.equal(null);
 
         const pe: IPushEvent = pushes[0];
@@ -181,7 +199,7 @@ describe("AutoTest", () => {
         await Util.timeout(1 * 1000); // let test finish so it doesn't ruin subsequent executions
     });
 
-    it("User should be given a warning message on a commit that has not been queued.", async () => {
+    it("Should give a user a warning message on a commit that has not been queued.", async () => {
         // This case happens when a comment is made on a commit that AutoTest did not see the push for
         expect(at).not.to.equal(null);
 
@@ -204,7 +222,7 @@ describe("AutoTest", () => {
         expect(allData.comments.length).to.equal(0); // comment event should not have been saved
     });
 
-    it("User should be given 'still processing' message on a commit that has not been finished.", async () => {
+    it("Should give a user a 'still processing' message on a commit that has not been finished.", async () => {
         // This case happens when a comment is made on a commit that AutoTest did not see the push for
         expect(at).not.to.equal(null);
 
@@ -225,9 +243,110 @@ describe("AutoTest", () => {
         expect(gh.messages.length).to.equal(1); // should generate a warning
         expect(gh.messages[0].message).to.equal("This commit is still queued for processing against d9. Your results will be posted here as soon as they are ready.");
         expect(allData.comments.length).to.equal(1);
+
+        await Util.timeout(200); // just clear the buffer before moving onto the next test
     });
 
-    it("User should be given the results message on a commit that has been finished.", async () => {
+    it("Should give a user a response for on a commit once it finishes if they have previously requested it.", async () => {
+        // This case happens when a comment is made on a commit that AutoTest did not see the push for
+        expect(at).not.to.equal(null);
+
+        // start fresh
+        data.clearData();
+        gh.messages = [];
+
+        // SETUP: add a push with no output records
+        await at.handlePushEvent(pushEventA);
+        let allData = await data.getAllData();
+        expect(gh.messages.length).to.equal(0); // should not be any feedback yet
+        expect(allData.comments.length).to.equal(0);
+        expect(allData.pushes.length).to.equal(1);
+        Log.test("Setup complete");
+
+        // TEST: send a comment (this is the previous test)
+        await at.handleCommentEvent(commentRecordUserA);
+        allData = await data.getAllData();
+        expect(gh.messages.length).to.equal(1); // should generate a warning
+        expect(gh.messages[0].message).to.equal("This commit is still queued for processing against d9. Your results will be posted here as soon as they are ready.");
+        expect(allData.comments.length).to.equal(1);
+        expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
+
+        // Wait for it!
+        await Util.timeout(100);
+        allData = await data.getAllData();
+        expect(gh.messages.length).to.equal(2); // should generate a warning
+        expect(gh.messages[1].message).to.equal("Test execution complete.");
+        expect(allData.comments.length).to.equal(1);
+        expect(allData.feedback.length).to.equal(1); // should be charged
+    });
+
+    it("Should give a user a response for on a commit once it finishes if postback is true.", async () => {
+        // This case happens when a comment is made on a commit that AutoTest did not see the push for
+        expect(at).not.to.equal(null);
+
+        // start fresh
+        data.clearData();
+        gh.messages = [];
+
+        // SETUP: add a push with no output records
+        await at.handlePushEvent(pushEventPostback);
+        let allData = await data.getAllData();
+        expect(gh.messages.length).to.equal(0); // should not be any feedback yet
+        expect(allData.comments.length).to.equal(0);
+        expect(allData.pushes.length).to.equal(1);
+        Log.test("Setup complete");
+
+        // TEST: send a comment (this is the previous test)
+        // await at.handleCommentEvent(commentRecordUserA);
+        // allData = await data.getAllData();
+        // expect(gh.messages.length).to.equal(1); // should generate a warning
+        // expect(gh.messages[0].message).to.equal("This commit is still queued for processing against d9. Your results will be posted here as soon as they are ready.");
+        // expect(allData.comments.length).to.equal(1);
+        // expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
+
+        // Wait for it!
+        await Util.timeout(100);
+        allData = await data.getAllData();
+        expect(gh.messages.length).to.equal(1); // should post response
+        expect(gh.messages[0].message).to.equal("Build Problem Encountered.");
+        expect(allData.comments.length).to.equal(0);
+        expect(allData.feedback.length).to.equal(0); // no charge
+    });
+
+    it("Should give a user a response for on a commit once it finishes if postback is true. They should not be charged if they requested this build.", async () => {
+        // This case happens when a comment is made on a commit that AutoTest did not see the push for
+        expect(at).not.to.equal(null);
+
+        // start fresh
+        data.clearData();
+        gh.messages = [];
+
+        // SETUP: add a push with no output records
+        await at.handlePushEvent(pushEventPostback);
+        let allData = await data.getAllData();
+        expect(gh.messages.length).to.equal(0); // should not be any feedback yet
+        expect(allData.comments.length).to.equal(0);
+        expect(allData.pushes.length).to.equal(1);
+        Log.test("Setup complete");
+
+        // TEST: send a comment (this is the previous test)
+        await at.handleCommentEvent(commentRecordUserA);
+        allData = await data.getAllData();
+        expect(gh.messages.length).to.equal(1); // should generate a warning
+        expect(gh.messages[0].message).to.equal("This commit is still queued for processing against d9. Your results will be posted here as soon as they are ready.");
+        expect(allData.comments.length).to.equal(1);
+        expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
+
+        // Wait for it!
+        await Util.timeout(100);
+        allData = await data.getAllData();
+        expect(gh.messages.length).to.equal(2); // should post response
+        expect(gh.messages[1].message).to.equal("Build Problem Encountered.");
+        expect(allData.comments.length).to.equal(1);
+        expect(allData.feedback.length).to.equal(0); // no charge
+    });
+
+    it("Should give a user the results message on a commit that has been finished.", async () => {
         // This case happens when a comment is made on a commit that AutoTest did not see the push for
         expect(at).not.to.equal(null);
 
@@ -263,7 +382,7 @@ describe("AutoTest", () => {
         Log.test("Test complete.");
     });
 
-    it("User should not be able to request results too soon.", async () => {
+    it("Should not let a user request results too soon.", async () => {
         // This case happens when a comment is made on a commit that AutoTest did not see the push for
         expect(at).not.to.equal(null);
 
@@ -284,7 +403,7 @@ describe("AutoTest", () => {
         data.saveFeedbackGivenRecord(fg);
         let allData = await data.getAllData();
         expect(allData.comments.length).to.equal(0);
-        expect(allData.feedback.length).to.equal(1); // user should have been charged
+        expect(allData.feedback.length).to.equal(1); // the feedback record we inserted from a recent past request
         Log.test("Setup complete");
 
         // TEST: send a comment
@@ -293,6 +412,7 @@ describe("AutoTest", () => {
         expect(gh.messages.length).to.equal(1); // should generate a warning
         expect(gh.messages[0].message).to.equal("You must wait 6 hours and 0 minutes before requesting feedback."); // would really be the whole message
         expect(allData.comments.length).to.equal(0); // doesn't count as a comment, user has to ask again once they are in-quota
+        expect(allData.feedback.length).to.equal(1); // no extra feedback records should be present
 
         Log.test("Test complete.");
     });

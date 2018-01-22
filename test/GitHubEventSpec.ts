@@ -1,10 +1,10 @@
-import Log from "../src/util/Log";
-
 import {expect} from "chai";
 import * as fs from "fs";
 import "mocha";
-import {GithubUtil} from "../src/util/GithubUtil";
+
 import {Config} from "../src/Config";
+import {GithubUtil} from "../src/util/GithubUtil";
+import Log from "../src/util/Log";
 
 describe("GitHub Event Parser", () => {
     Config.getInstance("test");

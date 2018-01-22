@@ -2,14 +2,14 @@ import {expect} from "chai";
 import "mocha";
 
 import {GithubService, IGithubMessage, IGithubService} from "../src/autotest/GithubService";
-import Log from "../src/util/Log";
 import {Config} from "../src/Config";
+import Log from "../src/util/Log";
 
 describe("GitHub Markdown Service", () => {
     Config.getInstance("test");
 
     const VALID_URL = "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments";
-    const INVALID_URL = "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2XXXXXINVALID/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments";
+    // const INVALID_URL = "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2XXXXXINVALID/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments";
 
     let gh: IGithubService;
 
@@ -33,8 +33,7 @@ describe("GitHub Markdown Service", () => {
         });
     });
 
-
-    it("Posting an invalid message should fail.", () => {
+    it("Should fail when trying to post an invalid message.", () => {
         const post: any = {
             url: VALID_URL
         };

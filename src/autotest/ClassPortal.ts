@@ -3,12 +3,18 @@ export interface IClassPortal {
     /**
      * For a given commitUrl, figure out what the default deliverable is at the current time.
      *
+     * NOTE: commitUrl could be something simpler too, maybe just courseId is easiest:
+     *
+     * GET /admin/getDefaultDeliverable/{:courseId}
+     *
      * @param commitUrl
      */
     getDefaultDeliverableId(commitUrl: string): Promise<string | null>;
 
     /**
-     * Is the user staff on the course.
+     * Returns whether the username is staff on the course.
+     *
+     * GET /admin/isStaff/{:courseId}/{:userId} (or some variant)
      *
      * @param courseId
      * @param userName
@@ -16,7 +22,9 @@ export interface IClassPortal {
     isStaff(courseId: string, userName: string): Promise<boolean>;
 
     /**
-     * Gets the delay period (in seconds) between AutoTest invocations.
+     * Gets the delay period (in seconds) that AutoTest should enforce on students between feedback requests.
+     *
+     * GET /admin/getTestDelay/{:courseId} (or some variant)
      *
      * Currently assumes the delay is constant across all deliverables.
      *
