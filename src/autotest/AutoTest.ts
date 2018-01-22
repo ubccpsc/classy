@@ -73,7 +73,7 @@ export class AutoTest implements IAutoTest {
      */
     public async handlePushEvent(info: IPushEvent): Promise<boolean> {
         try {
-            Log.info("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitSHA);
+            Log.info("AutoTest::handlePushEvent(..) - start; course: " + this.courseId + "; commit: " + info.commitSHA);
             const start = Date.now();
             const delivId: string = await this.getDelivId(info.projectURL); // current default deliverable
             if (delivId !== null) {
@@ -85,7 +85,7 @@ export class AutoTest implements IAutoTest {
                 // no active deliverable, ignore this push event (don't push an error either)
                 Log.warn("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitSHA + " - No active deliverable; push ignored.");
             }
-            Log.info("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitSHA + "; done. Took: " + Util.took(start));
+            Log.info("AutoTest::handlePushEvent(..) - done; course: " + this.courseId + "; commit: " + info.commitSHA + "; took: " + Util.took(start));
             return true;
         } catch (err) {
             Log.error("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; ERROR: " + err.message);
@@ -118,8 +118,8 @@ export class AutoTest implements IAutoTest {
         const that = this;
         const start = Date.now();
         try {
-            Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + " - start"); // commit: " + info.commitURL + "; user: " + info.userName);
-            Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitSHA + "; user: " + info.userName);
+            // Log.info("AutoTest::handleCommentEvent(..) - start; course: " + this.courseId); // commit: " + info.commitURL + "; user: " + info.userName);
+            Log.info("AutoTest::handleCommentEvent(..) - start; course: " + this.courseId + "; commit: " + info.commitSHA + "; user: " + info.userName);
 
             // NOTE: need to think a bit harder about which comment events should be saved and which should be dropped
 
@@ -227,7 +227,7 @@ export class AutoTest implements IAutoTest {
             // everything is ready; run the clock
             this.tick();
 
-            Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitSHA + "; done. Took: " + Util.took(start));
+            Log.info("AutoTest::handleCommentEvent(..) - done; course: " + this.courseId + "; commit: " + info.commitSHA + "; took: " + Util.took(start));
         } catch (err) {
             Log.error("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; ERROR: " + err.message);
             throw err;
