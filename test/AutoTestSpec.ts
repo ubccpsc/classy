@@ -123,7 +123,7 @@ describe("AutoTest", () => {
         expect(pushes.length).to.equal(9);
     });
 
-    it("REDO: Should be able to receive multiple pushes.", async () => {
+    it("Should be able to receive multiple pushes.", async () => {
         expect(at).not.to.equal(null);
 
         const pe: IPushEvent = pushes[0];
@@ -139,7 +139,7 @@ describe("AutoTest", () => {
         expect(allData.pushes.length).to.equal(6);
     });
 
-    it("REDO: Should be able to receive multiple concurrent pushes.", async () => {
+    it("Should be able to receive multiple concurrent pushes.", async () => {
         expect(at).not.to.equal(null);
 
         const pe: IPushEvent = pushes[0];
@@ -152,17 +152,12 @@ describe("AutoTest", () => {
         arr.push(at.handlePushEvent(pushes[5]));
 
         await Promise.all(arr);
-
-        // should assert something
+        const allData = await data.getAllData();
+        // expect(allData.pushes.length).to.equal(6);
+        await Util.timeout(100); // just wait
     });
 
-    it("REDO: Should be able to tick and pull something off the queue.", () => {
-        // expect(data.pushes.length).to.equal(6);
-        at.tick();
-        // expect(data.pushes.length).to.equal(6); // pushes record should be the same size
-    });
-
-    it("REDO: Should receive a comment event.", async () => {
+    it("Should receive a comment event.", async () => {
         expect(at).not.to.equal(null);
 
         const pe: IPushEvent = pushes[0];
@@ -177,11 +172,11 @@ describe("AutoTest", () => {
             timestamp:     1234567891
         };
 
-        // chai.spy.on(gh, "postMarkdownToGithub"); // installing spies caused dependency issues
-        // expect(data.comments.length).to.equal(0);
+        let allData = await data.getAllData();
+        expect(allData.comments.length).to.equal(0);
         await at.handleCommentEvent(ce);
-        // expect(data.comments.length).to.equal(1);
-        // expect(gh.messages.length).to.equal(1); // commented out because it's async and we aren't waiting yet
+        allData = await data.getAllData();
+        expect(allData.comments.length).to.equal(0);
 
         await Util.timeout(1 * 1000); // let test finish so it doesn't ruin subsequent executions
     });
@@ -211,7 +206,6 @@ describe("AutoTest", () => {
 
     it("User should be given 'still processing' message on a commit that has not been finished.", async () => {
         // This case happens when a comment is made on a commit that AutoTest did not see the push for
-
         expect(at).not.to.equal(null);
 
         // start fresh
@@ -235,7 +229,6 @@ describe("AutoTest", () => {
 
     it("User should be given the results message on a commit that has been finished.", async () => {
         // This case happens when a comment is made on a commit that AutoTest did not see the push for
-
         expect(at).not.to.equal(null);
 
         // start fresh
@@ -272,7 +265,6 @@ describe("AutoTest", () => {
 
     it("User should not be able to request results too soon.", async () => {
         // This case happens when a comment is made on a commit that AutoTest did not see the push for
-
         expect(at).not.to.equal(null);
 
         // start fresh
