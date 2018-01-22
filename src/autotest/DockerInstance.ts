@@ -1,5 +1,5 @@
 import {Config} from "../Config";
-import {IAttachment, ICommitRecord, IContainerInput, IContainerOutput, IGradeReport} from "../Types";
+import {ICommitRecord, IContainerInput, IContainerOutput, IGradeReport} from "../Types";
 import Log from "../util/Log";
 import Util from "../util/Util";
 
@@ -26,8 +26,6 @@ export class DockerInstance {
                 timeout = 20; // don't slow down tests; don't need a lot to get out of order here
             }
             await Util.timeout(timeout); // simulate the container taking longer than the rest of the process
-
-            Log.info("DockerInstance::execute() - done; commitSHA: " + this.input.pushInfo.commitSHA);
 
             const gradeReport: IGradeReport = {
                 scoreOverall: 50,
@@ -64,6 +62,7 @@ export class DockerInstance {
                 output:    out
             };
 
+            Log.info("DockerInstance::execute() - execution complete; commit: " + this.input.pushInfo.commitSHA);
             return ret;
 
         } catch (err) {

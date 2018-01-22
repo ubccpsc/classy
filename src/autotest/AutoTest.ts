@@ -74,6 +74,7 @@ export class AutoTest implements IAutoTest {
     public async handlePushEvent(info: IPushEvent): Promise<boolean> {
         try {
             Log.info("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitSHA);
+            const start = Date.now();
             const delivId: string = await this.getDelivId(info.projectURL); // current default deliverable
             if (delivId !== null) {
                 const input: IContainerInput = {courseId: this.courseId, delivId, pushInfo: info};
@@ -84,6 +85,7 @@ export class AutoTest implements IAutoTest {
                 // no active deliverable, ignore this push event (don't push an error either)
                 Log.warn("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitSHA + " - No active deliverable; push ignored.");
             }
+            Log.info("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitSHA + "; done. Took: " + Util.took(start));
             return true;
         } catch (err) {
             Log.error("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; ERROR: " + err.message);
@@ -114,6 +116,7 @@ export class AutoTest implements IAutoTest {
      */
     public async handleCommentEvent(info: ICommentEvent): Promise<boolean> {
         const that = this;
+        const start = Date.now();
         try {
             Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + " - start"); // commit: " + info.commitURL + "; user: " + info.userName);
             Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitSHA + "; user: " + info.userName);
@@ -223,6 +226,8 @@ export class AutoTest implements IAutoTest {
 
             // everything is ready; run the clock
             this.tick();
+
+            Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitSHA + "; done. Took: " + Util.took(start));
         } catch (err) {
             Log.error("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; ERROR: " + err.message);
             throw err;
@@ -242,6 +247,7 @@ export class AutoTest implements IAutoTest {
     public async handleExecutionComplete(data: ICommitRecord): Promise<void> {
         try {
             Log.info("AutoTest::handleExecutionComplete(..) - start");
+            const start = Date.now();
 
             if (typeof data === "undefined" || data === null) {
                 Log.warn("AutoTest::handleExecutionComplete(..) - null data; skipping");
@@ -273,7 +279,7 @@ export class AutoTest implements IAutoTest {
                 await this.saveFeedbackGiven(data.input.courseId, data.input.delivId, pushRequested.userName, pushRequested.timestamp, data.commitURL);
             } else {
                 // do nothing
-                Log.info("AutoTest::handleExecutionComplete(..) - course: " + this.courseId + "; commit not requested - no feedback given. url: " + data.commitSHA);
+                Log.info("AutoTest::handleExecutionComplete(..) - course: " + this.courseId + "; commit not requested - no feedback given; commit: " + data.commitSHA);
             }
 
             // when done clear the execution slot and schedule the next
@@ -288,9 +294,11 @@ export class AutoTest implements IAutoTest {
 
             // execution done, advance the clock
             this.tick();
+            Log.info("AutoTest::handleExecutionComplete(..) - done; took: " + Util.took(start));
         } catch (err) {
             Log.error("AutoTest::handleExecutionComplete(..) - course: " + this.courseId + "; ERROR: " + err.message);
         }
+
     }
 
     public tick() {
