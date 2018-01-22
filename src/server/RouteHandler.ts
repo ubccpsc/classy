@@ -58,13 +58,13 @@ export default class RouteHandler {
      *  - push
      */
     public static postGithubHook(req: restify.Request, res: restify.Response, next: restify.Next) {
-        Log.info("RoutHandler::postGithubHook(..) - start");
         const start = Date.now();
         const githubEvent: string = req.header("X-GitHub-Event");
+        Log.info("RoutHandler::postGithubHook(..) - start; handling event: " + githubEvent);
         const body = req.body;
         // let team: string = "";
-        const serverPort = RouteHandler.parseServerPort(req);
-        const currentCourseNum = RouteHandler.parseCourseNum(serverPort);
+        // const serverPort = RouteHandler.parseServerPort(req);
+        // const currentCourseNum = RouteHandler.parseCourseNum(serverPort);
 
         try {
             // const name: string = body.repository.name;
@@ -72,7 +72,7 @@ export default class RouteHandler {
         } catch (err) {
             Log.error("RoutHandler::postGithubHook(..) - ERROR extracting repo name: " + err);
         }
-        Log.info("RouteHandler::postGithubHook() - <RVD> X-GitHub-Event " + githubEvent + ".");
+        // Log.info("RouteHandler::postGithubHook() - <RVD> X-GitHub-Event " + githubEvent + ".");
 
         // enumerate GitHub event
         switch (githubEvent) {
@@ -88,7 +88,7 @@ export default class RouteHandler {
                     // const controller: CommitCommentController = new CommitCommentController(currentCourseNum);
                     // use body
                     const payload: any = body; // JSON.parse(JSON.stringify(body));
-                    Log.info("RouteHandler::handleCommentEvent() - start");
+                    // Log.info("RouteHandler::handleCommentEvent() - start");
 
                     let commentEvent;
                     try {
@@ -116,7 +116,7 @@ export default class RouteHandler {
                 try {
                     const payload = body;
 
-                    Log.info("RouteHandler::handlePushtEvent() - start");
+                    // Log.info("RouteHandler::handlePushtEvent() - start");
 
                     let pushEvent;
                     try {

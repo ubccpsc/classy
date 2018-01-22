@@ -185,43 +185,56 @@ export class DummyDataStore implements IDataStore {
     }
 
     public async getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): Promise<IFeedbackGiven | null> {
-        Log.info("DummyDataStore::getLatestFeedbackGivenRecord(..) - start");
+        Log.trace("DummyDataStore::getLatestFeedbackGivenRecord(..) - start");
         const start = Date.now();
-
-        const records: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
-        const shortList: IFeedbackGiven[] = [];
-        for (const req of records) {
-            if (req !== null && req.courseId === courseId && req.delivId === delivId && req.userName === userName) {
-                shortList.push(req);
+        let ret: IFeedbackGiven | null = null;
+        try {
+            const records: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
+            const shortList: IFeedbackGiven[] = [];
+            for (const req of records) {
+                if (req !== null && req.courseId === courseId && req.delivId === delivId && req.userName === userName) {
+                    shortList.push(req);
+                }
             }
-        }
 
-        if (shortList.length === 0) {
-            Log.info("DummyDataStore::getLatestFeedbackGivenRecord(..) - not found; took: " + Util.took(start));
-            return null;
-        } else {
-            let ret = null;
-            Math.max.apply(Math, shortList.map(function (o: IFeedbackGiven) {
-                Log.info("DummyDataStore::getLatestFeedbackGivenRecord(..) - found; took: " + Util.took(start));
-                ret = o;
-            }));
-            return ret;
+            if (shortList.length === 0) {
+                Log.info("DummyDataStore::getLatestFeedbackGivenRecord(..) - not found; took: " + Util.took(start));
+                ret = null;
+            } else {
+                Math.max.apply(Math, shortList.map(function (o: IFeedbackGiven) {
+                    Log.info("DummyDataStore::getLatestFeedbackGivenRecord(..) - found; took: " + Util.took(start));
+                    ret = o;
+                }));
+            }
+        } catch (err) {
+            Log.error("DummyDataStore::getLatestFeedbackGivenRecord(..) - ERROR: " + err);
+            ret = null;
         }
+        return ret;
     }
 
     public async getFeedbackGivenRecordForCommit(commitURL: string, userName: string): Promise<IFeedbackGiven | null> {
-        Log.info("DummyDataStore::getFeedbackGivenRecordForCommit(..) - start");
+        Log.trace("DummyDataStore::getFeedbackGivenRecordForCommit(..) - start");
+        let ret: IFeedbackGiven | null = null;
         const start = Date.now();
 
-        const records: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
-        for (const feedback of records) {
-            if (feedback !== null && feedback.commitURL === commitURL && feedback.userName === userName) {
-                Log.info("DummyDataStore::getFeedbackGivenRecordForCommit(..) - found; took: " + Util.took(start));
-                return feedback;
+        try {
+            const records: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
+            for (const feedback of records) {
+                if (feedback !== null && feedback.commitURL === commitURL && feedback.userName === userName) {
+                    Log.info("DummyDataStore::getFeedbackGivenRecordForCommit(..) - found; took: " + Util.took(start));
+                    ret = feedback;
+                    break;
+                }
             }
+        } catch (err) {
+            Log.error("DummyDataStore::getFeedbackGivenRecordForCommit(..) - ERROR: " + err);
+            ret = null;
         }
-        Log.info("DummyDataStore::getFeedbackGivenRecordForCommit(..) - not found; took: " + Util.took(start));
-        return null;
+        if (ret === null) {
+            Log.info("DummyDataStore::getFeedbackGivenRecordForCommit(..) - not found; took: " + Util.took(start));
+        }
+        return ret;
     }
 
     public async getAllData(): Promise<{ records: ICommitRecord[], comments: ICommentEvent[], pushes: IPushEvent[], feedback: IFeedbackGiven[] }> {
@@ -236,7 +249,7 @@ export class DummyDataStore implements IDataStore {
     }
 
     public clearData() {
-        Log.info("DummyDataStore::clearData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
+        Log.warn("DummyDataStore::clearData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
         if (Config.getInstance().getProp("name") === "test") {
             // do it
             fs.removeSync(this.RECORD_PATH);

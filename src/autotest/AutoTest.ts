@@ -72,7 +72,7 @@ export class AutoTest implements IAutoTest {
      */
     public async handlePushEvent(info: IPushEvent): Promise<boolean> {
         try {
-            Log.info("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL);
+            Log.info("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitSHA);
             const delivId: string = await this.getDelivId(info.projectURL); // current default deliverable
             if (delivId !== null) {
                 const input: IContainerInput = {courseId: this.courseId, delivId, pushInfo: info};
@@ -81,7 +81,7 @@ export class AutoTest implements IAutoTest {
                 this.tick(); // tick!
             } else {
                 // no active deliverable, ignore this push event (don't push an error either)
-                Log.warn("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL + " - No active deliverable; push ignored.");
+                Log.warn("AutoTest::handlePushEvent(..) - course: " + this.courseId + "; commit: " + info.commitSHA + " - No active deliverable; push ignored.");
             }
             return true;
         } catch (err) {
@@ -115,7 +115,7 @@ export class AutoTest implements IAutoTest {
         const that = this;
         try {
             Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + " - start"); // commit: " + info.commitURL + "; user: " + info.userName);
-            Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL + "; user: " + info.userName);
+            Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitSHA + "; user: " + info.userName);
 
             // NOTE: need to think a bit harder about which comment events should be saved and which should be dropped
 
@@ -173,7 +173,7 @@ export class AutoTest implements IAutoTest {
 
             if (res !== null) {
                 // execution complete
-                Log.trace("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL + "; execution complete");
+                Log.trace("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitSHA + "; execution complete");
                 if (hasBeenRequestedBefore !== null) {
                     // just give it to them again (saving the feedback given is ok since it is by push timestamp)
                     shouldPost = true;
@@ -186,14 +186,14 @@ export class AutoTest implements IAutoTest {
 
             } else {
                 // execution not yet complete
-                Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL + "; execution not yet complete");
+                Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitSHA + "; execution not yet complete");
                 if (shouldPost === true) {
 
                     // NOTE: it _should_ be on the standard queue here, but if it isn't, could we add it, just to be safe?
                     const onQueue = this.isOnQueue(info.commitURL);
                     let msg = "";
                     if (onQueue === false) {
-                        Log.warn("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitURL + "; - element not on queue.");
+                        Log.warn("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitSHA + "; - element not on queue.");
                         msg = "This commit is has not been queued; please make and push a new commit.";
                     } else {
                         // user has request quota available
@@ -324,7 +324,7 @@ export class AutoTest implements IAutoTest {
      * @param {IContainerInput} info
      */
     private async savePushInfo(info: IContainerInput) {
-        Log.trace("AutoTest::savePushInfo(..) - commit: " + info.pushInfo.commitURL);
+        Log.trace("AutoTest::savePushInfo(..) - commit: " + info.pushInfo.commitSHA);
         await this.dataStore.savePush(info);
     }
 
@@ -334,7 +334,7 @@ export class AutoTest implements IAutoTest {
      * @param {ICommentEvent} info
      */
     private async saveCommentInfo(info: ICommentEvent) {
-        Log.trace("AutoTest::saveCommentInfo(..) - commit: " + info.commitURL);
+        Log.trace("AutoTest::saveCommentInfo(..) - commit: " + info.commitSHA);
         await this.dataStore.saveComment(info);
     }
 
@@ -346,16 +346,16 @@ export class AutoTest implements IAutoTest {
      */
     private async invokeContainer(input: IContainerInput) {
         try {
-            Log.info("AutoTest::invokeContainer(..) - commit: " + input.pushInfo.commitURL);
+            Log.info("AutoTest::invokeContainer(..) - commit: " + input.pushInfo.commitSHA);
 
             const docker = new DockerInstance(input);
             const record: ICommitRecord = await docker.execute();
 
-            Log.info("AutoTest::invokeContainer(..) - complete for commit: " + input.pushInfo.commitURL + "; record: " + JSON.stringify(record));
+            Log.info("AutoTest::invokeContainer(..) - complete for commit: " + input.pushInfo.commitSHA + "; record: " + JSON.stringify(record));
             this.handleExecutionComplete(record);
 
         } catch (err) {
-            Log.error("AutoTest::invokeContainer(..) - ERROR for commit: " + input.pushInfo.commitURL + "; ERROR: " + err);
+            Log.error("AutoTest::invokeContainer(..) - ERROR for commit: " + input.pushInfo.commitSHA + "; ERROR: " + err);
             // Log.error("AutoTest::invokeContainer(..) - ERROR: " + err.message);
         }
     }
