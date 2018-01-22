@@ -6,6 +6,7 @@ import {IDataStore} from "./DataStore";
 import {DockerInstance} from "./DockerInstance";
 import {IGithubService} from "./GithubService";
 import {Queue} from "./Queue";
+import Util from "../util/Util";
 
 export interface IAutoTest {
     /**
@@ -272,7 +273,7 @@ export class AutoTest implements IAutoTest {
                 await this.saveFeedbackGiven(data.input.courseId, data.input.delivId, pushRequested.userName, pushRequested.timestamp, data.commitURL);
             } else {
                 // do nothing
-                Log.info("AutoTest::handleExecutionComplete(..) - course: " + this.courseId + "; commit not requested - no feedback given. url: " + data.commitURL);
+                Log.info("AutoTest::handleExecutionComplete(..) - course: " + this.courseId + "; commit not requested - no feedback given. url: " + data.commitSHA);
             }
 
             // when done clear the execution slot and schedule the next
@@ -347,11 +348,11 @@ export class AutoTest implements IAutoTest {
     private async invokeContainer(input: IContainerInput) {
         try {
             Log.info("AutoTest::invokeContainer(..) - commit: " + input.pushInfo.commitSHA);
-
+            const start = Date.now();
             const docker = new DockerInstance(input);
             const record: ICommitRecord = await docker.execute();
 
-            Log.info("AutoTest::invokeContainer(..) - complete for commit: " + input.pushInfo.commitSHA + "; record: " + JSON.stringify(record));
+            Log.info("AutoTest::invokeContainer(..) - complete for commit: " + input.pushInfo.commitSHA + "; took: " + Util.took(start)); // + "; record: " + JSON.stringify(record));
             this.handleExecutionComplete(record);
 
         } catch (err) {
