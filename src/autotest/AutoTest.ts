@@ -180,7 +180,7 @@ export class AutoTest implements IAutoTest {
                 }
                 if (shouldPost === true) {
                     await this.github.postMarkdownToGithub({url: info.postbackURL, message: res.output.feedback});
-                    await this.saveFeedbackGiven(this.courseId, delivId, info.userName, res.input.pushInfo.timestamp, info.commitURL);
+                    await this.saveFeedbackGiven(this.courseId, delivId, info.userName, info.timestamp, info.commitURL);
                     await this.saveCommentInfo(info); // user or TA; only for analytics since feedback has been given
                 }
 
@@ -257,7 +257,7 @@ export class AutoTest implements IAutoTest {
 
             await this.dataStore.saveOutputRecord(data);
 
-            const requestorUsername = await this.getRequestor(data.commitURL);
+            const pushRequested: ICommentEvent = await this.getRequestor(data.commitURL);
             if (data.output.postbackOnComplete === true) {
                 // do this first, doesn't count against quota
                 Log.info("AutoTest::handleExecutionComplete(..) - postback: true");
@@ -265,11 +265,11 @@ export class AutoTest implements IAutoTest {
                 // NOTE: if the feedback was requested for this build it shouldn't count
                 // since we're not calling saveFeedabck this is right
                 // but if we replay the commit comments, we would see it there, so be careful
-            } else if (requestorUsername !== null) {
+            } else if (pushRequested !== null) {
                 // feedback has been previously requested
                 Log.info("AutoTest::handleExecutionComplete(..) - feedback requested");
                 await this.github.postMarkdownToGithub({url: data.input.pushInfo.postbackURL, message: data.output.feedback});
-                await this.saveFeedbackGiven(data.input.courseId, data.input.delivId, requestorUsername, data.input.pushInfo.timestamp, data.commitURL);
+                await this.saveFeedbackGiven(data.input.courseId, data.input.delivId, pushRequested.userName, pushRequested.timestamp, data.commitURL);
             } else {
                 // do nothing
                 Log.info("AutoTest::handleExecutionComplete(..) - course: " + this.courseId + "; commit not requested - no feedback given. url: " + data.commitURL);
@@ -403,10 +403,10 @@ export class AutoTest implements IAutoTest {
      *
      * @param commitURL
      */
-    private async getRequestor(commitURL: string): Promise<string | null> {
+    private async getRequestor(commitURL: string): Promise<ICommentEvent | null> {
         const record: ICommentEvent = await this.dataStore.getCommentRecord(commitURL);
         if (record !== null) {
-            return record.userName;
+            return record;
         }
         return null;
     }
