@@ -8,6 +8,11 @@ import {Config} from "../Config";
 export interface IDataStore {
 
     /**
+     * Gets the push event record for a given commitURL
+     */
+    getPushRecord(commitURL: string): Promise<IPushEvent | null>;
+
+    /**
      * Saves push event (to its own table).
      *
      * Store IContainerInput instead of IPushEvent because this will be
@@ -28,7 +33,7 @@ export interface IDataStore {
      */
     saveComment(info: ICommentEvent): Promise<void>;
 
-    getCommentRecord(commitUrl: string): Promise<ICommentEvent | null>;
+    getCommentRecord(commitUrl: string, delivId: string): Promise<ICommentEvent | null>;
 
     saveOutputRecord(outputInfo: ICommitRecord): Promise<void>;
 
@@ -95,6 +100,32 @@ export class DummyDataStore implements IDataStore {
         }
     }
 
+    /**
+     * Gets the push event record for a given commitURL
+     */
+    public async getPushRecord(commitURL: string): Promise<IPushEvent | null> {
+        // Log.info("DummyDataStore::getPushRecord(..) - start");
+        try {
+            const start = Date.now();
+            // read
+            const outRecords: IPushEvent[] = await fs.readJSON(this.PUSH_PATH);
+
+            // find and return
+            for (const record of outRecords) {
+                if (record !== null && typeof record.commitURL !== "undefined" && record.commitURL === commitURL) {
+                    Log.info("DummyDataStore::getPushRecord(..) - found; took: " + Util.took(start));
+                    return record;
+                }
+            }
+
+            // not found
+            Log.info("DummyDataStore::getPushRecord(..) - not found; took: " + Util.took(start));
+        } catch (err) {
+            Log.error("DummyDataStore::getPushRecord(..) - ERROR: " + err);
+        }
+        return null;
+    }
+
     public async savePush(info: IContainerInput): Promise<void> {
         // Log.info("DummyDataStore::savePush(..) - start");
         try {
@@ -130,7 +161,7 @@ export class DummyDataStore implements IDataStore {
         }
     }
 
-    public async getCommentRecord(commitURL: string): Promise<ICommentEvent | null> {
+    public async getCommentRecord(commitURL: string, delivId: string): Promise<ICommentEvent | null> {
         // Log.info("DummyDataStore::getCommentRecord(..) - start");
         try {
             const start = Date.now();
@@ -139,7 +170,7 @@ export class DummyDataStore implements IDataStore {
 
             // find and return
             for (const record of outRecords) {
-                if (record !== null && typeof record.commitURL !== "undefined" && record.commitURL === commitURL) {
+                if (record !== null && typeof record.commitURL !== "undefined" && record.commitURL === commitURL && record.delivId === delivId) {
                     Log.info("DummyDataStore::getCommentRecord(..) - found; took: " + Util.took(start));
                     return record;
                 }

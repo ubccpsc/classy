@@ -1,12 +1,12 @@
 import {Config} from "../Config";
 import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven, IPushEvent} from "../Types";
 import Log from "../util/Log";
+import Util from "../util/Util";
 import {IClassPortal} from "./ClassPortal";
 import {IDataStore} from "./DataStore";
 import {DockerInstance} from "./DockerInstance";
 import {IGithubService} from "./GithubService";
 import {Queue} from "./Queue";
-import Util from "../util/Util";
 
 export interface IAutoTest {
     /**
@@ -71,11 +71,15 @@ export class AutoTest implements IAutoTest {
      *
      * @param info
      */
-    public async handlePushEvent(info: IPushEvent): Promise<boolean> {
+    public async handlePushEvent(info: IPushEvent, delivId?: string): Promise<boolean> {
         try {
             Log.info("AutoTest::handlePushEvent(..) - start; course: " + this.courseId + "; commit: " + info.commitSHA);
             const start = Date.now();
-            const delivId: string = await this.getDelivId(info.projectURL); // current default deliverable
+
+            if (typeof delivId === "undefined" || delivId === null) {
+                delivId = await this.getDelivId(info.projectURL); // current default deliverable
+            }
+
             if (delivId !== null) {
                 const input: IContainerInput = {courseId: this.courseId, delivId, pushInfo: info};
                 await this.savePushInfo(input);
@@ -194,17 +198,20 @@ export class AutoTest implements IAutoTest {
                 if (shouldPost === true) {
 
                     // NOTE: it _should_ be on the standard queue here, but if it isn't, could we add it, just to be safe?
-                    const onQueue = this.isOnQueue(info.commitURL);
-                    let msg = "";
+                    const onQueue = this.isOnQueue(info.commitURL, info.delivId);
+                    let msg = "This commit is still queued for processing against " + delivId + ".";
+                    msg += " Your results will be posted here as soon as they are ready.";
                     if (onQueue === false) {
-                        Log.warn("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitSHA + "; - element not on queue.");
-                        msg = "This commit is has not been queued; please make and push a new commit.";
-                    } else {
-                        // user has request quota available
-                        msg = "This commit is still queued for processing against " + delivId + ".";
-                        msg += " Your results will be posted here as soon as they are ready.";
-                        await this.saveCommentInfo(info); // whether TA or staff
+                        const pe = await this.dataStore.getPushRecord(info.commitURL);
+                        if (pe !== null) {
+                            Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitSHA + "; - element not on queue; adding.");
+                            await this.handlePushEvent(pe, info.delivId);
+                        } else {
+                            Log.warn("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitSHA + "; - element not on queue; cannot find push event.");
+                            msg = "This commit is has not been queued; please make and push a new commit.";
+                        }
                     }
+                    await this.saveCommentInfo(info); // whether TA or staff
                     await this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
                 }
 
@@ -264,7 +271,7 @@ export class AutoTest implements IAutoTest {
 
             await this.dataStore.saveOutputRecord(data);
 
-            const pushRequested: ICommentEvent = await this.getRequestor(data.commitURL);
+            const pushRequested: ICommentEvent = await this.getRequestor(data.commitURL, data.input.delivId);
             if (data.output.postbackOnComplete === true) {
                 // do this first, doesn't count against quota
                 Log.info("AutoTest::handleExecutionComplete(..) - postback: true");
@@ -412,8 +419,8 @@ export class AutoTest implements IAutoTest {
      *
      * @param commitURL
      */
-    private async getRequestor(commitURL: string): Promise<ICommentEvent | null> {
-        const record: ICommentEvent = await this.dataStore.getCommentRecord(commitURL);
+    private async getRequestor(commitURL: string, delivId: string): Promise<ICommentEvent | null> {
+        const record: ICommentEvent = await this.dataStore.getCommentRecord(commitURL, delivId);
         if (record !== null) {
             return record;
         }
@@ -489,7 +496,7 @@ export class AutoTest implements IAutoTest {
      * @param {string} commitURL
      * @returns {boolean}
      */
-    private isOnQueue(commitURL: string): boolean {
+    private isOnQueue(commitURL: string, delivId: string): boolean {
         let onQueue = false;
         if (this.standardExecution !== null && this.standardExecution.pushInfo.commitURL === commitURL) {
             onQueue = true;
