@@ -27,10 +27,11 @@ export default class Container {
     public async create(options?: IContainerOptions): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             let errMsg: string;
-            const cmdArgs: string[] = [`create --cap-add=NET_ADMIN`];
+            const cmdArgs: string[] = [`create`, `--cap-add=NET_ADMIN`];
             if (typeof options !== `undefined`) {
                 this.dockerOptionsToArgs(options, cmdArgs);
             }
+            cmdArgs.push(this.image);
             const cmd: ChildProcess = spawn(`docker`, cmdArgs);
 
             cmd.stdout.on(`data`, (data) => this._id = data.toString());
@@ -55,8 +56,12 @@ export default class Container {
      * @throws When the container does not exist.
      */
     public async getLog(tail: number = -1, size: number = 131072): Promise<string> {
-        const { code , output } = await Util.bufferedSpawn(`docker`, [`logs --tail ${tail}`]);
-        return output;
+        try {
+            const cmd = await Util.bufferedSpawn(`docker`, [`logs`, `--tail=${tail}`, this._id]);
+            return cmd.output;
+        } catch (err) {
+            throw new Error(err.output);
+        }
     }
 
     /**
@@ -68,7 +73,7 @@ export default class Container {
             exec(`docker inspect ${this._id}`, (error, stdout, stderr) => {
                 let parsedOutput: IContainerProperties;
                 if (error) {
-                    reject(`${error}. Details: ${stderr}`);
+                    reject(error);
                 }
 
                 try {
@@ -90,7 +95,7 @@ export default class Container {
         return new Promise<void>((resolve, reject) => {
             exec(`docker rm ${this._id}`, (error, stdout, stderr) => {
                 if (error) {
-                    reject(`${error}. Details: ${stderr}`);
+                    reject(error);
                 }
                 resolve();
             });
@@ -136,16 +141,16 @@ export default class Container {
     private dockerOptionsToArgs(options: IContainerOptions, initArgs: string[]): void {
         if (typeof options.env !== `undefined`) {
             for (const [key, value] of Object.entries(options.env)) {
-                initArgs.push(` --env ${key.toUpperCase()}=${value}`);
+                initArgs.push(`--env ${key.toUpperCase()}=${value}`);
             }
         }
         if (typeof options.volumes !== `undefined`) {
             for (const volume of options.volumes) {
-                initArgs.push(` --volume ${volume}`);
+                initArgs.push(`--volume ${volume}`);
             }
         }
         if (typeof options.envFile !== `undefined`) {
-            initArgs.push(` --env-file ${options.envFile}`);
+            initArgs.push(`--env-file ${options.envFile}`);
         }
     }
 }
