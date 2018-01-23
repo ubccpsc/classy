@@ -3,7 +3,7 @@ import Container from "../src/autotest/Container";
 import {IContainerProperties} from "../src/Types";
 import Log from "../src/util/Log";
 
-describe.only("Container", () => {
+describe("Container", () => {
     const images = {
         valid: "bb8d53afabff",
     };

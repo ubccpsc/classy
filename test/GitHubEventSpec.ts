@@ -47,6 +47,14 @@ describe("GitHub Event Parser", () => {
         expect(actual).to.deep.equal(expected);
     });
 
+    it("Should be able to parse a push that deleted an existing branch.", () => {
+        const content = readFile("push_delete-branch.json");
+        const actual = GithubUtil.processPush(JSON.parse(content));
+
+        const expected: any = null;
+        expect(actual).to.equal(null); // nothing to do when a branch is deleted
+    });
+
     it("Should be able to parse a push to a branch.", () => {
         const content = readFile("push_other-branch.json");
         const actual = GithubUtil.processPush(JSON.parse(content));

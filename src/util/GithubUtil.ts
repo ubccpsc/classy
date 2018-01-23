@@ -83,10 +83,12 @@ export class GithubUtil {
     /**
      * Throw an exception if something goes wrong.
      *
+     * Returns null for push operations we do not need to handle (like branch deletion).
+     *
      * @param payload
      * @returns {IPushEvent}
      */
-    public static processPush(payload: any): IPushEvent {
+    public static processPush(payload: any): IPushEvent | null {
         // const team = GithubUtil.getTeamOrProject(payload.repository.name);
         const repo = payload.repository.name;
         const projectURL = payload.repository.html_url;
@@ -96,10 +98,19 @@ export class GithubUtil {
 
         const branch = payload.ref;
         let commitSHA = "";
+
+        if (payload.deleted === true && payload.head_commit === null) {
+            // commit deleted a branch, do nothing
+            Log.info("GithubUtil::processPush(..) - branch removed; URL: " + headCommitURL);
+            return null;
+        }
+
         if (typeof payload.commits !== "undefined" && payload.commits.length > 0) {
+            Log.info("GithubUtil::processPush(..) - regular push; URL: " + headCommitURL);
             commitSHA = payload.commits[0].id;
         } else {
             // use this one when creating a new branch (may not have any commits)
+            Log.info("GithubUtil::processPush(..) - branch added; URL: " + headCommitURL);
             commitSHA = payload.head_commit.id;
         }
 

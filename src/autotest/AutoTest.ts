@@ -73,6 +73,10 @@ export class AutoTest implements IAutoTest {
      */
     public async handlePushEvent(info: IPushEvent, delivId?: string): Promise<boolean> {
         try {
+            if (typeof info === "undefined" || info === null) {
+                Log.info("AutoTest::handlePushEvent(..) - info not provided; skipping.");
+            }
+
             Log.info("AutoTest::handlePushEvent(..) - start; course: " + this.courseId + "; commit: " + info.commitSHA);
             const start = Date.now();
 
@@ -121,6 +125,11 @@ export class AutoTest implements IAutoTest {
     public async handleCommentEvent(info: ICommentEvent): Promise<boolean> {
         const that = this;
         const start = Date.now();
+
+        if (typeof info === "undefined" || info === null) {
+            Log.info("AutoTest::handleCommentEvent(..) - info not provided; skipping.");
+        }
+
         try {
             // Log.info("AutoTest::handleCommentEvent(..) - start; course: " + this.courseId); // commit: " + info.commitURL + "; user: " + info.userName);
             Log.info("AutoTest::handleCommentEvent(..) - start; course: " + this.courseId + "; commit: " + info.commitSHA + "; user: " + info.userName);
