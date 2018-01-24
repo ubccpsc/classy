@@ -39,45 +39,51 @@ export class GithubUtil {
      * @returns {ICommentEvent}
      */
     public static processComment(payload: any): ICommentEvent {
-        const commitSHA = payload.comment.commit_id;
-        let commitURL = payload.comment.html_url;  // this is the comment Url
-        commitURL = commitURL.substr(0, commitURL.lastIndexOf("#")); // strip off the comment reference
+        try {
+            const commitSHA = payload.comment.commit_id;
+            let commitURL = payload.comment.html_url;  // this is the comment Url
+            commitURL = commitURL.substr(0, commitURL.lastIndexOf("#")); // strip off the comment reference
 
-        const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
+            const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
 
-        const projectUrl = payload.repository.html_url;
-        const repoName = payload.repository.name;
-        // that.deliverable = GithubUtil.parseDeliverable(payload.repository.name);
-        const team = GithubUtil.getTeamOrProject(repoName);
-        const requestor = String(payload.comment.user.login).toLowerCase();
-        // that.user = String(payload.comment.user.login).toLowerCase();
-        const orgName = payload.organization.login;
-        // const commitCommentUrl = payload.comment.html_url;
-        // that.repo = payload.repository.name;
-        // const hook = Url.parse(payload.repository.commits_url.replace("{/sha}", "/" + this.commit) + "/comments");
-        const message = payload.comment.body;
-        const delivId = GithubUtil.parseDeliverableFromComment(message);
+            const projectUrl = payload.repository.html_url;
+            const repoName = payload.repository.name;
+            // that.deliverable = GithubUtil.parseDeliverable(payload.repository.name);
+            const team = GithubUtil.getTeamOrProject(repoName);
+            const requestor = String(payload.comment.user.login).toLowerCase();
+            // that.user = String(payload.comment.user.login).toLowerCase();
+            const orgName = payload.organization.login;
+            // const commitCommentUrl = payload.comment.html_url;
+            // that.repo = payload.repository.name;
+            // const hook = Url.parse(payload.repository.commits_url.replace("{/sha}", "/" + this.commit) + "/comments");
+            const message = payload.comment.body;
+            const delivId = GithubUtil.parseDeliverableFromComment(message);
 
-        // that.isRequest = payload.comment.body.toLowerCase().includes(this.config.getMentionTag());
-        // that.isProcessed = true;
-        const botMentioned: boolean = message.indexOf("@autobot") >= 0; // should not be hardcoded
+            // that.isRequest = payload.comment.body.toLowerCase().includes(this.config.getMentionTag());
+            // that.isProcessed = true;
+            const botMentioned: boolean = message.indexOf("@autobot") >= 0; // should not be hardcoded
 
-        const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can't add requests to a past comment
+            const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can't add requests to a past comment
 
-        const courseId: any = null; // not yet known
-        // TODO: check all of these
-        const commentEvent: ICommentEvent = {
-            botMentioned,
-            commitSHA,
-            commitURL,
-            postbackURL,
-            userName: requestor,
-            courseId,
-            delivId,
-            timestamp
-        };
+            const courseId: any = null; // not yet known
+            // TODO: check all of these
+            const commentEvent: ICommentEvent = {
+                botMentioned,
+                commitSHA,
+                commitURL,
+                postbackURL,
+                userName: requestor,
+                courseId,
+                delivId,
+                timestamp
+            };
 
-        return commentEvent;
+            return commentEvent;
+        } catch (err) {
+            Log.info("GithubUtil::processComment(..) - ERROR parsing: " + err);
+            Log.info("GithubUtil::processComment(..) - ERROR payload: " + JSON.stringify(payload));
+            return null;
+        }
     }
 
     /**
@@ -89,50 +95,57 @@ export class GithubUtil {
      * @returns {IPushEvent}
      */
     public static processPush(payload: any): IPushEvent | null {
-        // const team = GithubUtil.getTeamOrProject(payload.repository.name);
-        const repo = payload.repository.name;
-        const projectURL = payload.repository.html_url;
-        // head commit is sometimes null on new branches
-        const headCommitURL = payload.head_commit === null ? payload.repository.html_url + "/tree/" + String(payload.ref).replace("refs/heads/", "") : payload.head_commit.url;
-        const commitURL = headCommitURL;
+        try {
+            // const team = GithubUtil.getTeamOrProject(payload.repository.name);
+            const repo = payload.repository.name;
+            const projectURL = payload.repository.html_url;
 
-        const branch = payload.ref;
-        let commitSHA = "";
+            if (payload.deleted === true && payload.head_commit === null) {
+                // commit deleted a branch, do nothing
+                Log.info("GithubUtil::processPush(..) - branch removed; URL: " + projectURL);
+                return null;
+            }
 
-        if (payload.deleted === true && payload.head_commit === null) {
-            // commit deleted a branch, do nothing
-            Log.info("GithubUtil::processPush(..) - branch removed; URL: " + headCommitURL);
+            // head commit is sometimes null on new branches
+            const headCommitURL = payload.head_commit === null ? payload.repository.html_url + "/tree/" + String(payload.ref).replace("refs/heads/", "") : payload.head_commit.url;
+            const commitURL = headCommitURL;
+
+            const branch = payload.ref;
+            let commitSHA = "";
+
+            if (typeof payload.commits !== "undefined" && payload.commits.length > 0) {
+                Log.info("GithubUtil::processPush(..) - regular push; URL: " + headCommitURL);
+                commitSHA = payload.commits[0].id;
+            } else {
+                // use this one when creating a new branch (may not have any commits)
+                Log.info("GithubUtil::processPush(..) - branch added; URL: " + headCommitURL);
+                commitSHA = payload.head_commit.id;
+            }
+
+            const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
+
+            const user = String(payload.pusher.name).toLowerCase();
+            const githubOrg = payload.repository.owner.name;
+            // const commentHook = Url.parse(payload.repository.commits_url.replace("{/sha}", "/" + this._commit) + "/comments");
+            const timestamp = payload.repository.pushed_at * 1000;
+            const org = payload.repository.organization;
+
+            const pushEvent: IPushEvent = {
+                branch,
+                repo,
+                commitSHA,
+                commitURL,
+                org,
+                projectURL,
+                postbackURL,
+                timestamp
+            };
+            return pushEvent;
+        } catch (err) {
+            Log.info("GithubUtil::processPush(..) - ERROR parsing: " + err);
+            Log.info("GithubUtil::processPush(..) - ERROR payload: " + JSON.stringify(payload));
             return null;
         }
-
-        if (typeof payload.commits !== "undefined" && payload.commits.length > 0) {
-            Log.info("GithubUtil::processPush(..) - regular push; URL: " + headCommitURL);
-            commitSHA = payload.commits[0].id;
-        } else {
-            // use this one when creating a new branch (may not have any commits)
-            Log.info("GithubUtil::processPush(..) - branch added; URL: " + headCommitURL);
-            commitSHA = payload.head_commit.id;
-        }
-
-        const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
-
-        const user = String(payload.pusher.name).toLowerCase();
-        const githubOrg = payload.repository.owner.name;
-        // const commentHook = Url.parse(payload.repository.commits_url.replace("{/sha}", "/" + this._commit) + "/comments");
-        const timestamp = payload.repository.pushed_at * 1000;
-        const org = payload.repository.organization;
-
-        const pushEvent: IPushEvent = {
-            branch,
-            repo,
-            commitSHA,
-            commitURL,
-            org,
-            projectURL,
-            postbackURL,
-            timestamp
-        };
-        return pushEvent;
     }
 }
 
