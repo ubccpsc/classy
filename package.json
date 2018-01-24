@@ -44,6 +44,6 @@
         "build": "tsc",
         "lint": "tslint -c tsconfig.json 'src/**/*.ts' 'test/**/*.ts'",
         "test": "mocha --require ts-node/register --timeout 10000 bin/test/*.js",
-        "cover": "nyc --reporter text --reporter html yarn run test",
+        "cover": "nyc --reporter text --reporter html yarn run test"
     }
 }
