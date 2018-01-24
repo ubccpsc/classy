@@ -18,7 +18,7 @@ export default class RouteHandler {
             const data = new DummyDataStore();
             const portal = new DummyClassPortal();
             const gh = new GithubService();
-            const courseId = "cs310";
+            const courseId = "310";
 
             RouteHandler.autoTest = new AutoTest(courseId, data, portal, gh);
         }

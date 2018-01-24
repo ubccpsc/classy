@@ -47,7 +47,7 @@ describe("AutoTest", () => {
     };
 
     const inputRecordA: IContainerInput = {
-        "courseId": "cs310",
+        "courseId": "310",
         "delivId":  "d0",
         "pushInfo": pushEventA
     };
@@ -57,7 +57,7 @@ describe("AutoTest", () => {
         "commitSHA":    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "userName":     "cs310test",
-        "courseId":     "cs310",
+        "courseId":     "310",
         "delivId":      "d9",
         "postbackURL":  "EMPTY",
         "timestamp":    1516472873288
@@ -68,7 +68,7 @@ describe("AutoTest", () => {
         "commitSHA":    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "userName":     "cs310test",
-        "courseId":     "cs310",
+        "courseId":     "310",
         "delivId":      "d9",
         "postbackURL":  "EMPTY",
         "timestamp":    1516523258762
@@ -79,7 +79,7 @@ describe("AutoTest", () => {
         "commitSHA":    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "userName":     "staff",
-        "courseId":     "cs310",
+        "courseId":     "310",
         "delivId":      "d9",
         "postbackURL":  "EMPTY",
         "timestamp":    1516472874288
@@ -120,7 +120,7 @@ describe("AutoTest", () => {
 
         portal = new DummyClassPortal();
         gh = new GithubService();
-        const courseId = "cs310";
+        const courseId = "310";
         at = new AutoTest(courseId, data, portal, gh);
     });
 
@@ -184,7 +184,7 @@ describe("AutoTest", () => {
             commitSHA:     pe.commitSHA,
             commitURL:     pe.commitURL,
             userName:      "myUser",
-            courseId:      "cs310",
+            courseId:      "310",
             delivId:       "d0",
             "postbackURL": "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
             timestamp:     1234567891
@@ -393,7 +393,7 @@ describe("AutoTest", () => {
         // SETUP: add a push with no output records
         const fg: IFeedbackGiven = {
             "commitURL": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263fSOMEOTHER",
-            "courseId":  "cs310",
+            "courseId":  "310",
             "delivId":   "d9",
             "timestamp": 1516451273288, ///
             "userName":  "cs310test"
