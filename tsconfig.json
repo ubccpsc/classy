@@ -9,8 +9,7 @@
         "outDir": "bin",
         "lib": [
             "es7",
-            "es2017.object",
-            "dom"
+            "es2017.object"
         ],
         "typeRoots": [
             "./node_modules/@types"

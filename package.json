@@ -1,10 +1,20 @@
 {
-    "name": "cpsc310container",
-    "description": "AutoTest container for grading the 310 project.",
-    "homepage": "https://github.ubc.ca/cpsc310/cpsc310container",
-    "author": "Nick Bradley",
-    "license": "ECL-2.0",
-    "version": "0.0.1",
+    "name": "autotest",
+    "description": "A GitHub service for grading commits and posting feedback.",
+    "homepage": "https://github.ubc.ca/cpsc310/autotest",
+    "author": {
+        "name": "Reid Holmes",
+        "url": "https://cs.ubc.ca/~rtholmes"
+    },
+    "contributors": [
+        {
+            "name": "Nick Bradley",
+            "email": "nick@ncbradley.com",
+            "url": "https://www.ncbradley.com"
+        }
+    ],
+    "license": "MIT",
+    "version": "0.4.0",
     "engines": {
         "node": ">= 8.9 < 9"
     },
@@ -35,6 +45,5 @@
         "lint": "tslint -c tsconfig.json 'src/**/*.ts' 'test/**/*.ts'",
         "test": "mocha --require ts-node/register --timeout 10000 bin/test/*.js",
         "cover": "nyc --reporter text --reporter html yarn run test",
-        "start": "node bin/Main.js"
     }
 }
