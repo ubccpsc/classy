@@ -1,6 +1,6 @@
 import * as restify from "restify";
 import {AutoTest} from "../autotest/AutoTest";
-import {DummyClassPortal} from "../autotest/ClassPortal";
+import {ClassPortal, DummyClassPortal} from "../autotest/ClassPortal";
 import {DummyDataStore} from "../autotest/DataStore";
 import {GithubService} from "../autotest/GithubService";
 import {GithubUtil} from "../util/GithubUtil";
@@ -16,7 +16,8 @@ export default class RouteHandler {
 
             // TODO: create these in server?
             const data = new DummyDataStore();
-            const portal = new DummyClassPortal();
+            // const portal = new DummyClassPortal();
+            const portal = new ClassPortal();
             const gh = new GithubService();
             const courseId = "310";
 

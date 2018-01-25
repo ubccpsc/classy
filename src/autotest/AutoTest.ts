@@ -471,7 +471,7 @@ export class AutoTest implements IAutoTest {
         // async operations up front
         const isStaff = await this.classPortal.isStaff(this.courseId, userName);
         const record: IFeedbackGiven = await this.dataStore.getLatestFeedbackGivenRecord(this.courseId, delivId, userName);
-        const testDelay = await this.classPortal.getTestDelay(this.courseId); // should cache this
+        const testDelay = await this.classPortal.getTestDelay(this.courseId, delivId); // should cache this
 
         if (isStaff === true) {
             return null; // staff can always request

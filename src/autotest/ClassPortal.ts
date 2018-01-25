@@ -1,3 +1,6 @@
+import * as rp from "request-promise-native";
+import Log from "../util/Log";
+
 export interface IClassPortal {
 
     /**
@@ -7,9 +10,9 @@ export interface IClassPortal {
      *
      * GET /admin/getDefaultDeliverable/{:courseId}
      *
-     * @param commitUrl
+     * @param courseId
      */
-    getDefaultDeliverableId(commitUrl: string): Promise<string | null>;
+    getDefaultDeliverableId(courseId: string): Promise<string | null>;
 
     /**
      * Returns whether the username is staff on the course.
@@ -30,7 +33,7 @@ export interface IClassPortal {
      *
      * @param courseId
      */
-    getTestDelay(courseId: string): Promise<number | null>;
+    getTestDelay(courseId: string, delivId: string): Promise<number | null>;
 }
 
 export class DummyClassPortal implements IClassPortal {
@@ -60,12 +63,68 @@ export class DummyClassPortal implements IClassPortal {
      * @param {string} courseId
      * @returns {Promise<number>}
      */
-    public async getTestDelay(courseId: string): Promise<number | null> {
-        if (typeof courseId !== "undefined" && courseId !== null) {
+    public async getTestDelay(courseId: string, delivId: string): Promise<number | null> {
+        if (typeof courseId !== "undefined" && courseId !== null && typeof delivId !== "undefined" && delivId !== null) {
             if (courseId === "310") {
                 return 12 * 60 * 60 * 1000; // 12h right now
             }
         }
         return null;
+    }
+}
+
+export class ClassPortal implements IClassPortal {
+
+    public async isStaff(courseId: string, userName: string): Promise<boolean> {
+        Log.trace("ClassPortal::isStaff(..) - start");
+        if (typeof courseId === "undefined" || courseId === null || typeof userName === "undefined" || userName === null) {
+            return false;
+        }
+
+        const url = "https://portal.cs.ubc.ca:5000/" + courseId + "/isStaff/" + userName;
+        return rp(url).then(function (res) {
+            Log.trace("ClassPortal::isStaff(..) - success; url: " + url + " - success: " + res);
+            const json = JSON.parse(res);
+            return json.response;
+        }).catch(function (err) {
+            Log.trace("ClassPortal::isStaff(..) - ERROR; url: " + url + "; ERROR: " + err);
+            return false;
+        });
+    }
+
+    public async getDefaultDeliverableId(courseId: string): Promise<string | null> {
+        if (typeof courseId === "undefined" || courseId === null) {
+            return null;
+        }
+        const url = "https://portal.cs.ubc.ca:5000/" + courseId + "/defaultDeliverable";
+        return rp(url).then(function (res) {
+            Log.trace("ClassPortal::getDefaultDeliverableId(..) - success; url: " + url + " - success: " + res);
+            const json = JSON.parse(res);
+            return json.response;
+        }).catch(function (err) {
+            Log.trace("ClassPortal::getDefaultDeliverableId(..) - ERROR; url: " + url + "; ERROR: " + err);
+            return false;
+        });
+    }
+
+    /**
+     * Gets the delay beween test executions in milliseconds
+     *
+     * @param {string} courseId
+     * @returns {Promise<number>}
+     */
+    public async getTestDelay(courseId: string, delivId: string): Promise<number | null> {
+        if (typeof courseId === "undefined" || courseId === null || typeof delivId === "undefined" || delivId === null) {
+            return null;
+        }
+        const url = "https://portal.cs.ubc.ca:5000/" + courseId + "/" + delivId + "/rate";
+        return rp(url).then(function (res) {
+            Log.trace("ClassPortal::getTestDelay(..) - success; url: " + url + " - success: " + res);
+            const json = JSON.parse(res);
+            return json.response;
+        }).catch(function (err) {
+            Log.trace("ClassPortal::getTestDelay(..) - ERROR; url: " + url + "; ERROR: " + err);
+            return false;
+        });
     }
 }

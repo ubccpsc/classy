@@ -1,21 +1,22 @@
 import {expect} from "chai";
 import "mocha";
 import {Config} from "../src/Config";
-import {DummyClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
+import {ClassPortal, DummyClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
 
-describe("ClassPortal Service", () => {
+describe.only("ClassPortal Service", () => {
     Config.getInstance("test");
 
     let cp: IClassPortal;
     const classId = "310";
 
     beforeEach(function () {
-        cp = new DummyClassPortal(); // TODO: change to ClassPortalService not DummyClassPortal
+        // cp = new DummyClassPortal(); // TODO: change to ClassPortalService not DummyClassPortal
+        cp = new ClassPortal(); // TODO: change to ClassPortalService not DummyClassPortal
     });
 
     it("Should be able for a staff user to be staff.", async () => {
         try {
-            const actual = await cp.isStaff(classId, "staff");
+            const actual = await cp.isStaff(classId, "cs310");
             expect(actual).to.equal(true);
         } catch (err) {
             expect.fail("Should not happen");
@@ -68,8 +69,8 @@ describe("ClassPortal Service", () => {
 
     it("Should return the test delay in seconds for a course.", async () => {
         try {
-            const actual = await cp.getTestDelay(classId);
-            expect(actual).to.equal(43200000);
+            const actual = await cp.getTestDelay(classId, "d0");
+            expect(actual).to.equal(43200);
         } catch (err) {
             expect.fail("Should not happen");
         }
@@ -77,7 +78,7 @@ describe("ClassPortal Service", () => {
 
     it("Should return a null test delay if the course does not exist.", async () => {
         try {
-            const actual = await cp.getTestDelay("cs999");
+            const actual = await cp.getTestDelay("cs999", "d0");
             expect(actual).to.equal(null);
         } catch (err) {
             expect.fail("Should not happen");
@@ -87,7 +88,7 @@ describe("ClassPortal Service", () => {
     it("Should return a default deliverable if the course has one.", async () => {
         try {
             const actual = await cp.getDefaultDeliverableId(classId);
-            expect(actual).to.equal("d1");
+            expect(actual).to.equal("d0");
         } catch (err) {
             expect.fail("Should not happen");
         }
