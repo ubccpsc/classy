@@ -30,17 +30,28 @@ export interface IClassPortal {
      *
      * @param courseId
      */
-    getTestDelay(courseId: string): Promise<number>;
+    getTestDelay(courseId: string): Promise<number | null>;
 }
 
 export class DummyClassPortal implements IClassPortal {
 
     public async isStaff(courseId: string, userName: string): Promise<boolean> {
-        return userName === "staff" || userName === "cs310"; // TODO: implement
+        if (typeof courseId === "undefined" || courseId === null || typeof userName === "undefined" || userName === null) {
+            return false;
+        }
+        if (courseId === "310") {
+            return userName === "staff" || userName === "cs310";
+        }
+        return false;
     }
 
     public async getDefaultDeliverableId(commitUrl: string): Promise<string | null> {
-        return "d1"; // TODO: implement
+        if (typeof commitUrl !== "undefined" && commitUrl !== null) {
+            if (commitUrl.indexOf("310") >= 0) {
+                return "d1";
+            }
+        }
+        return null;
     }
 
     /**
@@ -49,7 +60,12 @@ export class DummyClassPortal implements IClassPortal {
      * @param {string} courseId
      * @returns {Promise<number>}
      */
-    public async getTestDelay(courseId: string): Promise<number> {
-        return 12 * 60 * 60 * 1000; // 12h right now // TODO: implement
+    public async getTestDelay(courseId: string): Promise<number | null> {
+        if (typeof courseId !== "undefined" && courseId !== null) {
+            if (courseId === "310") {
+                return 12 * 60 * 60 * 1000; // 12h right now
+            }
+        }
+        return null;
     }
 }
