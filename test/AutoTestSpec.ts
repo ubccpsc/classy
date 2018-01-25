@@ -196,7 +196,7 @@ describe("AutoTest", () => {
         allData = await data.getAllData();
         expect(allData.comments.length).to.equal(0);
 
-        await Util.timeout(1 * 1000); // let test finish so it doesn't ruin subsequent executions
+        // await Util.timeout(1 * 1000); // let test finish so it doesn't ruin subsequent executions
     });
 
     it("Should give a user a warning message on a commit that has not been queued.", async () => {
