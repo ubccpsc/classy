@@ -81,7 +81,7 @@ export class AutoTest implements IAutoTest {
             const start = Date.now();
 
             if (typeof delivId === "undefined" || delivId === null) {
-                delivId = await this.getDelivId(info.projectURL); // current default deliverable
+                delivId = await this.getDelivId(); // current default deliverable
             }
 
             if (delivId !== null) {
@@ -150,7 +150,7 @@ export class AutoTest implements IAutoTest {
             info.courseId = that.courseId;
             let delivId = info.delivId;
             if (delivId === null) {
-                delivId = await this.getDelivId(info.commitURL); // need to get the default deliverable for that repo
+                delivId = await this.getDelivId(); // need to get the default deliverable for that repo
                 info.delivId = delivId;
             }
 
@@ -390,8 +390,8 @@ export class AutoTest implements IAutoTest {
      *
      * @param commitURL
      */
-    private async getDelivId(commitURL: string): Promise<string | null> {
-        let str = await this.classPortal.getDefaultDeliverableId(commitURL);
+    private async getDelivId(): Promise<string | null> {
+        let str = await this.classPortal.getDefaultDeliverableId(this.courseId);
         if (typeof str === "undefined") {
             str = null;
         }
