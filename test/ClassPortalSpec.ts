@@ -3,7 +3,7 @@ import "mocha";
 import {Config} from "../src/Config";
 import {ClassPortal, DummyClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
 
-describe.only("ClassPortal Service", () => {
+describe("ClassPortal Service", () => {
     Config.getInstance("test");
 
     let cp: IClassPortal;
