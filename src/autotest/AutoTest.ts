@@ -250,6 +250,7 @@ export class AutoTest implements IAutoTest {
             this.tick();
 
             Log.info("AutoTest::handleCommentEvent(..) - done; course: " + this.courseId + "; commit: " + info.commitSHA + "; took: " + Util.took(start));
+            return true;
         } catch (err) {
             Log.error("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; ERROR: " + err.message);
             throw err;
