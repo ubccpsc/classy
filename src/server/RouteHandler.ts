@@ -128,7 +128,7 @@ export default class RouteHandler {
 
                     Log.info("RouteHandler::handlePushEvent() - request: " + JSON.stringify(pushEvent, null, 2));
                     RouteHandler.getAutoTest().handlePushEvent(pushEvent).then((result: boolean) => {
-                        Log.info("RouteHandler::handlePushEvent() - result: " + result + "; took: " + Util.took(start));
+                        Log.info("RouteHandler::handlePushEvent() - success: " + result + "; took: " + Util.took(start));
                         res.json(202, {body: "Commit has been queued"});
                     }).catch((err: any) => {
                         Log.error("RouteHandler::handlePushEvent() - error encountered; ERROR: " + err + "; took: " + Util.took(start));
