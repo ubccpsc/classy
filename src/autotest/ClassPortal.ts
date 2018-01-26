@@ -83,7 +83,7 @@ export class ClassPortal implements IClassPortal {
 
         const url = "https://portal.cs.ubc.ca:5000/" + courseId + "/isStaff/" + userName;
         return rp(url).then(function (res) {
-            Log.trace("ClassPortal::isStaff( " + courseId + ", " + userName + " ) - success; response: " + res);
+            Log.trace("ClassPortal::isStaff( " + courseId + ", " + userName + " ) - success; payload: " + res);
             const json = JSON.parse(res);
             return json.response;
         }).catch(function (err) {
@@ -100,7 +100,7 @@ export class ClassPortal implements IClassPortal {
 
         const url = "https://portal.cs.ubc.ca:5000/" + courseId + "/defaultDeliverable";
         return rp(url).then(function (res) {
-            Log.trace("ClassPortal::getDefaultDeliverableId( " + courseId + " ) - success; response: " + res);
+            Log.trace("ClassPortal::getDefaultDeliverableId( " + courseId + " ) - success; payload: " + res);
             const json = JSON.parse(res);
             return json.response;
         }).catch(function (err) {
@@ -123,7 +123,7 @@ export class ClassPortal implements IClassPortal {
 
         const url = "https://portal.cs.ubc.ca:5000/" + courseId + "/" + delivId + "/rate";
         return rp(url).then(function (res) {
-            Log.trace("ClassPortal::getTestDelay( " + courseId + ", " + delivId + " ) - success; response: " + res);
+            Log.trace("ClassPortal::getTestDelay( " + courseId + ", " + delivId + " ) - success; payload: " + res);
             const json = JSON.parse(res);
             return json.response;
         }).catch(function (err) {
