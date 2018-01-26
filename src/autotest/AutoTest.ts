@@ -69,12 +69,15 @@ export class AutoTest implements IAutoTest {
      * Persists the event so it can be restarted later if needed.
      * Schedules the build on the standard queue.
      *
+     * TODO: Not sure why it returns a boolean instead of void.
+     *
      * @param info
      */
     public async handlePushEvent(info: IPushEvent, delivId?: string): Promise<boolean> {
         try {
             if (typeof info === "undefined" || info === null) {
                 Log.info("AutoTest::handlePushEvent(..) - info not provided; skipping.");
+                return false;
             }
 
             Log.info("AutoTest::handlePushEvent(..) - start; course: " + this.courseId + "; commit: " + info.commitSHA);
@@ -120,6 +123,8 @@ export class AutoTest implements IAutoTest {
      *  * post back results if rate limiting check passes (and record fedback given)
      *  * post back warning if rate limiting check fails
      *
+     * TODO: Not sure why this returns a boolean instead of void.
+     *
      * @param info
      */
     public async handleCommentEvent(info: ICommentEvent): Promise<boolean> {
@@ -128,6 +133,7 @@ export class AutoTest implements IAutoTest {
 
         if (typeof info === "undefined" || info === null) {
             Log.info("AutoTest::handleCommentEvent(..) - info not provided; skipping.");
+            return false;
         }
 
         try {
