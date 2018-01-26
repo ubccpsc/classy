@@ -69,19 +69,22 @@ export class AutoTest implements IAutoTest {
      * Persists the event so it can be restarted later if needed.
      * Schedules the build on the standard queue.
      *
+     * TODO: Not sure why it returns a boolean instead of void.
+     *
      * @param info
      */
     public async handlePushEvent(info: IPushEvent, delivId?: string): Promise<boolean> {
         try {
             if (typeof info === "undefined" || info === null) {
                 Log.info("AutoTest::handlePushEvent(..) - info not provided; skipping.");
+                return false;
             }
 
             Log.info("AutoTest::handlePushEvent(..) - start; course: " + this.courseId + "; commit: " + info.commitSHA);
             const start = Date.now();
 
             if (typeof delivId === "undefined" || delivId === null) {
-                delivId = await this.getDelivId(info.projectURL); // current default deliverable
+                delivId = await this.getDelivId(); // current default deliverable
             }
 
             if (delivId !== null) {
@@ -120,6 +123,8 @@ export class AutoTest implements IAutoTest {
      *  * post back results if rate limiting check passes (and record fedback given)
      *  * post back warning if rate limiting check fails
      *
+     * TODO: Not sure why this returns a boolean instead of void.
+     *
      * @param info
      */
     public async handleCommentEvent(info: ICommentEvent): Promise<boolean> {
@@ -128,6 +133,7 @@ export class AutoTest implements IAutoTest {
 
         if (typeof info === "undefined" || info === null) {
             Log.info("AutoTest::handleCommentEvent(..) - info not provided; skipping.");
+            return false;
         }
 
         try {
@@ -150,7 +156,7 @@ export class AutoTest implements IAutoTest {
             info.courseId = that.courseId;
             let delivId = info.delivId;
             if (delivId === null) {
-                delivId = await this.getDelivId(info.commitURL); // need to get the default deliverable for that repo
+                delivId = await this.getDelivId(); // need to get the default deliverable for that repo
                 info.delivId = delivId;
             }
 
@@ -390,8 +396,8 @@ export class AutoTest implements IAutoTest {
      *
      * @param commitURL
      */
-    private async getDelivId(commitURL: string): Promise<string | null> {
-        let str = await this.classPortal.getDefaultDeliverableId(commitURL);
+    private async getDelivId(): Promise<string | null> {
+        let str = await this.classPortal.getDefaultDeliverableId(this.courseId);
         if (typeof str === "undefined") {
             str = null;
         }
@@ -471,7 +477,7 @@ export class AutoTest implements IAutoTest {
         // async operations up front
         const isStaff = await this.classPortal.isStaff(this.courseId, userName);
         const record: IFeedbackGiven = await this.dataStore.getLatestFeedbackGivenRecord(this.courseId, delivId, userName);
-        const testDelay = await this.classPortal.getTestDelay(this.courseId); // should cache this
+        const testDelay = await this.classPortal.getTestDelay(this.courseId, delivId); // should cache this
 
         if (isStaff === true) {
             return null; // staff can always request
