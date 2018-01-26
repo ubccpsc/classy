@@ -76,14 +76,14 @@ export class DummyClassPortal implements IClassPortal {
 export class ClassPortal implements IClassPortal {
 
     public async isStaff(courseId: string, userName: string): Promise<boolean> {
-        Log.trace("ClassPortal::isStaff(..) - start");
         if (typeof courseId === "undefined" || courseId === null || typeof userName === "undefined" || userName === null) {
+            Log.error("ClassPortal::isStaff(..) - missing parameters");
             return false;
         }
 
         const url = "https://portal.cs.ubc.ca:5000/" + courseId + "/isStaff/" + userName;
         return rp(url).then(function (res) {
-            Log.trace("ClassPortal::isStaff(..) - success; url: " + url + " - success: " + res);
+            Log.trace("ClassPortal::isStaff( " + courseId + ", " + userName + " ) - success; response: " + res);
             const json = JSON.parse(res);
             return json.response;
         }).catch(function (err) {
@@ -94,11 +94,13 @@ export class ClassPortal implements IClassPortal {
 
     public async getDefaultDeliverableId(courseId: string): Promise<string | null> {
         if (typeof courseId === "undefined" || courseId === null) {
+            Log.error("ClassPortal::getDefaultDeliverableId(..) - missing parameters");
             return null;
         }
+
         const url = "https://portal.cs.ubc.ca:5000/" + courseId + "/defaultDeliverable";
         return rp(url).then(function (res) {
-            Log.trace("ClassPortal::getDefaultDeliverableId(..) - success; url: " + url + " - success: " + res);
+            Log.trace("ClassPortal::getDefaultDeliverableId( " + courseId + " ) - success; response: " + res);
             const json = JSON.parse(res);
             return json.response;
         }).catch(function (err) {
@@ -115,11 +117,13 @@ export class ClassPortal implements IClassPortal {
      */
     public async getTestDelay(courseId: string, delivId: string): Promise<number | null> {
         if (typeof courseId === "undefined" || courseId === null || typeof delivId === "undefined" || delivId === null) {
+            Log.error("ClassPortal::getTestDelay(..) - missing parameters");
             return null;
         }
+
         const url = "https://portal.cs.ubc.ca:5000/" + courseId + "/" + delivId + "/rate";
         return rp(url).then(function (res) {
-            Log.trace("ClassPortal::getTestDelay(..) - success; url: " + url + " - success: " + res);
+            Log.trace("ClassPortal::getTestDelay( " + courseId + ", " + delivId + " ) - success; response: " + res);
             const json = JSON.parse(res);
             return json.response;
         }).catch(function (err) {
