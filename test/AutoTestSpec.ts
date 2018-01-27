@@ -47,7 +47,7 @@ describe("AutoTest", () => {
     };
 
     const inputRecordA: IContainerInput = {
-        "courseId": "cs310",
+        "courseId": "310",
         "delivId":  "d0",
         "pushInfo": pushEventA
     };
@@ -57,8 +57,8 @@ describe("AutoTest", () => {
         "commitSHA":    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "userName":     "cs310test",
-        "courseId":     "cs310",
-        "delivId":      "d9",
+        "courseId":     "310",
+        "delivId":      "d1",
         "postbackURL":  "EMPTY",
         "timestamp":    1516472873288
     };
@@ -68,8 +68,8 @@ describe("AutoTest", () => {
         "commitSHA":    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "userName":     "cs310test",
-        "courseId":     "cs310",
-        "delivId":      "d9",
+        "courseId":     "310",
+        "delivId":      "d1",
         "postbackURL":  "EMPTY",
         "timestamp":    1516523258762
     };
@@ -79,8 +79,8 @@ describe("AutoTest", () => {
         "commitSHA":    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "userName":     "staff",
-        "courseId":     "cs310",
-        "delivId":      "d9",
+        "courseId":     "310",
+        "delivId":      "d1",
         "postbackURL":  "EMPTY",
         "timestamp":    1516472874288
     };
@@ -120,7 +120,7 @@ describe("AutoTest", () => {
 
         portal = new DummyClassPortal();
         gh = new GithubService();
-        const courseId = "cs310";
+        const courseId = "310";
         at = new AutoTest(courseId, data, portal, gh);
     });
 
@@ -184,7 +184,7 @@ describe("AutoTest", () => {
             commitSHA:     pe.commitSHA,
             commitURL:     pe.commitURL,
             userName:      "myUser",
-            courseId:      "cs310",
+            courseId:      "310",
             delivId:       "d0",
             "postbackURL": "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
             timestamp:     1234567891
@@ -196,7 +196,7 @@ describe("AutoTest", () => {
         allData = await data.getAllData();
         expect(allData.comments.length).to.equal(0);
 
-        await Util.timeout(1 * 1000); // let test finish so it doesn't ruin subsequent executions
+        // await Util.timeout(1 * 1000); // let test finish so it doesn't ruin subsequent executions
     });
 
     it("Should give a user a warning message on a commit that has not been queued.", async () => {
@@ -241,7 +241,7 @@ describe("AutoTest", () => {
         await at.handleCommentEvent(commentRecordUserA);
         allData = await data.getAllData();
         expect(gh.messages.length).to.equal(1); // should generate a warning
-        expect(gh.messages[0].message).to.equal("This commit is still queued for processing against d9. Your results will be posted here as soon as they are ready.");
+        expect(gh.messages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
         expect(allData.comments.length).to.equal(1);
 
         await Util.timeout(200); // just clear the buffer before moving onto the next test
@@ -261,23 +261,25 @@ describe("AutoTest", () => {
         expect(gh.messages.length).to.equal(0); // should not be any feedback yet
         expect(allData.comments.length).to.equal(0);
         expect(allData.pushes.length).to.equal(1);
+        // don't wait; want to catch this push in flight
         Log.test("Setup complete");
 
         // TEST: send a comment (this is the previous test)
         await at.handleCommentEvent(commentRecordUserA);
         allData = await data.getAllData();
         expect(gh.messages.length).to.equal(1); // should generate a warning
-        expect(gh.messages[0].message).to.equal("This commit is still queued for processing against d9. Your results will be posted here as soon as they are ready.");
+        expect(gh.messages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
+        await Util.timeout(200); // Wait for it!
+        Log.test("Round 1 complete");
 
-        // Wait for it!
-        await Util.timeout(200);
         allData = await data.getAllData();
         expect(gh.messages.length).to.equal(2); // should generate a warning
         expect(gh.messages[1].message).to.equal("Test execution complete.");
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(1); // should be charged
+        Log.test("Test complete");
     });
 
     it("Should give a user a response for on a commit once it finishes if postback is true.", async () => {
@@ -300,7 +302,7 @@ describe("AutoTest", () => {
         // await at.handleCommentEvent(commentRecordUserA);
         // allData = await data.getAllData();
         // expect(gh.messages.length).to.equal(1); // should generate a warning
-        // expect(gh.messages[0].message).to.equal("This commit is still queued for processing against d9. Your results will be posted here as soon as they are ready.");
+        // expect(gh.messages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
         // expect(allData.comments.length).to.equal(1);
         // expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
 
@@ -333,7 +335,7 @@ describe("AutoTest", () => {
         await at.handleCommentEvent(commentRecordUserA);
         allData = await data.getAllData();
         expect(gh.messages.length).to.equal(1); // should generate a warning
-        expect(gh.messages[0].message).to.equal("This commit is still queued for processing against d9. Your results will be posted here as soon as they are ready.");
+        expect(gh.messages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
 
@@ -393,8 +395,8 @@ describe("AutoTest", () => {
         // SETUP: add a push with no output records
         const fg: IFeedbackGiven = {
             "commitURL": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263fSOMEOTHER",
-            "courseId":  "cs310",
-            "delivId":   "d9",
+            "courseId":  "310",
+            "delivId":   "d1",
             "timestamp": 1516451273288, ///
             "userName":  "cs310test"
         };

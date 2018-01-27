@@ -1,6 +1,6 @@
 import * as restify from "restify";
 import {AutoTest} from "../autotest/AutoTest";
-import {DummyClassPortal} from "../autotest/ClassPortal";
+import {ClassPortal, DummyClassPortal} from "../autotest/ClassPortal";
 import {DummyDataStore} from "../autotest/DataStore";
 import {GithubService} from "../autotest/GithubService";
 import {GithubUtil} from "../util/GithubUtil";
@@ -16,9 +16,10 @@ export default class RouteHandler {
 
             // TODO: create these in server?
             const data = new DummyDataStore();
-            const portal = new DummyClassPortal();
+            // const portal = new DummyClassPortal();
+            const portal = new ClassPortal();
             const gh = new GithubService();
-            const courseId = "cs310";
+            const courseId = "310";
 
             RouteHandler.autoTest = new AutoTest(courseId, data, portal, gh);
         }
@@ -128,7 +129,7 @@ export default class RouteHandler {
 
                     Log.info("RouteHandler::handlePushEvent() - request: " + JSON.stringify(pushEvent, null, 2));
                     RouteHandler.getAutoTest().handlePushEvent(pushEvent).then((result: boolean) => {
-                        Log.info("RouteHandler::handlePushEvent() - result: " + result + "; took: " + Util.took(start));
+                        Log.info("RouteHandler::handlePushEvent() - success: " + result + "; took: " + Util.took(start));
                         res.json(202, {body: "Commit has been queued"});
                     }).catch((err: any) => {
                         Log.error("RouteHandler::handlePushEvent() - error encountered; ERROR: " + err + "; took: " + Util.took(start));
