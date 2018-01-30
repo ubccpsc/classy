@@ -6,7 +6,6 @@
         "removeComments": true,
         "preserveConstEnums": true,
         "sourceMap": true,
-        "outDir": "bin",
         "lib": [
             "es7",
             "es2017.object",

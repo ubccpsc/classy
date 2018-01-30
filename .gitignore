@@ -15,3 +15,4 @@ test/*.map
 bin
 data/
 config.priv.json
+.nyc_output
