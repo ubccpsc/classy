@@ -124,6 +124,7 @@ export class AutoTest implements IAutoTest {
      *  * post back warning if rate limiting check fails
      *
      * TODO: Not sure why this returns a boolean instead of void.
+     * TODO: need to think a bit harder about which comment events should be saved and which should be dropped
      *
      * @param info
      */
@@ -137,10 +138,7 @@ export class AutoTest implements IAutoTest {
         }
 
         try {
-            // Log.info("AutoTest::handleCommentEvent(..) - start; course: " + this.courseId); // commit: " + info.commitURL + "; user: " + info.userName);
             Log.info("AutoTest::handleCommentEvent(..) - start; course: " + this.courseId + "; commit: " + info.commitSHA + "; user: " + info.userName);
-
-            // NOTE: need to think a bit harder about which comment events should be saved and which should be dropped
 
             if (info.userName === Config.getInstance().getProp("botName")) {
                 Log.info("AutoTest::handleCommentEvent(..) - ignored, comment made by AutoBot");
@@ -156,7 +154,8 @@ export class AutoTest implements IAutoTest {
             info.courseId = that.courseId;
             let delivId = info.delivId;
             if (delivId === null) {
-                delivId = await this.getDelivId(); // need to get the default deliverable for that repo
+                // need to get the default deliverable for that repo
+                delivId = await this.getDelivId();
                 info.delivId = delivId;
             }
 
@@ -167,51 +166,51 @@ export class AutoTest implements IAutoTest {
                 return true;
             }
 
-            // front load the async operations, even if it means we do some operations unnecessairly
-            // could do these all in parallel
+            // front load the async operations, even if it means we do some operations unnecessarily; thse could be done in parallel
             const isStaff: boolean = await this.classPortal.isStaff(this.courseId, info.userName); // async
             const requestFeedbackDelay: string | null = await this.requestFeedbackDelay(delivId, info.userName, info.timestamp); // ts of comment, not push
             const hasBeenRequestedBefore: IFeedbackGiven = await this.dataStore.getFeedbackGivenRecordForCommit(info.commitURL, info.userName); // students often request grades they have previously 'paid' for
             const res: ICommitRecord = await this.getOutputRecord(info.commitURL); // for any user
             const isCurrentlyRunning: boolean = this.isCommitExecuting(info.commitURL, delivId);
-
             Log.trace("AutoTest::handleCommentEvent(..) - isStaff: " + isStaff + "; delay: " + requestFeedbackDelay + "; res: " + res + "; running?: " + isCurrentlyRunning);
 
             let shouldPost = false; // should the result be given
             if (isStaff === true) {
+                // always respond for staff
                 shouldPost = true;
             } else {
                 if (requestFeedbackDelay === null) {
+                    // respond if they have not been given feedback before
                     shouldPost = true;
                 } else {
-                    if (hasBeenRequestedBefore !== null) {
-                        // don't give the timeout warning in this instance
-                    } else {
+                    // students have been given feedback within the time window
+                    if (hasBeenRequestedBefore === null) {
+                        // but the feedback was on another commit
                         shouldPost = false;
                         const msg = "You must wait " + requestFeedbackDelay + " before requesting feedback.";
                         await this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
+                    } else {
+                        // they have been given feedback within the window, but on this commit.
+                        // so we might as well give it to them. asking for this doesn't make sense,
+                        // but happens with remarkable frequency, so just give them their results back again
+                        shouldPost = true;
                     }
                 }
             }
 
             if (res !== null) {
-                // execution complete
+                // execution has been completed so there is feedback ready to give
                 Log.trace("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitSHA + "; execution complete");
-                if (hasBeenRequestedBefore !== null) {
-                    // just give it to them again (saving the feedback given is ok since it is by push timestamp)
-                    shouldPost = true;
-                }
+                // true if staff, requested before, or over feedback delay interval
                 if (shouldPost === true) {
                     await this.github.postMarkdownToGithub({url: info.postbackURL, message: res.output.feedback});
                     await this.saveFeedbackGiven(this.courseId, delivId, info.userName, info.timestamp, info.commitURL);
                     await this.saveCommentInfo(info); // user or TA; only for analytics since feedback has been given
                 }
-
             } else {
                 // execution not yet complete
                 Log.info("AutoTest::handleCommentEvent(..) - course: " + this.courseId + "; commit: " + info.commitSHA + "; execution not yet complete");
                 if (shouldPost === true) {
-
                     // NOTE: it _should_ be on the standard queue here, but if it isn't, could we add it, just to be safe?
                     const onQueue = this.isOnQueue(info.commitURL, info.delivId);
                     let msg = "This commit is still queued for processing against " + delivId + ".";
@@ -228,6 +227,8 @@ export class AutoTest implements IAutoTest {
                     }
                     await this.saveCommentInfo(info); // whether TA or staff
                     await this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
+                } else {
+                    // should we do something if shouldPost is false?
                 }
 
                 if (isCurrentlyRunning === true) {
@@ -241,7 +242,6 @@ export class AutoTest implements IAutoTest {
                         if (input !== null) {
                             this.expressQueue.push(input);
                         }
-
                     }
                 }
             }
