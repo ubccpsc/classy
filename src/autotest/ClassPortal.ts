@@ -88,7 +88,7 @@ export class ClassPortal implements IClassPortal {
             return json.response;
         }).catch(function (err) {
             Log.trace("ClassPortal::isStaff(..) - ERROR; url: " + url + "; ERROR: " + err);
-            return false;
+            return false; // err on the side of caution
         });
     }
 
@@ -105,7 +105,7 @@ export class ClassPortal implements IClassPortal {
             return json.response;
         }).catch(function (err) {
             Log.trace("ClassPortal::getDefaultDeliverableId(..) - ERROR; url: " + url + "; ERROR: " + err);
-            return false;
+            return null;
         });
     }
 
@@ -128,7 +128,7 @@ export class ClassPortal implements IClassPortal {
             return json.response;
         }).catch(function (err) {
             Log.trace("ClassPortal::getTestDelay(..) - ERROR; url: " + url + "; ERROR: " + err);
-            return false;
+            return null;
         });
     }
 }
