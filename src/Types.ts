@@ -151,15 +151,3 @@ export interface IAttachment {
     data: string;
     content_type: string;
 }
-
-// A subset of the Docker container run options.
-// https://docs.docker.com/engine/reference/commandline/create/#options
-export interface IContainerOptions {
-    env?: object;
-    envFile?: string;
-    volumes?: string[];  // Expands to multiple --volume <string> flags.
-}
-
-// A subset of the Docker inspect output for container objects.
-// https://docs.docker.com/engine/reference/commandline/inspect/
-export type IContainerProperties = object[];

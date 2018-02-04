@@ -1,9 +1,9 @@
 import { ChildProcess, exec, spawn, SpawnOptions } from "child_process";
 import { setTimeout } from "timers";
-import { IContainerOptions, IContainerProperties } from "../Types";
+import { IDockerContainerOptions, IDockerContainerProperties } from "../docker/DockerTypes";
 import Util from "../util/Util";
 
-enum ContainerStatus {
+enum DockerContainerStatus {
     created,
     restarting,
     running,
@@ -16,7 +16,7 @@ enum ContainerStatus {
 /**
  * Simple wrapper for Docker's container management commands with some basic extensions.
  */
-export default class Container {
+export default class DockerContainer {
     public image: string;
     private _id: string;
     private _timestamp: number;
@@ -36,7 +36,7 @@ export default class Container {
      * @returns a promise that resolves to the id of the created container.
      * @throws if the container has already been created, or if container creation failed.
      */
-    public async create(options?: IContainerOptions): Promise<void> {
+    public async create(options?: IDockerContainerOptions): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             let errMsg: string;
             const cmdArgs: string[] = [`create`, `--cap-add=NET_ADMIN`];
@@ -86,10 +86,10 @@ export default class Container {
      * Gets the container properties from Docker. Certain fields are only set while the container is running.
      * @throws When the container does not exist.
      */
-    public async getProperties(): Promise<IContainerProperties> {
-        return new Promise<IContainerProperties>((resolve, reject) => {
+    public async getProperties(): Promise<IDockerContainerProperties> {
+        return new Promise<IDockerContainerProperties>((resolve, reject) => {
             exec(`docker inspect ${this._id}`, (error, stdout, stderr) => {
-                let parsedOutput: IContainerProperties;
+                let parsedOutput: IDockerContainerProperties;
                 if (error) {
                     reject(error);
                 }
@@ -106,10 +106,10 @@ export default class Container {
 
     /**
      * Gets the status of the container.
-     * @returns {Promise<ContainerStatus>}
+     * @returns {Promise<DockerContainerStatus>}
      */
-    public getStatus(): Promise<ContainerStatus> {
-        return new Promise<ContainerStatus>((resolve, reject) => {
+    public getStatus(): Promise<DockerContainerStatus> {
+        return new Promise<DockerContainerStatus>((resolve, reject) => {
             exec(`docker ps --all --filter id=${this._id} --format "{{.Status}}"`, (error, stdout, stderr) => {
                 if (error) {
                     reject(error);
@@ -124,7 +124,7 @@ export default class Container {
                         cliStatus = "exited";
                     }
                 }
-                const status: ContainerStatus | undefined = (ContainerStatus as any)[cliStatus.toLocaleLowerCase()];
+                const status: DockerContainerStatus | undefined = (DockerContainerStatus as any)[cliStatus.toLocaleLowerCase()];
                 if (typeof status !== `undefined`) {
                     resolve(status);
                 } else {
@@ -185,11 +185,11 @@ export default class Container {
     }
 
     /**
-     * Converts the IContainerOptions object to an array of parameters suitable for spawn.
+     * Converts the IDockerContainerOptions object to an array of parameters suitable for spawn.
      * @param options Container options to flatten into an array of parameters.
      * @param initArgs The initial argument(s), usually the docker subcommand.
      */
-    private dockerOptionsToArgs(options: IContainerOptions, initArgs: string[]): void {
+    private dockerOptionsToArgs(options: IDockerContainerOptions, initArgs: string[]): void {
         if (typeof options.env !== `undefined`) {
             for (const [key, value] of Object.entries(options.env)) {
                 initArgs.push(`--env`);

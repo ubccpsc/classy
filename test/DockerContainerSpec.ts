@@ -1,14 +1,14 @@
 /* tslint:disable:no-unused-expression */
 import {expect} from "chai";
 import {ChildProcess, spawn} from "child_process";
-import Container from "../src/autotest/Container";
-import {IContainerOptions} from "../src/Types";
+import DockerContainer from "../src/docker/DockerContainer";
+import {IDockerContainerOptions} from "../src/docker/DockerTypes";
 import Log from "../src/util/Log";
 
-describe("Container", () => {
+describe("DockerContainer", () => {
     let sha: string;
     let tag: string;
-    let container: Container;
+    let container: DockerContainer;
 
     function createImage(name: string, dockerfileDir: string): Promise<string> {
         return new Promise<string>((resolve, reject) => {
@@ -59,7 +59,7 @@ describe("Container", () => {
     });
 
     beforeEach(() => {
-        container = new Container(sha);
+        container = new DockerContainer(sha);
     });
 
     afterEach(async () => {
@@ -88,7 +88,7 @@ describe("Container", () => {
         it(`Should create a new container from a valid image tag with no options specified.`, async () => {
             let result;
             try {
-                const cnt: Container = new Container(tag);
+                const cnt: DockerContainer = new DockerContainer(tag);
                 result = await cnt.create();
                 await cnt.remove();
             } catch (err) {
@@ -133,7 +133,7 @@ describe("Container", () => {
         it("Should create a new container from a valid image when extra options are specified.", async () => {
             let result;
             try {
-                result = await container.create({other: `option`} as IContainerOptions);
+                result = await container.create({other: `option`} as IDockerContainerOptions);
                 await container.remove();
             } catch (err) {
                 result = err;
@@ -144,7 +144,7 @@ describe("Container", () => {
         it("Should fail to create a new container from an non-existent image.", async () => {
             let result;
             try {
-                const invContainer = new Container("fake-image-123");
+                const invContainer = new DockerContainer("fake-image-123");
                 result = await invContainer.create();
                 await container.remove();
             } catch (err) {
@@ -232,7 +232,7 @@ describe("Container", () => {
             let result;
             try {
                 trapSha = await createImage("traptest", `${__dirname}/container/sig-handling`);
-                const cnt = new Container(trapSha);
+                const cnt = new DockerContainer(trapSha);
                 await cnt.create({env: {EXIT_ON_SIGTERM: true}});
                 result = await cnt.start(1000);
                 // console.log(await cnt.getLog());
@@ -252,7 +252,7 @@ describe("Container", () => {
             let result;
             try {
                 trapSha = await createImage("traptest2", `${__dirname}/container/sig-handling`);
-                const cnt = new Container(trapSha);
+                const cnt = new DockerContainer(trapSha);
                 await cnt.create();
                 result = await cnt.start(1000);
             } catch (err) {
@@ -271,14 +271,14 @@ describe("Container", () => {
     describe("Container::getLog", function () {
         this.timeout(5000);
         let logSha: string;
-        let logContainer: Container;
+        let logContainer: DockerContainer;
 
         before(async () => {
             logSha = await createImage(`logger`, `${__dirname}/container/logging`);
         });
 
         beforeEach(async () => {
-            logContainer = new Container(logSha);
+            logContainer = new DockerContainer(logSha);
             await logContainer.create();
             await logContainer.start();
         });
