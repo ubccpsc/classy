@@ -34,6 +34,16 @@ export interface IClassPortal {
      * @param courseId
      */
     getTestDelay(courseId: string, delivId: string): Promise<number | null>;
+
+    /**
+     * Gets the identifier for the AutoTest docker container that should process requests for this deliverable.
+     *
+     * GET /admin/{:courseId}/{:delivId}/container
+     *
+     * @param courseId
+     */
+    getContainerId(courseId: string, delivId: string): Promise<string | null>;
+
 }
 
 export class DummyClassPortal implements IClassPortal {
@@ -57,12 +67,15 @@ export class DummyClassPortal implements IClassPortal {
         return null;
     }
 
-    /**
-     * Gets the delay beween test executions in milliseconds
-     *
-     * @param {string} courseId
-     * @returns {Promise<number>}
-     */
+    public async getContainerId(courseId: string, delivId: string): Promise<string | null> {
+        if (typeof courseId !== "undefined" && courseId !== null && typeof delivId !== "undefined" && delivId !== null) {
+            if (courseId === "310") {
+                return "310container";
+            }
+        }
+        return null;
+    }
+
     public async getTestDelay(courseId: string, delivId: string): Promise<number | null> {
         if (typeof courseId !== "undefined" && courseId !== null && typeof delivId !== "undefined" && delivId !== null) {
             if (courseId === "310") {
@@ -131,4 +144,22 @@ export class ClassPortal implements IClassPortal {
             return null;
         });
     }
+
+    public async getContainerId(courseId: string, delivId: string): Promise<string | null> {
+        if (typeof courseId === "undefined" || courseId === null || typeof delivId === "undefined" || delivId === null) {
+            Log.error("ClassPortal::getContainerId(..) - missing parameters");
+            return null;
+        }
+
+        const url = "https://portal.cs.ubc.ca:5000/" + courseId + "/" + delivId + "/container";
+        return rp(url).then(function (res) {
+            Log.trace("ClassPortal::getContainerId( " + courseId + ", " + delivId + " ) - success; payload: " + res);
+            const json = JSON.parse(res);
+            return json.response;
+        }).catch(function (err) {
+            Log.trace("ClassPortal::getContainerId(..) - ERROR; url: " + url + "; ERROR: " + err);
+            return null;
+        });
+    }
+
 }
