@@ -94,7 +94,7 @@ describe("ClassPortal Service", () => {
         }
     });
 
-    it("Should return a null container id if the course does not exist.", async () => {
+    it.skip("Should return a null container id if the course does not exist.", async () => {
         try {
             const actual = await cp.getTestDelay("cs999", "d0");
             expect(actual).to.equal(null);
@@ -103,7 +103,7 @@ describe("ClassPortal Service", () => {
         }
     });
 
-    it("Should return a default deliverable if the course has one.", async () => {
+    it.skip("Should return a default deliverable if the course has one.", async () => {
         try {
             const actual = await cp.getDefaultDeliverableId(classId);
             expect(actual).to.equal("d0");
