@@ -28,20 +28,7 @@ class DockerContainerMock implements IDockerContainer {
     }
 }
 
-// class DockerContainerMock2 extends DockerContainerMock {
-//     constructor (reportToOutput: string, reportContent: string, logContent: string) {
-//         super(reportToOutput, reportContent, logContent);
-//     }
-
-//     public async start(timeout: number): Promise<number> {
-//         await fs.writeFile(this.reportToOutput, "This is a result record.");
-//         return new Promise<number>((resolve) => {
-//             setTimeout(() => resolve(1), timeout + 200);
-//         });
-//     }
-// }
-
-describe.only("Grader", () => {
+describe("Grader", () => {
     const config: Config = Config.getInstance();
     const workspace: string = `${__dirname}/scratch`;
     let grader: Grader;
