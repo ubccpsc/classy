@@ -85,6 +85,24 @@ describe("ClassPortal Service", () => {
         }
     });
 
+    it("Should return a container id for an existing course.", async () => {
+        try {
+            const actual = await cp.getTestDelay("cs310", "d0");
+            expect(actual).to.equal("foo"); // TODO: this is known to fail since the service isn't up yet
+        } catch (err) {
+            expect.fail("Should not happen");
+        }
+    });
+
+    it("Should return a null container id if the course does not exist.", async () => {
+        try {
+            const actual = await cp.getTestDelay("cs999", "d0");
+            expect(actual).to.equal(null);
+        } catch (err) {
+            expect.fail("Should not happen");
+        }
+    });
+
     it("Should return a default deliverable if the course has one.", async () => {
         try {
             const actual = await cp.getDefaultDeliverableId(classId);

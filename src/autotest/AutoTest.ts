@@ -380,6 +380,9 @@ export class AutoTest implements IAutoTest {
         try {
             Log.info("AutoTest::invokeContainer(..) - commit: " + input.pushInfo.commitSHA);
             const start = Date.now();
+
+            // TODO: make sure we are using the right container
+            // const containerId = await this.classPortal.getContainerId(input.courseId,input.delivId);
             const docker = new DockerInstance(input);
             const record: ICommitRecord = await docker.execute();
 
