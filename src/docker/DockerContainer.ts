@@ -13,11 +13,16 @@ enum DockerContainerStatus {
     dead
 }
 
+export interface IDockerContainer {
+    start(timeout: number): Promise<number>;
+    getLog(tail?: number, size?: number): Promise<string>;
+}
+
 /**
  * Simple wrapper for Docker's container management commands with some basic extensions.
  */
-export default class DockerContainer {
-    public image: string;
+export default class DockerContainer implements IDockerContainer {
+    private readonly _image: string;
     private _id: string;
     private _timestamp: number;
 
@@ -27,7 +32,7 @@ export default class DockerContainer {
      * @param image SHA or tag of Docker image from which to create container.
      */
     constructor(image: string) {
-        this.image = image;
+        this._image = image;
     }
 
     /**
@@ -43,7 +48,7 @@ export default class DockerContainer {
             if (typeof options !== `undefined`) {
                 this.dockerOptionsToArgs(options, cmdArgs);
             }
-            cmdArgs.push(this.image);
+            cmdArgs.push(this._image);
             const cmd: ChildProcess = spawn(`docker`, cmdArgs);
 
             cmd.stdout.on(`data`, (data) => this._id = data.toString().trim());

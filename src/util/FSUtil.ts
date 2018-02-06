@@ -29,6 +29,18 @@ export default class FSUtil {
         return zip.generateAsync(zipOptions) as Promise<Uint8Array>;
     }
 
+    /**
+     * Zips a file and stores it at the destination.
+     * @param file The path to the file to zip.
+     * @param dest The destination directory to store the zip. If the destination does not exist, it will be created.
+     */
+    public static async zipTo(file: string, dest: string): Promise<Uint8Array> {
+        const filename: string = path.basename(file);
+        const zipContent: Uint8Array = await FSUtil.zipFile(file);
+        await fs.writeFile(`${dest}/${filename}.zip`, zipContent);
+        return zipContent;
+    }
+
     private constructor() {
         // Do nothing
     }
