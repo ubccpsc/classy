@@ -6,6 +6,7 @@ import {IClassPortal} from "./ClassPortal";
 import {IDataStore} from "./DataStore";
 import {DockerInstance} from "./DockerInstance";
 import {IGithubService} from "./GithubService";
+import Grader from "./Grader";
 import {Queue} from "./Queue";
 
 export interface IAutoTest {
@@ -383,8 +384,11 @@ export class AutoTest implements IAutoTest {
 
             // TODO: make sure we are using the right container
             // const containerId = await this.classPortal.getContainerId(input.courseId,input.delivId);
-            const docker = new DockerInstance(input);
-            const record: ICommitRecord = await docker.execute();
+            // const docker = new DockerInstance(input);
+            // const record: ICommitRecord = await docker.execute();
+
+            const grader = new Grader();
+            const record: ICommitRecord = await grader.execute(input);
 
             Log.info("AutoTest::invokeContainer(..) - complete for commit: " + input.pushInfo.commitSHA + "; took: " + Util.took(start)); // + "; record: " + JSON.stringify(record));
             this.handleExecutionComplete(record);
