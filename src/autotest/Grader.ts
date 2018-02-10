@@ -5,6 +5,7 @@ import DockerContainer, { IDockerContainer } from "../docker/DockerContainer";
 import { IDockerContainerOptions } from "../docker/DockerTypes";
 import { IAttachment, ICommitRecord, IContainerInput, IContainerOutput, IGradeReport } from "../Types";
 import FSUtil from "../util/FSUtil";
+import Log from "../util/Log";
 import Repository from "../util/Repository";
 
 /**
@@ -48,7 +49,8 @@ export default class Grader {
      */
     public async grade(container: DockerContainer): Promise<IGradeReport> {
         // TODO @nickbradley logs should be truncated before being written to the file.
-        await fs.writeFile(`${this.keepDir}/${this.transcriptFilename}`, await container.logs());
+        const log: string = (await container.logs()).output;
+        await fs.writeFile(`${this.keepDir}/${this.transcriptFilename}`, log);
         // TODO @nickbradley Validate the report before returning
         const report: IGradeReport = await fs.readJson(`${this.keepDir}/${this.reportFilename}`);
         return report;
