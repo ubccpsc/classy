@@ -35,7 +35,8 @@ export class DockerInstance {
                 failNames:    [],
                 errorNames:   [],
                 skipNames:    [],
-                custom:       []
+                custom:       [],
+                feedback:     ""
             };
 
             const out: IContainerOutput = {
