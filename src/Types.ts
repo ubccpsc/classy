@@ -144,6 +144,7 @@ export interface IGradeReport {
     errorNames: string[];
     skipNames: string[];
     custom: any[];
+    feedback: string;
 }
 
 export interface IAttachment {

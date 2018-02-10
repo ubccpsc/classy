@@ -100,7 +100,8 @@ describe("AutoTest", () => {
                 "failNames":    [],
                 "errorNames":   [],
                 "skipNames":    [],
-                "custom":       []
+                "custom":       [],
+                "feedback":     ""
             },
             "feedback":           "Test Feedback",
             "postbackOnComplete": false,
