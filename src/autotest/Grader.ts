@@ -9,10 +9,14 @@ import Log from "../util/Log";
 import Repository from "../util/Repository";
 import Util from "../util/Util";
 
+export interface IGrader {
+    execute(input: IContainerInput): Promise<ICommitRecord>;
+}
+
 /**
  * Grades a student's project at a specified commit against a solution key for the assignment.
  */
-export default class Grader {
+export default class Grader implements IGrader {
     private readonly reportFilename: string;
     private readonly transcriptFilename: string;
     private workspace: string;
@@ -48,9 +52,10 @@ export default class Grader {
      * @param container The docker container that will execute the grading logic. It should already be created.
      * @param timeAlloted The duration, in milliseconds, the container is allowed to run for.
      */
-    public async grade(container: DockerContainer): Promise<IGradeReport> {
+    public async grade(container: DockerContainer, logDir: string): Promise<IGradeReport> {
         // TODO @nickbradley logs should be truncated before being written to the file.
         const log: string = (await container.logs()).output;
+        await fs.outputFile(`${logDir}/${this.transcriptFilename}`, log);
         await fs.writeFile(`${this.keepDir}/${this.transcriptFilename}`, log);
         // TODO @nickbradley Validate the report before returning
         const report: IGradeReport = await fs.readJson(`${this.keepDir}/${this.reportFilename}`);
@@ -70,11 +75,13 @@ export default class Grader {
         const assnToken: string = Config.getInstance().getProp("githubOrgToken");
         const solnToken: string = Config.getInstance().getProp("githubOracleToken");
         const solnUrl: string = Config.getInstance().getProp("oracleRepo").replace("://", `://${solnToken}@`);
+        const persistDirRoot: string = Config.getInstance().getProp("persistDir");
 
         const solnBranch: string = input.delivId;
         const assnUrl: string = input.pushInfo.projectURL.replace("://", `://${assnToken}@`);
         const assnCommit: string = input.pushInfo.commitSHA;
         const delivId: string = input.delivId;
+        const persistDir: string = `${persistDirRoot}/${assnCommit}`;
 
         let code: number;
         let container: DockerContainer;
@@ -112,7 +119,7 @@ export default class Grader {
         }
 
         try {
-            const gradeReport: IGradeReport = await this.grade(container);
+            const gradeReport: IGradeReport = await this.grade(container, persistDir);
             out.report = gradeReport;
             out.feedback = gradeReport.feedback;
         } catch (err) {
@@ -122,6 +129,14 @@ export default class Grader {
 
         try {
             out.attachments = await this.generateZipAttachments(this.keepDir);
+            const writePromises: Array<Promise<void>> = [];
+            for (const attachment of out.attachments) {
+                const name = attachment.name;
+                const data = attachment.data;
+                const filename = `${persistDir}/${name}`;
+                writePromises.push(fs.outputFile(filename, data));
+            }
+            await Promise.all(writePromises);
         } catch (err) {
             // TODO
         }
@@ -132,7 +147,6 @@ export default class Grader {
         } catch (err) {
             // TODO
         }
-
 
         const ret: ICommitRecord = {
             commitURL: input.pushInfo.commitURL,
