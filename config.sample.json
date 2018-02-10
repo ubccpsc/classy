@@ -9,7 +9,8 @@
             "oracleRepo": "https://github.ubc.ca/cpsc310/cpsc310project-impl.git",
             "postback": false,
             "persistDir": "./data/test/",
-            "port": 11333
+            "port": 11333,
+            "timeout": 300
         },
         {
             "name": "cs310",
@@ -20,7 +21,8 @@
             "oracleRepo": "https://github.ubc.ca/cpsc310/cpsc310project-impl.git",
             "postback": false,
             "persistDir": "./data/cs310/",
-            "port": 11333
+            "port": 11333,
+            "timeout": 300
         }
     ],
     "botName": "autobot",
