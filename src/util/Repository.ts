@@ -23,9 +23,9 @@ export default class Repository {
      */
     public async checkout(commit: string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            exec(`git checkout ${commit}`, (error, stdout, stderr) => {
+            exec(`git checkout ${commit}`, { cwd: this.path }, (error, stdout, stderr) => {
                 if (error) {
-                    reject(`${error}. Details: ${stderr}`);
+                    reject(error);
                 }
                 resolve();
             });
@@ -52,9 +52,9 @@ export default class Repository {
      */
     public async clone(url: string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            exec(`git clone ${url} ${this.path}`, (error, stdout, stderr) => {
+            exec(`git clone ${url} ${this.path}`, { env: {GIT_TERMINAL_PROMPT: 0} }, (error, stdout, stderr) => {
                 if (error) {
-                    reject(`${error}. Details: ${stderr}`);
+                    reject(error);
                 }
                 resolve();
             });
