@@ -1,12 +1,13 @@
 import * as fs from "fs-extra";
 import * as path from "path";
-import { Config } from "../Config";
-import DockerContainer, { IDockerContainer } from "../docker/DockerContainer";
-import { IDockerContainerOptions } from "../docker/DockerTypes";
-import { IAttachment, ICommitRecord, IContainerInput, IContainerOutput, IGradeReport } from "../Types";
+import {Config} from "../Config";
+import DockerContainer, {IDockerContainer} from "../docker/DockerContainer";
+import {IDockerContainerOptions} from "../docker/DockerTypes";
+import {IAttachment, ICommitRecord, IContainerInput, IContainerOutput, IGradeReport} from "../Types";
 import FSUtil from "../util/FSUtil";
 import Log from "../util/Log";
 import Repository from "../util/Repository";
+import Util from "../util/Util";
 
 /**
  * Grades a student's project at a specified commit against a solution key for the assignment.
@@ -57,7 +58,10 @@ export default class Grader {
     }
 
     public async execute(input: IContainerInput): Promise<ICommitRecord> {
+        Log.trace("Grader::execute(..) - start; SHA: " + input.pushInfo.commitSHA);
+
         enum State {SUCCESS, TIMEOUT, INVALID_REPORT, FAIL}
+
         const containerMount: string = `/io`;
 
         const image: string = Config.getInstance().getProp("dockerId");
@@ -130,7 +134,6 @@ export default class Grader {
         }
 
 
-
         const ret: ICommitRecord = {
             commitURL: input.pushInfo.commitURL,
             commitSHA: input.pushInfo.commitSHA,
@@ -145,6 +148,7 @@ export default class Grader {
      * @param workspace The working directory for the grader. If it does not exist, it will be created.
      */
     public async initWorkspace(workspace: string): Promise<void[]> {
+        Log.trace("Grader::initWorkspace(..) - start");
         this.workspace = workspace;
         this.assnDir = `${workspace}/assignment`;
         this.solnDir = `${workspace}/solution`;
@@ -157,10 +161,12 @@ export default class Grader {
     }
 
     public async runContainer(image: string, delivId: string, cntMntDir: string, timeout: number): Promise<[number, DockerContainer]> {
+        Log.trace("Grader::runContainer(..) - start; workspace: " + this.workspace);
+        const start = Date.now();
         const container: DockerContainer = new DockerContainer(image);
         const containerOptions: IDockerContainerOptions[] = [
-            { name: "--env", value: `ASSIGNMENT=${delivId}` },
-            { name: "--volume", value: `${this.workspace}:${cntMntDir}` }
+            {name: "--env", value: `ASSIGNMENT=${delivId}`},
+            {name: "--volume", value: `${this.workspace}:${cntMntDir}`}
         ];
         let containerId: string;
         let containerAddr: string;
@@ -173,6 +179,8 @@ export default class Grader {
             // Do IP tables stuff here
             await container.unpause();
             code = Number((await container.wait(timeout)).output);
+
+            Log.trace("Grader::runContainer(..) - done; workspace: " + this.workspace + "; took: " + Util.took(start));
         } catch (err) {
             console.log(err);
             // Report error in Container Output record
@@ -203,13 +211,13 @@ export default class Grader {
 
     protected async generateZipAttachments(dir: string): Promise<IAttachment[]> {
         const attachments: IAttachment[] = [];
-        const filenames: string [] =  await fs.readdir(dir);
+        const filenames: string [] = await fs.readdir(dir);
         for (const filename of filenames) {
             const name: string = `${filename}.zip`;
             const data: Uint8Array = await FSUtil.zipFile(`${dir}/${filename}`);
             const attachment: IAttachment = {
                 name,
-                data: data.toString(),
+                data:         data.toString(),
                 content_type: "application/zip",
             };
             attachments.push(attachment);
