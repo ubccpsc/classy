@@ -11,11 +11,27 @@ export interface IDockerImageProperties {
 // A subset of the Docker container run options.
 // https://docs.docker.com/engine/reference/commandline/create/#options
 export interface IDockerContainerOptions {
-    env?: object;
-    envFile?: string;
-    volumes?: string[];  // Expands to multiple --volume <string> flags.
+    name: string;
+    value: string;
 }
 
 // A subset of the Docker inspect output for container objects.
 // https://docs.docker.com/engine/reference/commandline/inspect/
-export type IDockerContainerProperties = object[];
+export interface IDockerContainerProperties {
+    [prop: string]: any;
+}
+
+export interface IDockerCmdResult {
+    code: number;
+    output: string;
+}
+
+export enum DockerContainerStatus {
+    created,
+    restarting,
+    running,
+    removing,
+    paused,
+    exited,
+    dead
+}

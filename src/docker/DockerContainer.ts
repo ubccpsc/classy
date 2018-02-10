@@ -1,30 +1,97 @@
-import { ChildProcess, exec, spawn, SpawnOptions } from "child_process";
-import { setTimeout } from "timers";
-import { IDockerContainerOptions, IDockerContainerProperties } from "../docker/DockerTypes";
-import Util from "../util/Util";
-
-enum DockerContainerStatus {
-    created,
-    restarting,
-    running,
-    removing,
-    paused,
-    exited,
-    dead
-}
-
-export interface IDockerContainer {
-    start(timeout: number): Promise<number>;
-    getLog(tail?: number, size?: number): Promise<string>;
-}
+import { IDockerCmdResult, IDockerContainerOptions } from "../docker/DockerTypes";
+import DockerUtil from "./DockerUtil";
 
 /**
  * Simple wrapper for Docker's container management commands with some basic extensions.
  */
+export interface IDockerContainer {
+    /**
+     * Creates a container from the image with the specified options.
+     *
+     * @param options The optional container configuration specified as an array of {name: value} pairs where name is
+     * the option name for docker create (and should include leading dashes) and value is the corresponding option value.
+     * @returns The container id.
+     */
+    create(options?: IDockerContainerOptions[]): Promise<IDockerCmdResult>;
+
+    /**
+     * Gets the container properties from Docker. Note: certain fields are only set while the container is running.
+     *
+     * @param format The optional format string to be passed to docker inspect.
+     * @returns A JSON string of the container's properties.
+     */
+    inspect(format?: string): Promise<IDockerCmdResult>;
+
+    /**
+     * Gets the stdio from the container. If the container has run multiple times, output from all runs will be returned.
+     *
+     * @param tail Specifies the number of lines from the end of the log to read. By default, all lines are returned.
+     * @returns The container's log.
+     */
+    logs(tail?: number): Promise<IDockerCmdResult>;
+
+    /**
+     * Pauses the execution of the container.
+     *
+     * @returns docker pause does not generate output.
+     */
+    pause(): Promise<IDockerCmdResult>;
+
+    /**
+     * Gets the formatted output of docker ps filtered to only include this container.
+     *
+     * @param format The optional format string passed to docker ps.
+     * @returns The formatted output of the docker ps command.
+     */
+    ps(format?: string): Promise<IDockerCmdResult>;
+
+    /**
+     * Resumes execution of a paused container.
+     *
+     * @returns The id of the container.
+     */
+    unpause(): Promise<IDockerCmdResult>;
+
+    /**
+     * Removes the completed container from disk, freeing its resources.
+     * This method *MUST* be called if create is called to free resources.
+     *
+     * @returns The id of the container.
+     */
+    remove(): Promise<IDockerCmdResult>;
+
+    /**
+     * Starts the created container as a background process and returns immediately. Use wait() to be notified when the
+     * container completes.
+     *
+     * @returns The id of the container.
+     */
+    start(): Promise<IDockerCmdResult>;
+
+    /**
+     * Stops a running container by sending a SIGTERM. If the container continues to run, issues a SIGKILL after the
+     * grace period.
+     *
+     * @param time The number of seconds to wait before sending SIGKILL after sending a SIGTERM. Defaults to 10s.
+     * @returns The container's exit code in the output field as a string.
+     */
+    stop(time?: number): Promise<IDockerCmdResult>;
+
+    /**
+     * Waits for the container to finish executing. If execution takes more time than alloted, forcefully terminates
+     * the container.
+     *
+     * @param seconds The duration for which the container is allowed to execute, after which it is forcefully
+     * terminated. The default value, 0, does not set a timeout.
+     * @returns The container's exit code in the output field as a string.
+     */
+    wait(seconds?: number): Promise<IDockerCmdResult>;
+}
+
+
 export default class DockerContainer implements IDockerContainer {
     private readonly _image: string;
     private _id: string;
-    private _timestamp: number;
 
     /**
      * Assigns the image from which the container will be created. This does not create the Docker container. It is
@@ -35,198 +102,103 @@ export default class DockerContainer implements IDockerContainer {
         this._image = image;
     }
 
-    /**
-     * Creates a container from the image with the specified options.
-     * @param options The optional container configuration.
-     * @returns a promise that resolves to the id of the created container.
-     * @throws if the container has already been created, or if container creation failed.
-     */
-    public async create(options?: IDockerContainerOptions): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            let errMsg: string;
-            const cmdArgs: string[] = [`create`, `--cap-add=NET_ADMIN`];
-            if (typeof options !== `undefined`) {
-                this.dockerOptionsToArgs(options, cmdArgs);
-            }
-            cmdArgs.push(this._image);
-            const cmd: ChildProcess = spawn(`docker`, cmdArgs);
-
-            cmd.stdout.on(`data`, (data) => this._id = data.toString().trim());
-            cmd.stderr.on(`data`, (data) => errMsg = data.toString());
-            cmd.on(`error`, (err) => {
-               reject(err);
-            });
-            cmd.on(`close`, (code, signal) => {
-                if (code === 0) {
-                    resolve();
-                } else {
-                    reject(new Error(errMsg));
-                }
-            });
-        });
-    }
-
-    /**
-     * Returns the stdio from the container. If the container is run multiple times, output from all runs will be returned.
-     * @param tail Number of lines to show from end of log. Passed directly to docker logs.
-     * @param size Number of bytes to keep from the log after tail has been applied.
-     * @throws When the container does not exist.
-     */
-    public async getLog(tail: number = -1, size: number = 131072): Promise<string> {
-        let pageSize: number = 4096;
-        if (size < 4096) {
-            pageSize = size;
+    public async create(options: IDockerContainerOptions[] = []): Promise<IDockerCmdResult> {
+        let ret: IDockerCmdResult;
+        const args: string[] = ["create"];
+        for (const option of options) {
+            args.push(option.name);
+            args.push(option.value);
         }
+        args.push(this._image);
+        ret = await DockerUtil.execCmd(args);
+        this._id = ret.output;
+        return ret;
+    }
 
-        const cmdArgs = [`logs`, `--tail=${tail}`, this._id];
-        try {
-            const cmd = await Util.bufferedSpawn(`docker`, cmdArgs, {}, size, pageSize);
-            return cmd.output;
-        } catch (err) {
-            throw new Error(err.output);
+    public async inspect(format?: string): Promise<IDockerCmdResult> {
+        const args: string[] = ["inspect"];
+        if (typeof format !== "undefined") {
+            args.push(`--format=${format}`);
         }
+        args.push(this._id);
+        return DockerUtil.execCmd(args);
     }
 
-    /**
-     * Gets the container properties from Docker. Certain fields are only set while the container is running.
-     * @throws When the container does not exist.
-     */
-    public async getProperties(): Promise<IDockerContainerProperties> {
-        return new Promise<IDockerContainerProperties>((resolve, reject) => {
-            exec(`docker inspect ${this._id}`, (error, stdout, stderr) => {
-                let parsedOutput: IDockerContainerProperties;
-                if (error) {
-                    reject(error);
-                }
-
-                try {
-                    parsedOutput = JSON.parse(stdout);
-                    resolve(parsedOutput);
-                } catch (err) {
-                    reject(err);
-                }
-            });
-        });
-    }
-
-    /**
-     * Gets the status of the container.
-     * @returns {Promise<DockerContainerStatus>}
-     */
-    public getStatus(): Promise<DockerContainerStatus> {
-        return new Promise<DockerContainerStatus>((resolve, reject) => {
-            exec(`docker ps --all --filter id=${this._id} --format "{{.Status}}"`, (error, stdout, stderr) => {
-                if (error) {
-                    reject(error);
-                }
-                let cliStatus: string = "";
-                if (typeof stdout === `string`) {
-                    cliStatus = stdout.trim();
-
-                    if (cliStatus === "Up Less than a second") {
-                        cliStatus = "running";
-                    } else if (cliStatus.startsWith("Exited")) {
-                        cliStatus = "exited";
-                    }
-                }
-                const status: DockerContainerStatus | undefined = (DockerContainerStatus as any)[cliStatus.toLocaleLowerCase()];
-                if (typeof status !== `undefined`) {
-                    resolve(status);
-                } else {
-                    reject(new Error(`Failed to get container status. ${stderr}`));
-                }
-            });
-        });
-    }
-
-    /**
-     * Removes the completed container from disk, freeing its resources. Once removed, getLogs and getProperties will fail.
-     * This method *MUST* be called if create is called to free resources.
-     * @throws When the container does not exist.
-     */
-    public async remove(): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            exec(`docker rm ${this._id}`, (error, stdout, stderr) => {
-                if (error) {
-                    reject(error);
-                }
-                resolve();
-            });
-        });
-    }
-
-    /**
-     * Starts the created container.
-     * @param timeout The duration for which the container is allowed to execute, after which it is forcefully terminated.
-     * @returns a promise that resolves to the exit code of the container.
-     * @throws if the container has not been created, cannot start, or does not terminate before the timeout is reached.
-     */
-    public async start(timeout: number = 0): Promise<number> {
-        this._timestamp = Date.now();
-        return new Promise<number>((resolve, reject) => {
-            let killed: boolean = false;
-            const cmdOpts: SpawnOptions = {
-               stdio: `ignore`,
-            };
-
-            const cmd: ChildProcess = spawn(`docker`, [`start`, `--attach`, this._id], cmdOpts);
-            if (timeout > 0) {
-                setTimeout(async () => {
-                    killed = true;
-                    await this.stop();
-                }, timeout);
-            }
-            cmd.on(`error`, (err) => {
-                reject(err);
-            });
-            cmd.on(`close`, (code) => {
-                if (killed === true) {  // timeout
-                    reject(code);
-                } else {
-                    resolve(code);
-                }
-            });
-        });
-    }
-
-    /**
-     * Converts the IDockerContainerOptions object to an array of parameters suitable for spawn.
-     * @param options Container options to flatten into an array of parameters.
-     * @param initArgs The initial argument(s), usually the docker subcommand.
-     */
-    private dockerOptionsToArgs(options: IDockerContainerOptions, initArgs: string[]): void {
-        if (typeof options.env !== `undefined`) {
-            for (const [key, value] of Object.entries(options.env)) {
-                initArgs.push(`--env`);
-                initArgs.push(`${key.toUpperCase()}=${value}`);
-            }
+    public async logs(tail?: number): Promise<IDockerCmdResult> {
+        const args: string[] = ["logs"];
+        if (typeof tail !== "undefined") {
+            args.push(`--tail=${tail}`);
         }
-        if (typeof options.volumes !== `undefined`) {
-            for (const volume of options.volumes) {
-                initArgs.push(`--volume`);
-                initArgs.push(volume);
-            }
+        args.push(this._id);
+        return DockerUtil.execCmd(args);
+    }
+
+    public async pause(): Promise<IDockerCmdResult> {
+        const args: string[] = ["pause", this._id];
+        return DockerUtil.execCmd(args);
+    }
+
+    public async ps(format?: string): Promise<IDockerCmdResult> {
+        const args: string[] = ["ps", "--all", "--filter", `id=${this._id}`];
+        if (typeof format !== "undefined") {
+            args.push("--format");
+            args.push(format);
         }
-        if (typeof options.envFile !== `undefined`) {
-            initArgs.push(`--env-file`);
-            initArgs.push(options.envFile);
+        return DockerUtil.execCmd(args);
+    }
+
+    public async unpause(): Promise<IDockerCmdResult> {
+        const args: string[] = ["unpause", this._id];
+        return DockerUtil.execCmd(args);
+    }
+
+    public async remove(): Promise<IDockerCmdResult> {
+        const args: string[] = ["rm", this._id];
+        return DockerUtil.execCmd(args);
+    }
+
+    public async start(): Promise<IDockerCmdResult> {
+        const args: string[] = ["start", this._id];
+        return DockerUtil.execCmd(args);
+    }
+
+    public async stop(time?: number): Promise<IDockerCmdResult> {
+        const args: string[] = ["stop"];
+        if (typeof time !== "undefined") {
+            args.push("--time");
+            args.push(time.toString());
+        }
+        args.push(this._id);
+        const ret = await DockerUtil.execCmd(args);
+        ret.output = await this.getExitCode();
+        return ret;
+    }
+
+    public async wait(seconds: number = 0): Promise<IDockerCmdResult> {
+        let stopRet: IDockerCmdResult;
+        let waitRet: IDockerCmdResult;
+        const args: string[] = ["wait", this._id];
+        if (seconds > 0) {
+            setTimeout(async () => {
+                stopRet = await this.stop();
+            }, seconds * 1000);
+        }
+        waitRet = await DockerUtil.execCmd(args);
+        if (typeof stopRet !== "undefined") {
+            return stopRet;
+        } else {
+            waitRet.output = await this.getExitCode();
+            return waitRet;
         }
     }
 
-    /**
-     * Stops a running container by sending a SIGTERM. If the container continues to run, issues a SIGKILL after the
-     * grace period.
-     * @param {number} gracePeriod The number of seconds to wait before sending SIGKILL after sending a SIGTERM.
-     * @returns {Promise<void>}
-     */
-    private stop(gracePeriod: number = 10): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-           exec(`docker stop --time ${gracePeriod} ${this._id}`, (error, stdout, stderr) => {
-               if (error) {
-                   reject(error);
-               }
-               resolve();
-           });
-        });
+    private async getExitCode(): Promise<string> {
+        const result: IDockerCmdResult = await this.ps("{{.Status}}");
+        const matches = result.output.match(/^Exited \((\d+)\)/);
+        if (matches !== null && matches.length > 1) {
+            return matches[1];
+        } else {
+            throw new Error("Could not get exit code.");
+        }
     }
 }
