@@ -20,10 +20,10 @@ export default class FSUtil {
             type: "uint8array",
         };
 
-        if (typeof name === `undefined`) {
+        if (typeof name === "undefined") {
             name = path.basename(filename);
         }
-        const data: Promise<Buffer> = fs.readFile(filename);
+        const data: Promise<string> = fs.readFile(filename, "utf8");
         zip.file(name, data);
 
         return zip.generateAsync(zipOptions) as Promise<Uint8Array>;
