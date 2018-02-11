@@ -103,6 +103,7 @@ export default class Grader implements IGrader {
             const solnRepo: Promise<Repository> = this.fetchRepository(this.solnDir, solnUrl, solnBranch);
             await Promise.all([assnRepo, solnRepo]);
         } catch (err) {
+            Log.error(err);
             out.feedback = "AutoTest encountered an unexpected error. Please make a new commit and try again.";
             out.postbackOnComplete = true;
         }
@@ -215,6 +216,7 @@ export default class Grader implements IGrader {
     }
 
     protected async fetchRepository(rootDir: string, url: string, commit?: string): Promise<Repository> {
+        Log.trace(`Grader::fetchRepository(..) - start; rootDir: ${rootDir}, url: ${url}, commit: ${commit}`);
         const repo: Repository = new Repository(rootDir);
         await repo.clone(url);
         if (typeof commit !== `undefined`) {
