@@ -387,7 +387,7 @@ export class AutoTest implements IAutoTest {
      */
     private async invokeContainer(input: IContainerInput) {
         try {
-            Log.info("AutoTest::invokeContainer(..) - commit: " + input.pushInfo.commitSHA);
+            Log.info("AutoTest::invokeContainer(..) - start; commit: " + input.pushInfo.commitSHA);
             const start = Date.now();
 
             // TODO: make sure we are using the right container
@@ -398,12 +398,11 @@ export class AutoTest implements IAutoTest {
             const grader = new Grader();
             const record: ICommitRecord = await grader.execute(input);
 
-            Log.info("AutoTest::invokeContainer(..) - complete for commit: " + input.pushInfo.commitSHA + "; took: " + Util.took(start)); // + "; record: " + JSON.stringify(record));
-            this.handleExecutionComplete(record);
-
+            Log.info("AutoTest::invokeContainer(..) - complete; commit: " + input.pushInfo.commitSHA + "; took: " + Util.took(start));
+            await this.handleExecutionComplete(record);
+            Log.info("AutoTest::invokeContainer(..) - done; commit: " + input.pushInfo.commitSHA + "; took: " + Util.took(start));
         } catch (err) {
             Log.error("AutoTest::invokeContainer(..) - ERROR for commit: " + input.pushInfo.commitSHA + "; ERROR: " + err);
-            // Log.error("AutoTest::invokeContainer(..) - ERROR: " + err.message);
         }
     }
 
