@@ -236,16 +236,7 @@ export class AutoTest implements IAutoTest {
                 if (isCurrentlyRunning === true) {
                     // do nothing, will be handled later when the commit finishes processing
                 } else {
-                    // TODO: handle case where request is for something on the regression queue, not the standard queue
-                    if (this.expressQueue.length() > this.standardQueue.indexOf(info.commitURL)) {
-                        // faster to just leave it on the standard queue
-                    } else {
-                        // promote to the express queue
-                        const input = this.standardQueue.remove(info.commitURL);
-                        if (input !== null) {
-                            this.expressQueue.push(input);
-                        }
-                    }
+                    this.promoteIfNeeded(info);
                 }
             }
 
@@ -548,5 +539,49 @@ export class AutoTest implements IAutoTest {
             onQueue = true;
         }
         return onQueue;
+    }
+
+    /**
+     * Promotes a job to the express queue if it will help it to complete faster.
+     *
+     * This seems more complicated than it should because we want to recognize being
+     * next in line on an non-express queue may be faster than last in line after being
+     * promoted to the express queue.
+     *
+     * @param {ICommentEvent} info
+     */
+    private promoteIfNeeded(info: ICommentEvent) {
+        if (this.standardQueue.indexOf(info.commitURL) >= 0) {
+            // is on the standard queue
+
+            if (this.expressQueue.length() > this.standardQueue.indexOf(info.commitURL)) {
+                // faster to just leave it on the standard queue
+            } else {
+                // promote to the express queue
+                const input = this.standardQueue.remove(info.commitURL);
+                if (input !== null) {
+                    Log.trace("AutoTest::promoteIfNeeded() - job moved from standard to express queue: " + info.commitSHA);
+                    this.expressQueue.push(input);
+                }
+            }
+
+        } else if (this.regressionQueue.indexOf(info.commitURL) >= 0) {
+            // is on the regression queue
+
+            if (this.expressQueue.length() > this.regressionQueue.indexOf(info.commitURL)) {
+                // faster to just leave it on the regression queue
+            } else {
+                // promote to the express queue
+                const input = this.regressionQueue.remove(info.commitURL);
+                if (input !== null) {
+                    Log.trace("AutoTest::promoteIfNeeded() - job moved from regression to express queue: " + info.commitSHA);
+                    this.expressQueue.push(input);
+                }
+            }
+
+        } else {
+            Log.error("AutoTest::promoteIfNeeded() - ERROR; commit cannot be found on either queue");
+        }
+
     }
 }
