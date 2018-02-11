@@ -4,7 +4,7 @@ import Log from "../util/Log";
 import Util from "../util/Util";
 import {IClassPortal} from "./ClassPortal";
 import {IDataStore} from "./DataStore";
-import {DockerInstance} from "./DockerInstance";
+// import {DockerInstance} from "./DockerInstance";
 import {IGithubService} from "./GithubService";
 import Grader from "./Grader";
 import {Queue} from "./Queue";
@@ -45,11 +45,12 @@ export interface IAutoTest {
 export class AutoTest implements IAutoTest {
 
     private readonly courseId: string;
-    // private readonly testDelay: number;
 
+    private regressionQueue = new Queue();
     private standardQueue = new Queue();
     private expressQueue = new Queue();
     // these could be arrays if we wanted a thread pool model
+    private regressionExecution: IContainerInput | null = null;
     private standardExecution: IContainerInput | null = null;
     private expresssExecution: IContainerInput | null = null;
 
@@ -235,6 +236,7 @@ export class AutoTest implements IAutoTest {
                 if (isCurrentlyRunning === true) {
                     // do nothing, will be handled later when the commit finishes processing
                 } else {
+                    // TODO: handle case where request is for something on the regression queue, not the standard queue
                     if (this.expressQueue.length() > this.standardQueue.indexOf(info.commitURL)) {
                         // faster to just leave it on the standard queue
                     } else {
@@ -316,6 +318,11 @@ export class AutoTest implements IAutoTest {
                 this.standardExecution = null;
             }
 
+            if (this.regressionExecution !== null && this.regressionExecution.pushInfo.commitURL === data.commitURL) {
+                Log.trace("AutoTest::handleExecutionComplete(..) - clear regression slot");
+                this.regressionExecution = null;
+            }
+
             // execution done, advance the clock
             this.tick();
             Log.info("AutoTest::handleExecutionComplete(..) - done; took: " + Util.took(start));
@@ -345,6 +352,16 @@ export class AutoTest implements IAutoTest {
                     this.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
                 }
             }
+
+            if (this.regressionExecution === null && this.regressionQueue.length() > 0) {
+                Log.info("AutoTest::tick(..) - regression queue clear; launching new job");
+                const info = this.regressionQueue.pop();
+                if (info !== null) {
+                    this.regressionExecution = info;
+                    this.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
+                }
+            }
+
             Log.info("AutoTest::tick(..) - done");
         } catch (err) {
             Log.error("AutoTest::tick() - course: " + this.courseId + "; ERROR: " + err.message);
