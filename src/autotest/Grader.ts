@@ -63,7 +63,7 @@ export default class Grader implements IGrader {
     }
 
     public async execute(input: IContainerInput): Promise<ICommitRecord> {
-        Log.trace("Grader::execute(..) - start; SHA: " + input.pushInfo.commitSHA);
+        Log.trace("Grader::execute(..) - start; commit: " + input.pushInfo.commitSHA);
 
         enum State {SUCCESS, TIMEOUT, INVALID_REPORT, FAIL}
 
