@@ -132,14 +132,14 @@ export class AutoTest implements IAutoTest {
      */
     public async handleCommentEvent(info: ICommentEvent): Promise<boolean> {
         const that = this;
-        const start = Date.now();
-
-        if (typeof info === "undefined" || info === null) {
-            Log.info("AutoTest::handleCommentEvent(..) - info not provided; skipping.");
-            return false;
-        }
-
         try {
+            const start = Date.now();
+
+            if (typeof info === "undefined" || info === null) {
+                Log.info("AutoTest::handleCommentEvent(..) - info not provided; skipping.");
+                return false;
+            }
+
             Log.info("AutoTest::handleCommentEvent(..) - start; course: " + this.courseId + "; commit: " + info.commitSHA + "; user: " + info.userName);
 
             if (info.userName === Config.getInstance().getProp("botName")) {
@@ -324,8 +324,8 @@ export class AutoTest implements IAutoTest {
     }
 
     public tick() {
-        Log.info("AutoTest::tick(..) - start");
         try {
+            Log.info("AutoTest::tick(..) - start");
             if (this.standardExecution === null && this.standardQueue.length() > 0) {
                 Log.info("AutoTest::tick(..) - standard queue clear; launching new job");
                 const info = this.standardQueue.pop();
@@ -365,8 +365,12 @@ export class AutoTest implements IAutoTest {
      * @param {IContainerInput} info
      */
     private async savePushInfo(info: IContainerInput) {
-        Log.trace("AutoTest::savePushInfo(..) - commit: " + info.pushInfo.commitSHA);
-        await this.dataStore.savePush(info);
+        try {
+            Log.trace("AutoTest::savePushInfo(..) - commit: " + info.pushInfo.commitSHA);
+            await this.dataStore.savePush(info);
+        } catch (err) {
+            Log.error("AutoTest::savePushInfo(..) - ERROR: " + err);
+        }
     }
 
     /**
@@ -375,8 +379,12 @@ export class AutoTest implements IAutoTest {
      * @param {ICommentEvent} info
      */
     private async saveCommentInfo(info: ICommentEvent) {
-        Log.trace("AutoTest::saveCommentInfo(..) - commit: " + info.commitSHA);
-        await this.dataStore.saveComment(info);
+        try {
+            Log.trace("AutoTest::saveCommentInfo(..) - commit: " + info.commitSHA);
+            await this.dataStore.saveComment(info);
+        } catch (err) {
+            Log.error("AutoTest::saveCommentInfo(..) - ERROR: " + err);
+        }
     }
 
     /**
@@ -412,16 +420,24 @@ export class AutoTest implements IAutoTest {
      * @param commitURL
      */
     private async getDelivId(): Promise<string | null> {
-        let str = await this.classPortal.getDefaultDeliverableId(this.courseId);
-        if (typeof str === "undefined") {
-            str = null;
+        try {
+            let str = await this.classPortal.getDefaultDeliverableId(this.courseId);
+            if (typeof str === "undefined") {
+                str = null;
+            }
+            return str;
+        } catch (err) {
+            Log.error("AutoTest::getDelivId() - ERROR: " + err);
         }
-        return str;
     }
 
     private async getOutputRecord(commitURL: string): Promise<ICommitRecord | null> {
-        const ret = await this.dataStore.getOutputRecord(commitURL);
-        return ret;
+        try {
+            const ret = await this.dataStore.getOutputRecord(commitURL);
+            return ret;
+        } catch (err) {
+            Log.error("AutoTest::getOutputRecord() - ERROR: " + err);
+        }
     }
 
     /**
@@ -434,14 +450,18 @@ export class AutoTest implements IAutoTest {
      * @param commitURL
      */
     private async saveFeedbackGiven(courseId: string, delivId: string, userName: string, timestamp: number, commitURL: string): Promise<void> {
-        const record: IFeedbackGiven = {
-            commitURL,
-            courseId,
-            delivId,
-            timestamp,
-            userName,
-        };
-        await this.dataStore.saveFeedbackGivenRecord(record);
+        try {
+            const record: IFeedbackGiven = {
+                commitURL,
+                courseId,
+                delivId,
+                timestamp,
+                userName,
+            };
+            await this.dataStore.saveFeedbackGivenRecord(record);
+        } catch (err) {
+            Log.error("AutoTest::saveFeedbackGiven() - ERROR: " + err);
+        }
     }
 
     /**
@@ -450,11 +470,15 @@ export class AutoTest implements IAutoTest {
      * @param commitURL
      */
     private async getRequestor(commitURL: string, delivId: string): Promise<ICommentEvent | null> {
-        const record: ICommentEvent = await this.dataStore.getCommentRecord(commitURL, delivId);
-        if (record !== null) {
-            return record;
+        try {
+            const record: ICommentEvent = await this.dataStore.getCommentRecord(commitURL, delivId);
+            if (record !== null) {
+                return record;
+            }
+            return null;
+        } catch (err) {
+            Log.error("AutoTest::getRequestor() - ERROR: " + err);
         }
-        return null;
     }
 
     /**
@@ -464,17 +488,21 @@ export class AutoTest implements IAutoTest {
      * @param delivId
      */
     private isCommitExecuting(commitURL: string, delivId: string): boolean {
-        if (this.standardExecution !== null) {
-            if (this.standardExecution.pushInfo.commitURL === commitURL && this.standardExecution.delivId === delivId) {
-                return true;
+        try {
+            if (this.standardExecution !== null) {
+                if (this.standardExecution.pushInfo.commitURL === commitURL && this.standardExecution.delivId === delivId) {
+                    return true;
+                }
             }
-        }
-        if (this.expresssExecution !== null) {
-            if (this.expresssExecution.pushInfo.commitURL === commitURL && this.expresssExecution.delivId === delivId) {
-                return true;
+            if (this.expresssExecution !== null) {
+                if (this.expresssExecution.pushInfo.commitURL === commitURL && this.expresssExecution.delivId === delivId) {
+                    return true;
+                }
             }
+            return false;
+        } catch (err) {
+            Log.error("AutoTest::isCommitExecuting() - ERROR: " + err);
         }
-        return false;
     }
 
     /**
@@ -488,35 +516,39 @@ export class AutoTest implements IAutoTest {
      *
      */
     private async requestFeedbackDelay(delivId: string, userName: string, reqTimestamp: number): Promise<string | null> {
-        Log.info("AutoTest::requestFeedbackDelay( " + delivId + ", " + userName + ", " + reqTimestamp + ". - start");
-        // async operations up front
-        const isStaff = await this.classPortal.isStaff(this.courseId, userName);
-        const record: IFeedbackGiven = await this.dataStore.getLatestFeedbackGivenRecord(this.courseId, delivId, userName);
-        const testDelay = await this.classPortal.getTestDelay(this.courseId, delivId); // should cache this
+        try {
+            Log.info("AutoTest::requestFeedbackDelay( " + delivId + ", " + userName + ", " + reqTimestamp + ". - start");
+            // async operations up front
+            const isStaff = await this.classPortal.isStaff(this.courseId, userName);
+            const record: IFeedbackGiven = await this.dataStore.getLatestFeedbackGivenRecord(this.courseId, delivId, userName);
+            const testDelay = await this.classPortal.getTestDelay(this.courseId, delivId); // should cache this
 
-        if (isStaff === true) {
-            return null; // staff can always request
-        } else {
-            if (record === null) {
-                return null; // no prior requests
+            if (isStaff === true) {
+                return null; // staff can always request
             } else {
-                const delta = (reqTimestamp - record.timestamp) / 1000;
-                if (delta >= testDelay) {
-                    return null; // enough time has passed
+                if (record === null) {
+                    return null; // no prior requests
                 } else {
-                    const hours = Math.floor(delta / 3600);
-                    const minutes = Math.floor((delta - (hours * 3600)) / 60);
-                    let msg = "";
-                    if (hours > 0) {
-                        msg = hours + " hours and " + minutes + " minutes";
-                    } else if (minutes > 0) {
-                        msg = minutes + " minutes";
+                    const delta = (reqTimestamp - record.timestamp) / 1000;
+                    if (delta >= testDelay) {
+                        return null; // enough time has passed
                     } else {
-                        msg = delta + " seconds";
+                        const hours = Math.floor(delta / 3600);
+                        const minutes = Math.floor((delta - (hours * 3600)) / 60);
+                        let msg = "";
+                        if (hours > 0) {
+                            msg = hours + " hours and " + minutes + " minutes";
+                        } else if (minutes > 0) {
+                            msg = minutes + " minutes";
+                        } else {
+                            msg = delta + " seconds";
+                        }
+                        return msg;
                     }
-                    return msg;
                 }
             }
+        } catch (err) {
+            Log.error("AutoTest::requestFeedbackDelay() - ERROR: " + err);
         }
     }
 
@@ -528,14 +560,18 @@ export class AutoTest implements IAutoTest {
      */
     private isOnQueue(commitURL: string, delivId: string): boolean {
         let onQueue = false;
-        if (this.standardExecution !== null && this.standardExecution.pushInfo.commitURL === commitURL) {
-            onQueue = true;
-        } else if (this.expresssExecution !== null && this.expresssExecution.pushInfo.commitURL === commitURL) {
-            onQueue = true;
-        } else if (this.standardQueue.indexOf(commitURL) >= 0) {
-            onQueue = true;
-        } else if (this.expressQueue.indexOf(commitURL) >= 0) {
-            onQueue = true;
+        try {
+            if (this.standardExecution !== null && this.standardExecution.pushInfo.commitURL === commitURL) {
+                onQueue = true;
+            } else if (this.expresssExecution !== null && this.expresssExecution.pushInfo.commitURL === commitURL) {
+                onQueue = true;
+            } else if (this.standardQueue.indexOf(commitURL) >= 0) {
+                onQueue = true;
+            } else if (this.expressQueue.indexOf(commitURL) >= 0) {
+                onQueue = true;
+            }
+        } catch (err) {
+            Log.error("AutoTest::isOnQueue() - ERROR: " + err);
         }
         return onQueue;
     }
@@ -550,37 +586,36 @@ export class AutoTest implements IAutoTest {
      * @param {ICommentEvent} info
      */
     private promoteIfNeeded(info: ICommentEvent) {
-        if (this.standardQueue.indexOf(info.commitURL) >= 0) {
-            // is on the standard queue
-
-            if (this.expressQueue.length() > this.standardQueue.indexOf(info.commitURL)) {
-                // faster to just leave it on the standard queue
-            } else {
-                // promote to the express queue
-                const input = this.standardQueue.remove(info.commitURL);
-                if (input !== null) {
-                    Log.trace("AutoTest::promoteIfNeeded() - job moved from standard to express queue: " + info.commitSHA);
-                    this.expressQueue.push(input);
+        try {
+            if (this.standardQueue.indexOf(info.commitURL) >= 0) {
+                // is on the standard queue
+                if (this.expressQueue.length() > this.standardQueue.indexOf(info.commitURL)) {
+                    // faster to just leave it on the standard queue
+                } else {
+                    // promote to the express queue
+                    const input = this.standardQueue.remove(info.commitURL);
+                    if (input !== null) {
+                        Log.trace("AutoTest::promoteIfNeeded() - job moved from standard to express queue: " + info.commitSHA);
+                        this.expressQueue.push(input);
+                    }
                 }
-            }
-
-        } else if (this.regressionQueue.indexOf(info.commitURL) >= 0) {
-            // is on the regression queue
-
-            if (this.expressQueue.length() > this.regressionQueue.indexOf(info.commitURL)) {
-                // faster to just leave it on the regression queue
-            } else {
-                // promote to the express queue
-                const input = this.regressionQueue.remove(info.commitURL);
-                if (input !== null) {
-                    Log.trace("AutoTest::promoteIfNeeded() - job moved from regression to express queue: " + info.commitSHA);
-                    this.expressQueue.push(input);
+            } else if (this.regressionQueue.indexOf(info.commitURL) >= 0) {
+                // is on the regression queue
+                if (this.expressQueue.length() > this.regressionQueue.indexOf(info.commitURL)) {
+                    // faster to just leave it on the regression queue
+                } else {
+                    // promote to the express queue
+                    const input = this.regressionQueue.remove(info.commitURL);
+                    if (input !== null) {
+                        Log.trace("AutoTest::promoteIfNeeded() - job moved from regression to express queue: " + info.commitSHA);
+                        this.expressQueue.push(input);
+                    }
                 }
+            } else {
+                Log.error("AutoTest::promoteIfNeeded() - ERROR; commit cannot be found on either queue");
             }
-
-        } else {
-            Log.error("AutoTest::promoteIfNeeded() - ERROR; commit cannot be found on either queue");
+        } catch (err) {
+            Log.error("AutoTest::promoteIfNeeded() - ERROR: " + err);
         }
-
     }
 }
