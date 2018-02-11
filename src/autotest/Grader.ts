@@ -155,6 +155,11 @@ export default class Grader implements IGrader {
             input:     input,
             output:    out
         };
+        try {
+            await fs.writeJson(`${persistDir}/commitRecord.json`, ret);
+        } catch (err) {
+            Log.error(`Grader::execute(..) - ERROR Writing commit record.`);
+        }
         return ret;
     }
 
