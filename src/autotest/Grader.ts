@@ -81,7 +81,7 @@ export default class Grader implements IGrader {
         const assnUrl: string = input.pushInfo.projectURL.replace("://", `://${assnToken}@`);
         const assnCommit: string = input.pushInfo.commitSHA;
         const delivId: string = input.delivId;
-        const persistDir: string = `${persistDirRoot}/${assnCommit}`;
+        const persistDir: string = `${persistDirRoot}/${assnCommit}-${delivId}`;
 
         let code: number;
         let container: DockerContainer;
@@ -234,7 +234,7 @@ export default class Grader implements IGrader {
             const data: Uint8Array = await FSUtil.zipFile(`${dir}/${filename}`);
             const attachment: IAttachment = {
                 name,
-                data:         data.toString(),
+                data,
                 content_type: "application/zip",
             };
             attachments.push(attachment);

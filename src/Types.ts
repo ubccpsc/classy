@@ -149,6 +149,6 @@ export interface IGradeReport {
 
 export interface IAttachment {
     name: string;
-    data: string;
+    data: Uint8Array;
     content_type: string;
 }
