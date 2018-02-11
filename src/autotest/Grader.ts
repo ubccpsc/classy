@@ -181,6 +181,7 @@ export default class Grader implements IGrader {
         const container: DockerContainer = new DockerContainer(image);
         const containerOptions: IDockerContainerOptions[] = [
             {name: "--env", value: `ASSIGNMENT=${delivId}`},
+            {name: "--env", value: `USER_ID=${1008}`},
             {name: "--volume", value: `${this.workspace}:${cntMntDir}`}
         ];
         let containerId: string;
