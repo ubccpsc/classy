@@ -612,7 +612,8 @@ export class AutoTest implements IAutoTest {
                     }
                 }
             } else {
-                Log.error("AutoTest::promoteIfNeeded() - ERROR; commit cannot be found on either queue");
+                // not an error:
+                // this happens if we try to promote after a job is done but before the queue is cleared
             }
         } catch (err) {
             Log.error("AutoTest::promoteIfNeeded() - ERROR: " + err);
