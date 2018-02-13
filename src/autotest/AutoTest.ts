@@ -4,10 +4,11 @@ import Log from "../util/Log";
 import Util from "../util/Util";
 import {IClassPortal} from "./ClassPortal";
 import {IDataStore} from "./DataStore";
-// import {DockerInstance} from "./DockerInstance";
+// import {MockGrader} from "./MockGrader";
 import {IGithubService} from "./GithubService";
 import Grader from "./Grader";
 import {Queue} from "./Queue";
+import {MockGrader} from "./MockGrader";
 
 export interface IAutoTest {
     /**
@@ -400,11 +401,19 @@ export class AutoTest implements IAutoTest {
 
             // TODO: make sure we are using the right container
             // const containerId = await this.classPortal.getContainerId(input.courseId,input.delivId);
-            // const docker = new DockerInstance(input);
+            // const docker = new MockGrader(input);
             // const record: ICommitRecord = await docker.execute();
 
-            const grader = new Grader();
-            const record: ICommitRecord = await grader.execute(input);
+            let record: ICommitRecord = null;
+            const isProd = true; // TODO: need a way to figure out if this is prod or test
+            if (isProd === true) {
+                const grader = new Grader();
+                record = await grader.execute(input);
+            } else {
+                Log.info("AutoTest::invokeContainer(..) - TEST CONFIG: Running MockGrader");
+                const grader = new MockGrader(input);
+                record = await grader.execute();
+            }
 
             Log.info("AutoTest::invokeContainer(..) - complete; commit: " + input.pushInfo.commitSHA + "; took: " + Util.took(start));
             await this.handleExecutionComplete(record);

@@ -3,7 +3,7 @@ import {ICommitRecord, IContainerInput, IContainerOutput, IGradeReport} from "..
 import Log from "../util/Log";
 import Util from "../util/Util";
 
-export class DockerInstance {
+export class MockGrader {
     private input: IContainerInput;
 
     /**
@@ -15,7 +15,7 @@ export class DockerInstance {
 
     public async execute(): Promise<ICommitRecord> {
         try {
-            Log.info("DockerInstance::execute() - start; commitSHA: " + this.input.pushInfo.commitSHA);
+            Log.info("MockGrader::execute() - start; commitSHA: " + this.input.pushInfo.commitSHA);
             const oracleToken = Config.getInstance().getProp("githubOracleToken");
             const dockerId = Config.getInstance().getProp("dockerId");
             const workspace = Config.getInstance().getProp("workspace");
@@ -63,11 +63,11 @@ export class DockerInstance {
                 output:    out
             };
 
-            Log.info("DockerInstance::execute() - execution complete; commit: " + this.input.pushInfo.commitSHA);
+            Log.info("MockGrader::execute() - execution complete; commit: " + this.input.pushInfo.commitSHA);
             return ret;
 
         } catch (err) {
-            Log.error("DockerInstance::execute() - ERROR: " + err);
+            Log.error("MockGrader::execute() - ERROR: " + err);
             throw err;
         }
     }

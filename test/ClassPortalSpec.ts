@@ -8,6 +8,7 @@ describe("ClassPortal Service", () => {
 
     let cp: IClassPortal;
     const classId = "310";
+    const CURRENT_DEFAULT_DELIV = "d2";
 
     beforeEach(function () {
         // cp = new DummyClassPortal(); // TODO: change to ClassPortalService not DummyClassPortal
@@ -94,7 +95,7 @@ describe("ClassPortal Service", () => {
         }
     });
 
-    it.skip("Should return a null container id if the course does not exist.", async () => {
+    it("Should return a null container id if the course does not exist.", async () => {
         try {
             const actual = await cp.getTestDelay("cs999", "d0");
             expect(actual).to.equal(null);
@@ -103,10 +104,10 @@ describe("ClassPortal Service", () => {
         }
     });
 
-    it.skip("Should return a default deliverable if the course has one.", async () => {
+    it("Should return a default deliverable if the course has one.", async () => {
         try {
             const actual = await cp.getDefaultDeliverableId(classId);
-            expect(actual).to.equal("d0");
+            expect(actual).to.equal(CURRENT_DEFAULT_DELIV);
         } catch (err) {
             expect.fail("Should not happen");
         }

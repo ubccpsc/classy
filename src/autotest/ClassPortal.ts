@@ -25,6 +25,9 @@ export interface IClassPortal {
     isStaff(courseId: string, userName: string): Promise<boolean>;
 
     /**
+     *
+     * TODO: combine with getContainer below.
+     *
      * Gets the delay period (in seconds) that AutoTest should enforce on students between feedback requests.
      *
      * GET /admin/getTestDelay/{:courseId} (or some variant)
