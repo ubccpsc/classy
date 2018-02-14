@@ -4,7 +4,7 @@ import Util from "../util/Util";
 
 import * as fs from "fs-extra";
 import {Config} from "../Config";
-import {MongoClient} from "mongodb";
+import {Collection, Db, MongoClient} from "mongodb";
 
 export interface IDataStore {
 
@@ -379,8 +379,12 @@ export class MongoDataStore implements IDataStore {
         */
     }
 
+    readonly PUSHCOLL = 'pushes';
+
     public async savePush(info: IContainerInput): Promise<void> {
         Log.info("MongoDataStore::savePush(..) - start");
+        await this.getCollection(this.PUSHCOLL);
+        return;
         /*
         try {
             const start = Date.now();
@@ -580,26 +584,6 @@ export class MongoDataStore implements IDataStore {
         return {records, comments, pushes, feedback};
     }
 
-    private async open(): Promise<MongoClient> {
-        const MongoClient = require('mongodb').MongoClient;
-        const assert = require('assert');
-
-        // Connection URL
-        const url = 'mongodb://localhost:27017';
-
-        // Database Name
-        const dbName = 'myproject';
-
-        // Use connect method to connect to the server
-        return MongoClient.connect(url, function (err: Error, client: MongoClient) {
-            assert.equal(null, err);
-            console.log("Connected successfully to server");
-
-            const db = client.db(dbName);
-            return db;
-            // client.close();
-        });
-    }
 
     public clearData() {
         Log.warn("MongoDataStore::clearData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
@@ -608,5 +592,62 @@ export class MongoDataStore implements IDataStore {
         } else {
             throw new Error("MongoDataStore::clearData() - can only be called on test configurations");
         }
+    }
+
+    private db: Db = null;
+
+    /**
+     * Internal use only, do not use this method; use getCollection(..) instead.
+     *
+     * @returns {Promise<Db>}
+     */
+    private async open(): Promise<Db> {
+        // const MongoClient = require('mongodb').MongoClient;
+        // const assert = require('assert');
+
+        /*
+        // Connection URL
+        const url = 'mongodb://localhost:27017';
+
+        // Database Name
+        const dbName = 'myproject';
+
+        // Use connect method to connect to the server
+        return MongoClient.connect(url, function (err: Error, client: MongoClient) {
+            // assert.equal(null, err);
+            console.log("Connected successfully to server");
+
+            const db = client.db(dbName);
+            return db;
+            // client.close();
+        });
+        */
+
+
+        Log.trace("MongoDataStore::open() - start");
+        if (this.db === null) {
+            const dbName = Config.getInstance().getProp("name");
+            Log.trace("MongoDataStore::open() - db null; making new connection to: " + dbName);
+
+            const client = await MongoClient.connect('mongodb://localhost:27017');
+            this.db = await client.db(dbName);
+
+            Log.trace("MongoDataStore::open() - db null; new connection made");
+        }
+        Log.trace("MongoDataStore::open() - returning db");
+        return this.db;
+    }
+
+
+    /**
+     * Returns a ready-to-use `collection` object from MongoDB.
+     *
+     * Usage:
+     *
+     *   (await getCollection('users')).find().toArray().then( ... )
+     */
+    private async getCollection(collectionName: string): Promise<Collection> {
+        const db = await this.open();
+        return db.collection(collectionName);
     }
 }
