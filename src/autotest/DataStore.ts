@@ -591,7 +591,7 @@ export class MongoDataStore implements IDataStore {
         const dbName = 'myproject';
 
         // Use connect method to connect to the server
-        return MongoClient.connect(url, function (err, client) {
+        return MongoClient.connect(url, function (err: Error, client: MongoClient) {
             assert.equal(null, err);
             console.log("Connected successfully to server");
 
