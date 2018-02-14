@@ -3,6 +3,7 @@ import "mocha";
 import {Config} from "../src/Config";
 import {IDataStore, MongoDataStore} from "../src/autotest/DataStore";
 import {TestData} from "./TestData";
+import Log from "../src/util/Log";
 
 describe.only("MongoStore", () => {
     Config.getInstance("test");
@@ -16,18 +17,29 @@ describe.only("MongoStore", () => {
     });
 
     it("Should be able to save a push event.", async () => {
-        try {
-            let allData = await ds.getAllData();
-            expect(allData.pushes).to.be.empty;
-            await ds.savePush(TestData.inputRecordA);
-            allData = await ds.getAllData();
-            expect(allData.pushes.length).to.equal(1);
+        // SETUP
+        let allData = await ds.getAllData();
+        expect(allData.pushes).to.be.empty;
 
-            // const actual = await cp.isStaff(classId, "cs310");
-            // expect(actual).to.equal(true);
-        } catch (err) {
-            expect.fail("Should not happen");
-        }
+        // TEST
+        await ds.savePush(TestData.inputRecordA);
+
+        // VERIFY
+        allData = await ds.getAllData();
+        expect(allData.pushes.length).to.equal(1);
+        let actual = allData.pushes[0];
+        expect(TestData.inputRecordA).to.deep.include(actual);
     });
 
+    it("Should be able to retrieve a push event.", async () => {
+        // SETUP
+        await ds.savePush(TestData.inputRecordA);
+
+        // TEST
+        const actual = await ds.getPushRecord(TestData.inputRecordA.pushInfo.commitURL);
+
+        // VERIFY
+        expect(actual).to.not.be.null;
+        expect(TestData.inputRecordA).to.deep.include(actual);
+    });
 });

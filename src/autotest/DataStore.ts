@@ -356,34 +356,31 @@ export class MongoDataStore implements IDataStore {
      */
     public async getPushRecord(commitURL: string): Promise<IPushEvent | null> {
         Log.info("MongoDataStore::getPushRecord(..) - start");
-        return null;
-        /*
+
         try {
             const start = Date.now();
-            // read
-            const outRecords: IPushEvent[] = await fs.readJSON(this.PUSH_PATH);
+            let col = await this.getCollection(this.PUSHCOLL);
+            const pushes: IPushEvent[] = await <any>col.find({}).toArray();
 
             // find and return
-            for (const record of outRecords) {
+            for (const record of pushes) {
                 if (record !== null && typeof record.commitURL !== "undefined" && record.commitURL === commitURL) {
                     Log.info("MongoDataStore::getPushRecord(..) - found; took: " + Util.took(start));
                     return record;
                 }
             }
-
             // not found
             Log.info("MongoDataStore::getPushRecord(..) - not found; took: " + Util.took(start));
         } catch (err) {
             Log.error("MongoDataStore::getPushRecord(..) - ERROR: " + err);
         }
         return null;
-        */
     }
 
     readonly PUSHCOLL = 'pushes';
 
     public async savePush(info: IContainerInput): Promise<void> {
-        Log.info("MongoDataStore::savePush(..) - start; push: "+JSON.stringify(info));
+        Log.info("MongoDataStore::savePush(..) - start; push: " + JSON.stringify(info));
         let collection = await this.getCollection(this.PUSHCOLL);
         // return;
 
@@ -578,11 +575,9 @@ export class MongoDataStore implements IDataStore {
     public async getAllData(): Promise<{ records: ICommitRecord[], comments: ICommentEvent[], pushes: IPushEvent[], feedback: IFeedbackGiven[] }> {
         Log.info("MongoDataStore::getAllData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
 
-
         let col = await this.getCollection(this.PUSHCOLL);
         const pushes: IPushEvent[] = await <any>col.find({}).toArray();
 
-        Log.info("Pushes: " + JSON.stringify(pushes));
         const records: ICommitRecord[] = null; //await fs.readJSON(this.RECORD_PATH);
         const comments: ICommentEvent[] = null; //await fs.readJSON(this.COMMENT_PATH);
         // pushes = pushes; //await fs.readJSON(this.PUSH_PATH);
