@@ -4,6 +4,7 @@ import Util from "../util/Util";
 
 import * as fs from "fs-extra";
 import {Config} from "../Config";
+import {MongoClient} from "mongodb";
 
 export interface IDataStore {
 
@@ -330,6 +331,282 @@ export class DummyDataStore implements IDataStore {
             Log.info("DummyDataStore::clearData() - files removed");
         } else {
             throw new Error("DummyDataStore::clearData() - can only be called on test configurations");
+        }
+    }
+}
+
+/**
+ * Simple example for testing.
+ */
+export class MongoDataStore implements IDataStore {
+
+    constructor() {
+        Log.info("MongoDataStore::<init> - start");
+
+        try {
+            // impl missing
+        } catch (err) {
+            Log.info("MongoDataStore::<init> - ERROR: " + err);
+        }
+    }
+
+    /**
+     * Gets the push event record for a given commitURL
+     */
+    public async getPushRecord(commitURL: string): Promise<IPushEvent | null> {
+        Log.info("MongoDataStore::getPushRecord(..) - start");
+        return null;
+        /*
+        try {
+            const start = Date.now();
+            // read
+            const outRecords: IPushEvent[] = await fs.readJSON(this.PUSH_PATH);
+
+            // find and return
+            for (const record of outRecords) {
+                if (record !== null && typeof record.commitURL !== "undefined" && record.commitURL === commitURL) {
+                    Log.info("MongoDataStore::getPushRecord(..) - found; took: " + Util.took(start));
+                    return record;
+                }
+            }
+
+            // not found
+            Log.info("MongoDataStore::getPushRecord(..) - not found; took: " + Util.took(start));
+        } catch (err) {
+            Log.error("MongoDataStore::getPushRecord(..) - ERROR: " + err);
+        }
+        return null;
+        */
+    }
+
+    public async savePush(info: IContainerInput): Promise<void> {
+        Log.info("MongoDataStore::savePush(..) - start");
+        /*
+        try {
+            const start = Date.now();
+            // read
+            const records = await fs.readJSON(this.PUSH_PATH);
+            // append
+            records.push(info);
+            // write
+            await fs.writeJSON(this.PUSH_PATH, records);
+
+            Log.info("MongoDataStore::savePush(..) - done; took: " + Util.took(start));
+        } catch (err) {
+            Log.error("MongoDataStore::savePush(..) - ERROR: " + err);
+        }
+        */
+    }
+
+    public async saveComment(info: ICommentEvent): Promise<void> {
+        Log.info("MongoDataStore::saveComment(..) - start");
+        /*
+         try {
+            const start = Date.now();
+
+            // read
+            const records = await fs.readJSON(this.COMMENT_PATH);
+            // append
+            records.push(info);
+            // write
+            await fs.writeJSON(this.COMMENT_PATH, records);
+
+            Log.info("MongoDataStore::saveComment(..) - done; took: " + Util.took(start));
+        } catch (err) {
+            Log.error("MongoDataStore::saveComment(..) - ERROR: " + err);
+        }
+        */
+    }
+
+    public async getCommentRecord(commitURL: string, delivId: string): Promise<ICommentEvent | null> {
+        Log.info("MongoDataStore::getCommentRecord(..) - start");
+        return null;
+        /*
+         try {
+            const start = Date.now();
+            // read
+            const outRecords: ICommentEvent[] = await fs.readJSON(this.COMMENT_PATH);
+
+            // find and return
+            for (const record of outRecords) {
+                if (record !== null && typeof record.commitURL !== "undefined" && record.commitURL === commitURL && record.delivId === delivId) {
+                    Log.info("MongoDataStore::getCommentRecord(..) - found; took: " + Util.took(start));
+                    return record;
+                }
+            }
+
+            // not found
+            Log.info("MongoDataStore::getCommentRecord(..) - not found; took: " + Util.took(start));
+        } catch (err) {
+            Log.error("MongoDataStore::getCommentRecord(..) - ERROR: " + err);
+        }
+        return null;
+        */
+    }
+
+    public async saveOutputRecord(outputInfo: ICommitRecord): Promise<void> {
+        Log.info("MongoDataStore::saveOutputRecord(..) - start");
+        /*
+       try {
+           const start = Date.now();
+           // read
+           const outRecords = await fs.readJSON(this.RECORD_PATH);
+           // append
+           outRecords.push(outputInfo);
+           // write
+           await fs.writeJSON(this.RECORD_PATH, outRecords);
+
+           Log.info("MongoDataStore::saveOutputRecord(..) - done; took: " + Util.took(start));
+       } catch (err) {
+           Log.error("MongoDataStore::saveOutputRecord(..) - ERROR: " + err);
+       }
+       */
+    }
+
+    public async getOutputRecord(commitURL: string): Promise<ICommitRecord | null> {
+        Log.info("MongoDataStore::getOutputRecord(..) - start");
+        return null;
+        /*
+       try {
+           const start = Date.now();
+
+           // read
+           const outRecords: ICommitRecord[] = await fs.readJSON(this.RECORD_PATH);
+           Log.info("MongoDataStore::getOutputRecord(..) - # records: " + outRecords.length);
+           // find and return
+           for (const record of outRecords) {
+               if (record !== null && typeof record.commitURL !== "undefined" && record.commitURL === commitURL) {
+                   Log.info("MongoDataStore::getOutputRecord(..) - found; took: " + Util.took(start));
+                   return record;
+               }
+           }
+           // not found
+           Log.info("MongoDataStore::getOutputRecord(..) - not found; took: " + Util.took(start));
+       } catch (err) {
+           Log.error("MongoDataStore::getOutputRecord(..) - ERROR: " + err);
+       }
+       return null;
+       */
+    }
+
+    public async saveFeedbackGivenRecord(info: IFeedbackGiven): Promise<void> {
+        Log.info("MongoDataStore::saveFeedbackGivenRecord(..) - start");
+        return;
+        /*
+       try {
+           const start = Date.now();
+           // read
+           const records = await fs.readJSON(this.FEEDBACK_PATH);
+           // append
+           records.push(info);
+           // write
+           await fs.writeJSON(this.FEEDBACK_PATH, records);
+
+           Log.info("MongoDataStore::saveFeedbackGivenRecord(..) - done; took: " + Util.took(start));
+       } catch (err) {
+           Log.error("MongoDataStore::saveFeedbackGivenRecord(..) - ERROR: " + err);
+       }
+       */
+    }
+
+    public async getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): Promise<IFeedbackGiven | null> {
+        Log.trace("MongoDataStore::getLatestFeedbackGivenRecord(..) - start");
+        let ret: IFeedbackGiven | null = null;
+        return ret;
+        /*
+        try {
+            const start = Date.now();
+            const records: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
+            const shortList: IFeedbackGiven[] = [];
+            for (const req of records) {
+                if (req !== null && req.courseId === courseId && req.delivId === delivId && req.userName === userName) {
+                    shortList.push(req);
+                }
+            }
+
+            if (shortList.length === 0) {
+                Log.info("MongoDataStore::getLatestFeedbackGivenRecord(..) - not found; took: " + Util.took(start));
+                ret = null;
+            } else {
+                Math.max.apply(Math, shortList.map(function (o: IFeedbackGiven) {
+                    Log.info("MongoDataStore::getLatestFeedbackGivenRecord(..) - found; took: " + Util.took(start));
+                    ret = o;
+                }));
+            }
+        } catch (err) {
+            Log.error("MongoDataStore::getLatestFeedbackGivenRecord(..) - ERROR: " + err);
+            ret = null;
+        }
+        return ret;
+        */
+    }
+
+    public async getFeedbackGivenRecordForCommit(commitURL: string, userName: string): Promise<IFeedbackGiven | null> {
+        Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - start");
+
+        let ret: IFeedbackGiven | null = null;
+        return ret;
+        /*
+        try {
+            const start = Date.now();
+            const records: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
+            for (const feedback of records) {
+                if (feedback !== null && feedback.commitURL === commitURL && feedback.userName === userName) {
+                    Log.info("MongoDataStore::getFeedbackGivenRecordForCommit(..) - found; took: " + Util.took(start));
+                    ret = feedback;
+                    break;
+                }
+            }
+            if (ret === null) {
+                Log.info("MongoDataStore::getFeedbackGivenRecordForCommit(..) - not found; took: " + Util.took(start));
+            }
+        } catch (err) {
+            Log.error("MongoDataStore::getFeedbackGivenRecordForCommit(..) - ERROR: " + err);
+            ret = null;
+        }
+        return ret;
+        */
+    }
+
+    public async getAllData(): Promise<{ records: ICommitRecord[], comments: ICommentEvent[], pushes: IPushEvent[], feedback: IFeedbackGiven[] }> {
+        Log.info("MongoDataStore::getAllData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
+
+
+        const records: ICommitRecord[] = null; //await fs.readJSON(this.RECORD_PATH);
+        const comments: ICommentEvent[] = null; //await fs.readJSON(this.COMMENT_PATH);
+        const pushes: IPushEvent[] = null; //await fs.readJSON(this.PUSH_PATH);
+        const feedback: IFeedbackGiven[] = null; //await fs.readJSON(this.FEEDBACK_PATH);
+
+        return {records, comments, pushes, feedback};
+    }
+
+    private async open(): Promise<MongoClient> {
+        const MongoClient = require('mongodb').MongoClient;
+        const assert = require('assert');
+
+        // Connection URL
+        const url = 'mongodb://localhost:27017';
+
+        // Database Name
+        const dbName = 'myproject';
+
+        // Use connect method to connect to the server
+        return MongoClient.connect(url, function (err, client) {
+            assert.equal(null, err);
+            console.log("Connected successfully to server");
+
+            const db = client.db(dbName);
+            return db;
+            // client.close();
+        });
+    }
+
+    public clearData() {
+        Log.warn("MongoDataStore::clearData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
+        if (Config.getInstance().getProp("name") === "test") {
+            Log.info("MongoDataStore::clearData() - files removed");
+        } else {
+            throw new Error("MongoDataStore::clearData() - can only be called on test configurations");
         }
     }
 }
