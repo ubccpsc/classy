@@ -42,11 +42,10 @@ if (process.argv.length < 3) {
     app.initServer();
 }
 
+
 Log.info("AutoTestDaemon - registering unhandled rejection");
-window.addEventListener('unhandledrejection', event => {
+process.on('unhandledRejection', (reason) => {
     // Prevent error output on the console:
-    event.preventDefault();
-    Log.error('AutoTestDaemon - unhandled promise: ' + (<any>event));
-    Log.error('AutoTestDaemon - unhandled promise; reason: ' + (<any>event).reason);
+    Log.error('AutoTestDaemon - unhandled promise: ' + (<any>reason));
 });
 Log.info("AutoTestDaemon - registering unhandled rejection; done");
