@@ -58,7 +58,7 @@ export interface IDataStore {
      *
      * Should only succeed if Config.getInstance().getProp("name") === test
      */
-    clearData(): void;
+    clearData(): Promise<void>;
 }
 
 /**
@@ -306,7 +306,7 @@ export class DummyDataStore implements IDataStore {
         return {records, comments, pushes, feedback};
     }
 
-    public clearData() {
+    public clearData(): Promise<void> {
         Log.warn("DummyDataStore::clearData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
         if (Config.getInstance().getProp("name") === "test") {
             // do it
@@ -332,6 +332,7 @@ export class DummyDataStore implements IDataStore {
         } else {
             throw new Error("DummyDataStore::clearData() - can only be called on test configurations");
         }
+        return Promise.resolve();
     }
 }
 
@@ -382,24 +383,26 @@ export class MongoDataStore implements IDataStore {
     readonly PUSHCOLL = 'pushes';
 
     public async savePush(info: IContainerInput): Promise<void> {
-        Log.info("MongoDataStore::savePush(..) - start");
-        await this.getCollection(this.PUSHCOLL);
-        return;
-        /*
+        Log.info("MongoDataStore::savePush(..) - start; push: "+JSON.stringify(info));
+        let collection = await this.getCollection(this.PUSHCOLL);
+        // return;
+
         try {
             const start = Date.now();
             // read
-            const records = await fs.readJSON(this.PUSH_PATH);
+            // const records = await fs.readJSON(this.PUSH_PATH);
             // append
-            records.push(info);
+            // records.push(info);
             // write
-            await fs.writeJSON(this.PUSH_PATH, records);
+            // await fs.writeJSON(this.PUSH_PATH, records);
+
+            await collection.insertOne(info);
 
             Log.info("MongoDataStore::savePush(..) - done; took: " + Util.took(start));
         } catch (err) {
             Log.error("MongoDataStore::savePush(..) - ERROR: " + err);
         }
-        */
+
     }
 
     public async saveComment(info: ICommentEvent): Promise<void> {
@@ -576,18 +579,26 @@ export class MongoDataStore implements IDataStore {
         Log.info("MongoDataStore::getAllData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
 
 
+        let col = await this.getCollection(this.PUSHCOLL);
+        const pushes: IPushEvent[] = await <any>col.find({}).toArray();
+
+        Log.info("Pushes: " + JSON.stringify(pushes));
         const records: ICommitRecord[] = null; //await fs.readJSON(this.RECORD_PATH);
         const comments: ICommentEvent[] = null; //await fs.readJSON(this.COMMENT_PATH);
-        const pushes: IPushEvent[] = null; //await fs.readJSON(this.PUSH_PATH);
+        // pushes = pushes; //await fs.readJSON(this.PUSH_PATH);
         const feedback: IFeedbackGiven[] = null; //await fs.readJSON(this.FEEDBACK_PATH);
 
         return {records, comments, pushes, feedback};
     }
 
 
-    public clearData() {
+    public async clearData(): Promise<void> {
         Log.warn("MongoDataStore::clearData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
         if (Config.getInstance().getProp("name") === "test") {
+
+            let col = await this.getCollection(this.PUSHCOLL);
+            await col.deleteMany({});
+
             Log.info("MongoDataStore::clearData() - files removed");
         } else {
             throw new Error("MongoDataStore::clearData() - can only be called on test configurations");

@@ -3,6 +3,7 @@ import {DummyClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
 import {DummyDataStore} from "../src/autotest/DataStore";
 import {GithubService} from "../src/autotest/GithubService";
 import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven, IPushEvent} from "../src/Types";
+import {TestData} from "./TestData";
 import Log from "../src/util/Log";
 
 import {expect} from "chai";
@@ -23,93 +24,6 @@ describe("AutoTest", () => {
     // now: 1516559187579
     // now -10h: 1516523258762
     // now - 24h: 1516472872288
-
-    const pushEventA: IPushEvent = {
-        "branch":      "master",
-        "commitSHA":   "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
-        "commitURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
-        "projectURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/",
-        "org":         "CPSC310-2017W-T2",
-        "postbackURL": "EMPTY",
-        "repo":        "d0_team999",
-        "timestamp":   1516472872288
-    };
-
-    const pushEventPostback: IPushEvent = {
-        "branch":      "master",
-        "commitSHA":   "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
-        "commitURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
-        "projectURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/",
-        "org":         "CPSC310-2017W-T2",
-        "postbackURL": "POSTBACK",
-        "repo":        "d0_team999",
-        "timestamp":   1516472872288
-    };
-
-    const inputRecordA: IContainerInput = {
-        "courseId": "310",
-        "delivId":  "d0",
-        "pushInfo": pushEventA
-    };
-
-    const commentRecordUserA = {
-        "botMentioned": true,
-        "commitSHA":    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
-        "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
-        "userName":     "cs310test",
-        "courseId":     "310",
-        "delivId":      "d1",
-        "postbackURL":  "EMPTY",
-        "timestamp":    1516472873288
-    };
-
-    const commentRecordUserATooSoon = {
-        "botMentioned": true,
-        "commitSHA":    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
-        "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
-        "userName":     "cs310test",
-        "courseId":     "310",
-        "delivId":      "d1",
-        "postbackURL":  "EMPTY",
-        "timestamp":    1516523258762
-    };
-
-    const commentRecordStaffA = {
-        "botMentioned": true,
-        "commitSHA":    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
-        "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
-        "userName":     "staff",
-        "courseId":     "310",
-        "delivId":      "d1",
-        "postbackURL":  "EMPTY",
-        "timestamp":    1516472874288
-    };
-
-    const outputRecordA: ICommitRecord = {
-        "commitURL": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
-        "commitSHA": "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
-        "input":     inputRecordA,
-        "output":    {
-            "commitUrl":          "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
-            "timestamp":          1516523418918,
-            "report":             {
-                "scoreOverall": 50,
-                "scoreTest":    50,
-                "scoreCover":   50,
-                "passNames":    [],
-                "failNames":    [],
-                "errorNames":   [],
-                "skipNames":    [],
-                "custom":       [],
-                "feedback":     ""
-            },
-            "feedback":           "Test Feedback",
-            "postbackOnComplete": false,
-            "custom":             {},
-            "attachments":        [],
-            "state":              "SUCCESS"
-        }
-    };
 
     before(function () {
         Log.test("AutoTest::before() - start");
@@ -216,7 +130,7 @@ describe("AutoTest", () => {
         Log.test("Setup complete");
 
         // TEST: send a comment
-        await at.handleCommentEvent(commentRecordUserA);
+        await at.handleCommentEvent(TestData.commentRecordUserA);
         allData = await data.getAllData();
         expect(gh.messages.length).to.equal(1); // should generate a warning
         expect(gh.messages[0].message).to.equal("This commit is has not been queued; please make and push a new commit.");
@@ -232,14 +146,14 @@ describe("AutoTest", () => {
         gh.messages = [];
 
         // SETUP: add a push with no output records
-        await at.handlePushEvent(pushEventA);
+        await at.handlePushEvent(TestData.pushEventA);
         let allData = await data.getAllData();
         expect(gh.messages.length).to.equal(0); // should not be any feedback yet
         expect(allData.pushes.length).to.equal(1);
         Log.test("Setup complete");
 
         // TEST: send a comment
-        await at.handleCommentEvent(commentRecordUserA);
+        await at.handleCommentEvent(TestData.commentRecordUserA);
         allData = await data.getAllData();
         expect(gh.messages.length).to.equal(1); // should generate a warning
         expect(gh.messages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
@@ -257,7 +171,7 @@ describe("AutoTest", () => {
         gh.messages = [];
 
         // SETUP: add a push with no output records
-        await at.handlePushEvent(pushEventA);
+        await at.handlePushEvent(TestData.pushEventA);
         let allData = await data.getAllData();
         expect(gh.messages.length).to.equal(0); // should not be any feedback yet
         expect(allData.comments.length).to.equal(0);
@@ -266,7 +180,7 @@ describe("AutoTest", () => {
         Log.test("Setup complete");
 
         // TEST: send a comment (this is the previous test)
-        await at.handleCommentEvent(commentRecordUserA);
+        await at.handleCommentEvent(TestData.commentRecordUserA);
         allData = await data.getAllData();
         expect(gh.messages.length).to.equal(1); // should generate a warning
         expect(gh.messages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
@@ -292,7 +206,7 @@ describe("AutoTest", () => {
         gh.messages = [];
 
         // SETUP: add a push with no output records
-        await at.handlePushEvent(pushEventPostback);
+        await at.handlePushEvent(TestData.pushEventPostback);
         let allData = await data.getAllData();
         expect(gh.messages.length).to.equal(0); // should not be any feedback yet
         expect(allData.comments.length).to.equal(0);
@@ -325,7 +239,7 @@ describe("AutoTest", () => {
         gh.messages = [];
 
         // SETUP: add a push with no output records
-        await at.handlePushEvent(pushEventPostback);
+        await at.handlePushEvent(TestData.pushEventPostback);
         let allData = await data.getAllData();
         expect(gh.messages.length).to.equal(0); // should not be any feedback yet
         expect(allData.comments.length).to.equal(0);
@@ -333,7 +247,7 @@ describe("AutoTest", () => {
         Log.test("Setup complete");
 
         // TEST: send a comment (this is the previous test)
-        await at.handleCommentEvent(commentRecordUserA);
+        await at.handleCommentEvent(TestData.commentRecordUserA);
         allData = await data.getAllData();
         expect(gh.messages.length).to.equal(1); // should generate a warning
         expect(gh.messages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
@@ -358,7 +272,7 @@ describe("AutoTest", () => {
         gh.messages = [];
 
         // SETUP: add a push with no output records
-        await at.handlePushEvent(pushEventA);
+        await at.handlePushEvent(TestData.pushEventA);
         let allData = await data.getAllData();
         expect(gh.messages.length).to.equal(0); // should not be any feedback yet
         expect(allData.pushes.length).to.equal(1);
@@ -367,7 +281,7 @@ describe("AutoTest", () => {
         Log.test("Setup complete");
 
         // TEST: send a comment
-        await at.handleCommentEvent(commentRecordUserA);
+        await at.handleCommentEvent(TestData.commentRecordUserA);
         allData = await data.getAllData();
         expect(gh.messages.length).to.equal(1); // should generate a warning
         expect(gh.messages[0].message).to.equal("Test execution complete."); // would really be the whole message
@@ -376,7 +290,7 @@ describe("AutoTest", () => {
         Log.test("First request complete; starting second.");
 
         // FOLLOWUP: do it again, user should be given result for free since they previously asked
-        await at.handleCommentEvent(commentRecordUserA);
+        await at.handleCommentEvent(TestData.commentRecordUserA);
         allData = await data.getAllData();
         expect(gh.messages.length).to.equal(2); // should return the row
         expect(gh.messages[0].message).to.equal("Test execution complete."); // would really be the whole message
@@ -401,8 +315,8 @@ describe("AutoTest", () => {
             "timestamp": 1516451273288, ///
             "userName":  "cs310test"
         };
-        data.savePush(inputRecordA);
-        data.saveOutputRecord(outputRecordA);
+        data.savePush(TestData.inputRecordA);
+        data.saveOutputRecord(TestData.outputRecordA);
         data.saveFeedbackGivenRecord(fg);
         let allData = await data.getAllData();
         expect(allData.comments.length).to.equal(0);
@@ -410,7 +324,7 @@ describe("AutoTest", () => {
         Log.test("Setup complete");
 
         // TEST: send a comment
-        await at.handleCommentEvent(commentRecordUserA);
+        await at.handleCommentEvent(TestData.commentRecordUserA);
         allData = await data.getAllData();
         expect(gh.messages.length).to.equal(1); // should generate a warning
         expect(gh.messages[0].message).to.equal("You must wait 6 hours and 0 minutes before requesting feedback."); // would really be the whole message
