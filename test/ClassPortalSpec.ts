@@ -90,9 +90,9 @@ describe("ClassPortal Service", () => {
 
     it("Should return a container id for an existing course.", async () => {
         try {
-            const res = await cp.getContainerDetails("cs310", "d0");
+            const res = await cp.getContainerDetails(classId, "d0");
             const actual = res.dockerImage;
-            expect(actual).to.equal("foo");
+            expect(actual).to.equal("autotest/cpsc310__bootstrap");
         } catch (err) {
             expect.fail("Should not happen");
         }
