@@ -360,9 +360,9 @@ export class MongoDataStore implements IDataStore {
         try {
             const start = Date.now();
             let col = await this.getCollection(this.PUSHCOLL);
-            const pushes: IContainerInput[] = await <any>col.find({}).toArray();
+            const pushes: IContainerInput[] = await <any>col.find({"pushInfo.commitURL": commitURL}).toArray();
 
-            // find and return
+            // find and return; array should only have one element, but this is just being extra cautious
             for (const record of pushes as IContainerInput[]) {
                 if (record !== null && typeof record.pushInfo.commitURL !== "undefined" && record.pushInfo.commitURL === commitURL) {
                     Log.info("MongoDataStore::getPushRecord(..) - found; took: " + Util.took(start));
