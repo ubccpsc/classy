@@ -360,13 +360,13 @@ export class MongoDataStore implements IDataStore {
         try {
             const start = Date.now();
             let col = await this.getCollection(this.PUSHCOLL);
-            const pushes: IPushEvent[] = await <any>col.find({}).toArray();
+            const pushes: IContainerInput[] = await <any>col.find({}).toArray();
 
             // find and return
-            for (const record of pushes) {
-                if (record !== null && typeof record.commitURL !== "undefined" && record.commitURL === commitURL) {
+            for (const record of pushes as IContainerInput[]) {
+                if (record !== null && typeof record.pushInfo.commitURL !== "undefined" && record.pushInfo.commitURL === commitURL) {
                     Log.info("MongoDataStore::getPushRecord(..) - found; took: " + Util.took(start));
-                    return record;
+                    return record.pushInfo;
                 }
             }
             // not found

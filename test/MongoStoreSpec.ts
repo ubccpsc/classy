@@ -40,6 +40,18 @@ describe.only("MongoStore", () => {
 
         // VERIFY
         expect(actual).to.not.be.null;
-        expect(TestData.inputRecordA).to.deep.include(actual);
+        expect(TestData.inputRecordA.pushInfo).to.deep.include(actual);
     });
+
+    it("Should return null for a push event that has not been saved.", async () => {
+        // SETUP
+        await ds.savePush(TestData.inputRecordA);
+
+        // TEST
+        const actual = await ds.getPushRecord(TestData.inputRecordB.pushInfo.commitURL);
+
+        // VERIFY
+        expect(actual).to.be.null;
+    });
+
 });

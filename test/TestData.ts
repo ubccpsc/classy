@@ -12,6 +12,17 @@ export class TestData {
         "timestamp":   1516472872288
     };
 
+    static readonly pushEventB: IPushEvent = {
+        "branch":      "master",
+        "commitSHA":   "eventb0918b872997de4c4d2baf4c263f8d4c6dc2",
+        "commitURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/eventb0918b872997de4c4d2baf4c263f8d4c6dc2",
+        "projectURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/",
+        "org":         "CPSC310-2017W-T2",
+        "postbackURL": "EMPTY",
+        "repo":        "d0_team999",
+        "timestamp":   1516992872288
+    };
+
     static readonly pushEventPostback: IPushEvent = {
         "branch":      "master",
         "commitSHA":   "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
@@ -27,6 +38,12 @@ export class TestData {
         "courseId": "310",
         "delivId":  "d0",
         "pushInfo": TestData.pushEventA
+    };
+
+    static readonly inputRecordB: IContainerInput = {
+        "courseId": "310",
+        "delivId":  "d0",
+        "pushInfo": TestData.pushEventB
     };
 
     static readonly commentRecordUserA = {
