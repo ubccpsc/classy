@@ -405,7 +405,10 @@ export class AutoTest implements IAutoTest {
             // const record: ICommitRecord = await docker.execute();
 
             let record: ICommitRecord = null;
-            const isProd = true; // TODO: need a way to figure out if this is prod or test
+            let isProd = true;
+            if (input.pushInfo.postbackURL === "EMPTY" || input.pushInfo.postbackURL === "POSTBACK") {
+                isProd = false; // EMPTY and POSTBACK used by test environment
+            }
             if (isProd === true) {
                 const grader = new Grader();
                 record = await grader.execute(input);
