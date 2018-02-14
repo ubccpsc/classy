@@ -36,7 +36,8 @@ export interface IClassPortal {
      *
      * @param courseId
      */
-    getTestDelay(courseId: string, delivId: string): Promise<number | null>;
+
+    // getTestDelay(courseId: string, delivId: string): Promise<number | null>;
 
     /**
      * Gets the identifier for the AutoTest docker container that should process requests for this deliverable.
@@ -45,7 +46,7 @@ export interface IClassPortal {
      *
      * @param courseId
      */
-    getContainerId(courseId: string, delivId: string): Promise<string | null>;
+    getContainerDetails(courseId: string, delivId: string): Promise<{ dockerImage: string, dockerBuild: string, testDelay: number, regressionDelivNames: string[] } | null>;
 
 }
 
@@ -70,23 +71,25 @@ export class DummyClassPortal implements IClassPortal {
         return null;
     }
 
-    public async getContainerId(courseId: string, delivId: string): Promise<string | null> {
+    public async getContainerDetails(courseId: string, delivId: string): Promise<{ dockerImage: string, dockerBuild: string, testDelay: number, regressionDelivNames: string[] } | null> {
         if (typeof courseId !== "undefined" && courseId !== null && typeof delivId !== "undefined" && delivId !== null) {
             if (courseId === "310") {
-                return "310container";
+                return {dockerImage: "310container", dockerBuild: "d0build", testDelay: 100, regressionDelivNames: []};
             }
         }
         return null;
     }
 
-    public async getTestDelay(courseId: string, delivId: string): Promise<number | null> {
-        if (typeof courseId !== "undefined" && courseId !== null && typeof delivId !== "undefined" && delivId !== null) {
-            if (courseId === "310") {
-                return 12 * 60 * 60 * 1000; // 12h right now
+    /*
+        public async getTestDelay(courseId: string, delivId: string): Promise<number | null> {
+            if (typeof courseId !== "undefined" && courseId !== null && typeof delivId !== "undefined" && delivId !== null) {
+                if (courseId === "310") {
+                    return 12 * 60 * 60 * 1000; // 12h right now
+                }
             }
+            return null;
         }
-        return null;
-    }
+        */
 }
 
 export class ClassPortal implements IClassPortal {
@@ -131,6 +134,8 @@ export class ClassPortal implements IClassPortal {
      * @param {string} courseId
      * @returns {Promise<number>}
      */
+
+    /*
     public async getTestDelay(courseId: string, delivId: string): Promise<number | null> {
         if (typeof courseId === "undefined" || courseId === null || typeof delivId === "undefined" || delivId === null) {
             Log.error("ClassPortal::getTestDelay(..) - missing parameters");
@@ -147,8 +152,8 @@ export class ClassPortal implements IClassPortal {
             return null;
         });
     }
-
-    public async getContainerId(courseId: string, delivId: string): Promise<string | null> {
+*/
+    public async getContainerDetails(courseId: string, delivId: string): Promise<{ dockerImage: string, dockerBuild: string, testDelay: number, regressionDelivNames: string[] } | null> {
         if (typeof courseId === "undefined" || courseId === null || typeof delivId === "undefined" || delivId === null) {
             Log.error("ClassPortal::getContainerId(..) - missing parameters");
             return null;

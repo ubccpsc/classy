@@ -70,7 +70,9 @@ describe("ClassPortal Service", () => {
 
     it("Should return the test delay in seconds for a course.", async () => {
         try {
-            const actual = await cp.getTestDelay(classId, "d0");
+            const res = await cp.getContainerDetails(classId, "d0");
+            expect(res).to.not.be.null;
+            const actual = res.testDelay;
             expect(actual).to.equal(43200);
         } catch (err) {
             expect.fail("Should not happen");
@@ -79,8 +81,8 @@ describe("ClassPortal Service", () => {
 
     it("Should return a null test delay if the course does not exist.", async () => {
         try {
-            const actual = await cp.getTestDelay("cs999", "d0");
-            expect(actual).to.equal(null);
+            const res = await cp.getContainerDetails("cs999", "d0");
+            expect(res).to.equal(null);
         } catch (err) {
             expect.fail("Should not happen");
         }
@@ -88,8 +90,9 @@ describe("ClassPortal Service", () => {
 
     it("Should return a container id for an existing course.", async () => {
         try {
-            const actual = await cp.getTestDelay("cs310", "d0");
-            expect(actual).to.equal("foo"); // TODO: this is known to fail since the service isn't up yet
+            const res = await cp.getContainerDetails("cs310", "d0");
+            const actual = res.dockerImage;
+            expect(actual).to.equal("foo");
         } catch (err) {
             expect.fail("Should not happen");
         }
@@ -97,8 +100,8 @@ describe("ClassPortal Service", () => {
 
     it("Should return a null container id if the course does not exist.", async () => {
         try {
-            const actual = await cp.getTestDelay("cs999", "d0");
-            expect(actual).to.equal(null);
+            const res = await cp.getContainerDetails("cs999", "d0");
+            expect(res).to.equal(null);
         } catch (err) {
             expect.fail("Should not happen");
         }
