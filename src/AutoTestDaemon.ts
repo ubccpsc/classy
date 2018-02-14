@@ -47,7 +47,7 @@ Log.info("AutoTestDaemon - registering unhandled rejection");
 
 process.on('unhandledRejection', (reason, p) => {
     // Prevent error output on the console:
-    Log.error('ATD: Unhandled Rejection at: ', p, '; reason:', reason);
+    Log.error('AutoTestDaemon - unhandled rejection at: ', p, '; reason:', reason);
     Log.error('AutoTestDaemon - unhandled promise: ' + (<any>JSON.stringify(reason)));
 });
 Log.info("AutoTestDaemon - registering unhandled rejection; done");
