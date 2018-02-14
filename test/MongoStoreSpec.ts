@@ -14,6 +14,7 @@ describe.only("MongoStore", () => {
         ds = new MongoDataStore();
         // we know it is a test environment
         await ds.clearData();
+        return;
     });
 
     it("Should be able to save a push event.", async () => {
@@ -27,8 +28,9 @@ describe.only("MongoStore", () => {
         // VERIFY
         allData = await ds.getAllData();
         expect(allData.pushes.length).to.equal(1);
-        let actual = allData.pushes[0];
-        expect(TestData.inputRecordA).to.deep.include(actual);
+        const actual = allData.pushes[0];
+        const expected = TestData.inputRecordA;
+        expect(actual).to.deep.include(expected);
     });
 
     it("Should be able to retrieve a push event.", async () => {
@@ -40,7 +42,8 @@ describe.only("MongoStore", () => {
 
         // VERIFY
         expect(actual).to.not.be.null;
-        expect(TestData.inputRecordA.pushInfo).to.deep.include(actual);
+        const expected = TestData.inputRecordA;
+        expect(actual).to.deep.include(expected);
     });
 
     it("Should return null for a push event that has not been saved.", async () => {
@@ -53,5 +56,95 @@ describe.only("MongoStore", () => {
         // VERIFY
         expect(actual).to.be.null;
     });
+
+
+    it("Should be able to save a comment event.", async () => {
+        // SETUP
+        let allData = await ds.getAllData();
+        expect(allData.comments).to.be.empty;
+
+        // TEST
+        await ds.saveComment(TestData.commentRecordStaffA);
+
+        // VERIFY
+        allData = await ds.getAllData();
+        expect(allData.comments.length).to.equal(1);
+        const actual = allData.comments[0];
+        const expected = TestData.commentRecordStaffA;
+        expect(actual).to.deep.include(expected);
+    });
+
+    it("Should be able to retrieve a comment event.", async () => {
+        // SETUP
+        await ds.saveComment(TestData.commentRecordStaffA);
+
+        // TEST
+        const actual = await ds.getCommentRecord(TestData.commentRecordStaffA.commitURL, TestData.commentRecordStaffA.delivId);
+
+        // VERIFY
+        expect(actual).to.not.be.null;
+        const expected = TestData.commentRecordStaffA;
+        expect(actual).to.deep.include(expected);
+    });
+
+    it("Should return null for a comment event that has not been saved.", async () => {
+        // SETUP
+        await ds.saveComment(TestData.commentRecordStaffA);
+
+        // TEST
+        const actual = await ds.getCommentRecord(TestData.commentRecordUserA.commitURL, TestData.commentRecordUserA.delivId);
+
+        // VERIFY
+        expect(actual).to.be.null;
+    });
+
+    it("Should be able to save an output event.", async () => {
+        // SETUP
+        let allData = await ds.getAllData();
+        expect(allData.records).to.be.empty;
+
+        // TEST
+        await ds.saveOutputRecord(TestData.outputRecordA);
+
+        // VERIFY
+        allData = await ds.getAllData();
+        expect(allData.records.length).to.equal(1);
+        const actual = allData.records[0];
+        const expected = TestData.outputRecordA;
+        expect(actual).to.deep.include(expected);
+    });
+
+    it("Should be able to retrieve an output event.", async () => {
+        // SETUP
+        await ds.saveOutputRecord(TestData.outputRecordA);
+
+        // TEST
+        const actual = await ds.getOutputRecord(TestData.outputRecordA.commitURL, TestData.outputRecordA.input.delivId);
+
+        // VERIFY
+        expect(actual).to.not.be.null;
+        const expected = TestData.outputRecordA;
+        expect(actual).to.deep.include(expected);
+    });
+
+    it("Should return null for an output event that has not been saved.", async () => {
+        // SETUP
+        await ds.saveOutputRecord(TestData.outputRecordA);
+
+        // TEST
+        const actual = await ds.getOutputRecord(TestData.outputRecordB.commitURL, TestData.outputRecordB.input.delivId);
+
+        // VERIFY
+        expect(actual).to.be.null;
+    });
+
+    /**
+     *
+     *
+     *
+     *
+     */
+
+    // TODO: feedback tests
 
 });

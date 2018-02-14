@@ -70,8 +70,8 @@ export class TestData {
 
     static readonly commentRecordStaffA = {
         "botMentioned": true,
-        "commitSHA":    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
-        "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
+        "commitSHA":    "abe1b0918b872997de4c4d2baf4c263f8d4staff",
+        "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4staff",
         "userName":     "staff",
         "courseId":     "310",
         "delivId":      "d1",
@@ -85,6 +85,32 @@ export class TestData {
         "input":     TestData.inputRecordA,
         "output":    {
             "commitUrl":          "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
+            "timestamp":          1516523418918,
+            "report":             {
+                "scoreOverall": 50,
+                "scoreTest":    50,
+                "scoreCover":   50,
+                "passNames":    [],
+                "failNames":    [],
+                "errorNames":   [],
+                "skipNames":    [],
+                "custom":       [],
+                "feedback":     ""
+            },
+            "feedback":           "Test Feedback",
+            "postbackOnComplete": false,
+            "custom":             {},
+            "attachments":        [],
+            "state":              "SUCCESS"
+        }
+    };
+
+    static readonly outputRecordB: ICommitRecord = {
+        "commitURL": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4staff",
+        "commitSHA": "abe1b0918b872997de4c4d2baf4c263f8d4staff",
+        "input":     TestData.inputRecordA,
+        "output":    {
+            "commitUrl":          "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4staff",
             "timestamp":          1516523418918,
             "report":             {
                 "scoreOverall": 50,
