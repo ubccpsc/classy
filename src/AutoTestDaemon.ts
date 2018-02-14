@@ -46,9 +46,13 @@ if (process.argv.length < 3) {
 Log.info("AutoTestDaemon - registering unhandled rejection");
 
 process.on('unhandledRejection', (reason, p) => {
-    // Prevent error output on the console:
-    Log.error('AutoTestDaemon - unhandled rejection at: ', p, '; reason:', reason);
-    Log.error('AutoTestDaemon - unhandled promise: ' + (<any>JSON.stringify(reason)));
+    try {
+        Log.error('AutoTestDaemon - unhandled promise'); // in case next line fails
+        console.log('AutoTestDaemon - unhandled rejection at: ', p, '; reason:', reason);
+        Log.error('AutoTestDaemon - unhandled promise: ' + (<any>JSON.stringify(reason)));
+    } catch(err){
+       // eat any error
+    }
 });
 Log.info("AutoTestDaemon - registering unhandled rejection; done");
-// Promise.reject('test unhandler');
+// Promise.reject('foo');
