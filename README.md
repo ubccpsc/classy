@@ -6,11 +6,17 @@ Then, when a student requests feedback by mentioning @autobot in a commit commen
 
 AutoTest is currently being used in two undergraduate computer science courses at The University of British Columbia to automatically grade the work of over 400 students. It has been in use since September 2017.
 
-## Getting Started
-
 ### Prerequisites
 
+* MongoDB needs to be installed and running. Only tested with v3.6.2.
+* Docker needs to be installed and running. Only tested with v17.12.
+
 ### Installing
+
+1) `git clone <repo>`
+2) `yarn run install`	
+3) `yarn run build`
+4) `yarn run test`
 
 ## Authors
 
