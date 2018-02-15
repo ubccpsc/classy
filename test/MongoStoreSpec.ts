@@ -181,7 +181,6 @@ describe("MongoStore", () => {
         expect(actual).to.deep.include(expected);
     });
 
-
     it("Should return null for a feedback event that has not been saved.", async () => {
         // SETUP
         await ds.saveFeedbackGivenRecord(TestData.feedbackRecordA);
