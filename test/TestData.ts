@@ -1,4 +1,4 @@
-import {ICommitRecord, IContainerInput, IPushEvent} from "../src/Types";
+import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven, IPushEvent} from "../src/Types";
 
 export class TestData {
     static readonly pushEventA: IPushEvent = {
@@ -46,7 +46,7 @@ export class TestData {
         "pushInfo": TestData.pushEventB
     };
 
-    static readonly commentRecordUserA = {
+    static readonly commentRecordUserA: ICommentEvent = {
         "botMentioned": true,
         "commitSHA":    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
@@ -57,7 +57,7 @@ export class TestData {
         "timestamp":    1516472873288
     };
 
-    static readonly commentRecordUserATooSoon = {
+    static readonly commentRecordUserATooSoon: ICommentEvent = {
         "botMentioned": true,
         "commitSHA":    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
@@ -68,7 +68,7 @@ export class TestData {
         "timestamp":    1516523258762
     };
 
-    static readonly commentRecordStaffA = {
+    static readonly commentRecordStaffA: ICommentEvent = {
         "botMentioned": true,
         "commitSHA":    "abe1b0918b872997de4c4d2baf4c263f8d4staff",
         "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4staff",
@@ -77,6 +77,22 @@ export class TestData {
         "delivId":      "d1",
         "postbackURL":  "EMPTY",
         "timestamp":    1516472874288
+    };
+
+    static readonly feedbackRecordA: IFeedbackGiven = {
+        userName:  TestData.commentRecordStaffA.userName,
+        courseId:  TestData.commentRecordStaffA.courseId,
+        delivId:   TestData.commentRecordStaffA.delivId,
+        timestamp: TestData.commentRecordStaffA.timestamp + 1000,
+        commitURL: TestData.commentRecordStaffA.commitURL
+    };
+
+    static readonly feedbackRecordB: IFeedbackGiven = {
+        userName:  TestData.commentRecordUserA.userName,
+        courseId:  TestData.commentRecordUserA.courseId,
+        delivId:   TestData.commentRecordUserA.delivId,
+        timestamp: TestData.commentRecordUserA.timestamp + 1000,
+        commitURL: TestData.commentRecordUserA.commitURL
     };
 
     static readonly outputRecordA: ICommitRecord = {

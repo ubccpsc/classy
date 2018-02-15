@@ -173,7 +173,7 @@ export class AutoTest implements IAutoTest {
             const isStaff: boolean = await this.classPortal.isStaff(this.courseId, info.userName); // async
             const requestFeedbackDelay: string | null = await this.requestFeedbackDelay(delivId, info.userName, info.timestamp); // ts of comment, not push
             const hasBeenRequestedBefore: IFeedbackGiven = await this.dataStore.getFeedbackGivenRecordForCommit(info.commitURL, info.userName); // students often request grades they have previously 'paid' for
-            const res: ICommitRecord = await this.getOutputRecord(info.commitURL); // for any user
+            const res: ICommitRecord = await this.getOutputRecord(info.commitURL, delivId); // for any user
             const isCurrentlyRunning: boolean = this.isCommitExecuting(info.commitURL, delivId);
             Log.trace("AutoTest::handleCommentEvent(..) - isStaff: " + isStaff + "; delay: " + requestFeedbackDelay + "; res: " + res + "; running?: " + isCurrentlyRunning);
 
@@ -443,9 +443,9 @@ export class AutoTest implements IAutoTest {
         }
     }
 
-    private async getOutputRecord(commitURL: string): Promise<ICommitRecord | null> {
+    private async getOutputRecord(commitURL: string, delivId: string): Promise<ICommitRecord | null> {
         try {
-            const ret = await this.dataStore.getOutputRecord(commitURL);
+            const ret = await this.dataStore.getOutputRecord(commitURL, delivId);
             return ret;
         } catch (err) {
             Log.error("AutoTest::getOutputRecord() - ERROR: " + err);

@@ -1,11 +1,11 @@
 import {expect} from "chai";
 import "mocha";
+
 import {Config} from "../src/Config";
 import {IDataStore, MongoDataStore} from "../src/autotest/DataStore";
 import {TestData} from "./TestData";
-import Log from "../src/util/Log";
 
-describe.only("MongoStore", () => {
+describe("MongoStore", () => {
     Config.getInstance("test");
 
     let ds: IDataStore;
@@ -138,13 +138,59 @@ describe.only("MongoStore", () => {
         expect(actual).to.be.null;
     });
 
-    /**
-     *
-     *
-     *
-     *
-     */
+    it("Should be able to save a feedback event.", async () => {
+        // SETUP
+        let allData = await ds.getAllData();
+        expect(allData.feedback).to.be.empty;
 
-    // TODO: feedback tests
+        // TEST
+        await ds.saveFeedbackGivenRecord(TestData.feedbackRecordA);
+
+        // VERIFY
+        allData = await ds.getAllData();
+        expect(allData.feedback.length).to.equal(1);
+        const actual = allData.feedback[0];
+        const expected = TestData.feedbackRecordA;
+        expect(actual).to.deep.include(expected);
+    });
+
+    it("Should be able to retrieve a feedback event.", async () => {
+        // SETUP
+        await ds.saveFeedbackGivenRecord(TestData.feedbackRecordA);
+
+        // TEST
+        const actual = await ds.getFeedbackGivenRecordForCommit(TestData.feedbackRecordA.commitURL, TestData.feedbackRecordA.userName);
+
+        // VERIFY
+        expect(actual).to.not.be.null;
+        const expected = TestData.feedbackRecordA;
+        expect(actual).to.deep.include(expected);
+    });
+
+    it("Should be able to retrieve the latest feedback event.", async () => {
+        // SETUP
+        await ds.saveFeedbackGivenRecord(TestData.feedbackRecordA);
+        await ds.saveFeedbackGivenRecord(TestData.feedbackRecordB);
+
+        // TEST
+        const actual = await ds.getLatestFeedbackGivenRecord(TestData.feedbackRecordA.courseId, TestData.feedbackRecordA.delivId, TestData.feedbackRecordA.userName);
+
+        // VERIFY
+        expect(actual).to.not.be.null;
+        const expected = TestData.feedbackRecordA;
+        expect(actual).to.deep.include(expected);
+    });
+
+
+    it("Should return null for a feedback event that has not been saved.", async () => {
+        // SETUP
+        await ds.saveFeedbackGivenRecord(TestData.feedbackRecordA);
+
+        // TEST
+        const actual = await ds.getFeedbackGivenRecordForCommit(TestData.feedbackRecordB.commitURL, TestData.feedbackRecordB.userName);
+
+        // VERIFY
+        expect(actual).to.be.null;
+    });
 
 });

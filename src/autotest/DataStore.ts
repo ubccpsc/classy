@@ -45,7 +45,7 @@ export interface IDataStore {
 
     getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): Promise<IFeedbackGiven | null>;
 
-    getFeedbackGivenRecordForCommit(commitUrl: string, userName: string): Promise<IFeedbackGiven | null>;
+    getFeedbackGivenRecordForCommit(commitUrl: string, userName: string): Promise<IFeedbackGiven | null>; // TODO: should this have delivId?
 
     /**
      * Debugging / testing only, should not be commonly used.
@@ -396,6 +396,33 @@ export class MongoDataStore implements IDataStore {
         return null;
     }
 
+    public async getRecords(column: string, query: {} | null): Promise<{}[] | null> {
+        try {
+            Log.info("MongoDataStore::getRecords(..) - start");
+            let col = await this.getCollection(column);
+            if (query === null) {
+                query = {};
+            }
+            //if (typeof key !== 'undefined' && key !== null && typeof value !== 'undefined' && value !== null) {
+            //    query[key] = value;
+            // }
+            const records: any[] = await <any>col.find(query).toArray();
+            if (records === null || records.length === 0) {
+                Log.info("MongoDataStore::getRecords(..) - done; no records found");
+                return null;
+            } else {
+                Log.info("MongoDataStore::getRecords(..) - done; # records: " + records.length);
+                for (const r of records) {
+                    delete r._id;// remove the record id, just so we can't use it
+                }
+                return records;
+            }
+        } catch (err) {
+            Log.error("MongoDataStore::getRecords(..) - ERROR: " + err);
+        }
+        return null;
+    }
+
     /**
      * Gets the push event record for a given commitURL
      */
@@ -504,35 +531,26 @@ export class MongoDataStore implements IDataStore {
 
     public async getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): Promise<IFeedbackGiven | null> {
         Log.trace("MongoDataStore::getLatestFeedbackGivenRecord(..) - start");
-        let ret: IFeedbackGiven | null = null;
-        throw new Error("NOT IMPL");
-        // return ret;
-        /*
         try {
             const start = Date.now();
-            const records: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
-            const shortList: IFeedbackGiven[] = [];
-            for (const req of records) {
-                if (req !== null && req.courseId === courseId && req.delivId === delivId && req.userName === userName) {
-                    shortList.push(req);
-                }
-            }
-
-            if (shortList.length === 0) {
-                Log.info("MongoDataStore::getLatestFeedbackGivenRecord(..) - not found; took: " + Util.took(start));
-                ret = null;
+            const res = await this.getRecords(this.FEEDBACKCOLL, {"courseId": courseId, "delivId": delivId, "userName": userName});
+            if (res === null) {
+                Log.info("MongoDataStore::getFeedbackGivenRecordForCommit(..) - record not found");
+                return null;
             } else {
-                Math.max.apply(Math, shortList.map(function (o: IFeedbackGiven) {
+                Log.info("MongoDataStore::getFeedbackGivenRecordForCommit(..) - found; took: " + Util.took(start));
+                // pick the most recent
+                let ret: IFeedbackGiven | null = null;
+                Math.max.apply(Math, res.map(function (o: IFeedbackGiven) {
                     Log.info("MongoDataStore::getLatestFeedbackGivenRecord(..) - found; took: " + Util.took(start));
                     ret = o;
                 }));
+                return ret;
             }
         } catch (err) {
             Log.error("MongoDataStore::getLatestFeedbackGivenRecord(..) - ERROR: " + err);
-            ret = null;
         }
-        return ret;
-        */
+        return null;
     }
 
     public async getFeedbackGivenRecordForCommit(commitURL: string, userName: string): Promise<IFeedbackGiven | null> {
