@@ -1,7 +1,7 @@
 import * as restify from "restify";
 import {AutoTest} from "../autotest/AutoTest";
 import {ClassPortal, DummyClassPortal} from "../autotest/ClassPortal";
-import {DummyDataStore} from "../autotest/DataStore";
+import {DummyDataStore, MongoDataStore} from "../autotest/DataStore";
 import {GithubService} from "../autotest/GithubService";
 import {GithubUtil} from "../util/GithubUtil";
 import Log from "../util/Log";
@@ -13,9 +13,9 @@ export default class RouteHandler {
 
     public static getAutoTest(): AutoTest {
         if (RouteHandler.autoTest === null) {
-
             // TODO: create these in server?
-            const data = new DummyDataStore();
+            // const data = new DummyDataStore();
+            const data = new MongoDataStore();
             // const portal = new DummyClassPortal();
             const portal = new ClassPortal();
             const gh = new GithubService();
