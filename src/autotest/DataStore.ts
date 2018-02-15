@@ -360,6 +360,7 @@ export class MongoDataStore implements IDataStore {
 
     public async saveRecord(column: string, record: any): Promise<void> {
         try {
+            Log.info("MongoDataStore::saveRecord( " + column + ", ...) - start");
             let collection = await this.getCollection(column);
             // be extra safe not to mutate existing record (we were seeing _id being added by mongo)
             const copy = Object.assign({}, record);
