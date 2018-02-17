@@ -1,7 +1,7 @@
 import * as restify from "restify";
 
 import {AutoTest} from "../autotest/AutoTest";
-import {ClassPortal} from "../autotest/ClassPortal";
+import {ClassPortal, EdXClassPortal} from "../autotest/ClassPortal";
 import {MongoDataStore} from "../autotest/DataStore";
 import {GithubService} from "../autotest/GithubService";
 import {GithubUtil} from "../util/GithubUtil";
@@ -24,7 +24,7 @@ export default class RouteHandler {
                 RouteHandler.autoTest = new AutoTest(courseId, data, portal, gh);
             } else if (Config.getInstance().getProp("kind") === "edx") {
                 const data = new MongoDataStore();
-                const portal = new ClassPortal(); // TODO: change to edxPortal
+                const portal = new EdXClassPortal();
                 const gh = new GithubService();
                 const courseId = Config.getInstance().getProp('name');
                 RouteHandler.autoTest = new AutoTest(courseId, data, portal, gh);

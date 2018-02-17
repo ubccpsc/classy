@@ -25,21 +25,6 @@ export interface IClassPortal {
     isStaff(courseId: string, userName: string): Promise<boolean>;
 
     /**
-     *
-     * TODO: combine with getContainer below.
-     *
-     * Gets the delay period (in seconds) that AutoTest should enforce on students between feedback requests.
-     *
-     * GET /admin/getTestDelay/{:courseId} (or some variant)
-     *
-     * Currently assumes the delay is constant across all deliverables.
-     *
-     * @param courseId
-     */
-
-    // getTestDelay(courseId: string, delivId: string): Promise<number | null>;
-
-    /**
      * Gets the identifier for the AutoTest docker container that should process requests for this deliverable.
      *
      * GET /admin/{:courseId}/{:delivId}/container
@@ -47,7 +32,6 @@ export interface IClassPortal {
      * @param courseId
      */
     getContainerDetails(courseId: string, delivId: string): Promise<{ dockerImage: string, dockerBuild: string, testDelay: number, regressionDelivNames: string[] } | null>;
-
 }
 
 export class DummyClassPortal implements IClassPortal {
@@ -90,6 +74,39 @@ export class DummyClassPortal implements IClassPortal {
             return null;
         }
         */
+}
+
+export class EdXClassPortal implements IClassPortal {
+
+    public async isStaff(courseId: string, userName: string): Promise<boolean> {
+        if (typeof courseId === "undefined" || courseId === null || typeof userName === "undefined" || userName === null) {
+            return false;
+        }
+        if (courseId === "edx") {
+            return userName === "rtholmes";
+        }
+        return false;
+    }
+
+    public async getDefaultDeliverableId(commitUrl: string): Promise<string | null> {
+        if (typeof commitUrl !== "undefined" && commitUrl !== null) {
+            if (commitUrl.indexOf("edx") >= 0) {
+                return null; // no default deliverable for edx (self paced)
+            }
+        }
+        return null;
+    }
+
+    public async getContainerDetails(courseId: string, delivId: string): Promise<{ dockerImage: string, dockerBuild: string, testDelay: number, regressionDelivNames: string[] } | null> {
+        if (typeof courseId !== "undefined" && courseId !== null && typeof delivId !== "undefined" && delivId !== null) {
+            if (courseId === "edx") {
+                const delay = 60 * 60 * 12; // 12h in seconds
+                // TODO: update the image and build
+                return {dockerImage: "310container", dockerBuild: "d0build", testDelay: delay, regressionDelivNames: []};
+            }
+        }
+        return null;
+    }
 }
 
 export class ClassPortal implements IClassPortal {
