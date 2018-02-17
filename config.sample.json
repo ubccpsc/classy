@@ -10,6 +10,7 @@
             "postback": false,
             "persistDir": "./data/test/",
             "port": 11333,
+            "kind": "ubc",
             "timeout": 300
         },
         {
@@ -22,6 +23,7 @@
             "postback": false,
             "persistDir": "./data/cs310/",
             "port": 11333,
+            "kind": "ubc",
             "timeout": 300
         }
     ],

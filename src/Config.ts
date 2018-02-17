@@ -9,10 +9,13 @@ export class Config {
                 Log.warn("Config::getInstance() - configName not specified; using test");
                 configName = "test";
             }
+
             const c = new Config();
+            let found = false;
             for (const course of c.config.courses) {
                 if (course.name === configName) {
                     Log.info("Config::getInstance() - processing config: " + configName);
+                    found = true;
                     for (const key of Object.keys(course)) {
                         if (typeof c.config[key] === "undefined") {
                             c.config[key] = course[key];
@@ -23,6 +26,10 @@ export class Config {
                 }
             }
             Config.instance = c;
+            if (found === false) {
+                Log.error("Config::getInstance( " + configName + " ) - config not found");
+                throw new Error("Config::getInstance( " + configName + " ) - config not found");
+            }
         }
         return Config.instance;
     }

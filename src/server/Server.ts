@@ -4,6 +4,7 @@ import * as restify from "restify";
 import Log from "../util/Log";
 
 import RouteHandler from "./RouteHandler";
+import {Config} from "../Config";
 
 /**
  * This configures the REST endpoints for the server.
@@ -94,7 +95,14 @@ export default class Server {
                 // that.rest.get("/queue", restify.bodyParser(), RouteHandler.queueStats);
 
                 // GitHub Webhook endpoints
-                that.rest.post("/submit", restify.plugins.bodyParser(), RouteHandler.postGithubHook);
+
+                if (Config.getInstance().getProp("kind") === "ubc") {
+                    that.rest.post("/submit", restify.plugins.bodyParser(), RouteHandler.postGithubHook);
+                } else if (Config.getInstance().getProp("kind") === "edx") {
+                    Log.info("Server::start() - xqueue request received - start");
+                    that.rest.post("/", restify.plugins.bodyParser(), RouteHandler.postXQueue);
+                }
+
 
                 // Docker container ResultRecord submission
                 // that.rest.post("/result", restify.bodyParser(), RouteHandler.resultSubmission);
