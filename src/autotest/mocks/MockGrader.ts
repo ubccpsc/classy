@@ -1,9 +1,10 @@
-import {Config} from "../Config";
-import {ICommitRecord, IContainerInput, IContainerOutput, IGradeReport} from "../Types";
-import Log from "../util/Log";
-import Util from "../util/Util";
+import {Config} from "../../Config";
+import {ICommitRecord, IContainerInput, IContainerOutput, IGradeReport} from "../../Types";
+import Log from "../../util/Log";
+import Util from "../../util/Util";
+import {IGrader} from "../Grader";
 
-export class MockGrader {
+export class MockGrader implements IGrader {
     private input: IContainerInput;
 
     /**

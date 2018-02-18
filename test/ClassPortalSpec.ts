@@ -1,7 +1,7 @@
 import {expect} from "chai";
 import "mocha";
 import {Config} from "../src/Config";
-import {ClassPortal, DummyClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
+import {ClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
 
 describe("ClassPortal Service", () => {
     Config.getInstance("test");
@@ -11,8 +11,8 @@ describe("ClassPortal Service", () => {
     const CURRENT_DEFAULT_DELIV = "d2";
 
     beforeEach(function () {
-        // cp = new DummyClassPortal(); // TODO: change to ClassPortalService not DummyClassPortal
-        cp = new ClassPortal(); // TODO: change to ClassPortalService not DummyClassPortal
+        // cp = new MockClassPortal(); // TODO: change to ClassPortalService not MockClassPortal
+        cp = new ClassPortal(); // TODO: change to ClassPortalService not MockClassPortal
     });
 
     it("Should be able for a staff user to be staff.", async () => {

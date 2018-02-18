@@ -1,7 +1,6 @@
-import {DummyClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
-import {DummyDataStore} from "../src/autotest/DataStore";
-import {GithubService} from "../src/autotest/GithubService";
-import {GithubAutoTest} from "../src/autotest/GithubAutoTest";
+import {IClassPortal} from "../src/autotest/ClassPortal";
+import {GithubService} from "../src/github/GithubService";
+import {GithubAutoTest} from "../src/github/GithubAutoTest";
 import {ICommentEvent, IFeedbackGiven, IPushEvent} from "../src/Types";
 import {TestData} from "./TestData";
 import Log from "../src/util/Log";
@@ -11,13 +10,15 @@ import * as fs from "fs-extra";
 import "mocha";
 import {Config} from "../src/Config";
 import Util from "../src/util/Util";
+import {MockClassPortal} from "../src/autotest/mocks/MockClassPortal";
+import {MockDataStore} from "../src/autotest/mocks/MockDataStore";
 
 
 describe("GithubAutoTest", () => {
 
     Config.getInstance("test");
     let pushes: IPushEvent[];
-    let data: DummyDataStore;
+    let data: MockDataStore;
     let portal: IClassPortal;
     let gh: GithubService;
     let at: GithubAutoTest;
@@ -31,10 +32,10 @@ describe("GithubAutoTest", () => {
 
         pushes = fs.readJSONSync("./test/pushes.json");
 
-        data = new DummyDataStore();
+        data = new MockDataStore();
         data.clearData();
 
-        portal = new DummyClassPortal();
+        portal = new MockClassPortal();
         gh = new GithubService();
         const courseId = "310";
         at = new GithubAutoTest(courseId, data, portal, gh);

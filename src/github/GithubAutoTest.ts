@@ -4,10 +4,10 @@ import Util from "../util/Util";
 
 import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven, IPushEvent} from "../Types";
 
-import {IClassPortal} from "./ClassPortal";
-import {IDataStore} from "./DataStore";
+import {IClassPortal} from "../autotest/ClassPortal";
+import {IDataStore} from "../autotest/DataStore";
 import {IGithubService} from "./GithubService";
-import {AutoTest} from "./AutoTest";
+import {AutoTest} from "../autotest/AutoTest";
 
 export interface IGithubTestManager {
 

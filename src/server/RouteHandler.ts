@@ -1,13 +1,16 @@
 import * as restify from "restify";
 
-import {AutoTest, GithubAutoTest} from "../autotest/AutoTest";
-import {ClassPortal, EdXClassPortal} from "../autotest/ClassPortal";
-import {MongoDataStore} from "../autotest/DataStore";
-import {GithubService} from "../autotest/GithubService";
-import {GithubUtil} from "../util/GithubUtil";
 import Log from "../util/Log";
 import Util from "../util/Util";
 import {Config} from "../Config";
+
+import {AutoTest} from "../autotest/AutoTest";
+import {ClassPortal} from "../autotest/ClassPortal";
+import {MongoDataStore} from "../autotest/DataStore";
+import {GithubService} from "../github/GithubService";
+import {GithubUtil} from "../github/GithubUtil";
+import {GithubAutoTest} from "../github/GithubAutoTest";
+import {EdXClassPortal} from "../edx/EdxClassPortal";
 
 export default class RouteHandler {
 

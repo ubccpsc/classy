@@ -1,6 +1,3 @@
-import {spawn, SpawnOptions} from "child_process";
-import Log from "./Log";
-
 interface ISpawnResult {
     code: number;
     output: string;
@@ -17,6 +14,7 @@ export default class Util {
         return Date.now() - start + " ms";
     }
 
+    /*
     public static async yarn(name: string, options: SpawnOptions) {
         const yarnCmd = process.env.YARN_PATH;
         options["uid"] = 1000;
@@ -117,4 +115,5 @@ export default class Util {
             });
         });
     }
+    */
 }

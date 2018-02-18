@@ -3,7 +3,7 @@ import * as fs from "fs";
 import "mocha";
 
 import {Config} from "../src/Config";
-import {GithubUtil} from "../src/util/GithubUtil";
+import {GithubUtil} from "../src/github/GithubUtil";
 import Log from "../src/util/Log";
 
 describe("GitHub Event Parser", () => {

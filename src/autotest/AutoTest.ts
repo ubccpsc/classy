@@ -4,7 +4,7 @@ import Util from "../util/Util";
 import {IDataStore} from "./DataStore";
 import Grader from "./Grader";
 import {Queue} from "./Queue";
-import {MockGrader} from "./MockGrader";
+import {MockGrader} from "./mocks/MockGrader";
 
 export interface IAutoTest {
     /**
