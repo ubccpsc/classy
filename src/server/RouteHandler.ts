@@ -131,7 +131,7 @@ export default class RouteHandler {
                 // NOTE: THIS WILL NOT WORK
                 // We should send 200 right away, but not with this payload
                 // payload has to come later, once the queue has processed the request
-                
+
                 // TODO: turn this into something
                 const correct = false;
                 const score = 101;
