@@ -1,6 +1,9 @@
 import {ICommentEvent, IPushEvent} from "../Types";
 import Log from "../util/Log";
 
+/**
+ * Translator class to turn REST payloads into IPushEvent and ICommentEvents.
+ */
 export class GithubUtil {
 
     public static getTeamOrProject(repositoryName: string): string {
@@ -11,15 +14,17 @@ export class GithubUtil {
         return val;
     }
 
-    public static parseDeliverable(fullRepoName: string): string | null {
-        const deliverable = fullRepoName.match(/^[^_]+(?=_)/);
-        if (deliverable) {
-            const val = deliverable.pop();
-            Log.trace("GithubUtil::parseDeliverable() - input: " + fullRepoName + "; output: " + val);
-            return val;
+    /*
+        public static parseDeliverable(fullRepoName: string): string | null {
+            const deliverable = fullRepoName.match(/^[^_]+(?=_)/);
+            if (deliverable) {
+                const val = deliverable.pop();
+                Log.trace("GithubUtil::parseDeliverable() - input: " + fullRepoName + "; output: " + val);
+                return val;
+            }
+            return null;
         }
-        return null;
-    }
+    */
 
     public static parseDeliverableFromComment(message: any): string | null {
         const matches = message.match("\\S*d\\d+\\S*");
@@ -149,6 +154,7 @@ export class GithubUtil {
     }
 }
 
+/*
 export class Commit {
     private commitString: string;
 
@@ -171,3 +177,4 @@ export class Commit {
         return this.commitString;
     }
 }
+*/

@@ -11,6 +11,7 @@ import {GithubService} from "../github/GithubService";
 import {GithubUtil} from "../github/GithubUtil";
 import {GithubAutoTest} from "../github/GithubAutoTest";
 import {EdXClassPortal} from "../edx/EdxClassPortal";
+import {EdxAutoTest} from "../edx/EdxAutoTest";
 
 export default class RouteHandler {
 
@@ -115,40 +116,37 @@ export default class RouteHandler {
      */
     public static postXQueue(req: restify.Request, res: restify.Response, next: restify.Next) {
         const start = Date.now();
-        // const githubEvent: string = req.header("X-GitHub-Event");
         const body = req.body;
         Log.info("RoutHandler::handleXQueue(..) - start; body: " + body);
+
+        let at: EdxAutoTest = <EdxAutoTest>RouteHandler.getAutoTest();
 
         try {
             const xqueueBody = body.xqueue_body;
             const name = xqueueBody.grader_payload;
             const studentResponse = xqueueBody.student_response;
 
-            // DO IT
-            const correct = "CORR";
-            const score = "SCORE";
-            const message = "MESSAGE";
+            at.handleTestRequest('fakeURL', 'fakeDeliv').then(function (data) {
 
-            res.json(200, {"correct": correct, "score": score, "msg": message});
+                // NOTE: THIS WILL NOT WORK
+                // We should send 200 right away, but not with this payload
+                // payload has to come later, once the queue has processed the request
+                
+                // TODO: turn this into something
+                const correct = false;
+                const score = 101;
+                const message = "MESSAGE";
+
+                Log.error("RouteHandler::handleXQueue(..) - done; took: " + Util.took(start));
+                res.json(200, {"correct": correct, "score": score, "msg": message});
+            }).catch(function (err) {
+                res.json(400, "Error encountered: " + err);
+            });
+
         } catch (err) {
-            Log.error("RouteHandler::handleXQueue(..) - ERROR: " + err);
+            Log.error("RouteHandler::handleXQueue(..) - ERROR: " + err + "; took: " + Util.took(start));
             res.json(400, "Error encountered: " + err);
         }
         return next();
     }
-
-    /*
-    protected static parseServerPort(req: restify.Request): number {
-        const serverPort = Number(req.headers.host.toString().split(":")[1]);
-        Log.trace("RoutHandler::parseServerPort(..) - port: " + serverPort);
-        return serverPort;
-    }
-
-    protected static parseCourseNum(portNum: number): number {
-        // not sure what is happening here
-        const courseNum = Number(parseInt(portNum.toString().substring(1), 10));
-        Log.trace("RoutHandler::parseCourseNum(..) - port: " + courseNum);
-        return courseNum;
-    }
-    */
 }
