@@ -1,6 +1,6 @@
 import * as restify from "restify";
 
-import {AutoTest} from "../autotest/AutoTest";
+import {AutoTest, GithubAutoTest} from "../autotest/AutoTest";
 import {ClassPortal, EdXClassPortal} from "../autotest/ClassPortal";
 import {MongoDataStore} from "../autotest/DataStore";
 import {GithubService} from "../autotest/GithubService";
@@ -21,13 +21,13 @@ export default class RouteHandler {
                 const portal = new ClassPortal();
                 const gh = new GithubService();
                 const courseId = Config.getInstance().getProp('name');
-                RouteHandler.autoTest = new AutoTest(courseId, data, portal, gh);
+                RouteHandler.autoTest = new GithubAutoTest(courseId, data, portal, gh);
             } else if (Config.getInstance().getProp("kind") === "edx") {
                 const data = new MongoDataStore();
                 const portal = new EdXClassPortal();
                 const gh = new GithubService();
                 const courseId = Config.getInstance().getProp('name');
-                RouteHandler.autoTest = new AutoTest(courseId, data, portal, gh);
+                RouteHandler.autoTest = new GithubAutoTest(courseId, data, portal, gh);
             } else {
                 Log.error("RouteHandler::getAutoTest() - ERROR; kind not supported");
             }
@@ -46,6 +46,9 @@ export default class RouteHandler {
         Log.info("RoutHandler::postGithubHook(..) - start; handling event: " + githubEvent);
         const body = req.body;
 
+        // cast is unfortunate, but if we're listening to these routes it must be a github AT instance
+        let at: GithubAutoTest = <GithubAutoTest>RouteHandler.getAutoTest();
+
         switch (githubEvent) {
             case "ping":
                 // github test packet; use to let the webhooks know we are listening
@@ -62,7 +65,7 @@ export default class RouteHandler {
                         Log.error("RouteHandler::handleCommentEvent() - ERROR parsing payload; err: " + err.message + "; payload: " + JSON.stringify(body, null, 2));
                         throw new Error("Failed to parse comment event payload");
                     }
-                    RouteHandler.getAutoTest().handleCommentEvent(commentEvent).then((result: boolean) => { // TODO: validate result properties; add an interface
+                    at.handleCommentEvent(commentEvent).then((result: boolean) => { // TODO: validate result properties; add an interface
                         Log.info("RouteHandler::commitComment() - success; result: " + result + "; took: " + Util.took(start));
                         res.json(200, {});
                     }).catch((err: any) => {
@@ -84,7 +87,7 @@ export default class RouteHandler {
                         Log.error("RouteHandler::handlePushEvent() - ERROR parsing payload; err: " + err.message + "; payload: " + JSON.stringify(body, null, 2));
                         throw new Error("Failed to parse push event payload");
                     }
-                    RouteHandler.getAutoTest().handlePushEvent(pushEvent).then((result: boolean) => {
+                    at.handlePushEvent(pushEvent).then((result: boolean) => {
                         Log.info("RouteHandler::handlePushEvent() - success: " + result + "; took: " + Util.took(start));
                         res.json(202, {body: "Commit has been queued"});
                     }).catch((err: any) => {

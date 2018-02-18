@@ -49,9 +49,9 @@ export class Config {
 
     public getProp(prop: string): any {
         if (typeof this.config[prop] === "undefined") {
-            Log.warn("Config::getProp( " + prop + " ) - property is undefined");
+            Log.error("Config::getProp( " + prop + " ) - property is undefined; you probably want this in your config file.");
         } else if (this.config[prop] === null) {
-            Log.warn("Config::getProp( " + prop + " ) - property is null");
+            Log.error("Config::getProp( " + prop + " ) - property is null");
         } else {
             return this.config[prop];
         }

@@ -1,8 +1,8 @@
-import {AutoTest} from "../src/autotest/AutoTest";
 import {DummyClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
 import {DummyDataStore} from "../src/autotest/DataStore";
 import {GithubService} from "../src/autotest/GithubService";
-import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven, IPushEvent} from "../src/Types";
+import {GithubAutoTest} from "../src/autotest/GithubAutoTest";
+import {ICommentEvent, IFeedbackGiven, IPushEvent} from "../src/Types";
 import {TestData} from "./TestData";
 import Log from "../src/util/Log";
 
@@ -12,14 +12,15 @@ import "mocha";
 import {Config} from "../src/Config";
 import Util from "../src/util/Util";
 
-describe("AutoTest", () => {
+
+describe("GithubAutoTest", () => {
 
     Config.getInstance("test");
     let pushes: IPushEvent[];
     let data: DummyDataStore;
     let portal: IClassPortal;
     let gh: GithubService;
-    let at: AutoTest;
+    let at: GithubAutoTest;
 
     // now: 1516559187579
     // now -10h: 1516523258762
@@ -36,7 +37,7 @@ describe("AutoTest", () => {
         portal = new DummyClassPortal();
         gh = new GithubService();
         const courseId = "310";
-        at = new AutoTest(courseId, data, portal, gh);
+        at = new GithubAutoTest(courseId, data, portal, gh);
     });
 
     beforeEach(function () {
