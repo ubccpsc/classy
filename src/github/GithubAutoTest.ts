@@ -304,7 +304,7 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
      */
     private async savePushInfo(info: IContainerInput) {
         try {
-            Log.trace("AuGithubAutoTesttoTest::savePushInfo(..) - commit: " + info.pushInfo.commitSHA);
+            Log.trace("GithubAutoTest::savePushInfo(..) - commit: " + info.pushInfo.commitSHA);
             await this.dataStore.savePush(info);
         } catch (err) {
             Log.error("GithubAutoTest::savePushInfo(..) - ERROR: " + err);

@@ -45,7 +45,12 @@ export abstract class AutoTest implements IAutoTest {
     }
 
     public addToStandardQueue(input: IContainerInput): void {
-        this.standardQueue.push(input);
+        Log.info("AutoTest::addToStandardQueue(..) - start; commit: " + input.pushInfo.commitSHA);
+        try {
+            this.standardQueue.push(input);
+        } catch (err) {
+            Log.error("AutoTest::addToStandardQueue(..) - ERROR: " + err);
+        }
     }
 
     public tick() {
