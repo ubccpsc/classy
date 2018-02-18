@@ -1,6 +1,5 @@
-import { IDockerContainerOptions } from "../docker/DockerTypes";
+import { IDockerContainerOptions } from "../Types";
 import {Command, CommandResult} from "../util/Command";
-import DockerUtil from "./DockerUtil";
 
 /**
  * Simple wrapper for Docker's container management commands with some basic extensions.
