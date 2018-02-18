@@ -149,6 +149,22 @@ export interface IGradeReport {
 
 export interface IAttachment {
     name: string;
-    data: Uint8Array;
+    data: any;
     content_type: string;
+}
+
+export interface IDockerImageProperties {
+    id: string;
+    repository: string;
+    tag: string;
+    digest: string;
+    createdSince: string;
+    createdAt: string;
+    size: string;
+}
+
+// A subset of the Docker container run options.
+// https://docs.docker.com/engine/reference/commandline/create/#options
+export interface IDockerContainerOptions {
+    [name: string]: string | string[];
 }

@@ -1,12 +1,23 @@
-import { ChildProcess, spawn, SpawnOptions } from "child_process";
-import {IDockerCmdResult} from "./DockerTypes";
+import {ChildProcess, spawn, SpawnOptions} from "child_process";
 
-export default class DockerUtil {
-    public static async execCmd(args: string[], options: SpawnOptions = {}): Promise<IDockerCmdResult> {
-        return new Promise<IDockerCmdResult>((resolve, reject) => {
+export type CommandResult = [number, any];
+
+export interface ICommand {
+    executeCommand(args: string[], options?: SpawnOptions): Promise<CommandResult>;
+}
+
+export class Command implements ICommand {
+    private name: string;
+
+    constructor(name: string) {
+        this.name = name;
+    }
+
+    public async executeCommand(args: string[], options: SpawnOptions = {}): Promise<CommandResult> {
+        return new Promise<CommandResult>((resolve, reject) => {
             let output: Buffer = Buffer.allocUnsafe(0);
 
-            const cmd: ChildProcess = spawn(`docker`, args, options);
+            const cmd: ChildProcess = spawn(this.name, args, options);
             cmd.on(`error`, (err) => {
                 reject(err);
              });
