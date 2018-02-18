@@ -18,9 +18,9 @@ export default class DockerUtil {
             });
             cmd.on(`close`, (code, signal) => {
                 if (code === 0) {
-                    resolve({code, output: output.toString().trim()});
+                    resolve([code, output.toString().trim()]);
                 } else {
-                    reject({code, output: output.toString().trim()});
+                    reject([code, output.toString().trim()]);
                 }
             });
         });

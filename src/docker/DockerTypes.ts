@@ -11,8 +11,7 @@ export interface IDockerImageProperties {
 // A subset of the Docker container run options.
 // https://docs.docker.com/engine/reference/commandline/create/#options
 export interface IDockerContainerOptions {
-    name: string;
-    value: string;
+    [name: string]: string | string[];
 }
 
 // A subset of the Docker inspect output for container objects.
@@ -21,10 +20,12 @@ export interface IDockerContainerProperties {
     [prop: string]: any;
 }
 
-export interface IDockerCmdResult {
-    code: number;
-    output: string;
-}
+// export interface IDockerCmdResult {
+//     code: number;
+//     output: string;
+// }
+
+export type IDockerCmdResult = [number, string];
 
 export enum DockerContainerStatus {
     created,
