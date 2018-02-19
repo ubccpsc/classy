@@ -49,6 +49,8 @@
         "build": "tsc",
         "lint": "tslint -c tslint.json 'src/**/*.ts' 'test/**/*.ts'",
         "test": "mocha --require ts-node/register --timeout 10000",
-        "cover": "nyc --reporter text --reporter html yarn run test"
+        "cover": "nyc --reporter text --reporter html yarn run test",
+        "run:dev": "nohup node ./src/AutoTestDaemon.js 310 &> nohup.out &",
+        "run:prod": "LOG_LEVEL=INFO nohup node ./src/AutoTestDaemon.js 310 &> nohup.out &"
     }
 }
