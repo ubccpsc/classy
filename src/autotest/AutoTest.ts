@@ -89,7 +89,11 @@ export abstract class AutoTest implements IAutoTest {
             }
 
             if (updated === false) {
-                Log.info("AutoTest::tick(..) - execution slots busy; no new jobs started");
+                if (this.standardExecution===null&&this.expresssExecution===null&&this.regressionExecution===null){
+                    Log.info("AutoTest::tick(..) - queue idle; no new jobs started");
+                } else {
+                    Log.info("AutoTest::tick(..) - execution slots busy; no new jobs started");
+                }
             }
 
             Log.info("AutoTest::tick(..) - done");
