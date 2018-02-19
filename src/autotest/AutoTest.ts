@@ -55,7 +55,8 @@ export abstract class AutoTest implements IAutoTest {
 
     public tick() {
         try {
-            Log.info("AutoTest::tick(..) - start");
+            Log.info("AutoTest::tick(..) - start; queues - #std: " + this.standardQueue.length() + "; #exp: " + this.expressQueue.length() + "; #reg: " + this.regressionQueue.length());
+
             if (this.standardExecution === null && this.standardQueue.length() > 0) {
                 Log.info("AutoTest::tick(..) - standard queue clear; launching new job");
                 const info = this.standardQueue.pop();
@@ -88,6 +89,17 @@ export abstract class AutoTest implements IAutoTest {
         }
     }
 
+    /**
+     * This is the main extension point for a subclass to respond to an execution completing.
+     * The record will be persisted by AutoTest, but any kind of reporting back to users will
+     * have to be handled by subclasses.
+     *
+     * If subclasses do not want to do anything, they can just `return Promise.resolve();`
+     * in their implementation.
+     *
+     * @param {ICommitRecord} data
+     * @returns {Promise<void>}
+     */
     protected abstract processExecution(data: ICommitRecord): Promise<void>;
 
     protected async getOutputRecord(commitURL: string, delivId: string): Promise<ICommitRecord | null> {
@@ -232,7 +244,13 @@ export abstract class AutoTest implements IAutoTest {
             }
 
             await this.dataStore.saveOutputRecord(data);
-            await this.processExecution(data);
+
+            try {
+                await this.processExecution(data);
+            } catch (err) {
+                // just eat this error so subtypes do not break our queue handling
+                Log.error("AutoTest::handleExecutionComplete(..) - ERROR; from processExecution: " + err);
+            }
 
             // when done clear the execution slot and schedule the next
             if (this.expresssExecution !== null && this.expresssExecution.pushInfo.commitURL === data.commitURL) {

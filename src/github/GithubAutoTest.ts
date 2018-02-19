@@ -228,23 +228,27 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
     }
 
     protected async processExecution(data: ICommitRecord): Promise<void> {
-
-        const pushRequested: ICommentEvent = await this.getRequestor(data.commitURL, data.input.delivId);
-        if (data.output.postbackOnComplete === true) {
-            // do this first, doesn't count against quota
-            Log.info("GithubAutoTest::handleExecutionComplete(..) - postback: true");
-            await this.github.postMarkdownToGithub({url: data.input.pushInfo.postbackURL, message: data.output.feedback});
-            // NOTE: if the feedback was requested for this build it shouldn't count
-            // since we're not calling saveFeedabck this is right
-            // but if we replay the commit comments, we would see it there, so be careful
-        } else if (pushRequested !== null) {
-            // feedback has been previously requested
-            Log.info("GithubAutoTest::handleExecutionComplete(..) - feedback requested");
-            await this.github.postMarkdownToGithub({url: data.input.pushInfo.postbackURL, message: data.output.feedback});
-            await this.saveFeedbackGiven(data.input.courseId, data.input.delivId, pushRequested.userName, pushRequested.timestamp, data.commitURL);
-        } else {
-            // do nothing
-            Log.info("GithubAutoTest::handleExecutionComplete(..) - course: " + this.courseId + "; commit not requested - no feedback given; commit: " + data.commitSHA);
+        try {
+            const pushRequested: ICommentEvent = await this.getRequestor(data.commitURL, data.input.delivId);
+            if (data.output.postbackOnComplete === true) {
+                // do this first, doesn't count against quota
+                Log.info("GithubAutoTest::processExecution(..) - postback: true");
+                await this.github.postMarkdownToGithub({url: data.input.pushInfo.postbackURL, message: data.output.feedback});
+                // NOTE: if the feedback was requested for this build it shouldn't count
+                // since we're not calling saveFeedabck this is right
+                // but if we replay the commit comments, we would see it there, so be careful
+            } else if (pushRequested !== null) {
+                // feedback has been previously requested
+                Log.info("GithubAutoTest::processExecution(..) - feedback requested");
+                await this.github.postMarkdownToGithub({url: data.input.pushInfo.postbackURL, message: data.output.feedback});
+                await this.saveFeedbackGiven(data.input.courseId, data.input.delivId, pushRequested.userName, pushRequested.timestamp, data.commitURL);
+            } else {
+                // do nothing
+                Log.info("GithubAutoTest::processExecution(..) - course: " + this.courseId + "; commit not requested - no feedback given; commit: " + data.commitSHA);
+            }
+        }catch(err){
+            Log.info("GithubAutoTest::processExecution(..) - ERROR: " + err);
+            return; // do not let errors escape
         }
     }
 
