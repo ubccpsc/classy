@@ -82,11 +82,13 @@ export class MongoDataStore implements IDataStore {
 
     public async saveRecord(column: string, record: any): Promise<void> {
         try {
-            Log.info("MongoDataStore::saveRecord( " + column + ", ...) - start");
+            Log.trace("MongoDataStore::saveRecord( " + column + ", ...) - start");
+            const start = Date.now();
             let collection = await this.getCollection(column);
             // be extra safe not to mutate existing record (we were seeing _id being added by mongo)
             const copy = Object.assign({}, record);
             await collection.insertOne(copy);
+            Log.trace("MongoDataStore::saveRecord( " + column + ", ...) - done; took: " + Util.took(start));
         } catch (err) {
             Log.error("MongoDataStore::saveRecord(..) - ERROR: " + err);
         }
@@ -95,7 +97,8 @@ export class MongoDataStore implements IDataStore {
 
     public async getSingleRecord(column: string, query: {} | null): Promise<{} | null> {
         try {
-            Log.info("MongoDataStore::getSingleRecord(..) - start");
+            Log.trace("MongoDataStore::getSingleRecord(..) - start");
+            const start = Date.now();
             let col = await this.getCollection(column);
             if (query === null) {
                 query = {};
@@ -105,10 +108,10 @@ export class MongoDataStore implements IDataStore {
             // }
             const records: any[] = await <any>col.find(query).toArray();
             if (records === null || records.length === 0) {
-                Log.info("MongoDataStore::getSingleRecord(..) - done; no records found");
+                Log.trace("MongoDataStore::getSingleRecord(..) - done; no records found; took: " + Util.took(start));
                 return null;
             } else {
-                Log.info("MongoDataStore::getSingleRecord(..) - done; # records: " + records.length);
+                Log.trace("MongoDataStore::getSingleRecord(..) - done; # records: " + records.length + "; took: " + Util.took(start));
                 let record = records[0];
                 delete record._id; // remove the record id, just so we can't use it
                 return record;
@@ -121,20 +124,17 @@ export class MongoDataStore implements IDataStore {
 
     public async getRecords(column: string, query: {} | null): Promise<{}[] | null> {
         try {
-            Log.info("MongoDataStore::getRecords(..) - start");
+            Log.trace("MongoDataStore::getRecords(..) - start");
             let col = await this.getCollection(column);
             if (query === null) {
                 query = {};
             }
-            //if (typeof key !== 'undefined' && key !== null && typeof value !== 'undefined' && value !== null) {
-            //    query[key] = value;
-            // }
             const records: any[] = await <any>col.find(query).toArray();
             if (records === null || records.length === 0) {
-                Log.info("MongoDataStore::getRecords(..) - done; no records found");
+                Log.trace("MongoDataStore::getRecords(..) - done; no records found");
                 return null;
             } else {
-                Log.info("MongoDataStore::getRecords(..) - done; # records: " + records.length);
+                Log.trace("MongoDataStore::getRecords(..) - done; # records: " + records.length);
                 for (const r of records) {
                     delete r._id;// remove the record id, just so we can't use it
                 }
@@ -150,14 +150,14 @@ export class MongoDataStore implements IDataStore {
      * Gets the push event record for a given commitURL
      */
     public async getPushRecord(commitURL: string): Promise<IPushEvent | null> {
-        Log.info("MongoDataStore::getPushRecord(..) - start");
+        Log.trace("MongoDataStore::getPushRecord(..) - start");
         try {
             const start = Date.now();
             const res = await this.getSingleRecord(this.PUSHCOLL, {"pushInfo.commitURL": commitURL});
             if (res === null) {
-                Log.info("MongoDataStore::getPushRecord(..) - record not found for: " + commitURL);
+                Log.trace("MongoDataStore::getPushRecord(..) - record not found for: " + commitURL);
             } else {
-                Log.info("MongoDataStore::getPushRecord(..) - found; took: " + Util.took(start));
+                Log.trace("MongoDataStore::getPushRecord(..) - found; took: " + Util.took(start));
             }
             return <any>res;
         } catch (err) {
@@ -168,11 +168,11 @@ export class MongoDataStore implements IDataStore {
 
 
     public async savePush(info: IContainerInput): Promise<void> {
-        Log.info("MongoDataStore::savePush(..) - start; push: " + JSON.stringify(info));
+        Log.trace("MongoDataStore::savePush(..) - start; push: " + JSON.stringify(info));
         const start = Date.now();
         try {
             await this.saveRecord(this.PUSHCOLL, info);
-            Log.info("MongoDataStore::savePush(..) - done; took: " + Util.took(start));
+            Log.trace("MongoDataStore::savePush(..) - done; took: " + Util.took(start));
         } catch (err) {
             Log.error("MongoDataStore::savePush(..) - ERROR: " + err);
         }
@@ -180,12 +180,11 @@ export class MongoDataStore implements IDataStore {
     }
 
     public async saveComment(info: ICommentEvent): Promise<void> {
-        Log.info("MongoDataStore::saveComment(..) - start");
-
+        Log.trace("MongoDataStore::saveComment(..) - start");
         try {
             const start = Date.now();
             await this.saveRecord(this.COMMENTCOLL, info);
-            Log.info("MongoDataStore::saveComment(..) - done; took: " + Util.took(start));
+            Log.trace("MongoDataStore::saveComment(..) - done; took: " + Util.took(start));
         } catch (err) {
             Log.error("MongoDataStore::saveComment(..) - ERROR: " + err);
         }
@@ -193,14 +192,14 @@ export class MongoDataStore implements IDataStore {
     }
 
     public async getCommentRecord(commitURL: string, delivId: string): Promise<ICommentEvent | null> {
-        Log.info("MongoDataStore::getCommentRecord(..) - start");
+        Log.trace("MongoDataStore::getCommentRecord(..) - start");
         try {
             const start = Date.now();
             const res = await this.getSingleRecord(this.COMMENTCOLL, {"commitURL": commitURL});
             if (res === null) {
-                Log.info("MongoDataStore::getCommentRecord(..) - record not found for: " + commitURL);
+                Log.trace("MongoDataStore::getCommentRecord(..) - record not found for: " + commitURL);
             } else {
-                Log.info("MongoDataStore::getCommentRecord(..) - found; took: " + Util.took(start));
+                Log.trace("MongoDataStore::getCommentRecord(..) - found; took: " + Util.took(start));
             }
             return <any>res;
         } catch (err) {
@@ -210,12 +209,11 @@ export class MongoDataStore implements IDataStore {
     }
 
     public async saveOutputRecord(outputInfo: ICommitRecord): Promise<void> {
-        Log.info("MongoDataStore::saveOutputRecord(..) - start");
-
+        Log.trace("MongoDataStore::saveOutputRecord(..) - start");
         try {
             const start = Date.now();
             await this.saveRecord(this.OUTPUTCOLL, outputInfo);
-            Log.info("MongoDataStore::saveOutputRecord(..) - done; took: " + Util.took(start));
+            Log.trace("MongoDataStore::saveOutputRecord(..) - done; took: " + Util.took(start));
         } catch (err) {
             Log.error("MongoDataStore::saveOutputRecord(..) - ERROR: " + err);
         }
@@ -223,15 +221,15 @@ export class MongoDataStore implements IDataStore {
     }
 
     public async getOutputRecord(commitURL: string, delivId: string): Promise<ICommitRecord | null> {
-        Log.info("MongoDataStore::getOutputRecord(..) - start");
+        Log.trace("MongoDataStore::getOutputRecord(..) - start");
         try {
             const start = Date.now();
 
             const res = await this.getSingleRecord(this.OUTPUTCOLL, {"commitURL": commitURL, "input.delivId": delivId});
             if (res === null) {
-                Log.info("MongoDataStore::getOutputRecord(..) - record not found for: " + commitURL);
+                Log.trace("MongoDataStore::getOutputRecord(..) - record not found for: " + commitURL);
             } else {
-                Log.info("MongoDataStore::getOutputRecord(..) - found; took: " + Util.took(start));
+                Log.trace("MongoDataStore::getOutputRecord(..) - found; took: " + Util.took(start));
             }
             return <any>res;
         } catch (err) {
@@ -241,11 +239,11 @@ export class MongoDataStore implements IDataStore {
     }
 
     public async saveFeedbackGivenRecord(info: IFeedbackGiven): Promise<void> {
-        Log.info("MongoDataStore::saveFeedbackGivenRecord(..) - start");
+        Log.trace("MongoDataStore::saveFeedbackGivenRecord(..) - start");
         try {
             const start = Date.now();
             await this.saveRecord(this.FEEDBACKCOLL, info);
-            Log.info("MongoDataStore::saveFeedbackGivenRecord(..) - done; took: " + Util.took(start));
+            Log.trace("MongoDataStore::saveFeedbackGivenRecord(..) - done; took: " + Util.took(start));
         } catch (err) {
             Log.error("MongoDataStore::saveFeedbackGivenRecord(..) - ERROR: " + err);
         }
@@ -258,14 +256,14 @@ export class MongoDataStore implements IDataStore {
             const start = Date.now();
             const res = await this.getRecords(this.FEEDBACKCOLL, {"courseId": courseId, "delivId": delivId, "userName": userName});
             if (res === null) {
-                Log.info("MongoDataStore::getFeedbackGivenRecordForCommit(..) - record not found");
+                Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - record not found");
                 return null;
             } else {
-                Log.info("MongoDataStore::getFeedbackGivenRecordForCommit(..) - found; took: " + Util.took(start));
+                Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - found; took: " + Util.took(start));
                 // pick the most recent
                 let ret: IFeedbackGiven | null = null;
                 Math.max.apply(Math, res.map(function (o: IFeedbackGiven) {
-                    Log.info("MongoDataStore::getLatestFeedbackGivenRecord(..) - found; took: " + Util.took(start));
+                    Log.trace("MongoDataStore::getLatestFeedbackGivenRecord(..) - found; took: " + Util.took(start));
                     ret = o;
                 }));
                 return ret;
@@ -282,9 +280,9 @@ export class MongoDataStore implements IDataStore {
             const start = Date.now();
             const res = await this.getSingleRecord(this.FEEDBACKCOLL, {"commitURL": commitURL});
             if (res === null) {
-                Log.info("MongoDataStore::getFeedbackGivenRecordForCommit(..) - record not found for: " + commitURL);
+                Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - record not found for: " + commitURL);
             } else {
-                Log.info("MongoDataStore::getFeedbackGivenRecordForCommit(..) - found; took: " + Util.took(start));
+                Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - found; took: " + Util.took(start));
             }
             return <any>res;
         } catch (err) {
@@ -294,7 +292,7 @@ export class MongoDataStore implements IDataStore {
     }
 
     public async getAllData(): Promise<{ records: ICommitRecord[], comments: ICommentEvent[], pushes: IPushEvent[], feedback: IFeedbackGiven[] }> {
-        Log.info("MongoDataStore::getAllData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
+        Log.trace("MongoDataStore::getAllData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
         let col: any = null;
 
         col = await this.getCollection(this.PUSHCOLL);
@@ -358,12 +356,12 @@ export class MongoDataStore implements IDataStore {
         Log.trace("MongoDataStore::open() - start");
         if (this.db === null) {
             const dbName = Config.getInstance().getProp("name");
-            Log.trace("MongoDataStore::open() - db null; making new connection to: " + dbName);
+            Log.info("MongoDataStore::open() - db null; making new connection to: " + dbName);
 
             const client = await MongoClient.connect('mongodb://localhost:27017');
             this.db = await client.db(dbName);
 
-            Log.trace("MongoDataStore::open() - db null; new connection made");
+            Log.info("MongoDataStore::open() - db null; new connection made");
         }
         Log.trace("MongoDataStore::open() - returning db");
         return this.db;

@@ -227,7 +227,7 @@ export abstract class AutoTest implements IAutoTest {
                 typeof data.commitURL === "undefined" ||
                 typeof data.input === "undefined" ||
                 typeof data.output === "undefined") {
-                Log.warn("AutoTest::handleExecutionComplete(..) - missing required field; skipping; data: " + JSON.stringify(data));
+                Log.error("AutoTest::handleExecutionComplete(..) - missing required field; skipping; data: " + JSON.stringify(data));
                 return;
             }
 
@@ -236,16 +236,16 @@ export abstract class AutoTest implements IAutoTest {
 
             // when done clear the execution slot and schedule the next
             if (this.expresssExecution !== null && this.expresssExecution.pushInfo.commitURL === data.commitURL) {
-                Log.trace("AutoTest::handleExecutionComplete(..) - clear express slot");
+                Log.trace("AutoTest::handleExecutionComplete(..) - clearing express slot");
                 this.expresssExecution = null;
             }
             if (this.standardExecution !== null && this.standardExecution.pushInfo.commitURL === data.commitURL) {
-                Log.trace("AutoTest::handleExecutionComplete(..) - clear standard slot");
+                Log.trace("AutoTest::handleExecutionComplete(..) - clearing standard slot");
                 this.standardExecution = null;
             }
 
             if (this.regressionExecution !== null && this.regressionExecution.pushInfo.commitURL === data.commitURL) {
-                Log.trace("AutoTest::handleExecutionComplete(..) - clear regression slot");
+                Log.trace("AutoTest::handleExecutionComplete(..) - clearing regression slot");
                 this.regressionExecution = null;
             }
 
