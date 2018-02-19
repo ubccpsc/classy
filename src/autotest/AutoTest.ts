@@ -57,8 +57,10 @@ export abstract class AutoTest implements IAutoTest {
         try {
             Log.info("AutoTest::tick(..) - start; queues - #std: " + this.standardQueue.length() + "; #exp: " + this.expressQueue.length() + "; #reg: " + this.regressionQueue.length());
 
+            let updated = false;
             if (this.standardExecution === null && this.standardQueue.length() > 0) {
                 Log.info("AutoTest::tick(..) - standard queue clear; launching new job");
+                updated = true;
                 const info = this.standardQueue.pop();
                 if (info !== null) {
                     this.standardExecution = info;
@@ -68,6 +70,7 @@ export abstract class AutoTest implements IAutoTest {
 
             if (this.expresssExecution === null && this.expressQueue.length() > 0) {
                 Log.info("AutoTest::tick(..) - express queue clear; launching new job");
+                updated = true;
                 const info = this.expressQueue.pop();
                 if (info !== null) {
                     this.expresssExecution = info;
@@ -77,12 +80,18 @@ export abstract class AutoTest implements IAutoTest {
 
             if (this.regressionExecution === null && this.regressionQueue.length() > 0) {
                 Log.info("AutoTest::tick(..) - regression queue clear; launching new job");
+                updated = true;
                 const info = this.regressionQueue.pop();
                 if (info !== null) {
                     this.regressionExecution = info;
                     this.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
                 }
             }
+
+            if (updated === false) {
+                Log.info("AutoTest::tick(..) - execution slots busy; no new jobs started");
+            }
+
             Log.info("AutoTest::tick(..) - done");
         } catch (err) {
             Log.error("AutoTest::tick() - course: " + this.courseId + "; ERROR: " + err.message);
