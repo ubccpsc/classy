@@ -59,30 +59,31 @@ export abstract class AutoTest implements IAutoTest {
 
             let updated = false;
             if (this.standardExecution === null && this.standardQueue.length() > 0) {
-                Log.info("AutoTest::tick(..) - standard queue clear; launching new job");
-                updated = true;
                 const info = this.standardQueue.pop();
                 if (info !== null) {
+                    updated = true;
+                    Log.info("AutoTest::tick(..) - standard queue clear; launching new job - commit: " + info.pushInfo.commitSHA);
                     this.standardExecution = info;
                     this.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
                 }
             }
 
             if (this.expresssExecution === null && this.expressQueue.length() > 0) {
-                Log.info("AutoTest::tick(..) - express queue clear; launching new job");
-                updated = true;
+
                 const info = this.expressQueue.pop();
                 if (info !== null) {
+                    updated = true;
+                    Log.info("AutoTest::tick(..) - express queue clear; launching new job - commit: " + info.pushInfo.commitSHA);
                     this.expresssExecution = info;
                     this.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
                 }
             }
 
             if (this.regressionExecution === null && this.regressionQueue.length() > 0) {
-                Log.info("AutoTest::tick(..) - regression queue clear; launching new job");
-                updated = true;
                 const info = this.regressionQueue.pop();
                 if (info !== null) {
+                    updated = true;
+                    Log.info("AutoTest::tick(..) - regression queue clear; launching new job - commit: " + info.pushInfo.commitSHA);
                     this.regressionExecution = info;
                     this.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
                 }
@@ -95,8 +96,6 @@ export abstract class AutoTest implements IAutoTest {
                     Log.info("AutoTest::tick(..) - execution slots busy; no new jobs started");
                 }
             }
-
-            Log.info("AutoTest::tick(..) - done");
         } catch (err) {
             Log.error("AutoTest::tick() - course: " + this.courseId + "; ERROR: " + err.message);
         }
@@ -240,7 +239,6 @@ export abstract class AutoTest implements IAutoTest {
      */
     private async handleExecutionComplete(data: ICommitRecord): Promise<void> {
         try {
-            Log.info("AutoTest::handleExecutionComplete(..) - start");
             const start = Date.now();
 
             if (typeof data === "undefined" || data === null) {
@@ -255,6 +253,8 @@ export abstract class AutoTest implements IAutoTest {
                 Log.error("AutoTest::handleExecutionComplete(..) - missing required field; skipping; data: " + JSON.stringify(data));
                 return;
             }
+
+            Log.info("AutoTest::handleExecutionComplete(..) - start; commit: " + data.commitSHA);
 
             await this.dataStore.saveOutputRecord(data);
 
