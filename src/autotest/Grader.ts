@@ -63,7 +63,7 @@ export default class Grader implements IGrader {
     }
 
     public async execute(input: IContainerInput): Promise<ICommitRecord> {
-        Log.trace("Grader::execute(..) - start; commit: " + input.pushInfo.commitSHA);
+        Log.info("Grader::execute(..) - start; commit: " + input.pushInfo.commitSHA);
 
         enum State {SUCCESS, TIMEOUT, INVALID_REPORT, FAIL}
 
@@ -181,7 +181,7 @@ export default class Grader implements IGrader {
     }
 
     public async runContainer(image: string, delivId: string, cntMntDir: string, timeout: number): Promise<[number, DockerContainer]> {
-        Log.trace("Grader::runContainer(..) - start; workspace: " + this.workspace);
+        Log.info("Grader::runContainer(..) - start; workspace: " + this.workspace);
         const start = Date.now();
         const container: DockerContainer = new DockerContainer(image);
         const containerOptions: IDockerContainerOptions[] = [
@@ -201,7 +201,7 @@ export default class Grader implements IGrader {
             await container.unpause();
             code = Number((await container.wait(timeout)).output);
 
-            Log.trace("Grader::runContainer(..) - done; workspace: " + this.workspace + "; took: " + Util.took(start));
+            Log.info("Grader::runContainer(..) - done; workspace: " + this.workspace + "; took: " + Util.took(start));
         } catch (err) {
             console.log(err);
             // Report error in Container Output record
