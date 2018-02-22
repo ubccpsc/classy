@@ -1,5 +1,5 @@
-import { IDockerCmdResult, IDockerContainerOptions } from "../docker/DockerTypes";
-import DockerUtil from "./DockerUtil";
+import { IDockerContainerOptions } from "../Types";
+import {Command, CommandResult} from "../util/Command";
 
 /**
  * Simple wrapper for Docker's container management commands with some basic extensions.
@@ -12,7 +12,7 @@ export interface IDockerContainer {
      * the option name for docker create (and should include leading dashes) and value is the corresponding option value.
      * @returns The container id.
      */
-    create(options?: IDockerContainerOptions[]): Promise<IDockerCmdResult>;
+    create(options?: IDockerContainerOptions): Promise<CommandResult>;
 
     /**
      * Gets the container properties from Docker. Note: certain fields are only set while the container is running.
@@ -20,7 +20,7 @@ export interface IDockerContainer {
      * @param format The optional format string to be passed to docker inspect.
      * @returns A JSON string of the container's properties.
      */
-    inspect(format?: string): Promise<IDockerCmdResult>;
+    inspect(format?: string): Promise<CommandResult>;
 
     /**
      * Gets the stdio from the container. If the container has run multiple times, output from all runs will be returned.
@@ -28,14 +28,14 @@ export interface IDockerContainer {
      * @param tail Specifies the number of lines from the end of the log to read. By default, all lines are returned.
      * @returns The container's log.
      */
-    logs(tail?: number): Promise<IDockerCmdResult>;
+    logs(tail?: number): Promise<CommandResult>;
 
     /**
      * Pauses the execution of the container.
      *
      * @returns docker pause does not generate output.
      */
-    pause(): Promise<IDockerCmdResult>;
+    pause(): Promise<CommandResult>;
 
     /**
      * Gets the formatted output of docker ps filtered to only include this container.
@@ -43,14 +43,14 @@ export interface IDockerContainer {
      * @param format The optional format string passed to docker ps.
      * @returns The formatted output of the docker ps command.
      */
-    ps(format?: string): Promise<IDockerCmdResult>;
+    ps(format?: string): Promise<CommandResult>;
 
     /**
      * Resumes execution of a paused container.
      *
      * @returns The id of the container.
      */
-    unpause(): Promise<IDockerCmdResult>;
+    unpause(): Promise<CommandResult>;
 
     /**
      * Removes the completed container from disk, freeing its resources.
@@ -58,7 +58,7 @@ export interface IDockerContainer {
      *
      * @returns The id of the container.
      */
-    remove(): Promise<IDockerCmdResult>;
+    remove(): Promise<CommandResult>;
 
     /**
      * Starts the created container as a background process and returns immediately. Use wait() to be notified when the
@@ -66,7 +66,7 @@ export interface IDockerContainer {
      *
      * @returns The id of the container.
      */
-    start(): Promise<IDockerCmdResult>;
+    start(): Promise<CommandResult>;
 
     /**
      * Stops a running container by sending a SIGTERM. If the container continues to run, issues a SIGKILL after the
@@ -75,21 +75,17 @@ export interface IDockerContainer {
      * @param time The number of seconds to wait before sending SIGKILL after sending a SIGTERM. Defaults to 10s.
      * @returns The container's exit code in the output field as a string.
      */
-    stop(time?: number): Promise<IDockerCmdResult>;
+    stop(time?: number): Promise<CommandResult>;
 
     /**
-     * Waits for the container to finish executing. If execution takes more time than alloted, forcefully terminates
-     * the container.
+     * Waits for the container to finish executing.
      *
-     * @param seconds The duration for which the container is allowed to execute, after which it is forcefully
-     * terminated. The default value, 0, does not set a timeout.
      * @returns The container's exit code in the output field as a string.
      */
-    wait(seconds?: number): Promise<IDockerCmdResult>;
+    wait(): Promise<CommandResult>;
 }
 
-
-export default class DockerContainer implements IDockerContainer {
+export class DockerContainer extends Command implements IDockerContainer {
     private readonly _image: string;
     private _id: string;
 
@@ -99,106 +95,112 @@ export default class DockerContainer implements IDockerContainer {
      * @param image SHA or tag of Docker image from which to create container.
      */
     constructor(image: string) {
+        super("docker");
         this._image = image;
     }
 
-    public async create(options: IDockerContainerOptions[] = []): Promise<IDockerCmdResult> {
-        let ret: IDockerCmdResult;
+    public async create(options: IDockerContainerOptions = {}): Promise<CommandResult> {
         const args: string[] = ["create"];
-        for (const option of options) {
-            args.push(option.name);
-            args.push(option.value);
-        }
+        args.concat(this.optionsToArgs(options));
         args.push(this._image);
-        ret = await DockerUtil.execCmd(args);
-        this._id = ret.output;
-        return ret;
+        const [code, id] = await this.executeCommand(args);
+        this._id = id;
+        return [code, id];
     }
 
-    public async inspect(format?: string): Promise<IDockerCmdResult> {
+    public async inspect(format?: string): Promise<CommandResult> {
         const args: string[] = ["inspect"];
         if (typeof format !== "undefined") {
             args.push(`--format=${format}`);
         }
         args.push(this._id);
-        return DockerUtil.execCmd(args);
+        return this.executeCommand(args);
     }
 
-    public async logs(tail?: number): Promise<IDockerCmdResult> {
+    public async logs(tail?: number): Promise<CommandResult> {
         const args: string[] = ["logs"];
         if (typeof tail !== "undefined") {
             args.push(`--tail=${tail}`);
         }
         args.push(this._id);
-        return DockerUtil.execCmd(args);
+        return this.executeCommand(args);
     }
 
-    public async pause(): Promise<IDockerCmdResult> {
+    public async pause(): Promise<CommandResult> {
         const args: string[] = ["pause", this._id];
-        return DockerUtil.execCmd(args);
+        return this.executeCommand(args);
     }
 
-    public async ps(format?: string): Promise<IDockerCmdResult> {
+    public async ps(format?: string): Promise<CommandResult> {
         const args: string[] = ["ps", "--all", "--filter", `id=${this._id}`];
         if (typeof format !== "undefined") {
             args.push("--format");
             args.push(format);
         }
-        return DockerUtil.execCmd(args);
+        return this.executeCommand(args);
     }
 
-    public async unpause(): Promise<IDockerCmdResult> {
+    public async unpause(): Promise<CommandResult> {
         const args: string[] = ["unpause", this._id];
-        return DockerUtil.execCmd(args);
+        return this.executeCommand(args);
     }
 
-    public async remove(): Promise<IDockerCmdResult> {
+    public async remove(): Promise<CommandResult> {
         const args: string[] = ["rm", this._id];
-        return DockerUtil.execCmd(args);
+        return this.executeCommand(args);
     }
 
-    public async start(): Promise<IDockerCmdResult> {
+    public async start(): Promise<CommandResult> {
         const args: string[] = ["start", this._id];
-        return DockerUtil.execCmd(args);
+        return this.executeCommand(args);
     }
 
-    public async stop(time?: number): Promise<IDockerCmdResult> {
+    public async stop(time?: number): Promise<CommandResult> {
         const args: string[] = ["stop"];
         if (typeof time !== "undefined") {
             args.push("--time");
             args.push(time.toString());
         }
         args.push(this._id);
-        const ret = await DockerUtil.execCmd(args);
-        ret.output = await this.getExitCode();
-        return ret;
+        let code: number;
+        let output: string;
+        [code, output] = await this.executeCommand(args);
+        output = await this.getExitCode();
+        return [code, output];
     }
 
-    public async wait(seconds: number = 0): Promise<IDockerCmdResult> {
-        let stopRet: IDockerCmdResult;
-        let waitRet: IDockerCmdResult;
+    public async wait(): Promise<CommandResult> {
         const args: string[] = ["wait", this._id];
-        if (seconds > 0) {
-            setTimeout(async () => {
-                stopRet = await this.stop();
-            }, seconds * 1000);
-        }
-        waitRet = await DockerUtil.execCmd(args);
-        if (typeof stopRet !== "undefined") {
-            return stopRet;
-        } else {
-            waitRet.output = await this.getExitCode();
-            return waitRet;
-        }
+        let code: number;
+        let output: string;
+        [code, output] = await this.executeCommand(args);
+        output = await this.getExitCode();
+        return [code, output];
     }
 
     private async getExitCode(): Promise<string> {
-        const result: IDockerCmdResult = await this.ps("{{.Status}}");
-        const matches = result.output.match(/^Exited \((\d+)\)/);
+        const [, output]: CommandResult = await this.ps("{{.Status}}");
+        const matches = output.match(/^Exited \((\d+)\)/);
         if (matches !== null && matches.length > 1) {
             return matches[1];
         } else {
             throw new Error("Could not get exit code.");
         }
+    }
+
+    private optionsToArgs(options: IDockerContainerOptions): string[] {
+        const args: string[] = [];
+        for (const [key, value] of Object.entries(options)) {
+            if (Array.isArray(value)) {
+                for (const element of value) {
+                    args.push(key);
+                    args.push(element);
+                }
+            } else {
+                args.push(key);
+                args.push(value);
+            }
+        }
+        return args;
     }
 }
