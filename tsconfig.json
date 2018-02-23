@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "ES5",
+    "noImplicitAny": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "outDir": "build/",
+    "lib": [
+      "es7",
+      "es2017.object",
+      "dom"
+    ],
+    "typeRoots": [
+      "./node_modules/@types"
+    ]
+  },
+  "filesGlob": [
+    "/src/**/*.ts",
+    "/test/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/oldSrc/*"
+  ]
+}

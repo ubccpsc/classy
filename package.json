@@ -1,0 +1,31 @@
+{
+  "name": "sdmm-portal-backend",
+  "version": "1.0.0",
+  "description": "SDMM Student Portal Backend",
+  "main": "build/App.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ubccpsc/sdmm-portal-backend.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ubccpsc/sdmm-portal-backend/issues"
+  },
+  "homepage": "https://github.com/ubccpsc/sdmm-portal-backend#readme",
+  "dependencies": {
+    "@types/onsenui": "^2.0.0",
+    "@types/request-promise-native": "^1.0.13",
+    "@types/restify": "^5.0.7",
+    "awesome-typescript-loader": "^3.4.1",
+    "client-oauth2": "^4.1.0",
+    "request-promise-native": "^1.0.5",
+    "restify": "^6.3.4",
+    "source-map-loader": "^0.2.3",
+    "typescript": "^2.7.2",
+    "webpack": "^3.11.0"
+  }
+}
