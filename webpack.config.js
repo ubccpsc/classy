@@ -3,11 +3,11 @@ var path = require('path');
 module.exports = {
 
     entry: {
-        portal: "./frontend/ts/App.ts"
+        portal: "./src/app/App.ts"
     },
     output: {
-        path: path.resolve(__dirname, "./frontend/html/js/"),
-        publicPath: path.resolve(__dirname, "./frontend/html/js/"),
+        path: path.resolve(__dirname, "./html/js/"),
+        publicPath: path.resolve(__dirname, "./html/js/"),
         filename: "portal.js"
     },
 
