@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SDMM Portal</title>
+
+    <!-- Onsen !-->
+    <link rel="stylesheet" href="https://unpkg.com/onsenui/css/onsenui.css">
+    <link rel="stylesheet" href="https://unpkg.com/onsenui/css/onsen-css-components.min.css">
+    <script src="https://unpkg.com/onsenui/js/onsenui.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+
+    <script src="js/portal.js"></script>
+</head>
+
+<body>
+
+<!-- First navigation component: Navigator. This will remain always on top of the app. -->
+<ons-navigator id="myNavigator" page="main.html">
+</ons-navigator>
+
+
+<!-- Second navigation component: Splitter. This will disappear if the first component changes its content. -->
+<template id="main.html">
+    <ons-page id="main">
+        <ons-toolbar>
+            <div class="center">UBC SDMM Portal</div>
+
+            <div id='indexLogin' class="right">
+                <ons-toolbar-button onclick="myApp.logout();">
+                    <ons-icon icon="fa-sign-out"></ons-icon>
+                    <span style="vertical-align: top; font-size: 80%;">Logout</span>
+                </ons-toolbar-button>
+            </div>
+        </ons-toolbar>
+
+        <ons-list>
+            <ons-list-item>
+                <div style="display:flex; align-items:center; justify-content: center; width: 100%">
+                    <ons-button onclick="myApp.handleMainPageClick({courseId: 'sdmm'})">SDMM</ons-button>
+                </div>
+            </ons-list-item>
+        </ons-list>
+    </ons-page>
+</template>
+
+<template id="student.html">
+    <ons-page id="studentTabsPage">
+        <ons-toolbar>
+            <div class="center" id="studentTabsHeader">Student Tabs</div>
+            <div class="right">
+                <ons-toolbar-button onclick="myApp.logout();">
+                    <ons-icon icon="fa-sign-out"></ons-icon>
+                    <span style="vertical-align: top; font-size: 80%;">Logout</span>
+                </ons-toolbar-button>
+            </div>
+        </ons-toolbar>
+
+        <p> This is the page content </p>
+
+    </ons-page>
+</template>
+
+<!--
+<template id="admin.html">
+    <ons-page id="adminTabsPage">
+        <ons-toolbar>
+            <div class="center" id="adminTabsHeader">Admin Tabs</div>
+            <div class="right">
+                <ons-toolbar-button onclick="myApp.logout();">
+                    <ons-icon icon="fa-sign-out"></ons-icon>
+                    <span style="vertical-align: top; font-size: 80%;">Logout</span>
+                </ons-toolbar-button>
+            </div>
+        </ons-toolbar>
+
+        <ons-modal id="adminProgress">
+            <div style="display:flex; flex-direction:column; align-items: center;">
+                <div id="modalText" style="padding-top: 1em; padding-bottom: 1em;">Data is being retrieved.</div>
+                <ons-progress-circular indeterminate></ons-progress-circular>
+            </div>
+        </ons-modal>
+
+        <ons-tabbar id="adminTabbar" position="top">
+            <ons-tab page="html/admin/grades.html" label="Grades" icon="ion-ios-paper-outline" active></ons-tab>
+            <ons-tab page="html/admin/teams.html" label="Teams" icon="ion-ios-people"></ons-tab>
+            <ons-tab page="html/admin/results.html" label="Test Results" icon="ion-android-checkmark-circle"></ons-tab>
+            <ons-tab page="html/admin/dashboard.html" label="Dashboard" icon="ion-ios-speedometer-outline"></ons-tab>
+            <ons-tab id="adminAdminTab" page="html/admin/github.html" label="Admin" icon="ion-ios-gear-outline"></ons-tab>
+        </ons-tabbar>
+    </ons-page>
+</template>
+-->
+
+<template id="login.html">
+    <ons-page id="loginPage">
+        <ons-toolbar>
+            <div class="center">Login Page</div>
+        </ons-toolbar>
+        <div style="height: 100%; display:flex; align-items:center; justify-content: center;">
+            <ons-button id="loginButton">Complete Login</ons-button>
+        </div>
+    </ons-page>
+</template>
+
+</body>
+
+</html>

@@ -57,3 +57,7 @@ typings/
 # dotenv environment variables file
 .env
 
+frontend/ts/**/*.js
+frontend/ts/**/*.map
+frontend/html/js/portal.js
+frontend/html/js/portal.js.map
