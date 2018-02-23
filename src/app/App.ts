@@ -216,7 +216,6 @@ export class App {
         } else if (token === null) {
             Log.info("App::validateCredentials() - token not set on cookie or localstorage; clearing for safety");
             this.clearCredentials();
-            return false;
         } else {
             Log.info("App::validateCredentials() - token available");
             var username = await this.getGithubCredentials(token);
@@ -239,8 +238,9 @@ export class App {
                 Log.info("App::validateCredentials() - invalid username; clearing for safety");
                 this.clearCredentials();
             }
-            return false;
         }
+        Log.info("App::validateCredentials() - returning false");
+        return false;
     }
 
     private clearCredentials() {
@@ -356,6 +356,13 @@ export class App {
 
     public logout() {
         Log.trace("App::logout() - start");
+
+        this.clearCredentials();
+        // TODO: erase credentials on server too
+        UI.pushPage("index.html");
+
+        // location.href = this.frontendURL;
+        /*
         let url = this.backendURL + '/logout';
         let OPTIONS_HTTP_GET: RequestInit = {credentials: 'include'};
         const that = this;
@@ -381,6 +388,7 @@ export class App {
             localStorage.clear();
             window.location.replace(that.frontendURL);
         });
+        */
     }
 
     private toggleLoginButton() {
