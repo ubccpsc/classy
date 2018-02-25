@@ -1,10 +1,11 @@
-import { IDockerContainerOptions } from "../Types";
-import {Command, CommandResult} from "../util/Command";
+import { CommandResult, IDockerContainerOptions } from "../Types";
+import {Command} from "../util/Command";
 
 /**
  * Simple wrapper for Docker's container management commands with some basic extensions.
  */
 export interface IDockerContainer {
+    id: string;
     /**
      * Creates a container from the image with the specified options.
      *
@@ -99,9 +100,13 @@ export class DockerContainer extends Command implements IDockerContainer {
         this._image = image;
     }
 
+    public get id(): string {
+        return this._id;
+    }
+
     public async create(options: IDockerContainerOptions = {}): Promise<CommandResult> {
-        const args: string[] = ["create"];
-        args.concat(this.optionsToArgs(options));
+        let args: string[] = ["create"];
+        args = args.concat(this.optionsToArgs(options));
         args.push(this._image);
         const [code, id] = await this.executeCommand(args);
         this._id = id;

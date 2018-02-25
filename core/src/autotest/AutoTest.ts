@@ -1,10 +1,15 @@
+import {Config} from "../Config";
+import { ISocketServer, SocketServer } from "../server/SocketServer";
 import {ICommentEvent, ICommitRecord, IContainerInput} from "../Types";
 import Log from "../util/Log";
 import Util from "../util/Util";
+import {ContainerHostEnvironment} from "./ContainerHostEnvironment";
 import {IDataStore} from "./DataStore";
 import Grader from "./Grader";
-import {Queue} from "./Queue";
 import {MockGrader} from "./mocks/MockGrader";
+import {Queue} from "./Queue";
+import { ContainerController } from "./ContainerController";
+import {FirewallChain} from "../util/FirewallChain";
 
 export interface IAutoTest {
     /**
@@ -27,6 +32,7 @@ export interface IAutoTest {
 }
 
 export abstract class AutoTest implements IAutoTest {
+    private static socketServer: ISocketServer;
     protected readonly courseId: string;
     protected readonly dataStore: IDataStore;
 
@@ -310,7 +316,19 @@ export abstract class AutoTest implements IAutoTest {
                 isProd = false; // EMPTY and POSTBACK used by test environment
             }
             if (isProd === true) {
-                const grader = new Grader();
+                const hostPort = Config.getInstance().getProp("SocketServerPort");
+                if (typeof AutoTest.socketServer === "undefined") {
+                    AutoTest.socketServer = new SocketServer(hostPort);
+                    AutoTest.socketServer.start();
+                }
+                const assnCommit: string = input.pushInfo.commitSHA;
+                const delivId: string = input.delivId;
+                const chainName: string = assnCommit.substring(0, 11) + delivId;
+                const firewallChain = new FirewallChain(chainName, "OUTPUT");
+                const tempDir = Config.getInstance().getProp("workspace") + "/" + assnCommit + "/" + delivId;
+                const persistDir = Config.getInstance().getProp("persistDir") + "/" + assnCommit + "/" + delivId;
+                const hostEnv = new ContainerHostEnvironment(AutoTest.socketServer, firewallChain, tempDir, persistDir);
+                const grader = new Grader(hostEnv);
                 record = await grader.execute(input);
             } else {
                 Log.info("AutoTest::invokeContainer(..) - TEST CONFIG: Running MockGrader");

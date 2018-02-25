@@ -5,7 +5,7 @@ import * as path from "path";
 /**
  * Wrapper for some git commands.
  */
-export default class Repository {
+export class Repository {
     public path: string;
 
     /**

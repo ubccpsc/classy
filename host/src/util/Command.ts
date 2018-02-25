@@ -1,23 +1,24 @@
 import {ChildProcess, spawn, SpawnOptions} from "child_process";
-
-export type CommandResult = [number, any];
+import {CommandResult} from "../Types";
+import Log from "./Log";
 
 export interface ICommand {
     executeCommand(args: string[], options?: SpawnOptions): Promise<CommandResult>;
 }
 
 export class Command implements ICommand {
-    private name: string;
+    private cmdName: string;
 
     constructor(name: string) {
-        this.name = name;
+        this.cmdName = name;
     }
 
     public async executeCommand(args: string[], options: SpawnOptions = {}): Promise<CommandResult> {
+        Log.trace(`Command::executeCommand(..) -> ${this.cmdName} ${args.join(" ")}`);
         return new Promise<CommandResult>((resolve, reject) => {
             let output: Buffer = Buffer.allocUnsafe(0);
 
-            const cmd: ChildProcess = spawn(this.name, args, options);
+            const cmd: ChildProcess = spawn(this.cmdName, args, options);
             cmd.on(`error`, (err) => {
                 reject(err);
              });
