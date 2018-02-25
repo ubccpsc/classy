@@ -2,7 +2,10 @@ import {Config} from "../../Config";
 import {ICommitRecord, IContainerInput, IContainerOutput, IGradeReport} from "../../Types";
 import Log from "../../util/Log";
 import Util from "../../util/Util";
-import {IGrader} from "../Grader";
+
+interface IGrader {
+    execute(): Promise<ICommitRecord>;
+}
 
 export class MockGrader implements IGrader {
     private input: IContainerInput;

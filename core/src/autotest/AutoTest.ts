@@ -1,15 +1,11 @@
+import * as rp from "request-promise-native";
 import {Config} from "../Config";
-import { ISocketServer, SocketServer } from "../server/SocketServer";
 import {ICommentEvent, ICommitRecord, IContainerInput} from "../Types";
 import Log from "../util/Log";
 import Util from "../util/Util";
-import {ContainerHostEnvironment} from "./ContainerHostEnvironment";
 import {IDataStore} from "./DataStore";
-import Grader from "./Grader";
 import {MockGrader} from "./mocks/MockGrader";
 import {Queue} from "./Queue";
-import { ContainerController } from "./ContainerController";
-import {FirewallChain} from "../util/FirewallChain";
 
 export interface IAutoTest {
     /**
@@ -32,7 +28,6 @@ export interface IAutoTest {
 }
 
 export abstract class AutoTest implements IAutoTest {
-    private static socketServer: ISocketServer;
     protected readonly courseId: string;
     protected readonly dataStore: IDataStore;
 
@@ -316,20 +311,42 @@ export abstract class AutoTest implements IAutoTest {
                 isProd = false; // EMPTY and POSTBACK used by test environment
             }
             if (isProd === true) {
-                const hostPort = Config.getInstance().getProp("SocketServerPort");
-                if (typeof AutoTest.socketServer === "undefined") {
-                    AutoTest.socketServer = new SocketServer(hostPort);
-                    AutoTest.socketServer.start();
-                }
-                const assnCommit: string = input.pushInfo.commitSHA;
-                const delivId: string = input.delivId;
-                const chainName: string = assnCommit.substring(0, 11) + delivId;
-                const firewallChain = new FirewallChain(chainName, "OUTPUT");
-                const tempDir = Config.getInstance().getProp("workspace") + "/" + assnCommit + "/" + delivId;
-                const persistDir = Config.getInstance().getProp("persistDir") + "/" + assnCommit + "/" + delivId;
-                const hostEnv = new ContainerHostEnvironment(AutoTest.socketServer, firewallChain, tempDir, persistDir);
-                const grader = new Grader(hostEnv);
-                record = await grader.execute(input);
+                // enum State {SUCCESS, TIMEOUT, INVALID_REPORT, FAIL}
+
+                // const image: string = Config.getInstance().getProp("dockerId");
+                // const timeout: number = Config.getInstance().getProp("timeout");
+                // const assnToken: string = Config.getInstance().getProp("githubOrgToken");
+                // const solnToken: string = Config.getInstance().getProp("githubOracleToken");
+                // const solnUrl: string = Config.getInstance().getProp("oracleRepo").replace("://", `://${solnToken}@`);
+
+                // const solnBranch: string = input.delivId;
+                // const assnUrl: string = input.pushInfo.projectURL.replace("://", `://${assnToken}@`);
+                // const assnCommit: string = input.pushInfo.commitSHA;
+                // const delivId: string = input.delivId;
+                const body = {
+                    "assnId": "d1",
+                    "assn": {
+                        "url": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git",
+                        "commit": "d24b10f"
+                    },
+                    "soln": {
+                        "url": "https://github.ubc.ca/cpsc310/cpsc310project-impl.git",
+                        "branch": "d1"
+                    },
+                    "container": {
+                        "image": "net",
+                        "timeout": 300000,
+                        "logSize": 0
+                    }
+                };
+                const rpOpts: rp.OptionsWithUrl = {
+                    method: "POST",
+                    url: "http://localhost:3000/worker-pool/task/grade",
+                    body,
+                    json: true, // Automatically stringifies the body to JSON,
+                    timeout: 360000  // enough time that the container will have timed out
+                };
+                record = await rp(rpOpts);
             } else {
                 Log.info("AutoTest::invokeContainer(..) - TEST CONFIG: Running MockGrader");
                 const grader = new MockGrader(input);

@@ -51,7 +51,7 @@
         "test": "mocha --require ts-node/register --timeout 10000",
         "cover": "nyc --reporter text --reporter html yarn run test",
         "start": "node --require dotenv/config ./src/Daemon.js",
-        "run:dev": "nohup node --require dotenv/config ./src/AutoTestDaemon.js 310 &> nohup.out &",
-        "run:prod": "LOG_LEVEL=INFO nohup node --require dotenv/config ./src/AutoTestDaemon.js 310 &> nohup.out &"
+        "run:dev": "nohup node ./src/AutoTestDaemon.js 310 &> nohup.out &",
+        "run:prod": "LOG_LEVEL=INFO nohup node ./src/AutoTestDaemon.js 310 &> nohup.out &"
     }
 }

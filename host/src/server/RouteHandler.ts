@@ -37,6 +37,17 @@ export default class RouteHandler {
     }
 
     public static async postGradingTask(req: restify.Request, res: restify.Response, next: restify.Next) {
+        // const out: IContainerOutput = {
+        //     commitUrl:          input.pushInfo.commitURL,
+        //     timestamp:          Date.now(),
+        //     report:             null,
+        //     feedback:           null,
+        //     postbackOnComplete: true,
+        //     custom:             {},
+        //     attachments:        [],
+        //     state:              "FAIL" // enum: SUCCESS, TIMEOUT, INVALID_REPORT, FAIL
+        // };
+
         const body: IGradeTask = req.body;
 
         const net: string = process.env.DOCKER_NET;
