@@ -99,7 +99,7 @@ export default class RouteHandler {
         const containerOptions: IDockerContainerOptions = {
             "--env": [`ASSIGNMENT=${body.assnId}`, `USER_UID=${hostUID}`, `HOST_IP=${hostIP}`, `HOST_IP=${hostPort}`],
             "--volume": [`${tempDir}:/input`, `${keepDir}:/archive`],
-            "--network": net,
+            "--network": "autotest_grade",
         };
         await cntr.create(containerOptions);
         await cntr.start();

@@ -99,7 +99,7 @@ export class SocketServer implements ISocketServer {
                 Log.info(`SocketServer::start() - closed`);
             });
 
-            this.server.listen(this.port);
+            this.server.listen(this.port, "172.28.2.0");
         });
     }
 
