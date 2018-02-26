@@ -342,7 +342,7 @@ export abstract class AutoTest implements IAutoTest {
                 };
                 const rpOpts: rp.OptionsWithUrl = {
                     method: "POST",
-                    url: "http://autotest:3000/worker-pool/task/grade",
+                    url: "http://autotest_grader:3000/worker-pool/task/grade",
                     body,
                     json: true, // Automatically stringifies the body to JSON,
                     timeout: 360000  // enough time that the container will have timed out
