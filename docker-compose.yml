@@ -1,12 +1,16 @@
 version: "3"
+
 services:
-    container-host:
-        build: host/
-        image: cntr
-        env_file: host/.env
+    core:
+        build: core/
+        ports:
+            - "11333:11333"
+    grader:
+        build: grader/
+        env_file: grader/.env
         networks:
             default:
-            grade:
+            grader:
                 ipv4_address: 172.28.2.0
         ports:
             - "3000:3000"
@@ -16,8 +20,9 @@ services:
         cap_add:
             - NET_ADMIN
         privileged: true
+
 networks:
-    grade:
+    grader:
         driver: bridge
         driver_opts:
             ip-range: "172.28.5.0/24"
@@ -25,8 +30,3 @@ networks:
         ipam:
             config:
                 - subnet: "172.28.0.0/16"
-
-#             --driver=bridge \
-# --subnet=172.28.0.0/16 \
-# --ip-range=172.28.5.0/24 \
-# --gateway=172.28.5.254 \

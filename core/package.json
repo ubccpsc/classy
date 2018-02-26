@@ -47,6 +47,7 @@
     },
     "scripts": {
         "build": "tsc",
+        "build:prod": "tsc --outDir bin --sourceMap false",
         "lint": "tslint -c tslint.json 'src/**/*.ts' 'test/**/*.ts'",
         "test": "mocha --require ts-node/register --timeout 10000",
         "cover": "nyc --reporter text --reporter html yarn run test",

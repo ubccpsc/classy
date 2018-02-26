@@ -321,10 +321,11 @@ export abstract class AutoTest implements IAutoTest {
 
                 // const solnBranch: string = input.delivId;
                 // const assnUrl: string = input.pushInfo.projectURL.replace("://", `://${assnToken}@`);
-                // const assnCommit: string = input.pushInfo.commitSHA;
-                // const delivId: string = input.delivId;
+                const assnCommit: string = input.pushInfo.commitSHA;
+                const delivId: string = input.delivId;
                 const body = {
                     "assnId": "d1",
+                    "execId": `${assnCommit}-${delivId}`,
                     "assn": {
                         "url": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git",
                         "commit": "d24b10f"
