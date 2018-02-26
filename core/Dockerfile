@@ -19,4 +19,4 @@ RUN yarn build:prod && \
 
 WORKDIR /app
 USER node
-CMD ["node", "AutoTestDaemon.js", "cs310"]
+CMD ["node", "AutoTestDaemon.js", "310"]
