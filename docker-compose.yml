@@ -1,8 +1,12 @@
 version: "3"
 
 services:
+    db:
+        image: mongo:3-jessie
     core:
         build: core/
+        links:
+            - db
         ports:
             - "11333:11333"
     grader:
