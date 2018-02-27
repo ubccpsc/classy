@@ -152,7 +152,17 @@ export default class RouteHandler {
             log = log.substring(0, body.container.logSize);
         }
         Log.info("Route Done");
-        const gradeReport: IGradeReport = await fs.readJson(`${keepDir}/report.json`);
+        // const gradeReport: IGradeReport = await fs.readJson(`${keepDir}/report.json`);
+        const gradeReport: IGradeReport = {
+            scoreOverall: 67.7,
+            scoreTest: 65.8,
+            scoreCover: 87.3,
+            passNames: ["p1", "p2"],
+            failNames: ["f1"],
+            errorNames: [],
+            skipNames: [],
+            custom:  []
+        };
         res.json(200, gradeReport);
     }
 }
