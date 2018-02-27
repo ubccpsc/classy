@@ -57,3 +57,8 @@ typings/
 # dotenv environment variables file
 .env
 
+**/src/**/*.js
+**/src/**/*.map
+**/test/*.js
+**/test/*.map
+
