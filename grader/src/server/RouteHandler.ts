@@ -49,8 +49,7 @@ export default class RouteHandler {
             const assnToken = process.env.GH_ORG_TOKEN;
             const solnToken = process.env.GH_ORACLE_TOKEN;
             const hostUID = process.env.HOST_UID;
-            const hostIP = process.env.HOST_IP;
-            const hostPort = process.env.SOCK_PORT;
+            const sockPort = process.env.SOCK_PORT;
             const tempDir: string = process.env.TEMP_DIR + "/" + execId;
             const keepDir: string = process.env.ARCHIVE_DIR + "/" + execId;
 
@@ -87,7 +86,7 @@ export default class RouteHandler {
             const img: string = body.container.image;
             const cntr: IDockerContainer = new DockerContainer(img);
             const containerOptions: IDockerContainerOptions = {
-                "--env": [`ASSIGNMENT=${body.assnId}`, `USER_UID=${hostUID}`, `HOST_PORT=${hostPort}`],
+                "--env": [`ASSIGNMENT=${body.assnId}`, `USER_UID=${hostUID}`, `HOST_PORT=${sockPort}`],
                 "--volume": [`${tempDir}:/input`, `${keepDir}:/archive`],
                 "--network": net,
                 "--add-host": `${net}_1`
@@ -109,14 +108,10 @@ export default class RouteHandler {
             let socket: any;
             Log.info("Register container socket listener");
             RouteHandler.containerSocketServer.getSocket(cntrAddr).then((sock) => {
-                console.log("Got client socket");
                 socket = sock;
                 socket.on("data", async (data: string) => {
-                    console.log("Got socket data");
                     const response = await RouteHandler.handleContainerMessage(data, cntrFirewall);
-                    console.log("Writing response", response);
-                    const succ = socket.write(response);
-                    console.log("Write was SUCC?", succ);
+                    socket.write(response);
                     socket.end();
                 });
             });
@@ -147,9 +142,8 @@ export default class RouteHandler {
             }
             Log.info("Route Done");
 
-            let gradeReport: IGradeReport;
             try {
-                gradeReport = await fs.readJson(`${keepDir}/report.json`);
+                report = await fs.readJson(`${keepDir}/report.json`);
                 state = "INVALID_REPORT";
             } catch (err) {
                 Log.warn(`RouteHandler::postGradingTask(..) - ERROR Reading grade report. ${err}`);
