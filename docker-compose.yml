@@ -3,10 +3,13 @@ version: "3"
 services:
     db:
         image: mongo:3-jessie
+        volumes:
+            - data/db:/data/db
     core:
         build: core/
-        links:
+        depends_on:
             - db
+            - grader
         ports:
             - "11333:11333"
     grader:
