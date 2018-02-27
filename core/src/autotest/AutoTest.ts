@@ -313,7 +313,7 @@ export abstract class AutoTest implements IAutoTest {
             if (isProd === true) {
                 // enum State {SUCCESS, TIMEOUT, INVALID_REPORT, FAIL}
 
-                // const image: string = Config.getInstance().getProp("dockerId");
+                const image: string = Config.getInstance().getProp("dockerId");
                 // const timeout: number = Config.getInstance().getProp("timeout");
                 // const assnToken: string = Config.getInstance().getProp("githubOrgToken");
                 // const solnToken: string = Config.getInstance().getProp("githubOracleToken");
@@ -335,7 +335,7 @@ export abstract class AutoTest implements IAutoTest {
                         "branch": "d1"
                     },
                     "container": {
-                        "image": "net",
+                        "image": image,
                         "timeout": 300000,
                         "logSize": 0
                     }
