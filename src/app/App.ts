@@ -152,8 +152,9 @@ export class App {
                     }
 
                     (document.querySelector('#loginButton') as OnsButtonElement).onclick = function () {
-                        Log.trace('App::init()::init - login pressed for: ' + courseId);
-                        window.location.replace(that.backendURL + 'auth');
+                        const url = that.backendURL + 'auth/?course=' + courseId;
+                        Log.trace('App::init()::init - login pressed for: ' + courseId + '; url: ' + url);
+                        window.location.replace(url);
                     };
                 }
             });
