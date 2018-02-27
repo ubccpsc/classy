@@ -348,11 +348,17 @@ export abstract class AutoTest implements IAutoTest {
                     timeout: 360000  // enough time that the container will have timed out
                 };
                 const response = await rp(rpOpts);
+                const report = response.report;
+                let feedback: string = "";
+                if (typeof report !== "undefined") {
+                    feedback = report.feedback;
+                }
+
                 const output: IContainerOutput = {
                     commitUrl: assnUrl,
                     timestamp: start,
-                    report: response.report,
-                    feedback: response.report.feedback,
+                    report,
+                    feedback,
                     postbackOnComplete: response.state !== "SUCCESS",
                     custom: {},
                     attachments: [],
