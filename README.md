@@ -2,17 +2,11 @@
 
 
 
-
-
-
 ## Development
 
 * Create a localhost key (https://gist.github.com/oslego/f13e136ffeaa6174289a)
     * Put `server.key` and `server.crt` in `<project-root>/ssl/`
-* Run two processes:
-    * `webpack --watch`
-    * `node something`
-
+* Start mongo locally: `mongod --config /usr/local/etc/mongod.conf`
 
 
 ## Deployment
