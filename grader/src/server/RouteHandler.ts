@@ -161,7 +161,8 @@ export default class RouteHandler {
             failNames: ["f1"],
             errorNames: [],
             skipNames: [],
-            custom:  []
+            custom:  [],
+            feedback: "Mock grade report",
         };
         res.json(200, gradeReport);
     }
