@@ -347,16 +347,16 @@ export abstract class AutoTest implements IAutoTest {
                     json: true, // Automatically stringifies the body to JSON,
                     timeout: 360000  // enough time that the container will have timed out
                 };
-                const report: IGradeReport = await rp(rpOpts);
+                const response = await rp(rpOpts);
                 const output: IContainerOutput = {
                     commitUrl: assnUrl,
                     timestamp: start,
-                    report,
-                    feedback: report.feedback,
-                    postbackOnComplete: false,
+                    report: response.report,
+                    feedback: response.report.feedback,
+                    postbackOnComplete: response.state !== "SUCCESS",
                     custom: {},
                     attachments: [],
-                    state: "SUCCESS"
+                    state: response.state
                 };
 
                 record = {
