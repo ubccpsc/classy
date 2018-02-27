@@ -1,6 +1,6 @@
 import * as rp from "request-promise-native";
 import {Config} from "../Config";
-import {ICommentEvent, ICommitRecord, IContainerInput} from "../Types";
+import {ICommentEvent, ICommitRecord, IContainerInput, IGradeReport, IContainerOutput} from "../Types";
 import Log from "../util/Log";
 import Util from "../util/Util";
 import {IDataStore} from "./DataStore";
@@ -314,29 +314,29 @@ export abstract class AutoTest implements IAutoTest {
                 // enum State {SUCCESS, TIMEOUT, INVALID_REPORT, FAIL}
 
                 const image: string = Config.getInstance().getProp("dockerId");
-                // const timeout: number = Config.getInstance().getProp("timeout");
+                const timeout: number = Config.getInstance().getProp("timeout");
                 // const assnToken: string = Config.getInstance().getProp("githubOrgToken");
                 // const solnToken: string = Config.getInstance().getProp("githubOracleToken");
-                // const solnUrl: string = Config.getInstance().getProp("oracleRepo").replace("://", `://${solnToken}@`);
-
-                // const solnBranch: string = input.delivId;
-                // const assnUrl: string = input.pushInfo.projectURL.replace("://", `://${assnToken}@`);
+                const solnUrl: string = Config.getInstance().getProp("oracleRepo");
+                const solnBranch: string = input.delivId;
+                const assnUrl: string = input.pushInfo.projectURL;
                 const assnCommit: string = input.pushInfo.commitSHA;
                 const delivId: string = input.delivId;
+
                 const body = {
-                    "assnId": "d1",
+                    "assnId": delivId,
                     "execId": `${assnCommit}-${delivId}`,
                     "assn": {
-                        "url": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git",
-                        "commit": "d24b10f"
+                        "url": assnUrl,
+                        "commit": assnCommit
                     },
                     "soln": {
-                        "url": "https://github.ubc.ca/cpsc310/cpsc310project-impl.git",
-                        "branch": "d1"
+                        "url": solnUrl,
+                        "branch": solnBranch
                     },
                     "container": {
                         "image": image,
-                        "timeout": 300000,
+                        "timeout": timeout * 1000,
                         "logSize": 0
                     }
                 };
@@ -347,7 +347,24 @@ export abstract class AutoTest implements IAutoTest {
                     json: true, // Automatically stringifies the body to JSON,
                     timeout: 360000  // enough time that the container will have timed out
                 };
-                record = await rp(rpOpts);
+                const report: IGradeReport = await rp(rpOpts);
+                const output: IContainerOutput = {
+                    commitUrl: assnUrl,
+                    timestamp: start,
+                    report,
+                    feedback: report.feedback,
+                    postbackOnComplete: false,
+                    custom: {},
+                    attachments: [],
+                    state: "SUCCESS"
+                };
+
+                record = {
+                    commitURL: assnUrl,
+                    commitSHA: assnCommit,
+                    input,
+                    output,
+                };
             } else {
                 Log.info("AutoTest::invokeContainer(..) - TEST CONFIG: Running MockGrader");
                 const grader = new MockGrader(input);
