@@ -8,6 +8,7 @@ import { FirewallController } from "../network/FirewallController";
 import { IContainerOutput, IDockerContainerOptions, IGradeReport, IGradeTask } from "../Types";
 import Log from "../util/Log";
 import { ISocketServer, SocketServer } from "./SocketServer";
+import { execSync } from "child_process";
 
 export default class RouteHandler {
 
@@ -74,7 +75,6 @@ export default class RouteHandler {
             mkdirPromises.push(fs.mkdirp(keepDir));
             await Promise.all(mkdirPromises);
 
-
             const assnRepo: Repository = new Repository(assnDir);
             const assnUrl: string = body.assn.url.replace("://", `://${assnToken}@`);
             const assnCommit: string = body.assn.commit;
@@ -94,6 +94,9 @@ export default class RouteHandler {
             if (typeof solnRef !== `undefined`) {
                 await solnRepo.checkout(solnRef);
             }
+
+            execSync(`chown -R 1008 ${tempDir}`);
+            execSync(`chown -R 1008 ${keepDir}`);
 
             // Container stuff
             Log.info("Creating container");
