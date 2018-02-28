@@ -88,8 +88,8 @@ export class DatabaseController {
 
     public async writePerson(record: Person): Promise<boolean> {
         Log.info("DatabaseController::writePerson(..) - start");
-        const existingPerson = this.getPerson(record.org, record.id);
-        if (existingPerson !== null) {
+        const existingPerson = await this.getPerson(record.org, record.id);
+        if (existingPerson === null) {
             return await this.writeRecord(this.PERSONCOLL, record);
         } else {
             Log.info("DatabaseController::writePerson(..) - ERROR; person already exists; person: " + JSON.stringify(record));
@@ -99,8 +99,8 @@ export class DatabaseController {
 
     public async writeTeam(record: Team): Promise<boolean> {
         Log.info("DatabaseController::writeTeam(..) - start");
-        const existingTeam = this.getTeam(record.org, record.id);
-        if (existingTeam !== null) {
+        const existingTeam = await this.getTeam(record.org, record.id);
+        if (existingTeam === null) {
             return await this.writeRecord(this.TEAMCOLL, record);
         } else {
             Log.info("DatabaseController::writeTeam(..) - ERROR; team already exists; team: " + JSON.stringify(record));
@@ -110,30 +110,30 @@ export class DatabaseController {
 
     public async writeDeliverable(record: Deliverable): Promise<boolean> {
         Log.info("DatabaseController::writeDeliverable(..) - start");
-        const existingDeiverable = this.getDeliverable(record.org, record.id);
-        if (existingDeiverable !== null) {
+        const existingDeiverable = await this.getDeliverable(record.org, record.id);
+        if (existingDeiverable === null) {
             return await this.writeRecord(this.DELIVCOLL, record);
         } else {
-            Log.info("DatabaseController::writeDeliverable(..) - ERROR; deliv already exists; deliv: " + JSON.stringify(record));
-            return false;
+            const query = {org: record.org, id: record.id};
+            return await this.updateRecord(this.DELIVCOLL, query, record);
         }
     }
 
     public async writeGrade(record: Grade): Promise<boolean> {
         Log.info("DatabaseController::writeGrade(..) - start");
         let gradeExists = await this.getGrade(record.org, record.personId, record.delivId);
-        if (gradeExists !== null) {
+        if (gradeExists === null) {
+            return await this.writeRecord(this.GRADECOLL, record);
+        } else {
             const query = {org: record.org, personId: record.personId, delivId: record.delivId};
             return await this.updateRecord(this.GRADECOLL, query, record);
-        } else {
-            return await this.writeRecord(this.GRADECOLL, record);
         }
     }
 
     public async writeRepository(record: Repository): Promise<boolean> {
         Log.info("DatabaseController::writeRepository(..) - start");
-        const existingRepo = this.getRepository(record.org, record.id);
-        if (existingRepo !== null) {
+        const existingRepo = await this.getRepository(record.org, record.id);
+        if (existingRepo === null) {
             return await this.writeRecord(this.REPOCOLL, record);
         } else {
             Log.info("DatabaseController::writeRepository(..) - ERROR; repo already exists; repo: " + JSON.stringify(record));
@@ -143,7 +143,7 @@ export class DatabaseController {
 
     public async writeRecord(colName: string, record: {}): Promise<boolean> {
         Log.info("DatabaseController::writeRecord( " + colName + ", ...) - start");
-        Log.trace("DatabaseController::writeRecord(..) - record: " + JSON.stringify(record));
+        Log.trace("DatabaseController::writeRecord(..) - col: " + colName + "; record: " + JSON.stringify(record));
         try {
             const collection = await this.getCollection(colName);
             const copy = Object.assign({}, record);
@@ -158,7 +158,7 @@ export class DatabaseController {
 
     public async updateRecord(colName: string, query: {}, record: {}): Promise<boolean> {
         Log.info("DatabaseController::updateRecord( " + colName + ", ...) - start");
-        Log.trace("DatabaseController::updateRecord(..) - record: " + JSON.stringify(record));
+        Log.trace("DatabaseController::updateRecord(..) - colName: " + colName + "; record: " + JSON.stringify(record));
         try {
             const collection = await this.getCollection(colName);
             const copy = Object.assign({}, record);
@@ -240,7 +240,7 @@ export class DatabaseController {
             }
             const records: any[] = await <any>col.find(query).toArray();
             if (records === null || records.length === 0) {
-                Log.trace("DatabaseController::readRecords(..) - done; no records found for: " + JSON.stringify(query) + " in: " + col + "; took: " + Util.took(start));
+                Log.trace("DatabaseController::readRecords(..) - done; no records found for: " + JSON.stringify(query) + " in: " + column + "; took: " + Util.took(start));
                 return [];
             } else {
                 Log.trace("DatabaseController::readRecords(..) - done; # records: " + records.length + ". took: " + Util.took(start));

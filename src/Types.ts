@@ -57,7 +57,7 @@ export interface Deliverable {
 
     openTimestamp: number;
     closeTimestamp: number;
-    gradesReleased: number;
+    gradesReleased: boolean;
     delay: number;
 
     teamMinSize: number;
