@@ -96,10 +96,9 @@ export default class RouteHandler {
             const img: string = body.container.image;
             const cntr: IDockerContainer = new DockerContainer(img);
             const containerOptions: IDockerContainerOptions = {
-                "--env": [`ASSIGNMENT=${body.assnId}`, `USER_UID=${hostUID}`, `HOST_PORT=${sockPort}`],
+                "--env": [`ASSIGNMENT=${body.assnId}`, `USER_UID=${hostUID}`, `HOST_NAME=172.28.2.0`, `HOST_PORT=${sockPort}`],
                 "--volume": [`${tempDir}:/input`, `${keepDir}:/archive`],
-                "--network": net,
-                "--add-host": `${net}_1`
+                "--network": net
             };
             await cntr.create(containerOptions);
             await cntr.start();
