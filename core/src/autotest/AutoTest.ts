@@ -311,18 +311,13 @@ export abstract class AutoTest implements IAutoTest {
                 isProd = false; // EMPTY and POSTBACK used by test environment
             }
             if (isProd === true) {
-                // enum State {SUCCESS, TIMEOUT, INVALID_REPORT, FAIL}
-
                 const image: string = Config.getInstance().getProp("dockerId");
                 const timeout: number = Config.getInstance().getProp("timeout");
-                // const assnToken: string = Config.getInstance().getProp("githubOrgToken");
-                // const solnToken: string = Config.getInstance().getProp("githubOracleToken");
                 const solnUrl: string = Config.getInstance().getProp("oracleRepo");
                 const solnBranch: string = input.delivId;
                 const assnUrl: string = input.pushInfo.projectURL;
                 const assnCommit: string = input.pushInfo.commitSHA;
                 const delivId: string = input.delivId;
-
                 const body = {
                     "assnId": delivId,
                     "execId": `${assnCommit}-${delivId}`,
@@ -347,23 +342,7 @@ export abstract class AutoTest implements IAutoTest {
                     json: true, // Automatically stringifies the body to JSON,
                     timeout: 360000  // enough time that the container will have timed out
                 };
-                const response = await rp(rpOpts);
-                const report = response.report;
-                let feedback: string = "";
-                if (typeof report !== "undefined") {
-                    feedback = report.feedback;
-                }
-
-                const output: IContainerOutput = {
-                    commitUrl: assnUrl,
-                    timestamp: start,
-                    report,
-                    feedback,
-                    postbackOnComplete: response.state !== "SUCCESS",
-                    custom: {},
-                    attachments: [],
-                    state: response.state
-                };
+                const output: IContainerOutput = await rp(rpOpts);
 
                 record = {
                     commitURL: assnUrl,
@@ -372,7 +351,7 @@ export abstract class AutoTest implements IAutoTest {
                     output,
                 };
 
-                Log.info("AutoTest::invokeContainer(..) - OUPUT " + JSON.stringify(output, null, 2));
+                Log.info("AutoTest::invokeContainer(..) - OUTPUT " + JSON.stringify(output, null, 2));
             } else {
                 Log.info("AutoTest::invokeContainer(..) - TEST CONFIG: Running MockGrader");
                 const grader = new MockGrader(input);

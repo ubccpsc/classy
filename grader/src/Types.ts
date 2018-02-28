@@ -72,3 +72,15 @@ export interface IGradeTask {
     soln: ISolution;
     container: IGradeContainer;
 }
+
+export interface IContainerOutput {
+    // needed
+    commitUrl: string; // key
+    timestamp: number; // time when complete
+    report: IGradeReport;
+    feedback: string; // markdown
+    postbackOnComplete: boolean;
+    custom: {};
+    attachments: any[];
+    state: string; // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
+}

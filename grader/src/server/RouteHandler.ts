@@ -5,7 +5,7 @@ import {DockerContainer, IDockerContainer} from "../docker/DockerContainer";
 import {Repository} from "../git/Repository";
 import { ContainerFirewall, IContainerFirewall } from "../network/ContainerFirewall";
 import { FirewallController } from "../network/FirewallController";
-import { IDockerContainerOptions, IGradeReport, IGradeTask } from "../Types";
+import { IContainerOutput, IDockerContainerOptions, IGradeReport, IGradeTask } from "../Types";
 import Log from "../util/Log";
 import { ISocketServer, SocketServer } from "./SocketServer";
 
@@ -38,8 +38,18 @@ export default class RouteHandler {
 
     public static async postGradingTask(req: restify.Request, res: restify.Response, next: restify.Next) {
         let execId: string;
-        let state: string = "SUCCESS";
-        let report: IGradeReport;
+        let state: string;
+        let cntrCode: number;
+        const out: IContainerOutput = {
+            commitUrl: "",
+            timestamp: Date.now(),
+            report: null,
+            feedback: "",
+            postbackOnComplete: false,
+            custom: {},
+            attachments: [],
+            state: "SUCCESS"
+        };
 
         try {
             const body: IGradeTask = req.body;
@@ -130,8 +140,9 @@ export default class RouteHandler {
                 }, timeout);
             }
 
-            await cntr.wait();
-            Log.info("Container done");
+            const [, cmdOut] = await cntr.wait();
+            cntrCode = Number(cmdOut);
+            Log.info("Container done with code " + cntrCode);
             didFinish = true;
             if (didTimeout) {
                 state = "TIMEOUT";
@@ -142,17 +153,28 @@ export default class RouteHandler {
             }
             Log.info("Route Done");
 
+            // Generate response
             try {
-                report = await fs.readJson(`${keepDir}/report.json`);
-                state = "INVALID_REPORT";
+                out.commitUrl = body.assn.url;
+                if (state === "TIMEOUT") {
+                    out.feedback = "Container did not complete in the allotted time.";
+                    out.postbackOnComplete = true;
+                } else {
+                    const report: IGradeReport = await fs.readJson(`${keepDir}/report.json`);
+                    out.report = report;
+                    out.feedback = report.feedback;
+                    out.postbackOnComplete = cntrCode !== 0;
+                }
             } catch (err) {
                 Log.warn(`RouteHandler::postGradingTask(..) - ERROR Reading grade report. ${err}`);
+                out.feedback = "AutoTes t experienced an error.";
+                state = "INVALID_REPORT";
             }
         } catch (err) {
             Log.warn(`RouteHandler::postGradingTask(..) - ERROR Processing ${execId}. ${err}`);
             state = "FAIL";
         } finally {
-            res.json(200, { state, report });
+            res.json(200, out);
         }
     }
 }
