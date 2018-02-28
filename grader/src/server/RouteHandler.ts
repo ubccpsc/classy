@@ -68,8 +68,9 @@ export default class RouteHandler {
 
             Log.info("Making directories");
             const mkdirPromises: Array<Promise<void>> = [];
-            mkdirPromises.push(fs.mkdirp(assnDir));
-            mkdirPromises.push(fs.mkdirp(solnDir));
+            // mkdirPromises.push(fs.mkdirp(assnDir));
+            // mkdirPromises.push(fs.mkdirp(solnDir));
+            mkdirPromises.push(fs.mkdirp(tempDir));
             mkdirPromises.push(fs.mkdirp(keepDir));
             await Promise.all(mkdirPromises);
 
