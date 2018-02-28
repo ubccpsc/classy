@@ -41,7 +41,7 @@ export default class RouteHandler {
         let state: string;
         let cntrCode: number;
         const out: IContainerOutput = {
-            commitUrl: "",
+            commitUrl: req.body.assn.url,
             timestamp: Date.now(),
             report: null,
             feedback: "",
@@ -155,24 +155,26 @@ export default class RouteHandler {
 
             // Generate response
             try {
-                out.commitUrl = body.assn.url;
                 if (state === "TIMEOUT") {
                     out.feedback = "Container did not complete in the allotted time.";
                     out.postbackOnComplete = true;
+                    out.state = "TIMEOUT";
                 } else {
                     const report: IGradeReport = await fs.readJson(`${keepDir}/report.json`);
                     out.report = report;
                     out.feedback = report.feedback;
                     out.postbackOnComplete = cntrCode !== 0;
+                    out.state = "SUCCESS";
                 }
             } catch (err) {
                 Log.warn(`RouteHandler::postGradingTask(..) - ERROR Reading grade report. ${err}`);
-                out.feedback = "AutoTes t experienced an error.";
-                state = "INVALID_REPORT";
+                out.feedback = "Failed to read grade report.";
+                out.state = "INVALID_REPORT";
             }
         } catch (err) {
             Log.warn(`RouteHandler::postGradingTask(..) - ERROR Processing ${execId}. ${err}`);
-            state = "FAIL";
+            out.feedback = "Error running container.";
+            out.state = "FAIL";
         } finally {
             res.json(200, out);
         }
