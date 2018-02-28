@@ -100,11 +100,13 @@ export default class RouteHandler {
 
             // Container stuff
             Log.info("Creating container");
+            const hostTemp: string = `/var/tmp/${execId}`;
+            const hostArch: string = `/home/cs310/autotest/data/archive/${execId}`;
             const img: string = body.container.image;
             const cntr: IDockerContainer = new DockerContainer(img);
             const containerOptions: IDockerContainerOptions = {
                 "--env": [`ASSIGNMENT=${body.assnId}`, `USER_UID=${hostUID}`, `HOST_NAME=172.28.2.0`, `HOST_PORT=${sockPort}`],
-                "--volume": [`${tempDir}:/input`, `${keepDir}:/archive`],
+                "--volume": [`${hostTemp}:/input`, `${hostArch}:/archive`],
                 "--network": net
             };
             await cntr.create(containerOptions);
