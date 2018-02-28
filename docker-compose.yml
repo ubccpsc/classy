@@ -26,6 +26,8 @@ services:
             - "7777:7777"
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
+            - /var/tmp:/temp
+            - /home/cs310/autotest/data/archive:/archive
         cap_add:
             - NET_ADMIN
         privileged: true

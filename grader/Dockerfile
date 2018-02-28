@@ -2,7 +2,8 @@ FROM node:8.9.4-alpine
 
 #ENV PATH="/usr/bin/docker:${PATH}"
 
-#VOLUME []
+VOLUME [ "/temp" ]
+VOLUME [ "/archive" ]
 
 # REST API Server
 EXPOSE 3000
