@@ -1,14 +1,12 @@
 /**
  * Created by rtholmes on 2018-02-23.
  */
-
 import restify = require('restify');
 import Log from "./Util/Log";
 
 import * as fs from "fs";
 import {AuthController} from "./controllers/AuthController";
 import {Config} from "./Config";
-import {IConfig} from "./Types";
 
 // import RouteHandler from './RouteHandler';
 
@@ -64,13 +62,11 @@ export default class BackendServer {
                 that.rest = restify.createServer(https_options);
 
                 that.rest.use(restify.plugins.queryParser());
-
                 that.rest.use(function crossOrigin(req, res, next) {
                     res.header("Access-Control-Allow-Origin", "*");
                     res.header("Access-Control-Allow-Headers", "X-Requested-With Content-Type token user");
                     return next();
                 });
-
 
                 /**
                  * Authentication

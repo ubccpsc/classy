@@ -52,8 +52,7 @@ export interface Person {
 
 
 export interface Deliverable {
-    readonly id: string; // org_shortName
-    readonly shortName: string; // invariant
+    readonly id: string; // is the shortname of the deliverable
     readonly org: string;
 
     openTimestamp: number;
@@ -68,25 +67,23 @@ export interface Deliverable {
 }
 
 export interface Team {
-    readonly id: string; // invariant; should be org_name
+    readonly id: string; // invariant; is the name of the team
     readonly org: string; // invariant
-    readonly name: string; // invariant (should be unique per org)
     url: string | null; // null when not yet created
-    members: Person[]; // foreign key
+    memberIds: string[]; // Person.id[] - foreign key
 }
 
 export interface Repository {
-    readonly id: string; // invariant; should be org_name
+    readonly id: string; // invariant; is the name of the repo
     readonly org: string; // invariant
-    readonly name: string; // invariant (should be unique per org)
     url: string | null; // null when not yet created
-    teams: Team[]; // foreign key
+    teamIds: string[]; // Team.id[] - foreign key
 }
 
 export interface Grade {
     // this should be the personId associated with the repo, not a staff who invoked it!
-    readonly personId: Person; // foreign key // could be a Person, but this is just easier
-    readonly delivId: Deliverable; // foreign key // could be a Deliverable, but this is just easier
+    readonly personId: string; // Person.id - foreign key // could be a Person, but this is just easier
+    readonly delivId: string; // Deliverable.id - foreign key // could be a Deliverable, but this is just easier
     readonly org: string;
     grade: number;
     comment: string;

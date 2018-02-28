@@ -23,9 +23,10 @@ export class PersonController {
         if (person === null) {
             if (orgName === 'secapstone' || orgName === 'secapstonetest') {
                 Log.info("PersonController::configureUsername( " + orgName + ", " + githubUsername + " ) - new person for this org; - provisioning");
-                // TODO: do the new user flow
-                // add to org
-                // make person object
+                // in the secapstone we don't know who the students are in advance
+                // in this case, we will create Person objects on demand
+
+                // make person
                 let person: Person = {
                     id:            githubUsername,
                     csId:          githubUsername, // sdmm doesn't have these
@@ -39,6 +40,7 @@ export class PersonController {
                     url:   'https://github.com/' + githubUsername,
                     labId: 'UNKNOWN'
                 };
+
                 // add to database
                 await this.db.writePerson(person);
                 return true;
