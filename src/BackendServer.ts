@@ -6,11 +6,8 @@ import restify = require('restify');
 import Log from "./Util/Log";
 
 import * as fs from "fs";
-import * as rp from "request-promise-native";
-
-import ClientOAuth2 = require("client-oauth2");
-import {App} from "./App";
 import {AuthController} from "./controllers/AuthController";
+import {Config} from "./Config";
 import {IConfig} from "./Types";
 
 // import RouteHandler from './RouteHandler';
@@ -18,14 +15,14 @@ import {IConfig} from "./Types";
 /**
  * This configures the REST endpoints for the server.
  */
-export default class BackEndServer {
+export default class BackendServer {
 
     private rest: restify.Server;
-    private config: IConfig;
+    private config: Config;
 
-    constructor(config: IConfig) {
-        Log.info("BackEndServer::<init> - start");
-        this.config = config;
+    constructor() {
+        Log.info("BackendServer::<init> - start");
+        this.config = Config.getInstance();
     }
 
     /**
@@ -35,11 +32,11 @@ export default class BackEndServer {
      * @returns {Promise<boolean>}
      */
     public stop(): Promise<boolean> {
-        Log.info('BackEndServer::stop() - start');
+        Log.info('BackendServer::stop() - start');
         let that = this;
         return new Promise(function (fulfill) {
             that.rest.close(function () {
-                Log.info('BackEndServer::stop() - done');
+                Log.info('BackendServer::stop() - done');
                 fulfill(true);
             });
         });
@@ -56,12 +53,12 @@ export default class BackEndServer {
         let that = this;
         return new Promise(function (fulfill, reject) {
             try {
-                Log.info('BackEndServer::start() - start');
+                Log.info('BackendServer::start() - start');
 
                 var https_options = {
                     name:        'backend',
-                    key:         fs.readFileSync(App.config.sslKeyPath),
-                    certificate: fs.readFileSync(App.config.sslCertPath)
+                    key:         fs.readFileSync(this.config.getProp('sslKeyPath')),
+                    certificate: fs.readFileSync(this.config.getProp('sslCertPath'))
                 };
 
                 that.rest = restify.createServer(https_options);
@@ -93,18 +90,18 @@ export default class BackEndServer {
                     })
                 );
 
-                that.rest.listen(that.config.backendPort, function () {
-                    Log.info('BackEndServer::start() - restify listening: ' + that.rest.url);
+                that.rest.listen(that.config.getProp('backendPort'), function () {
+                    Log.info('BackendServer::start() - restify listening: ' + that.rest.url);
                     fulfill(true);
                 });
 
                 that.rest.on('error', function (err: string) {
                     // catches errors in restify start; unusual syntax due to internal node not using normal exceptions here
-                    Log.info('BackEndServer::start() - restify ERROR: ' + err);
+                    Log.info('BackendServer::start() - restify ERROR: ' + err);
                     reject(err);
                 });
             } catch (err) {
-                Log.error('BackEndServer::start() - ERROR: ' + err);
+                Log.error('BackendServer::start() - ERROR: ' + err);
                 reject(err);
             }
         });

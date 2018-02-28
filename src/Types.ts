@@ -11,6 +11,7 @@ export interface IConfig {
     backendPort: number;
     backendUrl: string;
     frontendUrl: string;
+    dbName: string;
 }
 
 /**
@@ -35,7 +36,7 @@ export interface IConfig {
  */
 
 export interface Person {
-    readonly id: string; // org_key (where key is the githubId)
+    readonly id: string; // key (where key is the githubId | csId)
     readonly csId: string;
     readonly githubId: string;
     readonly studentNumber: number | null; // potential key; can be null for non-students
@@ -46,7 +47,7 @@ export interface Person {
     readonly kind: string; // student, ta, prof, ops
     url: string | null; // null when not yet validated (e.g., logged in)
 
-    labid: string | null; // can be null for non-students
+    labId: string | null; // can be null for non-students
 }
 
 

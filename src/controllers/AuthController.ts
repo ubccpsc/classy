@@ -1,7 +1,7 @@
 import Log from "../util/Log";
-import {App} from "../App";
 import * as rp from "request-promise-native";
 import {PersonController} from "./PersonController";
+import {Config} from "../Config";
 import ClientOAuth2 = require("client-oauth2");
 
 export class AuthController {
@@ -21,16 +21,16 @@ export class AuthController {
 
     public static getAuth(req: any, res: any, next: any) {
         Log.info("BES - /auth redirect start");
+        let config = Config.getInstance();
 
         const courseId = req.query.course;
         Log.info("BES - /auth redirect; course: " + courseId);
-
-        const githubRedirect = App.config.backendUrl + ':' + App.config.backendPort + '/githubCallback?course=' + courseId;
+        const githubRedirect = config.getProp('backendUrl') + ':' + config.getProp('backendPort') + '/githubCallback?course=' + courseId;
         var githubAuth = new ClientOAuth2({
-            clientId:         App.config.githubClientId,
-            clientSecret:     App.config.githubClientSecret,
-            accessTokenUri:   'https://github.com/login/oauth/access_token',
-            authorizationUri: 'https://github.com/login/oauth/authorize',
+            clientId:         config.getProp('githubClientId'),
+            clientSecret:     config.getProp('githubClientSecret'),
+            accessTokenUri:   config.getProp('githubHost') + 'login/oauth/access_token',
+            authorizationUri: config.getProp('githubHost') + 'login/oauth/authorize',
             redirectUri:      githubRedirect,
             scopes:           ['']
         });
@@ -41,14 +41,17 @@ export class AuthController {
 
     public static githubCallback(req: any, res: any, next: any) {
         Log.info("BES - /githubCallback - start");
+        let config = Config.getInstance();
         const courseId = req.query.course;
+
+        let personController = new PersonController();
 
         //const githubRedirect = App.config.backendUrl + ':' + App.config.backendPort + '/githubCallback';
         var githubAuth = new ClientOAuth2({
-            clientId:         App.config.githubClientId,
-            clientSecret:     App.config.githubClientSecret,
-            accessTokenUri:   'https://github.com/login/oauth/access_token',
-            authorizationUri: 'https://github.com/login/oauth/authorize',
+            clientId:         config.getProp('githubClientId'),
+            clientSecret:     config.getProp('githubClientSecret'),
+            accessTokenUri:   config.getProp('githubHost') + 'login/oauth/access_token',
+            authorizationUri: config.getProp('githubHost') + 'login/oauth/authorize',
             //  redirectUri:      githubRedirect,
             scopes:           ['']
         });
@@ -59,7 +62,7 @@ export class AuthController {
 
             token = user.accessToken;
             var options = {
-                uri:     'https://api.github.com/user',
+                uri:     config.getProp('githubAPI') + 'user',
                 method:  'GET',
                 headers: {
                     'Content-Type':  'application/json',
@@ -76,27 +79,27 @@ export class AuthController {
             const username = body.login;
             Log.info("BES - /githubCallback - GH username: " + username);
 
-            return PersonController.configureUsername(courseId, username)
+            return personController.configureUsername(courseId, username)
         }).then(function (validUser) {
-            let url = App.config.frontendUrl;
+            let url = config.getProp('frontendUrl');
             if (validUser === true) {
                 // only header method that worked for me
                 res.setHeader("Set-Cookie", "token=" + token);
-                Log.info("BES - /githubCallback - url: " + App.config.frontendUrl + "; port: " + App.config.frontendPort);
+                Log.info("BES - /githubCallback - url: " + config.getProp('frontendUrl') + "; port: " + config.getProp('frontendPort'));
                 if (url.indexOf('//') > 0) {
                     url = url.substr(url.indexOf('//') + 2, url.length);
                 }
                 res.redirect({
                     hostname: url,
                     pathname: '/index.html',
-                    port:     App.config.frontendPort
+                    port:     config.getProp('frontendPort')
                 }, next);
             } else {
                 // TODO: specify unknown user (SDMM will always be true, but for future courses this won't be true)
                 res.redirect({
                     hostname: url,
                     pathname: '/index.html',
-                    port:     App.config.frontendPort
+                    port:     config.getProp('frontendPort')
                 }, next);
             }
             // res.redirect('https://localhost:3000/index.html', next);
