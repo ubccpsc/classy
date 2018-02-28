@@ -27,8 +27,8 @@ describe("PersonController", () => {
         let people = await pc.getAllPeople(ORGNAME);
         expect(people).to.have.lengthOf(0);
 
-        let valid = await pc.configureUsername(ORGNAME, NAME1);
-        expect(valid).to.be.true;
+        let person = await pc.getPerson(ORGNAME, NAME1);
+        expect(person).to.not.be.null;
         people = await pc.getAllPeople(ORGNAME);
         expect(people).to.have.lengthOf(1);
     });
@@ -37,8 +37,8 @@ describe("PersonController", () => {
         let people = await pc.getAllPeople(ORGNAME);
         expect(people).to.have.lengthOf(1);
 
-        let valid = await pc.configureUsername(ORGNAME, NAME1);
-        expect(valid).to.be.true;
+        let person = await pc.getPerson(ORGNAME, NAME1);
+        expect(person).to.not.be.null;
         people = await pc.getAllPeople(ORGNAME);
         expect(people).to.have.lengthOf(1);
     });
@@ -47,8 +47,8 @@ describe("PersonController", () => {
         let people = await pc.getAllPeople(ORGNAME);
         expect(people).to.have.lengthOf(1);
 
-        let valid = await pc.configureUsername(ORGNAME, NAME2);
-        expect(valid).to.be.true;
+        let person = await pc.getPerson(ORGNAME, NAME2);
+        expect(person).to.not.be.null;
         people = await pc.getAllPeople(ORGNAME);
         expect(people).to.have.lengthOf(2);
     });

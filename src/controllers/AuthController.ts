@@ -79,10 +79,10 @@ export class AuthController {
             const username = body.login;
             Log.info("BES - /githubCallback - GH username: " + username);
 
-            return personController.configureUsername(courseId, username)
-        }).then(function (validUser) {
+            return personController.getPerson(courseId, username)
+        }).then(function (person) {
             let url = config.getProp('frontendUrl');
-            if (validUser === true) {
+            if (person !== null) {
                 // only header method that worked for me
                 res.setHeader("Set-Cookie", "token=" + token);
                 Log.info("BES - /githubCallback - url: " + config.getProp('frontendUrl') + "; port: " + config.getProp('frontendPort'));
@@ -95,7 +95,7 @@ export class AuthController {
                     port:     config.getProp('frontendPort')
                 }, next);
             } else {
-                // TODO: specify unknown user (SDMM will always be true, but for future courses this won't be true)
+                // TODO: specify 'unknown user' error message (SDMM will always be true, but for future courses this won't be true)
                 res.redirect({
                     hostname: url,
                     pathname: '/index.html',
