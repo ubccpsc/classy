@@ -60,8 +60,8 @@ export default class RouteHandler {
             const solnToken = process.env.GH_ORACLE_TOKEN;
             const hostUID = process.env.HOST_UID;
             const sockPort = process.env.SOCK_PORT;
-            const tempDir: string = "/temp" + execId;
-            const keepDir: string = "/archive" + execId;
+            const tempDir: string = "/temp/" + execId;
+            const keepDir: string = "/archive/" + execId;
 
             const assnDir: string = `${tempDir}/assignment`;
             const solnDir: string = `${tempDir}/solution`;
