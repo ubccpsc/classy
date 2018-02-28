@@ -85,8 +85,9 @@ export interface Grade {
     readonly personId: string; // Person.id - foreign key // could be a Person, but this is just easier
     readonly delivId: string; // Deliverable.id - foreign key // could be a Deliverable, but this is just easier
     readonly org: string;
-    grade: number;
+    score: number;
     comment: string;
+    url: string | null; // for traceability
 }
 
 /**
