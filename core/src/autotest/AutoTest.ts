@@ -316,14 +316,15 @@ export abstract class AutoTest implements IAutoTest {
                 const solnUrl: string = Config.getInstance().getProp("oracleRepo");
                 const solnBranch: string = input.delivId;
                 const assnUrl: string = input.pushInfo.projectURL;
-                const assnCommit: string = input.pushInfo.commitSHA;
+                const commitSHA: string = input.pushInfo.commitSHA;
+                const commitURL: string = input.pushInfo.commitURL;
                 const delivId: string = input.delivId;
                 const body = {
                     "assnId": delivId,
-                    "execId": `${assnCommit}-${delivId}`,
+                    "execId": `${commitSHA}-${delivId}`,
                     "assn": {
                         "url": assnUrl,
-                        "commit": assnCommit
+                        "commit": commitURL
                     },
                     "soln": {
                         "url": solnUrl,
@@ -345,8 +346,8 @@ export abstract class AutoTest implements IAutoTest {
                 const output: IContainerOutput = await rp(rpOpts);
 
                 record = {
-                    commitURL: assnUrl,
-                    commitSHA: assnCommit,
+                    commitURL,
+                    commitSHA,
                     input,
                     output,
                 };
