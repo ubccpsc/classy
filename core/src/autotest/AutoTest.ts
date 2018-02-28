@@ -1,6 +1,6 @@
 import * as rp from "request-promise-native";
 import {Config} from "../Config";
-import {ICommentEvent, ICommitRecord, IContainerInput, IGradeReport, IContainerOutput} from "../Types";
+import {ICommentEvent, ICommitRecord, IContainerInput, IContainerOutput, IGradeReport} from "../Types";
 import Log from "../util/Log";
 import Util from "../util/Util";
 import {IDataStore} from "./DataStore";
@@ -324,7 +324,7 @@ export abstract class AutoTest implements IAutoTest {
                     "execId": `${commitSHA}-${delivId}`,
                     "assn": {
                         "url": assnUrl,
-                        "commit": commitURL
+                        "commit": commitSHA
                     },
                     "soln": {
                         "url": solnUrl,
