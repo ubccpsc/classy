@@ -150,6 +150,7 @@ export default class RouteHandler {
             if (typeof body.container.logSize !== "undefined") {
                 log = log.substring(0, body.container.logSize);
             }
+            fs.writeFile(log, `${keepDir}/stdio.txt`);
             Log.info("Route Done");
 
             // Generate response
