@@ -372,7 +372,7 @@ export abstract class AutoTest implements IAutoTest {
                     output,
                 };
 
-                Log.trace("AutoTest::invokeContainer(..) - OUPUT " + JSON.stringify(output, null, 2));
+                Log.info("AutoTest::invokeContainer(..) - OUPUT " + JSON.stringify(output, null, 2));
             } else {
                 Log.info("AutoTest::invokeContainer(..) - TEST CONFIG: Running MockGrader");
                 const grader = new MockGrader(input);
