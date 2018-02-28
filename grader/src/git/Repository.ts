@@ -56,6 +56,7 @@ export class Repository {
                 if (error) {
                     reject(error);
                 }
+                console.log("GIT CLONE", stdout, stderr);
                 resolve();
             });
         });

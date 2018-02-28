@@ -74,14 +74,17 @@ export default class RouteHandler {
             mkdirPromises.push(fs.mkdirp(keepDir));
             await Promise.all(mkdirPromises);
 
-            Log.info("Geting assn repo");
+
             const assnRepo: Repository = new Repository(assnDir);
             const assnUrl: string = body.assn.url.replace("://", `://${assnToken}@`);
             const assnCommit: string = body.assn.commit;
             await assnRepo.clone(assnUrl);
+            Log.info(`Cloning from ${assnUrl} to ${assnDir} commit ${assnCommit}`);
             if (typeof assnCommit !== `undefined`) {
                 await assnRepo.checkout(assnCommit);
             }
+
+            console.log(fs.readdirSync(assnDir));
 
             Log.info("Getting soln repo");
             const solnRepo: Repository = new Repository(solnDir);
