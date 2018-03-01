@@ -4,8 +4,9 @@
 
 import Log from "./util/Log";
 import BackendServer from "./BackendServer";
+import {Config} from "./Config";
 
-const Config = require("../Config");
+// const Config = require("../Config");
 
 export class PortalBackend {
 
@@ -34,7 +35,10 @@ Log.info("PortalBackend - starting");
 if (process.argv.length < 3) {
     Log.error("PortalBackend - missing runtime param: node PortalBackend.js <courseName>");
 } else {
-    Config.getInstance(process.argv[2]);
+    const confKey = process.argv[2];
+    Log.info("PortalBackend - initiating configuration: " + confKey);
+    Config.getInstance(confKey);
+    // Log.trace("PortalBackend - initiating configuration: " + Config.getInstance());
     const app = new PortalBackend();
     app.init();
 }

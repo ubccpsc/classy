@@ -18,6 +18,7 @@ export class Config {
     }
 
     public static getInstance(configName?: string): Config {
+        Log.trace("Config::getInstance() - start");
         if (Config.instance === null) {
             if (typeof configName === "undefined") {
                 Log.warn("Config::getInstance() - configName not specified; using test");
@@ -45,6 +46,7 @@ export class Config {
                 throw new Error("Config::getInstance( " + configName + " ) - config not found");
             }
         }
+        Log.trace("Config::getInstance() - done");
         return Config.instance;
     }
 

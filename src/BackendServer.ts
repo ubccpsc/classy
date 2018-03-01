@@ -16,7 +16,7 @@ import {Config} from "./Config";
 export default class BackendServer {
 
     private rest: restify.Server;
-    private config: Config;
+    private config: Config = null;
 
     constructor() {
         Log.info("BackendServer::<init> - start");
@@ -48,15 +48,16 @@ export default class BackendServer {
      * @returns {Promise<boolean>}
      */
     public start(): Promise<boolean> {
+        Log.info('BackendServer::start() - start');
+        Log.info('BackendServer::start() - config: ' + this.config);
+
         let that = this;
         return new Promise(function (fulfill, reject) {
             try {
-                Log.info('BackendServer::start() - start');
-
                 var https_options = {
                     name:        'backend',
-                    key:         fs.readFileSync(this.config.getProp('sslKeyPath')),
-                    certificate: fs.readFileSync(this.config.getProp('sslCertPath'))
+                    key:         fs.readFileSync(that.config.getProp('sslKeyPath')),
+                    certificate: fs.readFileSync(that.config.getProp('sslCertPath'))
                 };
 
                 that.rest = restify.createServer(https_options);
