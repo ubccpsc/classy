@@ -8,6 +8,7 @@ import Log from "./util/Log";
 // import 'whatwg-fetch';
 import {OnsButtonElement, OnsPageElement} from "onsenui";
 import {Network} from "./util/Network";
+import {SDMMSummaryView} from "./SDMMSummaryView";
 
 declare var classportal: any;
 
@@ -405,6 +406,12 @@ export class App {
             // silently fail
             Log.error("APP:toggleLoginButton() - ERROR: " + err);
         }
+    }
+
+    public sdmmSelectChanged() {
+        let s: SDMMSummaryView = new SDMMSummaryView();
+        (<any>window).myApp.sdmm = s;
+        s.renderPage();
     }
 }
 
