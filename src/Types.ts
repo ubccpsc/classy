@@ -48,6 +48,7 @@ export interface Person {
     url: string | null; // null when not yet validated (e.g., logged in)
 
     labId: string | null; // can be null for non-students
+    custom: any; // used for anything. in sdmm will track 'custom.sdmmStatus'
 }
 
 
@@ -78,6 +79,7 @@ export interface Repository {
     readonly org: string; // invariant
     url: string | null; // null when not yet created
     teamIds: string[]; // Team.id[] - foreign key
+    custom: any;
 }
 
 export interface Grade {

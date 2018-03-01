@@ -50,8 +50,12 @@ export class RepositoryController {
                     id:      name,
                     org:     org,
                     url:     null,
-                    teamIds: teamIds
+                    teamIds: teamIds,
+                    custom:  {}
                 };
+                if (org === 'secapstone' || org === 'secapstonetest') {
+                    repo.custom.sddmD3pr = false;
+                }
                 await this.db.writeRepository(repo);
                 return true;
             } else {

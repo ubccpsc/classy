@@ -61,6 +61,18 @@ export class DatabaseController {
         return <Team[]> await this.readRecords(this.TEAMCOLL, {"org": orgName});
     }
 
+    public async getTeamsForPerson(orgName: string, personId: string): Promise<Team[]> {
+        Log.info("DatabaseController::getTeams( " + orgName + " ) - start");
+        let teams = await this.readRecords(this.TEAMCOLL, {"org": orgName});
+        let myTeams = [];
+        for (const t of teams as Team[]) {
+            if (t.memberIds.indexOf(personId) >= 0) {
+                myTeams.push(t);
+            }
+        }
+        return myTeams;
+    }
+
     public async getPeople(orgName: string): Promise<Person[]> {
         Log.info("DatabaseController::getPeople( " + orgName + " ) - start");
         return <Person[]> await this.readRecords(this.PERSONCOLL, {"org": orgName});

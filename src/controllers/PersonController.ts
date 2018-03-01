@@ -38,8 +38,11 @@ export class PersonController {
                     lName: '',
                     kind:  'student',
                     url:   'https://github.com/' + githubUsername,
-                    labId: 'UNKNOWN'
+                    labId: 'UNKNOWN',
+                    custom: {}
                 };
+
+                newPerson.custom.sdmmStatus = 'd0pre';
 
                 // add to database
                 await this.db.writePerson(newPerson);
