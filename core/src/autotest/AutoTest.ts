@@ -333,7 +333,7 @@ export abstract class AutoTest implements IAutoTest {
                     }
                 };
                 const rpOpts: rp.OptionsWithUrl = {
-                    method: "POST",
+                    method: "PUT",
                     url: `http://autotest_grader_1:3000/task/grade/${id}`,
                     body,
                     json: true, // Automatically stringifies the body to JSON,
