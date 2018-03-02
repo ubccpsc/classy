@@ -170,10 +170,11 @@ export class SDDMController {
                 Log.info("SDDMController::getStatus(..) - check successful; skipping");
                 return reportedStatus;
             }
-            let currentStatus = "D0PRE";
+            
+            let currentStatus = SDDMStatus[SDDMStatus.D0PRE]; // start with the lowest status and work up
 
             // D0PRE
-            if (currentStatus === "D0PRE") {
+            if (currentStatus === SDDMStatus[SDDMStatus.D0PRE]) {
                 // make sure d0 doesn't exist for a person, if it does, make them D0
 
                 let d0Repo = null;
@@ -185,7 +186,7 @@ export class SDDMController {
 
                     if (d0Repo !== null) {
                         Log.info("SDDMController::getStatus(..) - elevating D0PRE to D0");
-                        currentStatus = "D0";
+                        currentStatus = SDDMStatus[SDDMStatus.D0];
                     } else {
                         Log.info("SDDMController::getStatus(..) - NOT elevating from D0PRE");
                     }
@@ -193,19 +194,19 @@ export class SDDMController {
             }
 
             // D0
-            if (currentStatus === "D0") {
+            if (currentStatus === SDDMStatus[SDDMStatus.D0]) {
                 // if their d0 score >= 60, make them D1UNLOCKED
                 const d0Grade = await this.dc.getGrade(org, personId, "d0");
                 if (d0Grade && d0Grade.score >= 60) {
                     Log.info("SDDMController::getStatus(..) - elevating D0 to D1UNLOCKED");
-                    currentStatus = "D1UNLOCKED";
+                    currentStatus = SDDMStatus[SDDMStatus.D1UNLOCKED];
                 } else {
                     Log.info("SDDMController::getStatus(..) - NOT elevating from D0");
                 }
             }
 
             // D1UNLOCKED
-            if (currentStatus === "D1UNLOCKED") {
+            if (currentStatus === SDDMStatus[SDDMStatus.D1UNLOCKED]) {
                 // if they have a d1 team, make them D1TEAMSET
                 const teams = await this.dc.getTeamsForPerson(org, personId);
 
@@ -218,14 +219,14 @@ export class SDDMController {
 
                 if (d1team !== null) {
                     Log.info("SDDMController::getStatus(..) - elevating D1UNLOCKED to D1TEAMSET");
-                    currentStatus = "D1TEAMSET";
+                    currentStatus = SDDMStatus[SDDMStatus.D1TEAMSET];
                 } else {
                     Log.info("SDDMController::getStatus(..) - NOT elevating from D1UNLOCKED");
                 }
             }
 
             // D1TEAMSET
-            if (currentStatus === "D1TEAMSET") {
+            if (currentStatus === SDDMStatus[SDDMStatus.D1TEAMSET]) {
                 // if they have a d1 repo, make them D1
                 const repos = await this.rc.getReposForPerson(person);
                 let d1repo = null;
@@ -236,14 +237,14 @@ export class SDDMController {
                 }
                 if (d1repo !== null) {
                     Log.info("SDDMController::getStatus(..) - elevating D1TEAMSET to D1");
-                    currentStatus = "D1";
+                    currentStatus = SDDMStatus[SDDMStatus.D1];
                 } else {
                     Log.info("SDDMController::getStatus(..) - NOT elevating from D1TEAMSET");
                 }
             }
 
             // D1
-            if (currentStatus === "D1") {
+            if (currentStatus === SDDMStatus[SDDMStatus.D1]) {
                 // if their d1 score > 60, make them D2
                 let d1Grade = await this.gc.getGrade(org, personId, "d1");
                 if (d1Grade && d1Grade.score >= 60) {
@@ -256,26 +257,26 @@ export class SDDMController {
                             await this.dc.writeRepository(r);
                         }
                     }
-                    currentStatus = "D2";
+                    currentStatus = SDDMStatus[SDDMStatus.D2];
                 } else {
                     Log.info("SDDMController::getStatus(..) - NOT elevating from D1");
                 }
             }
 
             // D2
-            if (currentStatus === "D2") {
+            if (currentStatus === SDDMStatus[SDDMStatus.D2]) {
                 // if their d2 core > 60, make them D3PRE
                 let d2Grade = await this.gc.getGrade(org, personId, "d2");
                 if (d2Grade && d2Grade.score >= 60) {
                     Log.info("SDDMController::getStatus(..) - elevating D2 to D3PRE");
-                    currentStatus = "D3PRE";
+                    currentStatus = SDDMStatus[SDDMStatus.D3PRE];
                 } else {
                     Log.info("SDDMController::getStatus(..) - NOT elevating from D2");
                 }
             }
 
             // D3PRE
-            if (currentStatus === "D3PRE") {
+            if (currentStatus === SDDMStatus[SDDMStatus.D3PRE]) {
                 // if their d1 repo has custom.sddmD3pr===true, make them D3
                 let allRepos = await this.rc.getReposForPerson(person);
                 let prComplete = false;
@@ -287,7 +288,7 @@ export class SDDMController {
                 }
                 if (prComplete === true) {
                     Log.info("SDDMController::getStatus(..) - elevating D3PRE to D3");
-                    currentStatus = "D3";
+                    currentStatus = SDDMStatus[SDDMStatus.D3];// "D3";
                 } else {
                     Log.info("SDDMController::getStatus(..) - NOT elevating from D3PRE");
                 }
@@ -295,7 +296,7 @@ export class SDDMController {
 
             // D3
             // nothing else to be done
-            if (currentStatus === "D3") {
+            if (currentStatus === SDDMStatus[SDDMStatus.D3]) {
                 let allRepos = await this.rc.getReposForPerson(person);
                 for (const r of allRepos) {
                     if (r.custom.d2enabled === true) {
@@ -352,7 +353,7 @@ export class SDDMController {
             }
 
             const reportedStatus = person.custom.sddmStatus;
-            if (reportedStatus === "D0PRE") {
+            if (reportedStatus === SDDMStatus[SDDMStatus.D0PRE]) {
                 // don't bother, let checkStatus do it right
                 return false;
             }
