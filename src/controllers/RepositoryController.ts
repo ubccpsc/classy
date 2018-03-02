@@ -24,6 +24,8 @@ export class RepositoryController {
     public async getReposForPerson(myPerson: Person): Promise<Repository[]> {
         Log.info("RepositoryController::getReposForPerson( " + myPerson.id + " ) - start");
 
+        // NOTE: this is slow; there is a faster implementation in db.getReposForPerson now, but it is untested
+
         let myTeams = await new TeamController().getTeamsForPerson(myPerson);
 
         let myRepos: Repository[] = [];
@@ -40,31 +42,44 @@ export class RepositoryController {
         return myRepos;
     }
 
-    public async createRepository(org: string, name: string, teams: Team[]): Promise<boolean> {
+
+    public async createRepository(org: string, name: string, teams: Team[], custom: any): Promise<Repository | null> {
         Log.info("RepositoryController::createRepository( " + org + ", " + name + ",.. ) - start");
         try {
             let existingRepo = await this.getRepository(org, name);
             if (existingRepo === null) {
                 let teamIds: string[] = teams.map(team => team.id);
+
                 const repo: Repository = {
                     id:      name,
                     org:     org,
                     url:     null,
                     teamIds: teamIds,
-                    custom:  {}
+                    custom:  custom
                 };
-                if (org === 'secapstone' || org === 'secapstonetest') {
+
+                /**
+                 This can't be here, but don't forget it
+                 if (org === 'secapstone' || org === 'secapstonetest') {
                     repo.custom.sddmD3pr = false;
+
+                    repo.custom.d0enabled = false;
+                    repo.custom.d1enabled = false;
+                    repo.custom.d2enabled = false;
+                    repo.custom.d3enabled = false;
                 }
+                 */
+
                 await this.db.writeRepository(repo);
-                return true;
+                return await this.db.getRepository(repo.org, repo.id);
             } else {
                 Log.info("RepositoryController::createRepository( " + org + ", " + name + ",.. ) - repository exists: " + JSON.stringify(existingRepo));
-                return false;
+                return await this.db.getRepository(org, name);
             }
-        } catch (err) {
+        }
+        catch (err) {
             Log.error("RepositoryController::createRepository(..) - ERROR: " + err);
-            return false
+            return null;
         }
     }
 }

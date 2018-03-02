@@ -4,6 +4,7 @@ import {Config} from "../src/Config";
 import Log from "../src/util/Log";
 import {DatabaseController} from "../src/controllers/DatabaseController";
 
+
 before(async () => {
     Log.info('GlobalSpec::before()');
     const CONFIG = 'secapstonetest';

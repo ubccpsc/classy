@@ -20,7 +20,6 @@ export class GradesController {
         return grade;
     }
 
-
     public async createGrade(org: string, personId: string, delivId: string, score: number, comment: string, url: string): Promise<Grade | null> {
         Log.info("RepositoryController::createGrade( " + org + ", " + personId + ", " + delivId + ",.. ) - start");
         try {

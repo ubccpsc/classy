@@ -66,11 +66,42 @@ export class DatabaseController {
         let teams = await this.readRecords(this.TEAMCOLL, {"org": orgName});
         let myTeams = [];
         for (const t of teams as Team[]) {
-            if (t.memberIds.indexOf(personId) >= 0) {
+            if (t.personIds.indexOf(personId) >= 0) {
                 myTeams.push(t);
             }
         }
         return myTeams;
+    }
+
+    public async getRepositoriesForPerson(orgName: string, personId: string): Promise<Repository[]> {
+        Log.info("DatabaseController::getRepositoriesForPerson( " + orgName + " ) - start");
+
+        // NOTE: UNTESTED (except in mongo console)
+
+        let query = [{
+            "$lookup": {
+                "from":         "teams",
+                "localField":   "teamIds",
+                "foreignField": "id",
+                "as":           "teams"
+            }
+        },
+            {
+                "$lookup": {
+                    "from":         "people",
+                    "localField":   "teams.personIds",
+                    "foreignField": "id",
+                    "as":           "teammembers"
+                }
+            },
+            {
+                "$match": {"teammembers.id": personId}
+            }
+        ];
+
+        const records: any[] = await (<any>this.getCollection(this.REPOCOLL)).aggregate(query).toArray();
+
+        return records;
     }
 
     public async getPeople(orgName: string): Promise<Person[]> {
@@ -122,6 +153,7 @@ export class DatabaseController {
 
     public async writeDeliverable(record: Deliverable): Promise<boolean> {
         Log.info("DatabaseController::writeDeliverable(..) - start");
+        Log.trace("DatabaseController::writeDeliverable(..) - deliv: " + JSON.stringify(record));
         const existingDeiverable = await this.getDeliverable(record.org, record.id);
         if (existingDeiverable === null) {
             return await this.writeRecord(this.DELIVCOLL, record);
@@ -133,6 +165,7 @@ export class DatabaseController {
 
     public async writeGrade(record: Grade): Promise<boolean> {
         Log.info("DatabaseController::writeGrade(..) - start");
+        Log.trace("DatabaseController::writeGrade(..) - grade: " + JSON.stringify(record));
         let gradeExists = await this.getGrade(record.org, record.personId, record.delivId);
         if (gradeExists === null) {
             return await this.writeRecord(this.GRADECOLL, record);
@@ -144,6 +177,7 @@ export class DatabaseController {
 
     public async writeRepository(record: Repository): Promise<boolean> {
         Log.info("DatabaseController::writeRepository(..) - start");
+        Log.trace("DatabaseController::writeRepository(..) - repo: " + JSON.stringify(record));
         const existingRepo = await this.getRepository(record.org, record.id);
         if (existingRepo === null) {
             return await this.writeRecord(this.REPOCOLL, record);

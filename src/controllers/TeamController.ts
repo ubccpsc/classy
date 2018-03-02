@@ -26,7 +26,7 @@ export class TeamController {
         let myTeams: Team[] = [];
         let allTeams = await this.db.getTeams(myPerson.org);
         for (const team of allTeams) {
-            if (team.memberIds.indexOf(myPerson.id) >= 0) {
+            if (team.personIds.indexOf(myPerson.id) >= 0) {
                 myTeams.push(team);
             }
         }
@@ -35,7 +35,7 @@ export class TeamController {
         return myTeams;
     }
 
-    public async createTeam(org: string, name: string, people: Person[]): Promise<boolean> {
+    public async createTeam(org: string, name: string, people: Person[], custom: any): Promise<Team | null> {
         Log.info("TeamController::createTeam( " + org + ", " + name + ",.. ) - start");
         try {
             let existingTeam = await this.getTeam(org, name);
@@ -45,17 +45,18 @@ export class TeamController {
                     id:        name,
                     org:       org,
                     url:       null,
-                    memberIds: peopleIds
+                    personIds: peopleIds,
+                    custom:    custom
                 };
                 await this.db.writeTeam(team);
-                return true;
+                return await this.db.getTeam(org, name);
             } else {
                 Log.info("TeamController::createTeam( " + org + ", " + name + ",.. ) - team exists: " + JSON.stringify(existingTeam));
-                return false;
+                return await this.db.getTeam(org, name);
             }
         } catch (err) {
             Log.error("TeamController::createTeam(..) - ERROR: " + err);
-            return false
+            return null;
         }
     }
 }

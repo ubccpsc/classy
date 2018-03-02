@@ -71,7 +71,8 @@ export interface Team {
     readonly id: string; // invariant; is the name of the team
     readonly org: string; // invariant
     url: string | null; // null when not yet created
-    memberIds: string[]; // Person.id[] - foreign key
+    personIds: string[]; // Person.id[] - foreign key
+    custom: any;
 }
 
 export interface Repository {
@@ -84,7 +85,7 @@ export interface Repository {
 
 export interface Grade {
     // this should be the personId associated with the repo, not a staff who invoked it!
-    readonly personId: string; // Person.id - foreign key // could be a Person, but this is just easier
+    readonly personId: string; // Person.id; grades are really on repos, but we only care about them by person
     readonly delivId: string; // Deliverable.id - foreign key // could be a Deliverable, but this is just easier
     readonly org: string;
     score: number;

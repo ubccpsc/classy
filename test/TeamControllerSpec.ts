@@ -1,5 +1,5 @@
 const loadFirst = require('./GlobalSpec');
-const peopleFirst = require('./PersonControllerSpec');
+const pFirst = require('./PersonControllerSpec');
 
 import {expect} from "chai";
 import "mocha";
@@ -40,8 +40,9 @@ describe("TeamController", () => {
         let people = await pc.getAllPeople(ORGNAME);
         expect(people).to.have.lengthOf(2);
 
-        let valid = await tc.createTeam(ORGNAME, TEAMNAME1, people);
-        expect(valid).to.be.true;
+        let team = await tc.createTeam(ORGNAME, TEAMNAME1, people, {});
+        expect(team).to.not.be.null;
+
         teams = await tc.getAllTeams(ORGNAME);
         expect(teams).to.have.lengthOf(1);
     });
@@ -53,8 +54,9 @@ describe("TeamController", () => {
         let people = await pc.getAllPeople(ORGNAME);
         expect(people).to.have.lengthOf(2);
 
-        let valid = await tc.createTeam(ORGNAME, TEAMNAME1, people);
-        expect(valid).to.be.false;
+        let team = await tc.createTeam(ORGNAME, TEAMNAME1, people, {});
+        expect(team).to.not.be.null;
+
         teams = await tc.getAllTeams(ORGNAME);
         expect(teams).to.have.lengthOf(1);
     });
