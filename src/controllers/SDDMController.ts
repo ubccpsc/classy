@@ -413,14 +413,22 @@ export class SDDMController {
 
             let people: Person[] = [];
             for (const pid of peopleIds) {
-                let person = await this.dc.getPerson(org, pid);
+                let person = await this.dc.getPerson(org, pid); // make sure the person exists
                 if (person !== null) {
-                    // TODO: make sure this person can move onto d1!
-                    people.push(person)
+
+                    let grade = await this.gc.getGrade(org, pid, "d0"); // make sure they can move on
+                    if (grade !== null && grade.score > 59) {
+                        people.push(person)
+                    } else {
+                        return {
+                            success: false,
+                            message: "All teammates must have achieved a score of 60% or more to join a team."
+                        };
+                    }
                 } else {
                     return {
                         success: false,
-                        message: "Unknown person " + pid + " requested to be on team; please make sure they are registered with the course and have completed d0."
+                        message: "Unknown person " + pid + " requested to be on team; please make sure they are registered with the course."
                     };
                 }
             }

@@ -148,6 +148,11 @@ describe("SDDMController", () => {
         expect(status).to.equal("D3");
     });
 
+    it.only("Should not be able to provision a d0 repo for a random person.", async () => {
+        let payload = await sc.createRepo(Test.ORGNAME, Test.DELIVID0, ["this is a random name #@"]);
+        expect(payload.success).to.be.false;
+    });
+
     it.only("Should be able to provision a d0 repo.", async () => {
         let payload = await sc.createRepo(Test.ORGNAME, Test.DELIVID0, [Test.USERNAME1]);
         expect(payload.success).to.be.true;
