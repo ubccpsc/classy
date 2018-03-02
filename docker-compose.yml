@@ -5,10 +5,10 @@ services:
         image: mongo:3-jessie
         volumes:
             - ./data/db:/data/db
-    # geolocation:
-    #     build: TODO
-    #     ports:
-    #         - "11316:11316" # this is the geolocation port for d2/d3; exposd globally
+    geolocation:
+        build: https://${UBCCPSCTOKEN}@github.ubc.ca/cpsc310/cpsc310geocoder.git
+        ports:
+            - "11316:11316" # this is the geolocation port for d2/d3; exposd globally
     # referenceUI:
     #     build: https://${TOKEN}:@github.company.com/org/repo.git
     #     ports:
