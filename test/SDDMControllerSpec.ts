@@ -76,11 +76,11 @@ describe("SDDMController", () => {
         let status = await sc.getStatus(ORGNAME, USER);
         expect(status).to.equal("D0");
 
-        await gc.createGrade(ORGNAME, USER, "d0", 59, '', '');
+        await gc.createGrade(ORGNAME, REPOD0, "d0", 59, '', '');
         status = await sc.getStatus(ORGNAME, USER);
         expect(status).to.equal("D0"); // 59 is too low
 
-        await gc.createGrade(ORGNAME, USER, "d0", 61, '', '');
+        await gc.createGrade(ORGNAME, REPOD0, "d0", 61, '', '');
         status = await sc.getStatus(ORGNAME, USER);
         expect(status).to.equal("D1UNLOCKED");
     });
@@ -113,11 +113,11 @@ describe("SDDMController", () => {
         let status = await sc.getStatus(ORGNAME, USER);
         expect(status).to.equal("D1");
 
-        await gc.createGrade(ORGNAME, USER, "d1", 59, '', '');
+        await gc.createGrade(ORGNAME, REPOD1, "d1", 59, '', '');
         status = await sc.getStatus(ORGNAME, USER);
         expect(status).to.equal("D1"); // 59 is too low
 
-        await gc.createGrade(ORGNAME, USER, "d1", 61, '', '');
+        await gc.createGrade(ORGNAME, REPOD1, "d1", 61, '', '');
 
         status = await sc.getStatus(ORGNAME, USER);
         expect(status).to.equal("D2");
@@ -127,11 +127,11 @@ describe("SDDMController", () => {
         let status = await sc.getStatus(ORGNAME, USER);
         expect(status).to.equal("D2");
 
-        await gc.createGrade(ORGNAME, USER, "d2", 59, '', '');
+        await gc.createGrade(ORGNAME, REPOD1, "d2", 59, '', '');
         status = await sc.getStatus(ORGNAME, USER);
         expect(status).to.equal("D2"); // 59 is too low
 
-        await gc.createGrade(ORGNAME, USER, "d2", 61, '', '');
+        await gc.createGrade(ORGNAME, REPOD1, "d2", 61, '', '');
 
         status = await sc.getStatus(ORGNAME, USER);
         expect(status).to.equal("D3PRE");

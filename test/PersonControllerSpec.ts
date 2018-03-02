@@ -14,6 +14,7 @@ describe("PersonController", () => {
 
     const NAME1 = 'user1';
     const NAME2 = 'user2';
+    const NAME3 = 'user3';
 
     before(async () => {
         ORGNAME = Config.getInstance().getProp('org');
@@ -44,7 +45,7 @@ describe("PersonController", () => {
         expect(people).to.have.lengthOf(1);
     });
 
-    it("Should be able to add a second user.", async () => {
+    it("Should be able to add a more users.", async () => {
         let people = await pc.getAllPeople(ORGNAME);
         expect(people).to.have.lengthOf(1);
 
@@ -52,6 +53,11 @@ describe("PersonController", () => {
         expect(person).to.not.be.null;
         people = await pc.getAllPeople(ORGNAME);
         expect(people).to.have.lengthOf(2);
+
+        person = await pc.getPerson(ORGNAME, NAME3);
+        expect(person).to.not.be.null;
+        people = await pc.getAllPeople(ORGNAME);
+        expect(people).to.have.lengthOf(3);
     });
 
 });

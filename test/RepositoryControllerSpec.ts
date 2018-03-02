@@ -17,6 +17,7 @@ describe("RepositoryController", () => {
     let pc: PersonController;
 
     const TEAMNAME1 = 'team1';
+    const TEAMNAME2 = 'team1';
 
     const REPONAME1 = 'repo1';
     const REPONAME2 = 'repo2';
@@ -43,10 +44,10 @@ describe("RepositoryController", () => {
         let repos = await rc.getAllRepos(ORGNAME);
         expect(repos).to.have.lengthOf(0);
 
-        let teams = await tc.getAllTeams(ORGNAME);
-        expect(teams).to.have.lengthOf(1);
+        let team = await tc.getTeam(ORGNAME, TEAMNAME1);
+        expect(team).to.not.be.null;
 
-        let repo = await rc.createRepository(ORGNAME, REPONAME1, teams, {});
+        let repo = await rc.createRepository(ORGNAME, REPONAME1, [team], {});
         expect(repo).to.not.be.null;
 
         repos = await rc.getAllRepos(ORGNAME);
@@ -57,10 +58,10 @@ describe("RepositoryController", () => {
         let repos = await rc.getAllRepos(ORGNAME);
         expect(repos).to.have.lengthOf(1);
 
-        let teams = await tc.getAllTeams(ORGNAME);
-        expect(teams).to.have.lengthOf(1);
+        let team = await tc.getTeam(ORGNAME, TEAMNAME1);
+        expect(team).to.not.be.null;
 
-        let repo = await rc.createRepository(ORGNAME, REPONAME1, teams, {});
+        let repo = await rc.createRepository(ORGNAME, REPONAME1, [team], {});
         expect(repo).to.not.be.null;
 
         repos = await rc.getAllRepos(ORGNAME);

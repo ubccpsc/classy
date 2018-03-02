@@ -40,21 +40,21 @@ describe("GradeController", () => {
         let grades = await gc.getAllGrades(ORGNAME);
         expect(grades).to.have.lengthOf(0);
 
-        let valid = await gc.createGrade(ORGNAME, USERNAME1, DELIVID1, 100, 'comment', 'URL');
-        expect(valid).to.not.be.null;
+        let valid = await gc.createGrade(ORGNAME, REPONAME1, DELIVID1, 100, 'comment', 'URL');
+        expect(valid).to.be.true;
         grades = await gc.getAllGrades(ORGNAME);
-        expect(grades).to.have.lengthOf(1);
+        expect(grades).to.have.lengthOf(2);
         expect(grades[0].score).to.equal(100);
     });
 
     it("Should be able to update a grade.", async () => {
         let grades = await gc.getAllGrades(ORGNAME);
-        expect(grades).to.have.lengthOf(1); // from previous
+        expect(grades).to.have.lengthOf(2); // from previous
 
-        let valid = await gc.createGrade(ORGNAME, USERNAME1, DELIVID1, 50, 'commentup', 'URLup');
-        expect(valid).to.not.be.null;
+        let valid = await gc.createGrade(ORGNAME, REPONAME1, DELIVID1, 50, 'commentup', 'URLup');
+        expect(valid).to.be.true;
         grades = await gc.getAllGrades(ORGNAME);
-        expect(grades).to.have.lengthOf(1); // still one
+        expect(grades).to.have.lengthOf(2); // still two (one for each teammember)
         expect(grades[0].score).to.equal(50);
         expect(grades[0].comment).to.equal('commentup');
         expect(grades[0].url).to.equal('URLup');
@@ -62,7 +62,7 @@ describe("GradeController", () => {
 
     it("Should be able to get a grade for a user.", async () => {
         let grades = await gc.getAllGrades(ORGNAME);
-        expect(grades).to.have.lengthOf(1); // from previous
+        expect(grades).to.have.lengthOf(2); // from previous
 
         let grade = await gc.getGrade(ORGNAME, USERNAME1, DELIVID1);
         expect(grade).to.not.be.null;
