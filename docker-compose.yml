@@ -34,11 +34,11 @@ services:
         build: grader/
         env_file: grader/.env
         environment:
-            - HOST_DIR: "/home/cs310/autotest/data/runs"
-            - HOST_NAME: "172.28.2.0"
-            - SOCK_PORT: "7777"
-            - USER_UID: "1008"
-            - DOCKER_NET: "autotest_grader"
+            - "HOST_DIR=/home/cs310/autotest/data/runs"
+            - "HOST_NAME=172.28.2.0"
+            - "SOCK_PORT=7777"
+            - "USER_UID=1008"
+            - "DOCKER_NET=autotest_grader"
         networks:
             default:
             grader:
