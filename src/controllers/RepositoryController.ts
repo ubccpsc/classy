@@ -82,4 +82,16 @@ export class RepositoryController {
             return null;
         }
     }
+
+    public async createPullRequest(org: string, repoId: string, prId: string, custom: any): Promise<Repository | null> {
+        // TODO: implement PR functionality
+
+        // NOTE: this impl is more complex than it needs to be but is erring on the side of caution
+        let repo = await this.getRepository(org, repoId);
+        let customA = Object.assign({}, repo.custom);
+        let customB = Object.assign(customA, custom); // overwrite with new fields
+        repo.custom = customB;
+        await this.db.writeRepository(repo);
+        return await this.getRepository(org, repoId);
+    }
 }

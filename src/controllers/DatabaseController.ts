@@ -182,8 +182,8 @@ export class DatabaseController {
         if (existingRepo === null) {
             return await this.writeRecord(this.REPOCOLL, record);
         } else {
-            Log.info("DatabaseController::writeRepository(..) - ERROR; repo already exists; repo: " + JSON.stringify(record));
-            return false;
+            const query = {org: record.org, id: record.id};
+            return await this.updateRecord(this.REPOCOLL, query, record);
         }
     }
 

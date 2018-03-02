@@ -28,6 +28,8 @@ describe("SDDMController", () => {
 
     const USER = "sddmdusertest";
 
+    const PRNAME = "prd3id";
+
     before(async () => {
         ORGNAME = Config.getInstance().getProp('org');
     });
@@ -85,22 +87,65 @@ describe("SDDMController", () => {
 
     it("Should be able to get a D1TEAMSET status.", async () => {
         let status = await sc.getStatus(ORGNAME, USER);
+        expect(status).to.equal("D1UNLOCKED");
+
+        const person = await pc.getPerson(ORGNAME, USER);
+        const team = await tc.createTeam(ORGNAME, TEAMD1, [person], {sdmmd1: true});
+        expect(team).to.not.be.null;
+
+        status = await sc.getStatus(ORGNAME, USER);
         expect(status).to.equal("D1TEAMSET");
     });
+
     it("Should be able to get a D1 status.", async () => {
         let status = await sc.getStatus(ORGNAME, USER);
+        expect(status).to.equal("D1TEAMSET");
+
+        const team = await tc.getTeam(ORGNAME, TEAMD1);
+        const repo = await rc.createRepository(ORGNAME, REPOD1, [team], {d1enabled: true});
+        expect(repo).to.not.be.null;
+
+        status = await sc.getStatus(ORGNAME, USER);
         expect(status).to.equal("D1");
     });
+
     it("Should be able to get a D2 status.", async () => {
         let status = await sc.getStatus(ORGNAME, USER);
+        expect(status).to.equal("D1");
+
+        await gc.createGrade(ORGNAME, USER, "d1", 59, '', '');
+        status = await sc.getStatus(ORGNAME, USER);
+        expect(status).to.equal("D1"); // 59 is too low
+
+        await gc.createGrade(ORGNAME, USER, "d1", 61, '', '');
+
+        status = await sc.getStatus(ORGNAME, USER);
         expect(status).to.equal("D2");
     });
+
     it("Should be able to get a D3PRE status.", async () => {
         let status = await sc.getStatus(ORGNAME, USER);
+        expect(status).to.equal("D2");
+
+        await gc.createGrade(ORGNAME, USER, "d2", 59, '', '');
+        status = await sc.getStatus(ORGNAME, USER);
+        expect(status).to.equal("D2"); // 59 is too low
+
+        await gc.createGrade(ORGNAME, USER, "d2", 61, '', '');
+
+        status = await sc.getStatus(ORGNAME, USER);
         expect(status).to.equal("D3PRE");
     });
+
     it("Should be able to get a D3 status.", async () => {
         let status = await sc.getStatus(ORGNAME, USER);
+        expect(status).to.equal("D3PRE");
+
+        const repo = await rc.createPullRequest(ORGNAME, REPOD1, PRNAME, {sddmD3pr: true});
+        expect(repo).to.not.be.null;
+        expect(repo.custom.sddmD3pr).to.be.true;
+
+        status = await sc.getStatus(ORGNAME, USER);
         expect(status).to.equal("D3");
     });
 

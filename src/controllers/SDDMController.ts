@@ -126,8 +126,10 @@ export class SDDMController {
                         if (r.custom.d1enabled === true) {
                             // is a project repo
                             r.custom.d2enabled = true;
+                            await this.dc.writeRepository(r);
                         }
                     }
+                    currentStatus = "D2";
                 } else {
                     Log.info("XXX::getStatus(..) - NOT elevating from D1");
                 }
@@ -139,6 +141,7 @@ export class SDDMController {
                 let d2Grade = await this.gc.getGrade(org, personId, "d2");
                 if (d2Grade && d2Grade.score >= 60) {
                     Log.info("XXX::getStatus(..) - elevating D2 to D3PRE");
+                    currentStatus = "D3PRE";
                 } else {
                     Log.info("XXX::getStatus(..) - NOT elevating from D2");
                 }
@@ -171,6 +174,7 @@ export class SDDMController {
                     if (r.custom.d2enabled === true) {
                         // is a project repo
                         r.custom.d3enabled = true;
+                        await this.dc.writeRepository(r);
                     }
                 }
                 Log.info("XXX::getStatus(..) - NOT elevating from D3");
