@@ -14,11 +14,11 @@ services:
         ports:
             - "11315:11315" # this is the reference UI for all deliverables; exposd globally
     portalBackend:
-        build: TODO 
+        build: https://${UBCCPSCTOKEN}github.com/ubccpsc/sdmm-portal-backend.git
         ports:
             - "5000:5000" # this is the reference UI for all deliverables; exposd globally
     portalFrontend:
-        build: TODO 
+        build: https://${UBCCPSCTOKEN}github.com/ubccpsc/sdmm-portal.git 
         depends_on:
             - portalBackend
         ports:
