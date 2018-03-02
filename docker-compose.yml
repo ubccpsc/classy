@@ -6,7 +6,7 @@ services:
         volumes:
             - ./data/db:/data/db
     geolocation:
-        build: https://${UBCCPSCTOKEN}@github.ubc.ca/cpsc310/cpsc310geocoder.git
+        build: https://${GH_CPSC310TOKEN}@github.ubc.ca/cpsc310/cpsc310geocoder.git
         ports:
             - "11316:11316" # this is the geolocation port for d2/d3; exposd globally
     # referenceUI:
