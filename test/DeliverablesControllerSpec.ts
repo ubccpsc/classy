@@ -8,21 +8,11 @@ const loadFirst = require('./GlobalSpec');
 
 describe("DeliverablesController", () => {
 
-    // let ORGNAME: string;
     let dc: DeliverablesController;
 
-    /*
-    const TEAMNAME1 = 'team1';
-    const REPONAME1 = 'repo1';
-    const REPONAME2 = 'repo2';
-
-    const D1NAME = 'd1';
-*/
-
-    let DELIV1: Deliverable = null;
+    let DELIV1: Deliverable = null; // delivs are complex so just use one for the whole suite
 
     before(async () => {
-        // ORGNAME = Config.getInstance().getProp('org');
         DELIV1 = {
             id:               Test.DELIVID1,
             org:              Test.ORGNAME,

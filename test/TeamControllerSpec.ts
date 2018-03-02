@@ -12,9 +12,7 @@ describe("TeamController", () => {
     let tc: TeamController;
     let pc: PersonController;
 
-
     before(async () => {
-        // ORGNAME = Config.getInstance().getProp('org');
     });
 
     beforeEach(() => {

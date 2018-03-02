@@ -15,7 +15,30 @@ export class SDDMController {
         Log.trace("SDDMController::<init> - start");
     }
 
+
+    public async createRepo(org: string, delivId: string, peopleIds: string[]): Promise<boolean> {
+
+        try {
+            if (delivId === "d0") {
+
+            } else if (delivId === "d1") {
+
+            } else {
+                Log.warn("SDDMController::createRepo(..) - new repo not needed for delivId: " + delivId);
+                return false;
+            }
+        } catch (err) {
+            Log.error("SDDMController::createRepo(..) - ERROR: " + err);
+            return false;
+        }
+
+    }
+
     /**
+     *
+     * This confirms the SDDM status. The approach is conservative (and hence slow).
+     *
+     * It will try to use checkStatus first to speed itself up.
      * Status chain:
      *
      * D0PRE
@@ -29,19 +52,25 @@ export class SDDMController {
      *
      * @param {string} org
      * @param {string} personId
-     * @returns {Promise<string>}
+     * @returns {Promise<string>} null if the personId is not even known
      */
-    public async getStatus(org: string, personId: string): Promise<string> {
+    public async getStatus(org: string, personId: string): Promise<string | null> {
         Log.info("XXX::getStatus( " + org + ', ' + personId + ' ) - start');
         const start = Date.now();
         try {
             const person = await this.dc.getPerson(org, personId);
             if (person === null) {
                 Log.info("SDDMController::getStatus(..) - ERROR; person null");
-                return;
+                return null;
             }
 
-            // let currentStatus = person.custom.sddmStatus;
+            const reportedStatus = person.custom.sddmStatus;
+            // most of the time the status doesn't change, so let's just check that first:
+            const statusCorrect = await this.checkStatus(org, personId);
+            if (statusCorrect === true) {
+                Log.info("SDDMController::getStatus(..) - check successful; skipping");
+                return reportedStatus;
+            }
             let currentStatus = "D0PRE";
 
             // D0PRE
@@ -192,6 +221,50 @@ export class SDDMController {
             Log.error("XXX::getStatus( " + org + ', ' + personId + ' ) - ERROR: ' + err);
             return "UNKNOWN";
         }
+    }
 
+    /**
+     *
+     * This confirms the custom.sddmStatus is correct.
+     *
+     * It will try to use checkStatus first to speed itself up.
+     * Status chain:
+     *
+     * D0PRE
+     * D0
+     * D1UNLOCKED
+     * D1TEAMSET
+     * D1
+     * D2
+     * D3PRE
+     * D3
+     *
+     * @param {string} org
+     * @param {string} personId
+     * @returns {Promise<string>}
+     */
+    private async checkStatus(org: string, personId: string): Promise<boolean> {
+        Log.info("XXX::getStatus( " + org + ', ' + personId + ' ) - start');
+        const start = Date.now();
+        try {
+            const person = await this.dc.getPerson(org, personId);
+            if (person === null) {
+                Log.info("SDDMController::checkStatus(..) - ERROR; person null");
+                return null;
+            }
+
+            const reportedStatus = person.custom.sddmStatus;
+            if (reportedStatus === "D0PRE") {
+                // don't bother, let checkStatus do it right
+                return false;
+            }
+
+            // TODO: actually do this if it looks like getStatus is proving to be too slow
+
+            return false;
+
+        } catch (err) {
+            Log.info("SDDMController::checkStatus(..) - ERROR: " + err);
+        }
     }
 }

@@ -14,16 +14,6 @@ describe("RepositoryController", () => {
     let tc: TeamController;
     let pc: PersonController;
 
-    /*
-    const TEAMNAME1 = 'team1';
-    const TEAMNAME2 = 'team1';
-
-    const REPONAME1 = 'repo1';
-    const REPONAME2 = 'repo2';
-
-    const NAME1 = 'user1';
-    const NAME2 = 'user2';
-*/
     before(async () => {
     });
 

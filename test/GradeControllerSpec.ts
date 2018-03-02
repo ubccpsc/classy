@@ -8,23 +8,9 @@ const rFirst = require('./RepositoryControllerSpec');
 
 describe("GradeController", () => {
 
-    // let ORGNAME: string;
     let gc: GradesController;
 
-    /*
-    const TEAMNAME1 = 'team1';
-
-    const USERNAME1 = 'user1';
-    const USERNAME2 = 'user2';
-
-    const DELIVID1 = 'd1';
-    const DELIVID2 = 'd2';
-
-    const REPONAME1 = 'repo1';
-    const REPONAME2 = 'repo2';
-*/
     before(async () => {
-        //     ORGNAME = Config.getInstance().getProp('org');
     });
 
     beforeEach(() => {

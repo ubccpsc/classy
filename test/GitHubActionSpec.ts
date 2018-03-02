@@ -8,7 +8,7 @@ import Log from "../src/util/Log";
 import {Test} from "./GlobalSpec";
 import Util from "../src/util/Util";
 
-describe("GitHubActions", () => {
+describe.skip("GitHubActions", () => {
 
     let gh: GitHubActions;
 

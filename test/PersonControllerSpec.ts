@@ -10,11 +10,6 @@ describe("PersonController", () => {
 
     let pc: PersonController;
 
-    /*
-    const NAME1 = 'user1';
-    const NAME2 = 'user2';
-    const NAME3 = 'user3';
-*/
     before(async () => {
     });
 
