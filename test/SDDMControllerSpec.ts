@@ -247,6 +247,11 @@ describe("SDDMController", () => {
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.be.empty;
+
+        // also shouldn't be able to provision someone who hasn't been created yet
+        payload = await sc.provision(Test.ORGNAME, Test.DELIVID0, [PERSON3.id]);
+        expect(payload.success).to.be.false;
+        Log.test(payload.message);
     });
 
     it("Should be able to provision a d0 repo for an individual.", async () => {
@@ -369,6 +374,17 @@ describe("SDDMController", () => {
         expect(allTeams).to.have.lengthOf(0);
         // expect(allTeams[0].custom.sdmmd0).to.be.true;
         // expect(allTeams[0].custom.sdmmd1).to.be.false;
+
+
+        // and some other reasons you can't provision d1 repos
+
+        // need at least one person
+        payload = await sc.provision(Test.ORGNAME, Test.DELIVID1, []);
+        expect(payload.success).to.be.false; // person2 doesn't exist
+
+        // can't form a group with yourself
+        payload = await sc.provision(Test.ORGNAME, Test.DELIVID1, [PERSON2.id, PERSON2.id]);
+        expect(payload.success).to.be.false; // person2 doesn't exist
     });
 
 
