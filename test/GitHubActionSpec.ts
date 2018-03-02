@@ -8,28 +8,13 @@ import Log from "../src/util/Log";
 import {Test} from "./GlobalSpec";
 import Util from "../src/util/Util";
 
-describe.only("GitHubActions", () => {
+describe.skip("GitHubActions", () => {
 
-    // let ORGNAME: string;
     let gh: GitHubActions;
 
     let TIMEOUT = 5000;
 
-    /*
-    const TEAMNAME1 = 'team1';
-
-    const USERNAME1 = 'user1';
-    const USERNAME2 = 'user2';
-
-    const DELIVID1 = 'd1';
-    const DELIVID2 = 'd2';
-
-    const REPONAME1 = 'repo1';
-    const REPONAME2 = 'repo2';
-*/
-
     before(async () => {
-        //  ORGNAME = Config.getInstance().getProp('org');
     });
 
     beforeEach(function () {
@@ -37,13 +22,12 @@ describe.only("GitHubActions", () => {
     });
 
     it("Should be able to create list some repos.", async () => {
-        // really just checks that auth is correct
-
-        // delete test repos if needed
+        // check auth
         let repos = await gh.listRepos(Test.ORGNAME);
         expect(repos).to.be.an('array');
         expect(repos.length > 0).to.be.true;
 
+        // delete test repos if needed
         for (const repo of repos as any) {
             if (repo.full_name === "SECapstone/" + Test.REPONAME1) {
                 Log.test("Old test repo found; removing");
@@ -105,7 +89,7 @@ describe.only("GitHubActions", () => {
         expect(val.githubTeamNumber).to.be.an('number');
         expect(val.githubTeamNumber > 0).to.be.true;
 
-        let addMembers = await gh.addMembersToTeam(val.teamName, val.githubTeamNumber, [Test.USERNAMEGITHUB,Test.USERNAMEGITHUB2]);
+        let addMembers = await gh.addMembersToTeam(val.teamName, val.githubTeamNumber, [Test.USERNAMEGITHUB, Test.USERNAMEGITHUB2]);
         expect(addMembers.teamName).to.equal(Test.TEAMNAME1); // not a strong test
 
         let teamAdd = await gh.addTeamToRepo(Test.ORGNAME, val.githubTeamNumber, Test.REPONAME1, 'push');
