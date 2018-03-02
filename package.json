@@ -26,6 +26,7 @@
     "@types/restify": "^5.0.7",
     "awesome-typescript-loader": "^3.4.1",
     "chai": "^4.1.2",
+    "child-process-promise": "^2.2.1",
     "client-oauth2": "^4.1.0",
     "fs-extra": "^5.0.0",
     "mocha": "^5.0.1",
@@ -33,6 +34,7 @@
     "request-promise-native": "^1.0.5",
     "restify": "^6.3.4",
     "source-map-loader": "^0.2.3",
+    "tmp-promise": "^1.0.4",
     "ts-node": "^5.0.0",
     "typescript": "^2.7.2",
     "webpack": "^3.11.0"
