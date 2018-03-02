@@ -2,6 +2,8 @@ import {expect} from "chai";
 import "mocha";
 import {GradesController} from "../src/controllers/GradesController";
 import {Test} from "./GlobalSpec";
+import * as crypto from "crypto";
+import Log from "../src/util/Log";
 
 const loadFirst = require('./GlobalSpec');
 const rFirst = require('./RepositoryControllerSpec');
@@ -54,6 +56,5 @@ describe("GradeController", () => {
         expect(grade).to.not.be.null;
         expect(grade.score).to.equal(50);
     });
-
 
 });

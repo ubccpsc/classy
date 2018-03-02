@@ -2,27 +2,77 @@ import Log from "../util/Log";
 
 import * as rp from "request-promise-native";
 import {Config} from "../Config";
+import {Repository, Team} from "../Types";
 
 let tmp = require('tmp-promise');
 
-export class GitHubController {
+
+export interface IGitHubController {
+    /**
+     * This is a complex method that provisions an entire repository.
+     *
+     * Assumptions: a 'staff' repo must also exist.
+     *
+     * @param {string} org
+     * @param {string} repoName
+     * @param {Team[]} teams
+     * @param {string} sourceRepo
+     * @param {string} webhookAddress
+     * @returns {Promise<boolean>}
+     */
+    provisionRepository(org: string, repoName: string, teams: Team[], sourceRepo: string, webhookAddress: string): Promise<boolean>;
+
+    createPullRequest(org: string, repoName: string, prName: string): Promise<boolean>;
+
+    getRepositoryUrl(repo: Repository): Promise<string>;
+
+    getTeamUrl(team: Team): Promise<string>;
+}
 
 
-    public createD0repository(org: string, personId: string) {
-
+export class TestGitHubController implements IGitHubController {
+    public async getRepositoryUrl(repo: Repository): Promise<string> {
+        return "TESTURL";
     }
 
-    public createD1repository(org: string, teamId: string) {
-        // check that the team exists
-        // make sure any team members have d0 grade > 60
-        // make sure any team members do not already have d1 repos
+    public async getTeamUrl(team: Team): Promise<string> {
+        return "TESTURL";
     }
 
-    public createD3pr(org: string, repoId: string) {
-
+    public async provisionRepository(org: string, repoName: string, teams: Team[], sourceRepo: string, webhookAddress: string): Promise<boolean> {
+        Log.error("TestGitHubController::provisionRepository(..) - NOT IMPLEMENTED");
+        return true;
     }
 
+    public async createPullRequest(org: string, repoName: string, prName: string): Promise<boolean> {
+        Log.error("TestGitHubController::createPullRequest(..) - NOT IMPLEMENTED");
+        return true;
+    }
+}
 
+export class GitHubController implements IGitHubController {
+    private gha = new GitHubActions();
+
+    public async getRepositoryUrl(repo: Repository): Promise<string> {
+        Log.error("GitHubController::getRepositoryUrl(..) - NOT IMPLEMENTED");
+        return "TODO";
+    }
+
+    public async getTeamUrl(team: Team): Promise<string> {
+        Log.error("GitHubController::getTeamUrl(..) - NOT IMPLEMENTED");
+        // const url = this.gha.getTeamNumber()
+        return "TODO";
+    }
+
+    public async provisionRepository(org: string, repoName: string, teams: Team[], sourceRepo: string, webhookAddress: string): Promise<boolean> {
+        Log.error("GitHubController::provisionRepository(..) - NOT IMPLEMENTED");
+        return false;
+    }
+
+    public async createPullRequest(org: string, repoName: string, prName: string): Promise<boolean> {
+        Log.error("GitHubController::createPullRequest(..) - NOT IMPLEMENTED");
+        return false;
+    }
 }
 
 interface GitTeamTuple {

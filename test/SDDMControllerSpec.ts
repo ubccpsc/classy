@@ -1,4 +1,4 @@
-import {SDDMController} from "../src/controllers/SDDMController";
+import {ResponsePayload, SDDMController} from "../src/controllers/SDDMController";
 import {expect} from "chai";
 import "mocha";
 import {GradesController} from "../src/controllers/GradesController";
@@ -6,6 +6,7 @@ import {RepositoryController} from "../src/controllers/RepositoryController";
 import {TeamController} from "../src/controllers/TeamController";
 import {PersonController} from "../src/controllers/PersonController";
 import {Test} from "./GlobalSpec";
+import {TestGitHubController} from "../src/controllers/GitHubController";
 
 const loadFirst = require('./GlobalSpec');
 
@@ -33,7 +34,7 @@ describe("SDDMController", () => {
     });
 
     beforeEach(() => {
-        sc = new SDDMController();
+        sc = new SDDMController(new TestGitHubController());
         rc = new RepositoryController();
         gc = new GradesController();
         tc = new TeamController();
@@ -147,4 +148,8 @@ describe("SDDMController", () => {
         expect(status).to.equal("D3");
     });
 
+    it.only("Should be able to provision a d0 repo.", async () => {
+        let payload = await sc.createRepo(Test.ORGNAME, Test.DELIVID0, [Test.USERNAME1]);
+        expect(payload.success).to.be.true;
+    });
 });
