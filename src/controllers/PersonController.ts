@@ -1,10 +1,27 @@
 import Log from "../util/Log";
 import {DatabaseController} from "./DatabaseController";
 import {Person} from "../Types";
+import {SDDMController} from "./SDDMController";
 
 export class PersonController {
 
     private db: DatabaseController = DatabaseController.getInstance();
+
+    public async createPerson(personPrototype: Person): Promise<Person | null> {
+        Log.info("PersonController::createPerson( " + personPrototype.org + ", " + personPrototype.id + " ) - start");
+        let existingPerson = await this.db.getPerson(personPrototype.org, personPrototype.id);
+
+        if (existingPerson === null) {
+            Log.trace("PersonController::createPerson(..) - writing");
+            let successful = await this.db.writePerson(personPrototype);
+            if (successful === true) {
+                Log.trace("PersonController::createPerson(..) - retrieving");
+                const person = await this.db.getPerson(personPrototype.org, personPrototype.id);
+                return person;
+            }
+        }
+        return null;
+    }
 
     /**
      * Validates github username for the specified org.
@@ -21,46 +38,20 @@ export class PersonController {
         let person = await this.db.getPerson(org, githubUsername);
 
         if (person === null) {
-            if (org === 'secapstone' || org === 'secapstonetest') {
-                Log.info("PersonController::configureUsername( " + org + ", " + githubUsername + " ) - new person for this org; - provisioning");
-                // in the secapstone we don't know who the students are in advance
-                // in this case, we will create Person objects on demand
-
-                // make person
-                let newPerson: Person = {
-                    id:            githubUsername,
-                    csId:          githubUsername, // sdmm doesn't have these
-                    githubId:      githubUsername,
-                    studentNumber: null,
-
-                    org:   org,
-                    fName: '',
-                    lName: '',
-                    kind:  'student',
-                    url:   'https://github.com/' + githubUsername,
-                    labId: 'UNKNOWN',
-                    custom: {}
-                };
-
-                newPerson.custom.sdmmStatus = 'd0pre';
-
-                // add to database
-                await this.db.writePerson(newPerson);
-                return newPerson;
-            } else {
-                // otherwise, person should be configured for course in advance
-                // in this case, return false, because login failed
-                Log.info("PersonController::configureUsername( " + org + ", " + githubUsername + " ) - unknown person for this org - failing");
-                return null;
-            }
-        } else {
-            return person;
+            // otherwise, person should be configured for course in advance
+            // in this case, return false, because login failed
+            Log.info("PersonController::configureUsername( " + org + ", " + githubUsername + " ) - unknown person for this org - failing");
+            return null;
         }
+        //} else {
+        return person;
+        //}
     }
 
     public async getAllPeople(org: string): Promise<Person[]> {
         Log.info("PersonController::getAllPeople( " + org + " ) - start");
         return await this.db.getPeople(org);
     }
+
 
 }

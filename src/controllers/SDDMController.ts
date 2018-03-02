@@ -29,43 +29,86 @@ export class SDDMController {
         this.gh = ghController;
     }
 
-    public async createRepo(org: string, delivId: string, peopleIds: string[]): Promise<ResponsePayload> {
-        Log.info("SDDMController::createRepo( " + org + ", " + delivId + ", " + JSON.stringify(peopleIds) + " ) - start");
+    public async handleUnknownUser(org: string, githubUsername: string): Promise<Person | null> {
+        Log.info("SDDMController::handleUnknownUser( " + org + ", " + githubUsername + " ) - start");
+        if (org === 'secapstone' || org === 'secapstonetest') {
+            Log.info("SDDMController::handleUnknownUser(..) - new person for this org; - provisioning");
+
+            // in the secapstone we don't know who the students are in advance
+            // in this case, we will create Person objects on demand
+
+            // make person
+            let newPerson: Person = {
+                id:            githubUsername,
+                csId:          githubUsername, // sdmm doesn't have these
+                githubId:      githubUsername,
+                studentNumber: null,
+
+                org:    org,
+                fName:  '',
+                lName:  '',
+                kind:   'student',
+                url:    'https://github.com/' + githubUsername,
+                labId:  'UNKNOWN',
+                custom: {}
+            };
+
+            newPerson.custom.sdmmStatus = 'd0pre';
+
+            // add to database
+            await this.dc.writePerson(newPerson);
+            return newPerson;
+        }
+
+        Log.error("SDDMController::handleUnknownUser() - not a SDDM org");
+        return null;
+    }
+
+    /**
+     * Performs a complete provisioning task for a given deliverable and set of people.
+     *
+     * @param {string} org
+     * @param {string} delivId
+     * @param {string[]} peopleIds
+     * @returns {Promise<ResponsePayload>}
+     */
+    public async provision(org: string, delivId: string, peopleIds: string[]): Promise<ResponsePayload> {
+        Log.info("SDDMController::provision( " + org + ", " + delivId + ", " + JSON.stringify(peopleIds) + " ) - start");
 
         try {
             if (org !== "secapstone" && org !== "secapstonetest") {
-                Log.error("SDDMController::createRepo(..) - SDDMController should not be used for other orgs");
+                Log.error("SDDMController::provision(..) - SDDMController should not be used for other orgs");
                 return {success: false, message: "Invalid org; contact course staff."};
             }
 
             if (peopleIds.length < 1) {
-                Log.error("SDDMController::createRepo(..) - there needs to be at least one person on a repo");
+                Log.error("SDDMController::provision(..) - there needs to be at least one person on a repo");
                 return {success: false, message: "Invalid # of people; contact course staff."};
             }
 
             if (delivId === "d0") {
                 if (peopleIds.length === 1) {
-                    Log.info("SDDMController::createRepo(..) - provisioning new d0 repo for " + peopleIds[0]);
+                    Log.info("SDDMController::provision(..) - provisioning new d0 repo for " + peopleIds[0]);
                     return await this.provisionD0Repo(org, peopleIds[0]);
                 } else {
-                    Log.error("SDDMController::createRepo(..) - d0 repos are only for individuals");
+                    Log.error("SDDMController::provision(..) - d0 repos are only for individuals");
                     return {success: false, message: "D0 for indivduals only; contact course staff."};
                 }
             } else if (delivId === "d1") {
 
                 if (peopleIds.length === 1) {
-                    Log.info("SDDMController::createRepo(..) - updating existing d0 repo to d1 for " + peopleIds[0]);
+                    Log.info("SDDMController::provision(..) - updating existing d0 repo to d1 for " + peopleIds[0]);
                     return await this.updateIndividualD0toD1(org, peopleIds[0]);
                 } else {
-                    Log.info("SDDMController::createRepo(..) - provisioning new d1 repo for " + JSON.stringify(peopleIds[0]));
+                    Log.info("SDDMController::provision(..) - provisioning new d1 repo for " + JSON.stringify(peopleIds[0]));
                     return await this.provisionD1Repo(org, peopleIds);
                 }
             } else {
-                Log.warn("SDDMController::createRepo(..) - new repo not needed for delivId: " + delivId);
+                Log.warn("SDDMController::provision(..) - new repo not needed for delivId: " + delivId);
                 return {success: false, message: "Repo not needed; contact course staff."};
             }
         } catch (err) {
-            Log.error("SDDMController::createRepo(..) - ERROR: " + err);
+            Log.error("SDDMController::provision(..) - ERROR: " + err);
             return {success: false, message: "Unknown error creating repo; contact course staff."};
         }
 
@@ -314,6 +357,11 @@ export class SDDMController {
             const person = await this.pc.getPerson(org, name);
             const teamName = name;
             const repoName = "secap_" + teamName;
+
+            if (person === null) {
+                // return early
+                return {success: false, message: "Username not registered; contact course staff."};
+            }
 
             // create local team
             const teamCustom = {sdmmd0: true, sdmmd1: false, sdmmd2: false, sdmmd3: false}; // d0 team for now

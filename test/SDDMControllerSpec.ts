@@ -7,6 +7,7 @@ import {TeamController} from "../src/controllers/TeamController";
 import {PersonController} from "../src/controllers/PersonController";
 import {Test} from "./GlobalSpec";
 import {TestGitHubController} from "../src/controllers/GitHubController";
+import Log from "../src/util/Log";
 
 const loadFirst = require('./GlobalSpec');
 
@@ -42,7 +43,9 @@ describe("SDDMController", () => {
     });
 
     it("Should be able to get a D0PRE status.", async () => {
-        await pc.getPerson(Test.ORGNAME, USER); // provisions user
+        await sc.handleUnknownUser(Test.ORGNAME, USER); // provision user
+
+        await pc.getPerson(Test.ORGNAME, USER); // get user
 
         let status = await sc.getStatus(Test.ORGNAME, USER);
         expect(status).to.equal("D0PRE");
@@ -148,13 +151,15 @@ describe("SDDMController", () => {
         expect(status).to.equal("D3");
     });
 
-    it.only("Should not be able to provision a d0 repo for a random person.", async () => {
-        let payload = await sc.createRepo(Test.ORGNAME, Test.DELIVID0, ["this is a random name #@"]);
+    it("Should not be able to provision a d0 repo for a random person.", async () => {
+        let payload = await sc.provision(Test.ORGNAME, Test.DELIVID0, ["this is a random name #@"]);
         expect(payload.success).to.be.false;
+        Log.test(payload.message);
     });
 
-    it.only("Should be able to provision a d0 repo.", async () => {
-        let payload = await sc.createRepo(Test.ORGNAME, Test.DELIVID0, [Test.USERNAME1]);
+    it("Should be able to provision a d0 repo.", async () => {
+        let payload = await sc.provision(Test.ORGNAME, Test.DELIVID0, [Test.USERNAME1]);
         expect(payload.success).to.be.true;
+        Log.test(payload.message);
     });
 });
