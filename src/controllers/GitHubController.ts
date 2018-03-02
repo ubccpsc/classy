@@ -492,80 +492,90 @@ export class GitHubActions {
         });
 
         function cloneRepo() {
-            Log.info('GithubManager::cloneRepo() - cloning: ' + importRepo);
+            Log.info('GithubManager::importRepoFS(..)::cloneRepo() - cloning: ' + importRepo);
             return exec(`git clone ${authedImportRepo} ${tempPath}`)
                 .then(function (result: any) {
-                    Log.info('GitHubAction::cloneRepo STDOUT/STDERR:');
-                    console.log('stdoutSOMETHING: ', result.stdout);
-                    console.log('stderr: ', result.stderr);
+                    Log.info('GithubManager::importRepoFS(..)::cloneRepo() - done:');
+                    Log.trace('GithubManager::importRepoFS(..)::cloneRepo() - stdout: ' + result.stdout);
+                    if (result.stderr) {
+                        Log.warn('GithubManager::importRepoFS(..)::cloneRepo() - stderr: ' + result.stderr);
+                    }
                 });
         }
 
         function enterRepoPath() {
-            Log.info('GithubManager::cloneRepo() - enterRepoPath: ' + tempPath);
+            Log.info('GithubManager::importRepoFS(..)::enterRepoPath() - entering: ' + tempPath);
             return exec(`cd ${tempPath}`)
                 .then(function (result: any) {
-                    Log.info('GitHubAction::cloneRepo STDOUT/STDERR:');
-                    console.log('stdoutSOMETHING: ', result.stdout);
-                    console.log('stderr: ', result.stderr);
+                    Log.info('GithubManager::importRepoFS(..)::enterRepoPath() - done:');
+                    Log.trace('GithubManager::importRepoFS(..)::enterRepoPath() - stdout: ' + result.stdout);
+                    if (result.stderr) {
+                        Log.warn('GithubManager::importRepoFS(..)::enterRepoPath() - stderr: ' + result.stderr);
+                    }
                 });
         }
 
         function removeGitDir() {
-            Log.info('GithubManager::cloneRepo() - removing .git from cloned repo');
+            Log.info('GithubManager::importRepoFS(..)::removeGitDir() - removing .git from cloned repo');
             return exec(`cd ${tempPath} && rm -rf .git`)
                 .then(function (result: any) {
-                    Log.info('GitHubAction::cloneRepo STDOUT/STDERR:');
-                    console.log('stdoutSOMETHING: ', result.stdout);
-                    console.log('stderr: ', result.stderr);
+                    Log.info('GithubManager::importRepoFS(..)::removeGitDir() - done:');
+                    console.log('GithubManager::importRepoFS(..)::removeGitDir() - stdout: ', result.stdout);
+                    console.log('GithubManager::importRepoFS(..)::removeGitDir() - stderr: ', result.stderr);
                 });
         }
 
         function initGitDir() {
-            Log.info('GithubManager::cloneRepo() - git init in repo');
+            Log.info('GithubManager::importRepoFS(..)::initGitDir() - start');
             return exec(`cd ${tempPath} && git init`)
                 .then(function (result: any) {
-                    Log.info('GitHubAction::cloneRepo STDOUT/STDERR:');
-                    console.log('stdoutSOMETHING: ', result.stdout);
-                    console.log('stderr: ', result.stderr);
+                    Log.info('GithubManager::importRepoFS(..)::initGitDir() - done:');
+                    Log.trace('GithubManager::importRepoFS(..)::initGitDir() - stdout: ' + result.stdout);
+                    if (result.stderr) {
+                        Log.warn('GithubManager::importRepoFS(..)::initGitDir() - stderr: ' + result.stderr);
+                    }
                 });
         }
 
         function changeGitRemote() {
-            Log.info('GithubManager::cloneRepo() - change git remote');
+            Log.info('GithubManager::importRepoFS(..)::changeGitRemote() - start');
             const command = `cd ${tempPath} && git remote add origin ${authedStudentRepo}.git && git fetch --all`;
             return exec(command)
                 .then(function (result: any) {
-                    Log.info('GitHubAction::cloneRepo STDOUT/STDERR:');
-                    console.log('stdoutSOMETHING: ', result.stdout);
-                    console.log('stderr: ', result.stderr);
+                    Log.info('GithubManager::importRepoFS(..)::changeGitRemote() - done:');
+                    Log.trace('GithubManager::importRepoFS(..)::changeGitRemote() - stdout: ' + result.stdout);
+                    if (result.stderr) {
+                        Log.warn('GithubManager::importRepoFS(..)::changeGitRemote() - stderr: ' + result.stderr);
+                    }
                 });
         }
 
         function addFilesToRepo() {
-            Log.info('GithubManager::cloneRepo() - addFilesToRepo');
+            Log.info('GithubManager::importRepoFS(..)::addFilesToRepo() - start');
             const command = `cd ${tempPath} && git add . && git commit -m "Starter files"`;
             return exec(command)
                 .then(function (result: any) {
-                    Log.info('GitHubAction::cloneRepo STDOUT/STDERR:');
-                    console.log('stdoutSOMETHING: ', result.stdout);
-                    console.log('stderr: ', result.stderr);
+                    Log.info('GithubManager::importRepoFS(..)::addFilesToRepo() - done:');
+                    Log.trace('GithubManager::importRepoFS(..)::addFilesToRepo() - stdout: ' + result.stdout);
+                    if (result.stderr) {
+                        Log.warn('GithubManager::importRepoFS(..)::addFilesToRepo() - stderr: ' + result.stderr);
+                    }
                 });
         }
 
         function pushToNewRepo() {
-            Log.info('GithubManager::cloneRepo() - pushToNewRepo');
+            Log.info('GithubManager::importRepoFS(..)::pushToNewRepo() - start');
             let command = `pushd ${tempPath} && git push origin master`;
             return exec(command)
                 .then(function (result: any) {
-                    Log.info('GitHubAction::cloneRepo STDOUT/STDERR:');
-                    console.log('stdoutSOMETHING: ', result.stdout);
-                    console.log('stderr: ', result.stderr);
+                    Log.info('GithubManager::importRepoFS(..)::pushToNewRepo() - done: ');
+                    Log.trace('GithubManager::importRepoFS(..)::pushToNewRepo() - stdout: ' + result.stdout);
+                    if (result.stderr) {
+                        Log.warn('GithubManager::importRepoFS(..)::pushToNewRepo() - stderr: ' + result.stderr);
+                    }
                 });
         }
-
     }
-
 
     private delay(ms: number): Promise<{}> {
         // logger.info("GitHubManager::delay( " + ms + ") - start");

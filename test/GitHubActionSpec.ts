@@ -111,7 +111,7 @@ describe("GitHubActions", () => {
         expect(output).to.be.true;
 
         Log.test('Full clone took: ' + Util.took(start));
-    }).timeout(TIMEOUT * 10);
+    }).timeout(120 * 1000); // 2 minutes
 
     /**
      * This test is terrible, but gets the coverage tools to stop complaining.
@@ -119,7 +119,6 @@ describe("GitHubActions", () => {
     it("Should make sure that actions can actually fail.", async function () {
         const old = (<any>gh).gitHubAuthToken;
         (<any>gh).gitHubAuthToken = "FOOFOOFOO";
-
 
         try {
             await gh.createRepo(Test.ORGNAME, 'INVALIDREPONAME');
@@ -169,7 +168,6 @@ describe("GitHubActions", () => {
             // expected
         }
 
-
         try {
             await gh.listTeams(Test.ORGNAME);
         } catch (err) {
@@ -194,9 +192,8 @@ describe("GitHubActions", () => {
             // expected
         }
 
-
         Log.test('after expected fail');
-        // (<any>gh).gitHubAuthToken = old; // restor
+        (<any>gh).gitHubAuthToken = old; // restore token
     }).timeout(TIMEOUT);
 
 });

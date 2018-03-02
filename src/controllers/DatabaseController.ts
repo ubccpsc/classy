@@ -135,8 +135,8 @@ export class DatabaseController {
         if (existingPerson === null) {
             return await this.writeRecord(this.PERSONCOLL, record);
         } else {
-            Log.info("DatabaseController::writePerson(..) - ERROR; person already exists; person: " + JSON.stringify(record));
-            return false;
+            const query = {org: record.org, id: record.id};
+            return await this.updateRecord(this.PERSONCOLL, query, record);
         }
     }
 

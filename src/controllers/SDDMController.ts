@@ -37,7 +37,7 @@ export class SDDMController {
         try {
             const person = await this.dc.getPerson(org, personId);
             if (person === null) {
-                Log.info("XXX::getStatus(..) - ERROR; person null");
+                Log.info("SDDMController::getStatus(..) - ERROR; person null");
                 return;
             }
 
@@ -56,10 +56,10 @@ export class SDDMController {
                     }
 
                     if (d0Repo !== null) {
-                        Log.info("XXX::getStatus(..) - elevating D0PRE to D0");
+                        Log.info("SDDMController::getStatus(..) - elevating D0PRE to D0");
                         currentStatus = "D0";
                     } else {
-                        Log.info("XXX::getStatus(..) - NOT elevating from D0PRE");
+                        Log.info("SDDMController::getStatus(..) - NOT elevating from D0PRE");
                     }
                 }
             }
@@ -69,10 +69,10 @@ export class SDDMController {
                 // if their d0 score >= 60, make them D1UNLOCKED
                 const d0Grade = await this.dc.getGrade(org, personId, "d0");
                 if (d0Grade && d0Grade.score >= 60) {
-                    Log.info("XXX::getStatus(..) - elevating D0 to D1UNLOCKED");
+                    Log.info("SDDMController::getStatus(..) - elevating D0 to D1UNLOCKED");
                     currentStatus = "D1UNLOCKED";
                 } else {
-                    Log.info("XXX::getStatus(..) - NOT elevating from D0");
+                    Log.info("SDDMController::getStatus(..) - NOT elevating from D0");
                 }
             }
 
@@ -90,10 +90,10 @@ export class SDDMController {
                 }
 
                 if (d1team !== null) {
-                    Log.info("XXX::getStatus(..) - elevating D1UNLOCKED to D1TEAMSET");
+                    Log.info("SDDMController::getStatus(..) - elevating D1UNLOCKED to D1TEAMSET");
                     currentStatus = "D1TEAMSET";
                 } else {
-                    Log.info("XXX::getStatus(..) - NOT elevating from D1UNLOCKED");
+                    Log.info("SDDMController::getStatus(..) - NOT elevating from D1UNLOCKED");
                 }
             }
 
@@ -108,10 +108,10 @@ export class SDDMController {
                     }
                 }
                 if (d1repo !== null) {
-                    Log.info("XXX::getStatus(..) - elevating D1TEAMSET to D1");
+                    Log.info("SDDMController::getStatus(..) - elevating D1TEAMSET to D1");
                     currentStatus = "D1";
                 } else {
-                    Log.info("XXX::getStatus(..) - NOT elevating from D1TEAMSET");
+                    Log.info("SDDMController::getStatus(..) - NOT elevating from D1TEAMSET");
                 }
             }
 
@@ -120,7 +120,7 @@ export class SDDMController {
                 // if their d1 score > 60, make them D2
                 let d1Grade = await this.gc.getGrade(org, personId, "d1");
                 if (d1Grade && d1Grade.score >= 60) {
-                    Log.info("XXX::getStatus(..) - elevating D1 to D2");
+                    Log.info("SDDMController::getStatus(..) - elevating D1 to D2");
                     let allRepos = await this.rc.getReposForPerson(person);
                     for (const r of allRepos) {
                         if (r.custom.d1enabled === true) {
@@ -131,7 +131,7 @@ export class SDDMController {
                     }
                     currentStatus = "D2";
                 } else {
-                    Log.info("XXX::getStatus(..) - NOT elevating from D1");
+                    Log.info("SDDMController::getStatus(..) - NOT elevating from D1");
                 }
             }
 
@@ -140,10 +140,10 @@ export class SDDMController {
                 // if their d2 core > 60, make them D3PRE
                 let d2Grade = await this.gc.getGrade(org, personId, "d2");
                 if (d2Grade && d2Grade.score >= 60) {
-                    Log.info("XXX::getStatus(..) - elevating D2 to D3PRE");
+                    Log.info("SDDMController::getStatus(..) - elevating D2 to D3PRE");
                     currentStatus = "D3PRE";
                 } else {
-                    Log.info("XXX::getStatus(..) - NOT elevating from D2");
+                    Log.info("SDDMController::getStatus(..) - NOT elevating from D2");
                 }
             }
 
@@ -159,10 +159,10 @@ export class SDDMController {
                     }
                 }
                 if (prComplete === true) {
-                    Log.info("XXX::getStatus(..) - elevating D3PRE to D3");
+                    Log.info("SDDMController::getStatus(..) - elevating D3PRE to D3");
                     currentStatus = "D3";
                 } else {
-                    Log.info("XXX::getStatus(..) - NOT elevating from D3PRE");
+                    Log.info("SDDMController::getStatus(..) - NOT elevating from D3PRE");
                 }
             }
 
@@ -177,9 +177,14 @@ export class SDDMController {
                         await this.dc.writeRepository(r);
                     }
                 }
-                Log.info("XXX::getStatus(..) - NOT elevating from D3");
+                Log.info("SDDMController::getStatus(..) - NOT elevating from D3");
             }
-            Log.info("XXX::getStatus( " + org + ', ' + personId + ' ) - done; took: ' + Util.took(start));
+
+            // let currentStatus = person.custom.sddmStatus;
+            person.custom.sddmStatus = currentStatus;
+            this.dc.writePerson(person);
+
+            Log.info("SDDMController::getStatus( " + org + ', ' + personId + ' ) - done; took: ' + Util.took(start));
             return currentStatus;
         }
         catch
