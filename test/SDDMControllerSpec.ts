@@ -8,6 +8,7 @@ import {PersonController} from "../src/controllers/PersonController";
 import {Test} from "./GlobalSpec";
 import {TestGitHubController} from "../src/controllers/GitHubController";
 import Log from "../src/util/Log";
+import {Person} from "../src/Types";
 
 const loadFirst = require('./GlobalSpec');
 
@@ -31,7 +32,60 @@ describe("SDDMController", () => {
 
     const PRNAME = "prd3id";
 
+    const u1 = "sddmU1";
+    const u2 = "sddmU2";
+    const u3 = "sddmU3";
+
+
+    let PERSON1: Person = null;
+    let PERSON2: Person = null;
+    let PERSON3: Person = null;
+
     before(async () => {
+        PERSON1 = {
+            id:            u1,
+            csId:          u1, // sdmm doesn't have these
+            githubId:      u1,
+            studentNumber: null,
+
+            org:    Test.ORGNAME,
+            fName:  '',
+            lName:  '',
+            kind:   'student',
+            url:    'https://github.com/' + u1,
+            labId:  'UNKNOWN',
+            custom: {}
+        };
+
+        PERSON2 = {
+            id:            u2,
+            csId:          u2, // sdmm doesn't have these
+            githubId:      u2,
+            studentNumber: null,
+
+            org:    Test.ORGNAME,
+            fName:  '',
+            lName:  '',
+            kind:   'student',
+            url:    'https://github.com/' + u2,
+            labId:  'UNKNOWN',
+            custom: {}
+        };
+
+        PERSON3 = {
+            id:            u3,
+            csId:          u3, // sdmm doesn't have these
+            githubId:      u3,
+            studentNumber: null,
+
+            org:    Test.ORGNAME,
+            fName:  '',
+            lName:  '',
+            kind:   'student',
+            url:    'https://github.com/' + u3,
+            labId:  'UNKNOWN',
+            custom: {}
+        };
     });
 
     beforeEach(() => {
@@ -157,9 +211,207 @@ describe("SDDMController", () => {
         Log.test(payload.message);
     });
 
-    it("Should be able to provision a d0 repo.", async () => {
-        let payload = await sc.provision(Test.ORGNAME, Test.DELIVID0, [Test.USERNAME1]);
+    /**
+     *
+     *
+     * Provisioning tests. These do need to run in order.
+     *
+     *
+     */
+
+    it("Should not allow multiple people to be added to a d0 repo.", async () => {
+        let person = await pc.createPerson(PERSON1);
+        expect(person).to.not.be.null;
+
+        let person2 = await pc.createPerson(PERSON2);
+        expect(person2).to.not.be.null;
+
+        let allRepos = await rc.getReposForPerson(person);
+        expect(allRepos).to.be.empty;
+
+        let allTeams = await tc.getTeamsForPerson(person);
+        expect(allTeams).to.be.empty;
+
+        // don't provision for non-existent users
+        let payload = await sc.provision(Test.ORGNAME, Test.DELIVID0, [PERSON1.id, '23234#$Q#@#invalid']);
+        expect(payload.success).to.be.false;
+        Log.test(payload.message);
+
+        allRepos = await rc.getReposForPerson(person);
+        expect(allRepos).to.be.empty;
+
+        // don't create a d0 repo with multiple people
+        payload = await sc.provision(Test.ORGNAME, Test.DELIVID0, [PERSON1.id, PERSON2.id]);
+        expect(payload.success).to.be.false;
+        Log.test(payload.message);
+
+        allRepos = await rc.getReposForPerson(person);
+        expect(allRepos).to.be.empty;
+    });
+
+    it("Should be able to provision a d0 repo for an individual.", async () => {
+        let person = await pc.getPerson(PERSON1.org, PERSON1.id);
+        expect(person).to.not.be.null;
+
+        let allRepos = await rc.getReposForPerson(person);
+        expect(allRepos).to.be.empty;
+
+        let allTeams = await tc.getTeamsForPerson(person);
+        expect(allTeams).to.be.empty;
+
+        let payload = await sc.provision(Test.ORGNAME, Test.DELIVID0, [PERSON1.id]);
         expect(payload.success).to.be.true;
         Log.test(payload.message);
+
+        allRepos = await rc.getReposForPerson(person);
+        expect(allRepos).to.have.lengthOf(1);
+        expect(allRepos[0].custom.d0enabled).to.be.true;
+
+        allTeams = await tc.getTeamsForPerson(person);
+        expect(allTeams).to.have.lengthOf(1);
+        expect(allTeams[0].custom.sdmmd0).to.be.true;
     });
+
+
+    it("Should not upgrade a d0 repo for an individual if the grade is too low.", async () => {
+        let person = await pc.getPerson(PERSON1.org, PERSON1.id);
+        expect(person).to.not.be.null;
+
+        let payload = await sc.provision(Test.ORGNAME, Test.DELIVID1, [PERSON1.id]);
+        expect(payload.success).to.be.false;
+        Log.test(payload.message);
+
+        let allRepos = await rc.getReposForPerson(person);
+        expect(allRepos).to.have.lengthOf(1);
+        expect(allRepos[0].custom.d0enabled).to.be.true;
+        expect(allRepos[0].custom.d1enabled).to.be.false; // should stay d0
+
+        let allTeams = await tc.getTeamsForPerson(person);
+        expect(allTeams).to.have.lengthOf(1);
+        expect(allTeams[0].custom.sdmmd0).to.be.true;
+        expect(allTeams[0].custom.sdmmd1).to.be.false; // should stay d0
+    });
+
+    it("Should be able to upgrade a d0 repo for an individual.", async () => {
+        let person = await pc.getPerson(PERSON1.org, PERSON1.id);
+        expect(person).to.not.be.null;
+
+        let allRepos = await rc.getReposForPerson(person);
+        expect(allRepos).to.have.lengthOf(1);
+
+        let grade = await gc.createGrade(PERSON1.org, allRepos[0].id, Test.DELIVID0, 65, 'TESTCOMMENT', 'TESTURL');
+        expect(grade).to.be.true;
+
+        allRepos = await rc.getReposForPerson(person);
+        expect(allRepos).to.have.lengthOf(1);
+        expect(allRepos[0].custom.d0enabled).to.be.true;
+        expect(allRepos[0].custom.d1enabled).to.be.false;
+
+        Log.test('provisioning');
+        let payload = await sc.provision(Test.ORGNAME, Test.DELIVID1, [PERSON1.id]); // do it
+        Log.test('provisioning complete');
+        expect(payload.success).to.be.true;
+        Log.test(payload.message);
+
+        allRepos = await rc.getReposForPerson(person);
+        expect(allRepos).to.have.lengthOf(1); // no new repo
+        expect(allRepos[0].custom.d0enabled).to.be.true;
+        expect(allRepos[0].custom.d1enabled).to.be.true; // should be provisioned for d1 now
+
+        let allTeams = await tc.getTeamsForPerson(person);
+        expect(allTeams).to.have.lengthOf(1);
+        expect(allTeams[0].custom.sdmmd0).to.be.true;
+        expect(allTeams[0].custom.sdmmd1).to.be.true; // should be provisioned for d1 now
+
+        // try to do it again (should fail)  // makes sure they can't get multiple d1 repos
+        payload = await sc.provision(Test.ORGNAME, Test.DELIVID1, [PERSON1.id]); // do it
+        expect(payload.success).to.be.false;
+        Log.test(payload.message);
+
+        allRepos = await rc.getReposForPerson(person);
+        expect(allRepos).to.have.lengthOf(1); // no new repo
+    });
+
+
+    it("Should not be able to form a d1 team if a member does not exist or has insufficient d0 standing.", async () => {
+        let person = await pc.getPerson(PERSON2.org, PERSON2.id); // person2; person1 has a d1 repo from previous upgrade
+        expect(person).to.not.be.null;
+
+        let allRepos = await rc.getReposForPerson(person);
+        expect(allRepos).to.have.lengthOf(0); // no new repo
+
+        // don't allow pairing with someone who doesn't exist
+        let payload = await sc.provision(Test.ORGNAME, Test.DELIVID1, [PERSON2.id, "asdf32#@@#INVALIDPERSON"]);
+        expect(payload.success).to.be.false; // person2 doesn't exist
+        Log.test("User shouldn't exist: " + payload.message);
+
+        allRepos = await rc.getReposForPerson(person);
+        expect(allRepos).to.have.lengthOf(0);
+        // expect(allRepos[0].custom.d0enabled).to.be.true;
+        // expect(allRepos[0].custom.d1enabled).to.be.false;
+
+        let allTeams = await tc.getTeamsForPerson(person);
+        expect(allTeams).to.have.lengthOf(0);
+        // expect(allTeams[0].custom.sdmmd0).to.be.true;
+        // expect(allTeams[0].custom.sdmmd1).to.be.false;
+
+        // don't allow pairing with someone with insufficient d0 credit
+        payload = await sc.provision(Test.ORGNAME, Test.DELIVID1, [PERSON2.id, PERSON3.id]);
+        expect(payload.success).to.be.false; // person2 doesn't exist
+        Log.test("User's d0 grade is insufficient: " + payload.message);
+
+        allRepos = await rc.getReposForPerson(person);
+        expect(allRepos).to.have.lengthOf(0);
+        // expect(allRepos[0].custom.d0enabled).to.be.true;
+        // expect(allRepos[0].custom.d1enabled).to.be.false;
+
+        allTeams = await tc.getTeamsForPerson(person);
+        expect(allTeams).to.have.lengthOf(0);
+        // expect(allTeams[0].custom.sdmmd0).to.be.true;
+        // expect(allTeams[0].custom.sdmmd1).to.be.false;
+    });
+
+
+    it("Should be able to form a d1 team with a partner.", async () => {
+        // prepare person 2
+        let person2 = await pc.getPerson(PERSON2.org, PERSON2.id);
+        expect(person2).to.not.be.null;
+        let payload = await sc.provision(Test.ORGNAME, Test.DELIVID0, [person2.id]);
+        expect(payload.success).to.be.true;
+        let allRepos = await rc.getReposForPerson(person2);
+        expect(allRepos).to.have.lengthOf(1);
+        let grade = await gc.createGrade(person2.org, allRepos[0].id, Test.DELIVID0, 65, 'TESTCOMMENT', 'TESTURL');
+        expect(grade).to.be.true;
+
+        // prepare person3
+        let person3 = await pc.createPerson(PERSON3);
+        expect(person3).to.not.be.null;
+        // create d0 payload for person2
+        payload = await sc.provision(Test.ORGNAME, Test.DELIVID0, [person3.id]);
+        expect(payload.success).to.be.true;
+        // create d0 grade for person2
+        allRepos = await rc.getReposForPerson(person3);
+        expect(allRepos).to.have.lengthOf(1);
+        grade = await gc.createGrade(person3.org, allRepos[0].id, Test.DELIVID0, 70, 'TESTCOMMENT', 'TESTURL');
+        expect(grade).to.be.true;
+
+
+        // try to upgrade them to d1
+        Log.test('Updating to d1');
+        payload = await sc.provision(Test.ORGNAME, Test.DELIVID1, [person2.id, person3.id]);
+        expect(payload.success).to.be.true;
+        Log.test(payload.message);
+
+        allRepos = await rc.getReposForPerson(person2);
+        expect(allRepos).to.have.lengthOf(2);
+
+        // expect(allRepos[0].custom.d0enabled).to.be.true;
+        // expect(allRepos[0].custom.d1enabled).to.be.false;
+
+        let allTeams = await tc.getTeamsForPerson(person2);
+        expect(allTeams).to.have.lengthOf(2);
+        // expect(allTeams[0].custom.sdmmd0).to.be.true;
+        // expect(allTeams[0].custom.sdmmd1).to.be.false;
+    });
+
 });

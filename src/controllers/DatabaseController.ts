@@ -146,8 +146,8 @@ export class DatabaseController {
         if (existingTeam === null) {
             return await this.writeRecord(this.TEAMCOLL, record);
         } else {
-            Log.info("DatabaseController::writeTeam(..) - ERROR; team already exists; team: " + JSON.stringify(record));
-            return false;
+            const query = {org: record.org, id: record.id};
+            return await this.updateRecord(this.TEAMCOLL, query, record);
         }
     }
 

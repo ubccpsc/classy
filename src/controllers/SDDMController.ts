@@ -73,7 +73,7 @@ export class SDDMController {
      * @returns {Promise<ResponsePayload>}
      */
     public async provision(org: string, delivId: string, peopleIds: string[]): Promise<ResponsePayload> {
-        Log.info("SDDMController::provision( " + org + ", " + delivId + ", " + JSON.stringify(peopleIds) + " ) - start");
+        Log.info("SDDMController::provision( " + org + ", " + delivId + ", ... ) - start");
 
         try {
             if (org !== "secapstone" && org !== "secapstonetest") {
@@ -99,9 +99,17 @@ export class SDDMController {
                 if (peopleIds.length === 1) {
                     Log.info("SDDMController::provision(..) - updating existing d0 repo to d1 for " + peopleIds[0]);
                     return await this.updateIndividualD0toD1(org, peopleIds[0]);
+                } else if (peopleIds.length === 2) {
+                    Log.info("SDDMController::provision(..) - provisioning new d1 repo for " + JSON.stringify(peopleIds));
+                    if (peopleIds[0] !== peopleIds[1]) {
+                        return await this.provisionD1Repo(org, peopleIds);
+                    } else {
+                        Log.error("SDDMController::provision(..) - d1 duplicate users");
+                        return {success: false, message: "D1 duplicate users; contact course staff."};
+                    }
                 } else {
-                    Log.info("SDDMController::provision(..) - provisioning new d1 repo for " + JSON.stringify(peopleIds[0]));
-                    return await this.provisionD1Repo(org, peopleIds);
+                    Log.error("SDDMController::provision(..) - d1 can only be performed by single students or pairs of students.");
+                    return {success: false, message: "D1 can only be performed by single students or pairs of students."};
                 }
             } else {
                 Log.warn("SDDMController::provision(..) - new repo not needed for delivId: " + delivId);
@@ -405,6 +413,29 @@ export class SDDMController {
         const start = Date.now();
 
         try {
+            // make sure person exists
+            const person = await this.pc.getPerson(org, personId);
+            if (person === null) {
+                Log.error("SDDMController::updateIndividualD0toD1(..) - person does not exist: " + personId);
+                return {success: false, message: "Username not registered with course."};
+            }
+
+            // make sure the person has suffient d0 grade
+            let grade = await this.gc.getGrade(org, personId, "d0"); // make sure they can move on
+            if (grade === null || grade.score < 60) {
+                Log.error("SDDMController::updateIndividualD0toD1(..) - person does not exist: " + personId);
+                return {success: false, message: "Current d0 grade is not sufficient to move on to d1."};
+            }
+
+            // make sure the person does not already have a d1 repo
+            let myRepos = await this.rc.getReposForPerson(person);
+            for (const r of myRepos) {
+                if (r.custom.d1enabled === true) {
+                    Log.error("SDDMController::updateIndividualD0toD1(..) - person already has a d1 repo: " + r.id);
+                    return {success: false, message: "D1 repo has already been assigned: " + r.id};
+                }
+            }
+
             const name = personId;
             // const person = await this.pc.getPerson(org, name);
             const teamName = name;

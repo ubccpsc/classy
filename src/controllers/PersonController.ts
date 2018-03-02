@@ -33,25 +33,21 @@ export class PersonController {
      * @returns {boolean}
      */
     public async getPerson(org: string, githubUsername: string): Promise<Person | null> {
-        Log.info("PersonController::configureUsername( " + org + ", " + githubUsername + " ) - start");
+        Log.info("PersonController::getPerson( " + org + ", " + githubUsername + " ) - start");
 
         let person = await this.db.getPerson(org, githubUsername);
 
         if (person === null) {
-            // otherwise, person should be configured for course in advance
             // in this case, return false, because login failed
-            Log.info("PersonController::configureUsername( " + org + ", " + githubUsername + " ) - unknown person for this org - failing");
+            Log.info("PersonController::getPerson( " + org + ", " + githubUsername + " ) - unknown person for this org - failing");
             return null;
         }
-        //} else {
         return person;
-        //}
     }
 
     public async getAllPeople(org: string): Promise<Person[]> {
         Log.info("PersonController::getAllPeople( " + org + " ) - start");
         return await this.db.getPeople(org);
     }
-
 
 }
