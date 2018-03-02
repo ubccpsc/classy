@@ -16,7 +16,9 @@ export default class RouteHandler {
     public static async putGradingTask(req: restify.Request, res: restify.Response, next: restify.Next) {
         try {
             const id: string = req.params.id;
-            const task: IGradeTask = req.body;
+            const body = req.body;
+            body.assn["token"] = process.env.GITHUB_TOKEN;
+            const task: IGradeTask = body;
             if (!RouteHandler.containerSocketServer.isListening) {
                 Log.info("Starting socket server");
                 await RouteHandler.containerSocketServer.start();
