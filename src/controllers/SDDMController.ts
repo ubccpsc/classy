@@ -15,6 +15,17 @@ export interface ResponsePayload {
     message: string;
 }
 
+export enum SDDMStatus {
+    D0PRE,
+    D0,
+    D1UNLOCKED,
+    D1TEAMSET,
+    D1,
+    D2,
+    D3PRE,
+    D3
+}
+
 export class SDDMController {
 
     private dc = DatabaseController.getInstance();
@@ -143,7 +154,7 @@ export class SDDMController {
      * @returns {Promise<string>} null if the personId is not even known
      */
     public async getStatus(org: string, personId: string): Promise<string | null> {
-        Log.info("XXX::getStatus( " + org + ', ' + personId + ' ) - start');
+        Log.info("SDDMController::getStatus( " + org + ', ' + personId + ' ) - start');
         const start = Date.now();
         try {
             const person = await this.dc.getPerson(org, personId);
@@ -198,7 +209,6 @@ export class SDDMController {
                 // if they have a d1 team, make them D1TEAMSET
                 const teams = await this.dc.getTeamsForPerson(org, personId);
 
-                // XXX: check to see if one of them is a d0 team
                 let d1team: Team = null;
                 for (const t of teams) {
                     if (t.custom.sdmmd1 === true) {
@@ -306,7 +316,7 @@ export class SDDMController {
         }
         catch
             (err) {
-            Log.error("XXX::getStatus( " + org + ', ' + personId + ' ) - ERROR: ' + err);
+            Log.error("SDDMController::getStatus( " + org + ', ' + personId + ' ) - ERROR: ' + err);
             return "UNKNOWN";
         }
     }
@@ -332,7 +342,7 @@ export class SDDMController {
      * @returns {Promise<string>}
      */
     private async checkStatus(org: string, personId: string): Promise<boolean> {
-        Log.info("XXX::getStatus( " + org + ', ' + personId + ' ) - start');
+        Log.info("SDDMController::getStatus( " + org + ', ' + personId + ' ) - start');
         const start = Date.now();
         try {
             const person = await this.dc.getPerson(org, personId);
@@ -369,6 +379,13 @@ export class SDDMController {
             if (person === null) {
                 // return early
                 return {success: false, message: "Username not registered; contact course staff."};
+            }
+
+            let personStatus = await this.getStatus(org, personId);
+            if (personStatus !== SDDMStatus[SDDMStatus.D0PRE]) {
+                Log.info("SDDMController::provisionD0Repo( " + org + ", " + personId + " ) - bad status: " + personStatus);
+            } else {
+                Log.info("SDDMController::provisionD0Repo( " + org + ", " + personId + " ) - correct status: " + personStatus);
             }
 
             // create local team
@@ -436,6 +453,13 @@ export class SDDMController {
                 }
             }
 
+            let personStatus = await this.getStatus(org, personId);
+            if (personStatus !== SDDMStatus[SDDMStatus.D1UNLOCKED]) {
+                Log.info("SDDMController::updateIndividualD0toD1( " + org + ", " + personId + " ) - bad status: " + personStatus);
+            } else {
+                Log.info("SDDMController::updateIndividualD0toD1( " + org + ", " + personId + " ) - correct status: " + personStatus);
+            }
+
             const name = personId;
             // const person = await this.pc.getPerson(org, name);
             const teamName = name;
@@ -494,7 +518,6 @@ export class SDDMController {
             for (const pid of peopleIds) {
                 let person = await this.dc.getPerson(org, pid); // make sure the person exists
                 if (person !== null) {
-
                     let grade = await this.gc.getGrade(org, pid, "d0"); // make sure they can move on
                     if (grade !== null && grade.score > 59) {
                         people.push(person)
@@ -511,6 +534,20 @@ export class SDDMController {
                     };
                 }
             }
+
+            for (const p of people) {
+                let personStatus = await this.getStatus(org, p.id);
+                if (personStatus !== SDDMStatus[SDDMStatus.D1UNLOCKED]) {
+                    Log.info("SDDMController::provisionD1Repo( " + org + ", " + p.id + " ) - bad status: " + personStatus);
+                    return {
+                        success: false,
+                        message: "All teammates must be eligible to join a team."
+                    };
+                } else {
+                    Log.info("SDDMController::provisionD1Repo( " + org + ", " + p.id + " ) - correct status: " + personStatus);
+                }
+            }
+
             // create local team
             const teamCustom = {sdmmd0: false, sdmmd1: true, sdmmd2: true, sdmmd3: true}; // configure for project
             const team = await this.tc.createTeam(org, teamName, people, teamCustom);

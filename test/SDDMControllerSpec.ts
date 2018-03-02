@@ -352,13 +352,9 @@ describe("SDDMController", () => {
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(0);
-        // expect(allRepos[0].custom.d0enabled).to.be.true;
-        // expect(allRepos[0].custom.d1enabled).to.be.false;
 
         let allTeams = await tc.getTeamsForPerson(person);
         expect(allTeams).to.have.lengthOf(0);
-        // expect(allTeams[0].custom.sdmmd0).to.be.true;
-        // expect(allTeams[0].custom.sdmmd1).to.be.false;
 
         // don't allow pairing with someone with insufficient d0 credit
         payload = await sc.provision(Test.ORGNAME, Test.DELIVID1, [PERSON2.id, PERSON3.id]);
@@ -367,14 +363,9 @@ describe("SDDMController", () => {
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(0);
-        // expect(allRepos[0].custom.d0enabled).to.be.true;
-        // expect(allRepos[0].custom.d1enabled).to.be.false;
 
         allTeams = await tc.getTeamsForPerson(person);
         expect(allTeams).to.have.lengthOf(0);
-        // expect(allTeams[0].custom.sdmmd0).to.be.true;
-        // expect(allTeams[0].custom.sdmmd1).to.be.false;
-
 
         // and some other reasons you can't provision d1 repos
 
