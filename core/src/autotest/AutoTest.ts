@@ -319,16 +319,12 @@ export abstract class AutoTest implements IAutoTest {
                 const commitSHA: string = input.pushInfo.commitSHA;
                 const commitURL: string = input.pushInfo.commitURL;
                 const delivId: string = input.delivId;
+                const id: string = `${commitSHA}-${delivId}`;
                 const body = {
                     "assnId": delivId,
-                    "execId": `${commitSHA}-${delivId}`,
                     "assn": {
                         "url": assnUrl,
                         "commit": commitSHA
-                    },
-                    "soln": {
-                        "url": solnUrl,
-                        "branch": solnBranch
                     },
                     "container": {
                         "image": image,
@@ -338,7 +334,7 @@ export abstract class AutoTest implements IAutoTest {
                 };
                 const rpOpts: rp.OptionsWithUrl = {
                     method: "POST",
-                    url: "http://autotest_grader_1:3000/worker-pool/task/grade",
+                    url: `http://autotest_grader_1:3000/task/grade/${id}`,
                     body,
                     json: true, // Automatically stringifies the body to JSON,
                     timeout: 360000  // enough time that the container will have timed out

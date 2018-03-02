@@ -49,17 +49,13 @@ export interface IGradeReport {
     feedback: string;
 }
 
-interface IAssignment {
+export interface IAssignment {
     url: string;
     commit: string;
+    token: string;
 }
 
-interface ISolution {
-    url: string;
-    branch: string;
-}
-
-interface IGradeContainer {
+export interface IGradeContainer {
     image: string;
     timeout: number;
     logSize: number;
@@ -67,9 +63,7 @@ interface IGradeContainer {
 
 export interface IGradeTask {
     assnId: string;
-    execId: string;
     assn: IAssignment;
-    soln: ISolution;
     container: IGradeContainer;
 }
 
@@ -83,4 +77,12 @@ export interface IContainerOutput {
     custom: {};
     attachments: any[];
     state: string; // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
+}
+
+export interface IHostEnv {
+    name: string;  // hostname or ip address
+    port: number;  // (will be used for the socket server)
+    uid: number;   // the id of the host user that will run containers. this ensures files are written with the consistent permissions on the host.
+    net: string;   // the name of the (sub)net that the grading container should connect to
+    mount: string; // the path to the mounted host directory
 }

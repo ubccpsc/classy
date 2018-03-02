@@ -86,6 +86,7 @@ export default class Server {
                 // Worker pool endpoints
                 // this.rest.get("/worker-pool/status");
                 this.rest.post("/worker-pool/task/grade", restify.plugins.bodyParser(), RouteHandler.postGradingTask);
+                this.rest.put("/task/grade/:id", restify.plugins.bodyParser(), RouteHandler.putGradingTask);
 
                 // Worker endpoints
                 // this.rest.get("/worker/:id/status");
