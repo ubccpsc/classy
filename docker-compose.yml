@@ -45,7 +45,6 @@ services:
             - "GHT_ORACLE=${GHT_ORG_CPSC310}"
             - "SSL_CERT_PATH=./ssl/fullchain.pem"
             - "SSL_KEY_PATH=./ssl/privkey.pem"
-            - "SSL_INT_CERT=SSL_INT_CERT"
         depends_on:
             - db
             - grader
