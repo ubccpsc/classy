@@ -10,8 +10,6 @@ import "mocha";
 import restify = require('restify');
 
 const request = require('supertest');
-const https = require('https');
-
 
 describe('REST Routes for AutoTest', function () {
 
@@ -27,6 +25,8 @@ describe('REST Routes for AutoTest', function () {
             Log.test('RestifyAutoTestRoutes::before - server started');
             Log.test('orgName: ' + Test.ORGNAME);
             app = server.getServer();
+        }).catch(function (err) {
+            Log.test('RestifyAutoTestRoutes::before - server might already be started: ' + err);
         });
     });
 
@@ -39,10 +39,10 @@ describe('REST Routes for AutoTest', function () {
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
+        Log.test(response.status + " -> " + JSON.stringify(response.body.delivId));
         expect(response.status).to.equal(200);
         expect(response.body.delivId).to.not.be.undefined;
         expect(response.body.delivId).to.equal('d0');
-        Log.test(response.status + " -> " + response.body.delivId);
     });
 
     it('Should respond to a valid isStaff request for staff', async function () {
@@ -54,10 +54,10 @@ describe('REST Routes for AutoTest', function () {
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
+        Log.test(response.status + " -> " + JSON.stringify(response.body.isStaff));
         expect(response.status).to.equal(200);
         expect(response.body.isStaff).to.not.be.undefined;
         expect(response.body.isStaff).to.be.true;
-        Log.test(response.status + " -> " + response.body.isStaff);
     });
 
     it('Should respond to a valid isStaff request for non-staff', async function () {
@@ -69,10 +69,10 @@ describe('REST Routes for AutoTest', function () {
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
+        Log.test(response.status + " -> " + JSON.stringify(response.body.isStaff));
         expect(response.status).to.equal(200);
         expect(response.body.isStaff).to.not.be.undefined;
         expect(response.body.isStaff).to.be.false;
-        Log.test(response.status + " -> " + response.body.isStaff);
     });
 
     it('Should respond to a valid container request for a deliverable', async function () {
@@ -84,12 +84,12 @@ describe('REST Routes for AutoTest', function () {
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
+        Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(200);
         expect(response.body.dockerImage).to.not.be.undefined;
         expect(response.body.studentDelay).to.not.be.undefined;
         expect(response.body.maxExecTime).to.not.be.undefined;
         expect(response.body.regressionDelivIds).to.not.be.undefined;
-        Log.test(response.status + " -> " + response.body);
     });
 
     it('Should respond to an invalid container request', async function () {
@@ -101,9 +101,9 @@ describe('REST Routes for AutoTest', function () {
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
+        Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(400);
         expect(response.body.message).to.not.be.undefined;
-        Log.test(response.status + " -> " + response.body);
     });
 
 });
