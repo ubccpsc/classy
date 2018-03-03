@@ -4,6 +4,7 @@
   "description": "SDMM Student Portal",
   "main": "app/index.html",
   "scripts": {
+    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
