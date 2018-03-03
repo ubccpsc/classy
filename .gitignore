@@ -1,3 +1,5 @@
+config.priv.json
+
 # Logs
 logs
 *.log

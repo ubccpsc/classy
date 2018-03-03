@@ -18,11 +18,13 @@
   },
   "homepage": "https://github.com/ubccpsc/sdmm-portal#readme",
   "dependencies": {
+    "@types/fs-extra": "^5.0.1",
     "@types/onsenui": "^2.0.0",
     "@types/request-promise-native": "^1.0.13",
     "@types/restify": "^5.0.7",
     "awesome-typescript-loader": "^3.4.1",
     "client-oauth2": "^4.1.0",
+    "fs-extra": "^5.0.0",
     "request-promise-native": "^1.0.5",
     "restify": "^6.3.4",
     "source-map-loader": "^0.2.3",

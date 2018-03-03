@@ -4,15 +4,10 @@
 
 import restify = require('restify');
 import Log from "../app/util/Log";
-
-var Config = require("../../Config");
-
 import * as fs from "fs";
-import * as rp from "request-promise-native";
+import {Config} from "./Config";
 
-import ClientOAuth2 = require("client-oauth2");
-
-// import RouteHandler from './RouteHandler';
+// var Config = require("../../Config");
 
 /**
  * This configures the REST endpoints for the server.
@@ -21,12 +16,10 @@ export default class FrontEndServer {
 
     // private port: number;
     private rest: restify.Server;
-    private config: IConfig;
 
-    constructor(config: IConfig) {
+    constructor() {
         Log.info("Server::<init> - start");
-
-        this.config = config;
+        Config.getInstance();
     }
 
     /**
@@ -60,8 +53,8 @@ export default class FrontEndServer {
 
                 var https_options = {
                     name:        'frontend',
-                    key:         fs.readFileSync(that.config.sslKeyPath),
-                    certificate: fs.readFileSync(that.config.sslCertPath)
+                    key:         fs.readFileSync(Config.getInstance().getProp('sslKeyPath')),
+                    certificate: fs.readFileSync(Config.getInstance().getProp('sslCertPath'))
                 };
 
                 that.rest = restify.createServer(https_options);
@@ -151,7 +144,7 @@ export default class FrontEndServer {
                     })
                 );
 
-                that.rest.listen(that.config.frontendPort, function () {
+                that.rest.listen(Config.getInstance().getProp('frontendPort'), function () {
                     Log.info('FrontEndServer::start() - restify listening: ' + that.rest.url);
                     fulfill(true);
                 });
@@ -184,9 +177,9 @@ export interface IConfig {
     backendUrl: string;
 }
 
-const config: IConfig = <IConfig>Config;
-Log.info("FrontEndServer - port: " + config.frontendPort);
-const server = new FrontEndServer(config);
+
+Log.info("FrontEndServer - port: " + Config.getInstance().getProp('frontendPort'));
+const server = new FrontEndServer();
 server.start().then(function () {
     Log.info("FrontEndServer - started");
 }).catch(function (err) {
