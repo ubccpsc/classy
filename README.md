@@ -1,14 +1,19 @@
 # SDMM Portal
 
+This is the front-end for the capstone course of the edX Software Development MicroMasters program. The portal enables students to self-enroll in the capstone project, provision their repositories, manage their team, monitor their progress, and self-advance through the deliverables.
+
+The frontend requires the backend `sdmm-portal-backend` service be running.
+
 ## Development
 
-* initial configuration:
-    * Create a localhost key (https://gist.github.com/oslego/f13e136ffeaa6174289a)
-        * Put `server.key` and `server.crt` in `<project-root>/ssl/`
-    * Create a config file
-        * copy `sample.env` into `.env` and fill in the fields
+* Initial configuration:
+    * Create a localhost key: 
+    	* [Simple instructions.](https://gist.github.com/oslego/f13e136ffeaa6174289a)
+        * Copy `server.key` and `server.crt` into `<project-root>/ssl/`.
+    * Create a config file:
+        * Copy `sample.env` into `<project-root>/.env` and fill in all fields. Make sure the `.env` file is never committed to version control.
 
-* active development:
+* Active development:
     * Run two processes:
         * `webpack --watch`
         * `node -r dotenv/config  src/server/FrontEndServer.js`
@@ -24,7 +29,7 @@
 
 ## Deploy on sdmm
 
-Follow instructions here https://certbot.eff.org/#centosrhel7-other. 
+Follow the [certbot](https://certbot.eff.org/#centosrhel7-other) instructions.
 
 ```sh
 # Enable epel-release repo
