@@ -13,15 +13,30 @@ services:
     #     build: https://${TOKEN}:@github.company.com/org/repo.git
     #     ports:
     #         - "11315:11315" # this is the reference UI for all deliverables; exposd globally
-    portal-backend:
+    portal_backend:
         build: https://github.com/ubccpsc/sdmm-portal-backend.git
+        env_file: "./portal.env"
+        environment:
+            - "NAME=secapstone"
+            - "ORG=secapstone"
+            - "SSL_CERT_PATH=./ssl/fullchain.pem"
+            - "SSL_KEY_PATH=./ssl/privkey.pem"
+            - "SSL_INT_CERT="
+            - "FRONTEND_PORT=3000"
+            - "FRONTEND_URL=${COMPOSE_PROJECT_NAME}_portal_frontend_1"
+            - "BACKEND_PORT=5000"
+            - "BACKEND_URL=${COMPOSE_PROJECT_NAME}_portal_backend_1"
+            # - "GH_CLIENT_ID=${}"
+            # - "GH_CLIENT_SECRET=${}"
         ports:
             - "5000:5000" # this is the reference UI for all deliverables; exposd globally
-    portal-frontend:
+        volumes:
+            - "./ssl:/app/ssl"
+    portal_frontend:
         build: https://github.com/ubccpsc/sdmm-portal.git
-        env_file: "../sdmm-portal/.env"
+        env_file: "./portal.env"
         depends_on:
-            - portal-backend
+            - portal_backend
         ports:
             - "443:443" # exposed globally
         volumes:
@@ -29,7 +44,7 @@ services:
     core:
         build: core/
         depends_on:
-            - portal-backend
+            - portal_backend
         environment:
             - "NAME=secapstone"
             - "ORG=secapstone"
@@ -46,8 +61,8 @@ services:
             - "GHT_STUDENT_ORG=${GHT_ORG_SECAPSTONE}"
             - "GHT_ORACLE=${GHT_ORG_CPSC310}"
             - "SSL_CERT_PATH=./ssl/fullchain.pem"
-            - "SSL_KEY_PATH=./ssl/privkey.pem",
-            - "CP_HOST=${COMPOSE_PROJECT_NAME}_portal-backend_1"
+            - "SSL_KEY_PATH=./ssl/privkey.pem"
+            - "CP_HOST=${COMPOSE_PROJECT_NAME}_portal_backend_1"
             - "CP_PORT=5000"
         depends_on:
             - db
