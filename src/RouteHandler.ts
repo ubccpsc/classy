@@ -263,4 +263,94 @@ export class RouteHandler {
     }
 
 
+    // that.rest.get('/container/:org/:delivId', RouteHandler.atContainerDetails);
+    public static atContainerDetails(req: any, res: any, next: any) {
+        Log.info('RouteHandler::atContainerDetails(..) - /container/:org/:delivId - start GET');
+        // const user = req.headers.user;
+        // const token = req.headers.token;
+
+        // TODO: verify secret
+
+        const org = req.query.org;
+        const delivId = req.query.delivId;
+
+        Log.info('RouteHandler::atContainerDetails(..) - org: ' + org + '; delivId: ' + delivId);
+
+        // TODO: this is just a dummy implementation
+
+        res.send({dockerImage: 'secapstone-grader', studentDelay: 60 * 60 * 12, maxExecTime: 300});
+
+        /*
+                let sc: SDDMController = new SDDMController(new GitHubController());
+                sc.getStatus(org, user).then(function (status) {
+                    Log.trace('RouteHandler::getCurrentStatus(..) - sending 200; user: ' + user + '; status: ' + status);
+                    res.send({user: user, status: status});
+                }).catch(function (err) {
+                    Log.trace('RouteHandler::getCurrentStatus(..) - sending 400');
+                    res.send(400, {error: err});
+                });
+        */
+    }
+
+
+    public static atDefaultDeliverable(req: any, res: any, next: any) {
+        Log.info('RouteHandler::atDefaultDeliverable(..) - /defaultDeliverable/:org - start GET');
+        // const user = req.headers.user;
+        // const token = req.headers.token;
+
+        // TODO: verify secret
+
+        const org = req.query.org;
+
+        Log.info('RouteHandler::atDefaultDeliverable(..) - org: ' + org);
+
+        // TODO: this is just a dummy implementation
+
+        res.send({delivId: 'd0'});
+
+        /*
+                let sc: SDDMController = new SDDMController(new GitHubController());
+                sc.getStatus(org, user).then(function (status) {
+                    Log.trace('RouteHandler::getCurrentStatus(..) - sending 200; user: ' + user + '; status: ' + status);
+                    res.send({user: user, status: status});
+                }).catch(function (err) {
+                    Log.trace('RouteHandler::getCurrentStatus(..) - sending 400');
+                    res.send(400, {error: err});
+                });
+        */
+    }
+
+    public static atIsStaff(req: any, res: any, next: any) {
+        Log.info('RouteHandler::atIsStaff(..) - /isStaff/:org/:personId - start GET');
+        // const user = req.headers.user;
+        // const token = req.headers.token;
+
+        // TODO: verify secret
+
+        const org = req.query.org;
+        const personId = req.query.personId;
+
+        Log.info('RouteHandler::atIsStaff(..) - org: ' + org + '; personId: ' + personId);
+
+        // TODO: this is just a dummy implementation
+
+        if (personId === 'rtholmes' || personId === 'nickbradley') {
+            res.send({org: org, personId: personId, isStaff: true});
+        } else {
+            res.send({org: org, personId: personId, isStaff: false});
+        }
+
+        /*
+                let sc: SDDMController = new SDDMController(new GitHubController());
+                sc.getStatus(org, user).then(function (status) {
+                    Log.trace('RouteHandler::getCurrentStatus(..) - sending 200; user: ' + user + '; status: ' + status);
+                    res.send({user: user, status: status});
+                }).catch(function (err) {
+                    Log.trace('RouteHandler::getCurrentStatus(..) - sending 400');
+                    res.send(400, {error: err});
+                });
+        */
+    }
+
+
 }

@@ -77,8 +77,19 @@ export default class BackendServer {
                 that.rest.get('/auth', RouteHandler.getAuth);
                 that.rest.get('/githubCallback', RouteHandler.githubCallback);
 
+
+                /**
+                 * UI routes
+                 */
                 that.rest.get('/currentStatus', RouteHandler.getCurrentStatus);
                 that.rest.post('/performAction/:action', RouteHandler.performAction);
+
+                /**
+                 * AutoTest routes
+                 */
+                that.rest.get('/defaultDeliverable/:org', RouteHandler.atDefaultDeliverable);
+                that.rest.get('/isStaff/:org/:personId', RouteHandler.atIsStaff);
+                that.rest.get('/container/:org/:delivId', RouteHandler.atContainerDetails);
 
                 /**
                  * Serve up index.html; not needed for server backend
