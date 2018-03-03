@@ -183,28 +183,28 @@ export class RouteHandler {
     public static handlePreflight(req: any, res: any) {
         Log.trace("RouteHandler::handlePreflight(..)  - MethodNotAllowed - " + req.method.toLowerCase() + "; uri: " + req.url);
 
-        if (req.method.toLowerCase() === 'options') {
+        // if (req.method.toLowerCase() === 'options') { // was options
 
-            var allowHeaders = ['Accept', 'Accept-Version', 'Content-Type', 'Api-Version', 'user', 'token', 'org'];
-            if (res.methods.indexOf('OPTIONS') === -1) {
-                res.methods.push('OPTIONS');
-            }
-
-            if (res.methods.indexOf('GET') === -1) {
-                res.methods.push('GET');
-            }
-
-            res.header('Access-Control-Allow-Credentials', true);
-            res.header('Access-Control-Allow-Headers', allowHeaders.join(', '));
-            res.header('Access-Control-Allow-Methods', res.methods.join(', '));
-            res.header('Access-Control-Allow-Origin', req.headers.origin);
-
-            Log.trace("RouteHandler::handlePreflight(..) - MethodNotAllowed - sending 204");
-            return res.send(204);
-        } else {
-            Log.trace("RouteHandler::handlePreflight(..) - MethodNotAllowed - sending 405");
-            return res.send(405);
+        var allowHeaders = ['Accept', 'Accept-Version', 'Content-Type', 'Api-Version', 'user', 'token', 'org'];
+        if (res.methods.indexOf('OPTIONS') === -1) {
+            res.methods.push('OPTIONS');
         }
+
+        if (res.methods.indexOf('GET') === -1) {
+            res.methods.push('GET');
+        }
+
+        res.header('Access-Control-Allow-Credentials', true);
+        res.header('Access-Control-Allow-Headers', allowHeaders.join(', '));
+        res.header('Access-Control-Allow-Methods', res.methods.join(', '));
+        res.header('Access-Control-Allow-Origin', req.headers.origin);
+
+        Log.trace("RouteHandler::handlePreflight(..) - MethodNotAllowed - sending 204");
+        return res.send(204);
+        // } else {
+        //     Log.trace("RouteHandler::handlePreflight(..) - MethodNotAllowed - sending 405");
+        //    return res.send(405);
+        // }
     }
 
 
@@ -227,24 +227,39 @@ export class RouteHandler {
         });
     }
 
-
     public static performAction(req: any, res: any, next: any) {
-        Log.trace('RouteHandler::performAction(..) - /performAction - start GET');
+        Log.info('RouteHandler::performAction(..) - /performAction - start');
         const user = req.headers.user;
         const token = req.headers.token;
+        const org = req.headers.org;
+        const action = req.params.action;
 
         // TODO: verify token
 
-        const org = Config.getInstance().getProp('org');
-
         let sc: SDDMController = new SDDMController(new GitHubController());
-        let status = sc.getStatus(org, user).then(function (status) {
-            Log.trace('RouteHandler::performAction(..) - sending 200; user: ' + user + '; status: ' + status);
-            res.send({user: user, status: status});
-        }).catch(function (err) {
-            Log.trace('RouteHandler::performAction(..) - sending 400');
-            res.send(400, {error: err});
-        });
+
+        if (action === 'provisionD0') {
+            sc.provision(org, "d0", [user]).then(function (provisionResult) {
+                Log.trace('RouteHandler::performAction(..) - sending 200; result: ' + JSON.stringify(provisionResult));
+                res.send(provisionResult);
+            }).catch(function (err) {
+                Log.trace('RouteHandler::performAction(..) - sending 400');
+                res.send(400, {error: err});
+            });
+
+        } else if (action === 'provisionD1individual') {
+            sc.provision(org, "d0", [user]).then(function (provisionResult) {
+                Log.trace('RouteHandler::performAction(..) - sending 200; result: ' + JSON.stringify(provisionResult));
+                res.send(provisionResult);
+            }).catch(function (err) {
+                Log.trace('RouteHandler::performAction(..) - sending 400');
+                res.send(400, {error: err});
+            });
+
+        } else {
+            Log.trace('RouteHandler::performAction(..) - /performAction - unknown action: ' + action);
+            res.send(404, {error: 'Unknown action'});
+        }
     }
 
 

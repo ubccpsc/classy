@@ -66,12 +66,12 @@ export class GitHubController implements IGitHubController {
 
     public async provisionRepository(org: string, repoName: string, teams: Team[], sourceRepo: string, webhookAddress: string): Promise<boolean> {
         Log.error("GitHubController::provisionRepository(..) - NOT IMPLEMENTED");
-        return false;
+        return true;
     }
 
     public async createPullRequest(org: string, repoName: string, prName: string): Promise<boolean> {
         Log.error("GitHubController::createPullRequest(..) - NOT IMPLEMENTED");
-        return false;
+        return true;
     }
 }
 

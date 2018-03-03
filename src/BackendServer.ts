@@ -78,7 +78,7 @@ export default class BackendServer {
                 that.rest.get('/githubCallback', RouteHandler.githubCallback);
 
                 that.rest.get('/currentStatus', RouteHandler.getCurrentStatus);
-                that.rest.post('/performAction', RouteHandler.performAction);
+                that.rest.post('/performAction/:action', RouteHandler.performAction);
 
                 /**
                  * Serve up index.html; not needed for server backend
