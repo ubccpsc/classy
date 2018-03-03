@@ -7,6 +7,7 @@ import Log from "./Util/Log";
 import * as fs from "fs";
 import {AuthController} from "./controllers/AuthController";
 import {Config} from "./Config";
+import {SDDMREST} from "./controllers/SDDMREST";
 
 // import RouteHandler from './RouteHandler';
 
@@ -77,7 +78,8 @@ export default class BackendServer {
                 that.rest.get('/auth', AuthController.getAuth);
                 that.rest.get('/githubCallback', AuthController.githubCallback);
 
-
+                that.rest.get('/currentStatus', SDDMREST.getCurrentStatus);
+                that.rest.post('/performAction', SDDMREST.performAction);
                 /**
                  * Serve up index.html; not needed for server backend
                  */

@@ -5,6 +5,7 @@
 import Log from "./util/Log";
 import BackendServer from "./BackendServer";
 import {Config} from "./Config";
+import {PersonController} from "./controllers/PersonController";
 
 // const Config = require("../Config");
 

@@ -2,6 +2,7 @@ import Log from "../util/Log";
 import * as rp from "request-promise-native";
 import {PersonController} from "./PersonController";
 import {Config} from "../Config";
+import {Person} from "../Types";
 import ClientOAuth2 = require("client-oauth2");
 
 export class AuthController {
@@ -24,18 +25,23 @@ export class AuthController {
         let config = Config.getInstance();
 
         const courseId = req.query.course;
-        Log.info("BES - /auth redirect; course: " + courseId);
+
         const githubRedirect = config.getProp('backendUrl') + ':' + config.getProp('backendPort') + '/githubCallback?course=' + courseId;
-        var githubAuth = new ClientOAuth2({
+        Log.info("BES - /auth redirect; course: " + courseId + "; url: " + githubRedirect);
+
+        const setup = {
             clientId:         config.getProp('githubClientId'),
             clientSecret:     config.getProp('githubClientSecret'),
-            accessTokenUri:   config.getProp('githubHost') + 'login/oauth/access_token',
-            authorizationUri: config.getProp('githubHost') + 'login/oauth/authorize',
+            accessTokenUri:   config.getProp('githubHost') + '/login/oauth/access_token',
+            authorizationUri: config.getProp('githubHost') + '/login/oauth/authorize',
             redirectUri:      githubRedirect,
             scopes:           ['']
-        });
+        };
+
+        var githubAuth = new ClientOAuth2(setup);
 
         const uri = githubAuth.code.getUri();
+        Log.info("BES - /auth uri: " + uri);
         res.redirect(uri, next);
     }
 
@@ -46,13 +52,18 @@ export class AuthController {
 
         let personController = new PersonController();
 
-        //const githubRedirect = App.config.backendUrl + ':' + App.config.backendPort + '/githubCallback';
+        // TODO: do we need this redirect?
+        let backendUrl = config.getProp('backendUrl');
+        let backendPort = config.getProp('backendPort');
+        const githubRedirect = backendUrl + ':' + backendPort + '/githubCallback';
+        Log.info('BES / githubCallback; url: ' + githubRedirect);
+
         var githubAuth = new ClientOAuth2({
             clientId:         config.getProp('githubClientId'),
             clientSecret:     config.getProp('githubClientSecret'),
-            accessTokenUri:   config.getProp('githubHost') + 'login/oauth/access_token',
-            authorizationUri: config.getProp('githubHost') + 'login/oauth/authorize',
-            //  redirectUri:      githubRedirect,
+            accessTokenUri:   config.getProp('githubHost') + '/login/oauth/access_token',
+            authorizationUri: config.getProp('githubHost') + '/login/oauth/authorize',
+            redirectUri:      githubRedirect,
             scopes:           ['']
         });
 
@@ -62,7 +73,7 @@ export class AuthController {
 
             token = user.accessToken;
             var options = {
-                uri:     config.getProp('githubAPI') + 'user',
+                uri:     config.getProp('githubAPI') + '/user',
                 method:  'GET',
                 headers: {
                     'Content-Type':  'application/json',
@@ -79,7 +90,28 @@ export class AuthController {
             const username = body.login;
             Log.info("BES - /githubCallback - GH username: " + username);
 
-            return personController.getPerson(courseId, username)
+            // NOTE: this is not what you want for non micromasters
+            // this will create a person every time
+            // but for ubc courses we want to give a reject message for unknown users
+
+
+            let p: Person = {
+                id:            username,
+                csId:          username, // sdmm doesn't have these
+                githubId:      username,
+                studentNumber: null,
+
+                org:    courseId,
+                fName:  '',
+                lName:  '',
+                kind:   'student',
+                url:    'https://github.com/' + username,
+                labId:  'UNKNOWN',
+                custom: {}
+            };
+
+            return personController.createPerson(p);
+            // return personController.getPerson(courseId, username)
         }).then(function (person) {
             let url = config.getProp('frontendUrl');
             if (person !== null) {

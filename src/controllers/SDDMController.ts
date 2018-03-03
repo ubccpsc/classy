@@ -170,7 +170,7 @@ export class SDDMController {
                 Log.info("SDDMController::getStatus(..) - check successful; skipping");
                 return reportedStatus;
             }
-            
+
             let currentStatus = SDDMStatus[SDDMStatus.D0PRE]; // start with the lowest status and work up
 
             // D0PRE

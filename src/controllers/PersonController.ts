@@ -1,12 +1,17 @@
 import Log from "../util/Log";
 import {DatabaseController} from "./DatabaseController";
 import {Person} from "../Types";
-import {SDDMController} from "./SDDMController";
 
 export class PersonController {
 
     private db: DatabaseController = DatabaseController.getInstance();
 
+    /**
+     * Creates a person. If that person exists, returns the existing person.
+     *
+     * @param {Person} personPrototype
+     * @returns {Promise<Person | null>}
+     */
     public async createPerson(personPrototype: Person): Promise<Person | null> {
         Log.info("PersonController::createPerson( " + personPrototype.org + ", " + personPrototype.id + " ) - start");
         let existingPerson = await this.db.getPerson(personPrototype.org, personPrototype.id);
@@ -20,7 +25,7 @@ export class PersonController {
                 return person;
             }
         }
-        return null;
+        return existingPerson;
     }
 
     /**
