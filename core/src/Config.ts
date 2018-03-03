@@ -35,6 +35,8 @@ export class Config {
                 githubOracleToken: process.env.GHT_ORACLE,
                 sslCertPath: process.env.SSL_CERT_PATH,
                 sslKeyPath: process.env.SSL_KEY_PATH,
+                classPortalHost: process.env.CP_HOST,
+                classPortalPort: process.env.CP_PORT
             };
         } catch (err) {
             Log.error("Config::<init> - fatal error reading configuration file: " + err);
