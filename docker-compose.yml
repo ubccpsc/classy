@@ -28,6 +28,20 @@ services:
             - "../sdmm-portal/ssl:/app/ssl"
     core:
         build: core/
+        environment:
+            - "NAME=secapstone"
+            - "ORG=secapstone"
+            - "ADMIN_USER=secapstone"
+            - "DOCKER_ID=secapstone-grade"
+            - "WORKSPACE=/var/tmp/secapstone/"
+            - "ORACLE_REPO=https://github.ubc.ca/cpsc310/project_oracle"
+            - "POSTBACK=false"
+            - "PERSIST_DIR=/var/tmp/secapstone/"
+            - "PORT=11333"
+            - "TIMEOUT=300"
+            - "BOT_NAME=autobot"
+            - "GHT_STUDENT_ORG=${GHT_STUDENT_ORG}"
+            - "GHT_ORACLE=${GHT_ORACLE_ORG}"
         depends_on:
             - db
             - grader
@@ -41,7 +55,7 @@ services:
             - "SOCK_PORT=7777"
             - "USER_UID=1008"
             - "DOCKER_NET=autotest_grader"
-            - "GITHUB_TOKEN=${GH_CPSC310TOKEN}"
+            - "GITHUB_TOKEN=${GHT_ORACLE_ORG}"
         networks:
             default:
             grader:

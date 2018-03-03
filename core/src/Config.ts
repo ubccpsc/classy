@@ -5,31 +5,8 @@ export class Config {
 
     public static getInstance(configName?: string): Config {
         if (Config.instance === null) {
-            if (typeof configName === "undefined") {
-                Log.warn("Config::getInstance() - configName not specified; using test");
-                configName = "test";
-            }
-
             const c = new Config();
-            let found = false;
-            for (const course of c.config.courses) {
-                if (course.name === configName) {
-                    Log.info("Config::getInstance() - processing config: " + configName);
-                    found = true;
-                    for (const key of Object.keys(course)) {
-                        if (typeof c.config[key] === "undefined") {
-                            c.config[key] = course[key];
-                        } else {
-                            Log.warn("Config::getInstance() - key already exists: " + key);
-                        }
-                    }
-                }
-            }
             Config.instance = c;
-            if (found === false) {
-                Log.error("Config::getInstance( " + configName + " ) - config not found");
-                throw new Error("Config::getInstance( " + configName + " ) - config not found");
-            }
         }
         return Config.instance;
     }
@@ -41,7 +18,22 @@ export class Config {
     private constructor() {
         // should not be called by clients but typescript does not allow private constructors
         try {
-            this.config = fs.readJSONSync("./config.priv.json");
+            this.config = {
+                name: process.env.NAME,
+                org: process.env.ORG,
+                adminUser: process.env.ADMIN_USER,
+                dockerId: process.env.DOCKER_ID,
+                workspace: process.env.WORKSPACE,
+                oracleRepo: process.env.ORACLE_REPO,
+                postback: Boolean(process.env.POSTBACK),
+                persistDir: process.env.PERSIST_DIR,
+                port: Number(process.env.PORT),
+                timeout: Number(process.env.TIMEOUT),
+                botName: process.env.BOT_NAME,
+                githubOrgToken: process.env.GHT_STUDENT_ORG,
+                githubOracleToken: process.env.GHT_ORACLE,
+
+            };
         } catch (err) {
             Log.error("Config::<init> - fatal error reading configuration file: " + err);
         }
