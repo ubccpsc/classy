@@ -1,6 +1,6 @@
 FROM node:8.9.4-alpine
 
-ENV LOG_LEVEL=INFO
+ENV LOG_LEVEL=trace
 
 WORKDIR /tmp/app
 
