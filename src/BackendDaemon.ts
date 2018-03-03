@@ -19,7 +19,7 @@ export class BackendDaemon {
         Log.info('BackendDaemon::init() - start');
 
         // handle any config changes (specifically dev vs prod)
-        const server = new BackendServer(false);
+        const server = new BackendServer();
         server.start().then(function () {
             Log.info("BackendDaemon::init() - server started");
         }).catch(function (err) {

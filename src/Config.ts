@@ -20,7 +20,9 @@ export class Config {
                 frontendPort:       process.env.FRONTEND_PORT,
                 frontendUrl:        process.env.FRONTEND_URL,
                 backendPort:        process.env.BACKEND_PORT,
-                backendUrl:         process.env.BACKEND_URL
+                backendUrl:         process.env.BACKEND_URL,
+                githubHost:         process.env.GITHUB_HOST,
+                githubAPI:          process.env.GITHUB_API,
             }
         } catch (err) {
             Log.error("Config::<init> - fatal error reading configuration file: " + err);
