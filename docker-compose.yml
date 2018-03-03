@@ -9,16 +9,17 @@ services:
         build: https://${GH_CPSC310TOKEN}@github.ubc.ca/cpsc310/cpsc310geocoder.git
         ports:
             - "11316:11316" # this is the geolocation port for d2/d3; exposd globally
-    # referenceUI:
+    # reference-ui:
     #     build: https://${TOKEN}:@github.company.com/org/repo.git
     #     ports:
     #         - "11315:11315" # this is the reference UI for all deliverables; exposd globally
-    # portalBackend:
+    # portal-backend:
     #     build: https://${UBCCPSCTOKEN}github.com/ubccpsc/sdmm-portal-backend.git
     #     ports:
     #         - "5000:5000" # this is the reference UI for all deliverables; exposd globally
-    portalFrontend:
+    portal-frontend:
         build: https://github.com/ubccpsc/sdmm-portal.git
+        env_file: "../sdmm-portal/.env"
         # depends_on:
         #     - portalBackend
         ports:
