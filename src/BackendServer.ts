@@ -80,14 +80,15 @@ export default class BackendServer {
 
                 that.rest.get('/currentStatus', SDDMREST.getCurrentStatus);
                 that.rest.post('/performAction', SDDMREST.performAction);
+
                 /**
                  * Serve up index.html; not needed for server backend
                  */
-                that.rest.get('/\/.*/', restify.plugins.serveStatic({
-                        directory: 'html',
-                        default:   'index.html'
-                    })
-                );
+                // that.rest.get('/\/.*/', restify.plugins.serveStatic({
+                //        directory: 'html',
+                //        default:   'index.html'
+                //    })
+                //);
 
                 that.rest.listen(that.config.getProp('backendPort'), function () {
                     Log.info('BackendServer::start() - restify listening: ' + that.rest.url);

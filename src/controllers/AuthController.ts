@@ -94,7 +94,6 @@ export class AuthController {
             // this will create a person every time
             // but for ubc courses we want to give a reject message for unknown users
 
-
             let p: Person = {
                 id:            username,
                 csId:          username, // sdmm doesn't have these
