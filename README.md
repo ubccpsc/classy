@@ -28,21 +28,22 @@ This has not been done yet
 
 ## Deploy on sdmm
 
-Follow instructions here https://certbot.eff.org/#centosrhel7-other. First, enable epel-release repo:
+Follow instructions here https://certbot.eff.org/#centosrhel7-other. 
 
 ```sh
-# wget http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-# rpm -ivh epel-release-latest-7.noarch.rpm
-```
+# Enable epel-release repo
+wget http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+rpm -ivh epel-release-latest-7.noarch.rpm
 
-Then, install with
-
-```sh
+# Install certbot
 yum install certbot
-```
 
-To generate the cert:
-
-```sh
+# Generate cert
 certbot certonly --standalone -d sdmm.cs.ubc.ca
+
+# TODO Set renewal as cron/systemd job. It also needs to copy the new certs to /home/w-sdmm/sdmm-portal
+certbot renew
+cp $(readlink -f /etc/letsencrypt/live/sdmm.cs.ubc.ca/fullchain.pem) /home/w-sdmm/sdmm-portal/ssl/fullchain.pem
+cp $(readlink -f /etc/letsencrypt/live/sdmm.cs.ubc.ca/privkey.pem) /home/w-sdmm/sdmm-portal/ssl/privkey.pem
+chown -R w-sdmm:w-sdmm /home/w-sdmm/sdmm-portal/ssl
 ```

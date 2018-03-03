@@ -1,6 +1,6 @@
 FROM node:8-alpine
 
-EXPOSE 3000
+EXPOSE 443
 
 VOLUME [ "/app/ssl" ]
 
@@ -10,7 +10,6 @@ COPY src/ src/
 COPY html/ html/
 RUN yarn install && \
     yarn tsc && \
-    chown -R node /app
+    yarn webpack
 
-USER node
 CMD ["node", "--require", "dotenv/config", "src/server/FrontEndServer.js"]
