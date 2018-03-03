@@ -20,7 +20,8 @@ describe('REST Routes for AutoTest', function () {
 
     before(function () {
         Log.test('RestifyAutoTestRoutes::before - start');
-        var server = new BackendServer(false);
+        // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
+        const server = new BackendServer(false);
 
         return server.start().then(function () {
             Log.test('RestifyAutoTestRoutes::before - server started');

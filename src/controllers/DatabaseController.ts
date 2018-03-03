@@ -310,7 +310,8 @@ export class DatabaseController {
     private async open(): Promise<Db> {
         // Log.trace("DatabaseController::open() - start");
         if (this.db === null) {
-            const dbName = Config.getInstance().getProp('dbName');
+            // just use the org name for the db (use a test org name if you want to avoid tests wiping data!!)
+            const dbName = Config.getInstance().getProp('org');
             Log.info("DatabaseController::open() - db null; making new connection to: " + dbName);
 
             const client = await MongoClient.connect('mongodb://localhost:27017');
