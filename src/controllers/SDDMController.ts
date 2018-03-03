@@ -10,9 +10,37 @@ import {PersonController} from "./PersonController";
 
 import * as crypto from 'crypto';
 
-export interface ResponsePayload {
-    success: boolean;
+
+export interface Payload {
+    success?: ActionPayload | StatusPayload; // only set if defined
+    failure?: FailurePayload; // only set if defined
+}
+
+export interface FailurePayload {
     message: string;
+    shouldLogout: boolean; // almost always false
+}
+
+export interface ActionPayload {
+    message: string;
+    status: StatusPayload; // if an action was successful we should send the current status
+}
+
+export interface StatusPayload {
+    status: string;
+    d0: GradePayload | null;
+    d1: GradePayload | null;
+    d2: GradePayload | null;
+    d3: GradePayload | null;
+}
+
+export interface GradePayload {
+    score: number;
+    repoName: string;
+    repoUrl: string;
+    commitName: string;
+    commitUrl: string;
+    timestamp: string;
 }
 
 export enum SDDMStatus {
@@ -83,18 +111,18 @@ export class SDDMController {
      * @param {string[]} peopleIds
      * @returns {Promise<ResponsePayload>}
      */
-    public async provision(org: string, delivId: string, peopleIds: string[]): Promise<ResponsePayload> {
+    public async provision(org: string, delivId: string, peopleIds: string[]): Promise<Payload> {
         Log.info("SDDMController::provision( " + org + ", " + delivId + ", ... ) - start");
 
         try {
             if (org !== "secapstone" && org !== "secapstonetest") {
                 Log.error("SDDMController::provision(..) - SDDMController should not be used for other orgs");
-                return {success: false, message: "Invalid org; contact course staff."};
+                return {failure: {shouldLogout: false, message: "Invalid org; contact course staff."}};
             }
 
             if (peopleIds.length < 1) {
                 Log.error("SDDMController::provision(..) - there needs to be at least one person on a repo");
-                return {success: false, message: "Invalid # of people; contact course staff."};
+                return {failure: {shouldLogout: false, message: "Invalid # of people; contact course staff."}};
             }
 
             if (delivId === "d0") {
@@ -103,7 +131,7 @@ export class SDDMController {
                     return await this.provisionD0Repo(org, peopleIds[0]);
                 } else {
                     Log.error("SDDMController::provision(..) - d0 repos are only for individuals");
-                    return {success: false, message: "D0 for indivduals only; contact course staff."};
+                    return {failure: {shouldLogout: false, message: "D0 for indivduals only; contact course staff."}};
                 }
             } else if (delivId === "d1") {
 
@@ -116,19 +144,19 @@ export class SDDMController {
                         return await this.provisionD1Repo(org, peopleIds);
                     } else {
                         Log.error("SDDMController::provision(..) - d1 duplicate users");
-                        return {success: false, message: "D1 duplicate users; contact course staff."};
+                        return {failure: {shouldLogout: false, message: "D1 duplicate users; contact course staff."}};
                     }
                 } else {
                     Log.error("SDDMController::provision(..) - d1 can only be performed by single students or pairs of students.");
-                    return {success: false, message: "D1 can only be performed by single students or pairs of students."};
+                    return {failure: {shouldLogout: false, message: "D1 can only be performed by single students or pairs of students."}};
                 }
             } else {
                 Log.warn("SDDMController::provision(..) - new repo not needed for delivId: " + delivId);
-                return {success: false, message: "Repo not needed; contact course staff."};
+                return {failure: {shouldLogout: false, message: "Repo not needed; contact course staff."}};
             }
         } catch (err) {
             Log.error("SDDMController::provision(..) - ERROR: " + err);
-            return {success: false, message: "Unknown error creating repo; contact course staff."};
+            return {failure: {shouldLogout: false, message: "Unknown error creating repo; contact course staff."}};
         }
 
     }
@@ -367,7 +395,7 @@ export class SDDMController {
         }
     }
 
-    private async provisionD0Repo(org: string, personId: string): Promise<ResponsePayload> {
+    private async provisionD0Repo(org: string, personId: string): Promise<Payload> {
         Log.info("SDDMController::provisionD0Repo( " + org + ", " + personId + " ) - start");
         const start = Date.now();
 
@@ -379,7 +407,7 @@ export class SDDMController {
 
             if (person === null) {
                 // return early
-                return {success: false, message: "Username not registered; contact course staff."};
+                return {failure: {shouldLogout: false, message: "Username not registered; contact course staff."}};
             }
 
             let personStatus = await this.getStatus(org, personId);
@@ -415,18 +443,18 @@ export class SDDMController {
                 this.dc.writeTeam(team);
 
                 Log.info("SDDMController::provisionD0Repo(..) - d0 final provisioning successful; took: " + Util.took(start));
-                return {success: true, message: "Repository successfully created."};
+                return {success: {message: "Repository successfully created.", status: this.createStatusPayload()}};
             } else {
                 Log.error("SDDMController::provisionD0Repo(..) - something went wrong provisioning this repo; see logs above.");
-                return {success: false, message: "Error provisioning d0 repo; contact course staff."};
+                return {failure: {shouldLogout: false, message: "Error provisioning d0 repo; contact course staff."}};
             }
         } catch (err) {
             Log.error("SDDMController::provisionD0Repo(..) - ERROR: " + err);
-            return {success: false, message: "Error creating d0 repo; contact course staff."};
+            return {failure: {shouldLogout: false, message: "Error creating d0 repo; contact course staff."}};
         }
     }
 
-    private async updateIndividualD0toD1(org: string, personId: string): Promise<ResponsePayload> {
+    private async updateIndividualD0toD1(org: string, personId: string): Promise<Payload> {
         Log.info("SDDMController::updateIndividualD0toD1( " + org + ", " + personId + " ) - start");
         const start = Date.now();
 
@@ -435,14 +463,14 @@ export class SDDMController {
             const person = await this.pc.getPerson(org, personId);
             if (person === null) {
                 Log.error("SDDMController::updateIndividualD0toD1(..) - person does not exist: " + personId);
-                return {success: false, message: "Username not registered with course."};
+                return {failure: {shouldLogout: false, message: "Username not registered with course."}};
             }
 
             // make sure the person has suffient d0 grade
             let grade = await this.gc.getGrade(org, personId, "d0"); // make sure they can move on
             if (grade === null || grade.score < 60) {
                 Log.error("SDDMController::updateIndividualD0toD1(..) - person does not exist: " + personId);
-                return {success: false, message: "Current d0 grade is not sufficient to move on to d1."};
+                return {failure: {shouldLogout: false, message: "Current d0 grade is not sufficient to move on to d1."}};
             }
 
             // make sure the person does not already have a d1 repo
@@ -450,7 +478,7 @@ export class SDDMController {
             for (const r of myRepos) {
                 if (r.custom.d1enabled === true) {
                     Log.error("SDDMController::updateIndividualD0toD1(..) - person already has a d1 repo: " + r.id);
-                    return {success: false, message: "D1 repo has already been assigned: " + r.id};
+                    return {failure: {shouldLogout: false, message: "D1 repo has already been assigned: " + r.id}};
                 }
             }
 
@@ -482,23 +510,22 @@ export class SDDMController {
                 await this.dc.writeTeam(team);
             } else {
                 Log.error("SDDMController::updateIndividualD0toD1(..) - unable to find team: " + teamName + ' or repo: ' + repoName);
-                return {success: false, message: "Invalid team updating d0 repo; contact course staff."};
+                return {failure: {shouldLogout: false, message: "Invalid team updating d0 repo; contact course staff."}};
             }
 
             Log.info("SDDMController::updateIndividualD0toD1(..) - d0 to d1 individual upgrade successful; took: " + Util.took(start));
-            return {success: true, message: "D0 repo successfully updated to D1."};
+            return {success: {message: "D0 repo successfully updated to D1.", status: this.createStatusPayload()}};
         } catch (err) {
             Log.error("SDDMController::updateIndividualD0toD1(..) - ERROR: " + err);
-            return {success: false, message: "Error updating d0 repo; contact course staff."};
+            return {failure: {shouldLogout: false, message: "Error updating d0 repo; contact course staff."}};
         }
     }
 
-    private async provisionD1Repo(org: string, peopleIds: string[]): Promise<ResponsePayload> {
+    private async provisionD1Repo(org: string, peopleIds: string[]): Promise<Payload> {
         Log.info("SDDMController::provisionD1Repo( " + org + ", " + JSON.stringify(peopleIds) + " ) - start");
         const start = Date.now();
 
         try {
-
             // seems complicated, but we need team names that are unique
             // but with lots of people signing up at once we can't rely on a counter
             // especially since full provisioning will take a long time (e.g., 60+ seconds)
@@ -524,14 +551,18 @@ export class SDDMController {
                         people.push(person)
                     } else {
                         return {
-                            success: false,
-                            message: "All teammates must have achieved a score of 60% or more to join a team."
+                            failure: {
+                                shouldLogout: false,
+                                message:      "All teammates must have achieved a score of 60% or more to join a team."
+                            }
                         };
                     }
                 } else {
                     return {
-                        success: false,
-                        message: "Unknown person " + pid + " requested to be on team; please make sure they are registered with the course."
+                        failure: {
+                            shouldLogout: false,
+                            message:      "Unknown person " + pid + " requested to be on team; please make sure they are registered with the course."
+                        }
                     };
                 }
             }
@@ -541,8 +572,10 @@ export class SDDMController {
                 if (personStatus !== SDDMStatus[SDDMStatus.D1UNLOCKED]) {
                     Log.info("SDDMController::provisionD1Repo( " + org + ", " + p.id + " ) - bad status: " + personStatus);
                     return {
-                        success: false,
-                        message: "All teammates must be eligible to join a team."
+                        failure: {
+                            shouldLogout: false,
+                            message:      "All teammates must be eligible to join a team."
+                        }
                     };
                 } else {
                     Log.info("SDDMController::provisionD1Repo( " + org + ", " + p.id + " ) - correct status: " + personStatus);
@@ -576,14 +609,19 @@ export class SDDMController {
                 this.dc.writeTeam(team);
 
                 Log.info("SDDMController::provisionD1Repo(..) - d1 final provisioning successful; took: " + Util.took(start));
-                return {success: true, message: "D1 repository successfully provisioned."};
+                return {success: {message: "D1 repository successfully provisioned.", status: this.createStatusPayload()}};
             } else {
                 Log.error("SDDMController::provisionD1Repo(..) - something went wrong provisioning this repo; see logs above.");
-                return {success: false, message: "Error encountered creating d1 repo; contact course staff."};
+                return {failure: {shouldLogout: false, message: "Error encountered creating d1 repo; contact course staff."}};
             }
         } catch (err) {
             Log.error("SDDMController::provisionD1Repo(..) - ERROR: " + err);
-            return {success: false, message: "Error encountered provisioning d1 repo; contact course staff."};
+            return {failure: {shouldLogout: false, message: "Error encountered provisioning d1 repo; contact course staff."}};
         }
+    }
+
+    private createStatusPayload(): StatusPayload {
+        // TODO
+        return null;
     }
 }
