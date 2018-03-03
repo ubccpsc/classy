@@ -13,10 +13,8 @@ export default class Server {
     private rest: restify.Server;
     private port: number;
 
-    private config: Config; // for SSL params
-
     constructor() {
-        this.config = Config.getInstance(); // for SSL params
+        Config.getInstance(); // for SSL params
     }
 
     /**
@@ -73,12 +71,8 @@ export default class Server {
 
                 that.rest = restify.createServer({
                     name:        "AutoTest",
-                    key:         fs.readFileSync(that.config.getProp("sslCertPath")).toString(),
-                    certificate: fs.readFileSync(that.config.getProp("sslKeyPath")).toString()
-                });
-
-                that.rest = restify.createServer({ // Non SSL version
-                    name: "AutoTest"
+                    key:         fs.readFileSync(Config.getInstance().getProp("sslKeyPath")),
+                    certificate: fs.readFileSync(Config.getInstance().getProp("sslCertPath"))
                 });
 
                 // support CORS
