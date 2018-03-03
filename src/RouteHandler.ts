@@ -79,20 +79,24 @@ export class RouteHandler {
         // TODO: do we need this redirect?
         let backendUrl = config.getProp('backendUrl');
         let backendPort = config.getProp('backendPort');
-        const githubRedirect = backendUrl + ':' + backendPort + '/githubCallback';
+        const githubRedirect = backendUrl + ':' + backendPort + '/githubCallback?orgName=secapstone';
         Log.info('RouteHandler::githubCallback(..) - / githubCallback; url: ' + githubRedirect);
 
-        var githubAuth = new ClientOAuth2({
+        const opts = {
             clientId:         config.getProp('githubClientId'),
             clientSecret:     config.getProp('githubClientSecret'),
             accessTokenUri:   config.getProp('githubHost') + '/login/oauth/access_token',
             authorizationUri: config.getProp('githubHost') + '/login/oauth/authorize',
             redirectUri:      githubRedirect,
             scopes:           ['']
-        });
+        };
+
+        const githubAuth = new ClientOAuth2(opts);
 
         let token: string | null = null;
         let p: Person = null;
+
+        Log.info('RouteHandler::githubCallback(..) - opts: ' + JSON.stringify(opts));
 
         githubAuth.code.getToken(req.url).then(function (user) {
             Log.trace("RouteHandler::githubCallback(..) - token aquired");
