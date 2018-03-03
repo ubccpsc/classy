@@ -1,8 +1,6 @@
 import * as fs from "fs-extra";
 import Log from "./util/Log";
 
-const ConfigFile = require("../Config");
-
 export class Config {
 
     protected static instance: Config = null;
@@ -11,7 +9,20 @@ export class Config {
     private constructor() {
         // should not be called by clients
         try {
-            this.config = fs.readJSONSync("./config.priv.json");
+            //this.config = fs.readJSONSync("./config.priv.json");
+            this.config = {
+                name: process.env.NAME,
+                org: process.env.ORG,
+                githubClientId: process.env.GH_CLIENT_ID,
+                githubClientSecret: process.env.GH_CLIENT_SECRET,
+                sslCertPath: process.env.SSL_CERT_PATH,
+                sslKeyPath: process.env.SSL_KEY_PATH,
+                sslIntCert: process.env.SSL_INT_CERT,
+                frontendPort: process.env.FRONTEND_PORT,
+                frontendUrl: process.env.FRONTEND_URL,
+                backendPort: process.env.BACKEND_PORT,
+                backendUrl: process.env.BACKEND_URL
+            }
         } catch (err) {
             Log.error("Config::<init> - fatal error reading configuration file: " + err);
         }
@@ -20,31 +31,8 @@ export class Config {
     public static getInstance(configName?: string): Config {
         Log.trace("Config::getInstance() - start");
         if (Config.instance === null) {
-            if (typeof configName === "undefined") {
-                Log.warn("Config::getInstance() - configName not specified; using test");
-                configName = "test";
-            }
-
             const c = new Config();
-            let found = false;
-            for (const course of c.config.courses) {
-                if (course.name === configName) {
-                    Log.info("Config::getInstance() - processing config: " + configName);
-                    found = true;
-                    for (const key of Object.keys(course)) {
-                        if (typeof c.config[key] === "undefined") {
-                            c.config[key] = course[key];
-                        } else {
-                            Log.warn("Config::getInstance() - key already exists: " + key);
-                        }
-                    }
-                }
-            }
             Config.instance = c;
-            if (found === false) {
-                Log.error("Config::getInstance( " + configName + " ) - config not found");
-                throw new Error("Config::getInstance( " + configName + " ) - config not found");
-            }
         }
         Log.trace("Config::getInstance() - done");
         return Config.instance;

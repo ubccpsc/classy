@@ -32,16 +32,24 @@ export class BackendDaemon {
 
 // This ends up starting the whole system
 Log.info("BackendDaemon - starting");
-if (process.argv.length < 3) {
-    Log.error("BackendDaemon - missing runtime param: node BackendDaemon.js <courseName>");
-} else {
-    const confKey = process.argv[2];
-    Log.info("BackendDaemon - initiating configuration: " + confKey);
-    Config.getInstance(confKey);
-    // Log.trace("BackendDaemon - initiating configuration: " + Config.getInstance());
-    const app = new BackendDaemon();
-    app.init();
-}
+const confKey = process.env.COURSE_NUM;
+Log.info("BackendDaemon - initiating configuration: " + confKey);
+Config.getInstance(confKey);
+// Log.trace("BackendDaemon - initiating configuration: " + Config.getInstance());
+const app = new BackendDaemon();
+app.init();
+
+
+// if (process.argv.length < 3) {
+//     Log.error("BackendDaemon - missing runtime param: node BackendDaemon.js <courseName>");
+// } else {
+//     const confKey = process.argv[2];
+//     Log.info("BackendDaemon - initiating configuration: " + confKey);
+//     Config.getInstance(confKey);
+//     // Log.trace("BackendDaemon - initiating configuration: " + Config.getInstance());
+//     const app = new BackendDaemon();
+//     app.init();
+// }
 
 // Unhandled rejection checking code; this isn't great, but is better than being surprised
 Log.info("BackendDaemon - registering unhandled rejection");
