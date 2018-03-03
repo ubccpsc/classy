@@ -25,7 +25,7 @@ services:
         ports:
             - "443:443" # exposed globally
         volumes:
-            - "../sdmm-portal/ssl:/app/ssl"
+            - "./ssl:/app/ssl"
     core:
         build: core/
         environment:
@@ -43,11 +43,16 @@ services:
             - "BOT_NAME=autobot"
             - "GHT_STUDENT_ORG=${GHT_ORG_SECAPSTONE}"
             - "GHT_ORACLE=${GHT_ORG_CPSC310}"
+            - "SSL_CERT_PATH=./ssl/fullchain.pem"
+            - "SSL_KEY_PATH=./ssl/privkey.pem"
+            - "SSL_INT_CERT=SSL_INT_CERT"
         depends_on:
             - db
             - grader
         ports:
             - "11333:11333" # this is the github webhook port; exposed globally
+        volumes:
+            - "./ssl:/app/ssl"
     grader:
         build: grader/
         environment:
