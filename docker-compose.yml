@@ -32,7 +32,6 @@ services:
             - "11333:11333" # this is the github webhook port; exposed globally
     grader:
         build: grader/
-        env_file: grader/.env
         environment:
             - "HOST_DIR=/home/cs310/autotest/data/runs"
             - "HOST_NAME=172.28.2.0"
