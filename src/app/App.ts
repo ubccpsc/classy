@@ -27,7 +27,7 @@ export class App {
     private readonly frontendPROD = 'https://portal.cs.ubc.ca/';
 
     private authHelper: AuthHelper;
-    public currentCourseId: number;
+    // public currentCourseId: number;
     public readonly backendURL: string = this.backendDEV;
     public readonly frontendURL: string = this.frontendDEV;
 
@@ -74,15 +74,16 @@ export class App {
 
                 const pageName = page.id;
 
-                let courseId: string = null;
+                let org: string = null;
 
-                if (typeof (<any>page).pushedOptions !== 'undefined' && typeof (<any>page).pushedOptions.courseId !== 'undefined') {
-                    courseId = (<any>page).pushedOptions.courseId;
-                    that.currentCourseId = (<any>page).pushedOptions.courseId;
+                if (typeof (<any>page).pushedOptions !== 'undefined' && typeof (<any>page).pushedOptions.org !== 'undefined') {
+                    org = (<any>page).pushedOptions.org;
+                    localStorage.org = org;
+                    // that.org = (<any>page).pushedOptions.org;
+                    console.log('App::init()::init - org: ' + org + '; pushed option');
                 }
 
                 console.log('App::init()::init - page: ' + pageName);
-
 
                 if (pageName === 'adminTabsPage') {
                     // initializing tabs page for the first time
@@ -159,14 +160,15 @@ export class App {
                     const userrole = String(localStorage.userrole);
                     // const username = String(localStorage.username);
                     if (userrole === 'student') {
-                        UI.pushPage('student.html', {courseId: courseId});
+                        UI.pushPage('student.html', {org: org});
                     } else if (userrole === 'admin' || userrole === 'superadmin') {
-                        UI.pushPage('admin.html', {courseId: courseId});
+                        UI.pushPage('admin.html', {org: org});
                     }
 
                     (document.querySelector('#loginButton') as OnsButtonElement).onclick = function () {
-                        const url = that.backendURL + 'auth/?course=' + courseId;
-                        Log.trace('App::init()::init - login pressed for: ' + courseId + '; url: ' + url);
+                        localStorage.setItem('org', org);
+                        const url = that.backendURL + 'auth/?org=' + org;
+                        Log.trace('App::init()::init - login pressed for: ' + org + '; url: ' + url);
                         window.location.replace(url);
                     };
                 }
@@ -217,8 +219,8 @@ export class App {
         });
     }
 
-    public getAdminController(courseId: string) {
-        Log.trace('App::getAdminController( ' + courseId + ' )');
+    public getAdminController(org: string) {
+        Log.trace('App::getAdminController( ' + org + ' )');
         // return new AdminController(this, courseId);
     }
 
@@ -247,10 +249,10 @@ export class App {
                     Log.info("App::validateCredentials() - server validation failed");
                     this.clearCredentials();
                 } else {
-                    Log.info("App::validateCredentials() - validated with server; kind: " + credentials.kind);
+                    Log.info("App::validateCredentials() - validated with server; isAdmin: " + credentials.isAdmin);
                     localStorage.setItem('user', credentials.user);
                     localStorage.setItem('token', credentials.token);
-                    localStorage.setItem('kind', credentials.kind);
+                    localStorage.setItem('isAdmin', credentials.isAdmin);
                     return true;
                 }
             } else {
@@ -294,12 +296,17 @@ export class App {
     private getServerCredentials(username: string, token: string): Promise<{}> {
         const url = this.backendURL + 'getCredentials';
         Log.trace("App::getServerCredentials - start; url: " + url);
+        const that = this;
+
+        const org = localStorage.org;
+
         const options = {
             headers: {
                 'Content-Type': 'application/json',
                 'User-Agent':   'Portal',
                 'user':         username,
-                'token':        token
+                'token':        token,
+                'org':          org
             }
         };
         return fetch(url, options).then(function (resp: any) {
@@ -309,6 +316,11 @@ export class App {
                 return fetch(url, options);
             } else {
                 Log.trace("App::getServerCredentials - passing through");
+                Log.trace("App::getServerCredentials - code returned: " + resp.status);
+
+                if (resp.status === 400) {
+                    that.clearCredentials();
+                }
                 return resp;
             }
         }).then(function (data: any) {
@@ -323,25 +335,25 @@ export class App {
         });
     };
 
-    public handleMainPageClick(courseId: object) {
+    public handleMainPageClick(org: string) {
         Log.info("App::handleMainPageClick(..) - start");
 
         if (this.validated === true) {
             // push to correct handler
             if (localStorage.kind === 'superadmin') {
                 Log.info("App::handleMainPageClick(..) - super admin");
-                UI.pushPage('superadmin.html', courseId);
+                UI.pushPage('superadmin.html', org);
             } else if (localStorage.kind === 'admin') {
                 Log.info("App::handleMainPageClick(..) - admin");
-                UI.pushPage('admin.html', courseId);
+                UI.pushPage('admin.html', org);
             } else {
                 Log.info("App::handleMainPageClick(..) - student");
-                UI.pushPage('student.html', courseId);
+                UI.pushPage('student.html', org);
             }
         } else {
             // push to login page
             Log.info("App::handleMainPageClick(..) - not authorized");
-            UI.pushPage('login.html', courseId);
+            UI.pushPage('login.html', org);
         }
     }
 

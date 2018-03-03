@@ -211,7 +211,8 @@ export class SDMMSummaryView {
         const options = {
             headers: {
                 user:  localStorage.user,
-                token: localStorage.token
+                token: localStorage.token,
+                org:   localStorage.org
             }
         };
 
