@@ -1,23 +1,19 @@
 # SDMM Portal
 
-
-
-
-
-
 ## Development
 
-* Create a localhost key (https://gist.github.com/oslego/f13e136ffeaa6174289a)
-    * Put `server.key` and `server.crt` in `<project-root>/ssl/`
-* Run two processes:
-    * `webpack --watch`
-    * `node something`
+* initial configuration:
+    * Create a localhost key (https://gist.github.com/oslego/f13e136ffeaa6174289a)
+        * Put `server.key` and `server.crt` in `<project-root>/ssl/`
+    * Create a config file
+        * copy `sample.env` into `.env` and fill in the fields
 
-
+* active development:
+    * Run two processes:
+        * `webpack --watch`
+        * `node -r dotenv/config  src/server/FrontEndServer.js`
 
 ## Deployment
-
-This has not been done yet
 
 * Install `certbot` (https://certbot.eff.org/)
 * Generate a `localhost` certificate for development.
