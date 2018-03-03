@@ -39,7 +39,7 @@ services:
             - "SOCK_PORT=7777"
             - "USER_UID=1008"
             - "DOCKER_NET=autotest_grader"
-            - "GITHUB_TOKEN=${GH_SDMMTOKEN}"
+            - "GITHUB_TOKEN=${GH_CPSC310TOKEN}"
         networks:
             default:
             grader:
