@@ -6,7 +6,7 @@ services:
         volumes:
             - ./data/db:/data/db
     geolocation:
-        build: https://${GH_CPSC310TOKEN}@github.ubc.ca/cpsc310/cpsc310geocoder.git
+        build: https://${GHT_ORG_CPSC310}@github.ubc.ca/cpsc310/cpsc310geocoder.git
         ports:
             - "11316:11316" # this is the geolocation port for d2/d3; exposd globally
     # reference-ui:
@@ -40,8 +40,8 @@ services:
             - "PORT=11333"
             - "TIMEOUT=300"
             - "BOT_NAME=autobot"
-            - "GHT_STUDENT_ORG=${GHT_STUDENT_ORG}"
-            - "GHT_ORACLE=${GHT_ORACLE_ORG}"
+            - "GHT_STUDENT_ORG=${GHT_ORG_SECAPSTONE}"
+            - "GHT_ORACLE=${GHT_ORG_CPSC310}"
         depends_on:
             - db
             - grader
@@ -55,7 +55,7 @@ services:
             - "SOCK_PORT=7777"
             - "USER_UID=1008"
             - "DOCKER_NET=autotest_grader"
-            - "GITHUB_TOKEN=${GHT_ORACLE_ORG}"
+            - "GITHUB_TOKEN=${GHT_ORG_CPSC310}"
         networks:
             default:
             grader:
