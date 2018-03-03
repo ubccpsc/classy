@@ -26,3 +26,33 @@ Nick Bradley
 ## License
 
 [MIT](LICENSE)
+
+# Configuration Variables
+
+# Global
+
+* org name (global identifier for full intance) e.g., seacapstone, CPSC310-2017W-T2
+* AdminSecret
+* GH Token Student Org
+* GH Token Oracle Org
+* CP Frontend Host
+* CP Frontend Port
+* CP Backend Host
+* `CP_BACKEND_PORT`: CP Backend Port
+
+# AutoTest
+
+* From Global: CP Backend Settings, AdminSecret
+* XXX?
+* From CP via REST: per-delivId timeout, imageId, regressionDelivs
+
+# CP-Frontend
+
+* From Global: All CP settings
+
+# CP-Backend
+
+* GH OAuth Student Org Client Id
+* GH OAuth Student Org Secret Key
+* From Global: All CP settings, AdminSecret
+ 
