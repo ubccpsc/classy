@@ -9,8 +9,8 @@ COPY package.json tsconfig.json webpack.config.js ./
 COPY src/ src/
 COPY html/ html/
 RUN yarn install && \
-    yarn build && \
+    yarn tsc && \
     chown -R node /app
 
 USER node
-CMD ["node", "src/server/FrontEndServer.js"]
+CMD ["node", "--require", "dotenv/config", "src/server/FrontEndServer.js"]

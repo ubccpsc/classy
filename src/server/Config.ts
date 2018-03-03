@@ -12,7 +12,18 @@ export class Config {
     private constructor() {
         // should not be called by clients
         try {
-            this.config = fs.readJSONSync("./config.priv.json");
+            //this.config = fs.readJSONSync("./config.priv.json");
+            this.config = {
+                githubClientId: process.env.GH_CLIENT_ID,
+                githubClientSecret: process.env.GH_CLIENT_SECRET,
+                sslCertPath: process.env.SSL_CERT_PATH,
+                sslKeyPath: process.env.SSL_KEY_PATH,
+                sslIntCert: process.env.SSL_INT_CERT,
+                frontendPort: process.env.FRONTEND_PORT,
+                frontendUrl: process.env.FRONTEND_URL,
+                backendPort: process.env.BACKEND_PORT,
+                backendUrl: process.env.BACKEND_URL
+            }
         } catch (err) {
             Log.error("Config::<init> - fatal error reading configuration file: " + err);
         }
