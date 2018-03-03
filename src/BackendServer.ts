@@ -5,9 +5,8 @@ import restify = require('restify');
 import Log from "./Util/Log";
 
 import * as fs from "fs";
-import {AuthController} from "./controllers/AuthController";
 import {Config} from "./Config";
-import {SDDMREST} from "./controllers/SDDMREST";
+import {RouteHandler} from "./RouteHandler";
 
 // import RouteHandler from './RouteHandler';
 
@@ -66,20 +65,20 @@ export default class BackendServer {
                 that.rest.use(restify.plugins.queryParser());
                 that.rest.use(function crossOrigin(req, res, next) {
                     res.header("Access-Control-Allow-Origin", "*");
-                    res.header("Access-Control-Allow-Headers", "X-Requested-With Content-Type token user");
+                    res.header("Access-Control-Allow-Headers", "X-Requested-With Content-Type token user org");
                     return next();
                 });
 
                 /**
                  * Authentication
                  */
-                that.rest.on('MethodNotAllowed', AuthController.handlePreflight); // preflights cors requests
-                that.rest.get('/getCredentials', AuthController.getCredentials);
-                that.rest.get('/auth', AuthController.getAuth);
-                that.rest.get('/githubCallback', AuthController.githubCallback);
+                that.rest.on('MethodNotAllowed', RouteHandler.handlePreflight); // preflights cors requests
+                that.rest.get('/getCredentials', RouteHandler.getCredentials);
+                that.rest.get('/auth', RouteHandler.getAuth);
+                that.rest.get('/githubCallback', RouteHandler.githubCallback);
 
-                that.rest.get('/currentStatus', SDDMREST.getCurrentStatus);
-                that.rest.post('/performAction', SDDMREST.performAction);
+                that.rest.get('/currentStatus', RouteHandler.getCurrentStatus);
+                that.rest.post('/performAction', RouteHandler.performAction);
 
                 /**
                  * Serve up index.html; not needed for server backend

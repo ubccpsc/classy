@@ -51,6 +51,11 @@ export interface Person {
     custom: any; // used for anything. in sdmm will track 'custom.sdmmStatus'
 }
 
+export interface Auth {
+    org: string;
+    personId: string;
+    token: string;
+}
 
 export interface Deliverable {
     readonly id: string; // is the shortname of the deliverable

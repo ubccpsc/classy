@@ -1,6 +1,6 @@
 import {Collection, Db, MongoClient} from "mongodb";
 
-import {Deliverable, Grade, Person, Repository, Team} from "../Types";
+import {Auth, Deliverable, Grade, Person, Repository, Team} from "../Types";
 import Log from "../util/Log";
 import Util from "../util/Util";
 import {Config} from "../Config";
@@ -16,6 +16,7 @@ export class DatabaseController {
     private readonly TEAMCOLL = 'teams';
     private readonly DELIVCOLL = 'deliverables';
     private readonly REPOCOLL = 'repositories';
+    private readonly AUTHCOLL = 'auth';
 
     /**
      * use getInstance() instead.
@@ -321,5 +322,32 @@ export class DatabaseController {
         return this.db;
     }
 
+
+    public async verifyAuthToken(org: string, personId: string, token: string): Promise<boolean> {
+        Log.info("DatabaseController::verifyToken( " + org + ", " + personId + " ) - start");
+        let auth = <Auth> await this.readSingleRecord(this.AUTHCOLL, {"org": org, "personId": personId});
+        if (auth !== null) {
+            if (auth.token === token) {
+                Log.trace("DatabaseController::verifyToken( " + org + ", " + personId + " ) - token verified");
+                return true;
+            } else {
+                Log.trace("DatabaseController::verifyToken( " + org + ", " + personId + " ) - token !verified");
+                return false;
+            }
+        }
+        Log.trace("DatabaseController::verifyToken( " + org + ", " + personId + " ) - no token stored");
+        return false;
+    }
+
+    public async writeAuth(record: Auth): Promise<boolean> {
+        Log.info("DatabaseController::writeAuth(..) - start");
+        let auth = <Auth> await this.readSingleRecord(this.AUTHCOLL, {"org": record.org, "personId": record.personId});
+        if (auth === null) {
+            return await this.writeRecord(this.AUTHCOLL, record);
+        } else {
+            const query = {org: record.org, personId: record.personId};
+            return await this.updateRecord(this.AUTHCOLL, query, record);
+        }
+    }
 }
 
