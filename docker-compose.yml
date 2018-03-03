@@ -13,21 +13,23 @@ services:
     #     build: https://${TOKEN}:@github.company.com/org/repo.git
     #     ports:
     #         - "11315:11315" # this is the reference UI for all deliverables; exposd globally
-    # portal-backend:
-    #     build: https://${UBCCPSCTOKEN}github.com/ubccpsc/sdmm-portal-backend.git
-    #     ports:
-    #         - "5000:5000" # this is the reference UI for all deliverables; exposd globally
+    portal-backend:
+        build: https://github.com/ubccpsc/sdmm-portal-backend.git
+        ports:
+            - "5000:5000" # this is the reference UI for all deliverables; exposd globally
     portal-frontend:
         build: https://github.com/ubccpsc/sdmm-portal.git
         env_file: "../sdmm-portal/.env"
-        # depends_on:
-        #     - portalBackend
+        depends_on:
+            - portal-backend
         ports:
             - "443:443" # exposed globally
         volumes:
             - "./ssl:/app/ssl"
     core:
         build: core/
+        depends_on:
+            - portal-backend
         environment:
             - "NAME=secapstone"
             - "ORG=secapstone"
@@ -44,12 +46,14 @@ services:
             - "GHT_STUDENT_ORG=${GHT_ORG_SECAPSTONE}"
             - "GHT_ORACLE=${GHT_ORG_CPSC310}"
             - "SSL_CERT_PATH=./ssl/fullchain.pem"
-            - "SSL_KEY_PATH=./ssl/privkey.pem"
+            - "SSL_KEY_PATH=./ssl/privkey.pem",
+            - "CP_HOST=${COMPOSE_PROJECT_NAME}_portal-backend_1"
+            - "CP_PORT=5000"
         depends_on:
             - db
             - grader
         ports:
-            - "11333:11333" # this is the github webhook port; exposed globally
+            - "1310:11333" # this is the github webhook port; exposed globally
         volumes:
             - "./ssl:/app/ssl"
     grader:
