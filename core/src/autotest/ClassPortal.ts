@@ -45,7 +45,7 @@ export class ClassPortal implements IClassPortal {
             return false;
         }
 
-        const url = "https://" + this.host + ":" + this.port + "/" + courseId + "/isStaff/" + userName;
+        const url = "https://" + this.host + ":" + this.port + "/isStaff/" + courseId + "/" + userName;
         return rp(url).then(function (res) {
             Log.trace("ClassPortal::isStaff( " + courseId + ", " + userName + " ) - success; payload: " + res);
             const json = JSON.parse(res);
@@ -62,7 +62,7 @@ export class ClassPortal implements IClassPortal {
             return null;
         }
 
-        const url = "https://" + this.host + ":" + this.port + "/" + courseId + "/defaultDeliverable";
+        const url = "https://" + this.host + ":" + this.port + "/defaultDeliverable" + "/" + courseId;
         return rp(url).then(function (res) {
             Log.trace("ClassPortal::getDefaultDeliverableId( " + courseId + " ) - success; payload: " + res);
             const json = JSON.parse(res);
@@ -104,7 +104,7 @@ export class ClassPortal implements IClassPortal {
             return null;
         }
 
-        const url = "https://" + this.host + ":" + this.port + "/" + courseId + "/" + delivId + "/container";
+        const url = "https://" + this.host + ":" + this.port  + "/container" + "/" + courseId + "/" + delivId;
         return rp(url).then(function (res) {
             Log.trace("ClassPortal::getContainerId( " + courseId + ", " + delivId + " ) - success; payload: " + res);
             const json = JSON.parse(res);
