@@ -2,36 +2,33 @@
  * Created by rtholmes on 2017-10-04.
  */
 
-import {AuthHelper} from "./util/AuthHelper";
 import {UI} from "./util/UI";
 import Log from "./util/Log";
-// import 'whatwg-fetch';
-import {OnsButtonElement, OnsPageElement} from "onsenui";
 import {Network} from "./util/Network";
 import {SDMMSummaryView} from "./SDMMSummaryView";
+
+import {OnsButtonElement, OnsPageElement} from "onsenui";
 
 declare var classportal: any;
 
 export class App {
 
-//     private studentController: StudentController = null;
-//    private adminController: AdminController = null;
+    // private studentController: StudentController = null;
+    // private adminController: AdminController = null;
 
-    private AUTH_STATUS = 'authorized';
-    private UNAUTH_STATUS = 'unauthenticated';
+    // private AUTH_STATUS = 'authorized';
+    // private UNAUTH_STATUS = 'unauthenticated';
 
     // NOTE: having these hardcoded isn't great
-    private readonly backendDEV = 'https://localhost:5000/';
-    private readonly backendPROD = 'https://sdmm.cs.ubc.ca:5000/';
-    private readonly frontendDEV = 'https://localhost:3000/';
-    private readonly frontendPROD = 'https://portal.cs.ubc.ca/';
+    private readonly backendDEV = 'https://localhost:5000';
+    private readonly backendPROD = 'https://sdmm.cs.ubc.ca:5000';
+    private readonly frontendDEV = 'https://localhost:3000';
+    private readonly frontendPROD = 'https://sdmm.cs.ubc.ca';
 
-    private authHelper: AuthHelper;
-    // public currentCourseId: number;
     public readonly backendURL: string = this.backendDEV;
     public readonly frontendURL: string = this.frontendDEV;
 
-
+    // private authHelper: AuthHelper = null;
     private sdmmView: SDMMSummaryView = null;
 
     private validated = false;
@@ -50,9 +47,6 @@ export class App {
         }
 
         Log.trace('App::<init> config; backend: ' + this.backendURL + '; frontend: ' + this.frontendURL);
-        // this.authHelper = new AuthHelper(this.backendURL);
-        // this.authHelper.updateAuthStatus();
-
         Log.trace('App::<init> - backend: ' + this.backendURL);
     }
 
@@ -108,14 +102,12 @@ export class App {
 
                 /*
                 // DO NOT DO THIS HERE; DO IT ON SHOW BELOW!
-
                 // Each page calls its own initialization controller.
                 if (that.studentController !== null) {
                     if (typeof that.studentController[pageName] === 'function') {
                         that.studentController[pageName]();//(page);
                     }
                 }
-
                 // Each page calls its own initialization controller.
                 if (that.adminController !== null) {
                     if (typeof that.adminController[pageName] === 'function') {
@@ -132,10 +124,9 @@ export class App {
 
                     Log.trace('App::main()::authCheck - starting main.html with auth check');
 
-
                     that.toggleLoginButton();
 
-                    const URL = that.backendURL + 'currentUser';
+                    const URL = that.backendURL + '/currentUser';
                     let OPTIONS_HTTP_GET: RequestInit = {credentials: 'include'};
                     fetch(URL, OPTIONS_HTTP_GET).then((data: any) => {
                         if (data.status !== 200) {
@@ -167,7 +158,7 @@ export class App {
 
                     (document.querySelector('#loginButton') as OnsButtonElement).onclick = function () {
                         localStorage.setItem('org', org);
-                        const url = that.backendURL + 'auth/?org=' + org;
+                        const url = that.backendURL + '/auth/?org=' + org;
                         Log.trace('App::init()::init - login pressed for: ' + org + '; url: ' + url);
                         window.location.replace(url);
                     };
@@ -195,7 +186,6 @@ export class App {
                 // that.validateCredentials();
                 // let validated = true;
                 Log.trace('App::init()::show - page: ' + pageName + "; validated: " + validated);
-
 
                 if (pageName === "studentTabsPage" && validated === true) {
                     Log.trace('studentTabsPage - show!!!');
@@ -266,8 +256,12 @@ export class App {
 
     private clearCredentials() {
         Log.info("App::clearCredentials() - start");
+
+        // TODO: erase credentials on server too
+
         // invalid username; logout
         // clear the cookie and refresh
+        this.validated = false;
         localStorage.clear();
         document.cookie = "token=empty;expires=" + new Date(0).toUTCString();
         location.href = location.href;
@@ -294,7 +288,7 @@ export class App {
     };
 
     private getServerCredentials(username: string, token: string): Promise<{}> {
-        const url = this.backendURL + 'getCredentials';
+        const url = this.backendURL + '/getCredentials';
         Log.trace("App::getServerCredentials - start; url: " + url);
         const that = this;
 
@@ -362,15 +356,6 @@ export class App {
     */
     public isLoggedIn() {
         return this.validated === true;
-        /*
-        let token = this.readCookie('token');
-
-        const res = String(localStorage.authStatus) === this.AUTH_STATUS;
-        Log.trace("App::isLoggedIn(); value: " + res + "; token: " + token);
-
-
-        return res;
-        */
     }
 
     private readCookie(name: string) {
@@ -389,37 +374,7 @@ export class App {
         Log.trace("App::logout() - start");
 
         this.clearCredentials();
-        // TODO: erase credentials on server too
         UI.pushPage("index.html");
-
-        // location.href = this.frontendURL;
-        /*
-        let url = this.backendURL + '/logout';
-        let OPTIONS_HTTP_GET: RequestInit = {credentials: 'include'};
-        const that = this;
-        fetch(url, OPTIONS_HTTP_GET).then((data: any) => {
-            if (data.status !== 200) {
-                Log.trace('App::logout() - authCheck WARNING: Response status: ' + data.status);
-                throw new Error('App::logout() - authCheck - API ERROR' + data.status);
-            }
-            return data.json();
-        }).then((result: any) => {
-            const LOGOUT_SUCCESS = 'Successfully logged out.';
-            Log.trace('App::logout() Logging out... ');
-            let logoutResponse = String(result.response);
-            if (logoutResponse === LOGOUT_SUCCESS) {
-                localStorage.clear();
-                console.log('App::logout() Successfully logged out');
-                window.location.replace(that.frontendURL);
-            }
-        }).catch((err: Error) => {
-            // just force the logout if we run into a problem
-            Log.error('App::logout() - ERROR: ' + err.message);
-            Log.error('App::logout() - Clearing localstorage and refreshing');
-            localStorage.clear();
-            window.location.replace(that.frontendURL);
-        });
-        */
     }
 
     private toggleLoginButton() {
@@ -439,7 +394,7 @@ export class App {
 
     public sdmmSelectChanged() {
         console.log('sdmmSelectChanged');
-        (<any>window).myApp.sdmm.renderPage();
+        (<any>window).myApp.sdmm.updateState(); // stick to dropdown for debugging
     }
 }
 

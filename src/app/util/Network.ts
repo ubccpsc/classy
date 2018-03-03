@@ -25,7 +25,7 @@ export class Network {
                             localStorage.removeItem('authStatus');
                             location.reload();
                         }
-                    })
+                    });
                     console.log('Network::handleRemote() 200 return');
                 }
             }).catch((err: Error) => {

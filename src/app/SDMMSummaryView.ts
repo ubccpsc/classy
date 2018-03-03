@@ -1,6 +1,9 @@
 import Log from "./util/Log";
 import {OnsModalElement} from "onsenui";
 import {UI} from "./util/UI";
+import {App} from "./App";
+
+declare const myApp: App;
 
 export class SDMMSummaryView {
 
@@ -33,20 +36,40 @@ export class SDMMSummaryView {
 
     }
 
-    public createD0Repository() {
+    public checkStatus() {
+        const msg = "Updating status";
+        // UI.showModal(msg);
+
+        const url = this.remote + '/currentStatus';
+        this.fetchStatus(url);
+    }
+
+    public async createD0Repository(): Promise<void> {
         const msg = 'Creating D0 Repository<br/>This will take < 60 seconds';
-        UI.showModal(msg);
 
+        const url = this.remote + '/performAction/provisionD0';
+        Log.info('SDDM::createD0Repository( ' + url + ' ) - start');
 
-        // '/:courseId/admin/dashboard/:orgName/:delivId
-        // const url = this.app.backendURL + this.courseId + '/admin/dashboard/' + params.orgName + '/' + params.delivId + post;
-        const url = this.remote + '/currentStatus'; // hardcode
-        // going to be slow; show a modal
-        UI.showModal('Dashboard being retrieved. This should take < 10 seconds.');
-        this.handleRemote(url, null);//, this.dashboardView, UI.handleError);
+        let options: any = this.getOptions();
+        options.method = 'post';
+        let response = await fetch(url, options);
+        UI.hideModal();
+        if (response.status === 200) {
+            Log.trace('SDDM::createD0Repository(..) - 200 received');
+            let json = await response.json();
 
+            if (json.success === true) {
+                this.longAction(2000, "D0 Repository created");
+            } else {
+                this.longAction(5000, "Error encountered:<br/>" + json.message);
+            }
 
-        // this.longAction(5000,);
+            // TODO: refresh
+            this.checkStatus();
+        } else {
+            Log.trace('SDDM::createD0Repository(..) - !200 received');
+        }
+        return;
     }
 
     public createD1Repository() {
@@ -54,9 +77,34 @@ export class SDMMSummaryView {
         this.longAction(5000, 'Creating D1 Repository<br/>Will take < 10 seconds');
     }
 
-    public createD1Individual() {
+    public async createD1Individual(): Promise<void> {
         Log.info("SDMMSummaryView::createD1Individual() - start");
-        this.longAction(5000, 'Configuring D1 Without Team<br/>Will take < 10 seconds');
+        // this.longAction(5000, 'Configuring D1 Without Team<br/>Will take < 10 seconds');
+
+        const url = this.remote + '/performAction/provisionD1individual';
+        Log.info('SDDM::createD1Individual( ' + url + ' ) - start');
+
+        let options: any = this.getOptions();
+        options.method = 'post';
+        let response = await fetch(url, options);
+        UI.hideModal();
+        if (response.status === 200) {
+            Log.trace('SDDM::createD1Individual(..) - 200 received');
+            let json = await response.json();
+
+            if (json.success === true) {
+                this.longAction(2000, "D1 Repository created");
+            } else {
+                this.longAction(5000, "Error encountered:<br/>" + json.message);
+            }
+
+            // TODO: refresh
+            this.checkStatus();
+        } else {
+            Log.trace('SDDM::createD1Individual(..) - !200 received');
+        }
+        return;
+
     }
 
     public createD1Team() {
@@ -69,9 +117,12 @@ export class SDMMSummaryView {
         this.longAction(5000, 'Creating D3 Pull Request<br/>Will take < 10 seconds');
     }
 
-    private updateState() {
+    private updateState(value?: string) {
         const elem = <HTMLSelectElement>document.getElementById('sdmmSelect');
-        const value = elem.value;
+
+        if (typeof value === 'undefined') {
+            value = elem.value;
+        }
 
         // TODO: value should come from remote
 
@@ -160,7 +211,8 @@ export class SDMMSummaryView {
     public renderPage() {
         Log.info('SDMMSummaryView::renderPage() - start');
 
-        this.updateState();
+        // this.updateState();
+        this.checkStatus();
     }
 
     private show(ids: string[]) {
@@ -202,12 +254,43 @@ export class SDMMSummaryView {
         }
     }
 
-    public handleRemote(url: string, nextStep: any) {
-        console.log('Network::handleRemote( ' + url + ' ) - start');
+    public async fetchStatus(url: string): Promise<void> {
+        Log.info('SDDM::fetchStatus( ' + url + ' ) - start');
 
-        //const OPTIONS_HTTP_GET: object = {credentials: 'include'};
-        //const AUTHORIZED_STATUS: string = 'authorized';
+        let options = this.getOptions();
+        let response = await fetch(url, options);
+        UI.hideModal();
+        if (response.status === 200) {
+            Log.trace('SDDM::fetchStatus(..) - 200 received');
+            let json = await response.json();
+            Log.trace('SDDM::fetchStatus(..) - status: ' + json.status);
+            this.updateState(json.status);
+        } else {
+            Log.trace('SDDM::fetchStatus(..) - !200 received');
+        }
+        return;
+    }
 
+
+    /*
+    if (data.status !== 200 && data.status !== 405 && data.status !== 401) {
+        console.log('Network::handleRemote() WARNING: Repsonse status: ' + data.status);
+        throw new Error('Network::handleRemote() - API ERROR: ' + data.status);
+    } else if (data.status !== 200 && data.status === 405 || data.status === 401) {
+        console.error('Network::getRemotePost() Permission denied for your userrole.');
+        alert('You are not authorized to access this endpoint. Please re-login.');
+        // location.reload();
+    } else {
+        console.log('Network::handleRemote() 200 return');
+        data.json().then(function (json: any) {
+            // view.render(json); // calls render instead of the function
+            console.log('Network::handleRemote() this is the data: ' + JSON.stringify(json));
+
+        });
+    }
+    */
+
+    private getOptions() {
         const options = {
             headers: {
                 user:  localStorage.user,
@@ -215,28 +298,6 @@ export class SDMMSummaryView {
                 org:   localStorage.org
             }
         };
-
-        fetch(url, options).then((data: any) => {
-            UI.hideModal();
-            if (data.status !== 200 && data.status !== 405 && data.status !== 401) {
-                console.log('Network::handleRemote() WARNING: Repsonse status: ' + data.status);
-                throw new Error('Network::handleRemote() - API ERROR: ' + data.status);
-            } else if (data.status !== 200 && data.status === 405 || data.status === 401) {
-                console.error('Network::getRemotePost() Permission denied for your userrole.');
-                alert('You are not authorized to access this endpoint. Please re-login.');
-                // location.reload();
-            } else {
-                console.log('Network::handleRemote() 200 return');
-                data.json().then(function (json: any) {
-                    // view.render(json); // calls render instead of the function
-                    console.log('Network::handleRemote() this is the data: ' + JSON.stringify(json));
-
-                });
-            }
-        }).catch((err: Error) => {
-            console.error('Network::handleRemote( ' + url + ' ) - ERROR ' + err, err);
-            // onError(err.message);
-        });
+        return options;
     }
-
 }
