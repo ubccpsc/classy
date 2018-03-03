@@ -2,7 +2,7 @@
  * Created by rtholmes on 2018-02-23.
  */
 import restify = require('restify');
-import Log from "./Util/Log";
+import Log from "./util/Log";
 
 import * as fs from "fs";
 import {Config} from "./Config";
