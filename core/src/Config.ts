@@ -28,6 +28,7 @@ export class Config {
                 postback: Boolean(process.env.POSTBACK),
                 persistDir: process.env.PERSIST_DIR,
                 port: Number(process.env.PORT),
+                kind: process.env.KIND,
                 timeout: Number(process.env.TIMEOUT),
                 botName: process.env.BOT_NAME,
                 githubOrgToken: process.env.GHT_STUDENT_ORG,

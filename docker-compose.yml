@@ -38,6 +38,7 @@ services:
             - "POSTBACK=false"
             - "PERSIST_DIR=/var/tmp/secapstone/"
             - "PORT=11333"
+            - "KIND=ubc"
             - "TIMEOUT=300"
             - "BOT_NAME=autobot"
             - "GHT_STUDENT_ORG=${GHT_ORG_SECAPSTONE}"
