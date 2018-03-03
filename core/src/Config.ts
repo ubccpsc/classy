@@ -36,7 +36,9 @@ export class Config {
                 sslCertPath: process.env.SSL_CERT_PATH,
                 sslKeyPath: process.env.SSL_KEY_PATH,
                 classPortalHost: process.env.CP_HOST,
-                classPortalPort: process.env.CP_PORT
+                classPortalPort: process.env.CP_PORT,
+                graderHost: process.env.GRADER_HOST,
+                graderPort: process.env.GRADER_PORT,
             };
         } catch (err) {
             Log.error("Config::<init> - fatal error reading configuration file: " + err);
