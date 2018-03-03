@@ -10,7 +10,6 @@ import {PersonController} from "./PersonController";
 
 import * as crypto from 'crypto';
 
-
 export interface Payload {
     success?: ActionPayload | StatusPayload; // only set if defined
     failure?: FailurePayload; // only set if defined
@@ -108,7 +107,7 @@ export class SDDMController {
      *
      * @param {string} org
      * @param {string} delivId
-     * @param {string[]} peopleIds
+     * @param {string[]} peopleIds people order matters; requestor should be peopleIds[0]
      * @returns {Promise<ResponsePayload>}
      */
     public async provision(org: string, delivId: string, peopleIds: string[]): Promise<Payload> {
@@ -442,8 +441,10 @@ export class SDDMController {
                 team.url = teamUrl;
                 this.dc.writeTeam(team);
 
+                const statusPayload = await this.createStatusPayload(org, personId);
                 Log.info("SDDMController::provisionD0Repo(..) - d0 final provisioning successful; took: " + Util.took(start));
-                return {success: {message: "Repository successfully created.", status: this.createStatusPayload()}};
+
+                return {success: {message: "Repository successfully created.", status: statusPayload}};
             } else {
                 Log.error("SDDMController::provisionD0Repo(..) - something went wrong provisioning this repo; see logs above.");
                 return {failure: {shouldLogout: false, message: "Error provisioning d0 repo; contact course staff."}};
@@ -513,14 +514,20 @@ export class SDDMController {
                 return {failure: {shouldLogout: false, message: "Invalid team updating d0 repo; contact course staff."}};
             }
 
+            const statusPayload = await this.createStatusPayload(org, personId);
             Log.info("SDDMController::updateIndividualD0toD1(..) - d0 to d1 individual upgrade successful; took: " + Util.took(start));
-            return {success: {message: "D0 repo successfully updated to D1.", status: this.createStatusPayload()}};
+            return {success: {message: "D0 repo successfully updated to D1.", status: statusPayload}};
         } catch (err) {
             Log.error("SDDMController::updateIndividualD0toD1(..) - ERROR: " + err);
             return {failure: {shouldLogout: false, message: "Error updating d0 repo; contact course staff."}};
         }
     }
 
+    /**
+     * @param {string} org
+     * @param {string[]} peopleIds order matters here: the requestor should be peopleIds[0]
+     * @returns {Promise<Payload>}
+     */
     private async provisionD1Repo(org: string, peopleIds: string[]): Promise<Payload> {
         Log.info("SDDMController::provisionD1Repo( " + org + ", " + JSON.stringify(peopleIds) + " ) - start");
         const start = Date.now();
@@ -608,8 +615,9 @@ export class SDDMController {
                 team.url = teamUrl;
                 this.dc.writeTeam(team);
 
+                const statusPayload = await this.createStatusPayload(org, peopleIds[0]);
                 Log.info("SDDMController::provisionD1Repo(..) - d1 final provisioning successful; took: " + Util.took(start));
-                return {success: {message: "D1 repository successfully provisioned.", status: this.createStatusPayload()}};
+                return {success: {message: "D1 repository successfully provisioned.", status: statusPayload}};
             } else {
                 Log.error("SDDMController::provisionD1Repo(..) - something went wrong provisioning this repo; see logs above.");
                 return {failure: {shouldLogout: false, message: "Error encountered creating d1 repo; contact course staff."}};
@@ -620,8 +628,22 @@ export class SDDMController {
         }
     }
 
-    private createStatusPayload(): StatusPayload {
-        // TODO
-        return null;
+    private async createStatusPayload(org: string, personId: string): Promise<StatusPayload> {
+        const myStatus = await this.getStatus(org, personId);
+
+        let myD0: GradePayload = null;
+        let myD1: GradePayload = null;
+        let myD2: GradePayload = null;
+        let myD3: GradePayload = null;
+
+        let statusPayload = {
+            status: myStatus,
+            d0:     myD0,
+            d1:     myD1,
+            d2:     myD2,
+            d3:     myD3
+        };
+
+        return statusPayload;
     }
 }
