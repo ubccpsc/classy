@@ -3,7 +3,7 @@ import Util from "../util/Util";
 import {RepositoryController} from "./RepositoryController";
 import {DatabaseController} from "./DatabaseController";
 import {GradesController} from "./GradesController";
-import {Person, Team} from "../Types";
+import {Grade, Person, Team} from "../Types";
 import {IGitHubController} from "./GitHubController";
 import {TeamController} from "./TeamController";
 import {PersonController} from "./PersonController";
@@ -34,12 +34,11 @@ export interface StatusPayload {
 }
 
 export interface GradePayload {
-    score: number;
-    repoName: string;
-    repoUrl: string;
-    commitName: string;
-    commitUrl: string;
-    timestamp: string;
+    score: number; // grade: < 0 will mean 'N/A' in the UI
+
+    url: string; // commit URL if known, otherwise repo url
+
+    timestamp: number; // even if grade < 0 might as well return when the entry was made
 }
 
 export enum SDDMStatus {
@@ -441,6 +440,9 @@ export class SDDMController {
                 team.url = teamUrl;
                 this.dc.writeTeam(team);
 
+                // create grade entry
+                await this.gc.createGrade(org, repo.id, 'd0', -1, 'Repo Provisioned', repo.url, Date.now());
+
                 const statusPayload = await this.createStatusPayload(org, personId);
                 Log.info("SDDMController::provisionD0Repo(..) - d0 final provisioning successful; took: " + Util.took(start));
 
@@ -509,6 +511,11 @@ export class SDDMController {
                 team.custom.sdmmd2 = true;
                 team.custom.sdmmd3 = true;
                 await this.dc.writeTeam(team);
+
+                // create grade entries
+                await this.gc.createGrade(org, repo.id, 'd1', -1, 'Repo Provisioned', repo.url, Date.now());
+                await this.gc.createGrade(org, repo.id, 'd2', -1, 'Repo Provisioned', repo.url, Date.now());
+                await this.gc.createGrade(org, repo.id, 'd3', -1, 'Repo Provisioned', repo.url, Date.now());
             } else {
                 Log.error("SDDMController::updateIndividualD0toD1(..) - unable to find team: " + teamName + ' or repo: ' + repoName);
                 return {failure: {shouldLogout: false, message: "Invalid team updating d0 repo; contact course staff."}};
@@ -615,6 +622,11 @@ export class SDDMController {
                 team.url = teamUrl;
                 this.dc.writeTeam(team);
 
+                // create grade entries
+                await this.gc.createGrade(org, repo.id, 'd1', -1, 'Repo Provisioned', repo.url, Date.now());
+                await this.gc.createGrade(org, repo.id, 'd2', -1, 'Repo Provisioned', repo.url, Date.now());
+                await this.gc.createGrade(org, repo.id, 'd3', -1, 'Repo Provisioned', repo.url, Date.now());
+
                 const statusPayload = await this.createStatusPayload(org, peopleIds[0]);
                 Log.info("SDDMController::provisionD1Repo(..) - d1 final provisioning successful; took: " + Util.took(start));
                 return {success: {message: "D1 repository successfully provisioned.", status: statusPayload}};
@@ -635,6 +647,43 @@ export class SDDMController {
         let myD1: GradePayload = null;
         let myD2: GradePayload = null;
         let myD3: GradePayload = null;
+
+        let d0Grade: Grade = await this.dc.getGrade(org, personId, 'd0');
+        let d1Grade: Grade = await this.dc.getGrade(org, personId, 'd1');
+        let d2Grade: Grade = await this.dc.getGrade(org, personId, 'd2');
+        let d3Grade: Grade = await this.dc.getGrade(org, personId, 'd3');
+
+        if (d0Grade !== null) {
+            myD0 = {
+                score:     d0Grade.score,
+                url:       d0Grade.url,
+                timestamp: d0Grade.timestamp
+            }
+        }
+
+        if (d1Grade !== null) {
+            myD1 = {
+                score:     d1Grade.score,
+                url:       d1Grade.url,
+                timestamp: d1Grade.timestamp
+            }
+        }
+
+        if (d2Grade !== null) {
+            myD2 = {
+                score:     d2Grade.score,
+                url:       d2Grade.url,
+                timestamp: d2Grade.timestamp
+            }
+        }
+
+        if (d3Grade !== null) {
+            myD3 = {
+                score:     d3Grade.score,
+                url:       d3Grade.url,
+                timestamp: d3Grade.timestamp
+            }
+        }
 
         let statusPayload = {
             status: myStatus,

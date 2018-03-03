@@ -20,7 +20,7 @@ export class GradesController {
         return grade;
     }
 
-    public async createGrade(org: string, repoId: string, delivId: string, score: number, comment: string, url: string): Promise<boolean> {
+    public async createGrade(org: string, repoId: string, delivId: string, score: number, comment: string, url: string, timestamp: number): Promise<boolean> {
         Log.info("RepositoryController::createGrade( " + org + ", " + repoId + ", " + delivId + ",.. ) - start");
         try {
 
@@ -51,12 +51,13 @@ export class GradesController {
                 if (grade === null) {
                     // create new
                     grade = {
-                        org:      org,
-                        personId: personId,
-                        delivId:  delivId,
-                        score:    score,
-                        comment:  comment,
-                        url:      url
+                        org:       org,
+                        personId:  personId,
+                        delivId:   delivId,
+                        score:     score,
+                        comment:   comment,
+                        url:       url,
+                        timestamp: timestamp
                     };
                 } else {
                     // update existing

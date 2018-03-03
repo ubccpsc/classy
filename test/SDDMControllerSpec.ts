@@ -1,4 +1,4 @@
-import {ResponsePayload, SDDMController} from "../src/controllers/SDDMController";
+import {ActionPayload, FailurePayload, SDDMController, SDDMStatus} from "../src/controllers/SDDMController";
 import {expect} from "chai";
 import "mocha";
 import {GradesController} from "../src/controllers/GradesController";
@@ -132,11 +132,11 @@ describe("SDDMController", () => {
         let status = await sc.getStatus(Test.ORGNAME, USER);
         expect(status).to.equal("D0");
 
-        await gc.createGrade(Test.ORGNAME, REPOD0, "d0", 59, '', '');
+        await gc.createGrade(Test.ORGNAME, REPOD0, "d0", 59, '', '', Date.now());
         status = await sc.getStatus(Test.ORGNAME, USER);
         expect(status).to.equal("D0"); // 59 is too low
 
-        await gc.createGrade(Test.ORGNAME, REPOD0, "d0", 61, '', '');
+        await gc.createGrade(Test.ORGNAME, REPOD0, "d0", 61, '', '', Date.now());
         status = await sc.getStatus(Test.ORGNAME, USER);
         expect(status).to.equal("D1UNLOCKED");
     });
@@ -169,11 +169,11 @@ describe("SDDMController", () => {
         let status = await sc.getStatus(Test.ORGNAME, USER);
         expect(status).to.equal("D1");
 
-        await gc.createGrade(Test.ORGNAME, REPOD1, "d1", 59, '', '');
+        await gc.createGrade(Test.ORGNAME, REPOD1, "d1", 59, '', '', Date.now());
         status = await sc.getStatus(Test.ORGNAME, USER);
         expect(status).to.equal("D1"); // 59 is too low
 
-        await gc.createGrade(Test.ORGNAME, REPOD1, "d1", 61, '', '');
+        await gc.createGrade(Test.ORGNAME, REPOD1, "d1", 61, '', '', Date.now());
 
         status = await sc.getStatus(Test.ORGNAME, USER);
         expect(status).to.equal("D2");
@@ -183,11 +183,11 @@ describe("SDDMController", () => {
         let status = await sc.getStatus(Test.ORGNAME, USER);
         expect(status).to.equal("D2");
 
-        await gc.createGrade(Test.ORGNAME, REPOD1, "d2", 59, '', '');
+        await gc.createGrade(Test.ORGNAME, REPOD1, "d2", 59, '', '', Date.now());
         status = await sc.getStatus(Test.ORGNAME, USER);
         expect(status).to.equal("D2"); // 59 is too low
 
-        await gc.createGrade(Test.ORGNAME, REPOD1, "d2", 61, '', '');
+        await gc.createGrade(Test.ORGNAME, REPOD1, "d2", 61, '', '', Date.now());
 
         status = await sc.getStatus(Test.ORGNAME, USER);
         expect(status).to.equal("D3PRE");
@@ -207,8 +207,8 @@ describe("SDDMController", () => {
 
     it("Should not be able to provision a d0 repo for a random person.", async () => {
         let payload = await sc.provision(Test.ORGNAME, Test.DELIVID0, ["this is a random name #@"]);
-        expect(payload.success).to.be.false;
-        Log.test(payload.message);
+        expect(payload.failure).to.not.be.undefined;
+        Log.test(payload.failure.message);
     });
 
     /**
@@ -234,24 +234,24 @@ describe("SDDMController", () => {
 
         // don't provision for non-existent users
         let payload = await sc.provision(Test.ORGNAME, Test.DELIVID0, [PERSON1.id, '23234#$Q#@#invalid']);
-        expect(payload.success).to.be.false;
-        Log.test(payload.message);
+        expect(payload.failure).to.not.be.undefined;
+        Log.test(payload.failure.message);
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.be.empty;
 
         // don't create a d0 repo with multiple people
         payload = await sc.provision(Test.ORGNAME, Test.DELIVID0, [PERSON1.id, PERSON2.id]);
-        expect(payload.success).to.be.false;
-        Log.test(payload.message);
+        expect(payload.failure).to.not.be.undefined;
+        Log.test(payload.failure.message);
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.be.empty;
 
         // also shouldn't be able to provision someone who hasn't been created yet
         payload = await sc.provision(Test.ORGNAME, Test.DELIVID0, [PERSON3.id]);
-        expect(payload.success).to.be.false;
-        Log.test(payload.message);
+        expect(payload.failure).to.not.be.undefined;
+        Log.test(payload.failure.message);
     });
 
     it("Should be able to provision a d0 repo for an individual.", async () => {
@@ -265,8 +265,10 @@ describe("SDDMController", () => {
         expect(allTeams).to.be.empty;
 
         let payload = await sc.provision(Test.ORGNAME, Test.DELIVID0, [PERSON1.id]);
-        expect(payload.success).to.be.true;
-        Log.test(payload.message);
+        expect(payload.success).to.not.be.undefined;
+        expect(payload.failure).to.be.undefined;
+        const status = (<ActionPayload>payload.success).status;
+        expect(status.status).to.equal(SDDMStatus[SDDMStatus.D0]);
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(1);
@@ -283,8 +285,8 @@ describe("SDDMController", () => {
         expect(person).to.not.be.null;
 
         let payload = await sc.provision(Test.ORGNAME, Test.DELIVID1, [PERSON1.id]);
-        expect(payload.success).to.be.false;
-        Log.test(payload.message);
+        expect(payload.failure).to.not.be.undefined;
+        Log.test((<FailurePayload>payload.failure).message);
 
         let allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(1);
@@ -304,7 +306,7 @@ describe("SDDMController", () => {
         let allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(1);
 
-        let grade = await gc.createGrade(PERSON1.org, allRepos[0].id, Test.DELIVID0, 65, 'TESTCOMMENT', 'TESTURL');
+        let grade = await gc.createGrade(PERSON1.org, allRepos[0].id, Test.DELIVID0, 65, 'TESTCOMMENT', 'TESTURL', Date.now());
         expect(grade).to.be.true;
 
         allRepos = await rc.getReposForPerson(person);
@@ -315,8 +317,11 @@ describe("SDDMController", () => {
         Log.test('provisioning');
         let payload = await sc.provision(Test.ORGNAME, Test.DELIVID1, [PERSON1.id]); // do it
         Log.test('provisioning complete');
-        expect(payload.success).to.be.true;
-        Log.test(payload.message);
+        expect(payload.success).to.not.be.undefined;
+        expect(payload.failure).to.be.undefined;
+        const status = (<ActionPayload>payload.success).status;
+        expect(status.status).to.equal(SDDMStatus[SDDMStatus.D1]);
+        Log.test((<ActionPayload>payload.success).message);
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(1); // no new repo
@@ -330,8 +335,8 @@ describe("SDDMController", () => {
 
         // try to do it again (should fail)  // makes sure they can't get multiple d1 repos
         payload = await sc.provision(Test.ORGNAME, Test.DELIVID1, [PERSON1.id]); // do it
-        expect(payload.success).to.be.false;
-        Log.test(payload.message);
+        expect(payload.failure).to.not.be.undefined;
+        Log.test((<FailurePayload>payload.failure).message);
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(1); // no new repo
@@ -347,8 +352,8 @@ describe("SDDMController", () => {
 
         // don't allow pairing with someone who doesn't exist
         let payload = await sc.provision(Test.ORGNAME, Test.DELIVID1, [PERSON2.id, "asdf32#@@#INVALIDPERSON"]);
-        expect(payload.success).to.be.false; // person2 doesn't exist
-        Log.test("User shouldn't exist: " + payload.message);
+        expect(payload.failure).to.not.be.undefined;
+        Log.test((<FailurePayload>payload.failure).message);
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(0);
@@ -358,8 +363,8 @@ describe("SDDMController", () => {
 
         // don't allow pairing with someone with insufficient d0 credit
         payload = await sc.provision(Test.ORGNAME, Test.DELIVID1, [PERSON2.id, PERSON3.id]);
-        expect(payload.success).to.be.false; // person2 doesn't exist
-        Log.test("User's d0 grade is insufficient: " + payload.message);
+        expect(payload.failure).to.not.be.undefined;
+        Log.test((<FailurePayload>payload.failure).message);
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(0);
@@ -371,11 +376,13 @@ describe("SDDMController", () => {
 
         // need at least one person
         payload = await sc.provision(Test.ORGNAME, Test.DELIVID1, []);
-        expect(payload.success).to.be.false; // person2 doesn't exist
+        expect(payload.success).to.be.undefined;
+        expect(payload.failure).to.not.be.undefined;
 
         // can't form a group with yourself
         payload = await sc.provision(Test.ORGNAME, Test.DELIVID1, [PERSON2.id, PERSON2.id]);
-        expect(payload.success).to.be.false; // person2 doesn't exist
+        expect(payload.success).to.be.undefined;
+        expect(payload.failure).to.not.be.undefined; // person2 doesn't exist
     });
 
 
@@ -384,10 +391,12 @@ describe("SDDMController", () => {
         let person2 = await pc.getPerson(PERSON2.org, PERSON2.id);
         expect(person2).to.not.be.null;
         let payload = await sc.provision(Test.ORGNAME, Test.DELIVID0, [person2.id]);
-        expect(payload.success).to.be.true;
+        expect(payload.success).to.not.be.undefined;
+        expect((<ActionPayload>payload.success).status.status).to.equal(SDDMStatus[SDDMStatus.D0]);
+
         let allRepos = await rc.getReposForPerson(person2);
         expect(allRepos).to.have.lengthOf(1);
-        let grade = await gc.createGrade(person2.org, allRepos[0].id, Test.DELIVID0, 65, 'TESTCOMMENT', 'TESTURL');
+        let grade = await gc.createGrade(person2.org, allRepos[0].id, Test.DELIVID0, 65, 'TESTCOMMENT', 'TESTURL', Date.now());
         expect(grade).to.be.true;
 
         // prepare person3
@@ -395,19 +404,24 @@ describe("SDDMController", () => {
         expect(person3).to.not.be.null;
         // create d0 payload for person2
         payload = await sc.provision(Test.ORGNAME, Test.DELIVID0, [person3.id]);
-        expect(payload.success).to.be.true;
+        expect(payload.success).to.not.be.undefined;
+        expect((<ActionPayload>payload.success).status.status).to.equal(SDDMStatus[SDDMStatus.D0]);
+
         // create d0 grade for person2
         allRepos = await rc.getReposForPerson(person3);
         expect(allRepos).to.have.lengthOf(1);
-        grade = await gc.createGrade(person3.org, allRepos[0].id, Test.DELIVID0, 70, 'TESTCOMMENT', 'TESTURL');
+        grade = await gc.createGrade(person3.org, allRepos[0].id, Test.DELIVID0, 70, 'TESTCOMMENT', 'TESTURL', Date.now());
         expect(grade).to.be.true;
 
 
         // try to upgrade them to d1
         Log.test('Updating to d1');
         payload = await sc.provision(Test.ORGNAME, Test.DELIVID1, [person2.id, person3.id]);
-        expect(payload.success).to.be.true;
-        Log.test(payload.message);
+        expect(payload.success).to.not.be.undefined;
+        expect(payload.failure).to.be.undefined;
+        const status = (<ActionPayload>payload.success).status;
+        expect(status.status).to.equal(SDDMStatus[SDDMStatus.D1]);
+        Log.test((<ActionPayload>payload).message);
 
         allRepos = await rc.getReposForPerson(person2);
         expect(allRepos).to.have.lengthOf(2);

@@ -2,8 +2,6 @@ import {expect} from "chai";
 import "mocha";
 import {GradesController} from "../src/controllers/GradesController";
 import {Test} from "./GlobalSpec";
-import * as crypto from "crypto";
-import Log from "../src/util/Log";
 
 const loadFirst = require('./GlobalSpec');
 const rFirst = require('./RepositoryControllerSpec');
@@ -28,7 +26,7 @@ describe("GradeController", () => {
         let grades = await gc.getAllGrades(Test.ORGNAME);
         expect(grades).to.have.lengthOf(0);
 
-        let valid = await gc.createGrade(Test.ORGNAME, Test.REPONAME1, Test.DELIVID1, 100, 'comment', 'URL');
+        let valid = await gc.createGrade(Test.ORGNAME, Test.REPONAME1, Test.DELIVID1, 100, 'comment', 'URL', Date.now());
         expect(valid).to.be.true;
         grades = await gc.getAllGrades(Test.ORGNAME);
         expect(grades).to.have.lengthOf(2);
@@ -39,7 +37,7 @@ describe("GradeController", () => {
         let grades = await gc.getAllGrades(Test.ORGNAME);
         expect(grades).to.have.lengthOf(2); // from previous
 
-        let valid = await gc.createGrade(Test.ORGNAME, Test.REPONAME1, Test.DELIVID1, 50, 'commentup', 'URLup');
+        let valid = await gc.createGrade(Test.ORGNAME, Test.REPONAME1, Test.DELIVID1, 50, 'commentup', 'URLup', Date.now());
         expect(valid).to.be.true;
         grades = await gc.getAllGrades(Test.ORGNAME);
         expect(grades).to.have.lengthOf(2); // still two (one for each teammember)

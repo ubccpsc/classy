@@ -95,7 +95,8 @@ export interface Grade {
     readonly org: string;
     score: number;
     comment: string;
-    url: string | null; // for traceability
+    url: string; // commitUrl if a commit, repoUrl if a dummy entry
+    timestamp: number;
 }
 
 /**

@@ -92,10 +92,10 @@ describe("PersonController", () => {
         expect(people).to.have.lengthOf(1);
 
         person = await pc.createPerson(PERSON1);
-        expect(person).to.be.null;
+        expect(person).to.not.be.null; // returns the existing one
 
         people = await pc.getAllPeople(Test.ORGNAME);
-        expect(people).to.have.lengthOf(1);
+        expect(people).to.have.lengthOf(1); // should still be the same number
     });
 
     it("Should be able to add a more users.", async () => {
