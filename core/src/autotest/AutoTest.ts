@@ -313,8 +313,6 @@ export abstract class AutoTest implements IAutoTest {
             if (isProd === true) {
                 const image: string = Config.getInstance().getProp("dockerId");
                 const timeout: number = Config.getInstance().getProp("timeout");
-                const solnUrl: string = Config.getInstance().getProp("oracleRepo");
-                const solnBranch: string = input.delivId;
                 const assnUrl: string = input.pushInfo.projectURL;
                 const commitSHA: string = input.pushInfo.commitSHA;
                 const commitURL: string = input.pushInfo.commitURL;
