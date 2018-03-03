@@ -17,12 +17,14 @@ services:
     #     build: https://${UBCCPSCTOKEN}github.com/ubccpsc/sdmm-portal-backend.git
     #     ports:
     #         - "5000:5000" # this is the reference UI for all deliverables; exposd globally
-    # portalFrontend:
-    #     build: https://${UBCCPSCTOKEN}github.com/ubccpsc/sdmm-portal.git
-    #     depends_on:
-    #         - portalBackend
-    #     ports:
-    #         - "443:443" # exposed globally
+    portalFrontend:
+        build: https://github.com/ubccpsc/sdmm-portal.git
+        # depends_on:
+        #     - portalBackend
+        ports:
+            - "443:443" # exposed globally
+        volumes:
+            - "../sdmm-portal/ssl:/app/ssl"
     core:
         build: core/
         depends_on:
