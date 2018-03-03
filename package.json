@@ -36,6 +36,7 @@
     "request-promise-native": "^1.0.5",
     "restify": "^6.3.4",
     "source-map-loader": "^0.2.3",
+    "supertest": "^3.0.0",
     "tmp-promise": "^1.0.4",
     "ts-node": "^5.0.0",
     "typescript": "^2.7.2",

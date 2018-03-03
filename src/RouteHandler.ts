@@ -271,14 +271,19 @@ export class RouteHandler {
 
         // TODO: verify secret
 
-        const org = req.query.org;
-        const delivId = req.query.delivId;
+        const org = req.params.org;
+        const delivId = req.params.delivId;
 
         Log.info('RouteHandler::atContainerDetails(..) - org: ' + org + '; delivId: ' + delivId);
 
         // TODO: this is just a dummy implementation
 
-        res.send({dockerImage: 'secapstone-grader', studentDelay: 60 * 60 * 12, maxExecTime: 300});
+        if (org === 'INVALIDORG') {
+            res.send(400, {message: 'Invalid org: ' + org});
+        } else {
+            res.send({dockerImage: 'secapstone-grader', studentDelay: 60 * 60 * 12, maxExecTime: 300, regressionDelivIds: []});
+        }
+
 
         /*
                 let sc: SDDMController = new SDDMController(new GitHubController());
@@ -300,7 +305,7 @@ export class RouteHandler {
 
         // TODO: verify secret
 
-        const org = req.query.org;
+        const org = req.params.org;
 
         Log.info('RouteHandler::atDefaultDeliverable(..) - org: ' + org);
 
@@ -327,8 +332,8 @@ export class RouteHandler {
 
         // TODO: verify secret
 
-        const org = req.query.org;
-        const personId = req.query.personId;
+        const org = req.params.org;
+        const personId = req.params.personId;
 
         Log.info('RouteHandler::atIsStaff(..) - org: ' + org + '; personId: ' + personId);
 

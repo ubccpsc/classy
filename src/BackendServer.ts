@@ -17,10 +17,22 @@ export default class BackendServer {
 
     private rest: restify.Server;
     private config: Config = null;
+    private useHttps = false;
 
-    constructor() {
+    constructor(useHttps = true) {
         Log.info("BackendServer::<init> - start");
         this.config = Config.getInstance();
+        this.useHttps = useHttps;
+    }
+
+    /**
+     * Used in tests.
+     *
+     * @returns {Server}
+     */
+    public getServer(): restify.Server {
+        Log.trace('BackendServer::getServer()');
+        return this.rest;
     }
 
     /**
@@ -54,11 +66,16 @@ export default class BackendServer {
         let that = this;
         return new Promise(function (fulfill, reject) {
             try {
-                var https_options = {
+                let https_options: any = {
                     name:        'backend',
                     key:         fs.readFileSync(that.config.getProp('sslKeyPath')),
                     certificate: fs.readFileSync(that.config.getProp('sslCertPath'))
                 };
+
+                if (that.useHttps === false) {
+                    Log.warn('BackendServer::start() - disabling HTTPS; should only be used in testing!');
+                    https_options = {name: 'backend'};
+                }
 
                 that.rest = restify.createServer(https_options);
 
