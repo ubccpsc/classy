@@ -10,7 +10,13 @@ enum LogLevel {
 
 let LOG_LEVEL: LogLevel;
 
-switch (("TRACE").toUpperCase()) {
+let l = process.env.LOGLEVEL;
+if (typeof l === 'undefined') {
+    l = 'TRACE';
+}
+
+
+switch ((l).toUpperCase()) {
     case "TRACE":
         LOG_LEVEL = LogLevel.TRACE;
         break;
@@ -75,3 +81,5 @@ export default class Log {
         }
     }
 }
+
+Log.trace("LogLevel: " + l + '; LOG_LEVEL: ' + LOG_LEVEL);

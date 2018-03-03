@@ -5,8 +5,8 @@
 ## Development
 
 * Create a localhost key (https://gist.github.com/oslego/f13e136ffeaa6174289a)
+    * Copy `sample.env` into `.env`
     * Put `server.key` and `server.crt` in `<project-root>/ssl/`
-### NOT THIS * Start mongo locally: `mongod --config /usr/local/etc/mongod.conf`
     * `docker run -p 27017:27017 mongo` NOTE: WILL WIPE DATA, not for PROD
 
 
