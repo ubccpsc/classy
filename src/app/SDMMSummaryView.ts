@@ -1,10 +1,14 @@
 import Log from "./util/Log";
 import {OnsModalElement} from "onsenui";
+import {UI} from "./util/UI";
 
 export class SDMMSummaryView {
 
-    constructor() {
+    private remote: string = null;
+
+    constructor(remoteUrl: string) {
         Log.info("SDMMSummaryView::<init>");
+        this.remote = remoteUrl;
     }
 
     private longAction(duration: number, msg?: string) {
@@ -30,7 +34,19 @@ export class SDMMSummaryView {
     }
 
     public createD0Repository() {
-        this.longAction(5000, 'Creating D0 Repository<br/>Will take < 10 seconds');
+        const msg = 'Creating D0 Repository<br/>This will take < 60 seconds';
+        UI.showModal(msg);
+
+
+        // '/:courseId/admin/dashboard/:orgName/:delivId
+        // const url = this.app.backendURL + this.courseId + '/admin/dashboard/' + params.orgName + '/' + params.delivId + post;
+        const url = this.remote + '/currentStatus'; // hardcode
+        // going to be slow; show a modal
+        UI.showModal('Dashboard being retrieved. This should take < 10 seconds.');
+        this.handleRemote(url, null);//, this.dashboardView, UI.handleError);
+
+
+        // this.longAction(5000,);
     }
 
     public createD1Repository() {
@@ -184,6 +200,42 @@ export class SDMMSummaryView {
         } else {
             console.log('UI::hideModal(..) - Modal is null');
         }
+    }
+
+    public handleRemote(url: string, nextStep: any) {
+        console.log('Network::handleRemote( ' + url + ' ) - start');
+
+        //const OPTIONS_HTTP_GET: object = {credentials: 'include'};
+        //const AUTHORIZED_STATUS: string = 'authorized';
+
+        const options = {
+            headers: {
+                user:  localStorage.user,
+                token: localStorage.token
+            }
+        };
+
+        fetch(url, options).then((data: any) => {
+            UI.hideModal();
+            if (data.status !== 200 && data.status !== 405 && data.status !== 401) {
+                console.log('Network::handleRemote() WARNING: Repsonse status: ' + data.status);
+                throw new Error('Network::handleRemote() - API ERROR: ' + data.status);
+            } else if (data.status !== 200 && data.status === 405 || data.status === 401) {
+                console.error('Network::getRemotePost() Permission denied for your userrole.');
+                alert('You are not authorized to access this endpoint. Please re-login.');
+                // location.reload();
+            } else {
+                console.log('Network::handleRemote() 200 return');
+                data.json().then(function (json: any) {
+                    // view.render(json); // calls render instead of the function
+                    console.log('Network::handleRemote() this is the data: ' + JSON.stringify(json));
+
+                });
+            }
+        }).catch((err: Error) => {
+            console.error('Network::handleRemote( ' + url + ' ) - ERROR ' + err, err);
+            // onError(err.message);
+        });
     }
 
 }

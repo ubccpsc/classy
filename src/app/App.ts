@@ -31,6 +31,9 @@ export class App {
     public readonly backendURL: string = this.backendDEV;
     public readonly frontendURL: string = this.frontendDEV;
 
+
+    private sdmmView: SDMMSummaryView = null;
+
     private validated = false;
 
     constructor() {
@@ -61,7 +64,6 @@ export class App {
         this.validated = validated;
         Log.trace('App::init() - validated: ' + validated);
 
-
         return new Promise(function (fulfill, reject) {
 
             document.addEventListener('init', function (event) {
@@ -69,7 +71,6 @@ export class App {
 
                 // update login button state
                 that.toggleLoginButton();
-
 
                 const pageName = page.id;
 
@@ -91,6 +92,17 @@ export class App {
                 if (pageName === 'studentTabsPage') {
                     // initializing tabs page for the first time
                     // that.studentController = new StudentController(that, courseId);
+
+                    Log.info("studentTabsPage init; attaching sdmm view");
+
+                    Log.trace("App::init() - adding sdmm");
+                    let s: SDMMSummaryView = new SDMMSummaryView(that.backendURL);
+                    that.sdmmView = s;
+
+                    if (typeof (<any>window).myApp.sdmm === 'undefined') {
+                        (<any>window).myApp.sdmm = s; // just for debugging
+                    }
+                    Log.trace("App::init() - adding sdmm done");
                 }
 
                 /*
@@ -182,6 +194,11 @@ export class App {
                 // let validated = true;
                 Log.trace('App::init()::show - page: ' + pageName + "; validated: " + validated);
 
+
+                if (pageName === "studentTabsPage" && validated === true) {
+                    Log.trace('studentTabsPage - show!!!');
+                    that.sdmmView.renderPage();
+                }
                 /*
                 if (that.studentController !== null) {
                     if (typeof that.studentController[pageName] === 'function') {
@@ -409,9 +426,8 @@ export class App {
     }
 
     public sdmmSelectChanged() {
-        let s: SDMMSummaryView = new SDMMSummaryView();
-        (<any>window).myApp.sdmm = s;
-        s.renderPage();
+        console.log('sdmmSelectChanged');
+        (<any>window).myApp.sdmm.renderPage();
     }
 }
 
