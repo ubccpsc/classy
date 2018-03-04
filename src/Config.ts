@@ -24,6 +24,8 @@ export class Config {
                 githubHost:         process.env.GITHUB_HOST,
                 githubAPI:          process.env.GITHUB_API,
                 mongoUrl:           process.env.DB_URL,
+                githubTokenUser:    process.env.GH_TOKEN_USER,
+                githubToken:        process.env.GH_API_TOKEN,
             }
         } catch (err) {
             Log.error("Config::<init> - fatal error reading configuration file: " + err);
