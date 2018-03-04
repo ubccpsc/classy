@@ -170,4 +170,8 @@ export class UI {
         }
     }
 
+    public static showAlert(message: string) {
+        ons.notification.alert(message);
+    }
+
 }

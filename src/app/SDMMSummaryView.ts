@@ -111,7 +111,6 @@ export class SDMMSummaryView {
 
     public async createD1Individual(): Promise<void> {
         Log.info("SDMMSummaryView::createD1Individual() - start");
-        // this.longAction(5000, 'Configuring D1 Without Team<br/>Will take < 10 seconds');
 
         const url = this.remote + '/performAction/provisionD1individual';
         Log.info('SDDM::createD1Individual( ' + url + ' ) - start');
@@ -123,11 +122,10 @@ export class SDMMSummaryView {
         if (response.status === 200) {
             Log.trace('SDDM::createD1Individual(..) - 200 received');
             let json = await response.json();
-
-            if (json.success === true) {
+            if (typeof json.success !== 'undefined') {
                 this.longAction(2000, "D1 Repository created");
             } else {
-                this.longAction(5000, "Error encountered:<br/>" + json.message);
+                this.showError(json);
             }
 
             // TODO: refresh
@@ -139,9 +137,33 @@ export class SDMMSummaryView {
 
     }
 
-    public createD1Team() {
+    public async createD1Team(): Promise<void> {
         Log.info("SDMMSummaryView::createD1Team() - start");
-        this.longAction(5000, 'Configuring D1 Team<br/>Will take < 10 seconds');
+        // this.longAction(5000, 'Configuring D1 Team<br/>Will take < 10 seconds');
+
+        const url = this.remote + '/performAction/provisionD1team';
+        // TODO: actually provide team members!!!
+        Log.info('SDDM::createD1Team( ' + url + ' ) - start');
+
+        let options: any = this.getOptions();
+        options.method = 'post';
+        let response = await fetch(url, options);
+        UI.hideModal();
+        if (response.status === 200) {
+            Log.trace('SDDM::createD1Team(..) - 200 received');
+            let json = await response.json();
+            if (typeof json.success !== 'undefined') {
+                this.longAction(2000, "D1 Repository created");
+            } else {
+                this.showError(json);
+            }
+
+            // TODO: refresh
+            this.checkStatus();
+        } else {
+            Log.trace('SDDM::createD1Team(..) - !200 received');
+        }
+        return;
     }
 
     public createD3PullRequest() {
@@ -317,6 +339,14 @@ export class SDMMSummaryView {
 
     public showError(failure: any) { // FailurePayload
         Log.error("SDDM::showError(..) - failure: " + JSON.stringify(failure));
+        if (typeof failure === 'string') {
+            UI.showAlert(failure);
+        } else if (typeof failure.failure !== 'undefined') {
+            UI.showAlert(failure.failure.message);
+        } else {
+            Log.error("Unknown message: " + JSON.stringify(failure));
+            UI.showAlert("Action unsuccessful.");
+        }
     }
 
     /*

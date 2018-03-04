@@ -402,6 +402,7 @@ export class App {
         console.log('sdmmSelectChanged');
         (<any>window).myApp.sdmm.updateState(); // stick to dropdown for debugging
     }
+
 }
 
 Log.info('App.ts - preparing App for access');

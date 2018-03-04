@@ -233,6 +233,18 @@
     </ons-page>
 </template>
 
+<template id="alert-dialog.html">
+    <ons-alert-dialog id="my-alert-dialog" modifier="rowfooter">
+        <div class="alert-dialog-title">Warning</div>
+        <div class="alert-dialog-content" id="alertDialogBody">
+        </div>
+        <div class="alert-dialog-footer">
+            <!-- <ons-alert-dialog-button onclick="hideAlertDialog()">Cancel</ons-alert-dialog-button> -->
+            <ons-alert-dialog-button onclick="hideAlertDialog()">OK</ons-alert-dialog-button>
+        </div>
+    </ons-alert-dialog>
+</template>
+
 </body>
 
 </html>
