@@ -328,18 +328,18 @@ export class DatabaseController {
 
 
     public async verifyAuthToken(org: string, personId: string, token: string): Promise<boolean> {
-        Log.info("DatabaseController::verifyToken( " + org + ", " + personId + " ) - start");
+        Log.trace("DatabaseController::verifyToken( " + org + ", " + personId + " ) - start");
         let auth = <Auth> await this.readSingleRecord(this.AUTHCOLL, {"org": org, "personId": personId});
         if (auth !== null) {
             if (auth.token === token) {
-                Log.trace("DatabaseController::verifyToken( " + org + ", " + personId + " ) - token verified");
+                Log.info("DatabaseController::verifyToken( " + org + ", " + personId + " ) - token verified");
                 return true;
             } else {
-                Log.trace("DatabaseController::verifyToken( " + org + ", " + personId + " ) - token !verified");
+                Log.info("DatabaseController::verifyToken( " + org + ", " + personId + " ) - token !verified");
                 return false;
             }
         }
-        Log.trace("DatabaseController::verifyToken( " + org + ", " + personId + " ) - no token stored");
+        Log.info("DatabaseController::verifyToken( " + org + ", " + personId + " ) - no token stored");
         return false;
     }
 
