@@ -262,16 +262,34 @@ export class RouteHandler {
                 res.send(provisionResult);
             }).catch(function (err) {
                 Log.trace('RouteHandler::performAction(..) - sending 400');
-                res.send(400, {error: err});
+                res.send(400, {failure: {message: 'Unable to provision d0 repository; please try again later.'}});
             });
 
         } else if (action === 'provisionD1individual') {
-            sc.provision(org, "d0", [user]).then(function (provisionResult) {
-                Log.trace('RouteHandler::performAction(..) - sending 200; result: ' + JSON.stringify(provisionResult));
+            sc.provision(org, "d1", [user]).then(function (provisionResult) {
+                if (typeof provisionResult.success !== 'undefined') {
+                    Log.info('RouteHandler::performAction(..) - sending 200; success: ' + JSON.stringify(provisionResult));
+                } else {
+                    Log.info('RouteHandler::performAction(..) - sending 200; failure: ' + JSON.stringify(provisionResult));
+                }
+
                 res.send(provisionResult);
             }).catch(function (err) {
                 Log.trace('RouteHandler::performAction(..) - sending 400');
-                res.send(400, {error: err});
+                res.send(400, {failure: {message: 'Unable to provision d1 repository; please try again later.'}});
+            });
+        } else if (action === 'provisionD1team') {
+            // TODO: extract members
+            sc.provision(org, "d1", [user, null]).then(function (provisionResult) {
+                if (typeof provisionResult.success !== 'undefined') {
+                    Log.info('RouteHandler::performAction(..) - sending 200; success: ' + JSON.stringify(provisionResult));
+                } else {
+                    Log.info('RouteHandler::performAction(..) - sending 200; failure: ' + JSON.stringify(provisionResult));
+                }
+                res.send(provisionResult);
+            }).catch(function (err) {
+                Log.trace('RouteHandler::performAction(..) - sending 400');
+                res.send(400, {failure: {message: 'Unable to provision d1 repository; please try again later.'}});
             });
 
         } else {
