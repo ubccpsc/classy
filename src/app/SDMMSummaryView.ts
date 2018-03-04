@@ -272,10 +272,12 @@ export class SDMMSummaryView {
             Log.trace('SDDM::fetchStatus(..) - 200 received');
             let json = await response.json();
             Log.trace('SDDM::fetchStatus(..) - payload: ' + JSON.stringify(json));
-            Log.trace('SDDM::fetchStatus(..) - status: ' + json.status);
+
             if (typeof json.success !== 'undefined') {
+                Log.trace('SDDM::fetchStatus(..) - status: ' + json.success.status);
                 this.updateState(json.success); // StatusPayload
             } else {
+                Log.trace('SDDM::fetchStatus(..) - ERROR: ' + json.failure.message);
                 this.showError(json.failure); // FailurePayload
             }
 
