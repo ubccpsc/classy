@@ -179,7 +179,7 @@ export class SDDMController {
      * @param {string} personId
      * @returns {Promise<string>} null if the personId is not even known
      */
-    public async getStatus(org: string, personId: string): Promise<string | null> {
+    private async computeStatusString(org: string, personId: string): Promise<string | null> {
         Log.info("SDDMController::getStatus( " + org + ', ' + personId + ' ) - start');
         const start = Date.now();
         try {
@@ -191,11 +191,11 @@ export class SDDMController {
 
             const reportedStatus = person.custom.sddmStatus;
             // most of the time the status doesn't change, so let's just check that first:
-            const statusCorrect = await this.checkStatus(org, personId);
-            if (statusCorrect === true) {
-                Log.info("SDDMController::getStatus(..) - check successful; skipping");
-                return reportedStatus;
-            }
+            // const statusCorrect = await this.checkStatus(org, personId);
+            // if (statusCorrect === true) {
+            //    Log.info("SDDMController::getStatus(..) - check successful; skipping");
+            //    return reportedStatus;
+            // }
 
             let currentStatus = SDDMStatus[SDDMStatus.D0PRE]; // start with the lowest status and work up
 
@@ -368,6 +368,8 @@ export class SDDMController {
      * @param {string} personId
      * @returns {Promise<string>}
      */
+
+    /*
     private async checkStatus(org: string, personId: string): Promise<boolean> {
         Log.info("SDDMController::getStatus( " + org + ', ' + personId + ' ) - start');
         const start = Date.now();
@@ -392,6 +394,7 @@ export class SDDMController {
             Log.info("SDDMController::checkStatus(..) - ERROR: " + err);
         }
     }
+*/
 
     private async provisionD0Repo(org: string, personId: string): Promise<Payload> {
         Log.info("SDDMController::provisionD0Repo( " + org + ", " + personId + " ) - start");
@@ -408,7 +411,7 @@ export class SDDMController {
                 return {failure: {shouldLogout: false, message: "Username not registered; contact course staff."}};
             }
 
-            let personStatus = await this.getStatus(org, personId);
+            let personStatus = await this.computeStatusString(org, personId);
             if (personStatus !== SDDMStatus[SDDMStatus.D0PRE]) {
                 Log.info("SDDMController::provisionD0Repo( " + org + ", " + personId + " ) - bad status: " + personStatus);
             } else {
@@ -443,7 +446,7 @@ export class SDDMController {
                 // create grade entry
                 await this.gc.createGrade(org, repo.id, 'd0', -1, 'Repo Provisioned', repo.url, Date.now());
 
-                const statusPayload = await this.createStatusPayload(org, personId);
+                const statusPayload = await this.getStatus(org, personId);
                 Log.info("SDDMController::provisionD0Repo(..) - d0 final provisioning successful; took: " + Util.took(start));
 
                 return {success: {message: "Repository successfully created.", status: statusPayload}};
@@ -485,7 +488,7 @@ export class SDDMController {
                 }
             }
 
-            let personStatus = await this.getStatus(org, personId);
+            let personStatus = await this.computeStatusString(org, personId);
             if (personStatus !== SDDMStatus[SDDMStatus.D1UNLOCKED]) {
                 Log.info("SDDMController::updateIndividualD0toD1( " + org + ", " + personId + " ) - bad status: " + personStatus);
             } else {
@@ -521,7 +524,7 @@ export class SDDMController {
                 return {failure: {shouldLogout: false, message: "Invalid team updating d0 repo; contact course staff."}};
             }
 
-            const statusPayload = await this.createStatusPayload(org, personId);
+            const statusPayload = await this.getStatus(org, personId);
             Log.info("SDDMController::updateIndividualD0toD1(..) - d0 to d1 individual upgrade successful; took: " + Util.took(start));
             return {success: {message: "D0 repo successfully updated to D1.", status: statusPayload}};
         } catch (err) {
@@ -582,7 +585,7 @@ export class SDDMController {
             }
 
             for (const p of people) {
-                let personStatus = await this.getStatus(org, p.id);
+                let personStatus = await this.computeStatusString(org, p.id);
                 if (personStatus !== SDDMStatus[SDDMStatus.D1UNLOCKED]) {
                     Log.info("SDDMController::provisionD1Repo( " + org + ", " + p.id + " ) - bad status: " + personStatus);
                     return {
@@ -627,7 +630,7 @@ export class SDDMController {
                 await this.gc.createGrade(org, repo.id, 'd2', -1, 'Repo Provisioned', repo.url, Date.now());
                 await this.gc.createGrade(org, repo.id, 'd3', -1, 'Repo Provisioned', repo.url, Date.now());
 
-                const statusPayload = await this.createStatusPayload(org, peopleIds[0]);
+                const statusPayload = await this.getStatus(org, peopleIds[0]);
                 Log.info("SDDMController::provisionD1Repo(..) - d1 final provisioning successful; took: " + Util.took(start));
                 return {success: {message: "D1 repository successfully provisioned.", status: statusPayload}};
             } else {
@@ -640,8 +643,11 @@ export class SDDMController {
         }
     }
 
-    private async createStatusPayload(org: string, personId: string): Promise<StatusPayload> {
-        const myStatus = await this.getStatus(org, personId);
+    public async getStatus(org: string, personId: string): Promise<StatusPayload> {
+        Log.info("SDDMController::getStatus( " + org + ", " + personId + " ) - start");
+        const start = Date.now();
+
+        const myStatus = await this.computeStatusString(org, personId);
 
         let myD0: GradePayload = null;
         let myD1: GradePayload = null;
@@ -692,6 +698,8 @@ export class SDDMController {
             d2:     myD2,
             d3:     myD3
         };
+
+        Log.trace("SDDMController::getStatus( " + org + ", " + personId + " ) - took: " + Util.took(start));
 
         return statusPayload;
     }

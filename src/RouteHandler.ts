@@ -5,7 +5,7 @@ import {Config} from "./Config";
 import {DatabaseController} from "./controllers/DatabaseController";
 import {Auth, Person} from "./Types";
 import {PersonController} from "./controllers/PersonController";
-import {SDDMController} from "./controllers/SDDMController";
+import {Payload, SDDMController, StatusPayload} from "./controllers/SDDMController";
 import {GitHubController} from "./controllers/GitHubController";
 import ClientOAuth2 = require("client-oauth2");
 
@@ -194,7 +194,7 @@ export class RouteHandler {
 
         // if (req.method.toLowerCase() === 'options') { // was options
 
-        var allowHeaders = ['Accept', 'Accept-Version', 'Content-Type', 'Api-Version', 'user', 'token', 'org'];
+        var allowHeaders = ['Accept', 'Accept-Version', 'Content-Type', 'Api-Version', 'user-agent', 'user', 'token', 'org'];
         if (res.methods.indexOf('OPTIONS') === -1) {
             res.methods.push('OPTIONS');
         }
@@ -217,6 +217,14 @@ export class RouteHandler {
     }
 
 
+    /**
+     *
+     * Return message: Payload
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
     public static getCurrentStatus(req: any, res: any, next: any) {
         Log.trace('RouteHandler::getCurrentStatus(..) - /getCurrentStatus - start GET');
         const user = req.headers.user;
@@ -227,9 +235,11 @@ export class RouteHandler {
         const org = Config.getInstance().getProp('org');
 
         let sc: SDDMController = new SDDMController(new GitHubController());
-        sc.getStatus(org, user).then(function (status) {
+        sc.getStatus(org, user).then(function (status: StatusPayload) {
             Log.trace('RouteHandler::getCurrentStatus(..) - sending 200; user: ' + user + '; status: ' + status);
-            res.send({user: user, status: status});
+
+            const ret: Payload = {success: status};
+            res.send(ret);
         }).catch(function (err) {
             Log.trace('RouteHandler::getCurrentStatus(..) - sending 400');
             res.send(400, {error: err});
