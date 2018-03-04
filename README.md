@@ -39,7 +39,7 @@ certbot certonly --standalone -d sdmm.cs.ubc.ca
 
 # TODO Set renewal as cron/systemd job. It also needs to copy the new certs to /home/w-sdmm/sdmm-portal
 certbot renew
-cp $(readlink -f /etc/letsencrypt/live/sdmm.cs.ubc.ca/fullchain.pem) /home/w-sdmm/sdmm-portal/ssl/fullchain.pem
-cp $(readlink -f /etc/letsencrypt/live/sdmm.cs.ubc.ca/privkey.pem) /home/w-sdmm/sdmm-portal/ssl/privkey.pem
-chown -R w-sdmm:w-sdmm /home/w-sdmm/sdmm-portal/ssl
+cp $(readlink -f /etc/letsencrypt/live/sdmm.cs.ubc.ca/fullchain.pem) /home/w-sdmm/autotest/ssl/fullchain.pem
+cp $(readlink -f /etc/letsencrypt/live/sdmm.cs.ubc.ca/privkey.pem) /home/w-sdmm/autotest/ssl/privkey.pem
+chown -R w-sdmm:w-sdmm /home/w-sdmm/autotest/ssl
 ```
