@@ -45,7 +45,7 @@ export class ClassPortal implements IClassPortal {
             return false;
         }
 
-        const url = "http://" + this.host + ":" + this.port + "/isStaff/" + courseId + "/" + userName;
+        const url = "https://" + this.host + ":" + this.port + "/isStaff/" + courseId + "/" + userName;
         Log.info("ClassPortal::isStaff(..) - Sending request to " + url);
         return rp(url).then(function (res) {
             Log.trace("ClassPortal::isStaff( " + courseId + ", " + userName + " ) - success; payload: " + res);
@@ -63,7 +63,7 @@ export class ClassPortal implements IClassPortal {
             return null;
         }
 
-        const url = "http://" + this.host + ":" + this.port + "/defaultDeliverable" + "/" + courseId;
+        const url = "https://" + this.host + ":" + this.port + "/defaultDeliverable" + "/" + courseId;
         Log.info("ClassPortal::getDefaultDeliverableId(..) - Sending request to " + url);
         return rp(url).then(function (res) {
             Log.trace("ClassPortal::getDefaultDeliverableId( " + courseId + " ) - success; payload: " + res);
