@@ -3,7 +3,6 @@ import Log from "../util/Log";
 import * as rp from "request-promise-native";
 import {Config} from "../Config";
 import {Repository, Team} from "../Types";
-import {Test} from "../../test/GlobalSpec";
 
 let tmp = require('tmp-promise');
 
@@ -81,7 +80,7 @@ export class TestGitHubController implements IGitHubController {
             // perform import
             let targetUrl = 'https://github.com/SECapstone/' + repoName; // HACK: hardcode
             let importUrl = 'https://github.com/SECapstone/bootstrap';
-            let output = await gh.importRepoFS(Test.ORGNAME, importUrl, targetUrl);
+            let output = await gh.importRepoFS(org, importUrl, targetUrl);
             Log.trace('GHA::provisionRepository(..) - import: ' + output);
             // expect(output).to.be.true;
 
