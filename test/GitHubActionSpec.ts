@@ -1,20 +1,25 @@
-// const loadFirst = require('./GlobalSpec');
-// const rFirst = require('./GradeControllerSpec');
+const loadFirst = require('./GlobalSpec');
+const rFirst = require('./SDDMControllerSpec'); // so we go last
 
 import {expect} from "chai";
 import "mocha";
-import {GitHubActions} from "../src/controllers/GitHubController";
+import {GitHubActions, GitHubController} from "../src/controllers/GitHubController";
 import Log from "../src/util/Log";
 import {Test} from "./GlobalSpec";
 import Util from "../src/util/Util";
+import {ActionPayload, SDDMController} from "../src/controllers/SDDMController";
+import {GradesController} from "../src/controllers/GradesController";
 
-describe.only("GitHubActions", () => {
+describe("GitHubActions", () => {
 
     let gh: GitHubActions;
 
     let TIMEOUT = 5000;
 
+    let ORGNAME = 'secapstone';
+
     before(async () => {
+        Test.ORGNAME = ORGNAME;
     });
 
     beforeEach(function () {
@@ -89,7 +94,7 @@ describe.only("GitHubActions", () => {
         expect(val.githubTeamNumber).to.be.an('number');
         expect(val.githubTeamNumber > 0).to.be.true;
 
-        let addMembers = await gh.addMembersToTeam(val.teamName, val.githubTeamNumber, [Test.USERNAMEGITHUB, Test.USERNAMEGITHUB2]);
+        let addMembers = await gh.addMembersToTeam(val.teamName, val.githubTeamNumber, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
         expect(addMembers.teamName).to.equal(Test.TEAMNAME1); // not a strong test
 
         let teamAdd = await gh.addTeamToRepo(Test.ORGNAME, val.githubTeamNumber, Test.REPONAME1, 'push');
@@ -197,5 +202,127 @@ describe.only("GitHubActions", () => {
         (<any>gh).gitHubAuthToken = old; // restore token
     }).timeout(TIMEOUT);
 
-    // TODO: need tests
+
+    it("Should be able to delete things before running provisioning tests.", async function () {
+        // check auth
+        let repos = await gh.listRepos(Test.ORGNAME);
+        expect(repos).to.be.an('array');
+        expect(repos.length > 0).to.be.true;
+
+        // delete test repos if needed
+        for (const repo of repos as any) {
+            if (repo.full_name === "SECapstone/" + Test.REPONAME1) {
+                await gh.deleteRepo(Test.ORGNAME, Test.REPONAME1);
+            }
+            if (repo.full_name === "SECapstone/secap_" + Test.USERNAMEGITHUB1) {
+                await gh.deleteRepo(Test.ORGNAME, 'secap_' + Test.USERNAMEGITHUB1);
+            }
+            if (repo.full_name === "SECapstone/secap_" + Test.USERNAMEGITHUB2) {
+                await gh.deleteRepo(Test.ORGNAME, 'secap_' + Test.USERNAMEGITHUB2);
+            }
+            if (repo.full_name === "SECapstone/secap_" + Test.USERNAMEGITHUB3) {
+                await gh.deleteRepo(Test.ORGNAME, 'secap_' + Test.USERNAMEGITHUB3);
+            }
+            // TODO: delete team repo too
+        }
+
+        // delete teams if needed
+        let teams = await gh.listTeams(Test.ORGNAME);
+        expect(teams).to.be.an('array');
+        expect(teams.length > 0).to.be.true;
+
+        for (const team of teams as any) {
+            Log.info('team: ' + JSON.stringify(team));
+
+
+            if (team.name === Test.TEAMNAME1) {
+                await gh.deleteTeam(Test.ORGNAME, team.id);
+            }
+
+            if (team.name === Test.USERNAMEGITHUB1) {
+                const teamNum = await gh.getTeamNumber(Test.ORGNAME, Test.USERNAMEGITHUB1);
+                await gh.deleteTeam(Test.ORGNAME, teamNum);
+            }
+
+            if (team.name === Test.USERNAMEGITHUB2) {
+                const teamNum = await gh.getTeamNumber(Test.ORGNAME, Test.USERNAMEGITHUB2);
+                await gh.deleteTeam(Test.ORGNAME, teamNum);
+            }
+
+            if (team.name === Test.USERNAMEGITHUB3) {
+                const teamNum = await gh.getTeamNumber(Test.ORGNAME, Test.USERNAMEGITHUB3);
+                await gh.deleteTeam(Test.ORGNAME, teamNum);
+            }
+        }
+    }).timeout(30 * 1000);
+
+    it("Should be able to provision d0.", async function () {
+        const start = Date.now();
+
+        const sc = new SDDMController(new GitHubController());
+
+        Log.test('Provisioning three users');
+        const p1 = await sc.handleUnknownUser(Test.ORGNAME, Test.USERNAMEGITHUB1);
+        expect(p1).to.not.be.null;
+        const p2 = await sc.handleUnknownUser(Test.ORGNAME, Test.USERNAMEGITHUB2);
+        expect(p2).to.not.be.null;
+        const p3 = await sc.handleUnknownUser(Test.ORGNAME, Test.USERNAMEGITHUB3);
+        expect(p3).to.not.be.null;
+
+
+        Log.test('Provisioning three d0 repos');
+        let provision = await sc.provision(Test.ORGNAME, 'd0', [Test.USERNAMEGITHUB1]);
+        expect(provision.success).to.not.be.undefined;
+        expect(provision.failure).to.be.undefined;
+        expect((<ActionPayload>provision.success).status.status).to.equal("D0");
+
+        provision = await sc.provision(Test.ORGNAME, 'd0', [Test.USERNAMEGITHUB2]);
+        expect(provision.success).to.not.be.undefined;
+        expect(provision.failure).to.be.undefined;
+        expect((<ActionPayload>provision.success).status.status).to.equal("D0");
+
+        provision = await sc.provision(Test.ORGNAME, 'd0', [Test.USERNAMEGITHUB3]);
+        expect(provision.success).to.not.be.undefined;
+        expect(provision.failure).to.be.undefined;
+        expect((<ActionPayload>provision.success).status.status).to.equal("D0");
+
+        Log.test('Adding some grades for the d0 repos');
+        const gc = new GradesController();
+        await gc.createGrade(Test.ORGNAME, "secap_" + Test.USERNAMEGITHUB1, "d0", 65, "test", "TESTURL", Date.now());
+        await gc.createGrade(Test.ORGNAME, "secap_" + Test.USERNAMEGITHUB2, "d0", 70, "test", "TESTURL", Date.now());
+        await gc.createGrade(Test.ORGNAME, "secap_" + Test.USERNAMEGITHUB3, "d0", 75, "test", "TESTURL", Date.now());
+
+        Log.trace("Test took (3 users, 3 d0 repos): " + Util.took(start));
+    }).timeout(300 * 1000); // 5 minutes
+
+    it("Should be able to provision an individual d1.", async function () {
+        const start = Date.now();
+
+        const sc = new SDDMController(new GitHubController());
+
+        Log.test('Provision solo D1');
+        const provision = await sc.provision(Test.ORGNAME, 'd1', [Test.USERNAMEGITHUB1]);
+        expect(provision.success).to.not.be.undefined;
+        expect(provision.failure).to.be.undefined;
+        expect((<ActionPayload>provision.success).status.status).to.equal("D1");
+
+        Log.trace("Test took (1 users, 1 upgrade): " + Util.took(start));
+    }).timeout(300 * 1000); // 5 minutes
+
+    it("Should be able to provision a paired d1.", async function () {
+        const start = Date.now();
+
+        const sc = new SDDMController(new GitHubController());
+
+        Log.test('Provision paired d1');
+        const provision = await sc.provision(Test.ORGNAME, 'd1', [Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB3]);
+        expect(provision.success).to.not.be.undefined;
+        expect(provision.failure).to.be.undefined;
+        expect((<ActionPayload>provision.success).status.status).to.equal("D1");
+
+        // NOTE: every time this is run it will create a team we can't programmatically delete
+
+        Log.trace("Test took (2 users, 1 clones): " + Util.took(start));
+    }).timeout(300 * 1000); // 5 minutes
+
 });

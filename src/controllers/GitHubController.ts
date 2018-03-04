@@ -3,6 +3,7 @@ import Log from "../util/Log";
 import * as rp from "request-promise-native";
 import {Config} from "../Config";
 import {Repository, Team} from "../Types";
+import Util from "../util/Util";
 
 let tmp = require('tmp-promise');
 
@@ -31,93 +32,112 @@ export interface IGitHubController {
 
 
 export class GitHubController implements IGitHubController {
+
     public async getRepositoryUrl(repo: Repository): Promise<string> {
+        Log.info("GitHubController::GetRepositoryUrl")
         // HACK: hardcoded for sddm:
-        return "https://github.com/orgs/secapstone/" + repo.id;
+        const url = "https://github.com/orgs/secapstone/" + repo.id;
+        Log.info("GitHubController::GetRepositoryUrl( " + repo.id + " ) - url: " + url);
+        return url;
     }
 
     public async getTeamUrl(team: Team): Promise<string> {
         // HACK: hardcoded for sddm:
-        return "https://github.com/orgs/SECapstone/teams/" + team.id;
+        const teamUrl = "https://github.com/orgs/SECapstone/teams/" + team.id;
+        Log.info("GitHubController::getTeamUrl( " + team.id + " ) - url: " + teamUrl);
+        return teamUrl;
     }
 
     public async provisionRepository(org: string, repoName: string, teams: Team[], sourceRepo: string, webhookAddress: string): Promise<boolean> {
-        Log.error("TestGitHubController::provisionRepository(..) - NOT IMPLEMENTED");
-
+        Log.info("GitHubController::provisionRepository( " + org + ", " + repoName + ", ...) - start");
+        const start = Date.now();
         try {
             const gh = new GitHubActions();
 
+            if (teams.length < 1 || teams.length > 1) {
+                Log.info("GitHubController::provisionRepository(..) - only the first team will be added to the repo");
+            }
+
             // create a repo
+            Log.trace("GitHubController::provisionRepository() - create GitHub repo");
             let repoVal = await gh.createRepo(org, repoName);
             Log.trace('GHA::provisionRepository(..) - repo: ' + repoVal);
             // expect(repoVal).to.equal('https://github.com/SECapstone/' + Test.REPONAME1);
 
             // HARDCODE: assume one team
+            Log.trace("GitHubController::provisionRepository() - create GitHub team");
             let val = await gh.createTeam(org, teams[0].id, 'push');
             Log.trace('GHA::provisionRepository(..) createTeam: ' + val.teamName);
             // expect(val.teamName).to.equal(Test.TEAMNAME1);
             // expect(val.githubTeamNumber).to.be.an('number');
             // expect(val.githubTeamNumber > 0).to.be.true;
 
+            Log.trace("GitHubController::provisionRepository() - add members to GitHub team");
             let addMembers = await gh.addMembersToTeam(val.teamName, val.githubTeamNumber, teams[0].personIds);
             Log.trace('GHA::provisionRepository(..) - addMembers: ' + addMembers.teamName);
             // expect(addMembers.teamName).to.equal(Test.TEAMNAME1); // not a strong test
 
+            Log.trace("GitHubController::provisionRepository() - add team to repo");
             let teamAdd = await gh.addTeamToRepo(org, val.githubTeamNumber, repoName, 'push');
-            Log.trace('GHA::provisionRepository(..) - teamNumber: ' + teamAdd);
+            Log.trace('GHA::provisionRepository(..) - team name: ' + teamAdd.teamName);
             // expect(teamAdd.githubTeamNumber).to.equal(val.githubTeamNumber);
 
+            Log.trace("GitHubController::provisionRepository() - add staff team to repo");
             let staffTeamNumber = await gh.getTeamNumber(org, 'staff');
-            let staffAdd = await gh.addTeamToRepo(org, staffTeamNumber, repoName, 'admin');
             Log.trace('GHA::provisionRepository(..) - staffTeamNumber: ' + staffTeamNumber);
+            let staffAdd = await gh.addTeamToRepo(org, staffTeamNumber, repoName, 'admin');
+            Log.trace('GHA::provisionRepository(..) - team name: ' + staffAdd.teamName);
             // expect(staffAdd.githubTeamNumber).to.equal(staffTeamNumber);
 
             // add webhooks
+            Log.trace("GitHubController::provisionRepository() - add webhook");
             let createHook = await gh.addWebhook(org, repoName, webhookAddress);
-            Log.trace('GHA::provisionRepository(..) - webook: ' + createHook);
+            Log.trace('GHA::provisionRepository(..) - webook successful: ' + createHook);
             // expect(createHook).to.be.true;
 
             // perform import
             let targetUrl = 'https://github.com/SECapstone/' + repoName; // HACK: hardcode
             let importUrl = 'https://github.com/SECapstone/bootstrap';
+            Log.trace("GitHubController::provisionRepository() - importing project (slow)");
             let output = await gh.importRepoFS(org, importUrl, targetUrl);
-            Log.trace('GHA::provisionRepository(..) - import: ' + output);
+            Log.trace('GHA::provisionRepository(..) - import complete; success: ' + output);
             // expect(output).to.be.true;
 
+            Log.trace('GHA::provisionRepository(..) - successfully completed for: ' + repoName + '; took: ' + Util.took(start));
             return true;
         } catch (err) {
-            Log.error('GHA::provisionRepository(..) - ERROR: ' + err);
+            Log.error('GitHubController::provisionRepository(..) - ERROR: ' + err);
         }
         return false;
     }
 
     public async createPullRequest(org: string, repoName: string, prName: string): Promise<boolean> {
-        Log.error("TestGitHubController::createPullRequest(..) - NOT IMPLEMENTED");
+        Log.error("GitHubController::createPullRequest(..) - NOT IMPLEMENTED");
         return true;
     }
 }
 
-export class TestHubController implements IGitHubController {
+export class TestGitHubController implements IGitHubController {
     private gha = new GitHubActions();
 
     public async getRepositoryUrl(repo: Repository): Promise<string> {
-        Log.error("GitHubController::getRepositoryUrl(..) - NOT IMPLEMENTED");
+        Log.error("TestGitHubController::getRepositoryUrl(..) - NOT IMPLEMENTED");
         return "TODO";
     }
 
     public async getTeamUrl(team: Team): Promise<string> {
-        Log.error("GitHubController::getTeamUrl(..) - NOT IMPLEMENTED");
+        Log.error("TestGitHubController::getTeamUrl(..) - NOT IMPLEMENTED");
         // const url = this.gha.getTeamNumber()
         return "TODO";
     }
 
     public async provisionRepository(org: string, repoName: string, teams: Team[], sourceRepo: string, webhookAddress: string): Promise<boolean> {
-        Log.error("GitHubController::provisionRepository(..) - NOT IMPLEMENTED");
+        Log.error("TestGitHubController::provisionRepository(..) - NOT IMPLEMENTED");
         return true;
     }
 
     public async createPullRequest(org: string, repoName: string, prName: string): Promise<boolean> {
-        Log.error("GitHubController::createPullRequest(..) - NOT IMPLEMENTED");
+        Log.error("TestGitHubController::createPullRequest(..) - NOT IMPLEMENTED");
         return true;
     }
 }

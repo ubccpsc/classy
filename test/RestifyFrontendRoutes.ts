@@ -16,7 +16,7 @@ const request = require('supertest');
 const https = require('https');
 
 
-describe('REST Routes for AutoTest', function () {
+describe('REST Routes for Frontend', function () {
 
     var app: restify.Server = null;
 
@@ -68,7 +68,6 @@ describe('REST Routes for AutoTest', function () {
         expect(response.body.user).to.not.be.undefined;
         expect(response.body.status).to.not.be.undefined;
         expect(response.body.status).to.equal('D0PRE');
-
     });
 
 });

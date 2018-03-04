@@ -30,8 +30,9 @@ export class Test {
     public static readonly USERNAME2 = 'user2';
     public static readonly USERNAME3 = 'user3';
 
-    public static readonly USERNAMEGITHUB = "cpscbot";
+    public static readonly USERNAMEGITHUB1 = "cpscbot";
     public static readonly USERNAMEGITHUB2 = "rthse2";
+    public static readonly USERNAMEGITHUB3 = "ubcbot";
 
     public static readonly DELIVID0 = 'd0';
     public static readonly DELIVID1 = 'd1';
