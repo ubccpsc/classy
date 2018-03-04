@@ -232,7 +232,7 @@ export class App {
             var username = await this.getGithubCredentials(token);
             if (username !== null) {
                 // valid username; get role from server
-                Log.info("App::validateCredentials() - valid username");
+                Log.info("App::validateCredentials() - valid username: " + username);
 
                 var credentials: any = await this.getServerCredentials(username, token);
                 if (credentials === null) {
@@ -268,21 +268,24 @@ export class App {
     }
 
     private getGithubCredentials(token: string): Promise<string | null> {
-        Log.trace("App::getGithubCredentials - start");
+        Log.trace("App::getGithubCredentials(..) - start");
         return fetch('https://api.github.com/user', {
             headers: {
                 'Content-Type':  'application/json',
-                'User-Agent':    'Portal',
+                // 'User-Agent':    'Portal',
                 'Authorization': 'token ' + token
             }
         }).then(function (resp: any) {
-            Log.trace("App::getGithubCredentials - resp then: " + resp);
+            Log.trace("App::getGithubCredentials(..) - resp then: " + resp);
             return resp.json();
         }).then(function (data: any) {
-            Log.trace("App::getGithubCredentials - data then: " + data);
-            return data.login;
+            Log.trace("App::getGithubCredentials(..) - data then: " + data);
+            if (typeof data.login !== 'undefined') {
+                return data.login;
+            }
+            return null;
         }).catch(function (err: any) {
-            Log.error("App::getGithubCredentials - ERROR: " + err);
+            Log.error("App::getGithubCredentials(..) - ERROR: " + err);
             return null;
         });
     };
@@ -363,8 +366,11 @@ export class App {
         let s: string[] = decodeURI(document.cookie).split(';');
         for (let i = 0; i < s.length; i++) {
             let row = s[i].split('=', 2);
-            if (row.length === 2 && row[0] == name) {
-                return row[1];
+            if (row.length === 2) {
+                let key = row[0].trim(); // firefox sometimes has an extraneous space before the key
+                if (key === name) {
+                    return row[1].trim();
+                }
             }
         }
         return null;
