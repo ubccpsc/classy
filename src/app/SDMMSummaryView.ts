@@ -263,6 +263,7 @@ export class SDMMSummaryView {
         if (response.status === 200) {
             Log.trace('SDDM::fetchStatus(..) - 200 received');
             let json = await response.json();
+            Log.trace('SDDM::fetchStatus(..) - payload: ' + JSON.stringify(json));
             Log.trace('SDDM::fetchStatus(..) - status: ' + json.status);
             this.updateState(json.status);
         } else {
