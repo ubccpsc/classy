@@ -235,8 +235,8 @@ export class RouteHandler {
 
         let sc: SDDMController = new SDDMController(new GitHubController());
         sc.getStatus(org, user).then(function (status: StatusPayload) {
-            Log.info('RouteHandler::getCurrentStatus(..) - sending 200; user: ' + user + '; status: ' + status);
-
+            Log.info('RouteHandler::getCurrentStatus(..) - sending 200; user: ' + user);
+            Log.trace('RouteHandler::getCurrentStatus(..) - sending 200; user: ' + user + '; status: ' + JSON.stringify(status));
             const ret: Payload = {success: status};
             res.send(ret);
         }).catch(function (err) {

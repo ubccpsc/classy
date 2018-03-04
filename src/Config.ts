@@ -33,13 +33,13 @@ export class Config {
     }
 
     public static getInstance(configName?: string): Config {
-        Log.trace("Config::getInstance() - start");
+        // Log.trace("Config::getInstance() - start");
         if (Config.instance === null) {
             const c = new Config();
             Config.instance = c;
             // Log.trace("Full config: " + JSON.stringify(c));
         }
-        Log.trace("Config::getInstance() - done");
+        // Log.trace("Config::getInstance() - done");
         return Config.instance;
     }
 

@@ -18,3 +18,18 @@ This has not been done yet
 * Generate a `localhost` certificate for development.
     * `sudo certbot certonly`
     * Choose option 2 (`temporary webserver`)
+
+
+## External Steps
+
+0. Get a GitHub organization for your course and configure it. You probably want to:
+    * Disable repo access (Uncheck everything under Member Privileges)
+    * Change default `Repository Permissions` to `None` under Member Privileges
+
+
+
+1. Create a GitHub account you want to serve as your 'frontend'; this account will be making lots of accounts and comments, so you probably don't want it to be a personal account.
+    * Create a GitHub personal token (under development in the GitHub profile page) and use this in `.env`:
+        * GH_TOKEN_USER=<github account you created>
+        * GH_API_TOKEN="token <the github token; leave token and one space to the left of this>"
+    * Register this GitHub user as an owner in your organization.

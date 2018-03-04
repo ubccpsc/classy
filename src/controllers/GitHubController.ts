@@ -36,7 +36,7 @@ export class GitHubController implements IGitHubController {
     public async getRepositoryUrl(repo: Repository): Promise<string> {
         Log.info("GitHubController::GetRepositoryUrl")
         // HACK: hardcoded for sddm:
-        const url = "https://github.com/orgs/secapstone/" + repo.id;
+        const url = "https://github.com/secapstone/" + repo.id;
         Log.info("GitHubController::GetRepositoryUrl( " + repo.id + " ) - url: " + url);
         return url;
     }

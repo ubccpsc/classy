@@ -35,9 +35,7 @@ export interface StatusPayload {
 
 export interface GradePayload {
     score: number; // grade: < 0 will mean 'N/A' in the UI
-
     url: string; // commit URL if known, otherwise repo url
-
     timestamp: number; // even if grade < 0 might as well return when the entry was made
 }
 
