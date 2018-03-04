@@ -30,7 +30,7 @@ export interface IGitHubController {
 }
 
 
-export class TestGitHubController implements IGitHubController {
+export class GitHubController implements IGitHubController {
     public async getRepositoryUrl(repo: Repository): Promise<string> {
         // HACK: hardcoded for sddm:
         return "https://github.com/orgs/secapstone/" + repo.id;
@@ -97,7 +97,7 @@ export class TestGitHubController implements IGitHubController {
     }
 }
 
-export class GitHubController implements IGitHubController {
+export class TestHubController implements IGitHubController {
     private gha = new GitHubActions();
 
     public async getRepositoryUrl(repo: Repository): Promise<string> {
