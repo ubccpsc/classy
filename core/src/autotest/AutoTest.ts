@@ -311,6 +311,8 @@ export abstract class AutoTest implements IAutoTest {
                 isProd = false; // EMPTY and POSTBACK used by test environment
             }
             if (isProd === true) {
+                const host: string = Config.getInstance().getProp("graderHost");
+                const port: number = Config.getInstance().getProp("graderPort");
                 const image: string = Config.getInstance().getProp("dockerId");
                 const timeout: number = Config.getInstance().getProp("timeout");
                 const assnUrl: string = input.pushInfo.projectURL;
@@ -332,7 +334,7 @@ export abstract class AutoTest implements IAutoTest {
                 };
                 const rpOpts: rp.OptionsWithUrl = {
                     method: "PUT",
-                    url: `http://autotest_grader_1:3000/task/grade/${id}`,
+                    url: `http://${host}:${port}/task/grade/${id}`,
                     body,
                     json: true, // Automatically stringifies the body to JSON,
                     timeout: 360000  // enough time that the container will have timed out

@@ -1,4 +1,5 @@
 import * as rp from "request-promise-native";
+import { Config } from "../Config";
 import Log from "../util/Log";
 
 export interface IClassPortal {
@@ -35,6 +36,8 @@ export interface IClassPortal {
 }
 
 export class ClassPortal implements IClassPortal {
+    private host: string = Config.getInstance().getProp("classPortalHost");
+    private port: number = Config.getInstance().getProp("classPortalPort");
 
     public async isStaff(courseId: string, userName: string): Promise<boolean> {
         if (typeof courseId === "undefined" || courseId === null || typeof userName === "undefined" || userName === null) {
@@ -42,11 +45,12 @@ export class ClassPortal implements IClassPortal {
             return false;
         }
 
-        const url = "https://portal.cs.ubc.ca:5000/" + courseId + "/isStaff/" + userName;
+        const url = "https://" + this.host + ":" + this.port + "/isStaff/" + courseId + "/" + userName;
+        Log.info("ClassPortal::isStaff(..) - Sending request to " + url);
         return rp(url).then(function (res) {
             Log.trace("ClassPortal::isStaff( " + courseId + ", " + userName + " ) - success; payload: " + res);
             const json = JSON.parse(res);
-            return json.response;
+            return json.isStaff;
         }).catch(function (err) {
             Log.trace("ClassPortal::isStaff(..) - ERROR; url: " + url + "; ERROR: " + err);
             return false; // err on the side of caution
@@ -59,11 +63,12 @@ export class ClassPortal implements IClassPortal {
             return null;
         }
 
-        const url = "https://portal.cs.ubc.ca:5000/" + courseId + "/defaultDeliverable";
+        const url = "https://" + this.host + ":" + this.port + "/defaultDeliverable" + "/" + courseId;
+        Log.info("ClassPortal::getDefaultDeliverableId(..) - Sending request to " + url);
         return rp(url).then(function (res) {
             Log.trace("ClassPortal::getDefaultDeliverableId( " + courseId + " ) - success; payload: " + res);
             const json = JSON.parse(res);
-            return json.response;
+            return json.delivId;
         }).catch(function (err) {
             Log.trace("ClassPortal::getDefaultDeliverableId(..) - ERROR; url: " + url + "; ERROR: " + err);
             return null;
@@ -101,11 +106,12 @@ export class ClassPortal implements IClassPortal {
             return null;
         }
 
-        const url = "https://portal.cs.ubc.ca:5000/" + courseId + "/" + delivId + "/container";
+        const url = "https://" + this.host + ":" + this.port  + "/container" + "/" + courseId + "/" + delivId;
+        Log.info("ClassPortal::getContainerId(..) - Sending request to " + url);
         return rp(url).then(function (res) {
             Log.trace("ClassPortal::getContainerId( " + courseId + ", " + delivId + " ) - success; payload: " + res);
             const json = JSON.parse(res);
-            return json.response;
+            return json;
         }).catch(function (err) {
             Log.trace("ClassPortal::getContainerId(..) - ERROR; url: " + url + "; ERROR: " + err);
             return null;

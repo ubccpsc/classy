@@ -5,31 +5,82 @@ services:
         image: mongo:3-jessie
         volumes:
             - ./data/db:/data/db
+        ports:
+            - "27017:27017"
     geolocation:
-        build: https://${GH_CPSC310TOKEN}@github.ubc.ca/cpsc310/cpsc310geocoder.git
+        build: https://${GHT_ORG_CPSC310}@github.ubc.ca/cpsc310/cpsc310geocoder.git
         ports:
             - "11316:11316" # this is the geolocation port for d2/d3; exposd globally
-    # referenceUI:
+    # reference-ui:
     #     build: https://${TOKEN}:@github.company.com/org/repo.git
     #     ports:
     #         - "11315:11315" # this is the reference UI for all deliverables; exposd globally
-    # portalBackend:
-    #     build: https://${UBCCPSCTOKEN}github.com/ubccpsc/sdmm-portal-backend.git
-    #     ports:
-    #         - "5000:5000" # this is the reference UI for all deliverables; exposd globally
-    # portalFrontend:
-    #     build: https://${UBCCPSCTOKEN}github.com/ubccpsc/sdmm-portal.git
-    #     depends_on:
-    #         - portalBackend
-    #     ports:
-    #         - "443:443" # exposed globally
+    portal_backend:
+        build: https://github.com/ubccpsc/sdmm-portal-backend.git
+        env_file: "./portal.env"
+        environment:
+            - "NAME=secapstone"
+            - "ORG=secapstone"
+            - "SSL_CERT_PATH=./ssl/fullchain.pem"
+            - "SSL_KEY_PATH=./ssl/privkey.pem"
+            - "SSL_INT_CERT="
+            - "FRONTEND_PORT=443"
+            - "FRONTEND_URL=https://sdmm.cs.ubc.ca" # ${COMPOSE_PROJECT_NAME}_portal_frontend_1"
+            - "BACKEND_PORT=5000"
+            - "BACKEND_URL=https://sdmm.cs.ubc.ca"
+            - "GITHUB_HOST=https://github.com"
+            - "GITHUB_API=https://api.github.com"
+            - "DB_URL=mongodb://${COMPOSE_PROJECT_NAME}_db_1:27017"
+            # - "GH_TOKEN_USER="
+            # - "GH_API_TOKEN=token ${}"
+            # - "GH_CLIENT_ID=${}"
+            # - "GH_CLIENT_SECRET=${}"
+        ports:
+            - "5000:5000" # this is the reference UI for all deliverables; exposd globally
+        volumes:
+            - "./ssl:/app/ssl"
+    portal_frontend:
+        build: https://github.com/ubccpsc/sdmm-portal.git
+        env_file: "./portal.env"
+        depends_on:
+            - portal_backend
+        ports:
+            - "443:443" # exposed globally
+        volumes:
+            - "./ssl:/app/ssl"
     core:
         build: core/
+        depends_on:
+            - portal_backend
+        environment:
+            - "NAME=secapstone"
+            - "ORG=secapstone"
+            - "ADMIN_USER=secapstone"
+            - "DOCKER_ID=secapstone-grade"
+            - "WORKSPACE=/var/tmp/secapstone/"
+            - "ORACLE_REPO=https://github.ubc.ca/cpsc310/project_oracle"
+            - "POSTBACK=false"
+            - "PERSIST_DIR=/var/tmp/secapstone/"
+            - "PORT=11333"
+            - "KIND=ubc"
+            - "TIMEOUT=300"
+            - "BOT_NAME=autobot"
+            - "GHT_STUDENT_ORG=${GHT_ORG_SECAPSTONE}"
+            - "GHT_ORACLE=${GHT_ORG_CPSC310}"
+            - "SSL_CERT_PATH=./ssl/fullchain.pem"
+            - "SSL_KEY_PATH=./ssl/privkey.pem"
+            #- "CP_HOST=${COMPOSE_PROJECT_NAME}_portal_backend_1"
+            - "CP_HOST=sdmm.cs.ubc.ca"
+            - "CP_PORT=5000"
+            - "GRADER_HOST=${COMPOSE_PROJECT_NAME}_grader_1"
+            - "GRADER_PORT=3000"
         depends_on:
             - db
             - grader
         ports:
-            - "11333:11333" # this is the github webhook port; exposed globally
+            - "1310:11333" # this is the github webhook port; exposed globally
+        volumes:
+            - "./ssl:/app/ssl"
     grader:
         build: grader/
         environment:
@@ -38,7 +89,7 @@ services:
             - "SOCK_PORT=7777"
             - "USER_UID=1008"
             - "DOCKER_NET=autotest_grader"
-            - "GITHUB_TOKEN=${GH_CPSC310TOKEN}"
+            - "GITHUB_TOKEN=${GHT_ORG_SECAPSTONE}"
         networks:
             default:
             grader:

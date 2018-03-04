@@ -3,8 +3,8 @@ import * as restify from "restify";
 // import {AppConfig, IConfig} from "../Config";
 import Log from "../util/Log";
 
-import RouteHandler from "./RouteHandler";
 import {Config} from "../Config";
+import RouteHandler from "./RouteHandler";
 
 /**
  * This configures the REST endpoints for the server.
@@ -13,10 +13,8 @@ export default class Server {
     private rest: restify.Server;
     private port: number;
 
-    // private config: IConfig; // for SSL params
-
     constructor() {
-        // this.config = new AppConfig(); // for SSL params
+        Config.getInstance(); // for SSL params
     }
 
     /**
@@ -71,16 +69,10 @@ export default class Server {
 
                 Log.info("Server::start() - start");
 
-                /*
                 that.rest = restify.createServer({
                     name:        "AutoTest",
-                    key:         fs.readFileSync(that.config.getSSLKeyPath()).toString(),
-                    certificate: fs.readFileSync(that.config.getSSLCertPath()).toString(),
-                    ca:          fs.readFileSync(that.config.getSSLIntCertPath()).toString(),
-                });
-                */
-                that.rest = restify.createServer({ // Non SSL version
-                    name: "AutoTest"
+                    key:         fs.readFileSync(Config.getInstance().getProp("sslKeyPath")),
+                    certificate: fs.readFileSync(Config.getInstance().getProp("sslCertPath"))
                 });
 
                 // support CORS

@@ -34,14 +34,8 @@ export class AutoTestDaemon {
 
 // This ends up starting the whole system and listens on a hardcoded port (4321)
 Log.info("AutoTest Daemon - starting");
-if (process.argv.length < 3) {
-    Log.error("AutoTest Daemon - missing runtime param: node AutoTestDaemon.js <courseName>");
-} else {
-    Config.getInstance(process.argv[2]);
-    const app = new AutoTestDaemon();
-    app.initServer();
-}
-
+const app = new AutoTestDaemon();
+app.initServer();
 
 Log.info("AutoTestDaemon - registering unhandled rejection");
 
