@@ -84,11 +84,11 @@ services:
     grader:
         build: grader/
         environment:
-            - "HOST_DIR=/home/cs310/autotest/data/runs"
+            - "HOST_DIR=/home/w-sdmm/autotest/data/runs"
             - "HOST_NAME=172.28.2.0"
             - "SOCK_PORT=7777"
-            - "USER_UID=1008"
-            - "DOCKER_NET=autotest_grader"
+            - "USER_UID=81193"
+            - "DOCKER_NET=${COMPOSE_PROJECT_NAME}_grader"
             - "GITHUB_TOKEN=${GHT_ORG_SECAPSTONE}"
         networks:
             default:
@@ -99,7 +99,7 @@ services:
             - "7777:7777" # Socket endpoint for grader; not exposed globally
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
-            - "/home/cs310/autotest/data/runs:/data"
+            - "/home/w-sdmm/autotest/data/runs:/data"
         cap_add:
             - NET_ADMIN
         privileged: true
