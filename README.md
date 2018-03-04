@@ -56,3 +56,13 @@ Nick Bradley
 * GH OAuth Student Org Secret Key
 * From Global: All CP settings, AdminSecret
  
+
+# Docker
+
+AutoTest orchestrates a host of services using Docker; from within the `/home/w-sdmm/autotest` directory:
+
+* Rebuild: TODO COMMAND MISSING
+* Start: `docker-compose up -d`
+* Stop: TODO COMMAND MISSING
+* Attach to the logs: `docker-compose logs --follow`
+
