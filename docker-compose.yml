@@ -31,6 +31,8 @@ services:
             - "GITHUB_HOST=https://github.com"
             - "GITHUB_API=https://api.github.com"
             - "DB_URL=mongodb://${COMPOSE_PROJECT_NAME}_db_1:27017"
+            # - "GH_TOKEN_USER="
+            # - "GH_API_TOKEN=token ${}"
             # - "GH_CLIENT_ID=${}"
             # - "GH_CLIENT_SECRET=${}"
         ports:
@@ -71,7 +73,7 @@ services:
             - "CP_HOST=sdmm.cs.ubc.ca"
             - "CP_PORT=5000"
             - "GRADER_HOST=${COMPOSE_PROJECT_NAME}_grader_1"
-            - "GRADER_PORT=7777"
+            - "GRADER_PORT=3000"
         depends_on:
             - db
             - grader
