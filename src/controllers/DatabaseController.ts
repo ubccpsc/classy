@@ -312,9 +312,12 @@ export class DatabaseController {
         if (this.db === null) {
             // just use the org name for the db (use a test org name if you want to avoid tests wiping data!!)
             const dbName = Config.getInstance().getProp('org');
-            Log.info("DatabaseController::open() - db null; making new connection to: " + dbName);
+            const dbHost = Config.getInstance().getProp('mongoUrl');
 
-            const client = await MongoClient.connect('mongodb://localhost:27017');
+            Log.info("DatabaseController::open() - db null; making new connection to: " + dbName + "; on: " + dbHost);
+
+            // 'mongodb://localhost:27017'
+            const client = await MongoClient.connect(dbHost);
             this.db = await client.db(dbName);
 
             Log.info("DatabaseController::open() - db null; new connection made");

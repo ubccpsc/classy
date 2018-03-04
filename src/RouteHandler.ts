@@ -154,25 +154,28 @@ export class RouteHandler {
             // return personController.getPerson(courseId, username)
         }).then(function (person) {
             Log.info("RouteHandler::githubCallback(..) - person: " + person);
-            let url = config.getProp('frontendUrl');
+            let feUrl = config.getProp('frontendUrl');
+            let fePort = config.getProp('frontendPort');
+
             if (person !== null) {
                 // only header method that worked for me
                 res.setHeader("Set-Cookie", "token=" + token);
-                Log.info("RouteHandler::githubCallback(..) - /githubCallback - url: " + config.getProp('frontendUrl') + "; port: " + config.getProp('frontendPort'));
-                if (url.indexOf('//') > 0) {
-                    url = url.substr(url.indexOf('//') + 2, url.length);
+                Log.info("RouteHandler::githubCallback(..) - /githubCallback - url: " + feUrl + "; port: " + fePort);
+                if (feUrl.indexOf('//') > 0) {
+                    feUrl = feUrl.substr(feUrl.indexOf('//') + 2, feUrl.length);
                 }
+                Log.info("RouteHandler::githubCallback(..) - /githubCallback - redirect url: " + feUrl);
                 res.redirect({
-                    hostname: url,
+                    hostname: feUrl,
                     pathname: '/index.html',
-                    port:     config.getProp('frontendPort')
+                    port:     fePort
                 }, next);
             } else {
                 // TODO: specify 'unknown user' error message (SDMM will always be true, but for future courses this won't be true)
                 res.redirect({
-                    hostname: url,
+                    hostname: feUrl,
                     pathname: '/index.html',
-                    port:     config.getProp('frontendPort')
+                    port:     fePort
                 }, next);
             }
             // res.redirect('https://localhost:3000/index.html', next);
