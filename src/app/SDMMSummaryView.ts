@@ -5,6 +5,37 @@ import {App} from "./App";
 
 declare const myApp: App;
 
+// copied from sddm-portal-backend
+
+export interface Payload {
+    success?: ActionPayload | StatusPayload; // only set if defined
+    failure?: FailurePayload; // only set if defined
+}
+
+export interface FailurePayload {
+    message: string;
+    shouldLogout: boolean; // almost always false
+}
+
+export interface ActionPayload {
+    message: string;
+    status: StatusPayload; // if an action was successful we should send the current status
+}
+
+export interface StatusPayload {
+    status: string;
+    d0: GradePayload | null;
+    d1: GradePayload | null;
+    d2: GradePayload | null;
+    d3: GradePayload | null;
+}
+
+export interface GradePayload {
+    score: number; // grade: < 0 will mean 'N/A' in the UI
+    url: string; // commit URL if known, otherwise repo url
+    timestamp: number; // even if grade < 0 might as well return when the entry was made
+}
+
 export class SDMMSummaryView {
 
     private remote: string = null;
@@ -47,6 +78,7 @@ export class SDMMSummaryView {
     public async createD0Repository(): Promise<void> {
         const msg = 'Creating D0 Repository<br/>This will take < 60 seconds';
 
+        this.showModal("Provisioning D0 Repository.<br/>This can take up to 5 minutes.<br/>This dialog will clear as soon as the operation is complete.")
         const url = this.remote + '/performAction/provisionD0';
         Log.info('SDDM::createD0Repository( ' + url + ' ) - start');
 
@@ -164,12 +196,7 @@ export class SDMMSummaryView {
                 'sdmmd3locked',
             ]);
         } else if (value === 'D0') {
-            this.show([
-                'sdmmd0status',
-                'sdmmd1locked',
-                'sdmmd2locked',
-                'sdmmd3locked',
-            ]);
+            this.showStatusD0(status);
         } else if (value === 'D1UNLOCKED') {
             this.show([
                 'sdmmd0status',
@@ -319,5 +346,39 @@ export class SDMMSummaryView {
             }
         };
         return options;
+    }
+
+    private showStatusD0(status: StatusPayload) {
+        Log.trace('SDDMSV::showStatusD0(..) - start: ' + JSON.stringify(status));
+        // <ons-icon icon="fa-times-circle"></ons-icon> <!-- fa-check-circle -->
+        try {
+            // update icon
+            let row = document.getElementById('sdmmd0status');
+            let icon = row.children[0].children[0];
+            if (status.d0.score >= 60) {
+                icon.setAttribute('icon', 'fa-check-circle');
+            } else {
+                icon.setAttribute('icon', 'fa-times-circle');
+            }
+
+            // set title:
+            if (status.d0.score > 0) {
+                row.children[1].children[0].innerHTML = 'Grade: ' + status.d0.score.toFixed(1) + ' %';
+            } else {
+                row.children[1].children[0].innerHTML = 'Grade: N/A';
+            }
+
+            // set subrow
+            row.children[1].children[1].innerHTML = '<a href="' + status.d0.url + '">Source Repository</a>&nbsp;&nbsp;Timestamp: ' + new Date(status.d0.timestamp).toLocaleTimeString();
+
+            this.show([
+                'sdmmd0status',
+                'sdmmd1locked',
+                'sdmmd2locked',
+                'sdmmd3locked',
+            ]);
+        } catch (err) {
+            Log.trace('SDDMSV::showStatusD0(..) - ERROR: ' + err);
+        }
     }
 }
