@@ -23,6 +23,7 @@ export class Config {
                 backendUrl:         process.env.BACKEND_URL,
                 githubHost:         process.env.GITHUB_HOST,
                 githubAPI:          process.env.GITHUB_API,
+                mongoUrl:           process.env.DB_URL,
             }
         } catch (err) {
             Log.error("Config::<init> - fatal error reading configuration file: " + err);
