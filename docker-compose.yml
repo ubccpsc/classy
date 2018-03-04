@@ -5,6 +5,8 @@ services:
         image: mongo:3-jessie
         volumes:
             - ./data/db:/data/db
+        ports:
+            - "27017:27017"
     geolocation:
         build: https://${GHT_ORG_CPSC310}@github.ubc.ca/cpsc310/cpsc310geocoder.git
         ports:
@@ -28,6 +30,7 @@ services:
             - "BACKEND_URL=https://sdmm.cs.ubc.ca"
             - "GITHUB_HOST=https://github.com"
             - "GITHUB_API=https://api.github.com"
+            - "DB_URL=mongodb://${COMPOSE_PROJECT_NAME}_db_1:27017"
             # - "GH_CLIENT_ID=${}"
             # - "GH_CLIENT_SECRET=${}"
         ports:
