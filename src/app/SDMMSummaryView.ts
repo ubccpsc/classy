@@ -117,12 +117,20 @@ export class SDMMSummaryView {
         this.longAction(5000, 'Creating D3 Pull Request<br/>Will take < 10 seconds');
     }
 
-    private updateState(value?: string) {
+    private updateState(status?: any) { // status is SuccessPayload
         const elem = <HTMLSelectElement>document.getElementById('sdmmSelect');
 
-        if (typeof value === 'undefined') {
+        let value = null;
+        if (typeof status === 'undefined') {
             value = elem.value;
+        } else {
+            value = status.status;
+            if (value === null) {
+                Log.warn('SDDMSummaryView::updateState(..) - null value');
+                Log.warn('SDDMSummaryView::updateState(..) - status: ' + JSON.stringify(status));
+            }
         }
+
 
         // TODO: value should come from remote
 
@@ -265,13 +273,22 @@ export class SDMMSummaryView {
             let json = await response.json();
             Log.trace('SDDM::fetchStatus(..) - payload: ' + JSON.stringify(json));
             Log.trace('SDDM::fetchStatus(..) - status: ' + json.status);
-            this.updateState(json.status);
+            if (typeof json.success !== 'undefined') {
+                this.updateState(json.success); // StatusPayload
+            } else {
+                this.showError(json.failure); // FailurePayload
+            }
+
         } else {
             Log.trace('SDDM::fetchStatus(..) - !200 received');
         }
         return;
     }
 
+
+    public showError(failure: any) { // FailurePayload
+        Log.error("SDDM::showError(..) - failure: " + JSON.stringify(failure));
+    }
 
     /*
     if (data.status !== 200 && data.status !== 405 && data.status !== 401) {
