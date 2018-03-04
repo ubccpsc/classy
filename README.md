@@ -8,7 +8,7 @@
     * Copy `sample.env` into `.env`
     * Put `server.key` and `server.crt` in `<project-root>/ssl/`
     * `docker run -p 27017:27017 mongo` NOTE: WILL WIPE DATA, not for PROD
-
+    * don't forget `-r dotenv/config` in node params if you're running in an IDE
 
 ## Deployment
 

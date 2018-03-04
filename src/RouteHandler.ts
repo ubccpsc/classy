@@ -79,8 +79,9 @@ export class RouteHandler {
         // TODO: do we need this redirect?
         let backendUrl = config.getProp('backendUrl');
         let backendPort = config.getProp('backendPort');
-        // const githubRedirect = backendUrl + ':' + backendPort + '/githubCallback?orgName=secapstone';
-        const githubRedirect = 'https://sdmm.cs.ubc.ca:5000/githubCallback?orgName=' + org;
+        const githubRedirect = backendUrl + ':' + backendPort + '/githubCallback?orgName=secapstone';
+        // const githubRedirect = 'https://localhost:5000/githubCallback?orgName=secapstone';
+        // const githubRedirect = 'https://sdmm.cs.ubc.ca:5000/githubCallback?orgName=' + org;
         Log.info('RouteHandler::githubCallback(..) - / githubCallback; url: ' + githubRedirect);
 
         const opts = {
