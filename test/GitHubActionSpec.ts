@@ -51,40 +51,8 @@ describe.only("GitHubActions", () => {
 
 
     it("Clear stale repos and teams.", async function () {
-        Log.test('GitHubActionSpec::deleteStale() - start');
-
-        let repos = await gh.listRepos(Test.ORGNAME);
-        expect(repos).to.be.an('array');
-        expect(repos.length > 0).to.be.true;
-
-        // delete test repos if needed
-        for (const repo of repos as any) {
-            Log.info('Evaluating repo: ' + repo.name);
-            for (const r of REPOS) {
-                if (repo.name === r) {
-                    let val = await gh.deleteRepo(Test.ORGNAME, r);
-                    expect(val).to.be.true;
-                }
-            }
-        }
-
-        // delete teams if needed
-        let teams = await
-            gh.listTeams(Test.ORGNAME);
-        expect(teams).to.be.an('array');
-        expect(teams.length > 0).to.be.true;
-        Log.test('All Teams: ' + JSON.stringify(teams));
-        for (const team of teams as any) {
-            // Log.info('Evaluating team: ' + JSON.stringify(team));
-            for (const t of TEAMS) {
-                if (team.name === t) {
-                    Log.test("Old test team found; removing: " + team.name);
-                    let val = await gh.deleteTeam(Test.ORGNAME, team.id);
-                    expect(val).to.be.true;
-                }
-            }
-        }
-        Log.test('GitHubActionSpec::deleteStale() - done');
+        let del = await deleteStale();
+        expect(del).to.be.true;
     }).timeout(TIMEOUT * 10);
 
     it("Should be able to create a repo.", async function () {
@@ -263,41 +231,8 @@ describe.only("GitHubActions", () => {
 
 
     it("Clear stale repos and teams.", async function () {
-        Log.test('GitHubActionSpec::deleteStale() - start');
-
-        let repos = await gh.listRepos(Test.ORGNAME);
-        expect(repos).to.be.an('array');
-        expect(repos.length > 0).to.be.true;
-
-        // delete test repos if needed
-        for (const repo of repos as any) {
-            Log.info('Evaluating repo: ' + repo.name);
-            for (const r of REPOS) {
-                if (repo.name === r) {
-                    let val = await gh.deleteRepo(Test.ORGNAME, r);
-                    expect(val).to.be.true;
-                }
-            }
-        }
-
-
-        // delete teams if needed
-        let teams = await
-            gh.listTeams(Test.ORGNAME);
-        expect(teams).to.be.an('array');
-        expect(teams.length > 0).to.be.true;
-        Log.test('All Teams: ' + JSON.stringify(teams));
-        for (const team of teams as any) {
-            // Log.info('Evaluating team: ' + JSON.stringify(team));
-            for (const t of TEAMS) {
-                if (team.name === t) {
-                    Log.test("Old test team found; removing: " + team.name);
-                    let val = await gh.deleteTeam(Test.ORGNAME, team.id);
-                    expect(val).to.be.true;
-                }
-            }
-        }
-        Log.test('GitHubActionSpec::deleteStale() - done');
+        let del = await deleteStale();
+        expect(del).to.be.true;
     }).timeout(TIMEOUT * 10);
 
     it("Should be able to provision d0.", async function () {
@@ -392,11 +327,28 @@ describe.only("GitHubActions", () => {
 
 
     it("Clear stale repos and teams.", async function () {
+        let del = await deleteStale();
+        expect(del).to.be.true;
+    }).timeout(TIMEOUT * 10);
+
+
+    function getProjectPrefix(): string {
+        return "TEST__X__secap_";
+    }
+
+    function getTeamPrefix() {
+        return "TEST__X__t_";
+    }
+
+    async function deleteStale(): Promise<true> {
         Log.test('GitHubActionSpec::deleteStale() - start');
 
         let repos = await gh.listRepos(Test.ORGNAME);
         expect(repos).to.be.an('array');
         expect(repos.length > 0).to.be.true;
+
+        // TODO: find repos that start with TEST__X__ and delete them
+        // TODO: also add their name.substring(15) to the teams name too
 
         // delete test repos if needed
         for (const repo of repos as any) {
@@ -408,7 +360,6 @@ describe.only("GitHubActions", () => {
                 }
             }
         }
-
 
         // delete teams if needed
         let teams = await
@@ -428,14 +379,7 @@ describe.only("GitHubActions", () => {
             }
         }
         Log.test('GitHubActionSpec::deleteStale() - done');
-    }).timeout(TIMEOUT * 10);
-
-
-    function getProjectPrefix(): string {
-        return "TEST__X__secap_";
+        return true;
     }
 
-    function getTeamPrefix() {
-        return "TEST__X__t_";
-    }
 });
