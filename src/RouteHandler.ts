@@ -454,10 +454,10 @@ export class RouteHandler {
 
         return rp(options).then(function (succ) {
             Log.info('RouteHandler::githubWebhook(..) - success: ' + JSON.stringify(succ));
-            res.send({success: true}); // respond yes
+            res.send(200, succ); // send interpretation back to GitHub
         }).catch(function (err) {
             Log.error('RouteHandler::githubWebhook(..) - ERROR: ' + err);
-            res.send(400, {success: false}); // respond no (error only shows up in logs)
+            res.send(400, {error: err}); // respond no
         })
     }
 
