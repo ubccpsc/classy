@@ -339,7 +339,22 @@ export abstract class AutoTest implements IAutoTest {
                     json: true, // Automatically stringifies the body to JSON,
                     timeout: 360000  // enough time that the container will have timed out
                 };
-                const output: IContainerOutput = await rp(rpOpts);
+
+                let output: IContainerOutput = {
+                    commitUrl: assnUrl,
+                    timestamp: Date.now(),
+                    report: null,
+                    feedback: "Internal error: the grading service failed to handle the request.",
+                    postbackOnComplete: false,
+                    custom: {},
+                    attachments: [],
+                    state: "FAIL"
+                };
+                try {
+                    output = await rp(rpOpts);
+                } catch (err) {
+                    Log.warn("AutoTest::invokeContainer(..) - ERROR for commit: " + input.pushInfo.commitSHA + "; ERROR with grading service: " + err);
+                }
 
                 record = {
                     commitURL,
