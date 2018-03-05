@@ -682,7 +682,7 @@ export class GitHubActions {
 
         function pushToNewRepo() {
             Log.info('GithubManager::importRepoFS(..)::pushToNewRepo() - start');
-            let command = `pushd ${tempPath} && git push origin master`;
+            let command = `cd ${tempPath} && git push origin master`;
             return exec(command)
                 .then(function (result: any) {
                     Log.info('GithubManager::importRepoFS(..)::pushToNewRepo() - done: ');
