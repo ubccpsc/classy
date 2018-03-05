@@ -372,7 +372,7 @@ export abstract class AutoTest implements IAutoTest {
                 // POST the grade to Class Portal
                 try {
                     let score = -1;
-                    if (typeof output.report !== "undefined" && typeof output.report.scoreOverall !== "undefined") {
+                    if (output.report !== null && typeof output.report.scoreOverall !== "undefined") {
                         score = output.report.scoreOverall;
                     }
                     const gradePayload = {
