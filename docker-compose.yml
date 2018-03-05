@@ -16,7 +16,11 @@ services:
     #     ports:
     #         - "11315:11315" # this is the reference UI for all deliverables; exposd globally
     portal_backend:
-        build: https://github.com/ubccpsc/sdmm-portal-backend.git
+        build:
+            context: https://github.com/ubccpsc/sdmm-portal-backend.git
+            args:
+                - "GIT_USER=ubcbot"
+                - "GIT_EMAIL=36641711+ubcbot@users.noreply.github.com"
         env_file: "./portal.env"
         environment:
             - "NAME=secapstone"
