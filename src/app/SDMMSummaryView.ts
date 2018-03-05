@@ -234,19 +234,9 @@ export class SDMMSummaryView {
                 'sdmmd3locked',
             ]);
         } else if (value === 'D1') {
-            this.show([
-                'sdmmd0status',
-                'sdmmd1status',
-                'sdmmd2locked',
-                'sdmmd3locked',
-            ]);
+            this.showStatusD1(status);
         } else if (value === 'D2') {
-            this.show([
-                'sdmmd0status',
-                'sdmmd1status',
-                'sdmmd2status',
-                'sdmmd3locked',
-            ]);
+            this.showStatusD2(status);
         } else if (value === 'D3PRE') {
             this.show([
                 'sdmmd0status',
@@ -382,24 +372,9 @@ export class SDMMSummaryView {
         Log.trace('SDDMSV::showStatusD0(..) - start: ' + JSON.stringify(status));
         // <ons-icon icon="fa-times-circle"></ons-icon> <!-- fa-check-circle -->
         try {
-            // update icon
+
             let row = document.getElementById('sdmmd0status');
-            let icon = row.children[0].children[0];
-            if (status.d0.score >= 60) {
-                icon.setAttribute('icon', 'fa-check-circle');
-            } else {
-                icon.setAttribute('icon', 'fa-times-circle');
-            }
-
-            // set title:
-            if (status.d0.score > 0) {
-                row.children[1].children[0].innerHTML = 'Grade: ' + status.d0.score.toFixed(1) + ' %';
-            } else {
-                row.children[1].children[0].innerHTML = 'Grade: N/A';
-            }
-
-            // set subrow
-            row.children[1].children[1].innerHTML = '<a href="' + status.d0.url + '">Source Repository</a>&nbsp;&nbsp;Timestamp: ' + new Date(status.d0.timestamp).toLocaleTimeString();
+            this.updateDeliverableRow(row, status.d0);
 
             this.show([
                 'sdmmd0status',
@@ -411,4 +386,62 @@ export class SDMMSummaryView {
             Log.trace('SDDMSV::showStatusD0(..) - ERROR: ' + err);
         }
     }
+
+    private updateDeliverableRow(row:any,grade:GradePayload){
+        // update icon
+
+        let icon = row.children[0].children[0];
+        if (grade.score >= 60) {
+            icon.setAttribute('icon', 'fa-check-circle');
+        } else {
+            icon.setAttribute('icon', 'fa-times-circle');
+        }
+
+        // set title:
+        if (grade.score > 0) {
+            row.children[1].children[0].innerHTML = 'Grade: ' + grade.score.toFixed(1) + ' %';
+        } else {
+            row.children[1].children[0].innerHTML = 'Grade: N/A';
+        }
+
+        // set subrow
+        row.children[1].children[1].innerHTML = '<a href="' + grade.url + '">Source Repository</a>&nbsp;&nbsp;Timestamp: ' + new Date(grade.timestamp).toLocaleTimeString();
+
+    }
+
+    private showStatusD1(status: any | undefined) {
+
+        let row = document.getElementById('sdmmd0status');
+        this.updateDeliverableRow(row, status.d0);
+
+        row = document.getElementById('sdmmd1status');
+        this.updateDeliverableRow(row, status.d1);
+
+        this.show([
+            'sdmmd0status',
+            'sdmmd1status',
+            'sdmmd2locked',
+            'sdmmd3locked',
+        ]);
+    }
+
+    private showStatusD2(status: any | undefined) {
+
+        let row = document.getElementById('sdmmd0status');
+        this.updateDeliverableRow(row, status.d0);
+
+        row = document.getElementById('sdmmd1status');
+        this.updateDeliverableRow(row, status.d1);
+
+        row = document.getElementById('sdmmd2status');
+        this.updateDeliverableRow(row, status.d2);
+
+        this.show([
+            'sdmmd0status',
+            'sdmmd1status',
+            'sdmmd2status',
+            'sdmmd3locked',
+        ]);
+    }
+
 }
