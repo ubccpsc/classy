@@ -147,7 +147,9 @@ export class GradeWorker implements IGradeWorker {
             out.feedback = "Error running container.";
             out.state = "FAIL";
         } finally {
-            socket.end();
+            if (typeof socket !== "undefined") {
+                socket.end();
+            }
             cntr.remove();
             cntrFirewall.delete();
         }
