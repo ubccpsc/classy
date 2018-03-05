@@ -16,6 +16,7 @@ export interface IGradeWorker {
 export class GradeWorker implements IGradeWorker {
     private readonly workspace: string;
     private readonly assnId: string;
+    private readonly timestamp: number;
     private readonly assnSrc: IAssignment;
     private readonly cntr: IGradeContainer;
     private readonly ss: ISocketServer;
@@ -23,6 +24,7 @@ export class GradeWorker implements IGradeWorker {
 
     constructor(workspace: string, task: IGradeTask, ss: ISocketServer, host: IHostEnv) {
         this.workspace = workspace;
+        this.timestamp = task.timestamp;
         this.assnId = task.assnId;
         this.assnSrc = task.assn;
         this.cntr = task.container;
@@ -33,7 +35,7 @@ export class GradeWorker implements IGradeWorker {
     public async execute(): Promise<IContainerOutput> {
         let out: IContainerOutput = {
             commitUrl: this.assnSrc.url,
-            timestamp: Date.now(),
+            timestamp: this.timestamp,
             report: null,
             feedback: "",
             postbackOnComplete: false,
@@ -131,7 +133,7 @@ export class GradeWorker implements IGradeWorker {
                     out.postbackOnComplete = true;
                     out.state = "TIMEOUT";
                 } else {
-                    const report: IGradeReport = await fs.readJson(`${this.workspace}/report.json`);
+                    const report: IGradeReport = await fs.readJson(`${this.workspace}/output/report.json`);
                     out.report = report;
                     out.feedback = report.feedback;
                     out.postbackOnComplete = cntrCode !== 0;
@@ -147,9 +149,15 @@ export class GradeWorker implements IGradeWorker {
             out.feedback = "Error running container.";
             out.state = "FAIL";
         } finally {
-            socket.end();
+            if (typeof socket !== "undefined") {
+                socket.end();
+            }
             cntr.remove();
-            cntrFirewall.delete();
+            try {
+                cntrFirewall.delete();
+            } catch (err) {
+                // ignore: container did not request any exceptions so no firewall chain was created
+            }
         }
 
         return out;

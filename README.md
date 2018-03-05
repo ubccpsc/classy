@@ -14,7 +14,7 @@ AutoTest is currently being used in two undergraduate computer science courses a
 ### Installing
 
 1) `git clone <repo>`
-2) `yarn run install`	
+2) `yarn run install`
 3) `yarn run build`
 4) `yarn run test`
 
@@ -55,7 +55,6 @@ Nick Bradley
 * GH OAuth Student Org Client Id
 * GH OAuth Student Org Secret Key
 * From Global: All CP settings, AdminSecret
- 
 
 # Docker
 
@@ -66,3 +65,8 @@ AutoTest orchestrates a host of services using Docker; from within the `/home/w-
 * Stop: `docker-compose stop`
 * Attach to the logs: `docker-compose logs --follow`
 
+When deploying the first time, `iptables` must be set to drop all FORWARD traffic from the network created by docker-compose (`grader`):
+
+```sh
+sudo iptables -I FORWARD -s 172.28.0.0/16 -j DROP
+```

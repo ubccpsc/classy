@@ -15,6 +15,7 @@ export default class RouteHandler {
 
     public static async putGradingTask(req: restify.Request, res: restify.Response, next: restify.Next) {
         try {
+            req.socket.setTimeout(0);  // don't close the connection
             const id: string = req.params.id;
             const body = req.body;
             body.assn["token"] = process.env.GITHUB_TOKEN;

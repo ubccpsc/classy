@@ -63,6 +63,7 @@ export interface IGradeContainer {
 
 export interface IGradeTask {
     assnId: string;
+    timestamp: number;
     assn: IAssignment;
     container: IGradeContainer;
 }
