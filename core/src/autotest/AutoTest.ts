@@ -313,11 +313,16 @@ export abstract class AutoTest implements IAutoTest {
             if (isProd === true) {
                 const host: string = Config.getInstance().getProp("graderHost");
                 const port: number = Config.getInstance().getProp("graderPort");
+                const cpHost: string = Config.getInstance().getProp("classPortalHost");
+                const cpPort: number = Config.getInstance().getProp("classPortalPort");
                 const image: string = Config.getInstance().getProp("dockerId");
                 const timeout: number = Config.getInstance().getProp("timeout");
+                const org: string = Config.getInstance().getProp("org");
                 const assnUrl: string = input.pushInfo.projectURL;
                 const commitSHA: string = input.pushInfo.commitSHA;
                 const commitURL: string = input.pushInfo.commitURL;
+                const repo: string = input.pushInfo.repo;
+                const timestamp: number = input.pushInfo.timestamp;
                 const delivId: string = input.delivId;
                 const id: string = `${commitSHA}-${delivId}`;
                 const body = {
@@ -332,7 +337,7 @@ export abstract class AutoTest implements IAutoTest {
                         "logSize": 0
                     }
                 };
-                const rpOpts: rp.OptionsWithUrl = {
+                const gradeServiceOpts: rp.OptionsWithUrl = {
                     method: "PUT",
                     url: `http://${host}:${port}/task/grade/${id}`,
                     body,
@@ -351,7 +356,7 @@ export abstract class AutoTest implements IAutoTest {
                     state: "FAIL"
                 };
                 try {
-                    output = await rp(rpOpts);
+                    output = await rp(gradeServiceOpts);
                 } catch (err) {
                     Log.warn("AutoTest::invokeContainer(..) - ERROR for commit: " + input.pushInfo.commitSHA + "; ERROR with grading service: " + err);
                 }
@@ -362,6 +367,29 @@ export abstract class AutoTest implements IAutoTest {
                     input,
                     output,
                 };
+
+                // POST the grade to Class Portal
+                try {
+                    let score = -1;
+                    if (typeof output.report !== "undefined" && typeof output.report.scoreOverall !== "undefined") {
+                        score = output.report.scoreOverall;
+                    }
+                    const gradePayload = {
+                        score,
+                        url: commitURL,
+                        comment: output.feedback,
+                        timestamp,
+                    };
+                    const postGradeOpts: rp.OptionsWithUrl = {
+                        method: "POST",
+                        url: `https://${cpHost}:${cpPort}/grade/${org}/${repo}/${delivId}`,
+                        json: true,
+                        body: gradePayload,
+                    };
+                    await rp(postGradeOpts);
+                } catch (err) {
+                    Log.warn("AutoTest::invokeContainer(..) - ERROR for commit: " + input.pushInfo.commitSHA + "; ERROR sending grade: " + err);
+                }
 
                 Log.info("AutoTest::invokeContainer(..) - OUTPUT " + JSON.stringify(output, null, 2));
             } else {
