@@ -430,60 +430,35 @@ export class RouteHandler {
     }
 
 
+    /**
+     * This route forwards GitHub webhooks from the public-facing backend to AutoTest's
+     * endpoint (which can be internal and protected).
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
     public static githubWebhook(req: any, res: any, next: any) {
         Log.info('RouteHandler::githubWebhook(..) - start');
-        // const user = req.headers.user;
-        // const token = req.headers.token;
+        const webhookBody: any = req.body;
+        // Log.info('RouteHandler::githubWebhook(..) - body: ' + JSON.stringify(webhookBody));
 
-        // TODO: verify admin secret
-
-        // const org = req.params.org;
-        // const repoId = req.params.repoId;
-        // const delivId = req.params.delivId;
-
-        const webhookBody: any = req.body; // turn into json?
-
-        Log.info('RouteHandler::githubWebhook(..) - body: ' + JSON.stringify(webhookBody));
-        // res.send({success: true}); // respond
-
-
+        const url = Config.getInstance().getProp('backendUrl') + ':' + Config.getInstance().getProp('backendPort') + '/githubWebhook';
         var options = {
-            uri:     'https://sdmm.cs.ubc.ca:11333/submit',
+            uri:     url, //  https://sdmm.cs.ubc.ca:11333/submit',
             method:  'POST',
             json:    true,
-            headers: req.headers,
+            headers: req.headers, // use GitHub's headers
             body:    webhookBody
         };
-        // this extra check isn't strictly required, but means we can
-        // associate a username with a token on the backend if needed
+
         return rp(options).then(function (succ) {
-            Log.info('RouteHandler::githubWebhook(..) - sent: ' + JSON.stringify(succ));
-            res.send({success: true}); // respond
+            Log.info('RouteHandler::githubWebhook(..) - success: ' + JSON.stringify(succ));
+            res.send({success: true}); // respond yes
         }).catch(function (err) {
             Log.error('RouteHandler::githubWebhook(..) - ERROR: ' + err);
-            res.send(400, {success: false}); // respond
+            res.send(400, {success: false}); // respond no (error only shows up in logs)
         })
-
-        /*
-        let sc = new SDDMController(new GitHubController());
-        sc.handleNewGrade(org, repoId, delivId, gradeRecord).then(function (success) {
-            res.send({success: true}); // respond
-        }).catch(function (err) {
-            res.send({success: true}); // respond true, they can't do anything anyways
-            Log.error('RouteHandler::atGradeResult(..) - ERROR: ' + err);
-        });
-*/
-
-        /*
-                let sc: SDDMController = new SDDMController(new GitHubController());
-                sc.getStatus(org, user).then(function (status) {
-                    Log.trace('RouteHandler::getCurrentStatus(..) - sending 200; user: ' + user + '; status: ' + status);
-                    res.send({user: user, status: status});
-                }).catch(function (err) {
-                    Log.trace('RouteHandler::getCurrentStatus(..) - sending 400');
-                    res.send(400, {error: err});
-                });
-        */
     }
 
 }
