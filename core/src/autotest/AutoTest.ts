@@ -327,6 +327,7 @@ export abstract class AutoTest implements IAutoTest {
                 const id: string = `${commitSHA}-${delivId}`;
                 const body = {
                     "assnId": delivId,
+                    "timestamp": timestamp,
                     "assn": {
                         "url": assnUrl,
                         "commit": commitSHA
@@ -390,8 +391,6 @@ export abstract class AutoTest implements IAutoTest {
                 } catch (err) {
                     Log.warn("AutoTest::invokeContainer(..) - ERROR for commit: " + input.pushInfo.commitSHA + "; ERROR sending grade: " + err);
                 }
-
-                Log.info("AutoTest::invokeContainer(..) - OUTPUT " + JSON.stringify(output, null, 2));
             } else {
                 Log.info("AutoTest::invokeContainer(..) - TEST CONFIG: Running MockGrader");
                 const grader = new MockGrader(input);

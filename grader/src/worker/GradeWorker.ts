@@ -16,6 +16,7 @@ export interface IGradeWorker {
 export class GradeWorker implements IGradeWorker {
     private readonly workspace: string;
     private readonly assnId: string;
+    private readonly timestamp: number;
     private readonly assnSrc: IAssignment;
     private readonly cntr: IGradeContainer;
     private readonly ss: ISocketServer;
@@ -23,6 +24,7 @@ export class GradeWorker implements IGradeWorker {
 
     constructor(workspace: string, task: IGradeTask, ss: ISocketServer, host: IHostEnv) {
         this.workspace = workspace;
+        this.timestamp = task.timestamp;
         this.assnId = task.assnId;
         this.assnSrc = task.assn;
         this.cntr = task.container;
@@ -33,7 +35,7 @@ export class GradeWorker implements IGradeWorker {
     public async execute(): Promise<IContainerOutput> {
         let out: IContainerOutput = {
             commitUrl: this.assnSrc.url,
-            timestamp: Date.now(),
+            timestamp: this.timestamp,
             report: null,
             feedback: "",
             postbackOnComplete: false,
