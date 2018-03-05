@@ -76,9 +76,9 @@ export class SDMMSummaryView {
     }
 
     public async createD0Repository(): Promise<void> {
-        const msg = 'Creating D0 Repository<br/>This will take < 60 seconds';
 
         this.showModal("Provisioning D0 Repository.<br/>This can take up to 5 minutes.<br/>This dialog will clear as soon as the operation is complete.")
+
         const url = this.remote + '/performAction/provisionD0';
         Log.info('SDDM::createD0Repository( ' + url + ' ) - start');
 
@@ -90,10 +90,11 @@ export class SDMMSummaryView {
             Log.trace('SDDM::createD0Repository(..) - 200 received');
             let json = await response.json();
 
-            if (json.success === true) {
+            if (typeof json.success !== 'undefined') {
                 this.longAction(2000, "D0 Repository created");
             } else {
-                this.longAction(5000, "Error encountered:<br/>" + json.message);
+                // this.longAction(5000, "Error encountered:<br/>" + json.message);
+                this.showError(json);
             }
 
             // TODO: refresh
@@ -114,6 +115,8 @@ export class SDMMSummaryView {
 
         const url = this.remote + '/performAction/provisionD1individual';
         Log.info('SDDM::createD1Individual( ' + url + ' ) - start');
+
+        this.showModal("Provisioning D1 Repository.<br/>This can take up to 5 minutes.<br/>This dialog will clear as soon as the operation is complete.")
 
         let options: any = this.getOptions();
         options.method = 'post';
@@ -137,11 +140,13 @@ export class SDMMSummaryView {
 
     }
 
-    public async createD1Team(): Promise<void> {
+    public async createD1Team(partnerName: string): Promise<void> {
         Log.info("SDMMSummaryView::createD1Team() - start");
         // this.longAction(5000, 'Configuring D1 Team<br/>Will take < 10 seconds');
 
-        const url = this.remote + '/performAction/provisionD1team';
+        this.showModal("Provisioning D1 Repository.<br/>This can take up to 5 minutes.<br/>This dialog will clear as soon as the operation is complete.")
+
+        const url = this.remote + '/performAction/provisionD1team/' + partnerName;
         // TODO: actually provide team members!!!
         Log.info('SDDM::createD1Team( ' + url + ' ) - start');
 
@@ -387,7 +392,7 @@ export class SDMMSummaryView {
         }
     }
 
-    private updateDeliverableRow(row:any,grade:GradePayload){
+    private updateDeliverableRow(row: any, grade: GradePayload) {
         // update icon
 
         let icon = row.children[0].children[0];
@@ -410,38 +415,65 @@ export class SDMMSummaryView {
     }
 
     private showStatusD1(status: any | undefined) {
+        Log.info("SDDM::showStatusD1(..) - start: " + JSON.stringify(status));
+        try {
+            let row = document.getElementById('sdmmd0status');
+            this.updateDeliverableRow(row, status.d0);
 
-        let row = document.getElementById('sdmmd0status');
-        this.updateDeliverableRow(row, status.d0);
+            row = document.getElementById('sdmmd1status');
+            this.updateDeliverableRow(row, status.d1);
 
-        row = document.getElementById('sdmmd1status');
-        this.updateDeliverableRow(row, status.d1);
-
-        this.show([
-            'sdmmd0status',
-            'sdmmd1status',
-            'sdmmd2locked',
-            'sdmmd3locked',
-        ]);
+            this.show([
+                'sdmmd0status',
+                'sdmmd1status',
+                'sdmmd2locked',
+                'sdmmd3locked',
+            ]);
+        } catch (err) {
+            Log.info("SDDM::showStatusD1(..) - ERROR: " + err);
+        }
     }
 
     private showStatusD2(status: any | undefined) {
+        Log.info("SDDM::showStatusD2(..) - start: " + JSON.stringify(status));
+        try {
+            let row = document.getElementById('sdmmd0status');
+            this.updateDeliverableRow(row, status.d0);
 
-        let row = document.getElementById('sdmmd0status');
-        this.updateDeliverableRow(row, status.d0);
+            row = document.getElementById('sdmmd1status');
+            this.updateDeliverableRow(row, status.d1);
 
-        row = document.getElementById('sdmmd1status');
-        this.updateDeliverableRow(row, status.d1);
+            row = document.getElementById('sdmmd2status');
+            this.updateDeliverableRow(row, status.d2);
 
-        row = document.getElementById('sdmmd2status');
-        this.updateDeliverableRow(row, status.d2);
-
-        this.show([
-            'sdmmd0status',
-            'sdmmd1status',
-            'sdmmd2status',
-            'sdmmd3locked',
-        ]);
+            this.show([
+                'sdmmd0status',
+                'sdmmd1status',
+                'sdmmd2status',
+                'sdmmd3locked',
+            ]);
+        } catch (err) {
+            Log.info("SDDM::showStatusD2(..) - ERROR: " + err);
+        }
     }
 
+    public d1TeamDialog() {
+        Log.info("SDDM::d1TeamDialog()");
+        UI.showD1TeamDialog();
+    }
+
+    public d1TeamCancel() {
+        Log.info("SDDM::d1TeamCancel()");
+        UI.hideD1TeamDialog();
+    }
+
+    public d1TeamForm() {
+        Log.info("SDDM::d1TeamForm()");
+        let partnerInput: any = document.getElementById('d1partnerInput');
+        let partnerUser = partnerInput.value;
+        partnerUser = partnerUser.trim();
+        Log.info("SDDM::d1TeamForm() - partner name: " + partnerUser);
+        UI.hideD1TeamDialog();
+        this.createD1Team(partnerUser);
+    }
 }

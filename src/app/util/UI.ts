@@ -174,4 +174,23 @@ export class UI {
         ons.notification.alert(message);
     }
 
+    public static showD1TeamDialog() {
+        let dialog: any = document.getElementById('d1teamDialog');
+
+        if (dialog) {
+            dialog.show();
+        } else {
+            ons.createElement('d1team.html', {append: true})
+                .then(function (dialog: any) {
+                    dialog.show();
+                });
+        }
+    }
+
+
+    public static hideD1TeamDialog() {
+        let elem: any = document.getElementById('d1teamDialog');
+        elem.hide();
+    };
+
 }
