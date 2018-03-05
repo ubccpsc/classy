@@ -308,38 +308,44 @@ export class DatabaseController {
      * @returns {Promise<Db>}
      */
     private async open(): Promise<Db> {
-        // Log.trace("DatabaseController::open() - start");
-        if (this.db === null) {
-            // just use the org name for the db (use a test org name if you want to avoid tests wiping data!!)
-            const dbName = Config.getInstance().getProp('org');
-            const dbHost = Config.getInstance().getProp('mongoUrl');
+        try {
+            // Log.trace("DatabaseController::open() - start");
+            if (this.db === null) {
 
-            Log.info("DatabaseController::open() - db null; making new connection to: " + dbName + "; on: " + dbHost);
+                // just use the org name for the db (use a test org name if you want to avoid tests wiping data!!)
+                const dbName = Config.getInstance().getProp('org').trim(); // make sure there are no extra spaces in config
+                const dbHost = Config.getInstance().getProp('mongoUrl').trim(); // make sure there are no extra spaces in config
 
-            // 'mongodb://localhost:27017'
-            const client = await MongoClient.connect(dbHost);
-            this.db = await client.db(dbName);
+                // _ are to help diagnose whitespace in dbname/mongoUrl
+                Log.info("DatabaseController::open() - db null; making new connection to: _" + dbName + "_ on: _" + dbHost + "_");
 
-            Log.info("DatabaseController::open() - db null; new connection made");
+                // 'mongodb://localhost:27017'
+                const client = await MongoClient.connect(dbHost);
+                this.db = await client.db(dbName);
+
+                Log.info("DatabaseController::open() - db null; new connection made");
+            }
+            // Log.trace("DatabaseController::open() - returning db");
+            return this.db;
+        } catch (err) {
+            Log.error("DatabaseController::open() - ERROR: " + err);
         }
-        // Log.trace("DatabaseController::open() - returning db");
-        return this.db;
     }
 
 
     public async verifyAuthToken(org: string, personId: string, token: string): Promise<boolean> {
-        Log.info("DatabaseController::verifyToken( " + org + ", " + personId + " ) - start");
+        Log.trace("DatabaseController::verifyToken( " + org + ", " + personId + " ) - start");
         let auth = <Auth> await this.readSingleRecord(this.AUTHCOLL, {"org": org, "personId": personId});
         if (auth !== null) {
             if (auth.token === token) {
-                Log.trace("DatabaseController::verifyToken( " + org + ", " + personId + " ) - token verified");
+                Log.info("DatabaseController::verifyToken( " + org + ", " + personId + " ) - token verified");
                 return true;
             } else {
-                Log.trace("DatabaseController::verifyToken( " + org + ", " + personId + " ) - token !verified");
+                Log.info("DatabaseController::verifyToken( " + org + ", " + personId + " ) - token !verified");
                 return false;
             }
         }
-        Log.trace("DatabaseController::verifyToken( " + org + ", " + personId + " ) - no token stored");
+        Log.info("DatabaseController::verifyToken( " + org + ", " + personId + " ) - no token stored");
         return false;
     }
 

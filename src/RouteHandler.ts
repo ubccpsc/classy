@@ -5,7 +5,7 @@ import {Config} from "./Config";
 import {DatabaseController} from "./controllers/DatabaseController";
 import {Auth, Person} from "./Types";
 import {PersonController} from "./controllers/PersonController";
-import {Payload, SDDMController, StatusPayload} from "./controllers/SDDMController";
+import {GradePayload, Payload, SDDMController, StatusPayload} from "./controllers/SDDMController";
 import {GitHubController} from "./controllers/GitHubController";
 import ClientOAuth2 = require("client-oauth2");
 
@@ -19,33 +19,35 @@ export class RouteHandler {
     private static ac = new AuthController();
 
     public static getCredentials(req: any, res: any, next: any) {
-        Log.info('RouteHandler::getCredentials(..) - start GET');
+        Log.trace('RouteHandler::getCredentials(..) - start');
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
-        Log.trace('RouteHandler::getCredentials(..) - org: ' + org + '; user: ' + user + '; token: ' + token);
+        Log.info('RouteHandler::getCredentials(..) - org: ' + org + '; user: ' + user + '; token: ' + token);
 
         RouteHandler.ac.isValid(org, user, token).then(function (isValid) {
             Log.trace('RouteHandler::getCredentials(..) - in isValid(..)');
             if (isValid === true) {
                 Log.trace('RouteHandler::getCredentials(..) - isValid true');
                 RouteHandler.ac.isAdmin(org, user, token).then(function (isAdmin) {
-                    Log.trace('RouteHandler::getCredentials(..) - sending 200; isAdmin: ' + isAdmin);
+                    Log.info('RouteHandler::getCredentials(..) - sending 200; isAdmin: ' + isAdmin);
                     res.send({user: user, token: token, isAdmin: true});
                 }).catch(function (err) {
-                    Log.info('RouteHandler::getCredentials(..) - isValid true; catch');
+                    Log.info('RouteHandler::getCredentials(..) - isValid true; ERROR: ' + err);
+                    res.send(400, {failure: {message: "Login error (getCredentials valid inner error)."}});
                 });
             } else {
                 Log.trace('RouteHandler::getCredentials(..) - sending 400');
-                res.send(400, {error: "invalid user"});
+                res.send(400, {failure: {message: "Login error (getCredentials invalid inner error)."}});
             }
         }).catch(function (err) {
             Log.error('RouteHandler::getCredentials(..) - ERROR: ' + err);
+            res.send(400, {failure: {message: "Login error (getCredentials outer error)."}});
         });
     }
 
     public static getAuth(req: any, res: any, next: any) {
-        Log.info("RouteHandler::getAuth(..) - /auth redirect start");
+        Log.trace("RouteHandler::getAuth(..) - /auth redirect start");
         let config = Config.getInstance();
 
         const org = req.query.org;
@@ -65,12 +67,12 @@ export class RouteHandler {
         var githubAuth = new ClientOAuth2(setup);
 
         const uri = githubAuth.code.getUri();
-        Log.info("RouteHandler::getAuth(..) - /auth uri: " + uri);
+        Log.trace("RouteHandler::getAuth(..) - /auth uri: " + uri);
         res.redirect(uri, next);
     }
 
     public static githubCallback(req: any, res: any, next: any) {
-        Log.info("RouteHandler::githubCallback(..) - /githubCallback - start");
+        Log.trace("RouteHandler::githubCallback(..) - /githubCallback - start");
         let config = Config.getInstance();
         const org = req.query.org;
 
@@ -80,8 +82,6 @@ export class RouteHandler {
         let backendUrl = config.getProp('backendUrl');
         let backendPort = config.getProp('backendPort');
         const githubRedirect = backendUrl + ':' + backendPort + '/githubCallback?orgName=secapstone';
-        // const githubRedirect = 'https://localhost:5000/githubCallback?orgName=secapstone';
-        // const githubRedirect = 'https://sdmm.cs.ubc.ca:5000/githubCallback?orgName=' + org;
         Log.info('RouteHandler::githubCallback(..) - / githubCallback; url: ' + githubRedirect);
 
         const opts = {
@@ -98,10 +98,10 @@ export class RouteHandler {
         let token: string | null = null;
         let p: Person = null;
 
-        Log.info('RouteHandler::githubCallback(..) - opts: ' + JSON.stringify(opts));
+        // Log.info('RouteHandler::githubCallback(..) - opts: ' + JSON.stringify(opts));
 
         githubAuth.code.getToken(req.url).then(function (user) {
-            Log.trace("RouteHandler::githubCallback(..) - token aquired");
+            Log.trace("RouteHandler::githubCallback(..) - token acquired");
 
             token = user.accessToken;
             var options = {
@@ -150,6 +150,11 @@ export class RouteHandler {
             return DatabaseController.getInstance().writeAuth(auth);
         }).then(function (authWritten) {
             Log.info("RouteHandler::githubCallback(..) - authWritten: " + authWritten);
+
+            // TODO: this should really handoff to an org-based controller to decide if we should
+            // create a new person or return an error. This is fine for SDMM, but will need to
+            // change in the future.
+
             return personController.createPerson(p);
             // return personController.getPerson(courseId, username)
         }).then(function (person) {
@@ -160,11 +165,10 @@ export class RouteHandler {
             if (person !== null) {
                 // only header method that worked for me
                 res.setHeader("Set-Cookie", "token=" + token);
-                Log.info("RouteHandler::githubCallback(..) - /githubCallback - url: " + feUrl + "; port: " + fePort);
                 if (feUrl.indexOf('//') > 0) {
                     feUrl = feUrl.substr(feUrl.indexOf('//') + 2, feUrl.length);
                 }
-                Log.info("RouteHandler::githubCallback(..) - /githubCallback - redirect url: " + feUrl);
+                Log.trace("RouteHandler::githubCallback(..) - /githubCallback - redirect url: " + feUrl);
                 res.redirect({
                     hostname: feUrl,
                     pathname: '/index.html',
@@ -184,15 +188,14 @@ export class RouteHandler {
         }).catch(function (err) {
             // code incorrect or expired
             Log.error("RouteHandler::githubCallback(..) - /githubCallback - ERROR: " + err);
+            // NOTE: should this be returning 400 or something?
             return next();
         });
     }
 
     // from restify #284
     public static handlePreflight(req: any, res: any) {
-        Log.trace("RouteHandler::handlePreflight(..)  - MethodNotAllowed - " + req.method.toLowerCase() + "; uri: " + req.url);
-
-        // if (req.method.toLowerCase() === 'options') { // was options
+        Log.trace("RouteHandler::handlePreflight(..) - " + req.method.toLowerCase() + "; uri: " + req.url);
 
         var allowHeaders = ['Accept', 'Accept-Version', 'Content-Type', 'Api-Version', 'user-agent', 'user', 'token', 'org'];
         if (res.methods.indexOf('OPTIONS') === -1) {
@@ -208,12 +211,8 @@ export class RouteHandler {
         res.header('Access-Control-Allow-Methods', res.methods.join(', '));
         res.header('Access-Control-Allow-Origin', req.headers.origin);
 
-        Log.trace("RouteHandler::handlePreflight(..) - MethodNotAllowed - sending 204");
+        // Log.trace("RouteHandler::handlePreflight(..) - sending 204");
         return res.send(204);
-        // } else {
-        //     Log.trace("RouteHandler::handlePreflight(..) - MethodNotAllowed - sending 405");
-        //    return res.send(405);
-        // }
     }
 
 
@@ -226,7 +225,7 @@ export class RouteHandler {
      * @param next
      */
     public static getCurrentStatus(req: any, res: any, next: any) {
-        Log.trace('RouteHandler::getCurrentStatus(..) - /getCurrentStatus - start GET');
+        Log.trace('RouteHandler::getCurrentStatus(..) - /getCurrentStatus - start');
         const user = req.headers.user;
         const token = req.headers.token;
 
@@ -236,13 +235,13 @@ export class RouteHandler {
 
         let sc: SDDMController = new SDDMController(new GitHubController());
         sc.getStatus(org, user).then(function (status: StatusPayload) {
-            Log.trace('RouteHandler::getCurrentStatus(..) - sending 200; user: ' + user + '; status: ' + status);
-
+            Log.info('RouteHandler::getCurrentStatus(..) - sending 200; user: ' + user);
+            Log.trace('RouteHandler::getCurrentStatus(..) - sending 200; user: ' + user + '; status: ' + JSON.stringify(status));
             const ret: Payload = {success: status};
             res.send(ret);
         }).catch(function (err) {
-            Log.trace('RouteHandler::getCurrentStatus(..) - sending 400');
-            res.send(400, {error: err});
+            Log.info('RouteHandler::getCurrentStatus(..) - sending 400');
+            res.send(400, {failure: {message: err}});
         });
     }
 
@@ -252,6 +251,7 @@ export class RouteHandler {
         const token = req.headers.token;
         const org = req.headers.org;
         const action = req.params.action;
+        const param = req.params.param; // might not be set
 
         // TODO: verify token
 
@@ -263,16 +263,33 @@ export class RouteHandler {
                 res.send(provisionResult);
             }).catch(function (err) {
                 Log.trace('RouteHandler::performAction(..) - sending 400');
-                res.send(400, {error: err});
+                res.send(400, {failure: {message: 'Unable to provision d0 repository; please try again later.'}});
             });
 
         } else if (action === 'provisionD1individual') {
-            sc.provision(org, "d0", [user]).then(function (provisionResult) {
-                Log.trace('RouteHandler::performAction(..) - sending 200; result: ' + JSON.stringify(provisionResult));
+            sc.provision(org, "d1", [user]).then(function (provisionResult) {
+                if (typeof provisionResult.success !== 'undefined') {
+                    Log.info('RouteHandler::performAction(..) - sending 200; success: ' + JSON.stringify(provisionResult));
+                } else {
+                    Log.info('RouteHandler::performAction(..) - sending 200; failure: ' + JSON.stringify(provisionResult));
+                }
+
                 res.send(provisionResult);
             }).catch(function (err) {
                 Log.trace('RouteHandler::performAction(..) - sending 400');
-                res.send(400, {error: err});
+                res.send(400, {failure: {message: 'Unable to provision d1 repository; please try again later.'}});
+            });
+        } else if (action === 'provisionD1team') {
+            sc.provision(org, "d1", [user, param]).then(function (provisionResult) {
+                if (typeof provisionResult.success !== 'undefined') {
+                    Log.info('RouteHandler::performAction(..) - sending 200; success: ' + JSON.stringify(provisionResult));
+                } else {
+                    Log.info('RouteHandler::performAction(..) - sending 200; failure: ' + JSON.stringify(provisionResult));
+                }
+                res.send(provisionResult);
+            }).catch(function (err) {
+                Log.trace('RouteHandler::performAction(..) - sending 400');
+                res.send(400, {failure: {message: 'Unable to provision d1 repository; please try again later.'}});
             });
 
         } else {
@@ -331,6 +348,42 @@ export class RouteHandler {
         // TODO: this is just a dummy implementation
 
         res.send({delivId: 'd0'});
+
+        /*
+                let sc: SDDMController = new SDDMController(new GitHubController());
+                sc.getStatus(org, user).then(function (status) {
+                    Log.trace('RouteHandler::getCurrentStatus(..) - sending 200; user: ' + user + '; status: ' + status);
+                    res.send({user: user, status: status});
+                }).catch(function (err) {
+                    Log.trace('RouteHandler::getCurrentStatus(..) - sending 400');
+                    res.send(400, {error: err});
+                });
+        */
+    }
+
+
+    public static atGradeResult(req: any, res: any, next: any) {
+        Log.info('RouteHandler::atGradeResult(..) - start');
+        // const user = req.headers.user;
+        // const token = req.headers.token;
+
+        // TODO: verify admin secret
+
+        const org = req.params.org;
+        const repoId = req.params.repoId;
+        const delivId = req.params.delivId;
+
+        const gradeRecord: GradePayload = req.body; // turn into json?
+
+        Log.info('RouteHandler::atGradeResult(..) - org: ' + org + '; repoId: ' + repoId + '; delivId: ' + delivId + '; body: ' + JSON.stringify(gradeRecord));
+
+        let sc = new SDDMController(new GitHubController());
+        sc.handleNewGrade(org, repoId, delivId, gradeRecord).then(function (success) {
+            res.send({success: true}); // respond
+        }).catch(function (err) {
+            res.send({success: true}); // respond true, they can't do anything anyways
+            Log.error('RouteHandler::atGradeResult(..) - ERROR: ' + err);
+        });
 
         /*
                 let sc: SDDMController = new SDDMController(new GitHubController());

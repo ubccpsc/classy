@@ -84,6 +84,7 @@ export class RepositoryController {
     }
 
     public async createPullRequest(org: string, repoId: string, prId: string, custom: any): Promise<Repository | null> {
+        Log.error("RepositoryController::createPullRequest( " + org + ", " + repoId + ", " + prId + ", ... ) -  NOT IMPLEMENTED!!");
         // TODO: implement PR functionality
 
         // NOTE: this impl is more complex than it needs to be but is erring on the side of caution
@@ -93,5 +94,28 @@ export class RepositoryController {
         repo.custom = customB;
         await this.db.writeRepository(repo);
         return await this.getRepository(org, repoId);
+    }
+
+    public async getPeopleForRepo(org: string, repoId: string): Promise<string[] | null> {
+        Log.info("RepositoryController::getPeopleForRepo( " + org + ", " + repoId + ",.. ) -  start");
+
+        let peopleIds: string[] = [];
+        try {
+            let tc = new TeamController();
+            let repo = await this.getRepository(org, repoId);
+            if (repo !== null) {
+                for (const teamId of repo.teamIds) {
+                    let team = await tc.getTeam(org, teamId);
+                    for (const personId of team.personIds) {
+                        if (peopleIds.indexOf(personId) < 0) {
+                            peopleIds.push(personId);
+                        }
+                    }
+                }
+            }
+        } catch (err) {
+            Log.error("RepositoryController::getPeopleForRepo(..) - ERROR: " + err);
+        }
+        return peopleIds;
     }
 }

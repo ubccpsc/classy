@@ -1,7 +1,7 @@
 const loadFirst = require('./GlobalSpec');
 const rBefore = require('./GradeControllerSpec');
 
-import {ActionPayload, FailurePayload, SDDMController, SDDMStatus} from "../src/controllers/SDDMController";
+import {ActionPayload, FailurePayload, GradePayload, SDDMController, SDDMStatus} from "../src/controllers/SDDMController";
 import {expect} from "chai";
 import "mocha";
 import {GradesController} from "../src/controllers/GradesController";
@@ -115,7 +115,7 @@ describe("SDDMController", () => {
         await pc.getPerson(Test.ORGNAME, data.USER); // get user
 
         let status = await sc.getStatus(Test.ORGNAME, data.USER);
-        expect(status).to.equal("D0PRE");
+        expect(status.status).to.equal("D0PRE");
     });
 
 
@@ -130,7 +130,7 @@ describe("SDDMController", () => {
         */
     it("Should be able to get a D0 status.", async () => {
         let status = await sc.getStatus(Test.ORGNAME, data.USER);
-        expect(status).to.equal("D0PRE");
+        expect(status.status).to.equal("D0PRE");
 
         const person = await pc.getPerson(Test.ORGNAME, data.USER);
         const team = await tc.createTeam(Test.ORGNAME, data.TEAMD0, [person], {sdmmd0: true});
@@ -138,84 +138,120 @@ describe("SDDMController", () => {
         expect(repo).to.not.be.null;
 
         status = await sc.getStatus(Test.ORGNAME, data.USER);
-        expect(status).to.equal("D0");
+        expect(status.status).to.equal("D0");
     });
 
     it("Should be able to get a D1UNLOCKED status.", async () => {
         let status = await sc.getStatus(Test.ORGNAME, data.USER);
-        expect(status).to.equal("D0");
+        expect(status.status).to.equal("D0");
 
-        await gc.createGrade(Test.ORGNAME, data.REPOD0, "d0", 59, '', '', Date.now());
+        let grade: GradePayload = {
+            score:     59,
+            comment:   '',
+            url:       '',
+            timestamp: Date.now()
+        };
+        await gc.createGrade(Test.ORGNAME, data.REPOD0, "d0", grade);
         status = await sc.getStatus(Test.ORGNAME, data.USER);
-        expect(status).to.equal("D0"); // 59 is too low
+        expect(status.status).to.equal("D0"); // 59 is too low
 
-        await gc.createGrade(Test.ORGNAME, data.REPOD0, "d0", 61, '', '', Date.now());
+        grade = {
+            score:     61,
+            comment:   '',
+            url:       '',
+            timestamp: Date.now()
+        };
+        await gc.createGrade(Test.ORGNAME, data.REPOD0, "d0", grade);
         status = await sc.getStatus(Test.ORGNAME, data.USER);
-        expect(status).to.equal("D1UNLOCKED");
+        expect(status.status).to.equal("D1UNLOCKED");
     });
 
     it("Should be able to get a D1TEAMSET status.", async () => {
         let status = await sc.getStatus(Test.ORGNAME, data.USER);
-        expect(status).to.equal("D1UNLOCKED");
+        expect(status.status).to.equal("D1UNLOCKED");
 
         const person = await pc.getPerson(Test.ORGNAME, data.USER);
         const team = await tc.createTeam(Test.ORGNAME, data.TEAMD1, [person], {sdmmd1: true});
         expect(team).to.not.be.null;
 
         status = await sc.getStatus(Test.ORGNAME, data.USER);
-        expect(status).to.equal("D1TEAMSET");
+        expect(status.status).to.equal("D1TEAMSET");
     });
 
     it("Should be able to get a D1 status.", async () => {
         let status = await sc.getStatus(Test.ORGNAME, data.USER);
-        expect(status).to.equal("D1TEAMSET");
+        expect(status.status).to.equal("D1TEAMSET");
 
         const team = await tc.getTeam(Test.ORGNAME, data.TEAMD1);
         const repo = await rc.createRepository(Test.ORGNAME, data.REPOD1, [team], {d1enabled: true});
         expect(repo).to.not.be.null;
 
         status = await sc.getStatus(Test.ORGNAME, data.USER);
-        expect(status).to.equal("D1");
+        expect(status.status).to.equal("D1");
     });
 
     it("Should be able to get a D2 status.", async () => {
         let status = await sc.getStatus(Test.ORGNAME, data.USER);
-        expect(status).to.equal("D1");
+        expect(status.status).to.equal("D1");
 
-        await gc.createGrade(Test.ORGNAME, data.REPOD1, "d1", 59, '', '', Date.now());
+        let grade: GradePayload = {
+            score:     59,
+            comment:   '',
+            url:       '',
+            timestamp: Date.now()
+        };
+        await gc.createGrade(Test.ORGNAME, data.REPOD1, "d1", grade);
         status = await sc.getStatus(Test.ORGNAME, data.USER);
-        expect(status).to.equal("D1"); // 59 is too low
+        expect(status.status).to.equal("D1"); // 59 is too low
 
-        await gc.createGrade(Test.ORGNAME, data.REPOD1, "d1", 61, '', '', Date.now());
+        grade = {
+            score:     61,
+            comment:   '',
+            url:       '',
+            timestamp: Date.now()
+        };
+        await gc.createGrade(Test.ORGNAME, data.REPOD1, "d1", grade);
 
         status = await sc.getStatus(Test.ORGNAME, data.USER);
-        expect(status).to.equal("D2");
+        expect(status.status).to.equal("D2");
     });
 
     it("Should be able to get a D3PRE status.", async () => {
         let status = await sc.getStatus(Test.ORGNAME, data.USER);
-        expect(status).to.equal("D2");
+        expect(status.status).to.equal("D2");
 
-        await gc.createGrade(Test.ORGNAME, data.REPOD1, "d2", 59, '', '', Date.now());
+        let grade: GradePayload = {
+            score:     59,
+            comment:   '',
+            url:       '',
+            timestamp: Date.now()
+        };
+        await gc.createGrade(Test.ORGNAME, data.REPOD1, "d2", grade);
         status = await sc.getStatus(Test.ORGNAME, data.USER);
-        expect(status).to.equal("D2"); // 59 is too low
+        expect(status.status).to.equal("D2"); // 59 is too low
 
-        await gc.createGrade(Test.ORGNAME, data.REPOD1, "d2", 61, '', '', Date.now());
+        grade = {
+            score:     61,
+            comment:   '',
+            url:       '',
+            timestamp: Date.now()
+        };
+        await gc.createGrade(Test.ORGNAME, data.REPOD1, "d2", grade);
 
         status = await sc.getStatus(Test.ORGNAME, data.USER);
-        expect(status).to.equal("D3PRE");
+        expect(status.status).to.equal("D3PRE");
     });
 
     it("Should be able to get a D3 status.", async () => {
         let status = await sc.getStatus(Test.ORGNAME, data.USER);
-        expect(status).to.equal("D3PRE");
+        expect(status.status).to.equal("D3PRE");
 
         const repo = await rc.createPullRequest(Test.ORGNAME, data.REPOD1, data.PRNAME, {sddmD3pr: true});
         expect(repo).to.not.be.null;
         expect(repo.custom.sddmD3pr).to.be.true;
 
         status = await sc.getStatus(Test.ORGNAME, data.USER);
-        expect(status).to.equal("D3");
+        expect(status.status).to.equal("D3");
     });
 
     it("Should not be able to provision a d0 repo for a random person.", async () => {
@@ -320,7 +356,14 @@ describe("SDDMController", () => {
         let allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(1);
 
-        let grade = await gc.createGrade(data.PERSON1.org, allRepos[0].id, Test.DELIVID0, 65, 'TESTCOMMENT', 'TESTURL', Date.now());
+        let gradeR: GradePayload = {
+            score:     65,
+            comment:   'TESTCOMMENT',
+            url:       'TESTURL',
+            timestamp: Date.now()
+        };
+
+        let grade = await gc.createGrade(data.PERSON1.org, allRepos[0].id, Test.DELIVID0, gradeR);
         expect(grade).to.be.true;
 
         allRepos = await rc.getReposForPerson(person);
@@ -410,7 +453,13 @@ describe("SDDMController", () => {
 
         let allRepos = await rc.getReposForPerson(person2);
         expect(allRepos).to.have.lengthOf(1);
-        let grade = await gc.createGrade(person2.org, allRepos[0].id, Test.DELIVID0, 65, 'TESTCOMMENT', 'TESTURL', Date.now());
+        let gradeR: GradePayload = {
+            score:     65,
+            comment:   'TESTCOMMENT',
+            url:       'TESTURL',
+            timestamp: Date.now()
+        };
+        let grade = await gc.createGrade(person2.org, allRepos[0].id, Test.DELIVID0, gradeR);
         expect(grade).to.be.true;
 
         // prepare person3
@@ -424,7 +473,13 @@ describe("SDDMController", () => {
         // create d0 grade for person2
         allRepos = await rc.getReposForPerson(person3);
         expect(allRepos).to.have.lengthOf(1);
-        grade = await gc.createGrade(person3.org, allRepos[0].id, Test.DELIVID0, 70, 'TESTCOMMENT', 'TESTURL', Date.now());
+        gradeR = {
+            score:     70,
+            comment:   '',
+            url:       '',
+            timestamp: Date.now()
+        };
+        grade = await gc.createGrade(person3.org, allRepos[0].id, Test.DELIVID0, gradeR);
         expect(grade).to.be.true;
 
 

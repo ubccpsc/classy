@@ -9,6 +9,7 @@ import {TeamController} from "./TeamController";
 import {PersonController} from "./PersonController";
 
 import * as crypto from 'crypto';
+import {Config} from "../Config";
 
 export interface Payload {
     success?: ActionPayload | StatusPayload; // only set if defined
@@ -35,9 +36,8 @@ export interface StatusPayload {
 
 export interface GradePayload {
     score: number; // grade: < 0 will mean 'N/A' in the UI
-
+    comment: string;
     url: string; // commit URL if known, otherwise repo url
-
     timestamp: number; // even if grade < 0 might as well return when the entry was made
 }
 
@@ -142,7 +142,12 @@ export class SDDMController {
                         return await this.provisionD1Repo(org, peopleIds);
                     } else {
                         Log.error("SDDMController::provision(..) - d1 duplicate users");
-                        return {failure: {shouldLogout: false, message: "D1 duplicate users; contact course staff."}};
+                        return {
+                            failure: {
+                                shouldLogout: false,
+                                message:      "D1 duplicate users; if you wish to work alone, please select 'work individually'."
+                            }
+                        };
                     }
                 } else {
                     Log.error("SDDMController::provision(..) - d1 can only be performed by single students or pairs of students.");
@@ -404,7 +409,7 @@ export class SDDMController {
             const name = personId;
             const person = await this.pc.getPerson(org, name);
             const teamName = name;
-            const repoName = "secap_" + teamName;
+            const repoName = SDDMController.getProjectPrefix(org) + teamName;
 
             if (person === null) {
                 // return early
@@ -444,7 +449,13 @@ export class SDDMController {
                 this.dc.writeTeam(team);
 
                 // create grade entry
-                await this.gc.createGrade(org, repo.id, 'd0', -1, 'Repo Provisioned', repo.url, Date.now());
+                let grade: GradePayload = {
+                    score:     -1,
+                    comment:   'Repo Provisioned',
+                    url:       repo.url,
+                    timestamp: Date.now()
+                };
+                await this.gc.createGrade(org, repo.id, 'd0', grade);
 
                 const statusPayload = await this.getStatus(org, personId);
                 Log.info("SDDMController::provisionD0Repo(..) - d0 final provisioning successful; took: " + Util.took(start));
@@ -452,6 +463,10 @@ export class SDDMController {
                 return {success: {message: "Repository successfully created.", status: statusPayload}};
             } else {
                 Log.error("SDDMController::provisionD0Repo(..) - something went wrong provisioning this repo; see logs above.");
+                // TODO: cleanup here
+                // const delTeam = await this.tc.deleteTeam(team);
+                // const delRepo = await this.rc.deleteRepo(repo);
+
                 return {failure: {shouldLogout: false, message: "Error provisioning d0 repo; contact course staff."}};
             }
         } catch (err) {
@@ -498,7 +513,7 @@ export class SDDMController {
             const name = personId;
             // const person = await this.pc.getPerson(org, name);
             const teamName = name;
-            const repoName = "secap_" + teamName;
+            const repoName = SDDMController.getProjectPrefix(org) + teamName;
 
             // find local team & repo
             const team = await this.tc.getTeam(org, teamName);
@@ -516,9 +531,15 @@ export class SDDMController {
                 await this.dc.writeTeam(team);
 
                 // create grade entries
-                await this.gc.createGrade(org, repo.id, 'd1', -1, 'Repo Provisioned', repo.url, Date.now());
-                await this.gc.createGrade(org, repo.id, 'd2', -1, 'Repo Provisioned', repo.url, Date.now());
-                await this.gc.createGrade(org, repo.id, 'd3', -1, 'Repo Provisioned', repo.url, Date.now());
+                let grade: GradePayload = {
+                    score:     -1,
+                    comment:   'Repo Provisioned',
+                    url:       repo.url,
+                    timestamp: Date.now()
+                };
+                await this.gc.createGrade(org, repo.id, 'd1', grade);
+                await this.gc.createGrade(org, repo.id, 'd2', grade);
+                await this.gc.createGrade(org, repo.id, 'd3', grade);
             } else {
                 Log.error("SDDMController::updateIndividualD0toD1(..) - unable to find team: " + teamName + ' or repo: ' + repoName);
                 return {failure: {shouldLogout: false, message: "Invalid team updating d0 repo; contact course staff."}};
@@ -550,7 +571,7 @@ export class SDDMController {
             while (teamName === null) {
                 let str = crypto.randomBytes(256).toString('hex');
                 str = str.substr(0, 6);
-                const name = "t_" + str; // team prefix
+                const name = SDDMController.getTeamPrefix(org) + str; // team prefix
                 Log.trace("SDDMController::provisionD1Repo(..) - checking name: " + str);
                 let team = await this.tc.getTeam(org, str);
                 if (team === null) {
@@ -591,7 +612,7 @@ export class SDDMController {
                     return {
                         failure: {
                             shouldLogout: false,
-                            message:      "All teammates must be eligible to join a team."
+                            message:      "All teammates must be eligible to join a team and must not already be performing d1 in another team or on their own."
                         }
                     };
                 } else {
@@ -604,12 +625,12 @@ export class SDDMController {
             const team = await this.tc.createTeam(org, teamName, people, teamCustom);
 
             // create local repo
-            const repoName = "secap_" + teamName;
+            const repoName = SDDMController.getProjectPrefix(org) + teamName;
             const repoCustom = {d0enabled: false, d1enabled: true, d2enabled: true, d3enabled: true, sddmD3pr: false}; // d0 repo for now
             const repo = await this.rc.createRepository(org, repoName, [team], repoCustom);
 
             // create remote repo
-            const INPUTREPO = "https://github.com/SECapstone/bootstrap.git"; // HARDCODED for SDMM
+            const INPUTREPO = "https://github.com/SECapstone/bootstrap"; // HARDCODED for SDMM
             const WEBHOOKADDR = "https://sdmm.cs.ubc.ca:11333/submit"; // HARDCODED for SDMM
             const provisionResult = await this.gh.provisionRepository(org, repoName, [team], INPUTREPO, WEBHOOKADDR);
 
@@ -626,9 +647,15 @@ export class SDDMController {
                 this.dc.writeTeam(team);
 
                 // create grade entries
-                await this.gc.createGrade(org, repo.id, 'd1', -1, 'Repo Provisioned', repo.url, Date.now());
-                await this.gc.createGrade(org, repo.id, 'd2', -1, 'Repo Provisioned', repo.url, Date.now());
-                await this.gc.createGrade(org, repo.id, 'd3', -1, 'Repo Provisioned', repo.url, Date.now());
+                let grade: GradePayload = {
+                    score:     -1,
+                    comment:   'Repo Provisioned',
+                    url:       repo.url,
+                    timestamp: Date.now()
+                };
+                await this.gc.createGrade(org, repo.id, 'd1', grade);
+                await this.gc.createGrade(org, repo.id, 'd2', grade);
+                await this.gc.createGrade(org, repo.id, 'd3', grade);
 
                 const statusPayload = await this.getStatus(org, peopleIds[0]);
                 Log.info("SDDMController::provisionD1Repo(..) - d1 final provisioning successful; took: " + Util.took(start));
@@ -663,6 +690,7 @@ export class SDDMController {
             myD0 = {
                 score:     d0Grade.score,
                 url:       d0Grade.url,
+                comment:   '',
                 timestamp: d0Grade.timestamp
             }
         }
@@ -671,6 +699,7 @@ export class SDDMController {
             myD1 = {
                 score:     d1Grade.score,
                 url:       d1Grade.url,
+                comment:   '',
                 timestamp: d1Grade.timestamp
             }
         }
@@ -679,6 +708,7 @@ export class SDDMController {
             myD2 = {
                 score:     d2Grade.score,
                 url:       d2Grade.url,
+                comment:   '',
                 timestamp: d2Grade.timestamp
             }
         }
@@ -687,6 +717,7 @@ export class SDDMController {
             myD3 = {
                 score:     d3Grade.score,
                 url:       d3Grade.url,
+                comment:   '',
                 timestamp: d3Grade.timestamp
             }
         }
@@ -702,5 +733,57 @@ export class SDDMController {
         Log.trace("SDDMController::getStatus( " + org + ", " + personId + " ) - took: " + Util.took(start));
 
         return statusPayload;
+    }
+
+    public async handleNewGrade(org: string, repoId: string, delivId: string, grade: GradePayload): Promise<boolean> {
+        Log.info("SDDMController::handleNewGrade( .. ) - start");
+
+        try {
+            let peopleIds = await this.rc.getPeopleForRepo(org, repoId);
+            for (const personId of peopleIds) {
+                let existingGrade = await this.gc.getGrade(org, personId, delivId);
+                if (existingGrade === null || existingGrade.score < grade.score) {
+                    Log.info("SDDMController::handleNewGrade( .. ) - grade is higher; updating");
+                    this.gc.createGrade(org, repoId, delivId, grade);
+                } else {
+                    Log.info("SDDMController::handleNewGrade( .. ) - grade is not higher");
+                }
+            }
+            // createGrade(org: string, repoId: string, delivId: string, score: number, comment: string, url: string, timestamp: number)
+            return true;
+        } catch (err) {
+            Log.error("SDDMController::handleNewGrade( .. ) - ERROR: " + err);
+            return false;
+        }
+    }
+
+    /**
+     * Public static so tests can use them too.
+     *
+     * @param {string} org
+     * @returns {string}
+     */
+    private static getProjectPrefix(org: string): string {
+        if (org === "secapstonetest" || Config.getInstance().getProp('name') === "secapstonetest") {
+            Log.info("SDDMController::getProjectPrefix(..) - returning test prefix");
+            return "TEST__X__secap_";
+        } else {
+            return "secap_";
+        }
+    }
+
+    /**
+     * Public static so tests can use them too.
+     *
+     * @param {string} org
+     * @returns {string}
+     */
+    private static getTeamPrefix(org: string) {
+        if (org === "secapstonetest" || Config.getInstance().getProp('name') === "secapstonetest") {
+            Log.info("SDDMController::getTeamPrefix(..) - returning test prefix");
+            return "TEST__X__t_";
+        } else {
+            return "t_";
+        }
     }
 }

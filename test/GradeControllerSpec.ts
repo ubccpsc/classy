@@ -2,6 +2,7 @@ import {expect} from "chai";
 import "mocha";
 import {GradesController} from "../src/controllers/GradesController";
 import {Test} from "./GlobalSpec";
+import {GradePayload} from "../src/controllers/SDDMController";
 
 const loadFirst = require('./GlobalSpec');
 const rFirst = require('./RepositoryControllerSpec');
@@ -26,7 +27,14 @@ describe("GradeController", () => {
         let grades = await gc.getAllGrades(Test.ORGNAME);
         expect(grades).to.have.lengthOf(0);
 
-        let valid = await gc.createGrade(Test.ORGNAME, Test.REPONAME1, Test.DELIVID1, 100, 'comment', 'URL', Date.now());
+        let grade: GradePayload = {
+            score:     100,
+            comment:   'comment',
+            url:       'URL',
+            timestamp: Date.now()
+        };
+
+        let valid = await gc.createGrade(Test.ORGNAME, Test.REPONAME1, Test.DELIVID1, grade);
         expect(valid).to.be.true;
         grades = await gc.getAllGrades(Test.ORGNAME);
         expect(grades).to.have.lengthOf(2);
@@ -37,7 +45,14 @@ describe("GradeController", () => {
         let grades = await gc.getAllGrades(Test.ORGNAME);
         expect(grades).to.have.lengthOf(2); // from previous
 
-        let valid = await gc.createGrade(Test.ORGNAME, Test.REPONAME1, Test.DELIVID1, 50, 'commentup', 'URLup', Date.now());
+        let grade: GradePayload = {
+            score:     50,
+            comment:   'commentup',
+            url:       'URLup',
+            timestamp: Date.now()
+        };
+
+        let valid = await gc.createGrade(Test.ORGNAME, Test.REPONAME1, Test.DELIVID1, grade);
         expect(valid).to.be.true;
         grades = await gc.getAllGrades(Test.ORGNAME);
         expect(grades).to.have.lengthOf(2); // still two (one for each teammember)
