@@ -105,6 +105,7 @@ export default class RouteHandler {
                 break;
             default:
                 Log.warn("RouteHandler::postGithubHook() - Unhandled GitHub event: " + githubEvent);
+                res.json(400, "Unhandled GitHub hook event: " + githubEvent);
         }
         return next();
     }

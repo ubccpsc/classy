@@ -61,8 +61,8 @@ Nick Bradley
 
 AutoTest orchestrates a host of services using Docker; from within the `/home/w-sdmm/autotest` directory:
 
-* Rebuild: TODO COMMAND MISSING
+* Rebuild: `git pull; docker-compose build` # also grabs any updates to the docker file itself
 * Start: `docker-compose up -d`
-* Stop: TODO COMMAND MISSING
+* Stop: `docker-compose stop`
 * Attach to the logs: `docker-compose logs --follow`
 
