@@ -2,9 +2,7 @@ FROM node:8-alpine
 
 EXPOSE 5000
 
-RUN apk add --no-cache git && \
-    git config --global user.email "8973427+ubcbot@users.noreply.github.com" && \
-    git config --global user.name "ubcbot"
+RUN apk add --no-cache git
 
 WORKDIR /app
 COPY package.json tsconfig.json ./
@@ -15,4 +13,7 @@ RUN yarn install && \
     chown -R node /app
 
 USER node
+RUN git config --global user.email "8973427+ubcbot@users.noreply.github.com" && \
+    git config --global user.name "ubcbot"
+
 CMD ["node", "--require", "dotenv/config", "src/BackendDaemon.js"]
