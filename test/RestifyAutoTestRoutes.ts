@@ -13,7 +13,7 @@ import restify = require('restify');
 
 const request = require('supertest');
 
-describe.only('REST Routes for AutoTest', function () {
+describe('REST Routes for AutoTest', function () {
 
     var app: restify.Server = null;
 

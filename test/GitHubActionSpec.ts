@@ -3,6 +3,7 @@ const rFirst = require('./SDDMControllerSpec'); // so we go last
 
 import {expect} from "chai";
 import "mocha";
+
 import {GitHubActions, GitHubController} from "../src/controllers/GitHubController";
 import Log from "../src/util/Log";
 import {Test} from "./GlobalSpec";
@@ -17,6 +18,8 @@ describe.skip("GitHubActions", () => {
     let TIMEOUT = 5000;
 
     let ORGNAME = 'secapstone';
+    const REPONAME = getProjectPrefix(Test.ORGNAME) + Test.REPONAME1;
+    const TEAMNAME = getTeamPrefix(Test.ORGNAME) + Test.TEAMNAME1;
 
     before(async () => {
         Test.ORGNAME = ORGNAME;
@@ -26,91 +29,115 @@ describe.skip("GitHubActions", () => {
         gh = new GitHubActions();
     });
 
-    it("Should be able to create list some repos.", async () => {
-        // check auth
+    let REPOS = ["testtest__repo1",
+        "secap_cpscbot",
+        "secap_rthse2",
+        "secap_ubcbot",
+        "secap_testtest__repo1",
+        "TEST__X__secap_testtest__repo1",
+        "TEST__X__secap_TESTrepo1"];
+
+    let TEAMS = [
+        "rtholmes",
+        "ubcbot",
+        "rthse2",
+        "cpscbot",
+        "TEST__X__t_TESTteam1"
+    ];
+
+
+    it("Clear stale repos and teams.", async function () {
+        Log.test('GitHubActionSpec::deleteStale() - start');
+
         let repos = await gh.listRepos(Test.ORGNAME);
         expect(repos).to.be.an('array');
         expect(repos.length > 0).to.be.true;
 
         // delete test repos if needed
         for (const repo of repos as any) {
-            if (repo.full_name === "SECapstone/" + Test.REPONAME1) {
-                Log.test("Old test repo found; removing");
-                let val = await gh.deleteRepo(Test.ORGNAME, Test.REPONAME1);
-                expect(val).to.be.true;
+            Log.info('Evaluating repo: ' + repo.name);
+            for (const r of REPOS) {
+                if (repo.name === r) {
+                    let val = await
+                        gh.deleteRepo(Test.ORGNAME, r);
+                    expect(val).to.be.true;
+                }
             }
         }
 
         // delete teams if needed
-        let teams = await gh.listTeams(Test.ORGNAME);
+        let teams = await
+            gh.listTeams(Test.ORGNAME);
         expect(teams).to.be.an('array');
         expect(teams.length > 0).to.be.true;
-
+        Log.test('All Teams: ' + JSON.stringify(teams));
         for (const team of teams as any) {
-            Log.info('team: ' + JSON.stringify(team));
-            if (team.name === Test.TEAMNAME1) {
-                Log.test("Old test team found; removing");
-                let val = await gh.deleteTeam(Test.ORGNAME, team.id);
-                expect(val).to.be.true;
+            // Log.info('Evaluating team: ' + JSON.stringify(team));
+            for (const t of TEAMS) {
+                if (team.name === t) {
+                    Log.test("Old test team found; removing: " + team.name);
+                    let val = await
+                        gh.deleteTeam(Test.ORGNAME, team.id);
+                    expect(val).to.be.true;
+                }
             }
-
         }
-    });
+        Log.test('GitHubActionSpec::deleteStale() - done');
+    }).timeout(TIMEOUT * 10);
 
     it("Should be able to create a repo.", async function () {
-        let val = await gh.createRepo(Test.ORGNAME, Test.REPONAME1);
-        expect(val).to.equal('https://github.com/SECapstone/' + Test.REPONAME1);
+        let val = await gh.createRepo(Test.ORGNAME, REPONAME);
+        expect(val).to.equal('https://github.com/SECapstone/' + REPONAME);
     }).timeout(TIMEOUT);
 
     it("Should be able to remove a repo.", async function () {
-        let val = await gh.deleteRepo(Test.ORGNAME, Test.REPONAME1);
+        let val = await gh.deleteRepo(Test.ORGNAME, REPONAME);
         expect(val).to.be.true;
     }).timeout(TIMEOUT);
 
     it("Should be able to create the repo again.", async function () {
-        let val = await gh.createRepo(Test.ORGNAME, Test.REPONAME1);
-        expect(val).to.equal('https://github.com/SECapstone/' + Test.REPONAME1);
+        let val = await gh.createRepo(Test.ORGNAME, REPONAME);
+        expect(val).to.equal('https://github.com/SECapstone/' + REPONAME);
     }).timeout(TIMEOUT);
 
     it("Should be able to list a webhook.", async function () {
-        let val = await gh.listWebhooks(Test.ORGNAME, Test.REPONAME1);
+        let val = await gh.listWebhooks(Test.ORGNAME, REPONAME);
         expect(val).to.be.empty;
     }).timeout(TIMEOUT);
 
     it("Should be able to create a webhook.", async function () {
-        let hooks = await gh.listWebhooks(Test.ORGNAME, Test.REPONAME1);
+        let hooks = await gh.listWebhooks(Test.ORGNAME, REPONAME);
         expect(hooks).to.be.empty;
 
-        let createHook = await gh.addWebhook(Test.ORGNAME, Test.REPONAME1, 'https://localhost/test');
+        let createHook = await gh.addWebhook(Test.ORGNAME, REPONAME, 'https://localhost/test');
         expect(createHook).to.be.true;
 
-        hooks = await gh.listWebhooks(Test.ORGNAME, Test.REPONAME1);
+        hooks = await gh.listWebhooks(Test.ORGNAME, REPONAME);
         expect(hooks).to.have.lengthOf(1);
     }).timeout(TIMEOUT);
 
     it("Should be able to create a team, add users to it, and add it to the repo.", async function () {
-        let val = await gh.createTeam(Test.ORGNAME, Test.TEAMNAME1, 'push');
-        expect(val.teamName).to.equal(Test.TEAMNAME1);
+        let val = await gh.createTeam(Test.ORGNAME, TEAMNAME, 'push');
+        expect(val.teamName).to.equal(TEAMNAME);
         expect(val.githubTeamNumber).to.be.an('number');
         expect(val.githubTeamNumber > 0).to.be.true;
 
         let addMembers = await gh.addMembersToTeam(val.teamName, val.githubTeamNumber, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
-        expect(addMembers.teamName).to.equal(Test.TEAMNAME1); // not a strong test
+        expect(addMembers.teamName).to.equal(TEAMNAME); // not a strong test
 
-        let teamAdd = await gh.addTeamToRepo(Test.ORGNAME, val.githubTeamNumber, Test.REPONAME1, 'push');
+        let teamAdd = await gh.addTeamToRepo(Test.ORGNAME, val.githubTeamNumber, REPONAME, 'push');
         expect(teamAdd.githubTeamNumber).to.equal(val.githubTeamNumber);
 
         let staffTeamNumber = await gh.getTeamNumber(Test.ORGNAME, 'staff');
-        let staffAdd = await gh.addTeamToRepo(Test.ORGNAME, staffTeamNumber, Test.REPONAME1, 'admin');
+        let staffAdd = await gh.addTeamToRepo(Test.ORGNAME, staffTeamNumber, REPONAME, 'admin');
         expect(staffAdd.githubTeamNumber).to.equal(staffTeamNumber);
 
     }).timeout(TIMEOUT);
 
     it("Should be able to clone a source repo into a newly created repository.", async function () {
         const start = Date.now();
-
-        let targetUrl = 'https://github.com/SECapstone/testtest__repo1';
-        let importUrl = 'https://github.com/SECapstone/d0_bootstrap';
+        let targetUrl = 'https://github.com/SECapstone/' + REPONAME;
+        let importUrl = 'https://github.com/SECapstone/bootstrap';
 
         let output = await gh.importRepoFS(Test.ORGNAME, importUrl, targetUrl);
         expect(output).to.be.true;
@@ -203,6 +230,7 @@ describe.skip("GitHubActions", () => {
     }).timeout(TIMEOUT);
 
 
+    /*
     it("Should be able to delete things before running provisioning tests.", async function () {
         // check auth
         let repos = await gh.listRepos(Test.ORGNAME);
@@ -211,19 +239,10 @@ describe.skip("GitHubActions", () => {
 
         // delete test repos if needed
         for (const repo of repos as any) {
-            if (repo.full_name === "SECapstone/" + Test.REPONAME1) {
-                await gh.deleteRepo(Test.ORGNAME, Test.REPONAME1);
+            if (repo.full_name.indexOf("SECapstone/TEST__X__") === 0) {
+                Log.test("Deleting test repo: " + repo.name);
+                await gh.deleteRepo(Test.ORGNAME, repo.name);
             }
-            if (repo.full_name === "SECapstone/secap_" + Test.USERNAMEGITHUB1) {
-                await gh.deleteRepo(Test.ORGNAME, 'secap_' + Test.USERNAMEGITHUB1);
-            }
-            if (repo.full_name === "SECapstone/secap_" + Test.USERNAMEGITHUB2) {
-                await gh.deleteRepo(Test.ORGNAME, 'secap_' + Test.USERNAMEGITHUB2);
-            }
-            if (repo.full_name === "SECapstone/secap_" + Test.USERNAMEGITHUB3) {
-                await gh.deleteRepo(Test.ORGNAME, 'secap_' + Test.USERNAMEGITHUB3);
-            }
-            // TODO: delete team repo too
         }
 
         // delete teams if needed
@@ -232,29 +251,54 @@ describe.skip("GitHubActions", () => {
         expect(teams.length > 0).to.be.true;
 
         for (const team of teams as any) {
-            Log.info('team: ' + JSON.stringify(team));
-
-
-            if (team.name === Test.TEAMNAME1) {
+            if (team.name.indexOf("TEST__X__t_") === 0) {
+                Log.info('Deleting test team: ' + JSON.stringify(team));
                 await gh.deleteTeam(Test.ORGNAME, team.id);
-            }
-
-            if (team.name === Test.USERNAMEGITHUB1) {
-                const teamNum = await gh.getTeamNumber(Test.ORGNAME, Test.USERNAMEGITHUB1);
-                await gh.deleteTeam(Test.ORGNAME, teamNum);
-            }
-
-            if (team.name === Test.USERNAMEGITHUB2) {
-                const teamNum = await gh.getTeamNumber(Test.ORGNAME, Test.USERNAMEGITHUB2);
-                await gh.deleteTeam(Test.ORGNAME, teamNum);
-            }
-
-            if (team.name === Test.USERNAMEGITHUB3) {
-                const teamNum = await gh.getTeamNumber(Test.ORGNAME, Test.USERNAMEGITHUB3);
-                await gh.deleteTeam(Test.ORGNAME, teamNum);
             }
         }
     }).timeout(30 * 1000);
+    */
+
+
+    it("Clear stale repos and teams.", async function () {
+        Log.test('GitHubActionSpec::deleteStale() - start');
+
+        let repos = await gh.listRepos(Test.ORGNAME);
+        expect(repos).to.be.an('array');
+        expect(repos.length > 0).to.be.true;
+
+        // delete test repos if needed
+        for (const repo of repos as any) {
+            Log.info('Evaluating repo: ' + repo.name);
+            for (const r of REPOS) {
+                if (repo.name === r) {
+                    let val = await
+                        gh.deleteRepo(Test.ORGNAME, r);
+                    expect(val).to.be.true;
+                }
+            }
+        }
+
+
+        // delete teams if needed
+        let teams = await
+            gh.listTeams(Test.ORGNAME);
+        expect(teams).to.be.an('array');
+        expect(teams.length > 0).to.be.true;
+        Log.test('All Teams: ' + JSON.stringify(teams));
+        for (const team of teams as any) {
+            // Log.info('Evaluating team: ' + JSON.stringify(team));
+            for (const t of TEAMS) {
+                if (team.name === t) {
+                    Log.test("Old test team found; removing: " + team.name);
+                    let val = await
+                        gh.deleteTeam(Test.ORGNAME, team.id);
+                    expect(val).to.be.true;
+                }
+            }
+        }
+        Log.test('GitHubActionSpec::deleteStale() - done');
+    }).timeout(TIMEOUT * 10);
 
     it("Should be able to provision d0.", async function () {
         const start = Date.now();
@@ -268,7 +312,6 @@ describe.skip("GitHubActions", () => {
         expect(p2).to.not.be.null;
         const p3 = await sc.handleUnknownUser(Test.ORGNAME, Test.USERNAMEGITHUB3);
         expect(p3).to.not.be.null;
-
 
         Log.test('Provisioning three d0 repos');
         let provision = await sc.provision(Test.ORGNAME, 'd0', [Test.USERNAMEGITHUB1]);
@@ -295,6 +338,7 @@ describe.skip("GitHubActions", () => {
             timestamp: Date.now()
         };
         await gc.createGrade(Test.ORGNAME, "secap_" + Test.USERNAMEGITHUB1, "d0", grade);
+
         grade = {
             score:     70,
             comment:   'test',
@@ -302,6 +346,7 @@ describe.skip("GitHubActions", () => {
             timestamp: Date.now()
         };
         await gc.createGrade(Test.ORGNAME, "secap_" + Test.USERNAMEGITHUB2, "d0", grade);
+
         grade = {
             score:     75,
             comment:   'test',
@@ -320,6 +365,7 @@ describe.skip("GitHubActions", () => {
 
         Log.test('Provision solo D1');
         const provision = await sc.provision(Test.ORGNAME, 'd1', [Test.USERNAMEGITHUB1]);
+        Log.test('Provision solo d1; payload: ' + JSON.stringify(provision));
         expect(provision.success).to.not.be.undefined;
         expect(provision.failure).to.be.undefined;
         expect((<ActionPayload>provision.success).status.status).to.equal("D1");
@@ -334,6 +380,7 @@ describe.skip("GitHubActions", () => {
 
         Log.test('Provision paired d1');
         const provision = await sc.provision(Test.ORGNAME, 'd1', [Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB3]);
+        Log.test('Provision paired d1; payload: ' + JSON.stringify(provision));
         expect(provision.success).to.not.be.undefined;
         expect(provision.failure).to.be.undefined;
         expect((<ActionPayload>provision.success).status.status).to.equal("D1");
@@ -343,4 +390,55 @@ describe.skip("GitHubActions", () => {
         Log.trace("Test took (2 users, 1 clones): " + Util.took(start));
     }).timeout(300 * 1000); // 5 minutes
 
+
+
+
+    it("Clear stale repos and teams.", async function () {
+        Log.test('GitHubActionSpec::deleteStale() - start');
+
+        let repos = await gh.listRepos(Test.ORGNAME);
+        expect(repos).to.be.an('array');
+        expect(repos.length > 0).to.be.true;
+
+        // delete test repos if needed
+        for (const repo of repos as any) {
+            Log.info('Evaluating repo: ' + repo.name);
+            for (const r of REPOS) {
+                if (repo.name === r) {
+                    let val = await
+                        gh.deleteRepo(Test.ORGNAME, r);
+                    expect(val).to.be.true;
+                }
+            }
+        }
+
+
+        // delete teams if needed
+        let teams = await
+            gh.listTeams(Test.ORGNAME);
+        expect(teams).to.be.an('array');
+        expect(teams.length > 0).to.be.true;
+        Log.test('All Teams: ' + JSON.stringify(teams));
+        for (const team of teams as any) {
+            // Log.info('Evaluating team: ' + JSON.stringify(team));
+            for (const t of TEAMS) {
+                if (team.name === t) {
+                    Log.test("Old test team found; removing: " + team.name);
+                    let val = await
+                        gh.deleteTeam(Test.ORGNAME, team.id);
+                    expect(val).to.be.true;
+                }
+            }
+        }
+        Log.test('GitHubActionSpec::deleteStale() - done');
+    }).timeout(TIMEOUT * 10);
+
+
+    function getProjectPrefix(org: string): string {
+        return "TEST__X__secap_";
+    }
+
+    function getTeamPrefix(org: string) {
+        return "TEST__X__t_";
+    }
 });

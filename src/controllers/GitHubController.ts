@@ -171,7 +171,7 @@ export class GitHubActions {
     public createRepo(org: string, repoName: string): Promise<string> {
         let ctx = this;
 
-        Log.info("GitHubAction::createRepo( " + repoName + " ) - start");
+        Log.info("GitHubAction::createRepo( " + org + ", " + repoName + " ) - start");
         return new Promise(function (fulfill, reject) {
 
             const uri = ctx.apiPath + '/orgs/' + org + '/repos';
@@ -223,7 +223,7 @@ export class GitHubActions {
     public deleteRepo(org: string, repoName: string): Promise<boolean> {
         let ctx = this;
 
-        Log.info("GitHubAction::deleteRepo(..) - start");
+        Log.info("GitHubAction::deleteRepo( " + org + ", " + repoName + " ) - start");
         return new Promise(function (fulfill, reject) {
 
             const uri = ctx.apiPath + '/repos/' + org + '/' + repoName;
@@ -259,7 +259,7 @@ export class GitHubActions {
     public deleteTeam(org: string, teamId: number): Promise<boolean> {
         let ctx = this;
 
-        Log.info("GitHubAction::deleteTeam(..) - start");
+        Log.info("GitHubAction::deleteTeam( " + org + ", " + teamId + " ) - start");
         return new Promise(function (fulfill, reject) {
 
             const uri = ctx.apiPath + '/teams/' + teamId;//+ org + '/' + repoName;
@@ -293,7 +293,7 @@ export class GitHubActions {
     public listRepos(org: string): Promise<string> {
         let ctx = this;
 
-        Log.info("GitHubAction::listRepos(..) - start");
+        Log.info("GitHubAction::listRepos( " + org + " ) - start");
         return new Promise(function (fulfill, reject) {
 
             // GET /orgs/:org/repos
@@ -327,7 +327,7 @@ export class GitHubActions {
     public listTeams(org: string): Promise<string> {
         let ctx = this;
 
-        Log.info("GitHubAction::listTeams(..) - start");
+        Log.info("GitHubAction::listTeams( " + org + " ) - start");
         return new Promise(function (fulfill, reject) {
 
             // GET /orgs/:org/repos
@@ -358,7 +358,7 @@ export class GitHubActions {
 
     public listWebhooks(org: string, repoName: string): Promise<{}> {
         let ctx = this;
-        Log.info("GitHubAction::listWebhooks(..) - start");
+        Log.info("GitHubAction::listWebhooks( " + org + ", " + repoName + " ) - start");
 
         return new Promise(function (fulfill, reject) {
 
@@ -386,7 +386,7 @@ export class GitHubActions {
 
     public addWebhook(org: string, repoName: string, webhookEndpoint: string): Promise<boolean> {
         let ctx = this;
-        Log.info("GitHubAction::addWebhook(..) - start");
+        Log.info("GitHubAction::addWebhook( " + org + ", " + repoName + ", ... ) - start");
 
         return new Promise(function (fulfill, reject) {
 
@@ -434,7 +434,7 @@ export class GitHubActions {
      */
     public createTeam(org: string, teamName: string, permission: string): Promise<{ teamName: string, githubTeamNumber: number }> {
         let ctx = this;
-        Log.info("GitHubAction::createTeam(..) - start");
+        Log.info("GitHubAction::createTeam( " + org + ", " + teamName + ", " + permission + ", ... ) - start");
         return new Promise(function (fulfill, reject) {
 
             const uri = ctx.apiPath + '/orgs/' + org + '/teams';
@@ -473,7 +473,7 @@ export class GitHubActions {
      */
     public addMembersToTeam(teamName: string, githubTeamId: number, members: string[]): Promise<GitTeamTuple> {
         let ctx = this;
-        Log.info("GitHubAction::addMembersToTeam(..) - start; id: " + githubTeamId + "; members: " + JSON.stringify(members));
+        Log.info("GitHubAction::addMembersToTeam( " + teamName + ", ... ) - start; id: " + githubTeamId + "; members: " + JSON.stringify(members));
 
         return new Promise(function (fulfill, reject) {
             let promises: any = [];
@@ -545,7 +545,7 @@ export class GitHubActions {
     }
 
     public getTeamNumber(org: string, teamName: string): Promise<number> {
-        Log.info("GitHubAction::getTeamNumber( " + teamName + " ) - start");
+        Log.info("GitHubAction::getTeamNumber( " + org + ", " + teamName + " ) - start");
         let ctx = this;
 
         return new Promise(function (fulfill, reject) {

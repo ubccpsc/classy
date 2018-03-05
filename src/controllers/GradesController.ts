@@ -22,24 +22,26 @@ export class GradesController {
     }
 
     public async createGrade(org: string, repoId: string, delivId: string, grade: GradePayload): Promise<boolean> {
-        Log.info("RepositoryController::createGrade( " + org + ", " + repoId + ", " + delivId + ",.. ) - start");
+        Log.info("GradesController::createGrade( " + org + ", " + repoId + ", " + delivId + ",.. ) - start");
         try {
 
             // find all people on a repo
+            const allPeopleIds: string[] = [];
             let repo = await this.db.getRepository(org, repoId);
             const teamIds = repo.teamIds;
-            const allPeopleIds: string[] = [];
-            for (const tid of teamIds) {
-                let team = await this.db.getTeam(org, tid);
-                for (const t of team.personIds) {
-                    let found = false;
-                    for (const ap of allPeopleIds) {
-                        if (ap === t) {
-                            found = true;
+            if (teamIds !== null) {
+                for (const tid of teamIds) {
+                    let team = await this.db.getTeam(org, tid);
+                    for (const t of team.personIds) {
+                        let found = false;
+                        for (const ap of allPeopleIds) {
+                            if (ap === t) {
+                                found = true;
+                            }
                         }
-                    }
-                    if (found === false) {
-                        allPeopleIds.push(t);
+                        if (found === false) {
+                            allPeopleIds.push(t);
+                        }
                     }
                 }
             }

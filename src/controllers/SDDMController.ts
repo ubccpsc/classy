@@ -408,7 +408,7 @@ export class SDDMController {
             const name = personId;
             const person = await this.pc.getPerson(org, name);
             const teamName = name;
-            const repoName = "secap_" + teamName;
+            const repoName = SDDMController.getProjectPrefix(org) + teamName;
 
             if (person === null) {
                 // return early
@@ -508,7 +508,7 @@ export class SDDMController {
             const name = personId;
             // const person = await this.pc.getPerson(org, name);
             const teamName = name;
-            const repoName = "secap_" + teamName;
+            const repoName = SDDMController.getProjectPrefix(org) + teamName;
 
             // find local team & repo
             const team = await this.tc.getTeam(org, teamName);
@@ -566,7 +566,7 @@ export class SDDMController {
             while (teamName === null) {
                 let str = crypto.randomBytes(256).toString('hex');
                 str = str.substr(0, 6);
-                const name = "t_" + str; // team prefix
+                const name = SDDMController.getTeamPrefix(org) + str; // team prefix
                 Log.trace("SDDMController::provisionD1Repo(..) - checking name: " + str);
                 let team = await this.tc.getTeam(org, str);
                 if (team === null) {
@@ -620,7 +620,7 @@ export class SDDMController {
             const team = await this.tc.createTeam(org, teamName, people, teamCustom);
 
             // create local repo
-            const repoName = "secap_" + teamName;
+            const repoName = SDDMController.getProjectPrefix(org) + teamName;
             const repoCustom = {d0enabled: false, d1enabled: true, d2enabled: true, d3enabled: true, sddmD3pr: false}; // d0 repo for now
             const repo = await this.rc.createRepository(org, repoName, [team], repoCustom);
 
@@ -749,6 +749,34 @@ export class SDDMController {
         } catch (err) {
             Log.error("SDDMController::handleNewGrade( .. ) - ERROR: " + err);
             return false;
+        }
+    }
+
+    /**
+     * Public static so tests can use them too.
+     *
+     * @param {string} org
+     * @returns {string}
+     */
+    private static getProjectPrefix(org: string): string {
+        if (org === "secapstonetest") {
+            return "TEST__X__secap_";
+        } else {
+            return "secap_";
+        }
+    }
+
+    /**
+     * Public static so tests can use them too.
+     *
+     * @param {string} org
+     * @returns {string}
+     */
+    private static getTeamPrefix(org: string) {
+        if (org === "secapstonetest") {
+            return "TEST__X__t_";
+        } else {
+            return "t_";
         }
     }
 }
