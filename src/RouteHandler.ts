@@ -450,6 +450,7 @@ export class RouteHandler {
         var options = {
             uri:     'https://sdmm.cs.ubc.ca:11333/submit',
             method:  'POST',
+            json:    true,
             headers: {
                 'Content-Type': 'application/json'
                 //'User-Agent':    'Portal',
