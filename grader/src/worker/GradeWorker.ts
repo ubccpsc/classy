@@ -131,7 +131,7 @@ export class GradeWorker implements IGradeWorker {
                     out.postbackOnComplete = true;
                     out.state = "TIMEOUT";
                 } else {
-                    const report: IGradeReport = await fs.readJson(`${this.workspace}/report.json`);
+                    const report: IGradeReport = await fs.readJson(`${this.workspace}/output/report.json`);
                     out.report = report;
                     out.feedback = report.feedback;
                     out.postbackOnComplete = cntrCode !== 0;
@@ -151,7 +151,11 @@ export class GradeWorker implements IGradeWorker {
                 socket.end();
             }
             cntr.remove();
-            cntrFirewall.delete();
+            try {
+                cntrFirewall.delete();
+            } catch (err) {
+                // ignore: container did not request any exceptions so no firewall chain was created
+            }
         }
 
         return out;
