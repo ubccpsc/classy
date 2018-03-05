@@ -451,11 +451,7 @@ export class RouteHandler {
             uri:     'https://sdmm.cs.ubc.ca:11333/submit',
             method:  'POST',
             json:    true,
-            headers: {
-                'Content-Type': 'application/json'
-                //'User-Agent':    'Portal',
-                // 'Authorization': 'token ' + token
-            },
+            headers: req.headers,
             body:    webhookBody
         };
         // this extra check isn't strictly required, but means we can
