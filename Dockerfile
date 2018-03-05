@@ -3,7 +3,7 @@ FROM node:8-alpine
 EXPOSE 5000
 
 RUN apk add --no-cache git && \
-    git config --global user.email "" && \
+    git config --global user.email "8973427+ubcbot@users.noreply.github.com" && \
     git config --global user.name "ubcbot"
 
 WORKDIR /app
