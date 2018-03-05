@@ -9,6 +9,9 @@
     * Put `server.key` and `server.crt` in `<project-root>/ssl/`
     * `docker run -p 27017:27017 mongo` NOTE: WILL WIPE DATA, not for PROD
     * don't forget `-r dotenv/config` in node params if you're running in an IDE
+* If you want to debug the db, get on the ubc VPN and forward a port to the machine:
+    * `ssh <username>@<host> -L 27017:127.0.0.1:27017`
+    * Then you can connect to the db using `localhost:27017` and the appropriate credentials
 
 ## Deployment
 

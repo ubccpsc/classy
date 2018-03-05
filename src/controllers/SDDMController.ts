@@ -463,6 +463,10 @@ export class SDDMController {
                 return {success: {message: "Repository successfully created.", status: statusPayload}};
             } else {
                 Log.error("SDDMController::provisionD0Repo(..) - something went wrong provisioning this repo; see logs above.");
+                // TODO: cleanup here
+                // const delTeam = await this.tc.deleteTeam(team);
+                // const delRepo = await this.rc.deleteRepo(repo);
+
                 return {failure: {shouldLogout: false, message: "Error provisioning d0 repo; contact course staff."}};
             }
         } catch (err) {
@@ -626,7 +630,7 @@ export class SDDMController {
             const repo = await this.rc.createRepository(org, repoName, [team], repoCustom);
 
             // create remote repo
-            const INPUTREPO = "https://github.com/SECapstone/bootstrap.git"; // HARDCODED for SDMM
+            const INPUTREPO = "https://github.com/SECapstone/bootstrap"; // HARDCODED for SDMM
             const WEBHOOKADDR = "https://sdmm.cs.ubc.ca:11333/submit"; // HARDCODED for SDMM
             const provisionResult = await this.gh.provisionRepository(org, repoName, [team], INPUTREPO, WEBHOOKADDR);
 
