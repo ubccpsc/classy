@@ -9,6 +9,7 @@ import {TeamController} from "./TeamController";
 import {PersonController} from "./PersonController";
 
 import * as crypto from 'crypto';
+import {Config} from "../Config";
 
 export interface Payload {
     success?: ActionPayload | StatusPayload; // only set if defined
@@ -759,7 +760,8 @@ export class SDDMController {
      * @returns {string}
      */
     private static getProjectPrefix(org: string): string {
-        if (org === "secapstonetest") {
+        if (org === "secapstonetest" || Config.getInstance().getProp('name') === "secapstonetest") {
+            Log.info("SDDMController::getProjectPrefix(..) - returning test prefix");
             return "TEST__X__secap_";
         } else {
             return "secap_";
@@ -773,7 +775,8 @@ export class SDDMController {
      * @returns {string}
      */
     private static getTeamPrefix(org: string) {
-        if (org === "secapstonetest") {
+        if (org === "secapstonetest" || Config.getInstance().getProp('name') === "secapstonetest") {
+            Log.info("SDDMController::getTeamPrefix(..) - returning test prefix");
             return "TEST__X__t_";
         } else {
             return "t_";

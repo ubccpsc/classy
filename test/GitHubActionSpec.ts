@@ -18,11 +18,12 @@ describe.skip("GitHubActions", () => {
     let TIMEOUT = 5000;
 
     let ORGNAME = 'secapstone';
-    const REPONAME = getProjectPrefix(Test.ORGNAME) + Test.REPONAME1;
-    const TEAMNAME = getTeamPrefix(Test.ORGNAME) + Test.TEAMNAME1;
+    const REPONAME = getProjectPrefix() + Test.REPONAME1;
+    const TEAMNAME = getTeamPrefix() + Test.TEAMNAME1;
 
     before(async () => {
-        Test.ORGNAME = ORGNAME;
+        Test.ORGNAME = ORGNAME; // use real org name so the repos are provisioned correctly
+        // config.name will still be test though
     });
 
     beforeEach(function () {
@@ -30,8 +31,11 @@ describe.skip("GitHubActions", () => {
     });
 
     let REPOS = ["testtest__repo1",
+        "TEST__X__secap_cpscbot",
         "secap_cpscbot",
+        "TEST__X__secap_rthse2",
         "secap_rthse2",
+        "TEST__X__secap_ubcbot",
         "secap_ubcbot",
         "secap_testtest__repo1",
         "TEST__X__secap_testtest__repo1",
@@ -58,8 +62,7 @@ describe.skip("GitHubActions", () => {
             Log.info('Evaluating repo: ' + repo.name);
             for (const r of REPOS) {
                 if (repo.name === r) {
-                    let val = await
-                        gh.deleteRepo(Test.ORGNAME, r);
+                    let val = await gh.deleteRepo(Test.ORGNAME, r);
                     expect(val).to.be.true;
                 }
             }
@@ -76,8 +79,7 @@ describe.skip("GitHubActions", () => {
             for (const t of TEAMS) {
                 if (team.name === t) {
                     Log.test("Old test team found; removing: " + team.name);
-                    let val = await
-                        gh.deleteTeam(Test.ORGNAME, team.id);
+                    let val = await gh.deleteTeam(Test.ORGNAME, team.id);
                     expect(val).to.be.true;
                 }
             }
@@ -272,8 +274,7 @@ describe.skip("GitHubActions", () => {
             Log.info('Evaluating repo: ' + repo.name);
             for (const r of REPOS) {
                 if (repo.name === r) {
-                    let val = await
-                        gh.deleteRepo(Test.ORGNAME, r);
+                    let val = await gh.deleteRepo(Test.ORGNAME, r);
                     expect(val).to.be.true;
                 }
             }
@@ -291,8 +292,7 @@ describe.skip("GitHubActions", () => {
             for (const t of TEAMS) {
                 if (team.name === t) {
                     Log.test("Old test team found; removing: " + team.name);
-                    let val = await
-                        gh.deleteTeam(Test.ORGNAME, team.id);
+                    let val = await gh.deleteTeam(Test.ORGNAME, team.id);
                     expect(val).to.be.true;
                 }
             }
@@ -337,7 +337,7 @@ describe.skip("GitHubActions", () => {
             url:       'TESTURL',
             timestamp: Date.now()
         };
-        await gc.createGrade(Test.ORGNAME, "secap_" + Test.USERNAMEGITHUB1, "d0", grade);
+        await gc.createGrade(Test.ORGNAME, getProjectPrefix() + Test.USERNAMEGITHUB1, "d0", grade);
 
         grade = {
             score:     70,
@@ -345,7 +345,7 @@ describe.skip("GitHubActions", () => {
             url:       'TESTURL',
             timestamp: Date.now()
         };
-        await gc.createGrade(Test.ORGNAME, "secap_" + Test.USERNAMEGITHUB2, "d0", grade);
+        await gc.createGrade(Test.ORGNAME, getProjectPrefix() + Test.USERNAMEGITHUB2, "d0", grade);
 
         grade = {
             score:     75,
@@ -353,7 +353,7 @@ describe.skip("GitHubActions", () => {
             url:       'TESTURL',
             timestamp: Date.now()
         };
-        await gc.createGrade(Test.ORGNAME, "secap_" + Test.USERNAMEGITHUB3, "d0", grade);
+        await gc.createGrade(Test.ORGNAME, getProjectPrefix() + Test.USERNAMEGITHUB3, "d0", grade);
 
         Log.trace("Test took (3 users, 3 d0 repos): " + Util.took(start));
     }).timeout(300 * 1000); // 5 minutes
@@ -391,8 +391,6 @@ describe.skip("GitHubActions", () => {
     }).timeout(300 * 1000); // 5 minutes
 
 
-
-
     it("Clear stale repos and teams.", async function () {
         Log.test('GitHubActionSpec::deleteStale() - start');
 
@@ -405,8 +403,7 @@ describe.skip("GitHubActions", () => {
             Log.info('Evaluating repo: ' + repo.name);
             for (const r of REPOS) {
                 if (repo.name === r) {
-                    let val = await
-                        gh.deleteRepo(Test.ORGNAME, r);
+                    let val = await gh.deleteRepo(Test.ORGNAME, r);
                     expect(val).to.be.true;
                 }
             }
@@ -434,11 +431,11 @@ describe.skip("GitHubActions", () => {
     }).timeout(TIMEOUT * 10);
 
 
-    function getProjectPrefix(org: string): string {
+    function getProjectPrefix(): string {
         return "TEST__X__secap_";
     }
 
-    function getTeamPrefix(org: string) {
+    function getTeamPrefix() {
         return "TEST__X__t_";
     }
 });
