@@ -78,7 +78,7 @@ services:
             - db
             - grader
         ports:
-            - "1310:11333" # this is the github webhook port; exposed globally
+            - "11333:11333" # this is the github webhook port; exposed globally
         volumes:
             - "./ssl:/app/ssl"
     grader:
