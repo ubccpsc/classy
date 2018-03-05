@@ -89,7 +89,7 @@ export default class Server {
                 // GitHub Webhook endpoints
 
                 if (Config.getInstance().getProp("kind") === "ubc") {
-                    that.rest.post("/submit", restify.plugins.bodyParser(), RouteHandler.postGithubHook);
+                    that.rest.post("/githubWebhook", restify.plugins.bodyParser(), RouteHandler.postGithubHook);
                 } else if (Config.getInstance().getProp("kind") === "edx") {
                     Log.info("Server::start() - xqueue request received - start");
                     that.rest.post("/", restify.plugins.bodyParser(), RouteHandler.postXQueue);
