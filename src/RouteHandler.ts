@@ -52,7 +52,7 @@ export class RouteHandler {
 
         const org = req.query.org;
 
-        const githubRedirect = config.getProp('backendUrl') + ':' + config.getProp('backendPort') + '/githubCallback?org=' + org;
+        const githubRedirect = config.getProp('autotestUrl') + ':' + config.getProp('autotestPort') + '/githubCallback?org=' + org;
         Log.info("RouteHandler::getAuth(..) - /auth redirect; course: " + org + "; url: " + githubRedirect);
 
         const setup = {

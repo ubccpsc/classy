@@ -26,6 +26,8 @@ export class Config {
                 mongoUrl:           process.env.DB_URL,
                 githubTokenUser:    process.env.GH_TOKEN_USER,
                 githubToken:        process.env.GH_API_TOKEN,
+                autotestUrl:        process.env.AUTOTEST_URL,
+                autotestPort:       process.env.AUTOTEST_PORT,
             }
         } catch (err) {
             Log.error("Config::<init> - fatal error reading configuration file: " + err);
