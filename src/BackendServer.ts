@@ -80,6 +80,8 @@ export default class BackendServer {
                 that.rest = restify.createServer(https_options);
 
                 that.rest.use(restify.plugins.queryParser());
+                that.rest.use(restify.plugins.bodyParser({mapParams: true})); // NEW
+
                 that.rest.use(function crossOrigin(req, res, next) {
                     res.header("Access-Control-Allow-Origin", "*");
                     res.header("Access-Control-Allow-Headers", "X-Requested-With Content-Type token user org");
@@ -108,7 +110,7 @@ export default class BackendServer {
                 that.rest.get('/defaultDeliverable/:org', RouteHandler.atDefaultDeliverable);
                 that.rest.get('/isStaff/:org/:personId', RouteHandler.atIsStaff);
                 that.rest.get('/container/:org/:delivId', RouteHandler.atContainerDetails);
-                that.rest.get('/grades/:org/:repoId/:delivId', RouteHandler.atGradeResult);
+                that.rest.post('/grade/:org/:repoId/:delivId', RouteHandler.atGradeResult);
                 /**
                  * Serve up index.html; not needed for server backend
                  */

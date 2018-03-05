@@ -1,17 +1,19 @@
-const loadFirst = require('./GlobalSpec');
-
-
 import BackendServer from "../src/BackendServer";
 import Log from "../src/util/Log";
 import {Test} from "./GlobalSpec";
 
 import {expect} from "chai";
 import "mocha";
+import {GradePayload} from "../src/controllers/SDDMController";
+
+const loadFirst = require('./GlobalSpec');
+
+
 import restify = require('restify');
 
 const request = require('supertest');
 
-describe('REST Routes for AutoTest', function () {
+describe.only('REST Routes for AutoTest', function () {
 
     var app: restify.Server = null;
 
@@ -104,6 +106,29 @@ describe('REST Routes for AutoTest', function () {
         Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(400);
         expect(response.body.message).to.not.be.undefined;
+    });
+
+    it('Should be able to receive a grade event', async function () {
+
+        let response = null;
+
+        let gradePayload: GradePayload = {
+            score:     51,
+            url:       'test url from grade record',
+            comment:   'test comment from grade record',
+            timestamp: Date.now()
+        };
+
+        // that.rest.post('/grade/:org/:repoId/:delivId', RouteHandler.atGradeResult);
+        const url = '/grade/' + Test.ORGNAME + '/' + Test.REPONAME1 + '/' + Test.DELIVID0;
+        try {
+            response = await request(app).post(url).send(gradePayload).set('Accept', 'application/json');
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(response.body));
+        expect(response.status).to.equal(200);
+        expect(response.body.success).to.be.true;
     });
 
 });

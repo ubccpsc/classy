@@ -733,17 +733,22 @@ export class SDDMController {
     public async handleNewGrade(org: string, repoId: string, delivId: string, grade: GradePayload): Promise<boolean> {
         Log.info("SDDMController::handleNewGrade( .. ) - start");
 
-        let peopleIds = await this.rc.getPeopleForRepo(org, repoId);
-        for (const personId of peopleIds) {
-            let existingGrade = await this.gc.getGrade(org, personId, delivId);
-            if (existingGrade === null || existingGrade.score < grade.score) {
-                Log.info("SDDMController::handleNewGrade( .. ) - grade is higher; updating");
-                this.gc.createGrade(org, repoId, delivId, grade);
-            } else {
-                Log.info("SDDMController::handleNewGrade( .. ) - grade is not higher");
+        try {
+            let peopleIds = await this.rc.getPeopleForRepo(org, repoId);
+            for (const personId of peopleIds) {
+                let existingGrade = await this.gc.getGrade(org, personId, delivId);
+                if (existingGrade === null || existingGrade.score < grade.score) {
+                    Log.info("SDDMController::handleNewGrade( .. ) - grade is higher; updating");
+                    this.gc.createGrade(org, repoId, delivId, grade);
+                } else {
+                    Log.info("SDDMController::handleNewGrade( .. ) - grade is not higher");
+                }
             }
+            // createGrade(org: string, repoId: string, delivId: string, score: number, comment: string, url: string, timestamp: number)
+            return true;
+        } catch (err) {
+            Log.error("SDDMController::handleNewGrade( .. ) - ERROR: " + err);
+            return false;
         }
-        // createGrade(org: string, repoId: string, delivId: string, score: number, comment: string, url: string, timestamp: number)
-        return true;
     }
 }

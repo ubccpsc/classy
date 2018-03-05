@@ -375,7 +375,7 @@ export class RouteHandler {
 
         const gradeRecord: GradePayload = req.body; // turn into json?
 
-        Log.info('RouteHandler::atGradeResult(..) - org: ' + org);
+        Log.info('RouteHandler::atGradeResult(..) - org: ' + org + '; repoId: ' + repoId + '; delivId: ' + delivId + '; body: ' + JSON.stringify(gradeRecord));
 
         let sc = new SDDMController(new GitHubController());
         sc.handleNewGrade(org, repoId, delivId, gradeRecord).then(function (success) {

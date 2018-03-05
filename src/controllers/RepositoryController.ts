@@ -97,20 +97,25 @@ export class RepositoryController {
     }
 
     public async getPeopleForRepo(org: string, repoId: string): Promise<string[] | null> {
-        Log.info("RepositoryController::getPeopleForRepo( " + org + ", " + name + ",.. ) -  start");
-        let peopleIds: string[] = [];
-        let tc = new TeamController();
+        Log.info("RepositoryController::getPeopleForRepo( " + org + ", " + repoId + ",.. ) -  start");
 
-        let repo = await this.getRepository(org, repoId);
-        for (const teamId of repo.teamIds) {
-            let team = await tc.getTeam(org, teamId);
-            for (const personId of team.personIds) {
-                if (peopleIds.indexOf(personId) < 0) {
-                    peopleIds.push(personId);
+        let peopleIds: string[] = [];
+        try {
+            let tc = new TeamController();
+            let repo = await this.getRepository(org, repoId);
+            if (repo !== null) {
+                for (const teamId of repo.teamIds) {
+                    let team = await tc.getTeam(org, teamId);
+                    for (const personId of team.personIds) {
+                        if (peopleIds.indexOf(personId) < 0) {
+                            peopleIds.push(personId);
+                        }
+                    }
                 }
             }
+        } catch (err) {
+            Log.error("RepositoryController::getPeopleForRepo(..) - ERROR: " + err);
         }
-
         return peopleIds;
     }
 }
