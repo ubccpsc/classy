@@ -35,6 +35,8 @@ services:
             - "GITHUB_HOST=https://github.com"
             - "GITHUB_API=https://api.github.com"
             - "DB_URL=mongodb://${COMPOSE_PROJECT_NAME}_db_1:27017"
+            - "AUTOTEST_URL=https://sdmm.cs.ubc.ca"
+            - "AUTOTEST_PORT=11333"
             # - "GH_TOKEN_USER="
             # - "GH_API_TOKEN=token ${}"
             # - "GH_CLIENT_ID=${}"
