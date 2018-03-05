@@ -7,10 +7,10 @@ import {GitHubActions, GitHubController} from "../src/controllers/GitHubControll
 import Log from "../src/util/Log";
 import {Test} from "./GlobalSpec";
 import Util from "../src/util/Util";
-import {ActionPayload, SDDMController} from "../src/controllers/SDDMController";
+import {ActionPayload, GradePayload, SDDMController} from "../src/controllers/SDDMController";
 import {GradesController} from "../src/controllers/GradesController";
 
-describe("GitHubActions", () => {
+describe.skip("GitHubActions", () => {
 
     let gh: GitHubActions;
 
@@ -288,9 +288,27 @@ describe("GitHubActions", () => {
 
         Log.test('Adding some grades for the d0 repos');
         const gc = new GradesController();
-        await gc.createGrade(Test.ORGNAME, "secap_" + Test.USERNAMEGITHUB1, "d0", 65, "test", "TESTURL", Date.now());
-        await gc.createGrade(Test.ORGNAME, "secap_" + Test.USERNAMEGITHUB2, "d0", 70, "test", "TESTURL", Date.now());
-        await gc.createGrade(Test.ORGNAME, "secap_" + Test.USERNAMEGITHUB3, "d0", 75, "test", "TESTURL", Date.now());
+        let grade: GradePayload = {
+            score:     65,
+            comment:   'test',
+            url:       'TESTURL',
+            timestamp: Date.now()
+        };
+        await gc.createGrade(Test.ORGNAME, "secap_" + Test.USERNAMEGITHUB1, "d0", grade);
+        grade = {
+            score:     70,
+            comment:   'test',
+            url:       'TESTURL',
+            timestamp: Date.now()
+        };
+        await gc.createGrade(Test.ORGNAME, "secap_" + Test.USERNAMEGITHUB2, "d0", grade);
+        grade = {
+            score:     75,
+            comment:   'test',
+            url:       'TESTURL',
+            timestamp: Date.now()
+        };
+        await gc.createGrade(Test.ORGNAME, "secap_" + Test.USERNAMEGITHUB3, "d0", grade);
 
         Log.trace("Test took (3 users, 3 d0 repos): " + Util.took(start));
     }).timeout(300 * 1000); // 5 minutes

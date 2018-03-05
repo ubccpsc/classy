@@ -1,6 +1,7 @@
 import Log from "../util/Log";
 import {DatabaseController} from "./DatabaseController";
 import {Grade} from "../Types";
+import {GradePayload} from "./SDDMController";
 
 export class GradesController {
 
@@ -20,7 +21,7 @@ export class GradesController {
         return grade;
     }
 
-    public async createGrade(org: string, repoId: string, delivId: string, score: number, comment: string, url: string, timestamp: number): Promise<boolean> {
+    public async createGrade(org: string, repoId: string, delivId: string, grade: GradePayload): Promise<boolean> {
         Log.info("RepositoryController::createGrade( " + org + ", " + repoId + ", " + delivId + ",.. ) - start");
         try {
 
@@ -47,25 +48,26 @@ export class GradesController {
 
             for (var personId of allPeopleIds) {
                 // set their grades
-                let grade = await this.getGrade(org, personId, delivId);
-                if (grade === null) {
+                let gradeRecord = await this.getGrade(org, personId, delivId);
+                if (gradeRecord === null) {
                     // create new
-                    grade = {
+                    gradeRecord = {
                         org:       org,
                         personId:  personId,
                         delivId:   delivId,
-                        score:     score,
-                        comment:   comment,
-                        url:       url,
-                        timestamp: timestamp
+                        score:     grade.score,
+                        comment:   grade.comment,
+                        url:       grade.url,
+                        timestamp: grade.timestamp
                     };
                 } else {
                     // update existing
-                    grade.score = score;
-                    grade.comment = comment;
-                    grade.url = url;
+                    gradeRecord.score = grade.score;
+                    gradeRecord.comment = grade.comment;
+                    gradeRecord.url = grade.url;
+                    gradeRecord.timestamp = grade.timestamp;
                 }
-                await this.db.writeGrade(grade);
+                await this.db.writeGrade(gradeRecord);
             }
 
             return true;

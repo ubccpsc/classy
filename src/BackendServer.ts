@@ -108,7 +108,7 @@ export default class BackendServer {
                 that.rest.get('/defaultDeliverable/:org', RouteHandler.atDefaultDeliverable);
                 that.rest.get('/isStaff/:org/:personId', RouteHandler.atIsStaff);
                 that.rest.get('/container/:org/:delivId', RouteHandler.atContainerDetails);
-
+                that.rest.get('/grades/:org/:repoId/:delivId', RouteHandler.atGradeResult);
                 /**
                  * Serve up index.html; not needed for server backend
                  */

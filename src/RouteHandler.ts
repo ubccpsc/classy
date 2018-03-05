@@ -5,7 +5,7 @@ import {Config} from "./Config";
 import {DatabaseController} from "./controllers/DatabaseController";
 import {Auth, Person} from "./Types";
 import {PersonController} from "./controllers/PersonController";
-import {Payload, SDDMController, StatusPayload} from "./controllers/SDDMController";
+import {GradePayload, Payload, SDDMController, StatusPayload} from "./controllers/SDDMController";
 import {GitHubController} from "./controllers/GitHubController";
 import ClientOAuth2 = require("client-oauth2");
 
@@ -348,6 +348,42 @@ export class RouteHandler {
         // TODO: this is just a dummy implementation
 
         res.send({delivId: 'd0'});
+
+        /*
+                let sc: SDDMController = new SDDMController(new GitHubController());
+                sc.getStatus(org, user).then(function (status) {
+                    Log.trace('RouteHandler::getCurrentStatus(..) - sending 200; user: ' + user + '; status: ' + status);
+                    res.send({user: user, status: status});
+                }).catch(function (err) {
+                    Log.trace('RouteHandler::getCurrentStatus(..) - sending 400');
+                    res.send(400, {error: err});
+                });
+        */
+    }
+
+
+    public static atGradeResult(req: any, res: any, next: any) {
+        Log.info('RouteHandler::atGradeResult(..) - start');
+        // const user = req.headers.user;
+        // const token = req.headers.token;
+
+        // TODO: verify admin secret
+
+        const org = req.params.org;
+        const repoId = req.params.repoId;
+        const delivId = req.params.delivId;
+
+        const gradeRecord: GradePayload = req.body; // turn into json?
+
+        Log.info('RouteHandler::atGradeResult(..) - org: ' + org);
+
+        let sc = new SDDMController(new GitHubController());
+        sc.handleNewGrade(org, repoId, delivId, gradeRecord).then(function (success) {
+            res.send({success: true}); // respond
+        }).catch(function (err) {
+            res.send({success: true}); // respond true, they can't do anything anyways
+            Log.error('RouteHandler::atGradeResult(..) - ERROR: ' + err);
+        });
 
         /*
                 let sc: SDDMController = new SDDMController(new GitHubController());

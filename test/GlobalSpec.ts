@@ -7,9 +7,13 @@ import {DatabaseController} from "../src/controllers/DatabaseController";
 
 before(async () => {
     Log.info('GlobalSpec::before()');
-    const CONFIG = 'secapstonetest';
-    Config.getInstance(CONFIG);
+
+    Config.getInstance();
+    (<any>Config.getInstance()).config.org = 'secapstonetest'; // force testing in test environment
+    (<any>Config.getInstance()).config.name = 'secapstonetest'; // force testing in test environment
+
     Test.ORGNAME = Config.getInstance().getProp('org');
+    Log.info('GlobalSpec::before() - org: ' + Test.ORGNAME);
     let db = DatabaseController.getInstance();
     await db.clearData(); // nuke everything
 });
