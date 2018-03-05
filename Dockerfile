@@ -2,6 +2,9 @@ FROM node:8-alpine
 
 EXPOSE 5000
 
+ARG GIT_EMAIL
+ARG GIT_USER
+
 RUN apk add --no-cache git
 
 WORKDIR /app
@@ -13,7 +16,7 @@ RUN yarn install && \
     chown -R node /app
 
 USER node
-RUN git config --global user.email "8973427+ubcbot@users.noreply.github.com" && \
-    git config --global user.name "ubcbot"
+RUN git config --global user.email "${GIT_EMAIL}" && \
+    git config --global user.name "${GIT_USER}"
 
 CMD ["node", "--require", "dotenv/config", "src/BackendDaemon.js"]
