@@ -52,7 +52,7 @@ export class RouteHandler {
 
         const org = req.query.org;
 
-        const githubRedirect = config.getProp('autotestUrl') + ':' + config.getProp('autotestPort') + '/githubCallback?org=' + org;
+        const githubRedirect = config.getProp('backendUrl') + ':' + config.getProp('backendPort') + '/githubCallback?org=' + org;
         Log.info("RouteHandler::getAuth(..) - /auth redirect; course: " + org + "; url: " + githubRedirect);
 
         const setup = {
@@ -443,7 +443,7 @@ export class RouteHandler {
         const webhookBody: any = req.body;
         // Log.info('RouteHandler::githubWebhook(..) - body: ' + JSON.stringify(webhookBody));
 
-        const url = Config.getInstance().getProp('backendUrl') + ':' + Config.getInstance().getProp('backendPort') + '/githubWebhook';
+        const url = Config.getInstance().getProp('autotestUrl') + ':' + Config.getInstance().getProp('autotestPort') + '/githubWebhook';
         var options = {
             uri:     url, //  https://sdmm.cs.ubc.ca:11333/submit',
             method:  'POST',
