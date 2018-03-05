@@ -111,6 +111,8 @@ export default class BackendServer {
                 that.rest.get('/isStaff/:org/:personId', RouteHandler.atIsStaff);
                 that.rest.get('/container/:org/:delivId', RouteHandler.atContainerDetails);
                 that.rest.post('/grade/:org/:repoId/:delivId', RouteHandler.atGradeResult);
+
+                that.rest.post('/githubWebhook', RouteHandler.githubWebhook);
                 /**
                  * Serve up index.html; not needed for server backend
                  */

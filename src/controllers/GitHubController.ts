@@ -386,7 +386,7 @@ export class GitHubActions {
 
     public addWebhook(org: string, repoName: string, webhookEndpoint: string): Promise<boolean> {
         let ctx = this;
-        Log.info("GitHubAction::addWebhook( " + org + ", " + repoName + ", ... ) - start");
+        Log.info("GitHubAction::addWebhook( " + org + ", " + repoName + ", " + webhookEndpoint + " ) - start");
 
         return new Promise(function (fulfill, reject) {
 
