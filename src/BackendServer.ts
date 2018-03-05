@@ -99,7 +99,8 @@ export default class BackendServer {
                  * UI routes
                  */
                 that.rest.get('/currentStatus', RouteHandler.getCurrentStatus);
-                that.rest.post('/performAction/:action', RouteHandler.performAction);
+                that.rest.post('/performAction/:action/', RouteHandler.performAction);
+                that.rest.post('/performAction/:action/:param', RouteHandler.performAction);
 
                 /**
                  * AutoTest routes

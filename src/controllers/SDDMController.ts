@@ -140,7 +140,7 @@ export class SDDMController {
                         return await this.provisionD1Repo(org, peopleIds);
                     } else {
                         Log.error("SDDMController::provision(..) - d1 duplicate users");
-                        return {failure: {shouldLogout: false, message: "D1 duplicate users; contact course staff."}};
+                        return {failure: {shouldLogout: false, message: "D1 duplicate users; if you wish to work alone, please select 'work individually'."}};
                     }
                 } else {
                     Log.error("SDDMController::provision(..) - d1 can only be performed by single students or pairs of students.");
@@ -589,7 +589,7 @@ export class SDDMController {
                     return {
                         failure: {
                             shouldLogout: false,
-                            message:      "All teammates must be eligible to join a team."
+                            message:      "All teammates must be eligible to join a team and must not already be performing d1 in another team or on their own."
                         }
                     };
                 } else {
