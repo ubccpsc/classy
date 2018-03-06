@@ -122,7 +122,7 @@ export class GradeWorker implements IGradeWorker {
                 state = "TIMEOUT";
             }
             let [, log] = await cntr.logs();
-            if (typeof this.cntr.logSize !== "undefined") {
+            if (typeof this.cntr.logSize !== "undefined" && this.cntr.logSize > 0) {
                 log = log.substring(0, this.cntr.logSize);
             }
             fs.writeFile(`${this.workspace}/stdio.txt`, log);
