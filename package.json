@@ -24,6 +24,7 @@
     "client-oauth2": "^4.1.0",
     "dotenv": "5.0.1",
     "fs-extra": "^5.0.0",
+    "onsenui": "^2.9.2",
     "request": "2.83.0",
     "request-promise-native": "^1.0.5",
     "restify": "^6.3.4",
