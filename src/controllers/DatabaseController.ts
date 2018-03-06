@@ -152,6 +152,40 @@ export class DatabaseController {
         }
     }
 
+    /*
+    public async deletePerson(record: Person): Promise<boolean> {
+        Log.info("DatabaseController::deletePerson(..) - start");
+        return await this.deleteRecord(this.PERSONCOLL, {org: record.org, id: record.id});
+    }
+    */
+
+    public async deleteRepository(record: Repository): Promise<boolean> {
+        Log.info("DatabaseController::deleteRepository(..) - start");
+        if (record !== null) {
+            return await this.deleteRecord(this.REPOCOLL, {org: record.org, id: record.id});
+        }
+    }
+
+    public async deleteTeam(record: Team): Promise<boolean> {
+        Log.info("DatabaseController::deleteTeam(..) - start");
+        if (record !== null) {
+            return await this.deleteRecord(this.TEAMCOLL, {org: record.org, id: record.id});
+        }
+    }
+
+    private async deleteRecord(colName: string, query: {}): Promise<boolean> {
+        Log.trace("DatabaseController::deleteRecord( " + colName + ", " + JSON.stringify(query) + " ) - start");
+        try {
+            const collection = await this.getCollection(this.TEAMCOLL);
+            await collection.deleteOne(query);
+            Log.trace("DatabaseController::deleteRecord(..) - delete complete");
+            return true;
+        } catch (err) {
+            Log.error("DatabaseController::deleteRecord(..) - ERROR: " + err);
+            return false;
+        }
+    }
+
     public async writeDeliverable(record: Deliverable): Promise<boolean> {
         Log.info("DatabaseController::writeDeliverable(..) - start");
         Log.trace("DatabaseController::writeDeliverable(..) - deliv: " + JSON.stringify(record));

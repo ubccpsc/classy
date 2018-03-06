@@ -463,11 +463,12 @@ export class SDDMController {
                 return {success: {message: "Repository successfully created.", status: statusPayload}};
             } else {
                 Log.error("SDDMController::provisionD0Repo(..) - something went wrong provisioning this repo; see logs above.");
-                // TODO: cleanup here
-                // const delTeam = await this.tc.deleteTeam(team);
-                // const delRepo = await this.rc.deleteRepo(repo);
 
-                return {failure: {shouldLogout: false, message: "Error provisioning d0 repo; contact course staff."}};
+                const delTeam = await this.dc.deleteTeam(team);
+                const delRepo = await this.dc.deleteRepository(repo);
+                Log.info("SDDMController::provisionD0Repo(..) - team removed: " + delTeam + ", repo removed: " + delRepo);
+
+                return {failure: {shouldLogout: false, message: "Error provisioning d0 repo."}};
             }
         } catch (err) {
             Log.error("SDDMController::provisionD0Repo(..) - ERROR: " + err);
