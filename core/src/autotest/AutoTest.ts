@@ -319,6 +319,7 @@ export abstract class AutoTest implements IAutoTest {
                 const timeout: number = Config.getInstance().getProp("timeout");
                 const org: string = Config.getInstance().getProp("org");
                 const assnUrl: string = input.pushInfo.projectURL;
+                const assnCloneUrl: string = input.pushInfo.cloneURL;
                 const commitSHA: string = input.pushInfo.commitSHA;
                 const commitURL: string = input.pushInfo.commitURL;
                 const repo: string = input.pushInfo.repo;
@@ -330,6 +331,7 @@ export abstract class AutoTest implements IAutoTest {
                     "timestamp": timestamp,
                     "assn": {
                         "url": assnUrl,
+                        "cloneUrl": assnCloneUrl,
                         "commit": commitSHA
                     },
                     "container": {

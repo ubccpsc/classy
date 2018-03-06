@@ -58,6 +58,7 @@ export class EdxUtil {
         const evt: IPushEvent = {
             branch:      '', // really refs
             repo:        '', // repo name
+            cloneURL:    '',
             commitSHA:   '', // SHA
             commitURL:   'commitURL', // full url to commit
             org:         '', // orgName

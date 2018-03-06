@@ -104,6 +104,7 @@ export class GithubUtil {
             // const team = GithubUtil.getTeamOrProject(payload.repository.name);
             const repo = payload.repository.name;
             const projectURL = payload.repository.html_url;
+            const cloneURL = payload.repository.clone_url;
 
             if (payload.deleted === true && payload.head_commit === null) {
                 // commit deleted a branch, do nothing
@@ -138,6 +139,7 @@ export class GithubUtil {
             const pushEvent: IPushEvent = {
                 branch,
                 repo,
+                cloneURL,
                 commitSHA,
                 commitURL,
                 org,

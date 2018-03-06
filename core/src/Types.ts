@@ -4,6 +4,7 @@
 export interface IPushEvent {
     branch: string; // really refs
     repo: string; // repo name
+    cloneURL: string;
     commitSHA: string; // SHA
     commitURL: string; // full url to commit
     org: string; // orgName

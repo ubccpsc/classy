@@ -51,6 +51,7 @@ export interface IGradeReport {
 
 export interface IAssignment {
     url: string;
+    cloneUrl: string;
     commit: string;
     token: string;
 }

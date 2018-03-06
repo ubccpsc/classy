@@ -3,6 +3,7 @@ import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven, IPushEven
 export class TestData {
     static readonly pushEventA: IPushEvent = {
         "branch":      "master",
+        "cloneURL":    "",
         "commitSHA":   "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "commitURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "projectURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/",
@@ -14,6 +15,7 @@ export class TestData {
 
     static readonly pushEventB: IPushEvent = {
         "branch":      "master",
+        "cloneURL":    "",
         "commitSHA":   "eventb0918b872997de4c4d2baf4c263f8d4c6dc2",
         "commitURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/eventb0918b872997de4c4d2baf4c263f8d4c6dc2",
         "projectURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/",
@@ -25,6 +27,7 @@ export class TestData {
 
     static readonly pushEventPostback: IPushEvent = {
         "branch":      "master",
+        "cloneURL":    "",
         "commitSHA":   "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "commitURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "projectURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/",
