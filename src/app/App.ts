@@ -324,7 +324,7 @@ export class App {
             Log.trace("App::getServerCredentials - data raw: " + data);
             return data.json();
         }).then(function (data: any) {
-            Log.trace("App::getServerCredentials - data json: " + data);
+            Log.trace("App::getServerCredentials - data json: " + JSON.stringify(data));
             return data;
         }).catch(function (err: any) {
             Log.error("App::getServerCredentials - ERROR: " + err);

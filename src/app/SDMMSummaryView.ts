@@ -32,7 +32,7 @@ export interface StatusPayload {
 
 export interface GradePayload {
     score: number; // grade: < 0 will mean 'N/A' in the UI
-    url: string; // commit URL if known, otherwise repo url
+    URL: string; // commit URL if known, otherwise repo url
     timestamp: number; // even if grade < 0 might as well return when the entry was made
 }
 
@@ -410,7 +410,7 @@ export class SDMMSummaryView {
         }
 
         // set subrow
-        row.children[1].children[1].innerHTML = '<a href="' + grade.url + '">Source Repository</a>&nbsp;&nbsp;Timestamp: ' + new Date(grade.timestamp).toLocaleTimeString();
+        row.children[1].children[1].innerHTML = '<a href="' + grade.URL + '">Source Repository</a>&nbsp;&nbsp;Timestamp: ' + new Date(grade.timestamp).toLocaleTimeString();
 
     }
 
