@@ -2,26 +2,28 @@
 // Types needed from the Container's POV
 //
 export interface IPushEvent {
+    org: string; // orgName
+    repo: string; // TODO: rename repoId
+
     branch: string; // really refs
-    repo: string; // repo name
     cloneURL: string;
     commitSHA: string; // SHA
     commitURL: string; // full url to commit
-    org: string; // orgName
+
     projectURL: string; // full url to project
     postbackURL: string; // where to send postback results
     timestamp: number; // timestamp of push event
 }
 
 export interface ICommentEvent {
-    botMentioned: boolean; // was the bot mentioned (e.g., can ignore comments that don't mention the bot)
-    // repo: string;
+    courseId: string | null; // TODO: rename org
+    userName: string; // TODO: rename personId
+    delivId: string | null; // string if specified
+
     commitSHA: string;
     commitURL: string;
-    // projectUrl: string;
-    userName: string;
-    courseId: string | null; // string once known
-    delivId: string | null; // string if specified
+
+    botMentioned: boolean; // was the bot mentioned (e.g., can ignore comments that don't mention the bot)
     postbackURL: string; // where to send postback results
     timestamp: number; // timestamp of the latest comment update (safer than comment creation)
 }
@@ -30,8 +32,8 @@ export interface ICommentEvent {
  * Feedback key can be considered 'userName : courseId : delivId'
  */
 export interface IFeedbackGiven {
-    userName: string;
-    courseId: string;
+    userName: string; // TODO: rename personId
+    courseId: string; // TODO: rename org
     delivId: string;
     timestamp: number;
     commitURL: string; // for information only
@@ -48,7 +50,7 @@ export interface ICommitRecord { // refactor ICommitRecord
 export interface IContainerInput {
     // needed
     pushInfo: IPushEvent;
-    courseId: string;
+    courseId: string; // TODO: rename org
     delivId: string;
 
     // extra?
