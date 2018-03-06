@@ -359,10 +359,9 @@ export class GitHubActions {
                 Log.info("GitHubAction::deleteTeam(..) - success; body: " + body);
                 fulfill(true);
             }).catch(function (err: any) {
-                Log.error("GitHubAction::deleteTeam(..) - ERROR: " + JSON.stringify(err));
-                reject(err);
+                Log.error("GitHubAction::deleteTeam(..) - failed");// + JSON.stringify(err));
+                fulfill(false);
             });
-
         });
     }
 
@@ -399,6 +398,34 @@ export class GitHubActions {
 
         });
     }
+
+
+    /**
+     *
+     * Returns true if the team exists, false if it doesn't. Never fails, just returns false.
+     *
+     * @param {string} org
+     * @returns {Promise<string>}
+     */
+
+    /*
+    // THIS JUST WASN'T WORKING RIGHT?
+    public teamExists(org: string, teamName: string): Promise<boolean> {
+        let ctx = this;
+
+        Log.info("GitHubAction::teamExists( " + org + " ) - start");
+        return new Promise(function (fulfill, reject) {
+            ctx.getTeamNumber(org, teamName).then(function (exists) {
+                const teamExists = exists >= 0;
+                Log.trace("GitHubAction::teamExists(..) - value: " + exists + "; returning: " + teamExists);
+                fulfill(true);
+            }).catch(function (err) {
+                Log.trace("GitHubAction::teamExists(..) - returning: false");
+                fulfill(false);
+            });
+        });
+    }
+*/
 
     /**
      *
@@ -513,35 +540,41 @@ export class GitHubActions {
      * @param permission 'admin', 'pull', 'push' // admin for staff, push for students
      * @returns {Promise<number>} team id
      */
-    public createTeam(org: string, teamName: string, permission: string): Promise<{ teamName: string, githubTeamNumber: number }> {
+    public async createTeam(org: string, teamName: string, permission: string): Promise<{ teamName: string, githubTeamNumber: number }> {
         let ctx = this;
         Log.info("GitHubAction::createTeam( " + org + ", " + teamName + ", " + permission + ", ... ) - start");
-        return new Promise(function (fulfill, reject) {
 
-            const uri = ctx.apiPath + '/orgs/' + org + '/teams';
-            const options = {
-                method:  'POST',
-                uri:     uri,
-                headers: {
-                    'Authorization': ctx.gitHubAuthToken,
-                    'User-Agent':    ctx.gitHubUserName,
-                    'Accept':        'application/json'
-                },
-                body:    {
-                    name:       teamName,
-                    permission: permission
-                },
-                json:    true
-            };
-            rp(options).then(function (body: any) {
+        try {
+            const theTeamExists = await this.getTeamNumber(org, teamName) >= 0;
+            Log.info('teamexstsvalue: ' + theTeamExists);
+            if (theTeamExists === true) {
+                const teamNumber = await this.getTeamNumber(org, teamName);
+                return {teamName: teamName, githubTeamNumber: teamNumber};
+            } else {
+                const uri = ctx.apiPath + '/orgs/' + org + '/teams';
+                const options = {
+                    method:  'POST',
+                    uri:     uri,
+                    headers: {
+                        'Authorization': ctx.gitHubAuthToken,
+                        'User-Agent':    ctx.gitHubUserName,
+                        'Accept':        'application/json'
+                    },
+                    body:    {
+                        name:       teamName,
+                        permission: permission
+                    },
+                    json:    true
+                };
+                const body = await rp(options);
                 let id = body.id;
                 Log.info("GitHubAction::createTeam(..) - success: " + id);
-                fulfill({teamName: teamName, githubTeamNumber: id});
-            }).catch(function (err: any) {
-                Log.error("GitHubAction::createTeam(..) - ERROR: " + err);
-                reject(err);
-            });
-        });
+                return {teamName: teamName, githubTeamNumber: id};
+            }
+        } catch (err) {
+            Log.error("GitHubAction::createTeam(..) - ERROR: " + err);
+            throw err;
+        }
     }
 
     /**

@@ -11,7 +11,7 @@ import Util from "../src/util/Util";
 import {ActionPayload, GradePayload, SDDMController} from "../src/controllers/SDDMController";
 import {GradesController} from "../src/controllers/GradesController";
 
-describe("GitHubActions", () => {
+describe.only("GitHubActions", () => {
 
     let gh: GitHubActions;
 
@@ -30,7 +30,7 @@ describe("GitHubActions", () => {
         gh = new GitHubActions();
     });
 
-    let REPOS = ["testtest__repo1",
+    let TESTREPONAMES = ["testtest__repo1",
         // "TEST__X__secap_cpscbot",
         "secap_cpscbot",
         // "TEST__X__secap_rthse2",
@@ -42,12 +42,12 @@ describe("GitHubActions", () => {
         // "TEST__X__secap_TESTrepo1"
     ];
 
-    let TEAMS = [
+    let TESTTEAMNAMES = [
         "rtholmes",
         "ubcbot",
         "rthse2",
         "cpscbot",
-        //"TEST__X__t_TESTteam1"
+        "TEST__X__t_TESTteam1"
     ];
 
 
@@ -105,11 +105,16 @@ describe("GitHubActions", () => {
 
     it("Should not be possible to get a team number for a team that does not exist.", async function () {
         let val = await gh.getTeamNumber(Test.ORGNAME, TEAMNAME);
+        Log.test('Team # ' + val);
         expect(val).to.be.lessThan(0);
+
+        // let bool = await gh.teamExists(Test.ORGNAME, TEAMNAME);
+        // expect(bool).to.be.false;
     }).timeout(TIMEOUT);
 
     it("Should be able to create a team, add users to it, and add it to the repo.", async function () {
         let val = await gh.createTeam(Test.ORGNAME, TEAMNAME, 'push');
+        Log.test("Team details: " + JSON.stringify(val));
         expect(val.teamName).to.equal(TEAMNAME);
         expect(val.githubTeamNumber).to.be.an('number');
         expect(val.githubTeamNumber > 0).to.be.true;
@@ -128,7 +133,11 @@ describe("GitHubActions", () => {
 
     it("Should be possible to get a team number for a team that does exist.", async function () {
         let val = await gh.getTeamNumber(Test.ORGNAME, TEAMNAME);
+        Log.test('Team # ' + val);
         expect(val).to.be.greaterThan(0);
+
+        // let bool = await gh.teamExists(Test.ORGNAME, TEAMNAME);
+        // expect(bool).to.be.true;
     }).timeout(TIMEOUT);
 
     it("Should be able to clone a source repo into a newly created repository.", async function () {
@@ -373,14 +382,15 @@ describe("GitHubActions", () => {
         let repos = await gh.listRepos(Test.ORGNAME);
         expect(repos).to.be.an('array');
         expect(repos.length > 0).to.be.true;
-        
+
         // delete test repos if needed
         for (const repo of repos as any) {
-            Log.info('Evaluating repo: ' + repo.name);
-            for (const r of REPOS) {
+
+            for (const r of TESTREPONAMES) {
                 if (repo.name === r) {
+                    Log.info('Removing stale repo: ' + repo.name);
                     let val = await gh.deleteRepo(Test.ORGNAME, r);
-                    expect(val).to.be.true;
+                    // expect(val).to.be.true;
                 }
             }
         }
@@ -390,10 +400,12 @@ describe("GitHubActions", () => {
         for (const repo of repos as any) {
             Log.info('Evaluating repo: ' + repo.name);
             if (repo.name.indexOf('TEST__X__') === 0) {
+                Log.info('Removing stale repo: ' + repo.name);
                 let val = await gh.deleteRepo(Test.ORGNAME, repo.name);
-                expect(val).to.be.true;
+                // expect(val).to.be.true;
                 let teamName = repo.name.substr(15);
-                TEAMS.push(teamName);
+                Log.info('Adding stale team name: ' + repo.name);
+                TESTTEAMNAMES.push(teamName);
             }
         }
 
@@ -402,14 +414,14 @@ describe("GitHubActions", () => {
         expect(teams).to.be.an('array');
         expect(teams.length > 0).to.be.true;
         Log.test('All Teams: ' + JSON.stringify(teams));
+        Log.test('Stale Teams: ' + JSON.stringify(TESTTEAMNAMES));
         for (const team of teams as any) {
             // Log.info('Evaluating team: ' + JSON.stringify(team));
-            for (const t of TEAMS) {
+            for (const t of TESTTEAMNAMES) {
                 if (team.name === t) {
-                    Log.test("Old test team found; removing: " + team.name);
-                    let val = await
-                        gh.deleteTeam(Test.ORGNAME, team.id);
-                    expect(val).to.be.true;
+                    Log.test("Removing stale team: " + team.name);
+                    let val = await gh.deleteTeam(Test.ORGNAME, team.id);
+                    // expect(val).to.be.true;
                 }
             }
         }
