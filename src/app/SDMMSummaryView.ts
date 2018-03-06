@@ -127,6 +127,7 @@ export class SDMMSummaryView {
             let json = await response.json();
             if (typeof json.success !== 'undefined') {
                 this.longAction(2000, "D1 Repository created");
+                UI.hideModal();
             } else {
                 this.showError(json);
             }
@@ -382,7 +383,7 @@ export class SDMMSummaryView {
                 'sdmmd2locked',
                 'sdmmd3locked',
             ]);
-            
+
             if (status.d0 !== null) {
                 let row = document.getElementById('sdmmd0status');
                 this.updateDeliverableRow(row, status.d0);
