@@ -53,6 +53,7 @@ export interface IContainerInput {
     courseId: string; // TODO: rename org
     delivId: string;
 
+    /*
     // extra?
     deliverableInfo?: IDeliverableInfo;
     userInfo?: IUserInfo;
@@ -68,11 +69,12 @@ export interface IContainerInput {
     teamId?: string;
     courseNum?: number;
     stdioRef?: string;
+    */
 }
 
 export interface IContainerOutput {
     // needed
-    commitUrl: string; // key
+    commitUrl: string; // TODO: should be commitURL
     timestamp: number; // time when complete
     report: IGradeReport;
     feedback: string; // markdown
@@ -81,6 +83,7 @@ export interface IContainerOutput {
     attachments: IAttachment[];
     state: string; // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
 
+    /*
     // if we split the IContainerInput and IContainerOutput we don't need all of these
     // but having them in a single object on AutoTest is very useful
     team?: string; // needed
@@ -105,6 +108,7 @@ export interface IContainerOutput {
     gradeRequestedTimestamp?: number;
     idStamp?: string;
     stdioRef?: string; // how will we deal with stdio?
+    */
 }
 
 //
