@@ -392,6 +392,7 @@ export abstract class AutoTest implements IAutoTest {
                         json: true,
                         body: gradePayload,
                     };
+                    Log.trace("AutoTest::invokeContainer(..) - POST gradePayload: " + JSON.stringify(gradePayload, null, 2));
                     await rp(postGradeOpts);
                 } catch (err) {
                     Log.warn("AutoTest::invokeContainer(..) - ERROR for commit: " + input.pushInfo.commitSHA + "; ERROR sending grade: " + err);
