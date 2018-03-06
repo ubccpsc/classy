@@ -11,10 +11,12 @@ services:
         build: https://${GHT_ORG_CPSC310}@github.ubc.ca/cpsc310/cpsc310geocoder.git
         ports:
             - "11316:11316" # this is the geolocation port for d2/d3; exposd globally
-    # reference-ui:
-    #     build: https://${TOKEN}:@github.company.com/org/repoId.git
-    #     ports:
-    #         - "11315:11315" # this is the reference UI for all deliverables; exposd globally
+    reference-ui:
+        build:
+            context: https://${GHT_ORG_CPSC310}@github.ubc.ca/cpsc310/project_oracle.git#frontend-prod
+            dockerfile: ui.dockerfile
+        ports:
+            - "11315:11315" # this is the reference UI for all deliverables; exposd globally
     portal_backend:
         build:
             context: https://github.com/ubccpsc/sdmm-portal-backend.git
