@@ -62,6 +62,7 @@ export class GithubService implements IGithubService {
                 const body: string = JSON.stringify({body: message.message});
                 options.headers["Content-Length"] = Buffer.byteLength(body);
 
+                const c = Config.getInstance();
                 if (Config.getInstance().getProp("postback") === true) {
                     Log.trace("GithubService::postMarkdownToGithub(..) - request: " + JSON.stringify(options, null, 2));
                     const req = https.request(options, (res: any) => {
