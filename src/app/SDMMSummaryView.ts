@@ -421,16 +421,18 @@ export class SDMMSummaryView {
     private showStatusD1(status: any | undefined) {
         Log.info("SDDM::showStatusD1(..) - start: " + JSON.stringify(status));
         try {
-
-
+            let row = document.getElementById('sdmmd0status');
             if (status.d0 !== null) {
-                let row = document.getElementById('sdmmd0status');
                 this.updateDeliverableRow(row, status.d0);
+            } else {
+                row.style.display = 'none';
             }
 
+            row = document.getElementById('sdmmd1status');
             if (status.d1 !== null) {
-                let row = document.getElementById('sdmmd1status');
                 this.updateDeliverableRow(row, status.d1);
+            } else {
+                row.style.display = 'none';
             }
 
             this.show([
@@ -447,19 +449,26 @@ export class SDMMSummaryView {
     private showStatusD2(status: any | undefined) {
         Log.info("SDDM::showStatusD2(..) - start: " + JSON.stringify(status));
         try {
+
+            let row = document.getElementById('sdmmd0status');
             if (status.d0 !== null) {
-                let row = document.getElementById('sdmmd0status');
                 this.updateDeliverableRow(row, status.d0);
+            } else {
+                row.style.display = 'none';
             }
 
+            row = document.getElementById('sdmmd1status');
             if (status.d1 !== null) {
-                let row = document.getElementById('sdmmd1status');
                 this.updateDeliverableRow(row, status.d1);
+            } else {
+                row.style.display = 'none';
             }
 
+            row = document.getElementById('sdmmd2status');
             if (status.d2 !== null) {
-                let row = document.getElementById('sdmmd2status');
                 this.updateDeliverableRow(row, status.d2);
+            } else {
+                row.style.display = 'none';
             }
 
             this.show([
@@ -477,21 +486,32 @@ export class SDMMSummaryView {
     private showStatusD3(status: any | undefined) {
         Log.info("SDDM::showStatusD3(..) - start: " + JSON.stringify(status));
         try {
+            let row = document.getElementById('sdmmd0status');
             if (status.d0 !== null) {
-                let row = document.getElementById('sdmmd0status');
                 this.updateDeliverableRow(row, status.d0);
+            } else {
+                row.style.display = 'none';
             }
+            row = document.getElementById('sdmmd1status');
             if (status.d1 !== null) {
-                let row = document.getElementById('sdmmd1status');
+
                 this.updateDeliverableRow(row, status.d1);
+            } else {
+                row.style.display = 'none';
             }
+            row = document.getElementById('sdmmd2status');
             if (status.d2 !== null) {
-                let row = document.getElementById('sdmmd2status');
+
                 this.updateDeliverableRow(row, status.d2);
+            } else {
+                row.style.display = 'none';
             }
+            row = document.getElementById('sdmmd3status');
             if (status.d3 !== null) {
-                let row = document.getElementById('sdmmd3status');
+
                 this.updateDeliverableRow(row, status.d3);
+            } else {
+                row.style.display = 'none';
             }
 
             this.show([
