@@ -23,6 +23,7 @@ export class GradesController {
 
     public async createGrade(org: string, repoId: string, delivId: string, grade: GradePayload): Promise<boolean> {
         Log.info("GradesController::createGrade( " + org + ", " + repoId + ", " + delivId + ",.. ) - start");
+        Log.trace("GradesController::createGrade(..) - payload: " + JSON.stringify(grade));
         try {
 
             // find all people on a repo
@@ -62,12 +63,14 @@ export class GradesController {
                         URL:       grade.URL,
                         timestamp: grade.timestamp
                     };
+                    Log.trace("RepositoryController::createGrade(..) - new grade; personId: " + personId + "; grade: " + JSON.stringify(gradeRecord));
                 } else {
                     // update existing
                     gradeRecord.score = grade.score;
                     gradeRecord.comment = grade.comment;
                     gradeRecord.URL = grade.URL;
                     gradeRecord.timestamp = grade.timestamp;
+                    Log.trace("RepositoryController::createGrade(..) - updating grade; personId: " + personId + "; grade: " + JSON.stringify(gradeRecord));
                 }
                 await this.db.writeGrade(gradeRecord);
             }
