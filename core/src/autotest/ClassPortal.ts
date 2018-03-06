@@ -5,11 +5,11 @@ import Log from "../util/Log";
 export interface IClassPortal {
 
     /**
-     * For a given commitUrl, figure out what the default deliverable is at the current time.
+     * For a given commitURL, figure out what the default deliverable is at the current time.
      *
-     * NOTE: commitUrl could be something simpler too, maybe just courseId is easiest:
+     * NOTE: commitURL could be something simpler too, maybe just org is easiest:
      *
-     * GET /admin/getDefaultDeliverable/{:courseId}
+     * GET /admin/getDefaultDeliverable/{:org}
      *
      * @param courseId
      */
@@ -18,7 +18,7 @@ export interface IClassPortal {
     /**
      * Returns whether the username is staff on the course.
      *
-     * GET /admin/isStaff/{:courseId}/{:userId} (or some variant)
+     * GET /admin/isStaff/{:org}/{:userId} (or some variant)
      *
      * @param courseId
      * @param userName
@@ -28,7 +28,7 @@ export interface IClassPortal {
     /**
      * Gets the identifier for the AutoTest docker container that should process requests for this deliverable.
      *
-     * GET /admin/{:courseId}/{:delivId}/container
+     * GET /admin/{:org}/{:delivId}/container
      *
      * @param courseId
      */
@@ -83,15 +83,15 @@ export class ClassPortal implements IClassPortal {
      */
 
     /*
-    public async getTestDelay(courseId: string, delivId: string): Promise<number | null> {
-        if (typeof courseId === "undefined" || courseId === null || typeof delivId === "undefined" || delivId === null) {
+    public async getTestDelay(org: string, delivId: string): Promise<number | null> {
+        if (typeof org === "undefined" || org === null || typeof delivId === "undefined" || delivId === null) {
             Log.error("ClassPortal::getTestDelay(..) - missing parameters");
             return null;
         }
 
-        const url = "https://portal.cs.ubc.ca:5000/" + courseId + "/" + delivId + "/rate";
+        const url = "https://portal.cs.ubc.ca:5000/" + org + "/" + delivId + "/rate";
         return rp(url).then(function (res) {
-            Log.trace("ClassPortal::getTestDelay( " + courseId + ", " + delivId + " ) - success; payload: " + res);
+            Log.trace("ClassPortal::getTestDelay( " + org + ", " + delivId + " ) - success; payload: " + res);
             const json = JSON.parse(res);
             return json.response;
         }).catch(function (err) {

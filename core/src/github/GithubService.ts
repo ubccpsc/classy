@@ -5,7 +5,7 @@ import * as https from "https";
 
 export interface IGithubMessage {
     /**
-     * Commit where comment should be made (should be commitUrl)
+     * Commit where comment should be made (should be commitURL)
      */
     url: string;
 

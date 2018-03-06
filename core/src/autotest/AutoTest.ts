@@ -302,7 +302,7 @@ export abstract class AutoTest implements IAutoTest {
             const start = Date.now();
 
             // TODO: make sure we are using the right container
-            // const containerId = await this.classPortal.getContainerId(input.courseId,input.delivId);
+            // const containerId = await this.classPortal.getContainerId(input.org,input.delivId);
             // const docker = new MockGrader(input);
             // const record: ICommitRecord = await docker.execute();
 
@@ -323,7 +323,7 @@ export abstract class AutoTest implements IAutoTest {
                 const assnCloneUrl: string = input.pushInfo.cloneURL;
                 const commitSHA: string = input.pushInfo.commitSHA;
                 const commitURL: string = input.pushInfo.commitURL;
-                const repo: string = input.pushInfo.repo;
+                const repo: string = input.pushInfo.repoId;
                 const timestamp: number = input.pushInfo.timestamp;
                 const delivId: string = input.delivId;
                 const id: string = `${commitSHA}-${delivId}`;
@@ -350,14 +350,14 @@ export abstract class AutoTest implements IAutoTest {
                 };
 
                 let output: IContainerOutput = {
-                    commitUrl: assnUrl,
-                    timestamp: Date.now(),
-                    report: null,
-                    feedback: "Internal error: the grading service failed to handle the request.",
+                    commitURL:          assnUrl,
+                    timestamp:          Date.now(),
+                    report:             null,
+                    feedback:           "Internal error: the grading service failed to handle the request.",
                     postbackOnComplete: false,
-                    custom: {},
-                    attachments: [],
-                    state: "FAIL"
+                    custom:             {},
+                    attachments:        [],
+                    state:              "FAIL"
                 };
                 try {
                     output = await rp(gradeServiceOpts);

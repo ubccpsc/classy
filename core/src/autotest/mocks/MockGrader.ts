@@ -44,7 +44,7 @@ export class MockGrader implements IGrader {
             };
 
             const out: IContainerOutput = {
-                commitUrl:          this.input.pushInfo.commitURL,
+                commitURL:          this.input.pushInfo.commitURL,
                 timestamp:          Date.now(),
                 report:             gradeReport,
                 feedback:           "Test execution complete.",

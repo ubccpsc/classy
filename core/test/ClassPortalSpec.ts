@@ -96,7 +96,7 @@ describe("ClassPortal Service", () => {
         try {
             const res = await cp.getContainerDetails(classId, "d0");
             const actual = res.dockerImage;
-            expect(actual).to.equal("autotest/cpsc310__bootstrap");
+            expect(actual).to.equal("secapstone-grader");
         } catch (err) {
             expect.fail("Should not happen");
         }
@@ -114,7 +114,7 @@ describe("ClassPortal Service", () => {
     it("Should return a default deliverable if the course has one.", async () => {
         try {
             const actual = await cp.getDefaultDeliverableId(classId);
-            expect(actual).to.equal(CURRENT_DEFAULT_DELIV);
+            expect(actual).to.equal("d0");
         } catch (err) {
             expect.fail("Should not happen");
         }

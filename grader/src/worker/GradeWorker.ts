@@ -34,7 +34,7 @@ export class GradeWorker implements IGradeWorker {
 
     public async execute(): Promise<IContainerOutput> {
         let out: IContainerOutput = {
-            commitUrl: this.assnSrc.url,
+            commitURL: this.assnSrc.url,
             timestamp: this.timestamp,
             report: null,
             feedback: "",

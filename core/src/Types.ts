@@ -3,7 +3,7 @@
 //
 export interface IPushEvent {
     org: string; // orgName
-    repo: string; // TODO: rename repoId
+    repoId: string; // was repo
 
     branch: string; // really refs
     cloneURL: string;
@@ -16,8 +16,8 @@ export interface IPushEvent {
 }
 
 export interface ICommentEvent {
-    courseId: string | null; // TODO: rename org
-    userName: string; // TODO: rename personId
+    org: string | null; // was org
+    personId: string; // was username
     delivId: string | null; // string if specified
 
     commitSHA: string;
@@ -29,11 +29,11 @@ export interface ICommentEvent {
 }
 
 /**
- * Feedback key can be considered 'userName : courseId : delivId'
+ * Feedback key can be considered 'personId : org : delivId'
  */
 export interface IFeedbackGiven {
-    userName: string; // TODO: rename personId
-    courseId: string; // TODO: rename org
+    personId: string; // was username
+    org: string; // was org
     delivId: string;
     timestamp: number;
     commitURL: string; // for information only
@@ -50,7 +50,7 @@ export interface ICommitRecord { // refactor ICommitRecord
 export interface IContainerInput {
     // needed
     pushInfo: IPushEvent;
-    courseId: string; // TODO: rename org
+    org: string; // was courseId
     delivId: string;
 
     /*
@@ -74,7 +74,7 @@ export interface IContainerInput {
 
 export interface IContainerOutput {
     // needed
-    commitUrl: string; // TODO: should be commitURL
+    commitURL: string; // used to be commitUrl
     timestamp: number; // time when complete
     report: IGradeReport;
     feedback: string; // markdown
@@ -92,8 +92,8 @@ export interface IContainerOutput {
     projectUrl?: string;
     courseNum?: number;
     orgName?: string;
-    repo?: string; // needed
-    ref?: string; // is this commitUrl?
+    repoId?: string; // needed
+    ref?: string; // is this commitURL?
     user?: string;
     deliverable?: string;
 

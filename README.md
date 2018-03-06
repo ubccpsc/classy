@@ -13,7 +13,7 @@ AutoTest is currently being used in two undergraduate computer science courses a
 
 ### Installing
 
-1) `git clone <repo>`
+1) `git clone <repoId>`
 2) `yarn run install`
 3) `yarn run build`
 4) `yarn run test`

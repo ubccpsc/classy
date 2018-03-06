@@ -194,7 +194,7 @@ export class MockDataStore implements IDataStore {
             const records: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
             const shortList: IFeedbackGiven[] = [];
             for (const req of records) {
-                if (req !== null && req.courseId === courseId && req.delivId === delivId && req.userName === userName) {
+                if (req !== null && req.org === courseId && req.delivId === delivId && req.personId === userName) {
                     shortList.push(req);
                 }
             }
@@ -223,7 +223,7 @@ export class MockDataStore implements IDataStore {
             const start = Date.now();
             const records: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
             for (const feedback of records) {
-                if (feedback !== null && feedback.commitURL === commitURL && feedback.userName === userName) {
+                if (feedback !== null && feedback.commitURL === commitURL && feedback.personId === userName) {
                     Log.info("MockDataStore::getFeedbackGivenRecordForCommit(..) - found; took: " + Util.took(start));
                     ret = feedback;
                     break;

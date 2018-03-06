@@ -71,7 +71,7 @@ export interface IGradeTask {
 
 export interface IContainerOutput {
     // needed
-    commitUrl: string; // key
+    commitURL: string; // key
     timestamp: number; // time when complete
     report: IGradeReport;
     feedback: string; // markdown

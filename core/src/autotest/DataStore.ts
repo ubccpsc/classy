@@ -254,7 +254,7 @@ export class MongoDataStore implements IDataStore {
         Log.trace("MongoDataStore::getLatestFeedbackGivenRecord(..) - start");
         try {
             const start = Date.now();
-            const res = await this.getRecords(this.FEEDBACKCOLL, {"courseId": courseId, "delivId": delivId, "userName": userName});
+            const res = await this.getRecords(this.FEEDBACKCOLL, {"org": courseId, "delivId": delivId, "personId": userName});
             if (res === null) {
                 Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - record not found");
                 return null;
