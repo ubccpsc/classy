@@ -21,10 +21,10 @@ export class MockClassPortal implements IClassPortal {
         return null;
     }
 
-    public async getContainerDetails(courseId: string, delivId: string): Promise<{ dockerImage: string, dockerBuild: string, testDelay: number, regressionDelivNames: string[] } | null> {
+    public async getContainerDetails(courseId: string, delivId: string): Promise<{ dockerImage: string, studentDelay: number, maxExecTime: number, regressionDelivIds: string[] } | null> {
         if (typeof courseId !== "undefined" && courseId !== null && typeof delivId !== "undefined" && delivId !== null) {
             if (courseId === "310") {
-                return {dockerImage: "310container", dockerBuild: "d0build", testDelay: 100, regressionDelivNames: []};
+                return {dockerImage: "310container", studentDelay: 100, maxExecTime: 300, regressionDelivIds: []};
             }
         }
         return null;

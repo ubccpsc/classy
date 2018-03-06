@@ -272,7 +272,7 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
             const isStaff = await this.classPortal.isStaff(this.courseId, userName);
             const record: IFeedbackGiven = await this.dataStore.getLatestFeedbackGivenRecord(this.courseId, delivId, userName);
             const details = await this.classPortal.getContainerDetails(this.courseId, delivId); // should cache this
-            const testDelay = details.testDelay;
+            const testDelay = details.studentDelay;
 
             if (isStaff === true) {
                 return null; // staff can always request

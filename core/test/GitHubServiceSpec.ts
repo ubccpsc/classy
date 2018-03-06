@@ -1,3 +1,5 @@
+const loadFirst = require('./GlobalSpec');
+
 import {expect} from "chai";
 import "mocha";
 

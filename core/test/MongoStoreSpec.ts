@@ -1,3 +1,5 @@
+const loadFirst = require('./GlobalSpec');
+
 import {expect} from "chai";
 import "mocha";
 
@@ -6,7 +8,8 @@ import {IDataStore, MongoDataStore} from "../src/autotest/DataStore";
 import {TestData} from "./TestData";
 
 describe("MongoStore", () => {
-    Config.getInstance("test");
+    (<any>Config.getInstance()).config.name = "test"; // force a test name
+
 
     let ds: IDataStore;
 

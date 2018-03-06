@@ -1,3 +1,5 @@
+const loadFirst = require('./GlobalSpec');
+
 import {IClassPortal} from "../src/autotest/ClassPortal";
 import {GithubService} from "../src/github/GithubService";
 import {GithubAutoTest} from "../src/github/GithubAutoTest";

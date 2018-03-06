@@ -1,3 +1,5 @@
+const loadFirst = require('./GlobalSpec');
+
 import {expect} from "chai";
 import * as fs from "fs";
 import "mocha";
@@ -17,6 +19,7 @@ describe("GitHub Event Parser", () => {
         const expected = {
             "branch":      "refs/heads/master",
             "repo":        "d1_project9999",
+            "cloneURL": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git",
             "commitSHA":   "bbe3980fff47b7d6a921e9f89c6727bea639589c",
             "commitURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/bbe3980fff47b7d6a921e9f89c6727bea639589c",
             "postbackURL": "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments",
@@ -35,6 +38,7 @@ describe("GitHub Event Parser", () => {
 
         const expected = {
             "branch":      "refs/heads/test2",
+            "cloneURL": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git",
             "commitSHA":   "6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
             "commitURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
             "org":         "CPSC310-2017W-T2",
@@ -63,6 +67,7 @@ describe("GitHub Event Parser", () => {
         const expected = {
             "branch":      "refs/heads/test2",
             "commitSHA":   "d5f2203cfa1ae43a45932511ce39b2368f1c72ed",
+            "cloneURL": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git",
             "commitURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/d5f2203cfa1ae43a45932511ce39b2368f1c72ed",
             "org":         "CPSC310-2017W-T2",
             "projectURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",

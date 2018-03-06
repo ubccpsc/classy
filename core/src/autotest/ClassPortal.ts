@@ -32,7 +32,7 @@ export interface IClassPortal {
      *
      * @param courseId
      */
-    getContainerDetails(courseId: string, delivId: string): Promise<{ dockerImage: string, dockerBuild: string, testDelay: number, regressionDelivNames: string[] } | null>;
+    getContainerDetails(courseId: string, delivId: string): Promise<{ dockerImage: string,  studentDelay: number, maxExecTime: number, regressionDelivIds: string[] } | null>;
 }
 
 export class ClassPortal implements IClassPortal {
@@ -100,7 +100,7 @@ export class ClassPortal implements IClassPortal {
         });
     }
 */
-    public async getContainerDetails(courseId: string, delivId: string): Promise<{ dockerImage: string, dockerBuild: string, testDelay: number, regressionDelivNames: string[] } | null> {
+    public async getContainerDetails(courseId: string, delivId: string): Promise<{ dockerImage: string,  studentDelay: number, maxExecTime: number, regressionDelivIds: string[] }  | null> {
         if (typeof courseId === "undefined" || courseId === null || typeof delivId === "undefined" || delivId === null) {
             Log.error("ClassPortal::getContainerId(..) - missing parameters");
             return null;

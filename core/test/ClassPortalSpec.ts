@@ -1,3 +1,7 @@
+import {MockClassPortal} from "../src/autotest/mocks/MockClassPortal";
+
+const loadFirst = require('./GlobalSpec');
+
 import {expect} from "chai";
 import "mocha";
 import {Config} from "../src/Config";
@@ -7,7 +11,7 @@ describe("ClassPortal Service", () => {
     Config.getInstance("test");
 
     let cp: IClassPortal;
-    const classId = "310";
+    const classId = "secapstone";
     const CURRENT_DEFAULT_DELIV = "d2";
 
     beforeEach(function () {
@@ -17,7 +21,7 @@ describe("ClassPortal Service", () => {
 
     it("Should be able for a staff user to be staff.", async () => {
         try {
-            const actual = await cp.isStaff(classId, "cs310");
+            const actual = await cp.isStaff(classId, "rtholmes");
             expect(actual).to.equal(true);
         } catch (err) {
             expect.fail("Should not happen");
@@ -72,7 +76,7 @@ describe("ClassPortal Service", () => {
         try {
             const res = await cp.getContainerDetails(classId, "d0");
             expect(res).to.not.be.null;
-            const actual = res.testDelay;
+            const actual = res.studentDelay;
             expect(actual).to.equal(43200);
         } catch (err) {
             expect.fail("Should not happen");
