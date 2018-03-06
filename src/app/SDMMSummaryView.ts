@@ -62,7 +62,7 @@ export class SDMMSummaryView {
             if (sel !== null) {
                 sel.selectedIndex = sel.selectedIndex + 1;
             }
-            that.updateState();
+            that.checkStatus();
         }, (duration - 500));
 
     }
@@ -263,7 +263,6 @@ export class SDMMSummaryView {
     public renderPage() {
         Log.info('SDMMSummaryView::renderPage() - start');
 
-        // this.updateState();
         this.checkStatus();
     }
 
