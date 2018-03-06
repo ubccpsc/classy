@@ -80,6 +80,7 @@ services:
             - "CP_PORT=5000"
             - "GRADER_HOST=${COMPOSE_PROJECT_NAME}_grader_1"
             - "GRADER_PORT=3000"
+            - "DB_URL=mongodb://${COMPOSE_PROJECT_NAME}_db_1:27017"
         depends_on:
             - db
             - grader
