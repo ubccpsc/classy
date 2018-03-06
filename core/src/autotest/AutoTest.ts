@@ -298,6 +298,7 @@ export abstract class AutoTest implements IAutoTest {
     private async invokeContainer(input: IContainerInput) {
         try {
             Log.info("AutoTest::invokeContainer(..) - start; commit: " + input.pushInfo.commitSHA);
+            Log.trace("AutoTest::invokeContainer(..) - input: " + JSON.stringify(input, null, 2));
             const start = Date.now();
 
             // TODO: make sure we are using the right container
@@ -363,6 +364,8 @@ export abstract class AutoTest implements IAutoTest {
                 } catch (err) {
                     Log.warn("AutoTest::invokeContainer(..) - ERROR for commit: " + input.pushInfo.commitSHA + "; ERROR with grading service: " + err);
                 }
+
+                Log.trace("AutoTest::invokeContainer(..) - output: " + JSON.stringify(input, null, 2));
 
                 record = {
                     commitURL,
