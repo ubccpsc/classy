@@ -373,10 +373,7 @@ describe("GitHubActions", () => {
         let repos = await gh.listRepos(Test.ORGNAME);
         expect(repos).to.be.an('array');
         expect(repos.length > 0).to.be.true;
-
-        // TODO: find repos that start with TEST__X__ and delete them
-        // TODO: also add their name.substring(15) to the teams name too
-
+        
         // delete test repos if needed
         for (const repo of repos as any) {
             Log.info('Evaluating repo: ' + repo.name);
@@ -401,8 +398,7 @@ describe("GitHubActions", () => {
         }
 
         // delete teams if needed
-        let teams = await
-            gh.listTeams(Test.ORGNAME);
+        let teams = await gh.listTeams(Test.ORGNAME);
         expect(teams).to.be.an('array');
         expect(teams.length > 0).to.be.true;
         Log.test('All Teams: ' + JSON.stringify(teams));
