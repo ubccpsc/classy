@@ -114,7 +114,7 @@ describe('REST Routes for AutoTest', function () {
 
         let gradePayload: GradePayload = {
             score:     51,
-            url:       'test url from grade record',
+            URL:       'test URL from grade record',
             comment:   'test comment from grade record',
             timestamp: Date.now()
         };

@@ -31,7 +31,7 @@ export class PersonController {
     /**
      * Validates github username for the specified org.
      *
-     * This sets the Person.url field, confirming that they have
+     * This sets the Person.URL field, confirming that they have
      * successfully logged in.
      *
      * @param {string} githubUsername

@@ -295,7 +295,7 @@ describe("GitHubActions", () => {
         let grade: GradePayload = {
             score:     65,
             comment:   'test',
-            url:       'TESTURL',
+            URL:       'TESTURL',
             timestamp: Date.now()
         };
         await gc.createGrade(Test.ORGNAME, getProjectPrefix() + Test.USERNAMEGITHUB1, "d0", grade);
@@ -303,7 +303,7 @@ describe("GitHubActions", () => {
         grade = {
             score:     70,
             comment:   'test',
-            url:       'TESTURL',
+            URL:       'TESTURL',
             timestamp: Date.now()
         };
         await gc.createGrade(Test.ORGNAME, getProjectPrefix() + Test.USERNAMEGITHUB2, "d0", grade);
@@ -311,7 +311,7 @@ describe("GitHubActions", () => {
         grade = {
             score:     75,
             comment:   'test',
-            url:       'TESTURL',
+            URL:       'TESTURL',
             timestamp: Date.now()
         };
         await gc.createGrade(Test.ORGNAME, getProjectPrefix() + Test.USERNAMEGITHUB3, "d0", grade);

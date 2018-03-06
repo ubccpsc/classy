@@ -37,7 +37,7 @@ export interface StatusPayload {
 export interface GradePayload {
     score: number; // grade: < 0 will mean 'N/A' in the UI
     comment: string;
-    url: string; // commit URL if known, otherwise repo url
+    URL: string; // commit URL if known, otherwise repo URL
     timestamp: number; // even if grade < 0 might as well return when the entry was made
 }
 
@@ -85,7 +85,7 @@ export class SDDMController {
                 fName:  '',
                 lName:  '',
                 kind:   'student',
-                url:    'https://github.com/' + githubUsername,
+                URL:    'https://github.com/' + githubUsername,
                 labId:  'UNKNOWN',
                 custom: {}
             };
@@ -419,6 +419,7 @@ export class SDDMController {
             let personStatus = await this.computeStatusString(org, personId);
             if (personStatus !== SDDMStatus[SDDMStatus.D0PRE]) {
                 Log.info("SDDMController::provisionD0Repo( " + org + ", " + personId + " ) - bad status: " + personStatus);
+                return {failure: {shouldLogout: false, message: "User is not eligible for D0."}};
             } else {
                 Log.info("SDDMController::provisionD0Repo( " + org + ", " + personId + " ) - correct status: " + personStatus);
             }
@@ -451,7 +452,7 @@ export class SDDMController {
 
                 // update local team and repo with github values
                 const repoUrl = await this.gh.getRepositoryUrl(repo);
-                repo.url = repoUrl;
+                repo.URL = repoUrl;
                 this.dc.writeRepository(repo);
 
                 const teamUrl = await this.gh.getTeamUrl(team);
@@ -462,7 +463,7 @@ export class SDDMController {
                 let grade: GradePayload = {
                     score:     -1,
                     comment:   'Repo Provisioned',
-                    url:       repo.url,
+                    URL:       repo.URL,
                     timestamp: Date.now()
                 };
                 await this.gc.createGrade(org, repo.id, 'd0', grade);
@@ -474,7 +475,9 @@ export class SDDMController {
             } else {
                 Log.error("SDDMController::provisionD0Repo(..) - something went wrong provisioning this repo; see logs above.");
 
+                // d0pre people should not have teams
                 const delTeam = await this.dc.deleteTeam(team);
+                // d0pre people should not have repos
                 const delRepo = await this.dc.deleteRepository(repo);
                 Log.info("SDDMController::provisionD0Repo(..) - team removed: " + delTeam + ", repo removed: " + delRepo);
 
@@ -545,7 +548,7 @@ export class SDDMController {
                 let grade: GradePayload = {
                     score:     -1,
                     comment:   'Repo Provisioned',
-                    url:       repo.url,
+                    URL:       repo.URL,
                     timestamp: Date.now()
                 };
                 await this.gc.createGrade(org, repo.id, 'd1', grade);
@@ -651,7 +654,7 @@ export class SDDMController {
 
                 // update local team and repo with github values
                 const repoUrl = await this.gh.getRepositoryUrl(repo);
-                repo.url = repoUrl;
+                repo.URL = repoUrl;
                 this.dc.writeRepository(repo);
 
                 const teamUrl = await this.gh.getTeamUrl(team);
@@ -662,7 +665,7 @@ export class SDDMController {
                 let grade: GradePayload = {
                     score:     -1,
                     comment:   'Repo Provisioned',
-                    url:       repo.url,
+                    URL:       repo.URL,
                     timestamp: Date.now()
                 };
                 await this.gc.createGrade(org, repo.id, 'd1', grade);
@@ -701,7 +704,7 @@ export class SDDMController {
         if (d0Grade !== null) {
             myD0 = {
                 score:     d0Grade.score,
-                url:       d0Grade.url,
+                URL:       d0Grade.URL,
                 comment:   '',
                 timestamp: d0Grade.timestamp
             }
@@ -710,7 +713,7 @@ export class SDDMController {
         if (d1Grade !== null) {
             myD1 = {
                 score:     d1Grade.score,
-                url:       d1Grade.url,
+                URL:       d1Grade.URL,
                 comment:   '',
                 timestamp: d1Grade.timestamp
             }
@@ -719,7 +722,7 @@ export class SDDMController {
         if (d2Grade !== null) {
             myD2 = {
                 score:     d2Grade.score,
-                url:       d2Grade.url,
+                URL:       d2Grade.URL,
                 comment:   '',
                 timestamp: d2Grade.timestamp
             }
@@ -728,7 +731,7 @@ export class SDDMController {
         if (d3Grade !== null) {
             myD3 = {
                 score:     d3Grade.score,
-                url:       d3Grade.url,
+                URL:       d3Grade.URL,
                 comment:   '',
                 timestamp: d3Grade.timestamp
             }
@@ -761,7 +764,7 @@ export class SDDMController {
                     Log.info("SDDMController::handleNewGrade( .. ) - grade is not higher");
                 }
             }
-            // createGrade(org: string, repoId: string, delivId: string, score: number, comment: string, url: string, timestamp: number)
+            // createGrade(org: string, repoId: string, delivId: string, score: number, comment: string, URL: string, timestamp: number)
             return true;
         } catch (err) {
             Log.error("SDDMController::handleNewGrade( .. ) - ERROR: " + err);

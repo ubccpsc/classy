@@ -30,7 +30,7 @@ describe("GradeController", () => {
         let grade: GradePayload = {
             score:     100,
             comment:   'comment',
-            url:       'URL',
+            URL:       'URL',
             timestamp: Date.now()
         };
 
@@ -48,7 +48,7 @@ describe("GradeController", () => {
         let grade: GradePayload = {
             score:     50,
             comment:   'commentup',
-            url:       'URLup',
+            URL:       'URLup',
             timestamp: Date.now()
         };
 
@@ -58,7 +58,7 @@ describe("GradeController", () => {
         expect(grades).to.have.lengthOf(2); // still two (one for each teammember)
         expect(grades[0].score).to.equal(50);
         expect(grades[0].comment).to.equal('commentup');
-        expect(grades[0].url).to.equal('URLup');
+        expect(grades[0].URL).to.equal('URLup');
     });
 
     it("Should be able to get a grade for a user.", async () => {

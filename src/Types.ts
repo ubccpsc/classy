@@ -45,7 +45,7 @@ export interface Person {
     readonly fName: string;
     readonly lName: string;
     readonly kind: string; // student, ta, prof, ops
-    url: string | null; // null when not yet validated (e.g., logged in)
+    URL: string | null; // null when not yet validated (e.g., logged in)
 
     labId: string | null; // can be null for non-students
     custom: any; // used for anything. in sdmm will track 'custom.sdmmStatus'
@@ -83,7 +83,7 @@ export interface Team {
 export interface Repository {
     readonly id: string; // invariant; is the name of the repo
     readonly org: string; // invariant
-    url: string | null; // null when not yet created
+    URL: string | null; // null when not yet created
     teamIds: string[]; // Team.id[] - foreign key
     custom: any;
 }
@@ -95,7 +95,7 @@ export interface Grade {
     readonly org: string;
     score: number;
     comment: string;
-    url: string; // commitUrl if a commit, repoUrl if a dummy entry
+    URL: string; // commitUrl if a commit, repoUrl if a dummy entry
     timestamp: number;
 }
 
@@ -116,5 +116,5 @@ export interface PersonRecord {
 export interface ResultSummary {
     timestamp: number;
     grade: number;
-    url: string;
+    URL: string;
 }

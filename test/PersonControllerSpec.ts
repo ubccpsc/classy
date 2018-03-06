@@ -26,7 +26,7 @@ describe("PersonController", () => {
             fName:  '',
             lName:  '',
             kind:   'student',
-            url:    'https://github.com/' + Test.USERNAME1,
+            URL:    'https://github.com/' + Test.USERNAME1,
             labId:  'UNKNOWN',
             custom: {}
         };
@@ -41,7 +41,7 @@ describe("PersonController", () => {
             fName:  '',
             lName:  '',
             kind:   'student',
-            url:    'https://github.com/' + Test.USERNAME2,
+            URL:    'https://github.com/' + Test.USERNAME2,
             labId:  'UNKNOWN',
             custom: {}
         };
@@ -56,7 +56,7 @@ describe("PersonController", () => {
             fName:  '',
             lName:  '',
             kind:   'student',
-            url:    'https://github.com/' + Test.USERNAME1,
+            URL:    'https://github.com/' + Test.USERNAME1,
             labId:  'UNKNOWN',
             custom: {}
         };

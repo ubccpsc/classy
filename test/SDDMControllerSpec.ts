@@ -47,7 +47,7 @@ export class TestData {
             fName:  '',
             lName:  '',
             kind:   'student',
-            url:    'https://github.com/' + this.u1,
+            URL:    'https://github.com/' + this.u1,
             labId:  'UNKNOWN',
             custom: {}
         };
@@ -62,7 +62,7 @@ export class TestData {
             fName:  '',
             lName:  '',
             kind:   'student',
-            url:    'https://github.com/' + this.u2,
+            URL:    'https://github.com/' + this.u2,
             labId:  'UNKNOWN',
             custom: {}
         };
@@ -77,7 +77,7 @@ export class TestData {
             fName:  '',
             lName:  '',
             kind:   'student',
-            url:    'https://github.com/' + this.u3,
+            URL:    'https://github.com/' + this.u3,
             labId:  'UNKNOWN',
             custom: {}
         };
@@ -148,7 +148,7 @@ describe("SDDMController", () => {
         let grade: GradePayload = {
             score:     59,
             comment:   '',
-            url:       '',
+            URL:       '',
             timestamp: Date.now()
         };
         await gc.createGrade(Test.ORGNAME, data.REPOD0, "d0", grade);
@@ -158,7 +158,7 @@ describe("SDDMController", () => {
         grade = {
             score:     61,
             comment:   '',
-            url:       '',
+            URL:       '',
             timestamp: Date.now()
         };
         await gc.createGrade(Test.ORGNAME, data.REPOD0, "d0", grade);
@@ -197,7 +197,7 @@ describe("SDDMController", () => {
         let grade: GradePayload = {
             score:     59,
             comment:   '',
-            url:       '',
+            URL:       '',
             timestamp: Date.now()
         };
         await gc.createGrade(Test.ORGNAME, data.REPOD1, "d1", grade);
@@ -207,7 +207,7 @@ describe("SDDMController", () => {
         grade = {
             score:     61,
             comment:   '',
-            url:       '',
+            URL:       '',
             timestamp: Date.now()
         };
         await gc.createGrade(Test.ORGNAME, data.REPOD1, "d1", grade);
@@ -223,7 +223,7 @@ describe("SDDMController", () => {
         let grade: GradePayload = {
             score:     59,
             comment:   '',
-            url:       '',
+            URL:       '',
             timestamp: Date.now()
         };
         await gc.createGrade(Test.ORGNAME, data.REPOD1, "d2", grade);
@@ -233,7 +233,7 @@ describe("SDDMController", () => {
         grade = {
             score:     61,
             comment:   '',
-            url:       '',
+            URL:       '',
             timestamp: Date.now()
         };
         await gc.createGrade(Test.ORGNAME, data.REPOD1, "d2", grade);
@@ -359,7 +359,7 @@ describe("SDDMController", () => {
         let gradeR: GradePayload = {
             score:     65,
             comment:   'TESTCOMMENT',
-            url:       'TESTURL',
+            URL:       'TESTURL',
             timestamp: Date.now()
         };
 
@@ -456,7 +456,7 @@ describe("SDDMController", () => {
         let gradeR: GradePayload = {
             score:     65,
             comment:   'TESTCOMMENT',
-            url:       'TESTURL',
+            URL:       'TESTURL',
             timestamp: Date.now()
         };
         let grade = await gc.createGrade(person2.org, allRepos[0].id, Test.DELIVID0, gradeR);
@@ -476,7 +476,7 @@ describe("SDDMController", () => {
         gradeR = {
             score:     70,
             comment:   '',
-            url:       '',
+            URL:       '',
             timestamp: Date.now()
         };
         grade = await gc.createGrade(person3.org, allRepos[0].id, Test.DELIVID0, gradeR);

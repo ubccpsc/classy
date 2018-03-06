@@ -37,14 +37,14 @@ export class GitHubController implements IGitHubController {
         Log.info("GitHubController::GetRepositoryUrl")
         // HACK: hardcoded for sddm:
         const url = "https://github.com/secapstone/" + repo.id;
-        Log.info("GitHubController::GetRepositoryUrl( " + repo.id + " ) - url: " + url);
+        Log.info("GitHubController::GetRepositoryUrl( " + repo.id + " ) - URL: " + url);
         return url;
     }
 
     public async getTeamUrl(team: Team): Promise<string> {
         // HACK: hardcoded for sddm:
         const teamUrl = "https://github.com/orgs/SECapstone/teams/" + team.id;
-        Log.info("GitHubController::getTeamUrl( " + team.id + " ) - url: " + teamUrl);
+        Log.info("GitHubController::getTeamUrl( " + team.id + " ) - URL: " + teamUrl);
         return teamUrl;
     }
 
@@ -154,7 +154,7 @@ export class TestGitHubController implements IGitHubController {
 
     public async getTeamUrl(team: Team): Promise<string> {
         Log.error("TestGitHubController::getTeamUrl(..) - NOT IMPLEMENTED");
-        // const url = this.gha.getTeamNumber()
+        // const URL = this.gha.getTeamNumber()
         return "TODO";
     }
 
@@ -189,11 +189,11 @@ export class GitHubActions {
     }
 
     /**
-     * Creates a given repo and returns its url. If the repo exists, return the url for that repo.
+     * Creates a given repo and returns its URL. If the repo exists, return the URL for that repo.
      *
      * @param org
      * @param repoName
-     * @returns {Promise<string>} provisioned team url
+     * @returns {Promise<string>} provisioned team URL
      */
     public createRepo(org: string, repoName: string): Promise<string> {
         let ctx = this;
@@ -227,7 +227,7 @@ export class GitHubActions {
                 // body.name;
                 // body.id;
                 url = body.html_url;
-                Log.info("GitHubAction::createRepo(..) - success; url: " + url + "; delaying to prep repo.");
+                Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; delaying to prep repo.");
                 return ctx.delay(ctx.DELAY_SEC);
             }).then(function () {
                 Log.info("GitHubAction::createRepo(..) - repo created: " + repoName);

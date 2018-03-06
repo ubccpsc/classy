@@ -53,7 +53,7 @@ export class RepositoryController {
                 const repo: Repository = {
                     id:      name,
                     org:     org,
-                    url:     null,
+                    URL:     null,
                     teamIds: teamIds,
                     custom:  custom
                 };

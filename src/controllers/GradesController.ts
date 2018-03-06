@@ -59,14 +59,14 @@ export class GradesController {
                         delivId:   delivId,
                         score:     grade.score,
                         comment:   grade.comment,
-                        url:       grade.url,
+                        URL:       grade.URL,
                         timestamp: grade.timestamp
                     };
                 } else {
                     // update existing
                     gradeRecord.score = grade.score;
                     gradeRecord.comment = grade.comment;
-                    gradeRecord.url = grade.url;
+                    gradeRecord.URL = grade.URL;
                     gradeRecord.timestamp = grade.timestamp;
                 }
                 await this.db.writeGrade(gradeRecord);

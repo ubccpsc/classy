@@ -53,7 +53,7 @@ export class RouteHandler {
         const org = req.query.org;
 
         const githubRedirect = config.getProp('backendUrl') + ':' + config.getProp('backendPort') + '/githubCallback?org=' + org;
-        Log.info("RouteHandler::getAuth(..) - /auth redirect; course: " + org + "; url: " + githubRedirect);
+        Log.info("RouteHandler::getAuth(..) - /auth redirect; course: " + org + "; URL: " + githubRedirect);
 
         const setup = {
             clientId:         config.getProp('githubClientId'),
@@ -82,7 +82,7 @@ export class RouteHandler {
         let backendUrl = config.getProp('backendUrl');
         let backendPort = config.getProp('backendPort');
         const githubRedirect = backendUrl + ':' + backendPort + '/githubCallback?orgName=secapstone';
-        Log.info('RouteHandler::githubCallback(..) - / githubCallback; url: ' + githubRedirect);
+        Log.info('RouteHandler::githubCallback(..) - / githubCallback; URL: ' + githubRedirect);
 
         const opts = {
             clientId:         config.getProp('githubClientId'),
@@ -136,7 +136,7 @@ export class RouteHandler {
                 fName:  '',
                 lName:  '',
                 kind:   'student',
-                url:    'https://github.com/' + username,
+                URL:    'https://github.com/' + username,
                 labId:  'UNKNOWN',
                 custom: {}
             };
@@ -168,7 +168,7 @@ export class RouteHandler {
                 if (feUrl.indexOf('//') > 0) {
                     feUrl = feUrl.substr(feUrl.indexOf('//') + 2, feUrl.length);
                 }
-                Log.trace("RouteHandler::githubCallback(..) - /githubCallback - redirect url: " + feUrl);
+                Log.trace("RouteHandler::githubCallback(..) - /githubCallback - redirect URL: " + feUrl);
                 res.redirect({
                     hostname: feUrl,
                     pathname: '/index.html',

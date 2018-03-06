@@ -47,7 +47,7 @@ describe('REST Routes for Frontend', function () {
             fName:  '',
             lName:  '',
             kind:   'student',
-            url:    'https://github.com/' + Test.USERNAME1,
+            URL:    'https://github.com/' + Test.USERNAME1,
             labId:  'UNKNOWN',
             custom: {}
         };
