@@ -1,3 +1,4 @@
+import {Config} from "../Config";
 import {ICommentEvent, IPushEvent} from "../Types";
 import Log from "../util/Log";
 
@@ -66,7 +67,7 @@ export class GithubUtil {
 
             // that.isRequest = payload.comment.body.toLowerCase().includes(this.config.getMentionTag());
             // that.isProcessed = true;
-            const botMentioned: boolean = message.indexOf("@autobot") >= 0; // should not be hardcoded
+            const botMentioned: boolean = message.indexOf("@" + Config.getInstance().getProp("botName")) >= 0; // should not be hardcoded
 
             const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can't add requests to a past comment
 

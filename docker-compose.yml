@@ -70,7 +70,7 @@ services:
             - "PORT=11333"
             - "KIND=ubc"
             - "TIMEOUT=300"
-            - "BOT_NAME=autobot"
+            - "BOT_NAME=ubcbot"
             - "GHT_STUDENT_ORG=${GHT_ORG_SECAPSTONE}"
             - "GHT_ORACLE=${GHT_ORG_CPSC310}"
             - "SSL_CERT_PATH=./ssl/fullchain.pem"

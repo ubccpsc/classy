@@ -165,7 +165,7 @@ export class GradeWorker implements IGradeWorker {
 
     protected async preRun(): Promise<void> {
         Log.info(`GradeWorker::preRun() - Start`);
-        const assnUrl = this.assnSrc.cloneUrl.replace("://", `://${this.assnSrc.token}@`) + ".git";
+        const assnUrl = this.assnSrc.cloneUrl.replace("://", `://${this.assnSrc.token}@`);
         const assnDir = `${this.workspace}/assn`;
         const assnRef = this.assnSrc.commit;
 
