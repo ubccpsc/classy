@@ -54,25 +54,21 @@ export class GithubUtil {
 
             const projectUrl = payload.repository.html_url;
             const repoName = payload.repository.name;
-            // that.deliverable = GithubUtil.parseDeliverable(payload.repository.name);
             const team = GithubUtil.getTeamOrProject(repoName);
             const requestor = String(payload.comment.user.login).toLowerCase();
-            // that.user = String(payload.comment.user.login).toLowerCase();
             const orgName = payload.organization.login;
-            // const commitCommentUrl = payload.comment.html_url;
-            // that.repo = payload.repository.name;
-            // const hook = Url.parse(payload.repository.commits_url.replace("{/sha}", "/" + this.commit) + "/comments");
             const message = payload.comment.body;
             const delivId = GithubUtil.parseDeliverableFromComment(message);
 
             // that.isRequest = payload.comment.body.toLowerCase().includes(this.config.getMentionTag());
             // that.isProcessed = true;
-            const botMentioned: boolean = message.indexOf("@" + Config.getInstance().getProp("botName")) >= 0; // should not be hardcoded
+            const botName = "@" + Config.getInstance().getProp("botName").toLowerCase();
+            const botMentioned: boolean = message.toLowerCase().indexOf(botName) >= 0;
 
             const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can't add requests to a past comment
 
             const courseId: any = null; // not yet known
-            // TODO: check all of these
+            
             const commentEvent: ICommentEvent = {
                 botMentioned,
                 commitSHA,

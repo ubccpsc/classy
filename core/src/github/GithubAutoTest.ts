@@ -135,15 +135,18 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
             // update info record
             info.courseId = that.courseId;
             let delivId = info.delivId;
+
+            /*
             if (delivId === null) {
                 // need to get the default deliverable for that repo
                 delivId = await this.getDelivId();
                 info.delivId = delivId;
             }
+            */
 
             if (delivId === null) {
                 // no deliverable, give warning and abort
-                const msg = "There is no current default deliverable; results will not be posted.";
+                const msg = "Please specify a deliverable so AutoTest knows what to run against (e.g., #d0).";
                 await this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
                 return true;
             }
