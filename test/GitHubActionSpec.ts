@@ -31,22 +31,23 @@ describe("GitHubActions", () => {
     });
 
     let REPOS = ["testtest__repo1",
-        "TEST__X__secap_cpscbot",
+        // "TEST__X__secap_cpscbot",
         "secap_cpscbot",
-        "TEST__X__secap_rthse2",
+        // "TEST__X__secap_rthse2",
         "secap_rthse2",
-        "TEST__X__secap_ubcbot",
+        // "TEST__X__secap_ubcbot",
         "secap_ubcbot",
         "secap_testtest__repo1",
-        "TEST__X__secap_testtest__repo1",
-        "TEST__X__secap_TESTrepo1"];
+        // "TEST__X__secap_testtest__repo1",
+        // "TEST__X__secap_TESTrepo1"
+    ];
 
     let TEAMS = [
         "rtholmes",
         "ubcbot",
         "rthse2",
         "cpscbot",
-        "TEST__X__t_TESTteam1"
+        //"TEST__X__t_TESTteam1"
     ];
 
 
@@ -384,6 +385,18 @@ describe("GitHubActions", () => {
                     let val = await gh.deleteRepo(Test.ORGNAME, r);
                     expect(val).to.be.true;
                 }
+            }
+        }
+
+        repos = await gh.listRepos(Test.ORGNAME);
+        // delete test repos if needed
+        for (const repo of repos as any) {
+            Log.info('Evaluating repo: ' + repo.name);
+            if (repo.name.indexOf('TEST__X__') === 0) {
+                let val = await gh.deleteRepo(Test.ORGNAME, repo.name);
+                expect(val).to.be.true;
+                let teamName = repo.name.substr(15);
+                TEAMS.push(teamName);
             }
         }
 

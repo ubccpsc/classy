@@ -443,8 +443,9 @@ export class SDDMController {
             const repo = await this.rc.createRepository(org, repoName, [team], repoCustom);
 
             // create remote repo
-            const INPUTREPO = "https://github.com/SECapstone/bootstrap.git"; // HARDCODED for SDMM D0
-            const WEBHOOKADDR = "https://sdmm.cs.ubc.ca:11333/submit"; // HARDCODED for SDMM
+            const INPUTREPO = "https://github.com/SECapstone/bootstrap"; // HARDCODED for SDMM D0
+            // set to the backendUrl:backendPort, not autotestUrl:autotestPort since the backend will be publicly visible
+            const WEBHOOKADDR = Config.getInstance().getProp('backendUrl') + ':' + Config.getInstance().getProp('backendPort') + '/githubWebhook';
             const provisionResult = await this.gh.provisionRepository(org, repoName, [team], INPUTREPO, WEBHOOKADDR);
 
             if (provisionResult === true) {
