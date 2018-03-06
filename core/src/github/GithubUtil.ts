@@ -68,7 +68,7 @@ export class GithubUtil {
             const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can't add requests to a past comment
 
             const courseId: any = null; // not yet known
-            
+
             const commentEvent: ICommentEvent = {
                 botMentioned,
                 commitSHA,
