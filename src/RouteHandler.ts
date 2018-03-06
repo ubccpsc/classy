@@ -314,10 +314,10 @@ export class RouteHandler {
 
         // TODO: this is just a dummy implementation
 
-        if (org === 'INVALIDORG') {
-            res.send(400, {message: 'Invalid org: ' + org});
-        } else {
+        if (org === 'secapstone' || org === 'secapstonetest') {
             res.send({dockerImage: 'secapstone-grader', studentDelay: 60 * 60 * 12, maxExecTime: 300, regressionDelivIds: []});
+        } else {
+            res.send(400, {message: 'Invalid org: ' + org});
         }
 
 
@@ -347,7 +347,11 @@ export class RouteHandler {
 
         // TODO: this is just a dummy implementation
 
-        res.send({delivId: 'd0'});
+        if (org === 'secapstone' || org === 'secapstonetest') {
+            res.send({delivId: 'd0'});
+        } else {
+            res.send(400, {error: 'unknown course'});
+        }
 
         /*
                 let sc: SDDMController = new SDDMController(new GitHubController());
