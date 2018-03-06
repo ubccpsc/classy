@@ -12,6 +12,7 @@ import {GithubUtil} from "../github/GithubUtil";
 import {GithubAutoTest} from "../github/GithubAutoTest";
 import {EdXClassPortal} from "../edx/EdxClassPortal";
 import {EdxAutoTest} from "../edx/EdxAutoTest";
+import {ICommentEvent, IPushEvent} from "../Types";
 
 export default class RouteHandler {
 
@@ -61,7 +62,7 @@ export default class RouteHandler {
                 break;
             case "commit_comment":
                 try {
-                    let commentEvent = null;
+                    let commentEvent: ICommentEvent = null;
                     try {
                         commentEvent = GithubUtil.processComment(body);
                         Log.info("RouteHandler::handleCommentEvent() - request: " + JSON.stringify(commentEvent, null, 2));
@@ -71,7 +72,7 @@ export default class RouteHandler {
                     }
                     at.handleCommentEvent(commentEvent).then((result: boolean) => { // TODO: validate result properties; add an interface
                         Log.info("RouteHandler::commitComment() - success; result: " + result + "; took: " + Util.took(start));
-                        res.json(200, {});
+                        res.json(200, commentEvent); // report back our interpretation of the hook
                     }).catch((err: any) => {
                         Log.error("RouteHandler::commitComment() - failure; ERROR: " + err + "; took: " + Util.took(start));
                         res.json(400, "Failed to process commit comment.");
@@ -83,7 +84,7 @@ export default class RouteHandler {
                 break;
             case "push":
                 try {
-                    let pushEvent = null;
+                    let pushEvent: IPushEvent = null;
                     try {
                         pushEvent = GithubUtil.processPush(body);
                         Log.info("RouteHandler::handlePushEvent() - request: " + JSON.stringify(pushEvent, null, 2));
@@ -93,7 +94,7 @@ export default class RouteHandler {
                     }
                     at.handlePushEvent(pushEvent).then((result: boolean) => {
                         Log.info("RouteHandler::handlePushEvent() - success: " + result + "; took: " + Util.took(start));
-                        res.json(202, {body: "Commit has been queued"});
+                        res.json(200, pushEvent); // report back our interpretation of the hook
                     }).catch((err: any) => {
                         Log.error("RouteHandler::handlePushEvent() - error encountered; ERROR: " + err + "; took: " + Util.took(start));
                         res.json(400, "Failed to enqueue commit for testing.");
