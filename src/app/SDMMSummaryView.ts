@@ -225,6 +225,7 @@ export class SDMMSummaryView {
         } else if (value === 'D0') {
             this.showStatusD0(status);
         } else if (value === 'D1UNLOCKED') {
+            this.showStatusD0(status); // still do the d0 status
             this.show([
                 'sdmmd0status',
                 'sdmmd1teams',
@@ -232,6 +233,7 @@ export class SDMMSummaryView {
                 'sdmmd3locked',
             ]);
         } else if (value === 'D1TEAMSET') {
+            this.showStatusD0(status); // still do the d0 status
             this.show([
                 'sdmmd0status',
                 'sdmmd1provision',
@@ -243,6 +245,8 @@ export class SDMMSummaryView {
         } else if (value === 'D2') {
             this.showStatusD2(status);
         } else if (value === 'D3PRE') {
+            // still do the d2 status
+            this.showStatusD2(status);
             this.show([
                 'sdmmd0status',
                 'sdmmd1status',
@@ -250,12 +254,7 @@ export class SDMMSummaryView {
                 'sdmmd3provision',
             ]);
         } else if (value === 'D3') {
-            this.show([
-                'sdmmd0status',
-                'sdmmd1status',
-                'sdmmd2status',
-                'sdmmd3status',
-            ]);
+            this.showStatusD3(status);
         }
 
     }
@@ -404,12 +403,13 @@ export class SDMMSummaryView {
         // set title:
         if (grade.score > 0) {
             row.children[1].children[0].innerHTML = 'Grade: ' + grade.score.toFixed(1) + ' %';
+            row.children[1].children[1].innerHTML = '<a href="' + grade.URL + '">Source Commit</a>&nbsp;&nbsp;Timestamp: ' + new Date(grade.timestamp).toLocaleTimeString();
         } else {
             row.children[1].children[0].innerHTML = 'Grade: N/A';
+            row.children[1].children[1].innerHTML = '<a href="' + grade.URL + '">Source Repository</a>&nbsp;&nbsp;Timestamp: ' + new Date(grade.timestamp).toLocaleTimeString();
         }
 
         // set subrow
-        row.children[1].children[1].innerHTML = '<a href="' + grade.URL + '">Source Repository</a>&nbsp;&nbsp;Timestamp: ' + new Date(grade.timestamp).toLocaleTimeString();
 
     }
 
@@ -450,6 +450,33 @@ export class SDMMSummaryView {
                 'sdmmd1status',
                 'sdmmd2status',
                 'sdmmd3locked',
+            ]);
+        } catch (err) {
+            Log.info("SDDM::showStatusD2(..) - ERROR: " + err);
+        }
+    }
+
+
+    private showStatusD3(status: any | undefined) {
+        Log.info("SDDM::showStatusD3(..) - start: " + JSON.stringify(status));
+        try {
+            let row = document.getElementById('sdmmd0status');
+            this.updateDeliverableRow(row, status.d0);
+
+            row = document.getElementById('sdmmd1status');
+            this.updateDeliverableRow(row, status.d1);
+
+            row = document.getElementById('sdmmd2status');
+            this.updateDeliverableRow(row, status.d2);
+
+            row = document.getElementById('sdmmd3status');
+            this.updateDeliverableRow(row, status.d3);
+
+            this.show([
+                'sdmmd0status',
+                'sdmmd1status',
+                'sdmmd2status',
+                'sdmmd3status',
             ]);
         } catch (err) {
             Log.info("SDDM::showStatusD2(..) - ERROR: " + err);
