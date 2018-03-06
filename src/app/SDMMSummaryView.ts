@@ -376,17 +376,19 @@ export class SDMMSummaryView {
         // <ons-icon icon="fa-times-circle"></ons-icon> <!-- fa-check-circle -->
         try {
 
-            if (status.d0 !== null) {
-                let row = document.getElementById('sdmmd0status');
-                this.updateDeliverableRow(row, status.d0);
-            }
-
             this.show([
                 'sdmmd0status',
                 'sdmmd1locked',
                 'sdmmd2locked',
                 'sdmmd3locked',
             ]);
+            
+            if (status.d0 !== null) {
+                let row = document.getElementById('sdmmd0status');
+                this.updateDeliverableRow(row, status.d0);
+            }
+
+
         } catch (err) {
             Log.trace('SDDMSV::showStatusD0(..) - ERROR: ' + err);
         }
@@ -421,6 +423,14 @@ export class SDMMSummaryView {
     private showStatusD1(status: any | undefined) {
         Log.info("SDDM::showStatusD1(..) - start: " + JSON.stringify(status));
         try {
+
+            this.show([
+                'sdmmd0status',
+                'sdmmd1status',
+                'sdmmd2locked',
+                'sdmmd3locked',
+            ]);
+
             let row = document.getElementById('sdmmd0status');
             if (status.d0 !== null) {
                 this.updateDeliverableRow(row, status.d0);
@@ -435,12 +445,6 @@ export class SDMMSummaryView {
                 row.style.display = 'none';
             }
 
-            this.show([
-                'sdmmd0status',
-                'sdmmd1status',
-                'sdmmd2locked',
-                'sdmmd3locked',
-            ]);
         } catch (err) {
             Log.info("SDDM::showStatusD1(..) - ERROR: " + err);
         }
@@ -449,6 +453,13 @@ export class SDMMSummaryView {
     private showStatusD2(status: any | undefined) {
         Log.info("SDDM::showStatusD2(..) - start: " + JSON.stringify(status));
         try {
+
+            this.show([
+                'sdmmd0status',
+                'sdmmd1status',
+                'sdmmd2status',
+                'sdmmd3locked',
+            ]);
 
             let row = document.getElementById('sdmmd0status');
             if (status.d0 !== null) {
@@ -470,13 +481,6 @@ export class SDMMSummaryView {
             } else {
                 row.style.display = 'none';
             }
-
-            this.show([
-                'sdmmd0status',
-                'sdmmd1status',
-                'sdmmd2status',
-                'sdmmd3locked',
-            ]);
         } catch (err) {
             Log.info("SDDM::showStatusD2(..) - ERROR: " + err);
         }
@@ -486,6 +490,14 @@ export class SDMMSummaryView {
     private showStatusD3(status: any | undefined) {
         Log.info("SDDM::showStatusD3(..) - start: " + JSON.stringify(status));
         try {
+
+            this.show([
+                'sdmmd0status',
+                'sdmmd1status',
+                'sdmmd2status',
+                'sdmmd3status',
+            ]);
+
             let row = document.getElementById('sdmmd0status');
             if (status.d0 !== null) {
                 this.updateDeliverableRow(row, status.d0);
@@ -514,12 +526,6 @@ export class SDMMSummaryView {
                 row.style.display = 'none';
             }
 
-            this.show([
-                'sdmmd0status',
-                'sdmmd1status',
-                'sdmmd2status',
-                'sdmmd3status',
-            ]);
         } catch (err) {
             Log.info("SDDM::showStatusD2(..) - ERROR: " + err);
         }
