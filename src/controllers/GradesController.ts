@@ -26,6 +26,10 @@ export class GradesController {
         Log.trace("GradesController::createGrade(..) - payload: " + JSON.stringify(grade));
         try {
 
+            if (typeof (<any>grade).url !== 'undefined') {
+                grade.URL = (<any>grade).url; // TODO: remove this when AutoTest is done being naughty
+            }
+
             // find all people on a repo
             const allPeopleIds: string[] = [];
             let repo = await this.db.getRepository(org, repoId);
@@ -47,7 +51,7 @@ export class GradesController {
                 }
             }
 
-            Log.info("RepositoryController::createGrade(..) - # people: " + allPeopleIds.length);
+            Log.info("GradesController::createGrade(..) - # people: " + allPeopleIds.length);
 
             for (var personId of allPeopleIds) {
                 // set their grades
@@ -63,21 +67,21 @@ export class GradesController {
                         URL:       grade.URL,
                         timestamp: grade.timestamp
                     };
-                    Log.trace("RepositoryController::createGrade(..) - new grade; personId: " + personId + "; grade: " + JSON.stringify(gradeRecord));
+                    Log.trace("GradesController::createGrade(..) - new grade; personId: " + personId + "; grade: " + JSON.stringify(gradeRecord));
                 } else {
                     // update existing
                     gradeRecord.score = grade.score;
                     gradeRecord.comment = grade.comment;
                     gradeRecord.URL = grade.URL;
                     gradeRecord.timestamp = grade.timestamp;
-                    Log.trace("RepositoryController::createGrade(..) - updating grade; personId: " + personId + "; grade: " + JSON.stringify(gradeRecord));
+                    Log.trace("GradesController::createGrade(..) - updating grade; personId: " + personId + "; grade: " + JSON.stringify(gradeRecord));
                 }
                 await this.db.writeGrade(gradeRecord);
             }
 
             return true;
         } catch (err) {
-            Log.error("RepositoryController::createGrade(..) - ERROR: " + err);
+            Log.error("GradesController::createGrade(..) - ERROR: " + err);
             return false;
         }
     }
