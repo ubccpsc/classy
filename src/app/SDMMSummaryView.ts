@@ -225,7 +225,7 @@ export class SDMMSummaryView {
         } else if (value === 'D0') {
             this.showStatusD0(status);
         } else if (value === 'D1UNLOCKED') {
-            this.showStatusD0(status); // still do the d0 status
+            this.showStatusD1(status); // still do the d0 status
             this.show([
                 'sdmmd0status',
                 'sdmmd1teams',
@@ -233,7 +233,7 @@ export class SDMMSummaryView {
                 'sdmmd3locked',
             ]);
         } else if (value === 'D1TEAMSET') {
-            this.showStatusD0(status); // still do the d0 status
+            this.showStatusD1(status); // still do the d0 status
             this.show([
                 'sdmmd0status',
                 'sdmmd1provision',
@@ -246,7 +246,7 @@ export class SDMMSummaryView {
             this.showStatusD2(status);
         } else if (value === 'D3PRE') {
             // still do the d2 status
-            this.showStatusD2(status);
+            this.showStatusD3(status);
             this.show([
                 'sdmmd0status',
                 'sdmmd1status',
@@ -376,8 +376,10 @@ export class SDMMSummaryView {
         // <ons-icon icon="fa-times-circle"></ons-icon> <!-- fa-check-circle -->
         try {
 
-            let row = document.getElementById('sdmmd0status');
-            this.updateDeliverableRow(row, status.d0);
+            if (status.d0 !== null) {
+                let row = document.getElementById('sdmmd0status');
+                this.updateDeliverableRow(row, status.d0);
+            }
 
             this.show([
                 'sdmmd0status',
@@ -392,6 +394,9 @@ export class SDMMSummaryView {
 
     private updateDeliverableRow(row: any, grade: GradePayload) {
         // update icon
+        if (row === null || grade === null) {
+            return;
+        }
 
         let icon = row.children[0].children[0];
         if (grade.score >= 60) {
@@ -416,11 +421,17 @@ export class SDMMSummaryView {
     private showStatusD1(status: any | undefined) {
         Log.info("SDDM::showStatusD1(..) - start: " + JSON.stringify(status));
         try {
-            let row = document.getElementById('sdmmd0status');
-            this.updateDeliverableRow(row, status.d0);
 
-            row = document.getElementById('sdmmd1status');
-            this.updateDeliverableRow(row, status.d1);
+
+            if (status.d0 !== null) {
+                let row = document.getElementById('sdmmd0status');
+                this.updateDeliverableRow(row, status.d0);
+            }
+
+            if (status.d1 !== null) {
+                let row = document.getElementById('sdmmd1status');
+                this.updateDeliverableRow(row, status.d1);
+            }
 
             this.show([
                 'sdmmd0status',
@@ -436,14 +447,20 @@ export class SDMMSummaryView {
     private showStatusD2(status: any | undefined) {
         Log.info("SDDM::showStatusD2(..) - start: " + JSON.stringify(status));
         try {
-            let row = document.getElementById('sdmmd0status');
-            this.updateDeliverableRow(row, status.d0);
+            if (status.d0 !== null) {
+                let row = document.getElementById('sdmmd0status');
+                this.updateDeliverableRow(row, status.d0);
+            }
 
-            row = document.getElementById('sdmmd1status');
-            this.updateDeliverableRow(row, status.d1);
+            if (status.d1 !== null) {
+                let row = document.getElementById('sdmmd1status');
+                this.updateDeliverableRow(row, status.d1);
+            }
 
-            row = document.getElementById('sdmmd2status');
-            this.updateDeliverableRow(row, status.d2);
+            if (status.d2 !== null) {
+                let row = document.getElementById('sdmmd2status');
+                this.updateDeliverableRow(row, status.d2);
+            }
 
             this.show([
                 'sdmmd0status',
@@ -460,17 +477,22 @@ export class SDMMSummaryView {
     private showStatusD3(status: any | undefined) {
         Log.info("SDDM::showStatusD3(..) - start: " + JSON.stringify(status));
         try {
-            let row = document.getElementById('sdmmd0status');
-            this.updateDeliverableRow(row, status.d0);
-
-            row = document.getElementById('sdmmd1status');
-            this.updateDeliverableRow(row, status.d1);
-
-            row = document.getElementById('sdmmd2status');
-            this.updateDeliverableRow(row, status.d2);
-
-            row = document.getElementById('sdmmd3status');
-            this.updateDeliverableRow(row, status.d3);
+            if (status.d0 !== null) {
+                let row = document.getElementById('sdmmd0status');
+                this.updateDeliverableRow(row, status.d0);
+            }
+            if (status.d1 !== null) {
+                let row = document.getElementById('sdmmd1status');
+                this.updateDeliverableRow(row, status.d1);
+            }
+            if (status.d2 !== null) {
+                let row = document.getElementById('sdmmd2status');
+                this.updateDeliverableRow(row, status.d2);
+            }
+            if (status.d3 !== null) {
+                let row = document.getElementById('sdmmd3status');
+                this.updateDeliverableRow(row, status.d3);
+            }
 
             this.show([
                 'sdmmd0status',
