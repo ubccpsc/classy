@@ -358,7 +358,7 @@ export class MongoDataStore implements IDataStore {
             const dbName = Config.getInstance().getProp("name");
             Log.info("MongoDataStore::open() - db null; making new connection to: " + dbName);
 
-            const client = await MongoClient.connect('mongodb://localhost:27017');
+            const client = await MongoClient.connect(Config.getInstance().getProp("mongoUrl")); // 'mongodb://localhost:27017'
             this.db = await client.db(dbName);
 
             Log.info("MongoDataStore::open() - db null; new connection made");

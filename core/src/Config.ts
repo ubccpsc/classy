@@ -39,6 +39,7 @@ export class Config {
                 classPortalPort: process.env.CP_PORT,
                 graderHost: process.env.GRADER_HOST,
                 graderPort: process.env.GRADER_PORT,
+                mongoUrl: process.env.DB_URL,
             };
         } catch (err) {
             Log.error("Config::<init> - fatal error reading configuration file: " + err);
