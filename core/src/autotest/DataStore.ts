@@ -68,7 +68,7 @@ export class MongoDataStore implements IDataStore {
     readonly PUSHCOLL = 'pushes';
     readonly COMMENTCOLL = 'comments';
     readonly OUTPUTCOLL = 'output';
-    readonly FEEDBACKCOLL = 'output';
+    readonly FEEDBACKCOLL = 'feedback';
 
     constructor() {
         Log.info("MongoDataStore::<init> - start");
