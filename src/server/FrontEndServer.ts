@@ -82,6 +82,22 @@ export default class FrontEndServer {
                     Log.info('FrontEndServer::start() - restify ERROR: ' + err);
                     reject(err);
                 });
+
+                // forward port 80 to production port
+                Log.info('FrontEndServer::Creating forward - start');
+                const nonSecure = restify.createServer({name: 'redirectToSSL'});
+                nonSecure.get(/.*/, function (req, res, next) {
+                    const url = Config.getInstance().getProp('frontendUrl') + ':' + Config.getInstance().getProp('frontendPort') + req.getUrl().href;
+                    res.redirect(301, url, next);
+                });
+                nonSecure.on('error', function (err) {
+                    Log.warn('FrontEndServer::Creating forward failed; need sudo? ERROR: ' + err.message);
+                });
+                nonSecure.listen(80, function () {
+                    Log.info('FrontEndServer::Creating forward - listening on 80');
+                });
+                Log.info('FrontEndServer::Creating forward - done');
+
             } catch (err) {
                 Log.error('FrontEndServer::start() - ERROR: ' + err);
                 reject(err);
