@@ -74,8 +74,8 @@ export class GithubUtil {
                 commitSHA,
                 commitURL,
                 postbackURL,
-                userName: requestor,
-                courseId,
+                personId: requestor,
+                org:      courseId,
                 delivId,
                 timestamp
             };
@@ -135,7 +135,7 @@ export class GithubUtil {
 
             const pushEvent: IPushEvent = {
                 branch,
-                repo,
+                repoId: repo,
                 cloneURL,
                 commitSHA,
                 commitURL,

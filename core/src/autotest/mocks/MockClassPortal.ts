@@ -31,9 +31,9 @@ export class MockClassPortal implements IClassPortal {
     }
 
     /*
-        public async getTestDelay(courseId: string, delivId: string): Promise<number | null> {
-            if (typeof courseId !== "undefined" && courseId !== null && typeof delivId !== "undefined" && delivId !== null) {
-                if (courseId === "310") {
+        public async getTestDelay(org: string, delivId: string): Promise<number | null> {
+            if (typeof org !== "undefined" && org !== null && typeof delivId !== "undefined" && delivId !== null) {
+                if (org === "310") {
                     return 12 * 60 * 60 * 1000; // 12h right now
                 }
             }

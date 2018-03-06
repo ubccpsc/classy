@@ -35,7 +35,7 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
     private github: IGithubService = null;
 
     constructor(courseId: string, dataStore: IDataStore, portal: IClassPortal, github: IGithubService) {
-        super(courseId, dataStore); // this.courseId = courseId;
+        super(courseId, dataStore); // this.org = org;
         // this.dataStore = dataStore;
         this.classPortal = portal;
         this.github = github;
@@ -68,7 +68,7 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
             }
 
             if (delivId !== null) {
-                const input: IContainerInput = {courseId: this.courseId, delivId, pushInfo: info};
+                const input: IContainerInput = {org: this.courseId, delivId, pushInfo: info};
                 await this.savePushInfo(input);
                 this.addToStandardQueue(input);
                 // this.standardQueue.push(input);
@@ -120,9 +120,9 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
                 return false;
             }
 
-            Log.info("GithubAutoTest::handleCommentEvent(..) - start; course: " + this.courseId + "; commit: " + info.commitSHA + "; user: " + info.userName);
+            Log.info("GithubAutoTest::handleCommentEvent(..) - start; course: " + this.courseId + "; commit: " + info.commitSHA + "; user: " + info.personId);
 
-            if (info.userName === Config.getInstance().getProp("botName")) {
+            if (info.personId === Config.getInstance().getProp("botName")) {
                 Log.info("GithubAutoTest::handleCommentEvent(..) - ignored, comment made by AutoBot");
                 return true;
             }
@@ -133,12 +133,12 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
             }
 
             // update info record
-            info.courseId = that.courseId;
+            info.org = that.courseId;
             let delivId = info.delivId;
 
             /*
             if (delivId === null) {
-                // need to get the default deliverable for that repo
+                // need to get the default deliverable for that repoId
                 delivId = await this.getDelivId();
                 info.delivId = delivId;
             }
@@ -152,9 +152,9 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
             }
 
             // front load the async operations, even if it means we do some operations unnecessarily; thse could be done in parallel
-            const isStaff: boolean = await this.classPortal.isStaff(this.courseId, info.userName); // async
-            const requestFeedbackDelay: string | null = await this.requestFeedbackDelay(delivId, info.userName, info.timestamp); // ts of comment, not push
-            const hasBeenRequestedBefore: IFeedbackGiven = await this.dataStore.getFeedbackGivenRecordForCommit(info.commitURL, info.userName); // students often request grades they have previously 'paid' for
+            const isStaff: boolean = await this.classPortal.isStaff(this.courseId, info.personId); // async
+            const requestFeedbackDelay: string | null = await this.requestFeedbackDelay(delivId, info.personId, info.timestamp); // ts of comment, not push
+            const hasBeenRequestedBefore: IFeedbackGiven = await this.dataStore.getFeedbackGivenRecordForCommit(info.commitURL, info.personId); // students often request grades they have previously 'paid' for
             const res: ICommitRecord = await this.getOutputRecord(info.commitURL, delivId); // for any user
             const isCurrentlyRunning: boolean = this.isCommitExecuting(info.commitURL, delivId);
             Log.trace("GithubAutoTest::handleCommentEvent(..) - isStaff: " + isStaff + "; delay: " + requestFeedbackDelay + "; res: " + res + "; running?: " + isCurrentlyRunning);
@@ -189,7 +189,7 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
                 // true if staff, requested before, or over feedback delay interval
                 if (shouldPost === true) {
                     await this.github.postMarkdownToGithub({url: info.postbackURL, message: res.output.feedback});
-                    await this.saveFeedbackGiven(this.courseId, delivId, info.userName, info.timestamp, info.commitURL);
+                    await this.saveFeedbackGiven(this.courseId, delivId, info.personId, info.timestamp, info.commitURL);
                     await this.saveCommentInfo(info); // user or TA; only for analytics since feedback has been given
                 }
             } else {
@@ -244,7 +244,7 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
                 // feedback has been previously requested
                 Log.info("GithubAutoTest::processExecution(..) - feedback requested");
                 await this.github.postMarkdownToGithub({url: data.input.pushInfo.postbackURL, message: data.output.feedback});
-                await this.saveFeedbackGiven(data.input.courseId, data.input.delivId, pushRequested.userName, pushRequested.timestamp, data.commitURL);
+                await this.saveFeedbackGiven(data.input.org, data.input.delivId, pushRequested.personId, pushRequested.timestamp, data.commitURL);
             } else {
                 // do nothing
                 Log.info("GithubAutoTest::processExecution(..) - course: " + this.courseId + "; commit not requested - no feedback given; commit: " + data.commitSHA);
@@ -363,10 +363,10 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
         try {
             const record: IFeedbackGiven = {
                 commitURL,
-                courseId,
+                org:      courseId,
                 delivId,
                 timestamp,
-                userName,
+                personId: userName,
             };
             await this.dataStore.saveFeedbackGivenRecord(record);
         } catch (err) {
