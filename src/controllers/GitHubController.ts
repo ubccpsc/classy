@@ -58,27 +58,54 @@ export class GitHubController implements IGitHubController {
                 Log.info("GitHubController::provisionRepository(..) - only the first team will be added to the repo");
             }
 
-            // create a repo
-            Log.trace("GitHubController::provisionRepository() - create GitHub repo");
-            let repoVal = await gh.createRepo(org, repoName);
-            Log.trace('GHA::provisionRepository(..) - repo: ' + repoVal);
-            // expect(repoVal).to.equal('https://github.com/SECapstone/' + Test.REPONAME1);
+            try {
+                Log.trace("GitHubController::provisionRepository() - see if repo already exists");
+                let repoVal = await gh.repoExists(org, repoName);
+                Log.trace('GHA::provisionRepository(..) - repo exists: ' + repoVal);
+                if (repoVal === true) {
+                    // this is fatal, we can't provision a repo that already exists
+                    Log.error("GitHubController::provisionRepository() - repo already exists; provisioning failed");
+                    return false;
+                }
+            } catch (err) {
+                Log.error("GitHubController::provisionRepository() - repo already exists; ERROR: " + err);
+                throw err;
+            }
 
-            // HARDCODE: assume one team
-            Log.trace("GitHubController::provisionRepository() - create GitHub team");
-            let val = await gh.createTeam(org, teams[0].id, 'push');
-            Log.trace('GHA::provisionRepository(..) createTeam: ' + val.teamName);
-            // expect(val.teamName).to.equal(Test.TEAMNAME1);
-            // expect(val.githubTeamNumber).to.be.an('number');
-            // expect(val.githubTeamNumber > 0).to.be.true;
+            try {
+                // create a repo
+                Log.trace("GitHubController::provisionRepository() - create GitHub repo");
+                let repoVal = await gh.createRepo(org, repoName);
+                Log.trace('GHA::provisionRepository(..) - repo: ' + repoVal);
+                // expect(repoVal).to.equal('https://github.com/SECapstone/' + Test.REPONAME1);
+            } catch (err) {
+                Log.error('GHA::provisionRepository(..) - create repo error: ' + err);
+                // repo creation failed; remove if needed (requires createRepo be permissive if already exists)
+                let res = await gh.deleteRepo(org, repoName);
+                Log.info('GHA::provisionRepository(..) - repo removed: ' + res);
+                return false;
+            }
+
+            let teamValue = null;
+            try {
+                // HARDCODE: assume one team
+                Log.trace("GitHubController::provisionRepository() - create GitHub team");
+                teamValue = await gh.createTeam(org, teams[0].id, 'push');
+                Log.trace('GHA::provisionRepository(..) createTeam: ' + teamValue.teamName);
+                // expect(val.teamName).to.equal(Test.TEAMNAME1);
+                // expect(val.githubTeamNumber).to.be.an('number');
+                // expect(val.githubTeamNumber > 0).to.be.true;
+            } catch (err) {
+                Log.error("GitHubController::provisionRepository() - create team ERROR: " + err);
+            }
 
             Log.trace("GitHubController::provisionRepository() - add members to GitHub team");
-            let addMembers = await gh.addMembersToTeam(val.teamName, val.githubTeamNumber, teams[0].personIds);
+            let addMembers = await gh.addMembersToTeam(teamValue.teamName, teamValue.githubTeamNumber, teams[0].personIds);
             Log.trace('GHA::provisionRepository(..) - addMembers: ' + addMembers.teamName);
             // expect(addMembers.teamName).to.equal(Test.TEAMNAME1); // not a strong test
 
             Log.trace("GitHubController::provisionRepository() - add team to repo");
-            let teamAdd = await gh.addTeamToRepo(org, val.githubTeamNumber, repoName, 'push');
+            let teamAdd = await gh.addTeamToRepo(org, teamValue.githubTeamNumber, repoName, 'push');
             Log.trace('GHA::provisionRepository(..) - team name: ' + teamAdd.teamName);
             // expect(teamAdd.githubTeamNumber).to.equal(val.githubTeamNumber);
 
@@ -162,7 +189,7 @@ export class GitHubActions {
     }
 
     /**
-     * Creates a given repo and returns its url. Will fail if the repo already exists.
+     * Creates a given repo and returns its url. If the repo exists, return the url for that repo.
      *
      * @param org
      * @param repoName
@@ -222,14 +249,67 @@ export class GitHubActions {
      */
     public deleteRepo(org: string, repoName: string): Promise<boolean> {
         let ctx = this;
-
         Log.info("GitHubAction::deleteRepo( " + org + ", " + repoName + " ) - start");
+
+        // first make sure the repo exists
+
+        return new Promise(function (fulfill, reject) {
+
+            ctx.repoExists(org, repoName).then(function (repoExists: boolean) {
+
+                if (repoExists === true) {
+                    Log.info("GitHubAction::deleteRepo(..) - repo exists; deleting");
+
+                    const uri = ctx.apiPath + '/repos/' + org + '/' + repoName;
+                    Log.trace("GitHubAction::deleteRepo(..) - URI: " + uri);
+                    const options = {
+                        method:  'DELETE',
+                        uri:     uri,
+                        headers: {
+                            'Authorization': ctx.gitHubAuthToken,
+                            'User-Agent':    ctx.gitHubUserName,
+                            'Accept':        'application/json'
+                        }
+                    };
+
+                    rp(options).then(function (body: any) {
+                        Log.info("GitHubAction::deleteRepo(..) - success; body: " + body);
+                        fulfill(true);
+                    }).catch(function (err: any) {
+                        Log.error("GitHubAction::deleteRepo(..) - ERROR: " + JSON.stringify(err));
+                        reject(err);
+                    });
+                } else {
+                    Log.info("GitHubAction::deleteRepo(..) - repo does not exists; not deleting");
+                    fulfill(false);
+                }
+            }).catch(function (err) {
+                Log.error("GitHubAction::deleteRepo(..) - ERROR: " + JSON.stringify(err));
+                reject(err);
+            });
+
+
+        });
+    }
+
+    /**
+     * Checks if a repo exists or not. If the request fails for _ANY_ reason the failure will not
+     * be reported, only that the repo does not exist.
+     *
+     * @param org
+     * @param repoName
+     * @returns {Promise<boolean>}
+     */
+    public repoExists(org: string, repoName: string): Promise<boolean> {
+        let ctx = this;
+        Log.info("GitHubAction::repoExists( " + org + ", " + repoName + " ) - start");
+
         return new Promise(function (fulfill, reject) {
 
             const uri = ctx.apiPath + '/repos/' + org + '/' + repoName;
-            Log.trace("GitHubAction::deleteRepo(..) - URI: " + uri);
+            Log.trace("GitHubAction::repoExists(..) - URI: " + uri);
             const options = {
-                method:  'DELETE',
+                method:  'GET',
                 uri:     uri,
                 headers: {
                     'Authorization': ctx.gitHubAuthToken,
@@ -239,13 +319,14 @@ export class GitHubActions {
             };
 
             rp(options).then(function (body: any) {
-                Log.info("GitHubAction::deleteRepo(..) - success; body: " + body);
+                Log.info("GitHubAction::repoExists(..) - true; body: " + body);
                 fulfill(true);
             }).catch(function (err: any) {
-                Log.error("GitHubAction::deleteRepo(..) - ERROR: " + JSON.stringify(err));
-                reject(err);
+                // Log.error("GitHubAction::repoExists(..) - ERROR: " + JSON.stringify(err));
+                Log.info("GitHubAction::repoExists(..) - false");
+                // NOTE: this silently fails if the credentials are wrong
+                fulfill(false);
             });
-
         });
     }
 
@@ -544,6 +625,14 @@ export class GitHubActions {
         });
     }
 
+    /**
+     * Gets the internal number for a team. Returns -1 if the team does not exist. Will throw an error
+     * if some other configuration problem is encountered.
+     *
+     * @param {string} org
+     * @param {string} teamName
+     * @returns {Promise<number>}
+     */
     public getTeamNumber(org: string, teamName: string): Promise<number> {
         Log.info("GitHubAction::getTeamNumber( " + org + ", " + teamName + " ) - start");
         let ctx = this;
@@ -559,7 +648,9 @@ export class GitHubActions {
                 }
 
                 if (teamId < 0) {
-                    reject('GitHubAction::getTeamNumber(..) - ERROR: Could not find team: ' + teamName);
+                    // reject('GitHubAction::getTeamNumber(..) - ERROR: Could not find team: ' + teamName);
+                    Log.warn('GitHubAction::getTeamNumber(..) - WARN: Could not find team: ' + teamName);
+                    fulfill(-1);
                 } else {
                     fulfill(teamId);
                 }

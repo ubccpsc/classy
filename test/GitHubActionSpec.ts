@@ -11,7 +11,7 @@ import Util from "../src/util/Util";
 import {ActionPayload, GradePayload, SDDMController} from "../src/controllers/SDDMController";
 import {GradesController} from "../src/controllers/GradesController";
 
-describe.only("GitHubActions", () => {
+describe("GitHubActions", () => {
 
     let gh: GitHubActions;
 
@@ -55,12 +55,28 @@ describe.only("GitHubActions", () => {
         expect(del).to.be.true;
     }).timeout(TIMEOUT * 10);
 
+    it("Should not be possible to find a repo that does not exist.", async function () {
+        let val = await gh.repoExists(Test.ORGNAME, REPONAME);
+        expect(val).to.be.false;
+    }).timeout(TIMEOUT);
+
+    it("Should not be possible to delete a repo that does not exist.", async function () {
+        // and it should do so without crashing
+        let val = await gh.deleteRepo(Test.ORGNAME, REPONAME);
+        expect(val).to.be.false;
+    }).timeout(TIMEOUT);
+
     it("Should be able to create a repo.", async function () {
         let val = await gh.createRepo(Test.ORGNAME, REPONAME);
         expect(val).to.equal('https://github.com/SECapstone/' + REPONAME);
     }).timeout(TIMEOUT);
 
-    it("Should be able to remove a repo.", async function () {
+    it("Should not be possible to find a repo that does exist.", async function () {
+        let val = await gh.repoExists(Test.ORGNAME, REPONAME);
+        expect(val).to.be.true;
+    }).timeout(TIMEOUT);
+
+    it("Should be able to remove a repo that does exist.", async function () {
         let val = await gh.deleteRepo(Test.ORGNAME, REPONAME);
         expect(val).to.be.true;
     }).timeout(TIMEOUT);
@@ -86,6 +102,11 @@ describe.only("GitHubActions", () => {
         expect(hooks).to.have.lengthOf(1);
     }).timeout(TIMEOUT);
 
+    it("Should not be possible to get a team number for a team that does not exist.", async function () {
+        let val = await gh.getTeamNumber(Test.ORGNAME, TEAMNAME);
+        expect(val).to.be.lessThan(0);
+    }).timeout(TIMEOUT);
+
     it("Should be able to create a team, add users to it, and add it to the repo.", async function () {
         let val = await gh.createTeam(Test.ORGNAME, TEAMNAME, 'push');
         expect(val.teamName).to.equal(TEAMNAME);
@@ -102,6 +123,11 @@ describe.only("GitHubActions", () => {
         let staffAdd = await gh.addTeamToRepo(Test.ORGNAME, staffTeamNumber, REPONAME, 'admin');
         expect(staffAdd.githubTeamNumber).to.equal(staffTeamNumber);
 
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to get a team number for a team that does exist.", async function () {
+        let val = await gh.getTeamNumber(Test.ORGNAME, TEAMNAME);
+        expect(val).to.be.greaterThan(0);
     }).timeout(TIMEOUT);
 
     it("Should be able to clone a source repo into a newly created repository.", async function () {

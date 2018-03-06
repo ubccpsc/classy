@@ -176,9 +176,9 @@ export class DatabaseController {
     private async deleteRecord(colName: string, query: {}): Promise<boolean> {
         Log.trace("DatabaseController::deleteRecord( " + colName + ", " + JSON.stringify(query) + " ) - start");
         try {
-            const collection = await this.getCollection(this.TEAMCOLL);
-            await collection.deleteOne(query);
-            Log.trace("DatabaseController::deleteRecord(..) - delete complete");
+            const collection = await this.getCollection(colName);
+            let res = await collection.deleteOne(query);
+            Log.trace("DatabaseController::deleteRecord(..) - delete complete; result: " + JSON.stringify(res));
             return true;
         } catch (err) {
             Log.error("DatabaseController::deleteRecord(..) - ERROR: " + err);

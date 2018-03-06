@@ -90,7 +90,7 @@ export class SDDMController {
                 custom: {}
             };
 
-            newPerson.custom.sdmmStatus = 'd0pre';
+            newPerson.custom.sdmmStatus = 'd0pre'; // new users always start in d0pre state
 
             // add to database
             await this.dc.writePerson(newPerson);
@@ -424,10 +424,20 @@ export class SDDMController {
             }
 
             // create local team
+            let existingTeam = await this.tc.getTeam(org, teamName);
+            if (existingTeam !== null) {
+                // team already exists; warn and fail
+                throw new Error("SDDMController::provisionD0Repo(..) - team already exists: " + teamName);
+            }
             const teamCustom = {sdmmd0: true, sdmmd1: false, sdmmd2: false, sdmmd3: false}; // d0 team for now
             const team = await this.tc.createTeam(org, teamName, [person], teamCustom);
 
             // create local repo
+            let existingRepo = await this.rc.getRepository(org, repoName);
+            if (existingRepo !== null) {
+                // repo already exists; warn and fail
+                throw new Error("SDDMController::provisionD0Repo(..) - repo already exists: " + repoName);
+            }
             const repoCustom = {d0enabled: true, d1enabled: false, d2enabled: false, d3enabled: false, sddmD3pr: false}; // d0 repo for now
             const repo = await this.rc.createRepository(org, repoName, [team], repoCustom);
 
