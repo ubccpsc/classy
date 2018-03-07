@@ -1,6 +1,13 @@
 version: "3"
 
 services:
+    router:
+        build: https://${GHT_ORG_CPSC310}@github.ubc.ca/cpsc310/autotest-config.git#:router
+        ports:
+            - "80:80"
+        links:
+            - geolocation
+            - reference-ui
     db:
         image: mongo:3-jessie
         volumes:
