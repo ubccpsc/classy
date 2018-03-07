@@ -34,10 +34,19 @@
             </div>
         </ons-toolbar>
 
-        <ons-list>
+        <ons-list modifier="inset" style="margin-top: 8px;">
+            <ons-list-item>
+                <div style="text-align:center; width: 80%; margin-left: auto; margin-right: auto;"> <!--  -->
+                    This is the Course Management Portal for the <a
+                            href="https://www.edx.org/course/software-development-capstone-project-ubcx-softengprjx">UBC edX Software
+                        Development Capstone Project</a>. If you are a member of this capstone course, you can provision your repositories
+                    and teams for your capstone project with this system. Please login with your GitHub credentials below to get
+                    started!
+                </div>
+            </ons-list-item>
             <ons-list-item>
                 <div style="display:flex; align-items:center; justify-content: center; width: 100%">
-                    <ons-button onclick="myApp.handleMainPageClick({org: 'secapstone'})">SDMM</ons-button>
+                    <ons-button onclick="myApp.handleMainPageClick({org: 'secapstone'})">SDMM Portal Login</ons-button>
                 </div>
             </ons-list-item>
         </ons-list>
@@ -238,13 +247,15 @@
         <div class="alert-dialog-title">Specify D1 Teammate</div>
         <div class="alert-dialog-content">
             <p>
-            Only one team member needs to do this. Enter the GitHub username for your partner.
+                Only one team member needs to do this. Enter the GitHub username for your partner.
             </p>
             <p>
-                NOTE: you will _both_ have to have more than 60% on d1 to proceed. You <b>must</b> work with this partner for the remainder of the project.
+                NOTE: you will _both_ have to have more than 60% on d1 to proceed. You <b>must</b> work with this partner for the remainder
+                of the project.
             </p>
             <p>
-                Partner GitHub username:<ons-input style="background: white; margin-top: 10px;" id="d1partnerInput"></ons-input>
+                Partner GitHub username:
+                <ons-input style="background: white; margin-top: 10px;" id="d1partnerInput"></ons-input>
             </p>
         </div>
         <div class="alert-dialog-footer">

@@ -58,6 +58,11 @@ export class App {
         this.validated = validated;
         Log.trace('App::init() - validated: ' + validated);
 
+        if (validated === true) {
+            Log.trace('App::init() - validated: true; simulating mainPageClick');
+            that.handleMainPageClick({org: 'secapstone'}); // NOTE: hardcode
+        }
+
         return new Promise(function (fulfill, reject) {
 
             document.addEventListener('init', function (event) {
@@ -332,25 +337,25 @@ export class App {
         });
     };
 
-    public handleMainPageClick(org: string) {
+    public handleMainPageClick(params: {}) {
         Log.info("App::handleMainPageClick(..) - start");
 
         if (this.validated === true) {
             // push to correct handler
             if (localStorage.kind === 'superadmin') {
                 Log.info("App::handleMainPageClick(..) - super admin");
-                UI.pushPage('superadmin.html', org);
+                UI.pushPage('superadmin.html', params);
             } else if (localStorage.kind === 'admin') {
                 Log.info("App::handleMainPageClick(..) - admin");
-                UI.pushPage('admin.html', org);
+                UI.pushPage('admin.html', params);
             } else {
                 Log.info("App::handleMainPageClick(..) - student");
-                UI.pushPage('student.html', org);
+                UI.pushPage('student.html', params);
             }
         } else {
             // push to login page
             Log.info("App::handleMainPageClick(..) - not authorized");
-            UI.pushPage('login.html', org);
+            UI.pushPage('login.html', params);
         }
     }
 
@@ -416,7 +421,7 @@ if (typeof classportal === 'undefined') {
 
 (<any>window).myApp = new classportal.App();
 (<any>window).myApp.init().then(function (ret: any) {
-    Log.info("App.ts - init then: " + ret);
+    Log.info("App.ts - init then: " + JSON.stringify(ret));
 }).catch(function (err: any) {
     Log.error("App.ts - init ERROR: " + err);
 });
