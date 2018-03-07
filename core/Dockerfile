@@ -13,7 +13,7 @@ RUN yarn install
 RUN yarn build:prod && \
     mv bin/ /app/ && \
     mv node_modules /app/ && \
-    cp config.priv.json /app && \
+    # cp config.priv.json /app && \
     chown -R node:node /app && \
     rm -rf /tmp/app
 
