@@ -1,0 +1,8 @@
+.list-header {
+    padding-top: 4px;
+    padding-bottom: 0;
+    padding-left: 10px;
+    padding-right: 0;
+    background-color: #99c8ff; /* full shade (too dark): #0076ff */
+    color: #424242;
+}
