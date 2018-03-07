@@ -8,7 +8,7 @@ COPY package.json package.json
 COPY yarn.lock yarn.lock
 COPY tsconfig.json tsconfig.json
 COPY src/ src/
-COPY config.priv.json config.priv.json
+#COPY config.priv.json config.priv.json
 RUN yarn install
 RUN yarn build:prod && \
     mv bin/ /app/ && \
