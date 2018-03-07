@@ -34,26 +34,27 @@
             </div>
         </ons-toolbar>
 
-        <ons-list modifier="inset" style="margin-top: 8px;">
-            <ons-list-item>
-                <div style="text-align:center; width: 65%; margin-left: auto; margin-right: auto;"> <!--  -->
-                    This is the management portal for the <a
-                            href="https://www.edx.org/course/software-development-capstone-project-ubcx-softengprjx">UBC edX Software
-                        Development Capstone Project</a>. If you are a member of this capstone course, you can provision your repositories
-                    and teams for your self-paced capstone project with this system.
-                </div>
-            </ons-list-item>
-            <ons-list-item>
-                <div style="display:flex; align-items:center; justify-content: center; width: 100%">
-
+        <div style="height: 100%; display:flex; flex-direction: row; align-items:center; justify-content: center;">
+            <ons-card style="display: flex; flex-direction: row; align-items: center; text-align: center; margin:10em;">
+                <div> <!--style="width: 65%; margin-left: auto; margin-right: auto; text-align: center;"-->
+                    <div style="padding-bottom: 1em; display: flex">
+                        <p>
+                            This is the management portal for the <a
+                                href="https://www.edx.org/course/software-development-capstone-project-ubcx-softengprjx">UBC edX Software
+                            Development Capstone Project</a>. If you are a member of this capstone course, you can provision your
+                            repositories
+                            and teams for your self-paced capstone project with this system.
+                        </p>
+                    </div>
                     <ons-button onclick="myApp.handleMainPageClick({org: 'secapstone'})" modifier="large;"
                                 style="padding-top:1em; padding-bottom: 1em; padding-left:2em; padding-right: 2em;">
                         <ons-icon icon="fa-graduation-cap" style="font-size: 250%; vertical-align: bottom;"></ons-icon>
                         SDMM Portal Login
                     </ons-button>
                 </div>
-            </ons-list-item>
-        </ons-list>
+            </ons-card>
+        </div>
+
     </ons-page>
 </template>
 
@@ -245,8 +246,8 @@
             <div class="center">GitHub Verification</div>
         </ons-toolbar>
         <div style="height: 100%; display:flex; align-items:center; justify-content: center;">
-            <ons-card>
-                <div style="width: 65%; margin-left: auto; margin-right: auto; text-align: center;">
+            <ons-card style="display: flex; flex-direction: row; align-items: center; text-align: center; margin:10em;">
+                <div> <!--style="width: 65%; margin-left: auto; margin-right: auto; text-align: center;"-->
                     <div style="padding-bottom: 1em; display: flex">
                         We use GitHub to authenticate your user session. This is required as all course resources are provisioned through
                         the GitHub platform. We do not store any of your personal GitHub details; we only verify and store your GitHub
