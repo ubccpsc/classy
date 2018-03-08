@@ -11,7 +11,7 @@ import Util from "../src/util/Util";
 import {ActionPayload, GradePayload, SDDMController} from "../src/controllers/SDDMController";
 import {GradesController} from "../src/controllers/GradesController";
 
-describe.only("GitHubActions", () => {
+describe.skip("GitHubActions", () => {
 
     let gh: GitHubActions;
 

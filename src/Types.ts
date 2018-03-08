@@ -1,6 +1,7 @@
 /**
  * not sure we can validate this here
  */
+/*
 export interface IConfig {
     githubClientId: string;
     githubClientSecret: string;
@@ -13,6 +14,7 @@ export interface IConfig {
     frontendUrl: string;
     dbName: string;
 }
+*/
 
 /**
  * Common queries:

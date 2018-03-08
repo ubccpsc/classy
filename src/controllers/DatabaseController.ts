@@ -366,7 +366,13 @@ export class DatabaseController {
         }
     }
 
+    public async getAuth(org: string, personId: string): Promise<Auth | null> {
+        Log.trace("DatabaseController::getAuthToken( " + org + ", " + personId + " ) - start");
+        let auth = <Auth> await this.readSingleRecord(this.AUTHCOLL, {"org": org, "personId": personId});
+        return auth;
+    }
 
+    /*
     public async verifyAuthToken(org: string, personId: string, token: string): Promise<boolean> {
         Log.trace("DatabaseController::verifyToken( " + org + ", " + personId + " ) - start");
         let auth = <Auth> await this.readSingleRecord(this.AUTHCOLL, {"org": org, "personId": personId});
@@ -383,6 +389,7 @@ export class DatabaseController {
         return false;
     }
 
+*/
     public async writeAuth(record: Auth): Promise<boolean> {
         Log.info("DatabaseController::writeAuth(..) - start");
         let auth = <Auth> await this.readSingleRecord(this.AUTHCOLL, {"org": record.org, "personId": record.personId});
