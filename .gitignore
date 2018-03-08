@@ -4,6 +4,8 @@
 
 **/node_modules/
 **/coverage/
+config.priv.json
+
 # Logs
 logs
 *.log
@@ -63,6 +65,7 @@ typings/
 # dotenv environment variables file
 .env
 
+<<<<<<< HEAD
 **/src/**/*.js
 **/src/**/*.map
 **/test/*.js
@@ -77,3 +80,14 @@ config.priv.json
 =======
 
 >>>>>>> old_sdmm-portal-backend/master
+=======
+src/**/*.js
+src/**/*.map
+test/**/*.js
+test/**/*.map
+html/js/portal.js
+html/js/portal.js.map
+config.js
+ssl/
+.idea/
+>>>>>>> old_sdmm-portal/master
