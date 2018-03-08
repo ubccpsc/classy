@@ -1,0 +1,20 @@
+{
+    "files.exclude": {
+        "**/.git": true,
+        "**/.DS_Store": true,
+        "**/*.js": {
+            "when": "$(basename).ts"
+        },
+        "**/*.js.map": {
+            "when": "$(basename)"
+        }
+    },
+    "json.schemas": [
+        {
+            "fileMatch": [
+                "/test/queries/**"
+            ],
+            "url": "/test/query.schema.json"
+        }
+    ]
+}
