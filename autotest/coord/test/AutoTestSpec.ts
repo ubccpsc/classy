@@ -32,7 +32,7 @@ describe("GithubAutoTest", () => {
     before(function () {
         Log.test("AutoTest::before() - start");
 
-        pushes = fs.readJSONSync("./test/pushes.json");
+        pushes = fs.readJSONSync(__dirname + "/pushes.json");
 
         data = new MockDataStore();
         data.clearData();
