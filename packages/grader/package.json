@@ -1,0 +1,40 @@
+{
+    "name": "grader",
+    "description": "A GitHub service for grading commits and posting feedback.",
+    "homepage": "https://github.ubc.ca/cpsc310/autotest",
+    "author": {
+        "name": "Reid Holmes",
+        "url": "https://cs.ubc.ca/~rtholmes"
+    },
+    "contributors": [
+        {
+            "name": "Nick Bradley",
+            "email": "nick@ncbradley.com",
+            "url": "https://www.ncbradley.com"
+        }
+    ],
+    "license": "MIT",
+    "version": "0.4.0",
+    "engines": {
+        "node": ">= 8.9 < 9"
+    },
+    "dependencies": {
+        "dotenv": "4.0.0",
+        "fs-extra": "5.0.0",
+        "jszip": "3.1.5",
+        "mongodb": "^3.0.2",
+        "request": "^2.83.0",
+        "request-promise-native": "^1.0.5",
+        "restify": "^6.3.4"
+    },
+    "scripts": {
+        "build": "tsc",
+        "build:prod": "tsc --outDir bin --sourceMap false",
+        "lint": "tslint -c tslint.json 'src/**/*.ts' 'test/**/*.ts'",
+        "test": "mocha --require ts-node/register --timeout 10000",
+        "cover": "nyc --reporter text --reporter html yarn run test",
+        "start": "node --require dotenv/config ./src/Daemon.js",
+        "run:dev": "nohup node ./src/AutoTestDaemon.js 310 &> nohup.out &",
+        "run:prod": "LOG_LEVEL=INFO nohup node ./src/AutoTestDaemon.js 310 &> nohup.out &"
+    }
+}

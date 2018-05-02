@@ -15,12 +15,7 @@
             "./node_modules/@types"
         ]
     },
-    "filesGlob": [
-        "/src/**/*.ts",
-        "/test/**/*.ts"
-    ],
     "exclude": [
-        "node_modules",
-        "**/oldSrc/*"
+        "node_modules"
     ]
 }
