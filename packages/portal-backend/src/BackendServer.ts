@@ -2,10 +2,10 @@
  * Created by rtholmes on 2018-02-23.
  */
 import restify = require('restify');
-import Log from "./util/Log";
+import Log from "../../common/Log";
 
 import * as fs from "fs";
-import {Config} from "./Config";
+import {Config} from "../../common/Config";
 import {RouteHandler} from "./RouteHandler";
 
 // import RouteHandler from './RouteHandler';

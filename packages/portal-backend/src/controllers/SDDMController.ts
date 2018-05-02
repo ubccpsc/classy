@@ -1,5 +1,5 @@
-import Log from "../util/Log";
-import Util from "../util/Util";
+import Log from "../../../common/Log";
+import Util from "../../../common/Util";
 import {RepositoryController} from "./RepositoryController";
 import {DatabaseController} from "./DatabaseController";
 import {GradesController} from "./GradesController";
@@ -9,7 +9,7 @@ import {TeamController} from "./TeamController";
 import {PersonController} from "./PersonController";
 
 import * as crypto from 'crypto';
-import {Config} from "../Config";
+import {Config} from "../../../common/Config";
 
 export interface Payload {
     success?: ActionPayload | StatusPayload; // only set if defined

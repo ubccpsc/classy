@@ -1,5 +1,5 @@
 import BackendServer from "../src/BackendServer";
-import Log from "../src/util/Log";
+import Log from "../../common/Log";
 import {Test} from "./GlobalSpec";
 
 import {expect} from "chai";

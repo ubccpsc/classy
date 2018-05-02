@@ -1,9 +1,9 @@
 import {Collection, Db, MongoClient} from "mongodb";
 
 import {Auth, Deliverable, Grade, Person, Repository, Team} from "../Types";
-import Log from "../util/Log";
-import Util from "../util/Util";
-import {Config} from "../Config";
+import Log from "../../../common/Log";
+import Util from "../../../common/Util";
+import {Config} from "../../../common/Config";
 
 
 export class DatabaseController {

@@ -3,9 +3,9 @@
  */
 
 import restify = require('restify');
-import Log from "../app/util/Log";
+import Log from "../../../common/Log";
 import * as fs from "fs";
-import {Config} from "./Config";
+import {Config} from "../../../common/Config";
 
 // var Config = require("../../Config");
 

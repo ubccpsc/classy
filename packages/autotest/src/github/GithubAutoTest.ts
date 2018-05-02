@@ -1,6 +1,6 @@
-import {Config} from "../Config";
-import Log from "../util/Log";
-import Util from "../util/Util";
+import {Config} from "../../../common/Config";
+import Log from "../../../common/Log";
+import Util from "../../../common/Util";
 
 import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven, IPushEvent} from "../Types";
 

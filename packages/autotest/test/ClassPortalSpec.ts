@@ -4,7 +4,7 @@ const loadFirst = require('./GlobalSpec');
 
 import {expect} from "chai";
 import "mocha";
-import {Config} from "../src/Config";
+import {Config} from "../../common/Config";
 import {ClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
 
 describe("ClassPortal Service", () => {

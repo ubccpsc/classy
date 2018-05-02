@@ -6,7 +6,7 @@ import {Repository} from "../git/Repository";
 import { ContainerFirewall, IContainerFirewall } from "../network/ContainerFirewall";
 import { FirewallController } from "../network/FirewallController";
 import { IContainerOutput, IDockerContainerOptions, IGradeReport, IGradeTask, IHostEnv } from "../Types";
-import Log from "../util/Log";
+import Log from "../../../common/Log";
 import {GradeWorker, IGradeWorker} from "../worker/GradeWorker";
 import { ISocketServer, SocketServer } from "./SocketServer";
 

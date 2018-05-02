@@ -1,8 +1,8 @@
 import * as rp from "request-promise-native";
-import {Config} from "../Config";
+import {Config} from "../../../common/Config";
 import {ICommentEvent, ICommitRecord, IContainerInput, IContainerOutput, IGradeReport} from "../Types";
-import Log from "../util/Log";
-import Util from "../util/Util";
+import Log from "../../../common/Log";
+import Util from "../../../common/Util";
 import {IDataStore} from "./DataStore";
 import {MockGrader} from "./mocks/MockGrader";
 import {Queue} from "./Queue";

@@ -4,8 +4,8 @@ import {expect} from "chai";
 import "mocha";
 
 import {GithubService, IGithubMessage, IGithubService} from "../src/github/GithubService";
-import {Config} from "../src/Config";
-import Log from "../src/util/Log";
+import {Config} from "../../common/Config";
+import Log from "../../common/Log";
 
 describe("GitHub Markdown Service", () => {
     Config.getInstance("test");

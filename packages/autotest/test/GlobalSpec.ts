@@ -1,7 +1,7 @@
 import "mocha";
 
-import {Config} from "../src/Config";
-import Log from "../src/util/Log";
+import {Config} from "../../common/Config";
+import Log from "../../common/Log";
 
 
 

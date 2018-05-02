@@ -5,9 +5,9 @@ import {expect} from "chai";
 import "mocha";
 
 import {GitHubActions, GitHubController} from "../src/controllers/GitHubController";
-import Log from "../src/util/Log";
+import Log from "../../common/Log";
 import {Test} from "./GlobalSpec";
-import Util from "../src/util/Util";
+import Util from "../../common/Util";
 import {ActionPayload, GradePayload, SDDMController} from "../src/controllers/SDDMController";
 import {GradesController} from "../src/controllers/GradesController";
 

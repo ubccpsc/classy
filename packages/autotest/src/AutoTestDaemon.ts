@@ -3,9 +3,9 @@
  */
 
 import Server from "./server/Server";
-import Log from "./util/Log";
-import {Config} from "./Config";
-// import {IConfig, AppConfig} from './Config';
+import Log from "./../../common/Log";
+import {Config} from "../../common/Config";
+// import {IConfig, AppConfig} from './../../common../../../common/Config';
 // import MongoDB from './db/MongoDB';
 
 /**

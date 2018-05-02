@@ -1,9 +1,9 @@
-import Log from "../util/Log";
+import Log from "../../../common/Log";
 
 import * as rp from "request-promise-native";
-import {Config} from "../Config";
+import {Config} from "../../../common/Config";
 import {Repository, Team} from "../Types";
-import Util from "../util/Util";
+import Util from "../../../common/Util";
 
 let tmp = require('tmp-promise');
 

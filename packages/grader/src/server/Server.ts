@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as restify from "restify";
-import Log from "../util/Log";
+import Log from "../../../common/Log";
 import RouteHandler from "./RouteHandler";
 
 /**

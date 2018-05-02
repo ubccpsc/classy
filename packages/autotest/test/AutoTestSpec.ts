@@ -5,13 +5,13 @@ import {GithubService} from "../src/github/GithubService";
 import {GithubAutoTest} from "../src/github/GithubAutoTest";
 import {ICommentEvent, IFeedbackGiven, IPushEvent} from "../src/Types";
 import {TestData} from "./TestData";
-import Log from "../src/util/Log";
+import Log from "../../common/Log";
 
 import {expect} from "chai";
 import * as fs from "fs-extra";
 import "mocha";
-import {Config} from "../src/Config";
-import Util from "../src/util/Util";
+import {Config} from "../../common/Config";
+import Util from "../../common/Util";
 import {MockClassPortal} from "../src/autotest/mocks/MockClassPortal";
 import {MockDataStore} from "../src/autotest/mocks/MockDataStore";
 

@@ -1,5 +1,5 @@
 import * as net from "net";
-import Log from "../util/Log";
+import Log from "../../../common/Log";
 
 /**
  * A simple socket server.

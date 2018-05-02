@@ -1,4 +1,4 @@
-import Log from "../util/Log";
+import Log from "../../../common/Log";
 import {DatabaseController} from "./DatabaseController";
 import {Grade} from "../Types";
 import {GradePayload} from "./SDDMController";

@@ -1,6 +1,6 @@
-import {Config} from "../Config";
+import {Config} from "../../../common/Config";
 import {ICommentEvent, IPushEvent} from "../Types";
-import Log from "../util/Log";
+import Log from "../../../common/Log";
 
 /**
  * Translator class to turn REST payloads into IPushEvent and ICommentEvents.

@@ -1,6 +1,6 @@
 import * as rp from "request-promise-native";
 import {IClassPortal} from "../autotest/ClassPortal";
-import Log from "../util/Log";
+import Log from "../../../common/Log";
 
 export class EdXClassPortal implements IClassPortal {
 

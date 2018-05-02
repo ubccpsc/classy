@@ -7,7 +7,7 @@ import {ContainerFirewall, IContainerFirewall} from "../network/ContainerFirewal
 import {FirewallController} from "../network/FirewallController";
 import {ISocketServer} from "../server/SocketServer";
 import {IAssignment, IContainerOutput, IDockerContainerOptions, IGradeContainer, IGradeReport, IGradeTask, IHostEnv} from "../Types";
-import Log from "../util/Log";
+import Log from "../../../common/Log";
 
 export interface IGradeWorker {
     execute(): Promise<IContainerOutput>;

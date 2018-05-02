@@ -1,4 +1,4 @@
-import Log from "./util/Log";
+import Log from "../../../common/Log";
 import {OnsModalElement} from "onsenui";
 import {UI} from "./util/UI";
 import {App} from "./App";

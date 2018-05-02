@@ -1,7 +1,7 @@
 /**
  * Created by rtholmes on 2017-10-04.
  */
-import Log from "./Log";
+import Log from "../../../../common/Log";
 
 // import 'whatwg-fetch';
 // import {IsAuthenticatedResponse} from '../Models';

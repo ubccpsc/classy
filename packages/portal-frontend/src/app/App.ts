@@ -3,7 +3,7 @@
  */
 
 import {UI} from "./util/UI";
-import Log from "./util/Log";
+import Log from "../../../common/Log";
 import {Network} from "./util/Network";
 import {SDMMSummaryView} from "./SDMMSummaryView";
 

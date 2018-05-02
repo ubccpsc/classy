@@ -1,8 +1,8 @@
-import {Config} from "../../Config";
+import {Config} from "../../../../common/Config";
 import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven, IPushEvent} from "../../Types";
 import * as fs from "fs-extra";
-import Util from "../../util/Util";
-import Log from "../../util/Log";
+import Util from "../../../../common/Util";
+import Log from "../../../../common/Log";
 import {IDataStore} from "../DataStore";
 
 /**

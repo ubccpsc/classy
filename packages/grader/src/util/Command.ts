@@ -1,6 +1,6 @@
 import {ChildProcess, spawn, SpawnOptions} from "child_process";
 import {CommandResult} from "../Types";
-import Log from "./Log";
+import Log from "../../../common/Log";
 
 export interface ICommand {
     executeCommand(args: string[], options?: SpawnOptions): Promise<CommandResult>;

@@ -1,7 +1,7 @@
-import Log from "./util/Log";
+import Log from "../../common/Log";
 import {AuthController} from "./controllers/AuthController";
 import * as rp from "request-promise-native";
-import {Config} from "./Config";
+import {Config} from "../../common/Config";
 import {DatabaseController} from "./controllers/DatabaseController";
 import {Auth, Person} from "./Types";
 import {PersonController} from "./controllers/PersonController";

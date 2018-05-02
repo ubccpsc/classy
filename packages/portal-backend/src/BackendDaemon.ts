@@ -2,11 +2,11 @@
  * Created by rtholmes on 2018-02-23.
  */
 
-import Log from "./util/Log";
+import Log from "../../common/Log";
 import BackendServer from "./BackendServer";
-import {Config} from "./Config";
+import {Config} from "../../common/Config";
 
-// const Config = require("../Config");
+// const Config = require("../../common/Config");
 
 export class BackendDaemon {
 

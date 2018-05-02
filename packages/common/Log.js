@@ -1,16 +1,16 @@
-/* tslint:disable:no-console */
-enum LogLevel {
-    TRACE,
-    INFO,
-    WARN,
-    ERROR,
-    TEST,
-    NONE,
-}
-
-let LOG_LEVEL: LogLevel;
-
-switch ((process.env["LOG_LEVEL"] || "").toUpperCase()) {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+var LogLevel;
+(function (LogLevel) {
+    LogLevel[LogLevel["TRACE"] = 0] = "TRACE";
+    LogLevel[LogLevel["INFO"] = 1] = "INFO";
+    LogLevel[LogLevel["WARN"] = 2] = "WARN";
+    LogLevel[LogLevel["ERROR"] = 3] = "ERROR";
+    LogLevel[LogLevel["TEST"] = 4] = "TEST";
+    LogLevel[LogLevel["NONE"] = 5] = "NONE";
+})(LogLevel || (LogLevel = {}));
+let LOG_LEVEL;
+switch (("TRACE").toUpperCase()) {
     case "TRACE":
         LOG_LEVEL = LogLevel.TRACE;
         break;
@@ -32,46 +32,38 @@ switch ((process.env["LOG_LEVEL"] || "").toUpperCase()) {
     default:
         LOG_LEVEL = LogLevel.TRACE;
 }
-
-/**
- * Collection of logging methods. Useful for making the output easier to read and understand.
- */
-export default class Log {
-    public static Level: LogLevel = LOG_LEVEL;
-
-    public static trace(msg: string): void {
+class Log {
+    static trace(msg) {
         if (Log.Level <= LogLevel.TRACE) {
             console.log(`<T> ${new Date().toLocaleString()}: ${msg}`);
         }
     }
-
-    public static cmd(msg: string): void {
+    static cmd(msg) {
         if (Log.Level <= LogLevel.INFO) {
             console.info(`\`\`\`\n${msg}\n\`\`\``);
         }
     }
-
-    public static info(msg: string): void {
+    static info(msg) {
         if (Log.Level <= LogLevel.INFO) {
             console.info(`<I> ${new Date().toLocaleString()}: ${msg}`);
         }
     }
-
-    public static warn(msg: string): void {
+    static warn(msg) {
         if (Log.Level <= LogLevel.WARN) {
             console.warn(`<W> ${new Date().toLocaleString()}: ${msg}`);
         }
     }
-
-    public static error(msg: string): void {
+    static error(msg) {
         if (Log.Level <= LogLevel.ERROR) {
             console.error(`<E> ${new Date().toLocaleString()}: ${msg}`);
         }
     }
-
-    public static test(msg: string): void {
+    static test(msg) {
         if (Log.Level <= LogLevel.TEST) {
             console.log(`<X> ${new Date().toLocaleString()}: ${msg}`);
         }
     }
 }
+Log.Level = LOG_LEVEL;
+exports.default = Log;
+//# sourceMappingURL=Log.js.map

@@ -9,7 +9,7 @@ import {RepositoryController} from "../src/controllers/RepositoryController";
 import {TeamController} from "../src/controllers/TeamController";
 import {PersonController} from "../src/controllers/PersonController";
 import {Test} from "./GlobalSpec";
-import Log from "../src/util/Log";
+import Log from "../../common/Log";
 import {Person} from "../src/Types";
 import {TestGitHubController} from "../src/controllers/GitHubController";
 

@@ -1,5 +1,5 @@
-import {Config} from "../Config";
-import Log from "../util/Log";
+import {Config} from "../../../common/Config";
+import Log from "../../../common/Log";
 
 import * as https from "https";
 
