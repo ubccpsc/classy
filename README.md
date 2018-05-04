@@ -10,6 +10,9 @@ The project has been configured to use [yarn workspaces](https://yarnpkg.com/lan
 You should add global dependencies to the root `package.json` and package-specific dependencies in the package-level `package.json`.
 
 ## Deploying
+The project requires an ssl certificate.
+You can specify its location with environment variables `SSL_CERT_PATH` and `SSL_KEY_PATH`.
+
 Build the Docker image from the Dockerfile in the root of the project:
 ```bash
 docker build -t classy:base .
