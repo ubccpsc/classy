@@ -1,22 +1,27 @@
-FROM node:8-alpine
+FROM classy:base
 
-EXPOSE 5000
+ARG GH_BOT_USERNAME
+ARG GH_BOT_EMAIL
+ARG PORT=5000
 
-ARG GIT_EMAIL
-ARG GIT_USER
+ENV BACKEND_PORT $PORT
+
+EXPOSE $PORT
+
+VOLUME /app/packages/portal-backend/ssl
 
 RUN apk add --no-cache git
 
-WORKDIR /app
-COPY package.json tsconfig.json ./
+WORKDIR /app/packages/portal-backend
+COPY package.json ./
 COPY src/ src/
 COPY html/ html/
-RUN yarn install && \
-    yarn tsc && \
-    chown -R node /app
+RUN chown -R node /app
 
 USER node
-RUN git config --global user.email "${GIT_EMAIL}" && \
-    git config --global user.name "${GIT_USER}"
+RUN yarn install \
+ && tsc \
+ && git config --global user.email "${GH_BOT_USERNAME}" \
+ && git config --global user.name "${GH_BOT_EMAIL}"
 
-CMD ["node", "--require", "dotenv/config", "src/BackendDaemon.js"]
+CMD ["node", "src/BackendDaemon.js"]

@@ -22,6 +22,8 @@
 **/html/**/*.js
 **/html/**/*.map
 **/bin/
+common/**/*.js
+common/**/*.map
 
 # MacOS
 **/.DS_Store

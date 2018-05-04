@@ -1,15 +1,21 @@
-FROM node:8-alpine
+FROM classy:base
 
-EXPOSE 443
+ARG PORT=1443
+ENV FRONTEND_PORT $PORT
 
-VOLUME [ "/app/ssl" ]
+EXPOSE $PORT
 
-WORKDIR /app
-COPY package.json tsconfig.json webpack.config.js ./
+VOLUME [ "/app/packages/portal-frontend/ssl" ]
+
+WORKDIR /app/packages/portal-frontend
+COPY package.json webpack.config.js ./
 COPY src/ src/
 COPY html/ html/
-RUN yarn install && \
-    yarn tsc && \
-    yarn webpack
+RUN chown -R node /app
 
-CMD ["node", "--require", "dotenv/config", "src/server/FrontEndServer.js"]
+USER node
+RUN yarn install \
+ && tsc \
+ && yarn webpack
+
+CMD ["node", "src/server/FrontEndServer.js"]

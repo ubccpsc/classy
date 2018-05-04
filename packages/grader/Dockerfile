@@ -1,27 +1,33 @@
-FROM node:8.9.4-alpine
+FROM classy:base
 
-#ENV PATH="/usr/bin/docker:${PATH}"
+ARG GRADER_PORT_REST
+ARG GRADER_PORT_SOCK
+
+ENV GRADER_PORT_REST ${GRADER_PORT_REST:-3000}
+ENV GRADER_PORT_SOCK ${GRADER_PORT_SOCK:-7777}
+ENV NODE_ENV ${NODE_ENV:-production}
+
+EXPOSE $GRADER_PORT_REST
+EXPOSE $GRADER_PORT_SOCK
 
 VOLUME [ "/temp" ]
 VOLUME [ "/archive" ]
-
-# REST API Server
-EXPOSE 3000
-EXPOSE 7777
 
 RUN apk add --no-cache docker
 RUN apk add --no-cache iptables
 RUN apk add --no-cache git
 
-WORKDIR /tmp/app
-
+WORKDIR /app/packages/grader
 COPY package.json package.json
-COPY yarn.lock yarn.lock
-COPY tsconfig.json tsconfig.json
 COPY src/ src/
-RUN yarn install
-RUN yarn build:prod && mv bin/ /app/ && mv node_modules /app/ && rm -rf /tmp/app
+RUN chown -R node /app
 
-WORKDIR /app
+USER node
+RUN yarn install --pure-lockfile --non-interactive --production=false \
+ && tsc --outDir /app --sourceMap false \
+ && cp package.json /app/grader \
+ && rm -r /app/packages /app/package.json /app/tsconfig.json
 
-CMD ["node", "Daemon.js"]
+WORKDIR /app/grader
+
+CMD ["node", "src/Daemon.js"]

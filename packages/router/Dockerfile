@@ -1,5 +1,13 @@
 FROM nginx:1.13-alpine
 
-EXPOSE 80
+ARG SERVER_NAME=localhost
 
-COPY nginx.conf /etc/nginx/nginx.conf
+EXPOSE 80
+EXPOSE 443
+
+RUN apk add --no-cache ruby
+
+WORKDIR /etc/nginx
+COPY nginx.rconf nginx.rconf
+RUN erb nginx.rconf | tee nginx.conf \
+ && rm nginx.rconf

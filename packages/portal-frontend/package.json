@@ -26,6 +26,8 @@
         "request": "2.83.0",
         "request-promise-native": "^1.0.5",
         "restify": "^6.3.4",
-        "source-map-loader": "^0.2.3"
+        "source-map-loader": "^0.2.3",
+        "typescript": "^2",
+        "webpack": "^3.11.0"
     }
 }

@@ -2,124 +2,95 @@ version: "3"
 
 services:
     router:
-        build: https://${GHT_ORG_CPSC310}@github.ubc.ca/cpsc310/autotest-config.git#:router
+        build:
+            args:
+                - SERVER_NAME
+            context: ./packages/router
+        depends_on:
+            - portal_frontend
+            - geolocation
+            - reference_ui
         ports:
             - "80:80"
-        links:
-            - geolocation
-            - reference-ui
-    db:
-        image: mongo:3-jessie
+            - "443:443"
         volumes:
-            - ./data/db:/data/db
-        ports:
-            - "27017:27017"
+            - "./ssl:/etc/ssl"
     geolocation:
-        build: https://${GHT_ORG_CPSC310}@github.ubc.ca/cpsc310/cpsc310geocoder.git
-        ports:
-            - "11316:11316" # this is the geolocation port for d2/d3; exposd globally
-    reference-ui:
         build:
-            context: https://${GHT_ORG_CPSC310}@github.ubc.ca/cpsc310/project_oracle.git#frontend-prod
+            args:
+                - PORT=11316  # Must match port in nginx.conf; Dockerfile must EXPOSE this port
+            context: https://${GH_ORG_TOKEN}@github.ubc.ca/cpsc310/cpsc310geocoder.git
+    reference_ui:
+        build:
+            args:
+                - PORT=11315  # Must match port in nginx.conf; Dockerfile must EXPOSE this port
+            context: https://${GH_ORG_TOKEN}@github.ubc.ca/cpsc310/project_oracle.git#frontend-prod
             dockerfile: ui.dockerfile
-        ports:
-            - "11315:11315" # this is the reference UI for all deliverables; exposd globally
+    portal_frontend:
+        build:
+            args:
+                - PORT=1443  # Must match port in nginx.conf; Dockerfile must EXPOSE this port
+            context: ./packages/portal-frontend
+        depends_on:
+            - portal_backend
+        env_file: .env
+        volumes:
+            - "./ssl:/app/packages/portal-frontend/ssl"
     portal_backend:
         build:
-            context: https://github.com/ubccpsc/sdmm-portal-backend.git
             args:
-                - "GIT_USER=ubcbot"
-                - "GIT_EMAIL=36641711+ubcbot@users.noreply.github.com"
-        env_file: "./portal.env"
-        environment:
-            - "NAME=secapstone"
-            - "ORG=secapstone"
-            - "SSL_CERT_PATH=./ssl/fullchain.pem"
-            - "SSL_KEY_PATH=./ssl/privkey.pem"
-            - "SSL_INT_CERT="
-            - "FRONTEND_PORT=443"
-            - "FRONTEND_URL=https://sdmm.cs.ubc.ca" # ${COMPOSE_PROJECT_NAME}_portal_frontend_1"
-            - "BACKEND_PORT=5000"
-            - "BACKEND_URL=https://sdmm.cs.ubc.ca"
-            - "GITHUB_HOST=https://github.com"
-            - "GITHUB_API=https://api.github.com"
-            - "DB_URL=mongodb://${COMPOSE_PROJECT_NAME}_db_1:27017"
-            - "AUTOTEST_URL=https://sdmm.cs.ubc.ca"
-            - "AUTOTEST_PORT=11333"
-            # - "GH_TOKEN_USER="
-            # - "GH_API_TOKEN=token ${}"
-            # - "GH_CLIENT_ID=${}"
-            # - "GH_CLIENT_SECRET=${}"
-        ports:
-            - "5000:5000" # this is the reference UI for all deliverables; exposd globally
-        volumes:
-            - "./ssl:/app/ssl"
-    portal_frontend:
-        build: https://github.com/ubccpsc/sdmm-portal.git
-        env_file: "./portal.env"
+                - PORT=5000
+                - GH_BOT_USERNAME
+                - GH_BOT_EMAIL
+            context: ./packages/portal-backend
         depends_on:
-            - portal_backend
-        ports:
-            - "443:443" # exposed globally
-        volumes:
-            - "./ssl:/app/ssl"
-    core:
-        build: core/
+            - db
+        env_file: .env
         depends_on:
-            - portal_backend
-        environment:
-            - "NAME=secapstone"
-            - "ORG=secapstone"
-            - "ADMIN_USER=secapstone"
-            - "DOCKER_ID=secapstone-grade"
-            - "WORKSPACE=/var/tmp/secapstone/"
-            - "ORACLE_REPO=https://github.ubc.ca/cpsc310/project_oracle"
-            - "POSTBACK=false"
-            - "PERSIST_DIR=/var/tmp/secapstone/"
-            - "PORT=11333"
-            - "KIND=ubc"
-            - "TIMEOUT=300"
-            - "BOT_NAME=ubcbot"
-            - "GHT_STUDENT_ORG=${GHT_ORG_SECAPSTONE}"
-            - "GHT_ORACLE=${GHT_ORG_CPSC310}"
-            - "SSL_CERT_PATH=./ssl/fullchain.pem"
-            - "SSL_KEY_PATH=./ssl/privkey.pem"
-            #- "CP_HOST=${COMPOSE_PROJECT_NAME}_portal_backend_1"
-            - "CP_HOST=sdmm.cs.ubc.ca"
-            - "CP_PORT=5000"
-            - "GRADER_HOST=${COMPOSE_PROJECT_NAME}_grader_1"
-            - "GRADER_PORT=3000"
-            - "DB_URL=mongodb://${COMPOSE_PROJECT_NAME}_db_1:27017"
+            - autotest
+        volumes:
+                - "./ssl:/app/packages/portal-backend/ssl"
+    db:
+        image: mongo:3-jessie
+        ports:
+            - "27017:27017"
+        volumes:
+            - ./data/db:/data/db
+    autotest:
+        build:
+            args:
+                - PORT=11333
+            context: ./packages/autotest
         depends_on:
             - db
             - grader
-        ports:
-            - "11333:11333" # this is the github webhook port; exposed globally
+        env_file: .env
         volumes:
-            - "./ssl:/app/ssl"
+            - "./ssl:/app/packages/autotest/ssl"
     grader:
-        build: grader/
+        build: ./packages/grader
+        env_file: .env
         environment:
             - "HOST_DIR=/home/w-sdmm/autotest/data/runs"
             - "HOST_NAME=172.28.2.0"
             - "SOCK_PORT=7777"
             - "USER_UID=81193"
             - "DOCKER_NET=${COMPOSE_PROJECT_NAME}_grader"
-            - "GITHUB_TOKEN=${GHT_ORG_SECAPSTONE}"
+            - "GITHUB_TOKEN=${GH_BOT_TOKEN}"
         networks:
             default:
             grader:
                 ipv4_address: 172.28.2.0
+        expose:
+            - ${GRADER_PORT_REST}
         ports:
-            - "3000:3000" # REST endpoint for grader; not exposed globally
             - "7777:7777" # Socket endpoint for grader; not exposed globally
         volumes:
             - /var/run/docker.sock:/var/run/docker.sock
-            - "/home/w-sdmm/autotest/data/runs:/data"
+            - "${GRADER_HOST_DIR}:${GRADER_PERSIST_DIR}"
         cap_add:
             - NET_ADMIN
         privileged: true
-
 networks:
     grader:
         driver: bridge
@@ -129,3 +100,110 @@ networks:
         ipam:
             config:
                 - subnet: "172.28.0.0/16"
+
+
+#    portal_backend:
+#        build:
+#            context: https://github.com/ubccpsc/sdmm-portal-backend.git
+#            args:
+#                - "GIT_USER=ubcbot"
+#                - "GIT_EMAIL=36641711+ubcbot@users.noreply.github.com"
+#        env_file: "./portal.env"
+#        environment:
+#            - "NAME=secapstone"
+#            - "ORG=secapstone"
+#            - "SSL_CERT_PATH=./ssl/fullchain.pem"
+#            - "SSL_KEY_PATH=./ssl/privkey.pem"
+#            - "SSL_INT_CERT="
+#            - "FRONTEND_PORT=443"
+#            - "FRONTEND_URL=https://sdmm.cs.ubc.ca" # ${COMPOSE_PROJECT_NAME}_portal_frontend_1"
+#            - "BACKEND_PORT=5000"
+#            - "BACKEND_URL=https://sdmm.cs.ubc.ca"
+#            - "GITHUB_HOST=https://github.com"
+#            - "GITHUB_API=https://api.github.com"
+#            - "DB_URL=mongodb://${COMPOSE_PROJECT_NAME}_db_1:27017"
+#            - "AUTOTEST_URL=https://sdmm.cs.ubc.ca"
+#            - "AUTOTEST_PORT=11333"
+#            # - "GH_TOKEN_USER="
+#            # - "GH_API_TOKEN=token ${}"
+#            # - "GH_CLIENT_ID=${}"
+#            # - "GH_CLIENT_SECRET=${}"
+#        ports:
+#            - "5000:5000" # this is the reference UI for all deliverables; exposd globally
+#        volumes:
+#            - "./ssl:/app/ssl"
+#    portal_frontend:
+#        build: https://github.com/ubccpsc/sdmm-portal.git
+#        env_file: "./portal.env"
+#        depends_on:
+#            - portal_backend
+#        ports:
+#            - "443:443" # exposed globally
+#        volumes:
+#            - "./ssl:/app/ssl"
+#    core:
+#        build: core/
+#        depends_on:
+#            - portal_backend
+#        environment:
+#            - "NAME=secapstone"
+#            - "ORG=secapstone"
+#            - "ADMIN_USER=secapstone"
+#            - "DOCKER_ID=secapstone-grade"
+#            - "WORKSPACE=/var/tmp/secapstone/"
+#            - "ORACLE_REPO=https://github.ubc.ca/cpsc310/project_oracle"
+#            - "POSTBACK=false"
+#            - "PERSIST_DIR=/var/tmp/secapstone/"
+#            - "PORT=11333"
+#            - "KIND=ubc"
+#            - "TIMEOUT=300"
+#            - "BOT_NAME=ubcbot"
+#            - "GHT_STUDENT_ORG=${GHT_ORG_SECAPSTONE}"
+#            - "GHT_ORACLE=${GHT_ORG_CPSC310}"
+#            - "SSL_CERT_PATH=./ssl/fullchain.pem"
+#            - "SSL_KEY_PATH=./ssl/privkey.pem"
+#            #- "CP_HOST=${COMPOSE_PROJECT_NAME}_portal_backend_1"
+#            - "CP_HOST=sdmm.cs.ubc.ca"
+#            - "CP_PORT=5000"
+#            - "GRADER_HOST=${COMPOSE_PROJECT_NAME}_grader_1"
+#            - "GRADER_PORT=3000"
+#            - "DB_URL=mongodb://${COMPOSE_PROJECT_NAME}_db_1:27017"
+#        depends_on:
+#            - db
+#            - grader
+#        ports:
+#            - "11333:11333" # this is the github webhook port; exposed globally
+#        volumes:
+#            - "./ssl:/app/ssl"
+#    grader:
+#        build: grader/
+#        environment:
+#            - "HOST_DIR=/home/w-sdmm/autotest/data/runs"
+#            - "HOST_NAME=172.28.2.0"
+#            - "SOCK_PORT=7777"
+#            - "USER_UID=81193"
+#            - "DOCKER_NET=${COMPOSE_PROJECT_NAME}_grader"
+#            - "GITHUB_TOKEN=${GHT_ORG_SECAPSTONE}"
+#        networks:
+#            default:
+#            grader:
+#                ipv4_address: 172.28.2.0
+#        ports:
+#            - "3000:3000" # REST endpoint for grader; not exposed globally
+#            - "7777:7777" # Socket endpoint for grader; not exposed globally
+#        volumes:
+#            - /var/run/docker.sock:/var/run/docker.sock
+#            - "/home/w-sdmm/autotest/data/runs:/data"
+#        cap_add:
+#            - NET_ADMIN
+#        privileged: true
+#
+#networks:
+#    grader:
+#        driver: bridge
+#        driver_opts:
+#            ip-range: "172.28.5.0/24"
+#            gateway: "172.28.5.254"
+#        ipam:
+#            config:
+#                - subnet: "172.28.0.0/16"
