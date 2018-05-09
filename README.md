@@ -21,7 +21,7 @@ This image is used as the base image for the other services.
 
 Then, to deploy, run:
 ```bash
-docker-compose up --build -d
+docker-compose -f docker-compose.yml -f docker-compose.310.yml up --build -d
 ```
 
 ## Authors

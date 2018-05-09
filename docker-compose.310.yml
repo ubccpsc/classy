@@ -1,0 +1,28 @@
+version: "3"
+
+services:
+    router:
+        build:
+            args:
+                - SERVER_NAME
+            context: ./packages/router
+        depends_on:
+            - portal_frontend
+            - geolocation
+            - reference_ui
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - "./ssl:/etc/ssl"
+    geolocation:
+        build:
+            args:
+                - PORT=11316  # Must match port in nginx.conf; Dockerfile must EXPOSE this port
+            context: https://${GH_ORG_TOKEN}@github.ubc.ca/cpsc310/cpsc310geocoder.git
+    reference_ui:
+        build:
+            args:
+                - PORT=11315  # Must match port in nginx.conf; Dockerfile must EXPOSE this port
+            context: https://${GH_ORG_TOKEN}@github.ubc.ca/cpsc310/project_oracle.git#frontend-prod
+            dockerfile: ui.dockerfile
