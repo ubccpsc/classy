@@ -23,7 +23,8 @@ describe("DeliverablesController", () => {
             teamMinSize:      1,
             teamMaxSize:      1,
             teamSameLab:      false,
-            teamStudentsForm: false
+            teamStudentsForm: false,
+            custom:           {}
         };
     });
 

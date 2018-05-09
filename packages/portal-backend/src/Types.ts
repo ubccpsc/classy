@@ -52,7 +52,7 @@ export interface Person {
 
     labId: string | null; // can be null for non-students
 
-    custom: {}; // used for anything. in sdmm will track 'custom.sdmmStatus'
+    custom: any; // used for anything. in sdmm will track 'custom.sdmmStatus'
 }
 
 export interface Auth {
@@ -75,7 +75,7 @@ export interface Deliverable {
     teamSameLab: boolean;
     teamStudentsForm: boolean;
 
-    custom: {}; // not used by the default implementation, but useful for extension (e.g., schemas)
+    custom: any; // {}; not used by the default implementation, but useful for extension (e.g., schemas)
 }
 
 export interface Team {
@@ -84,7 +84,7 @@ export interface Team {
     url: string | null; // null when not yet created
     personIds: string[]; // Person.id[] - foreign key
 
-    custom: {};
+    custom: any;
 }
 
 export interface Repository {
@@ -93,7 +93,7 @@ export interface Repository {
     URL: string | null; // null when not yet created
     teamIds: string[]; // Team.id[] - foreign key
 
-    custom: {};
+    custom: any; // {}; not used by default
 }
 
 export interface Grade {
@@ -106,7 +106,7 @@ export interface Grade {
     URL: string; // commitUrl if a commit, repoUrl if a dummy entry
     timestamp: number;
 
-    custom: {}; // not used by the default implementation, but useful for extension (e.g., custom grade values)
+    custom: any; // {}; not used by the default implementation, but useful for extension (e.g., custom grade values)
 }
 
 /**

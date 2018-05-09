@@ -65,7 +65,8 @@ export class GradesController {
                         score:     grade.score,
                         comment:   grade.comment,
                         URL:       grade.URL,
-                        timestamp: grade.timestamp
+                        timestamp: grade.timestamp,
+                        custom: {}
                     };
                     Log.trace("GradesController::createGrade(..) - new grade; personId: " + personId + "; grade: " + JSON.stringify(gradeRecord));
                 } else {
