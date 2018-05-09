@@ -16,10 +16,8 @@ export class App {
     // private studentController: StudentController = null;
     // private adminController: AdminController = null;
 
-    // private AUTH_STATUS = 'authorized';
-    // private UNAUTH_STATUS = 'unauthenticated';
-
     // NOTE: having these hardcoded isn't great
+    // these should come from Config.getInstance().getProp('foo');
     private readonly backendDEV = 'https://localhost:5000';
     private readonly backendPROD = 'https://sdmm.cs.ubc.ca:5000';
     private readonly frontendDEV = 'https://localhost:3000';
@@ -28,7 +26,6 @@ export class App {
     public readonly backendURL: string = this.backendDEV;
     public readonly frontendURL: string = this.frontendDEV;
 
-    // private authHelper: AuthHelper = null;
     private sdmmView: SDMMSummaryView = null;
 
     private validated = false;
@@ -52,7 +49,7 @@ export class App {
 
     public async init(): Promise<{}> {
         Log.trace('App::init() - start');
-        var that = this;
+        const that = this;
 
         let validated = await that.validateCredentials();
         this.validated = validated;
@@ -234,12 +231,12 @@ export class App {
             this.clearCredentials();
         } else {
             Log.info("App::validateCredentials() - token available");
-            var username = await this.getGithubCredentials(token);
+            const username = await this.getGithubCredentials(token);
             if (username !== null) {
                 // valid username; get role from server
                 Log.info("App::validateCredentials() - valid username: " + username);
 
-                var credentials: any = await this.getServerCredentials(username, token);
+                const credentials: any = await this.getServerCredentials(username, token);
                 if (credentials === null) {
                     Log.info("App::validateCredentials() - server validation failed");
                     this.clearCredentials();

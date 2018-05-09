@@ -40,12 +40,14 @@ export class Network {
     public static remotePost(url: string, payload: object, onError: any): Promise<object> {
         console.log('Network::handleRemote( ' + url + ' ) - start');
 
-        const OPTIONS_HTTP_POST: object = {credentials: 'include', method: 'post', cors: 'enabled',
-            body: JSON.stringify(payload), headers: {'Content-Type': 'application/json'} };
+        const OPTIONS_HTTP_POST: object = {
+            credentials: 'include', method: 'post', cors: 'enabled',
+            body:        JSON.stringify(payload), headers: {'Content-Type': 'application/json'}
+        };
         const AUTHORIZED_STATUS: string = 'authorized';
 
         return fetch(url, OPTIONS_HTTP_POST).then((data: any) => {
-            if (data.status !== 200 && data.status !== 405 && data.status !== 401 ) {
+            if (data.status !== 200 && data.status !== 405 && data.status !== 401) {
                 console.log('Network::handleRemote() WARNING: Repsonse status: ' + data.status);
                 throw new Error('Network::handleRemote() - API ERROR: ' + data.status);
             } else if (data.status !== 200 && data.status === 405 || data.status === 401) {
@@ -70,12 +72,14 @@ export class Network {
         console.log('Network::handleRemote( ' + url + ' ) - start');
 
         if (USE_REAL === true) {
-            const OPTIONS_HTTP_POST: object = {credentials: 'include', method: 'post', cors: 'enabled',
-                body: JSON.stringify(payload), headers: {'Content-Type': 'application/json'} };
+            const OPTIONS_HTTP_POST: object = {
+                credentials: 'include', method: 'post', cors: 'enabled',
+                body:        JSON.stringify(payload), headers: {'Content-Type': 'application/json'}
+            };
             const AUTHORIZED_STATUS: string = 'authorized';
 
             fetch(url, OPTIONS_HTTP_POST).then((data: any) => {
-                if (data.status !== 200 && data.status !== 405 && data.status !== 401 ) {
+                if (data.status !== 200 && data.status !== 405 && data.status !== 401) {
                     console.log('Network::handleRemote() WARNING: Repsonse status: ' + data.status);
                     throw new Error('Network::handleRemote() - API ERROR: ' + data.status);
                 } else if (data.status !== 200 && data.status === 405 || data.status === 401) {
@@ -100,7 +104,6 @@ export class Network {
                 console.log('Network::handleRemote( \' + url + \' ) - then; data: ' + JSON.stringify(data));
                 view.render(data);
             }).catch(function (err: Error) {
-
                 console.log('Network::handleRemote( \' + url + \' ) - catch; ERROR: ' + err);
                 onError(err);
             });
@@ -111,15 +114,14 @@ export class Network {
         console.log('Network::httpPost( ' + url + ' ) - start');
         const OPTIONS_HTTP_POST: object = {
             credentials: 'include',
-            method: 'post',
-            cors: 'enabled',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
+            method:      'post',
+            cors:        'enabled',
+            headers:     {'Content-Type': 'application/json'},
+            body:        JSON.stringify(payload)
         };
         return fetch(url, OPTIONS_HTTP_POST).then((data: any) => {
             return data
-        })
-        .catch((err) => {
+        }).catch((err) => {
             console.log('Network::httpPost() ERROR ' + err);
         });
     }
@@ -128,14 +130,13 @@ export class Network {
         console.log('Network::httpPostFile( ' + url + ' ) - start');
         const OPTIONS_HTTP_POST_FILE: object = {
             credentials: 'include',
-            method: 'post',
-            cors: 'enabled',
-            body: formData
+            method:      'post',
+            cors:        'enabled',
+            body:        formData
         };
         return fetch(url, OPTIONS_HTTP_POST_FILE).then((data: any) => {
             return data
-        })
-        .catch((err) => {
+        }).catch((err) => {
             console.log('Network::httpPostFile() ERROR ' + err);
         });
     }
@@ -144,15 +145,14 @@ export class Network {
         console.log('Network::httpPut( ' + url + ' ) - start');
         const OPTIONS_HTTP_PUT: object = {
             credentials: 'include',
-            method: 'put',
-            cors: 'enabled',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
+            method:      'put',
+            cors:        'enabled',
+            headers:     {'Content-Type': 'application/json'},
+            body:        JSON.stringify(payload)
         };
         return fetch(url, OPTIONS_HTTP_PUT).then((data: any) => {
             return data;
-        })
-        .catch((err) => {
+        }).catch((err) => {
             console.log('Network::httpPut() ERROR ' + err);
         });
     }
@@ -168,8 +168,7 @@ export class Network {
             } else {
                 throw 'Could not fetch data from ' + url;
             }
-        })
-        .catch((err) => {
+        }).catch((err) => {
             console.log('Network::httpGet() ERROR ' + err);
         });
     }
@@ -183,7 +182,7 @@ export class Network {
             const AUTHORIZED_STATUS: string = 'authorized';
 
             fetch(url, OPTIONS_HTTP_GET).then((data: any) => {
-                if (data.status !== 200 && data.status !== 405 && data.status !== 401 ) {
+                if (data.status !== 200 && data.status !== 405 && data.status !== 401) {
                     console.log('Network::handleRemote() WARNING: Repsonse status: ' + data.status);
                     throw new Error('Network::handleRemote() - API ERROR: ' + data.status);
                 } else if (data.status !== 200 && data.status === 405 || data.status === 401) {

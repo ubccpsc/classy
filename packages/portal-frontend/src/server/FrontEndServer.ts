@@ -3,11 +3,10 @@
  */
 
 import restify = require('restify');
-import Log from "../../../common/Log";
 import * as fs from "fs";
-import {Config} from "../../../common/Config";
 
-// var Config = require("../../Config");
+import {Config} from "../../../common/Config";
+import Log from "../../../common/Log";
 
 /**
  * This configures the REST endpoints for the server.
@@ -46,12 +45,12 @@ export default class FrontEndServer {
      * @returns {Promise<boolean>}
      */
     public start(): Promise<boolean> {
-        let that = this;
+        const that = this;
         return new Promise(function (fulfill, reject) {
             try {
                 Log.info('FrontEndServer::start() - start');
 
-                var https_options = {
+                const https_options = {
                     name:        'frontend',
                     key:         fs.readFileSync(Config.getInstance().getProp('sslKeyPath')),
                     certificate: fs.readFileSync(Config.getInstance().getProp('sslCertPath'))
@@ -83,22 +82,6 @@ export default class FrontEndServer {
                     reject(err);
                 });
 
-
-                // forward port 80 to production port
-                // Log.info('FrontEndServer::Creating forward - start');
-                // const nonSecure = restify.createServer({name: 'redirectToSSL'});
-                // nonSecure.get(/.*/, function (req, res, next) {
-                //     const url = Config.getInstance().getProp('frontendUrl') + ':' + Config.getInstance().getProp('frontendPort') + req.getUrl().href;
-                //     res.redirect(301, url, next);
-                // });
-                // nonSecure.on('error', function (err) {
-                //     Log.warn('FrontEndServer::Creating forward failed; need sudo? ERROR: ' + err.message);
-                // });
-                // nonSecure.listen(80, function () {
-                //     Log.info('FrontEndServer::Creating forward - listening on 80');
-                // });
-                // Log.info('FrontEndServer::Creating forward - done');
-
             } catch (err) {
                 Log.error('FrontEndServer::start() - ERROR: ' + err);
                 reject(err);
@@ -106,22 +89,6 @@ export default class FrontEndServer {
         });
     }
 }
-
-/**
- * not sure we can validate this here
- */
-export interface IConfig {
-    githubClientId: string;
-    githubClientSecret: string;
-    sslCertPath: string;
-    sslKeyPath: string;
-    sslIntCert: string;
-    frontendPort: number;
-    backendPort: number;
-    frontendUrl: string;
-    backendUrl: string;
-}
-
 
 Log.info("FrontEndServer - port: " + Config.getInstance().getProp('frontendPort'));
 const server = new FrontEndServer();
