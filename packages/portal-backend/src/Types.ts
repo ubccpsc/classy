@@ -1,6 +1,7 @@
 /**
  * not sure we can validate this here
  */
+
 /*
 export interface IConfig {
     githubClientId: string;
@@ -50,7 +51,8 @@ export interface Person {
     URL: string | null; // null when not yet validated (e.g., logged in)
 
     labId: string | null; // can be null for non-students
-    custom: any; // used for anything. in sdmm will track 'custom.sdmmStatus'
+
+    custom: {}; // used for anything. in sdmm will track 'custom.sdmmStatus'
 }
 
 export interface Auth {
@@ -72,6 +74,8 @@ export interface Deliverable {
     teamMaxSize: number;
     teamSameLab: boolean;
     teamStudentsForm: boolean;
+
+    custom: {}; // not used by the default implementation, but useful for extension (e.g., schemas)
 }
 
 export interface Team {
@@ -79,7 +83,8 @@ export interface Team {
     readonly org: string; // invariant
     url: string | null; // null when not yet created
     personIds: string[]; // Person.id[] - foreign key
-    custom: any;
+
+    custom: {};
 }
 
 export interface Repository {
@@ -87,7 +92,8 @@ export interface Repository {
     readonly org: string; // invariant
     URL: string | null; // null when not yet created
     teamIds: string[]; // Team.id[] - foreign key
-    custom: any;
+
+    custom: {};
 }
 
 export interface Grade {
@@ -99,6 +105,8 @@ export interface Grade {
     comment: string;
     URL: string; // commitUrl if a commit, repoUrl if a dummy entry
     timestamp: number;
+
+    custom: {}; // not used by the default implementation, but useful for extension (e.g., custom grade values)
 }
 
 /**
