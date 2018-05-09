@@ -93,6 +93,8 @@ export class App {
                     Log.info("studentTabsPage init; attaching sdmm view");
 
                     Log.trace("App::init() - adding sdmm");
+                    // TODO: this should not be hard coded, but should instead get a value from the .env file
+                    // e.g., so we can load up a DefaultView (RTH to build), or a SDMMView, or a MDSView
                     let s: SDMMSummaryView = new SDMMSummaryView(that.backendURL);
                     that.sdmmView = s;
 
@@ -400,6 +402,9 @@ export class App {
         }
     }
 
+    /**
+     * TODO: this should _NOT_ be here since it is SDMM-specific
+     */
     public sdmmSelectChanged() {
         console.log('sdmmSelectChanged');
         (<any>window).myApp.sdmm.updateState(); // stick to dropdown for debugging
