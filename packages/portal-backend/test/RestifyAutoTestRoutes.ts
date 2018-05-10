@@ -4,10 +4,11 @@ import {Test} from "./GlobalSpec";
 
 import {expect} from "chai";
 import "mocha";
-import {GradePayload} from "../src/controllers/SDDMController";
+import {GradePayload} from "../src/controllers/CourseController";
 
+// This seems silly, but just makes sure GlobalSpec runs first.
+// It should be at the top of every test file.
 const loadFirst = require('./GlobalSpec');
-
 
 import restify = require('restify');
 
@@ -16,7 +17,6 @@ const request = require('supertest');
 describe('REST Routes for AutoTest', function () {
 
     var app: restify.Server = null;
-
 
     before(function () {
         Log.test('RestifyAutoTestRoutes::before - start');
@@ -112,7 +112,7 @@ describe('REST Routes for AutoTest', function () {
 
         let response = null;
 
-        let gradePayload: GradePayload = {
+        const gradePayload: GradePayload = {
             score:     51,
             URL:       'test URL from grade record',
             comment:   'test comment from grade record',

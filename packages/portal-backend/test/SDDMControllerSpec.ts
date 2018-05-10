@@ -1,7 +1,8 @@
 const loadFirst = require('./GlobalSpec');
 const rBefore = require('./GradeControllerSpec');
 
-import {ActionPayload, FailurePayload, GradePayload, SDDMController, SDDMStatus} from "../src/controllers/SDDMController";
+import {ActionPayload, FailurePayload, GradePayload, CourseController, SDDMStatus} from "../src/controllers/CourseController";
+import {SDMMController} from "../src/controllers/SDMM/SDMMController";
 import {expect} from "chai";
 import "mocha";
 import {GradesController} from "../src/controllers/GradesController";
@@ -86,7 +87,7 @@ export class TestData {
 
 describe("SDDMController", () => {
 
-    let sc: SDDMController;
+    let sc: SDMMController;
     let gc: GradesController;
     let tc: TeamController;
     let rc: RepositoryController;
@@ -102,7 +103,7 @@ describe("SDDMController", () => {
         data = new TestData();
 
         const ghInstance = new TestGitHubController();
-        sc = new SDDMController(ghInstance);
+        sc = new SDMMController(ghInstance);
         rc = new RepositoryController();
         gc = new GradesController();
         tc = new TeamController();

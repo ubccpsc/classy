@@ -8,7 +8,7 @@ import {GitHubActions, GitHubController} from "../src/controllers/GitHubControll
 import Log from "../../common/Log";
 import {Test} from "./GlobalSpec";
 import Util from "../../common/Util";
-import {ActionPayload, GradePayload, SDDMController} from "../src/controllers/SDDMController";
+import {ActionPayload, CourseController, GradePayload} from "../src/controllers/CourseController";
 import {GradesController} from "../src/controllers/GradesController";
 
 describe.skip("GitHubActions", () => {
@@ -274,7 +274,7 @@ describe.skip("GitHubActions", () => {
     it("Should be able to provision d0.", async function () {
         const start = Date.now();
 
-        const sc = new SDDMController(new GitHubController());
+        const sc = new CourseController(new GitHubController());
 
         Log.test('Provisioning three users');
         const p1 = await sc.handleUnknownUser(Test.ORGNAME, Test.USERNAMEGITHUB1);
@@ -332,7 +332,7 @@ describe.skip("GitHubActions", () => {
     it("Should be able to provision an individual d1.", async function () {
         const start = Date.now();
 
-        const sc = new SDDMController(new GitHubController());
+        const sc = new CourseController(new GitHubController());
 
         Log.test('Provision solo D1');
         const provision = await sc.provision(Test.ORGNAME, 'd1', [Test.USERNAMEGITHUB1]);
@@ -347,7 +347,7 @@ describe.skip("GitHubActions", () => {
     it("Should be able to provision a paired d1.", async function () {
         const start = Date.now();
 
-        const sc = new SDDMController(new GitHubController());
+        const sc = new CourseController(new GitHubController());
 
         Log.test('Provision paired d1');
         const provision = await sc.provision(Test.ORGNAME, 'd1', [Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB3]);

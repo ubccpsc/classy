@@ -1,7 +1,7 @@
 import Log from "../../../common/Log";
 import {DatabaseController} from "./DatabaseController";
 import {Grade} from "../Types";
-import {GradePayload} from "./SDDMController";
+import {GradePayload} from "./CourseController";
 
 export class GradesController {
 

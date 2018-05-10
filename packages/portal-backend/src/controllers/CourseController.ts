@@ -52,7 +52,7 @@ export enum SDDMStatus {
     D3
 }
 
-export class SDDMController {
+export class CourseController {
 
     private dc = DatabaseController.getInstance();
     private pc = new PersonController();
@@ -409,7 +409,7 @@ export class SDDMController {
             const name = personId;
             const person = await this.pc.getPerson(org, name);
             const teamName = name;
-            const repoName = SDDMController.getProjectPrefix(org) + teamName;
+            const repoName = CourseController.getProjectPrefix(org) + teamName;
 
             if (person === null) {
                 // return early
@@ -528,7 +528,7 @@ export class SDDMController {
             const name = personId;
             // const person = await this.pc.getPerson(org, name);
             const teamName = name;
-            const repoName = SDDMController.getProjectPrefix(org) + teamName;
+            const repoName = CourseController.getProjectPrefix(org) + teamName;
 
             // find local team & repo
             const team = await this.tc.getTeam(org, teamName);
@@ -586,7 +586,7 @@ export class SDDMController {
             while (teamName === null) {
                 let str = crypto.randomBytes(256).toString('hex');
                 str = str.substr(0, 6);
-                const name = SDDMController.getTeamPrefix(org) + str; // team prefix
+                const name = CourseController.getTeamPrefix(org) + str; // team prefix
                 Log.trace("SDDMController::provisionD1Repo(..) - checking name: " + str);
                 let team = await this.tc.getTeam(org, str);
                 if (team === null) {
@@ -640,7 +640,7 @@ export class SDDMController {
             const team = await this.tc.createTeam(org, teamName, people, teamCustom);
 
             // create local repo
-            const repoName = SDDMController.getProjectPrefix(org) + teamName;
+            const repoName = CourseController.getProjectPrefix(org) + teamName;
             const repoCustom = {d0enabled: false, d1enabled: true, d2enabled: true, d3enabled: true, sddmD3pr: false}; // d0 repo for now
             const repo = await this.rc.createRepository(org, repoName, [team], repoCustom);
 

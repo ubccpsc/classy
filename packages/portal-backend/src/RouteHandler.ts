@@ -1,11 +1,13 @@
-import Log from "../../common/Log";
-import {AuthController} from "./controllers/AuthController";
 import * as rp from "request-promise-native";
+
 import {Config} from "../../common/Config";
+import Log from "../../common/Log";
+
+import {AuthController} from "./controllers/AuthController";
 import {DatabaseController} from "./controllers/DatabaseController";
 import {Auth, Person} from "./Types";
 import {PersonController} from "./controllers/PersonController";
-import {GradePayload, Payload, SDDMController, StatusPayload} from "./controllers/SDDMController";
+import {GradePayload, Payload, CourseController, StatusPayload} from "./controllers/CourseController";
 import {GitHubController} from "./controllers/GitHubController";
 import ClientOAuth2 = require("client-oauth2");
 
@@ -64,24 +66,33 @@ export class RouteHandler {
             scopes:           ['']
         };
 
-        var githubAuth = new ClientOAuth2(setup);
+        const githubAuth = new ClientOAuth2(setup);
 
         const uri = githubAuth.code.getUri();
         Log.trace("RouteHandler::getAuth(..) - /auth uri: " + uri);
         res.redirect(uri, next);
     }
 
+    /**
+     * Handles the GitHub OAuth callback. This seems complicated, and is, so you should
+     * really think on it over a weekend before deciding to make any edits to _anything_
+     * in this method.
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
     public static githubCallback(req: any, res: any, next: any) {
         Log.trace("RouteHandler::githubCallback(..) - /githubCallback - start");
-        let config = Config.getInstance();
+        const config = Config.getInstance();
         const org = req.query.org;
 
-        let personController = new PersonController();
+        const personController = new PersonController();
 
         // TODO: do we need this redirect?
-        let backendUrl = config.getProp('backendUrl');
-        let backendPort = config.getProp('backendPort');
-        const githubRedirect = backendUrl + ':' + backendPort + '/githubCallback?orgName=secapstone';
+        const backendUrl = config.getProp('backendUrl');
+        const backendPort = config.getProp('backendPort');
+        const githubRedirect = backendUrl + ':' + backendPort + '/githubCallback?orgName=secapstone';  // SDMM
         Log.info('RouteHandler::githubCallback(..) - / githubCallback; URL: ' + githubRedirect);
 
         const opts = {
@@ -104,7 +115,7 @@ export class RouteHandler {
             Log.trace("RouteHandler::githubCallback(..) - token acquired");
 
             token = user.accessToken;
-            var options = {
+            const options = {
                 uri:     config.getProp('githubAPI') + '/user',
                 method:  'GET',
                 headers: {
@@ -113,6 +124,7 @@ export class RouteHandler {
                     'Authorization': 'token ' + token
                 }
             };
+
             // this extra check isn't strictly required, but means we can
             // associate a username with a token on the backend if needed
             return rp(options);
@@ -125,10 +137,9 @@ export class RouteHandler {
             // NOTE: this is not what you want for non micromasters
             // this will create a person every time
             // but for ubc courses we want to give a reject message for unknown users
-
             p = {
                 id:            username,
-                csId:          username, // sdmm doesn't have these
+                csId:          username,
                 githubId:      username,
                 studentNumber: null,
 
@@ -136,7 +147,7 @@ export class RouteHandler {
                 fName:  '',
                 lName:  '',
                 kind:   'student',
-                URL:    'https://github.com/' + username,
+                URL:    'https://github.com/' + username, // HARDCODE (don't hardcode host)
                 labId:  'UNKNOWN',
                 custom: {}
             };
@@ -155,8 +166,10 @@ export class RouteHandler {
             // create a new person or return an error. This is fine for SDMM, but will need to
             // change in the future.
 
+            // NOTE: this creates a new user; for most courses we would instead prefer to reject them here
+            // if they are not registered with the org in advance
+
             return personController.createPerson(p);
-            // return personController.getPerson(courseId, username)
         }).then(function (person) {
             Log.info("RouteHandler::githubCallback(..) - person: " + person);
             let feUrl = config.getProp('frontendUrl');
@@ -193,11 +206,20 @@ export class RouteHandler {
         });
     }
 
-    // from restify #284
+    /**
+     * Work around some CORS-related issues for OAuth. This looks manky, but don't change it.
+     *
+     * Really.
+     *
+     * Code taken from restify #284
+     *
+     * @param req
+     * @param res
+     */
     public static handlePreflight(req: any, res: any) {
         Log.trace("RouteHandler::handlePreflight(..) - " + req.method.toLowerCase() + "; uri: " + req.url);
 
-        var allowHeaders = ['Accept', 'Accept-Version', 'Content-Type', 'Api-Version', 'user-agent', 'user', 'token', 'org'];
+        const allowHeaders = ['Accept', 'Accept-Version', 'Content-Type', 'Api-Version', 'user-agent', 'user', 'token', 'org'];
         if (res.methods.indexOf('OPTIONS') === -1) {
             res.methods.push('OPTIONS');
         }
@@ -218,7 +240,7 @@ export class RouteHandler {
 
     /**
      *
-     * Return message: Payload
+     * Return message: Payload.
      *
      * @param req
      * @param res
@@ -233,7 +255,7 @@ export class RouteHandler {
 
         const org = Config.getInstance().getProp('org');
 
-        let sc: SDDMController = new SDDMController(new GitHubController());
+        let sc: CourseController= new CourseController(new GitHubController());
         sc.getStatus(org, user).then(function (status: StatusPayload) {
             Log.info('RouteHandler::getCurrentStatus(..) - sending 200; user: ' + user);
             Log.trace('RouteHandler::getCurrentStatus(..) - sending 200; user: ' + user + '; status: ' + JSON.stringify(status));
@@ -255,7 +277,7 @@ export class RouteHandler {
 
         // TODO: verify token
 
-        let sc: SDDMController = new SDDMController(new GitHubController());
+        let sc: CourseController = new CourseController(new GitHubController());
 
         if (action === 'provisionD0') {
             sc.provision(org, "d0", [user]).then(function (provisionResult) {
@@ -381,7 +403,7 @@ export class RouteHandler {
 
         Log.info('RouteHandler::atGradeResult(..) - org: ' + org + '; repoId: ' + repoId + '; delivId: ' + delivId + '; body: ' + JSON.stringify(gradeRecord));
 
-        let sc = new SDDMController(new GitHubController());
+        let sc = new CourseController(new GitHubController());
         sc.handleNewGrade(org, repoId, delivId, gradeRecord).then(function (success) {
             res.send({success: true}); // respond
         }).catch(function (err) {
@@ -401,20 +423,25 @@ export class RouteHandler {
         */
     }
 
+    /**
+     * TODO: this needs to be implemented.
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
     public static atIsStaff(req: any, res: any, next: any) {
         Log.info('RouteHandler::atIsStaff(..) - /isStaff/:org/:personId - start GET');
         // const user = req.headers.user;
         // const token = req.headers.token;
 
         // TODO: verify secret
-
         const org = req.params.org;
         const personId = req.params.personId;
 
         Log.info('RouteHandler::atIsStaff(..) - org: ' + org + '; personId: ' + personId);
 
         // TODO: this is just a dummy implementation
-
         if (personId === 'rtholmes' || personId === 'nickbradley') {
             res.send({org: org, personId: personId, isStaff: true});
         } else {
@@ -449,7 +476,7 @@ export class RouteHandler {
 
         const url = Config.getInstance().getProp('autotestUrl') + ':' + Config.getInstance().getProp('autotestPort') + '/githubWebhook';
         var options = {
-            uri:     url, //  https://sdmm.cs.ubc.ca:11333/submit',
+            uri:     url,
             method:  'POST',
             json:    true,
             headers: req.headers, // use GitHub's headers
