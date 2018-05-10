@@ -1,16 +1,18 @@
 const loadFirst = require('./GlobalSpec');
 const rBefore = require('./GradeControllerSpec');
 
-import {ActionPayload, FailurePayload, GradePayload, CourseController, SDDMStatus} from "../src/controllers/CourseController";
-import {SDMMController} from "../src/controllers/SDMM/SDMMController";
 import {expect} from "chai";
 import "mocha";
+
+import Log from "../../common/Log";
+
+import {ActionPayload, FailurePayload, GradePayload, SDDMStatus} from "../src/controllers/CourseController";
+import {SDMMController} from "../src/controllers/SDMM/SDMMController";
 import {GradesController} from "../src/controllers/GradesController";
 import {RepositoryController} from "../src/controllers/RepositoryController";
 import {TeamController} from "../src/controllers/TeamController";
 import {PersonController} from "../src/controllers/PersonController";
 import {Test} from "./GlobalSpec";
-import Log from "../../common/Log";
 import {Person} from "../src/Types";
 import {TestGitHubController} from "../src/controllers/GitHubController";
 

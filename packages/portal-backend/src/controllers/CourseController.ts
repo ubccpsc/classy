@@ -54,12 +54,12 @@ export enum SDDMStatus {
 
 export class CourseController {
 
-    private dc = DatabaseController.getInstance();
-    private pc = new PersonController();
-    private rc = new RepositoryController();
-    private tc = new TeamController();
-    private gc = new GradesController();
-    private gh: IGitHubController = null;
+    protected dc = DatabaseController.getInstance();
+    protected pc = new PersonController();
+    protected rc = new RepositoryController();
+    protected tc = new TeamController();
+    protected gc = new GradesController();
+    protected gh: IGitHubController = null;
 
     constructor(ghController: IGitHubController) {
         Log.trace("SDDMController::<init> - start");
@@ -67,37 +67,8 @@ export class CourseController {
     }
 
     public async handleUnknownUser(org: string, githubUsername: string): Promise<Person | null> {
-        Log.info("SDDMController::handleUnknownUser( " + org + ", " + githubUsername + " ) - start");
-        if (org === 'secapstone' || org === 'secapstonetest') {
-            Log.info("SDDMController::handleUnknownUser(..) - new person for this org; - provisioning");
+        Log.info("CourseController::handleUnknownUser( " + org + ", " + githubUsername + " ) - person unknown; returning null");
 
-            // in the secapstone we don't know who the students are in advance
-            // in this case, we will create Person objects on demand
-
-            // make person
-            let newPerson: Person = {
-                id:            githubUsername,
-                csId:          githubUsername, // sdmm doesn't have these
-                githubId:      githubUsername,
-                studentNumber: null,
-
-                org:    org,
-                fName:  '',
-                lName:  '',
-                kind:   'student',
-                URL:    'https://github.com/' + githubUsername,
-                labId:  'UNKNOWN',
-                custom: {}
-            };
-
-            newPerson.custom.sdmmStatus = 'd0pre'; // new users always start in d0pre state
-
-            // add to database
-            await this.dc.writePerson(newPerson);
-            return newPerson;
-        }
-
-        Log.error("SDDMController::handleUnknownUser() - not a SDDM org");
         return null;
     }
 
