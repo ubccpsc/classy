@@ -24,6 +24,8 @@ Then, to deploy, run:
 docker-compose -f docker-compose.yml -f docker-compose.310.yml up --build -d
 ```
 
+If you want to start a single service, in the `classy/` folder execute `docker-compose up -d <service>` (where service is something like `db`).
+
 ## Authors
 
 - Reid Holmes
