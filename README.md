@@ -25,6 +25,8 @@ docker-compose -f docker-compose.yml -f docker-compose.310.yml up --build -d
 ```
 
 If you want to start a single service, in the `classy/` folder execute `docker-compose up -d <service>` (where service is something like `db`).
+	
+If you want to run the db for testing, in `classy/` run `docker run -p 27017:27017 mongo`
 
 ## Authors
 

@@ -17,6 +17,22 @@ When configuring a WebStorm Run config:
 	* JavaScript File: `src/server/BackendServer.js`.
 	* Application parameters (for your path): `dotenv_config_path=/Users/rtholmes/GoogleDrive/dev/classy/.env`.
 
-## Insstructions TODO
+## Instructions TODO
 
-    * `webpack` description missing 
+    * `webpack` description missing
+    
+## Testing
+
+0) 	`yarn run install`
+
+1) Configure WebStorm (only needs to happen once):
+	* Create `Mocha` execution profile
+	* Node options: `--require dotenv/config`
+	* Mocha package: `<classy-dir>/packages/portal-backend/node_modules/mocha`
+	* Extra Mocha options: `dotenv_config_path=<classy-dir>/.env`
+	* Test directory: `<classy-dir>/packages/portal-backend/test`
+	
+2) Start db: `docker run -p 27017:27017 mongo`
+
+3) Run the tests.
+ 
