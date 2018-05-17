@@ -3,7 +3,7 @@ import Util from "../../../common/Util";
 import {RepositoryController} from "./RepositoryController";
 import {DatabaseController} from "./DatabaseController";
 import {GradesController} from "./GradesController";
-import {Grade, Person, Team} from "../Types";
+import {Deliverable, Grade, Person, Team} from "../Types";
 import {IGitHubController} from "./GitHubController";
 import {TeamController} from "./TeamController";
 import {PersonController} from "./PersonController";
@@ -52,7 +52,76 @@ export enum SDDMStatus {
     D3
 }
 
-export class CourseController {
+/**
+ * This is the high-level interfaces that CourseControllers should implement
+ * although they should do this by extending CourseController directly rather
+ * than starting from scratch.
+ */
+export interface ICourseController {
+
+    /**
+     * Gets the person associated with the username.
+     *
+     * @param {string} org
+     * @param {string} githubUsername
+     * @returns {Promise<Person | null>} Returns null if the username is unknown in the org.
+     */
+    getPerson(org: string, githubUsername: string): Promise<Person | null>;
+
+    /**
+     * Sets the people for the org. Usually populated with classlist (or some such).
+     *
+     * @param {string} org
+     * @param {Person[]} people
+     * @returns {Promise<boolean>}
+     */
+    setPeople(org: string, people: Person[]): Promise<boolean>;
+
+    /**
+     * Get all the deliverables for an org.
+     *
+     * @param {string} org
+     * @returns {Promise<Deliverable[]>}
+     */
+    getDeliverables(org: string): Promise<Deliverable[]>;
+
+    /**
+     * Sets the deliverables for an org. Will replace deliverables that have the same
+     * Deliverable.id, otherwise it will create new ones.
+     *
+     * Will _not_ delete any deliverables.
+     *
+     * @param {string} org
+     * @param {Deliverable[]} deliverables
+     * @returns {Promise<boolean>}
+     */
+    setDeliverables(org: string, deliverables: Deliverable[]): Promise<boolean>;
+
+    /**
+     * If no Person is provided, gets all grades for an org.
+     * If a Person is provided, gets all grades for only that person.
+     *
+     * @param {string} org
+     * @param {Person} person
+     * @returns {Promise<Grade[]>}
+     */
+    getGrades(org: string, person?: Person): Promise<Grade[]>;
+
+    /**
+     * Sets the grades for an org. Any grade that already exists in the system with the
+     * same Grade.personId && Grade.delivId will be replaced; new records will be added.
+     *
+     * Will _not_ delete any existing grades.
+     *
+     * @param {string} org
+     * @param {Grade[]} grades
+     * @returns {Promise<boolean>}
+     */
+    setGrades(org: string, grades: Grade[]): Promise<boolean>;
+
+}
+
+export class CourseController { // don't implement ICourseController yet
 
     protected dc = DatabaseController.getInstance();
     protected pc = new PersonController();
@@ -62,7 +131,7 @@ export class CourseController {
     protected gh: IGitHubController = null;
 
     constructor(ghController: IGitHubController) {
-        Log.trace("SDDMController::<init> - start");
+        Log.trace("CourseController::<init> - start");
         this.gh = ghController;
     }
 
@@ -81,38 +150,38 @@ export class CourseController {
      * @returns {Promise<ResponsePayload>}
      */
     public async provision(org: string, delivId: string, peopleIds: string[]): Promise<Payload> {
-        Log.info("SDDMController::provision( " + org + ", " + delivId + ", ... ) - start");
+        Log.info("CourseController::provision( " + org + ", " + delivId + ", ... ) - start");
 
         try {
             if (org !== "secapstone" && org !== "secapstonetest") {
-                Log.error("SDDMController::provision(..) - SDDMController should not be used for other orgs");
+                Log.error("CourseController::provision(..) - SDDMController should not be used for other orgs");
                 return {failure: {shouldLogout: false, message: "Invalid org; contact course staff."}};
             }
 
             if (peopleIds.length < 1) {
-                Log.error("SDDMController::provision(..) - there needs to be at least one person on a repo");
+                Log.error("CourseController::provision(..) - there needs to be at least one person on a repo");
                 return {failure: {shouldLogout: false, message: "Invalid # of people; contact course staff."}};
             }
 
             if (delivId === "d0") {
                 if (peopleIds.length === 1) {
-                    Log.info("SDDMController::provision(..) - provisioning new d0 repo for " + peopleIds[0]);
+                    Log.info("CourseController::provision(..) - provisioning new d0 repo for " + peopleIds[0]);
                     return await this.provisionD0Repo(org, peopleIds[0]);
                 } else {
-                    Log.error("SDDMController::provision(..) - d0 repos are only for individuals");
+                    Log.error("CourseController::provision(..) - d0 repos are only for individuals");
                     return {failure: {shouldLogout: false, message: "D0 for indivduals only; contact course staff."}};
                 }
             } else if (delivId === "d1") {
 
                 if (peopleIds.length === 1) {
-                    Log.info("SDDMController::provision(..) - updating existing d0 repo to d1 for " + peopleIds[0]);
+                    Log.info("CourseController::provision(..) - updating existing d0 repo to d1 for " + peopleIds[0]);
                     return await this.updateIndividualD0toD1(org, peopleIds[0]);
                 } else if (peopleIds.length === 2) {
-                    Log.info("SDDMController::provision(..) - provisioning new d1 repo for " + JSON.stringify(peopleIds));
+                    Log.info("CourseController::provision(..) - provisioning new d1 repo for " + JSON.stringify(peopleIds));
                     if (peopleIds[0] !== peopleIds[1]) {
                         return await this.provisionD1Repo(org, peopleIds);
                     } else {
-                        Log.error("SDDMController::provision(..) - d1 duplicate users");
+                        Log.error("CourseController::provision(..) - d1 duplicate users");
                         return {
                             failure: {
                                 shouldLogout: false,
@@ -121,15 +190,15 @@ export class CourseController {
                         };
                     }
                 } else {
-                    Log.error("SDDMController::provision(..) - d1 can only be performed by single students or pairs of students.");
+                    Log.error("CourseController::provision(..) - d1 can only be performed by single students or pairs of students.");
                     return {failure: {shouldLogout: false, message: "D1 can only be performed by single students or pairs of students."}};
                 }
             } else {
-                Log.warn("SDDMController::provision(..) - new repo not needed for delivId: " + delivId);
+                Log.warn("CourseController::provision(..) - new repo not needed for delivId: " + delivId);
                 return {failure: {shouldLogout: false, message: "Repo not needed; contact course staff."}};
             }
         } catch (err) {
-            Log.error("SDDMController::provision(..) - ERROR: " + err);
+            Log.error("CourseController::provision(..) - ERROR: " + err);
             return {failure: {shouldLogout: false, message: "Unknown error creating repo; contact course staff."}};
         }
 
@@ -156,12 +225,12 @@ export class CourseController {
      * @returns {Promise<string>} null if the personId is not even known
      */
     private async computeStatusString(org: string, personId: string): Promise<string | null> {
-        Log.info("SDDMController::getStatus( " + org + ', ' + personId + ' ) - start');
+        Log.info("CourseController::getStatus( " + org + ', ' + personId + ' ) - start');
         const start = Date.now();
         try {
             const person = await this.dc.getPerson(org, personId);
             if (person === null) {
-                Log.info("SDDMController::getStatus(..) - ERROR; person null");
+                Log.info("CourseController::getStatus(..) - ERROR; person null");
                 return null;
             }
 
@@ -169,7 +238,7 @@ export class CourseController {
             // most of the time the status doesn't change, so let's just check that first:
             // const statusCorrect = await this.checkStatus(org, personId);
             // if (statusCorrect === true) {
-            //    Log.info("SDDMController::getStatus(..) - check successful; skipping");
+            //    Log.info("CourseController::getStatus(..) - check successful; skipping");
             //    return reportedStatus;
             // }
 
@@ -187,10 +256,10 @@ export class CourseController {
                     }
 
                     if (d0Repo !== null) {
-                        Log.info("SDDMController::getStatus(..) - elevating D0PRE to D0");
+                        Log.info("CourseController::getStatus(..) - elevating D0PRE to D0");
                         currentStatus = SDDMStatus[SDDMStatus.D0];
                     } else {
-                        Log.info("SDDMController::getStatus(..) - NOT elevating from D0PRE");
+                        Log.info("CourseController::getStatus(..) - NOT elevating from D0PRE");
                     }
                 }
             }
@@ -200,10 +269,10 @@ export class CourseController {
                 // if their d0 score >= 60, make them D1UNLOCKED
                 const d0Grade = await this.dc.getGrade(org, personId, "d0");
                 if (d0Grade && d0Grade.score >= 60) {
-                    Log.info("SDDMController::getStatus(..) - elevating D0 to D1UNLOCKED");
+                    Log.info("CourseController::getStatus(..) - elevating D0 to D1UNLOCKED");
                     currentStatus = SDDMStatus[SDDMStatus.D1UNLOCKED];
                 } else {
-                    Log.info("SDDMController::getStatus(..) - NOT elevating from D0");
+                    Log.info("CourseController::getStatus(..) - NOT elevating from D0");
                 }
             }
 
@@ -220,10 +289,10 @@ export class CourseController {
                 }
 
                 if (d1team !== null) {
-                    Log.info("SDDMController::getStatus(..) - elevating D1UNLOCKED to D1TEAMSET");
+                    Log.info("CourseController::getStatus(..) - elevating D1UNLOCKED to D1TEAMSET");
                     currentStatus = SDDMStatus[SDDMStatus.D1TEAMSET];
                 } else {
-                    Log.info("SDDMController::getStatus(..) - NOT elevating from D1UNLOCKED");
+                    Log.info("CourseController::getStatus(..) - NOT elevating from D1UNLOCKED");
                 }
             }
 
@@ -238,10 +307,10 @@ export class CourseController {
                     }
                 }
                 if (d1repo !== null) {
-                    Log.info("SDDMController::getStatus(..) - elevating D1TEAMSET to D1");
+                    Log.info("CourseController::getStatus(..) - elevating D1TEAMSET to D1");
                     currentStatus = SDDMStatus[SDDMStatus.D1];
                 } else {
-                    Log.info("SDDMController::getStatus(..) - NOT elevating from D1TEAMSET");
+                    Log.info("CourseController::getStatus(..) - NOT elevating from D1TEAMSET");
                 }
             }
 
@@ -250,7 +319,7 @@ export class CourseController {
                 // if their d1 score > 60, make them D2
                 let d1Grade = await this.gc.getGrade(org, personId, "d1");
                 if (d1Grade && d1Grade.score >= 60) {
-                    Log.info("SDDMController::getStatus(..) - elevating D1 to D2");
+                    Log.info("CourseController::getStatus(..) - elevating D1 to D2");
                     let allRepos = await this.rc.getReposForPerson(person);
                     for (const r of allRepos) {
                         if (r.custom.d1enabled === true) {
@@ -261,7 +330,7 @@ export class CourseController {
                     }
                     currentStatus = SDDMStatus[SDDMStatus.D2];
                 } else {
-                    Log.info("SDDMController::getStatus(..) - NOT elevating from D1");
+                    Log.info("CourseController::getStatus(..) - NOT elevating from D1");
                 }
             }
 
@@ -270,10 +339,10 @@ export class CourseController {
                 // if their d2 core > 60, make them D3PRE
                 let d2Grade = await this.gc.getGrade(org, personId, "d2");
                 if (d2Grade && d2Grade.score >= 60) {
-                    Log.info("SDDMController::getStatus(..) - elevating D2 to D3PRE");
+                    Log.info("CourseController::getStatus(..) - elevating D2 to D3PRE");
                     currentStatus = SDDMStatus[SDDMStatus.D3PRE];
                 } else {
-                    Log.info("SDDMController::getStatus(..) - NOT elevating from D2");
+                    Log.info("CourseController::getStatus(..) - NOT elevating from D2");
                 }
             }
 
@@ -289,10 +358,10 @@ export class CourseController {
                     }
                 }
                 if (prComplete === true) {
-                    Log.info("SDDMController::getStatus(..) - elevating D3PRE to D3");
+                    Log.info("CourseController::getStatus(..) - elevating D3PRE to D3");
                     currentStatus = SDDMStatus[SDDMStatus.D3];// "D3";
                 } else {
-                    Log.info("SDDMController::getStatus(..) - NOT elevating from D3PRE");
+                    Log.info("CourseController::getStatus(..) - NOT elevating from D3PRE");
                 }
             }
 
@@ -307,19 +376,19 @@ export class CourseController {
                         await this.dc.writeRepository(r);
                     }
                 }
-                Log.info("SDDMController::getStatus(..) - NOT elevating from D3");
+                Log.info("CourseController::getStatus(..) - NOT elevating from D3");
             }
 
             // let currentStatus = person.custom.sddmStatus;
             person.custom.sddmStatus = currentStatus;
             this.dc.writePerson(person);
 
-            Log.info("SDDMController::getStatus( " + org + ', ' + personId + ' ) - done; took: ' + Util.took(start));
+            Log.info("CourseController::getStatus( " + org + ', ' + personId + ' ) - done; took: ' + Util.took(start));
             return currentStatus;
         }
         catch
             (err) {
-            Log.error("SDDMController::getStatus( " + org + ', ' + personId + ' ) - ERROR: ' + err);
+            Log.error("CourseController::getStatus( " + org + ', ' + personId + ' ) - ERROR: ' + err);
             return "UNKNOWN";
         }
     }
@@ -347,12 +416,12 @@ export class CourseController {
 
     /*
     private async checkStatus(org: string, personId: string): Promise<boolean> {
-        Log.info("SDDMController::getStatus( " + org + ', ' + personId + ' ) - start');
+        Log.info("CourseController::getStatus( " + org + ', ' + personId + ' ) - start');
         const start = Date.now();
         try {
             const person = await this.dc.getPerson(org, personId);
             if (person === null) {
-                Log.info("SDDMController::checkStatus(..) - ERROR; person null");
+                Log.info("CourseController::checkStatus(..) - ERROR; person null");
                 return null;
             }
 
@@ -367,13 +436,13 @@ export class CourseController {
             return false;
 
         } catch (err) {
-            Log.info("SDDMController::checkStatus(..) - ERROR: " + err);
+            Log.info("CourseController::checkStatus(..) - ERROR: " + err);
         }
     }
 */
 
     private async provisionD0Repo(org: string, personId: string): Promise<Payload> {
-        Log.info("SDDMController::provisionD0Repo( " + org + ", " + personId + " ) - start");
+        Log.info("CourseController::provisionD0Repo( " + org + ", " + personId + " ) - start");
         const start = Date.now();
 
         try {
@@ -389,17 +458,17 @@ export class CourseController {
 
             let personStatus = await this.computeStatusString(org, personId);
             if (personStatus !== SDDMStatus[SDDMStatus.D0PRE]) {
-                Log.info("SDDMController::provisionD0Repo( " + org + ", " + personId + " ) - bad status: " + personStatus);
+                Log.info("CourseController::provisionD0Repo( " + org + ", " + personId + " ) - bad status: " + personStatus);
                 return {failure: {shouldLogout: false, message: "User is not eligible for D0."}};
             } else {
-                Log.info("SDDMController::provisionD0Repo( " + org + ", " + personId + " ) - correct status: " + personStatus);
+                Log.info("CourseController::provisionD0Repo( " + org + ", " + personId + " ) - correct status: " + personStatus);
             }
 
             // create local team
             let existingTeam = await this.tc.getTeam(org, teamName);
             if (existingTeam !== null) {
                 // team already exists; warn and fail
-                throw new Error("SDDMController::provisionD0Repo(..) - team already exists: " + teamName);
+                throw new Error("CourseController::provisionD0Repo(..) - team already exists: " + teamName);
             }
             const teamCustom = {sdmmd0: true, sdmmd1: false, sdmmd2: false, sdmmd3: false}; // d0 team for now
             const team = await this.tc.createTeam(org, teamName, [person], teamCustom);
@@ -408,7 +477,7 @@ export class CourseController {
             let existingRepo = await this.rc.getRepository(org, repoName);
             if (existingRepo !== null) {
                 // repo already exists; warn and fail
-                throw new Error("SDDMController::provisionD0Repo(..) - repo already exists: " + repoName);
+                throw new Error("CourseController::provisionD0Repo(..) - repo already exists: " + repoName);
             }
             const repoCustom = {d0enabled: true, d1enabled: false, d2enabled: false, d3enabled: false, sddmD3pr: false}; // d0 repo for now
             const repo = await this.rc.createRepository(org, repoName, [team], repoCustom);
@@ -420,7 +489,7 @@ export class CourseController {
             const provisionResult = await this.gh.provisionRepository(org, repoName, [team], INPUTREPO, WEBHOOKADDR);
 
             if (provisionResult === true) {
-                Log.info("SDDMController::provisionD0Repo(..) - d0 github provisioning successful");
+                Log.info("CourseController::provisionD0Repo(..) - d0 github provisioning successful");
 
                 // update local team and repo with github values
                 const repoUrl = await this.gh.getRepositoryUrl(repo);
@@ -441,42 +510,42 @@ export class CourseController {
                 await this.gc.createGrade(org, repo.id, 'd0', grade);
 
                 const statusPayload = await this.getStatus(org, personId);
-                Log.info("SDDMController::provisionD0Repo(..) - d0 final provisioning successful; took: " + Util.took(start));
+                Log.info("CourseController::provisionD0Repo(..) - d0 final provisioning successful; took: " + Util.took(start));
 
                 return {success: {message: "Repository successfully created.", status: statusPayload}};
             } else {
-                Log.error("SDDMController::provisionD0Repo(..) - something went wrong provisioning this repo; see logs above.");
+                Log.error("CourseController::provisionD0Repo(..) - something went wrong provisioning this repo; see logs above.");
 
                 // d0pre people should not have teams
                 const delTeam = await this.dc.deleteTeam(team);
                 // d0pre people should not have repos
                 const delRepo = await this.dc.deleteRepository(repo);
-                Log.info("SDDMController::provisionD0Repo(..) - team removed: " + delTeam + ", repo removed: " + delRepo);
+                Log.info("CourseController::provisionD0Repo(..) - team removed: " + delTeam + ", repo removed: " + delRepo);
 
                 return {failure: {shouldLogout: false, message: "Error provisioning d0 repo."}};
             }
         } catch (err) {
-            Log.error("SDDMController::provisionD0Repo(..) - ERROR: " + err);
+            Log.error("CourseController::provisionD0Repo(..) - ERROR: " + err);
             return {failure: {shouldLogout: false, message: "Error creating d0 repo; contact course staff."}};
         }
     }
 
     private async updateIndividualD0toD1(org: string, personId: string): Promise<Payload> {
-        Log.info("SDDMController::updateIndividualD0toD1( " + org + ", " + personId + " ) - start");
+        Log.info("CourseController::updateIndividualD0toD1( " + org + ", " + personId + " ) - start");
         const start = Date.now();
 
         try {
             // make sure person exists
             const person = await this.pc.getPerson(org, personId);
             if (person === null) {
-                Log.error("SDDMController::updateIndividualD0toD1(..) - person does not exist: " + personId);
+                Log.error("CourseController::updateIndividualD0toD1(..) - person does not exist: " + personId);
                 return {failure: {shouldLogout: false, message: "Username not registered with course."}};
             }
 
             // make sure the person has suffient d0 grade
             let grade = await this.gc.getGrade(org, personId, "d0"); // make sure they can move on
             if (grade === null || grade.score < 60) {
-                Log.error("SDDMController::updateIndividualD0toD1(..) - person does not exist: " + personId);
+                Log.error("CourseController::updateIndividualD0toD1(..) - person does not exist: " + personId);
                 return {failure: {shouldLogout: false, message: "Current d0 grade is not sufficient to move on to d1."}};
             }
 
@@ -484,16 +553,16 @@ export class CourseController {
             let myRepos = await this.rc.getReposForPerson(person);
             for (const r of myRepos) {
                 if (r.custom.d1enabled === true) {
-                    Log.error("SDDMController::updateIndividualD0toD1(..) - person already has a d1 repo: " + r.id);
+                    Log.error("CourseController::updateIndividualD0toD1(..) - person already has a d1 repo: " + r.id);
                     return {failure: {shouldLogout: false, message: "D1 repo has already been assigned: " + r.id}};
                 }
             }
 
             let personStatus = await this.computeStatusString(org, personId);
             if (personStatus !== SDDMStatus[SDDMStatus.D1UNLOCKED]) {
-                Log.info("SDDMController::updateIndividualD0toD1( " + org + ", " + personId + " ) - bad status: " + personStatus);
+                Log.info("CourseController::updateIndividualD0toD1( " + org + ", " + personId + " ) - bad status: " + personStatus);
             } else {
-                Log.info("SDDMController::updateIndividualD0toD1( " + org + ", " + personId + " ) - correct status: " + personStatus);
+                Log.info("CourseController::updateIndividualD0toD1( " + org + ", " + personId + " ) - correct status: " + personStatus);
             }
 
             const name = personId;
@@ -527,15 +596,15 @@ export class CourseController {
                 await this.gc.createGrade(org, repo.id, 'd2', grade);
                 await this.gc.createGrade(org, repo.id, 'd3', grade);
             } else {
-                Log.error("SDDMController::updateIndividualD0toD1(..) - unable to find team: " + teamName + ' or repo: ' + repoName);
+                Log.error("CourseController::updateIndividualD0toD1(..) - unable to find team: " + teamName + ' or repo: ' + repoName);
                 return {failure: {shouldLogout: false, message: "Invalid team updating d0 repo; contact course staff."}};
             }
 
             const statusPayload = await this.getStatus(org, personId);
-            Log.info("SDDMController::updateIndividualD0toD1(..) - d0 to d1 individual upgrade successful; took: " + Util.took(start));
+            Log.info("CourseController::updateIndividualD0toD1(..) - d0 to d1 individual upgrade successful; took: " + Util.took(start));
             return {success: {message: "D0 repo successfully updated to D1.", status: statusPayload}};
         } catch (err) {
-            Log.error("SDDMController::updateIndividualD0toD1(..) - ERROR: " + err);
+            Log.error("CourseController::updateIndividualD0toD1(..) - ERROR: " + err);
             return {failure: {shouldLogout: false, message: "Error updating d0 repo; contact course staff."}};
         }
     }
@@ -546,7 +615,7 @@ export class CourseController {
      * @returns {Promise<Payload>}
      */
     private async provisionD1Repo(org: string, peopleIds: string[]): Promise<Payload> {
-        Log.info("SDDMController::provisionD1Repo( " + org + ", " + JSON.stringify(peopleIds) + " ) - start");
+        Log.info("CourseController::provisionD1Repo( " + org + ", " + JSON.stringify(peopleIds) + " ) - start");
         const start = Date.now();
 
         try {
@@ -558,11 +627,11 @@ export class CourseController {
                 let str = crypto.randomBytes(256).toString('hex');
                 str = str.substr(0, 6);
                 const name = CourseController.getTeamPrefix(org) + str; // team prefix
-                Log.trace("SDDMController::provisionD1Repo(..) - checking name: " + str);
+                Log.trace("CourseController::provisionD1Repo(..) - checking name: " + str);
                 let team = await this.tc.getTeam(org, str);
                 if (team === null) {
                     teamName = str;
-                    Log.trace("SDDMController::provisionD1Repo(..) - name available; using: " + teamName);
+                    Log.trace("CourseController::provisionD1Repo(..) - name available; using: " + teamName);
                 }
             }
 
@@ -594,7 +663,7 @@ export class CourseController {
             for (const p of people) {
                 let personStatus = await this.computeStatusString(org, p.id);
                 if (personStatus !== SDDMStatus[SDDMStatus.D1UNLOCKED]) {
-                    Log.info("SDDMController::provisionD1Repo( " + org + ", " + p.id + " ) - bad status: " + personStatus);
+                    Log.info("CourseController::provisionD1Repo( " + org + ", " + p.id + " ) - bad status: " + personStatus);
                     return {
                         failure: {
                             shouldLogout: false,
@@ -602,7 +671,7 @@ export class CourseController {
                         }
                     };
                 } else {
-                    Log.info("SDDMController::provisionD1Repo( " + org + ", " + p.id + " ) - correct status: " + personStatus);
+                    Log.info("CourseController::provisionD1Repo( " + org + ", " + p.id + " ) - correct status: " + personStatus);
                 }
             }
 
@@ -622,7 +691,7 @@ export class CourseController {
             const provisionResult = await this.gh.provisionRepository(org, repoName, [team], INPUTREPO, WEBHOOKADDR);
 
             if (provisionResult === true) {
-                Log.info("SDDMController::provisionD1Repo(..) - d1 github provisioning successful");
+                Log.info("CourseController::provisionD1Repo(..) - d1 github provisioning successful");
 
                 // update local team and repo with github values
                 const repoUrl = await this.gh.getRepositoryUrl(repo);
@@ -645,20 +714,20 @@ export class CourseController {
                 await this.gc.createGrade(org, repo.id, 'd3', grade);
 
                 const statusPayload = await this.getStatus(org, peopleIds[0]);
-                Log.info("SDDMController::provisionD1Repo(..) - d1 final provisioning successful; took: " + Util.took(start));
+                Log.info("CourseController::provisionD1Repo(..) - d1 final provisioning successful; took: " + Util.took(start));
                 return {success: {message: "D1 repository successfully provisioned.", status: statusPayload}};
             } else {
-                Log.error("SDDMController::provisionD1Repo(..) - something went wrong provisioning this repo; see logs above.");
+                Log.error("CourseController::provisionD1Repo(..) - something went wrong provisioning this repo; see logs above.");
                 return {failure: {shouldLogout: false, message: "Error encountered creating d1 repo; contact course staff."}};
             }
         } catch (err) {
-            Log.error("SDDMController::provisionD1Repo(..) - ERROR: " + err);
+            Log.error("CourseController::provisionD1Repo(..) - ERROR: " + err);
             return {failure: {shouldLogout: false, message: "Error encountered provisioning d1 repo; contact course staff."}};
         }
     }
 
     public async getStatus(org: string, personId: string): Promise<StatusPayload> {
-        Log.info("SDDMController::getStatus( " + org + ", " + personId + " ) - start");
+        Log.info("CourseController::getStatus( " + org + ", " + personId + " ) - start");
         const start = Date.now();
 
         const myStatus = await this.computeStatusString(org, personId);
@@ -717,29 +786,29 @@ export class CourseController {
             d3:     myD3
         };
 
-        Log.trace("SDDMController::getStatus( " + org + ", " + personId + " ) - took: " + Util.took(start));
+        Log.trace("CourseController::getStatus( " + org + ", " + personId + " ) - took: " + Util.took(start));
 
         return statusPayload;
     }
 
     public async handleNewGrade(org: string, repoId: string, delivId: string, grade: GradePayload): Promise<boolean> {
-        Log.info("SDDMController::handleNewGrade( .. ) - start");
+        Log.info("CourseController::handleNewGrade( .. ) - start");
 
         try {
             let peopleIds = await this.rc.getPeopleForRepo(org, repoId);
             for (const personId of peopleIds) {
                 let existingGrade = await this.gc.getGrade(org, personId, delivId);
                 if (existingGrade === null || existingGrade.score < grade.score) {
-                    Log.info("SDDMController::handleNewGrade( .. ) - grade is higher; updating");
+                    Log.info("CourseController::handleNewGrade( .. ) - grade is higher; updating");
                     this.gc.createGrade(org, repoId, delivId, grade);
                 } else {
-                    Log.info("SDDMController::handleNewGrade( .. ) - grade is not higher");
+                    Log.info("CourseController::handleNewGrade( .. ) - grade is not higher");
                 }
             }
             // createGrade(org: string, repoId: string, delivId: string, score: number, comment: string, URL: string, timestamp: number)
             return true;
         } catch (err) {
-            Log.error("SDDMController::handleNewGrade( .. ) - ERROR: " + err);
+            Log.error("CourseController::handleNewGrade( .. ) - ERROR: " + err);
             return false;
         }
     }
@@ -752,7 +821,7 @@ export class CourseController {
      */
     private static getProjectPrefix(org: string): string {
         if (org === "secapstonetest" || Config.getInstance().getProp('name') === "secapstonetest") {
-            Log.info("SDDMController::getProjectPrefix(..) - returning test prefix");
+            Log.info("CourseController::getProjectPrefix(..) - returning test prefix");
             return "TEST__X__secap_";
         } else {
             return "secap_";
@@ -767,7 +836,7 @@ export class CourseController {
      */
     private static getTeamPrefix(org: string) {
         if (org === "secapstonetest" || Config.getInstance().getProp('name') === "secapstonetest") {
-            Log.info("SDDMController::getTeamPrefix(..) - returning test prefix");
+            Log.info("CourseController::getTeamPrefix(..) - returning test prefix");
             return "TEST__X__t_";
         } else {
             return "t_";

@@ -1,8 +1,9 @@
 const loadFirst = require('./GlobalSpec');
 const rBefore = require('./GradeControllerSpec');
 
-import {expect} from "chai";
 import "mocha";
+import {expect} from "chai";
+
 
 import {CourseController} from "../src/controllers/CourseController";
 import {GradesController} from "../src/controllers/GradesController";
