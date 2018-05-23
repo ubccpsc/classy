@@ -34,5 +34,7 @@ When configuring a WebStorm Run config:
 	
 2) Start db: `docker run -p 27017:27017 mongo`
 
-3) Run the tests.
- 
+3) Make sure you have `GH_CLIENT_ID` and `GH_CLIENT_SECRET` set to a GitHub OAuth client that redirects to `https://localhost:5000/githubCallback?orgName=YOURORG` so you can authenticate with your test instance. 
+
+4) Run the tests / Run the service for interactive work (this will require running `portal-frontend` too and accessing it all via `https://localhost:3000`).
+

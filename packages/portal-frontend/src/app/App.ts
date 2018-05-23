@@ -95,7 +95,7 @@ export class App {
                     Log.trace("App::init() - adding sdmm");
                     // TODO: this should not be hard coded, but should instead get a value from the .env file
                     // e.g., so we can load up a DefaultView (RTH to build), or a SDMMView, or a MDSView
-                    
+
                     // just hardcode the options for now, but it should come from .env (or somewhere)
                     const viewName = "SDMMSummaryView";
                     if (viewName === "SDMMSummaryView") {
