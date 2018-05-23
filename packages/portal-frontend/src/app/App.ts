@@ -5,9 +5,10 @@
 import {UI} from "./util/UI";
 import Log from "../../../common/Log";
 import {Network} from "./util/Network";
-import {SDMMSummaryView} from "./SDMMSummaryView";
 
 import {OnsButtonElement, OnsPageElement} from "onsenui";
+import {ViewFactory} from "./views/ViewFactory";
+import {IView} from "./views/IView";
 
 declare var classportal: any;
 
@@ -26,7 +27,7 @@ export class App {
     public readonly backendURL: string = this.backendDEV;
     public readonly frontendURL: string = this.frontendDEV;
 
-    private sdmmView: SDMMSummaryView = null;
+    private view: IView = null;
 
     private validated = false;
 
@@ -57,7 +58,7 @@ export class App {
 
         if (validated === true) {
             Log.trace('App::init() - validated: true; simulating mainPageClick');
-            that.handleMainPageClick({org: 'secapstone'}); // NOTE: hardcode
+            that.handleMainPageClick();
         }
 
         return new Promise(function (fulfill, reject) {
@@ -72,45 +73,31 @@ export class App {
 
                 let org: string = null;
 
-                if (typeof (<any>page).pushedOptions !== 'undefined' && typeof (<any>page).pushedOptions.org !== 'undefined') {
-                    org = (<any>page).pushedOptions.org;
-                    localStorage.org = org;
-                    // that.org = (<any>page).pushedOptions.org;
-                    console.log('App::init()::init - org: ' + org + '; pushed option');
-                }
+                org = ViewFactory.getInstance().getOrg();
+                localStorage.org = org; // TODO: remove; just use the factory to track this
+                Log.trace('App::init()::init - org: ' + org + '; pushed option');
 
-                console.log('App::init()::init - page: ' + pageName);
+                Log.trace('App::init()::init - page: ' + pageName);
 
                 if (pageName === 'adminTabsPage') {
                     // initializing tabs page for the first time
                     // that.adminController = new AdminController(that, courseId);
+                    Log.warn('App::init()::init - page: ' + pageName + ' NOT IMPLEMENTED');
                 }
 
                 if (pageName === 'studentTabsPage') {
                     // initializing tabs page for the first time
                     // that.studentController = new StudentController(that, courseId);
 
-                    Log.info("studentTabsPage init; attaching sdmm view");
+                    Log.info("studentTabsPage init; attaching view");
+                    (<any>window).classportal.view = ViewFactory.getInstance().getView(that.backendURL);
 
-                    Log.trace("App::init() - adding sdmm");
-                    // TODO: this should not be hard coded, but should instead get a value from the .env file
-                    // e.g., so we can load up a DefaultView (RTH to build), or a SDMMView, or a MDSView
-
-                    // just hardcode the options for now, but it should come from .env (or somewhere)
-                    const viewName = "SDMMSummaryView";
-                    if (viewName === "SDMMSummaryView") {
-                        (<any>window).classportal.view = new SDMMSummaryView(that.backendURL);
-                    } else if (viewName === "310") {
-                        // (<any>window).classportal.view = new SDMMSummaryView();
-                    }
-
-                    Log.info('foobar');
-
-                    let s: SDMMSummaryView = new SDMMSummaryView(that.backendURL);
-                    that.sdmmView = s;
+                    // let s: SDMMSummaryView = new SDMMSummaryView(that.backendURL);
+                    const view = ViewFactory.getInstance().getView(that.backendURL);
+                    that.view = view;
 
                     if (typeof (<any>window).myApp.sdmm === 'undefined') {
-                        (<any>window).myApp.sdmm = s; // just for debugging
+                        (<any>window).myApp.sdmm = view; // just for debugging
                     }
                     Log.trace("App::init() - adding sdmm done");
                 }
@@ -132,12 +119,8 @@ export class App {
                 */
 
                 if (pageName === 'main') {
-                    if (1 + 1 > 0) {
-                        return;
-                    }
+                    Log.trace('App::init()::authCheck - starting main.html with auth check');
                     const AUTHORIZED_STATUS: string = 'authorized';
-
-                    Log.trace('App::main()::authCheck - starting main.html with auth check');
 
                     that.toggleLoginButton();
 
@@ -145,8 +128,8 @@ export class App {
                     let OPTIONS_HTTP_GET: RequestInit = {credentials: 'include'};
                     fetch(URL, OPTIONS_HTTP_GET).then((data: any) => {
                         if (data.status !== 200) {
-                            Log.trace('App::main()::authCheck - WARNING: Response status: ' + data.status);
-                            throw new Error('App::main()::authCheck - API ERROR: ' + data.status);
+                            Log.trace('App::init()::authCheck - WARNING: Response status: ' + data.status);
+                            throw new Error('App::init()::authCheck - API ERROR: ' + data.status);
                         }
                         return data.json();
                     }).then((data: any) => {
@@ -157,7 +140,7 @@ export class App {
                         localStorage.setItem('fname', user.fname);
                         that.toggleLoginButton();
                     }).catch((err: any) => {
-                        Log.error('App:main()::authCheck - ERROR: ' + err.message);
+                        Log.error('App::init()::authCheck - ERROR: ' + err.message);
                     });
                 }
 
@@ -204,7 +187,7 @@ export class App {
 
                 if (pageName === "studentTabsPage" && validated === true) {
                     Log.trace('studentTabsPage - show!!!');
-                    that.sdmmView.renderPage();
+                    that.view.renderPage();
                 }
                 /*
                 if (that.studentController !== null) {
@@ -347,8 +330,12 @@ export class App {
         });
     };
 
-    public handleMainPageClick(params: {}) {
+    public handleMainPageClick(params?: {}) {
         Log.info("App::handleMainPageClick(..) - start");
+
+        if (typeof params === 'undefined') {
+            params = {};
+        }
 
         if (this.validated === true) {
             // push to correct handler
@@ -417,7 +404,7 @@ export class App {
      * TODO: this should _NOT_ be here since it is SDMM-specific
      */
     public sdmmSelectChanged() {
-        console.log('sdmmSelectChanged');
+        Log.trace('App::sdmmSelectChanged()');
         (<any>window).myApp.sdmm.updateState(); // stick to dropdown for debugging
     }
 
