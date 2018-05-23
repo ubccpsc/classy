@@ -7,16 +7,19 @@
 
 This assumes you're working with WebStorm.
 
-* Create `classy/ssl/XXX` and `classy/ssl/XXX`.
-	* Instructions for this are in `classy/README.md`.
-* Copy `classy/ssl/` into `classy/packages/portal-frontend/ssl/`.
+### Configure your environment:
 
-When configuring a WebStorm Run config:
+1) Setup SSL certificates (full instructions for this are in `classy/README.md`):
+    * Create `classy/ssl/fullchain.pem` and `classy/ssl/privkey.pem` 
+    * Copy `classy/ssl/` into `classy/packages/portal-frontend/ssl/`
 
-	* Node parameters: `--require dotenv/config`.
-	* JavaScript File: `src/server/FrontEndServer.js`.
-	* Application parameters (for your path): `dotenv_config_path=/Users/rtholmes/GoogleDrive/dev/classy/.env`.
+2) Create a WebStorm execution profile (for interactive execution):
+	* Node parameters: `--require dotenv/config`
+	* JavaScript File: `src/server/FrontEndServer.js`
+	* Application parameters (for your path): `dotenv_config_path=<classy-dir>/.env`
 
-## Insstructions TODO
+### Execution the frontend
 
-    * `webpack` description missing 
+1) Run WebPack (bundles TS into JS for the browser): `webpack --watch`
+
+2) Run your execution profile in WebStorm (don't forget to start `portal-backend` first!).
