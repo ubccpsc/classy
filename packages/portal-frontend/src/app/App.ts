@@ -79,9 +79,9 @@ export class App {
 
                 Log.trace('App::init()::init - page: ' + pageName);
 
-                if (pageName === "landing") {
-                    Log.trace('App::init()::init - landing detected; pushing real target');
-                    UI.pushPage(ViewFactory.getInstance().getHTMLPrefix() + '/main.html');
+                if (pageName === 'index') {
+                    Log.trace('App::init()::init - index detected; pushing real target');
+                    UI.pushPage(ViewFactory.getInstance().getHTMLPrefix() + '/landing.html');
                     return;
                 }
 

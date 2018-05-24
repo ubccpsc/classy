@@ -49,6 +49,17 @@ export class ViewFactory {
         }
     }
 
+    /**
+     * Returns the prefix directory for the HTML files specific to the course. While you can have
+     * many files in this directory, several are required:
+     *
+     * landing.html - This is the main course-specific landing page
+     * login.html - This is the login page
+     * student.html - This is the main student landing page
+     * admin.html - This is the main admin landing page
+     *
+     * @returns {string}
+     */
     public getHTMLPrefix() {
         if (this.courseName === 'sdmm') {
             return 'sdmm';
