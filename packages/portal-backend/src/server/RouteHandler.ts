@@ -1,14 +1,14 @@
 import * as rp from "request-promise-native";
 
-import {Config} from "../../common/Config";
-import Log from "../../common/Log";
+import {Config} from "../../../common/Config";
+import Log from "../../../common/Log";
 
-import {AuthController} from "./controllers/AuthController";
-import {DatabaseController} from "./controllers/DatabaseController";
-import {Auth, Person} from "./Types";
-import {PersonController} from "./controllers/PersonController";
-import {GradePayload, Payload, CourseController, StatusPayload} from "./controllers/CourseController";
-import {GitHubController} from "./controllers/GitHubController";
+import {AuthController} from "../controllers/AuthController";
+import {DatabaseController} from "../controllers/DatabaseController";
+import {Auth, Person} from "../Types";
+import {PersonController} from "../controllers/PersonController";
+import {GradePayload, Payload, CourseController, StatusPayload} from "../controllers/CourseController";
+import {GitHubController} from "../controllers/GitHubController";
 import ClientOAuth2 = require("client-oauth2");
 
 /**

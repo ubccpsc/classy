@@ -1,10 +1,10 @@
 import {expect} from "chai";
 import "mocha";
-import {GradesController} from "../src/controllers/GradesController";
-import {Test} from "./GlobalSpec";
-import {CourseController, GradePayload} from "../src/controllers/CourseController";
+import {GradesController} from "../../src/controllers/GradesController";
+import {Test} from "../GlobalSpec";
+import {CourseController, GradePayload} from "../../src/controllers/CourseController";
 
-const loadFirst = require('./GlobalSpec');
+const loadFirst = require('../GlobalSpec');
 const rFirst = require('./RepositoryControllerSpec');
 
 describe("GradeController", () => {

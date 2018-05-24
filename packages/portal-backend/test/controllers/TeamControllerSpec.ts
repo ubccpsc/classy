@@ -1,10 +1,10 @@
-import {Test} from "./GlobalSpec";
+import {Test} from "../GlobalSpec";
 import {expect} from "chai";
 import "mocha";
-import {PersonController} from "../src/controllers/PersonController";
-import {TeamController} from "../src/controllers/TeamController";
+import {PersonController} from "../../src/controllers/PersonController";
+import {TeamController} from "../../src/controllers/TeamController";
 
-const loadFirst = require('./GlobalSpec');
+const loadFirst = require('../GlobalSpec');
 const pFirst = require('./PersonControllerSpec');
 
 describe("TeamController", () => {

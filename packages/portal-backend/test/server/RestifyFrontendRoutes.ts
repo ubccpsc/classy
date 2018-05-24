@@ -1,20 +1,18 @@
-import BackendServer from "../src/BackendServer";
-import Log from "../../common/Log";
-import {Test} from "./GlobalSpec";
+import BackendServer from "../../src/server/BackendServer";
+import Log from "../../../common/Log";
+import {Test} from "../GlobalSpec";
 
 import {expect} from "chai";
 import "mocha";
-import {Person} from "../src/Types";
-import {PersonController} from "../src/controllers/PersonController";
+import {Person} from "../../src/Types";
+import {PersonController} from "../../src/controllers/PersonController";
 
-const loadFirst = require('./GlobalSpec');
-
+const loadFirst = require('../GlobalSpec');
 
 import restify = require('restify');
 
 const request = require('supertest');
 const https = require('https');
-
 
 describe('REST Routes for Frontend', function () {
 
@@ -29,7 +27,7 @@ describe('REST Routes for Frontend', function () {
             Log.test('RestifyFrontendRoutes::before - server started');
             Log.test('orgName: ' + Test.ORGNAME);
             app = server.getServer();
-        }).catch(function(err){
+        }).catch(function (err) {
             // probably ok; ust means server is already started
             Log.test('RestifyFrontendRoutes::before - server might already be started: ' + err);
         });

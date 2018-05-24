@@ -2,15 +2,15 @@ import "mocha";
 
 import {Config} from "../../common/Config";
 import Log from "../../common/Log";
-import {DatabaseController} from "../src/controllers/DatabaseController";
 
+import {DatabaseController} from "../src/controllers/DatabaseController";
 
 before(async () => {
     Log.info('GlobalSpec::before()');
 
     Config.getInstance();
-    (<any>Config.getInstance()).config.org = 'secapstonetest'; // force testing in test environment
-    (<any>Config.getInstance()).config.name = 'secapstonetest'; // force testing in test environment
+    (<any>Config.getInstance()).config.org = 'secapstonetest'; // force testing in test environment // TODO: NOT GOOD for 340
+    (<any>Config.getInstance()).config.name = 'secapstonetest'; // force testing in test environment // TODO: NOT GOOD for 340
 
     Test.ORGNAME = Config.getInstance().getProp('org');
     Log.info('GlobalSpec::before() - org: ' + Test.ORGNAME);

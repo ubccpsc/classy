@@ -1,21 +1,19 @@
-const loadFirst = require('./GlobalSpec');
+const loadFirst = require('../GlobalSpec');
 const rBefore = require('./GradeControllerSpec');
 
 import "mocha";
 import {expect} from "chai";
 
+import {Test} from "../GlobalSpec";
 
-import {CourseController} from "../src/controllers/CourseController";
-import {GradesController} from "../src/controllers/GradesController";
-import {RepositoryController} from "../src/controllers/RepositoryController";
-import {TeamController} from "../src/controllers/TeamController";
-import {PersonController} from "../src/controllers/PersonController";
-import {Test} from "./GlobalSpec";
-import {TestGitHubController} from "../src/controllers/GitHubController";
-
+import {CourseController} from "../../src/controllers/CourseController";
+import {GradesController} from "../../src/controllers/GradesController";
+import {RepositoryController} from "../../src/controllers/RepositoryController";
+import {TeamController} from "../../src/controllers/TeamController";
+import {PersonController} from "../../src/controllers/PersonController";
+import {TestGitHubController} from "../../src/controllers/GitHubController";
 
 export class TestData {
-
 
     constructor() {
 

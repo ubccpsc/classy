@@ -1,11 +1,18 @@
 import {Config} from "../../common/Config";
 import Log from "../../common/Log";
 
-import SDMMREST from "./controllers/SDMM/SDMMREST";
-import IREST from "./controllers/IREST";
+import IREST from "./server/IREST";
+import SDMMREST from "./server/SDMM/SDMMREST";
 
 export class Factory {
 
+    /**
+     * Returns a custom route handler for a course. This will be used to configure
+     * Restify with any custom routes required for the course backend. Only one
+     * custom handler is permitted per instance.
+     *
+     * @returns {IREST}
+     */
     public static getCustomRouteHandler(): IREST {
         const org = Factory.getOrg();
 
@@ -16,8 +23,14 @@ export class Factory {
         } else {
             Log.error("Factory::getXXX() - unknown org: " + org);
         }
+        return null; // TODO: should not happen; should return a default implementation instead.
     }
 
+    /**
+     * Gets the org associated with the Backend instance from the .env file.
+     *
+     * @returns {string | null}
+     */
     private static getOrg(): string | null {
         try {
             const org = Config.getInstance().getProp('org');
@@ -28,5 +41,6 @@ export class Factory {
         } catch (err) {
             Log.error("Factory::getOrg() - ERROR: " + err);
         }
+        return null;
     }
 }

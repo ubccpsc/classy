@@ -14,7 +14,7 @@ This assumes you're working with WebStorm.
 When configuring a WebStorm Run config:
 
 	* Node parameters: `--require dotenv/config`.
-	* JavaScript File: `src/server/BackendServer.js`.
+	* JavaScript File: `src/server/Backend.js`.
 	* Application parameters (for your path): `dotenv_config_path=/Users/rtholmes/GoogleDrive/dev/classy/.env`.
 
 ## Instructions TODO
@@ -36,7 +36,7 @@ When configuring a WebStorm Run config:
     * Create `Node.js` execution profile
     * Node options: `--require dotenv/config`
     * Working directory: `<classy-dir>/packages/portal-backend`
-    * JavaScript file: `src/BackendDaemon.js`
+    * JavaScript file: `src/Backend.js`
     * Application parameters: `dotenv_config_path=<classy-dir>/.env`
 
 3) Start db: `docker run -p 27017:27017 mongo`
@@ -45,3 +45,11 @@ When configuring a WebStorm Run config:
 
 5) Run the tests / Run the service for interactive work (this will require running `portal-frontend` too and accessing it all via `https://localhost:3000`).
 
+## High-Level Architecture
+
+The backend is split into two main layers: the `controllers/` and the `server/`. 
+
+The `controllers/` handle all database and logic operations and are oblivious to the backend being a REST-based system. This makes the code easier to unit test which is important given the controllers also contains all of the complex backend code. The code in the `controllers/` directory is common across all clients; any client-specific code should be placed in a subdirectory of `controllers/`.
+
+The `server/` acts as a thin shim on top of the `controllers/` to transfer data in and out of the backend using REST. Any course-specific code should be placed in a subdirectory of `REST/`.
+ 

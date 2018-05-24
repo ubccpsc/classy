@@ -1,15 +1,36 @@
-import {RepositoryController} from "../src/controllers/RepositoryController";
 import {expect} from "chai";
 import "mocha";
-import {TeamController} from "../src/controllers/TeamController";
-import {PersonController} from "../src/controllers/PersonController";
-import {Test} from "./GlobalSpec";
+import {Test} from "../GlobalSpec";
+import {AuthController} from "../../src/controllers/AuthController";
 
-const loadFirst = require('./GlobalSpec');
-const teamsFirst = require('./TeamControllerSpec');
+const loadFirst = require('../GlobalSpec');
+const teamsFirst = require('./PersonControllerSpec');
 
-describe("RepositoryController", () => {
+describe("AuthController", () => {
 
+    let ac: AuthController;
+
+    before(async () => {
+    });
+
+    beforeEach(() => {
+        ac = new AuthController();
+    });
+
+    it("Should not validate a user who does not exist.", async () => {
+        let isValid = await ac.isValid(Test.ORGNAME, Test.USERNAME3, ''); // not registered
+        expect(isValid).to.be.false;
+    });
+
+
+    it("Should not let invalid be admins.", async () => {
+        let isValid = await ac.isAdmin(Test.ORGNAME, Test.USERNAME3, ''); // not registered
+        expect(isValid).to.be.false;
+    });
+
+
+    // TODO: implement auth controller tests
+    /*
     let rc: RepositoryController;
     let tc: TeamController;
     let pc: PersonController;
@@ -64,4 +85,5 @@ describe("RepositoryController", () => {
         repos = await rc.getReposForPerson(person);
         expect(repos).to.have.lengthOf(1);
     });
+    */
 });

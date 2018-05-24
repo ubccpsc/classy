@@ -2,8 +2,8 @@ import restify = require('restify');
 import Log from "../../../../common/Log";
 
 import IREST from "../IREST";
-import {CourseController} from "../CourseController";
-import {GitHubController} from "../GitHubController";
+import {CourseController} from "../../controllers/CourseController";
+import {GitHubController} from "../../controllers/GitHubController";
 
 export default class SDMMREST implements IREST {
 

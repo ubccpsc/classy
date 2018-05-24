@@ -1,10 +1,10 @@
-import BackendServer from "../src/BackendServer";
-import Log from "../../common/Log";
-import {Test} from "./GlobalSpec";
+import BackendServer from "../../src/server/BackendServer";
+import Log from "../../../common/Log";
+import {Test} from "../GlobalSpec";
 
 import {expect} from "chai";
 import "mocha";
-import {GradePayload} from "../src/controllers/CourseController";
+import {GradePayload} from "../../src/controllers/CourseController";
 
 // This seems silly, but just makes sure GlobalSpec runs first.
 // It should be at the top of every test file.
