@@ -527,4 +527,12 @@ export class SDMMSummaryView implements IView {
         UI.hideD1TeamDialog();
         this.createD1Team(partnerUser);
     }
+
+    /**
+     * Debugging method.
+     */
+    public sdmmSelectChanged() {
+        Log.trace('App::sdmmSelectChanged()');
+        this.updateState(); // stick to dropdown for debugging
+    }
 }

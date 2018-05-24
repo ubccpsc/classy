@@ -14,18 +14,8 @@ declare var classportal: any;
 
 export class App {
 
-    // private studentController: StudentController = null;
-    // private adminController: AdminController = null;
-
-    // NOTE: having these hardcoded isn't great
-    // these should come from Config.getInstance().getProp('foo');
-    private readonly backendDEV = 'https://localhost:5000';
-    private readonly backendPROD = 'https://sdmm.cs.ubc.ca:5000';
-    private readonly frontendDEV = 'https://localhost:3000';
-    private readonly frontendPROD = 'https://sdmm.cs.ubc.ca';
-
-    public readonly backendURL: string = this.backendDEV;
-    public readonly frontendURL: string = this.frontendDEV;
+    public readonly backendURL: string = null;
+    public readonly frontendURL: string = null;
 
     private view: IView = null;
 
@@ -34,14 +24,18 @@ export class App {
     constructor() {
         Log.trace('App::<init> - start');
 
-        if (window.location.href.indexOf('://localhost') > 0) {
-            // DEV
-            this.backendURL = this.backendDEV;
-            this.frontendURL = this.frontendDEV;
+        // configure the frontend and backend URLs
+        // uses the browser location and figures it out from there
+        // means the backend must run on the same host as the frontend
+        // but with port 5000
+        // TODO: this will need to be tested better before putting it into production
+        let location = window.location.href;
+        location = location.substr(0, location.indexOf('/', 10)); // peel off anything after the host/port
+        this.frontendURL = location;
+        if (location.indexOf('3000') > 0) {
+            this.backendURL = location.replace('3000', '5000');
         } else {
-            // PROD
-            this.backendURL = this.backendPROD;
-            this.frontendURL = this.frontendPROD;
+            this.backendURL = location + ':5000/';
         }
 
         Log.trace('App::<init> config; backend: ' + this.backendURL + '; frontend: ' + this.frontendURL);
@@ -95,17 +89,13 @@ export class App {
                     // initializing tabs page for the first time
                     // that.studentController = new StudentController(that, courseId);
 
-                    Log.info("studentTabsPage init; attaching view");
+                    Log.info("App::init() - studentTabsPage init; attaching view");
                     (<any>window).classportal.view = ViewFactory.getInstance().getView(that.backendURL);
 
-                    // let s: SDMMSummaryView = new SDMMSummaryView(that.backendURL);
                     const view = ViewFactory.getInstance().getView(that.backendURL);
                     that.view = view;
 
-                    if (typeof (<any>window).myApp.sdmm === 'undefined') {
-                        (<any>window).myApp.sdmm = view; // just for debugging
-                    }
-                    Log.trace("App::init() - adding sdmm done");
+                    Log.trace("App::init() - studentTabsPage init; view attached");
                 }
 
                 /*
@@ -222,6 +212,16 @@ export class App {
         UI.pushPage(page, opts);
     }
 
+    /**
+     * Validate that the current user has valid credentials.
+     *
+     * If they have a token, check with GitHub to make sure it's still valid.
+     *
+     * If anything goes wrong, just clear the credentials and force the user
+     * to login again.
+     *
+     * @returns {Promise<boolean>}
+     */
     private async validateCredentials(): Promise<boolean> {
         Log.info("App::validateCredentials() - start");
         let token = this.readCookie('token');
@@ -264,19 +264,25 @@ export class App {
         // TODO: erase credentials on server too
 
         // invalid username; logout
-        // clear the cookie and refresh
         this.validated = false;
-        localStorage.clear();
-        document.cookie = "token=empty;expires=" + new Date(0).toUTCString();
-        location.href = location.href;
+        localStorage.clear(); // erase cached info
+        document.cookie = "token=empty;expires=" + new Date(0).toUTCString(); // clear the cookies
+        location.href = location.href; // force refresh the page
     }
 
+    /**
+     * Given a GitHub token, get the GitHub username.
+     *
+     * Returns null if the token is not valid.
+     *
+     * @param {string} token
+     * @returns {Promise<string | null>}
+     */
     private getGithubCredentials(token: string): Promise<string | null> {
         Log.trace("App::getGithubCredentials(..) - start");
         return fetch('https://api.github.com/user', {
             headers: {
                 'Content-Type':  'application/json',
-                // 'User-Agent':    'Portal',
                 'Authorization': 'token ' + token
             }
         }).then(function (resp: any) {
@@ -294,7 +300,16 @@ export class App {
         });
     };
 
-    private getServerCredentials(username: string, token: string): Promise<{}> {
+    /**
+     * Gets the user credentials from the server.
+     *
+     * If anything goes wrong, returns null.
+     *
+     * @param {string} username
+     * @param {string} token
+     * @returns {Promise<{}>}
+     */
+    private getServerCredentials(username: string, token: string): Promise<{}> { // TODO: return should have a type | null
         const url = this.backendURL + '/getCredentials';
         Log.trace("App::getServerCredentials - start; url: " + url);
         const that = this;
@@ -412,15 +427,6 @@ export class App {
             Log.error("APP:toggleLoginButton() - ERROR: " + err);
         }
     }
-
-    /**
-     * TODO: this should _NOT_ be here since it is SDMM-specific
-     */
-    public sdmmSelectChanged() {
-        Log.trace('App::sdmmSelectChanged()');
-        (<any>window).myApp.sdmm.updateState(); // stick to dropdown for debugging
-    }
-
 }
 
 Log.info('App.ts - preparing App for access');
