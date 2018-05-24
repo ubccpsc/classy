@@ -48,4 +48,14 @@ export class ViewFactory {
             Log.error("ViewFactory::getOrg() - ERROR; unknown courseName: " + this.courseName);
         }
     }
+
+    public getHTMLPrefix() {
+        if (this.courseName === 'sdmm') {
+            return 'sdmm';
+        } else if (this.courseName === 'cs340') {
+            return 'cs340';
+        } else {
+            Log.error("ViewFactory::getHTMLPrefix() - ERROR; unknown courseName: " + this.courseName);
+        }
+    }
 }

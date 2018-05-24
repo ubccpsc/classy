@@ -1,0 +1,21 @@
+<ons-page id="studentTabsPage">
+    <ons-toolbar>
+        <div class="center" id="studentTabsHeader">CS 340</div>
+        <div class="right">
+            <ons-toolbar-button onclick="myApp.logout();">
+                <ons-icon icon="fa-sign-out"></ons-icon>
+                <span style="vertical-align: top; font-size: 80%;">Logout</span>
+            </ons-toolbar-button>
+        </div>
+    </ons-toolbar>
+    <ons-modal id="studentModal">
+        <div style="display:flex; flex-direction:column; align-items: center;">
+            <div id="modalText" style="padding-top: 1em; padding-bottom: 1em;">Updating. Will take < 5 seconds.</div>
+            <ons-progress-circular indeterminate></ons-progress-circular>
+        </div>
+    </ons-modal>
+    <ons-list>
+        <ons-list-item>Content here</ons-list-item>
+    </ons-list>
+</ons-page>
+

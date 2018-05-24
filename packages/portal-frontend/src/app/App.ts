@@ -79,6 +79,12 @@ export class App {
 
                 Log.trace('App::init()::init - page: ' + pageName);
 
+                if (pageName === "landing") {
+                    Log.trace('App::init()::init - landing detected; pushing real target');
+                    UI.pushPage(ViewFactory.getInstance().getHTMLPrefix() + '/main.html');
+                    return;
+                }
+
                 if (pageName === 'adminTabsPage') {
                     // initializing tabs page for the first time
                     // that.adminController = new AdminController(that, courseId);
@@ -117,41 +123,41 @@ export class App {
                     }
                 }
                 */
+                /*
+                                if (pageName === 'main') {
+                                    Log.trace('App::init()::authCheck - starting main.html with auth check');
+                                    const AUTHORIZED_STATUS: string = 'authorized';
 
-                if (pageName === 'main') {
-                    Log.trace('App::init()::authCheck - starting main.html with auth check');
-                    const AUTHORIZED_STATUS: string = 'authorized';
+                                    that.toggleLoginButton();
 
-                    that.toggleLoginButton();
-
-                    const URL = that.backendURL + '/currentUser';
-                    let OPTIONS_HTTP_GET: RequestInit = {credentials: 'include'};
-                    fetch(URL, OPTIONS_HTTP_GET).then((data: any) => {
-                        if (data.status !== 200) {
-                            Log.trace('App::init()::authCheck - WARNING: Response status: ' + data.status);
-                            throw new Error('App::init()::authCheck - API ERROR: ' + data.status);
-                        }
-                        return data.json();
-                    }).then((data: any) => {
-                        let user = data.response.user;
-                        localStorage.setItem('userrole', user.userrole);
-                        localStorage.setItem('username', user.username);
-                        localStorage.setItem('authStatus', AUTHORIZED_STATUS);
-                        localStorage.setItem('fname', user.fname);
-                        that.toggleLoginButton();
-                    }).catch((err: any) => {
-                        Log.error('App::init()::authCheck - ERROR: ' + err.message);
-                    });
-                }
-
+                                    const URL = that.backendURL + '/currentStatus';  // '/currentUser'; // NOTE: this doesn't seem right
+                                    let OPTIONS_HTTP_GET: RequestInit = {credentials: 'include', mode: 'no-cors'}; // NOTE: not sure about the mode param
+                                    fetch(URL, OPTIONS_HTTP_GET).then((data: any) => {
+                                        if (data.status !== 200) {
+                                            Log.trace('App::init()::authCheck - WARNING: Response status: ' + data.status);
+                                            throw new Error('App::init()::authCheck - API ERROR: ' + data.status);
+                                        }
+                                        return data.json();
+                                    }).then((data: any) => {
+                                        let user = data.response.user;
+                                        localStorage.setItem('userrole', user.userrole);
+                                        localStorage.setItem('username', user.username);
+                                        localStorage.setItem('authStatus', AUTHORIZED_STATUS);
+                                        localStorage.setItem('fname', user.fname);
+                                        that.toggleLoginButton();
+                                    }).catch((err: any) => {
+                                        Log.error('App::init()::authCheck - ERROR: ' + err.message);
+                                    });
+                                }
+                */
                 if (pageName === 'loginPage') {
 
                     const userrole = String(localStorage.userrole);
                     // const username = String(localStorage.username);
                     if (userrole === 'student') {
-                        UI.pushPage('student.html', {org: org});
+                        UI.pushPage(ViewFactory.getInstance().getHTMLPrefix() + '/student.html', {org: org});
                     } else if (userrole === 'admin' || userrole === 'superadmin') {
-                        UI.pushPage('admin.html', {org: org});
+                        UI.pushPage(ViewFactory.getInstance().getHTMLPrefix() + '/admin.html', {org: org});
                     }
 
                     (document.querySelector('#loginButton') as OnsButtonElement).onclick = function () {
@@ -339,20 +345,17 @@ export class App {
 
         if (this.validated === true) {
             // push to correct handler
-            if (localStorage.kind === 'superadmin') {
-                Log.info("App::handleMainPageClick(..) - super admin");
-                UI.pushPage('superadmin.html', params);
-            } else if (localStorage.kind === 'admin') {
+            if (localStorage.kind === 'admin') {
                 Log.info("App::handleMainPageClick(..) - admin");
-                UI.pushPage('admin.html', params);
+                UI.pushPage(ViewFactory.getInstance().getHTMLPrefix() + '/admin.html', params);
             } else {
                 Log.info("App::handleMainPageClick(..) - student");
-                UI.pushPage('student.html', params);
+                UI.pushPage(ViewFactory.getInstance().getHTMLPrefix() + '/student.html', params);
             }
         } else {
             // push to login page
             Log.info("App::handleMainPageClick(..) - not authorized");
-            UI.pushPage('login.html', params);
+            UI.pushPage(ViewFactory.getInstance().getHTMLPrefix() + '/login.html', params);
         }
     }
 
@@ -389,10 +392,20 @@ export class App {
         try {
             if (this.isLoggedIn() === true) {
                 Log.trace("App::toggleLoginButton() - showing logout");
-                document.getElementById('indexLogin').style.display = 'block';
+                const el = document.getElementById('indexLogin');
+                if (el !== null) {
+                    el.style.display = 'block';
+                } else {
+                    Log.trace("App::toggleLoginButton() - button not visible");
+                }
             } else {
                 Log.trace("App::toggleLoginButton() - hiding logout");
-                document.getElementById('indexLogin').style.display = 'none';
+                const el = document.getElementById('indexLogin');
+                if (el !== null) {
+                    el.style.display = 'none';
+                } else {
+                    Log.trace("App::toggleLoginButton() - button not visible");
+                }
             }
         } catch (err) {
             // silently fail

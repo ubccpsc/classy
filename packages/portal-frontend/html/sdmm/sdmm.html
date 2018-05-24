@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SDMM Portal</title>
+
+    <!-- Onsen !-->
+    <link rel="stylesheet" href="https://unpkg.com/onsenui/css/onsenui.css">
+    <link rel="stylesheet" href="https://unpkg.com/onsenui/css/onsen-css-components.min.css">
+    <script src="https://unpkg.com/onsenui/js/onsenui.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+
+    <script src="js/portal.js"></script>
+</head>
+
+<body>
+
+<!-- First navigation component: Navigator. This will remain always on top of the app. -->
+<!--
+<ons-navigator id="myNavigator" page="main.html">
+</ons-navigator>
+-->
+
+<!-- Second navigation component: Splitter. This will disappear if the first component changes its content. -->
+<template id="main.html">
+    <ons-page id="main">
+        <ons-toolbar>
+            <div class="center">UBC SDMM Portal</div>
+
+            <div id='indexLogin' class="right">
+                <ons-toolbar-button onclick="myApp.logout();">
+                    <ons-icon icon="fa-sign-out"></ons-icon>
+                    <span style="vertical-align: top; font-size: 80%;">Logout</span>
+                </ons-toolbar-button>
+            </div>
+        </ons-toolbar>
+
+        <div style="height: 100%; display:flex; flex-direction: row; align-items:center; justify-content: center;">
+            <ons-card style="display: flex; flex-direction: row; align-items: center; text-align: center; margin:10em; max-width: 650px;">
+                <div>
+                    <div style="padding-bottom: 1em; display: flex">
+                        <p>
+                            This is the management portal for the <a
+                                href="https://www.edx.org/course/software-development-capstone-project-ubcx-softengprjx">UBC edX Software
+                            Development Capstone Project</a>. Members of this capstone course can use this system to provision their
+                            repositories and teams and monitor their progress for this self-paced capstone project.
+                        </p>
+                    </div>
+                    <ons-button onclick="myApp.handleMainPageClick()" modifier="large;"
+                                style="padding-top:1em; padding-bottom: 1em; padding-left:2em; padding-right: 2em;">
+                        <ons-icon icon="fa-graduation-cap" style="font-size: 250%; vertical-align: bottom;"></ons-icon>
+                        SDMM Portal Login
+                    </ons-button>
+                </div>
+            </ons-card>
+        </div>
+
+    </ons-page>
+</template>
+
+<template id="student.html">
+    <ons-page id="studentTabsPage">
+        <ons-toolbar>
+            <div class="center" id="studentTabsHeader">SDMM Capstone Portal</div>
+            <div class="right">
+                <ons-toolbar-button onclick="myApp.logout();">
+                    <ons-icon icon="fa-sign-out"></ons-icon>
+                    <span style="vertical-align: top; font-size: 80%;">Logout</span>
+                </ons-toolbar-button>
+            </div>
+        </ons-toolbar>
+        <ons-modal id="studentModal">
+            <div style="display:flex; flex-direction:column; align-items: center;">
+                <div id="modalText" style="padding-top: 1em; padding-bottom: 1em;">Updating. Will take < 5 seconds.</div>
+                <ons-progress-circular indeterminate></ons-progress-circular>
+            </div>
+        </ons-modal>
+        <ons-list>
+            <ons-list-item style="display: none">
+                <select id="sdmmSelect" onchange="myApp.sdmmSelectChanged()">
+                    <option>D0PRE</option>
+                    <option>D0</option>
+
+                    <option>D1UNLOCKED</option>
+                    <option>D1TEAMSET</option>
+                    <option>D1</option>
+
+                    <option>D2</option>
+
+                    <option>D3PRE</option>
+                    <option>D3</option>
+                </select>
+            </ons-list-item>
+            <ons-list-header>Sprint 0 (d0)</ons-list-header>
+            <ons-list-item id="sdmmd0provision">
+                <div style="display:flex; flex-direction: column;">
+                    <div>
+                        Before D0 can be started a repository must be provisioned.
+                    </div>
+                    <div style="padding-top: 0.5em;">
+                        <ons-button onclick="myApp.sdmm.createD0Repository();">Provision D0 Repository</ons-button>
+                    </div>
+                </div>
+            </ons-list-item>
+            <ons-list-item id="sdmmd0status" style="display:none;">
+                <div class="left" style="font-size:200%;">
+                    <ons-icon icon="fa-check-circle"></ons-icon> <!-- -->
+                </div>
+                <div class="center">
+                    <span class="list-item__title">Grade: N/A</span><span class="list-item__subtitle">Repo: <a
+                        href="https://sdmm.cs.ubc.ca">Not Provisioned</a>&nbsp;&nbsp; Commit: <a
+                        href="https://sdmm.cs.ubc.ca">N/A</a></span>
+                </div>
+            </ons-list-item>
+            <ons-list-header style="padding-top: 0em;">Sprint 1 (d1)</ons-list-header>
+            <ons-list-item id="sdmmd1locked" style="display:none;">
+                <div class="left">
+                    <ons-icon icon="ion-locked"></ons-icon>
+                </div>
+                <div class="center">
+                    D1 locked until D0 grade > 60%
+                </div>
+            </ons-list-item>
+            <ons-list-item id="sdmmd1teams" style="display:none;">
+                <div style="display:flex; flex-direction: column;">
+                    <div>
+                        D1 can be performed individually or in a team. This decision cannot be changed for the rest of the project so please
+                        choose carefully. If you wish to work with a partner, they must also have a d0 score > 60% and you must know their
+                        GitHub username.
+                    </div>
+                    <div style="padding-top: 0.5em;">
+                        <ons-button onclick="myApp.sdmm.createD1Individual();">Work individually for d1, d2, and d3.</ons-button>
+                    </div>
+                    <div style="padding-top: 0.5em;">
+                        <ons-button onclick="myApp.sdmm.d1TeamDialog();">Select partner for d1, d2, and d3.</ons-button>
+                    </div>
+                </div>
+            </ons-list-item>
+            <ons-list-item id="sdmmd1provision" style="display:none;">
+                <div style="display:flex; flex-direction: column;">
+                    <div>
+                        Before D1 can be started a repository must be provisioned.
+                    </div>
+                    <div style="padding-top: 0.5em;">
+                        <ons-button onclick="myApp.sdmm.createD1Repository();">Provision D1 Repository</ons-button>
+                    </div>
+                </div>
+            </ons-list-item>
+            <ons-list-item id="sdmmd1status" style="display:none;">
+                <div class="left" style="font-size:200%;">
+                    <ons-icon icon="fa-times-circle"></ons-icon> <!-- fa-check-circle -->
+                </div>
+                <div class="center">
+                    <span class="list-item__title">Grade: N/A</span><span class="list-item__subtitle">Repo: <a
+                        href="https://sdmm.cs.ubc.ca">Not Provisioned</a>&nbsp;&nbsp; Commit: <a
+                        href="https://sdmm.cs.ubc.ca">N/A</a></span>
+                </div>
+            </ons-list-item>
+            <ons-list-header style="padding-top: 0em;">Sprint 2 (d2)</ons-list-header>
+            <ons-list-item id="sdmmd2locked" style="display:none;">
+                <div class="left">
+                    <ons-icon icon="ion-locked"></ons-icon>
+                </div>
+                <div class="center">
+                    D2 locked until D1 grade > 60%
+                </div>
+            </ons-list-item>
+            <ons-list-item id="sdmmd2status" style="display:none;">
+                <div class="left" style="font-size:200%;">
+                    <ons-icon icon="fa-times-circle"></ons-icon> <!-- fa-check-circle -->
+                </div>
+                <div class="center">
+                    <span class="list-item__title">Grade: N/A</span><span class="list-item__subtitle">Repo: <a
+                        href="https://sdmm.cs.ubc.ca">Not Provisioned</a>&nbsp;&nbsp; Commit: <a
+                        href="https://sdmm.cs.ubc.ca">N/A</a></span>
+                </div>
+            </ons-list-item>
+            <ons-list-header style="padding-top: 0em;">Sprint 3 (d3)</ons-list-header>
+            <ons-list-item id="sdmmd3provision" style="display:none;">
+                <div style="display:flex; flex-direction: column;">
+                    <div>
+                        Before starting D3 we must apply a pull request against your repository. Please press the button below to initiate
+                        the pull request; you will still have to merge this request in your GitHub repository.
+                    </div>
+                    <div style="padding-top: 0.5em;">
+                        <ons-button onclick="myApp.sdmm.createD3PullRequest();">Initiate D3 Pull Request</ons-button>
+                    </div>
+                </div>
+            </ons-list-item>
+            <ons-list-item id="sdmmd3locked" style="display:none;">
+                <div class="left">
+                    <ons-icon icon="ion-locked"></ons-icon>
+                </div>
+                <div class="center">
+                    D3 locked until D2 grade > 60%
+                </div>
+            </ons-list-item>
+            <ons-list-item id="sdmmd3status" style="display:none;">
+                <div class="left" style="font-size:200%;">
+                    <ons-icon icon="fa-times-circle"></ons-icon> <!-- fa-check-circle -->
+                </div>
+                <div class="center">
+                    <span class="list-item__title">Grade: N/A</span><span class="list-item__subtitle">Repo: <a
+                        href="https://sdmm.cs.ubc.ca">Not Provisioned</a>&nbsp;&nbsp; Commit: <a
+                        href="https://sdmm.cs.ubc.ca">N/A</a></span>
+                </div>
+            </ons-list-item>
+        </ons-list>
+    </ons-page>
+</template>
+
+<!--
+<template id="admin.html">
+    <ons-page id="adminTabsPage">
+        <ons-toolbar>
+            <div class="center" id="adminTabsHeader">Admin Tabs</div>
+            <div class="right">
+                <ons-toolbar-button onclick="myApp.logout();">
+                    <ons-icon icon="fa-sign-out"></ons-icon>
+                    <span style="vertical-align: top; font-size: 80%;">Logout</span>
+                </ons-toolbar-button>
+            </div>
+        </ons-toolbar>
+
+        <ons-modal id="adminProgress">
+            <div style="display:flex; flex-direction:column; align-items: center;">
+                <div id="modalText" style="padding-top: 1em; padding-bottom: 1em;">Data is being retrieved.</div>
+                <ons-progress-circular indeterminate></ons-progress-circular>
+            </div>
+        </ons-modal>
+
+        <ons-tabbar id="adminTabbar" position="top">
+            <ons-tab page="html/admin/grades.html" label="Grades" icon="ion-ios-paper-outline" active></ons-tab>
+            <ons-tab page="html/admin/teams.html" label="Teams" icon="ion-ios-people"></ons-tab>
+            <ons-tab page="html/admin/results.html" label="Test Results" icon="ion-android-checkmark-circle"></ons-tab>
+            <ons-tab page="html/admin/dashboard.html" label="Dashboard" icon="ion-ios-speedometer-outline"></ons-tab>
+            <ons-tab id="adminAdminTab" page="html/admin/github.html" label="Admin" icon="ion-ios-gear-outline"></ons-tab>
+        </ons-tabbar>
+    </ons-page>
+</template>
+-->
+
+<template id="login.html">
+    <ons-page id="loginPage">
+        <ons-toolbar>
+            <div class="center">GitHub Verification</div>
+        </ons-toolbar>
+        <div style="height: 100%; display:flex; align-items:center; justify-content: center;">
+            <ons-card style="display: flex; flex-direction: row; align-items: center; text-align: center; margin:10em; max-width: 650px;">
+                <div> <!--style="width: 65%; margin-left: auto; margin-right: auto; text-align: center;"-->
+                    <div style="padding-bottom: 1em; display: flex">
+                        We use GitHub to authenticate your user session. This is required as all course resources are provisioned through
+                        the GitHub platform. We do not store any of your personal GitHub details; we only verify and store your GitHub
+                        username. Any repositories we provision will be within a private organization and will not appear on your public
+                        GitHub profile.
+                    </div>
+                    <ons-button id="loginButton" style="padding-top:1em; padding-bottom: 1em; padding-left:2em; padding-right: 2em;">
+                        <ons-icon icon="md-github" style="font-size: 250%; vertical-align: bottom;"></ons-icon>
+                        Verify GitHub Credentials
+                    </ons-button>
+                </div>
+            </ons-card>
+        </div>
+    </ons-page>
+</template>
+
+<template id="d1team.html">
+    <ons-alert-dialog id="d1teamDialog" modifier="rowfooter">
+        <div class="alert-dialog-title">Specify D1 Teammate</div>
+        <div class="alert-dialog-content">
+            <p>
+                Only one team member needs to do this. Enter the GitHub username for your partner.
+            </p>
+            <p>
+                NOTE: you will _both_ have to have more than 60% on d1 to proceed. You <b>must</b> work with this partner for the remainder
+                of the project.
+            </p>
+            <p>
+                Partner GitHub username:
+                <ons-input style="background: white; margin-top: 10px;" id="d1partnerInput"></ons-input>
+            </p>
+        </div>
+        <div class="alert-dialog-footer">
+            <ons-alert-dialog-button onclick="myApp.sdmm.d1TeamCancel()">Cancel</ons-alert-dialog-button>
+            <ons-alert-dialog-button onclick="myApp.sdmm.d1TeamForm();">Select Partner</ons-alert-dialog-button>
+        </div>
+    </ons-alert-dialog>
+</template>
+
+</body>
+
+</html>
