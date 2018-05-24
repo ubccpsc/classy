@@ -7,6 +7,7 @@ import Log from "../../common/Log";
 import * as fs from "fs";
 import {Config} from "../../common/Config";
 import {RouteHandler} from "./RouteHandler";
+import {Factory} from "./Factory";
 
 // import RouteHandler from './RouteHandler';
 
@@ -101,8 +102,7 @@ export default class BackendServer {
                  * UI routes
                  */
                 that.rest.get('/currentStatus', RouteHandler.getCurrentStatus);
-                that.rest.post('/performAction/:action/', RouteHandler.performAction);
-                that.rest.post('/performAction/:action/:param', RouteHandler.performAction);
+
 
                 /**
                  * AutoTest routes
@@ -112,6 +112,12 @@ export default class BackendServer {
                 that.rest.get('/container/:org/:delivId', RouteHandler.atContainerDetails);
                 that.rest.post('/grade/:org/:repoId/:delivId', RouteHandler.atGradeResult);
                 that.rest.post('/githubWebhook', RouteHandler.githubWebhook); // forward GitHub Webhooks to AutoTest
+
+                /**
+                 * Register custom route handler.
+                 */
+                Factory.getCustomRouteHandler().registerRoutes(that.rest);
+
                 /**
                  * Serve up index.html; not needed for server backend
                  */
