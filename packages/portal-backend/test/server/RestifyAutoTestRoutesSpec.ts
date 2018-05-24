@@ -1,14 +1,16 @@
-import BackendServer from "../../src/server/BackendServer";
-import Log from "../../../common/Log";
-import {Test} from "../GlobalSpec";
-
 import {expect} from "chai";
 import "mocha";
+
+import BackendServer from "../../src/server/BackendServer";
+import Log from "../../../common/Log";
+
+import {Test} from "../GlobalSpec";
+
 import {GradePayload} from "../../src/controllers/CourseController";
 
 // This seems silly, but just makes sure GlobalSpec runs first.
 // It should be at the top of every test file.
-const loadFirst = require('./GlobalSpec');
+const loadFirst = require('../GlobalSpec');
 
 import restify = require('restify');
 

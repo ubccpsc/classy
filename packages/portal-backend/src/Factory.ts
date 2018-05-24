@@ -18,10 +18,12 @@ export class Factory {
 
         if (org === 'sdmm') {
             return new SDMMREST();
+        } else if (org === 'secapstonetest') {
+            return new SDMMREST();
         } else if (org === 'cs340') {
             // do something
         } else {
-            Log.error("Factory::getXXX() - unknown org: " + org);
+            Log.error("Factory::getCustomRouteHandler() - unknown org: " + org);
         }
         return null; // TODO: should not happen; should return a default implementation instead.
     }

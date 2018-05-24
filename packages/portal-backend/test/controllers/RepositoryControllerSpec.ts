@@ -1,9 +1,11 @@
-import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {expect} from "chai";
 import "mocha";
+
+import {Test} from "../GlobalSpec";
+
+import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
 import {PersonController} from "../../src/controllers/PersonController";
-import {Test} from "../GlobalSpec";
 
 const loadFirst = require('../GlobalSpec');
 const teamsFirst = require('./TeamControllerSpec');

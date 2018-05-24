@@ -1,9 +1,10 @@
-import BackendServer from "../../src/server/BackendServer";
+import {expect} from "chai";
+import "mocha";
+
 import Log from "../../../common/Log";
 import {Test} from "../GlobalSpec";
 
-import {expect} from "chai";
-import "mocha";
+import BackendServer from "../../src/server/BackendServer";
 import {Person} from "../../src/Types";
 import {PersonController} from "../../src/controllers/PersonController";
 

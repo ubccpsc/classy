@@ -1,6 +1,8 @@
-import {Test} from "../GlobalSpec";
 import {expect} from "chai";
 import "mocha";
+
+import {Test} from "../GlobalSpec";
+
 import {PersonController} from "../../src/controllers/PersonController";
 import {TeamController} from "../../src/controllers/TeamController";
 

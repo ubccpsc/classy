@@ -1,8 +1,10 @@
 import {expect} from "chai";
 import "mocha";
+
+import {Test} from "../GlobalSpec";
+
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {Deliverable} from "../../src/Types";
-import {Test} from "../GlobalSpec";
 
 const loadFirst = require('../GlobalSpec');
 
