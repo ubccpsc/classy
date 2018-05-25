@@ -4,12 +4,10 @@ const rFirst = require('./SDDMControllerSpec'); // so we go last
 import {expect} from "chai";
 import "mocha";
 
-import {GitHubActions, GitHubController} from "../../../src/controllers/GitHubController";
-import Log from "../../../../common/Log";
-import {Test} from "../../GlobalSpec";
-import Util from "../../../../common/Util";
-import {ActionPayload, CourseController, GradePayload} from "../../../src/controllers/CourseController";
-import {GradesController} from "../../../src/controllers/GradesController";
+import {GitHubActions} from "../../src/controllers/GitHubController";
+import Log from "../../../common/Log";
+import {Test} from "../GlobalSpec";
+import Util from "../../../common/Util";
 
 describe.skip("GitHubActions", () => {
 
@@ -31,15 +29,10 @@ describe.skip("GitHubActions", () => {
     });
 
     let TESTREPONAMES = ["testtest__repo1",
-        // "TEST__X__secap_cpscbot",
         "secap_cpscbot",
-        // "TEST__X__secap_rthse2",
         "secap_rthse2",
-        // "TEST__X__secap_ubcbot",
         "secap_ubcbot",
-        "secap_testtest__repo1",
-        // "TEST__X__secap_testtest__repo1",
-        // "TEST__X__secap_TESTrepo1"
+        "secap_testtest__repo1"
     ];
 
     let TESTTEAMNAMES = [
@@ -264,106 +257,6 @@ describe.skip("GitHubActions", () => {
         }
     }).timeout(30 * 1000);
     */
-
-
-    it("Clear stale repos and teams.", async function () {
-        let del = await deleteStale();
-        expect(del).to.be.true;
-    }).timeout(TIMEOUT * 10);
-
-    it("Should be able to provision d0.", async function () {
-        const start = Date.now();
-
-        const sc = new CourseController(new GitHubController());
-
-        Log.test('Provisioning three users');
-        const p1 = await sc.handleUnknownUser(Test.USERNAMEGITHUB1);
-        expect(p1).to.not.be.null;
-        const p2 = await sc.handleUnknownUser(Test.USERNAMEGITHUB2);
-        expect(p2).to.not.be.null;
-        const p3 = await sc.handleUnknownUser(Test.USERNAMEGITHUB3);
-        expect(p3).to.not.be.null;
-
-        Log.test('Provisioning three d0 repos');
-        let provision = await sc.provision('d0', [Test.USERNAMEGITHUB1]);
-        expect(provision.success).to.not.be.undefined;
-        expect(provision.failure).to.be.undefined;
-        expect((<ActionPayload>provision.success).status.status).to.equal("D0");
-
-        provision = await sc.provision('d0', [Test.USERNAMEGITHUB2]);
-        expect(provision.success).to.not.be.undefined;
-        expect(provision.failure).to.be.undefined;
-        expect((<ActionPayload>provision.success).status.status).to.equal("D0");
-
-        provision = await sc.provision('d0', [Test.USERNAMEGITHUB3]);
-        expect(provision.success).to.not.be.undefined;
-        expect(provision.failure).to.be.undefined;
-        expect((<ActionPayload>provision.success).status.status).to.equal("D0");
-
-        Log.test('Adding some grades for the d0 repos');
-        const gc = new GradesController();
-        let grade: GradePayload = {
-            score:     65,
-            comment:   'test',
-            URL:       'TESTURL',
-            timestamp: Date.now(),
-            custom:    {}
-        };
-        await gc.createGrade(getProjectPrefix() + Test.USERNAMEGITHUB1, "d0", grade);
-
-        grade = {
-            score:     70,
-            comment:   'test',
-            URL:       'TESTURL',
-            timestamp: Date.now(),
-            custom:    {}
-        };
-        await gc.createGrade(getProjectPrefix() + Test.USERNAMEGITHUB2, "d0", grade);
-
-        grade = {
-            score:     75,
-            comment:   'test',
-            URL:       'TESTURL',
-            timestamp: Date.now(),
-            custom:    {}
-        };
-        await gc.createGrade(getProjectPrefix() + Test.USERNAMEGITHUB3, "d0", grade);
-
-        Log.trace("Test took (3 users, 3 d0 repos): " + Util.took(start));
-    }).timeout(300 * 1000); // 5 minutes
-
-    it("Should be able to provision an individual d1.", async function () {
-        const start = Date.now();
-
-        const sc = new CourseController(new GitHubController());
-
-        Log.test('Provision solo D1');
-        const provision = await sc.provision('d1', [Test.USERNAMEGITHUB1]);
-        Log.test('Provision solo d1; payload: ' + JSON.stringify(provision));
-        expect(provision.success).to.not.be.undefined;
-        expect(provision.failure).to.be.undefined;
-        expect((<ActionPayload>provision.success).status.status).to.equal("D1");
-
-        Log.trace("Test took (1 users, 1 upgrade): " + Util.took(start));
-    }).timeout(300 * 1000); // 5 minutes
-
-    it("Should be able to provision a paired d1.", async function () {
-        const start = Date.now();
-
-        const sc = new CourseController(new GitHubController());
-
-        Log.test('Provision paired d1');
-        const provision = await sc.provision('d1', [Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB3]);
-        Log.test('Provision paired d1; payload: ' + JSON.stringify(provision));
-        expect(provision.success).to.not.be.undefined;
-        expect(provision.failure).to.be.undefined;
-        expect((<ActionPayload>provision.success).status.status).to.equal("D1");
-
-        // NOTE: every time this is run it will create a team we can't programmatically delete
-
-        Log.trace("Test took (2 users, 1 clones): " + Util.took(start));
-    }).timeout(300 * 1000); // 5 minutes
-
 
     it("Clear stale repos and teams.", async function () {
         let del = await deleteStale();

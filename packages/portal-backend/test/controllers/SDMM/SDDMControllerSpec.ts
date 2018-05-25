@@ -84,7 +84,7 @@ export class TestData {
     }
 }
 
-describe("SDDMController", () => {
+describe("SDDM: SDMMController", () => {
 
     let sc: SDMMController;
     let gc: GradesController;
