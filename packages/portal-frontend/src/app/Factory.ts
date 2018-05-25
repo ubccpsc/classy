@@ -1,9 +1,21 @@
-import {SDMMSummaryView} from "./sdmm/SDMMSummaryView";
-import Log from "../../../../common/Log";
+import {SDMMSummaryView} from "./views/sdmm/SDMMSummaryView";
+import Log from "../../../common/Log";
 
-export class ViewFactory {
+/**
+ * Entry point for configuring per-course aspects of the frontend.
+ *
+ * While course options will be hardcoded in here (e.g., with strings
+ * corresponding to their org name), the file should only need to be
+ * modified when new courses are added; not during active development.
+ *
+ * The current org will be pulled from the backend when App starts and
+ * set here; this means that the org should only be specified in the
+ * .env file on the portal-backend.
+ *
+ */
+export class Factory {
 
-    private static instance: ViewFactory = null;
+    private static instance: Factory = null;
     private org: string = null;
 
     /**
@@ -12,15 +24,15 @@ export class ViewFactory {
     private constructor() {
     }
 
-    public static getInstance(org?: string): ViewFactory {
-        if (ViewFactory.instance === null) {
-            ViewFactory.instance = new ViewFactory();
+    public static getInstance(org?: string): Factory {
+        if (Factory.instance === null) {
+            Factory.instance = new Factory();
         }
-        if (ViewFactory.instance.org === null && typeof org !== 'undefined') { // only set this once (first guard)
-            Log.info("ViewFactory::getInstance(..) - setting org: " + org);
-            ViewFactory.instance.org = org;
+        if (Factory.instance.org === null && typeof org !== 'undefined') { // only set this once (first guard)
+            Log.info("Factory::getInstance(..) - setting org: " + org);
+            Factory.instance.org = org;
         }
-        return ViewFactory.instance;
+        return Factory.instance;
     }
 
     public getView(backendUrl: string) {
@@ -29,7 +41,7 @@ export class ViewFactory {
         } else if (this.org === 'cs340') {
             // something else
         } else {
-            Log.error("ViewFactory::getView() - ERROR; unknown org: " + this.org);
+            Log.error("Factory::getView() - ERROR; unknown org: " + this.org);
         }
     }
 
@@ -42,7 +54,7 @@ export class ViewFactory {
     public getOrg() {
         if (this.org === null) {
             // Just a sanity check; if this happens we have a real problem with the app init flow
-            Log.error("ViewFactory::getOrg() - org requested before being set!");
+            Log.error("Factory::getOrg() - org requested before being set!");
         }
         return this.org;
     }
@@ -66,7 +78,7 @@ export class ViewFactory {
         } else if (this.org === 'cs340') {
             return 'cs340';
         } else {
-            Log.error("ViewFactory::getHTMLPrefix() - ERROR; unknown org: " + this.org);
+            Log.error("Factory::getHTMLPrefix() - ERROR; unknown org: " + this.org);
         }
     }
 }

@@ -7,7 +7,7 @@ import Log from "../../../common/Log";
 import {Network} from "./util/Network";
 
 import {OnsButtonElement, OnsPageElement} from "onsenui";
-import {ViewFactory} from "./views/ViewFactory";
+import {Factory} from "./Factory";
 import {IView} from "./views/IView";
 
 declare var classportal: any;
@@ -46,6 +46,7 @@ export class App {
         Log.trace('App::init() - start');
         const that = this;
 
+        // before anything else happens, get the org associated with the backend
         await this.retrieveOrg();
 
         let validated = await that.validateCredentials();
@@ -69,7 +70,7 @@ export class App {
 
                 let org: string = null;
 
-                org = ViewFactory.getInstance().getOrg();
+                org = Factory.getInstance().getOrg();
                 localStorage.org = org; // TODO: remove; just use the factory to track this
                 Log.trace('App::init()::init - org: ' + org + '; pushed option');
 
@@ -77,7 +78,7 @@ export class App {
 
                 if (pageName === 'index') {
                     Log.trace('App::init()::init - index detected; pushing real target');
-                    UI.pushPage(ViewFactory.getInstance().getHTMLPrefix() + '/landing.html');
+                    UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/landing.html');
                     return;
                 }
 
@@ -92,9 +93,9 @@ export class App {
                     // that.studentController = new StudentController(that, courseId);
 
                     Log.info("App::init() - studentTabsPage init; attaching view");
-                    (<any>window).classportal.view = ViewFactory.getInstance().getView(that.backendURL);
+                    (<any>window).classportal.view = Factory.getInstance().getView(that.backendURL);
 
-                    const view = ViewFactory.getInstance().getView(that.backendURL);
+                    const view = Factory.getInstance().getView(that.backendURL);
                     that.view = view;
 
                     Log.trace("App::init() - studentTabsPage init; view attached");
@@ -147,9 +148,9 @@ export class App {
                     const userrole = String(localStorage.userrole);
                     // const username = String(localStorage.username);
                     if (userrole === 'student') {
-                        UI.pushPage(ViewFactory.getInstance().getHTMLPrefix() + '/student.html', {org: org});
+                        UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/student.html', {org: org});
                     } else if (userrole === 'admin' || userrole === 'superadmin') {
-                        UI.pushPage(ViewFactory.getInstance().getHTMLPrefix() + '/admin.html', {org: org});
+                        UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/admin.html', {org: org});
                     }
 
                     (document.querySelector('#loginButton') as OnsButtonElement).onclick = function () {
@@ -369,7 +370,7 @@ export class App {
             Log.trace('App::retrieveOrg() - 200 received');
             const json = await response.json();
             Log.trace('App::retrieveOrg() - payload: ' + JSON.stringify(json) + '; setting org: ' + json.org);
-            ViewFactory.getInstance(json.org);
+            Factory.getInstance(json.org);
             Log.trace("App::retrieveOrg() - done");
         } else {
             Log.error('App::retrieveOrg() - ERROR');
@@ -387,15 +388,15 @@ export class App {
             // push to correct handler
             if (localStorage.kind === 'admin') {
                 Log.info("App::handleMainPageClick(..) - admin");
-                UI.pushPage(ViewFactory.getInstance().getHTMLPrefix() + '/admin.html', params);
+                UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/admin.html', params);
             } else {
                 Log.info("App::handleMainPageClick(..) - student");
-                UI.pushPage(ViewFactory.getInstance().getHTMLPrefix() + '/student.html', params);
+                UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/student.html', params);
             }
         } else {
             // push to login page
             Log.info("App::handleMainPageClick(..) - not authorized");
-            UI.pushPage(ViewFactory.getInstance().getHTMLPrefix() + '/login.html', params);
+            UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/login.html', params);
         }
     }
 
