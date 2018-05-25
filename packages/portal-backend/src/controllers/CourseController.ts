@@ -40,6 +40,7 @@ export interface GradePayload {
     comment: string;
     URL: string; // commit URL if known, otherwise repo URL
     timestamp: number; // even if grade < 0 might as well return when the entry was made
+    custom: any;
 }
 
 export enum SDDMStatus {
@@ -507,7 +508,8 @@ export class CourseController { // don't implement ICourseController yet
                     score:     -1,
                     comment:   'Repo Provisioned',
                     URL:       repo.URL,
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
+                    custom:    {}
                 };
                 await this.gc.createGrade(repo.id, 'd0', grade);
 
@@ -593,7 +595,8 @@ export class CourseController { // don't implement ICourseController yet
                     score:     -1,
                     comment:   'Repo Provisioned',
                     URL:       repo.URL,
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
+                    custom:    {}
                 };
                 await this.gc.createGrade(repo.id, 'd1', grade);
                 await this.gc.createGrade(repo.id, 'd2', grade);
@@ -711,7 +714,8 @@ export class CourseController { // don't implement ICourseController yet
                     score:     -1,
                     comment:   'Repo Provisioned',
                     URL:       repo.URL,
-                    timestamp: Date.now()
+                    timestamp: Date.now(),
+                    custom:    {}
                 };
                 await this.gc.createGrade(repo.id, 'd1', grade);
                 await this.gc.createGrade(repo.id, 'd2', grade);
@@ -752,7 +756,8 @@ export class CourseController { // don't implement ICourseController yet
                 score:     d0Grade.score,
                 URL:       d0Grade.URL,
                 comment:   '',
-                timestamp: d0Grade.timestamp
+                timestamp: d0Grade.timestamp,
+                custom:    {}
             }
         }
 
@@ -761,7 +766,8 @@ export class CourseController { // don't implement ICourseController yet
                 score:     d1Grade.score,
                 URL:       d1Grade.URL,
                 comment:   '',
-                timestamp: d1Grade.timestamp
+                timestamp: d1Grade.timestamp,
+                custom:    {}
             }
         }
 
@@ -770,7 +776,8 @@ export class CourseController { // don't implement ICourseController yet
                 score:     d2Grade.score,
                 URL:       d2Grade.URL,
                 comment:   '',
-                timestamp: d2Grade.timestamp
+                timestamp: d2Grade.timestamp,
+                custom:    {}
             }
         }
 
@@ -779,7 +786,8 @@ export class CourseController { // don't implement ICourseController yet
                 score:     d3Grade.score,
                 URL:       d3Grade.URL,
                 comment:   '',
-                timestamp: d3Grade.timestamp
+                timestamp: d3Grade.timestamp,
+                custom:    {}
             }
         }
 

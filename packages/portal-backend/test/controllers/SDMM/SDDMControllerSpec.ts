@@ -149,7 +149,8 @@ describe("SDDMController", () => {
             score:     59,
             comment:   '',
             URL:       '',
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            custom:    {}
         };
         await gc.createGrade(data.REPOD0, "d0", grade);
         status = await sc.getStatus(data.USER);
@@ -159,7 +160,8 @@ describe("SDDMController", () => {
             score:     61,
             comment:   '',
             URL:       '',
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            custom:    {}
         };
         await gc.createGrade(data.REPOD0, "d0", grade);
         status = await sc.getStatus(data.USER);
@@ -198,7 +200,8 @@ describe("SDDMController", () => {
             score:     59,
             comment:   '',
             URL:       '',
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            custom:    {}
         };
         await gc.createGrade(data.REPOD1, "d1", grade);
         status = await sc.getStatus(data.USER);
@@ -208,7 +211,8 @@ describe("SDDMController", () => {
             score:     61,
             comment:   '',
             URL:       '',
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            custom:    {}
         };
         await gc.createGrade(data.REPOD1, "d1", grade);
 
@@ -224,7 +228,8 @@ describe("SDDMController", () => {
             score:     59,
             comment:   '',
             URL:       '',
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            custom:    {}
         };
         await gc.createGrade(data.REPOD1, "d2", grade);
         status = await sc.getStatus(data.USER);
@@ -234,7 +239,8 @@ describe("SDDMController", () => {
             score:     61,
             comment:   '',
             URL:       '',
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            custom:    {}
         };
         await gc.createGrade(data.REPOD1, "d2", grade);
 
@@ -360,7 +366,8 @@ describe("SDDMController", () => {
             score:     65,
             comment:   'TESTCOMMENT',
             URL:       'TESTURL',
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            custom:    {}
         };
 
         let grade = await gc.createGrade(allRepos[0].id, Test.DELIVID0, gradeR);
@@ -457,7 +464,8 @@ describe("SDDMController", () => {
             score:     65,
             comment:   'TESTCOMMENT',
             URL:       'TESTURL',
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            custom:    {}
         };
         let grade = await gc.createGrade(allRepos[0].id, Test.DELIVID0, gradeR);
         expect(grade).to.be.true;
@@ -477,7 +485,8 @@ describe("SDDMController", () => {
             score:     70,
             comment:   '',
             URL:       '',
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            custom:    {}
         };
         grade = await gc.createGrade(allRepos[0].id, Test.DELIVID0, gradeR);
         expect(grade).to.be.true;

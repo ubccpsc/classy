@@ -66,7 +66,7 @@ export class GradesController {
                         comment:   grade.comment,
                         URL:       grade.URL,
                         timestamp: grade.timestamp,
-                        custom:    {}
+                        custom:    grade.custom
                     };
                     Log.trace("GradesController::createGrade(..) - new grade; personId: " + personId + "; grade: " + JSON.stringify(gradeRecord));
                 } else {
@@ -75,6 +75,7 @@ export class GradesController {
                     gradeRecord.comment = grade.comment;
                     gradeRecord.URL = grade.URL;
                     gradeRecord.timestamp = grade.timestamp;
+                    gradeRecord.custom = grade.custom;
                     Log.trace("GradesController::createGrade(..) - updating grade; personId: " + personId + "; grade: " + JSON.stringify(gradeRecord));
                 }
                 await this.db.writeGrade(gradeRecord);

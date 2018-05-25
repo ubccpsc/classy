@@ -118,7 +118,8 @@ describe('REST Routes for AutoTest', function () {
             score:     51,
             URL:       'test URL from grade record',
             comment:   'test comment from grade record',
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            custom:    {}
         };
 
         // that.rest.post('/grade/:org/:repoId/:delivId', RouteHandler.atGradeResult);

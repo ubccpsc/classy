@@ -306,7 +306,8 @@ describe.skip("GitHubActions", () => {
             score:     65,
             comment:   'test',
             URL:       'TESTURL',
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            custom:    {}
         };
         await gc.createGrade(getProjectPrefix() + Test.USERNAMEGITHUB1, "d0", grade);
 
@@ -314,7 +315,8 @@ describe.skip("GitHubActions", () => {
             score:     70,
             comment:   'test',
             URL:       'TESTURL',
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            custom:    {}
         };
         await gc.createGrade(getProjectPrefix() + Test.USERNAMEGITHUB2, "d0", grade);
 
@@ -322,7 +324,8 @@ describe.skip("GitHubActions", () => {
             score:     75,
             comment:   'test',
             URL:       'TESTURL',
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            custom:    {}
         };
         await gc.createGrade(getProjectPrefix() + Test.USERNAMEGITHUB3, "d0", grade);
 

@@ -33,7 +33,8 @@ describe("GradeController", () => {
             score:     100,
             comment:   'comment',
             URL:       'URL',
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            custom:    {}
         };
 
         let valid = await gc.createGrade(Test.REPONAME1, Test.DELIVID1, grade);
@@ -51,7 +52,8 @@ describe("GradeController", () => {
             score:     50,
             comment:   'commentup',
             URL:       'URLup',
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            custom:    {}
         };
 
         let valid = await gc.createGrade(Test.REPONAME1, Test.DELIVID1, grade);
