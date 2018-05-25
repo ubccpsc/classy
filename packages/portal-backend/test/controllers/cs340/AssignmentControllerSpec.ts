@@ -10,7 +10,7 @@ import {TeamController} from "../../../src/controllers/TeamController";
 import {Grade, Repository, Team} from "../../../src/Types";
 
 const loadFirst = require('../../GlobalSpec');
-const rFirst = require('./GradeControllerSpec');
+const dFirst = require('../GradeControllerSpec');
 
 const TEST_ORG = "CPSC340";
 const TEST_STUDENT_ID_0 = "student0";
@@ -30,7 +30,7 @@ const TEST_REPO_ID = "A2_REPO_STUDENT0";
 const TEST_ASSN_ID = "A2";
 
 
-xdescribe("AssignmentController", () => {
+describe("AssignmentController", () => {
     let ac: AssignmentController = new AssignmentController();
     let gc: GradesController = new GradesController();
     let tc = new TeamController();
