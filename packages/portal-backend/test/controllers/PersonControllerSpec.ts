@@ -24,7 +24,6 @@ describe("PersonController", () => {
             githubId:      Test.USERNAME1,
             studentNumber: null,
 
-            org:    Test.ORGNAME,
             fName:  '',
             lName:  '',
             kind:   'student',
@@ -39,7 +38,6 @@ describe("PersonController", () => {
             githubId:      Test.USERNAME2,
             studentNumber: null,
 
-            org:    Test.ORGNAME,
             fName:  '',
             lName:  '',
             kind:   'student',
@@ -54,7 +52,6 @@ describe("PersonController", () => {
             githubId:      Test.USERNAME3,
             studentNumber: null,
 
-            org:    Test.ORGNAME,
             fName:  '',
             lName:  '',
             kind:   'student',
@@ -70,38 +67,38 @@ describe("PersonController", () => {
     });
 
     it("Should be able to be validate a new user.", async () => {
-        let people = await pc.getAllPeople(Test.ORGNAME);
+        let people = await pc.getAllPeople();
         expect(people).to.have.lengthOf(0);
 
-        let person = await pc.getPerson(Test.ORGNAME, PERSON1.id);
+        let person = await pc.getPerson(PERSON1.id);
         expect(person).to.be.null;
 
         person = await pc.createPerson(PERSON1);
         expect(person).to.not.be.null;
 
-        person = await pc.getPerson(Test.ORGNAME, PERSON1.id);
+        person = await pc.getPerson(PERSON1.id);
         expect(person).to.not.be.null;
     });
 
     it("Should not add a person a second time.", async () => {
-        let people = await pc.getAllPeople(Test.ORGNAME);
+        let people = await pc.getAllPeople();
         expect(people).to.have.lengthOf(1);
 
-        let person = await pc.getPerson(Test.ORGNAME, PERSON1.id);
+        let person = await pc.getPerson(PERSON1.id);
         expect(person).to.not.be.null;
 
-        people = await pc.getAllPeople(Test.ORGNAME);
+        people = await pc.getAllPeople();
         expect(people).to.have.lengthOf(1);
 
         person = await pc.createPerson(PERSON1);
         expect(person).to.not.be.null; // returns the existing one
 
-        people = await pc.getAllPeople(Test.ORGNAME);
+        people = await pc.getAllPeople();
         expect(people).to.have.lengthOf(1); // should still be the same number
     });
 
     it("Should be able to add a more users.", async () => {
-        let people = await pc.getAllPeople(Test.ORGNAME);
+        let people = await pc.getAllPeople();
         expect(people).to.have.lengthOf(1);
 
         let person = await pc.createPerson(PERSON2);
@@ -110,7 +107,7 @@ describe("PersonController", () => {
         person = await pc.createPerson(PERSON3);
         expect(person).to.not.be.null;
 
-        people = await pc.getAllPeople(Test.ORGNAME);
+        people = await pc.getAllPeople();
         expect(people).to.have.lengthOf(3);
     });
 

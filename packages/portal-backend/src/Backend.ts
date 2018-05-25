@@ -3,10 +3,9 @@
  */
 
 import Log from "../../common/Log";
-import BackendServer from "./server/BackendServer";
-import {Config} from "../../common/Config";
+import Config from "../../common/Config";
 
-// const Config = require("../../common/Config");
+import BackendServer from "./server/BackendServer";
 
 export class Backend {
 

@@ -1,8 +1,10 @@
 import * as rp from "request-promise-native";
-import {Config} from "../../../common/Config";
-import {ICommentEvent, ICommitRecord, IContainerInput, IContainerOutput, IGradeReport} from "../Types";
+
+import Config from "../../../common/Config";
 import Log from "../../../common/Log";
 import Util from "../../../common/Util";
+
+import {ICommentEvent, ICommitRecord, IContainerInput, IContainerOutput} from "../Types";
 import {IDataStore} from "./DataStore";
 import {MockGrader} from "./mocks/MockGrader";
 import {Queue} from "./Queue";
@@ -328,24 +330,24 @@ export abstract class AutoTest implements IAutoTest {
                 const delivId: string = input.delivId;
                 const id: string = `${commitSHA}-${delivId}`;
                 const body = {
-                    "assnId": delivId,
+                    "assnId":    delivId,
                     "timestamp": timestamp,
-                    "assn": {
-                        "url": assnUrl,
+                    "assn":      {
+                        "url":      assnUrl,
                         "cloneUrl": assnCloneUrl,
-                        "commit": commitSHA
+                        "commit":   commitSHA
                     },
                     "container": {
-                        "image": image,
+                        "image":   image,
                         "timeout": timeout * 1000,
                         "logSize": 0
                     }
                 };
                 const gradeServiceOpts: rp.OptionsWithUrl = {
-                    method: "PUT",
-                    url: `http://${host}:${port}/task/grade/${id}`,
+                    method:  "PUT",
+                    url:     `http://${host}:${port}/task/grade/${id}`,
                     body,
-                    json: true, // Automatically stringifies the body to JSON,
+                    json:    true, // Automatically stringifies the body to JSON,
                     timeout: 360000  // enough time that the container will have timed out
                 };
 
@@ -382,15 +384,15 @@ export abstract class AutoTest implements IAutoTest {
                     }
                     const gradePayload = {
                         score,
-                        url: commitURL,
+                        url:     commitURL,
                         comment: output.feedback,
                         timestamp,
                     };
                     const postGradeOpts: rp.OptionsWithUrl = {
                         method: "POST",
-                        url: `https://${cpHost}:${cpPort}/grade/${org}/${repo}/${delivId}`,
-                        json: true,
-                        body: gradePayload,
+                        url:    `https://${cpHost}:${cpPort}/grade/${org}/${repo}/${delivId}`,
+                        json:   true,
+                        body:   gradePayload,
                     };
                     Log.trace("AutoTest::invokeContainer(..) - POST gradePayload: " + JSON.stringify(gradePayload, null, 2));
                     await rp(postGradeOpts);

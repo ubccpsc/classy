@@ -277,25 +277,25 @@ describe.skip("GitHubActions", () => {
         const sc = new CourseController(new GitHubController());
 
         Log.test('Provisioning three users');
-        const p1 = await sc.handleUnknownUser(Test.ORGNAME, Test.USERNAMEGITHUB1);
+        const p1 = await sc.handleUnknownUser(Test.USERNAMEGITHUB1);
         expect(p1).to.not.be.null;
-        const p2 = await sc.handleUnknownUser(Test.ORGNAME, Test.USERNAMEGITHUB2);
+        const p2 = await sc.handleUnknownUser(Test.USERNAMEGITHUB2);
         expect(p2).to.not.be.null;
-        const p3 = await sc.handleUnknownUser(Test.ORGNAME, Test.USERNAMEGITHUB3);
+        const p3 = await sc.handleUnknownUser(Test.USERNAMEGITHUB3);
         expect(p3).to.not.be.null;
 
         Log.test('Provisioning three d0 repos');
-        let provision = await sc.provision(Test.ORGNAME, 'd0', [Test.USERNAMEGITHUB1]);
+        let provision = await sc.provision('d0', [Test.USERNAMEGITHUB1]);
         expect(provision.success).to.not.be.undefined;
         expect(provision.failure).to.be.undefined;
         expect((<ActionPayload>provision.success).status.status).to.equal("D0");
 
-        provision = await sc.provision(Test.ORGNAME, 'd0', [Test.USERNAMEGITHUB2]);
+        provision = await sc.provision('d0', [Test.USERNAMEGITHUB2]);
         expect(provision.success).to.not.be.undefined;
         expect(provision.failure).to.be.undefined;
         expect((<ActionPayload>provision.success).status.status).to.equal("D0");
 
-        provision = await sc.provision(Test.ORGNAME, 'd0', [Test.USERNAMEGITHUB3]);
+        provision = await sc.provision('d0', [Test.USERNAMEGITHUB3]);
         expect(provision.success).to.not.be.undefined;
         expect(provision.failure).to.be.undefined;
         expect((<ActionPayload>provision.success).status.status).to.equal("D0");
@@ -308,7 +308,7 @@ describe.skip("GitHubActions", () => {
             URL:       'TESTURL',
             timestamp: Date.now()
         };
-        await gc.createGrade(Test.ORGNAME, getProjectPrefix() + Test.USERNAMEGITHUB1, "d0", grade);
+        await gc.createGrade(getProjectPrefix() + Test.USERNAMEGITHUB1, "d0", grade);
 
         grade = {
             score:     70,
@@ -316,7 +316,7 @@ describe.skip("GitHubActions", () => {
             URL:       'TESTURL',
             timestamp: Date.now()
         };
-        await gc.createGrade(Test.ORGNAME, getProjectPrefix() + Test.USERNAMEGITHUB2, "d0", grade);
+        await gc.createGrade(getProjectPrefix() + Test.USERNAMEGITHUB2, "d0", grade);
 
         grade = {
             score:     75,
@@ -324,7 +324,7 @@ describe.skip("GitHubActions", () => {
             URL:       'TESTURL',
             timestamp: Date.now()
         };
-        await gc.createGrade(Test.ORGNAME, getProjectPrefix() + Test.USERNAMEGITHUB3, "d0", grade);
+        await gc.createGrade(getProjectPrefix() + Test.USERNAMEGITHUB3, "d0", grade);
 
         Log.trace("Test took (3 users, 3 d0 repos): " + Util.took(start));
     }).timeout(300 * 1000); // 5 minutes
@@ -335,7 +335,7 @@ describe.skip("GitHubActions", () => {
         const sc = new CourseController(new GitHubController());
 
         Log.test('Provision solo D1');
-        const provision = await sc.provision(Test.ORGNAME, 'd1', [Test.USERNAMEGITHUB1]);
+        const provision = await sc.provision('d1', [Test.USERNAMEGITHUB1]);
         Log.test('Provision solo d1; payload: ' + JSON.stringify(provision));
         expect(provision.success).to.not.be.undefined;
         expect(provision.failure).to.be.undefined;
@@ -350,7 +350,7 @@ describe.skip("GitHubActions", () => {
         const sc = new CourseController(new GitHubController());
 
         Log.test('Provision paired d1');
-        const provision = await sc.provision(Test.ORGNAME, 'd1', [Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB3]);
+        const provision = await sc.provision('d1', [Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB3]);
         Log.test('Provision paired d1; payload: ' + JSON.stringify(provision));
         expect(provision.success).to.not.be.undefined;
         expect(provision.failure).to.be.undefined;

@@ -1,6 +1,6 @@
 import Log from "./Log";
 
-export class Config {
+export default class Config {
 
     public static getInstance(configName?: string): Config {
         if (Config.instance === null) {

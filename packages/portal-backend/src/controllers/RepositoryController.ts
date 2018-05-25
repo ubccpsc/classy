@@ -1,4 +1,5 @@
 import Log from "../../../common/Log";
+
 import {DatabaseController} from "./DatabaseController";
 import {Person, Repository, Team} from "../Types";
 import {TeamController} from "./TeamController";
@@ -7,17 +8,17 @@ export class RepositoryController {
 
     private db: DatabaseController = DatabaseController.getInstance();
 
-    public async getAllRepos(orgName: string): Promise<Repository[]> {
-        Log.info("RepositoryController::getAllRepos( " + orgName + " ) - start");
+    public async getAllRepos(): Promise<Repository[]> {
+        Log.info("RepositoryController::getAllRepos() - start");
 
-        let repos = await this.db.getRepositories(orgName);
+        let repos = await this.db.getRepositories();
         return repos;
     }
 
-    public async getRepository(org: string, name: string): Promise<Repository | null> {
-        Log.info("RepositoryController::getRepository( " + org + ", " + name + " ) - start");
+    public async getRepository(name: string): Promise<Repository | null> {
+        Log.info("RepositoryController::getRepository( " + name + " ) - start");
 
-        let repo = await this.db.getRepository(org, name);
+        let repo = await this.db.getRepository(name);
         return repo;
     }
 
@@ -29,7 +30,7 @@ export class RepositoryController {
         let myTeams = await new TeamController().getTeamsForPerson(myPerson);
 
         let myRepos: Repository[] = [];
-        let allRepos = await this.db.getRepositories(myPerson.org);
+        let allRepos = await this.db.getRepositories();
         for (const repo of allRepos) {
             for (const team of myTeams) {
                 if (repo.teamIds.indexOf(team.id) >= 0) {
@@ -43,16 +44,15 @@ export class RepositoryController {
     }
 
 
-    public async createRepository(org: string, name: string, teams: Team[], custom: any): Promise<Repository | null> {
-        Log.info("RepositoryController::createRepository( " + org + ", " + name + ",.. ) - start");
+    public async createRepository(name: string, teams: Team[], custom: any): Promise<Repository | null> {
+        Log.info("RepositoryController::createRepository( " + name + ",.. ) - start");
         try {
-            let existingRepo = await this.getRepository(org, name);
+            let existingRepo = await this.getRepository(name);
             if (existingRepo === null) {
                 let teamIds: string[] = teams.map(team => team.id);
 
                 const repo: Repository = {
                     id:      name,
-                    org:     org,
                     URL:     null,
                     teamIds: teamIds,
                     custom:  custom
@@ -71,10 +71,10 @@ export class RepositoryController {
                  */
 
                 await this.db.writeRepository(repo);
-                return await this.db.getRepository(repo.org, repo.id);
+                return await this.db.getRepository(repo.id);
             } else {
-                Log.info("RepositoryController::createRepository( " + org + ", " + name + ",.. ) - repository exists: " + JSON.stringify(existingRepo));
-                return await this.db.getRepository(org, name);
+                Log.info("RepositoryController::createRepository( " + name + ",.. ) - repository exists: " + JSON.stringify(existingRepo));
+                return await this.db.getRepository(name);
             }
         }
         catch (err) {
@@ -83,29 +83,29 @@ export class RepositoryController {
         }
     }
 
-    public async createPullRequest(org: string, repoId: string, prId: string, custom: any): Promise<Repository | null> {
-        Log.error("RepositoryController::createPullRequest( " + org + ", " + repoId + ", " + prId + ", ... ) -  NOT IMPLEMENTED!!");
+    public async createPullRequest(repoId: string, prId: string, custom: any): Promise<Repository | null> {
+        Log.error("RepositoryController::createPullRequest( " + repoId + ", " + prId + ", ... ) -  NOT IMPLEMENTED!!");
         // TODO: implement PR functionality
 
         // NOTE: this impl is more complex than it needs to be but is erring on the side of caution
-        let repo = await this.getRepository(org, repoId);
+        let repo = await this.getRepository(repoId);
         let customA = Object.assign({}, repo.custom);
         let customB = Object.assign(customA, custom); // overwrite with new fields
         repo.custom = customB;
         await this.db.writeRepository(repo);
-        return await this.getRepository(org, repoId);
+        return await this.getRepository( repoId);
     }
 
-    public async getPeopleForRepo(org: string, repoId: string): Promise<string[] | null> {
-        Log.info("RepositoryController::getPeopleForRepo( " + org + ", " + repoId + ",.. ) -  start");
+    public async getPeopleForRepo( repoId: string): Promise<string[] | null> {
+        Log.info("RepositoryController::getPeopleForRepo( " + repoId + ",.. ) -  start");
 
         let peopleIds: string[] = [];
         try {
             let tc = new TeamController();
-            let repo = await this.getRepository(org, repoId);
+            let repo = await this.getRepository(repoId);
             if (repo !== null) {
                 for (const teamId of repo.teamIds) {
-                    let team = await tc.getTeam(org, teamId);
+                    let team = await tc.getTeam(teamId);
                     for (const personId of team.personIds) {
                         if (peopleIds.indexOf(personId) < 0) {
                             peopleIds.push(personId);

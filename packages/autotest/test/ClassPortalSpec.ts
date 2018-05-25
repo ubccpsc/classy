@@ -1,11 +1,10 @@
-import {MockClassPortal} from "../src/autotest/mocks/MockClassPortal";
-
-const loadFirst = require('./GlobalSpec');
-
 import {expect} from "chai";
 import "mocha";
-import {Config} from "../../common/Config";
+
+import Config from "../../common/Config";
 import {ClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
+
+const loadFirst = require('./GlobalSpec');
 
 describe("ClassPortal Service", () => {
     Config.getInstance("test");

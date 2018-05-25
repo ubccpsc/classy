@@ -17,7 +17,6 @@ describe("DeliverablesController", () => {
     before(async () => {
         DELIV1 = {
             id:               Test.DELIVID1,
-            org:              Test.ORGNAME,
             openTimestamp:    -1,
             closeTimestamp:   -1,
             gradesReleased:   false,
@@ -43,7 +42,7 @@ describe("DeliverablesController", () => {
         let delivs = await dc.getAllDeliverables(Test.ORGNAME);
         expect(delivs).to.have.lengthOf(0);
 
-        let valid = await dc.saveDeliverable(Test.ORGNAME, DELIV1);
+        let valid = await dc.saveDeliverable(DELIV1);
         expect(valid).to.not.be.null;
         delivs = await dc.getAllDeliverables(Test.ORGNAME);
         expect(delivs).to.have.lengthOf(1);
@@ -58,7 +57,7 @@ describe("DeliverablesController", () => {
         deliv2.gradesReleased = true;
         deliv2.teamMinSize = 4;
 
-        let valid = await dc.saveDeliverable(Test.ORGNAME, deliv2);
+        let valid = await dc.saveDeliverable(deliv2);
         expect(valid).to.not.be.null;
         delivs = await dc.getAllDeliverables(Test.ORGNAME);
         expect(delivs).to.have.lengthOf(1);
@@ -67,7 +66,7 @@ describe("DeliverablesController", () => {
     });
 
     it("Should be able to get a specific deliverable.", async () => {
-        let deliv = await dc.getDeliverable(Test.ORGNAME, Test.DELIVID1);
+        let deliv = await dc.getDeliverable(Test.DELIVID1);
         expect(deliv).to.not.be.null;
         expect(deliv.id).to.equal(Test.DELIVID1);
     });

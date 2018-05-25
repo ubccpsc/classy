@@ -1,7 +1,9 @@
 import {CourseController} from "../CourseController";
 import {IGitHubController} from "../GitHubController";
 import {Person} from "../../Types";
+
 import Log from "../../../../common/Log";
+import Config from "../../../../common/Config";
 
 export class SDMMController extends CourseController {
 
@@ -9,7 +11,8 @@ export class SDMMController extends CourseController {
         super(ghController);
     }
 
-    public async handleUnknownUser(org: string, githubUsername: string): Promise<Person | null> {
+    public async handleUnknownUser(githubUsername: string): Promise<Person | null> {
+        const org = Config.getInstance().getProp('org');
         Log.info("SDDMController::handleUnknownUser( " + org + ", " + githubUsername + " ) - start");
         if (org === 'secapstone' || org === 'secapstonetest') {
             Log.info("SDDMController::handleUnknownUser(..) - new person for this org; - provisioning");
@@ -24,7 +27,7 @@ export class SDMMController extends CourseController {
                 githubId:      githubUsername,
                 studentNumber: null,
 
-                org:    org,
+                // org:    org,
                 fName:  '',
                 lName:  '',
                 kind:   'student',

@@ -6,17 +6,17 @@ export class TeamController {
 
     private db: DatabaseController = DatabaseController.getInstance();
 
-    public async getAllTeams(org: string): Promise<Team[]> {
-        Log.info("TeamController::getAllTeams( " + org + " ) - start");
+    public async getAllTeams(): Promise<Team[]> {
+        Log.info("TeamController::getAllTeams() - start");
 
-        let teams = await this.db.getTeams(org);
+        let teams = await this.db.getTeams();
         return teams;
     }
 
-    public async getTeam(org: string, name: string): Promise<Team | null> {
-        Log.info("TeamController::getAllTeams( " + org + ", " + name + " ) - start");
+    public async getTeam(name: string): Promise<Team | null> {
+        Log.info("TeamController::getAllTeams( " + name + " ) - start");
 
-        let team = await this.db.getTeam(org, name);
+        let team = await this.db.getTeam(name);
         return team;
     }
 
@@ -24,7 +24,7 @@ export class TeamController {
         Log.info("TeamController::getTeamsForPerson( " + myPerson.id + " ) - start");
 
         let myTeams: Team[] = [];
-        let allTeams = await this.db.getTeams(myPerson.org);
+        let allTeams = await this.db.getTeams();
         for (const team of allTeams) {
             if (team.personIds.indexOf(myPerson.id) >= 0) {
                 myTeams.push(team);
@@ -35,24 +35,23 @@ export class TeamController {
         return myTeams;
     }
 
-    public async createTeam(org: string, name: string, people: Person[], custom: any): Promise<Team | null> {
-        Log.info("TeamController::createTeam( " + org + ", " + name + ",.. ) - start");
+    public async createTeam(name: string, people: Person[], custom: any): Promise<Team | null> {
+        Log.info("TeamController::createTeam( " + name + ",.. ) - start");
         try {
-            let existingTeam = await this.getTeam(org, name);
+            let existingTeam = await this.getTeam(name);
             if (existingTeam === null) {
                 let peopleIds: string[] = people.map(person => person.id);
                 const team: Team = {
                     id:        name,
-                    org:       org,
                     url:       null,
                     personIds: peopleIds,
                     custom:    custom
                 };
                 await this.db.writeTeam(team);
-                return await this.db.getTeam(org, name);
+                return await this.db.getTeam(name);
             } else {
-                Log.info("TeamController::createTeam( " + org + ", " + name + ",.. ) - team exists: " + JSON.stringify(existingTeam));
-                return await this.db.getTeam(org, name);
+                Log.info("TeamController::createTeam( " + name + ",.. ) - team exists: " + JSON.stringify(existingTeam));
+                return await this.db.getTeam(name);
             }
         } catch (err) {
             Log.error("TeamController::createTeam(..) - ERROR: " + err);

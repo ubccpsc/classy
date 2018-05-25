@@ -1,8 +1,10 @@
-import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven, IPushEvent} from "../Types";
+import {Collection, Db, MongoClient} from "mongodb";
+
 import Log from "../../../common/Log";
 import Util from "../../../common/Util";
-import {Config} from "../../../common/Config";
-import {Collection, Db, MongoClient} from "mongodb";
+import Config from "../../../common/Config";
+
+import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven, IPushEvent} from "../Types";
 
 export interface IDataStore {
 

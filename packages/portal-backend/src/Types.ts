@@ -53,7 +53,7 @@ export interface Person {
     readonly githubId: string;
     readonly studentNumber: number | null; // potential key; can be null for non-students
 
-    readonly org: string;
+    // readonly org: string;
     readonly fName: string;
     readonly lName: string;
     readonly kind: string; // student, ta, prof, ops
@@ -65,14 +65,14 @@ export interface Person {
 }
 
 export interface Auth {
-    org: string;
+    // org: string;
     personId: string;
     token: string;
 }
 
 export interface Deliverable {
     readonly id: string; // is the shortname of the deliverable
-    readonly org: string;
+    // readonly org: string;
 
     openTimestamp: number;
     closeTimestamp: number;
@@ -89,7 +89,7 @@ export interface Deliverable {
 
 export interface Team {
     readonly id: string; // invariant; is the name of the team
-    readonly org: string; // invariant
+    // readonly org: string; // invariant
     url: string | null; // null when not yet created
     personIds: string[]; // Person.id[] - foreign key
 
@@ -98,7 +98,7 @@ export interface Team {
 
 export interface Repository {
     readonly id: string; // invariant; is the name of the repo
-    readonly org: string; // invariant
+    // readonly org: string; // invariant
     URL: string | null; // null when not yet created
     teamIds: string[]; // Team.id[] - foreign key
 
@@ -109,7 +109,7 @@ export interface Grade {
     // this should be the personId associated with the repo, not a staff who invoked it!
     readonly personId: string; // Person.id; grades are really on repos, but we only care about them by person
     readonly delivId: string; // Deliverable.id - foreign key // could be a Deliverable, but this is just easier
-    readonly org: string;
+    // readonly org: string;
     score: number;
     comment: string;
     URL: string; // commitUrl if a commit, repoUrl if a dummy entry
@@ -128,7 +128,7 @@ export interface Grade {
 export interface PersonRecord {
     person: Person;
     delivId: string;
-    org: string;
+    // org: string;
     results: ResultSummary[];
 }
 

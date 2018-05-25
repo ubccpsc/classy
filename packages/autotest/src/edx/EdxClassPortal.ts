@@ -1,6 +1,4 @@
-import * as rp from "request-promise-native";
 import {IClassPortal} from "../autotest/ClassPortal";
-import Log from "../../../common/Log";
 
 export class EdXClassPortal implements IClassPortal {
 
@@ -23,7 +21,7 @@ export class EdXClassPortal implements IClassPortal {
         return null;
     }
 
-    public async getContainerDetails(courseId: string, delivId: string): Promise<{ dockerImage: string,  studentDelay: number, maxExecTime: number, regressionDelivIds: string[] }  | null> {
+    public async getContainerDetails(courseId: string, delivId: string): Promise<{ dockerImage: string, studentDelay: number, maxExecTime: number, regressionDelivIds: string[] } | null> {
         if (typeof courseId !== "undefined" && courseId !== null && typeof delivId !== "undefined" && delivId !== null) {
             if (courseId === "edx") {
                 const delay = 60 * 60 * 12; // 12h in seconds

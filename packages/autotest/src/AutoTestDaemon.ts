@@ -4,7 +4,8 @@
 
 import Server from "./server/Server";
 import Log from "./../../common/Log";
-import {Config} from "../../common/Config";
+import Config from "../../common/Config";
+
 // import {IConfig, AppConfig} from './../../common../../../common/Config';
 // import MongoDB from './db/MongoDB';
 
@@ -44,8 +45,8 @@ process.on('unhandledRejection', (reason, p) => {
         Log.error('AutoTestDaemon - unhandled promise'); // in case next line fails
         console.log('AutoTestDaemon - unhandled rejection at: ', p, '; reason:', reason);
         Log.error('AutoTestDaemon - unhandled promise: ' + (<any>JSON.stringify(reason)));
-    } catch(err){
-       // eat any error
+    } catch (err) {
+        // eat any error
     }
 });
 Log.info("AutoTestDaemon - registering unhandled rejection; done");

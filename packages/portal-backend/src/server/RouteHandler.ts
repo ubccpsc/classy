@@ -1,13 +1,13 @@
 import * as rp from "request-promise-native";
 
-import {Config} from "../../../common/Config";
+import Config from "../../../common/Config";
 import Log from "../../../common/Log";
 
 import {AuthController} from "../controllers/AuthController";
 import {DatabaseController} from "../controllers/DatabaseController";
 import {Auth, Person} from "../Types";
 import {PersonController} from "../controllers/PersonController";
-import {GradePayload, Payload, CourseController, StatusPayload} from "../controllers/CourseController";
+import {CourseController, GradePayload, Payload, StatusPayload} from "../controllers/CourseController";
 import {GitHubController} from "../controllers/GitHubController";
 import ClientOAuth2 = require("client-oauth2");
 
@@ -27,11 +27,11 @@ export class RouteHandler {
         const org = req.headers.org;
         Log.info('RouteHandler::getCredentials(..) - org: ' + org + '; user: ' + user + '; token: ' + token);
 
-        RouteHandler.ac.isValid(org, user, token).then(function (isValid) {
+        RouteHandler.ac.isValid(user, token).then(function (isValid) {
             Log.trace('RouteHandler::getCredentials(..) - in isValid(..)');
             if (isValid === true) {
                 Log.trace('RouteHandler::getCredentials(..) - isValid true');
-                RouteHandler.ac.isAdmin(org, user, token).then(function (isAdmin) {
+                RouteHandler.ac.isAdmin(user, token).then(function (isAdmin) {
                     Log.info('RouteHandler::getCredentials(..) - sending 200; isAdmin: ' + isAdmin);
                     res.send({user: user, token: token, isAdmin: true});
                 }).catch(function (err) {
@@ -143,7 +143,6 @@ export class RouteHandler {
                 githubId:      username,
                 studentNumber: null,
 
-                org:    org,
                 fName:  '',
                 lName:  '',
                 kind:   'student',
@@ -153,7 +152,6 @@ export class RouteHandler {
             };
 
             const auth: Auth = {
-                org:      org,
                 personId: username,
                 token:    token
             };
@@ -253,10 +251,10 @@ export class RouteHandler {
 
         // TODO: verify token
 
-        const org = Config.getInstance().getProp('org');
+        // const org = Config.getInstance().getProp('org');
 
-        let sc: CourseController= new CourseController(new GitHubController());
-        sc.getStatus(org, user).then(function (status: StatusPayload) {
+        let sc: CourseController = new CourseController(new GitHubController());
+        sc.getStatus(user).then(function (status: StatusPayload) {
             Log.info('RouteHandler::getCurrentStatus(..) - sending 200; user: ' + user);
             Log.trace('RouteHandler::getCurrentStatus(..) - sending 200; user: ' + user + '; status: ' + JSON.stringify(status));
             const ret: Payload = {success: status};
@@ -266,8 +264,6 @@ export class RouteHandler {
             res.send(400, {failure: {message: err}});
         });
     }
-
-
 
 
     // that.rest.get('/container/:org/:delivId', RouteHandler.atContainerDetails);
@@ -353,7 +349,7 @@ export class RouteHandler {
         Log.info('RouteHandler::atGradeResult(..) - org: ' + org + '; repoId: ' + repoId + '; delivId: ' + delivId + '; body: ' + JSON.stringify(gradeRecord));
 
         let sc = new CourseController(new GitHubController());
-        sc.handleNewGrade(org, repoId, delivId, gradeRecord).then(function (success) {
+        sc.handleNewGrade(repoId, delivId, gradeRecord).then(function (success) {
             res.send({success: true}); // respond
         }).catch(function (err) {
             res.send({success: true}); // respond true, they can't do anything anyways

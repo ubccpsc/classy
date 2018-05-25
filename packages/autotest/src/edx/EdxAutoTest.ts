@@ -1,6 +1,8 @@
-import {AutoTest} from "../autotest/AutoTest";
-import {ICommentEvent, ICommitRecord, IContainerInput, IPushEvent} from "../Types";
 import Log from "../../../common/Log";
+
+import {ICommentEvent, ICommitRecord, IContainerInput, IPushEvent} from "../Types";
+
+import {AutoTest} from "../autotest/AutoTest";
 import {IGithubService} from "../github/GithubService";
 import {IClassPortal} from "../autotest/ClassPortal";
 import {IDataStore} from "../autotest/DataStore";

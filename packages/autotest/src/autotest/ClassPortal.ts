@@ -1,5 +1,6 @@
 import * as rp from "request-promise-native";
-import { Config } from "../../../common/Config";
+
+import Config from "../../../common/Config";
 import Log from "../../../common/Log";
 
 export interface IClassPortal {
@@ -32,7 +33,7 @@ export interface IClassPortal {
      *
      * @param courseId
      */
-    getContainerDetails(courseId: string, delivId: string): Promise<{ dockerImage: string,  studentDelay: number, maxExecTime: number, regressionDelivIds: string[] } | null>;
+    getContainerDetails(courseId: string, delivId: string): Promise<{ dockerImage: string, studentDelay: number, maxExecTime: number, regressionDelivIds: string[] } | null>;
 }
 
 export class ClassPortal implements IClassPortal {
@@ -100,13 +101,13 @@ export class ClassPortal implements IClassPortal {
         });
     }
 */
-    public async getContainerDetails(courseId: string, delivId: string): Promise<{ dockerImage: string,  studentDelay: number, maxExecTime: number, regressionDelivIds: string[] }  | null> {
+    public async getContainerDetails(courseId: string, delivId: string): Promise<{ dockerImage: string, studentDelay: number, maxExecTime: number, regressionDelivIds: string[] } | null> {
         if (typeof courseId === "undefined" || courseId === null || typeof delivId === "undefined" || delivId === null) {
             Log.error("ClassPortal::getContainerId(..) - missing parameters");
             return null;
         }
 
-        const url = "https://" + this.host + ":" + this.port  + "/container" + "/" + courseId + "/" + delivId;
+        const url = "https://" + this.host + ":" + this.port + "/container" + "/" + courseId + "/" + delivId;
         Log.info("ClassPortal::getContainerId(..) - Sending request to " + url);
         return rp(url).then(function (res) {
             Log.trace("ClassPortal::getContainerId( " + courseId + ", " + delivId + " ) - success; payload: " + res);

@@ -1,4 +1,4 @@
-import {Config} from "../../common/Config";
+import Config from "../../common/Config";
 import Log from "../../common/Log";
 
 import IREST from "./server/IREST";

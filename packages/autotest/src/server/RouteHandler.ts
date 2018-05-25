@@ -2,7 +2,7 @@ import * as restify from "restify";
 
 import Log from "../../../common/Log";
 import Util from "../../../common/Util";
-import {Config} from "../../../common/Config";
+import Config from "../../../common/Config";
 
 import {AutoTest} from "../autotest/AutoTest";
 import {ClassPortal} from "../autotest/ClassPortal";

@@ -8,7 +8,6 @@ import {GitHubController} from "../../controllers/GitHubController";
 export default class SDMMREST implements IREST {
 
     public constructor() {
-
     }
 
     public registerRoutes(server: restify.Server) {
@@ -31,7 +30,7 @@ export default class SDMMREST implements IREST {
         let sc: CourseController = new CourseController(new GitHubController());
 
         if (action === 'provisionD0') {
-            sc.provision(org, "d0", [user]).then(function (provisionResult) {
+            sc.provision("d0", [user]).then(function (provisionResult) {
                 Log.trace('RouteHandler::performAction(..) - sending 200; result: ' + JSON.stringify(provisionResult));
                 res.send(provisionResult);
             }).catch(function (err) {
@@ -40,7 +39,7 @@ export default class SDMMREST implements IREST {
             });
 
         } else if (action === 'provisionD1individual') {
-            sc.provision(org, "d1", [user]).then(function (provisionResult) {
+            sc.provision("d1", [user]).then(function (provisionResult) {
                 if (typeof provisionResult.success !== 'undefined') {
                     Log.info('RouteHandler::performAction(..) - sending 200; success: ' + JSON.stringify(provisionResult));
                 } else {
@@ -53,7 +52,7 @@ export default class SDMMREST implements IREST {
                 res.send(400, {failure: {message: 'Unable to provision d1 repository; please try again later.'}});
             });
         } else if (action === 'provisionD1team') {
-            sc.provision(org, "d1", [user, param]).then(function (provisionResult) {
+            sc.provision("d1", [user, param]).then(function (provisionResult) {
                 if (typeof provisionResult.success !== 'undefined') {
                     Log.info('RouteHandler::performAction(..) - sending 200; success: ' + JSON.stringify(provisionResult));
                 } else {

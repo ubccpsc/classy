@@ -1,7 +1,7 @@
-import {Config} from "../../../common/Config";
-import Log from "../../../common/Log";
-
 import * as https from "https";
+
+import Config from "../../../common/Config";
+import Log from "../../../common/Log";
 
 export interface IGithubMessage {
     /**

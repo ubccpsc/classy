@@ -1,5 +1,6 @@
 import {expect} from "chai";
 import "mocha";
+
 import {Test} from "../GlobalSpec";
 import {AuthController} from "../../src/controllers/AuthController";
 
@@ -18,13 +19,13 @@ describe("AuthController", () => {
     });
 
     it("Should not validate a user who does not exist.", async () => {
-        let isValid = await ac.isValid(Test.ORGNAME, Test.USERNAME3, ''); // not registered
+        let isValid = await ac.isValid(Test.USERNAME3, ''); // not registered
         expect(isValid).to.be.false;
     });
 
 
     it("Should not let invalid be admins.", async () => {
-        let isValid = await ac.isAdmin(Test.ORGNAME, Test.USERNAME3, ''); // not registered
+        let isValid = await ac.isAdmin( Test.USERNAME3, ''); // not registered
         expect(isValid).to.be.false;
     });
 

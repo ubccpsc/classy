@@ -1,4 +1,4 @@
-import {Config} from "../../../common/Config";
+import Config from "../../../common/Config";
 import Log from "../../../common/Log";
 import Util from "../../../common/Util";
 
@@ -249,7 +249,7 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
                 // do nothing
                 Log.info("GithubAutoTest::processExecution(..) - course: " + this.courseId + "; commit not requested - no feedback given; commit: " + data.commitSHA);
             }
-        }catch(err){
+        } catch (err) {
             Log.info("GithubAutoTest::processExecution(..) - ERROR: " + err);
             return; // do not let errors escape
         }

@@ -1,7 +1,7 @@
 import {expect} from "chai";
 import "mocha";
 
-import {Config} from "../../common/Config";
+import Config from "../../common/Config";
 import Log from "../../common/Log";
 
 import {DatabaseController} from "../src/controllers/DatabaseController";

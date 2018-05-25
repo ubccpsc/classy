@@ -3,9 +3,10 @@ const loadFirst = require('./GlobalSpec');
 import {expect} from "chai";
 import "mocha";
 
-import {GithubService, IGithubMessage, IGithubService} from "../src/github/GithubService";
-import {Config} from "../../common/Config";
+import Config from "../../common/Config";
 import Log from "../../common/Log";
+
+import {GithubService, IGithubMessage, IGithubService} from "../src/github/GithubService";
 
 describe("GitHub Markdown Service", () => {
     Config.getInstance("test");

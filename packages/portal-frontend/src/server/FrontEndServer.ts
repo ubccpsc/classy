@@ -5,7 +5,7 @@
 import restify = require('restify');
 import * as fs from "fs";
 
-import {Config} from "../../../common/Config";
+import Config from "../../../common/Config";
 import Log from "../../../common/Log";
 
 /**

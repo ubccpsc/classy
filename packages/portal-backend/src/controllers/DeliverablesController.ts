@@ -1,4 +1,5 @@
 import Log from "../../../common/Log";
+
 import {DatabaseController} from "./DatabaseController";
 import {Deliverable} from "../Types";
 
@@ -9,20 +10,20 @@ export class DeliverablesController {
     public async getAllDeliverables(org: string): Promise<Deliverable[]> {
         Log.info("DeliverablesController::getAllGrades( " + org + " ) - start");
 
-        let delivs = await this.db.getDeliverables(org);
+        let delivs = await this.db.getDeliverables();
         return delivs;
     }
 
-    public async getDeliverable(org: string, delivId: string): Promise<Deliverable | null> {
-        Log.info("DeliverablesController::getDeliverable( " + org + ", " + delivId + " ) - start");
+    public async getDeliverable(delivId: string): Promise<Deliverable | null> {
+        Log.info("DeliverablesController::getDeliverable( " + delivId + " ) - start");
 
-        let deliv = await this.db.getDeliverable(org, delivId);
+        let deliv = await this.db.getDeliverable(delivId);
         return deliv;
     }
 
 
-    public async saveDeliverable(org: string, deliv: Deliverable): Promise<Deliverable | null> {
-        Log.info("DeliverableController::saveDeliverable( " + org + ", " + JSON.stringify(deliv) + " ) - start");
+    public async saveDeliverable(deliv: Deliverable): Promise<Deliverable | null> {
+        Log.info("DeliverableController::saveDeliverable( " + JSON.stringify(deliv) + " ) - start");
         try {
             // let existingDeliverable = await this.getDeliverable(org, deliv.id);
 

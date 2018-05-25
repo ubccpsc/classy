@@ -42,7 +42,6 @@ describe('REST Routes for Frontend', function () {
             githubId:      Test.USERNAME1,
             studentNumber: null,
 
-            org:    Test.ORGNAME,
             fName:  '',
             lName:  '',
             kind:   'student',

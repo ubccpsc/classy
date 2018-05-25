@@ -1,5 +1,9 @@
+import * as crypto from 'crypto';
+
+import Config from "../../../common/Config";
 import Log from "../../../common/Log";
 import Util from "../../../common/Util";
+
 import {RepositoryController} from "./RepositoryController";
 import {DatabaseController} from "./DatabaseController";
 import {GradesController} from "./GradesController";
@@ -7,9 +11,6 @@ import {Deliverable, Grade, Person, Team} from "../Types";
 import {IGitHubController} from "./GitHubController";
 import {TeamController} from "./TeamController";
 import {PersonController} from "./PersonController";
-
-import * as crypto from 'crypto';
-import {Config} from "../../../common/Config";
 
 export interface Payload {
     success?: ActionPayload | StatusPayload; // only set if defined
@@ -66,7 +67,7 @@ export interface ICourseController {
      * @param {string} githubUsername
      * @returns {Promise<Person | null>} Returns null if the username is unknown in the org.
      */
-    getPerson(org: string, githubUsername: string): Promise<Person | null>;
+    getPerson(githubUsername: string): Promise<Person | null>;
 
     /**
      * Sets the people for the org. Usually populated with classlist (or some such).
@@ -75,7 +76,7 @@ export interface ICourseController {
      * @param {Person[]} people
      * @returns {Promise<boolean>}
      */
-    setPeople(org: string, people: Person[]): Promise<boolean>;
+    setPeople(people: Person[]): Promise<boolean>;
 
     /**
      * Get all the deliverables for an org.
@@ -83,7 +84,7 @@ export interface ICourseController {
      * @param {string} org
      * @returns {Promise<Deliverable[]>}
      */
-    getDeliverables(org: string): Promise<Deliverable[]>;
+    getDeliverables(): Promise<Deliverable[]>;
 
     /**
      * Sets the deliverables for an org. Will replace deliverables that have the same
@@ -95,7 +96,7 @@ export interface ICourseController {
      * @param {Deliverable[]} deliverables
      * @returns {Promise<boolean>}
      */
-    setDeliverables(org: string, deliverables: Deliverable[]): Promise<boolean>;
+    setDeliverables(deliverables: Deliverable[]): Promise<boolean>;
 
     /**
      * If no Person is provided, gets all grades for an org.
@@ -105,7 +106,7 @@ export interface ICourseController {
      * @param {Person} person
      * @returns {Promise<Grade[]>}
      */
-    getGrades(org: string, person?: Person): Promise<Grade[]>;
+    getGrades(person?: Person): Promise<Grade[]>;
 
     /**
      * Sets the grades for an org. Any grade that already exists in the system with the
@@ -117,7 +118,7 @@ export interface ICourseController {
      * @param {Grade[]} grades
      * @returns {Promise<boolean>}
      */
-    setGrades(org: string, grades: Grade[]): Promise<boolean>;
+    setGrades(grades: Grade[]): Promise<boolean>;
 
 }
 
@@ -135,8 +136,8 @@ export class CourseController { // don't implement ICourseController yet
         this.gh = ghController;
     }
 
-    public async handleUnknownUser(org: string, githubUsername: string): Promise<Person | null> {
-        Log.info("CourseController::handleUnknownUser( " + org + ", " + githubUsername + " ) - person unknown; returning null");
+    public async handleUnknownUser(githubUsername: string): Promise<Person | null> {
+        Log.info("CourseController::handleUnknownUser( " + githubUsername + " ) - person unknown; returning null");
 
         return null;
     }
@@ -149,10 +150,11 @@ export class CourseController { // don't implement ICourseController yet
      * @param {string[]} peopleIds people order matters; requestor should be peopleIds[0]
      * @returns {Promise<ResponsePayload>}
      */
-    public async provision(org: string, delivId: string, peopleIds: string[]): Promise<Payload> {
-        Log.info("CourseController::provision( " + org + ", " + delivId + ", ... ) - start");
+    public async provision(delivId: string, peopleIds: string[]): Promise<Payload> {
+        Log.info("CourseController::provision( " + delivId + ", ... ) - start");
 
         try {
+            const org = Config.getInstance().getProp('org');
             if (org !== "secapstone" && org !== "secapstonetest") {
                 Log.error("CourseController::provision(..) - SDDMController should not be used for other orgs");
                 return {failure: {shouldLogout: false, message: "Invalid org; contact course staff."}};
@@ -166,7 +168,7 @@ export class CourseController { // don't implement ICourseController yet
             if (delivId === "d0") {
                 if (peopleIds.length === 1) {
                     Log.info("CourseController::provision(..) - provisioning new d0 repo for " + peopleIds[0]);
-                    return await this.provisionD0Repo(org, peopleIds[0]);
+                    return await this.provisionD0Repo(peopleIds[0]);
                 } else {
                     Log.error("CourseController::provision(..) - d0 repos are only for individuals");
                     return {failure: {shouldLogout: false, message: "D0 for indivduals only; contact course staff."}};
@@ -175,11 +177,11 @@ export class CourseController { // don't implement ICourseController yet
 
                 if (peopleIds.length === 1) {
                     Log.info("CourseController::provision(..) - updating existing d0 repo to d1 for " + peopleIds[0]);
-                    return await this.updateIndividualD0toD1(org, peopleIds[0]);
+                    return await this.updateIndividualD0toD1(peopleIds[0]);
                 } else if (peopleIds.length === 2) {
                     Log.info("CourseController::provision(..) - provisioning new d1 repo for " + JSON.stringify(peopleIds));
                     if (peopleIds[0] !== peopleIds[1]) {
-                        return await this.provisionD1Repo(org, peopleIds);
+                        return await this.provisionD1Repo(peopleIds);
                     } else {
                         Log.error("CourseController::provision(..) - d1 duplicate users");
                         return {
@@ -224,11 +226,12 @@ export class CourseController { // don't implement ICourseController yet
      * @param {string} personId
      * @returns {Promise<string>} null if the personId is not even known
      */
-    private async computeStatusString(org: string, personId: string): Promise<string | null> {
+    private async computeStatusString(personId: string): Promise<string | null> {
+        const org = Config.getInstance().getProp('org');
         Log.info("CourseController::getStatus( " + org + ', ' + personId + ' ) - start');
         const start = Date.now();
         try {
-            const person = await this.dc.getPerson(org, personId);
+            const person = await this.dc.getPerson(personId);
             if (person === null) {
                 Log.info("CourseController::getStatus(..) - ERROR; person null");
                 return null;
@@ -267,7 +270,7 @@ export class CourseController { // don't implement ICourseController yet
             // D0
             if (currentStatus === SDDMStatus[SDDMStatus.D0]) {
                 // if their d0 score >= 60, make them D1UNLOCKED
-                const d0Grade = await this.dc.getGrade(org, personId, "d0");
+                const d0Grade = await this.dc.getGrade(personId, "d0");
                 if (d0Grade && d0Grade.score >= 60) {
                     Log.info("CourseController::getStatus(..) - elevating D0 to D1UNLOCKED");
                     currentStatus = SDDMStatus[SDDMStatus.D1UNLOCKED];
@@ -279,7 +282,7 @@ export class CourseController { // don't implement ICourseController yet
             // D1UNLOCKED
             if (currentStatus === SDDMStatus[SDDMStatus.D1UNLOCKED]) {
                 // if they have a d1 team, make them D1TEAMSET
-                const teams = await this.dc.getTeamsForPerson(org, personId);
+                const teams = await this.dc.getTeamsForPerson(personId);
 
                 let d1team: Team = null;
                 for (const t of teams) {
@@ -317,7 +320,7 @@ export class CourseController { // don't implement ICourseController yet
             // D1
             if (currentStatus === SDDMStatus[SDDMStatus.D1]) {
                 // if their d1 score > 60, make them D2
-                let d1Grade = await this.gc.getGrade(org, personId, "d1");
+                let d1Grade = await this.gc.getGrade(personId, "d1");
                 if (d1Grade && d1Grade.score >= 60) {
                     Log.info("CourseController::getStatus(..) - elevating D1 to D2");
                     let allRepos = await this.rc.getReposForPerson(person);
@@ -337,7 +340,7 @@ export class CourseController { // don't implement ICourseController yet
             // D2
             if (currentStatus === SDDMStatus[SDDMStatus.D2]) {
                 // if their d2 core > 60, make them D3PRE
-                let d2Grade = await this.gc.getGrade(org, personId, "d2");
+                let d2Grade = await this.gc.getGrade(personId, "d2");
                 if (d2Grade && d2Grade.score >= 60) {
                     Log.info("CourseController::getStatus(..) - elevating D2 to D3PRE");
                     currentStatus = SDDMStatus[SDDMStatus.D3PRE];
@@ -385,9 +388,7 @@ export class CourseController { // don't implement ICourseController yet
 
             Log.info("CourseController::getStatus( " + org + ', ' + personId + ' ) - done; took: ' + Util.took(start));
             return currentStatus;
-        }
-        catch
-            (err) {
+        } catch (err) {
             Log.error("CourseController::getStatus( " + org + ', ' + personId + ' ) - ERROR: ' + err);
             return "UNKNOWN";
         }
@@ -441,22 +442,23 @@ export class CourseController { // don't implement ICourseController yet
     }
 */
 
-    private async provisionD0Repo(org: string, personId: string): Promise<Payload> {
+    private async provisionD0Repo(personId: string): Promise<Payload> {
+        const org = Config.getInstance().getProp('org');
         Log.info("CourseController::provisionD0Repo( " + org + ", " + personId + " ) - start");
         const start = Date.now();
 
         try {
             const name = personId;
-            const person = await this.pc.getPerson(org, name);
+            const person = await this.pc.getPerson(name);
             const teamName = name;
-            const repoName = CourseController.getProjectPrefix(org) + teamName;
+            const repoName = CourseController.getProjectPrefix() + teamName;
 
             if (person === null) {
                 // return early
                 return {failure: {shouldLogout: false, message: "Username not registered; contact course staff."}};
             }
 
-            let personStatus = await this.computeStatusString(org, personId);
+            let personStatus = await this.computeStatusString(personId);
             if (personStatus !== SDDMStatus[SDDMStatus.D0PRE]) {
                 Log.info("CourseController::provisionD0Repo( " + org + ", " + personId + " ) - bad status: " + personStatus);
                 return {failure: {shouldLogout: false, message: "User is not eligible for D0."}};
@@ -465,28 +467,28 @@ export class CourseController { // don't implement ICourseController yet
             }
 
             // create local team
-            let existingTeam = await this.tc.getTeam(org, teamName);
+            let existingTeam = await this.tc.getTeam(teamName);
             if (existingTeam !== null) {
                 // team already exists; warn and fail
                 throw new Error("CourseController::provisionD0Repo(..) - team already exists: " + teamName);
             }
             const teamCustom = {sdmmd0: true, sdmmd1: false, sdmmd2: false, sdmmd3: false}; // d0 team for now
-            const team = await this.tc.createTeam(org, teamName, [person], teamCustom);
+            const team = await this.tc.createTeam(teamName, [person], teamCustom);
 
             // create local repo
-            let existingRepo = await this.rc.getRepository(org, repoName);
+            let existingRepo = await this.rc.getRepository(repoName);
             if (existingRepo !== null) {
                 // repo already exists; warn and fail
                 throw new Error("CourseController::provisionD0Repo(..) - repo already exists: " + repoName);
             }
             const repoCustom = {d0enabled: true, d1enabled: false, d2enabled: false, d3enabled: false, sddmD3pr: false}; // d0 repo for now
-            const repo = await this.rc.createRepository(org, repoName, [team], repoCustom);
+            const repo = await this.rc.createRepository(repoName, [team], repoCustom);
 
             // create remote repo
             const INPUTREPO = "https://github.com/SECapstone/bootstrap"; // HARDCODED for SDMM D0
             // set to the backendUrl:backendPort, not autotestUrl:autotestPort since the backend will be publicly visible
             const WEBHOOKADDR = Config.getInstance().getProp('backendUrl') + ':' + Config.getInstance().getProp('backendPort') + '/githubWebhook';
-            const provisionResult = await this.gh.provisionRepository(org, repoName, [team], INPUTREPO, WEBHOOKADDR);
+            const provisionResult = await this.gh.provisionRepository(repoName, [team], INPUTREPO, WEBHOOKADDR);
 
             if (provisionResult === true) {
                 Log.info("CourseController::provisionD0Repo(..) - d0 github provisioning successful");
@@ -507,9 +509,9 @@ export class CourseController { // don't implement ICourseController yet
                     URL:       repo.URL,
                     timestamp: Date.now()
                 };
-                await this.gc.createGrade(org, repo.id, 'd0', grade);
+                await this.gc.createGrade(repo.id, 'd0', grade);
 
-                const statusPayload = await this.getStatus(org, personId);
+                const statusPayload = await this.getStatus(personId);
                 Log.info("CourseController::provisionD0Repo(..) - d0 final provisioning successful; took: " + Util.took(start));
 
                 return {success: {message: "Repository successfully created.", status: statusPayload}};
@@ -530,20 +532,21 @@ export class CourseController { // don't implement ICourseController yet
         }
     }
 
-    private async updateIndividualD0toD1(org: string, personId: string): Promise<Payload> {
+    private async updateIndividualD0toD1(personId: string): Promise<Payload> {
+        const org = Config.getInstance().getProp('org');
         Log.info("CourseController::updateIndividualD0toD1( " + org + ", " + personId + " ) - start");
         const start = Date.now();
 
         try {
             // make sure person exists
-            const person = await this.pc.getPerson(org, personId);
+            const person = await this.pc.getPerson(personId);
             if (person === null) {
                 Log.error("CourseController::updateIndividualD0toD1(..) - person does not exist: " + personId);
                 return {failure: {shouldLogout: false, message: "Username not registered with course."}};
             }
 
             // make sure the person has suffient d0 grade
-            let grade = await this.gc.getGrade(org, personId, "d0"); // make sure they can move on
+            let grade = await this.gc.getGrade(personId, "d0"); // make sure they can move on
             if (grade === null || grade.score < 60) {
                 Log.error("CourseController::updateIndividualD0toD1(..) - person does not exist: " + personId);
                 return {failure: {shouldLogout: false, message: "Current d0 grade is not sufficient to move on to d1."}};
@@ -558,7 +561,7 @@ export class CourseController { // don't implement ICourseController yet
                 }
             }
 
-            let personStatus = await this.computeStatusString(org, personId);
+            let personStatus = await this.computeStatusString(personId);
             if (personStatus !== SDDMStatus[SDDMStatus.D1UNLOCKED]) {
                 Log.info("CourseController::updateIndividualD0toD1( " + org + ", " + personId + " ) - bad status: " + personStatus);
             } else {
@@ -568,11 +571,11 @@ export class CourseController { // don't implement ICourseController yet
             const name = personId;
             // const person = await this.pc.getPerson(org, name);
             const teamName = name;
-            const repoName = CourseController.getProjectPrefix(org) + teamName;
+            const repoName = CourseController.getProjectPrefix() + teamName;
 
             // find local team & repo
-            const team = await this.tc.getTeam(org, teamName);
-            const repo = await this.rc.getRepository(org, repoName);
+            const team = await this.tc.getTeam(teamName);
+            const repo = await this.rc.getRepository(repoName);
 
             if (team !== null && repo !== null) {
                 // custom should be {d0enabled: true, d1enabled: true, d2enabled: false, d3enabled: false, sddmD3pr: false};
@@ -592,15 +595,15 @@ export class CourseController { // don't implement ICourseController yet
                     URL:       repo.URL,
                     timestamp: Date.now()
                 };
-                await this.gc.createGrade(org, repo.id, 'd1', grade);
-                await this.gc.createGrade(org, repo.id, 'd2', grade);
-                await this.gc.createGrade(org, repo.id, 'd3', grade);
+                await this.gc.createGrade(repo.id, 'd1', grade);
+                await this.gc.createGrade(repo.id, 'd2', grade);
+                await this.gc.createGrade(repo.id, 'd3', grade);
             } else {
                 Log.error("CourseController::updateIndividualD0toD1(..) - unable to find team: " + teamName + ' or repo: ' + repoName);
                 return {failure: {shouldLogout: false, message: "Invalid team updating d0 repo; contact course staff."}};
             }
 
-            const statusPayload = await this.getStatus(org, personId);
+            const statusPayload = await this.getStatus(personId);
             Log.info("CourseController::updateIndividualD0toD1(..) - d0 to d1 individual upgrade successful; took: " + Util.took(start));
             return {success: {message: "D0 repo successfully updated to D1.", status: statusPayload}};
         } catch (err) {
@@ -614,7 +617,8 @@ export class CourseController { // don't implement ICourseController yet
      * @param {string[]} peopleIds order matters here: the requestor should be peopleIds[0]
      * @returns {Promise<Payload>}
      */
-    private async provisionD1Repo(org: string, peopleIds: string[]): Promise<Payload> {
+    private async provisionD1Repo(peopleIds: string[]): Promise<Payload> {
+        const org = Config.getInstance().getProp('org');
         Log.info("CourseController::provisionD1Repo( " + org + ", " + JSON.stringify(peopleIds) + " ) - start");
         const start = Date.now();
 
@@ -628,7 +632,7 @@ export class CourseController { // don't implement ICourseController yet
                 str = str.substr(0, 6);
                 const name = CourseController.getTeamPrefix(org) + str; // team prefix
                 Log.trace("CourseController::provisionD1Repo(..) - checking name: " + str);
-                let team = await this.tc.getTeam(org, str);
+                let team = await this.tc.getTeam(str);
                 if (team === null) {
                     teamName = str;
                     Log.trace("CourseController::provisionD1Repo(..) - name available; using: " + teamName);
@@ -637,9 +641,9 @@ export class CourseController { // don't implement ICourseController yet
 
             let people: Person[] = [];
             for (const pid of peopleIds) {
-                let person = await this.dc.getPerson(org, pid); // make sure the person exists
+                let person = await this.dc.getPerson(pid); // make sure the person exists
                 if (person !== null) {
-                    let grade = await this.gc.getGrade(org, pid, "d0"); // make sure they can move on
+                    let grade = await this.gc.getGrade(pid, "d0"); // make sure they can move on
                     if (grade !== null && grade.score > 59) {
                         people.push(person)
                     } else {
@@ -661,7 +665,7 @@ export class CourseController { // don't implement ICourseController yet
             }
 
             for (const p of people) {
-                let personStatus = await this.computeStatusString(org, p.id);
+                let personStatus = await this.computeStatusString(p.id);
                 if (personStatus !== SDDMStatus[SDDMStatus.D1UNLOCKED]) {
                     Log.info("CourseController::provisionD1Repo( " + org + ", " + p.id + " ) - bad status: " + personStatus);
                     return {
@@ -677,18 +681,18 @@ export class CourseController { // don't implement ICourseController yet
 
             // create local team
             const teamCustom = {sdmmd0: false, sdmmd1: true, sdmmd2: true, sdmmd3: true}; // configure for project
-            const team = await this.tc.createTeam(org, teamName, people, teamCustom);
+            const team = await this.tc.createTeam(teamName, people, teamCustom);
 
             // create local repo
-            const repoName = CourseController.getProjectPrefix(org) + teamName;
+            const repoName = CourseController.getProjectPrefix() + teamName;
             const repoCustom = {d0enabled: false, d1enabled: true, d2enabled: true, d3enabled: true, sddmD3pr: false}; // d0 repo for now
-            const repo = await this.rc.createRepository(org, repoName, [team], repoCustom);
+            const repo = await this.rc.createRepository(repoName, [team], repoCustom);
 
             // create remote repo
             const INPUTREPO = "https://github.com/SECapstone/bootstrap"; // HARDCODED for SDMM
             // set to the backendUrl:backendPort, not autotestUrl:autotestPort since the backend will be publicly visible
             const WEBHOOKADDR = Config.getInstance().getProp('backendUrl') + ':' + Config.getInstance().getProp('backendPort') + '/githubWebhook';
-            const provisionResult = await this.gh.provisionRepository(org, repoName, [team], INPUTREPO, WEBHOOKADDR);
+            const provisionResult = await this.gh.provisionRepository(repoName, [team], INPUTREPO, WEBHOOKADDR);
 
             if (provisionResult === true) {
                 Log.info("CourseController::provisionD1Repo(..) - d1 github provisioning successful");
@@ -709,11 +713,11 @@ export class CourseController { // don't implement ICourseController yet
                     URL:       repo.URL,
                     timestamp: Date.now()
                 };
-                await this.gc.createGrade(org, repo.id, 'd1', grade);
-                await this.gc.createGrade(org, repo.id, 'd2', grade);
-                await this.gc.createGrade(org, repo.id, 'd3', grade);
+                await this.gc.createGrade(repo.id, 'd1', grade);
+                await this.gc.createGrade(repo.id, 'd2', grade);
+                await this.gc.createGrade(repo.id, 'd3', grade);
 
-                const statusPayload = await this.getStatus(org, peopleIds[0]);
+                const statusPayload = await this.getStatus(peopleIds[0]);
                 Log.info("CourseController::provisionD1Repo(..) - d1 final provisioning successful; took: " + Util.took(start));
                 return {success: {message: "D1 repository successfully provisioned.", status: statusPayload}};
             } else {
@@ -726,21 +730,22 @@ export class CourseController { // don't implement ICourseController yet
         }
     }
 
-    public async getStatus(org: string, personId: string): Promise<StatusPayload> {
+    public async getStatus(personId: string): Promise<StatusPayload> {
+        const org = Config.getInstance().getProp('org');
         Log.info("CourseController::getStatus( " + org + ", " + personId + " ) - start");
         const start = Date.now();
 
-        const myStatus = await this.computeStatusString(org, personId);
+        const myStatus = await this.computeStatusString(personId);
 
         let myD0: GradePayload = null;
         let myD1: GradePayload = null;
         let myD2: GradePayload = null;
         let myD3: GradePayload = null;
 
-        let d0Grade: Grade = await this.dc.getGrade(org, personId, 'd0');
-        let d1Grade: Grade = await this.dc.getGrade(org, personId, 'd1');
-        let d2Grade: Grade = await this.dc.getGrade(org, personId, 'd2');
-        let d3Grade: Grade = await this.dc.getGrade(org, personId, 'd3');
+        let d0Grade: Grade = await this.dc.getGrade(personId, 'd0');
+        let d1Grade: Grade = await this.dc.getGrade(personId, 'd1');
+        let d2Grade: Grade = await this.dc.getGrade(personId, 'd2');
+        let d3Grade: Grade = await this.dc.getGrade(personId, 'd3');
 
         if (d0Grade !== null) {
             myD0 = {
@@ -786,21 +791,21 @@ export class CourseController { // don't implement ICourseController yet
             d3:     myD3
         };
 
-        Log.trace("CourseController::getStatus( " + org + ", " + personId + " ) - took: " + Util.took(start));
+        Log.trace("CourseController::getStatus( " + personId + " ) - took: " + Util.took(start));
 
         return statusPayload;
     }
 
-    public async handleNewGrade(org: string, repoId: string, delivId: string, grade: GradePayload): Promise<boolean> {
+    public async handleNewGrade(repoId: string, delivId: string, grade: GradePayload): Promise<boolean> {
         Log.info("CourseController::handleNewGrade( .. ) - start");
 
         try {
-            let peopleIds = await this.rc.getPeopleForRepo(org, repoId);
+            let peopleIds = await this.rc.getPeopleForRepo(repoId);
             for (const personId of peopleIds) {
-                let existingGrade = await this.gc.getGrade(org, personId, delivId);
+                let existingGrade = await this.gc.getGrade(personId, delivId);
                 if (existingGrade === null || existingGrade.score < grade.score) {
                     Log.info("CourseController::handleNewGrade( .. ) - grade is higher; updating");
-                    this.gc.createGrade(org, repoId, delivId, grade);
+                    this.gc.createGrade(repoId, delivId, grade);
                 } else {
                     Log.info("CourseController::handleNewGrade( .. ) - grade is not higher");
                 }
@@ -819,7 +824,8 @@ export class CourseController { // don't implement ICourseController yet
      * @param {string} org
      * @returns {string}
      */
-    private static getProjectPrefix(org: string): string {
+    private static getProjectPrefix(): string {
+        const org = Config.getInstance().getProp('org');
         if (org === "secapstonetest" || Config.getInstance().getProp('name') === "secapstonetest") {
             Log.info("CourseController::getProjectPrefix(..) - returning test prefix");
             return "TEST__X__secap_";

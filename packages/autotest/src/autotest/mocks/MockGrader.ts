@@ -1,7 +1,8 @@
-import {Config} from "../../../../common/Config";
-import {ICommitRecord, IContainerInput, IContainerOutput, IGradeReport} from "../../Types";
+import Config from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
+
+import {ICommitRecord, IContainerInput, IContainerOutput, IGradeReport} from "../../Types";
 
 interface IGrader {
     execute(): Promise<ICommitRecord>;

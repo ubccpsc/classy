@@ -1,9 +1,7 @@
 import "mocha";
 
-import {Config} from "../../common/Config";
+import Config from "../../common/Config";
 import Log from "../../common/Log";
-
-
 
 before(async () => {
     Log.info('GlobalSpec::before()');

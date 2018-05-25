@@ -1,12 +1,11 @@
-import Log from "../../../common/Log";
-
 import * as rp from "request-promise-native";
-import {Config} from "../../../common/Config";
-import {Repository, Team} from "../Types";
+import Log from "../../../common/Log";
+import Config from "../../../common/Config";
 import Util from "../../../common/Util";
 
-let tmp = require('tmp-promise');
+import {Repository, Team} from "../Types";
 
+let tmp = require('tmp-promise');
 
 export interface IGitHubController {
     /**
@@ -21,9 +20,9 @@ export interface IGitHubController {
      * @param {string} webhookAddress
      * @returns {Promise<boolean>}
      */
-    provisionRepository(org: string, repoName: string, teams: Team[], sourceRepo: string, webhookAddress: string): Promise<boolean>;
+    provisionRepository(repoName: string, teams: Team[], sourceRepo: string, webhookAddress: string): Promise<boolean>;
 
-    createPullRequest(org: string, repoName: string, prName: string): Promise<boolean>;
+    createPullRequest(repoName: string, prName: string): Promise<boolean>;
 
     getRepositoryUrl(repo: Repository): Promise<string>;
 
@@ -48,7 +47,8 @@ export class GitHubController implements IGitHubController {
         return teamUrl;
     }
 
-    public async provisionRepository(org: string, repoName: string, teams: Team[], sourceRepo: string, webhookAddress: string): Promise<boolean> {
+    public async provisionRepository(repoName: string, teams: Team[], sourceRepo: string, webhookAddress: string): Promise<boolean> {
+        const org = Config.getInstance().getProp('org');
         Log.info("GitHubController::provisionRepository( " + org + ", " + repoName + ", ...) - start");
         const start = Date.now();
         try {
@@ -138,7 +138,7 @@ export class GitHubController implements IGitHubController {
         return false;
     }
 
-    public async createPullRequest(org: string, repoName: string, prName: string): Promise<boolean> {
+    public async createPullRequest(repoName: string, prName: string): Promise<boolean> {
         Log.error("GitHubController::createPullRequest(..) - NOT IMPLEMENTED");
         return true;
     }
@@ -158,12 +158,12 @@ export class TestGitHubController implements IGitHubController {
         return "TODO";
     }
 
-    public async provisionRepository(org: string, repoName: string, teams: Team[], sourceRepo: string, webhookAddress: string): Promise<boolean> {
+    public async provisionRepository(repoName: string, teams: Team[], sourceRepo: string, webhookAddress: string): Promise<boolean> {
         Log.error("TestGitHubController::provisionRepository(..) - NOT IMPLEMENTED");
         return true;
     }
 
-    public async createPullRequest(org: string, repoName: string, prName: string): Promise<boolean> {
+    public async createPullRequest(repoName: string, prName: string): Promise<boolean> {
         Log.error("TestGitHubController::createPullRequest(..) - NOT IMPLEMENTED");
         return true;
     }
