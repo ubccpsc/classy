@@ -4,16 +4,17 @@ const rBefore = require('../GradeControllerSpec');
 import {expect} from "chai";
 import "mocha";
 
-import Log from "../../../../common/Log";
+import {Test} from "../../GlobalSpec";
 
-import {ActionPayload, FailurePayload, GradePayload, SDDMStatus} from "../../../src/controllers/CourseController";
+import Log from "../../../../common/Log";
+import {ActionPayload, FailurePayload, GradePayload, SDMMStatus} from "../../../../common/types/SDMMTypes";
+
+import {Person} from "../../../src/Types";
 import {SDMMController} from "../../../src/controllers/SDMM/SDMMController";
 import {GradesController} from "../../../src/controllers/GradesController";
 import {RepositoryController} from "../../../src/controllers/RepositoryController";
 import {TeamController} from "../../../src/controllers/TeamController";
 import {PersonController} from "../../../src/controllers/PersonController";
-import {Test} from "../../GlobalSpec";
-import {Person} from "../../../src/Types";
 import {TestGitHubController} from "../../../src/controllers/GitHubController";
 
 
@@ -84,7 +85,7 @@ export class TestData {
     }
 }
 
-describe("SDDMController", () => {
+describe("SDDM: SDMMController", () => {
 
     let sc: SDMMController;
     let gc: GradesController;
@@ -324,7 +325,7 @@ describe("SDDMController", () => {
         expect(payload.success).to.not.be.undefined;
         expect(payload.failure).to.be.undefined;
         const status = (<ActionPayload>payload.success).status;
-        expect(status.status).to.equal(SDDMStatus[SDDMStatus.D0]);
+        expect(status.status).to.equal(SDMMStatus[SDMMStatus.D0]);
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(1);
@@ -384,7 +385,7 @@ describe("SDDMController", () => {
         expect(payload.success).to.not.be.undefined;
         expect(payload.failure).to.be.undefined;
         const status = (<ActionPayload>payload.success).status;
-        expect(status.status).to.equal(SDDMStatus[SDDMStatus.D1]);
+        expect(status.status).to.equal(SDMMStatus[SDMMStatus.D1]);
         Log.test((<ActionPayload>payload.success).message);
 
         allRepos = await rc.getReposForPerson(person);
@@ -456,7 +457,7 @@ describe("SDDMController", () => {
         expect(person2).to.not.be.null;
         let payload = await sc.provision(Test.DELIVID0, [person2.id]);
         expect(payload.success).to.not.be.undefined;
-        expect((<ActionPayload>payload.success).status.status).to.equal(SDDMStatus[SDDMStatus.D0]);
+        expect((<ActionPayload>payload.success).status.status).to.equal(SDMMStatus[SDMMStatus.D0]);
 
         let allRepos = await rc.getReposForPerson(person2);
         expect(allRepos).to.have.lengthOf(1);
@@ -476,7 +477,7 @@ describe("SDDMController", () => {
         // create d0 payload for person2
         payload = await sc.provision(Test.DELIVID0, [person3.id]);
         expect(payload.success).to.not.be.undefined;
-        expect((<ActionPayload>payload.success).status.status).to.equal(SDDMStatus[SDDMStatus.D0]);
+        expect((<ActionPayload>payload.success).status.status).to.equal(SDMMStatus[SDMMStatus.D0]);
 
         // create d0 grade for person2
         allRepos = await rc.getReposForPerson(person3);
@@ -498,7 +499,7 @@ describe("SDDMController", () => {
         expect(payload.success).to.not.be.undefined;
         expect(payload.failure).to.be.undefined;
         const status = (<ActionPayload>payload.success).status;
-        expect(status.status).to.equal(SDDMStatus[SDDMStatus.D1]);
+        expect(status.status).to.equal(SDMMStatus[SDMMStatus.D1]);
         Log.test((<ActionPayload>payload).message);
 
         allRepos = await rc.getReposForPerson(person2);

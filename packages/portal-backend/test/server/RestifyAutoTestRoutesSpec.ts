@@ -1,12 +1,14 @@
 import {expect} from "chai";
 import "mocha";
 
-import BackendServer from "../../src/server/BackendServer";
-import Log from "../../../common/Log";
-
 import {Test} from "../GlobalSpec";
 
-import {GradePayload} from "../../src/controllers/CourseController";
+import Log from "../../../common/Log";
+import Config from "../../../common/Config";
+import {GradePayload} from "../../../common/types/SDMMTypes";
+
+import BackendServer from "../../src/server/BackendServer";
+import {DatabaseController} from "../../src/controllers/DatabaseController";
 
 // This seems silly, but just makes sure GlobalSpec runs first.
 // It should be at the top of every test file.
@@ -20,10 +22,21 @@ describe('REST Routes for AutoTest', function () {
 
     var app: restify.Server = null;
 
-    before(function () {
+    var server: BackendServer = null;
+    before(async () => {
         Log.test('RestifyAutoTestRoutes::before - start');
+
+        Config.getInstance();
+        (<any>Config.getInstance()).config.org = (<any>Config.getInstance()).config.testorg; // force testing environment
+        // (<any>Config.getInstance()).config.name = 'secapstonetest'; // force testing in test environment // TODO: NOT GOOD for 340
+
+        Test.ORGNAME = Config.getInstance().getProp('testorg');
+        Log.info('GlobalSpec::before() - org: ' + Test.ORGNAME);
+        let db = DatabaseController.getInstance();
+        await db.clearData(); // nuke everything
+
         // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
-        const server = new BackendServer(false);
+        server = new BackendServer(false);
 
         return server.start().then(function () {
             Log.test('RestifyAutoTestRoutes::before - server started');
@@ -32,6 +45,11 @@ describe('REST Routes for AutoTest', function () {
         }).catch(function (err) {
             Log.test('RestifyAutoTestRoutes::before - server might already be started: ' + err);
         });
+    });
+
+    after(function () {
+        Log.test('RestifyAutoTestRoutes::after - start');
+        return server.stop();
     });
 
     it('Should respond to a valid defaultDeliverable request', async function () {

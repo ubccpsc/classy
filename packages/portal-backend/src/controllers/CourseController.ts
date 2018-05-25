@@ -3,6 +3,7 @@ import * as crypto from 'crypto';
 import Config from "../../../common/Config";
 import Log from "../../../common/Log";
 import Util from "../../../common/Util";
+import {GradePayload, Payload, SDMMStatus, StatusPayload} from "../../../common/types/SDMMTypes";
 
 import {RepositoryController} from "./RepositoryController";
 import {DatabaseController} from "./DatabaseController";
@@ -12,47 +13,6 @@ import {IGitHubController} from "./GitHubController";
 import {TeamController} from "./TeamController";
 import {PersonController} from "./PersonController";
 
-export interface Payload {
-    success?: ActionPayload | StatusPayload; // only set if defined
-    failure?: FailurePayload; // only set if defined
-}
-
-export interface FailurePayload {
-    message: string;
-    shouldLogout: boolean; // almost always false
-}
-
-export interface ActionPayload {
-    message: string;
-    status: StatusPayload; // if an action was successful we should send the current status
-}
-
-export interface StatusPayload {
-    status: string;
-    d0: GradePayload | null;
-    d1: GradePayload | null;
-    d2: GradePayload | null;
-    d3: GradePayload | null;
-}
-
-export interface GradePayload {
-    score: number; // grade: < 0 will mean 'N/A' in the UI
-    comment: string;
-    URL: string; // commit URL if known, otherwise repo URL
-    timestamp: number; // even if grade < 0 might as well return when the entry was made
-    custom: any;
-}
-
-export enum SDDMStatus {
-    D0PRE,
-    D0,
-    D1UNLOCKED,
-    D1TEAMSET,
-    D1,
-    D2,
-    D3PRE,
-    D3
-}
 
 /**
  * This is the high-level interfaces that CourseControllers should implement
@@ -157,7 +117,7 @@ export class CourseController { // don't implement ICourseController yet
         try {
             const org = Config.getInstance().getProp('org');
             if (org !== "secapstone" && org !== "secapstonetest") {
-                Log.error("CourseController::provision(..) - SDDMController should not be used for other orgs");
+                Log.error("CourseController::provision(..) - SDMMController should not be used for other orgs");
                 return {failure: {shouldLogout: false, message: "Invalid org; contact course staff."}};
             }
 
@@ -209,7 +169,7 @@ export class CourseController { // don't implement ICourseController yet
 
     /**
      *
-     * This confirms the SDDM status. The approach is conservative (and hence slow).
+     * This confirms the SDMM status. The approach is conservative (and hence slow).
      *
      * It will try to use checkStatus first to speed itself up.
      * Status chain:
@@ -246,10 +206,10 @@ export class CourseController { // don't implement ICourseController yet
             //    return reportedStatus;
             // }
 
-            let currentStatus = SDDMStatus[SDDMStatus.D0PRE]; // start with the lowest status and work up
+            let currentStatus = SDMMStatus[SDMMStatus.D0PRE]; // start with the lowest status and work up
 
             // D0PRE
-            if (currentStatus === SDDMStatus[SDDMStatus.D0PRE]) {
+            if (currentStatus === SDMMStatus[SDMMStatus.D0PRE]) {
                 // make sure d0 doesn't exist for a person, if it does, make them D0
 
                 let d0Repo = null;
@@ -261,7 +221,7 @@ export class CourseController { // don't implement ICourseController yet
 
                     if (d0Repo !== null) {
                         Log.info("CourseController::getStatus(..) - elevating D0PRE to D0");
-                        currentStatus = SDDMStatus[SDDMStatus.D0];
+                        currentStatus = SDMMStatus[SDMMStatus.D0];
                     } else {
                         Log.info("CourseController::getStatus(..) - NOT elevating from D0PRE");
                     }
@@ -269,19 +229,19 @@ export class CourseController { // don't implement ICourseController yet
             }
 
             // D0
-            if (currentStatus === SDDMStatus[SDDMStatus.D0]) {
+            if (currentStatus === SDMMStatus[SDMMStatus.D0]) {
                 // if their d0 score >= 60, make them D1UNLOCKED
                 const d0Grade = await this.dc.getGrade(personId, "d0");
                 if (d0Grade && d0Grade.score >= 60) {
                     Log.info("CourseController::getStatus(..) - elevating D0 to D1UNLOCKED");
-                    currentStatus = SDDMStatus[SDDMStatus.D1UNLOCKED];
+                    currentStatus = SDMMStatus[SDMMStatus.D1UNLOCKED];
                 } else {
                     Log.info("CourseController::getStatus(..) - NOT elevating from D0");
                 }
             }
 
             // D1UNLOCKED
-            if (currentStatus === SDDMStatus[SDDMStatus.D1UNLOCKED]) {
+            if (currentStatus === SDMMStatus[SDMMStatus.D1UNLOCKED]) {
                 // if they have a d1 team, make them D1TEAMSET
                 const teams = await this.dc.getTeamsForPerson(personId);
 
@@ -294,14 +254,14 @@ export class CourseController { // don't implement ICourseController yet
 
                 if (d1team !== null) {
                     Log.info("CourseController::getStatus(..) - elevating D1UNLOCKED to D1TEAMSET");
-                    currentStatus = SDDMStatus[SDDMStatus.D1TEAMSET];
+                    currentStatus = SDMMStatus[SDMMStatus.D1TEAMSET];
                 } else {
                     Log.info("CourseController::getStatus(..) - NOT elevating from D1UNLOCKED");
                 }
             }
 
             // D1TEAMSET
-            if (currentStatus === SDDMStatus[SDDMStatus.D1TEAMSET]) {
+            if (currentStatus === SDMMStatus[SDMMStatus.D1TEAMSET]) {
                 // if they have a d1 repo, make them D1
                 const repos = await this.rc.getReposForPerson(person);
                 let d1repo = null;
@@ -312,14 +272,14 @@ export class CourseController { // don't implement ICourseController yet
                 }
                 if (d1repo !== null) {
                     Log.info("CourseController::getStatus(..) - elevating D1TEAMSET to D1");
-                    currentStatus = SDDMStatus[SDDMStatus.D1];
+                    currentStatus = SDMMStatus[SDMMStatus.D1];
                 } else {
                     Log.info("CourseController::getStatus(..) - NOT elevating from D1TEAMSET");
                 }
             }
 
             // D1
-            if (currentStatus === SDDMStatus[SDDMStatus.D1]) {
+            if (currentStatus === SDMMStatus[SDMMStatus.D1]) {
                 // if their d1 score > 60, make them D2
                 let d1Grade = await this.gc.getGrade(personId, "d1");
                 if (d1Grade && d1Grade.score >= 60) {
@@ -332,26 +292,26 @@ export class CourseController { // don't implement ICourseController yet
                             await this.dc.writeRepository(r);
                         }
                     }
-                    currentStatus = SDDMStatus[SDDMStatus.D2];
+                    currentStatus = SDMMStatus[SDMMStatus.D2];
                 } else {
                     Log.info("CourseController::getStatus(..) - NOT elevating from D1");
                 }
             }
 
             // D2
-            if (currentStatus === SDDMStatus[SDDMStatus.D2]) {
+            if (currentStatus === SDMMStatus[SDMMStatus.D2]) {
                 // if their d2 core > 60, make them D3PRE
                 let d2Grade = await this.gc.getGrade(personId, "d2");
                 if (d2Grade && d2Grade.score >= 60) {
                     Log.info("CourseController::getStatus(..) - elevating D2 to D3PRE");
-                    currentStatus = SDDMStatus[SDDMStatus.D3PRE];
+                    currentStatus = SDMMStatus[SDMMStatus.D3PRE];
                 } else {
                     Log.info("CourseController::getStatus(..) - NOT elevating from D2");
                 }
             }
 
             // D3PRE
-            if (currentStatus === SDDMStatus[SDDMStatus.D3PRE]) {
+            if (currentStatus === SDMMStatus[SDMMStatus.D3PRE]) {
                 // if their d1 repo has custom.sddmD3pr===true, make them D3
                 let allRepos = await this.rc.getReposForPerson(person);
                 let prComplete = false;
@@ -363,7 +323,7 @@ export class CourseController { // don't implement ICourseController yet
                 }
                 if (prComplete === true) {
                     Log.info("CourseController::getStatus(..) - elevating D3PRE to D3");
-                    currentStatus = SDDMStatus[SDDMStatus.D3];// "D3";
+                    currentStatus = SDMMStatus[SDMMStatus.D3];// "D3";
                 } else {
                     Log.info("CourseController::getStatus(..) - NOT elevating from D3PRE");
                 }
@@ -371,7 +331,7 @@ export class CourseController { // don't implement ICourseController yet
 
             // D3
             // nothing else to be done
-            if (currentStatus === SDDMStatus[SDDMStatus.D3]) {
+            if (currentStatus === SDMMStatus[SDMMStatus.D3]) {
                 let allRepos = await this.rc.getReposForPerson(person);
                 for (const r of allRepos) {
                     if (r.custom.d2enabled === true) {
@@ -428,7 +388,7 @@ export class CourseController { // don't implement ICourseController yet
             }
 
             const reportedStatus = person.custom.sddmStatus;
-            if (reportedStatus === SDDMStatus[SDDMStatus.D0PRE]) {
+            if (reportedStatus === SDMMStatus[SDMMStatus.D0PRE]) {
                 // don't bother, let checkStatus do it right
                 return false;
             }
@@ -460,7 +420,7 @@ export class CourseController { // don't implement ICourseController yet
             }
 
             let personStatus = await this.computeStatusString(personId);
-            if (personStatus !== SDDMStatus[SDDMStatus.D0PRE]) {
+            if (personStatus !== SDMMStatus[SDMMStatus.D0PRE]) {
                 Log.info("CourseController::provisionD0Repo( " + org + ", " + personId + " ) - bad status: " + personStatus);
                 return {failure: {shouldLogout: false, message: "User is not eligible for D0."}};
             } else {
@@ -564,7 +524,7 @@ export class CourseController { // don't implement ICourseController yet
             }
 
             let personStatus = await this.computeStatusString(personId);
-            if (personStatus !== SDDMStatus[SDDMStatus.D1UNLOCKED]) {
+            if (personStatus !== SDMMStatus[SDMMStatus.D1UNLOCKED]) {
                 Log.info("CourseController::updateIndividualD0toD1( " + org + ", " + personId + " ) - bad status: " + personStatus);
             } else {
                 Log.info("CourseController::updateIndividualD0toD1( " + org + ", " + personId + " ) - correct status: " + personStatus);
@@ -669,7 +629,7 @@ export class CourseController { // don't implement ICourseController yet
 
             for (const p of people) {
                 let personStatus = await this.computeStatusString(p.id);
-                if (personStatus !== SDDMStatus[SDDMStatus.D1UNLOCKED]) {
+                if (personStatus !== SDMMStatus[SDMMStatus.D1UNLOCKED]) {
                     Log.info("CourseController::provisionD1Repo( " + org + ", " + p.id + " ) - bad status: " + personStatus);
                     return {
                         failure: {

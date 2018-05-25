@@ -1,7 +1,6 @@
 /**
  * NOTE: these were part of SDDM frontend and should be made to be more generic (e.g.m, StatusPayload) for other courses.
  */
-
 export interface Payload {
     success?: ActionPayload | StatusPayload; // only set if defined
     failure?: FailurePayload; // only set if defined
@@ -27,6 +26,19 @@ export interface StatusPayload {
 
 export interface GradePayload {
     score: number; // grade: < 0 will mean 'N/A' in the UI
-    URL: string; // commit URL if known, otherwise repo url
+    comment: string;
+    URL: string; // commit URL if known, otherwise repo URL
     timestamp: number; // even if grade < 0 might as well return when the entry was made
+    custom: any;
+}
+
+export enum SDMMStatus {
+    D0PRE,
+    D0,
+    D1UNLOCKED,
+    D1TEAMSET,
+    D1,
+    D2,
+    D3PRE,
+    D3
 }

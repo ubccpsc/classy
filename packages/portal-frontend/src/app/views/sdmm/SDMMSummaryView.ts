@@ -8,7 +8,7 @@
 import {OnsModalElement} from "onsenui";
 
 import Log from "../../../../../common/Log";
-import {GradePayload, StatusPayload} from "../../../../../common/Types";
+import {GradePayload, StatusPayload} from "../../../../../common/types/SDMMTypes";
 
 import {UI} from "../../util/UI";
 import {IView} from "../IView";

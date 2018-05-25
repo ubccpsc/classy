@@ -4,7 +4,7 @@ import "mocha";
 import {Test} from "../GlobalSpec";
 
 import {GradesController} from "../../src/controllers/GradesController";
-import {GradePayload} from "../../src/controllers/CourseController";
+import {GradePayload} from "../../../common/types/SDMMTypes";
 
 const loadFirst = require('../GlobalSpec');
 const rFirst = require('./RepositoryControllerSpec');
