@@ -10,7 +10,6 @@ import Log from "../../../../common/Log";
  *
  */
 
-
 // Represents an Assignment grade, comprised of an arbitrary amount of Questions
 export interface AssignmentGrade {
     assignmentID: string;               // Unique Assignment ID per course
@@ -51,7 +50,7 @@ export class AssignmentController {
         //
         // return returningPromise;
         Log.info("AssignmentController:getAssignmentGrade("+org+", "+personId+", "+assignId+") - start");
-        let grade : Grade = await this.gc.getGrade(org,personId,assignId);
+        let grade : Grade = await this.gc.getGrade(personId,assignId);
         if (grade === null) return null;
 
         const assignmentGrade : AssignmentGrade = grade.custom;
@@ -77,12 +76,12 @@ export class AssignmentController {
 
         try {
             let peopleIDs: string[] = [];
-            let repo = await this.db.getRepository(org, repoID);
+            let repo = await this.db.getRepository(repoID);
             const teamIDs = repo.teamIds;
 
             if (teamIDs !== null) {
                 for (const tid of teamIDs) {
-                    let team = await this.db.getTeam(org, tid);
+                    let team = await this.db.getTeam(tid);
                     for (const t of team.personIds) {
                         let found = false;
                         for (const ap of peopleIDs) {
@@ -101,12 +100,11 @@ export class AssignmentController {
 
             for (let personID of peopleIDs) {
                 // set each person's grade with the grade calculated
-                let gradeRecord = await this.gc.getGrade(org, personID, assignId);
+                let gradeRecord = await this.gc.getGrade(personID, assignId);
                 if (gradeRecord === null) {
                     // if no record was found, create a new one
 
                     gradeRecord = {
-                        org:        org,
                         personId:   personID,
                         delivId:    assignId,
                         score:      totalGrade,
