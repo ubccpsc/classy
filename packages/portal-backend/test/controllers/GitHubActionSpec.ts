@@ -1,5 +1,4 @@
-const loadFirst = require('../../GlobalSpec');
-const rFirst = require('./SDDMControllerSpec'); // so we go last
+const loadFirst = require('../GlobalSpec');
 
 import {expect} from "chai";
 import "mocha";
@@ -42,7 +41,6 @@ describe.skip("GitHubActions", () => {
         "cpscbot",
         "TEST__X__t_TESTteam1"
     ];
-
 
     it("Clear stale repos and teams.", async function () {
         let del = await deleteStale();
@@ -227,36 +225,6 @@ describe.skip("GitHubActions", () => {
         Log.test('after expected fail');
         (<any>gh).gitHubAuthToken = old; // restore token
     }).timeout(TIMEOUT);
-
-
-    /*
-    it("Should be able to delete things before running provisioning tests.", async function () {
-        // check auth
-        let repos = await gh.listRepos(Test.ORGNAME);
-        expect(repos).to.be.an('array');
-        expect(repos.length > 0).to.be.true;
-
-        // delete test repos if needed
-        for (const repo of repos as any) {
-            if (repo.full_name.indexOf("SECapstone/TEST__X__") === 0) {
-                Log.test("Deleting test repo: " + repo.name);
-                await gh.deleteRepo(Test.ORGNAME, repo.name);
-            }
-        }
-
-        // delete teams if needed
-        let teams = await gh.listTeams(Test.ORGNAME);
-        expect(teams).to.be.an('array');
-        expect(teams.length > 0).to.be.true;
-
-        for (const team of teams as any) {
-            if (team.name.indexOf("TEST__X__t_") === 0) {
-                Log.info('Deleting test team: ' + JSON.stringify(team));
-                await gh.deleteTeam(Test.ORGNAME, team.id);
-            }
-        }
-    }).timeout(30 * 1000);
-    */
 
     it("Clear stale repos and teams.", async function () {
         let del = await deleteStale();

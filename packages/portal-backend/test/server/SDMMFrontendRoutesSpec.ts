@@ -15,26 +15,32 @@ import restify = require('restify');
 const request = require('supertest');
 const https = require('https');
 
-describe('REST Routes for Frontend', function () {
+describe('SDMM: Frontend Routes', function () {
 
     var app: restify.Server = null;
+    var server: BackendServer = null;
 
     before(function () {
-        Log.test('RestifyFrontendRoutes::before - start');
+        Log.test('SDMMFrontendRoutes::before - start');
         // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
-        const server = new BackendServer(false);
+        server = new BackendServer(false);
 
         return server.start().then(function () {
-            Log.test('RestifyFrontendRoutes::before - server started');
-            Log.test('orgName: ' + Test.ORGNAME);
+            Log.test('SDMMFrontendRoutes::before - server started');
+            // Log.test('orgName: ' + Test.ORGNAME);
             app = server.getServer();
         }).catch(function (err) {
             // probably ok; ust means server is already started
-            Log.test('RestifyFrontendRoutes::before - server might already be started: ' + err);
+            Log.test('SDMMFrontendRoutes::before - server might already be started: ' + err);
         });
     });
 
-    it.skip('Should respond to a valid status request', async function () {
+    after(function () {
+        Log.test('SDMMFrontendRoutes::after - start');
+        return server.stop();
+    });
+
+    it('Should respond to a valid status request', async function () {
 
         const PERSON1: Person = {
             id:            Test.USERNAME1,
@@ -63,9 +69,15 @@ describe('REST Routes for Frontend', function () {
         // works on its own but not with others
         Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(200);
-        expect(response.body.user).to.not.be.undefined;
-        expect(response.body.status).to.not.be.undefined;
-        expect(response.body.status).to.equal('D0PRE');
+
+        expect(response.body.success).to.not.be.undefined;
+
+        expect(response.body.success.status).to.equal('D0PRE');
+
+        expect(response.body.success.d0).to.be.null;
+        expect(response.body.success.d1).to.be.null;
+        expect(response.body.success.d2).to.be.null;
+        expect(response.body.success.d3).to.be.null;
     });
 
 });

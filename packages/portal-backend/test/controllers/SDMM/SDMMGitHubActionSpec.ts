@@ -11,7 +11,7 @@ import Util from "../../../../common/Util";
 import {ActionPayload, CourseController, GradePayload} from "../../../src/controllers/CourseController";
 import {GradesController} from "../../../src/controllers/GradesController";
 
-describe.only("SDMM:: SDMMGitHubActions", () => {
+describe.skip("SDMM:: SDMMGitHubActions", () => {
 
     let gh: GitHubActions;
 
