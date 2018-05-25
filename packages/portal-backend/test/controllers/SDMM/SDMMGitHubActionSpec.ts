@@ -1,14 +1,17 @@
 const loadFirst = require('../../GlobalSpec');
-const rFirst = require('./SDDMControllerSpec'); // so we go last
+const rFirst = require('./SDMMControllerSpec'); // so we go last
 
 import {expect} from "chai";
 import "mocha";
 
-import {GitHubActions, GitHubController} from "../../../src/controllers/GitHubController";
-import Log from "../../../../common/Log";
 import {Test} from "../../GlobalSpec";
+
+import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
-import {ActionPayload, CourseController, GradePayload} from "../../../src/controllers/CourseController";
+import {ActionPayload, GradePayload} from "../../../../common/types/SDMMTypes";
+
+import {GitHubActions, GitHubController} from "../../../src/controllers/GitHubController";
+import {CourseController} from "../../../src/controllers/CourseController";
 import {GradesController} from "../../../src/controllers/GradesController";
 
 describe.skip("SDMM:: SDMMGitHubActions", () => {

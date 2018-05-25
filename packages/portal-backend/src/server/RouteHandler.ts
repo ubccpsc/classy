@@ -7,7 +7,8 @@ import {AuthController} from "../controllers/AuthController";
 import {DatabaseController} from "../controllers/DatabaseController";
 import {Auth, Person} from "../Types";
 import {PersonController} from "../controllers/PersonController";
-import {CourseController, GradePayload, Payload, StatusPayload} from "../controllers/CourseController";
+import {CourseController} from "../controllers/CourseController";
+import {GradePayload, Payload, StatusPayload} from "../../../common/types/SDMMTypes";
 import {GitHubController} from "../controllers/GitHubController";
 import ClientOAuth2 = require("client-oauth2");
 

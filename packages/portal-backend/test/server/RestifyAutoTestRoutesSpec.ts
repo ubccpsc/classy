@@ -1,13 +1,13 @@
 import {expect} from "chai";
 import "mocha";
 
-import BackendServer from "../../src/server/BackendServer";
-import Log from "../../../common/Log";
-import Config from "../../../common/Config";
-
 import {Test} from "../GlobalSpec";
 
-import {GradePayload} from "../../src/controllers/CourseController";
+import Log from "../../../common/Log";
+import Config from "../../../common/Config";
+import {GradePayload} from "../../../common/types/SDMMTypes";
+
+import BackendServer from "../../src/server/BackendServer";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 
 // This seems silly, but just makes sure GlobalSpec runs first.
