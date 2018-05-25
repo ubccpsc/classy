@@ -3,6 +3,7 @@ import {DatabaseController} from "../DatabaseController";
 import {Grade} from "../../Types";
 // import {GradePayload} from "../GradesController";
 import Log from "../../../../common/Log";
+import {GradePayload} from "../CourseController";
 
 /**
  *
@@ -43,13 +44,13 @@ export class AssignmentController {
     // }
 
 
-    public async getAssignmentGrade(org: string, personId: string, assignId: string): Promise<AssignmentGrade | null> {
+    public async getAssignmentGrade(personId: string, assignId: string): Promise<AssignmentGrade | null> {
         // let returningPromise = new Promise((resolve, reject) => {
         //     let gradeObj : Grade = await this.gc.getGrade(org, personId, assignId);
         // });
         //
         // return returningPromise;
-        Log.info("AssignmentController:getAssignmentGrade("+org+", "+personId+", "+assignId+") - start");
+        Log.info("AssignmentController:getAssignmentGrade("+", "+personId+", "+assignId+") - start");
         let grade : Grade = await this.gc.getGrade(personId,assignId);
         if (grade === null) return null;
 
@@ -58,78 +59,32 @@ export class AssignmentController {
         return assignmentGrade;
     }
 
-    public async setAssignmentGrade(org: string, repoID: string, assignId: string, assnPayload: AssignmentGrade) : Promise<boolean> {
+    public async setAssignmentGrade(repoID: string, assignId: string, assnPayload: AssignmentGrade) : Promise<boolean> {
         // Array<Array<SubsectionGrade>>
+        Log.info("AssignmentController::setAssignmentGrade("+", "+repoID+", "+assignId+",..) - start");
+        Log.trace("AssignmentController::setAssignmentGrade(..) - payload: " + JSON.stringify(assnPayload));
 
         let totalGrade = 0;
 
-        for (let i = 0; i < assnPayload.questions.length; i++) {
-            let aQuestion = assnPayload.questions[i];
-            for (let j = 0; j < aQuestion.subQuestion.length; j++) {
-                let aSubQuestion = aQuestion.subQuestion[j];
+        for (const aQuestion of assnPayload.questions) {
+            for (const aSubQuestion of aQuestion.subQuestion) {
+                // Sum up all subcompartment grades
                 totalGrade += aSubQuestion.grade;
             }
         }
 
-        Log.info("AssignmentController::setAssignmentGrade("+org+", "+repoID+", "+assignId+",..) - start");
-        Log.trace("AssignmentController::setAssignmentGrade(..) - payload: " + JSON.stringify(assnPayload));
+        let newGradePayload : GradePayload = {
+            // assignmentID: assnPayload.assignmentID,
+            // studentID: assnPayload.studentID,
+            score: totalGrade,
+            comment: 'Marked assignment',
+            URL: "",
+            timestamp: Date.now(),
+            custom: assnPayload
+        };
 
-        try {
-            let peopleIDs: string[] = [];
-            let repo = await this.db.getRepository(repoID);
-            const teamIDs = repo.teamIds;
-
-            if (teamIDs !== null) {
-                for (const tid of teamIDs) {
-                    let team = await this.db.getTeam(tid);
-                    for (const t of team.personIds) {
-                        let found = false;
-                        for (const ap of peopleIDs) {
-                            if (ap === t) {
-                                found = true;
-                            }
-                        }
-                        if (found === false) {
-                            peopleIDs.push(t);
-                        }
-                    }
-                }
-            }
-
-            Log.info("AssignmentController::setAssignmentGrade(..) - # people: " + peopleIDs.length);
-
-            for (let personID of peopleIDs) {
-                // set each person's grade with the grade calculated
-                let gradeRecord = await this.gc.getGrade(personID, assignId);
-                if (gradeRecord === null) {
-                    // if no record was found, create a new one
-
-                    gradeRecord = {
-                        personId:   personID,
-                        delivId:    assignId,
-                        score:      totalGrade,
-                        comment:    "",                     // TODO, change this
-                        URL:        "",                     // TODO: edit the url
-                        timestamp:  Date.now(),
-                        custom:     assnPayload
-
-                };
-                    Log.trace("AssignmentController::setAssignmentGrade(..) - new grade; personID: "+ personID + "; grade: " + JSON.stringify(gradeRecord));
-                } else {
-                    // retrieved grades, update existing records
-                    gradeRecord.score       = totalGrade;
-                    gradeRecord.comment     = "";           // TODO: have comments show up (maybe?)
-                    gradeRecord.URL         = "";           // TODO: edit the url
-                    gradeRecord.timestamp   = Date.now();
-                }
-                await this.db.writeGrade(gradeRecord);
-            }
-            return true;
-
-        } catch (err) {
-            Log.error("AssignmentController::setAssignmentGrade(..) - ERROR: " + err);
-            return false;
-        }
+        let success = await this.gc.createGrade(repoID, assignId, newGradePayload);
+        return success;
     }
 
     // public async addGrade(org: string, repoId: string, delivId: string)
