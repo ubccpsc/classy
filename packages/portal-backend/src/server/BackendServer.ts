@@ -7,8 +7,10 @@ import * as fs from "fs";
 import Log from "../../../common/Log";
 import Config from "../../../common/Config";
 
-import {RouteHandler} from "./RouteHandler";
 import {Factory} from "../Factory";
+
+import {RouteHandler} from "./RouteHandler";
+import GeneralRoutes from "./common/GeneralRoutes";
 
 // import RouteHandler from './RouteHandler';
 
@@ -115,9 +117,17 @@ export default class BackendServer {
                 that.rest.post('/githubWebhook', RouteHandler.githubWebhook); // forward GitHub Webhooks to AutoTest
 
                 /**
+                 * Run individual handlers as needed
+                 */
+                Log.info('BackendServer::start() - Registering individual handlers');
+                new GeneralRoutes().registerRoutes(that.rest);
+                Log.info('BackendServer::start() - Registering individual handlers; done');
+                /**
                  * Register custom route handler.
                  */
+                Log.info('BackendServer::start() - Registering custom handler');
                 Factory.getCustomRouteHandler().registerRoutes(that.rest);
+                Log.info('BackendServer::start() - Registering custom handler; done');
 
                 /**
                  * Serve up index.html; not needed for server backend

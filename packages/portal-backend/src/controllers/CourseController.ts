@@ -856,4 +856,18 @@ export class CourseController { // don't implement ICourseController yet
             return "t_";
         }
     }
+
+    public static getOrg(): string | null {
+        try {
+            const org = Config.getInstance().getProp('org');
+            if (org !== null) {
+                return org;
+            } else {
+                Log.error("CourseController::getOrg() - ERROR: null org");
+            }
+        } catch (err) {
+            Log.error("CourseController::getOrg() - ERROR: " + err.message);
+        }
+        return null;
+    }
 }

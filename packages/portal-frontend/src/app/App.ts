@@ -38,13 +38,15 @@ export class App {
             this.backendURL = location + ':5000/';
         }
 
-        Log.trace('App::<init> config; backend: ' + this.backendURL + '; frontend: ' + this.frontendURL);
+        Log.trace('App::<init> - frontend: ' + this.frontendURL);
         Log.trace('App::<init> - backend: ' + this.backendURL);
     }
 
     public async init(): Promise<{}> {
         Log.trace('App::init() - start');
         const that = this;
+
+        await this.retrieveOrg();
 
         let validated = await that.validateCredentials();
         this.validated = validated;
@@ -350,6 +352,29 @@ export class App {
             return null;
         });
     };
+
+    private async retrieveOrg() {
+        const url = this.backendURL + '/org';
+        Log.trace("App::retrieveOrg() - start; url: " + url);
+
+        const options = {
+            headers: {
+                'Content-Type': 'application/json',
+                'User-Agent':   'Portal',
+            }
+        };
+
+        let response = await fetch(url, options);
+        if (response.status === 200) {
+            Log.trace('App::retrieveOrg() - 200 received');
+            const json = await response.json();
+            Log.trace('App::retrieveOrg() - payload: ' + JSON.stringify(json) + '; setting org: ' + json.org);
+            ViewFactory.getInstance(json.org);
+            Log.trace("App::retrieveOrg() - done");
+        } else {
+            Log.error('App::retrieveOrg() - ERROR');
+        }
+    }
 
     public handleMainPageClick(params?: {}) {
         Log.info("App::handleMainPageClick(..) - start");
