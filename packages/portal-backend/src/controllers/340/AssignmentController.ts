@@ -16,7 +16,6 @@ export interface AssignmentGrade {
     assignmentID: string;               // Unique Assignment ID per course
     studentID: string;                  // Unique Student ID per course
     questions: Array<QuestionGrade>;    // SubQuestions
-
 }
 
 // Represents the Question's grade, comprised of an arbitrary amount of subQuestions
@@ -31,6 +30,28 @@ export interface SubQuestionGrade {
     sectionName: string;
     grade: number;
     feedback: string;
+}
+
+// Represents a grading rubric
+export interface AssignmentGradingRubric {
+    name: string;
+    comment: string;
+    questions: QuestionGradingRubric[];
+}
+
+// Represents a question rubric
+export interface QuestionGradingRubric {
+    name: string;
+    comment: string;
+    subQuestions: SubQuestionGradingRubric[];
+}
+
+export interface SubQuestionGradingRubric {
+    name: string;
+    comment: string;
+    outOf: number;
+
+    modifiers: any;         // Custom modifiers - course dependant
 }
 
 export class AssignmentController {
