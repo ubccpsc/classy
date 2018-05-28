@@ -3,6 +3,7 @@ import Log from "../../common/Log";
 
 import IREST from "./server/IREST";
 import SDMMREST from "./server/SDMM/SDMMREST";
+import CS340REST from "./server/340/CS340REST";
 
 export class Factory {
 
@@ -21,6 +22,7 @@ export class Factory {
         } else if (org === 'secapstonetest') {
             return new SDMMREST();
         } else if (org === 'cs340') {
+            return new CS340REST();
             // do something
         } else {
             Log.error("Factory::getCustomRouteHandler() - unknown org: " + org);

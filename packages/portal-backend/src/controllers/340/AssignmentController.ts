@@ -3,7 +3,7 @@ import {DatabaseController} from "../DatabaseController";
 import {Grade} from "../../Types";
 // import {GradePayload} from "../GradesController";
 import Log from "../../../../common/Log";
-import {GradePayload} from "../CourseController";
+import {GradePayload} from "../../../../common/types/SDMMTypes";
 
 /**
  *
@@ -78,7 +78,7 @@ export class AssignmentController {
             // studentID: assnPayload.studentID,
             score: totalGrade,
             comment: 'Marked assignment',
-            URL: "",
+            URL: "", // TODO: Assign repo url
             timestamp: Date.now(),
             custom: assnPayload
         };
