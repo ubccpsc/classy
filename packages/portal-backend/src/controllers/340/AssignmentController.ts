@@ -15,14 +15,14 @@ import {GradePayload} from "../../../../common/types/SDMMTypes";
 export interface AssignmentGrade {
     assignmentID: string;               // Unique Assignment ID per course
     studentID: string;                  // Unique Student ID per course
-    questions: Array<QuestionGrade>;    // SubQuestions
+    questions: QuestionGrade[];    // SubQuestions
 }
 
 // Represents the Question's grade, comprised of an arbitrary amount of subQuestions
 export interface QuestionGrade {
     questionName: string;
     commentName: string;
-    subQuestion: Array<SubQuestionGrade>;
+    subQuestion: SubQuestionGrade[];
 }
 
 // Represents the subQuestion's grade
@@ -53,6 +53,15 @@ export interface SubQuestionGradingRubric {
 
     modifiers: any;         // Custom modifiers - course dependant
 }
+
+// export interface CategoricalGradeRecord extends CategoricalRecord {
+//     grade: number;
+// }
+//
+// export interface CategoricalRecord {
+//     name: string;
+//     comment: string;
+// }
 
 export class AssignmentController {
     private db: DatabaseController = DatabaseController.getInstance();

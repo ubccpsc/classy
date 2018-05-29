@@ -51,7 +51,7 @@ export default class CS340REST implements IREST {
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
-        const aid = req.params.aid;         // Assignment ID
+        const aid = req.params.aid;                 // Assignment ID
 
         // TODO: Authenticate token
 
@@ -79,7 +79,8 @@ export default class CS340REST implements IREST {
 
         return next();
 
-/*        let delivController : DeliverablesController = new DeliverablesController();
+    /*
+    let delivController : DeliverablesController = new DeliverablesController();
         delivController.getDeliverable(aid).then((deliv) => {
             if(deliv === null) {
                 // TODO: send an appropriate failure
