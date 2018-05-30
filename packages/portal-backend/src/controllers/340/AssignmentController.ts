@@ -4,75 +4,15 @@ import {Grade} from "../../Types";
 // import {GradePayload} from "../GradesController";
 import Log from "../../../../common/Log";
 import {GradePayload} from "../../../../common/types/SDMMTypes";
+import {AssignmentGrade} from "../../../../common/types/CS340Types";
 
-/**
- *
- * Custom type definitions, to be placed inside the custom field
- *
+/*
+ * Definition of controller object
  */
-
-// Represents an Assignment grade, comprised of an arbitrary amount of Questions
-export interface AssignmentGrade {
-    assignmentID: string;               // Unique Assignment ID per course
-    studentID: string;                  // Unique Student ID per course
-    questions: QuestionGrade[];    // SubQuestions
-}
-
-// Represents the Question's grade, comprised of an arbitrary amount of subQuestions
-export interface QuestionGrade {
-    questionName: string;
-    commentName: string;
-    subQuestion: SubQuestionGrade[];
-}
-
-// Represents the subQuestion's grade
-export interface SubQuestionGrade {
-    sectionName: string;
-    grade: number;
-    feedback: string;
-}
-
-// Represents a grading rubric
-export interface AssignmentGradingRubric {
-    name: string;
-    comment: string;
-    questions: QuestionGradingRubric[];
-}
-
-// Represents a question rubric
-export interface QuestionGradingRubric {
-    name: string;
-    comment: string;
-    subQuestions: SubQuestionGradingRubric[];
-}
-
-export interface SubQuestionGradingRubric {
-    name: string;
-    comment: string;
-    outOf: number;
-
-    modifiers: any;         // Custom modifiers - course dependant
-}
-
-// export interface CategoricalGradeRecord extends CategoricalRecord {
-//     grade: number;
-// }
-//
-// export interface CategoricalRecord {
-//     name: string;
-//     comment: string;
-// }
 
 export class AssignmentController {
     private db: DatabaseController = DatabaseController.getInstance();
-    // private gc: GradesController = GradesController.getInstance();
     private gc : GradesController = new GradesController();
-
-    // public constructor() {
-    //     Log.info("New AssignmentController created");
-    //     this.gc = new GradesController();
-    // }
-
 
     public async getAssignmentGrade(personId: string, assignId: string): Promise<AssignmentGrade | null> {
         // let returningPromise = new Promise((resolve, reject) => {
@@ -85,7 +25,6 @@ export class AssignmentController {
         if (grade === null) return null;
 
         const assignmentGrade : AssignmentGrade = grade.custom;
-
         return assignmentGrade;
     }
 
@@ -116,6 +55,4 @@ export class AssignmentController {
         let success = await this.gc.createGrade(repoID, assignId, newGradePayload);
         return success;
     }
-
-    // public async addGrade(org: string, repoId: string, delivId: string)
 }

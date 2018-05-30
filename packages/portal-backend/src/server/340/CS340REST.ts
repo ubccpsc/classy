@@ -4,7 +4,8 @@ import Log from "../../../../common/Log";
 import IREST from "../IREST";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {Deliverable} from "../../Types";
-import {AssignmentController, AssignmentGradingRubric} from "../../controllers/340/AssignmentController";
+import {AssignmentController} from "../../controllers/340/AssignmentController";
+import {AssignmentGradingRubric} from "../../../../common/types/CS340Types";
 
 export default class CS340REST implements IREST {
     public constructor() {
@@ -77,9 +78,8 @@ export default class CS340REST implements IREST {
             ]
         });
 
-        return next();
+        // return next();
 
-    /*
     let delivController : DeliverablesController = new DeliverablesController();
         delivController.getDeliverable(aid).then((deliv) => {
             if(deliv === null) {
@@ -87,7 +87,7 @@ export default class CS340REST implements IREST {
             } else {
                 if (deliv.custom !== null) {
                     let rubric : AssignmentGradingRubric = deliv.custom;
-                    // rubric
+                    //
                 }
             }
         });
@@ -95,7 +95,6 @@ export default class CS340REST implements IREST {
         res.send(404, {
             message: "Not implemented"
         });
-    */
     }
 
     public static setAssignmentGrade(req:any, res: any, next:any) {

@@ -1,5 +1,7 @@
 import {SDMMSummaryView} from "./views/sdmm/SDMMSummaryView";
 import Log from "../../../common/Log";
+import {CS340View} from "./views/340/CS340View";
+import {UI} from "./util/UI";
 
 /**
  * Entry point for configuring per-course aspects of the frontend.
@@ -36,10 +38,14 @@ export class Factory {
     }
 
     public getView(backendUrl: string) {
+        Log.trace("Begin view fetching");
         if (this.org === 'sdmm') {
             return new SDMMSummaryView(backendUrl);
         } else if (this.org === 'cs340') {
             // something else
+            // Log.trace("ZOOOOOOOOOOOOOOOOOOOM");
+            // return new CS340View(backendUrl);
+            UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/landing.html');
         } else {
             Log.error("Factory::getView() - ERROR; unknown org: " + this.org);
         }
