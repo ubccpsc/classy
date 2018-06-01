@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link   rel="stylesheet" href="https://unpkg.com/onsenui/css/onsenui.css">
+    <link   rel="stylesheet" href="https://unpkg.com/onsenui/css/onsen-css-components.min.css">
+    <script src="https://unpkg.com/onsenui/js/onsenui.min.js"></script>
+
+    <link   rel="stylesheet" href="css/style.css">
+
+    <script src="js/gradeSubmission.js"></script>
+    <script>
+        var readyState = setInterval(function () {
+            if (document && document.readyState === 'complete') {
+                clearInterval(readyState);
+                readyState = null;
+
+                populateGrading("");
+            }
+        }, 10);
+    </script>
+</head>
+
+<body>
+<ons-navigator id="myNavigator" page="gradeSubmission.html"></ons-navigator>
+<template id="gradeSubmission.html">
+    <ons-page id="gradeSubmission">
+        <ons-toolbar>
+            <div class="center" id="topBarName">Grade Submission</div>
+        </ons-toolbar>
+
+        <div class="mainBody">
+            <div id="assignmentSection">
+                <!--This will be filled in dynamically-->
+            </div>
+            <div id="gradingSection">
+                <!--This will be filled in dynamically-->
+            </div>
+        </div>
+    </ons-page>
+</template>
+</body>
