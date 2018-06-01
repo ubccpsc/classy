@@ -41,7 +41,7 @@ export interface SubQuestionGradingRubric {
     name: string;
     comment: string;
     outOf: number;
-
+    weight: number;
     modifiers: any;         // Custom modifiers - course dependant
 }
 
