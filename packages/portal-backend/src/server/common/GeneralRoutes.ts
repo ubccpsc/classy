@@ -22,7 +22,9 @@ export default class GeneralRoutes implements IREST {
 
         const org = CourseController.getOrg();
         if (org !== null) {
-            res.send({org: org});
+            const payload = {org: org};
+            Log.trace('GeneralRoutes::getOrg(..) - sending: ' + JSON.stringify(payload));
+            res.send(payload);
         } else {
             res.send(400, {failure: {message: 'Unable to retrieve org (server error)'}});
         }

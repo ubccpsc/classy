@@ -93,7 +93,7 @@ export default class FrontEndServer {
 Log.info("FrontEndServer - port: " + Config.getInstance().getProp('frontendPort'));
 const server = new FrontEndServer();
 server.start().then(function () {
-    Log.info("FrontEndServer - started");
+    Log.info("FrontEndServer - started; Log messages will mostly appear in your browser console.");
 }).catch(function (err) {
     Log.info("FrontEndServer - ERROR: " + err);
 });

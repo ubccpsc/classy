@@ -202,6 +202,11 @@ export class App {
                 */
             });
 
+            // TODO: Feels like this needs some kind of guard?
+            // Loads the landing page, but I wouldn't want this to happen more than the first login
+            Log.trace('App::init()::init - loading initial index');
+            UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/landing.html');
+
             fulfill({}); // resolve the promise so it's not just hanging there
         });
     }

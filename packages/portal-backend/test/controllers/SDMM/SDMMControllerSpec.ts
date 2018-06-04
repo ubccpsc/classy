@@ -6,6 +6,8 @@ import "mocha";
 
 import {Test} from "../../GlobalSpec";
 
+
+import Config from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {ActionPayload, FailurePayload, GradePayload, SDMMStatus} from "../../../../common/types/SDMMTypes";
 
@@ -95,8 +97,14 @@ describe("SDDM: SDMMController", () => {
 
     let data: TestData;
 
-    before(async () => {
+    let OLD_ORG: string | null = null;
 
+    before(async () => {
+        Log.test("SDMMControllerSpec::before()");
+        // Force SDMM tests to run in an SDMM org
+        Config.getInstance();
+        OLD_ORG = (<any>Config.getInstance()).config.org;
+        (<any>Config.getInstance()).config.org = 'secapstonetest';
     });
 
     beforeEach(() => {
@@ -108,6 +116,13 @@ describe("SDDM: SDMMController", () => {
         gc = new GradesController();
         tc = new TeamController();
         pc = new PersonController();
+    });
+
+    after(async () => {
+        // Force SDMM tests to run in an SDMM org
+        Log.test("SDMMControllerSpec::after()");
+        Config.getInstance();
+        (<any>Config.getInstance()).config.org = OLD_ORG;
     });
 
     it("Should be able to get a D0PRE status.", async () => {

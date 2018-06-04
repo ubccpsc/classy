@@ -4,6 +4,7 @@ import Log from "../../common/Log";
 import IREST from "./server/IREST";
 import SDMMREST from "./server/SDMM/SDMMREST";
 import CS340REST from "./server/340/CS340REST";
+import NoCustomRoutes from "./server/common/NoCustomRoutes";
 
 export class Factory {
 
@@ -17,13 +18,13 @@ export class Factory {
     public static getCustomRouteHandler(): IREST {
         const org = Factory.getOrg();
 
-        if (org === 'sdmm') {
+        if (org === 'sdmm' || org === 'secapstonetest') {
             return new SDMMREST();
-        } else if (org === 'secapstonetest') {
-            return new SDMMREST();
+        } else if (org === 'CS310-2017Jan' || org === 'CS310-2017Jan_TEST') {
+            // no custom routes are required for 310
+            return new NoCustomRoutes();
         } else if (org === 'cs340') {
             return new CS340REST();
-            // do something
         } else {
             Log.error("Factory::getCustomRouteHandler() - unknown org: " + org);
         }

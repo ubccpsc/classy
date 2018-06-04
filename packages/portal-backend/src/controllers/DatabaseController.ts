@@ -270,7 +270,7 @@ export class DatabaseController {
     public async clearData(): Promise<void> {
         Log.warn("DatabaseController::clearData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
         const configOrg = Config.getInstance().getProp("testorg");
-        if (configOrg === "test" || configOrg === "secapstonetest") {
+        if (configOrg === "test" || configOrg === "secapstonetest" || configOrg === "CS310-2017Jan_TEST") {
             let cols = [this.PERSONCOLL, this.GRADECOLL, this.TEAMCOLL, this.DELIVCOLL, this.REPOCOLL];
             for (const col of cols) {
                 Log.info("DatabaseController::clearData() - removing data for collection: " + col);
