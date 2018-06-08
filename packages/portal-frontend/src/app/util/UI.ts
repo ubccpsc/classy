@@ -39,7 +39,10 @@ export class UI {
     public static getCurrentPage(): any {
         const nav = document.querySelector('#myNavigator') as any;
         if (nav !== null) {
-            return nav.getCurrentPage();
+            //
+            return nav.topPage;
+            // This doesn't seem to work anymore, there is no getCurrentPage function on the nav object
+            // return nav.getCurrentPage();
         }
     }
 

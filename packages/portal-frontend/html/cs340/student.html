@@ -1,4 +1,3 @@
-
 <ons-page id="studentTabsPage">
     <ons-toolbar>
         <div class="center" id="studentTabsHeader">CS 340</div>
@@ -9,6 +8,19 @@
             </ons-toolbar-button>
         </div>
     </ons-toolbar>
+    <div>
+<!--        <ons-select id="deliverableList" onchange="window.classportal.view.changeStudentList(event)">
+
+            &lt;!&ndash;This is to be filled with some buttons with deliverable IDs attached to them&ndash;&gt;
+&lt;!&ndash;            <option value="material">Hello</option>
+            <option value="material">Hello1</option>
+            <option value="material">Hello2</option>&ndash;&gt;
+        </ons-select>-->
+        <ons-list-header>Select Deliverable:</ons-list-header>
+        <ons-list id="deliverableList" expandable>
+
+        </ons-list>
+    </div>
     <ons-modal id="studentModal">
         <div style="display:flex; flex-direction:column; align-items: center;">
             <div id="modalText" style="padding-top: 1em; padding-bottom: 1em;">Updating. Will take < 5 seconds.</div>
@@ -16,13 +28,23 @@
         </div>
     </ons-modal>
     <ons-button onclick="window.classportal.view.testfunction()">
-    <!--<ons-button onclick="myApp.fooBar()">-->
         A button
     </ons-button>
     <!--<ons-list>-->
         <!--<ons-list-item>Content here</ons-list-item>-->
     <!--</ons-list>-->
+    <script>
+        document.addEventListener('init', function (event) {
+            window.classportal.view.renderDeliverables();
+        });
+    </script>
 </ons-page>
+
+<!--<script>
+    document.addEventListener('init', function (event) {
+        window.classportal.view.getAllDeliverables();
+    });
+</script>-->
 
 <!--
 <ons-page id="gradeSubmission">

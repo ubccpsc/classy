@@ -5,7 +5,7 @@
  * student views, as they need for their own courses.
  */
 
-import {OnsModalElement} from "onsenui";
+import {OnsModalElement, OnsPageElement, OnsToastElement} from "onsenui";
 
 import Log from "../../../../../common/Log";
 import {GradePayload, StatusPayload} from "../../../../../common/types/SDMMTypes";
@@ -14,6 +14,8 @@ import {AssignmentGradingRubric, QuestionGradingRubric, SubQuestionGradingRubric
 import {AssignmentGrade, QuestionGrade, SubQuestionGrade} from "../../../../../common/types/CS340Types";
 
 import {IView} from "../IView";
+import {Deliverable} from "../../../../../portal-backend/src/Types";
+import {Factory} from "../../Factory";
 
 
 export class CS340View implements IView {
@@ -70,6 +72,18 @@ export class CS340View implements IView {
         }
     }
 
+    public showError(failure: any) { // FailurePayload
+        Log.error("SDDM::showError(..) - failure: " + JSON.stringify(failure));
+        if (typeof failure === 'string') {
+            UI.showAlert(failure);
+        } else if (typeof failure.failure !== 'undefined') {
+            UI.showAlert(failure.failure.message);
+        } else {
+            Log.error("Unknown message: " + JSON.stringify(failure));
+            UI.showAlert("Action unsuccessful.");
+        }
+    }
+
     public async getGradingRubric(assignmentId : string) : Promise<AssignmentGradingRubric|null> {
         Log.info("CS340View::getGradingRubric("+assignmentId+") - start");
         const url = this.remote + '/getAssignmentRubric/' + assignmentId;
@@ -98,15 +112,60 @@ export class CS340View implements IView {
         return null;
     }
 
-    public showError(failure: any) { // FailurePayload
-        Log.error("SDDM::showError(..) - failure: " + JSON.stringify(failure));
-        if (typeof failure === 'string') {
-            UI.showAlert(failure);
-        } else if (typeof failure.failure !== 'undefined') {
-            UI.showAlert(failure.failure.message);
+    public async renderDeliverables() {
+        // TODO [Jonathan]: Get the deliverables
+        Log.info("CS340View::getAllDeliverables() - start");
+        const url = this.remote + '/getAllDeliverables';
+        this.showModal("Getting all deliverables, please wait...");
+
+        let options: any = this.getOptions();
+        options.method = 'get';
+        let response = await fetch(url, options);
+        UI.hideModal();
+
+        if (response.status === 200) {
+            // console.log("This is the result received: ");
+            let jsonResponse = await response.json();
+            // console.log(jsonResponse);
+            Log.info("CS340View::getAllDeliverables() - end");
+
+            let deliverableListElement : HTMLElement = document.getElementById("deliverableList");
+            while(deliverableListElement.firstChild) {
+                deliverableListElement.removeChild(deliverableListElement.firstChild);
+            }
+            let arrayResponse : Deliverable[] = jsonResponse.result;
+/*            let selectElement : HTMLElement = document.createElement("select");
+
+            selectElement.setAttribute("class", "select-input");*/
+
+            for(const deliv of arrayResponse) {
+                let newOption = document.createElement("ons-list-item");
+                newOption.setAttribute("tappable", "true");
+                // newOption.setAttribute("value", "material");
+                newOption.innerHTML = deliv.id;
+                // TODO [Jonathan]: Make this call the page transition function
+                newOption.setAttribute("onclick", "window.classportal.view.changeStudentList(\""+deliv.id+"\")");
+                // selectElement.appendChild(newOption);
+                deliverableListElement.appendChild(newOption);
+            }
+
+            // deliverableListElement.appendChild(selectElement);
+            // return jsonResponse.result;
         } else {
-            Log.error("Unknown message: " + JSON.stringify(failure));
-            UI.showAlert("Action unsuccessful.");
+            Log.info("CS340View::getAllDeliverables() - Error: unable to retrieve deliverables");
+            // return null;
         }
+    }
+
+    public async changeStudentList(delivId : string) {
+        console.log(delivId);
+
+        const nav = document.querySelector('#myNavigator') as any;
+        let page = nav.pushPage(Factory.getInstance().getHTMLPrefix() + "/deliverableView.html", {
+            delivId: delivId
+        });
+
+        console.log(nav.topPage.data);
+        // console.log();
     }
 }

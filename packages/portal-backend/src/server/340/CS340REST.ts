@@ -18,6 +18,7 @@ export default class CS340REST implements IREST {
         // TODO [Jonathan]: Add the routes here
         server.get('/getAssignmentGrade/:sid/:aid', CS340REST.getAssignmentGrade);
         server.get('/getAssignmentRubric/:aid', CS340REST.getAssignmentRubric);
+        server.get('/getAllDeliverables', CS340REST.getAllDeliverables);
         server.post('/setAssignmentGrade', CS340REST.setAssignmentGrade);
     }
 
@@ -157,6 +158,21 @@ export default class CS340REST implements IREST {
         res.send(404, {
             message: "Not implemented"
         });
+    }
+
+    public static getAllDeliverables(req:any, res:any, next:any) {
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        // TODO [Jonathan]: Return an array of deliverables
+        let delivController : DeliverablesController = new DeliverablesController();
+
+        delivController.getAllDeliverables(org).then((result) => {
+            res.send(200, {result});
+        });
+
+        // return next();
     }
 
 }

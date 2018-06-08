@@ -4,10 +4,11 @@ import "mocha";
 import {Test} from "../../GlobalSpec";
 
 import {GradesController} from "../../../src/controllers/GradesController";
-import {AssignmentController, AssignmentGrade} from "../../../src/controllers/340/AssignmentController";
+import {AssignmentController} from "../../../src/controllers/340/AssignmentController";
 import {RepositoryController} from "../../../src/controllers/RepositoryController";
 import {TeamController} from "../../../src/controllers/TeamController";
 import {Grade, Repository, Team} from "../../../src/Types";
+import {AssignmentGrade} from "../../../../common/types/CS340Types";
 
 const loadFirst = require('../../GlobalSpec');
 const dFirst = require('../GradeControllerSpec');
