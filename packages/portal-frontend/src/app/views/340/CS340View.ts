@@ -5,7 +5,7 @@
  * student views, as they need for their own courses.
  */
 
-import {OnsModalElement, OnsPageElement, OnsToastElement} from "onsenui";
+import {OnsModalElement, OnsPageElement, OnsSelectElement, OnsToastElement} from "onsenui";
 
 import Log from "../../../../../common/Log";
 import {GradePayload, StatusPayload} from "../../../../../common/types/SDMMTypes";
@@ -112,6 +112,13 @@ export class CS340View implements IView {
         return null;
     }
 
+    public async pageSetup() {
+        Log.info("CS340View::pageSetup - Setting up page with default dropdowns");
+
+
+    }
+
+
     public async renderDeliverables() {
         // TODO [Jonathan]: Get the deliverables
         Log.info("CS340View::getAllDeliverables() - start");
@@ -124,33 +131,31 @@ export class CS340View implements IView {
         UI.hideModal();
 
         if (response.status === 200) {
-            // console.log("This is the result received: ");
+            console.log("This is the result received: ");
             let jsonResponse = await response.json();
-            // console.log(jsonResponse);
+            console.log(jsonResponse);
             Log.info("CS340View::getAllDeliverables() - end");
 
-            let deliverableListElement : HTMLElement = document.getElementById("deliverableList");
+            let deliverableListElement = document.getElementById("select-deliverable-list") as OnsSelectElement;
             while(deliverableListElement.firstChild) {
                 deliverableListElement.removeChild(deliverableListElement.firstChild);
+                // deliverableListElement.remove();
             }
             let arrayResponse : Deliverable[] = jsonResponse.result;
-/*            let selectElement : HTMLElement = document.createElement("select");
-
-            selectElement.setAttribute("class", "select-input");*/
 
             for(const deliv of arrayResponse) {
-                let newOption = document.createElement("ons-list-item");
-                newOption.setAttribute("tappable", "true");
-                // newOption.setAttribute("value", "material");
+                // let newOption = document.createElement("ons-list-item");
+                let newOption = document.createElement("option");
+                // newOption.setAttribute("tappable", "true");
+                newOption.setAttribute("value", "material");
                 newOption.innerHTML = deliv.id;
                 // TODO [Jonathan]: Make this call the page transition function
-                newOption.setAttribute("onclick", "window.classportal.view.changeStudentList(\""+deliv.id+"\")");
+                // newOption.setAttribute("onclick", "window.classportal.view.changeStudentList(\""+deliv.id+"\")");
                 // selectElement.appendChild(newOption);
-                deliverableListElement.appendChild(newOption);
+                (<any>deliverableListElement).appendChild(newOption);
             }
 
-            // deliverableListElement.appendChild(selectElement);
-            // return jsonResponse.result;
+            // TODO [Jonathan]: Setup an event listener on the button to show the grades
         } else {
             Log.info("CS340View::getAllDeliverables() - Error: unable to retrieve deliverables");
             // return null;

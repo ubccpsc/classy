@@ -16,9 +16,33 @@
             <option value="material">Hello1</option>
             <option value="material">Hello2</option>&ndash;&gt;
         </ons-select>-->
-        <ons-list-header>Select Deliverable:</ons-list-header>
+<!--        <ons-list-header>Select Deliverable:</ons-list-header>
         <ons-list id="deliverableList" expandable>
 
+        </ons-list>-->
+
+        <ons-list>
+            <ons-list-header>Select Deliverable:</ons-list-header>
+            <ons-list-item style="text-align: center;">
+                <ons-row>
+                    <ons-col>
+                        Deliverable:
+                        <ons-select
+                                    style="padding-left: 2em; padding-right: 1em; vertical-align: middle;">
+                            <select id="select-deliverable-list" class="select-input">
+
+                            </select>
+                        </ons-select>
+                        <p></p>
+                        <ons-button id="select-deliverable-button">Update</ons-button>
+                    </ons-col>
+                </ons-row>
+            </ons-list-item>
+
+            <ons-list-header>Grades</ons-list-header>
+            <ons-list-item>
+                <div id="grades-table"></div>
+            </ons-list-item>
         </ons-list>
     </div>
     <ons-modal id="studentModal">
