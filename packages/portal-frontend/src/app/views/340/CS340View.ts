@@ -5,7 +5,7 @@
  * student views, as they need for their own courses.
  */
 
-import {OnsModalElement, OnsPageElement, OnsSelectElement, OnsToastElement} from "onsenui";
+import {OnsButtonElement, OnsModalElement, OnsPageElement, OnsSelectElement, OnsToastElement} from "onsenui";
 
 import Log from "../../../../../common/Log";
 import {GradePayload, StatusPayload} from "../../../../../common/types/SDMMTypes";
@@ -148,29 +148,28 @@ export class CS340View implements IView {
                 let newOption = document.createElement("option");
                 // newOption.setAttribute("tappable", "true");
                 newOption.setAttribute("value", "material");
-                newOption.innerHTML = deliv.id;
+                newOption.text = deliv.id;
+                newOption.value = deliv.id;
                 // TODO [Jonathan]: Make this call the page transition function
                 // newOption.setAttribute("onclick", "window.classportal.view.changeStudentList(\""+deliv.id+"\")");
                 // selectElement.appendChild(newOption);
                 (<any>deliverableListElement).appendChild(newOption);
             }
-
             // TODO [Jonathan]: Setup an event listener on the button to show the grades
+            let deliverableButton = document.getElementById("select-deliverable-button") as OnsButtonElement;
+            deliverableButton.addEventListener('click', () => {
+                let selectedDeliverable = deliverableListElement.options[deliverableListElement.options.selectedIndex].value;
+                // Log.info("CS340View::clickListener - value: " + selectedDeliverable);
+                this.renderStudentSubmissions(selectedDeliverable);
+            });
         } else {
             Log.info("CS340View::getAllDeliverables() - Error: unable to retrieve deliverables");
             // return null;
         }
     }
 
-    public async changeStudentList(delivId : string) {
-        console.log(delivId);
-
-        const nav = document.querySelector('#myNavigator') as any;
-        let page = nav.pushPage(Factory.getInstance().getHTMLPrefix() + "/deliverableView.html", {
-            delivId: delivId
-        });
-
-        console.log(nav.topPage.data);
-        // console.log();
+    public async renderStudentSubmissions(delivId : string) {
+        Log.info("CS340View::renderStudentSubmissions("+delivId+")");
+        let gradeBox = document.getElementById("grades-table");
     }
 }
