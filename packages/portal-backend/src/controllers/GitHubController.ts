@@ -694,6 +694,84 @@ export class GitHubActions {
         });
     }
 
+    /**
+     * Gets the list of users on a team. Returns [] if the team does not exist or nobody is on the team.
+     * Will throw an error if some other configuration problem is encountered.
+     *
+     * @param {string} org
+     * @param {string} teamName
+     * @returns {Promise<number>}
+     */
+    public getTeamMembers(org: string, teamNumber: number): Promise<string[]> {
+        let ctx = this;
+
+        Log.info("GitHubAction::getTeamMembers( " + org + ", " + teamNumber + " ) - start");
+        return new Promise(function (fulfill, reject) {
+
+            // GET /orgs/:org/repos
+            const uri = ctx.apiPath + '/orgs/' + org + '/teams/' + teamNumber + '/members';
+            const options = {
+                method:  'GET',
+                uri:     uri,
+                headers: {
+                    'Authorization': ctx.gitHubAuthToken,
+                    'User-Agent':    ctx.gitHubUserName,
+                    'Accept':        'application/json'
+                }
+            };
+
+            // NOTE: do not know how this will do with paging if there are lots of teams
+
+            rp(options).then(function (body: any) {
+                Log.info("GitHubAction::getTeamMembers(..) - success; body: " + body);
+                let resp = JSON.parse(body);
+                let ids: string[] = [];
+                for (const result of resp) {
+                    ids.push(result.login)
+                }
+
+                fulfill(ids);
+            }).catch(function (err: any) {
+                Log.error("GitHubAction::getTeamMembers(..) - ERROR: " + JSON.stringify(err));
+                reject(err);
+            });
+
+        });
+    }
+
+
+    private isOnAdminTeam(org: string, userName: string): Promise<boolean> {
+        return this.isOnTeam(org, 'admin', userName);
+    }
+
+    private isOnStaffTeam(org: string, userName: string): Promise<boolean> {
+        return this.isOnTeam(org, 'staff', userName);
+    }
+
+    private async isOnTeam(org: string, teamName: string, userName: string): Promise<boolean> {
+        let gh = this;
+        // return new Promise(function (fulfill, reject) {
+
+        let teamNumber = await gh.getTeamNumber(org, teamName);
+        if (teamNumber < 0) {
+            Log.warn('GitHubController::isOnTeam(..) - team does not exist: ' + teamName + ' for org: ' + org);
+            return false;
+        }
+
+        let teamMembers = await gh.getTeamMembers(org, teamNumber);
+
+        for (const member of teamMembers) {
+            if (member === userName) {
+                Log.info('GitHubController::isOnTeam(..) - user: ' + userName + ' IS on team: ' + teamName + ' for org: ' + org);
+                return true;
+            }
+        }
+
+        Log.info('GitHubController::isOnTeam(..) - user: ' + userName + ' is NOT on team: ' + teamName + ' for org: ' + org);
+        // if true wasn't returned it must be false
+        return false;
+    }
+
     public async importRepoFS(org: string, importRepo: string, studentRepo: string): Promise<boolean> {
         Log.info('GitHubAction::importRepoFS( ' + importRepo + ', ' + studentRepo + ' ) - start');
         const that = this;
@@ -826,4 +904,5 @@ export class GitHubActions {
             setTimeout(resolve, ms);
         });
     }
+
 }
