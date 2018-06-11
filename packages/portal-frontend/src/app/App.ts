@@ -186,7 +186,7 @@ export class App {
 
                 if (pageName === "studentTabsPage" && validated === true) {
                     Log.trace('studentTabsPage - show!!!');
-                    that.view.renderPage();
+                    that.view.renderPage(options);
                 }
                 /*
                 if (that.studentController !== null) {

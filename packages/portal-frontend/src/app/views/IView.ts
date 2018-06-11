@@ -1,3 +1,3 @@
 export interface IView {
-    renderPage(): void;
+    renderPage(opts: {}): void;
 }

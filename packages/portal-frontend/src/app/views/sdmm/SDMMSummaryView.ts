@@ -237,7 +237,7 @@ export class SDMMSummaryView implements IView {
 
     }
 
-    public renderPage() {
+    public renderPage(opts: {}) {
         Log.info('SDMMSummaryView::renderPage() - start');
 
         this.checkStatus();

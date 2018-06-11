@@ -51,8 +51,8 @@ export class CS310View implements IView {
         this.fetchStatus(url);
     }
 
-    public renderPage() {
-        Log.info('CS310View::renderPage() - start');
+    public renderPage(opts: {}) {
+        Log.info('CS310View::renderPage() - start; options: ' + opts);
 
         this.checkStatus();
     }
