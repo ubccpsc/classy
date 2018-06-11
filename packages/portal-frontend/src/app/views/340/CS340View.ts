@@ -6,12 +6,9 @@
  */
 
 import {OnsButtonElement, OnsModalElement, OnsPageElement, OnsSelectElement, OnsToastElement} from "onsenui";
-
 import Log from "../../../../../common/Log";
-import {GradePayload, StatusPayload} from "../../../../../common/types/SDMMTypes";
 import {UI} from "../../util/UI";
-import {AssignmentGradingRubric, QuestionGradingRubric, SubQuestionGradingRubric} from "../../../../../common/types/CS340Types";
-import {AssignmentGrade, QuestionGrade, SubQuestionGrade} from "../../../../../common/types/CS340Types";
+import {AssignmentGrade, AssignmentGradingRubric} from "../../../../../common/types/CS340Types";
 
 import {IView} from "../IView";
 import {Deliverable} from "../../../../../portal-backend/src/Types";
@@ -26,8 +23,8 @@ export class CS340View implements IView {
         this.remote = remoteUrl;
     }
 
-    public renderPage() {
-        Log.info('CS340View::renderPage() - start');
+    public renderPage(opts: {}) {
+        Log.info('CS340View::renderPage() - start; opts: ' + opts);
     }
 
     public testfunction() {
@@ -84,8 +81,8 @@ export class CS340View implements IView {
         }
     }
 
-    public async getGradingRubric(assignmentId : string) : Promise<AssignmentGradingRubric|null> {
-        Log.info("CS340View::getGradingRubric("+assignmentId+") - start");
+    public async getGradingRubric(assignmentId: string): Promise<AssignmentGradingRubric | null> {
+        Log.info("CS340View::getGradingRubric(" + assignmentId + ") - start");
         const url = this.remote + '/getAssignmentRubric/' + assignmentId;
         this.showModal("Getting grading rubric, please wait...");
         // Call the function
@@ -106,7 +103,7 @@ export class CS340View implements IView {
         return null;
     }
 
-    public async getStudentGrade(sid: string, aid: string) : Promise<AssignmentGrade|null> {
+    public async getStudentGrade(sid: string, aid: string): Promise<AssignmentGrade | null> {
         // TODO [Jonathan]: Complete this
 
         return null;
@@ -137,13 +134,13 @@ export class CS340View implements IView {
             Log.info("CS340View::getAllDeliverables() - end");
 
             let deliverableListElement = document.getElementById("select-deliverable-list") as OnsSelectElement;
-            while(deliverableListElement.firstChild) {
+            while (deliverableListElement.firstChild) {
                 deliverableListElement.removeChild(deliverableListElement.firstChild);
                 // deliverableListElement.remove();
             }
-            let arrayResponse : Deliverable[] = jsonResponse.result;
+            let arrayResponse: Deliverable[] = jsonResponse.result;
 
-            for(const deliv of arrayResponse) {
+            for (const deliv of arrayResponse) {
                 // let newOption = document.createElement("ons-list-item");
                 let newOption = document.createElement("option");
                 // newOption.setAttribute("tappable", "true");
@@ -168,8 +165,21 @@ export class CS340View implements IView {
         }
     }
 
+// <<<<<<< HEAD
     public async renderStudentSubmissions(delivId : string) {
         Log.info("CS340View::renderStudentSubmissions("+delivId+")");
         let gradeBox = document.getElementById("grades-table");
+// =======
+//     public async changeStudentList(delivId: string) {
+//         console.log(delivId);
+//
+//         const nav = document.querySelector('#myNavigator') as any;
+//         let page = nav.pushPage(Factory.getInstance().getHTMLPrefix() + "/deliverableView.html", {
+//             delivId: delivId
+//         });
+//
+//         console.log(nav.topPage.data);
+//         // console.log();
+// >>>>>>> 6485a394b8e4acf9036fc5e5c2b3121698aa8cee
     }
 }

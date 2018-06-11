@@ -47,11 +47,16 @@ export interface IConfig {
  *
  */
 
+// TODO: should Person.kind be removed and punted to github?
+// e.g., GitHub should have 'staff' and 'admin' teams.
+// If you're on 'admin', you're an admin
+// If you're on 'staff', you're a TA
+// If you're not on either, you're a student
 export interface Person {
     readonly id: string; // key (where key is the githubId | csId)
     readonly csId: string;
     readonly githubId: string;
-    readonly studentNumber: number | null; // potential key; can be null for non-students
+    readonly studentNumber: number | null;
 
     // readonly org: string;
     readonly fName: string;
