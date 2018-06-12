@@ -74,4 +74,8 @@ export default class Config {
         return null;
     }
 
+    public setProp(prop: string, val: any) {
+        Log.error("Config::setProp( " + prop + ", " + val + " ) - should only be done by test suites, not production code");
+        this.config[prop] = val;
+    }
 }
