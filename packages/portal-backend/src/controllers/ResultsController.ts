@@ -1,28 +1,35 @@
 import Log from "../../../common/Log";
 
 import {DatabaseController} from "./DatabaseController";
-import {Grade} from "../Types";
-import {GradePayload} from "../../../common/types/SDMMTypes";
+// import {Grade} from "../Types";
+// import {GradePayload} from "../../../common/types/SDMMTypes";
 
-export class GradesController {
+import {IContainerOutput} from "../../../autotest/src/Types";
+
+export class ResultsController {
 
     private db: DatabaseController = DatabaseController.getInstance();
 
-    public async getAllGrades(): Promise<Grade[]> {
-        Log.info("GradesController::getAllGrades() - start");
+    public async getAllResults(): Promise<IContainerOutput[]> {
+        Log.info("ResultsController::getAllResults() - start");
 
-        let grades = await this.db.getGrades();
-        return grades;
+        let results = await this.db.getResults();
+        return results;
     }
 
+    // TODO: need to be able to get subsets of results
+    /*
     public async getGrade(personId: string, delivId: string): Promise<Grade | null> {
         Log.info("GradesController::getGrade( " + personId + ", " + delivId + " ) - start");
 
         let grade = await this.db.getGrade(personId, delivId);
         return grade;
     }
+    */
 
-    public async createGrade(repoId: string, delivId: string, grade: GradePayload): Promise<boolean> {
+    // TODO: need to be able to associate a result row with a person
+    /*
+    public async createResult(repoId: string, delivId: string, grade: GradePayload): Promise<boolean> {
         Log.info("GradesController::createGrade( " + repoId + ", " + delivId + ",.. ) - start");
         Log.trace("GradesController::createGrade(..) - payload: " + JSON.stringify(grade));
         try {
@@ -87,4 +94,5 @@ export class GradesController {
             return false;
         }
     }
+    */
 }

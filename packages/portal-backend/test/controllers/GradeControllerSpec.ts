@@ -9,7 +9,7 @@ import {GradePayload} from "../../../common/types/SDMMTypes";
 const loadFirst = require('../GlobalSpec');
 const rFirst = require('./RepositoryControllerSpec');
 
-describe("GradeController", () => {
+describe.only("GradeController", () => {
 
     let gc: GradesController;
 
