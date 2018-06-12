@@ -22,6 +22,18 @@ export class GradesController {
         return grade;
     }
 
+    /**
+     * Returns all grades for all deliverables.
+     *
+     * @returns {Promise<Grade[]>}
+     */
+    public async getGrades(): Promise<Grade[]> {
+        Log.info("GradesController::getGrades() - start");
+
+        let grades = await this.db.getGrades();
+        return grades;
+    }
+
     public async createGrade(repoId: string, delivId: string, grade: GradePayload): Promise<boolean> {
         Log.info("GradesController::createGrade( " + repoId + ", " + delivId + ",.. ) - start");
         Log.trace("GradesController::createGrade(..) - payload: " + JSON.stringify(grade));
@@ -54,7 +66,7 @@ export class GradesController {
 
             Log.info("GradesController::createGrade(..) - # people: " + allPeopleIds.length);
 
-            for (var personId of allPeopleIds) {
+            for (const personId of allPeopleIds) {
                 // set their grades
                 let gradeRecord = await this.getGrade(personId, delivId);
                 if (gradeRecord === null) {

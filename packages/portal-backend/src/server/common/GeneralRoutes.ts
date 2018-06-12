@@ -29,4 +29,5 @@ export default class GeneralRoutes implements IREST {
             res.send(400, {failure: {message: 'Unable to retrieve org (server error)'}});
         }
     }
+
 }
