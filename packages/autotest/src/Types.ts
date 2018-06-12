@@ -28,48 +28,25 @@ export interface ICommentEvent {
     timestamp: number; // timestamp of the latest comment update (safer than comment creation)
 }
 
-/**
- * Feedback key can be considered 'personId : org : delivId'
- */
 export interface IFeedbackGiven {
-    personId: string; // was username
-    org: string; // was org
+    personId: string;
+    org: string;
     delivId: string;
     timestamp: number;
     commitURL: string; // for information only
 }
 
-export interface ICommitRecord { // refactor ICommitRecord
+export interface ICommitRecord {
     commitURL: string;
     commitSHA: string;
-    // user: IUserInfo;
     input: IContainerInput;
     output: IContainerOutput;
 }
 
 export interface IContainerInput {
-    // needed
     pushInfo: IPushEvent;
-    org: string; // was courseId
+    org: string;
     delivId: string;
-
-    /*
-    // extra?
-    deliverableInfo?: IDeliverableInfo;
-    userInfo?: IUserInfo;
-    container?: IContainer;
-    dockerImage?: string;
-    githubKeys?: {
-        delivKey: string;
-        solutionsKey: string;
-        orgKey: string;
-    };
-    githubOrg?: string;
-    custom?: {};
-    teamId?: string;
-    courseNum?: number;
-    stdioRef?: string;
-    */
 }
 
 export interface IContainerOutput {
@@ -82,37 +59,6 @@ export interface IContainerOutput {
     attachments: IAttachment[];
     state: string; // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
 }
-
-//
-// These are not required by AutoTest
-//
-
-// not required
-// export interface IUserInfo {
-//     username: string;
-//     csid: string;
-//     snum: string;
-//     profileUrl: string;
-//     fname: string;
-//     lname: string;
-// }
-
-// don't know what this is
-// export interface IContainer {
-//     branch: string;
-//     suiteVersion: string;
-//     image: string;
-//     exitcode: number;
-// }
-
-// don't know what this is
-// export interface IDeliverableInfo {
-//     solutionsUrl: string;
-//     deliverableCommit: string;
-//     deliverableUrl: string;
-//     deliverableToMark: string;
-//     githubKey: string;
-// }
 
 export interface IGradeReport {
     scoreOverall: number;
@@ -131,4 +77,3 @@ export interface IAttachment {
     data: any;
     content_type: string;
 }
-
