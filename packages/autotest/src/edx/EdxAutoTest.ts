@@ -1,6 +1,6 @@
 import Log from "../../../common/Log";
 
-import {ICommentEvent, ICommitRecord, IContainerInput, IPushEvent} from "../Types";
+import {ICommitRecord, IContainerInput, IPushEvent} from "../Types";
 
 import {AutoTest} from "../autotest/AutoTest";
 import {IGithubService} from "../github/GithubService";
@@ -20,8 +20,6 @@ export class EdxAutoTest extends AutoTest {
 
     public async handleTestRequest(commitURL: string, delivId: string): Promise<void> {
         Log.info("EdxAutoTest::handleTestRequest(..) - start; url: " + commitURL + "; delivId: " + delivId);
-
-        const start = Date.now();
 
         if (typeof commitURL === "undefined" || commitURL === null) {
             // ERROR
@@ -69,10 +67,6 @@ export class EdxUtil {
             timestamp:   -1 // timestamp of push event
         };
         return Promise.resolve(evt);
-    }
-
-    public static convertPayload(request: any): ICommentEvent {
-        return null;
     }
 
 }

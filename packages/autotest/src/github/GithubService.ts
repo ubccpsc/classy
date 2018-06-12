@@ -19,8 +19,7 @@ export interface IGithubService {
     /**
      * Posts the feedback (in markdown) back to the github url.
      *
-     * @param commitUrl
-     * @param feedback
+     * @param message
      */
     postMarkdownToGithub(message: IGithubMessage): Promise<boolean>;
 }
@@ -36,11 +35,13 @@ export class GithubService implements IGithubService {
                 Log.info("GithubService::postMarkdownToGithub(..) - Posting markdown to url: " + message.url + "; message: " + message.message);
 
                 if (typeof message.url === "undefined" || message.url === null) {
-                    throw new Error("GithubService::postMarkdownToGithub(..)  - message.url is required");
+                    Log.error("GithubService::postMarkdownToGithub(..)  - message.url is required");
+                    reject(false);
                 }
 
                 if (typeof message.message === "undefined" || message.message === null || message.message.length < 1) {
-                    throw new Error("GithubService::postMarkdownToGithub(..)  - message.message is required");
+                    Log.error("GithubService::postMarkdownToGithub(..)  - message.message is required");
+                    reject(false);
                 }
 
                 const noProtocolUrl = message.url.replace("https://", "");
@@ -79,6 +80,7 @@ export class GithubService implements IGithubService {
                         reject(false);
                     });
                     req.write(body);
+                    // noinspection TypeScriptValidateJSTypes
                     req.end();
                 } else {
                     Log.trace("GithubService::postMarkdownToGithub(..) - send skipped (config.postback === false)");
