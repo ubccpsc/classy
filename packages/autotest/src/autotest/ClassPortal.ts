@@ -37,8 +37,8 @@ export interface IClassPortal {
 }
 
 export class ClassPortal implements IClassPortal {
-    private host: string = Config.getInstance().getProp("classPortalHost");
-    private port: number = Config.getInstance().getProp("classPortalPort");
+    private host: string = Config.getInstance().getProp("backendUrl");
+    private port: number = Config.getInstance().getProp("backendPort");
 
     public async isStaff(courseId: string, userName: string): Promise<boolean> {
         if (typeof courseId === "undefined" || courseId === null || typeof userName === "undefined" || userName === null) {
@@ -46,7 +46,7 @@ export class ClassPortal implements IClassPortal {
             return false;
         }
 
-        const url = "https://" + this.host + ":" + this.port + "/isStaff/" + courseId + "/" + userName;
+        const url = this.host + ":" + this.port + "/isStaff/" + courseId + "/" + userName;
         Log.info("ClassPortal::isStaff(..) - Sending request to " + url);
         return rp(url).then(function (res) {
             Log.trace("ClassPortal::isStaff( " + courseId + ", " + userName + " ) - success; payload: " + res);
@@ -64,7 +64,7 @@ export class ClassPortal implements IClassPortal {
             return null;
         }
 
-        const url = "https://" + this.host + ":" + this.port + "/defaultDeliverable" + "/" + courseId;
+        const url = this.host + ":" + this.port + "/defaultDeliverable" + "/" + courseId;
         Log.info("ClassPortal::getDefaultDeliverableId(..) - Sending request to " + url);
         return rp(url).then(function (res) {
             Log.trace("ClassPortal::getDefaultDeliverableId( " + courseId + " ) - success; payload: " + res);
@@ -107,7 +107,7 @@ export class ClassPortal implements IClassPortal {
             return null;
         }
 
-        const url = "https://" + this.host + ":" + this.port + "/container" + "/" + courseId + "/" + delivId;
+        const url = this.host + ":" + this.port + "/container" + "/" + courseId + "/" + delivId;
         Log.info("ClassPortal::getContainerId(..) - Sending request to " + url);
         return rp(url).then(function (res) {
             Log.trace("ClassPortal::getContainerId( " + courseId + ", " + delivId + " ) - success; payload: " + res);

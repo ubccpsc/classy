@@ -73,8 +73,7 @@ export interface IContainerInput {
 }
 
 export interface IContainerOutput {
-    // needed
-    commitURL: string; // used to be commitUrl
+    commitURL: string;
     timestamp: number; // time when complete
     report: IGradeReport;
     feedback: string; // markdown
@@ -82,33 +81,6 @@ export interface IContainerOutput {
     custom: {};
     attachments: IAttachment[];
     state: string; // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
-
-    /*
-    // if we split the IContainerInput and IContainerOutput we don't need all of these
-    // but having them in a single object on AutoTest is very useful
-    team?: string; // needed
-    commit?: string; // sha?
-    committer?: string; // needed
-    projectUrl?: string;
-    courseNum?: number;
-    orgName?: string;
-    repoId?: string; // needed
-    ref?: string; // is this commitURL?
-    user?: string;
-    deliverable?: string;
-
-    // not needed
-    container?: {
-        scriptVersion: string;
-        suiteVersion: string;
-        image: string;
-        exitCode: number;
-    };
-    gradeRequested?: boolean;
-    gradeRequestedTimestamp?: number;
-    idStamp?: string;
-    stdioRef?: string; // how will we deal with stdio?
-    */
 }
 
 //
@@ -116,31 +88,31 @@ export interface IContainerOutput {
 //
 
 // not required
-export interface IUserInfo {
-    username: string;
-    csid: string;
-    snum: string;
-    profileUrl: string;
-    fname: string;
-    lname: string;
-}
+// export interface IUserInfo {
+//     username: string;
+//     csid: string;
+//     snum: string;
+//     profileUrl: string;
+//     fname: string;
+//     lname: string;
+// }
 
 // don't know what this is
-export interface IContainer {
-    branch: string;
-    suiteVersion: string;
-    image: string;
-    exitcode: number;
-}
+// export interface IContainer {
+//     branch: string;
+//     suiteVersion: string;
+//     image: string;
+//     exitcode: number;
+// }
 
 // don't know what this is
-export interface IDeliverableInfo {
-    solutionsUrl: string;
-    deliverableCommit: string;
-    deliverableUrl: string;
-    deliverableToMark: string;
-    githubKey: string;
-}
+// export interface IDeliverableInfo {
+//     solutionsUrl: string;
+//     deliverableCommit: string;
+//     deliverableUrl: string;
+//     deliverableToMark: string;
+//     githubKey: string;
+// }
 
 export interface IGradeReport {
     scoreOverall: number;
