@@ -1,12 +1,16 @@
+import restify = require('restify');
 import * as rp from "request-promise-native";
 
 import Config from "../../../../common/Config";
 import Log from "../../../../common/Log";
-import {CourseController} from "../../controllers/CourseController";
 import {GradePayload} from "../../../../common/types/SDMMTypes";
-import {GitHubController} from "../../controllers/GitHubController";
+
+import {IContainerOutput} from "../../../../autotest/src/Types";
+
 import IREST from "../IREST";
-import restify = require('restify');
+import {CourseController} from "../../controllers/CourseController";
+import {GitHubController} from "../../controllers/GitHubController";
+import {ResultsController} from "../../controllers/ResultsController";
 
 /**
  * Just a large body of static methods for translating between restify and the remainder of the system.
@@ -20,6 +24,7 @@ export class AutoTestRouteHandler implements IREST {
         server.get('/isStaff/:org/:personId', AutoTestRouteHandler.atIsStaff);
         server.get('/container/:org/:delivId', AutoTestRouteHandler.atContainerDetails);
         server.post('/grade/:org/:repoId/:delivId', AutoTestRouteHandler.atGradeResult);
+        server.post('/at/result/', AutoTestRouteHandler.atResult);
         server.post('/githubWebhook', AutoTestRouteHandler.githubWebhook); // forward GitHub Webhooks to AutoTest
     }
 
@@ -123,6 +128,30 @@ export class AutoTestRouteHandler implements IREST {
                     res.send(400, {error: err});
                 });
         */
+    }
+
+    public static atResult(req: any, res: any, next: any) {
+        Log.info('AutoTestRouteHandler::atResult(..) - start');
+        // const user = req.headers.user;
+        // const token = req.headers.token;
+
+        // TODO: verify admin secret
+
+        const org = req.params.org;
+        // const repoId = req.params.repoId;
+        // const delivId = req.params.delivId;
+
+        const resultRecord: IContainerOutput = req.body; // turn into json?
+
+        Log.info('AutoTestRouteHandler::atResult(..) - org: ' + org + '; body: ' + JSON.stringify(resultRecord));
+
+        let rc = new ResultsController();
+        rc.createResult(resultRecord).then(function (success) {
+            res.send({success: true}); // respond
+        }).catch(function (err) {
+            res.send({success: true}); // respond true, they can't do anything anyways
+            Log.error('AutoTestRouteHandler::atResult(..) - ERROR: ' + err);
+        });
     }
 
     /**

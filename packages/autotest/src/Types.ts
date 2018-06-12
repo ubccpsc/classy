@@ -73,6 +73,7 @@ export interface IGradeReport {
 }
 
 export interface IAttachment {
+
     name: string;
     data: any;
     content_type: string;
