@@ -2,10 +2,6 @@ import * as rp from "request-promise-native";
 
 import Config from "../../../../common/Config";
 import Log from "../../../../common/Log";
-
-import {AuthController} from "../../controllers/AuthController";
-import {DatabaseController} from "../../controllers/DatabaseController";
-import {PersonController} from "../../controllers/PersonController";
 import {CourseController} from "../../controllers/CourseController";
 import {GradePayload} from "../../../../common/types/SDMMTypes";
 import {GitHubController} from "../../controllers/GitHubController";
@@ -17,12 +13,8 @@ import restify = require('restify');
  */
 export class AutoTestRouteHandler implements IREST {
 
-    private static dc = DatabaseController.getInstance();
-    private static pc = new PersonController();
-    private static ac = new AuthController();
-
     public registerRoutes(server: restify.Server) {
-        Log.info("AutoTestRouteHandler::registerRoutes() - start");
+        Log.info('AutoTestRouteHandler::registerRoutes() - start');
 
         server.get('/defaultDeliverable/:org', AutoTestRouteHandler.atDefaultDeliverable);
         server.get('/isStaff/:org/:personId', AutoTestRouteHandler.atIsStaff);
@@ -141,7 +133,7 @@ export class AutoTestRouteHandler implements IREST {
      * @param next
      */
     public static atIsStaff(req: any, res: any, next: any) {
-        Log.info('RouteHandler::atIsStaff(..) - /isStaff/:org/:personId - start GET');
+        Log.info('AutoTestRouteHandler::atIsStaff(..) - /isStaff/:org/:personId - start GET');
         // const user = req.headers.user;
         // const token = req.headers.token;
 
@@ -149,7 +141,7 @@ export class AutoTestRouteHandler implements IREST {
         const org = req.params.org;
         const personId = req.params.personId;
 
-        Log.info('RouteHandler::atIsStaff(..) - org: ' + org + '; personId: ' + personId);
+        Log.info('AutoTestRouteHandler::atIsStaff(..) - org: ' + org + '; personId: ' + personId);
 
         // TODO: this is just a dummy implementation
         if (personId === 'rtholmes' || personId === 'nickbradley') {
@@ -180,7 +172,7 @@ export class AutoTestRouteHandler implements IREST {
      * @param next
      */
     public static githubWebhook(req: any, res: any, next: any) {
-        Log.info('RouteHandler::githubWebhook(..) - start');
+        Log.info('AutoTestRouteHandler::githubWebhook(..) - start');
         const webhookBody: any = req.body;
         // Log.info('RouteHandler::githubWebhook(..) - body: ' + JSON.stringify(webhookBody));
 
@@ -194,10 +186,10 @@ export class AutoTestRouteHandler implements IREST {
         };
 
         return rp(options).then(function (succ) {
-            Log.info('RouteHandler::githubWebhook(..) - success: ' + JSON.stringify(succ));
+            Log.info('AutoTestRouteHandler::githubWebhook(..) - success: ' + JSON.stringify(succ));
             res.send(200, succ); // send interpretation back to GitHub
         }).catch(function (err) {
-            Log.error('RouteHandler::githubWebhook(..) - ERROR: ' + err);
+            Log.error('AutoTestRouteHandler::githubWebhook(..) - ERROR: ' + err);
             res.send(400, {error: err}); // respond no
         })
     }

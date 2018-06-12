@@ -14,6 +14,6 @@ export default class NoCustomRoutes implements IREST {
     }
 
     public registerRoutes(server: restify.Server) {
-        Log.trace("NoCustomRoutes::registerRoutes() - start");
+        Log.trace('NoCustomRoutes::registerRoutes(); nothing to register');
     }
 }

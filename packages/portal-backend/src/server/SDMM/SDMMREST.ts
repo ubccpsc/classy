@@ -13,7 +13,7 @@ export default class SDMMREST implements IREST {
     }
 
     public registerRoutes(server: restify.Server) {
-        Log.trace("SDMMREST::registerRoutes() - start");
+        Log.trace('SDMMREST::registerRoutes() - start');
 
         server.post('/performAction/:action/', SDMMREST.performAction);
         server.post('/performAction/:action/:param', SDMMREST.performAction);
