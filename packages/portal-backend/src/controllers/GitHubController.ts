@@ -241,6 +241,83 @@ export class GitHubActions {
     }
 
     /**
+     * Removes write access for the given repository
+     * @param {string} org
+     * @param {string} repoName
+     * @param {string} permissionLevel - one of: 'push' 'pull'
+     * @returns {Promise<boolean>}
+     */
+
+    public setRepoPermission(org: string, repoName: string, permissionLevel: string): Promise<boolean> {
+        let ctx = this;
+        Log.info("GithubAction::setRepoPermission( " + org + ", " + repoName + ", " + permissionLevel + " ) - start");
+
+        return new Promise(function (fulfill, reject) {
+            // Check if permissionLevel is one of: {push, pull}
+            // We don't want to be able to grant a team admin access!
+            if(permissionLevel !== "pull" && permissionLevel !== "push") {
+                Log.error("GitHubAction::setRepoPermission(..) - ERROR, Invalid permissionLevel: " + permissionLevel);
+                reject(false);
+            }
+            // Make sure the repo exists
+            ctx.repoExists(org, repoName).then(function (repoExists: boolean) {
+                if(repoExists) {
+                    Log.info("GitHubAction::setRepoPermission(..) - repo exists");
+                    Log.info("GitHubAction::setRepoPermission(..) - getting teams associated with repo");
+                    const teamsUri = ctx.apiPath + '/repos/' + org + '/' + repoName + '/teams';
+                    Log.trace("GitHubAction::setRepoPermission(..) - URI: " + teamsUri);
+                    const teamOptions = {
+                        method: 'GET',
+                        uri: teamsUri,
+                        headers: {
+                            'Authorization': ctx.gitHubAuthToken,
+                            'User-Agent':    ctx.gitHubUserName,
+                            'Accept':        'application/json'
+                        },
+                        json: true
+                    };
+
+                    rp(teamOptions).then(function (responseData: any) {
+                        Log.info("GitHubAction::setRepoPermission(..) - setting permission for teams on repo");
+                        for(const team of responseData) {
+                            Log.info("GitHubAction::setRepoPermission(..) - set team: " + team.name + " to " + permissionLevel);
+                            const permissionUri = ctx.apiPath + '/teams/' + team.id + '/repos/' + org + '/' + repoName;
+                            Log.trace("GitHubAction::setRepoPermission(..) - URI: " + permissionUri);
+                            const permissionOptions = {
+                                method:  'PUT',
+                                uri:     permissionUri,
+                                headers: {
+                                    'Authorization': ctx.gitHubAuthToken,
+                                    'User-Agent':    ctx.gitHubUserName,
+                                    'Accept':        'application/json'
+                                },
+                                body: {
+                                    permission: permissionLevel
+                                },
+                                json: true
+                            };
+
+                            rp(permissionOptions).then(function (response) {
+                                Log.info("GitHubAction::setRepoPermission(..) - changed team: " + team.id + " permissions");
+                            }).catch(function (err) {
+                                Log.error("GitHubAction::setRepoPermission(..) - ERROR: " + err);
+                            });
+                        }
+                    });
+                    fulfill(true);
+                } else {
+                    Log.info("GitHubAction::setRepoPermission(..) - repo does not exists; unable to revoke push");
+                    fulfill(false);
+                }
+            }).catch(function (err) {
+                // If we get an error; something went wrong
+                Log.error("GitHubAction::setRepoPermission(..) - ERROR: " + JSON.stringify(err));
+                reject(err);
+            });
+        });
+    }
+
+    /**
      * Deletes a repo from the organization.
      *
      * @param org
