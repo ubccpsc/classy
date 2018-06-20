@@ -451,12 +451,11 @@ export class GitHubActions {
             };
 
             // NOTE: do not know how this will do with paging if there are lots of teams
-
             rp(options).then(function (body: any) {
                 Log.info("GitHubAction::listTeams(..) - success; body: " + body);
                 fulfill(JSON.parse(body));
             }).catch(function (err: any) {
-                Log.error("GitHubAction::listTeams(..) - ERROR: " + JSON.stringify(err));
+                Log.error("GitHubAction::listTeams(..) - ERROR: " + JSON.stringify(err) + '\n; for URI: ' + uri);
                 reject(err);
             });
 
