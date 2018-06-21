@@ -301,6 +301,7 @@ export class GitHubActions {
                                 Log.info("GitHubAction::setRepoPermission(..) - changed team: " + team.id + " permissions");
                             }).catch(function (err) {
                                 Log.error("GitHubAction::setRepoPermission(..) - ERROR: " + err);
+                                fulfill(false);
                             });
                         }
                     });

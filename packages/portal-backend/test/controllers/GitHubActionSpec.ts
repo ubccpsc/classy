@@ -231,6 +231,25 @@ describe.skip("GitHubActions", () => {
         expect(del).to.be.true;
     }).timeout(TIMEOUT * 10);
 
+    it("Should be able to create a repo, " +
+        "create a team, add users to it, add it to the repo, " +
+        "and change their permissions", async function() {
+        let githubTeam = await gh.createTeam(Test.ORGNAME, TEAMNAME, 'push');
+        expect(githubTeam.teamName).to.be.equal(TEAMNAME);
+        expect(githubTeam.githubTeamNumber).to.be.an('number');
+        expect(githubTeam.githubTeamNumber > 0).to.be.true;
+
+        // Expects adding members to work
+        let addMembers = await gh.addMembersToTeam(githubTeam.teamName, githubTeam.githubTeamNumber, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+        let teamAdd = await gh.addTeamToRepo(Test.ORGNAME, githubTeam.githubTeamNumber, REPONAME, 'push');
+
+        let staffTeamNumber = await gh.getTeamNumber(Test.ORGNAME, 'staff');
+        let staffAdd = await gh.addTeamToRepo(Test.ORGNAME, staffTeamNumber, REPONAME, 'admin');
+        let permissionEdit = await gh.setRepoPermission(Test.ORGNAME, REPONAME, "pull");
+        expect(permissionEdit).to.be.true;
+
+    }).timeout(TIMEOUT);
+
 
     function getProjectPrefix(): string {
         return "TEST__X__secap_";
