@@ -3,9 +3,11 @@ import Log from "../../../../common/Log";
 
 import IREST from "../IREST";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
-import {Deliverable} from "../../Types";
+import {Deliverable, Grade} from "../../Types";
 import {AssignmentController} from "../../controllers/340/AssignmentController";
 import {AssignmentGradingRubric} from "../../../../common/types/CS340Types";
+import {GradesController} from "../../controllers/GradesController";
+import {PersonController} from "../../controllers/PersonController";
 
 export default class CS340REST implements IREST {
     public constructor() {
@@ -19,7 +21,11 @@ export default class CS340REST implements IREST {
         server.get('/getAssignmentGrade/:sid/:aid', CS340REST.getAssignmentGrade);
         server.get('/getAssignmentRubric/:aid', CS340REST.getAssignmentRubric);
         server.get('/getAllDeliverables', CS340REST.getAllDeliverables);
+        server.get('/getAllSubmissionsByDelivID/:id', CS340REST.getAllSubmissionsByDelivID);
+        server.get('/getAllGrades', CS340REST.getAllGrades);
         server.post('/setAssignmentGrade', CS340REST.setAssignmentGrade);
+        server.get('/getPersonByID/:gitHubUserName', CS340REST.getPersonByID);
+        server.get('/getAllPersons', CS340REST.getAllPersons);
     }
 
     public static getAssignmentGrade(req: any, res: any, next: any) {
@@ -50,10 +56,12 @@ export default class CS340REST implements IREST {
 
     public static getAssignmentRubric(req: any, res: any, next: any) {
         // TODO [Jonathan]: Get Assignment rubric for grading view rendering
+        Log.info("cs340REST::getAssignmentRubric(...) - start");
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
         const aid = req.params.aid;                 // Assignment ID
+        Log.info("cs340REST::getAssignmentRubric(...) - aid: " + aid);
 
         // TODO [Jonathan]: Authenticate token
 
@@ -91,8 +99,10 @@ export default class CS340REST implements IREST {
             } else {
                 if (deliv.custom !== null) {
                     let rubric : AssignmentGradingRubric = deliv.custom;
-                    res.send(200, rubric);
+                    res.send(200, {response: rubric});
                 } else {
+                    Log.info("cs340REST::getAssignmentRubric(...) - deliv.custom: " + deliv.custom);
+
                     // TODO [Jonathan]: Set this up to inform there was no rubric
                     res.send(204, {error: "Rubric not found, perhaps the deliverable has no rubric?"});
                 }
@@ -169,10 +179,76 @@ export default class CS340REST implements IREST {
         let delivController : DeliverablesController = new DeliverablesController();
 
         delivController.getAllDeliverables(org).then((result) => {
-            res.send(200, {result});
+            res.send(200, {response: result});
         });
 
         // return next();
     }
 
+    public static getAllGrades(req:any, res:any, next:any) {
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        let gradeController:GradesController = new GradesController();
+        gradeController.getAllGrades().then((result) => {
+            res.send(200, {response: result});
+        });
+    }
+
+    // TODO: Should we move something like this to the general routes?
+    // Probably want to rename this to something better
+    public static getAllSubmissionsByDelivID(req:any, res:any, next:any) {
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+        const delivId = req.params.id;                  // Deliverable ID
+
+        let gradeController:GradesController = new GradesController();
+
+        gradeController.getAllGrades().then((result) => {
+            let resultArray:Grade[] = [];
+            for(const grade of result) {
+                // <Grade>gradeValue.
+                if(grade.delivId == delivId) {
+                    resultArray.push(grade);
+                }
+            }
+            res.send(200, {response: resultArray});
+        });
+
+        return next();
+    }
+
+    public static getPersonByID(req:any, res:any, next:any) {
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+        const gitHubUserName = req.params.gitHubUserName;                  // gitHubUserName
+
+        let personController : PersonController = new PersonController();
+
+        personController.getPerson(gitHubUserName).then((result) => {
+            if(result === null) {
+                res.send(404, {error: "Username not found"});
+            } else {
+                res.send(200, {response: result});
+            }
+        });
+
+        return next();
+    }
+
+    public static getAllPersons(req:any, res:any, next:any) {
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        let personController : PersonController = new PersonController();
+
+        personController.getAllPeople().then(result => {
+            res.send(200, {response: result});
+        });
+        return next();
+    }
 }
