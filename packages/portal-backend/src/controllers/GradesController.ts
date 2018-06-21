@@ -54,7 +54,7 @@ export class GradesController {
 
             Log.info("GradesController::createGrade(..) - # people: " + allPeopleIds.length);
 
-            for (var personId of allPeopleIds) {
+            for (const personId of allPeopleIds) {
                 // set their grades
                 let gradeRecord = await this.getGrade(personId, delivId);
                 if (gradeRecord === null) {

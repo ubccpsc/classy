@@ -8,13 +8,13 @@ import Log from "../../../common/Log";
 import {Test} from "../GlobalSpec";
 import Util from "../../../common/Util";
 
-describe.skip("GitHubActions", () => {
+describe.only("GitHubActions", () => {
 
     let gh: GitHubActions;
 
     let TIMEOUT = 5000;
 
-    let ORGNAME = 'secapstone';
+    let ORGNAME = 'classytest'; // dedicated test org; ensures we don't kill repos in production
     const REPONAME = getProjectPrefix() + Test.REPONAME1;
     const TEAMNAME = getTeamPrefix() + Test.TEAMNAME1;
 
@@ -245,11 +245,10 @@ describe.skip("GitHubActions", () => {
 
         let repos = await gh.listRepos(Test.ORGNAME);
         expect(repos).to.be.an('array');
-        expect(repos.length > 0).to.be.true;
+        // expect(repos.length > 0).to.be.true; // test org can be empty
 
         // delete test repos if needed
         for (const repo of repos as any) {
-
             for (const r of TESTREPONAMES) {
                 if (repo.name === r) {
                     Log.info('Removing stale repo: ' + repo.name);
@@ -276,7 +275,7 @@ describe.skip("GitHubActions", () => {
         // delete teams if needed
         let teams = await gh.listTeams(Test.ORGNAME);
         expect(teams).to.be.an('array');
-        expect(teams.length > 0).to.be.true;
+        // expect(teams.length > 0).to.be.true; // can have 0 teams
         Log.test('All Teams: ' + JSON.stringify(teams));
         Log.test('Stale Teams: ' + JSON.stringify(TESTTEAMNAMES));
         for (const team of teams as any) {

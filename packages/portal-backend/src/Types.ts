@@ -123,6 +123,12 @@ export interface Grade {
     custom: any; // {}; not used by the default implementation, but useful for extension (e.g., custom grade values)
 }
 
+export interface AutoTestResult {
+    // TODO
+
+    custom: any;
+}
+
 /**
  *
  *

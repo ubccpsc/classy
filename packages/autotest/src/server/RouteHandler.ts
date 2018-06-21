@@ -11,7 +11,6 @@ import {GithubService} from "../github/GithubService";
 import {GithubUtil} from "../github/GithubUtil";
 import {GithubAutoTest} from "../github/GithubAutoTest";
 import {EdXClassPortal} from "../edx/EdxClassPortal";
-import {EdxAutoTest} from "../edx/EdxAutoTest";
 import {ICommentEvent, IPushEvent} from "../Types";
 
 export default class RouteHandler {
@@ -111,44 +110,44 @@ export default class RouteHandler {
         return next();
     }
 
-    /**
-     * Handles GitHub POSTs, currently:
-     *  - commit_comment
-     *  - push
-     */
-    public static postXQueue(req: restify.Request, res: restify.Response, next: restify.Next) {
-        const start = Date.now();
-        const body = req.body;
-        Log.info("RoutHandler::handleXQueue(..) - start; body: " + body);
-
-        let at: EdxAutoTest = <EdxAutoTest>RouteHandler.getAutoTest();
-
-        try {
-            const xqueueBody = body.xqueue_body;
-            const name = xqueueBody.grader_payload;
-            const studentResponse = xqueueBody.student_response;
-
-            at.handleTestRequest('fakeURL', 'fakeDeliv').then(function (data) {
-
-                // NOTE: THIS WILL NOT WORK
-                // We should send 200 right away, but not with this payload
-                // payload has to come later, once the queue has processed the request
-
-                // TODO: turn this into something
-                const correct = false;
-                const score = 101;
-                const message = "MESSAGE";
-
-                Log.error("RouteHandler::handleXQueue(..) - done; took: " + Util.took(start));
-                res.json(200, {"correct": correct, "score": score, "msg": message});
-            }).catch(function (err) {
-                res.json(400, "Error encountered: " + err);
-            });
-
-        } catch (err) {
-            Log.error("RouteHandler::handleXQueue(..) - ERROR: " + err + "; took: " + Util.took(start));
-            res.json(400, "Error encountered: " + err);
-        }
-        return next();
-    }
+    // /**
+    //  * Handles GitHub POSTs, currently:
+    //  *  - commit_comment
+    //  *  - push
+    //  */
+    // public static postXQueue(req: restify.Request, res: restify.Response, next: restify.Next) {
+    //     const start = Date.now();
+    //     const body = req.body;
+    //     Log.info("RoutHandler::handleXQueue(..) - start; body: " + body);
+    //
+    //     let at: EdxAutoTest = <EdxAutoTest>RouteHandler.getAutoTest();
+    //
+    //     try {
+    //         const xqueueBody = body.xqueue_body;
+    //         const name = xqueueBody.grader_payload;
+    //         const studentResponse = xqueueBody.student_response;
+    //
+    //         at.handleTestRequest('fakeURL', 'fakeDeliv').then(function (data) {
+    //
+    //             // NOTE: THIS WILL NOT WORK
+    //             // We should send 200 right away, but not with this payload
+    //             // payload has to come later, once the queue has processed the request
+    //
+    //             // TODO: turn this into something
+    //             const correct = false;
+    //             const score = 101;
+    //             const message = "MESSAGE";
+    //
+    //             Log.error("RouteHandler::handleXQueue(..) - done; took: " + Util.took(start));
+    //             res.json(200, {"correct": correct, "score": score, "msg": message});
+    //         }).catch(function (err) {
+    //             res.json(400, "Error encountered: " + err);
+    //         });
+    //
+    //     } catch (err) {
+    //         Log.error("RouteHandler::handleXQueue(..) - ERROR: " + err + "; took: " + Util.took(start));
+    //         res.json(400, "Error encountered: " + err);
+    //     }
+    //     return next();
+    // }
 }

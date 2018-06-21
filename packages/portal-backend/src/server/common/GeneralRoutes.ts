@@ -10,7 +10,7 @@ export default class GeneralRoutes implements IREST {
     }
 
     public registerRoutes(server: restify.Server) {
-        Log.trace("GeneralRoutes::registerRoutes() - start");
+        Log.trace('GeneralRoutes::registerRoutes() - start');
 
         // returns the org that the backend is currently configured to serve
         // mainly used by the frontend so it uses the correct UI
@@ -29,4 +29,5 @@ export default class GeneralRoutes implements IREST {
             res.send(400, {failure: {message: 'Unable to retrieve org (server error)'}});
         }
     }
+
 }

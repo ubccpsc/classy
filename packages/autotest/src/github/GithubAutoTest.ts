@@ -35,12 +35,9 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
     private github: IGithubService = null;
 
     constructor(courseId: string, dataStore: IDataStore, portal: IClassPortal, github: IGithubService) {
-        super(courseId, dataStore); // this.org = org;
-        // this.dataStore = dataStore;
+        super(courseId, dataStore);
         this.classPortal = portal;
         this.github = github;
-        // this.classPortal = portal;
-        // this.github = github;
     }
 
     /**
@@ -49,9 +46,8 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
      * Persists the event so it can be restarted later if needed.
      * Schedules the build on the standard queue.
      *
-     * TODO: Not sure why it returns a boolean instead of void.
-     *
      * @param info
+     * @param delivId
      */
     public async handlePushEvent(info: IPushEvent, delivId?: string): Promise<boolean> {
         try {
@@ -71,8 +67,6 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
                 const input: IContainerInput = {org: this.courseId, delivId, pushInfo: info};
                 await this.savePushInfo(input);
                 this.addToStandardQueue(input);
-                // this.standardQueue.push(input);
-                // this.tick(); // tick!
                 this.tick();
             } else {
                 // no active deliverable, ignore this push event (don't push an error either)
@@ -105,7 +99,6 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
      *  * post back results if rate limiting check passes (and record fedback given)
      *  * post back warning if rate limiting check fails
      *
-     * TODO: Not sure why this returns a boolean instead of void.
      * TODO: need to think a bit harder about which comment events should be saved and which should be dropped
      *
      * @param info
@@ -135,14 +128,6 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
             // update info record
             info.org = that.courseId;
             let delivId = info.delivId;
-
-            /*
-            if (delivId === null) {
-                // need to get the default deliverable for that repoId
-                delivId = await this.getDelivId();
-                info.delivId = delivId;
-            }
-            */
 
             if (delivId === null) {
                 // no deliverable, give warning and abort
@@ -332,11 +317,8 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
         }
     }
 
-
     /**
      * Gets the current deliverable id
-     *
-     * @param commitURL
      */
     private async getDelivId(): Promise<string | null> {
         try {
@@ -378,6 +360,7 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
      * Return the username that requested the result for the given commitURL (or null)
      *
      * @param commitURL
+     * @param delivId
      */
     private async getRequestor(commitURL: string, delivId: string): Promise<ICommentEvent | null> {
         try {

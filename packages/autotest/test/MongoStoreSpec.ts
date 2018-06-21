@@ -9,10 +9,17 @@ import {IDataStore, MongoDataStore} from "../src/autotest/DataStore";
 import {TestData} from "./TestData";
 
 describe("MongoStore", () => {
-    (<any>Config.getInstance()).config.name = "test"; // force a test name
-
 
     let ds: IDataStore;
+    const oldName = (<any>Config.getInstance()).getProp('name'); // .env value to restore after tests
+
+    before(function () {
+        (<any>Config.getInstance()).setProp('name', "test"); // force a test name
+    });
+
+    after(function () {
+        (<any>Config.getInstance()).setProp('name', oldName); // restore name
+    });
 
     beforeEach(async () => {
         ds = new MongoDataStore();

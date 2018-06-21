@@ -1,4 +1,4 @@
-const loadFirst = require('./GlobalSpec');
+require('./GlobalSpec');
 
 import {expect} from "chai";
 import "mocha";
@@ -16,8 +16,20 @@ describe("GitHub Markdown Service", () => {
 
     let gh: IGithubService;
 
+    let postbackVal = Config.getInstance().getProp("postback");
+
     before(function () {
         gh = new GithubService();
+
+        // set postback to be true so we an actually validate this
+        let config = Config.getInstance();
+        config.setProp("postback", true);
+    });
+
+    after(function () {
+        // return postback val
+        let config = Config.getInstance();
+        config.setProp("postback", postbackVal);
     });
 
     it("Should be able to post a valid message.", () => {
@@ -31,7 +43,7 @@ describe("GitHub Markdown Service", () => {
             Log.test("Success (expected)");
             expect(res).to.equal(true);
         }).catch(function (err) {
-            Log.test("Failure (unexpected)");
+            Log.test("Failure (unexpected): " + err);
             expect.fail();
         });
     });
@@ -43,7 +55,7 @@ describe("GitHub Markdown Service", () => {
 
         Log.test("Trying an invalid message");
         return gh.postMarkdownToGithub(post).then(function (res: boolean) {
-            Log.test("Success (unexpected)");
+            Log.test("Success (unexpected): " + res);
             expect.fail();
         }).catch(function (err) {
             Log.test("Failure (expected)");

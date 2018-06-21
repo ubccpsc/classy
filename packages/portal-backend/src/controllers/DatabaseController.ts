@@ -4,6 +4,8 @@ import Log from "../../../common/Log";
 import Util from "../../../common/Util";
 import Config from "../../../common/Config";
 
+import {IContainerOutput} from "../../../autotest/src/Types";
+
 import {Auth, Deliverable, Grade, Person, Repository, Team} from "../Types";
 
 export class DatabaseController {
@@ -13,6 +15,7 @@ export class DatabaseController {
 
     private readonly PERSONCOLL = 'people';
     private readonly GRADECOLL = 'grades';
+    private readonly RESULTCOLL = 'results';
     private readonly TEAMCOLL = 'teams';
     private readonly DELIVCOLL = 'deliverables';
     private readonly REPOCOLL = 'repositories';
@@ -72,6 +75,11 @@ export class DatabaseController {
             }
         }
         return myTeams;
+    }
+
+    public async getResults(): Promise<IContainerOutput[]> {
+        Log.info("DatabaseController::getResult() - start");
+        return <IContainerOutput[]> await this.readRecords(this.RESULTCOLL, {});
     }
 
     public async getRepositoriesForPerson(personId: string): Promise<Repository[]> {
@@ -150,6 +158,17 @@ export class DatabaseController {
             const query = {id: record.id};
             return await this.updateRecord(this.TEAMCOLL, query, record);
         }
+    }
+
+    /**
+     * These are write-only; they should never need to be updated.
+     *
+     * @param {IContainerOutput} record
+     * @returns {Promise<boolean>}
+     */
+    public async writeResult(record: IContainerOutput): Promise<boolean> {
+        Log.info("DatabaseController::writeResult(..) - start");
+        return await this.writeRecord(this.RESULTCOLL, record);
     }
 
     /*

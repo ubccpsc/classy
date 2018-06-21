@@ -344,7 +344,9 @@ export class MongoDataStore implements IDataStore {
 
             Log.info("MongoDataStore::clearData() - files removed");
         } else {
-            throw new Error("MongoDataStore::clearData() - can only be called on test configurations");
+            const msg = "MongoDataStore::clearData() - can only be called on test configurations";
+            Log.warn(msg);
+            throw new Error(msg);
         }
         return;
     }

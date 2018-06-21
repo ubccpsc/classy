@@ -8,25 +8,13 @@ import {ICommentEvent, IPushEvent} from "../Types";
  */
 export class GithubUtil {
 
-    public static getTeamOrProject(repositoryName: string): string {
-        // NOTE assume repository name is of the form: CS310-2016Fall/cpsc310project_team10
-        const idx = repositoryName.lastIndexOf("_") + 1;
-        const val = repositoryName.slice(idx);
-        Log.trace("GithubUtil::getTeamOrProject() - input: " + repositoryName + "; output: " + val);
-        return val;
-    }
-
-    /*
-        public static parseDeliverable(fullRepoName: string): string | null {
-            const deliverable = fullRepoName.match(/^[^_]+(?=_)/);
-            if (deliverable) {
-                const val = deliverable.pop();
-                Log.trace("GithubUtil::parseDeliverable() - input: " + fullRepoName + "; output: " + val);
-                return val;
-            }
-            return null;
-        }
-    */
+    // public static getTeamOrProject(repositoryName: string): string {
+    //     // NOTE assume repository name is of the form: CS310-2016Fall/cpsc310project_team10
+    //     const idx = repositoryName.lastIndexOf("_") + 1;
+    //     const val = repositoryName.slice(idx);
+    //     Log.trace("GithubUtil::getTeamOrProject() - input: " + repositoryName + "; output: " + val);
+    //     return val;
+    // }
 
     public static parseDeliverableFromComment(message: any): string | null {
         const matches = message.match("\\S*d\\d+\\S*");
@@ -53,11 +41,12 @@ export class GithubUtil {
 
             const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
 
-            const projectUrl = payload.repository.html_url;
-            const repoName = payload.repository.name;
-            const team = GithubUtil.getTeamOrProject(repoName);
+            // const projectUrl = payload.repository.html_url;
+            // const team = GithubUtil.getTeamOrProject(repoName);
+            // const orgName = payload.organization.login;
+            // const repoName = payload.repository.name;
+
             const requestor = String(payload.comment.user.login).toLowerCase();
-            const orgName = payload.organization.login;
             const message = payload.comment.body;
             const delivId = GithubUtil.parseDeliverableFromComment(message);
 
@@ -80,7 +69,7 @@ export class GithubUtil {
                 delivId,
                 timestamp
             };
-
+            Log.trace("GithubUtil::processComment(..) - handling: " + commentEvent);
             return commentEvent;
         } catch (err) {
             Log.info("GithubUtil::processComment(..) - ERROR parsing: " + err);
@@ -128,9 +117,8 @@ export class GithubUtil {
 
             const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
 
-            const user = String(payload.pusher.name).toLowerCase();
-            const githubOrg = payload.repository.owner.name;
-            // const commentHook = Url.parse(payload.repository.commits_url.replace("{/sha}", "/" + this._commit) + "/comments");
+            // const user = String(payload.pusher.name).toLowerCase();
+            // const githubOrg = payload.repository.owner.name;
             const timestamp = payload.repository.pushed_at * 1000;
             const org = payload.repository.organization;
 
@@ -145,6 +133,7 @@ export class GithubUtil {
                 postbackURL,
                 timestamp
             };
+            Log.trace("GithubUtil::processPush(..) - handling: " + pushEvent);
             return pushEvent;
         } catch (err) {
             Log.info("GithubUtil::processPush(..) - ERROR parsing: " + err);
@@ -153,28 +142,3 @@ export class GithubUtil {
         }
     }
 }
-
-/*
-export class Commit {
-    private commitString: string;
-
-    constructor(commitString: string) {
-        if (!Commit.isValid(commitString)) {
-            throw new Error("Invalid commit string.");
-        }
-        this.commitString = commitString;
-    }
-
-    public static isValid(commitString: string): boolean {
-        return /^[a-z0-9]{40}$/.test(commitString);
-    }
-
-    get short(): string {
-        return this.commitString.substring(0, 7);
-    }
-
-    public toString(): string {
-        return this.commitString;
-    }
-}
-*/
