@@ -1,6 +1,15 @@
 import Log from "./Log";
 
+export enum ConfigKey {
+    org,
+    frontendUrl,
+    backendUrl,
+    frontendPort,
+    backendPort
+}
+
 export default class Config {
+
 
     public static getInstance(configName?: string): Config {
         if (Config.instance === null) {

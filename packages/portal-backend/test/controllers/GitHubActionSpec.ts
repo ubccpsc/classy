@@ -24,7 +24,12 @@ describe.only("GitHubActions", () => {
     });
 
     beforeEach(function () {
+        Log.test('BeforeTest: "' + (<any>this).currentTest.title + '"');
         gh = new GitHubActions();
+    });
+
+    afterEach(function () {
+        Log.test('AfterTest: "' + (<any>this).currentTest.title + '"');
     });
 
     let TESTREPONAMES = ["testtest__repo1",
@@ -129,6 +134,21 @@ describe.only("GitHubActions", () => {
 
         // let bool = await gh.teamExists(Test.ORGNAME, TEAMNAME);
         // expect(bool).to.be.true;
+    }).timeout(TIMEOUT);
+
+    it("Should get an empty array of team members for a team that does not exist.", async function () {
+        let val = await gh.getTeamMembers(Test.ORGNAME, -1337);
+        Log.test('# Team members: ' + val.length);
+        expect(val.length).to.equal(0);
+    }).timeout(TIMEOUT);
+
+    it("Should be able to get member names for a valid team.", async function () {
+        let teamnum = await gh.getTeamNumber(Test.ORGNAME, 'staff');
+        expect(teamnum).to.be.greaterThan(0);
+        let val = await gh.getTeamMembers(Test.ORGNAME, teamnum);
+        Log.test('# Team members: ' + val.length);
+        expect(val.length).to.be.greaterThan(0);
+        expect(val).to.contain('rtholmes');
     }).timeout(TIMEOUT);
 
     it("Should be able to clone a source repo into a newly created repository.", async function () {

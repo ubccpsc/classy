@@ -708,7 +708,8 @@ export class GitHubActions {
         return new Promise(function (fulfill, reject) {
 
             // GET /orgs/:org/repos
-            const uri = ctx.apiPath + '/orgs/' + org + '/teams/' + teamNumber + '/members';
+            // const uri = ctx.apiPath + '/orgs/' + org + '/teams/' + teamNumber + '/members';
+            const uri = ctx.apiPath + '/teams/' + teamNumber + '/members';
             const options = {
                 method:  'GET',
                 uri:     uri,
@@ -731,8 +732,9 @@ export class GitHubActions {
 
                 fulfill(ids);
             }).catch(function (err: any) {
-                Log.error("GitHubAction::getTeamMembers(..) - ERROR: " + JSON.stringify(err));
-                reject(err);
+                Log.warn("GitHubAction::getTeamMembers(..) - ERROR: " + JSON.stringify(err));
+                // reject(err); // just return empy [] rather than failing
+                fulfill([]);
             });
 
         });
