@@ -736,13 +736,16 @@ export class GitHubActions {
         });
     }
 
-
-    private isOnAdminTeam(userName: string): Promise<boolean> {
-        return this.isOnTeam('admin', userName);
+    public async isOnAdminTeam(userName: string): Promise<boolean> {
+        const isAdmin = await this.isOnTeam('admin', userName);
+        Log.trace('GitHubController::isOnAdminTeam( ' + userName + ' ) - result: ' + isAdmin);
+        return isAdmin;
     }
 
-    private isOnStaffTeam(userName: string): Promise<boolean> {
-        return this.isOnTeam('staff', userName);
+    public async isOnStaffTeam(userName: string): Promise<boolean> {
+        const isStaff = await this.isOnTeam('staff', userName);
+        Log.trace('GitHubController::isOnStaffTeam( ' + userName + ' ) - result: ' + isStaff);
+        return isStaff;
     }
 
     private async isOnTeam(teamName: string, userName: string): Promise<boolean> {

@@ -3,6 +3,7 @@ import Log from "../../../common/Log";
 import {PersonController} from "./PersonController";
 import {DatabaseController} from "./DatabaseController";
 import {Auth} from "../Types";
+import {GitHubActions} from "./GitHubController";
 
 export class AuthController {
 
@@ -46,10 +47,14 @@ export class AuthController {
         if (person !== null) {
             let valid = await this.isValid(personId, token);
             if (valid === true) {
+                // check kind
+                const isStaff = await new GitHubActions().isOnStaffTeam(personId);
+                const isAdmin = await new GitHubActions().isOnAdminTeam(personId);
                 // student, ta, prof, ops
-                if (person.kind === "ta" || person.kind === "prof" || person.kind === "ops") {
-                    return true;
-                }
+                // if (person.kind === "ta" || person.kind === "prof" || person.kind === "ops") {
+                //   return true;
+                // }
+                return isStaff || isAdmin;
             }
         }
         return false;

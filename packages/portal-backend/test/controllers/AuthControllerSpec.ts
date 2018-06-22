@@ -3,11 +3,14 @@ import "mocha";
 
 import {Test} from "../GlobalSpec";
 import {AuthController} from "../../src/controllers/AuthController";
+import {PersonController} from "../../src/controllers/PersonController";
+import {Auth, Person} from "../../src/Types";
+import {DatabaseController} from "../../src/controllers/DatabaseController";
 
 const loadFirst = require('../GlobalSpec');
 const teamsFirst = require('./PersonControllerSpec');
 
-describe("AuthController", () => {
+describe.only("AuthController", () => {
 
     let ac: AuthController;
 
@@ -25,10 +28,81 @@ describe("AuthController", () => {
 
 
     it("Should not let invalid be admins.", async () => {
-        let isValid = await ac.isAdmin( Test.USERNAME3, ''); // not registered
+        let isValid = await ac.isAdmin(Test.USERNAME3, ''); // not registered
         expect(isValid).to.be.false;
     });
 
+
+    it("Should identify an admin correctly.", async () => {
+        const pc = new PersonController();
+        const p: Person = {
+            id:            'rtholmes',
+            csId:          'r2d2',
+            githubId:      'rtholmes',
+            studentNumber: null,
+
+            fName: '',
+            lName: '',
+            kind:  '',
+            URL:   null,
+
+            labId: null,
+
+            custom: {}
+        };
+        const newPerson = await pc.createPerson(p);
+        expect(newPerson).to.not.be.null;
+
+        let isValid = await ac.isValid('rtholmes', 'faketoken');
+        expect(isValid).to.be.false;
+
+        const auth: Auth = {
+            personId: 'rtholmes',
+            token:    'realtoken'
+        };
+        await DatabaseController.getInstance().writeAuth(auth);
+        isValid = await ac.isValid('rtholmes', 'realtoken');
+        expect(isValid).to.be.true;
+
+        isValid = await ac.isAdmin('rtholmes', 'realtoken');
+        expect(isValid).to.be.true;
+    });
+
+
+    it("Should identify a non-admin correctly.", async () => {
+        const pc = new PersonController();
+        const p: Person = {
+            id:            'user',
+            csId:          'r2d2',
+            githubId:      'user',
+            studentNumber: null,
+
+            fName: '',
+            lName: '',
+            kind:  '',
+            URL:   null,
+
+            labId: null,
+
+            custom: {}
+        };
+        const newPerson = await pc.createPerson(p);
+        expect(newPerson).to.not.be.null;
+
+        let isValid = await ac.isValid('user', 'faketoken');
+        expect(isValid).to.be.false;
+
+        const auth: Auth = {
+            personId: 'user',
+            token:    'realtoken'
+        };
+        await DatabaseController.getInstance().writeAuth(auth);
+        isValid = await ac.isValid('user', 'realtoken');
+        expect(isValid).to.be.true;
+
+        isValid = await ac.isAdmin('user', 'realtoken');
+        expect(isValid).to.be.false;
+    });
 
     // TODO: implement auth controller tests
     /*

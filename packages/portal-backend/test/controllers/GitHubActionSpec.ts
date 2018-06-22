@@ -9,7 +9,7 @@ import {Test} from "../GlobalSpec";
 import Util from "../../../common/Util";
 import Config from "../../../common/Config";
 
-describe.only("GitHubActions", () => {
+describe("GitHubActions", () => {
 
     let gh: GitHubActions;
 
