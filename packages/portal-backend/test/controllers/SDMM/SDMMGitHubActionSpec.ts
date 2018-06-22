@@ -349,7 +349,7 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
     async function deleteStale(): Promise<true> {
         Log.test('GitHubActionSpec::deleteStale() - start');
 
-        let repos = await gh.listRepos(Test.ORGNAME);
+        let repos = await gh.listRepos();
         expect(repos).to.be.an('array');
         expect(repos.length > 0).to.be.true;
 
@@ -359,19 +359,19 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
             for (const r of TESTREPONAMES) {
                 if (repo.name === r) {
                     Log.info('Removing stale repo: ' + repo.name);
-                    let val = await gh.deleteRepo(Test.ORGNAME, r);
+                    let val = await gh.deleteRepo(r);
                     // expect(val).to.be.true;
                 }
             }
         }
 
-        repos = await gh.listRepos(Test.ORGNAME);
+        repos = await gh.listRepos();
         // delete test repos if needed
         for (const repo of repos as any) {
             Log.info('Evaluating repo: ' + repo.name);
             if (repo.name.indexOf('TEST__X__') === 0) {
                 Log.info('Removing stale repo: ' + repo.name);
-                let val = await gh.deleteRepo(Test.ORGNAME, repo.name);
+                let val = await gh.deleteRepo(repo.name);
                 // expect(val).to.be.true;
                 let teamName = repo.name.substr(15);
                 Log.info('Adding stale team name: ' + repo.name);
@@ -380,7 +380,7 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
         }
 
         // delete teams if needed
-        let teams = await gh.listTeams(Test.ORGNAME);
+        let teams = await gh.listTeams();
         expect(teams).to.be.an('array');
         expect(teams.length > 0).to.be.true;
         Log.test('All Teams: ' + JSON.stringify(teams));
@@ -390,7 +390,7 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
             for (const t of TESTTEAMNAMES) {
                 if (team.name === t) {
                     Log.test("Removing stale team: " + team.name);
-                    let val = await gh.deleteTeam(Test.ORGNAME, team.id);
+                    let val = await gh.deleteTeam(team.id);
                     // expect(val).to.be.true;
                 }
             }
