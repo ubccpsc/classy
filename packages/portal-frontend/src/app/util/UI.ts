@@ -2,6 +2,7 @@
  * Created by rtholmes on 2017-10-04.
  */
 import {OnsModalElement} from "onsenui";
+import Log from "../../../../common/Log";
 // import {Team} from '../Models';
 
 const OPEN_DELIV_KEY = 'open';
@@ -25,13 +26,13 @@ export class UI {
         if (typeof options === 'undefined') {
             options = {};
         }
-        console.log('pushPage - id: ' + pageId + '; options: ' + JSON.stringify(options));
+        Log.info('UI::pushPage( ' + pageId + ', ' + JSON.stringify(options) + ' )');
 
         const nav = document.querySelector('#myNavigator') as any;// as ons.OnsNavigatorElement;
         if (nav !== null) {
             return nav.pushPage(pageId, options);
         } else {
-            console.log('UI::pushPage(..) - WARN: nav is null');
+            Log.error('UI::pushPage(..) - WARN: nav is null');
             return nav.pushPage(pageId, options);
         }
     }
@@ -51,7 +52,7 @@ export class UI {
         if (nav !== null) {
             nav.popPage();
         } else {
-            console.log('UI::popPage(..) - WARN: nav is null');
+            Log.error('UI::popPage(..) - WARN: nav is null');
         }
     }
 
@@ -84,14 +85,14 @@ export class UI {
 
         if (typeof subtext === 'undefined') {
             // simple list item
-            var taskItem = ons.createElement(
+            const taskItem = ons.createElement(
                 '<ons-list-item>' +
                 text +
                 '</ons-list-item>') as HTMLElement;
             return taskItem;
         } else {
             // compound list item
-            var taskItem = ons.createElement(
+            const taskItem = ons.createElement(
                 prefix +
                 '<span class="list-item__title">' + text + '</span><span class="list-item__subtitle">' + subtext + '</span>' +
                 '</ons-list-item>') as HTMLElement;
@@ -122,12 +123,12 @@ export class UI {
             }
             modal.show({animation: 'fade'});
         } else {
-            console.log('UI::showModal(..) - Modal is null');
+            Log.error('UI::showModal(..) - Modal is null');
         }
     }
 
     public static createTextInputField(key: string, value: string, type: string) {
-        let inputField = ons.createElement(
+        const inputField = ons.createElement(
             '<input type="text" style="margin: 0 0 0 15px" class="text-input text-input--underbar" value="">' +
             value +
             '</input>') as HTMLElement;
@@ -169,7 +170,7 @@ export class UI {
         if (modal !== null) {
             modal.hide({animation: 'fade'});
         } else {
-            console.log('UI::hideModal(..) - Modal is null');
+            Log.error('UI::hideModal(..) - Modal is null');
         }
     }
 
@@ -178,18 +179,16 @@ export class UI {
     }
 
     public static showD1TeamDialog() {
-        let dialog: any = document.getElementById('d1teamDialog');
+        const dialog: any = document.getElementById('d1teamDialog');
 
         if (dialog) {
             dialog.show();
         } else {
-            ons.createElement('d1team.html', {append: true})
-                .then(function (dialog: any) {
-                    dialog.show();
-                });
+            ons.createElement('d1team.html', {append: true}).then(function (dialog: any) {
+                dialog.show();
+            });
         }
     }
-
 
     public static hideD1TeamDialog() {
         let elem: any = document.getElementById('d1teamDialog');

@@ -1,8 +1,10 @@
-import {SDMMSummaryView} from "./views/sdmm/SDMMSummaryView";
+// import {SDMMSummaryView} from "./views/sdmm/SDMMSummaryView";
 import Log from "../../../common/Log";
-import {UI} from "./util/UI";
 import {CS310View} from "./views/cs310/CS310View";
 import {CS340View} from "./views/340/CS340View";
+import {AdminView} from "./views/AdminView";
+import {SDMMSummaryView} from "./views/sdmm/SDMMSummaryView";
+import {IView} from "./views/IView";
 
 /**
  * Entry point for configuring per-course aspects of the frontend.
@@ -21,6 +23,9 @@ export class Factory {
     private static instance: Factory = null;
     private org: string = null;
 
+    private studentView: IView | null = null;
+    private adminView: IView | null = null;
+
     /**
      * Use getInstance instead.
      */
@@ -38,21 +43,36 @@ export class Factory {
         return Factory.instance;
     }
 
-    public getView(backendUrl: string) {
+    public getView(backendUrl: string): IView {
         // Log.trace("Begin view fetching");
-        if (this.org === 'sdmm') {
-            return new SDMMSummaryView(backendUrl);
-        } else if (this.org === 'CS310-2017Jan' || this.org === 'CS310-2017Jan_TEST') {
-            return new CS310View(backendUrl);
-        } else if (this.org === 'cs340') {
-            // something else
-            // Log.trace("cs340 view detected");
-            return new CS340View(backendUrl);
-
-            // UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/landing.html');
-        } else {
-            Log.error("Factory::getView() - ERROR; unknown org: " + this.org);
+        if (this.studentView === null) {
+            if (this.org === 'sdmm') {
+                this.studentView = new SDMMSummaryView(backendUrl);
+            } else if (this.org === 'CS310-2017Jan' || this.org === 'CS310-2017Jan_TEST') {
+                this.studentView = new CS310View(backendUrl);
+            } else if (this.org === 'cs340') {
+                this.studentView = new CS340View(backendUrl);
+            } else {
+                Log.error("Factory::getView() - ERROR; unknown org: " + this.org);
+            }
         }
+        return this.studentView;
+    }
+
+    public getAdminView(backendUrl: string): IView {
+        // Log.trace("Begin view fetching");
+        if (this.adminView === null) {
+            if (this.org === 'sdmm') {
+                this.adminView = new AdminView(backendUrl);
+            } else if (this.org === 'CS310-2017Jan' || this.org === 'CS310-2017Jan_TEST') {
+                this.adminView = new AdminView(backendUrl);
+            } else if (this.org === 'cs340') {
+                this.adminView = new AdminView(backendUrl);
+            } else {
+                Log.error("Factory::getView() - ERROR; unknown org: " + this.org);
+            }
+        }
+        return this.adminView;
     }
 
     /**

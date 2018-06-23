@@ -51,11 +51,13 @@ export class App {
 
         let validated = await that.validateCredentials();
         this.validated = validated;
-        Log.trace('App::init() - validated: ' + validated);
+        // Log.trace('App::init() - validated: ' + validated);
 
         if (validated === true) {
             Log.trace('App::init() - validated: true; simulating mainPageClick');
             that.handleMainPageClick();
+        } else {
+            Log.trace('App::init() - validated: false');
         }
 
         return new Promise(function (fulfill, reject) {
@@ -67,14 +69,13 @@ export class App {
                 that.toggleLoginButton();
 
                 const pageName = page.id;
-
                 let org: string = null;
 
                 org = Factory.getInstance().getOrg();
                 localStorage.org = org; // TODO: remove; just use the factory to track this
-                Log.trace('App::init()::init - org: ' + org + '; pushed option');
+                Log.trace('App::init()::init - org: ' + org + '; page: ' + pageName + '; opts: ' + JSON.stringify(event));
 
-                Log.trace('App::init()::init - page: ' + pageName);
+                // Log.trace('App::init()::init - page: ' + pageName);
 
                 if (pageName === 'index') {
                     Log.trace('App::init()::init - index detected; pushing real target');
@@ -85,7 +86,13 @@ export class App {
                 if (pageName === 'adminTabsPage') {
                     // initializing tabs page for the first time
                     // that.adminController = new AdminController(that, courseId);
-                    Log.warn('App::init()::init - page: ' + pageName + ' NOT IMPLEMENTED');
+                    Log.info("App::init() - adminTabsPage init; attaching view");
+                    (<any>window).classportal.view = Factory.getInstance().getAdminView(that.backendURL);
+
+                    const view = Factory.getInstance().getAdminView(that.backendURL);
+                    that.view = view;
+
+                    Log.trace("App::init() - studentTabsPage init; view attached");
                 }
 
                 if (pageName === 'studentTabsPage') {
@@ -174,7 +181,7 @@ export class App {
                 if (typeof options === 'undefined') {
                     options = {};
                 }
-                Log.trace('App::init()::show - page: ' + pageName);
+                Log.trace('App::init()::show - page: ' + pageName + '; event: ' + JSON.stringify(event));
 
                 // update login button state
                 that.toggleLoginButton();
@@ -184,8 +191,19 @@ export class App {
                 // let validated = true;
                 Log.trace('App::init()::show - page: ' + pageName + "; validated: " + validated);
 
+                /*
                 if (pageName === "studentTabsPage" && validated === true) {
                     Log.trace('studentTabsPage - show!!!');
+                    that.view.renderPage(options);
+                }
+
+                if (pageName === "adminTabsPage" && validated === true) {
+                    Log.trace('adminTabsPage - show!!!');
+                    that.view.renderPage(options);
+                }
+                */
+                if (that.view !== null) {
+                    Log.trace('App::init()::show - calling view.renderPage');
                     that.view.renderPage(options);
                 }
                 /*
@@ -295,10 +313,10 @@ export class App {
                 'Authorization': 'token ' + token
             }
         }).then(function (resp: any) {
-            Log.trace("App::getGithubCredentials(..) - resp then: " + resp);
+            Log.trace("App::getGithubCredentials(..) - resp status: " + resp.status);
             return resp.json();
         }).then(function (data: any) {
-            Log.trace("App::getGithubCredentials(..) - data then: " + data);
+            Log.trace("App::getGithubCredentials(..) - data then: " + data.login);
             if (typeof data.login !== 'undefined') {
                 return data.login;
             }
@@ -335,7 +353,7 @@ export class App {
             }
         };
         return fetch(url, options).then(function (resp: any) {
-            Log.trace("App::getServerCredentials - resp: " + resp);
+            Log.trace("App::getServerCredentials - resp status: " + resp.status);
             if (resp.status === 204) {
                 Log.trace("App::getServerCredentials - fetching");
                 return fetch(url, options);
@@ -373,7 +391,7 @@ export class App {
 
         let response = await fetch(url, options);
         if (response.status === 200) {
-            Log.trace('App::retrieveOrg() - 200 received');
+            Log.trace('App::retrieveOrg() - status: ' + response.status);
             const json = await response.json();
             Log.trace('App::retrieveOrg() - payload: ' + JSON.stringify(json) + '; setting org: ' + json.org);
             Factory.getInstance(json.org);
@@ -438,25 +456,25 @@ export class App {
     private toggleLoginButton() {
         try {
             if (this.isLoggedIn() === true) {
-                Log.trace("App::toggleLoginButton() - showing logout");
+                // Log.trace("App::toggleLoginButton() - showing logout");
                 const el = document.getElementById('indexLogin');
                 if (el !== null) {
                     el.style.display = 'block';
                 } else {
-                    Log.trace("App::toggleLoginButton() - button not visible");
+                    // Log.trace("App::toggleLoginButton() - button not visible");
                 }
             } else {
-                Log.trace("App::toggleLoginButton() - hiding logout");
+                // Log.trace("App::toggleLoginButton() - hiding logout");
                 const el = document.getElementById('indexLogin');
                 if (el !== null) {
                     el.style.display = 'none';
                 } else {
-                    Log.trace("App::toggleLoginButton() - button not visible");
+                    // Log.trace("App::toggleLoginButton() - button not visible");
                 }
             }
         } catch (err) {
             // silently fail
-            Log.error("APP:toggleLoginButton() - ERROR: " + err);
+            Log.error("App:toggleLoginButton() - ERROR: " + err);
         }
     }
 }
