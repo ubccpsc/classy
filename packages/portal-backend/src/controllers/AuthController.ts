@@ -3,7 +3,7 @@ import Log from "../../../common/Log";
 import {PersonController} from "./PersonController";
 import {DatabaseController} from "./DatabaseController";
 import {Auth} from "../Types";
-import {GitHubActions} from "./GitHubController";
+import {GitHubActions} from "./util/GitHubActions";
 
 export class AuthController {
 

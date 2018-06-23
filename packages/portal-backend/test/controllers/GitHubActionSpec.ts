@@ -3,7 +3,7 @@ const loadFirst = require('../GlobalSpec');
 import {expect} from "chai";
 import "mocha";
 
-import {GitHubActions} from "../../src/controllers/GitHubController";
+import {GitHubActions} from "../../src/controllers/util/GitHubActions";
 import Log from "../../../common/Log";
 import {Test} from "../GlobalSpec";
 import Util from "../../../common/Util";

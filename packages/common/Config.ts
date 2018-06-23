@@ -1,11 +1,11 @@
 import Log from "./Log";
 
 export enum ConfigKey {
-    org,
-    frontendUrl,
-    backendUrl,
-    frontendPort,
-    backendPort
+    org = "org",
+    frontendUrl = "frontendUrl",
+    backendUrl = "backendUrl",
+    frontendPort = "frontendPort",
+    backendPort = "backendPort"
 }
 
 export default class Config {
@@ -72,7 +72,7 @@ export default class Config {
         }
     }
 
-    public getProp(prop: string): any {
+    public getProp(prop: ConfigKey): any {
         if (typeof this.config[prop] === "undefined") {
             Log.error("Config::getProp( " + prop + " ) - property is undefined; you probably want this in your config file.");
         } else if (this.config[prop] === null) {

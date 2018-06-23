@@ -10,7 +10,8 @@ import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
 import {ActionPayload, GradePayload} from "../../../../common/types/SDMMTypes";
 
-import {GitHubActions, GitHubController} from "../../../src/controllers/GitHubController";
+import {GitHubController} from "../../../src/controllers/GitHubController";
+import {GitHubActions} from "../../../src/controllers/util/GitHubActions";
 import {CourseController} from "../../../src/controllers/CourseController";
 import {GradesController} from "../../../src/controllers/GradesController";
 

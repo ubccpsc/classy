@@ -28,7 +28,7 @@ describe.only("AuthController", () => {
 
 
     it("Should not let invalid be admins.", async () => {
-        let isValid = await ac.isAdmin(Test.USERNAME3, ''); // not registered
+        let isValid = await ac.isPrivileged(Test.USERNAME3, ''); // not registered
         expect(isValid).to.be.false;
     });
 
@@ -64,8 +64,9 @@ describe.only("AuthController", () => {
         isValid = await ac.isValid('rtholmes', 'realtoken');
         expect(isValid).to.be.true;
 
-        isValid = await ac.isAdmin('rtholmes', 'realtoken');
-        expect(isValid).to.be.true;
+        let isPriv = await ac.isPrivileged('rtholmes', 'realtoken');
+        expect(isPriv.isAdmin).to.be.true;
+        expect(isPriv.isStaff).to.be.true;
     });
 
 
@@ -100,8 +101,9 @@ describe.only("AuthController", () => {
         isValid = await ac.isValid('user', 'realtoken');
         expect(isValid).to.be.true;
 
-        isValid = await ac.isAdmin('user', 'realtoken');
-        expect(isValid).to.be.false;
+        let isPriv = await ac.isPrivileged('user', 'realtoken');
+        expect(isPriv.isAdmin).to.be.false;
+        expect(isPriv.isStaff).to.be.false;
     });
 
     // TODO: implement auth controller tests
