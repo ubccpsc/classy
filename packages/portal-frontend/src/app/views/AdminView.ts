@@ -8,14 +8,27 @@
 import Log from "../../../../common/Log";
 import {IView} from "./IView";
 
+interface AdminTabs {
+    deliverables: boolean,
+    students: boolean,
+    teams: boolean,
+    results: boolean,
+    grades: boolean,
+    dashboard: boolean,
+    config: boolean
+}
+
 export class AdminView implements IView {
 
-    private remote: string = null;
+    private remote: string | null = null;
+    private tabs: AdminTabs | null = null;
 
-    constructor(remoteUrl: string) {
+    constructor(remoteUrl: string, tabs: AdminTabs) {
         Log.info("AdminView::<init>");
         this.remote = remoteUrl;
+        this.tabs = tabs;
     }
+
 
     /*
         private longAction(duration: number, msg?: string) {
@@ -51,9 +64,31 @@ export class AdminView implements IView {
 
     */
     public renderPage(opts: {}) {
-        Log.info('AdminView::renderPage() - start; options: ' + opts);
+        Log.info('AdminView::renderPage() - start; options: ' + JSON.stringify(opts));
 
-        // this.checkStatus();
+        if (this.tabs !== null) {
+            this.setTabVisibility('AdminDeliverableTab', this.tabs.deliverables);
+            this.setTabVisibility('AdminStudentTab', this.tabs.students);
+            this.setTabVisibility('AdminTeamTab', this.tabs.teams);
+            this.setTabVisibility('AdminResultTab', this.tabs.results);
+            this.setTabVisibility('AdminGradeTab', this.tabs.grades);
+            this.setTabVisibility('AdminDashboardTab', this.tabs.dashboard);
+            this.setTabVisibility('AdminConfigTab', this.tabs.config);
+        }
+    }
+
+    // this.checkStatus();
+
+
+    private setTabVisibility(name: string, visible: boolean) {
+        const e = document.getElementById(name);
+        if (e !== null) {
+            if (visible === false) {
+                e.style.display = 'none';
+            }
+        } else {
+            Log.warn("AdminView::setTabVisibility( " + name + ", " + visible + " ) - tab not found");
+        }
     }
 
     /*

@@ -83,29 +83,24 @@ export class App {
                     return;
                 }
 
-                if (pageName === 'adminTabsPage') {
-                    // initializing tabs page for the first time
-                    // that.adminController = new AdminController(that, courseId);
-                    Log.info("App::init() - adminTabsPage init; attaching view");
-                    (<any>window).classportal.view = Factory.getInstance().getAdminView(that.backendURL);
+                if (that.view === null) {
+                    let v: IView = null;
+                    if (pageName === 'AdminRoot') {
+                        // initializing tabs page for the first time
+                        Log.info("App::init() - AdminRoot init; attaching view");
+                        v = Factory.getInstance().getAdminView(that.backendURL);
+                        Log.trace("App::init() - AdminRoot init; view attached");
+                    } else if (pageName === 'StudentRoot') {
+                        // initializing tabs page for the first time
+                        Log.info("App::init() - StudentRoot init; attaching view");
+                        v = Factory.getInstance().getView(that.backendURL);
+                        Log.trace("App::init() - StudentRoot init; view attached");
+                    } else {
+                        Log.trace("App::init() - unknown page name: " + pageName);
+                    }
 
-                    const view = Factory.getInstance().getAdminView(that.backendURL);
-                    that.view = view;
-
-                    Log.trace("App::init() - studentTabsPage init; view attached");
-                }
-
-                if (pageName === 'studentTabsPage') {
-                    // initializing tabs page for the first time
-                    // that.studentController = new StudentController(that, courseId);
-
-                    Log.info("App::init() - studentTabsPage init; attaching view");
-                    (<any>window).classportal.view = Factory.getInstance().getView(that.backendURL);
-
-                    const view = Factory.getInstance().getView(that.backendURL);
-                    that.view = view;
-
-                    Log.trace("App::init() - studentTabsPage init; view attached");
+                    (<any>window).classportal.view = v;
+                    that.view = v;
                 }
 
                 /*
@@ -181,7 +176,7 @@ export class App {
                 if (typeof options === 'undefined') {
                     options = {};
                 }
-                Log.trace('App::init()::show - page: ' + pageName + '; event: ' + JSON.stringify(event));
+                Log.trace('App::init()::show - page: ' + pageName + '; validated: ' + validated + '; event: ' + JSON.stringify(event));
 
                 // update login button state
                 that.toggleLoginButton();
@@ -189,7 +184,7 @@ export class App {
                 // let validated = await
                 // that.validateCredentials();
                 // let validated = true;
-                Log.trace('App::init()::show - page: ' + pageName + "; validated: " + validated);
+                // Log.trace('App::init()::show - page: ' + pageName + "; validated: " + validated);
 
                 /*
                 if (pageName === "studentTabsPage" && validated === true) {
@@ -203,7 +198,7 @@ export class App {
                 }
                 */
                 if (that.view !== null) {
-                    Log.trace('App::init()::show - calling view.renderPage');
+                    Log.trace('App::init()::show - calling view.renderPage for: ' + pageName);
                     that.view.renderPage(options);
                 }
                 /*
@@ -338,7 +333,7 @@ export class App {
      */
     private getServerCredentials(username: string, token: string): Promise<{}> { // TODO: return should have a type | null
         const url = this.backendURL + '/getCredentials';
-        Log.trace("App::getServerCredentials - start; url: " + url);
+        Log.trace('App::getServerCredentials( ' + username + '...) - start; url: ' + url);
         const that = this;
 
         const org = localStorage.org;
@@ -353,27 +348,27 @@ export class App {
             }
         };
         return fetch(url, options).then(function (resp: any) {
-            Log.trace("App::getServerCredentials - resp status: " + resp.status);
+            Log.trace("App::getServerCredentials(..) - resp status: " + resp.status);
             if (resp.status === 204) {
-                Log.trace("App::getServerCredentials - fetching");
+                Log.trace("App::getServerCredentials(..) - fetching");
                 return fetch(url, options);
             } else {
-                Log.trace("App::getServerCredentials - passing through");
-                Log.trace("App::getServerCredentials - code returned: " + resp.status);
+                Log.trace("App::getServerCredentials(..) - passing through");
+                Log.trace("App::getServerCredentials(..) - code returned: " + resp.status);
 
                 if (resp.status === 400) {
                     that.clearCredentials();
                 }
                 return resp;
             }
+        }).then(function (resp: any) {
+            Log.trace("App::getServerCredentials(..) - data status: " + resp.statu);
+            return resp.json();
         }).then(function (data: any) {
-            Log.trace("App::getServerCredentials - data raw: " + data);
-            return data.json();
-        }).then(function (data: any) {
-            Log.trace("App::getServerCredentials - data json: " + JSON.stringify(data));
+            Log.trace("App::getServerCredentials(..) - data json: " + JSON.stringify(data));
             return data;
         }).catch(function (err: any) {
-            Log.error("App::getServerCredentials - ERROR: " + err);
+            Log.error("App::getServerCredentials(..) - ERROR: " + err);
             return null;
         });
     };
@@ -402,11 +397,10 @@ export class App {
     }
 
     public handleMainPageClick(params?: {}) {
-        Log.info("App::handleMainPageClick(..) - start");
-
         if (typeof params === 'undefined') {
             params = {};
         }
+        Log.info("App::handleMainPageClick( " + JSON.stringify(params) + " ) - start");
 
         if (this.validated === true) {
             // push to correct handler

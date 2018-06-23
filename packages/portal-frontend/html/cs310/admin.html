@@ -1,4 +1,4 @@
-<ons-page>
+<ons-page id="AdminRoot">
     <ons-toolbar>
         <div class="center">CPSC 310 Admin Portal</div>
         <div id='indexLogin' class="right">
@@ -10,24 +10,26 @@
     </ons-toolbar>
 
     <ons-tabbar swipeable position="top">
-        <ons-tab page="deliverables.html" label="Deliverables" icon="ion-home, material:md-home" active>
+        <ons-tab id="AdminDeliverableTab" page="deliverables.html" label="Deliverables" icon="ion-home, material:md-home" active>
         </ons-tab>
 
-        <ons-tab page="students.html" label="Students" icon="md-face" active-icon="md-face">
+        <ons-tab id="AdminStudentTab" page="students.html" label="Students" icon="md-face" active-icon="md-face">
         </ons-tab>
 
-        <ons-tab page="teams.html" label="Teams" icon="ion-ios-people">
+        <ons-tab id="AdminTeamTab" page="teams.html" label="Teams" icon="ion-ios-people">
         </ons-tab>
 
-        <ons-tab page="grades.html" label="Grades" icon="ion-ios-paper-outline">
+        <ons-tab id="AdminGradeTab" page="grades.html" label="Grades" icon="ion-ios-paper-outline">
         </ons-tab>
 
-        <ons-tab page="results.html" label="Results" icon="ion-android-checkmark-circle">
+        <ons-tab id="AdminResultTab" page="results.html" label="Results" icon="ion-android-checkmark-circle">
         </ons-tab>
 
-        <ons-tab page="dashboard.html" label="Dashboard" icon="ion-ios-speedometer-outline">
+        <ons-tab id="AdminDashboardTab" page="dashboard.html" label="Dashboard" icon="ion-ios-speedometer-outline">
         </ons-tab>
 
+        <ons-tab id="AdminConfigTab" page="config.html" label="Config" icon="ion-ios-gear">
+        </ons-tab>
     </ons-tabbar>
 
 
@@ -80,5 +82,12 @@
         </ons-page>
     </template>
 
+    <template id="config.html">
+        <ons-page id="AdminConfig">
+            <p style="text-align: center;">
+                Config Page
+            </p>
+        </ons-page>
+    </template>
 
 </ons-page>

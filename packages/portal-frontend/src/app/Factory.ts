@@ -44,8 +44,8 @@ export class Factory {
     }
 
     public getView(backendUrl: string): IView {
-        // Log.trace("Begin view fetching");
         if (this.studentView === null) {
+            Log.trace("Factory::getView() - instantating new view");
             if (this.org === 'sdmm') {
                 this.studentView = new SDMMSummaryView(backendUrl);
             } else if (this.org === 'CS310-2017Jan' || this.org === 'CS310-2017Jan_TEST') {
@@ -60,14 +60,31 @@ export class Factory {
     }
 
     public getAdminView(backendUrl: string): IView {
-        // Log.trace("Begin view fetching");
         if (this.adminView === null) {
+            Log.trace("Factory::getAdminView() - instantating new view for: " + this.org);
+            let tabs = {
+                deliverables: true,
+                students:     true,
+                teams:        true,
+                results:      true,
+                grades:       true,
+                dashboard:    true,
+                config:       true
+            };
+
             if (this.org === 'sdmm') {
-                this.adminView = new AdminView(backendUrl);
+                this.adminView = new AdminView(backendUrl, tabs);
             } else if (this.org === 'CS310-2017Jan' || this.org === 'CS310-2017Jan_TEST') {
-                this.adminView = new AdminView(backendUrl);
+                // tabs.deliverables = false;
+                // tabs.students = false;
+                // tabs.teams = false;
+                // tabs.grades = false;
+                // tabs.results = false;
+                // tabs.dashboard = false;
+                // tabs.config = false;
+                this.adminView = new AdminView(backendUrl, tabs);
             } else if (this.org === 'cs340') {
-                this.adminView = new AdminView(backendUrl);
+                this.adminView = new AdminView(backendUrl, tabs);
             } else {
                 Log.error("Factory::getView() - ERROR; unknown org: " + this.org);
             }
