@@ -3,7 +3,7 @@ require('./GlobalSpec');
 import {expect} from "chai";
 import "mocha";
 
-import Config from "../../common/Config";
+import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
 
 import {GithubService, IGithubMessage, IGithubService} from "../src/github/GithubService";
@@ -16,20 +16,20 @@ describe("GitHub Markdown Service", () => {
 
     let gh: IGithubService;
 
-    let postbackVal = Config.getInstance().getProp("postback");
+    let postbackVal = Config.getInstance().getProp(ConfigKey.postback);
 
     before(function () {
         gh = new GithubService();
 
         // set postback to be true so we an actually validate this
         let config = Config.getInstance();
-        config.setProp("postback", true);
+        config.setProp(ConfigKey.postback, true);
     });
 
     after(function () {
         // return postback val
         let config = Config.getInstance();
-        config.setProp("postback", postbackVal);
+        config.setProp(ConfigKey.postback, postbackVal);
     });
 
     it("Should be able to post a valid message.", () => {

@@ -5,7 +5,7 @@
 import restify = require('restify');
 import * as fs from "fs";
 
-import Config from "../../../common/Config";
+import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
 /**
@@ -52,8 +52,8 @@ export default class FrontEndServer {
 
                 const https_options = {
                     name:        'frontend',
-                    key:         fs.readFileSync(Config.getInstance().getProp('sslKeyPath')),
-                    certificate: fs.readFileSync(Config.getInstance().getProp('sslCertPath'))
+                    key:         fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslKeyPath)),
+                    certificate: fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslCertPath))
                 };
 
                 that.rest = restify.createServer(https_options);
@@ -71,7 +71,7 @@ export default class FrontEndServer {
                     })
                 );
 
-                that.rest.listen(Config.getInstance().getProp('frontendPort'), function () {
+                that.rest.listen(Config.getInstance().getProp(ConfigKey.frontendPort), function () {
                     Log.info('FrontEndServer::start() - restify listening: ' + that.rest.url);
                     fulfill(true);
                 });
@@ -90,7 +90,7 @@ export default class FrontEndServer {
     }
 }
 
-Log.info("FrontEndServer - port: " + Config.getInstance().getProp('frontendPort'));
+Log.info("FrontEndServer - port: " + Config.getInstance().getProp(ConfigKey.frontendPort));
 const server = new FrontEndServer();
 server.start().then(function () {
     Log.info("FrontEndServer - started; Log messages will mostly appear in your browser console.");

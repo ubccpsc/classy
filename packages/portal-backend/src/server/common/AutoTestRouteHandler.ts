@@ -1,7 +1,7 @@
 import restify = require('restify');
 import * as rp from "request-promise-native";
 
-import Config from "../../../../common/Config";
+import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {GradePayload} from "../../../../common/types/SDMMTypes";
 
@@ -205,7 +205,7 @@ export class AutoTestRouteHandler implements IREST {
         const webhookBody: any = req.body;
         // Log.info('RouteHandler::githubWebhook(..) - body: ' + JSON.stringify(webhookBody));
 
-        const url = Config.getInstance().getProp('autotestUrl') + ':' + Config.getInstance().getProp('autotestPort') + '/githubWebhook';
+        const url = Config.getInstance().getProp(ConfigKey.autotestUrl) + ':' + Config.getInstance().getProp(ConfigKey.autotestPort) + '/githubWebhook';
         const options = {
             uri:     url,
             method:  'POST',

@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as restify from "restify";
 
 import Log from "../../../common/Log";
-import Config from "../../../common/Config";
+import Config, {ConfigKey} from "../../../common/Config";
 
 import RouteHandler from "./RouteHandler";
 
@@ -71,8 +71,8 @@ export default class Server {
 
                 that.rest = restify.createServer({
                     name:        "AutoTest",
-                    key:         fs.readFileSync(Config.getInstance().getProp("sslKeyPath")),
-                    certificate: fs.readFileSync(Config.getInstance().getProp("sslCertPath"))
+                    key:         fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslKeyPath)),
+                    certificate: fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslCertPath))
                 });
 
                 // support CORS
@@ -88,7 +88,7 @@ export default class Server {
 
                 // GitHub Webhook endpoints
 
-                if (Config.getInstance().getProp("kind") === "ubc") {
+                if (Config.getInstance().getProp(ConfigKey.kind) === "ubc") {
                     that.rest.post("/githubWebhook", restify.plugins.bodyParser(), RouteHandler.postGithubHook);
                 }
 

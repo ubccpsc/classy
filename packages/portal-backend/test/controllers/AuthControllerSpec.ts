@@ -28,12 +28,13 @@ describe.only("AuthController", () => {
 
 
     it("Should not let invalid be admins.", async () => {
-        let isValid = await ac.isPrivileged(Test.USERNAME3, ''); // not registered
-        expect(isValid).to.be.false;
+        let isPriv = await ac.isPrivileged(Test.USERNAME3, ''); // not registered
+        expect(isPriv.isAdmin).to.be.false;
+        expect(isPriv.isStaff).to.be.false;
     });
 
 
-    it("Should identify an admin correctly.", async () => {
+    it("Should identify a staff correctly.", async () => {
         const pc = new PersonController();
         const p: Person = {
             id:            'rtholmes',
@@ -65,7 +66,7 @@ describe.only("AuthController", () => {
         expect(isValid).to.be.true;
 
         let isPriv = await ac.isPrivileged('rtholmes', 'realtoken');
-        expect(isPriv.isAdmin).to.be.true;
+        expect(isPriv.isAdmin).to.be.false;
         expect(isPriv.isStaff).to.be.true;
     });
 

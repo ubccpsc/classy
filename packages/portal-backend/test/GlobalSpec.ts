@@ -1,7 +1,7 @@
 import {expect} from "chai";
 import "mocha";
 
-import Config from "../../common/Config";
+import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
 
 import {DatabaseController} from "../src/controllers/DatabaseController";
@@ -13,7 +13,7 @@ before(async () => {
     (<any>Config.getInstance()).config.org = (<any>Config.getInstance()).config.testorg; // force testing environment
     // (<any>Config.getInstance()).config.name = 'secapstonetest'; // force testing in test environment // TODO: NOT GOOD for 340
 
-    Test.ORGNAME = Config.getInstance().getProp('testorg');
+    Test.ORGNAME = Config.getInstance().getProp(ConfigKey.testorg);
     Log.info('GlobalSpec::before() - org: ' + Test.ORGNAME);
     let db = DatabaseController.getInstance();
     await db.clearData(); // nuke everything

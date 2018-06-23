@@ -3,7 +3,7 @@
  */
 
 import Log from "./../../common/Log";
-import Config from "../../common/Config";
+import Config, {ConfigKey} from "../../common/Config";
 
 import Server from "./server/Server";
 
@@ -15,7 +15,7 @@ export class AutoTestDaemon {
     public initServer() {
         Log.info("AutoTestDaemon::initServer() - start");
 
-        const portNum = Number(Config.getInstance().getProp("port"));
+        const portNum = Number(Config.getInstance().getProp(ConfigKey.port));
 
         // start server
         const s = new Server();

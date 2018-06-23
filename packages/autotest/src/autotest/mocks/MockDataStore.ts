@@ -1,6 +1,6 @@
 import * as fs from "fs-extra";
 
-import Config from "../../../../common/Config";
+import Config, {ConfigKey} from "../../../../common/Config";
 import Util from "../../../../common/Util";
 import Log from "../../../../common/Log";
 
@@ -12,7 +12,7 @@ import {IDataStore} from "../DataStore";
  */
 export class MockDataStore implements IDataStore {
 
-    private readonly dir = Config.getInstance().getProp("persistDir");
+    private readonly dir = Config.getInstance().getProp(ConfigKey.persistDir);
     private readonly RECORD_PATH = this.dir + "/outputRecords.json";
     private readonly COMMENT_PATH = this.dir + "/commentRecords.json";
     private readonly PUSH_PATH = this.dir + "/pushRecords.json";
@@ -254,7 +254,7 @@ export class MockDataStore implements IDataStore {
 
     public clearData(): Promise<void> {
         Log.warn("MockDataStore::clearData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
-        if (Config.getInstance().getProp("name") === "test") {
+        if (Config.getInstance().getProp(ConfigKey.name) === "test") {
             // do it
             fs.removeSync(this.RECORD_PATH);
             fs.removeSync(this.COMMENT_PATH);

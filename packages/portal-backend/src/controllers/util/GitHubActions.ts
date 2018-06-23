@@ -1,6 +1,6 @@
 import * as rp from "request-promise-native";
 
-import Config from "../../../../common/Config";
+import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {GitTeamTuple} from "../GitHubController";
 
@@ -17,10 +17,10 @@ export class GitHubActions {
 
     constructor() {
         // NOTE: this is not very controllable; these would be better as params
-        this.org = Config.getInstance().getProp('org');
-        this.apiPath = Config.getInstance().getProp('githubAPI');
-        this.gitHubUserName = Config.getInstance().getProp("githubTokenUser");
-        this.gitHubAuthToken = Config.getInstance().getProp("githubToken");
+        this.org = Config.getInstance().getProp(ConfigKey.org);
+        this.apiPath = Config.getInstance().getProp(ConfigKey.githubAPI);
+        this.gitHubUserName = Config.getInstance().getProp(ConfigKey.githubTokenUser);
+        this.gitHubAuthToken = Config.getInstance().getProp(ConfigKey.githubToken);
     }
 
     /**

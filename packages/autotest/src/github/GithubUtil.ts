@@ -1,4 +1,4 @@
-import Config from "../../../common/Config";
+import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
 import {ICommentEvent, IPushEvent} from "../Types";
@@ -52,7 +52,7 @@ export class GithubUtil {
 
             // that.isRequest = payload.comment.body.toLowerCase().includes(this.config.getMentionTag());
             // that.isProcessed = true;
-            const botName = "@" + Config.getInstance().getProp("botName").toLowerCase();
+            const botName = "@" + Config.getInstance().getProp(ConfigKey.botName).toLowerCase();
             const botMentioned: boolean = message.toLowerCase().indexOf(botName) >= 0;
 
             const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can't add requests to a past comment

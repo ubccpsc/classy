@@ -1,5 +1,5 @@
 import Log from "../../../common/Log";
-import Config from "../../../common/Config";
+import Config, {ConfigKey} from "../../../common/Config";
 import Util from "../../../common/Util";
 
 import {Repository, Team} from "../Types";
@@ -49,7 +49,7 @@ export class GitHubController implements IGitHubController {
     }
 
     public async provisionRepository(repoName: string, teams: Team[], sourceRepo: string, webhookAddress: string): Promise<boolean> {
-        const org = Config.getInstance().getProp('org');
+        const org = Config.getInstance().getProp(ConfigKey.org);
         Log.info("GitHubController::provisionRepository( " + org + ", " + repoName + ", ...) - start");
         const start = Date.now();
         try {

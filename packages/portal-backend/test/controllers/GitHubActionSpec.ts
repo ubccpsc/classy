@@ -7,7 +7,7 @@ import {GitHubActions} from "../../src/controllers/util/GitHubActions";
 import Log from "../../../common/Log";
 import {Test} from "../GlobalSpec";
 import Util from "../../../common/Util";
-import Config from "../../../common/Config";
+import Config, {ConfigKey} from "../../../common/Config";
 
 describe("GitHubActions", () => {
 
@@ -24,12 +24,12 @@ describe("GitHubActions", () => {
     before(async () => {
         Test.ORGNAME = ORGNAME; // use real org name so the repos are provisioned correctly
 
-        OLDORGNAME = Config.getInstance().getProp('org');
-        Config.getInstance().setProp('org', ORGNAME);
+        OLDORGNAME = Config.getInstance().getProp(ConfigKey.org);
+        Config.getInstance().setProp(ConfigKey.org, ORGNAME);
     });
 
     after(async () => {
-        Config.getInstance().setProp('org', OLDORGNAME);
+        Config.getInstance().setProp(ConfigKey.org, OLDORGNAME);
     });
 
     beforeEach(function () {

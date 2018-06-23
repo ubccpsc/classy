@@ -2,7 +2,7 @@ import * as restify from "restify";
 
 import Log from "../../../common/Log";
 import Util from "../../../common/Util";
-import Config from "../../../common/Config";
+import Config, {ConfigKey} from "../../../common/Config";
 
 import {AutoTest} from "../autotest/AutoTest";
 import {ClassPortal} from "../autotest/ClassPortal";
@@ -20,17 +20,17 @@ export default class RouteHandler {
     public static getAutoTest(): AutoTest {
         if (RouteHandler.autoTest === null) {
 
-            if (Config.getInstance().getProp("kind") === "ubc") {
+            if (Config.getInstance().getProp(ConfigKey.kind) === "ubc") {
                 const data = new MongoDataStore();
                 const portal = new ClassPortal();
                 const gh = new GithubService();
-                const courseId = Config.getInstance().getProp('name');
+                const courseId = Config.getInstance().getProp(ConfigKey.name);
                 RouteHandler.autoTest = new GithubAutoTest(courseId, data, portal, gh);
-            } else if (Config.getInstance().getProp("kind") === "edx") {
+            } else if (Config.getInstance().getProp(ConfigKey.kind) === "edx") {
                 const data = new MongoDataStore();
                 const portal = new EdXClassPortal();
                 const gh = new GithubService();
-                const courseId = Config.getInstance().getProp('name');
+                const courseId = Config.getInstance().getProp(ConfigKey.name);
                 RouteHandler.autoTest = new GithubAutoTest(courseId, data, portal, gh);
             } else {
                 Log.error("RouteHandler::getAutoTest() - ERROR; kind not supported");

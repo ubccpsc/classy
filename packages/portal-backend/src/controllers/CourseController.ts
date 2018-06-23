@@ -1,6 +1,6 @@
 import * as crypto from 'crypto';
 
-import Config from "../../../common/Config";
+import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import Util from "../../../common/Util";
 import {GradePayload, Payload, SDMMStatus, StatusPayload} from "../../../common/types/SDMMTypes";
@@ -115,7 +115,7 @@ export class CourseController { // don't implement ICourseController yet
         Log.info("CourseController::provision( " + delivId + ", ... ) - start");
 
         try {
-            const org = Config.getInstance().getProp('org');
+            const org = Config.getInstance().getProp(ConfigKey.org);
             if (org !== "secapstone" && org !== "secapstonetest") {
                 Log.error("CourseController::provision(..) - SDMMController should not be used for other orgs");
                 return {failure: {shouldLogout: false, message: "Invalid org; contact course staff."}};
@@ -188,7 +188,7 @@ export class CourseController { // don't implement ICourseController yet
      * @returns {Promise<string>} null if the personId is not even known
      */
     private async computeStatusString(personId: string): Promise<string | null> {
-        const org = Config.getInstance().getProp('org');
+        const org = Config.getInstance().getProp(ConfigKey.org);
         Log.info("CourseController::getStatus( " + org + ', ' + personId + ' ) - start');
         const start = Date.now();
         try {
@@ -404,7 +404,7 @@ export class CourseController { // don't implement ICourseController yet
 */
 
     private async provisionD0Repo(personId: string): Promise<Payload> {
-        const org = Config.getInstance().getProp('org');
+        const org = Config.getInstance().getProp(ConfigKey.org);
         Log.info("CourseController::provisionD0Repo( " + org + ", " + personId + " ) - start");
         const start = Date.now();
 
@@ -448,7 +448,7 @@ export class CourseController { // don't implement ICourseController yet
             // create remote repo
             const INPUTREPO = "https://github.com/SECapstone/bootstrap"; // HARDCODED for SDMM D0
             // set to the backendUrl:backendPort, not autotestUrl:autotestPort since the backend will be publicly visible
-            const WEBHOOKADDR = Config.getInstance().getProp('backendUrl') + ':' + Config.getInstance().getProp('backendPort') + '/githubWebhook';
+            const WEBHOOKADDR = Config.getInstance().getProp(ConfigKey.backendUrl) + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/githubWebhook';
             const provisionResult = await this.gh.provisionRepository(repoName, [team], INPUTREPO, WEBHOOKADDR);
 
             if (provisionResult === true) {
@@ -495,7 +495,7 @@ export class CourseController { // don't implement ICourseController yet
     }
 
     private async updateIndividualD0toD1(personId: string): Promise<Payload> {
-        const org = Config.getInstance().getProp('org');
+        const org = Config.getInstance().getProp(ConfigKey.org);
         Log.info("CourseController::updateIndividualD0toD1( " + org + ", " + personId + " ) - start");
         const start = Date.now();
 
@@ -581,7 +581,7 @@ export class CourseController { // don't implement ICourseController yet
      * @returns {Promise<Payload>}
      */
     private async provisionD1Repo(peopleIds: string[]): Promise<Payload> {
-        const org = Config.getInstance().getProp('org');
+        const org = Config.getInstance().getProp(ConfigKey.org);
         Log.info("CourseController::provisionD1Repo( " + org + ", " + JSON.stringify(peopleIds) + " ) - start");
         const start = Date.now();
 
@@ -654,7 +654,7 @@ export class CourseController { // don't implement ICourseController yet
             // create remote repo
             const INPUTREPO = "https://github.com/SECapstone/bootstrap"; // HARDCODED for SDMM
             // set to the backendUrl:backendPort, not autotestUrl:autotestPort since the backend will be publicly visible
-            const WEBHOOKADDR = Config.getInstance().getProp('backendUrl') + ':' + Config.getInstance().getProp('backendPort') + '/githubWebhook';
+            const WEBHOOKADDR = Config.getInstance().getProp(ConfigKey.backendUrl) + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/githubWebhook';
             const provisionResult = await this.gh.provisionRepository(repoName, [team], INPUTREPO, WEBHOOKADDR);
 
             if (provisionResult === true) {
@@ -695,7 +695,7 @@ export class CourseController { // don't implement ICourseController yet
     }
 
     public async getStatus(personId: string): Promise<StatusPayload> {
-        const org = Config.getInstance().getProp('org');
+        const org = Config.getInstance().getProp(ConfigKey.org);
         Log.info("CourseController::getStatus( " + org + ", " + personId + " ) - start");
         const start = Date.now();
 
@@ -793,8 +793,8 @@ export class CourseController { // don't implement ICourseController yet
      * @returns {string}
      */
     private static getProjectPrefix(): string {
-        const org = Config.getInstance().getProp('org');
-        if (org === "secapstonetest" || Config.getInstance().getProp('name') === "secapstonetest") {
+        const org = Config.getInstance().getProp(ConfigKey.org);
+        if (org === "secapstonetest" || Config.getInstance().getProp(ConfigKey.name) === "secapstonetest") {
             Log.info("CourseController::getProjectPrefix(..) - returning test prefix");
             return "TEST__X__secap_";
         } else {
@@ -809,7 +809,7 @@ export class CourseController { // don't implement ICourseController yet
      * @returns {string}
      */
     private static getTeamPrefix(org: string) {
-        if (org === "secapstonetest" || Config.getInstance().getProp('name') === "secapstonetest") {
+        if (org === "secapstonetest" || Config.getInstance().getProp(ConfigKey.name) === "secapstonetest") {
             Log.info("CourseController::getTeamPrefix(..) - returning test prefix");
             return "TEST__X__t_";
         } else {
@@ -819,7 +819,7 @@ export class CourseController { // don't implement ICourseController yet
 
     public static getOrg(): string | null {
         try {
-            const org = Config.getInstance().getProp('org');
+            const org = Config.getInstance().getProp(ConfigKey.org);
             if (org !== null) {
                 return org;
             } else {

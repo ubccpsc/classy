@@ -1,4 +1,4 @@
-import Config from "../../common/Config";
+import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
 
 import IREST from "./server/IREST";
@@ -38,7 +38,7 @@ export class Factory {
      */
     private static getOrg(): string | null {
         try {
-            const org = Config.getInstance().getProp('org');
+            const org = Config.getInstance().getProp(ConfigKey.org);
             if (org === null) {
                 Log.error("Factory::getOrg() - null org");
             }

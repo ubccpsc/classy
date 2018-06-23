@@ -2,7 +2,7 @@ import {Collection, Db, MongoClient} from "mongodb";
 
 import Log from "../../../common/Log";
 import Util from "../../../common/Util";
-import Config from "../../../common/Config";
+import Config, {ConfigKey} from "../../../common/Config";
 
 import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven, IPushEvent} from "../Types";
 
@@ -327,7 +327,7 @@ export class MongoDataStore implements IDataStore {
 
     public async clearData(): Promise<void> {
         Log.warn("MongoDataStore::clearData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
-        if (Config.getInstance().getProp("name") === "test") {
+        if (Config.getInstance().getProp(ConfigKey.name) === "test") {
 
             let col: any = null;
             col = await this.getCollection(this.PUSHCOLL);
@@ -359,10 +359,10 @@ export class MongoDataStore implements IDataStore {
     private async open(): Promise<Db> {
         Log.trace("MongoDataStore::open() - start");
         if (this.db === null) {
-            const dbName = Config.getInstance().getProp("name");
+            const dbName = Config.getInstance().getProp(ConfigKey.name);
             Log.info("MongoDataStore::open() - db null; making new connection to: " + dbName);
 
-            const client = await MongoClient.connect(Config.getInstance().getProp("mongoUrl")); // 'mongodb://localhost:27017'
+            const client = await MongoClient.connect(Config.getInstance().getProp(ConfigKey.mongoUrl)); // 'mongodb://localhost:27017'
             this.db = await client.db(dbName);
 
             Log.info("MongoDataStore::open() - db null; new connection made");

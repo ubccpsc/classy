@@ -1,4 +1,4 @@
-import Config from "../../../../common/Config";
+import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
 
@@ -21,13 +21,13 @@ export class MockGrader implements IGrader {
     public async execute(): Promise<ICommitRecord> {
         try {
             Log.info("MockGrader::execute() - start; commitSHA: " + this.input.pushInfo.commitSHA);
-            const oracleToken = Config.getInstance().getProp("githubOracleToken");
-            const dockerId = Config.getInstance().getProp("dockerId");
-            const workspace = Config.getInstance().getProp("workspace");
+            const oracleToken = Config.getInstance().getProp(ConfigKey.githubOracleToken);
+            const dockerId = Config.getInstance().getProp(ConfigKey.dockerId);
+            const workspace = Config.getInstance().getProp(ConfigKey.workspace);
 
             // TODO: This should really become TestDocker.ts or something that can be instantiated
             let timeout = 10000;
-            if (Config.getInstance().getProp("name") === "test") {
+            if (Config.getInstance().getProp(ConfigKey.name) === "test") {
                 timeout = 20; // don't slow down tests; don't need a lot to get out of order here
             }
             await Util.timeout(timeout); // simulate the container taking longer than the rest of the process
