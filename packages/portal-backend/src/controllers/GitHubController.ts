@@ -5,7 +5,7 @@ import Util from "../../../common/Util";
 
 import {Repository, Team} from "../Types";
 
-let tmp = require('tmp-promise');
+const tmp = require('tmp-promise');
 
 export interface IGitHubController {
     /**
@@ -32,7 +32,7 @@ export interface IGitHubController {
 export class GitHubController implements IGitHubController {
 
     public async getRepositoryUrl(repo: Repository): Promise<string> {
-        Log.info("GitHubController::GetRepositoryUrl")
+        Log.info("GitHubController::GetRepositoryUrl");
         // HACK: hardcoded for sddm:
         const url = "https://github.com/secapstone/" + repo.id;
         Log.info("GitHubController::GetRepositoryUrl( " + repo.id + " ) - URL: " + url);
@@ -68,7 +68,7 @@ export class GitHubController implements IGitHubController {
                 }
             } catch (err) {
                 Log.error("GitHubController::provisionRepository() - repo already exists; ERROR: " + err);
-                throw err;
+                return false;
             }
 
             try {
@@ -144,7 +144,6 @@ export class GitHubController implements IGitHubController {
 }
 
 export class TestGitHubController implements IGitHubController {
-    private gha = new GitHubActions();
 
     public async getRepositoryUrl(repo: Repository): Promise<string> {
         Log.error("TestGitHubController::getRepositoryUrl(..) - NOT IMPLEMENTED");
@@ -303,7 +302,7 @@ export class GitHubActions {
         let ctx = this;
         Log.info("GitHubAction::repoExists( " + ctx.org + ", " + repoName + " ) - start");
 
-        return new Promise(function (fulfill, reject) {
+        return new Promise(function (fulfill) {
 
             const uri = ctx.apiPath + '/repos/' + ctx.org + '/' + repoName;
             Log.trace("GitHubAction::repoExists(..) - URI: " + uri);
@@ -320,10 +319,9 @@ export class GitHubActions {
             rp(options).then(function (body: any) {
                 Log.info("GitHubAction::repoExists(..) - true; body: " + body);
                 fulfill(true);
-            }).catch(function (err: any) {
-                // Log.error("GitHubAction::repoExists(..) - ERROR: " + JSON.stringify(err));
+            }).catch(function () { // err: any
+                // Log.trace("GitHubAction::repoExists(..) - ERROR: " + JSON.stringify(err));
                 Log.info("GitHubAction::repoExists(..) - false");
-                // NOTE: this silently fails if the credentials are wrong
                 fulfill(false);
             });
         });
@@ -339,7 +337,7 @@ export class GitHubActions {
         let ctx = this;
 
         Log.info("GitHubAction::deleteTeam( " + ctx.org + ", " + teamId + " ) - start");
-        return new Promise(function (fulfill, reject) {
+        return new Promise(function (fulfill) {
 
             const uri = ctx.apiPath + '/teams/' + teamId;
             Log.trace("GitHubAction::deleteRepo(..) - URI: " + uri);
@@ -356,8 +354,8 @@ export class GitHubActions {
             rp(options).then(function (body: any) {
                 Log.info("GitHubAction::deleteTeam(..) - success; body: " + body);
                 fulfill(true);
-            }).catch(function (err: any) {
-                Log.error("GitHubAction::deleteTeam(..) - failed");// + JSON.stringify(err));
+            }).catch(function () { // err: any
+                Log.error("GitHubAction::deleteTeam(..) - failed");
                 fulfill(false);
             });
         });
@@ -365,7 +363,6 @@ export class GitHubActions {
 
     /**
      *
-     * @param {string} org
      * @returns {Promise<string>}
      */
     public listRepos(): Promise<string> {
@@ -397,37 +394,8 @@ export class GitHubActions {
         });
     }
 
-
     /**
-     *
-     * Returns true if the team exists, false if it doesn't. Never fails, just returns false.
-     *
-     * @param {string} org
-     * @returns {Promise<string>}
-     */
-
-    /*
-    // THIS JUST WASN'T WORKING RIGHT?
-    public teamExists(org: string, teamName: string): Promise<boolean> {
-        let ctx = this;
-
-        Log.info("GitHubAction::teamExists( " + org + " ) - start");
-        return new Promise(function (fulfill, reject) {
-            ctx.getTeamNumber(org, teamName).then(function (exists) {
-                const teamExists = exists >= 0;
-                Log.trace("GitHubAction::teamExists(..) - value: " + exists + "; returning: " + teamExists);
-                fulfill(true);
-            }).catch(function (err) {
-                Log.trace("GitHubAction::teamExists(..) - returning: false");
-                fulfill(false);
-            });
-        });
-    }
-*/
-
-    /**
-     *
-     * @param {string} org
+     * Lists the teams for the current org.
      * @returns {Promise<string>}
      */
     public listTeams(): Promise<string> {
@@ -618,7 +586,6 @@ export class GitHubActions {
     /**
      * NOTE: needs the team Id (number), not the team name (string)!
      *
-     * @param org
      * @param teamId
      * @param repoName
      * @param permission ('pull', 'push', 'admin')
@@ -655,7 +622,9 @@ export class GitHubActions {
     }
 
     /**
-     * Gets the internal number for a team. Returns -1 if the team does not exist. Will throw an error
+     * Gets the internal number for a team.
+     *
+     * Returns -1 if the team does not exist. Will throw an error
      * if some other configuration problem is encountered.
      *
      * @param {string} teamName
@@ -690,21 +659,20 @@ export class GitHubActions {
     }
 
     /**
-     * Gets the list of users on a team. Returns [] if the team does not exist or nobody is on the team.
+     * Gets the list of users on a team.
+     *
+     * Returns [] if the team does not exist or nobody is on the team.
      * Will throw an error if some other configuration problem is encountered.
      *
-     * @param {string} org
-     * @param {string} teamName
+     * @param {string} teamNumber
      * @returns {Promise<number>}
      */
     public getTeamMembers(teamNumber: number): Promise<string[]> {
         let ctx = this;
 
         Log.info("GitHubAction::getTeamMembers( " + ctx.org + ", " + teamNumber + " ) - start");
-        return new Promise(function (fulfill, reject) {
+        return new Promise(function (fulfill) {
 
-            // GET /orgs/:org/repos
-            // const uri = ctx.apiPath + '/orgs/' + org + '/teams/' + teamNumber + '/members';
             const uri = ctx.apiPath + '/teams/' + teamNumber + '/members';
             const options = {
                 method:  'GET',
@@ -716,8 +684,7 @@ export class GitHubActions {
                 }
             };
 
-            // NOTE: do not know how this will do with paging if there are lots of teams
-
+            // NOTE: not sure how this will respond to paging if there are lots of teams
             rp(options).then(function (body: any) {
                 Log.info("GitHubAction::getTeamMembers(..) - success; body: " + body);
                 let resp = JSON.parse(body);
@@ -729,10 +696,9 @@ export class GitHubActions {
                 fulfill(ids);
             }).catch(function (err: any) {
                 Log.warn("GitHubAction::getTeamMembers(..) - ERROR: " + JSON.stringify(err));
-                // reject(err); // just return empy [] rather than failing
+                // just return empy [] rather than failing
                 fulfill([]);
             });
-
         });
     }
 
@@ -750,16 +716,14 @@ export class GitHubActions {
 
     private async isOnTeam(teamName: string, userName: string): Promise<boolean> {
         let gh = this;
-        // return new Promise(function (fulfill, reject) {
 
         let teamNumber = await gh.getTeamNumber(teamName);
         if (teamNumber < 0) {
-            Log.warn('GitHubController::isOnTeam(..) - team does not exist: ' + teamName + ' for org: ' + gh.org);
+            Log.warn('GitHubController::isOnTeam(..) - team: ' + teamName + ' does not exist for org: ' + gh.org);
             return false;
         }
 
         let teamMembers = await gh.getTeamMembers(teamNumber);
-
         for (const member of teamMembers) {
             if (member === userName) {
                 Log.info('GitHubController::isOnTeam(..) - user: ' + userName + ' IS on team: ' + teamName + ' for org: ' + gh.org);
@@ -768,7 +732,6 @@ export class GitHubActions {
         }
 
         Log.info('GitHubController::isOnTeam(..) - user: ' + userName + ' is NOT on team: ' + teamName + ' for org: ' + gh.org);
-        // if true wasn't returned it must be false
         return false;
     }
 
