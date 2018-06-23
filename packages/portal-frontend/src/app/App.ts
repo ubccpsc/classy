@@ -251,10 +251,11 @@ export class App {
                     Log.info("App::validateCredentials() - server validation failed");
                     this.clearCredentials();
                 } else {
-                    Log.info("App::validateCredentials() - validated with server; isAdmin: " + credentials.isAdmin);
+                    Log.info("App::validateCredentials() - validated with server; isAdmin: " + credentials.isAdmin + "; isStaff: " + credentials.isStaff);
                     localStorage.setItem('user', credentials.user);
                     localStorage.setItem('token', credentials.token);
                     localStorage.setItem('isAdmin', credentials.isAdmin);
+                    localStorage.setItem('isStaff', credentials.isStaff);
                     return true;
                 }
             } else {
@@ -391,7 +392,7 @@ export class App {
 
         if (this.validated === true) {
             // push to correct handler
-            if (localStorage.kind === 'admin') {
+            if (localStorage.isAdmin === 'true' || localStorage.isStaff === 'true') { // localStorage returns strings
                 Log.info("App::handleMainPageClick(..) - admin");
                 UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/admin.html', params);
             } else {

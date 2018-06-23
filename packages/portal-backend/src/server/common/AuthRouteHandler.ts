@@ -39,9 +39,11 @@ export class AuthRouteHandler implements IREST {
             Log.trace('AuthRouteHandler::getCredentials(..) - in isValid(..)');
             if (isValid === true) {
                 Log.trace('AuthRouteHandler::getCredentials(..) - isValid true');
-                AuthRouteHandler.ac.isAdmin(user, token).then(function (isAdmin) {
-                    Log.info('RouteHandler::getCredentials(..) - sending 200; isAdmin: ' + isAdmin);
-                    res.send({user: user, token: token, isAdmin: true});
+                AuthRouteHandler.ac.isPrivileged(user, token).then(function (isPrivileged) {
+
+                    Log.info('RouteHandler::getCredentials(..) - sending 200; isPriv: ' + (isPrivileged.isStaff || isPrivileged.isAdmin));
+                    res.send({user: user, token: token, isAdmin: isPrivileged.isAdmin, isStaff: isPrivileged.isStaff});
+
                 }).catch(function (err) {
                     Log.info('AuthRouteHandler::getCredentials(..) - isValid true; ERROR: ' + err);
                     res.send(400, {failure: {message: "Login error (getCredentials valid inner error)."}});

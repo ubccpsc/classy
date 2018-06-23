@@ -41,23 +41,18 @@ export class AuthController {
         return false;
     }
 
-    public async isAdmin(personId: string, token: string): Promise<boolean> {
-        Log.trace("AuthController::isAdmin( " + personId + ", ... ) - start");
+    public async isPrivileged(personId: string, token: string): Promise<{ isAdmin: boolean, isStaff: boolean }> {
+        Log.trace("AuthController::isPrivileged( " + personId + ", ... ) - start");
         let person = await new PersonController().getPerson(personId);
         if (person !== null) {
             let valid = await this.isValid(personId, token);
             if (valid === true) {
-                // check kind
                 const isStaff = await new GitHubActions().isOnStaffTeam(personId);
                 const isAdmin = await new GitHubActions().isOnAdminTeam(personId);
-                // student, ta, prof, ops
-                // if (person.kind === "ta" || person.kind === "prof" || person.kind === "ops") {
-                //   return true;
-                // }
-                return isStaff || isAdmin;
+                return {isAdmin: isAdmin, isStaff: isStaff};
             }
         }
-        return false;
+        return {isAdmin: false, isStaff: false};
     }
 
 }
