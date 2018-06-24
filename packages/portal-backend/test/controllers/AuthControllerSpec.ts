@@ -10,7 +10,7 @@ import {DatabaseController} from "../../src/controllers/DatabaseController";
 const loadFirst = require('../GlobalSpec');
 const teamsFirst = require('./PersonControllerSpec');
 
-describe.only("AuthController", () => {
+describe("AuthController", () => {
 
     let ac: AuthController;
 
