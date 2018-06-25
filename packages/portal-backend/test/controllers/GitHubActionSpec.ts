@@ -9,7 +9,7 @@ import {Test} from "../GlobalSpec";
 import Util from "../../../common/Util";
 import Config, {ConfigKey} from "../../../common/Config";
 
-describe("GitHubActions", () => {
+describe.only("GitHubActions", () => {
 
     let gh: GitHubActions;
 
@@ -74,7 +74,8 @@ describe("GitHubActions", () => {
 
     it("Should be able to create a repo.", async function () {
         let val = await gh.createRepo(REPONAME);
-        expect(val).to.equal('https://github.com/SECapstone/' + REPONAME);
+        const name = Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME;
+        expect(val).to.equal(name);
     }).timeout(TIMEOUT);
 
     it("Should not be possible to find a repo that does exist.", async function () {
@@ -89,7 +90,8 @@ describe("GitHubActions", () => {
 
     it("Should be able to create the repo again.", async function () {
         let val = await gh.createRepo(REPONAME);
-        expect(val).to.equal('https://github.com/SECapstone/' + REPONAME);
+        const name = Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME;
+        expect(val).to.equal(name);
     }).timeout(TIMEOUT);
 
     it("Should be able to list a webhook.", async function () {
@@ -112,9 +114,6 @@ describe("GitHubActions", () => {
         let val = await gh.getTeamNumber(TEAMNAME);
         Log.test('Team # ' + val);
         expect(val).to.be.lessThan(0);
-
-        // let bool = await gh.teamExists(Test.ORGNAME, TEAMNAME);
-        // expect(bool).to.be.false;
     }).timeout(TIMEOUT);
 
     it("Should be able to create a team, add users to it, and add it to the repo.", async function () {
@@ -162,8 +161,8 @@ describe("GitHubActions", () => {
 
     it("Should be able to clone a source repo into a newly created repository.", async function () {
         const start = Date.now();
-        let targetUrl = 'https://github.com/SECapstone/' + REPONAME;
-        let importUrl = 'https://github.com/SECapstone/bootstrap';
+        let targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME;
+        let importUrl = 'https://github.com/SECapstone/bootstrap'; // this is hard coded, but at least it's public
 
         let output = await gh.importRepoFS(importUrl, targetUrl);
         expect(output).to.be.true;
