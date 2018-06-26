@@ -7,8 +7,7 @@ export class CS340AdminView extends AdminView {
         Log.info('CS340AdminView::renderPage( ' + name + ', ... ) - start; options: ' + JSON.stringify(opts));
         super.renderPage(name, opts);
 
-        // insert custom tab here somehow?
-        // should be possible with document.getElementById(`adminTabbar`)
+        // custom view init here
     }
 
     public handleAdminCustomGrades(opts: any) {
