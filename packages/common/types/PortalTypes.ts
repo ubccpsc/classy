@@ -11,6 +11,11 @@ export interface FailurePayload {
     shouldLogout: boolean; // almost always false
 }
 
+export interface Payload {
+    success?: any; // only set if defined
+    failure?: FailurePayload; // only set if defined
+}
+
 export interface StudentTransportPayload {
     success?: StudentTransport[]; // only set if defined
     failure?: FailurePayload; // only set if defined

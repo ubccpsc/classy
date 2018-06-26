@@ -1,11 +1,16 @@
 import restify = require('restify');
 import Log from "../../../../common/Log";
 
+import * as fs from 'fs';
+import * as parse from 'csv-parse';
+
 import IREST from "../IREST";
 import {AuthController} from "../../controllers/AuthController";
 import {CourseController} from "../../controllers/CourseController";
 import {GitHubController} from "../../controllers/GitHubController";
-import {StudentTransportPayload} from '../../../../common/types/PortalTypes';
+import {Payload, StudentTransportPayload} from '../../../../common/types/PortalTypes';
+import {Person} from "../../Types";
+import {PersonController} from "../../controllers/PersonController";
 
 export default class AdminRoutes implements IREST {
 
@@ -174,8 +179,69 @@ export default class AdminRoutes implements IREST {
 
     private static postClasslist(req: any, res: any, next: any) {
         Log.info('AdminRoutes::postClasslist(..) - start');
-        res.send(200, {worked: true});
-        Log.info('AdminRoutes::postClasslist(..) - end');
-        return next();
+
+        try {
+            let files = req.files;
+            let classlist = files.classlist;
+
+            let rs = fs.createReadStream(classlist.path);
+            const options = {
+                columns:          true,
+                skip_empty_lines: true,
+                trim:             true,
+            };
+
+            const parser = parse(options, (err, data) => {
+                if (err) {
+                    Log.error('AdminRoutes::postClasslist(..) - parse ERROR: ' + err);
+                    const payload: Payload = {
+                        failure: {
+                            message:      'Unable to parse classlist; ERROR: ' + err,
+                            shouldLogout: false
+                        }
+                    };
+                    res.send(400, payload);
+                    return next();
+                } else {
+                    Log.info('AdminRoutes::postClasslist(..) - parse successful');
+                    const pc = new PersonController();
+                    for (const row of data) {
+                        Log.trace(JSON.stringify(row));
+                        let p: Person = {
+                            id: row.ACCT, // id is CSID since this cannot be changed
+
+                            csId:          row.ACCT,
+                            githubId:      row.CWL,
+                            studentNumber: row.SNUM,
+                            fName:         row.FIRST,
+                            lName:         row.LAST,
+
+                            kind:   'student',
+                            URL:    null,
+                            labId:  row.LAB,
+                            custom: {}
+                        };
+                        pc.createPerson(p);
+                        // TODO: would be nice to keep track of # updates, # deleted, and # created here
+                    }
+
+                    res.send(200, {success: {message: 'Classlist upload successful'}});
+                    Log.info('AdminRoutes::postClasslist(..) - end');
+                }
+            });
+
+            rs.pipe(parser);
+        } catch (err) {
+            Log.error('AdminRoutes::postClasslist(..) - ERROR: ' + err);
+            const payload: Payload = {
+                failure: {
+                    message:      'Unable to post classlist; ERROR: ' + err,
+                    shouldLogout: false
+                }
+            };
+            res.send(400, payload);
+            return next();
+        }
+
     }
 }

@@ -196,9 +196,9 @@ export class AdminView implements IView {
             evt.stopPropagation(); // prevents list item expansion
 
             const fileInput = document.querySelector('#adminClasslistFile') as HTMLInputElement;
-            let isValid: boolean = that.validateClasslistSpecified(fileInput);
-            if (isValid) {
-                that.save(fileInput.files);
+            const isValid: boolean = that.validateClasslistSpecified(fileInput);
+            if (isValid === true) {
+                that.uploadClasslist(fileInput.files);
             }
         };
 
@@ -208,23 +208,23 @@ export class AdminView implements IView {
 
     private validateClasslistSpecified(fileInput: HTMLInputElement) {
         if (fileInput.value.length > 0) {
-            console.log('ClassListView::save() - validation passed');
+            Log.trace('AdminView::validateClasslistSpecified() - validation passed');
             return true;
         } else {
-            UI.notification('You must select a Class List before you click "Upload".');
+            UI.notification('You must select a ClassList CSV before you click "Upload".');
             return false;
         }
     }
 
-    public async save(fileList: FileList) {
-        console.log('ClassListView::save() - start');
+    public async uploadClasslist(fileList: FileList) {
+        Log.info('AdminView::uploadClasslist(..) - start');
         const url = this.remote + '/admin/classlist';
 
-        UI.showModal('Uploading class list');
+        UI.showModal('Uploading classlist.');
 
         try {
             const formData = new FormData();
-            formData.append('classList', fileList[0]); // The CSV is fileList[0]
+            formData.append('classlist', fileList[0]); // The CSV is fileList[0]
 
             const opts = {
                 headers: {
@@ -233,22 +233,23 @@ export class AdminView implements IView {
                     'token': localStorage.token
                 }
             };
-            const response: Response = await Network.httpPostFile(url, opts, formData);//.then(function (data: any) {
+            const response: Response = await Network.httpPostFile(url, opts, formData);
             if (response.status >= 200 && response.status < 300) {
                 const data = await response.json();
                 UI.hideModal();
-                console.log('ClassListView RESPONSE: ' + JSON.stringify(data));
-                UI.notification('ClassList Successfully Updated!');
+                Log.info('AdminView::uploadClasslist(..) - RESPONSE: ' + JSON.stringify(data));
+                UI.notification('ClassList Updated.');
             } else {
-                UI.notification('There was an issue updating your Class List! Please check the CSV format.');
+                UI.hideModal();
+                UI.notification('There was an issue uploading your classlist! Please ensure the file includes the required columns.');
             }
         } catch (err) {
             UI.hideModal();
-            Log.error('asdf' + err);
+            Log.error('AdminView::uploadClasslist(..) - ERROR: ' + err.message);
             this.showError(err);
         }
 
-        console.log('ClassListView::save() - end');
+        Log.trace('AdminView::uploadClasslist(..) - end');
     }
 
     // called by reflection in renderPage

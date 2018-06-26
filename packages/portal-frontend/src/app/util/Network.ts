@@ -1,3 +1,5 @@
+import Log from "../../../../common/Log";
+
 /**
  * Created by rtholmes on 2017-10-04.
  */
@@ -127,20 +129,23 @@ export class Network {
     }
 
     public static async httpPostFile(url: string, opts: any, formData: FormData): Promise<Response> {
-        console.log('Network::httpPostFile( ' + url + ' ) - start');
-        let postOptions: object = {
+        Log.trace('Network::httpPostFile( ' + url + ' ) - start');
+
+        let postOptions: {} = {
             method: 'post',
             cors:   'enabled',
             body:   formData
         };
-        postOptions = Object.assign(postOptions, opts); // add in user & token
-        return fetch(url, postOptions).then((data: any) => {
-            console.log('one');
-            return data
-        }).catch((err) => {
-            console.log('two');
-            console.log('Network::httpPostFile() ERROR ' + err);
-        });
+
+        try {
+            postOptions = Object.assign(postOptions, opts); // add in user & token
+            const data = await fetch(url, postOptions);
+            Log.trace('Network::httpPostFile( ' + url + ' ) - success');
+            return data;
+        } catch (err) {
+            Log.trace('Network::httpPostFile( ' + url + ' ) - ERROR ' + err);
+            throw err;
+        }
     }
 
     public static async httpPut(url: string, payload: object): Promise<object> {
