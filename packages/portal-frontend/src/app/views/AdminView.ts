@@ -219,6 +219,7 @@ export class AdminView implements IView {
                 sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown:    true, // Whether the column should initially sort descending or ascending.
+                style:       'padding-left: 1em; padding-right: 1em;'
             },
             {
                 id:          'fName',

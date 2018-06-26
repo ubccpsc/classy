@@ -7,6 +7,7 @@ export interface TableHeader {
     sortable: boolean; // Whether the column is sortable (sometimes sorting does not make sense).
     defaultSort: boolean; // Whether the column is the default sort for the table. should only be true for one column.
     sortDown: boolean; // Whether the column should initially sort descending or ascending.
+    style?: string; // optional style hints for column
 }
 
 export interface TableCell {
@@ -120,16 +121,20 @@ export class SortableTable {
         let tablePrefix = '<table style="margin-left: auto; margin-right: auto; border-collapse: collapse;">'; // width: 100%;
         tablePrefix += '<tr>';
 
-        for (let header of this.headers) {
+        for (const header of this.headers) {
+            if (typeof header.style === 'undefined') {
+                header.style = '';
+            }
+
             // decorate this.sorCol appropriately
             if (this.sortHeader !== null && header.id === this.sortHeader.id) {
                 if (this.sortHeader.sortDown) {
-                    tablePrefix += '<th class="sortableHeader" col="' + header.id + '"><b>' + header.text + ' ▲</b></th>';
+                    tablePrefix += '<th class="sortableHeader" style="' + header.style + '" col="' + header.id + '"><b>' + header.text + ' ▲</b></th>';
                 } else {
-                    tablePrefix += '<th class="sortableHeader"  col="' + header.id + '"><b>' + header.text + ' ▼</b></th>';
+                    tablePrefix += '<th class="sortableHeader"  style="' + header.style + '" col="' + header.id + '"><b>' + header.text + ' ▼</b></th>';
                 }
             } else {
-                tablePrefix += '<th class="sortableHeader" col="' + header.id + '">' + header.text + '</th>';
+                tablePrefix += '<th class="sortableHeader" style="' + header.style + '" col="' + header.id + '">' + header.text + '</th>';
             }
         }
         tablePrefix += '</tr>';
@@ -268,8 +273,16 @@ export class SortableTable {
         for (let i = 0; i < rows.length; i++) {
             const row = [], cols = rows[i].querySelectorAll('td, th');
 
-            for (let j = 0; j < cols.length; j++)
-                row.push((<HTMLTableCellElement>cols[j]).innerText);
+            for (let j = 0; j < cols.length; j++) {
+                if (i === 0) {
+                    let text = (<HTMLTableCellElement>cols[j]).innerText;
+                    text = text.replace(' ▼', '');
+                    text = text.replace(' ▲', '');
+                    row.push(text);
+                } else {
+                    row.push((<HTMLTableCellElement>cols[j]).innerText);
+                }
+            }
 
             csv.push(row.join(','));
         }
