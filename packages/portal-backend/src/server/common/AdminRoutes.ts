@@ -17,6 +17,9 @@ export default class AdminRoutes implements IREST {
 
         // student list visible to all privileged users
         server.get('/admin/students', AdminRoutes.isPrivileged, AdminRoutes.getStudents);
+
+        // posting a class list is admin only
+        server.post('/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
     }
 
     /**
@@ -150,9 +153,6 @@ export default class AdminRoutes implements IREST {
     private static getStudents(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getStudents(..) - start');
 
-        const user = req.headers.user;
-        const token = req.headers.token;
-
         const cc = new CourseController(new GitHubController());
         cc.getStudents().then(function (students) {
             Log.trace('AdminRoutes::getStudents(..) - in then; # students: ' + students.length);
@@ -172,4 +172,7 @@ export default class AdminRoutes implements IREST {
         });
     }
 
+    private static postClasslist(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::postClasslist(..) - start');
+    }
 }

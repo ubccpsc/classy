@@ -103,57 +103,17 @@ export class App {
                     that.view = v;
                 }
 
-                /*
-                // DO NOT DO THIS HERE; DO IT ON SHOW BELOW!
-                // Each page calls its own initialization controller.
-                if (that.studentController !== null) {
-                    if (typeof that.studentController[pageName] === 'function') {
-                        that.studentController[pageName]();//(page);
-                    }
-                }
-                // Each page calls its own initialization controller.
-                if (that.adminController !== null) {
-                    if (typeof that.adminController[pageName] === 'function') {
-                        that.adminController[pageName]();//(page);
-                    }
-                }
-                */
-                /*
-                                if (pageName === 'main') {
-                                    Log.trace('App::init()::authCheck - starting main.html with auth check');
-                                    const AUTHORIZED_STATUS: string = 'authorized';
-
-                                    that.toggleLoginButton();
-
-                                    const URL = that.backendURL + '/currentStatus';  // '/currentUser'; // NOTE: this doesn't seem right
-                                    let OPTIONS_HTTP_GET: RequestInit = {credentials: 'include', mode: 'no-cors'}; // NOTE: not sure about the mode param
-                                    fetch(URL, OPTIONS_HTTP_GET).then((data: any) => {
-                                        if (data.status !== 200) {
-                                            Log.trace('App::init()::authCheck - WARNING: Response status: ' + data.status);
-                                            throw new Error('App::init()::authCheck - API ERROR: ' + data.status);
-                                        }
-                                        return data.json();
-                                    }).then((data: any) => {
-                                        let user = data.response.user;
-                                        localStorage.setItem('userrole', user.userrole);
-                                        localStorage.setItem('username', user.username);
-                                        localStorage.setItem('authStatus', AUTHORIZED_STATUS);
-                                        localStorage.setItem('fname', user.fname);
-                                        that.toggleLoginButton();
-                                    }).catch((err: any) => {
-                                        Log.error('App::init()::authCheck - ERROR: ' + err.message);
-                                    });
-                                }
-                */
                 if (pageName === 'loginPage') {
-
+                    Log.trace("App::init() - loginPage init; attaching login button");
+                    /*
+                    Log.warn("App::init() - loginPage init; NEEDED??");
                     const userrole = String(localStorage.userrole);
-                    // const username = String(localStorage.username);
                     if (userrole === 'student') {
                         UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/student.html', {org: org});
-                    } else if (userrole === 'admin' || userrole === 'superadmin') {
-                        UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/admin.html', {org: org});
+                    } else if (userrole === 'admin') {
+                        UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/admin.html', {org: org, isAdmin: true});
                     }
+                    */
 
                     (document.querySelector('#loginButton') as OnsButtonElement).onclick = function () {
                         localStorage.setItem('org', org);
@@ -181,38 +141,12 @@ export class App {
                 // update login button state
                 that.toggleLoginButton();
 
-                // let validated = await
-                // that.validateCredentials();
-                // let validated = true;
-                // Log.trace('App::init()::show - page: ' + pageName + "; validated: " + validated);
-
-                /*
-                if (pageName === "studentTabsPage" && validated === true) {
-                    Log.trace('studentTabsPage - show!!!');
-                    that.view.renderPage(options);
-                }
-
-                if (pageName === "adminTabsPage" && validated === true) {
-                    Log.trace('adminTabsPage - show!!!');
-                    that.view.renderPage(options);
-                }
-                */
                 if (that.view !== null) {
                     Log.trace('App::init()::show - calling view.renderPage for: ' + pageName);
                     that.view.renderPage(pageName, options);
+                } else {
+                    Log.trace('App::init()::show - view is null; cannot call view.renderPage for: ' + pageName);
                 }
-                /*
-                if (that.studentController !== null) {
-                    if (typeof that.studentController[pageName] === 'function') {
-                        that.studentController[pageName](options);
-                    }
-                }
-                if (that.adminController !== null) {
-                    if (typeof that.adminController[pageName] === 'function') {
-                        that.adminController[pageName](options);
-                    }
-                }
-                */
             });
 
             // TODO: Feels like this needs some kind of guard?
@@ -396,7 +330,7 @@ export class App {
         }
     }
 
-    public handleMainPageClick(params?: {}) {
+    public handleMainPageClick(params?: any) {
         if (typeof params === 'undefined') {
             params = {};
         }
@@ -404,7 +338,9 @@ export class App {
 
         if (this.validated === true) {
             // push to correct handler
-            if (localStorage.isAdmin === 'true' || localStorage.isStaff === 'true') { // localStorage returns strings
+            params.isAdmin = localStorage.isAdmin === 'true'; // localStorage returns strings
+            params.isStaff = localStorage.isStaff === 'true'; // localStorage returns strings
+            if (params.isAdmin || params.isStaff) {
                 Log.info("App::handleMainPageClick(..) - admin");
                 UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/admin.html', params);
             } else {

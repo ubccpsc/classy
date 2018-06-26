@@ -28,6 +28,8 @@ export class AdminView implements IView {
 
     private remote: string | null = null;
     private tabs: AdminTabs | null = null;
+    private isStaff = false;
+    private isAdmin = false;
 
     constructor(remoteUrl: string, tabs: AdminTabs) {
         Log.info("AdminView::<init>");
@@ -35,41 +37,7 @@ export class AdminView implements IView {
         this.tabs = tabs;
     }
 
-
-    /*
-        private longAction(duration: number, msg?: string) {
-            const that = this;
-            if (typeof msg !== 'undefined') {
-                that.showModal(msg);
-            } else {
-                that.showModal();
-            }
-
-            setTimeout(function () {
-                that.hideModal();
-            }, duration);
-
-            setTimeout(function () {
-                let sel = <any>document.getElementById('sdmmSelect');
-                if (sel !== null) {
-                    sel.selectedIndex = sel.selectedIndex + 1;
-                }
-                that.checkStatus();
-            }, (duration - 500));
-
-        }
-
-        public checkStatus() {
-            Log.warn("CS310view::checkStatus() - NOT IMPLEMENTED");
-            // const msg = "Updating status";
-            // UI.showModal(msg);
-
-            // const url = this.remote + '/currentStatus';
-            // this.fetchStatus(url);
-        }
-
-    */
-    public renderPage(name: string, opts: {}) {
+    public renderPage(name: string, opts: any) {
         Log.info('AdminView::renderPage( ' + name + ', ... ) - start; options: ' + JSON.stringify(opts));
 
         if (this.tabs !== null) {
@@ -82,12 +50,25 @@ export class AdminView implements IView {
             this.setTabVisibility('AdminConfigTab', this.tabs.config);
         }
 
+        if (typeof opts.isAdmin !== 'undefined') {
+            this.isAdmin = opts.isAdmin;
+        }
+        if (typeof opts.isStaff !== 'undefined') {
+            this.isStaff = opts.isStaff;
+        }
+        if (this.isAdmin === false) {
+            // hide the config tab if we aren't an admin
+            Log.info('AdminView::renderPage(..) - !admin; hiding config tab');
+            this.setTabVisibility('AdminConfigTab', false);
+        }
+
         // NOTE: This is a kind of reflection to find the function to call without hard-coding it
         // this calls `handle<PageName>`, so to make it work your IView subtype must have a method
         // with that name (which you set in your ons-page id attribute in your html file)
         const functionName = 'handle' + name;
         if (typeof (<any>this)[functionName] === 'function') {
             Log.warn('AdminView::renderPage(..) - calling: ' + functionName);
+            // NOTE: does not await; not sure if this is a problem
             (<any>this)[functionName](opts);
         } else {
             Log.warn('AdminView::renderPage(..) - unknown page: ' + name + ' (function: ' + functionName + ' not defined on view).');
@@ -162,7 +143,7 @@ export class AdminView implements IView {
     */
 
     public showError(failure: any) { // FailurePayload
-        Log.error("CS310View::showError(..) - failure: " + JSON.stringify(failure));
+        Log.error("AdminView::showError(..) - start");
         try {
             // check to see if response is json
             const f = JSON.parse(failure);
@@ -177,7 +158,7 @@ export class AdminView implements IView {
         } else if (typeof failure.failure !== 'undefined') {
             UI.showAlert(failure.failure.message);
         } else {
-            Log.error("Unknown message: " + JSON.stringify(failure));
+            Log.error("AdminView::showError(..) - Unknown message: " + failure);
             UI.showAlert("Action unsuccessful.");
         }
     }
@@ -191,6 +172,13 @@ export class AdminView implements IView {
             }
         };
         return options;
+    }
+
+    // called by reflection in renderPage
+    private async handleAdminRoot(opts: {}): Promise<void> {
+        Log.info('AdminView::handleAdminRoot(..) - start');
+        // Can init frame here if needed
+        return;
     }
 
     // called by reflection in renderPage
