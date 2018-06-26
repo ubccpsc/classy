@@ -1,11 +1,13 @@
 // import {SDMMSummaryView} from "./views/sdmm/SDMMSummaryView";
 import Log from "../../../common/Log";
+
+import {IView} from "./views/IView";
+import {AdminView} from "./views/AdminView";
+
 import {CS310View} from "./views/cs310/CS310View";
 import {CS340View} from "./views/340/CS340View";
-import {AdminView} from "./views/AdminView";
-import {SDMMSummaryView} from "./views/sdmm/SDMMSummaryView";
-import {IView} from "./views/IView";
 import {CS340AdminView} from "./views/340/CS340AdminView";
+import {SDMMSummaryView} from "./views/sdmm/SDMMSummaryView";
 
 /**
  * Entry point for configuring per-course aspects of the frontend.

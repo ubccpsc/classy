@@ -184,31 +184,31 @@ export class AdminView implements IView {
         return options;
     }
 
+    // called by reflection in renderPage
     private async handleAdminStudents(opts: {}): Promise<void> {
         Log.info('AdminView::handleStudents(..) - start');
         UI.showModal('Retrieving students');
 
+        // NOTE: this could consider if studentListTable has children, and if they do, don't refresh
+        document.getElementById('studentListTable').innerHTML = ''; // clear target
 
-        let options = this.getOptions();
-        let url = this.remote + '/admin/students';
-        let response = await fetch(url, options);
+        const options = this.getOptions();
+        const url = this.remote + '/admin/students';
+        const response = await fetch(url, options);
         UI.hideModal();
         if (response.status === 200) {
             Log.trace('AdminView::handleStudents(..) - 200 received');
-            let json: StudentTransportPayload = await response.json();
-            Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
-
+            const json: StudentTransportPayload = await response.json();
+            // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
             if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
                 Log.trace('AdminView::handleStudents(..)  - worked');
                 this.renderStudents(json.success);
-
             } else {
                 Log.trace('AdminView::handleStudents(..)  - ERROR: ' + json.failure.message);
                 this.showError(json.failure); // FailurePayload
             }
-
         } else {
-            Log.trace('AdminView::handleStudents(..)  - !200 received');
+            Log.trace('AdminView::handleStudents(..)  - !200 received: ' + response.status);
         }
     }
 
@@ -219,29 +219,32 @@ export class AdminView implements IView {
                 text:        'Github Id',
                 sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
-                sortDown:    true, // Whether the column should initially sort descending or ascending.
+                sortDown:    false, // Whether the column should initially sort descending or ascending.
                 style:       'padding-left: 1em; padding-right: 1em;'
             },
             {
                 id:          'fName',
                 text:        'First Name',
-                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
-                defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
-                sortDown:    true, // Whether the column should initially sort descending or ascending.
+                sortable:    true,
+                defaultSort: false,
+                sortDown:    true,
+                style:       'padding-left: 1em; padding-right: 1em;'
             },
             {
                 id:          'lName',
                 text:        'Last Name',
-                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
-                defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
-                sortDown:    true, // Whether the column should initially sort descending or ascending.
+                sortable:    true,
+                defaultSort: false,
+                sortDown:    true,
+                style:       'padding-left: 1em; padding-right: 1em;'
             },
             {
                 id:          'labId',
                 text:        'Lab Section',
-                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
-                defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
-                sortDown:    true, // Whether the column should initially sort descending or ascending.
+                sortable:    true,
+                defaultSort: false,
+                sortDown:    true,
+                style:       'padding-left: 1em; padding-right: 1em;'
             }
         ];
 
