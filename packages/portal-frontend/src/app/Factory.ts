@@ -5,6 +5,7 @@ import {CS340View} from "./views/340/CS340View";
 import {AdminView} from "./views/AdminView";
 import {SDMMSummaryView} from "./views/sdmm/SDMMSummaryView";
 import {IView} from "./views/IView";
+import {CS340AdminView} from "./views/340/CS340AdminView";
 
 /**
  * Entry point for configuring per-course aspects of the frontend.
@@ -86,7 +87,10 @@ export class Factory {
                 // tabs.config = false;
                 this.adminView = new AdminView(backendUrl, tabs);
             } else if (this.org === 'cs340') {
-                this.adminView = new AdminView(backendUrl, tabs);
+                tabs.teams = false; // no teams
+                tabs.results = false; // no results
+                tabs.dashboard = false; // no dashboard
+                this.adminView = new CS340AdminView(backendUrl, tabs);
             } else {
                 Log.error("Factory::getView() - ERROR; unknown org: " + this.org);
             }

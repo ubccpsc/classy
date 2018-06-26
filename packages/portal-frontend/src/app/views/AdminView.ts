@@ -82,15 +82,17 @@ export class AdminView implements IView {
             this.setTabVisibility('AdminConfigTab', this.tabs.config);
         }
 
-        if (name === 'AdminStudents') {
-            this.handleStudents(opts);
+        // NOTE: This is a kind of reflection to find the function to call without hard-coding it
+        // this calls `handle<PageName>`, so to make it work your IView subtype must have a method
+        // with that name (which you set in your ons-page id attribute in your html file)
+        const functionName = 'handle' + name;
+        if (typeof (<any>this)[functionName] === 'function') {
+            Log.warn('AdminView::renderPage(..) - calling: ' + functionName);
+            (<any>this)[functionName](opts);
         } else {
-            Log.warn('AdminView::renderPage(..) - unknown page: ' + name);
+            Log.warn('AdminView::renderPage(..) - unknown page: ' + name + ' (function: ' + functionName + ' not defined on view).');
         }
     }
-
-    // this.checkStatus();
-
 
     private setTabVisibility(name: string, visible: boolean) {
         const e = document.getElementById(name);
@@ -171,7 +173,6 @@ export class AdminView implements IView {
         }
     }
 
-
     private getOptions() {
         const options = {
             headers: {
@@ -183,7 +184,7 @@ export class AdminView implements IView {
         return options;
     }
 
-    private async handleStudents(opts: {}): Promise<void> {
+    private async handleAdminStudents(opts: {}): Promise<void> {
         Log.info('AdminView::handleStudents(..) - start');
         UI.showModal('Retrieving students');
 
