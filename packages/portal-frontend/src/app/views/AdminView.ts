@@ -163,6 +163,15 @@ export class AdminView implements IView {
 
     public showError(failure: any) { // FailurePayload
         Log.error("CS310View::showError(..) - failure: " + JSON.stringify(failure));
+        try {
+            // check to see if response is json
+            const f = JSON.parse(failure);
+            if (f !== null) {
+                failure = f; // change to object if it is one
+            }
+        } catch (err) {
+            // intentionally blank
+        }
         if (typeof failure === 'string') {
             UI.showAlert(failure);
         } else if (typeof failure.failure !== 'undefined') {
@@ -209,6 +218,8 @@ export class AdminView implements IView {
             }
         } else {
             Log.trace('AdminView::handleStudents(..)  - !200 received: ' + response.status);
+            const text = await response.text();
+            this.showError(text);
         }
     }
 
