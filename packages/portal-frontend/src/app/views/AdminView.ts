@@ -13,6 +13,8 @@ import {IView} from "./IView";
 
 import {StudentTransport, StudentTransportPayload} from "../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
+import {OnsButtonElement} from "onsenui";
+import {Network} from "../util/Network";
 
 interface AdminTabs {
     deliverables: boolean,
@@ -154,8 +156,10 @@ export class AdminView implements IView {
             // intentionally blank
         }
         if (typeof failure === 'string') {
+            Log.error("AdminView::showError(..) - failure: " + failure);
             UI.showAlert(failure);
         } else if (typeof failure.failure !== 'undefined') {
+            Log.error("AdminView::showError(..) - failure message: " + failure.failure.message);
             UI.showAlert(failure.failure.message);
         } else {
             Log.error("AdminView::showError(..) - Unknown message: " + failure);
@@ -179,6 +183,72 @@ export class AdminView implements IView {
         Log.info('AdminView::handleAdminRoot(..) - start');
         // Can init frame here if needed
         return;
+    }
+
+    // called by reflection in renderPage
+    private async handleAdminConfig(opts: {}): Promise<void> {
+        Log.info('AdminView::handleAdminConfig(..) - start');
+        const that = this;
+        // Can init frame here if needed
+
+        (document.querySelector('#adminSubmitClasslist') as OnsButtonElement).onclick = function (evt) {
+            Log.info('AdminView::handleAdminConfig(..) - upload pressed');
+            evt.stopPropagation(); // prevents list item expansion
+
+            const fileInput = document.querySelector('#adminClasslistFile') as HTMLInputElement;
+            let isValid: boolean = that.validateClasslistSpecified(fileInput);
+            if (isValid) {
+                that.save(fileInput.files);
+            }
+        };
+
+        return;
+    }
+
+
+    private validateClasslistSpecified(fileInput: HTMLInputElement) {
+        if (fileInput.value.length > 0) {
+            console.log('ClassListView::save() - validation passed');
+            return true;
+        } else {
+            UI.notification('You must select a Class List before you click "Upload".');
+            return false;
+        }
+    }
+
+    public async save(fileList: FileList) {
+        console.log('ClassListView::save() - start');
+        const url = this.remote + '/admin/classlist';
+
+        UI.showModal('Uploading class list');
+
+        try {
+            const formData = new FormData();
+            formData.append('classList', fileList[0]); // The CSV is fileList[0]
+
+            const opts = {
+                headers: {
+                    // 'Content-Type': 'application/json', // violates CORS; leave commented out
+                    'user':  localStorage.user,
+                    'token': localStorage.token
+                }
+            };
+            const response: Response = await Network.httpPostFile(url, opts, formData);//.then(function (data: any) {
+            if (response.status >= 200 && response.status < 300) {
+                const data = await response.json();
+                UI.hideModal();
+                console.log('ClassListView RESPONSE: ' + JSON.stringify(data));
+                UI.notification('ClassList Successfully Updated!');
+            } else {
+                UI.notification('There was an issue updating your Class List! Please check the CSV format.');
+            }
+        } catch (err) {
+            UI.hideModal();
+            Log.error('asdf' + err);
+            this.showError(err);
+        }
+
+        console.log('ClassListView::save() - end');
     }
 
     // called by reflection in renderPage

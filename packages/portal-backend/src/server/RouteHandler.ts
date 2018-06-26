@@ -1,14 +1,8 @@
-import * as rp from "request-promise-native";
-
-import Config from "../../../common/Config";
 import Log from "../../../common/Log";
 
 import {AuthController} from "../controllers/AuthController";
 import {DatabaseController} from "../controllers/DatabaseController";
 import {PersonController} from "../controllers/PersonController";
-import {CourseController} from "../controllers/CourseController";
-import {GradePayload, Payload, StatusPayload} from "../../../common/types/SDMMTypes";
-import {GitHubController} from "../controllers/GitHubController";
 
 /**
  * Just a large body of static methods for translating between restify and the remainder of the system.
@@ -46,11 +40,9 @@ export class RouteHandler {
         res.header('Access-Control-Allow-Methods', res.methods.join(', '));
         res.header('Access-Control-Allow-Origin', req.headers.origin);
 
-        // Log.trace("RouteHandler::handlePreflight(..) - sending 204");
+        Log.trace("RouteHandler::handlePreflight(..) - sending 204; headers: " + JSON.stringify(res.getHeaders()));
         return res.send(204);
     }
-
-
 
 
     // // that.rest.get('/container/:org/:delivId', RouteHandler.atContainerDetails);

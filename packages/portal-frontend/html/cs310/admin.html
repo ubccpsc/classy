@@ -92,9 +92,24 @@
 
     <template id="config.html">
         <ons-page id="AdminConfig">
-            <p style="text-align: center;">
-                Config Page
-            </p>
+            <ons-list>
+                <ons-list-header>Upload Classlist</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left">
+                        Select classlist CSV <input id="adminClasslistFile" style="padding-left: 1em" type="file"/>
+                        <ons-button id="adminSubmitClasslist" modifier="medium">Upload Classlist</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        The CSV must have a header row that contains the following columns:
+
+                        <pre>ACCT,SNUM,CWL,LAST,FIRST,LAB</pre>
+                        The corresponding classlist command for this is:
+                        <pre>classlist -T -f "%ACCT,%SN,%CWL,%LN,%FN,%LAB" &lt;COURSENUM&gt;</pre>
+                        ACCT and SNUM are invariants and cannot change although ther fields can be updated (changing GitHub logins presents its own issues that require manual effort on the part of course staff to handle).
+                        Pre-existing Students, Teams, and Repositories <i>WILL NOT</i> be affected.
+                    </div>
+                </ons-list-item>
+            </ons-list>
         </ons-page>
     </template>
 

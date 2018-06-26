@@ -126,17 +126,19 @@ export class Network {
         });
     }
 
-    public static async httpPostFile(url: string, formData: FormData): Promise<object> {
+    public static async httpPostFile(url: string, opts: any, formData: FormData): Promise<Response> {
         console.log('Network::httpPostFile( ' + url + ' ) - start');
-        const OPTIONS_HTTP_POST_FILE: object = {
-            credentials: 'include',
-            method:      'post',
-            cors:        'enabled',
-            body:        formData
+        let postOptions: object = {
+            method: 'post',
+            cors:   'enabled',
+            body:   formData
         };
-        return fetch(url, OPTIONS_HTTP_POST_FILE).then((data: any) => {
+        postOptions = Object.assign(postOptions, opts); // add in user & token
+        return fetch(url, postOptions).then((data: any) => {
+            console.log('one');
             return data
         }).catch((err) => {
+            console.log('two');
             console.log('Network::httpPostFile() ERROR ' + err);
         });
     }

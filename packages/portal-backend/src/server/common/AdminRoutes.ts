@@ -118,7 +118,7 @@ export default class AdminRoutes implements IREST {
 
         const ac = new AuthController();
         ac.isPrivileged(user, token).then(function (priv) {
-                Log.trace('AdminRoutes::isAdmin(..) - in isStaff: ' + JSON.stringify(priv));
+                Log.trace('AdminRoutes::isAdmin(..) - in isAdmin: ' + JSON.stringify(priv));
                 if (priv.isAdmin === true) {
                     return next();
                 } else {
@@ -174,5 +174,8 @@ export default class AdminRoutes implements IREST {
 
     private static postClasslist(req: any, res: any, next: any) {
         Log.info('AdminRoutes::postClasslist(..) - start');
+        res.send(200, {worked: true});
+        Log.info('AdminRoutes::postClasslist(..) - end');
+        return next();
     }
 }
