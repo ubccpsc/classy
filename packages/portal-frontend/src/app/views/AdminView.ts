@@ -215,7 +215,7 @@ export class AdminView implements IView {
         const headers: TableHeader[] = [
             {
                 id:          'id',
-                text:        'GithubId',
+                text:        'Github Id',
                 sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown:    true, // Whether the column should initially sort descending or ascending.
@@ -229,14 +229,14 @@ export class AdminView implements IView {
             },
             {
                 id:          'lName',
-                text:        'lName',
+                text:        'Last Name',
                 sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown:    true, // Whether the column should initially sort descending or ascending.
             },
             {
                 id:          'labId',
-                text:        'Lab',
+                text:        'Lab Section',
                 sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown:    true, // Whether the column should initially sort descending or ascending.

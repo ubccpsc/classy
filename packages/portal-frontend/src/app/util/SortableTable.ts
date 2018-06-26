@@ -209,7 +209,6 @@ export class SortableTable {
                 }
             }
 
-
             if (Array.isArray(aVal)) {
                 // an array
                 return (aVal.length - bVal.length) * mult;
@@ -218,8 +217,8 @@ export class SortableTable {
                 // something that isn't an array or string
                 return (Number(aVal) - Number(bVal)) * mult;
             } else if (typeof aVal === 'string') {
-                // as a string
-                return aVal.localeCompare(bVal) * mult;
+                // as a string; tries to naturally sort w/ numeric & base
+                return aVal.localeCompare(bVal, undefined, {numeric: true, sensitivity: 'base'}) * mult;
             } else {
                 // something that isn't an array or string or number
                 return (aVal - bVal) * mult;
