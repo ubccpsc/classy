@@ -32,6 +32,13 @@
         </ons-tab>
     </ons-tabbar>
 
+    <!-- Progress modal used by UI util class; only shown when requested -->
+    <ons-modal id="adminProgress">
+        <div style="display:flex; flex-direction:column; align-items: center;">
+            <div id="modalText" style="padding-top: 1em; padding-bottom: 1em;">Data is being retrieved.</div>
+            <ons-progress-circular indeterminate></ons-progress-circular>
+        </div>
+    </ons-modal>
 
     <template id="deliverables.html">
         <ons-page id="AdminDeliverables">
@@ -46,6 +53,7 @@
         <ons-page id="AdminStudents">
             <ons-list id="AdminStudentsList">
                 <ons-list-header>Students</ons-list-header>
+                <div id="studentListTable" style="width:100%;">Students</div>
             </ons-list>
         </ons-page>
     </template>

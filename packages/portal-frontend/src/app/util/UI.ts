@@ -178,6 +178,7 @@ export class UI {
         ons.notification.alert(message);
     }
 
+    // SDMM: move
     public static showD1TeamDialog() {
         const dialog: any = document.getElementById('d1teamDialog');
 
@@ -190,6 +191,7 @@ export class UI {
         }
     }
 
+    // SDMM: move
     public static hideD1TeamDialog() {
         let elem: any = document.getElementById('d1teamDialog');
         elem.hide();

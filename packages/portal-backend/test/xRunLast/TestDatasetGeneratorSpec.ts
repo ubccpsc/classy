@@ -12,32 +12,27 @@ describe.only('TestDatasetGenerator', function () {
     it('Can generate some students', async function () {
         const pc: PersonController = new PersonController();
 
-        let p: Person = {
-            id:            'p1',
-            csId:          'p1',
-            githubId:      'p1',
-            studentNumber: 1,
-
-            fName: 'p1first',
-            lName: 'p1last',
-            kind:  'student',
-            URL:   null,
-
-            labId: 'l1a',
-
-            custom: {}
-        };
 
         for (let i = 0; i < 100; i++) {
-            const person = JSON.parse(JSON.stringify(p));
-            person.id = 'p' + i;
-            person.csid = 'p' + i;
-            person.github = 'p' + i;
-            person.studntNumber = i;
-            person.fName = 'p' + i + 'first';
-            person.lName = 'p' + i + 'last';
+            const pid = 'p' + i;
 
-            await pc.createPerson(person);
+            let p: Person = {
+                id:            pid,
+                csId:          pid,
+                githubId:      pid,
+                studentNumber: i,
+
+                fName: pid + 'first',
+                lName: pid + 'last',
+                kind:  'student',
+                URL:   null,
+
+                labId: 'l1a',
+
+                custom: {}
+            };
+
+            await pc.createPerson(p);
         }
     });
 

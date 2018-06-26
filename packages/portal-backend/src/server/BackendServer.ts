@@ -11,6 +11,7 @@ import {Factory} from "../Factory";
 import GeneralRoutes from "./common/GeneralRoutes";
 import {AuthRouteHandler} from "./common/AuthRouteHandler";
 import {AutoTestRouteHandler} from "./common/AutoTestRouteHandler";
+import AdminRoutes from "./common/AdminRoutes";
 
 /**
  * This configures the REST endpoints for the server.
@@ -101,7 +102,12 @@ export default class BackendServer {
 
                 // general
                 new GeneralRoutes().registerRoutes(that.rest);
+
+                // admin
+                new AdminRoutes().registerRoutes(that.rest);
+
                 Log.info('BackendServer::start() - Registering common handlers; done');
+
 
                 // Register custom route handler for specific classy instance
                 Log.info('BackendServer::start() - Registering custom handler');

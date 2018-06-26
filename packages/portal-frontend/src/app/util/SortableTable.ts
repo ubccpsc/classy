@@ -262,14 +262,14 @@ export class SortableTable {
 
     private exportTableToCSV(fileName: string) {
         let csv = [];
-        let root = document.querySelector(this.divName);
+        const root = document.querySelector(this.divName);
         //var rows = document.querySelectorAll("table tr");
-        let rows = root.querySelectorAll('table tr');
+        const rows = root.querySelectorAll('table tr');
 
-        for (var i = 0; i < rows.length; i++) {
-            var row = [], cols = rows[i].querySelectorAll('td, th');
+        for (let i = 0; i < rows.length; i++) {
+            const row = [], cols = rows[i].querySelectorAll('td, th');
 
-            for (var j = 0; j < cols.length; j++)
+            for (let j = 0; j < cols.length; j++)
                 row.push((<HTMLTableCellElement>cols[j]).innerText);
 
             csv.push(row.join(','));
@@ -280,6 +280,6 @@ export class SortableTable {
     }
 
     private attachDownload() {
-        this.exportTableToCSV('classPortal.csv');
+        this.exportTableToCSV('classy.csv');
     }
 }

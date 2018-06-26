@@ -6,6 +6,16 @@
  All fields should be primitives.
  */
 
+export interface FailurePayload {
+    message: string;
+    shouldLogout: boolean; // almost always false
+}
+
+export interface StudentTransportPayload {
+    success?: StudentTransport[]; // only set if defined
+    failure?: FailurePayload; // only set if defined
+}
+
 export interface StudentTransport {
     firstName: string;
     lastName: string;

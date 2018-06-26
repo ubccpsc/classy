@@ -6,7 +6,13 @@
  */
 
 import Log from "../../../../common/Log";
+
+import {UI} from "../util/UI"
+
 import {IView} from "./IView";
+
+import {StudentTransport, StudentTransportPayload} from "../../../../common/types/PortalTypes";
+import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 
 interface AdminTabs {
     deliverables: boolean,
@@ -63,8 +69,8 @@ export class AdminView implements IView {
         }
 
     */
-    public renderPage(opts: {}) {
-        Log.info('AdminView::renderPage() - start; options: ' + JSON.stringify(opts));
+    public renderPage(name: string, opts: {}) {
+        Log.info('AdminView::renderPage( ' + name + ', ... ) - start; options: ' + JSON.stringify(opts));
 
         if (this.tabs !== null) {
             this.setTabVisibility('AdminDeliverableTab', this.tabs.deliverables);
@@ -74,6 +80,12 @@ export class AdminView implements IView {
             this.setTabVisibility('AdminGradeTab', this.tabs.grades);
             this.setTabVisibility('AdminDashboardTab', this.tabs.dashboard);
             this.setTabVisibility('AdminConfigTab', this.tabs.config);
+        }
+
+        if (name === 'AdminStudents') {
+            this.handleStudents(opts);
+        } else {
+            Log.warn('AdminView::renderPage(..) - unknown page: ' + name);
         }
     }
 
@@ -92,59 +104,60 @@ export class AdminView implements IView {
     }
 
     /*
-    public showModal(text?: string) {
-        // https://onsen.io/v2/api/js/ons-modal.html
+        public showModal(text?: string) {
+            // https://onsen.io/v2/api/js/ons-modal.html
 
-        if (typeof text === 'undefined') {
-            text = null;
-        }
-
-        const modal = document.querySelector('ons-modal') as OnsModalElement;
-        if (modal !== null) {
-            modal.style.backgroundColor = '#444444'; // modal opaque
-            if (text != null) {
-                document.getElementById('modalText').innerHTML = text;
+            if (typeof text === 'undefined') {
+                text = null;
             }
-            modal.show({animation: 'fade'});
-        } else {
-            Log.warn('CS310View::showModal(..) - Modal is null');
-        }
-    }
 
-    public hideModal() {
-        const modal = document.querySelector('ons-modal') as OnsModalElement;
-        if (modal !== null) {
-            modal.hide({animation: 'fade'});
-        } else {
-            Log.warn('CS310View::hideModal(..) - Modal is null');
-        }
-    }
-
-    public async fetchStatus(url: string): Promise<void> {
-        Log.info('CS310View::fetchStatus( ' + url + ' ) - start');
-
-        let options = this.getOptions();
-        let response = await fetch(url, options);
-        UI.hideModal();
-        if (response.status === 200) {
-            Log.trace('CS310View::fetchStatus(..) - 200 received');
-            let json = await response.json();
-            Log.trace('CS310View::fetchStatus(..) - payload: ' + JSON.stringify(json));
-
-            if (typeof json.success !== 'undefined') {
-                Log.trace('CS310View::fetchStatus(..) - status: ' + json.success.status);
-                // this.updateState(json.success); // StatusPayload
+            const modal = document.querySelector('ons-modal') as OnsModalElement;
+            if (modal !== null) {
+                modal.style.backgroundColor = '#444444'; // modal opaque
+                if (text != null) {
+                    document.getElementById('modalText').innerHTML = text;
+                }
+                modal.show({animation: 'fade'});
             } else {
-                Log.trace('CS310View::fetchStatus(..) - ERROR: ' + json.failure.message);
-                this.showError(json.failure); // FailurePayload
+                Log.warn('CS310View::showModal(..) - Modal is null');
             }
-
-        } else {
-            Log.trace('CS310View::fetchStatus(..) - !200 received');
         }
-        return;
-    }
 
+        public hideModal() {
+            const modal = document.querySelector('ons-modal') as OnsModalElement;
+            if (modal !== null) {
+                modal.hide({animation: 'fade'});
+            } else {
+                Log.warn('CS310View::hideModal(..) - Modal is null');
+            }
+        }*/
+
+    /*
+        public async fetchStatus(url: string): Promise<void> {
+            Log.info('CS310View::fetchStatus( ' + url + ' ) - start');
+
+            let options = this.getOptions();
+            let response = await fetch(url, options);
+            UI.hideModal();
+            if (response.status === 200) {
+                Log.trace('CS310View::fetchStatus(..) - 200 received');
+                let json = await response.json();
+                Log.trace('CS310View::fetchStatus(..) - payload: ' + JSON.stringify(json));
+
+                if (typeof json.success !== 'undefined') {
+                    Log.trace('CS310View::fetchStatus(..) - status: ' + json.success.status);
+                    // this.updateState(json.success); // StatusPayload
+                } else {
+                    Log.trace('CS310View::fetchStatus(..) - ERROR: ' + json.failure.message);
+                    this.showError(json.failure); // FailurePayload
+                }
+
+            } else {
+                Log.trace('CS310View::fetchStatus(..) - !200 received');
+            }
+            return;
+        }
+    */
 
     public showError(failure: any) { // FailurePayload
         Log.error("CS310View::showError(..) - failure: " + JSON.stringify(failure));
@@ -158,16 +171,92 @@ export class AdminView implements IView {
         }
     }
 
+
     private getOptions() {
         const options = {
             headers: {
                 'Content-Type': 'application/json',
                 'user':         localStorage.user,
-                'token':        localStorage.token,
-                'org':          localStorage.org
+                'token':        localStorage.token
             }
         };
         return options;
     }
-    */
+
+    private async handleStudents(opts: {}): Promise<void> {
+        Log.info('AdminView::handleStudents(..) - start');
+        UI.showModal('Retrieving students');
+
+
+        let options = this.getOptions();
+        let url = this.remote + '/admin/students';
+        let response = await fetch(url, options);
+        UI.hideModal();
+        if (response.status === 200) {
+            Log.trace('AdminView::handleStudents(..) - 200 received');
+            let json: StudentTransportPayload = await response.json();
+            Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
+
+            if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
+                Log.trace('AdminView::handleStudents(..)  - worked');
+                this.renderStudents(json.success);
+
+            } else {
+                Log.trace('AdminView::handleStudents(..)  - ERROR: ' + json.failure.message);
+                this.showError(json.failure); // FailurePayload
+            }
+
+        } else {
+            Log.trace('AdminView::handleStudents(..)  - !200 received');
+        }
+    }
+
+    private renderStudents(students: StudentTransport[]) {
+        const headers: TableHeader[] = [
+            {
+                id:          'id',
+                text:        'GithubId',
+                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
+                defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
+                sortDown:    true, // Whether the column should initially sort descending or ascending.
+            },
+            {
+                id:          'fName',
+                text:        'First Name',
+                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
+                defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
+                sortDown:    true, // Whether the column should initially sort descending or ascending.
+            },
+            {
+                id:          'lName',
+                text:        'lName',
+                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
+                defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
+                sortDown:    true, // Whether the column should initially sort descending or ascending.
+            },
+            {
+                id:          'labId',
+                text:        'Lab',
+                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
+                defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
+                sortDown:    true, // Whether the column should initially sort descending or ascending.
+            }
+        ];
+
+        const st = new SortableTable(headers, '#studentListTable');
+        for (const student of students) {
+            let row: TableCell[] = [
+                {value: student.userName, html: '<a href="' + student.userUrl + '">' + student.userName + '</a>'},
+                {value: student.firstName, html: student.firstName},
+                {value: student.lastName, html: student.lastName},
+                {value: student.labId, html: student.labId}
+            ];
+            st.addRow(row);
+        }
+
+        setTimeout(function () {
+            st.generate();
+        }, 50);
+
+    }
 }

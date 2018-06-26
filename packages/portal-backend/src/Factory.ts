@@ -20,7 +20,7 @@ export class Factory {
 
         if (org === 'sdmm' || org === 'secapstonetest') {
             return new SDMMREST();
-        } else if (org === 'CS310-2017Jan' || org === 'CS310-2017Jan_TEST') {
+        } else if (org === 'CS310-2017Jan' || org === 'CS310-2017Jan_TEST' || org === 'classytest') {
             // no custom routes are required for 310
             return new NoCustomRoutes();
         } else if (org === 'cs340') {

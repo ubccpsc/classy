@@ -199,7 +199,7 @@ export class App {
                 */
                 if (that.view !== null) {
                     Log.trace('App::init()::show - calling view.renderPage for: ' + pageName);
-                    that.view.renderPage(options);
+                    that.view.renderPage(pageName, options);
                 }
                 /*
                 if (that.studentController !== null) {

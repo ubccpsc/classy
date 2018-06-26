@@ -46,7 +46,9 @@ export class Factory {
     public getView(backendUrl: string): IView {
         if (this.studentView === null) {
             Log.trace("Factory::getView() - instantating new view");
-            if (this.org === 'sdmm') {
+            if (this.org === 'classytest') {
+                this.studentView = new CS310View(backendUrl); // default to 310 for testing
+            } else if (this.org === 'sdmm') {
                 this.studentView = new SDMMSummaryView(backendUrl);
             } else if (this.org === 'CS310-2017Jan' || this.org === 'CS310-2017Jan_TEST') {
                 this.studentView = new CS310View(backendUrl);
@@ -74,7 +76,7 @@ export class Factory {
 
             if (this.org === 'sdmm') {
                 this.adminView = new AdminView(backendUrl, tabs);
-            } else if (this.org === 'CS310-2017Jan' || this.org === 'CS310-2017Jan_TEST') {
+            } else if (this.org === 'CS310-2017Jan' || this.org === 'CS310-2017Jan_TEST' || this.org === 'classytest') {
                 // tabs.deliverables = false;
                 // tabs.students = false;
                 // tabs.teams = false;
@@ -120,7 +122,9 @@ export class Factory {
      * @returns {string}
      */
     public getHTMLPrefix() {
-        if (this.org === 'sdmm') {
+        if (this.org === 'classytest') {
+            return 'cs310'; // might need to change this per-course for testing
+        } else if (this.org === 'sdmm') {
             return 'sdmm';
         } else if (this.org === 'CS310-2017Jan' || this.org === 'CS310-2017Jan_TEST') {
             return 'cs310';
