@@ -2,7 +2,7 @@ import {Collection, Db, MongoClient} from "mongodb";
 
 import Log from "../../../common/Log";
 import Util from "../../../common/Util";
-import Config from "../../../common/Config";
+import Config, {ConfigKey} from "../../../common/Config";
 
 import {IContainerOutput} from "../../../autotest/src/Types";
 
@@ -288,8 +288,8 @@ export class DatabaseController {
 
     public async clearData(): Promise<void> {
         Log.warn("DatabaseController::clearData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
-        const configOrg = Config.getInstance().getProp("testorg");
-        if (configOrg === "test" || configOrg === "secapstonetest" || configOrg === "CS310-2017Jan_TEST") {
+        const configOrg = Config.getInstance().getProp(ConfigKey.testorg);
+        if (configOrg === "test" || configOrg === "secapstonetest" || configOrg === "classytest") {
             let cols = [this.PERSONCOLL, this.GRADECOLL, this.TEAMCOLL, this.DELIVCOLL, this.REPOCOLL];
             for (const col of cols) {
                 Log.info("DatabaseController::clearData() - removing data for collection: " + col);
@@ -366,8 +366,8 @@ export class DatabaseController {
             if (this.db === null) {
 
                 // just use the org name for the db (use a test org name if you want to avoid tests wiping data!!)
-                const dbName = Config.getInstance().getProp('org').trim(); // make sure there are no extra spaces in config
-                const dbHost = Config.getInstance().getProp('mongoUrl').trim(); // make sure there are no extra spaces in config
+                const dbName = Config.getInstance().getProp(ConfigKey.org).trim(); // make sure there are no extra spaces in config
+                const dbHost = Config.getInstance().getProp(ConfigKey.mongoUrl).trim(); // make sure there are no extra spaces in config
 
                 // _ are to help diagnose whitespace in dbname/mongoUrl
                 Log.info("DatabaseController::open() - db null; making new connection to: _" + dbName + "_ on: _" + dbHost + "_");

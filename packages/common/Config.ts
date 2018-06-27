@@ -1,6 +1,51 @@
 import Log from "./Log";
 
+export enum ConfigKey {
+    kind = "kind", // REMOVE?
+    name = "name",
+    org = "org",
+    testorg = "testorg",
+
+    frontendUrl = "frontendUrl",
+    backendUrl = "backendUrl",
+    frontendPort = "frontendPort",
+    backendPort = "backendPort",
+    mongoUrl = "mongoUrl",
+
+    githubAPI = "githubAPI",
+    githubTokenUser = "githubTokenUser",
+    githubToken = "githubToken",
+
+    githubClientId = "githubClientId",
+    githubClientSecret = "githubClientSecret",
+    githubHost = "githubHost",
+
+    autotestUrl = "autotestUrl",
+    autotestPort = "autotestPort",
+
+    sslKeyPath = "sslKeyPath",
+    sslCertPath = "sslCertPath",
+
+    // autotest
+    persistDir = "persistDir",
+    port = "port",
+    githubOracleToken = "githubOracleToken",
+    githubOrgToken = "githubOrgToken",
+    dockerId = "dockerId",
+    workspace = "workspace",
+    graderHost = "graderHost",
+    graderPort = "graderPort",
+    classPortalHost = "classPortalHost",
+    classPortalPort = "classPortalPort",
+    timeout = "timeout",
+    botName = "botName",
+    postback = "postback",
+
+
+}
+
 export default class Config {
+
 
     public static getInstance(configName?: string): Config {
         if (Config.instance === null) {
@@ -63,7 +108,7 @@ export default class Config {
         }
     }
 
-    public getProp(prop: string): any {
+    public getProp(prop: ConfigKey): any {
         if (typeof this.config[prop] === "undefined") {
             Log.error("Config::getProp( " + prop + " ) - property is undefined; you probably want this in your config file.");
         } else if (this.config[prop] === null) {
@@ -74,7 +119,7 @@ export default class Config {
         return null;
     }
 
-    public setProp(prop: string, val: any) {
+    public setProp(prop: ConfigKey, val: any) {
         Log.error("Config::setProp( " + prop + ", " + val + " ) - should only be done by test suites, not production code");
         this.config[prop] = val;
     }

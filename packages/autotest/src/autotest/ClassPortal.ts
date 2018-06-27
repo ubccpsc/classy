@@ -1,6 +1,6 @@
 import * as rp from "request-promise-native";
 
-import Config from "../../../common/Config";
+import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
 export interface IClassPortal {
@@ -37,8 +37,8 @@ export interface IClassPortal {
 }
 
 export class ClassPortal implements IClassPortal {
-    private host: string = Config.getInstance().getProp("backendUrl");
-    private port: number = Config.getInstance().getProp("backendPort");
+    private host: string = Config.getInstance().getProp(ConfigKey.backendUrl);
+    private port: number = Config.getInstance().getProp(ConfigKey.backendPort);
 
     public async isStaff(courseId: string, userName: string): Promise<boolean> {
         if (typeof courseId === "undefined" || courseId === null || typeof userName === "undefined" || userName === null) {

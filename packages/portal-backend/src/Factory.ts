@@ -1,4 +1,4 @@
-import Config from "../../common/Config";
+import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
 
 import IREST from "./server/IREST";
@@ -20,7 +20,7 @@ export class Factory {
 
         if (org === 'sdmm' || org === 'secapstonetest') {
             return new SDMMREST();
-        } else if (org === 'CS310-2017Jan' || org === 'CS310-2017Jan_TEST') {
+        } else if (org === 'CS310-2017Jan' || org === 'CS310-2017Jan_TEST' || org === 'classytest') {
             // no custom routes are required for 310
             return new NoCustomRoutes();
         } else if (org === 'cs340') {
@@ -38,7 +38,7 @@ export class Factory {
      */
     private static getOrg(): string | null {
         try {
-            const org = Config.getInstance().getProp('org');
+            const org = Config.getInstance().getProp(ConfigKey.org);
             if (org === null) {
                 Log.error("Factory::getOrg() - null org");
             }

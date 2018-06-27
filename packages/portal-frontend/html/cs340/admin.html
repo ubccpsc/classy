@@ -1,6 +1,6 @@
 <ons-page id="AdminRoot">
     <ons-toolbar>
-        <div class="center">CPSC 310 Admin Portal</div>
+        <div class="center">CPSC 340 Admin Portal</div>
         <div id='indexLogin' class="right">
             <ons-toolbar-button onclick="myApp.logout();">
                 <ons-icon icon="fa-sign-out"></ons-icon>
@@ -20,6 +20,9 @@
         </ons-tab>
 
         <ons-tab id="AdminGradeTab" page="grades.html" label="Grades" icon="ion-ios-paper-outline">
+        </ons-tab>
+
+        <ons-tab id="AdminCustomGradeTab" page="gradesCustom.html" label="GradesCustom" icon="ion-ios-paper-outline">
         </ons-tab>
 
         <ons-tab id="AdminResultTab" page="results.html" label="Results" icon="ion-android-checkmark-circle">
@@ -53,7 +56,7 @@
         <ons-page id="AdminStudents">
             <ons-list id="AdminStudentsList">
                 <ons-list-header>Students</ons-list-header>
-                <div id="studentListTable" style="width:100%;"></div>
+                <div id="studentListTable" style="width:100%;">Students</div>
             </ons-list>
         </ons-page>
     </template>
@@ -70,6 +73,14 @@
         <ons-page id="AdminGrades">
             <p style="text-align: center;">
                 Grades Page
+            </p>
+        </ons-page>
+    </template>
+
+    <template id="gradesCustom.html">
+        <ons-page id="AdminCustomGrades">
+            <p style="text-align: center;">
+                CPSC 340 Custom Grades Page
             </p>
         </ons-page>
     </template>
@@ -92,24 +103,9 @@
 
     <template id="config.html">
         <ons-page id="AdminConfig">
-            <ons-list>
-                <ons-list-header>Upload Classlist</ons-list-header>
-                <ons-list-item expandable>
-                    <div class="left">
-                        Select classlist CSV <input id="adminClasslistFile" style="padding-left: 1em" type="file"/>
-                        <ons-button id="adminSubmitClasslist" modifier="medium">Upload Classlist</ons-button>
-                    </div>
-                    <div class="expandable-content">
-                        The CSV must have a header row that contains the following columns:
-
-                        <pre>ACCT,SNUM,CWL,LAST,FIRST,LAB</pre>
-                        The corresponding classlist command for this is:
-                        <pre>classlist -T -f "%ACCT,%SN,%CWL,%LN,%FN,%LAB" &lt;COURSENUM&gt;</pre>
-                        ACCT and SNUM are invariants and cannot change although ther fields can be updated (changing GitHub logins presents its own issues that require manual effort on the part of course staff to handle).
-                        Pre-existing Students, Teams, and Repositories <i>WILL NOT</i> be affected.
-                    </div>
-                </ons-list-item>
-            </ons-list>
+            <p style="text-align: center;">
+                Config Page
+            </p>
         </ons-page>
     </template>
 

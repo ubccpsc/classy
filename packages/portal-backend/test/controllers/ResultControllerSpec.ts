@@ -2,7 +2,7 @@ import {expect} from "chai";
 import "mocha";
 import * as fs from "fs-extra";
 
-import Config from "../../../common/Config";
+import Config, {ConfigKey} from "../../../common/Config";
 import {ResultsController} from "../../src/controllers/ResultsController";
 
 const loadFirst = require('../GlobalSpec');
@@ -28,7 +28,7 @@ describe("ResultController", () => {
         expect(results).to.have.lengthOf(0);
 
 
-        const dir = Config.getInstance().getProp("persistDir");
+        const dir = Config.getInstance().getProp(ConfigKey.persistDir);
         const fullPath = dir + "/outputRecords.json";
 
         let data = fs.readJSONSync(__dirname + "/outputRecords.json"); // TODO: known not to be right

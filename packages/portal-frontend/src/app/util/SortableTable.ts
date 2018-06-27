@@ -7,6 +7,7 @@ export interface TableHeader {
     sortable: boolean; // Whether the column is sortable (sometimes sorting does not make sense).
     defaultSort: boolean; // Whether the column is the default sort for the table. should only be true for one column.
     sortDown: boolean; // Whether the column should initially sort descending or ascending.
+    style?: string; // optional style hints for column
 }
 
 export interface TableCell {
@@ -120,16 +121,20 @@ export class SortableTable {
         let tablePrefix = '<table style="margin-left: auto; margin-right: auto; border-collapse: collapse;">'; // width: 100%;
         tablePrefix += '<tr>';
 
-        for (let header of this.headers) {
+        for (const header of this.headers) {
+            if (typeof header.style === 'undefined') {
+                header.style = '';
+            }
+
             // decorate this.sorCol appropriately
             if (this.sortHeader !== null && header.id === this.sortHeader.id) {
                 if (this.sortHeader.sortDown) {
-                    tablePrefix += '<th class="sortableHeader" col="' + header.id + '"><b>' + header.text + ' ▲</b></th>';
+                    tablePrefix += '<th class="sortableHeader" style="' + header.style + '" col="' + header.id + '"><b>' + header.text + ' ▲</b></th>';
                 } else {
-                    tablePrefix += '<th class="sortableHeader"  col="' + header.id + '"><b>' + header.text + ' ▼</b></th>';
+                    tablePrefix += '<th class="sortableHeader"  style="' + header.style + '" col="' + header.id + '"><b>' + header.text + ' ▼</b></th>';
                 }
             } else {
-                tablePrefix += '<th class="sortableHeader" col="' + header.id + '">' + header.text + '</th>';
+                tablePrefix += '<th class="sortableHeader" style="' + header.style + '" col="' + header.id + '">' + header.text + '</th>';
             }
         }
         tablePrefix += '</tr>';
@@ -209,7 +214,6 @@ export class SortableTable {
                 }
             }
 
-
             if (Array.isArray(aVal)) {
                 // an array
                 return (aVal.length - bVal.length) * mult;
@@ -218,8 +222,8 @@ export class SortableTable {
                 // something that isn't an array or string
                 return (Number(aVal) - Number(bVal)) * mult;
             } else if (typeof aVal === 'string') {
-                // as a string
-                return aVal.localeCompare(bVal) * mult;
+                // as a string; tries to naturally sort w/ numeric & base
+                return aVal.localeCompare(bVal, undefined, {numeric: true, sensitivity: 'base'}) * mult;
             } else {
                 // something that isn't an array or string or number
                 return (aVal - bVal) * mult;
@@ -262,15 +266,23 @@ export class SortableTable {
 
     private exportTableToCSV(fileName: string) {
         let csv = [];
-        let root = document.querySelector(this.divName);
+        const root = document.querySelector(this.divName);
         //var rows = document.querySelectorAll("table tr");
-        let rows = root.querySelectorAll('table tr');
+        const rows = root.querySelectorAll('table tr');
 
-        for (var i = 0; i < rows.length; i++) {
-            var row = [], cols = rows[i].querySelectorAll('td, th');
+        for (let i = 0; i < rows.length; i++) {
+            const row = [], cols = rows[i].querySelectorAll('td, th');
 
-            for (var j = 0; j < cols.length; j++)
-                row.push((<HTMLTableCellElement>cols[j]).innerText);
+            for (let j = 0; j < cols.length; j++) {
+                if (i === 0) {
+                    let text = (<HTMLTableCellElement>cols[j]).innerText;
+                    text = text.replace(' ▼', '');
+                    text = text.replace(' ▲', '');
+                    row.push(text);
+                } else {
+                    row.push((<HTMLTableCellElement>cols[j]).innerText);
+                }
+            }
 
             csv.push(row.join(','));
         }
@@ -280,6 +292,6 @@ export class SortableTable {
     }
 
     private attachDownload() {
-        this.exportTableToCSV('classPortal.csv');
+        this.exportTableToCSV('classy.csv');
     }
 }

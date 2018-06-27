@@ -1,8 +1,9 @@
 import * as crypto from 'crypto';
 
-import Config from "../../../common/Config";
+import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import Util from "../../../common/Util";
+import {StudentTransport} from '../../../common/types/PortalTypes';
 import {GradePayload, Payload, SDMMStatus, StatusPayload} from "../../../common/types/SDMMTypes";
 
 import {RepositoryController} from "./RepositoryController";
@@ -13,73 +14,101 @@ import {IGitHubController} from "./GitHubController";
 import {TeamController} from "./TeamController";
 import {PersonController} from "./PersonController";
 
-
 /**
- * This is the high-level interfaces that CourseControllers should implement
- * although they should do this by extending CourseController directly rather
- * than starting from scratch.
+ * This is the high-level interfaces that provides intermediate access to the
+ * low-level controllers for the REST interfaces. This interface ensures that
+ * the REST subsystem never sends backend representations to the front-end.
+ *
+ * This separation ensures that front-ends only work with primitive types encoded
+ * in transport representations, rather than the database types. This gives us
+ * much greater flexibility for upgrading the backend without changing any frontend
+ * code.
+ *
+ * Implementations which violate this separation do so at their own peril.
+ *
+ * Custom CourseControllers should not implement this directly, they probably
+ * want tot extend CourseController instead.
  */
 export interface ICourseController {
 
     /**
+     *
+     * TODO: Convert Person to PersonTransport
+     *
      * Gets the person associated with the username.
      *
-     * @param {string} org
      * @param {string} githubUsername
      * @returns {Promise<Person | null>} Returns null if the username is unknown in the org.
      */
     getPerson(githubUsername: string): Promise<Person | null>;
 
     /**
+     *
+     * TODO: Convert Person to PersonTransport
+     *
      * Sets the people for the org. Usually populated with classlist (or some such).
      *
-     * @param {string} org
      * @param {Person[]} people
      * @returns {Promise<boolean>}
      */
     setPeople(people: Person[]): Promise<boolean>;
 
     /**
+     *
+     * TODO: Convert Deliverable to DeliverableTransport
+     *
      * Get all the deliverables for an org.
      *
-     * @param {string} org
      * @returns {Promise<Deliverable[]>}
      */
     getDeliverables(): Promise<Deliverable[]>;
 
     /**
+     *
+     * TODO: convert Deliverable to DeliverableTransport
+     *
      * Sets the deliverables for an org. Will replace deliverables that have the same
      * Deliverable.id, otherwise it will create new ones.
      *
      * Will _not_ delete any deliverables.
      *
-     * @param {string} org
      * @param {Deliverable[]} deliverables
      * @returns {Promise<boolean>}
      */
     setDeliverables(deliverables: Deliverable[]): Promise<boolean>;
 
     /**
+     *
+     * TODO: Convert Person to PersonTransport and Grade to GradeTransport
+     *
      * If no Person is provided, gets all grades for an org.
      * If a Person is provided, gets all grades for only that person.
      *
-     * @param {string} org
      * @param {Person} person
      * @returns {Promise<Grade[]>}
      */
     getGrades(person?: Person): Promise<Grade[]>;
 
     /**
+     *
+     * TODO: convert Grade to GradeTransport
+     *
      * Sets the grades for an org. Any grade that already exists in the system with the
      * same Grade.personId && Grade.delivId will be replaced; new records will be added.
      *
      * Will _not_ delete any existing grades.
      *
-     * @param {string} org
      * @param {Grade[]} grades
      * @returns {Promise<boolean>}
      */
     setGrades(grades: Grade[]): Promise<boolean>;
+
+    /**
+     * Gets the students associated with the course.
+     *
+     * @returns {Promise<StudentTransport[]>}
+     */
+    getStudents(): Promise<StudentTransport[]>;
 
 }
 
@@ -106,7 +135,6 @@ export class CourseController { // don't implement ICourseController yet
     /**
      * Performs a complete provisioning task for a given deliverable and set of people.
      *
-     * @param {string} org
      * @param {string} delivId
      * @param {string[]} peopleIds people order matters; requestor should be peopleIds[0]
      * @returns {Promise<ResponsePayload>}
@@ -115,7 +143,7 @@ export class CourseController { // don't implement ICourseController yet
         Log.info("CourseController::provision( " + delivId + ", ... ) - start");
 
         try {
-            const org = Config.getInstance().getProp('org');
+            const org = Config.getInstance().getProp(ConfigKey.org);
             if (org !== "secapstone" && org !== "secapstonetest") {
                 Log.error("CourseController::provision(..) - SDMMController should not be used for other orgs");
                 return {failure: {shouldLogout: false, message: "Invalid org; contact course staff."}};
@@ -183,12 +211,11 @@ export class CourseController { // don't implement ICourseController yet
      * D3PRE
      * D3
      *
-     * @param {string} org
      * @param {string} personId
      * @returns {Promise<string>} null if the personId is not even known
      */
     private async computeStatusString(personId: string): Promise<string | null> {
-        const org = Config.getInstance().getProp('org');
+        const org = Config.getInstance().getProp(ConfigKey.org);
         Log.info("CourseController::getStatus( " + org + ', ' + personId + ' ) - start');
         const start = Date.now();
         try {
@@ -404,7 +431,7 @@ export class CourseController { // don't implement ICourseController yet
 */
 
     private async provisionD0Repo(personId: string): Promise<Payload> {
-        const org = Config.getInstance().getProp('org');
+        const org = Config.getInstance().getProp(ConfigKey.org);
         Log.info("CourseController::provisionD0Repo( " + org + ", " + personId + " ) - start");
         const start = Date.now();
 
@@ -448,7 +475,7 @@ export class CourseController { // don't implement ICourseController yet
             // create remote repo
             const INPUTREPO = "https://github.com/SECapstone/bootstrap"; // HARDCODED for SDMM D0
             // set to the backendUrl:backendPort, not autotestUrl:autotestPort since the backend will be publicly visible
-            const WEBHOOKADDR = Config.getInstance().getProp('backendUrl') + ':' + Config.getInstance().getProp('backendPort') + '/githubWebhook';
+            const WEBHOOKADDR = Config.getInstance().getProp(ConfigKey.backendUrl) + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/githubWebhook';
             const provisionResult = await this.gh.provisionRepository(repoName, [team], INPUTREPO, WEBHOOKADDR);
 
             if (provisionResult === true) {
@@ -495,7 +522,7 @@ export class CourseController { // don't implement ICourseController yet
     }
 
     private async updateIndividualD0toD1(personId: string): Promise<Payload> {
-        const org = Config.getInstance().getProp('org');
+        const org = Config.getInstance().getProp(ConfigKey.org);
         Log.info("CourseController::updateIndividualD0toD1( " + org + ", " + personId + " ) - start");
         const start = Date.now();
 
@@ -576,12 +603,11 @@ export class CourseController { // don't implement ICourseController yet
     }
 
     /**
-     * @param {string} org
      * @param {string[]} peopleIds order matters here: the requestor should be peopleIds[0]
      * @returns {Promise<Payload>}
      */
     private async provisionD1Repo(peopleIds: string[]): Promise<Payload> {
-        const org = Config.getInstance().getProp('org');
+        const org = Config.getInstance().getProp(ConfigKey.org);
         Log.info("CourseController::provisionD1Repo( " + org + ", " + JSON.stringify(peopleIds) + " ) - start");
         const start = Date.now();
 
@@ -593,7 +619,7 @@ export class CourseController { // don't implement ICourseController yet
             while (teamName === null) {
                 let str = crypto.randomBytes(256).toString('hex');
                 str = str.substr(0, 6);
-                const name = CourseController.getTeamPrefix(org) + str; // team prefix
+                const name = CourseController.getTeamPrefix() + str; // team prefix
                 Log.trace("CourseController::provisionD1Repo(..) - checking name: " + str);
                 let team = await this.tc.getTeam(str);
                 if (team === null) {
@@ -654,7 +680,7 @@ export class CourseController { // don't implement ICourseController yet
             // create remote repo
             const INPUTREPO = "https://github.com/SECapstone/bootstrap"; // HARDCODED for SDMM
             // set to the backendUrl:backendPort, not autotestUrl:autotestPort since the backend will be publicly visible
-            const WEBHOOKADDR = Config.getInstance().getProp('backendUrl') + ':' + Config.getInstance().getProp('backendPort') + '/githubWebhook';
+            const WEBHOOKADDR = Config.getInstance().getProp(ConfigKey.backendUrl) + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/githubWebhook';
             const provisionResult = await this.gh.provisionRepository(repoName, [team], INPUTREPO, WEBHOOKADDR);
 
             if (provisionResult === true) {
@@ -695,7 +721,7 @@ export class CourseController { // don't implement ICourseController yet
     }
 
     public async getStatus(personId: string): Promise<StatusPayload> {
-        const org = Config.getInstance().getProp('org');
+        const org = Config.getInstance().getProp(ConfigKey.org);
         Log.info("CourseController::getStatus( " + org + ", " + personId + " ) - start");
         const start = Date.now();
 
@@ -789,12 +815,11 @@ export class CourseController { // don't implement ICourseController yet
     /**
      * Public static so tests can use them too.
      *
-     * @param {string} org
      * @returns {string}
      */
     private static getProjectPrefix(): string {
-        const org = Config.getInstance().getProp('org');
-        if (org === "secapstonetest" || Config.getInstance().getProp('name') === "secapstonetest") {
+        const org = Config.getInstance().getProp(ConfigKey.org);
+        if (org === "secapstonetest" || Config.getInstance().getProp(ConfigKey.name) === "secapstonetest") {
             Log.info("CourseController::getProjectPrefix(..) - returning test prefix");
             return "TEST__X__secap_";
         } else {
@@ -808,8 +833,10 @@ export class CourseController { // don't implement ICourseController yet
      * @param {string} org
      * @returns {string}
      */
-    private static getTeamPrefix(org: string) {
-        if (org === "secapstonetest" || Config.getInstance().getProp('name') === "secapstonetest") {
+    private static getTeamPrefix() {
+        const org = Config.getInstance().getProp(ConfigKey.org);
+
+        if (org === "secapstonetest" || Config.getInstance().getProp(ConfigKey.name) === "secapstonetest") {
             Log.info("CourseController::getTeamPrefix(..) - returning test prefix");
             return "TEST__X__t_";
         } else {
@@ -819,7 +846,7 @@ export class CourseController { // don't implement ICourseController yet
 
     public static getOrg(): string | null {
         try {
-            const org = Config.getInstance().getProp('org');
+            const org = Config.getInstance().getProp(ConfigKey.org);
             if (org !== null) {
                 return org;
             } else {
@@ -830,4 +857,30 @@ export class CourseController { // don't implement ICourseController yet
         }
         return null;
     }
+
+    /**
+     * Gets the students associated with the course.
+     *
+     * @returns {Promise<StudentTransport[]>}
+     */
+    public async getStudents(): Promise<StudentTransport[]> {
+        let people = await this.pc.getAllPeople();
+        let students: StudentTransport[] = [];
+        for (const person of people) {
+            if (person.kind === 'student') {
+                const studentTransport = {
+                    firstName:  person.fName,
+                    lastName:   person.lName,
+                    userName:   person.githubId,
+                    userUrl:    Config.getInstance().getProp(ConfigKey.githubHost) + '/' + person.githubId,
+                    studentNum: person.studentNumber,
+                    labId:      person.labId
+                };
+                students.push(studentTransport);
+            }
+        }
+        return students;
+    }
+
+
 }

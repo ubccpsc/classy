@@ -1,6 +1,6 @@
 import * as https from "https";
 
-import Config from "../../../common/Config";
+import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
 export interface IGithubMessage {
@@ -56,14 +56,14 @@ export class GithubService implements IGithubService {
                     headers: {
                         "Content-Type":  "application/json",
                         "User-Agent":    "UBC-CPSC310-AutoTest",
-                        "Authorization": "token " + Config.getInstance().getProp("githubOrgToken")
+                        "Authorization": "token " + Config.getInstance().getProp(ConfigKey.githubOrgToken)
                     }
                 };
 
                 const body: string = JSON.stringify({body: message.message});
                 options.headers["Content-Length"] = Buffer.byteLength(body);
 
-                if (Config.getInstance().getProp("postback") === true) {
+                if (Config.getInstance().getProp(ConfigKey.postback) === true) {
                     Log.trace("GithubService::postMarkdownToGithub(..) - request: " + JSON.stringify(options, null, 2));
                     const req = https.request(options, (res: any) => {
                         Log.trace("GithubService::postMarkdownToGithub(..) - response received; status: " + res.statusCode);

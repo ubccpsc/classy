@@ -1,6 +1,6 @@
 import * as rp from "request-promise-native";
 
-import Config from "../../../../common/Config";
+import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 
 import {AuthController} from "../../controllers/AuthController";
@@ -39,9 +39,11 @@ export class AuthRouteHandler implements IREST {
             Log.trace('AuthRouteHandler::getCredentials(..) - in isValid(..)');
             if (isValid === true) {
                 Log.trace('AuthRouteHandler::getCredentials(..) - isValid true');
-                AuthRouteHandler.ac.isAdmin(user, token).then(function (isAdmin) {
-                    Log.info('RouteHandler::getCredentials(..) - sending 200; isAdmin: ' + isAdmin);
-                    res.send({user: user, token: token, isAdmin: true});
+                AuthRouteHandler.ac.isPrivileged(user, token).then(function (isPrivileged) {
+
+                    Log.info('RouteHandler::getCredentials(..) - sending 200; isPriv: ' + (isPrivileged.isStaff || isPrivileged.isAdmin));
+                    res.send({user: user, token: token, isAdmin: isPrivileged.isAdmin, isStaff: isPrivileged.isStaff});
+
                 }).catch(function (err) {
                     Log.info('AuthRouteHandler::getCredentials(..) - isValid true; ERROR: ' + err);
                     res.send(400, {failure: {message: "Login error (getCredentials valid inner error)."}});
@@ -62,14 +64,14 @@ export class AuthRouteHandler implements IREST {
 
         const org = req.query.org;
 
-        const githubRedirect = config.getProp('backendUrl') + ':' + config.getProp('backendPort') + '/githubCallback?org=' + org;
+        const githubRedirect = config.getProp(ConfigKey.backendUrl) + ':' + config.getProp(ConfigKey.backendPort) + '/githubCallback?org=' + org;
         Log.info("AuthRouteHandler::getAuth(..) - /auth redirect; course: " + org + "; URL: " + githubRedirect);
 
         const setup = {
-            clientId:         config.getProp('githubClientId'),
-            clientSecret:     config.getProp('githubClientSecret'),
-            accessTokenUri:   config.getProp('githubHost') + '/login/oauth/access_token',
-            authorizationUri: config.getProp('githubHost') + '/login/oauth/authorize',
+            clientId:         config.getProp(ConfigKey.githubClientId),
+            clientSecret:     config.getProp(ConfigKey.githubClientSecret),
+            accessTokenUri:   config.getProp(ConfigKey.githubHost) + '/login/oauth/access_token',
+            authorizationUri: config.getProp(ConfigKey.githubHost) + '/login/oauth/authorize',
             redirectUri:      githubRedirect,
             scopes:           ['']
         };
@@ -98,16 +100,16 @@ export class AuthRouteHandler implements IREST {
         const personController = new PersonController();
 
         // TODO: do we need this redirect?
-        const backendUrl = config.getProp('backendUrl');
-        const backendPort = config.getProp('backendPort');
-        const githubRedirect = backendUrl + ':' + backendPort + '/githubCallback?orgName=secapstone';  // SDMM
+        const backendUrl = config.getProp(ConfigKey.backendUrl);
+        const backendPort = config.getProp(ConfigKey.backendPort);
+        const githubRedirect = backendUrl + ':' + backendPort + '/githubCallback?orgName=secapstone';  // SDMM HardCode
         Log.info('AuthRouteHandler::githubCallback(..) - / githubCallback; URL: ' + githubRedirect);
 
         const opts = {
-            clientId:         config.getProp('githubClientId'),
-            clientSecret:     config.getProp('githubClientSecret'),
-            accessTokenUri:   config.getProp('githubHost') + '/login/oauth/access_token',
-            authorizationUri: config.getProp('githubHost') + '/login/oauth/authorize',
+            clientId:         config.getProp(ConfigKey.githubClientId),
+            clientSecret:     config.getProp(ConfigKey.githubClientSecret),
+            accessTokenUri:   config.getProp(ConfigKey.githubHost) + '/login/oauth/access_token',
+            authorizationUri: config.getProp(ConfigKey.githubHost) + '/login/oauth/authorize',
             redirectUri:      githubRedirect,
             scopes:           ['']
         };
@@ -124,7 +126,7 @@ export class AuthRouteHandler implements IREST {
 
             token = user.accessToken;
             const options = {
-                uri:     config.getProp('githubAPI') + '/user',
+                uri:     config.getProp(ConfigKey.githubAPI) + '/user',
                 method:  'GET',
                 headers: {
                     'Content-Type':  'application/json',
@@ -178,8 +180,8 @@ export class AuthRouteHandler implements IREST {
             return personController.createPerson(p);
         }).then(function (person) {
             Log.info("AuthRouteHandler::githubCallback(..) - person: " + person);
-            let feUrl = config.getProp('frontendUrl');
-            let fePort = config.getProp('frontendPort');
+            let feUrl = config.getProp(ConfigKey.frontendUrl);
+            let fePort = config.getProp(ConfigKey.frontendPort);
 
             if (person !== null) {
                 // only header method that worked for me

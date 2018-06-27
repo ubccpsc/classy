@@ -1,4 +1,4 @@
-import Config from "../../../common/Config";
+import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import Util from "../../../common/Util";
 
@@ -115,7 +115,7 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
 
             Log.info("GithubAutoTest::handleCommentEvent(..) - start; course: " + this.courseId + "; commit: " + info.commitSHA + "; user: " + info.personId);
 
-            if (info.personId === Config.getInstance().getProp("botName")) {
+            if (info.personId === Config.getInstance().getProp(ConfigKey.botName)) {
                 Log.info("GithubAutoTest::handleCommentEvent(..) - ignored, comment made by AutoBot");
                 return true;
             }

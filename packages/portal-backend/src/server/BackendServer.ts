@@ -5,12 +5,13 @@ import restify = require('restify');
 import * as fs from "fs";
 
 import Log from "../../../common/Log";
-import Config from "../../../common/Config";
+import Config, {ConfigKey} from "../../../common/Config";
 
 import {Factory} from "../Factory";
 import GeneralRoutes from "./common/GeneralRoutes";
 import {AuthRouteHandler} from "./common/AuthRouteHandler";
 import {AutoTestRouteHandler} from "./common/AutoTestRouteHandler";
+import AdminRoutes from "./common/AdminRoutes";
 
 /**
  * This configures the REST endpoints for the server.
@@ -70,8 +71,8 @@ export default class BackendServer {
             try {
                 let https_options: any = {
                     name:        'backend',
-                    key:         fs.readFileSync(that.config.getProp('sslKeyPath')),
-                    certificate: fs.readFileSync(that.config.getProp('sslCertPath'))
+                    key:         fs.readFileSync(that.config.getProp(ConfigKey.sslKeyPath)),
+                    certificate: fs.readFileSync(that.config.getProp(ConfigKey.sslCertPath))
                 };
 
                 if (that.useHttps === false) {
@@ -101,14 +102,19 @@ export default class BackendServer {
 
                 // general
                 new GeneralRoutes().registerRoutes(that.rest);
+
+                // admin
+                new AdminRoutes().registerRoutes(that.rest);
+
                 Log.info('BackendServer::start() - Registering common handlers; done');
+
 
                 // Register custom route handler for specific classy instance
                 Log.info('BackendServer::start() - Registering custom handler');
                 Factory.getCustomRouteHandler().registerRoutes(that.rest);
                 Log.info('BackendServer::start() - Registering custom handler; done');
 
-                that.rest.listen(that.config.getProp('backendPort'), function () {
+                that.rest.listen(that.config.getProp(ConfigKey.backendPort), function () {
                     Log.info('BackendServer::start() - restify listening: ' + that.rest.url);
                     fulfill(true);
                 });

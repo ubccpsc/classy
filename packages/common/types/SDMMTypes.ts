@@ -1,14 +1,11 @@
 /**
  * NOTE: these were part of SDDM frontend and should be made to be more generic (e.g.m, StatusPayload) for other courses.
  */
+import {FailurePayload} from "./PortalTypes";
+
 export interface Payload {
     success?: ActionPayload | StatusPayload; // only set if defined
     failure?: FailurePayload; // only set if defined
-}
-
-export interface FailurePayload {
-    message: string;
-    shouldLogout: boolean; // almost always false
 }
 
 export interface ActionPayload {
@@ -24,6 +21,9 @@ export interface StatusPayload {
     d3: GradePayload | null;
 }
 
+/**
+ * TODO: Move to PortalTypes and rname to GradeTransport
+ */
 export interface GradePayload {
     score: number; // grade: < 0 will mean 'N/A' in the UI
     comment: string;

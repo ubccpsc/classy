@@ -1,6 +1,6 @@
 import * as rp from "request-promise-native";
 
-import Config from "../../../common/Config";
+import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import Util from "../../../common/Util";
 
@@ -314,13 +314,13 @@ export abstract class AutoTest implements IAutoTest {
                 isProd = false; // EMPTY and POSTBACK used by test environment
             }
             if (isProd === true) {
-                const host: string = Config.getInstance().getProp("graderHost");
-                const port: number = Config.getInstance().getProp("graderPort");
-                const cpHost: string = Config.getInstance().getProp("classPortalHost");
-                const cpPort: number = Config.getInstance().getProp("classPortalPort");
-                const image: string = Config.getInstance().getProp("dockerId");
-                const timeout: number = Config.getInstance().getProp("timeout");
-                const org: string = Config.getInstance().getProp("org");
+                const host: string = Config.getInstance().getProp(ConfigKey.graderHost);
+                const port: number = Config.getInstance().getProp(ConfigKey.graderPort);
+                const cpHost: string = Config.getInstance().getProp(ConfigKey.classPortalHost);
+                const cpPort: number = Config.getInstance().getProp(ConfigKey.classPortalPort);
+                const image: string = Config.getInstance().getProp(ConfigKey.dockerId);
+                const timeout: number = Config.getInstance().getProp(ConfigKey.timeout);
+                const org: string = Config.getInstance().getProp(ConfigKey.org);
                 const assnUrl: string = input.pushInfo.projectURL;
                 const assnCloneUrl: string = input.pushInfo.cloneURL;
                 const commitSHA: string = input.pushInfo.commitSHA;
