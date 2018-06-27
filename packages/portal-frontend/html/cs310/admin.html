@@ -52,6 +52,11 @@
     <template id="students.html">
         <ons-page id="AdminStudents">
             <ons-list id="AdminStudentsList">
+                <div style="text-align:center; padding: 1em;">Select Lab (optional):<select id="studentsListSelect"
+                                                                                            style="margin-left: 1em;">
+                    <option>All</option>
+                    <option>Unspecified</option>
+                </select></div>
                 <ons-list-header>Students</ons-list-header>
                 <div id="studentListTable" style="width:100%;"></div>
             </ons-list>
@@ -105,7 +110,8 @@
                         <pre>ACCT,SNUM,CWL,LAST,FIRST,LAB</pre>
                         The corresponding classlist command for this is:
                         <pre>classlist -T -f "%ACCT,%SN,%CWL,%LN,%FN,%LAB" &lt;COURSENUM&gt;</pre>
-                        ACCT and SNUM are invariants and cannot change although ther fields can be updated (changing GitHub logins presents its own issues that require manual effort on the part of course staff to handle).
+                        ACCT and SNUM are invariants and cannot change although ther fields can be updated (changing GitHub logins presents
+                        its own issues that require manual effort on the part of course staff to handle).
                         Pre-existing Students, Teams, and Repositories <i>WILL NOT</i> be affected.
                     </div>
                 </ons-list-item>

@@ -258,12 +258,16 @@ export class AdminView implements IView {
     }
 
     // called by reflection in renderPage
-    private async handleAdminStudents(opts: {}): Promise<void> {
+    private async handleAdminStudents(opts: any): Promise<void> {
         Log.info('AdminView::handleStudents(..) - start');
         UI.showModal('Retrieving students');
 
         // NOTE: this could consider if studentListTable has children, and if they do, don't refresh
         document.getElementById('studentListTable').innerHTML = ''; // clear target
+
+        if (typeof opts.labSection === 'undefined') {
+            opts.labSection = 'All';
+        }
 
         const options = this.getOptions();
         const url = this.remote + '/admin/students';
@@ -275,7 +279,7 @@ export class AdminView implements IView {
             // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
             if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
                 Log.trace('AdminView::handleStudents(..)  - worked');
-                this.renderStudents(json.success);
+                this.renderStudents(json.success, opts.labSection);
             } else {
                 Log.trace('AdminView::handleStudents(..)  - ERROR: ' + json.failure.message);
                 this.showError(json.failure); // FailurePayload
@@ -287,7 +291,7 @@ export class AdminView implements IView {
         }
     }
 
-    private renderStudents(students: StudentTransport[]) {
+    private renderStudents(students: StudentTransport[], labSection: string) {
         const headers: TableHeader[] = [
             {
                 id:          'id',
@@ -323,6 +327,7 @@ export class AdminView implements IView {
             }
         ];
 
+        let labSectionsOptions = ['-All-', '-Unspecified-'];
         const st = new SortableTable(headers, '#studentListTable');
         for (const student of students) {
             let row: TableCell[] = [
@@ -331,12 +336,39 @@ export class AdminView implements IView {
                 {value: student.lastName, html: student.lastName},
                 {value: student.labId, html: student.labId}
             ];
-            st.addRow(row);
+            if (labSectionsOptions.indexOf(student.labId) < 0 && student.labId !== '' && student.labId !== null) {
+                labSectionsOptions.push(student.labId);
+            }
+            if (labSection === student.labId || labSection === '-All-' ||
+                (labSection === '-Unspecified-' && student.labId === '')) {
+                st.addRow(row);
+            }
         }
 
-        setTimeout(function () {
-            st.generate();
-        }, 50);
+        st.generate();
+
+        labSectionsOptions = labSectionsOptions.sort();
+        let labSelector = document.querySelector('#studentsListSelect') as HTMLSelectElement;
+        labSelector.innerHTML = '';
+        for (const labId of labSectionsOptions) {
+            let selected = false;
+            if (labId === labSection) {
+                selected = true;
+            }
+            const o: HTMLOptionElement = new Option(labId, labId, false, selected);
+            labSelector.add(o);
+        }
+
+        const that = this;
+        labSelector.onchange = function (evt) {
+            Log.info('AdminView::renderStudents(..) - upload pressed');
+            evt.stopPropagation(); // prevents list item expansion
+
+            let val = labSelector.value.valueOf();
+
+            // that.renderPage('AdminStudents', {labSection: val}); // if we need to re-fetch
+            that.renderStudents(students, val); // if cached data is ok
+        };
 
     }
 }
