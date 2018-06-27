@@ -174,6 +174,10 @@ interface GitTeamTuple {
     githubTeamNumber: number
 }
 
+interface TeamInformation extends GitTeamTuple {
+    permission: string
+}
+
 export class GitHubActions {
 
     private apiPath: string | null = null;
@@ -241,13 +245,44 @@ export class GitHubActions {
     }
 
     /**
+     * Returns all teams that are associated with a given repository
+     * @param {string} org
+     * @param {string} repoName
+     * @returns {Promise<GitTeamTuple[]>}
+     */
+    public async getTeamsOnRepo(org: string, repoName: string) : Promise<TeamInformation[]> {
+        let ctx = this;
+        Log.info("GithubAction::getTeamsOnRepo( " + org + ", " + repoName + " ) - start");
+        const teamsUri = ctx.apiPath + '/repos/' + org + '/' + repoName + '/teams';
+        Log.trace("GitHubAction::setRepoPermission(..) - URI: " + teamsUri);
+        const teamOptions = {
+            method: 'GET',
+            uri: teamsUri,
+            headers: {
+                'Authorization': ctx.gitHubAuthToken,
+                'User-Agent':    ctx.gitHubUserName,
+                'Accept':        'application/json'
+            },
+            json: true
+        };
+
+        let response = rp(teamOptions);
+
+        // STUB
+        return [{
+            teamName: "",
+            githubTeamNumber: 0,
+            permission: ""
+        }];
+    }
+
+    /**
      * Removes write access for the given repository
      * @param {string} org
      * @param {string} repoName
      * @param {string} permissionLevel - one of: 'push' 'pull'
      * @returns {Promise<boolean>}
      */
-
     public setRepoPermission(org: string, repoName: string, permissionLevel: string): Promise<boolean> {
         let ctx = this;
         Log.info("GithubAction::setRepoPermission( " + org + ", " + repoName + ", " + permissionLevel + " ) - start");
@@ -277,32 +312,36 @@ export class GitHubActions {
                         json: true
                     };
 
+                    // Change each team's permission
                     rp(teamOptions).then(function (responseData: any) {
                         Log.info("GitHubAction::setRepoPermission(..) - setting permission for teams on repo");
                         for(const team of responseData) {
-                            Log.info("GitHubAction::setRepoPermission(..) - set team: " + team.name + " to " + permissionLevel);
-                            const permissionUri = ctx.apiPath + '/teams/' + team.id + '/repos/' + org + '/' + repoName;
-                            Log.trace("GitHubAction::setRepoPermission(..) - URI: " + permissionUri);
-                            const permissionOptions = {
-                                method:  'PUT',
-                                uri:     permissionUri,
-                                headers: {
-                                    'Authorization': ctx.gitHubAuthToken,
-                                    'User-Agent':    ctx.gitHubUserName,
-                                    'Accept':        'application/json'
-                                },
-                                body: {
-                                    permission: permissionLevel
-                                },
-                                json: true
-                            };
+                            // Don't change teams that have admin permission
+                            if(team.permission !== "admin") {
+                                Log.info("GitHubAction::setRepoPermission(..) - set team: " + team.name + " to " + permissionLevel);
+                                const permissionUri = ctx.apiPath + '/teams/' + team.id + '/repos/' + org + '/' + repoName;
+                                Log.trace("GitHubAction::setRepoPermission(..) - URI: " + permissionUri);
+                                const permissionOptions = {
+                                    method:  'PUT',
+                                    uri:     permissionUri,
+                                    headers: {
+                                        'Authorization': ctx.gitHubAuthToken,
+                                        'User-Agent':    ctx.gitHubUserName,
+                                        'Accept':        'application/json'
+                                    },
+                                    body: {
+                                        permission: permissionLevel
+                                    },
+                                    json: true
+                                };
 
-                            rp(permissionOptions).then(function (response) {
-                                Log.info("GitHubAction::setRepoPermission(..) - changed team: " + team.id + " permissions");
-                            }).catch(function (err) {
-                                Log.error("GitHubAction::setRepoPermission(..) - ERROR: " + err);
-                                fulfill(false);
-                            });
+                                rp(permissionOptions).then(function (response) {
+                                    Log.info("GitHubAction::setRepoPermission(..) - changed team: " + team.id + " permissions");
+                                }).catch(function (err) {
+                                    Log.error("GitHubAction::setRepoPermission(..) - ERROR: " + err);
+                                    fulfill(false);
+                                });
+                            }
                         }
                     });
                     fulfill(true);
