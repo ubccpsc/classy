@@ -7,3 +7,48 @@
     color: #424242;
 }
 
+.mainBody {
+    /* height: 100%; */
+    display: flex;  
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.questionBody {
+    /* Something goes here */
+}
+
+.subQuestionBody {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 25px;
+    align-items: flex-start;
+}
+
+.subQuestionInfoBox {
+    flex: 2;
+}
+
+.subQuestionTextBox {
+    flex: 3;
+    flex-direction: column;
+}
+
+.textboxLabel {
+    flex: 1;
+    margin-top: 0px;
+}
+
+.errorBox {
+    color: red;
+}
+
+.redText {
+    color: red;
+}
+
+#gradingSection {
+    margin-top: 50px;
+    margin-bottom: 100px;
+}

@@ -10,7 +10,7 @@ import Log from "../../../../../common/Log";
 import {UI} from "../../util/UI";
 import {
     AssignmentGrade,
-    AssignmentGradingRubric,
+    AssignmentGradingRubric, QuestionGrade, SubQuestionGrade,
     SubQuestionGradingRubric
 } from "../../../../../common/types/CS340Types";
 
@@ -152,10 +152,28 @@ export class CS340View implements IView {
         let assignmentInfoElement = document.getElementById('assignmentInfoSection');
         let gradingSectionElement = document.getElementById('gradingSection');
 
+        // let assignmentInfoList = document.createElement("ons-list");
+        // let assignmentInfoAssignmentID = document.createElement("ons-list-item");
+        // let assignmentInfoAssignmentStudent = document.createElement("ons-list-item");
+
+        let assignmentInfoList = document.createElement("div");
+
+        let assignmentInfoAssignmentID = document.createElement("p");
+        assignmentInfoAssignmentID.innerHTML = delivId;
+        assignmentInfoAssignmentID.setAttribute("class", "aInfoID");
+
+        let assignmentInfoStudentID = document.createElement("p");
+        assignmentInfoStudentID.innerHTML = sid;
+        assignmentInfoStudentID.setAttribute("class", "aInfoSID");
+        assignmentInfoList.appendChild(assignmentInfoAssignmentID);
+        assignmentInfoList.appendChild(assignmentInfoStudentID);
+
         if (gradingSectionElement === null || assignmentInfoElement === null) {
             Log.error("CS340View::populateGradingPage() - Unable to populate page due to missing elements");
             return;
         }
+
+        assignmentInfoElement.appendChild(assignmentInfoList);
 
         for (let i = 0; i < rubric.questions.length; i++) {
             // Get the i-th question
@@ -168,6 +186,7 @@ export class CS340View implements IView {
 
             // TODO: Check this
             questionHeaderComponent1.innerHTML = question.name;
+            questionHeaderComponent1.setAttribute("class", "questionName");
             questionHeaderComponent2.setAttribute("class", "redText");
             questionHeaderComponent2.innerHTML = " *";
 
@@ -243,10 +262,163 @@ export class CS340View implements IView {
         // Create a submission button
         let submitButton = document.createElement("ons-button");
         // TODO: Link this better
-        submitButton.setAttribute("onclick", "submitGrades()");
+        submitButton.setAttribute("onclick", "window.classportal.view.submitGrade()");
         submitButton.innerHTML = "Submit";
 
         gradingSectionElement!.appendChild(submitButton);
+    }
+
+    public async submitGrade(): Promise<AssignmentGrade|null> {
+        let error = false;
+        let questionArray : QuestionGrade[] = [];
+        let questionBoxes = document.getElementsByClassName("questionBox");
+
+        for (let i = 0; i < questionBoxes.length; i++) {
+            // A single question box, representative of many subquestions
+            let questionBox = questionBoxes[i];
+            // Get each subquestion from the questionBox
+            let subQuestions = questionBox.getElementsByClassName("subQuestionBody");
+            // initalize an array to place all the information inside
+            let subQuestionArray : SubQuestionGrade[] = [];
+
+            // for each subQuestion
+            for (let j = 0; j < subQuestions.length; j++) {
+                // Get a single subQuestion
+                let subQuestion = subQuestions[j];
+
+                // Grab the elements associated with the subQuesiton
+                let gradeInputElements = subQuestion.getElementsByClassName("subQuestionGradeInput");
+                let errorElements = subQuestion.getElementsByClassName("errorBox");
+                let responseBoxElements = subQuestion.getElementsByClassName("textarea");
+
+                // Check if there is exactly one element in each
+                // otherwise something is wrong with the webpage
+                if(gradeInputElements.length !== 1 ||
+                    responseBoxElements.length !== 1 ||
+                    errorElements.length !== 1) {
+                    // Display an error
+                    Log.error("CS340View::submitGrade - Error: Page is malformed");
+                    return null;
+                }
+
+                // Grab the elements
+                let gradeInputElement = gradeInputElements[0] as HTMLInputElement;
+                let responseBoxElement = responseBoxElements[0] as HTMLTextAreaElement;
+                let errorElement = errorElements[0] as HTMLElement;
+
+                // Get the type from the embedded HTML data
+                let rubricType = gradeInputElement.getAttribute("data-type");
+
+                // Retrieve the value inputted into the form field
+                let gradeValue = parseFloat(gradeInputElement.value);
+
+                // If the value is not found, set it to a default empty string
+                if (rubricType === null) {
+                    rubricType = "";
+                    error = true;
+                    continue;
+                }
+
+                // If the grade value retrieved is not a number, default the value to 0
+                if (isNaN(gradeValue)) {
+                    gradeValue = 0;
+                    error = true;
+                    errorElement.innerHTML = "Error: Must specify a valid number";
+                    continue;
+                } else {
+                    // If the gradeValue is an actual number
+                    // check if there are any warnings about the input value
+                    if (this.checkIfWarning(gradeInputElement)) {
+                        error = true;
+                        continue;
+                    }
+                }
+
+                let newSubGrade : SubQuestionGrade = {
+                    sectionName: rubricType,
+                    grade: gradeValue,
+                    feedback: responseBoxElement.value
+                };
+
+                subQuestionArray.push(newSubGrade);
+            }
+
+            let questionNames = document.getElementsByClassName("questionName");
+            if(questionNames.length !== 1) {
+                error = true;
+                continue;
+            }
+
+            let newQuestion : QuestionGrade = {
+                questionName: questionNames[0].innerHTML,
+                commentName: "",
+                subQuestion: subQuestionArray
+            };
+
+            questionArray.push(newQuestion);
+        }
+
+        let aInfoSIDElements = document.getElementsByClassName("aInfoSID");
+        let aInfoIDElements = document.getElementsByClassName("aInfoID");
+
+        if (aInfoSIDElements.length !== 1 || aInfoIDElements.length !== 1) {
+            error = true;
+        }
+
+        if(error) {
+            Log.error("CS340View::submitGrade() - Unable to submit data");
+            return null;
+        }
+
+        let sid = aInfoSIDElements[0].innerHTML;
+        let aid = aInfoIDElements[0].innerHTML;
+
+        let newAssignmentGrade : AssignmentGrade = {
+            assignmentID: aid,
+            studentID: sid,
+            questions: questionArray
+        };
+
+        // TODO: Record in database the new Grade
+        const url = this.remote + '/setAssignmentGrade';
+        Log.info("CS340View::submitGrade() - uri: " + url);
+
+        UI.showModal("Submitting grade, please wait...");
+        // Call the function
+        let options: any = this.getOptions();
+
+        options.method = 'put';
+        options.headers.Accept = 'application/json';
+        options.json = true;
+        // options.body = JSON.stringify({"value": "response"});
+        options.body = JSON.stringify(newAssignmentGrade);
+
+        Log.info("CS340View::submitGrade() - request body: " + options.body);
+
+        let response = await fetch(url, options);
+
+        UI.hideModal();
+        Log.info("CS340View::submitGrade() - response from api " + response);
+
+        return newAssignmentGrade;
+
+        // return {
+        //     assignmentID: "a1",
+        //     studentID: "jopika",
+        //     questions: [
+        //         {
+        //             questionName: "question 1",
+        //             commentName: "",
+        //             subQuestion: [
+        //                 {
+        //                     sectionName: "",
+        //                     grade: 0,
+        //                     feedback   : ""
+        //                 }
+        //             ]
+        //         }
+        //     ]
+        // }
     }
 
     public async getStudentGrade(sid: string, aid: string): Promise<AssignmentGrade | null> {
@@ -270,24 +442,27 @@ export class CS340View implements IView {
         options.method = 'get';
         let response = await fetch(url, options);
         UI.hideModal();
-        Log.info("CS340View::getAllDeliverables() - response recieved");
 
         if (response.status === 200) {
+            Log.info("CS340View::getAllDeliverables() - response 200");
+
             // console.log("This is the result received: ");
             let jsonResponse = await response.json();
             let responseData = jsonResponse.response;
 
             // console.log(jsonResponse);
+            Log.info("CS340View::getAllDeliverables() - response data: " + JSON.stringify(responseData));
 
             let deliverableListElement = document.getElementById("select-deliverable-list") as OnsSelectElement;
             while (deliverableListElement.firstChild) {
                 deliverableListElement.removeChild(deliverableListElement.firstChild);
                 // deliverableListElement.remove();
             }
-            let arrayResponse: Deliverable[] = responseData.result;
+            let arrayResponse: Deliverable[] = responseData;
             // Log.info("CS340View::getAllDeliverables() value- " + JSON.stringify(arrayResponse));
             // Log.info("CS340View::getAllDeliverables() value- " + arrayResponse);
             if (arrayResponse == null || typeof arrayResponse == "undefined") {
+                Log.error("CS340View::getAllDeliverables() - error, response is null or undefined");
                 return;
             }
             for (const deliv of arrayResponse) {
@@ -300,6 +475,7 @@ export class CS340View implements IView {
                 // TODO [Jonathan]: Make this call the page transition function
                 // newOption.setAttribute("onclick", "window.classportal.view.changeStudentList(\""+deliv.id+"\")");
                 // selectElement.appendChild(newOption);
+                Log.info("CS340View::getAllDeliverables - Add new option: " + deliv.id);
                 (<any>deliverableListElement).appendChild(newOption);
             }
             // TODO [Jonathan]: Setup an event listener on the button to show the grades
@@ -310,7 +486,7 @@ export class CS340View implements IView {
                 this.renderStudentSubmissions(selectedDeliverable);
             });
         } else {
-            Log.info("CS340View::getAllDeliverables() - Error: unable to retrieve deliverables");
+            Log.error("CS340View::getAllDeliverables() - Error: unable to retrieve deliverables");
             // return null;
         }
 
@@ -524,4 +700,8 @@ export class CS340View implements IView {
         return false;
     }
 
+    private checkIfWarning(gradeInputElement: HTMLInputElement) : boolean {
+        // TODO: Complete this
+        return false; // stub
+    }
 }
