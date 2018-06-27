@@ -180,6 +180,18 @@ export default class AdminRoutes implements IREST {
     private static postClasslist(req: any, res: any, next: any) {
         Log.info('AdminRoutes::postClasslist(..) - start');
 
+        const handleError = function (msg: string) {
+            Log.error('AdminRoutes::postClasslist(..)::handleError - message: ' + msg);
+            const payload: Payload = {
+                failure: {
+                    message:      msg,
+                    shouldLogout: false
+                }
+            };
+            res.send(400, payload);
+            return next();
+        };
+
         try {
             let files = req.files;
             let classlist = files.classlist;
@@ -193,54 +205,57 @@ export default class AdminRoutes implements IREST {
 
             const parser = parse(options, (err, data) => {
                 if (err) {
-                    Log.error('AdminRoutes::postClasslist(..) - parse ERROR: ' + err);
-                    const payload: Payload = {
-                        failure: {
-                            message:      'Unable to parse classlist; ERROR: ' + err,
-                            shouldLogout: false
-                        }
-                    };
-                    res.send(400, payload);
-                    return next();
+                    const msg = 'Class list parse error: ' + err;
+                    handleError(msg);
                 } else {
                     Log.info('AdminRoutes::postClasslist(..) - parse successful');
                     const pc = new PersonController();
+
+                    let people: Promise<Person>[] = [];
                     for (const row of data) {
-                        Log.trace(JSON.stringify(row));
-                        let p: Person = {
-                            id: row.ACCT, // id is CSID since this cannot be changed
+                        // Log.trace(JSON.stringify(row));
+                        if (typeof row.ACCT !== 'undefined' && typeof row.CWL !== 'undefined' &&
+                            typeof row.SNUM !== 'undefined' && typeof row.FIRST !== 'undefined' &&
+                            typeof row.LAST !== 'undefined' && typeof row.LAB !== 'undefined') {
+                            let p: Person = {
+                                id: row.ACCT, // id is CSID since this cannot be changed
 
-                            csId:          row.ACCT,
-                            githubId:      row.CWL,
-                            studentNumber: row.SNUM,
-                            fName:         row.FIRST,
-                            lName:         row.LAST,
+                                csId:          row.ACCT,
+                                githubId:      row.CWL,
+                                studentNumber: row.SNUM,
+                                fName:         row.FIRST,
+                                lName:         row.LAST,
 
-                            kind:   'student',
-                            URL:    null,
-                            labId:  row.LAB,
-                            custom: {}
-                        };
-                        pc.createPerson(p);
-                        // TODO: would be nice to keep track of # updates, # deleted, and # created here
+                                kind:   'student',
+                                URL:    null,
+                                labId:  row.LAB,
+                                custom: {}
+                            };
+                            people.push(pc.createPerson(p));
+                        } else {
+                            Log.info('AdminRoutes::postClasslist(..) - column missing from: ' + JSON.stringify(row));
+                            people.push(Promise.reject('Required column missing'));
+                        }
                     }
 
-                    res.send(200, {success: {message: 'Classlist upload successful'}});
-                    Log.info('AdminRoutes::postClasslist(..) - end');
+                    Promise.all(people).then(function () {
+                        if (people.length > 0) {
+                            res.send(200, {success: {message: 'Class list upload successful. ' + people.length + ' students processed.'}});
+                            Log.info('AdminRoutes::postClasslist(..) - end');
+                        } else {
+                            const msg = 'Class list upload not successful; no students were processed from CSV.';
+                            handleError(msg);
+                        }
+                    }).catch(function (err) {
+                        handleError('Class list upload error: ' + err);
+                    });
                 }
             });
 
             rs.pipe(parser);
         } catch (err) {
             Log.error('AdminRoutes::postClasslist(..) - ERROR: ' + err);
-            const payload: Payload = {
-                failure: {
-                    message:      'Unable to post classlist; ERROR: ' + err,
-                    shouldLogout: false
-                }
-            };
-            res.send(400, payload);
-            return next();
+            handleError('Class list upload unsuccessful: ' + err);
         }
 
     }

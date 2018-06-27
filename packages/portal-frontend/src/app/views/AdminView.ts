@@ -238,10 +238,15 @@ export class AdminView implements IView {
                 const data = await response.json();
                 UI.hideModal();
                 Log.info('AdminView::uploadClasslist(..) - RESPONSE: ' + JSON.stringify(data));
-                UI.notification('ClassList Updated.');
+                UI.notification('Class list Updated.');
             } else {
+                const reason = await response.json();
                 UI.hideModal();
-                UI.notification('There was an issue uploading your classlist! Please ensure the file includes the required columns.');
+                if (typeof reason.failure && typeof reason.failure.message) {
+                    UI.notification('There was an issue uploading your class list. Please ensure the CSV file includes all required columns. <br/>Details: ' + reason.failure.message);
+                } else {
+                    UI.notification('There was an issue uploading your class list. Please ensure the CSV file includes all required columns.');
+                }
             }
         } catch (err) {
             UI.hideModal();
