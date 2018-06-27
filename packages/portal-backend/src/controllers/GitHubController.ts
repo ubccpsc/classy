@@ -244,37 +244,48 @@ export class GitHubActions {
         });
     }
 
+
+    // Commented out due to lack of testing
     /**
      * Returns all teams that are associated with a given repository
      * @param {string} org
      * @param {string} repoName
      * @returns {Promise<GitTeamTuple[]>}
      */
-    public async getTeamsOnRepo(org: string, repoName: string) : Promise<TeamInformation[]> {
-        let ctx = this;
-        Log.info("GithubAction::getTeamsOnRepo( " + org + ", " + repoName + " ) - start");
-        const teamsUri = ctx.apiPath + '/repos/' + org + '/' + repoName + '/teams';
-        Log.trace("GitHubAction::setRepoPermission(..) - URI: " + teamsUri);
-        const teamOptions = {
-            method: 'GET',
-            uri: teamsUri,
-            headers: {
-                'Authorization': ctx.gitHubAuthToken,
-                'User-Agent':    ctx.gitHubUserName,
-                'Accept':        'application/json'
-            },
-            json: true
-        };
-
-        let response = rp(teamOptions);
-
-        // STUB
-        return [{
-            teamName: "",
-            githubTeamNumber: 0,
-            permission: ""
-        }];
-    }
+    // public async getTeamsOnRepo(org: string, repoName: string) : Promise<TeamInformation[]> {
+    //     let ctx = this;
+    //     Log.info("GithubAction::getTeamsOnRepo( " + org + ", " + repoName + " ) - start");
+    //     const teamsUri = ctx.apiPath + '/repos/' + org + '/' + repoName + '/teams';
+    //     Log.trace("GitHubAction::getTeamsOnRepo(..) - URI: " + teamsUri);
+    //     const teamOptions = {
+    //         method: 'GET',
+    //         uri: teamsUri,
+    //         headers: {
+    //             'Authorization': ctx.gitHubAuthToken,
+    //             'User-Agent':    ctx.gitHubUserName,
+    //             'Accept':        'application/json'
+    //         },
+    //         json: true
+    //     };
+    //
+    //     let response = await rp(teamOptions);
+    //     let teamInformations: TeamInformation[] = [];
+    //     for(const item of response) {
+    //         let newInfo: TeamInformation = {
+    //             teamName: item.name,
+    //             githubTeamNumber: item.id,
+    //             permission: item.permission
+    //         };
+    //         teamInformations.push(newInfo);
+    //     }
+    //     // STUB
+    //     // return [{
+    //     //     teamName: "",
+    //     //     githubTeamNumber: 0,
+    //     //     permission: ""
+    //     // }];
+    //     return teamInformations;
+    // }
 
     /**
      * Removes write access for the given repository
