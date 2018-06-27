@@ -30,3 +30,17 @@ export interface StudentTransport {
     labId: string;
 }
 
+export interface DeliverableTransport {
+    id: string;
+    openTimestamp: number;
+    closeTimestamp: number;
+    minTeamSize: number; // must be > 0
+    maxTeamSize: number; // leave at 1 for individual assignments
+    teamsSameLab: boolean;
+    studentsFormTeams: boolean;
+    onOpenAction: string; // will change to something else
+    onCloseAction: string; // will change to something else
+    url: string; // student-facing description
+    gradesReleased: boolean;
+    autoTestRate: number; // minutes between autotest retries
+}

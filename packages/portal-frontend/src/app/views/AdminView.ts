@@ -205,7 +205,6 @@ export class AdminView implements IView {
         return;
     }
 
-
     private validateClasslistSpecified(fileInput: HTMLInputElement) {
         if (fileInput.value.length > 0) {
             Log.trace('AdminView::validateClasslistSpecified() - validation passed');
