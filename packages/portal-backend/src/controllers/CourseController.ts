@@ -3,7 +3,7 @@ import * as crypto from 'crypto';
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import Util from "../../../common/Util";
-import {StudentTransport} from '../../../common/types/PortalTypes';
+import {DeliverableTransport, StudentTransport} from '../../../common/types/PortalTypes';
 import {GradePayload, Payload, SDMMStatus, StatusPayload} from "../../../common/types/SDMMTypes";
 
 import {RepositoryController} from "./RepositoryController";
@@ -110,6 +110,12 @@ export interface ICourseController {
      */
     getStudents(): Promise<StudentTransport[]>;
 
+    /**
+     * Gets the deliverables associated with the course.
+     *
+     * @returns {Promise<DeliverableTransport[]>}
+     */
+    getDeliverables(): Promise<DeliverableTransport[]>;
 }
 
 export class CourseController { // don't implement ICourseController yet
@@ -880,6 +886,37 @@ export class CourseController { // don't implement ICourseController yet
             }
         }
         return students;
+    }
+
+    /**
+     * Gets the students associated with the course.
+     *
+     * @returns {Promise<StudentTransport[]>}
+     */
+    public async getDeliverables(): Promise<DeliverableTransport[]> {
+        let deliverables = await this.dc.getDeliverables();
+
+        let delivs: DeliverableTransport[] = [];
+        for (const deliv of deliverables) {
+
+            const delivTransport: DeliverableTransport = {
+                id:                deliv.id,
+                openTimestamp:     deliv.openTimestamp,
+                closeTimestamp:    deliv.closeTimestamp,
+                minTeamSize:       deliv.teamMinSize,
+                maxTeamSize:       deliv.teamMaxSize,
+                teamsSameLab:      deliv.teamSameLab,
+                studentsFormTeams: deliv.teamStudentsForm,
+                onOpenAction:      '',
+                onCloseAction:     '',
+                url:               deliv.url,
+                gradesReleased:    deliv.gradesReleased
+            };
+
+            delivs.push(delivTransport);
+        }
+
+        return delivs;
     }
 
 

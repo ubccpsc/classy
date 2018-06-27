@@ -8,7 +8,7 @@ import IREST from "../IREST";
 import {AuthController} from "../../controllers/AuthController";
 import {CourseController} from "../../controllers/CourseController";
 import {GitHubController} from "../../controllers/GitHubController";
-import {Payload, StudentTransportPayload} from '../../../../common/types/PortalTypes';
+import {DeliverableTransportPayload, Payload, StudentTransportPayload} from '../../../../common/types/PortalTypes';
 import {Person} from "../../Types";
 import {PersonController} from "../../controllers/PersonController";
 
@@ -20,8 +20,9 @@ export default class AdminRoutes implements IREST {
     public registerRoutes(server: restify.Server) {
         Log.trace('AdminRoutes::registerRoutes() - start');
 
-        // student list visible to all privileged users
+        // visible to all privileged users
         server.get('/admin/students', AdminRoutes.isPrivileged, AdminRoutes.getStudents);
+        server.get('/admin/deliverables', AdminRoutes.isPrivileged, AdminRoutes.getDeliverables);
 
         // posting a class list is admin only
         server.post('/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
@@ -169,6 +170,36 @@ export default class AdminRoutes implements IREST {
             const payload: StudentTransportPayload = {
                 failure: {
                     message:      'Unable to retrieve student list; ERROR: ' + err.message,
+                    shouldLogout: false
+                }
+            };
+            res.send(400, payload);
+            return next(false);
+        });
+    }
+
+
+    /**
+     * Returns a StudentTransportPayload.
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
+    private static getDeliverables(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::getDeliverables(..) - start');
+
+        const cc = new CourseController(new GitHubController());
+        cc.getDeliverables().then(function (delivs) {
+            Log.trace('AdminRoutes::getDeliverables(..) - in then; # deliverables: ' + delivs.length);
+            const payload: DeliverableTransportPayload = {success: delivs};
+            res.send(payload);
+            return next();
+        }).catch(function (err) {
+            Log.error('AdminRoutes::getDeliverables(..) - ERROR: ' + err.message);
+            const payload: StudentTransportPayload = {
+                failure: {
+                    message:      'Unable to deliverable list; ERROR: ' + err.message,
                     shouldLogout: false
                 }
             };

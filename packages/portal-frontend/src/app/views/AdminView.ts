@@ -11,7 +11,12 @@ import {UI} from "../util/UI"
 
 import {IView} from "./IView";
 
-import {StudentTransport, StudentTransportPayload} from "../../../../common/types/PortalTypes";
+import {
+    DeliverableTransport,
+    DeliverableTransportPayload,
+    StudentTransport,
+    StudentTransportPayload
+} from "../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 import {OnsButtonElement} from "onsenui";
 import {Network} from "../util/Network";
@@ -69,7 +74,7 @@ export class AdminView implements IView {
         // with that name (which you set in your ons-page id attribute in your html file)
         const functionName = 'handle' + name;
         if (typeof (<any>this)[functionName] === 'function') {
-            Log.warn('AdminView::renderPage(..) - calling: ' + functionName);
+            Log.info('AdminView::renderPage(..) - calling: ' + functionName);
             // NOTE: does not await; not sure if this is a problem
             (<any>this)[functionName](opts);
         } else {
@@ -186,6 +191,34 @@ export class AdminView implements IView {
     }
 
     // called by reflection in renderPage
+    private async handleAdminDeliverables(opts: {}): Promise<void> {
+        Log.info('AdminView::handleAdminDeliverables(..) - start');
+        UI.showModal('Retrieving deliverables');
+
+        const options = this.getOptions();
+        const url = this.remote + '/admin/deliverables';
+        const response = await fetch(url, options);
+        UI.hideModal();
+        if (response.status === 200) {
+            Log.trace('AdminView::handleAdminDeliverables(..) - 200 received');
+            const json: DeliverableTransportPayload = await response.json();
+            // Log.trace('AdminView::handleAdminDeliverables(..)  - payload: ' + JSON.stringify(json));
+            if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
+                Log.trace('AdminView::handleAdminDeliverables(..)  - worked');
+
+                this.renderDeliverables(json.success);
+            } else {
+                Log.trace('AdminView::handleAdminDeliverables(..)  - ERROR: ' + json.failure.message);
+                this.showError(json.failure); // FailurePayload
+            }
+        } else {
+            Log.trace('AdminView::handleAdminDeliverables(..)  - !200 received: ' + response.status);
+            const text = await response.text();
+            this.showError(text);
+        }
+    }
+
+    // called by reflection in renderPage
     private async handleAdminConfig(opts: {}): Promise<void> {
         Log.info('AdminView::handleAdminConfig(..) - start');
         const that = this;
@@ -265,7 +298,7 @@ export class AdminView implements IView {
         document.getElementById('studentListTable').innerHTML = ''; // clear target
 
         if (typeof opts.labSection === 'undefined') {
-            opts.labSection = 'All';
+            opts.labSection = '-All-';
         }
 
         const options = this.getOptions();
@@ -369,5 +402,23 @@ export class AdminView implements IView {
             that.renderStudents(students, val); // if cached data is ok
         };
 
+    }
+
+    private renderDeliverables(deliverables: DeliverableTransport[]) {
+        const deliverableList = document.querySelector('#adminDeliverablesList') as HTMLElement;
+
+        deliverableList.innerHTML = '';
+        deliverableList.appendChild(UI.createListHeader('Deliverables'));
+
+        for (const deliv of deliverables) {
+            const main = 'Deliverable: ' + deliv.id;
+            const sub = 'Opens: ' + new Date(deliv.openTimestamp).toLocaleString() + '; Closes: ' + new Date(deliv.closeTimestamp).toLocaleString();
+            const elem = UI.createListItem(main, sub, false);
+            deliverableList.appendChild(elem);
+        }
+
+        if (deliverables.length === 0) {
+            deliverableList.appendChild(UI.createListItem('Deliverables not yet specified.'));
+        }
     }
 }

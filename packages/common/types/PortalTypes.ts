@@ -30,6 +30,11 @@ export interface StudentTransport {
     labId: string;
 }
 
+export interface DeliverableTransportPayload {
+    success?: DeliverableTransport[]; // only set if defined
+    failure?: FailurePayload; // only set if defined
+}
+
 export interface DeliverableTransport {
     id: string;
     openTimestamp: number;
@@ -42,5 +47,5 @@ export interface DeliverableTransport {
     onCloseAction: string; // will change to something else
     url: string; // student-facing description
     gradesReleased: boolean;
-    autoTestRate: number; // minutes between autotest retries
+    // autoTestRate: number; // minutes between autotest retries
 }

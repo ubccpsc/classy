@@ -42,9 +42,9 @@
 
     <template id="deliverables.html">
         <ons-page id="AdminDeliverables">
-            <p style="text-align: center;">
-                Deliverables Page
-            </p>
+            <ons-list id="adminDeliverablesList">
+                <ons-list-header>Deliverables</ons-list-header>
+            </ons-list>
         </ons-page>
     </template>
 
@@ -116,6 +116,345 @@
                     </div>
                 </ons-list-item>
             </ons-list>
+        </ons-page>
+    </template>
+
+
+    <!-- NOTE THIS IS REALLY ROUGH AND WILL CHANGE -->
+    <template id="editDeliverable.html">
+        <ons-page id="adminEditDeliverablePage">
+
+            <ons-toolbar>
+                <div class="left">
+                    <ons-back-button></ons-back-button>
+                </div>
+                <div id="adminEditDeliverablePage-header" class="center"></div>
+            </ons-toolbar>
+
+            <form id="admin-editable-deliverable-form">
+                <ons-list id="admin-editable-deliverable-list">
+                    <input type="hidden" id="adminEditDeliverablePage-id"/>
+                    <ons-list-header>Deliverable Options</ons-list-header>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="A string of lowercase letters, [a-z], followed by any number.">Name</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input id="adminEditDeliverablePage-name"></ons-input>
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-header>Starter Code</ons-list-header>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span>Repo Url</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input id="adminEditDeliverablePage-url"></ons-input>
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span>Github Key</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input id="adminEditDeliverablePage-deliverableKey"></ons-input>
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-header>Solutions Code</ons-list-header>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span>Github Url</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input id="adminEditDeliverablePage-solutionsUrl"></ons-input>
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span>Github Key</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input id="adminEditDeliverablePage-solutionsKey"></ons-input>
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-header>Grade Request Rate</ons-list-header>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="Grade request delay in minutes.">Delay</span>
+                        </div>
+                        <div class="right settingRight">
+                            <input id="adminEditDeliverablePage-rate" type="text" name="duration-picker">
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-header>Deliverable Dates</ons-list-header>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="The date that AutoTest will begin marking Github Repositories for a Deliverable.">Open</span>
+                        </div>
+                        <div class="right settingRight">
+                            <input id="adminEditDeliverablePage-open" class="flatpickr right settingRight"
+                                   style="text-align: center; margin-left: 1em; margin-right: 1em;"
+                                   type="text"
+                                   placeholder="Select Date..">
+                            </input>
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="The date that AutoTest will stop marking Github Repositories for a Deliverable.">Close</span>
+                        </div>
+                        <div class="right settingRight">
+                            <input id="adminEditDeliverablePage-close" class="flatpickr right settingRight"
+                                   style="text-align: center; margin-left: 1em; margin-right: 1em;"
+                                   type="text"
+                                   placeholder="Select Date..">
+                            </input>
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-header>Default Team Options</ons-list-header>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="The minimum number of students that are allowed in a team.">Minimum Size</span>
+                        </div>
+                        <div class="right settingRight">
+                            <select id="adminEditDeliverablePage-minTeamSize" class="settingSelect">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                            </select>
+                        </div>
+                    </ons-list-item>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="The maximum number of students that are allowed in a Team.">Maximum Size</span>
+                        </div>
+                        <div class="right settingRight">
+                            <select id="adminEditDeliverablePage-maxTeamSize" class="settingSelect">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                            </select>
+                        </div>
+                    </ons-list-item>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="Enable if the Students for Team Generation and Student-made Teams must be in the same lab based on the Lab List.">Must Be In Same Lab</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-switch id="adminEditDeliverablePage-inSameLab" modifier="list-item" onclick=""></ons-switch>
+                        </div>
+                    </ons-list-item>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="Enable if Students are allowed to creat their own team.">Students Make Teams</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-switch id="adminEditDeliverablePage-studentsMakeTeams" modifier="list-item" onclick=""></ons-switch>
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-header>Grade Options</ons-list-header>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="Displays Grades for Deliverable underneath Student Area.">Grades Released</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-switch id="adminEditDeliverablePage-gradesReleased" modifier="list-item" onclick=""></ons-switch>
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-header>Docker Override</ons-list-header>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="Turn on this Deliverable repository image for marking if built.">Override Enabled</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-switch id="adminEditDeliverablePage-dockerOverride"></ons-switch>
+                        </div>
+                    </ons-list-item>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                    <span title="If this field is unempty, AutoTest will override the default Course image with this image. The tagged name of the built Docker Image should be entered here.
+
+                    The command line `docker tag $(docker images -q autotest/cpsc210__bootstrap:master) autotest/cpsc210__bootstrap` would produce the tag 'autotest/cpsc210__bootstrap'.
+
+                    To drop and re-build these repos, the tag name must remain consistent.">Docker Image</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input id="adminEditDeliverablePage-dockerImage"></ons-input>
+                        </div>
+                    </ons-list-item>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="The commit of the built and tagged Docker Image (likely 'master' or 'latest' by default).">Docker Build</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input id="adminEditDeliverablePage-dockerBuild"></ons-input>
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-header>Regression Tester</ons-list-header>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="AutoTest will mark additional deliverables on the basis of this Github Push">Regression Tests Enabled</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-switch id="adminEditDeliverablePage-regressionTest"></ons-switch>
+                        </div>
+                    </ons-list-item>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                    <span title="Put any Deliverable names seperated by spaces that you want graded against Pushes on this Deliverable.
+
+                    ie. 'd1 d2 d3 c99'">Additional Tests</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input id="adminEditDeliverablePage-regressionTests"></ons-input>
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-header>Other Settings</ons-list-header>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="The commit of the built and tagged Docker Image (likely 'master' or 'latest' by default).">Custom Html</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-switch id="adminEditDeliverablePage-customHtml"></ons-switch>
+                        </div>
+                    </ons-list-item>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="Enter server and port to allow external internet requests from inside container. ie. 'google.ca:80 portal.cs.ubc.ca:1210'. ">Whitelisted Servers</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input id="adminEditDeliverablePage-whitelistedServers"></ons-input>
+                        </div>
+                    </ons-list-item>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="The commit of the built and tagged Docker Image (likely 'master' or 'latest' by default).">Custom JSON Input</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input id="adminEditDeliverablePage-custom"></ons-input>
+                        </div>
+                    </ons-list-item>
+
+
+                    <ons-list-header>Debug details</ons-list-header>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span>Building Repos</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-switch disabled id="adminEditDeliverablePage-buildingRepos"></ons-switch>
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="The number that Team creation will begin at. Reset to '0' if Teams and Github Repositories are deleted for a Deliverable.">Project Count</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input disabled id="adminEditDeliverablePage-projectCount"></ons-input>
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item style="display: flex;">
+                    </ons-list-item>
+                </ons-list>
+            </form>
+
+            <ons-fab id="adminEditDeliverablePage-save-action" position="bottom right">
+                <ons-icon icon="md-save"></ons-icon>
+            </ons-fab>
+
         </ons-page>
     </template>
 

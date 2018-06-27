@@ -77,8 +77,8 @@ export interface Auth {
 
 export interface Deliverable {
     readonly id: string; // is the shortname of the deliverable
-    // readonly org: string;
 
+    url: string;
     openTimestamp: number;
     closeTimestamp: number;
     gradesReleased: boolean;
