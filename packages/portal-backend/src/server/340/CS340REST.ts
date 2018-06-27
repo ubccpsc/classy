@@ -3,11 +3,12 @@ import Log from "../../../../common/Log";
 
 import IREST from "../IREST";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
-import {Deliverable, Grade} from "../../Types";
+import {Deliverable, Grade, Person, Repository} from "../../Types";
 import {AssignmentController} from "../../controllers/340/AssignmentController";
-import {AssignmentGradingRubric} from "../../../../common/types/CS340Types";
+import {AssignmentGrade, AssignmentGradingRubric, QuestionGrade} from "../../../../common/types/CS340Types";
 import {GradesController} from "../../controllers/GradesController";
 import {PersonController} from "../../controllers/PersonController";
+import {RepositoryController} from "../../controllers/RepositoryController";
 
 export default class CS340REST implements IREST {
     public constructor() {
@@ -23,7 +24,7 @@ export default class CS340REST implements IREST {
         server.get('/getAllDeliverables', CS340REST.getAllDeliverables);
         server.get('/getAllSubmissionsByDelivID/:id', CS340REST.getAllSubmissionsByDelivID);
         server.get('/getAllGrades', CS340REST.getAllGrades);
-        server.post('/setAssignmentGrade', CS340REST.setAssignmentGrade);
+        server.put('/setAssignmentGrade', CS340REST.setAssignmentGrade);
         server.get('/getPersonByID/:gitHubUserName', CS340REST.getPersonByID);
         server.get('/getAllPersons', CS340REST.getAllPersons);
     }
@@ -123,7 +124,7 @@ export default class CS340REST implements IREST {
         const org = req.headers.org;
 
         if (req.body === null) {
-            res.send(400, {errror: "invalid request"});
+            res.send(400, {error: "invalid request"});
         }
 
         const newDeliv : Deliverable = req.body;
@@ -164,9 +165,49 @@ export default class CS340REST implements IREST {
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
+        Log.info("CS340REST::setAssignmentGrade() - start");
 
-        res.send(404, {
-            message: "Not implemented"
+        const reqBody : AssignmentGrade = JSON.parse(req.body);
+
+        if(reqBody === null) {
+            Log.error("Unable to get request body: " + req.body);
+            res.send(400, {error: "Invalid request"});
+            return next();
+        }
+
+        // Log.info("CS340REST::setAssignmentGrade() - reqBody is not NULL");
+        Log.info("CS340REST::setAssignmentGrade() - reqBody = " + JSON.stringify(reqBody));
+        // Log.info("CS340REST::setAssignmentGrade() - req = " + req);
+        const assignId  : string = reqBody.assignmentID;
+        const studentId : string = reqBody.studentID;
+        const questions: QuestionGrade[] = reqBody.questions;
+
+        Log.info("CS340REST::setAssignmentGrade() - aid: "+assignId+" sid: "+studentId);
+
+        let assignController = new AssignmentController();
+        let personController = new PersonController();
+
+        personController.getPerson(studentId).then(async function (result) {
+            let person : Person = result;
+
+            if(result === null) {
+                res.send(400, {error: "Invalid student ID"});
+                return next();
+            }
+            let repo : Repository = await assignController.getAssignmentRepo(assignId, person);
+            if(repo === null) {
+                res.send(400, {error: "no assignment repository created"});
+                return next();
+            }
+            let success = await assignController.setAssignmentGrade(repo.id, assignId, reqBody);
+            if (success) {
+                res.send(200, {response: "Success"});
+            } else {
+                res.send(500, {error: "Unable to write to database"});
+            }
+
+            Log.info("CS340REST::setAssignmentGrade() - end");
+            return next();
         });
     }
 
