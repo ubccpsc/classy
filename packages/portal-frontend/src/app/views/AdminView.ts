@@ -18,7 +18,7 @@ import {
     StudentTransportPayload
 } from "../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
-import {OnsButtonElement} from "onsenui";
+import {OnsButtonElement, OnsFabElement} from "onsenui";
 import {Network} from "../util/Network";
 
 interface AdminTabs {
@@ -194,6 +194,17 @@ export class AdminView implements IView {
     private async handleAdminDeliverables(opts: {}): Promise<void> {
         Log.info('AdminView::handleAdminDeliverables(..) - start');
         UI.showModal('Retrieving deliverables');
+        const start = Date.now();
+
+        const fab = document.querySelector('#adminAddDeliverable') as OnsFabElement;
+        if (this.isAdmin === false) {
+            fab.style.display = 'none';
+        } else {
+            fab.onclick = function (evt) {
+                Log.info('AdminView::handleAdminDeliverables(..)::addDeliverable::onClick');
+                UI.pushPage('editDeliverable.html', {delivId: null});
+            };
+        }
 
         const options = this.getOptions();
         const url = this.remote + '/admin/deliverables';
@@ -204,7 +215,7 @@ export class AdminView implements IView {
             const json: DeliverableTransportPayload = await response.json();
             // Log.trace('AdminView::handleAdminDeliverables(..)  - payload: ' + JSON.stringify(json));
             if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                Log.trace('AdminView::handleAdminDeliverables(..)  - worked');
+                Log.trace('AdminView::handleAdminDeliverables(..)  - worked; took: ' + this.took(start));
 
                 this.renderDeliverables(json.success);
             } else {
@@ -292,6 +303,7 @@ export class AdminView implements IView {
     // called by reflection in renderPage
     private async handleAdminStudents(opts: any): Promise<void> {
         Log.info('AdminView::handleStudents(..) - start');
+        const start = Date.now();
         UI.showModal('Retrieving students');
 
         // NOTE: this could consider if studentListTable has children, and if they do, don't refresh
@@ -310,7 +322,7 @@ export class AdminView implements IView {
             const json: StudentTransportPayload = await response.json();
             // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
             if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                Log.trace('AdminView::handleStudents(..)  - worked');
+                Log.trace('AdminView::handleStudents(..)  - worked; took: ' + this.took(start));
                 this.renderStudents(json.success, opts.labSection);
             } else {
                 Log.trace('AdminView::handleStudents(..)  - ERROR: ' + json.failure.message);
@@ -435,5 +447,20 @@ export class AdminView implements IView {
 
     private handleadminEditDeliverablePage(opts: any) {
         Log.warn('AdminView::handleadminEditDeliverablePage( ' + JSON.stringify(opts) + ' ) - NOT IMPLEMENTED');
+        const that = this;
+
+        const fab = document.querySelector('#adminEditDeliverableSave') as OnsFabElement;
+        if (this.isAdmin === false) {
+            fab.style.display = 'none';
+        } else {
+            fab.onclick = function (evt) {
+                Log.info('AdminView::handleadminEditDeliverablePage(..)::addDeliverable::onClick');
+                that.showError('not implemented');
+            };
+        }
+    }
+
+    private took(start: number): string {
+        return (Date.now() - start) + ' ms';
     }
 }
