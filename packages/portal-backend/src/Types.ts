@@ -78,7 +78,7 @@ export interface Auth {
 export interface Deliverable {
     readonly id: string; // is the shortname of the deliverable
 
-    url: string;
+    URL: string;
     openTimestamp: number;
     closeTimestamp: number;
     gradesReleased: boolean;
@@ -95,7 +95,7 @@ export interface Deliverable {
 export interface Team {
     readonly id: string; // invariant; is the name of the team
     // readonly org: string; // invariant
-    url: string | null; // null when not yet created
+    URL: string | null; // null when not yet created
     personIds: string[]; // Person.id[] - foreign key
 
     custom: any;

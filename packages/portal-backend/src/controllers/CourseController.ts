@@ -248,7 +248,7 @@ export class CourseController { // don't implement ICourseController yet
                 studentsFormTeams: deliv.teamStudentsForm,
                 onOpenAction:      '',
                 onCloseAction:     '',
-                url:               deliv.url,
+                URL:               deliv.URL,
                 gradesReleased:    deliv.gradesReleased
             };
 

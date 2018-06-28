@@ -6,12 +6,7 @@ import {Grade, Person, Team} from "../../Types";
 
 import Log from "../../../../common/Log";
 import Config, {ConfigKey} from "../../../../common/Config";
-import {GradesController} from "../GradesController";
-import {DatabaseController} from "../DatabaseController";
-import {PersonController} from "../PersonController";
-import {TeamController} from "../TeamController";
-import {RepositoryController} from "../RepositoryController";
-import {SDMMStatus, Payload, GradePayload, StatusPayload} from "../../../../common/types/SDMMTypes";
+import {GradePayload, Payload, SDMMStatus, StatusPayload} from "../../../../common/types/SDMMTypes";
 import Util from "../../../../common/Util";
 
 export class SDMMController extends CourseController {
@@ -376,7 +371,7 @@ export class SDMMController extends CourseController {
                 this.dc.writeRepository(repo);
 
                 const teamUrl = await this.gh.getTeamUrl(team);
-                team.url = teamUrl;
+                team.URL = teamUrl;
                 this.dc.writeTeam(team);
 
                 // create grade entry
@@ -581,7 +576,7 @@ export class SDMMController extends CourseController {
                 this.dc.writeRepository(repo);
 
                 const teamUrl = await this.gh.getTeamUrl(team);
-                team.url = teamUrl;
+                team.URL = teamUrl;
                 this.dc.writeTeam(team);
 
                 // create grade entries

@@ -41,7 +41,7 @@ describe('TestDatasetGenerator', function () {
         const d: Deliverable = {
             id: '',
 
-            url:            'http://NOTSET',
+            URL:            'http://NOTSET',
             openTimestamp:  -1,
             closeTimestamp: -1,
             gradesReleased: false,

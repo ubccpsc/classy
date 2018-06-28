@@ -17,7 +17,7 @@ describe("DeliverablesController", () => {
     before(async () => {
         DELIV1 = {
             id:               Test.DELIVID1,
-            url:              'https://NOTSET',
+            URL:              'https://NOTSET',
             openTimestamp:    -1,
             closeTimestamp:   -1,
             gradesReleased:   false,

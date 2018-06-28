@@ -25,6 +25,8 @@ export interface StatusPayload {
  * TODO: Move to PortalTypes and rname to GradeTransport
  */
 export interface GradePayload {
+    // delivId: string; // TODO: how do we know what the grade is for?
+    // personId: string; // TODO: who do we know who the grade is for?
     score: number; // grade: < 0 will mean 'N/A' in the UI
     comment: string;
     URL: string; // commit URL if known, otherwise repo URL
