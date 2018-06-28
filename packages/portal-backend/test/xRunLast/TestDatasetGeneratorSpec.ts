@@ -1,17 +1,16 @@
 import {expect} from "chai";
 import "mocha";
+
 import {PersonController} from "../../src/controllers/PersonController";
 import {Deliverable, Person} from "../../src/Types";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 
 const loadFirst = require('../GlobalSpec');
-// const loadSecond = require('./server/RestifyAutoTestRoutesSpec');
 
 describe.only('TestDatasetGenerator', function () {
 
     it('Can generate some students', async function () {
         const pc: PersonController = new PersonController();
-
 
         for (let i = 0; i < 100; i++) {
             const pid = 'p' + i;
