@@ -66,7 +66,7 @@ describe("AuthController", () => {
         expect(isValid).to.be.true;
 
         let isPriv = await ac.isPrivileged('rtholmes', 'realtoken');
-        expect(isPriv.isAdmin).to.be.false;
+        expect(isPriv.isAdmin).to.be.true;
         expect(isPriv.isStaff).to.be.true;
     });
 

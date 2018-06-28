@@ -8,6 +8,7 @@ import {TeamController} from "../../src/controllers/TeamController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {TestGitHubController} from "../../src/controllers/GitHubController";
 import Config, {ConfigKey} from "../../../common/Config";
+import Log from "../../../common/Log";
 
 const load1 = require('../GlobalSpec');
 const load2 = require('./GradeControllerSpec');
@@ -20,7 +21,7 @@ export class TestData {
     }
 }
 
-describe.only("CourseController", () => {
+describe("CourseController", () => {
 
     let cc: CourseController;
     let gc: GradesController;
@@ -44,6 +45,12 @@ describe.only("CourseController", () => {
         tc = new TeamController();
         pc = new PersonController();
     });
+
+    it("Should be able to get the org name.", async () => {
+        const res = await CourseController.getOrg();
+        expect(res).to.equal('classytest');
+    });
+
 
     it("Should not be able to get a user that doesn't exist.", async () => {
         const USERNAME = "UNKNOWNUSER" + new Date().getTime();
@@ -72,4 +79,27 @@ describe.only("CourseController", () => {
         expect(res).to.deep.include(s); // make sure at least one student with the right format is in there
     });
 
+
+    it("Should be able to get a list of deliverables.", async () => {
+
+        const res = await cc.getDeliverables();
+        expect(res).to.be.an('array');
+        expect(res.length).to.be.greaterThan(0);
+
+        const e = { // : DeliverableTransport only partial so type skipped
+            id: 'd1',
+
+            url:            'http://NOTSET',
+            gradesReleased: false,
+
+            minTeamSize:       1,
+            maxTeamSize:       2,
+            teamsSameLab:      true,
+            studentsFormTeams: true
+
+        };
+
+        // Log.test(JSON.stringify(res));
+        // expect(res).to.deep.include(d); // make sure at least one deliverable with the right format is in there
+    });
 });

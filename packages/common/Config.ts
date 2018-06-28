@@ -1,3 +1,6 @@
+const dotenv = require('dotenv');
+dotenv.config({path: '../../.env'});
+
 import Log from "./Log";
 
 export enum ConfigKey {
@@ -45,7 +48,6 @@ export enum ConfigKey {
 }
 
 export default class Config {
-
 
     public static getInstance(configName?: string): Config {
         if (Config.instance === null) {

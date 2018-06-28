@@ -137,7 +137,8 @@ export class AutoTestRouteHandler implements IREST {
 
         // TODO: verify admin secret
 
-        const org = req.params.org;
+        // const org = req.params.org;
+        const org = Config.getInstance().getProp(ConfigKey.org);
         // const repoId = req.params.repoId;
         // const delivId = req.params.delivId;
 

@@ -11,7 +11,6 @@ before(async () => {
 
     Config.getInstance();
     (<any>Config.getInstance()).config.org = (<any>Config.getInstance()).config.testorg; // force testing environment
-    // (<any>Config.getInstance()).config.name = 'secapstonetest'; // force testing in test environment // TODO: NOT GOOD for 340
 
     Test.ORGNAME = Config.getInstance().getProp(ConfigKey.testorg);
     Log.info('GlobalSpec::before() - org: ' + Test.ORGNAME);

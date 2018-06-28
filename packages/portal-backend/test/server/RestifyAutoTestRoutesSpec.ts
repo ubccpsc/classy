@@ -67,6 +67,24 @@ describe('REST Routes for AutoTest', function () {
         expect(response.body.delivId).to.equal('d0');
     });
 
+    it('Should respond to a valid result', async function () {
+
+        let response = null;
+        const url = '/at/result/';
+
+        const body = {dummy: true}; // TODO: this should send a real result
+
+        try {
+            response = await request(app).post(url).send(body);
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(response.body));
+        expect(response.status).to.equal(200);
+        expect(response.body.success).to.not.be.undefined;
+        expect(response.body.success).to.equal(true);
+    });
+
     it('Should respond to a valid isStaff request for staff', async function () {
 
         let response = null;

@@ -1,6 +1,4 @@
-const loadFirst = require('../../GlobalSpec');
-const rFirst = require('./SDMMControllerSpec'); // so we go last
-
+import {SDMMController} from "../../../src/controllers/SDMM/SDMMController";
 import {expect} from "chai";
 import "mocha";
 
@@ -14,6 +12,9 @@ import {GitHubController} from "../../../src/controllers/GitHubController";
 import {GitHubActions} from "../../../src/controllers/util/GitHubActions";
 import {CourseController} from "../../../src/controllers/CourseController";
 import {GradesController} from "../../../src/controllers/GradesController";
+
+const loadFirst = require('../../GlobalSpec');
+const rFirst = require('./SDMMControllerSpec'); // so we go last
 
 describe.skip("SDMM:: SDMMGitHubActions", () => {
 
@@ -242,7 +243,7 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
     it("Should be able to provision d0.", async function () {
         const start = Date.now();
 
-        const sc = new CourseController(new GitHubController());
+        const sc = new SDMMController(new GitHubController());
 
         Log.test('Provisioning three users');
         const p1 = await sc.handleUnknownUser(Test.USERNAMEGITHUB1);
@@ -303,7 +304,7 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
     it("Should be able to provision an individual d1.", async function () {
         const start = Date.now();
 
-        const sc = new CourseController(new GitHubController());
+        const sc = new SDMMController(new GitHubController());
 
         Log.test('Provision solo D1');
         const provision = await sc.provision('d1', [Test.USERNAMEGITHUB1]);
@@ -318,7 +319,7 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
     it("Should be able to provision a paired d1.", async function () {
         const start = Date.now();
 
-        const sc = new CourseController(new GitHubController());
+        const sc = new SDMMController(new GitHubController());
 
         Log.test('Provision paired d1');
         const provision = await sc.provision('d1', [Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB3]);

@@ -7,7 +7,7 @@ import {DeliverablesController} from "../../src/controllers/DeliverablesControll
 
 const loadFirst = require('../GlobalSpec');
 
-describe.only('TestDatasetGenerator', function () {
+describe('TestDatasetGenerator', function () {
 
     it('Can generate some students', async function () {
         const pc: PersonController = new PersonController();
