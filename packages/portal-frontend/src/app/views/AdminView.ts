@@ -413,12 +413,27 @@ export class AdminView implements IView {
         for (const deliv of deliverables) {
             const main = 'Deliverable: ' + deliv.id;
             const sub = 'Opens: ' + new Date(deliv.openTimestamp).toLocaleString() + '; Closes: ' + new Date(deliv.closeTimestamp).toLocaleString();
-            const elem = UI.createListItem(main, sub, false);
+
+            let editable = false;
+            if (this.isAdmin === true) {
+                editable = true;
+            }
+
+            const elem = UI.createListItem(main, sub, editable);
+            elem.setAttribute('delivId', deliv.id);
+            elem.onclick = function (evt: any) {
+                const delivId = evt.currentTarget.getAttribute('delivId');
+                UI.pushPage('editDeliverable.html', {delivId: delivId});
+            };
             deliverableList.appendChild(elem);
         }
 
         if (deliverables.length === 0) {
             deliverableList.appendChild(UI.createListItem('Deliverables not yet specified.'));
         }
+    }
+
+    private handleadminEditDeliverablePage(opts: any) {
+        Log.warn('AdminView::handleadminEditDeliverablePage( ' + JSON.stringify(opts) + ' ) - NOT IMPLEMENTED');
     }
 }
