@@ -16,7 +16,8 @@ describe("DeliverablesController", () => {
 
     before(async () => {
         DELIV1 = {
-            id:               Test.DELIVID1,
+            id: Test.DELIVID1,
+
             URL:              'https://NOTSET',
             openTimestamp:    -1,
             closeTimestamp:   -1,
@@ -26,6 +27,9 @@ describe("DeliverablesController", () => {
             teamMaxSize:      1,
             teamSameLab:      false,
             teamStudentsForm: false,
+            teamPrefix:       'team_',
+            repoPrefix:       'd1_',
+            bootstrapUrl:     '',
             custom:           {}
         };
     });

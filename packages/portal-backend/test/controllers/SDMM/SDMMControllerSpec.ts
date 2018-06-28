@@ -164,6 +164,7 @@ describe("SDDM: SDMMController", () => {
         let grade: GradePayload = {
             score:     59,
             comment:   '',
+            urlName:   '',
             URL:       '',
             timestamp: Date.now(),
             custom:    {}
@@ -175,6 +176,7 @@ describe("SDDM: SDMMController", () => {
         grade = {
             score:     61,
             comment:   '',
+            urlName:   '',
             URL:       '',
             timestamp: Date.now(),
             custom:    {}
@@ -215,6 +217,7 @@ describe("SDDM: SDMMController", () => {
         let grade: GradePayload = {
             score:     59,
             comment:   '',
+            urlName:   '',
             URL:       '',
             timestamp: Date.now(),
             custom:    {}
@@ -226,6 +229,7 @@ describe("SDDM: SDMMController", () => {
         grade = {
             score:     61,
             comment:   '',
+            urlName:   '',
             URL:       '',
             timestamp: Date.now(),
             custom:    {}
@@ -243,6 +247,7 @@ describe("SDDM: SDMMController", () => {
         let grade: GradePayload = {
             score:     59,
             comment:   '',
+            urlName:   '',
             URL:       '',
             timestamp: Date.now(),
             custom:    {}
@@ -254,6 +259,7 @@ describe("SDDM: SDMMController", () => {
         grade = {
             score:     61,
             comment:   '',
+            urlName:   '',
             URL:       '',
             timestamp: Date.now(),
             custom:    {}
@@ -381,6 +387,7 @@ describe("SDDM: SDMMController", () => {
         let gradeR: GradePayload = {
             score:     65,
             comment:   'TESTCOMMENT',
+            urlName:   'TESTURLNAME',
             URL:       'TESTURL',
             timestamp: Date.now(),
             custom:    {}
@@ -479,6 +486,7 @@ describe("SDDM: SDMMController", () => {
         let gradeR: GradePayload = {
             score:     65,
             comment:   'TESTCOMMENT',
+            urlName:   'TESTURLNAME',
             URL:       'TESTURL',
             timestamp: Date.now(),
             custom:    {}
@@ -500,6 +508,7 @@ describe("SDDM: SDMMController", () => {
         gradeR = {
             score:     70,
             comment:   '',
+            urlName:   '',
             URL:       '',
             timestamp: Date.now(),
             custom:    {}

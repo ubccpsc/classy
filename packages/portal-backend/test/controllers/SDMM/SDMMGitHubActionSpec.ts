@@ -10,7 +10,6 @@ import {ActionPayload, GradePayload} from "../../../../common/types/SDMMTypes";
 
 import {GitHubController} from "../../../src/controllers/GitHubController";
 import {GitHubActions} from "../../../src/controllers/util/GitHubActions";
-import {CourseController} from "../../../src/controllers/CourseController";
 import {GradesController} from "../../../src/controllers/GradesController";
 
 const loadFirst = require('../../GlobalSpec');
@@ -274,6 +273,7 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
         let grade: GradePayload = {
             score:     65,
             comment:   'test',
+            urlName:   'urlName',
             URL:       'TESTURL',
             timestamp: Date.now(),
             custom:    {}
@@ -283,6 +283,7 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
         grade = {
             score:     70,
             comment:   'test',
+            urlName:   'urlName',
             URL:       'TESTURL',
             timestamp: Date.now(),
             custom:    {}
@@ -292,6 +293,7 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
         grade = {
             score:     75,
             comment:   'test',
+            urlName:   'name',
             URL:       'TESTURL',
             timestamp: Date.now(),
             custom:    {}

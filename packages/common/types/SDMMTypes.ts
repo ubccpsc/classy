@@ -22,14 +22,17 @@ export interface StatusPayload {
 }
 
 /**
- * TODO: Move to PortalTypes and rname to GradeTransport
+ * TODO: This type seems fundamentally broken and should be revisited. We just need to make sure that any properties we add to it are things autoTest knows.
  */
 export interface GradePayload {
-    // delivId: string; // TODO: how do we know what the grade is for?
+    // delivId: string; // invariant; foreign key on Deliverable.id
     // personId: string; // TODO: who do we know who the grade is for?
     score: number; // grade: < 0 will mean 'N/A' in the UI
     comment: string;
+
+    urlName: string; // name associated with url (e.g., project name)
     URL: string; // commit URL if known, otherwise repo URL
+
     timestamp: number; // even if grade < 0 might as well return when the entry was made
     custom: any;
 }
@@ -44,3 +47,4 @@ export enum SDMMStatus {
     D3PRE,
     D3
 }
+

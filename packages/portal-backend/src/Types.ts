@@ -1,37 +1,29 @@
 /**
+ * These types are the storage-specific types used by the backend.
  *
- * TODO:
- * TODO: These should be moved into common or removed entirely.
- * TODO:
+ * The types should never be exposed to portal-frontend; if you need to
+ * transfer data between the backend and front end please use the
+ * Transport types in portal-common.
  *
+ * This strict separation is to allow us to more easily evolve
+ * portal-backend without impacting portal-frontend.
+ *
+ * On Deliverable:Repository mapping. This is explicitly not recorded.
+ * If repositories need to be made for a deliverable, course staff should
+ * do this. With AutoTest, students can invoke tests for deliverable
+ * against any repository. Of course, if they invoke it against the wrong
+ * one they won't do very well, but that is ok. Tracking this just is not
+ * worth the complexity.
  */
 
 
 /**
- * not sure we can validate this here
- */
-
-/*
-export interface IConfig {
-    githubClientId: string;
-    githubClientSecret: string;
-    sslCertPath: string;
-    sslKeyPath: string;
-    sslIntCert: string;
-    frontendPort: number;
-    backendPort: number;
-    backendUrl: string;
-    frontendUrl: string;
-    dbName: string;
-}
-*/
-
-/**
- * Common queries:
+ * A goal of these types is to make it easier (and more efficient)
+ * to perform the most common queries. These include:
  *
- * 1) List all people (easy)
- * 2) List all teams (easy, just join with people)
- * 3) List most recent results for a deliverable (easy, straight from results)
+ * 1) List all students (easy, directly from people)
+ * 2) List all teams and student members (easy, just join teams with people)
+ * 3) List most recent results for a deliverable (easy, directly from results)
  * 3) List all results for a deliverable for each user
  *     Harder. Problem is we don't have a 1:1 mapping between repo and deliverable.
  *     Or maybe we just need to roll with this:
@@ -40,70 +32,78 @@ export interface IConfig {
  *              Find all results for the desired delivId for any r above. Return for each person.
  *              This doesn't combine teams, but makes it so people won't be missed.
  *              Result: PersonRecord[]
+ * 4) List most recent results for a team (3 above with date limit)
+ * 5) List all people on a repo
+ *      Join with Team with repo.teamIds then join with People using team.peopleIds
  *
- * 4) List most recent results for a team (date limit)
+ * G1) Store a new grade (easy, directly from Grade)
+ *      * use grade.delivId & grade.personId to make sure there is only one of these records.
+ *      * write or overwrite as needed
  *
- *
- *
+ * R1) Store a new result (XXX THINKING IN PROGRESS)
+ *      * result.delivId (needed to create a grade record)
+ *      * result.repoId (needed to get a list of people to create grade records on (see #5 above, list all people on repo)
  */
 
-// TODO: should Person.kind be removed and punted to github?
-// e.g., GitHub should have 'staff' and 'admin' teams.
-// If you're on 'admin', you're an admin
-// If you're on 'staff', you're a TA
-// If you're not on either, you're a student
-export interface Person {
-    readonly id: string; // key (where key is the githubId | csId)
-    readonly csId: string;
-    readonly githubId: string;
-    readonly studentNumber: number | null;
 
-    // readonly org: string;
+export interface Person {
+    readonly id: string; // primary key (this will duplicate csId or githubId (in CS it will always be csId))
+    readonly csId: string;
+    readonly studentNumber: number | null;
+    githubId: string; // warning: this can change (e.g., if student updates their CWL)
+
     readonly fName: string;
     readonly lName: string;
-    readonly kind: string; // student, ta, prof, ops
-    URL: string | null; // null when not yet validated (e.g., logged in)
+    kind: string | null; // student, staff, admin (staff / admin taken from GitHub if kind is null)
+    URL: string | null; // usually the person's GitHub profile URL; null when not yet validated
 
-    labId: string | null; // can be null for non-students
+    labId: string | null; // null for non-students
 
     custom: any; // used for anything. in sdmm will track 'custom.sdmmStatus'
 }
 
 export interface Auth {
-    // org: string;
-    personId: string;
-    token: string;
+    personId: string; // invariant
+    token: string | null;
 }
 
+// NOTE: Intentionally not linked to Repository (see docs at top of file)
 export interface Deliverable {
-    readonly id: string; // is the shortname of the deliverable
+    readonly id: string; // primary key; invariant. this is the shortname of the deliverable (e.g., d1)
+    URL: string; // links to the public deliverable description
 
-    URL: string;
     openTimestamp: number;
     closeTimestamp: number;
     gradesReleased: boolean;
-    delay: number;
 
     teamMinSize: number;
     teamMaxSize: number;
     teamSameLab: boolean;
     teamStudentsForm: boolean;
+    teamPrefix: string | null; // prefix for team names (e.g., pTeam_ or d1Team_)
+
+    // autotest fields
+    bootstrapUrl: string | null; // link to bootstrap code
+    repoPrefix: string | null; // prefix for repo name (e.g, project_ or d1_)
+    delay: number; // delay in minutes between grading requests (0 means no delay)
+    // MISSING: any container parametrization (e.g., solution project?)
 
     custom: any; // {}; not used by the default implementation, but useful for extension (e.g., schemas)
 }
 
 export interface Team {
     readonly id: string; // invariant; is the name of the team
-    // readonly org: string; // invariant
+
     URL: string | null; // null when not yet created
     personIds: string[]; // Person.id[] - foreign key
 
     custom: any;
 }
 
+// NOTE: Intentionally not linked to Deliverable (see docs at top of file)
 export interface Repository {
     readonly id: string; // invariant; is the name of the repo
-    // readonly org: string; // invariant
+
     URL: string | null; // null when not yet created
     teamIds: string[]; // Team.id[] - foreign key
 
@@ -114,10 +114,12 @@ export interface Grade {
     // this should be the personId associated with the repo, not a staff who invoked it!
     readonly personId: string; // Person.id; grades are really on repos, but we only care about them by person
     readonly delivId: string; // Deliverable.id - foreign key // could be a Deliverable, but this is just easier
-    // readonly org: string;
+
     score: number;
     comment: string;
-    URL: string; // commitUrl if a commit, repoUrl if a dummy entry
+
+    urlName: string | null; // name associated with URL (e.g., project name)
+    URL: string | null; // link to commit, if appropriate or repoUrl if not
     timestamp: number;
 
     custom: any; // {}; not used by the default implementation, but useful for extension (e.g., custom grade values)
@@ -136,6 +138,7 @@ export interface AutoTestResult {
  *
  *
  */
+/*
 export interface PersonRecord {
     person: Person;
     delivId: string;
@@ -148,3 +151,4 @@ export interface ResultSummary {
     grade: number;
     URL: string;
 }
+*/

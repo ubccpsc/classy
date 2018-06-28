@@ -378,6 +378,7 @@ export class SDMMController extends CourseController {
                 let grade: GradePayload = {
                     score:     -1,
                     comment:   'Repo Provisioned',
+                    urlName:   repo.id,
                     URL:       repo.URL,
                     timestamp: Date.now(),
                     custom:    {}
@@ -465,6 +466,7 @@ export class SDMMController extends CourseController {
                 let grade: GradePayload = {
                     score:     -1,
                     comment:   'Repo Provisioned',
+                    urlName:   repo.id,
                     URL:       repo.URL,
                     timestamp: Date.now(),
                     custom:    {}
@@ -583,6 +585,7 @@ export class SDMMController extends CourseController {
                 let grade: GradePayload = {
                     score:     -1,
                     comment:   'Repo Provisioned',
+                    urlName:   repo.id,
                     URL:       repo.URL,
                     timestamp: Date.now(),
                     custom:    {}
@@ -624,6 +627,7 @@ export class SDMMController extends CourseController {
         if (d0Grade !== null) {
             myD0 = {
                 score:     d0Grade.score,
+                urlName:   d0Grade.urlName,
                 URL:       d0Grade.URL,
                 comment:   '',
                 timestamp: d0Grade.timestamp,
@@ -634,6 +638,7 @@ export class SDMMController extends CourseController {
         if (d1Grade !== null) {
             myD1 = {
                 score:     d1Grade.score,
+                urlName:   d1Grade.urlName,
                 URL:       d1Grade.URL,
                 comment:   '',
                 timestamp: d1Grade.timestamp,
@@ -644,6 +649,7 @@ export class SDMMController extends CourseController {
         if (d2Grade !== null) {
             myD2 = {
                 score:     d2Grade.score,
+                urlName:   d2Grade.urlName,
                 URL:       d2Grade.URL,
                 comment:   '',
                 timestamp: d2Grade.timestamp,
@@ -654,6 +660,7 @@ export class SDMMController extends CourseController {
         if (d3Grade !== null) {
             myD3 = {
                 score:     d3Grade.score,
+                urlName:   d3Grade.urlName,
                 URL:       d3Grade.URL,
                 comment:   '',
                 timestamp: d3Grade.timestamp,

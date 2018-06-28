@@ -51,6 +51,9 @@ describe('TestDatasetGenerator', function () {
             teamMaxSize:      2,
             teamSameLab:      true,
             teamStudentsForm: true,
+            teamPrefix:       'team_',
+            repoPrefix:       '',
+            bootstrapUrl:     '',
 
             custom: {}
         };
@@ -58,6 +61,7 @@ describe('TestDatasetGenerator', function () {
         for (let i = 0; i < 5; i++) {
             const deliv = JSON.parse(JSON.stringify(d));
             deliv.id = 'd' + i;
+            deliv.repoPrefix = 'd' + i + '_';
             deliv.openTimestamp = new Date().getTime();
             deliv.closeTimestamp = new Date().getTime();
 

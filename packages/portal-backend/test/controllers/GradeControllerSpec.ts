@@ -32,6 +32,7 @@ describe("GradeController", () => {
         let grade: GradePayload = {
             score:     100,
             comment:   'comment',
+            urlName:   'urlName',
             URL:       'URL',
             timestamp: Date.now(),
             custom:    {}
@@ -51,6 +52,7 @@ describe("GradeController", () => {
         let grade: GradePayload = {
             score:     50,
             comment:   'commentup',
+            urlName:   'urlName',
             URL:       'URLup',
             timestamp: Date.now(),
             custom:    {}

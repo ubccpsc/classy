@@ -53,7 +53,6 @@ export class GradesController {
             }
 
             Log.info("GradesController::createGrade(..) - # people: " + allPeopleIds.length);
-
             for (const personId of allPeopleIds) {
                 // set their grades
                 let gradeRecord = await this.getGrade(personId, delivId);
@@ -64,6 +63,7 @@ export class GradesController {
                         delivId:   delivId,
                         score:     grade.score,
                         comment:   grade.comment,
+                        urlName:   grade.urlName,
                         URL:       grade.URL,
                         timestamp: grade.timestamp,
                         custom:    grade.custom
@@ -71,6 +71,7 @@ export class GradesController {
                     Log.trace("GradesController::createGrade(..) - new grade; personId: " + personId + "; grade: " + JSON.stringify(gradeRecord));
                 } else {
                     // update existing
+                    // personId & delivId are invariant
                     gradeRecord.score = grade.score;
                     gradeRecord.comment = grade.comment;
                     gradeRecord.URL = grade.URL;

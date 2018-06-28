@@ -14,7 +14,7 @@ import {TeamController} from "../TeamController";
 
 export class AssignmentController {
     private db: DatabaseController = DatabaseController.getInstance();
-    private gc : GradesController = new GradesController();
+    private gc: GradesController = new GradesController();
     private rc: RepositoryController = new RepositoryController();
     private tc: TeamController = new TeamController();
 
@@ -24,17 +24,17 @@ export class AssignmentController {
         // });
         //
         // return returningPromise;
-        Log.info("AssignmentController:getAssignmentGrade("+", "+personId+", "+assignId+") - start");
-        let grade : Grade = await this.gc.getGrade(personId,assignId);
+        Log.info("AssignmentController:getAssignmentGrade(" + ", " + personId + ", " + assignId + ") - start");
+        let grade: Grade = await this.gc.getGrade(personId, assignId);
         if (grade === null) return null;
 
-        const assignmentGrade : AssignmentGrade = grade.custom;
+        const assignmentGrade: AssignmentGrade = grade.custom;
         return assignmentGrade;
     }
 
-    public async setAssignmentGrade(repoID: string, assignId: string, assnPayload: AssignmentGrade) : Promise<boolean> {
+    public async setAssignmentGrade(repoID: string, assignId: string, assnPayload: AssignmentGrade): Promise<boolean> {
         // Array<Array<SubsectionGrade>>
-        Log.info("AssignmentController::setAssignmentGrade("+", "+repoID+", "+assignId+",..) - start");
+        Log.info("AssignmentController::setAssignmentGrade(" + ", " + repoID + ", " + assignId + ",..) - start");
         Log.trace("AssignmentController::setAssignmentGrade(..) - payload: " + JSON.stringify(assnPayload));
 
         let totalGrade = 0;
@@ -47,20 +47,21 @@ export class AssignmentController {
         }
 
         // Assume Repository exists
-        let repo : Repository = await this.rc.getRepository(repoID);
+        let repo: Repository = await this.rc.getRepository(repoID);
 
-        if(repo === null) {
+        if (repo === null) {
             return false;
         }
 
-        let newGradePayload : GradePayload = {
+        let newGradePayload: GradePayload = {
             // assignmentID: assnPayload.assignmentID,
             // studentID: assnPayload.studentID,
-            score: totalGrade,
-            comment: 'Marked assignment',
-            URL: repo.URL,
+            score:     totalGrade,
+            comment:   'Marked assignment',
+            urlName:   repo.id,
+            URL:       repo.URL,
             timestamp: Date.now(),
-            custom: assnPayload
+            custom:    assnPayload
         };
 
         let success = await this.gc.createGrade(repoID, assignId, newGradePayload);
@@ -77,12 +78,12 @@ export class AssignmentController {
 
         let allRepos: Repository[] = await this.db.getRepositories();
         let personRepos: Repository[] = [];
-        for(const repo of allRepos) {
+        for (const repo of allRepos) {
             const teamIds: string[] = repo.teamIds;
-            for(const teamId of teamIds) {
+            for (const teamId of teamIds) {
                 const team = await this.tc.getTeam(teamId);
-                for(const personIds of team.personIds) {
-                    if(personIds === person.id) {
+                for (const personIds of team.personIds) {
+                    if (personIds === person.id) {
                         personRepos.push(repo);
                     }
                 }
@@ -90,7 +91,7 @@ export class AssignmentController {
         }
         let result: Repository[] = [];
         for (const repo of personRepos) {
-            if(repo.custom === delivId) {
+            if (repo.custom === delivId) {
                 result.push(repo);
             }
         }
