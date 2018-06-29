@@ -88,9 +88,9 @@ export class AutoTestRouteHandler implements IREST {
 
         let sc = new CourseController(new GitHubController());
         sc.handleNewAutoTestGrade(gradeRecord).then(function (success: any) {
-            res.send({success: true}); // respond
+            res.send(200, {success: {success: true}}); // respond
         }).catch(function (err) {
-            res.send({success: true}); // respond true, they can't do anything anyways
+            res.send(400, {failure: {message: 'Failed to receive grade: ' + err}}); // respond true, they can't do anything anyways
             Log.error('AutoTestRouteHandler::atGradeResult(..) - ERROR: ' + err);
         });
     }

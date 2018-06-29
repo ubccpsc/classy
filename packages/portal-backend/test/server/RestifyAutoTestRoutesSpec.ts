@@ -5,14 +5,19 @@ import {Test} from "../GlobalSpec";
 
 import Log from "../../../common/Log";
 import Config, {ConfigKey} from "../../../common/Config";
-import {GradePayload} from "../../../common/types/SDMMTypes";
 
 import BackendServer from "../../src/server/BackendServer";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
+import {
+    AutoTestAuthPayload,
+    AutoTestConfigPayload,
+    AutoTestDefaultDeliverablePayload,
+    AutoTestGradeTransport
+} from "../../../common/types/PortalTypes";
 
 // This seems silly, but just makes sure GlobalSpec runs first.
 // It should be at the top of every test file.
-const loadFirst = require('../GlobalSpec');
+// const loadFirst = require('../GlobalSpec');
 
 import restify = require('restify');
 
@@ -55,16 +60,18 @@ describe('REST Routes for AutoTest', function () {
     it('Should respond to a valid defaultDeliverable request', async function () {
 
         let response = null;
-        const url = '/defaultDeliverable/' + Test.ORGNAME;
+        let body: AutoTestDefaultDeliverablePayload;
+        const url = '/at/defaultDeliverable/';
         try {
             response = await request(app).get(url);
+            body = response.body;
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
-        Log.test(response.status + " -> " + JSON.stringify(response.body.delivId));
+        Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
-        expect(response.body.delivId).to.not.be.undefined;
-        expect(response.body.delivId).to.equal('d0');
+        expect(body.success.defaultDeliverable).to.not.be.undefined;
+        expect(body.success.defaultDeliverable).to.equal('d0');
     });
 
     it('Should respond to a valid result', async function () {
@@ -88,70 +95,90 @@ describe('REST Routes for AutoTest', function () {
     it('Should respond to a valid isStaff request for staff', async function () {
 
         let response = null;
-        const url = '/isStaff/' + Test.ORGNAME + '/rtholmes';
+        let body: AutoTestAuthPayload;
+        const url = '/at/isStaff/rtholmes';
         try {
             response = await request(app).get(url);
+            body = response.body;
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
-        Log.test(response.status + " -> " + JSON.stringify(response.body.isStaff));
+        Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
-        expect(response.body.isStaff).to.not.be.undefined;
-        expect(response.body.isStaff).to.be.true;
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.isStaff).to.not.be.undefined;
+        expect(body.success.isStaff).to.be.true;
+        expect(body.success.isAdmin).to.be.true;
     });
 
     it('Should respond to a valid isStaff request for non-staff', async function () {
 
         let response = null;
-        const url = '/isStaff/' + Test.ORGNAME + '/INVALIDUSERNAME';
+        let body: AutoTestAuthPayload;
+        const url = '/at/isStaff/INVALIDUSERNAME';
         try {
             response = await request(app).get(url);
+            body = response.body;
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
-        Log.test(response.status + " -> " + JSON.stringify(response.body.isStaff));
+        Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
-        expect(response.body.isStaff).to.not.be.undefined;
-        expect(response.body.isStaff).to.be.false;
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.isStaff).to.not.be.undefined;
+        expect(body.success.isAdmin).to.not.be.undefined;
+        expect(body.success.isStaff).to.be.false;
+        expect(body.success.isAdmin).to.be.false;
     });
 
     it('Should respond to a valid container request for a deliverable', async function () {
 
         let response = null;
-        const url = '/container/' + Test.ORGNAME + '/d0';
+        const url = '/at/container/d0';
+        let body: AutoTestConfigPayload;
         try {
             response = await request(app).get(url);
+            body = response.body;
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
-        Log.test(response.status + " -> " + JSON.stringify(response.body));
+        Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
-        expect(response.body.dockerImage).to.not.be.undefined;
-        expect(response.body.studentDelay).to.not.be.undefined;
-        expect(response.body.maxExecTime).to.not.be.undefined;
-        expect(response.body.regressionDelivIds).to.not.be.undefined;
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.dockerImage).to.not.be.undefined;
+        expect(body.success.studentDelay).to.not.be.undefined;
+        expect(body.success.maxExecTime).to.not.be.undefined;
+        expect(body.success.regressionDelivIds).to.not.be.undefined;
+        expect(body.success.regressionDelivIds).to.be.an('array');
     });
 
     it('Should respond to an invalid container request', async function () {
 
         let response = null;
-        const url = '/container/INVALIDORG/d0';
+        const url = '/at/container/d9997';
+        let body: AutoTestConfigPayload;
         try {
             response = await request(app).get(url);
+            body = response.body;
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
-        Log.test(response.status + " -> " + JSON.stringify(response.body));
+        Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(400);
-        expect(response.body.message).to.not.be.undefined;
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+        expect(body.failure.message).to.not.be.undefined;
     });
 
     it('Should be able to receive a grade event', async function () {
 
         let response = null;
 
-        const gradePayload: GradePayload = {
+        const gradePayload: AutoTestGradeTransport = {
+            delivId:   Test.DELIVID0,
             score:     51,
+            repoId:    Test.REPONAME1,
+            repoURL:   'repoURL',
             urlName:   'urlName',
             URL:       'test URL from grade record',
             comment:   'test comment from grade record',
@@ -159,8 +186,7 @@ describe('REST Routes for AutoTest', function () {
             custom:    {}
         };
 
-        // that.rest.post('/grade/:org/:repoId/:delivId', RouteHandler.atGradeResult);
-        const url = '/grade/' + Test.ORGNAME + '/' + Test.REPONAME1 + '/' + Test.DELIVID0;
+        const url = '/at/grade/';
         try {
             response = await request(app).post(url).send(gradePayload).set('Accept', 'application/json');
         } catch (err) {

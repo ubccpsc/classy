@@ -8,7 +8,7 @@ import {RepositoryController} from "../../src/controllers/RepositoryController";
 const loadFirst = require('../GlobalSpec');
 const rFirst = require('./TeamControllerSpec');
 
-describe("GitHubController", () => {
+describe.skip("GitHubController", () => {
 
     let TIMEOUT = 10000;
 
