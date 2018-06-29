@@ -18,7 +18,6 @@ const load3 = require('../xRunLast/TestDatasetGeneratorSpec');
 export class TestData {
 
     constructor() {
-
     }
 }
 

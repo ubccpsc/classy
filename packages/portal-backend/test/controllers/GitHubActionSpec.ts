@@ -9,7 +9,7 @@ import {Test} from "../GlobalSpec";
 import Util from "../../../common/Util";
 import Config, {ConfigKey} from "../../../common/Config";
 
-describe.skip("GitHubActions", () => {
+describe("GitHubActions", () => {
 
     let gh: GitHubActions;
 
@@ -45,7 +45,8 @@ describe.skip("GitHubActions", () => {
         "secap_cpscbot",
         "secap_rthse2",
         "secap_ubcbot",
-        "secap_testtest__repo1"
+        "secap_testtest__repo1",
+        "TESTrepo1"
     ];
 
     let TESTTEAMNAMES = [
@@ -53,7 +54,8 @@ describe.skip("GitHubActions", () => {
         "ubcbot",
         "rthse2",
         "cpscbot",
-        "TEST__X__t_TESTteam1"
+        "TEST__X__t_TESTteam1",
+        "TESTteam1"
     ];
 
     it("Clear stale repos and teams.", async function () {
