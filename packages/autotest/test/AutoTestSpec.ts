@@ -17,7 +17,7 @@ import {MockDataStore} from "../src/autotest/mocks/MockDataStore";
 
 const loadFirst = require('./GlobalSpec');
 
-describe("GithubAutoTest", () => {
+describe("GitHubAutoTest", () => {
 
     Config.getInstance("test");
     let pushes: IPushEvent[];
@@ -81,20 +81,28 @@ describe("GithubAutoTest", () => {
     });
 
     it("Should be able to receive multiple concurrent pushes.", async () => {
-        expect(at).not.to.equal(null);
+        try {
+            expect(at).not.to.equal(null);
 
-        const pe: IPushEvent = pushes[0];
-        const arr = [];
-        arr.push(at.handlePushEvent(pushes[0]));
-        arr.push(at.handlePushEvent(pushes[1]));
-        arr.push(at.handlePushEvent(pushes[2]));
-        arr.push(at.handlePushEvent(pushes[3]));
-        arr.push(at.handlePushEvent(pushes[4]));
-        arr.push(at.handlePushEvent(pushes[5]));
+            const pe: IPushEvent = pushes[0];
+            const arr = [];
+            arr.push(at.handlePushEvent(pushes[0]));
+            arr.push(at.handlePushEvent(pushes[1]));
+            arr.push(at.handlePushEvent(pushes[2]));
+            arr.push(at.handlePushEvent(pushes[3]));
+            arr.push(at.handlePushEvent(pushes[4]));
+            arr.push(at.handlePushEvent(pushes[5]));
 
-        await Promise.all(arr);
-        const allData = await data.getAllData();
-        // expect(allData.pushes.length).to.equal(6);
+            Log.test('before promise.all');
+            await Promise.all(arr);
+            Log.test('after promise.all');
+            const allData = await data.getAllData();
+            Log.test('after getAllData');
+            // expect(allData.pushes.length).to.equal(6);
+        } catch (err) {
+            Log.error('should never happen: ' + err);
+            expect.fail('should never happen', err);
+        }
     });
 
     it("Should be able to receive a comment event.", async () => {

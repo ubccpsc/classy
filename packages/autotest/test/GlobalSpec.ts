@@ -1,20 +1,16 @@
 import "mocha";
 
-import Config from "../../common/Config";
+import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
 
 before(async () => {
     Log.info('GlobalSpec::before()');
 
-    Config.getInstance();
-    (<any>Config.getInstance()).config.org = 'test'; // force testing in test environment
-    (<any>Config.getInstance()).config.name = 'test'; // force testing in test environment
-
-    // let db = DatabaseController.getInstance();
-    // await db.clearData(); // nuke everything
+    Config.getInstance().setProp(ConfigKey.org, 'test');
+    Config.getInstance().setProp(ConfigKey.name, 'test');
 });
 
 after(() => {
     Log.info('GlobalSpec::after()');
-    // process.exit();
+    process.exit();
 });
