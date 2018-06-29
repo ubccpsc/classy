@@ -320,8 +320,10 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
      * Gets the current deliverable id
      */
     private async getDelivId(): Promise<string | null> {
+        Log.trace("GitHubAutoTest::getDelivId() - start");
         try {
             let str = await this.classPortal.getDefaultDeliverableId();
+            Log.trace("GitHubAutoTest::getDelivId() - RESPONSE: " + str);
             if (typeof str === "undefined") {
                 str = null;
             }

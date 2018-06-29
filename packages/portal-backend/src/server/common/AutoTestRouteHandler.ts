@@ -21,8 +21,8 @@ export class AutoTestRouteHandler implements IREST {
         Log.info('AutoTestRouteHandler::registerRoutes() - start');
 
         server.get('/at/defaultDeliverable', AutoTestRouteHandler.atDefaultDeliverable); // /:org
-        server.get('/isStaff/:org/:personId', AutoTestRouteHandler.atIsStaff);
-        server.get('/container/:org/:delivId', AutoTestRouteHandler.atContainerDetails);
+        server.get('/at/isStaff/:personId', AutoTestRouteHandler.atIsStaff);
+        server.get('/at/container/:delivId', AutoTestRouteHandler.atContainerDetails);
         server.post('/at/grade/', AutoTestRouteHandler.atGradeResult); // was: /grade/:org/:repoId/:delivId
         server.post('/at/result/', AutoTestRouteHandler.atResult);
         server.post('/githubWebhook', AutoTestRouteHandler.githubWebhook); // forward GitHub Webhooks to AutoTest
@@ -36,17 +36,18 @@ export class AutoTestRouteHandler implements IREST {
 
         // TODO: verify secret
 
-        const org = req.params.org;
+        // const org = req.params.org;
         const delivId = req.params.delivId;
 
-        Log.info('AutoTestRouteHandler::atContainerDetails(..) - org: ' + org + '; delivId: ' + delivId);
+        Log.info('AutoTestRouteHandler::atContainerDetails(..) - delivId: ' + delivId);
 
         // TODO: this is just a dummy implementation
 
-        if (org === 'secapstone' || org === 'secapstonetest') {
+        const org = Config.getInstance().getProp(ConfigKey.org);
+        if ((org === 'secapstone' || org === 'classytest') && delivId !== 'd9997') { // HACK: the && is terrible and is just for testing
             res.send({dockerImage: 'secapstone-grader', studentDelay: 60 * 60 * 12, maxExecTime: 300, regressionDelivIds: []});
         } else {
-            res.send(400, {message: 'Invalid org: ' + org});
+            res.send(400, {message: 'Could not retrieve container details'});
         }
 
 
@@ -70,13 +71,13 @@ export class AutoTestRouteHandler implements IREST {
 
         // TODO: verify secret
 
-        const org = req.params.org;
-
+        // const org = req.params.org;
+        const org = Config.getInstance().getProp(ConfigKey.org);
         Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - org: ' + org);
 
         // TODO: this is just a dummy implementation
 
-        if (org === 'secapstone' || org === 'secapstonetest') {
+        if (org === 'secapstone' || org === 'classytest') {
             res.send({delivId: 'd0'});
         } else {
             res.send(400, {error: 'unknown course'});
@@ -108,7 +109,7 @@ export class AutoTestRouteHandler implements IREST {
 
         const gradeRecord: AutoTestGradeTransport = req.body; // turn into json?
 
-        Log.info('AutoTestRouteHandler::atGradeResult(..) - repoId: ' + gradeRecord.repoId + '; delivId: ' +gradeRecord. delivId + '; body: ' + JSON.stringify(gradeRecord));
+        Log.info('AutoTestRouteHandler::atGradeResult(..) - repoId: ' + gradeRecord.repoId + '; delivId: ' + gradeRecord.delivId + '; body: ' + JSON.stringify(gradeRecord));
 
         let sc = new CourseController(new GitHubController());
         sc.handleNewAutoTestGrade(gradeRecord).then(function (success: any) {
@@ -168,7 +169,8 @@ export class AutoTestRouteHandler implements IREST {
         // const token = req.headers.token;
 
         // TODO: verify secret
-        const org = req.params.org;
+        // const org = req.params.org;
+        const org = Config.getInstance().getProp(ConfigKey.org);
         const personId = req.params.personId;
 
         Log.info('AutoTestRouteHandler::atIsStaff(..) - org: ' + org + '; personId: ' + personId);

@@ -45,9 +45,10 @@ export class ClassPortal implements IClassPortal {
             return false;
         }
 
-        const url = this.host + ":" + this.port + "/isStaff/" + courseId + "/" + userName;
+        const url = this.host + ":" + this.port + "/at/isStaff/" + userName;
         Log.info("ClassPortal::isStaff(..) - Sending request to " + url);
-        return rp(url).then(function (res) {
+        const opts: rp.RequestPromiseOptions = {rejectUnauthorized: false};
+        return rp(url, opts).then(function (res) {
             Log.trace("ClassPortal::isStaff( " + courseId + ", " + userName + " ) - success; payload: " + res);
             const json = JSON.parse(res);
             return json.isStaff;
@@ -61,8 +62,9 @@ export class ClassPortal implements IClassPortal {
 
         const courseId = Config.getInstance().getProp(ConfigKey.org); // TODO: get rid of this var
         const url = this.host + ":" + this.port + "/at/defaultDeliverable";
+        const opts: rp.RequestPromiseOptions = {rejectUnauthorized: false};
         Log.info("ClassPortal::getDefaultDeliverableId(..) - Sending request to " + url);
-        return rp(url).then(function (res) {
+        return rp(url, opts).then(function (res) {
             Log.trace("ClassPortal::getDefaultDeliverableId( " + courseId + " ) - success; payload: " + res);
             const json = JSON.parse(res);
             return json.delivId;
@@ -104,9 +106,10 @@ export class ClassPortal implements IClassPortal {
             return null;
         }
 
-        const url = this.host + ":" + this.port + "/container" + "/" + courseId + "/" + delivId;
+        const url = this.host + ":" + this.port + "/at/container/" + delivId;
+        const opts: rp.RequestPromiseOptions = {rejectUnauthorized: false};
         Log.info("ClassPortal::getContainerId(..) - Sending request to " + url);
-        return rp(url).then(function (res) {
+        return rp(url, opts).then(function (res) {
             Log.trace("ClassPortal::getContainerId( " + courseId + ", " + delivId + " ) - success; payload: " + res);
             const json = JSON.parse(res);
             return json;
