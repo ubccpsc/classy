@@ -302,14 +302,10 @@ export abstract class AutoTest implements IAutoTest {
             Log.trace("AutoTest::invokeContainer(..) - input: " + JSON.stringify(input, null, 2));
             const start = Date.now();
 
-            // TODO: make sure we are using the right container
-            // const containerId = await this.classPortal.getContainerId(input.org,input.delivId);
-            // const docker = new MockGrader(input);
-            // const record: ICommitRecord = await docker.execute();
-
             let record: ICommitRecord = null;
             let isProd = true;
             if (input.pushInfo.postbackURL === "EMPTY" || input.pushInfo.postbackURL === "POSTBACK") {
+                Log.warn("AutoTest::invokeContainer(..) - execution skipped; !isProd");
                 isProd = false; // EMPTY and POSTBACK used by test environment
             }
             if (isProd === true) {
@@ -319,12 +315,12 @@ export abstract class AutoTest implements IAutoTest {
                 const cpPort: number = Config.getInstance().getProp(ConfigKey.classPortalPort);
                 const image: string = Config.getInstance().getProp(ConfigKey.dockerId);
                 const timeout: number = Config.getInstance().getProp(ConfigKey.timeout);
-                const org: string = Config.getInstance().getProp(ConfigKey.org);
+                // const org: string = Config.getInstance().getProp(ConfigKey.org);
                 const assnUrl: string = input.pushInfo.projectURL;
                 const assnCloneUrl: string = input.pushInfo.cloneURL;
                 const commitSHA: string = input.pushInfo.commitSHA;
                 const commitURL: string = input.pushInfo.commitURL;
-                const repo: string = input.pushInfo.repoId;
+                // const repo: string = input.pushInfo.repoId;
                 const timestamp: number = input.pushInfo.timestamp;
                 const delivId: string = input.delivId;
                 const id: string = `${commitSHA}-${delivId}`;

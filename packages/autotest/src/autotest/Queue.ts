@@ -4,8 +4,14 @@ export class Queue {
 
     private data: IContainerInput[] = [];
 
-    public push(info: IContainerInput) {
-        this.data.push(info);
+    /**
+     * returns the length of the array after the push.
+     *
+     * @param {IContainerInput} info
+     * @returns {number}
+     */
+    public push(info: IContainerInput): number {
+        return this.data.push(info);
     }
 
     public pop(): IContainerInput | null {

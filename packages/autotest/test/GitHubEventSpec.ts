@@ -12,6 +12,15 @@ import {GithubUtil} from "../src/github/GithubUtil";
 describe("GitHub Event Parser", () => {
     Config.getInstance("test");
 
+    it("Should fail gracefully with a bad push.", () => {
+
+        let actual = GithubUtil.processPush(null);
+        expect(actual).to.deep.equal(null);
+
+        actual = GithubUtil.processPush(undefined);
+        expect(actual).to.deep.equal(null);
+    });
+
     it("Should be able to parse a standard push.", () => {
         const content = readFile("push_master-branch.json");
         const actual = GithubUtil.processPush(JSON.parse(content));

@@ -2,18 +2,19 @@ import {expect} from "chai";
 import * as fs from "fs-extra";
 import "mocha";
 
+import Log from "../../common/Log";
 import Config from "../../common/Config";
 import Util from "../../common/Util";
+
 import {IClassPortal} from "../src/autotest/ClassPortal";
 import {GithubService} from "../src/github/GithubService";
 import {GithubAutoTest} from "../src/github/GithubAutoTest";
 import {ICommentEvent, IFeedbackGiven, IPushEvent} from "../src/Types";
-import {TestData} from "./TestData";
-import Log from "../../common/Log";
-
 
 import {MockClassPortal} from "../src/autotest/mocks/MockClassPortal";
 import {MockDataStore} from "../src/autotest/mocks/MockDataStore";
+
+import {TestData} from "./TestData";
 
 const loadFirst = require('./GlobalSpec');
 
@@ -40,7 +41,6 @@ describe("GitHubAutoTest", () => {
 
         portal = new MockClassPortal();
         gh = new GithubService();
-        const courseId = "310";
         at = new GithubAutoTest(data, portal, gh);
 
         (<any>Config.getInstance()).config.postback = false;
@@ -62,6 +62,15 @@ describe("GitHubAutoTest", () => {
     it("Should be able to be instantiated.", () => {
         expect(at).not.to.equal(null);
         expect(pushes.length).to.equal(9);
+    });
+
+    it("Should gracefully fail with bad pushes.", async () => {
+        expect(at).not.to.equal(null);
+
+        let res = await at.handlePushEvent(null);
+        expect(res).to.be.null;
+        res = await at.handlePushEvent(undefined);
+        expect(res).to.be.null;
     });
 
     it("Should be able to receive multiple pushes.", async () => {
@@ -105,6 +114,15 @@ describe("GitHubAutoTest", () => {
         }
     });
 
+    it("Should gracefully fail with bad comments.", async () => {
+        expect(at).not.to.equal(null);
+
+        let res = await at.handleCommentEvent(null);
+        expect(res).to.be.null;
+        res = await at.handleCommentEvent(undefined);
+        expect(res).to.be.null;
+    });
+
     it("Should be able to receive a comment event.", async () => {
         expect(at).not.to.equal(null);
 
@@ -128,6 +146,37 @@ describe("GitHubAutoTest", () => {
 
         // await Util.timeout(1 * 1000); // let test finish so it doesn't ruin subsequent executions
     });
+
+    it("Should be able to use a comment event to start the express queue.", async () => {
+        expect(at).not.to.equal(null);
+
+        const pe: IPushEvent = pushes[0];
+        let allData = await data.getAllData();
+        expect(allData.pushes.length).to.equal(0);
+        await at.handlePushEvent(pe);
+        await at.handlePushEvent(pushes[1]);
+        await at.handlePushEvent(pushes[2]);
+
+        const ce: ICommentEvent = {
+            botMentioned:  true,
+            commitSHA:     pushes[2].commitSHA,
+            commitURL:     pushes[2].commitURL,
+            personId:      "myUser",
+            // org:           "310",
+            delivId:       "d0",
+            "postbackURL": "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/cbe1b0918b872997de4c4d2baf4c263f8d4c6dc2/comments",
+            timestamp:     1234567891
+        };
+
+        expect(allData.comments.length).to.equal(0);
+        await at.handleCommentEvent(ce);
+        allData = await data.getAllData();
+        expect(allData.comments.length).to.equal(1);
+
+        // await Util.timeout(1 * 1000); // let test finish so it doesn't ruin subsequent executions
+
+    });
+
 
     it("Should give a user a warning message on a commit that has not been queued.", async () => {
         // This case happens when a comment is made on a commit that AutoTest did not see the push for
@@ -348,6 +397,19 @@ describe("GitHubAutoTest", () => {
         expect(allData.feedback.length).to.equal(1); // no extra feedback records should be present
 
         Log.test("Test complete.");
+    });
+
+    it("Should be able to invoke a container.", async () => {
+        expect(at).not.to.equal(null);
+
+        const pe: IPushEvent = pushes[0];
+        pe.postbackURL = 'do it here';
+        let allData = await data.getAllData();
+        expect(allData.pushes.length).to.equal(0);
+        await at.handlePushEvent(pe);
+        allData = await data.getAllData();
+        expect(allData.pushes.length).to.equal(1);
+
     });
 
     it.skip("Should let a user request results without specifying delivId.", async () => {
