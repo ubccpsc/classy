@@ -8,6 +8,7 @@ import {IClassPortal} from "../autotest/ClassPortal";
 import {IDataStore} from "../autotest/DataStore";
 import {IGithubService} from "./GithubService";
 import {AutoTest} from "../autotest/AutoTest";
+import {AutoTestAuthTransport, AutoTestConfigTransport} from "../../../common/types/PortalTypes";
 
 export interface IGithubTestManager {
 
@@ -136,7 +137,7 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
             }
 
             // front load the async operations, even if it means we do some operations unnecessarily; thse could be done in parallel
-            const isStaff: boolean = await this.classPortal.isStaff(info.personId); // async
+            const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(info.personId); // async
             const requestFeedbackDelay: string | null = await this.requestFeedbackDelay(delivId, info.personId, info.timestamp); // ts of comment, not push
             const hasBeenRequestedBefore: IFeedbackGiven = await this.dataStore.getFeedbackGivenRecordForCommit(info.commitURL, info.personId); // students often request grades they have previously 'paid' for
             const res: ICommitRecord = await this.getOutputRecord(info.commitURL, delivId); // for any user
@@ -144,7 +145,7 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
             Log.trace("GithubAutoTest::handleCommentEvent(..) - isStaff: " + isStaff + "; delay: " + requestFeedbackDelay + "; res: " + res + "; running?: " + isCurrentlyRunning);
 
             let shouldPost = false; // should the result be given
-            if (isStaff === true) {
+            if (isStaff !== null && (isStaff.isAdmin === true || isStaff.isStaff === true)) {
                 // always respond for staff
                 shouldPost = true;
             } else {
@@ -253,12 +254,15 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
         try {
             Log.info("GithubAutoTest::requestFeedbackDelay( " + delivId + ", " + userName + ", " + reqTimestamp + ". - start");
             // async operations up front
-            const isStaff = await this.classPortal.isStaff(userName);
+            const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(userName);
             const record: IFeedbackGiven = await this.dataStore.getLatestFeedbackGivenRecord(delivId, userName);
-            const details = await this.classPortal.getContainerDetails(delivId); // should cache this
-            const testDelay = details.studentDelay;
+            const details: AutoTestConfigTransport = await this.classPortal.getContainerDetails(delivId); // should cache this
+            let testDelay = 0;
+            if (details !== null) {
+                testDelay = details.studentDelay;
+            }
 
-            if (isStaff === true) {
+            if (isStaff !== null && (isStaff.isAdmin === true || isStaff.isStaff === true)) {
                 return null; // staff can always request
             } else {
                 if (record === null) {
@@ -324,10 +328,10 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
         try {
             let str = await this.classPortal.getDefaultDeliverableId();
             Log.trace("GitHubAutoTest::getDelivId() - RESPONSE: " + str);
-            if (typeof str === "undefined") {
-                str = null;
+            if (typeof str.defaultDeliverable !== "undefined") {
+                return str.defaultDeliverable;
             }
-            return str;
+            return null;
         } catch (err) {
             Log.error("GithubAutoTest::getDelivId() - ERROR: " + err);
         }

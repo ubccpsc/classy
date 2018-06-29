@@ -1,25 +1,21 @@
 import {IClassPortal} from "../autotest/ClassPortal";
 import Config, {ConfigKey} from "../../../common/Config";
+import {AutoTestAuthTransport, AutoTestDefaultDeliverableTransport} from "../../../common/types/PortalTypes";
 
 export class EdXClassPortal implements IClassPortal {
 
-    public async isStaff(userName: string): Promise<boolean> {
+    public async isStaff(userName: string): Promise<AutoTestAuthTransport> {
         const courseId = Config.getInstance().getProp(ConfigKey.org); // TODO: get rid of this var
-        if (typeof courseId === "undefined" || courseId === null || typeof userName === "undefined" || userName === null) {
-            return false;
+        if (courseId === "edx") { // TODO: should be secapstone
+            if (userName === "rtholmes") {
+                return {personId: userName, isStaff: true, isAdmin: true};
+            }
         }
-        if (courseId === "edx") {
-            return userName === "rtholmes";
-        }
-        return false;
+        return {personId: userName, isStaff: false, isAdmin: false};
     }
 
-    public async getDefaultDeliverableId(): Promise<string | null> {
-        // if (typeof commitUrl !== "undefined" && commitUrl !== null) {
-        //     if (commitUrl.indexOf("edx") >= 0) {
-        //         return null; // no default deliverable for edx (self paced)
-        //     }
-        // }
+    public async getDefaultDeliverableId(): Promise<AutoTestDefaultDeliverableTransport | null> {
+        // no default deliverable for edx
         return null;
     }
 

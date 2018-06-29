@@ -1,50 +1,37 @@
 import {IClassPortal} from "../ClassPortal";
 import Config, {ConfigKey} from "../../../../common/Config";
+import {AutoTestAuthTransport, AutoTestConfigTransport, AutoTestDefaultDeliverableTransport} from "../../../../common/types/PortalTypes";
+import Log from "../../../../common/Log";
 
 export class MockClassPortal implements IClassPortal {
 
-    public async isStaff(userName: string): Promise<boolean> {
-        const courseId = Config.getInstance().getProp(ConfigKey.org); // TODO: get rid of var
-        if (typeof courseId === "undefined" || courseId === null || typeof userName === "undefined" || userName === null) {
-            return false;
+    public async isStaff(userName: string): Promise<AutoTestAuthTransport> {
+        const org = Config.getInstance().getProp(ConfigKey.org); // TODO: get rid of var
+        if (org === "test") { // 310
+            if (userName === "staff" || userName === "cs310") {
+                return {personId: userName, isStaff: true, isAdmin: true};
+            }
         }
-        if (courseId === "test") { // 310
-            return userName === "staff" || userName === "cs310";
-        }
-        return false;
+        Log.error('MockClassPortal::isStaff() - MockClassPortal should not be used with: ' + org);
+        return {personId: userName, isStaff: false, isAdmin: false};
     }
 
-    public async getDefaultDeliverableId(): Promise<string | null> {
-        // if (typeof commitUrl !== "undefined" && commitUrl !== null) {
-        //     if (commitUrl.indexOf("310") >= 0) {
-        //         return "d1";
-        //     }
-        // }
-        const courseId = Config.getInstance().getProp(ConfigKey.org); // TODO: get rid of var
-        if (courseId === 'test') {
-            return "d1";
+    public async getDefaultDeliverableId(): Promise<AutoTestDefaultDeliverableTransport | null> {
+        const org = Config.getInstance().getProp(ConfigKey.org); // TODO: get rid of var
+        if (org === 'test') {
+            return {defaultDeliverable: "d1"};
         }
+        Log.error('MockClassPortal::getDefaultDeliverableId() - MockClassPortal should not be used with: ' + org);
         return null;
     }
 
-    public async getContainerDetails(delivId: string): Promise<{ dockerImage: string, studentDelay: number, maxExecTime: number, regressionDelivIds: string[] } | null> {
-        const courseId = Config.getInstance().getProp(ConfigKey.org); // TODO: get rid of var
-        if (typeof courseId !== "undefined" && courseId !== null && typeof delivId !== "undefined" && delivId !== null) {
-            if (courseId === "test") { // 310
-                return {dockerImage: "310container", studentDelay: 100, maxExecTime: 300, regressionDelivIds: []};
-            }
+    public async getContainerDetails(delivId: string): Promise<AutoTestConfigTransport | null> {
+        const org = Config.getInstance().getProp(ConfigKey.org); // TODO: get rid of var
+        if (org === "test") { // 310
+            return {dockerImage: "310container", studentDelay: 100, maxExecTime: 300, regressionDelivIds: []};
         }
+        Log.error('MockClassPortal::getContainerDetails() - MockClassPortal should not be used with: ' + org);
         return null;
     }
 
-    /*
-        public async getTestDelay(org: string, delivId: string): Promise<number | null> {
-            if (typeof org !== "undefined" && org !== null && typeof delivId !== "undefined" && delivId !== null) {
-                if (org === "310") {
-                    return 12 * 60 * 60 * 1000; // 12h right now
-                }
-            }
-            return null;
-        }
-        */
 }

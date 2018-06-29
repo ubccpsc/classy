@@ -80,3 +80,47 @@ export interface AutoTestGradeTransport extends BaseGradeTransport {
     repoId: string;
     repoURL: string;
 }
+
+export interface AutoTestConfigPayload {
+    success?: AutoTestConfigTransport; // only set if defined
+    failure?: FailurePayload; // only set if defined
+}
+
+/**
+ * AutoTest configuration details.
+ * Requested per-deliverable.
+ */
+export interface AutoTestConfigTransport {
+    dockerImage: string,
+    studentDelay: number,
+    maxExecTime: number,
+    regressionDelivIds: string[]
+}
+
+export interface AutoTestAuthPayload {
+    success?: AutoTestAuthTransport; // only set if defined
+    failure?: FailurePayload; // only set if defined
+}
+
+/**
+ * AutoTest configuration details.
+ * Requested per-deliverable.
+ */
+export interface AutoTestAuthTransport {
+    personId: string,
+    isStaff: boolean,
+    isAdmin: boolean
+}
+
+export interface AutoTestDefaultDeliverablePayload {
+    success?: AutoTestDefaultDeliverableTransport; // only set if defined
+    failure?: FailurePayload; // only set if defined
+}
+
+/**
+ * AutoTest configuration details.
+ * Requested per-deliverable.
+ */
+export interface AutoTestDefaultDeliverableTransport {
+    defaultDeliverable: string
+}

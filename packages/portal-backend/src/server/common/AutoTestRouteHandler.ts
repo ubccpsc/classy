@@ -3,7 +3,12 @@ import * as rp from "request-promise-native";
 
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
-import {AutoTestGradeTransport} from "../../../../common/types/PortalTypes";
+import {
+    AutoTestAuthPayload,
+    AutoTestConfigPayload,
+    AutoTestDefaultDeliverablePayload,
+    AutoTestGradeTransport
+} from "../../../../common/types/PortalTypes";
 
 import {IContainerOutput} from "../../../../autotest/src/Types";
 
@@ -28,46 +33,30 @@ export class AutoTestRouteHandler implements IREST {
         server.post('/githubWebhook', AutoTestRouteHandler.githubWebhook); // forward GitHub Webhooks to AutoTest
     }
 
-    // that.rest.get('/container/:org/:delivId', RouteHandler.atContainerDetails);
     public static atContainerDetails(req: any, res: any, next: any) {
-        Log.info('AutoTestRouteHandler::atContainerDetails(..) - /container/:org/:delivId - start GET');
-        // const user = req.headers.user;
-        // const token = req.headers.token;
+        Log.info('AutoTestRouteHandler::atContainerDetails(..) - /at/container/:delivId - start GET');
 
         // TODO: verify secret
 
-        // const org = req.params.org;
         const delivId = req.params.delivId;
 
         Log.info('AutoTestRouteHandler::atContainerDetails(..) - delivId: ' + delivId);
 
         // TODO: this is just a dummy implementation
-
+        let payload: AutoTestConfigPayload;
         const org = Config.getInstance().getProp(ConfigKey.org);
         if ((org === 'secapstone' || org === 'classytest') && delivId !== 'd9997') { // HACK: the && is terrible and is just for testing
-            res.send({dockerImage: 'secapstone-grader', studentDelay: 60 * 60 * 12, maxExecTime: 300, regressionDelivIds: []});
+            payload = {success: {dockerImage: 'secapstone-grader', studentDelay: 60 * 60 * 12, maxExecTime: 300, regressionDelivIds: []}};
+            res.send(200, payload);
         } else {
-            res.send(400, {message: 'Could not retrieve container details'});
+            payload = {failure: {message: 'Could not retrieve container details', shouldLogout: false}};
+            res.send(400, payload);
         }
-
-
-        /*
-                let sc: SDDMController = new SDDMController(new GitHubController());
-                sc.getStatus(org, user).then(function (status) {
-                    Log.trace('RouteHandler::getCurrentStatus(..) - sending 200; user: ' + user + '; status: ' + status);
-                    res.send({user: user, status: status});
-                }).catch(function (err) {
-                    Log.trace('RouteHandler::getCurrentStatus(..) - sending 400');
-                    res.send(400, {error: err});
-                });
-        */
     }
 
 
     public static atDefaultDeliverable(req: any, res: any, next: any) {
         Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - /defaultDeliverable/:org - start GET');
-        // const user = req.headers.user;
-        // const token = req.headers.token;
 
         // TODO: verify secret
 
@@ -77,35 +66,21 @@ export class AutoTestRouteHandler implements IREST {
 
         // TODO: this is just a dummy implementation
 
+        let payload: AutoTestDefaultDeliverablePayload;
         if (org === 'secapstone' || org === 'classytest') {
-            res.send({delivId: 'd0'});
+            payload = {success: {defaultDeliverable: 'd0'}};
+            res.send(200, payload);
         } else {
-            res.send(400, {error: 'unknown course'});
+            payload = {failure: {message: 'No default deliverable found.', shouldLogout: false}};
+            res.send(400, payload);
         }
-
-        /*
-                let sc: SDDMController = new SDDMController(new GitHubController());
-                sc.getStatus(org, user).then(function (status) {
-                    Log.trace('RouteHandler::getCurrentStatus(..) - sending 200; user: ' + user + '; status: ' + status);
-                    res.send({user: user, status: status});
-                }).catch(function (err) {
-                    Log.trace('RouteHandler::getCurrentStatus(..) - sending 400');
-                    res.send(400, {error: err});
-                });
-        */
     }
 
 
     public static atGradeResult(req: any, res: any, next: any) {
         Log.info('AutoTestRouteHandler::atGradeResult(..) - start');
-        // const user = req.headers.user;
-        // const token = req.headers.token;
 
         // TODO: verify admin secret
-
-        // const org = req.params.org;
-        // const repoId = req.params.repoId;
-        // const delivId = req.params.delivId;
 
         const gradeRecord: AutoTestGradeTransport = req.body; // turn into json?
 
@@ -118,35 +93,17 @@ export class AutoTestRouteHandler implements IREST {
             res.send({success: true}); // respond true, they can't do anything anyways
             Log.error('AutoTestRouteHandler::atGradeResult(..) - ERROR: ' + err);
         });
-
-        /*
-                let sc: SDDMController = new SDDMController(new GitHubController());
-                sc.getStatus(org, user).then(function (status) {
-                    Log.trace('RouteHandler::getCurrentStatus(..) - sending 200; user: ' + user + '; status: ' + status);
-                    res.send({user: user, status: status});
-                }).catch(function (err) {
-                    Log.trace('RouteHandler::getCurrentStatus(..) - sending 400');
-                    res.send(400, {error: err});
-                });
-        */
     }
 
     public static atResult(req: any, res: any, next: any) {
         Log.info('AutoTestRouteHandler::atResult(..) - start');
-        // const user = req.headers.user;
-        // const token = req.headers.token;
 
         // TODO: verify admin secret
 
-        // const org = req.params.org;
         const org = Config.getInstance().getProp(ConfigKey.org);
-        // const repoId = req.params.repoId;
-        // const delivId = req.params.delivId;
-
-        const resultRecord: IContainerOutput = req.body; // turn into json?
+        const resultRecord: IContainerOutput = req.body;
 
         Log.info('AutoTestRouteHandler::atResult(..) - org: ' + org + '; body: ' + JSON.stringify(resultRecord));
-
         let rc = new ResultsController();
         rc.createResult(resultRecord).then(function (success) {
             res.send({success: true}); // respond
@@ -165,33 +122,22 @@ export class AutoTestRouteHandler implements IREST {
      */
     public static atIsStaff(req: any, res: any, next: any) {
         Log.info('AutoTestRouteHandler::atIsStaff(..) - /isStaff/:org/:personId - start GET');
-        // const user = req.headers.user;
-        // const token = req.headers.token;
 
         // TODO: verify secret
-        // const org = req.params.org;
         const org = Config.getInstance().getProp(ConfigKey.org);
         const personId = req.params.personId;
 
         Log.info('AutoTestRouteHandler::atIsStaff(..) - org: ' + org + '; personId: ' + personId);
 
+        let payload: AutoTestAuthPayload;
         // TODO: this is just a dummy implementation
         if (personId === 'rtholmes' || personId === 'nickbradley') {
-            res.send({org: org, personId: personId, isStaff: true});
+            payload = {success: {personId: personId, isStaff: true, isAdmin: true}};
+            res.send(200, payload);
         } else {
-            res.send({org: org, personId: personId, isStaff: false});
+            payload = {success: {personId: personId, isStaff: false, isAdmin: false}};
+            res.send(200, payload);
         }
-
-        /*
-                let sc: SDDMController = new SDDMController(new GitHubController());
-                sc.getStatus(org, user).then(function (status) {
-                    Log.trace('RouteHandler::getCurrentStatus(..) - sending 200; user: ' + user + '; status: ' + status);
-                    res.send({user: user, status: status});
-                }).catch(function (err) {
-                    Log.trace('RouteHandler::getCurrentStatus(..) - sending 400');
-                    res.send(400, {error: err});
-                });
-        */
     }
 
 
@@ -206,7 +152,8 @@ export class AutoTestRouteHandler implements IREST {
     public static githubWebhook(req: any, res: any, next: any) {
         Log.info('AutoTestRouteHandler::githubWebhook(..) - start');
         const webhookBody: any = req.body;
-        // Log.info('RouteHandler::githubWebhook(..) - body: ' + JSON.stringify(webhookBody));
+
+        // TODO: is there any way to verify this actually came from GitHub?
 
         const url = Config.getInstance().getProp(ConfigKey.autotestUrl) + ':' + Config.getInstance().getProp(ConfigKey.autotestPort) + '/githubWebhook';
         const options = {

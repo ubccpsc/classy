@@ -21,7 +21,8 @@ describe("ClassPortal Service", () => {
     it("Should be able for a staff user to be staff.", async () => {
         try {
             const actual = await cp.isStaff("rtholmes");
-            expect(actual).to.equal(true);
+            expect(actual.isStaff).to.equal(true);
+            expect(actual.isAdmin).to.equal(true);
         } catch (err) {
             expect.fail("Should not happen");
         }
@@ -30,7 +31,8 @@ describe("ClassPortal Service", () => {
     it("Should be able for a non-staff user to not be staff.", async () => {
         try {
             const actual = await cp.isStaff("student");
-            expect(actual).to.equal(false);
+            expect(actual.isStaff).to.equal(false);
+            expect(actual.isAdmin).to.equal(false);
         } catch (err) {
             expect.fail("Should not happen");
         }
@@ -39,7 +41,8 @@ describe("ClassPortal Service", () => {
     it("Should be able for invalid user to not be staff.", async () => {
         try {
             const actual = await cp.isStaff("foo");
-            expect(actual).to.equal(false);
+            expect(actual.isStaff).to.equal(false);
+            expect(actual.isAdmin).to.equal(false);
         } catch (err) {
             expect.fail("Should not happen");
         }
@@ -48,11 +51,14 @@ describe("ClassPortal Service", () => {
     it("Should return false for non-staff.", async () => {
         try {
             let actual = await cp.isStaff(null);
-            expect(actual).to.equal(false);
+            expect(actual.isStaff).to.equal(false);
+            expect(actual.isAdmin).to.equal(false);
             actual = await cp.isStaff(undefined);
-            expect(actual).to.equal(false);
+            expect(actual.isStaff).to.equal(false);
+            expect(actual.isAdmin).to.equal(false);
             actual = await cp.isStaff("");
-            expect(actual).to.equal(false);
+            expect(actual.isStaff).to.equal(false);
+            expect(actual.isAdmin).to.equal(false);
         } catch (err) {
             expect.fail("Should not happen");
         }
@@ -92,7 +98,7 @@ describe("ClassPortal Service", () => {
     it("Should return a default deliverable if the course has one.", async () => {
         try {
             const actual = await cp.getDefaultDeliverableId();
-            expect(actual).to.equal("d0");
+            expect(actual.defaultDeliverable).to.equal("d0");
         } catch (err) {
             expect.fail("Should not happen");
         }
