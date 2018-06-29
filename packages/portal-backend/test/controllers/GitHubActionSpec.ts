@@ -9,7 +9,7 @@ import {Test} from "../GlobalSpec";
 import Util from "../../../common/Util";
 import Config, {ConfigKey} from "../../../common/Config";
 
-describe("GitHubActions", () => {
+describe.skip("GitHubActions", () => {
 
     let gh: GitHubActions;
 

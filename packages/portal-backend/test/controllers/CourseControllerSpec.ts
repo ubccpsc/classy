@@ -8,7 +8,8 @@ import {TeamController} from "../../src/controllers/TeamController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {TestGitHubController} from "../../src/controllers/GitHubController";
 import Config, {ConfigKey} from "../../../common/Config";
-import Log from "../../../common/Log";
+import {AutoTestGradeTransport} from "../../../common/types/PortalTypes";
+import {Test} from "../GlobalSpec";
 
 const load1 = require('../GlobalSpec');
 const load2 = require('./GradeControllerSpec');
@@ -101,5 +102,51 @@ describe("CourseController", () => {
 
         // Log.test(JSON.stringify(res));
         // expect(res).to.deep.include(d); // make sure at least one deliverable with the right format is in there
+    });
+
+    it("Should be able to handle a new AutoTest grade.", async () => {
+
+        const grade: AutoTestGradeTransport = {
+            delivId: 'd0',
+
+            score:   100, // grade: < 0 will mean 'N/A' in the UI
+            comment: '', // simple grades will just have a comment
+
+            urlName: 'commitName', // description to go with the URL (repo if exists)
+            URL:     'commitUrl', // commit URL if known, otherwise repo URL (commit / repo if exists)
+
+            timestamp: Date.now(), // even if grade < 0 might as well return when the entry was made
+            custom:    {},
+
+            repoId:  Test.REPONAME1,
+            repoURL: 'repoUrl',
+        };
+
+        const res = await cc.handleNewAutoTestGrade(grade);
+        expect(res).to.be.an('boolean');
+        expect(res).to.be.true;
+    });
+
+    it("Should fail to handle a new AutoTest grade if the repoId is invalid.", async () => {
+
+        const grade: AutoTestGradeTransport = {
+            delivId: 'd0',
+
+            score:   100, // grade: < 0 will mean 'N/A' in the UI
+            comment: '', // simple grades will just have a comment
+
+            urlName: 'commitName', // description to go with the URL (repo if exists)
+            URL:     'commitUrl', // commit URL if known, otherwise repo URL (commit / repo if exists)
+
+            timestamp: Date.now(), // even if grade < 0 might as well return when the entry was made
+            custom:    {},
+
+            repoId:  'INVALIDID',
+            repoURL: 'repoUrl',
+        };
+
+        const res = await cc.handleNewAutoTestGrade(grade);
+        expect(res).to.be.an('boolean');
+        expect(res).to.be.false;
     });
 });

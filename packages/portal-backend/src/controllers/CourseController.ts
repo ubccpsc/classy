@@ -1,7 +1,6 @@
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
-import {DeliverableTransport, StudentTransport, AutoTestGradeTransport} from '../../../common/types/PortalTypes';
-import {GradePayload} from "../../../common/types/SDMMTypes";
+import {AutoTestGradeTransport, DeliverableTransport, StudentTransport} from '../../../common/types/PortalTypes';
 
 import {RepositoryController} from "./RepositoryController";
 import {DatabaseController} from "./DatabaseController";
@@ -139,7 +138,18 @@ export class CourseController { // don't implement ICourseController yet
         Log.info("CourseController::handleNewGrade( .. ) - start");
 
         try {
-            let peopleIds = await this.rc.getPeopleForRepo(grade.repoId);
+            let repo = await this.rc.getRepository(grade.repoId); // sanity check
+            if (repo === null) {
+                Log.error("CourseController::handleNewGrade( .. ) - invalid repo name: " + grade.repoId);
+                return false;
+            }
+
+            let peopleIds = await this.rc.getPeopleForRepo(grade.repoId); // sanity check
+            if (peopleIds.length < 1) {
+                Log.error("CourseController::handleNewGrade( .. ) - no people to associate grade record with.");
+                return false;
+            }
+
             for (const personId of peopleIds) {
                 let existingGrade = await this.gc.getGrade(personId, grade.delivId);
                 if (existingGrade === null || existingGrade.score < grade.score) {
@@ -149,7 +159,6 @@ export class CourseController { // don't implement ICourseController yet
                     Log.info("CourseController::handleNewGrade( .. ) - grade is not higher");
                 }
             }
-            // createGrade(org: string, repoId: string, delivId: string, score: number, comment: string, URL: string, timestamp: number)
             return true;
         } catch (err) {
             Log.error("CourseController::handleNewGrade( .. ) - ERROR: " + err);
