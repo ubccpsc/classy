@@ -20,7 +20,7 @@ export class AutoTestRouteHandler implements IREST {
     public registerRoutes(server: restify.Server) {
         Log.info('AutoTestRouteHandler::registerRoutes() - start');
 
-        server.get('/defaultDeliverable/:org', AutoTestRouteHandler.atDefaultDeliverable);
+        server.get('/at/defaultDeliverable', AutoTestRouteHandler.atDefaultDeliverable); // /:org
         server.get('/isStaff/:org/:personId', AutoTestRouteHandler.atIsStaff);
         server.get('/container/:org/:delivId', AutoTestRouteHandler.atContainerDetails);
         server.post('/at/grade/', AutoTestRouteHandler.atGradeResult); // was: /grade/:org/:repoId/:delivId

@@ -60,7 +60,7 @@ export class ClassPortal implements IClassPortal {
     public async getDefaultDeliverableId(): Promise<string | null> {
 
         const courseId = Config.getInstance().getProp(ConfigKey.org); // TODO: get rid of this var
-        const url = this.host + ":" + this.port + "/defaultDeliverable" + "/" + courseId;
+        const url = this.host + ":" + this.port + "/at/defaultDeliverable";
         Log.info("ClassPortal::getDefaultDeliverableId(..) - Sending request to " + url);
         return rp(url).then(function (res) {
             Log.trace("ClassPortal::getDefaultDeliverableId( " + courseId + " ) - success; payload: " + res);

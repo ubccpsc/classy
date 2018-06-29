@@ -24,7 +24,7 @@ describe("GitHub Event Parser", () => {
             "commitSHA":   "bbe3980fff47b7d6a921e9f89c6727bea639589c",
             "commitURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/bbe3980fff47b7d6a921e9f89c6727bea639589c",
             "postbackURL": "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments",
-            "org":         "CPSC310-2017W-T2",
+            // "org":         "CPSC310-2017W-T2",
             "projectURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
             "timestamp":   1516324553000
         };
@@ -42,7 +42,7 @@ describe("GitHub Event Parser", () => {
             "cloneURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git",
             "commitSHA":   "6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
             "commitURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
-            "org":         "CPSC310-2017W-T2",
+            // "org":         "CPSC310-2017W-T2",
             "projectURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
             "postbackURL": "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/6da86d2bdfe8fec9120b60e8d7b71c66077489b6/comments",
             "repoId":      "d1_project9999",
@@ -70,7 +70,7 @@ describe("GitHub Event Parser", () => {
             "commitSHA":   "d5f2203cfa1ae43a45932511ce39b2368f1c72ed",
             "cloneURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git",
             "commitURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/d5f2203cfa1ae43a45932511ce39b2368f1c72ed",
-            "org":         "CPSC310-2017W-T2",
+            // "org":         "CPSC310-2017W-T2",
             "projectURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
             "postbackURL": "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
             "repoId":      "d1_project9999",
@@ -89,7 +89,7 @@ describe("GitHub Event Parser", () => {
             "botMentioned": true,
             "commitSHA":    "bbe3980fff47b7d6a921e9f89c6727bea639589c",
             "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/bbe3980fff47b7d6a921e9f89c6727bea639589c",
-            "org":          null,
+            // "org":          null,
             "delivId":      "d7",
             // "projectURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
             // "repoId":         "d1_project9999",
@@ -114,7 +114,7 @@ describe("GitHub Event Parser", () => {
             // "projectURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
             "postbackURL":  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments",
             "personId":     "cs310",
-            "org":          null,
+            // "org":          null,
             "delivId":      "d7",
             "timestamp":    1516324833000
         };
@@ -135,7 +135,7 @@ describe("GitHub Event Parser", () => {
             // "projectURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
             "postbackURL":  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/6da86d2bdfe8fec9120b60e8d7b71c66077489b6/comments",
             "personId":     "cs310",
-            "org":          null,
+            // "org":          null,
             "delivId":      null,
             "timestamp":    1516320674000
         };
@@ -156,7 +156,7 @@ describe("GitHub Event Parser", () => {
             // "projectURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
             "postbackURL":  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
             "personId":     "cs310",
-            "org":          null,
+            // "org":          null,
             "delivId":      "d7",
             "timestamp":    1516324931000
         };
