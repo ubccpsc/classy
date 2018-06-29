@@ -65,7 +65,6 @@ export class GithubUtil {
                 commitURL,
                 postbackURL,
                 personId: requestor,
-                org:      courseId,
                 delivId,
                 timestamp
             };
@@ -128,7 +127,6 @@ export class GithubUtil {
                 cloneURL,
                 commitSHA,
                 commitURL,
-                org,
                 projectURL,
                 postbackURL,
                 timestamp

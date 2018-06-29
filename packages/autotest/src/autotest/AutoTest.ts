@@ -8,6 +8,7 @@ import {ICommentEvent, ICommitRecord, IContainerInput, IContainerOutput} from ".
 import {IDataStore} from "./DataStore";
 import {MockGrader} from "./mocks/MockGrader";
 import {Queue} from "./Queue";
+import {AutoTestGradeTransport} from "../../../common/types/PortalTypes";
 
 export interface IAutoTest {
     /**
@@ -30,7 +31,6 @@ export interface IAutoTest {
 }
 
 export abstract class AutoTest implements IAutoTest {
-    protected readonly courseId: string;
     protected readonly dataStore: IDataStore;
 
     private regressionQueue = new Queue();
@@ -42,8 +42,7 @@ export abstract class AutoTest implements IAutoTest {
     private standardExecution: IContainerInput | null = null;
     private expresssExecution: IContainerInput | null = null;
 
-    constructor(courseId: string, dataStore: IDataStore) {
-        this.courseId = courseId;
+    constructor(dataStore: IDataStore) {
         this.dataStore = dataStore;
     }
 
@@ -100,7 +99,7 @@ export abstract class AutoTest implements IAutoTest {
                 }
             }
         } catch (err) {
-            Log.error("AutoTest::tick() - course: " + this.courseId + "; ERROR: " + err.message);
+            Log.error("AutoTest::tick() - ERROR: " + err.message);
         }
     }
 
@@ -287,7 +286,7 @@ export abstract class AutoTest implements IAutoTest {
             this.tick();
             Log.info("AutoTest::handleExecutionComplete(..) - done; took: " + Util.took(start));
         } catch (err) {
-            Log.error("AutoTest::handleExecutionComplete(..) - course: " + this.courseId + "; ERROR: " + err.message);
+            Log.error("AutoTest::handleExecutionComplete(..) - ERROR: " + err.message);
         }
     }
 
@@ -314,8 +313,8 @@ export abstract class AutoTest implements IAutoTest {
                 isProd = false; // EMPTY and POSTBACK used by test environment
             }
             if (isProd === true) {
-                const host: string = Config.getInstance().getProp(ConfigKey.graderHost);
-                const port: number = Config.getInstance().getProp(ConfigKey.graderPort);
+                const atHost: string = Config.getInstance().getProp(ConfigKey.graderHost);
+                const atPort: number = Config.getInstance().getProp(ConfigKey.graderPort);
                 const cpHost: string = Config.getInstance().getProp(ConfigKey.classPortalHost);
                 const cpPort: number = Config.getInstance().getProp(ConfigKey.classPortalPort);
                 const image: string = Config.getInstance().getProp(ConfigKey.dockerId);
@@ -329,7 +328,7 @@ export abstract class AutoTest implements IAutoTest {
                 const timestamp: number = input.pushInfo.timestamp;
                 const delivId: string = input.delivId;
                 const id: string = `${commitSHA}-${delivId}`;
-                const body = {
+                const body = { // TODO: add type (this is used inside the container)
                     "assnId":    delivId,
                     "timestamp": timestamp,
                     "assn":      {
@@ -345,7 +344,7 @@ export abstract class AutoTest implements IAutoTest {
                 };
                 const gradeServiceOpts: rp.OptionsWithUrl = {
                     method:  "PUT",
-                    url:     `http://${host}:${port}/task/grade/${id}`,
+                    url:     `http://${atHost}:${atPort}/task/grade/${id}`,
                     body,
                     json:    true, // Automatically stringifies the body to JSON,
                     timeout: 360000  // enough time that the container will have timed out
@@ -382,15 +381,22 @@ export abstract class AutoTest implements IAutoTest {
                     if (output.report !== null && typeof output.report.scoreOverall !== "undefined") {
                         score = output.report.scoreOverall;
                     }
-                    const gradePayload = {
+                    const gradePayload: AutoTestGradeTransport = {
+                        delivId,
                         score,
-                        url:     commitURL,
+                        repoId:  input.pushInfo.repoId,
+                        repoURL: input.pushInfo.projectURL,
+
+                        urlName: input.pushInfo.repoId,
+                        URL:     commitURL,
+
                         comment: output.feedback,
                         timestamp,
+                        custom:  {}
                     };
                     const postGradeOpts: rp.OptionsWithUrl = {
                         method: "POST",
-                        url:    `https://${cpHost}:${cpPort}/grade/${org}/${repo}/${delivId}`,
+                        url:    `https://${cpHost}:${cpPort}/at/grade/`, // ${org}/${repo}/${delivId}
                         json:   true,
                         body:   gradePayload,
                     };

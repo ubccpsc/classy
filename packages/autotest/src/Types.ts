@@ -2,7 +2,6 @@
 // Types needed from the Container's POV
 //
 export interface IPushEvent {
-    org: string; // orgName
     repoId: string; // was repo
 
     branch: string; // really refs
@@ -16,7 +15,6 @@ export interface IPushEvent {
 }
 
 export interface ICommentEvent {
-    org: string | null; // was org
     personId: string; // was username
     delivId: string | null; // string if specified
 
@@ -30,7 +28,6 @@ export interface ICommentEvent {
 
 export interface IFeedbackGiven {
     personId: string;
-    org: string;
     delivId: string;
     timestamp: number;
     commitURL: string; // for information only
@@ -45,7 +42,6 @@ export interface ICommitRecord {
 
 export interface IContainerInput {
     pushInfo: IPushEvent;
-    org: string;
     delivId: string;
 }
 
@@ -73,7 +69,6 @@ export interface IGradeReport {
 }
 
 export interface IAttachment {
-
     name: string;
     data: any;
     content_type: string;

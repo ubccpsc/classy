@@ -1,8 +1,10 @@
 import {IClassPortal} from "../ClassPortal";
+import Config, {ConfigKey} from "../../../../common/Config";
 
 export class MockClassPortal implements IClassPortal {
 
-    public async isStaff(courseId: string, userName: string): Promise<boolean> {
+    public async isStaff(userName: string): Promise<boolean> {
+        const courseId = Config.getInstance().getProp(ConfigKey.org); // TODO: get rid of var
         if (typeof courseId === "undefined" || courseId === null || typeof userName === "undefined" || userName === null) {
             return false;
         }
@@ -12,16 +14,17 @@ export class MockClassPortal implements IClassPortal {
         return false;
     }
 
-    public async getDefaultDeliverableId(commitUrl: string): Promise<string | null> {
-        if (typeof commitUrl !== "undefined" && commitUrl !== null) {
-            if (commitUrl.indexOf("310") >= 0) {
-                return "d1";
-            }
-        }
+    public async getDefaultDeliverableId(): Promise<string | null> {
+        // if (typeof commitUrl !== "undefined" && commitUrl !== null) {
+        //     if (commitUrl.indexOf("310") >= 0) {
+        //         return "d1";
+        //     }
+        // }
         return null;
     }
 
-    public async getContainerDetails(courseId: string, delivId: string): Promise<{ dockerImage: string, studentDelay: number, maxExecTime: number, regressionDelivIds: string[] } | null> {
+    public async getContainerDetails(delivId: string): Promise<{ dockerImage: string, studentDelay: number, maxExecTime: number, regressionDelivIds: string[] } | null> {
+        const courseId = Config.getInstance().getProp(ConfigKey.org); // TODO: get rid of var
         if (typeof courseId !== "undefined" && courseId !== null && typeof delivId !== "undefined" && delivId !== null) {
             if (courseId === "310") {
                 return {dockerImage: "310container", studentDelay: 100, maxExecTime: 300, regressionDelivIds: []};

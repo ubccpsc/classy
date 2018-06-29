@@ -184,7 +184,7 @@ describe("MongoStore", () => {
         await ds.saveFeedbackGivenRecord(TestData.feedbackRecordB);
 
         // TEST
-        const actual = await ds.getLatestFeedbackGivenRecord(TestData.feedbackRecordA.org, TestData.feedbackRecordA.delivId, TestData.feedbackRecordA.personId);
+        const actual = await ds.getLatestFeedbackGivenRecord(TestData.feedbackRecordA.delivId, TestData.feedbackRecordA.personId);
 
         // VERIFY
         expect(actual).to.not.be.null;

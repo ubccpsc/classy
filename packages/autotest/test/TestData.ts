@@ -7,7 +7,7 @@ export class TestData {
         "commitSHA":   "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "commitURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "projectURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/",
-        "org":         "CPSC310-2017W-T2",
+        // "org":         "CPSC310-2017W-T2",
         "postbackURL": "EMPTY",
         "repoId":      "d0_team999",
         "timestamp":   1516472872288
@@ -19,7 +19,7 @@ export class TestData {
         "commitSHA":   "eventb0918b872997de4c4d2baf4c263f8d4c6dc2",
         "commitURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/eventb0918b872997de4c4d2baf4c263f8d4c6dc2",
         "projectURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/",
-        "org":         "CPSC310-2017W-T2",
+        // "org":         "CPSC310-2017W-T2",
         "postbackURL": "EMPTY",
         "repoId":      "d0_team999",
         "timestamp":   1516992872288
@@ -31,20 +31,20 @@ export class TestData {
         "commitSHA":   "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "commitURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "projectURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/",
-        "org":         "CPSC310-2017W-T2",
+        // "org":         "CPSC310-2017W-T2",
         "postbackURL": "POSTBACK",
         "repoId":      "d0_team999",
         "timestamp":   1516472872288
     };
 
     static readonly inputRecordA: IContainerInput = {
-        "org":      "310",
+        // "org":      "310",
         "delivId":  "d0",
         "pushInfo": TestData.pushEventA
     };
 
     static readonly inputRecordB: IContainerInput = {
-        "org":      "310",
+        // "org":      "310",
         "delivId":  "d0",
         "pushInfo": TestData.pushEventB
     };
@@ -54,7 +54,7 @@ export class TestData {
         "commitSHA":    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "personId":     "cs310test",
-        "org":          "310",
+        // "org":          "310",
         "delivId":      "d1",
         "postbackURL":  "EMPTY",
         "timestamp":    1516472873288
@@ -65,7 +65,7 @@ export class TestData {
         "commitSHA":    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "personId":     "cs310test",
-        "org":          "310",
+        // "org":          "310",
         "delivId":      "d1",
         "postbackURL":  "EMPTY",
         "timestamp":    1516523258762
@@ -76,7 +76,7 @@ export class TestData {
         commitSHA:    "abe1b0918b872997de4c4d2baf4c263f8d4staff",
         commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4staff",
         personId:     "staff",
-        org:          "310",
+        // org:          "310",
         delivId:      "d1",
         postbackURL:  "EMPTY",
         timestamp:    1516472874288
@@ -84,7 +84,7 @@ export class TestData {
 
     static readonly feedbackRecordA: IFeedbackGiven = {
         personId:  TestData.commentRecordStaffA.personId,
-        org:       TestData.commentRecordStaffA.org,
+        // org:       TestData.commentRecordStaffA.org,
         delivId:   TestData.commentRecordStaffA.delivId,
         timestamp: TestData.commentRecordStaffA.timestamp + 1000,
         commitURL: TestData.commentRecordStaffA.commitURL
@@ -92,7 +92,7 @@ export class TestData {
 
     static readonly feedbackRecordB: IFeedbackGiven = {
         personId:  TestData.commentRecordUserA.personId,
-        org:       TestData.commentRecordUserA.org,
+        // org:       TestData.commentRecordUserA.org,
         delivId:   TestData.commentRecordUserA.delivId,
         timestamp: TestData.commentRecordUserA.timestamp + 1000,
         commitURL: TestData.commentRecordUserA.commitURL

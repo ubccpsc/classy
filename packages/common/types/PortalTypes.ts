@@ -55,12 +55,11 @@ export interface GradeTransportPayload {
     failure?: FailurePayload; // only set if defined
 }
 
-export interface GradeTransport {
-    personId: string; // person grade is for
-    delivId: string; // deliv grade is associated with
-
-    personName: string;
-    personUrl: string;
+/**
+ * Do not use these directly; use subtypes instead.
+ */
+export interface BaseGradeTransport {
+    delivId: string; // invariant: deliv grade is associated with
 
     score: number; // grade: < 0 will mean 'N/A' in the UI
     comment: string; // simple grades will just have a comment
@@ -70,4 +69,14 @@ export interface GradeTransport {
 
     timestamp: number; // even if grade < 0 might as well return when the entry was made
     custom: any;
+}
+
+export interface GradeTransport extends BaseGradeTransport {
+    personId: string; // invariant: person grade is for
+    personURL: string;
+}
+
+export interface AutoTestGradeTransport extends BaseGradeTransport {
+    repoId: string;
+    repoURL: string;
 }

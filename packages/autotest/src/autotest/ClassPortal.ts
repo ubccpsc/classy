@@ -6,15 +6,11 @@ import Log from "../../../common/Log";
 export interface IClassPortal {
 
     /**
-     * For a given commitURL, figure out what the default deliverable is at the current time.
      *
-     * NOTE: commitURL could be something simpler too, maybe just org is easiest:
+     * GET /admin/getDefaultDeliverable
      *
-     * GET /admin/getDefaultDeliverable/{:org}
-     *
-     * @param courseId
      */
-    getDefaultDeliverableId(courseId: string): Promise<string | null>;
+    getDefaultDeliverableId(): Promise<string | null>;
 
     /**
      * Returns whether the username is staff on the course.
@@ -24,7 +20,7 @@ export interface IClassPortal {
      * @param courseId
      * @param userName
      */
-    isStaff(courseId: string, userName: string): Promise<boolean>;
+    isStaff(userName: string): Promise<boolean>;
 
     /**
      * Gets the identifier for the AutoTest docker container that should process requests for this deliverable.
@@ -33,14 +29,17 @@ export interface IClassPortal {
      *
      * @param courseId
      */
-    getContainerDetails(courseId: string, delivId: string): Promise<{ dockerImage: string, studentDelay: number, maxExecTime: number, regressionDelivIds: string[] } | null>;
+    getContainerDetails(delivId: string): Promise<{ dockerImage: string, studentDelay: number, maxExecTime: number, regressionDelivIds: string[] } | null>;
 }
 
 export class ClassPortal implements IClassPortal {
     private host: string = Config.getInstance().getProp(ConfigKey.backendUrl);
     private port: number = Config.getInstance().getProp(ConfigKey.backendPort);
 
-    public async isStaff(courseId: string, userName: string): Promise<boolean> {
+    public async isStaff(userName: string): Promise<boolean> {
+
+        const courseId = Config.getInstance().getProp(ConfigKey.org); // TODO: get rid of this var
+
         if (typeof courseId === "undefined" || courseId === null || typeof userName === "undefined" || userName === null) {
             Log.error("ClassPortal::isStaff(..) - missing parameters");
             return false;
@@ -58,12 +57,9 @@ export class ClassPortal implements IClassPortal {
         });
     }
 
-    public async getDefaultDeliverableId(courseId: string): Promise<string | null> {
-        if (typeof courseId === "undefined" || courseId === null) {
-            Log.error("ClassPortal::getDefaultDeliverableId(..) - missing parameters");
-            return null;
-        }
+    public async getDefaultDeliverableId(): Promise<string | null> {
 
+        const courseId = Config.getInstance().getProp(ConfigKey.org); // TODO: get rid of this var
         const url = this.host + ":" + this.port + "/defaultDeliverable" + "/" + courseId;
         Log.info("ClassPortal::getDefaultDeliverableId(..) - Sending request to " + url);
         return rp(url).then(function (res) {
@@ -101,7 +97,8 @@ export class ClassPortal implements IClassPortal {
         });
     }
 */
-    public async getContainerDetails(courseId: string, delivId: string): Promise<{ dockerImage: string, studentDelay: number, maxExecTime: number, regressionDelivIds: string[] } | null> {
+    public async getContainerDetails(delivId: string): Promise<{ dockerImage: string, studentDelay: number, maxExecTime: number, regressionDelivIds: string[] } | null> {
+        const courseId = Config.getInstance().getProp(ConfigKey.org); // TODO: get rid of this var
         if (typeof courseId === "undefined" || courseId === null || typeof delivId === "undefined" || delivId === null) {
             Log.error("ClassPortal::getContainerId(..) - missing parameters");
             return null;

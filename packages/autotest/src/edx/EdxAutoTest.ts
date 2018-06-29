@@ -12,8 +12,8 @@ export class EdxAutoTest extends AutoTest {
     private classPortal: IClassPortal = null;
     private github: IGithubService = null;
 
-    constructor(courseId: string, dataStore: IDataStore, portal: IClassPortal, github: IGithubService) {
-        super(courseId, dataStore); // this.org = org;
+    constructor(dataStore: IDataStore, portal: IClassPortal, github: IGithubService) {
+        super(dataStore);
         this.classPortal = portal;
         this.github = github;
     }
@@ -36,7 +36,7 @@ export class EdxAutoTest extends AutoTest {
         }
 
         const info = await EdxUtil.simulatePushEvent(commitURL);
-        const input: IContainerInput = {org: this.courseId, delivId, pushInfo: info};
+        const input: IContainerInput = {delivId, pushInfo: info};
         await this.dataStore.savePush(input);
 
         this.addToStandardQueue(input);
@@ -61,7 +61,6 @@ export class EdxUtil {
             cloneURL:    '',
             commitSHA:   '', // SHA
             commitURL:   'commitURL', // full url to commit
-            org:         '', // orgName
             projectURL:  '', // full url to project
             postbackURL: '', // where to send postback results
             timestamp:   -1 // timestamp of push event

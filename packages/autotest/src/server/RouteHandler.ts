@@ -25,13 +25,13 @@ export default class RouteHandler {
                 const portal = new ClassPortal();
                 const gh = new GithubService();
                 const courseId = Config.getInstance().getProp(ConfigKey.name);
-                RouteHandler.autoTest = new GithubAutoTest(courseId, data, portal, gh);
+                RouteHandler.autoTest = new GithubAutoTest(data, portal, gh);
             } else if (Config.getInstance().getProp(ConfigKey.kind) === "edx") {
                 const data = new MongoDataStore();
                 const portal = new EdXClassPortal();
                 const gh = new GithubService();
                 const courseId = Config.getInstance().getProp(ConfigKey.name);
-                RouteHandler.autoTest = new GithubAutoTest(courseId, data, portal, gh);
+                RouteHandler.autoTest = new GithubAutoTest(data, portal, gh);
             } else {
                 Log.error("RouteHandler::getAutoTest() - ERROR; kind not supported");
             }

@@ -117,13 +117,14 @@ export interface Grade {
 
     score: number;
     comment: string;
+    timestamp: number;
 
     urlName: string | null; // name associated with URL (e.g., project name)
     URL: string | null; // link to commit, if appropriate or repoUrl if not
-    timestamp: number;
 
     custom: any; // {}; not used by the default implementation, but useful for extension (e.g., custom grade values)
 }
+
 
 export interface AutoTestResult {
     // TODO

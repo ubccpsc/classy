@@ -1,6 +1,6 @@
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
-import {DeliverableTransport, StudentTransport} from '../../../common/types/PortalTypes';
+import {DeliverableTransport, StudentTransport, AutoTestGradeTransport} from '../../../common/types/PortalTypes';
 import {GradePayload} from "../../../common/types/SDMMTypes";
 
 import {RepositoryController} from "./RepositoryController";
@@ -135,16 +135,16 @@ export class CourseController { // don't implement ICourseController yet
         return null;
     }
 
-    public async handleNewGrade(repoId: string, delivId: string, grade: GradePayload): Promise<boolean> {
+    public async handleNewAutoTestGrade(grade: AutoTestGradeTransport): Promise<boolean> {
         Log.info("CourseController::handleNewGrade( .. ) - start");
 
         try {
-            let peopleIds = await this.rc.getPeopleForRepo(repoId);
+            let peopleIds = await this.rc.getPeopleForRepo(grade.repoId);
             for (const personId of peopleIds) {
-                let existingGrade = await this.gc.getGrade(personId, delivId);
+                let existingGrade = await this.gc.getGrade(personId, grade.delivId);
                 if (existingGrade === null || existingGrade.score < grade.score) {
                     Log.info("CourseController::handleNewGrade( .. ) - grade is higher; updating");
-                    this.gc.createGrade(repoId, delivId, grade);
+                    this.gc.createGrade(grade.repoId, grade.delivId, grade);
                 } else {
                     Log.info("CourseController::handleNewGrade( .. ) - grade is not higher");
                 }

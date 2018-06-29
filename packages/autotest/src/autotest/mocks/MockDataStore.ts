@@ -188,7 +188,7 @@ export class MockDataStore implements IDataStore {
         }
     }
 
-    public async getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): Promise<IFeedbackGiven | null> {
+    public async getLatestFeedbackGivenRecord(delivId: string, userName: string): Promise<IFeedbackGiven | null> {
         // Log.trace("MockDataStore::getLatestFeedbackGivenRecord(..) - start");
         let ret: IFeedbackGiven | null = null;
         try {
@@ -196,7 +196,7 @@ export class MockDataStore implements IDataStore {
             const records: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
             const shortList: IFeedbackGiven[] = [];
             for (const req of records) {
-                if (req !== null && req.org === courseId && req.delivId === delivId && req.personId === userName) {
+                if (req !== null && req.delivId === delivId && req.personId === userName) {
                     shortList.push(req);
                 }
             }

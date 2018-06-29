@@ -3,7 +3,7 @@ import * as rp from "request-promise-native";
 
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
-import {GradePayload} from "../../../../common/types/SDMMTypes";
+import {AutoTestGradeTransport} from "../../../../common/types/PortalTypes";
 
 import {IContainerOutput} from "../../../../autotest/src/Types";
 
@@ -23,7 +23,7 @@ export class AutoTestRouteHandler implements IREST {
         server.get('/defaultDeliverable/:org', AutoTestRouteHandler.atDefaultDeliverable);
         server.get('/isStaff/:org/:personId', AutoTestRouteHandler.atIsStaff);
         server.get('/container/:org/:delivId', AutoTestRouteHandler.atContainerDetails);
-        server.post('/grade/:org/:repoId/:delivId', AutoTestRouteHandler.atGradeResult);
+        server.post('/at/grade/', AutoTestRouteHandler.atGradeResult); // was: /grade/:org/:repoId/:delivId
         server.post('/at/result/', AutoTestRouteHandler.atResult);
         server.post('/githubWebhook', AutoTestRouteHandler.githubWebhook); // forward GitHub Webhooks to AutoTest
     }
@@ -102,16 +102,16 @@ export class AutoTestRouteHandler implements IREST {
 
         // TODO: verify admin secret
 
-        const org = req.params.org;
-        const repoId = req.params.repoId;
-        const delivId = req.params.delivId;
+        // const org = req.params.org;
+        // const repoId = req.params.repoId;
+        // const delivId = req.params.delivId;
 
-        const gradeRecord: GradePayload = req.body; // turn into json?
+        const gradeRecord: AutoTestGradeTransport = req.body; // turn into json?
 
-        Log.info('AutoTestRouteHandler::atGradeResult(..) - org: ' + org + '; repoId: ' + repoId + '; delivId: ' + delivId + '; body: ' + JSON.stringify(gradeRecord));
+        Log.info('AutoTestRouteHandler::atGradeResult(..) - repoId: ' + gradeRecord.repoId + '; delivId: ' +gradeRecord. delivId + '; body: ' + JSON.stringify(gradeRecord));
 
         let sc = new CourseController(new GitHubController());
-        sc.handleNewGrade(repoId, delivId, gradeRecord).then(function (success) {
+        sc.handleNewAutoTestGrade(gradeRecord).then(function (success: any) {
             res.send({success: true}); // respond
         }).catch(function (err) {
             res.send({success: true}); // respond true, they can't do anything anyways

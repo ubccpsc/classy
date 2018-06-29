@@ -20,7 +20,7 @@ describe("ClassPortal Service", () => {
 
     it("Should be able for a staff user to be staff.", async () => {
         try {
-            const actual = await cp.isStaff(classId, "rtholmes");
+            const actual = await cp.isStaff("rtholmes");
             expect(actual).to.equal(true);
         } catch (err) {
             expect.fail("Should not happen");
@@ -29,7 +29,7 @@ describe("ClassPortal Service", () => {
 
     it("Should be able for a non-staff user to not be staff.", async () => {
         try {
-            const actual = await cp.isStaff(classId, "student");
+            const actual = await cp.isStaff("student");
             expect(actual).to.equal(false);
         } catch (err) {
             expect.fail("Should not happen");
@@ -38,7 +38,7 @@ describe("ClassPortal Service", () => {
 
     it("Should be able for invalid user to not be staff.", async () => {
         try {
-            const actual = await cp.isStaff(classId, "foo");
+            const actual = await cp.isStaff("foo");
             expect(actual).to.equal(false);
         } catch (err) {
             expect.fail("Should not happen");
@@ -47,24 +47,11 @@ describe("ClassPortal Service", () => {
 
     it("Should return false for non-staff.", async () => {
         try {
-            let actual = await cp.isStaff(classId, null);
+            let actual = await cp.isStaff(null);
             expect(actual).to.equal(false);
-            actual = await cp.isStaff(classId, undefined);
+            actual = await cp.isStaff(undefined);
             expect(actual).to.equal(false);
-            actual = await cp.isStaff(classId, "");
-            expect(actual).to.equal(false);
-        } catch (err) {
-            expect.fail("Should not happen");
-        }
-    });
-
-    it("Should return false for courses that don't exist.", async () => {
-        try {
-            let actual = await cp.isStaff("cs999", "staff");
-            expect(actual).to.equal(false);
-            actual = await cp.isStaff(null, "staff");
-            expect(actual).to.equal(false);
-            actual = await cp.isStaff(undefined, "staff");
+            actual = await cp.isStaff("");
             expect(actual).to.equal(false);
         } catch (err) {
             expect.fail("Should not happen");
@@ -73,7 +60,7 @@ describe("ClassPortal Service", () => {
 
     it("Should return the test delay in seconds for a course.", async () => {
         try {
-            const res = await cp.getContainerDetails(classId, "d0");
+            const res = await cp.getContainerDetails("d0");
             expect(res).to.not.be.null;
             const actual = res.studentDelay;
             expect(actual).to.equal(43200);
@@ -82,18 +69,10 @@ describe("ClassPortal Service", () => {
         }
     });
 
-    it("Should return a null test delay if the course does not exist.", async () => {
-        try {
-            const res = await cp.getContainerDetails("cs999", "d0");
-            expect(res).to.equal(null);
-        } catch (err) {
-            expect.fail("Should not happen");
-        }
-    });
 
     it("Should return a container id for an existing course.", async () => {
         try {
-            const res = await cp.getContainerDetails(classId, "d0");
+            const res = await cp.getContainerDetails("d0");
             const actual = res.dockerImage;
             expect(actual).to.equal("secapstone-grader");
         } catch (err) {
@@ -101,9 +80,9 @@ describe("ClassPortal Service", () => {
         }
     });
 
-    it("Should return a null container id if the course does not exist.", async () => {
+    it("Should return a null container id if delivId does not exist.", async () => {
         try {
-            const res = await cp.getContainerDetails("cs999", "d0");
+            const res = await cp.getContainerDetails("d9997");
             expect(res).to.equal(null);
         } catch (err) {
             expect.fail("Should not happen");
@@ -112,19 +91,11 @@ describe("ClassPortal Service", () => {
 
     it("Should return a default deliverable if the course has one.", async () => {
         try {
-            const actual = await cp.getDefaultDeliverableId(classId);
+            const actual = await cp.getDefaultDeliverableId();
             expect(actual).to.equal("d0");
         } catch (err) {
             expect.fail("Should not happen");
         }
     });
 
-    it("Should return a null default deliverable if the course does not exist.", async () => {
-        try {
-            const actual = await cp.getDefaultDeliverableId("cs999");
-            expect(actual).to.equal(null);
-        } catch (err) {
-            expect.fail("Should not happen");
-        }
-    });
 });
