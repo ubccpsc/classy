@@ -16,6 +16,27 @@ export interface Payload {
     failure?: FailurePayload; // only set if defined
 }
 
+export interface OrgTransportPayload {
+    success?: OrgTransport; // only set if defined
+    failure?: FailurePayload; // only set if defined
+}
+
+export interface OrgTransport {
+    org: string;
+}
+
+export interface AuthTransportPayload {
+    success?: AuthTransport; // only set if defined
+    failure?: FailurePayload; // only set if defined
+}
+
+export interface AuthTransport {
+    personId: string;
+    token: string;
+    isAdmin: boolean;
+    isStaff: boolean;
+}
+
 export interface StudentTransportPayload {
     success?: StudentTransport[]; // only set if defined
     failure?: FailurePayload; // only set if defined

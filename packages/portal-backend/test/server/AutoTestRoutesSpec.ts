@@ -1,5 +1,6 @@
 import {expect} from "chai";
 import "mocha";
+import * as fs from "fs-extra";
 
 import {Test} from "../GlobalSpec";
 
@@ -23,7 +24,7 @@ import restify = require('restify');
 
 const request = require('supertest');
 
-describe('REST Routes for AutoTest', function () {
+describe('AutoTest Routes', function () {
 
     var app: restify.Server = null;
 
@@ -38,7 +39,7 @@ describe('REST Routes for AutoTest', function () {
         Test.ORGNAME = Config.getInstance().getProp(ConfigKey.testorg);
         Log.info('GlobalSpec::before() - org: ' + Test.ORGNAME);
         let db = DatabaseController.getInstance();
-        await db.clearData(); // nuke everything
+        // await db.clearData(); // nuke everything
 
         // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
         server = new BackendServer(false);
@@ -195,6 +196,23 @@ describe('REST Routes for AutoTest', function () {
         Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(200);
         expect(response.body.success).to.be.true;
+    });
+
+    it('Should be able to receive a Webhook event from GitHub', async function () {
+        let response = null;
+
+        let body = fs.readJSONSync("../../packages/autotest/test/githubEvents/push_master-branch.json"); // __dirname
+
+        const url = '/githubWebhook';
+        try {
+            response = await request(app).post(url).send(body).set('Accept', 'application/json');
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        // Log.test(response.status + " -> " + JSON.stringify(response.body));
+        expect(response.status).to.equal(400); // really should be 200, but AutoTest isn't running so it will return this error
+        const text = response.text;
+        expect(text.indexOf('ECONNREFUSED')).to.be.greaterThan(0); // at least make sure it fails for the right reason
     });
 
 });

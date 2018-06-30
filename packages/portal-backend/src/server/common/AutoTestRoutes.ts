@@ -20,17 +20,17 @@ import {ResultsController} from "../../controllers/ResultsController";
 /**
  * Just a large body of static methods for translating between restify and the remainder of the system.
  */
-export class AutoTestRouteHandler implements IREST {
+export class AutoTestRoutes implements IREST {
 
     public registerRoutes(server: restify.Server) {
         Log.info('AutoTestRouteHandler::registerRoutes() - start');
 
-        server.get('/at/defaultDeliverable', AutoTestRouteHandler.atDefaultDeliverable); // /:org
-        server.get('/at/isStaff/:personId', AutoTestRouteHandler.atIsStaff);
-        server.get('/at/container/:delivId', AutoTestRouteHandler.atContainerDetails);
-        server.post('/at/grade/', AutoTestRouteHandler.atGradeResult); // was: /grade/:org/:repoId/:delivId
-        server.post('/at/result/', AutoTestRouteHandler.atResult);
-        server.post('/githubWebhook', AutoTestRouteHandler.githubWebhook); // forward GitHub Webhooks to AutoTest
+        server.get('/at/defaultDeliverable', AutoTestRoutes.atDefaultDeliverable); // /:org
+        server.get('/at/isStaff/:personId', AutoTestRoutes.atIsStaff);
+        server.get('/at/container/:delivId', AutoTestRoutes.atContainerDetails);
+        server.post('/at/grade/', AutoTestRoutes.atGradeResult); // was: /grade/:org/:repoId/:delivId
+        server.post('/at/result/', AutoTestRoutes.atResult);
+        server.post('/githubWebhook', AutoTestRoutes.githubWebhook); // forward GitHub Webhooks to AutoTest
     }
 
     public static atContainerDetails(req: any, res: any, next: any) {

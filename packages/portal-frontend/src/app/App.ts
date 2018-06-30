@@ -9,6 +9,7 @@ import {Network} from "./util/Network";
 import {OnsButtonElement, OnsPageElement} from "onsenui";
 import {Factory} from "./Factory";
 import {IView} from "./views/IView";
+import {AuthTransportPayload, OrgTransportPayload} from "../../../common/types/PortalTypes";
 
 declare var classportal: any;
 
@@ -193,16 +194,16 @@ export class App {
                 // valid username; get role from server
                 Log.info("App::validateCredentials() - valid username: " + username);
 
-                const credentials: any = await this.getServerCredentials(username, token);
-                if (credentials === null) {
+                const credentials = await this.getServerCredentials(username, token);
+                if (credentials === null || typeof credentials.failure !== 'undefined') {
                     Log.info("App::validateCredentials() - server validation failed");
                     this.clearCredentials();
                 } else {
-                    Log.info("App::validateCredentials() - validated with server; isAdmin: " + credentials.isAdmin + "; isStaff: " + credentials.isStaff);
-                    localStorage.setItem('user', credentials.user);
-                    localStorage.setItem('token', credentials.token);
-                    localStorage.setItem('isAdmin', credentials.isAdmin);
-                    localStorage.setItem('isStaff', credentials.isStaff);
+                    Log.info("App::validateCredentials() - validated with server; isAdmin: " + credentials.success.isAdmin + "; isStaff: " + credentials.success.isStaff);
+                    localStorage.setItem('user', credentials.success.personId);
+                    localStorage.setItem('token', credentials.success.token);
+                    localStorage.setItem('isAdmin', credentials.success.isAdmin + '');
+                    localStorage.setItem('isStaff', credentials.success.isStaff + '');
                     return true;
                 }
             } else {
@@ -265,7 +266,7 @@ export class App {
      * @param {string} token
      * @returns {Promise<{}>}
      */
-    private getServerCredentials(username: string, token: string): Promise<{}> { // TODO: return should have a type | null
+    private getServerCredentials(username: string, token: string): Promise<AuthTransportPayload> {
         const url = this.backendURL + '/getCredentials';
         Log.trace('App::getServerCredentials( ' + username + '...) - start; url: ' + url);
         const that = this;
@@ -298,7 +299,7 @@ export class App {
         }).then(function (resp: any) {
             Log.trace("App::getServerCredentials(..) - data status: " + resp.statu);
             return resp.json();
-        }).then(function (data: any) {
+        }).then(function (data: AuthTransportPayload) {
             Log.trace("App::getServerCredentials(..) - data json: " + JSON.stringify(data));
             return data;
         }).catch(function (err: any) {
@@ -321,9 +322,9 @@ export class App {
         let response = await fetch(url, options);
         if (response.status === 200) {
             Log.trace('App::retrieveOrg() - status: ' + response.status);
-            const json = await response.json();
-            Log.trace('App::retrieveOrg() - payload: ' + JSON.stringify(json) + '; setting org: ' + json.org);
-            Factory.getInstance(json.org);
+            const json: OrgTransportPayload = await response.json();
+            Log.trace('App::retrieveOrg() - payload: ' + JSON.stringify(json) + '; setting org: ' + json.success.org);
+            Factory.getInstance(json.success.org);
             Log.trace("App::retrieveOrg() - done");
         } else {
             Log.error('App::retrieveOrg() - ERROR');

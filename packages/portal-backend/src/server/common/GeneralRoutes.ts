@@ -3,6 +3,7 @@ import Log from "../../../../common/Log";
 
 import IREST from "../IREST";
 import {CourseController} from "../../controllers/CourseController";
+import {OrgTransportPayload} from '../../../../common/types/PortalTypes';
 
 export default class GeneralRoutes implements IREST {
 
@@ -21,12 +22,14 @@ export default class GeneralRoutes implements IREST {
         Log.info('GeneralRoutes::getOrg(..) - start');
 
         const org = CourseController.getOrg();
+        let payload: OrgTransportPayload;
         if (org !== null) {
-            const payload = {org: org};
+            payload = {success: {org: org}};
             Log.trace('GeneralRoutes::getOrg(..) - sending: ' + JSON.stringify(payload));
-            res.send(payload);
+            res.send(200, payload);
         } else {
-            res.send(400, {failure: {message: 'Unable to retrieve org (server error)'}});
+            payload = {failure: {message: 'Unable to retrieve org (server error)', shouldLogout: false}};
+            res.send(400, payload);
         }
     }
 

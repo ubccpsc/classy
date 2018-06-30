@@ -15,7 +15,7 @@ import restify = require('restify');
 const request = require('supertest');
 const https = require('https');
 
-describe('SDMM: Frontend Routes', function () {
+describe('SDMM Routes', function () {
 
     var app: restify.Server = null;
     var server: BackendServer = null;
