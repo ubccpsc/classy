@@ -195,7 +195,8 @@ describe('AutoTest Routes', function () {
         }
         Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(200);
-        expect(response.body.success).to.be.true;
+        expect(response.body.success).to.not.be.undefined;
+        expect(response.body.success.success).to.be.true;
     });
 
     it('Should be able to receive a Webhook event from GitHub', async function () {
