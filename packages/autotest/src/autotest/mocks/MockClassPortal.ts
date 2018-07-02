@@ -1,6 +1,12 @@
 import {IClassPortal} from "../ClassPortal";
 import Config, {ConfigKey} from "../../../../common/Config";
-import {AutoTestAuthTransport, AutoTestConfigTransport, AutoTestDefaultDeliverableTransport} from "../../../../common/types/PortalTypes";
+import {
+    AutoTestAuthTransport,
+    AutoTestConfigTransport,
+    AutoTestDefaultDeliverableTransport,
+    AutoTestGradeTransport,
+    Payload
+} from "../../../../common/types/PortalTypes";
 import Log from "../../../../common/Log";
 
 export class MockClassPortal implements IClassPortal {
@@ -32,6 +38,10 @@ export class MockClassPortal implements IClassPortal {
         }
         Log.error('MockClassPortal::getContainerDetails() - MockClassPortal should not be used with: ' + org);
         return null;
+    }
+
+    public async sendGrade(grade: AutoTestGradeTransport): Promise<Payload> {
+        return {success: {worked: true}};
     }
 
 }

@@ -2,7 +2,7 @@ import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import Util from "../../../common/Util";
 
-import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven, IPushEvent} from "../Types";
+import {IAutoTestResult, ICommentEvent, IContainerInput, IFeedbackGiven, IPushEvent} from "../Types";
 
 import {IClassPortal} from "../autotest/ClassPortal";
 import {IDataStore} from "../autotest/DataStore";
@@ -32,12 +32,10 @@ export interface IGithubTestManager {
 
 export class GithubAutoTest extends AutoTest implements IGithubTestManager {
 
-    private classPortal: IClassPortal = null;
     private github: IGithubService = null;
 
     constructor(dataStore: IDataStore, portal: IClassPortal, github: IGithubService) {
-        super(dataStore);
-        this.classPortal = portal;
+        super(dataStore, portal);
         this.github = github;
     }
 
@@ -140,7 +138,7 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
             const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(info.personId); // async
             const requestFeedbackDelay: string | null = await this.requestFeedbackDelay(delivId, info.personId, info.timestamp); // ts of comment, not push
             const hasBeenRequestedBefore: IFeedbackGiven = await this.dataStore.getFeedbackGivenRecordForCommit(info.commitURL, info.personId); // students often request grades they have previously 'paid' for
-            const res: ICommitRecord = await this.getOutputRecord(info.commitURL, delivId); // for any user
+            const res: IAutoTestResult = await this.getOutputRecord(info.commitURL, delivId); // for any user
             const isCurrentlyRunning: boolean = this.isCommitExecuting(info.commitURL, delivId);
             Log.trace("GithubAutoTest::handleCommentEvent(..) - isStaff: " + isStaff + "; delay: " + requestFeedbackDelay + "; res: " + res + "; running?: " + isCurrentlyRunning);
 
@@ -215,7 +213,7 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
         }
     }
 
-    protected async processExecution(data: ICommitRecord): Promise<void> {
+    protected async processExecution(data: IAutoTestResult): Promise<void> {
         try {
             const pushRequested: ICommentEvent = await this.getRequestor(data.commitURL, data.input.delivId);
             if (data.output.postbackOnComplete === true) {
@@ -223,7 +221,7 @@ export class GithubAutoTest extends AutoTest implements IGithubTestManager {
                 Log.info("GithubAutoTest::processExecution(..) - postback: true");
                 await this.github.postMarkdownToGithub({url: data.input.pushInfo.postbackURL, message: data.output.feedback});
                 // NOTE: if the feedback was requested for this build it shouldn't count
-                // since we're not calling saveFeedabck this is right
+                // since we're not calling saveFeedback this is right
                 // but if we replay the commit comments, we would see it there, so be careful
             } else if (pushRequested !== null) {
                 // feedback has been previously requested

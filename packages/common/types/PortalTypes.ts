@@ -5,6 +5,7 @@
 
  All fields should be primitives.
  */
+import {IContainerOutput} from "../../autotest/src/Types";
 
 export interface FailurePayload {
     message: string;
@@ -144,4 +145,18 @@ export interface AutoTestDefaultDeliverablePayload {
  */
 export interface AutoTestDefaultDeliverableTransport {
     defaultDeliverable: string
+}
+
+export interface AutoTestResultPayload {
+    success?: AutoTestResultTransport; // only set if defined
+    failure?: FailurePayload; // only set if defined
+}
+
+// TODO: this is not the right type and needs to be fixed
+// maybe update IContainerOutput directly and then refactor
+// this to be actual UI transport types?
+export interface AutoTestResultTransport {
+    delivId: string; // FK
+    repoId: string; // FK
+    output: IContainerOutput;
 }

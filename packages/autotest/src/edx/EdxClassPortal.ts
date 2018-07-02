@@ -1,6 +1,11 @@
 import {IClassPortal} from "../autotest/ClassPortal";
 import Config, {ConfigKey} from "../../../common/Config";
-import {AutoTestAuthTransport, AutoTestDefaultDeliverableTransport} from "../../../common/types/PortalTypes";
+import {
+    AutoTestAuthTransport,
+    AutoTestDefaultDeliverableTransport,
+    AutoTestGradeTransport,
+    Payload
+} from "../../../common/types/PortalTypes";
 
 export class EdXClassPortal implements IClassPortal {
 
@@ -29,6 +34,10 @@ export class EdXClassPortal implements IClassPortal {
             }
         }
         return null;
+    }
+
+    public async sendGrade(grade: AutoTestGradeTransport): Promise<Payload> {
+        return {success: {worked: true}};
     }
 }
 

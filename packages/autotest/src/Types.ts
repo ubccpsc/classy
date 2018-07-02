@@ -33,7 +33,16 @@ export interface IFeedbackGiven {
     commitURL: string; // for information only
 }
 
-export interface ICommitRecord {
+/**
+ * This is the result of an AutoTest run.
+ *
+ * There is some duplication in the record to enable easier querying.
+ *
+ */
+export interface IAutoTestResult {
+    delivId: string; // (already in input)
+    repoId: string;  // (already in input)
+    timestamp: number; // timestamp of push, not of any processing (already in input)
     commitURL: string;
     commitSHA: string;
     input: IContainerInput;

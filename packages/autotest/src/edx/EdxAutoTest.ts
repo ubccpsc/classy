@@ -1,6 +1,6 @@
 import Log from "../../../common/Log";
 
-import {ICommitRecord, IContainerInput, IPushEvent} from "../Types";
+import {IAutoTestResult, IContainerInput, IPushEvent} from "../Types";
 
 import {AutoTest} from "../autotest/AutoTest";
 import {IGithubService} from "../github/GithubService";
@@ -9,12 +9,10 @@ import {IDataStore} from "../autotest/DataStore";
 
 export class EdxAutoTest extends AutoTest {
 
-    private classPortal: IClassPortal = null;
     private github: IGithubService = null;
 
     constructor(dataStore: IDataStore, portal: IClassPortal, github: IGithubService) {
-        super(dataStore);
-        this.classPortal = portal;
+        super(dataStore, portal);
         this.github = github;
     }
 
@@ -45,7 +43,7 @@ export class EdxAutoTest extends AutoTest {
         return Promise.resolve();
     }
 
-    protected processExecution(data: ICommitRecord): Promise<void> {
+    protected processExecution(data: IAutoTestResult): Promise<void> {
         Log.info("EdxAutoTest::processExecution(..) - start; url: " + data.commitURL);
         return Promise.resolve();
     }
