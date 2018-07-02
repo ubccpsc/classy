@@ -28,7 +28,7 @@ export class Factory {
         } else {
             Log.error("Factory::getCustomRouteHandler() - unknown org: " + org);
         }
-        return null; // TODO: should not happen; should return a default implementation instead.
+        return new NoCustomRoutes(); // default handler
     }
 
     /**

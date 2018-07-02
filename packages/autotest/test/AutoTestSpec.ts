@@ -68,9 +68,9 @@ describe("GitHubAutoTest", () => {
         expect(at).not.to.equal(null);
 
         let res = await at.handlePushEvent(null);
-        expect(res).to.be.null;
+        expect(res).to.be.false;
         res = await at.handlePushEvent(undefined);
-        expect(res).to.be.null;
+        expect(res).to.be.false;
     });
 
     it("Should be able to receive multiple pushes.", async () => {
@@ -118,9 +118,9 @@ describe("GitHubAutoTest", () => {
         expect(at).not.to.equal(null);
 
         let res = await at.handleCommentEvent(null);
-        expect(res).to.be.null;
+        expect(res).to.be.false;
         res = await at.handleCommentEvent(undefined);
-        expect(res).to.be.null;
+        expect(res).to.be.false;
     });
 
     it("Should be able to receive a comment event.", async () => {

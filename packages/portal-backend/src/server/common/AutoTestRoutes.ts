@@ -39,12 +39,13 @@ export class AutoTestRoutes implements IREST {
         // TODO: verify secret
 
         const delivId = req.params.delivId;
+        const org = Config.getInstance().getProp(ConfigKey.org);
 
-        Log.info('AutoTestRouteHandler::atContainerDetails(..) - delivId: ' + delivId);
+        Log.info('AutoTestRouteHandler::atContainerDetails(..) - org: ' + org + '; delivId: ' + delivId);
 
         // TODO: this is just a dummy implementation
         let payload: AutoTestConfigPayload;
-        const org = Config.getInstance().getProp(ConfigKey.org);
+
         if ((org === 'secapstone' || org === 'classytest') && delivId !== 'd9997') { // HACK: the && is terrible and is just for testing
             payload = {success: {dockerImage: 'secapstone-grader', studentDelay: 60 * 60 * 12, maxExecTime: 300, regressionDelivIds: []}};
             res.send(200, payload);
