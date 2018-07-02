@@ -26,7 +26,7 @@ export class RouteHandler {
     public static handlePreflight(req: any, res: any) {
         Log.trace("RouteHandler::handlePreflight(..) - " + req.method.toLowerCase() + "; uri: " + req.url);
 
-        const allowHeaders = ['Accept', 'Accept-Version', 'Content-Type', 'Api-Version', 'user-agent', 'user', 'token', 'org'];
+        const allowHeaders = ['Accept', 'Accept-Version', 'Content-Type', 'Api-Version', 'user-agent', 'user', 'token', 'org', 'name'];
         if (res.methods.indexOf('OPTIONS') === -1) {
             res.methods.push('OPTIONS');
         }

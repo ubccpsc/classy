@@ -4,8 +4,7 @@ dotenv.config({path: '../../.env'});
 import Log from "./Log";
 
 export enum ConfigKey {
-    kind = "kind", // REMOVE?
-    name = "name",
+    name = "name", // name of the course (e.g., cs310, cs340, secapstone, classytest) // should be stable between course instances
     org = "org",
     testorg = "testorg",
 
@@ -65,7 +64,7 @@ export default class Config {
         // should not be called by clients but typescript does not allow private constructors
         try {
             this.config = {
-                //  name: process.env.NAME, // don't need this; just use ORG instead
+                name:               process.env.NAME,
                 org:                process.env.ORG,
                 testorg:            process.env.ORGTEST,
                 dockerId:           process.env.GRADER_DOCKER_ID,
@@ -73,7 +72,7 @@ export default class Config {
                 postback:           Boolean(process.env.AUTOTEST_POSTBACK),
                 persistDir:         process.env.GRADER_PERSIST_DIR,
                 port:               Number(process.env.AUTOTEST_PORT),
-                kind:               process.env.KIND,
+                // kind:               process.env.KIND, // REMOVE
                 timeout:            Number(process.env.GRADER_TIMEOUT),
                 botName:            process.env.GH_BOT_USERNAME,
                 githubOrgToken:     process.env.GH_BOT_TOKEN,

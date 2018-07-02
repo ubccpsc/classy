@@ -17,13 +17,14 @@ export interface Payload {
     failure?: FailurePayload; // only set if defined
 }
 
-export interface OrgTransportPayload {
-    success?: OrgTransport; // only set if defined
+export interface ConfigTransportPayload {
+    success?: ConfigTransport; // only set if defined
     failure?: FailurePayload; // only set if defined
 }
 
-export interface OrgTransport {
+export interface ConfigTransport {
     org: string;
+    name: string;
 }
 
 export interface AuthTransportPayload {

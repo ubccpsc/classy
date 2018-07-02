@@ -212,6 +212,21 @@ export class CourseController { // don't implement ICourseController yet
         return null;
     }
 
+    public static getName(): string | null {
+        try {
+            const org = Config.getInstance().getProp(ConfigKey.name);
+            if (org !== null) {
+                return org;
+            } else {
+                Log.error("CourseController::getName() - ERROR: null name");
+            }
+        } catch (err) {
+            Log.error("CourseController::getName() - ERROR: " + err.message);
+        }
+        return null;
+    }
+
+
     /**
      * Gets the students associated with the course.
      *

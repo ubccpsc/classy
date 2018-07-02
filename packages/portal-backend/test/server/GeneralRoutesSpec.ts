@@ -8,9 +8,9 @@ import Config, {ConfigKey} from "../../../common/Config";
 
 import BackendServer from "../../src/server/BackendServer";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
-import {OrgTransportPayload} from "../../../common/types/PortalTypes";
-
+import {ConfigTransportPayload} from "../../../common/types/PortalTypes";
 import restify = require('restify');
+
 const request = require('supertest');
 
 describe('General Routes', function () {
@@ -42,10 +42,10 @@ describe('General Routes', function () {
         return server.stop();
     });
 
-    it('Should be able to get the org name', async function () {
+    it('Should be able to get config details', async function () {
 
         let response = null;
-        let body: OrgTransportPayload;
+        let body: ConfigTransportPayload;
         const url = '/org';
         try {
             response = await request(app).get(url);
@@ -58,6 +58,7 @@ describe('General Routes', function () {
         expect(body.success).to.not.be.undefined;
         expect(body.success.org).to.not.be.undefined;
         expect(body.success.org).to.equal(Config.getInstance().getProp(ConfigKey.org));
+        expect(body.success.name).to.equal(Config.getInstance().getProp(ConfigKey.name));
     });
 
 });

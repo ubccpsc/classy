@@ -86,39 +86,8 @@ export default class Server {
                 // Return the test queue stats
                 // that.rest.get("/queue", restify.bodyParser(), RouteHandler.queueStats);
 
-                // GitHub Webhook endpoints
-
-                if (Config.getInstance().getProp(ConfigKey.kind) === "ubc") {
-                    that.rest.post("/githubWebhook", restify.plugins.bodyParser(), RouteHandler.postGithubHook);
-                }
-
-                // Docker container ResultRecord submission
-                // that.rest.post("/result", restify.bodyParser(), RouteHandler.resultSubmission);
-
-                // Host Static HTML contained in zipFileContainer
-                // that.rest.post("/staticHtml", restify.bodyParser(), RouteHandler.staticHtml);
-
-                /*
-                              // Serves static files for the UI.
-                              that.rest.get("/public/.*", restify.serveStatic({
-                                  directory: __dirname
-                              }));
-
-                              // Loads the homepage.
-                              // curl -is  http://localhost:4321/
-                              that.rest.get('/', RouteHandler.getHomepage);
-
-                              // clear; curl -is  http://localhost:4321/echo/foo
-                              that.rest.get('/echo/:message', RouteHandler.getEcho);
-
-                              // Sends a dataset. Is idempotent and can create or update a dataset id.
-                              // curl localhost:4321/dataset/test --upload-file FNAME.zip
-                              that.rest.put('/dataset/:id', RouteHandler.putDataset);
-                */
-                // Receives queries. Although these queries never change the server (and thus could be GETs)
-                // they are formed by sending JSON bodies, which is not standard for normal GET requests.
-                // curl -is -X POST -d '{ "key": "value" }' http://localhost:4321/query
-                // that.rest.post('/submit', restify.bodyParser(), RouteHandler.postSubmit);
+                // GitHub Webhook endpoint
+                that.rest.post("/githubWebhook", restify.plugins.bodyParser(), RouteHandler.postGithubHook);
 
                 that.rest.listen(that.port, function () {
                     Log.info("Server::start() - restify listening: " + that.rest.url);

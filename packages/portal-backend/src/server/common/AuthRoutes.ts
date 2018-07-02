@@ -66,11 +66,11 @@ export class AuthRoutes implements IREST {
     public static getAuth(req: any, res: any, next: any) {
         Log.trace("AuthRouteHandler::getAuth(..) - /auth redirect start");
         let config = Config.getInstance();
-        const org = config.getProp(ConfigKey.org);
+        // const org = config.getProp(ConfigKey.org);
         // const org = req.query.org;
-
-        const githubRedirect = config.getProp(ConfigKey.backendUrl) + ':' + config.getProp(ConfigKey.backendPort) + '/githubCallback?org=' + org;
-        Log.info("AuthRouteHandler::getAuth(..) - /auth redirect; course: " + org + "; URL: " + githubRedirect);
+        const name = config.getProp(ConfigKey.name);
+        const githubRedirect = config.getProp(ConfigKey.backendUrl) + ':' + config.getProp(ConfigKey.backendPort) + '/githubCallback?name=' + name;
+        Log.info("AuthRouteHandler::getAuth(..) - /auth redirect; course: " + name + "; URL: " + githubRedirect);
 
         const setup = {
             clientId:         config.getProp(ConfigKey.githubClientId),
@@ -107,7 +107,8 @@ export class AuthRoutes implements IREST {
         // TODO: do we need this redirect?
         const backendUrl = config.getProp(ConfigKey.backendUrl);
         const backendPort = config.getProp(ConfigKey.backendPort);
-        const githubRedirect = backendUrl + ':' + backendPort + '/githubCallback?orgName=secapstone';  // SDMM HardCode
+        // const githubRedirect = backendUrl + ':' + backendPort + '/githubCallback?orgName=secapstone';  // SDMM HardCode
+        const githubRedirect = backendUrl + ':' + backendPort + '/githubCallback?name=' + config.getProp(ConfigKey.name);
         Log.info('AuthRouteHandler::githubCallback(..) - / githubCallback; URL: ' + githubRedirect);
 
         const opts = {

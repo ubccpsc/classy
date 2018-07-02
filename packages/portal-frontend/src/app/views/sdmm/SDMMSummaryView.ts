@@ -12,6 +12,7 @@ import {GradePayload, StatusPayload} from "../../../../../common/types/SDMMTypes
 
 import {UI} from "../../util/UI";
 import {IView} from "../IView";
+import {Factory} from "../../Factory";
 
 export class SDMMSummaryView implements IView {
 
@@ -343,7 +344,8 @@ export class SDMMSummaryView implements IView {
             headers: {
                 user:  localStorage.user,
                 token: localStorage.token,
-                org:   localStorage.org
+                // org:   localStorage.org
+                name:  Factory.getInstance().getName()
             }
         };
         return options;

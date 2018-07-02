@@ -9,7 +9,7 @@ import {Network} from "./util/Network";
 import {OnsButtonElement, OnsPageElement} from "onsenui";
 import {Factory} from "./Factory";
 import {IView} from "./views/IView";
-import {AuthTransportPayload, OrgTransportPayload} from "../../../common/types/PortalTypes";
+import {AuthTransportPayload, ConfigTransport, ConfigTransportPayload} from "../../../common/types/PortalTypes";
 
 declare var classportal: any;
 
@@ -48,7 +48,7 @@ export class App {
         const that = this;
 
         // before anything else happens, get the org associated with the backend
-        await this.retrieveOrg();
+        await this.retrieveConfig();
 
         let validated = await that.validateCredentials();
         this.validated = validated;
@@ -70,14 +70,12 @@ export class App {
                 that.toggleLoginButton();
 
                 const pageName = page.id;
-                let org: string = null;
+                let name: string = null;
 
-                org = Factory.getInstance().getOrg();
-                localStorage.org = org; // TODO: remove; just use the factory to track this
-                Log.trace('App::init()::init - org: ' + org + '; page: ' + pageName + '; opts: ' + JSON.stringify(event));
+                name = Factory.getInstance().getName();
+                Log.trace('App::init()::init - name : ' + name + '; page: ' + pageName + '; opts: ' + JSON.stringify(event));
 
                 // Log.trace('App::init()::init - page: ' + pageName);
-
                 if (pageName === 'index') {
                     Log.trace('App::init()::init - index detected; pushing real target');
                     UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/landing.html');
@@ -117,9 +115,9 @@ export class App {
                     */
 
                     (document.querySelector('#loginButton') as OnsButtonElement).onclick = function () {
-                        localStorage.setItem('org', org);
-                        const url = that.backendURL + '/auth/?org=' + org;
-                        Log.trace('App::init()::init - login pressed for: ' + org + '; url: ' + url);
+                        // localStorage.setItem('org', org);
+                        const url = that.backendURL + '/auth/?name=' + name;
+                        Log.trace('App::init()::init - login pressed for: ' + name + '; url: ' + url);
                         window.location.replace(url);
                     };
                 }
@@ -271,15 +269,16 @@ export class App {
         Log.trace('App::getServerCredentials( ' + username + '...) - start; url: ' + url);
         const that = this;
 
-        const org = localStorage.org;
-
+        // const org = localStorage.org;
+        const name = Factory.getInstance().getName();
         const options = {
             headers: {
                 'Content-Type': 'application/json',
                 'User-Agent':   'Portal',
                 'user':         username,
                 'token':        token,
-                'org':          org
+                'name':         name
+                // 'org':          org
             }
         };
         return fetch(url, options).then(function (resp: any) {
@@ -297,7 +296,7 @@ export class App {
                 return resp;
             }
         }).then(function (resp: any) {
-            Log.trace("App::getServerCredentials(..) - data status: " + resp.statu);
+            Log.trace("App::getServerCredentials(..) - data status: " + resp.status);
             return resp.json();
         }).then(function (data: AuthTransportPayload) {
             Log.trace("App::getServerCredentials(..) - data json: " + JSON.stringify(data));
@@ -308,9 +307,9 @@ export class App {
         });
     };
 
-    private async retrieveOrg() {
-        const url = this.backendURL + '/org';
-        Log.trace("App::retrieveOrg() - start; url: " + url);
+    private async retrieveConfig(): Promise<ConfigTransport> {
+        const url = this.backendURL + '/config';
+        Log.trace("App::retrieveConfig() - start; url: " + url);
 
         const options = {
             headers: {
@@ -321,13 +320,20 @@ export class App {
 
         let response = await fetch(url, options);
         if (response.status === 200) {
-            Log.trace('App::retrieveOrg() - status: ' + response.status);
-            const json: OrgTransportPayload = await response.json();
-            Log.trace('App::retrieveOrg() - payload: ' + JSON.stringify(json) + '; setting org: ' + json.success.org);
-            Factory.getInstance(json.success.org);
-            Log.trace("App::retrieveOrg() - done");
+            Log.trace('App::retrieveConfig() - status: ' + response.status);
+            const json: ConfigTransportPayload = await response.json();
+
+            if (typeof json.success !== 'undefined') {
+                Log.trace('App::retrieveConfig() - success; payload: ' + JSON.stringify(json) + '; setting org: ' + json.success.org);
+                Factory.getInstance(json.success.name); // name instead of org
+                return json.success;
+            } else {
+                Log.error('App::retrieveConfig() - failed: ' + JSON.stringify(json) + ')');
+                return {org: 'ERROR', name: 'ERROR'};
+            }
         } else {
-            Log.error('App::retrieveOrg() - ERROR');
+            Log.error('App::retrieveConfig() - ERROR');
+            return {org: 'ERROR', name: 'ERROR'};
         }
     }
 
