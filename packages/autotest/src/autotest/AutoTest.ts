@@ -173,6 +173,8 @@ export abstract class AutoTest implements IAutoTest {
                 onQueue = true;
             } else if (this.expressQueue.indexOf(commitURL) >= 0) {
                 onQueue = true;
+            } else if (this.regressionQueue.indexOf(commitURL) >= 0) {
+                onQueue = true;
             }
         } catch (err) {
             Log.error("AutoTest::isOnQueue() - ERROR: " + err);
@@ -315,8 +317,8 @@ export abstract class AutoTest implements IAutoTest {
             if (isProd === true) {
                 const atHost: string = Config.getInstance().getProp(ConfigKey.graderHost);
                 const atPort: number = Config.getInstance().getProp(ConfigKey.graderPort);
-                const cpHost: string = Config.getInstance().getProp(ConfigKey.classPortalHost);
-                const cpPort: number = Config.getInstance().getProp(ConfigKey.classPortalPort);
+                // const cpHost: string = Config.getInstance().getProp(ConfigKey.classPortalHost);
+                // const cpPort: number = Config.getInstance().getProp(ConfigKey.classPortalPort);
                 const image: string = Config.getInstance().getProp(ConfigKey.dockerId);
                 const timeout: number = Config.getInstance().getProp(ConfigKey.timeout);
                 // const org: string = Config.getInstance().getProp(ConfigKey.org);

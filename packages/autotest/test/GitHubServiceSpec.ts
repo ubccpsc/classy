@@ -6,7 +6,7 @@ import "mocha";
 import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
 
-import {GithubService, IGithubMessage, IGithubService} from "../src/github/GithubService";
+import {GitHubService, IGitHubMessage, IGitHubService} from "../src/github/GithubService";
 
 describe("GitHub Markdown Service", () => {
     Config.getInstance("test");
@@ -14,12 +14,12 @@ describe("GitHub Markdown Service", () => {
     const VALID_URL = "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments";
     // const INVALID_URL = "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2XXXXXINVALID/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments";
 
-    let gh: IGithubService;
+    let gh: IGitHubService;
 
     let postbackVal = Config.getInstance().getProp(ConfigKey.postback);
 
     before(function () {
-        gh = new GithubService();
+        gh = new GitHubService();
 
         // set postback to be true so we an actually validate this
         let config = Config.getInstance();
@@ -34,7 +34,7 @@ describe("GitHub Markdown Service", () => {
 
     // TODO: need to update url
     it.skip("Should be able to post a valid message.", () => {
-        const post: IGithubMessage = {
+        const post: IGitHubMessage = {
             url:     VALID_URL,
             message: "Automated Test Suite Message"
         };

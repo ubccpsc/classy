@@ -7,23 +7,23 @@ import "mocha";
 import Config from "../../common/Config";
 import Log from "../../common/Log";
 
-import {GithubUtil} from "../src/github/GithubUtil";
+import {GitHubUtil} from "../src/github/GithubUtil";
 
 describe("GitHub Event Parser", () => {
     Config.getInstance("test");
 
     it("Should fail gracefully with a bad push.", () => {
 
-        let actual = GithubUtil.processPush(null);
+        let actual = GitHubUtil.processPush(null);
         expect(actual).to.deep.equal(null);
 
-        actual = GithubUtil.processPush(undefined);
+        actual = GitHubUtil.processPush(undefined);
         expect(actual).to.deep.equal(null);
     });
 
     it("Should be able to parse a standard push.", () => {
         const content = readFile("push_master-branch.json");
-        const actual = GithubUtil.processPush(JSON.parse(content));
+        const actual = GitHubUtil.processPush(JSON.parse(content));
         // Log.test(JSON.stringify(actual));
 
         const expected = {
@@ -43,7 +43,7 @@ describe("GitHub Event Parser", () => {
 
     it("Should be able to parse a push that created a new branch.", () => {
         const content = readFile("push_create-new-branch.json");
-        const actual = GithubUtil.processPush(JSON.parse(content));
+        const actual = GitHubUtil.processPush(JSON.parse(content));
         // Log.test(JSON.stringify(actual));
 
         const expected = {
@@ -63,7 +63,7 @@ describe("GitHub Event Parser", () => {
 
     it("Should be able to parse a push that deleted an existing branch.", () => {
         const content = readFile("push_delete-branch.json");
-        const actual = GithubUtil.processPush(JSON.parse(content));
+        const actual = GitHubUtil.processPush(JSON.parse(content));
 
         const expected: any = null;
         expect(actual).to.equal(null); // nothing to do when a branch is deleted
@@ -71,7 +71,7 @@ describe("GitHub Event Parser", () => {
 
     it("Should be able to parse a push to a branch.", () => {
         const content = readFile("push_other-branch.json");
-        const actual = GithubUtil.processPush(JSON.parse(content));
+        const actual = GitHubUtil.processPush(JSON.parse(content));
         // Log.test(JSON.stringify(actual));
 
         const expected = {
@@ -91,7 +91,7 @@ describe("GitHub Event Parser", () => {
 
     it("Should be able to parse a comment on a master commit with one deliverable and a mention.", () => {
         const content = readFile("comment_master_bot_one-deliv.json");
-        const actual = GithubUtil.processComment(JSON.parse(content));
+        const actual = GitHubUtil.processComment(JSON.parse(content));
         Log.test(JSON.stringify(actual));
 
         const expected: any = {
@@ -112,7 +112,7 @@ describe("GitHub Event Parser", () => {
 
     it("Should be able to parse a comment on a master commit with multiple deliverables and a mention.", () => {
         const content = readFile("comment_master_bot_two-deliv.json");
-        const actual = GithubUtil.processComment(JSON.parse(content));
+        const actual = GitHubUtil.processComment(JSON.parse(content));
         Log.test(JSON.stringify(actual));
 
         const expected: any = {
@@ -133,7 +133,7 @@ describe("GitHub Event Parser", () => {
 
     it("Should be able to parse a comment on a master commit with no deliverables and no mention.", () => {
         const content = readFile("comment_master_no-bot_no-deliv.json");
-        const actual = GithubUtil.processComment(JSON.parse(content));
+        const actual = GitHubUtil.processComment(JSON.parse(content));
         Log.test(JSON.stringify(actual));
 
         const expected: any = {
@@ -154,7 +154,7 @@ describe("GitHub Event Parser", () => {
 
     it("Should be able to parse a comment on another branch with one deliverable and a mention.", () => {
         const content = readFile("comment_other-branch_bot_one-deliv.json");
-        const actual = GithubUtil.processComment(JSON.parse(content));
+        const actual = GitHubUtil.processComment(JSON.parse(content));
         Log.test(JSON.stringify(actual));
 
         const expected: any = {

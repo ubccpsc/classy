@@ -7,7 +7,7 @@ import Config, {ConfigKey} from "../../../common/Config";
 import RouteHandler from "./RouteHandler";
 
 /**
- * This configures the REST endpoints for the server.
+ * This configures the endpoints for the AutoTest REST server.
  */
 export default class Server {
     private rest: restify.Server;
@@ -18,7 +18,7 @@ export default class Server {
     }
 
     /**
-     * Stops the server. Again returns a promise so we know when the connections have
+     * Stops the server. Returns a promise so we know when the connections have
      * actually been fully closed and the port has been released.
      *
      * @returns {Promise<boolean>}
@@ -26,8 +26,6 @@ export default class Server {
     public async stop(): Promise<boolean> {
         Log.info("Server::close()");
         const that = this;
-        // await TestJobController.getInstance(7310).close();
-        // await TestJobController.getInstance(7210).close();
         return new Promise<boolean>(function (fulfill) {
             that.rest.close(function () {
                 fulfill(true);
@@ -45,17 +43,6 @@ export default class Server {
     }
 
     /**
-     * Gets the port that was set on this instance of a server
-     * @returns {number}
-     */
-
-    /*
-    public getPort() {
-        return this.port;
-    }
-    */
-
-    /**
      * Starts the server. Returns a promise with a boolean value. Promises are used
      * here because starting the server takes some time and we want to know when it
      * is done (and if it worked).
@@ -66,7 +53,6 @@ export default class Server {
         const that = this;
         return new Promise(function (fulfill, reject) {
             try {
-
                 Log.info("Server::start() - start");
 
                 that.rest = restify.createServer({

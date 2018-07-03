@@ -3,15 +3,15 @@ import Log from "../../../common/Log";
 import {IAutoTestResult, IContainerInput, IPushEvent} from "../Types";
 
 import {AutoTest} from "../autotest/AutoTest";
-import {IGithubService} from "../github/GithubService";
+import {IGitHubService} from "../github/GithubService";
 import {IClassPortal} from "../autotest/ClassPortal";
 import {IDataStore} from "../autotest/DataStore";
 
 export class EdxAutoTest extends AutoTest {
 
-    private github: IGithubService = null;
+    private github: IGitHubService = null;
 
-    constructor(dataStore: IDataStore, portal: IClassPortal, github: IGithubService) {
+    constructor(dataStore: IDataStore, portal: IClassPortal, github: IGitHubService) {
         super(dataStore, portal);
         this.github = github;
     }

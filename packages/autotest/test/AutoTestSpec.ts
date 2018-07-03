@@ -7,8 +7,8 @@ import Config from "../../common/Config";
 import Util from "../../common/Util";
 
 import {IClassPortal} from "../src/autotest/ClassPortal";
-import {GithubService} from "../src/github/GithubService";
-import {GithubAutoTest} from "../src/github/GithubAutoTest";
+import {GitHubService} from "../src/github/GithubService";
+import {GitHubAutoTest} from "../src/github/GithubAutoTest";
 import {ICommentEvent, IFeedbackGiven, IPushEvent} from "../src/Types";
 
 import {MockClassPortal} from "../src/autotest/mocks/MockClassPortal";
@@ -24,8 +24,8 @@ describe("GitHubAutoTest", () => {
     let pushes: IPushEvent[];
     let data: MockDataStore;
     let portal: IClassPortal;
-    let gh: GithubService;
-    let at: GithubAutoTest;
+    let gh: GitHubService;
+    let at: GitHubAutoTest;
 
     // now: 1516559187579
     // now -10h: 1516523258762
@@ -40,8 +40,8 @@ describe("GitHubAutoTest", () => {
         data.clearData();
 
         portal = new MockClassPortal();
-        gh = new GithubService();
-        at = new GithubAutoTest(data, portal, gh);
+        gh = new GitHubService();
+        at = new GitHubAutoTest(data, portal, gh);
 
         (<any>Config.getInstance()).config.postback = false;
     });

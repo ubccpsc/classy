@@ -6,13 +6,13 @@ import {ICommentEvent, IPushEvent} from "../Types";
 /**
  * Translator class to turn REST payloads into IPushEvent and ICommentEvents.
  */
-export class GithubUtil {
+export class GitHubUtil {
 
     // public static getTeamOrProject(repositoryName: string): string {
     //     // NOTE assume repository name is of the form: CS310-2016Fall/cpsc310project_team10
     //     const idx = repositoryName.lastIndexOf("_") + 1;
     //     const val = repositoryName.slice(idx);
-    //     Log.trace("GithubUtil::getTeamOrProject() - input: " + repositoryName + "; output: " + val);
+    //     Log.trace("GitHubUtil::getTeamOrProject() - input: " + repositoryName + "; output: " + val);
     //     return val;
     // }
 
@@ -21,7 +21,7 @@ export class GithubUtil {
         if (matches) {
             let deliv = matches.pop();
             deliv = deliv.replace(/[^a-z0-9]/gi, ""); // replace all non-alphanumeric with empty string
-            Log.trace("GithubUtil::parseDeliverableFromComment() - input: " + message + "; output: " + deliv);
+            Log.trace("GitHubUtil::parseDeliverableFromComment() - input: " + message + "; output: " + deliv);
             return deliv;
         }
         return null;
@@ -42,13 +42,13 @@ export class GithubUtil {
             const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
 
             // const projectUrl = payload.repository.html_url;
-            // const team = GithubUtil.getTeamOrProject(repoName);
+            // const team = GitHubUtil.getTeamOrProject(repoName);
             // const orgName = payload.organization.login;
             // const repoName = payload.repository.name;
 
             const requestor = String(payload.comment.user.login).toLowerCase();
             const message = payload.comment.body;
-            const delivId = GithubUtil.parseDeliverableFromComment(message);
+            const delivId = GitHubUtil.parseDeliverableFromComment(message);
 
             // that.isRequest = payload.comment.body.toLowerCase().includes(this.config.getMentionTag());
             // that.isProcessed = true;
@@ -68,11 +68,11 @@ export class GithubUtil {
                 delivId,
                 timestamp
             };
-            Log.trace("GithubUtil::processComment(..) - handling: " + commentEvent);
+            Log.trace("GitHubUtil::processComment(..) - handling: " + commentEvent);
             return commentEvent;
         } catch (err) {
-            Log.info("GithubUtil::processComment(..) - ERROR parsing: " + err);
-            Log.info("GithubUtil::processComment(..) - ERROR payload: " + JSON.stringify(payload));
+            Log.info("GitHubUtil::processComment(..) - ERROR parsing: " + err);
+            Log.info("GitHubUtil::processComment(..) - ERROR payload: " + JSON.stringify(payload));
             return null;
         }
     }
@@ -87,14 +87,14 @@ export class GithubUtil {
      */
     public static processPush(payload: any): IPushEvent | null {
         try {
-            // const team = GithubUtil.getTeamOrProject(payload.repository.name);
+            // const team = GitHubUtil.getTeamOrProject(payload.repository.name);
             const repo = payload.repository.name;
             const projectURL = payload.repository.html_url;
             const cloneURL = payload.repository.clone_url;
 
             if (payload.deleted === true && payload.head_commit === null) {
                 // commit deleted a branch, do nothing
-                Log.info("GithubUtil::processPush(..) - branch removed; URL: " + projectURL);
+                Log.info("GitHubUtil::processPush(..) - branch removed; URL: " + projectURL);
                 return null;
             }
 
@@ -106,11 +106,11 @@ export class GithubUtil {
             let commitSHA = "";
 
             if (typeof payload.commits !== "undefined" && payload.commits.length > 0) {
-                Log.info("GithubUtil::processPush(..) - regular push; URL: " + headCommitURL);
+                Log.info("GitHubUtil::processPush(..) - regular push; URL: " + headCommitURL);
                 commitSHA = payload.commits[0].id;
             } else {
                 // use this one when creating a new branch (may not have any commits)
-                Log.info("GithubUtil::processPush(..) - branch added; URL: " + headCommitURL);
+                Log.info("GitHubUtil::processPush(..) - branch added; URL: " + headCommitURL);
                 commitSHA = payload.head_commit.id;
             }
 
@@ -131,11 +131,11 @@ export class GithubUtil {
                 postbackURL,
                 timestamp
             };
-            Log.trace("GithubUtil::processPush(..) - handling: " + pushEvent);
+            Log.trace("GitHubUtil::processPush(..) - handling: " + pushEvent);
             return pushEvent;
         } catch (err) {
-            Log.info("GithubUtil::processPush(..) - ERROR parsing: " + err);
-            Log.info("GithubUtil::processPush(..) - ERROR payload: " + JSON.stringify(payload));
+            Log.info("GitHubUtil::processPush(..) - ERROR parsing: " + err);
+            Log.info("GitHubUtil::processPush(..) - ERROR payload: " + JSON.stringify(payload));
             return null;
         }
     }
