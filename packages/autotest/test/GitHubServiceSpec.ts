@@ -6,7 +6,7 @@ import "mocha";
 import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
 
-import {GitHubService, IGitHubMessage, IGitHubService} from "../src/github/GithubService";
+import {GitHubService, IGitHubMessage, IGitHubService} from "../src/github/GitHubService";
 
 describe("GitHub Markdown Service", () => {
     Config.getInstance("test");

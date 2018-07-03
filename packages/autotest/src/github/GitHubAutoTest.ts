@@ -6,7 +6,7 @@ import {IAutoTestResult, ICommentEvent, IContainerInput, IFeedbackGiven, IPushEv
 
 import {IClassPortal} from "../autotest/ClassPortal";
 import {IDataStore} from "../autotest/DataStore";
-import {IGitHubService} from "./GithubService";
+import {IGitHubService} from "./GitHubService";
 import {AutoTest} from "../autotest/AutoTest";
 import {AutoTestAuthTransport, AutoTestConfigTransport} from "../../../common/types/PortalTypes";
 
@@ -208,7 +208,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             Log.info("GitHubAutoTest::handleCommentEvent(..) - done; commit: " + info.commitSHA + "; took: " + Util.took(start));
             return true;
         } catch (err) {
-            Log.error("AutGithubAutoTestoTest::handleCommentEvent(..) - ERROR: " + err.message);
+            Log.error("GitHubAutoTestTest::handleCommentEvent(..) - ERROR: " + err.message);
             throw err;
         }
     }

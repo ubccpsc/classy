@@ -7,7 +7,7 @@ import "mocha";
 import Config from "../../common/Config";
 import Log from "../../common/Log";
 
-import {GitHubUtil} from "../src/github/GithubUtil";
+import {GitHubUtil} from "../src/github/GitHubUtil";
 
 describe("GitHub Event Parser", () => {
     Config.getInstance("test");

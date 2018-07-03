@@ -7,8 +7,8 @@ import Config from "../../common/Config";
 import Util from "../../common/Util";
 
 import {IClassPortal} from "../src/autotest/ClassPortal";
-import {GitHubService} from "../src/github/GithubService";
-import {GitHubAutoTest} from "../src/github/GithubAutoTest";
+import {GitHubService} from "../src/github/GitHubService";
+import {GitHubAutoTest} from "../src/github/GitHubAutoTest";
 import {ICommentEvent, IFeedbackGiven, IPushEvent} from "../src/Types";
 
 import {MockClassPortal} from "../src/autotest/mocks/MockClassPortal";

@@ -41,11 +41,6 @@ export class GitHubUtil {
 
             const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
 
-            // const projectUrl = payload.repository.html_url;
-            // const team = GitHubUtil.getTeamOrProject(repoName);
-            // const orgName = payload.organization.login;
-            // const repoName = payload.repository.name;
-
             const requestor = String(payload.comment.user.login).toLowerCase();
             const message = payload.comment.body;
             const delivId = GitHubUtil.parseDeliverableFromComment(message);
@@ -56,8 +51,6 @@ export class GitHubUtil {
             const botMentioned: boolean = message.toLowerCase().indexOf(botName) >= 0;
 
             const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can't add requests to a past comment
-
-            const courseId: any = null; // not yet known
 
             const commentEvent: ICommentEvent = {
                 botMentioned,
@@ -116,10 +109,7 @@ export class GitHubUtil {
 
             const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
 
-            // const user = String(payload.pusher.name).toLowerCase();
-            // const githubOrg = payload.repository.owner.name;
             const timestamp = payload.repository.pushed_at * 1000;
-            const org = payload.repository.organization;
 
             const pushEvent: IPushEvent = {
                 branch,

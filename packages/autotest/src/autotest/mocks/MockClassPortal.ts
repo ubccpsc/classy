@@ -12,36 +12,42 @@ import Log from "../../../../common/Log";
 export class MockClassPortal implements IClassPortal {
 
     public async isStaff(userName: string): Promise<AutoTestAuthTransport> {
-        const org = Config.getInstance().getProp(ConfigKey.org); // TODO: get rid of var
-        if (org === "test") { // 310
+        const name = Config.getInstance().getProp(ConfigKey.name);
+        if (name === "test") {
             if (userName === "staff" || userName === "cs310") {
                 return {personId: userName, isStaff: true, isAdmin: true};
+            } else {
+                return {personId: userName, isStaff: false, isAdmin: false};
             }
         }
-        Log.error('MockClassPortal::isStaff() - MockClassPortal should not be used with: ' + org);
+        Log.error('MockClassPortal::isStaff() - MockClassPortal should not be used with: ' + name);
         return {personId: userName, isStaff: false, isAdmin: false};
     }
 
     public async getDefaultDeliverableId(): Promise<AutoTestDefaultDeliverableTransport | null> {
-        const org = Config.getInstance().getProp(ConfigKey.org); // TODO: get rid of var
-        if (org === 'test') {
+        const name = Config.getInstance().getProp(ConfigKey.name);
+        if (name === 'test') {
             return {defaultDeliverable: "d1"};
         }
-        Log.error('MockClassPortal::getDefaultDeliverableId() - MockClassPortal should not be used with: ' + org);
+        Log.error('MockClassPortal::getDefaultDeliverableId() - MockClassPortal should not be used with: ' + name);
         return null;
     }
 
     public async getContainerDetails(delivId: string): Promise<AutoTestConfigTransport | null> {
-        const org = Config.getInstance().getProp(ConfigKey.org); // TODO: get rid of var
-        if (org === "test") { // 310
+        const name = Config.getInstance().getProp(ConfigKey.name);
+        if (name === "test") { // 310
             return {dockerImage: "310container", studentDelay: 100, maxExecTime: 300, regressionDelivIds: []};
         }
-        Log.error('MockClassPortal::getContainerDetails() - MockClassPortal should not be used with: ' + org);
+        Log.error('MockClassPortal::getContainerDetails() - MockClassPortal should not be used with: ' + name);
         return null;
     }
 
     public async sendGrade(grade: AutoTestGradeTransport): Promise<Payload> {
-        return {success: {worked: true}};
+        if (name === "test") {
+            return {success: {worked: true}};
+        } else {
+            return {failure: {message: 'did not work', shouldLogout: false}};
+        }
     }
 
 }

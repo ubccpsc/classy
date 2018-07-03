@@ -7,9 +7,9 @@ import Config, {ConfigKey} from "../../../common/Config";
 import {AutoTest} from "../autotest/AutoTest";
 import {ClassPortal} from "../autotest/ClassPortal";
 import {MongoDataStore} from "../autotest/DataStore";
-import {GitHubService} from "../github/GithubService";
-import {GitHubUtil} from "../github/GithubUtil";
-import {GitHubAutoTest} from "../github/GithubAutoTest";
+import {GitHubService} from "../github/GitHubService";
+import {GitHubUtil} from "../github/GitHubUtil";
+import {GitHubAutoTest} from "../github/GitHubAutoTest";
 import {EdXClassPortal} from "../edx/EdxClassPortal";
 import {ICommentEvent, IPushEvent} from "../Types";
 

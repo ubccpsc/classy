@@ -3,7 +3,7 @@ import Log from "../../../common/Log";
 import {IAutoTestResult, IContainerInput, IPushEvent} from "../Types";
 
 import {AutoTest} from "../autotest/AutoTest";
-import {IGitHubService} from "../github/GithubService";
+import {IGitHubService} from "../github/GitHubService";
 import {IClassPortal} from "../autotest/ClassPortal";
 import {IDataStore} from "../autotest/DataStore";
 
