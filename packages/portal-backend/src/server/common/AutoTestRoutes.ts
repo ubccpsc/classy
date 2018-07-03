@@ -111,6 +111,7 @@ export class AutoTestRoutes implements IREST {
         //     res.send({success: true}); // respond true, they can't do anything anyways
         //     Log.error('AutoTestRouteHandler::atResult(..) - ERROR: ' + err);
         // });
+        res.send(200, {success: {worked: true}});
     }
 
     /**

@@ -26,6 +26,8 @@ const request = require('supertest');
 
 describe('AutoTest Routes', function () {
 
+    const TIMEOUT = 5000;
+
     var app: restify.Server = null;
 
     var server: BackendServer = null;
@@ -53,10 +55,10 @@ describe('AutoTest Routes', function () {
         });
     });
 
-    after(function () {
+    after(async function () {
         Log.test('RestifyAutoTestRoutes::after - start');
         return server.stop();
-    });
+    });//.timeout(TIMEOUT);
 
     it('Should respond to a valid defaultDeliverable request', async function () {
 
@@ -73,7 +75,7 @@ describe('AutoTest Routes', function () {
         expect(response.status).to.equal(200);
         expect(body.success.defaultDeliverable).to.not.be.undefined;
         expect(body.success.defaultDeliverable).to.equal('d0');
-    });
+    }).timeout(TIMEOUT);
 
     it('Should respond to a valid result', async function () {
 
@@ -91,7 +93,7 @@ describe('AutoTest Routes', function () {
         expect(response.status).to.equal(200);
         expect(response.body.success).to.not.be.undefined;
         expect(response.body.success).to.equal(true);
-    });
+    }).timeout(TIMEOUT);
 
     it('Should respond to a valid isStaff request for staff', async function () {
 

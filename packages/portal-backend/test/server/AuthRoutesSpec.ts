@@ -15,6 +15,8 @@ const request = require('supertest');
 
 describe('Auth Routes', function () {
 
+    const TIMEOUT = 5000;
+
     var app: restify.Server = null;
 
     var server: BackendServer = null;
@@ -63,7 +65,7 @@ describe('Auth Routes', function () {
         expect(body.success).to.not.be.undefined;
         expect(body.success.personId).to.equal(auth.personId);
         expect(body.success.token).to.equal(auth.token);
-    });
+    }).timeout(TIMEOUT);
 
     it('Should fail to get credentials if the token is bad', async function () {
 

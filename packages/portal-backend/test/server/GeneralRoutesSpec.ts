@@ -46,7 +46,7 @@ describe('General Routes', function () {
 
         let response = null;
         let body: ConfigTransportPayload;
-        const url = '/org';
+        const url = '/config';
         try {
             response = await request(app).get(url);
             body = response.body;

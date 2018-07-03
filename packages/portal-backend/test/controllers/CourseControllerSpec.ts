@@ -7,7 +7,7 @@ import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {TestGitHubController} from "../../src/controllers/GitHubController";
-import Config, {ConfigKey} from "../../../common/Config";
+import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 import {AutoTestGradeTransport} from "../../../common/types/PortalTypes";
 import {Test} from "../GlobalSpec";
 
@@ -46,11 +46,10 @@ describe("CourseController", () => {
         pc = new PersonController();
     });
 
-    it("Should be able to get the org name.", async () => {
-        const res = await CourseController.getOrg();
-        expect(res).to.equal('classytest');
+    it("Should be able to get the config name.", async () => {
+        const res = await CourseController.getName();
+        expect(res).to.equal(ConfigCourses.classytest);
     });
-
 
     it("Should not be able to get a user that doesn't exist.", async () => {
         const USERNAME = "UNKNOWNUSER" + new Date().getTime();
