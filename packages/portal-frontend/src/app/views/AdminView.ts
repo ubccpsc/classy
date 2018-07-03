@@ -33,7 +33,7 @@ interface AdminTabs {
 
 export class AdminView implements IView {
 
-    private remote: string | null = null;
+    protected remote: string | null = null;
     private tabs: AdminTabs | null = null;
     private isStaff = false;
     private isAdmin = false;
@@ -172,7 +172,7 @@ export class AdminView implements IView {
         }
     }
 
-    private getOptions() {
+    protected getOptions() {
         const options = {
             headers: {
                 'Content-Type': 'application/json',

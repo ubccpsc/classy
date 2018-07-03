@@ -32,7 +32,7 @@ export class AssignmentController {
         return assignmentGrade;
     }
 
-    public async setAssignmentGrade(repoID: string, assignId: string, assnPayload: AssignmentGrade): Promise<boolean> {
+    public async setAssignmentGrade(repoID: string, assignId: string, assnPayload: AssignmentGrade, markerId?: string): Promise<boolean> {
         // Array<Array<SubsectionGrade>>
         Log.info("AssignmentController::setAssignmentGrade(" + ", " + repoID + ", " + assignId + ",..) - start");
         Log.trace("AssignmentController::setAssignmentGrade(..) - payload: " + JSON.stringify(assnPayload));
@@ -53,11 +53,13 @@ export class AssignmentController {
             return false;
         }
 
+        Log.trace("AssignmentController::setAssignmentGrade() - " + (markerId? 'Marked by ' + markerId : 'Marked assignment'));
+
         let newGradePayload: GradePayload = {
             // assignmentID: assnPayload.assignmentID,
             // studentID: assnPayload.studentID,
             score:     totalGrade,
-            comment:   'Marked assignment',
+            comment:   markerId? 'Marked by ' + markerId : 'Marked assignment',
             urlName:   repo.id,
             URL:       repo.URL,
             timestamp: Date.now(),

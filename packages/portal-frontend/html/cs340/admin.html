@@ -44,10 +44,18 @@
     </ons-modal>
 
     <template id="deliverables.html">
-        <ons-page id="AdminDeliverables">
+<!--        <ons-page id="AdminDeliverables">
             <p style="text-align: center;">
                 Deliverables Page
             </p>
+        </ons-page>-->
+        <ons-page id="AdminDeliverables">
+            <ons-list id="adminDeliverablesList">
+                <ons-list-header>Deliverables</ons-list-header>
+            </ons-list>
+            <ons-fab id="adminAddDeliverable" position="bottom right">
+                <ons-icon icon="md-plus"></ons-icon>
+            </ons-fab>
         </ons-page>
     </template>
 
@@ -82,6 +90,9 @@
             <p style="text-align: center;">
                 CPSC 340 Custom Grades Page
             </p>
+            <ons-button onclick="window.classportal.view.testfunction()">
+                A button
+            </ons-button>
         </ons-page>
     </template>
 

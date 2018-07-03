@@ -166,8 +166,12 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
         Log.info("CS340REST::setAssignmentGrade() - start");
-
-        const reqBody : AssignmentGrade = JSON.parse(req.body);
+        let reqBody : AssignmentGrade;
+        if(typeof req.body === 'string') {
+            reqBody = JSON.parse(req.body);
+        } else {
+            reqBody = req.body
+        }
 
         if(reqBody === null) {
             Log.error("Unable to get request body: " + req.body);
@@ -199,7 +203,7 @@ export default class CS340REST implements IREST {
                 res.send(400, {error: "no assignment repository created"});
                 return next();
             }
-            let success = await assignController.setAssignmentGrade(repo.id, assignId, reqBody);
+            let success = await assignController.setAssignmentGrade(repo.id, assignId, reqBody, user);
             if (success) {
                 res.send(200, {response: "Success"});
             } else {

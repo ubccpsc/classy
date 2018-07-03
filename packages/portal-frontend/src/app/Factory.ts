@@ -55,7 +55,7 @@ export class Factory {
                 this.studentView = new SDMMSummaryView(backendUrl);
             } else if (this.org === 'CS310-2017Jan' || this.org === 'CS310-2017Jan_TEST') {
                 this.studentView = new CS310View(backendUrl);
-            } else if (this.org === 'cs340') {
+            } else if (this.org === 'cs340' || this.org === 'cpsc340') {
                 this.studentView = new CS340View(backendUrl);
             } else {
                 Log.error("Factory::getView() - ERROR; unknown org: " + this.org);
@@ -88,7 +88,7 @@ export class Factory {
                 // tabs.dashboard = false;
                 // tabs.config = false;
                 this.adminView = new AdminView(backendUrl, tabs);
-            } else if (this.org === 'cs340') {
+            } else if (this.org === 'cs340' || this.org === 'cpsc340') {
                 tabs.teams = false; // no teams
                 tabs.results = false; // no results
                 tabs.dashboard = false; // no dashboard
@@ -134,7 +134,7 @@ export class Factory {
             return 'sdmm';
         } else if (this.org === 'CS310-2017Jan' || this.org === 'CS310-2017Jan_TEST') {
             return 'cs310';
-        } else if (this.org === 'cs340') {
+        } else if (this.org === 'cs340' || this.org === 'cpsc340') {
             return 'cs340';
         } else {
             Log.error("Factory::getHTMLPrefix() - ERROR; unknown org: " + this.org);

@@ -23,7 +23,7 @@ export class Factory {
         } else if (org === 'CS310-2017Jan' || org === 'CS310-2017Jan_TEST' || org === 'classytest') {
             // no custom routes are required for 310
             return new NoCustomRoutes();
-        } else if (org === 'cs340') {
+        } else if (org === 'cs340' || org === 'cpsc340') {
             return new CS340REST();
         } else {
             Log.error("Factory::getCustomRouteHandler() - unknown org: " + org);
