@@ -18,17 +18,27 @@ describe.skip("GitHubActions", () => {
     const REPONAME = getProjectPrefix() + Test.REPONAME1;
     const TEAMNAME = getTeamPrefix() + Test.TEAMNAME1;
 
-    let OLDORGNAME: string | null = null;
+    let oldOrg: string | null = null;
+
+    // before(async () => {
+    //     Test.ORGNAME = 'classytest';
+    //
+    //     OLDORGNAME = Config.getInstance().getProp(ConfigKey.org);
+    //     Config.getInstance().setProp(ConfigKey.org, Test.ORGNAME); // dedicated test org; ensures we don't kill repos in production
+    // });
+    //
+    // after(async () => {
+    //     Config.getInstance().setProp(ConfigKey.org, OLDORGNAME);
+    // });
 
     before(async () => {
-        Test.ORGNAME = 'classytest';
-
-        OLDORGNAME = Config.getInstance().getProp(ConfigKey.org);
-        Config.getInstance().setProp(ConfigKey.org, Test.ORGNAME); // dedicated test org; ensures we don't kill repos in production
+        // test github actions on a test github instance (for safety)
+        oldOrg = Config.getInstance().getProp(ConfigKey.org);
+        Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
     });
 
-    after(async () => {
-        Config.getInstance().setProp(ConfigKey.org, OLDORGNAME);
+    before(async () => {
+        Config.getInstance().setProp(ConfigKey.org, oldOrg);
     });
 
     beforeEach(function () {

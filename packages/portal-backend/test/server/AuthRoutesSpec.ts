@@ -1,8 +1,6 @@
 import {expect} from "chai";
 import "mocha";
 
-import {Test} from "../GlobalSpec";
-
 import Log from "../../../common/Log";
 import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 
@@ -20,10 +18,14 @@ describe('Auth Routes', function () {
     var app: restify.Server = null;
 
     var server: BackendServer = null;
+
+    // let oldOrg: string | null = null;
     before(async () => {
         Log.test('AuthRoutes::before - start');
-        Config.getInstance().setProp(ConfigKey.name, ConfigCourses.classytest); // force testing environment
-        Test.ORGNAME = Config.getInstance().getProp(ConfigKey.testorg);
+
+        // oldOrg = Config.getInstance().getProp(ConfigKey.org);
+        // Config.getInstance().setProp(ConfigKey.name, ConfigCourses.classytest); // force testing environment
+
 
         let db = DatabaseController.getInstance();
         // await db.clearData(); // nuke everything

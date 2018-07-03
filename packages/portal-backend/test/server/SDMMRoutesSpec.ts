@@ -7,6 +7,7 @@ import {Test} from "../GlobalSpec";
 import BackendServer from "../../src/server/BackendServer";
 import {Person} from "../../src/Types";
 import {PersonController} from "../../src/controllers/PersonController";
+import Config, {ConfigKey} from "../../../common/Config";
 
 const loadFirst = require('../GlobalSpec');
 
@@ -65,7 +66,8 @@ describe.skip('SDMM Routes', function () {
         let response = null;
         const url = '/currentStatus/';
         try {
-            response = await request(app).get(url).set({org: Test.ORGNAME, user: Test.USERNAME1, token: 'testtoken'});
+            const name = Config.getInstance().getProp(ConfigKey.name);
+            response = await request(app).get(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
         } catch (err) {
             Log.test('ERROR: ' + err);
         }

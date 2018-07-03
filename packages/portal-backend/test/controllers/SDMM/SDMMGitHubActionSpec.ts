@@ -11,6 +11,7 @@ import {ActionPayload, GradePayload} from "../../../../common/types/SDMMTypes";
 import {GitHubController} from "../../../src/controllers/GitHubController";
 import {GitHubActions} from "../../../src/controllers/util/GitHubActions";
 import {GradesController} from "../../../src/controllers/GradesController";
+import Config, {ConfigKey} from "../../../../common/Config";
 
 const loadFirst = require('../../GlobalSpec');
 const rFirst = require('./SDMMControllerSpec'); // so we go last
@@ -21,13 +22,20 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
 
     let TIMEOUT = 5000;
 
-    let ORGNAME = 'secapstone';
+    // let ORGNAME = 'secapstone';
     const REPONAME = getProjectPrefix() + Test.REPONAME1;
     const TEAMNAME = getTeamPrefix() + Test.TEAMNAME1;
 
+    let oldOrg: string = null; // track the old org so it can be restored
+
     before(async () => {
-        Test.ORGNAME = ORGNAME; // use real org name so the repos are provisioned correctly
-        // config.name will still be test though
+        // test github actions on a test github instance (for safety)
+        oldOrg = Config.getInstance().getProp(ConfigKey.org);
+        Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
+    });
+
+    before(async () => {
+        Config.getInstance().setProp(ConfigKey.org, oldOrg);
     });
 
     beforeEach(function () {

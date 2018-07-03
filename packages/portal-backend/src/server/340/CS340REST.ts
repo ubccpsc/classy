@@ -223,7 +223,7 @@ export default class CS340REST implements IREST {
         // TODO [Jonathan]: Return an array of deliverables
         let delivController : DeliverablesController = new DeliverablesController();
 
-        delivController.getAllDeliverables(org).then((result) => {
+        delivController.getAllDeliverables().then((result) => {
             res.send(200, {response: result});
         });
 

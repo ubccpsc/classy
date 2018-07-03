@@ -13,8 +13,9 @@ before(async () => {
 
     Config.getInstance().setProp(ConfigKey.name, ConfigCourses.classytest); // force testing env
 
-    Test.ORGNAME = Config.getInstance().getProp(ConfigKey.testorg);
-    Log.info('GlobalSpec::before() - org: ' + Test.ORGNAME);
+    // Test.ORGNAME = Config.getInstance().getProp(ConfigKey.testorg);
+    // Log.info('GlobalSpec::before() - org: ' + Test.ORGNAME);
+
     let db = DatabaseController.getInstance();
     await db.clearData(); // nuke everything
 });
@@ -26,7 +27,7 @@ after(() => {
 
 export class Test {
 
-    public static ORGNAME = "NOTSETYET"; // TODO: fix this
+//    public static ORGNAME = "NOTSETYET"; // TODO: fix this
 
     public static readonly TEAMNAME1 = 'TESTteam1';
     public static readonly TEAMNAME2 = 'TESTteam2';

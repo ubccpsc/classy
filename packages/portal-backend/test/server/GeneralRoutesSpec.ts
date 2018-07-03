@@ -20,8 +20,9 @@ describe('General Routes', function () {
     var server: BackendServer = null;
     before(async () => {
         Log.test('GeneralRoutes::before - start');
-        Config.getInstance().setProp(ConfigKey.name, ConfigCourses.classytest);
-        Test.ORGNAME = Config.getInstance().getProp(ConfigKey.testorg);
+
+        // Config.getInstance().setProp(ConfigKey.name, ConfigCourses.classytest);
+        // Test.ORGNAME = Config.getInstance().getProp(ConfigKey.testorg);
 
         let db = DatabaseController.getInstance();
         // await db.clearData(); // nuke everything
