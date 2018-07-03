@@ -2,7 +2,6 @@ import {expect} from "chai";
 import "mocha";
 
 import Log from "../../../common/Log";
-import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 
 import BackendServer from "../../src/server/BackendServer";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
@@ -57,11 +56,15 @@ describe('Auth Routes', function () {
         let body: AuthTransportPayload;
         const url = '/getCredentials';
         try {
+            Log.test('making request');
             response = await request(app).get(url).set('user', auth.personId).set('token', auth.token);
+            Log.test('response received');
             body = response.body;
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
+        Log.test('checking assertions on: response');
+
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
