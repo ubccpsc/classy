@@ -98,7 +98,6 @@ export class Factory {
             }
         }
         return this.adminView;
-        return this.adminView;
     }
 
     /**
