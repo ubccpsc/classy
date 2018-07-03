@@ -66,7 +66,7 @@ export class AuthRoutes implements IREST {
     public static getAuth(req: any, res: any, next: any) {
         Log.trace("AuthRouteHandler::getAuth(..) - /auth redirect start");
         let config = Config.getInstance();
-        // const org = config.getProp(ConfigKey.org);
+
         // const org = req.query.org;
         const name = config.getProp(ConfigKey.name);
         const githubRedirect = config.getProp(ConfigKey.backendUrl) + ':' + config.getProp(ConfigKey.backendPort) + '/githubCallback?name=' + name;

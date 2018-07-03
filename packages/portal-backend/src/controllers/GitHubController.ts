@@ -36,7 +36,7 @@ export class GitHubController implements IGitHubController {
     public async getRepositoryUrl(repo: Repository): Promise<string> {
         Log.info("GitHubController::GetRepositoryUrl - start");
         const c = Config.getInstance();
-        const ghHost = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/';
+        const ghHost = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/'; // valid .org use
         const url = ghHost + repo.id;
         Log.info("GitHubController::GetRepositoryUrl( " + repo.id + " ) - URL: " + url);
         return url;
@@ -45,14 +45,13 @@ export class GitHubController implements IGitHubController {
     public async getTeamUrl(team: Team): Promise<string> {
         // const teamUrl = "https://github.com/orgs/SECapstone/teams/" + team.id;
         const c = Config.getInstance();
-        const teamUrl = c.getProp(ConfigKey.githubHost) + '/orgs/' + c.getProp(ConfigKey.org) + '/teams/' + team.id;
+        const teamUrl = c.getProp(ConfigKey.githubHost) + '/orgs/' + c.getProp(ConfigKey.org) + '/teams/' + team.id; // valid .org use
         Log.info("GitHubController::getTeamUrl( " + team.id + " ) - URL: " + teamUrl);
         return teamUrl;
     }
 
     public async provisionRepository(repoName: string, teams: Team[], importUrl: string, webhookAddress: string): Promise<boolean> {
-        const org = Config.getInstance().getProp(ConfigKey.org);
-        Log.info("GitHubController::provisionRepository( " + org + ", " + repoName + ", ...) - start");
+        Log.info("GitHubController::provisionRepository( " + repoName + ", ...) - start");
         const start = Date.now();
         try {
             const gh = new GitHubActions();
@@ -121,7 +120,7 @@ export class GitHubController implements IGitHubController {
 
             // perform import
             const c = Config.getInstance();
-            let targetUrl = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/' + repoName;
+            let targetUrl = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/' + repoName; // valid .org use
 
             Log.trace("GitHubController::provisionRepository() - importing project (slow)");
             let output = await gh.importRepoFS(importUrl, targetUrl);

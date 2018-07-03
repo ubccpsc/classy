@@ -20,7 +20,7 @@ export default class RouteHandler {
     public static getAutoTest(): AutoTest {
         if (RouteHandler.autoTest === null) {
 
-            if (Config.getInstance().getProp(ConfigKey.name) === "secapstone") {
+            if (Config.getInstance().getProp(ConfigKey.name) === "sdmm") {
                 const data = new MongoDataStore();
                 const portal = new EdXClassPortal();
                 const gh = new GitHubService();

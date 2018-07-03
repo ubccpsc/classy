@@ -126,11 +126,6 @@ export interface Grade {
 }
 
 
-export interface AutoTestResult {
-    // TODO
-
-    custom: any;
-}
 
 /**
  *

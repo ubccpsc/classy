@@ -1,7 +1,7 @@
 import {expect} from "chai";
 import "mocha";
 
-import Config, {ConfigKey} from "../../common/Config";
+import Config, {ConfigCourses, ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
 
 import {DatabaseController} from "../src/controllers/DatabaseController";
@@ -10,7 +10,8 @@ before(async () => {
     Log.info('GlobalSpec::before()');
 
     Config.getInstance();
-    (<any>Config.getInstance()).config.org = (<any>Config.getInstance()).config.testorg; // force testing environment
+
+    Config.getInstance().setProp(ConfigKey.name, ConfigCourses.classytest); // force testing env
 
     Test.ORGNAME = Config.getInstance().getProp(ConfigKey.testorg);
     Log.info('GlobalSpec::before() - org: ' + Test.ORGNAME);
@@ -25,7 +26,7 @@ after(() => {
 
 export class Test {
 
-    public static ORGNAME = "NOTSETYET";
+    public static ORGNAME = "NOTSETYET"; // TODO: fix this
 
     public static readonly TEAMNAME1 = 'TESTteam1';
     public static readonly TEAMNAME2 = 'TESTteam2';

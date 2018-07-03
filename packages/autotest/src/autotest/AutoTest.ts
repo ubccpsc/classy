@@ -317,21 +317,21 @@ export abstract class AutoTest implements IAutoTest {
             if (isProd === true) {
                 const atHost: string = Config.getInstance().getProp(ConfigKey.graderHost);
                 const atPort: number = Config.getInstance().getProp(ConfigKey.graderPort);
-                // const cpHost: string = Config.getInstance().getProp(ConfigKey.classPortalHost);
-                // const cpPort: number = Config.getInstance().getProp(ConfigKey.classPortalPort);
+
                 const image: string = Config.getInstance().getProp(ConfigKey.dockerId);
                 const timeout: number = Config.getInstance().getProp(ConfigKey.timeout);
-                // const org: string = Config.getInstance().getProp(ConfigKey.org);
+
                 const assnUrl: string = input.pushInfo.projectURL;
                 const assnCloneUrl: string = input.pushInfo.cloneURL;
                 const commitSHA: string = input.pushInfo.commitSHA;
                 const commitURL: string = input.pushInfo.commitURL;
-                // const repo: string = input.pushInfo.repoId;
+
                 const timestamp: number = input.pushInfo.timestamp;
                 const delivId: string = input.delivId;
                 const repoId: string = input.pushInfo.repoId;
                 const id: string = `${commitSHA}-${delivId}`;
-                const body = { // TODO: add type (this is used inside the container)
+
+                const body = { // TODO: ncbradley add type (this is used inside the container)
                     "assnId":    delivId,
                     "timestamp": timestamp,
                     "assn":      {

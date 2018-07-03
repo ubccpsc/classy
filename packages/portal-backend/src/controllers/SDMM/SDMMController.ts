@@ -5,7 +5,7 @@ import {IGitHubController} from "../GitHubController";
 import {Grade, Person, Team} from "../../Types";
 
 import Log from "../../../../common/Log";
-import Config, {ConfigKey} from "../../../../common/Config";
+import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
 import {GradePayload, Payload, SDMMStatus, StatusPayload} from "../../../../common/types/SDMMTypes";
 import Util from "../../../../common/Util";
 
@@ -27,10 +27,10 @@ export class SDMMController extends CourseController {
         Log.info("CourseController::provision( " + delivId + ", ... ) - start");
 
         try {
-            const org = Config.getInstance().getProp(ConfigKey.org);
-            if (org !== "secapstone" && org !== "secapstonetest") {
-                Log.error("CourseController::provision(..) - SDMMController should not be used for other orgs");
-                return {failure: {shouldLogout: false, message: "Invalid org; contact course staff."}};
+            const name = Config.getInstance().getProp(ConfigKey.name);
+            if (name !== ConfigCourses.sdmm && name !== ConfigCourses.classytest) {
+                Log.error("CourseController::provision(..) - SDMMController should not be used for other courses");
+                return {failure: {shouldLogout: false, message: "Invalid course; contact course staff."}};
             }
 
             if (peopleIds.length < 1) {
@@ -99,8 +99,7 @@ export class SDMMController extends CourseController {
      * @returns {Promise<string>} null if the personId is not even known
      */
     private async computeStatusString(personId: string): Promise<string | null> {
-        const org = Config.getInstance().getProp(ConfigKey.org);
-        Log.info("CourseController::getStatus( " + org + ', ' + personId + ' ) - start');
+        Log.info("CourseController::getStatus( " + personId + ' ) - start');
         const start = Date.now();
         try {
             const person = await this.dc.getPerson(personId);
@@ -111,7 +110,7 @@ export class SDMMController extends CourseController {
 
             const reportedStatus = person.custom.sddmStatus;
             // most of the time the status doesn't change, so let's just check that first:
-            // const statusCorrect = await this.checkStatus(org, personId);
+            // const statusCorrect = await this.checkStatus(personId);
             // if (statusCorrect === true) {
             //    Log.info("CourseController::getStatus(..) - check successful; skipping");
             //    return reportedStatus;
@@ -258,10 +257,10 @@ export class SDMMController extends CourseController {
             person.custom.sddmStatus = currentStatus;
             this.dc.writePerson(person);
 
-            Log.info("CourseController::getStatus( " + org + ', ' + personId + ' ) - done; took: ' + Util.took(start));
+            Log.info("CourseController::getStatus( " + personId + ' ) - done; took: ' + Util.took(start));
             return currentStatus;
         } catch (err) {
-            Log.error("CourseController::getStatus( " + org + ', ' + personId + ' ) - ERROR: ' + err);
+            Log.error("CourseController::getStatus( " + personId + ' ) - ERROR: ' + err);
             return "UNKNOWN";
         }
     }
@@ -282,17 +281,16 @@ export class SDMMController extends CourseController {
      * D3PRE
      * D3
      *
-     * @param {string} org
      * @param {string} personId
      * @returns {Promise<string>}
      */
 
     /*
-    private async checkStatus(org: string, personId: string): Promise<boolean> {
-        Log.info("CourseController::getStatus( " + org + ', ' + personId + ' ) - start');
+    private async checkStatus(personId: string): Promise<boolean> {
+        Log.info("CourseController::getStatus( " + personId + ' ) - start');
         const start = Date.now();
         try {
-            const person = await this.dc.getPerson(org, personId);
+            const person = await this.dc.getPerson(personId);
             if (person === null) {
                 Log.info("CourseController::checkStatus(..) - ERROR; person null");
                 return null;
@@ -315,8 +313,7 @@ export class SDMMController extends CourseController {
 */
 
     private async provisionD0Repo(personId: string): Promise<Payload> {
-        const org = Config.getInstance().getProp(ConfigKey.org);
-        Log.info("CourseController::provisionD0Repo( " + org + ", " + personId + " ) - start");
+        Log.info("CourseController::provisionD0Repo( " + personId + " ) - start");
         const start = Date.now();
 
         try {
@@ -332,10 +329,10 @@ export class SDMMController extends CourseController {
 
             let personStatus = await this.computeStatusString(personId);
             if (personStatus !== SDMMStatus[SDMMStatus.D0PRE]) {
-                Log.info("CourseController::provisionD0Repo( " + org + ", " + personId + " ) - bad status: " + personStatus);
+                Log.info("CourseController::provisionD0Repo( " + personId + " ) - bad status: " + personStatus);
                 return {failure: {shouldLogout: false, message: "User is not eligible for D0."}};
             } else {
-                Log.info("CourseController::provisionD0Repo( " + org + ", " + personId + " ) - correct status: " + personStatus);
+                Log.info("CourseController::provisionD0Repo( " + personId + " ) - correct status: " + personStatus);
             }
 
             // create local team
@@ -407,8 +404,7 @@ export class SDMMController extends CourseController {
     }
 
     private async updateIndividualD0toD1(personId: string): Promise<Payload> {
-        const org = Config.getInstance().getProp(ConfigKey.org);
-        Log.info("CourseController::updateIndividualD0toD1( " + org + ", " + personId + " ) - start");
+        Log.info("CourseController::updateIndividualD0toD1( " + personId + " ) - start");
         const start = Date.now();
 
         try {
@@ -437,13 +433,13 @@ export class SDMMController extends CourseController {
 
             let personStatus = await this.computeStatusString(personId);
             if (personStatus !== SDMMStatus[SDMMStatus.D1UNLOCKED]) {
-                Log.info("CourseController::updateIndividualD0toD1( " + org + ", " + personId + " ) - bad status: " + personStatus);
+                Log.info("CourseController::updateIndividualD0toD1( " + personId + " ) - bad status: " + personStatus);
             } else {
-                Log.info("CourseController::updateIndividualD0toD1( " + org + ", " + personId + " ) - correct status: " + personStatus);
+                Log.info("CourseController::updateIndividualD0toD1( " + personId + " ) - correct status: " + personStatus);
             }
 
             const name = personId;
-            // const person = await this.pc.getPerson(org, name);
+            // const person = await this.pc.getPerson(name);
             const teamName = name;
             const repoName = CourseController.getProjectPrefix() + teamName;
 
@@ -493,8 +489,7 @@ export class SDMMController extends CourseController {
      * @returns {Promise<Payload>}
      */
     private async provisionD1Repo(peopleIds: string[]): Promise<Payload> {
-        const org = Config.getInstance().getProp(ConfigKey.org);
-        Log.info("CourseController::provisionD1Repo( " + org + ", " + JSON.stringify(peopleIds) + " ) - start");
+        Log.info("CourseController::provisionD1Repo( " + JSON.stringify(peopleIds) + " ) - start");
         const start = Date.now();
 
         try {
@@ -542,7 +537,7 @@ export class SDMMController extends CourseController {
             for (const p of people) {
                 let personStatus = await this.computeStatusString(p.id);
                 if (personStatus !== SDMMStatus[SDMMStatus.D1UNLOCKED]) {
-                    Log.info("CourseController::provisionD1Repo( " + org + ", " + p.id + " ) - bad status: " + personStatus);
+                    Log.info("CourseController::provisionD1Repo( " + p.id + " ) - bad status: " + personStatus);
                     return {
                         failure: {
                             shouldLogout: false,
@@ -550,7 +545,7 @@ export class SDMMController extends CourseController {
                         }
                     };
                 } else {
-                    Log.info("CourseController::provisionD1Repo( " + org + ", " + p.id + " ) - correct status: " + personStatus);
+                    Log.info("CourseController::provisionD1Repo( " + p.id + " ) - correct status: " + personStatus);
                 }
             }
 
@@ -608,8 +603,7 @@ export class SDMMController extends CourseController {
     }
 
     public async getStatus(personId: string): Promise<StatusPayload> {
-        const org = Config.getInstance().getProp(ConfigKey.org);
-        Log.info("CourseController::getStatus( " + org + ", " + personId + " ) - start");
+        Log.info("CourseController::getStatus( " + personId + " ) - start");
         const start = Date.now();
 
         const myStatus = await this.computeStatusString(personId);
@@ -682,10 +676,10 @@ export class SDMMController extends CourseController {
     }
 
     public async handleUnknownUser(githubUsername: string): Promise<Person | null> {
-        const org = Config.getInstance().getProp(ConfigKey.org);
-        Log.info("SDDMController::handleUnknownUser( " + org + ", " + githubUsername + " ) - start");
-        if (org === 'secapstone' || org === 'secapstonetest') {
-            Log.info("SDDMController::handleUnknownUser(..) - new person for this org; - provisioning");
+        const name = Config.getInstance().getProp(ConfigKey.name);
+        Log.info("SDDMController::handleUnknownUser( " + githubUsername + " ) - start");
+        if (name === ConfigCourses.sdmm || name === ConfigCourses.classytest) {
+            Log.info("SDDMController::handleUnknownUser(..) - new person for this course; - provisioning");
 
             // in the secapstone we don't know who the students are in advance
             // in this case, we will create Person objects on demand
@@ -697,7 +691,6 @@ export class SDMMController extends CourseController {
                 githubId:      githubUsername,
                 studentNumber: null,
 
-                // org:    org,
                 fName:  '',
                 lName:  '',
                 kind:   'student',
@@ -713,7 +706,7 @@ export class SDMMController extends CourseController {
             return newPerson;
         }
 
-        Log.error("SDDMController::handleUnknownUser() - not a SDDM org");
+        Log.error("SDDMController::handleUnknownUser() - not a SDDM course");
         return null;
     }
 

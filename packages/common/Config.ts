@@ -3,6 +3,19 @@ dotenv.config({path: '../../.env'});
 
 import Log from "./Log";
 
+/**
+ * Master list of courses supported by Classy. Config.name should
+ * always be set to one of these in .env.
+ */
+export enum ConfigCourses {
+    classytest = "classytest",
+
+    cs310 = "cs310",
+    cs340 = "cs340",
+
+    sdmm = "sdmm", // edX micromasters capstone project
+}
+
 export enum ConfigKey {
     name = "name", // name of the course (e.g., cs310, cs340, secapstone, classytest) // should be stable between course instances
     org = "org",

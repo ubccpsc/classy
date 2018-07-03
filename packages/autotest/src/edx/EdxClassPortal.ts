@@ -7,11 +7,15 @@ import {
     Payload
 } from "../../../common/types/PortalTypes";
 
+/**
+ * TODO: This type should go away once the full portal-backend project is finished and spun up.
+ * The SDMM backend instance should be able to provide all of this directly.
+ */
 export class EdXClassPortal implements IClassPortal {
 
     public async isStaff(userName: string): Promise<AutoTestAuthTransport> {
-        const courseId = Config.getInstance().getProp(ConfigKey.org); // TODO: get rid of this var
-        if (courseId === "edx") { // TODO: should be secapstone
+        const courseId = Config.getInstance().getProp(ConfigKey.name);
+        if (courseId === "sdmm") {
             if (userName === "rtholmes") {
                 return {personId: userName, isStaff: true, isAdmin: true};
             }
@@ -25,9 +29,9 @@ export class EdXClassPortal implements IClassPortal {
     }
 
     public async getContainerDetails(delivId: string): Promise<{ dockerImage: string, studentDelay: number, maxExecTime: number, regressionDelivIds: string[] } | null> {
-        const courseId = Config.getInstance().getProp(ConfigKey.org); // TODO: get rid of this var
+        const courseId = Config.getInstance().getProp(ConfigKey.name);
         if (typeof courseId !== "undefined" && courseId !== null && typeof delivId !== "undefined" && delivId !== null) {
-            if (courseId === "edx") {
+            if (courseId === "sdmm") {
                 const delay = 60 * 60 * 12; // 12h in seconds
                 // TODO: update the image and build
                 return {dockerImage: "310container", studentDelay: delay, maxExecTime: 300, regressionDelivIds: []};

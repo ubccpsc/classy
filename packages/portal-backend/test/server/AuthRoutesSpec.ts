@@ -4,7 +4,7 @@ import "mocha";
 import {Test} from "../GlobalSpec";
 
 import Log from "../../../common/Log";
-import Config, {ConfigKey} from "../../../common/Config";
+import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 
 import BackendServer from "../../src/server/BackendServer";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
@@ -20,7 +20,7 @@ describe('Auth Routes', function () {
     var server: BackendServer = null;
     before(async () => {
         Log.test('AuthRoutes::before - start');
-        Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg)); // force testing environment
+        Config.getInstance().setProp(ConfigKey.name, ConfigCourses.classytest); // force testing environment
         Test.ORGNAME = Config.getInstance().getProp(ConfigKey.testorg);
 
         let db = DatabaseController.getInstance();

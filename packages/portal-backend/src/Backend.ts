@@ -3,7 +3,7 @@
  */
 
 import Log from "../../common/Log";
-import Config from "../../common/Config";
+import Config, {ConfigCourses} from "../../common/Config";
 
 import BackendServer from "./server/BackendServer";
 
