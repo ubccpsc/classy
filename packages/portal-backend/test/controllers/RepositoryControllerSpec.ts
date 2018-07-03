@@ -6,6 +6,7 @@ import {Test} from "../GlobalSpec";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
 import {PersonController} from "../../src/controllers/PersonController";
+import Log from "../../../common/Log";
 
 const loadFirst = require('../GlobalSpec');
 const teamsFirst = require('./TeamControllerSpec');
@@ -65,5 +66,16 @@ describe("RepositoryController", () => {
         const person = await pc.getPerson(Test.USERNAME1);
         repos = await rc.getReposForPerson(person);
         expect(repos).to.have.lengthOf(1);
+    });
+
+    it("Should be able to find all users for a repo.", async () => {
+        let repos = await rc.getAllRepos();
+        expect(repos).to.have.lengthOf(1);
+
+        let people = await rc.getPeopleForRepo(repos[0].id);
+        Log.test(JSON.stringify(people));
+        expect(people).to.have.lengthOf(2);
+        expect(people).to.contain('user1');
+        expect(people).to.contain('user2');
     });
 });

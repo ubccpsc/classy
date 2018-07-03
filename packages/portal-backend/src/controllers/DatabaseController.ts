@@ -2,7 +2,7 @@ import {Collection, Db, MongoClient} from "mongodb";
 
 import Log from "../../../common/Log";
 import Util from "../../../common/Util";
-import Config, {ConfigKey} from "../../../common/Config";
+import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 
 import {IContainerOutput} from "../../../autotest/src/Types";
 
@@ -174,7 +174,7 @@ export class DatabaseController {
     /*
     public async deletePerson(record: Person): Promise<boolean> {
         Log.info("DatabaseController::deletePerson(..) - start");
-        return await this.deleteRecord(this.PERSONCOLL, {org: record.org, id: record.id});
+        return await this.deleteRecord(this.PERSONCOLL, {id: record.id});
     }
     */
 
@@ -288,9 +288,21 @@ export class DatabaseController {
 
     public async clearData(): Promise<void> {
         Log.warn("DatabaseController::clearData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
-        const configOrg = Config.getInstance().getProp(ConfigKey.testorg);
-        if (configOrg === "test" || configOrg === "secapstonetest" || configOrg === "classytest") {
-            let cols = [this.PERSONCOLL, this.GRADECOLL, this.TEAMCOLL, this.DELIVCOLL, this.REPOCOLL];
+
+        const configName = Config.getInstance().getProp(ConfigKey.name);
+        Log.warn("DatabaseController::clearData() - name: " + configName);
+
+        if (configName === ConfigCourses.classytest) {
+            // NOTE: can only delete data if the current instance is the main test instance
+
+            // private readonly PERSONCOLL = 'people';
+            // private readonly GRADECOLL = 'grades';
+            // private readonly RESULTCOLL = 'results';
+            // private readonly TEAMCOLL = 'teams';
+            // private readonly DELIVCOLL = 'deliverables';
+            // private readonly REPOCOLL = 'repositories';
+            // private readonly AUTHCOLL = 'auth';
+            let cols = [this.PERSONCOLL, this.GRADECOLL, this.RESULTCOLL, this.TEAMCOLL, this.DELIVCOLL, this.REPOCOLL, this.AUTHCOLL];
             for (const col of cols) {
                 Log.info("DatabaseController::clearData() - removing data for collection: " + col);
                 const collection = await this.getCollection(col);
@@ -365,8 +377,8 @@ export class DatabaseController {
             // Log.trace("DatabaseController::open() - start");
             if (this.db === null) {
 
-                // just use the org name for the db (use a test org name if you want to avoid tests wiping data!!)
-                const dbName = Config.getInstance().getProp(ConfigKey.org).trim(); // make sure there are no extra spaces in config
+                // just use Config.name for the db (use a test org name if you want to avoid tests wiping data!!)
+                const dbName = Config.getInstance().getProp(ConfigKey.name).trim(); // make sure there are no extra spaces in config
                 const dbHost = Config.getInstance().getProp(ConfigKey.mongoUrl).trim(); // make sure there are no extra spaces in config
 
                 // _ are to help diagnose whitespace in dbname/mongoUrl

@@ -5,12 +5,14 @@
  * student views, as they need for their own courses.
  */
 
-import {OnsButtonElement, OnsModalElement, OnsPageElement, OnsSelectElement, OnsToastElement} from "onsenui";
+import {OnsButtonElement, OnsSelectElement} from "onsenui";
 import Log from "../../../../../common/Log";
 import {UI} from "../../util/UI";
 import {
     AssignmentGrade,
-    AssignmentGradingRubric, QuestionGrade, SubQuestionGrade,
+    AssignmentGradingRubric,
+    QuestionGrade,
+    SubQuestionGrade,
     SubQuestionGradingRubric
 } from "../../../../../common/types/CS340Types";
 
@@ -30,10 +32,10 @@ export class CS340View implements IView {
 
     public renderPage(opts: {}) {
         Log.info('CS340View::renderPage() - start; opts: ' + JSON.stringify(opts));
-        let opsObject : any = opts;
-        if(opsObject.page !== null) {
+        let opsObject: any = opts;
+        if (opsObject.page !== null) {
             console.log("got a non-null page value");
-            if(opsObject.page === "cs340/gradingView.html") {
+            if (opsObject.page === "cs340/gradingView.html") {
                 // do stuff
                 console.log("got into grading");
                 this.populateGradingPage("a1", "jopika").then((result) => {
@@ -46,9 +48,9 @@ export class CS340View implements IView {
     public testfunction() {
         console.log("A spooky message!");
         UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/gradingView.html', {
-            hello:"world"
-            ,page: Factory.getInstance().getHTMLPrefix() + '/gradingView.html'
-        }).then(()=> {
+            hello:  "world"
+            , page: Factory.getInstance().getHTMLPrefix() + '/gradingView.html'
+        }).then(() => {
             this.renderPage({page: Factory.getInstance().getHTMLPrefix() + '/gradingView.html'});
             console.log("all done!");
         });
@@ -59,7 +61,8 @@ export class CS340View implements IView {
             headers: {
                 user:  localStorage.user,
                 token: localStorage.token,
-                org:   localStorage.org
+                // org:   localStorage.org
+                name:  Factory.getInstance().getName()
             }
         };
         return options;
@@ -134,11 +137,11 @@ export class CS340View implements IView {
      * @param {string} sid
      * @returns {Promise<void>}
      */
-    public async populateGradingPage(delivId: string, sid : string) {
+    public async populateGradingPage(delivId: string, sid: string) {
         Log.info("CS340View::populateGradingPage() - start");
 
         UI.showModal("Populating grading view, please wait...");
-        let rubric : AssignmentGradingRubric = await this.getGradingRubric(delivId);
+        let rubric: AssignmentGradingRubric = await this.getGradingRubric(delivId);
         if (rubric === null) {
             // Log.error(rubric);
             Log.error("CS340View::populateGradingPage() - Unable to populate page due to missing rubric");
@@ -198,8 +201,8 @@ export class CS340View implements IView {
             let questionBox = document.createElement("div");
             questionBox.setAttribute("class", "questionBox");
 
-            for(let j = 0; j < question.subQuestions.length; j++) {
-                let subQuestion : SubQuestionGradingRubric = question.subQuestions[j];
+            for (let j = 0; j < question.subQuestions.length; j++) {
+                let subQuestion: SubQuestionGradingRubric = question.subQuestions[j];
 
                 let questionSubBoxElement = document.createElement("div");
                 questionSubBoxElement.setAttribute("class", "subQuestionBody");
@@ -268,9 +271,9 @@ export class CS340View implements IView {
         gradingSectionElement!.appendChild(submitButton);
     }
 
-    public async submitGrade(): Promise<AssignmentGrade|null> {
+    public async submitGrade(): Promise<AssignmentGrade | null> {
         let error = false;
-        let questionArray : QuestionGrade[] = [];
+        let questionArray: QuestionGrade[] = [];
         let questionBoxes = document.getElementsByClassName("questionBox");
 
         for (let i = 0; i < questionBoxes.length; i++) {
@@ -279,7 +282,7 @@ export class CS340View implements IView {
             // Get each subquestion from the questionBox
             let subQuestions = questionBox.getElementsByClassName("subQuestionBody");
             // initalize an array to place all the information inside
-            let subQuestionArray : SubQuestionGrade[] = [];
+            let subQuestionArray: SubQuestionGrade[] = [];
 
             // for each subQuestion
             for (let j = 0; j < subQuestions.length; j++) {
@@ -293,7 +296,7 @@ export class CS340View implements IView {
 
                 // Check if there is exactly one element in each
                 // otherwise something is wrong with the webpage
-                if(gradeInputElements.length !== 1 ||
+                if (gradeInputElements.length !== 1 ||
                     responseBoxElements.length !== 1 ||
                     errorElements.length !== 1) {
                     // Display an error
@@ -334,25 +337,25 @@ export class CS340View implements IView {
                     }
                 }
 
-                let newSubGrade : SubQuestionGrade = {
+                let newSubGrade: SubQuestionGrade = {
                     sectionName: rubricType,
-                    grade: gradeValue,
-                    feedback: responseBoxElement.value
+                    grade:       gradeValue,
+                    feedback:    responseBoxElement.value
                 };
 
                 subQuestionArray.push(newSubGrade);
             }
 
             let questionNames = document.getElementsByClassName("questionName");
-            if(questionNames.length !== 1) {
+            if (questionNames.length !== 1) {
                 error = true;
                 continue;
             }
 
-            let newQuestion : QuestionGrade = {
+            let newQuestion: QuestionGrade = {
                 questionName: questionNames[0].innerHTML,
-                commentName: "",
-                subQuestion: subQuestionArray
+                commentName:  "",
+                subQuestion:  subQuestionArray
             };
 
             questionArray.push(newQuestion);
@@ -365,7 +368,7 @@ export class CS340View implements IView {
             error = true;
         }
 
-        if(error) {
+        if (error) {
             Log.error("CS340View::submitGrade() - Unable to submit data");
             return null;
         }
@@ -373,10 +376,10 @@ export class CS340View implements IView {
         let sid = aInfoSIDElements[0].innerHTML;
         let aid = aInfoIDElements[0].innerHTML;
 
-        let newAssignmentGrade : AssignmentGrade = {
+        let newAssignmentGrade: AssignmentGrade = {
             assignmentID: aid,
-            studentID: sid,
-            questions: questionArray
+            studentID:    sid,
+            questions:    questionArray
         };
 
         // TODO: Record in database the new Grade
@@ -494,8 +497,8 @@ export class CS340View implements IView {
     }
 
 // <<<<<<< HEAD
-    public async renderStudentSubmissions(delivId : string) {
-        Log.info("CS340View::renderStudentSubmissions("+delivId+") -- start");
+    public async renderStudentSubmissions(delivId: string) {
+        Log.info("CS340View::renderStudentSubmissions(" + delivId + ") -- start");
         let gradeTable = document.getElementById("grades-table");
         const submissionRetrieveURL = this.remote + '/getAllSubmissionsByDelivID/' + delivId;
 
@@ -517,34 +520,34 @@ export class CS340View implements IView {
 
                 let headers: TableHeader[] = [];
                 let defaultSort = true; // Set true for first value
-                for(let h of headerValues) {
-                    headers.push({id: h, text: h, sortable: true, defaultSort: defaultSort, sortDown:true});
+                for (let h of headerValues) {
+                    headers.push({id: h, text: h, sortable: true, defaultSort: defaultSort, sortDown: true});
                     defaultSort = false;
                 }
 
                 // Get all students and their associated information, then store in a map for constant time access
                 const url = this.remote + '/getAllPersons';
-                let options : any = this.getOptions();
+                let options: any = this.getOptions();
                 options.method = 'get';
                 let response = await fetch(url, options);
 
-                if(response.status !== 200) {
+                if (response.status !== 200) {
                     // Fail, unable to join person data
                     Log.trace("CS340View::renderStudentSubmissions - unable to join person data; code: " + response.status);
                     return;
                 }
 
                 let jsonResponse = await response.json();
-                const personData : Person[] = jsonResponse.response;
+                const personData: Person[] = jsonResponse.response;
 
-                if(personData === null) {
+                if (personData === null) {
                     Log.trace("CS340View::renderStudentSubmissions - unable to parse person data");
                 }
 
                 // Person Lookup mapping, for close to constant lookups
-                let personIdMap : {[s:string] : Person} = {};
-                for(const person of personData) {
-                    if(typeof personIdMap[person.id] === 'undefined') {
+                let personIdMap: { [s: string]: Person } = {};
+                for (const person of personData) {
+                    if (typeof personIdMap[person.id] === 'undefined') {
                         personIdMap[person.id] = person;
                     }
                 }
@@ -571,136 +574,135 @@ export class CS340View implements IView {
     }
 
     // Takes the data, and removes unnecessary data based on the delivId string, and returns a filtered Grade Array
-    private processGradeTableData(data: Grade[], delivId: string) : Grade[]{
-        let returnArray : Grade[] = [];
-        for(const grade of data) {
-            if(grade.delivId === delivId || delivId === "all") {
+    private processGradeTableData(data: Grade[], delivId: string): Grade[] {
+        let returnArray: Grade[] = [];
+        for (const grade of data) {
+            if (grade.delivId === delivId || delivId === "all") {
                 returnArray.push(grade);
             }
         }
         return returnArray;
     }
 
-/*
-    // Using the submission data (grades), join the data with student and deliverable information
-    private async processData(data: Grade[], delivId: string) {
+    /*
+        // Using the submission data (grades), join the data with student and deliverable information
+        private async processData(data: Grade[], delivId: string) {
 
-        Log.info("CS340View::processResponse - start");
-        const url = this.remote + '/getAllPersons';
-        let options : any = this.getOptions();
-        options.method = 'get';
-        let response = await fetch(url, options);
+            Log.info("CS340View::processResponse - start");
+            const url = this.remote + '/getAllPersons';
+            let options : any = this.getOptions();
+            options.method = 'get';
+            let response = await fetch(url, options);
 
-        if(response.status !== 200) {
-            // Fail, unable to join person data
-            Log.trace("CS340View::processResponse - unable to join person data; code: " + response.status);
-            return;
-        }
-
-        let jsonResponse = await response.json();
-        const personData : Person[] = jsonResponse.response;
-
-        if(personData === null) {
-            Log.trace("CS340View::processResponse - unable to parse person data");
-        }
-
-        // Person Lookup mapping, for close to constant lookups
-        let personIdMap : {[s:string] : Person} = {};
-        for(const person of personData) {
-            if(typeof personIdMap[person.id] === 'undefined') {
-                personIdMap[person.id] = person;
-            }
-        }
-
-        // let students : Map<string,String[]> = new Map<string, String[]>();
-        let students : {[s: string]: any} = {};
-        let delivNamesMap : {[s: string]: string} = {};
-
-        // Prepare student map and deliverable map data
-        for (var row of data) {
-            let personId = row.personId;
-
-            const deliverable = row.delivId;
-
-            // Create a new array for the given personId
-            if (typeof students[personId] === 'undefined') {
-                students[personId] = [];                            // get ready for grades
+            if(response.status !== 200) {
+                // Fail, unable to join person data
+                Log.trace("CS340View::processResponse - unable to join person data; code: " + response.status);
+                return;
             }
 
-            if (this.includeRecord(row, delivId)) {
-                // not captured yet
-                if (typeof delivNamesMap[deliverable] === 'undefined') {
-                    delivNamesMap[deliverable] = deliverable;
+            let jsonResponse = await response.json();
+            const personData : Person[] = jsonResponse.response;
+
+            if(personData === null) {
+                Log.trace("CS340View::processResponse - unable to parse person data");
+            }
+
+            // Person Lookup mapping, for close to constant lookups
+            let personIdMap : {[s:string] : Person} = {};
+            for(const person of personData) {
+                if(typeof personIdMap[person.id] === 'undefined') {
+                    personIdMap[person.id] = person;
                 }
             }
-        }
 
-        // Basic sorting function based on strings
-        const stringSort = function (a: string, b: string) {
-            return (a.localeCompare(b));
-        };
+            // let students : Map<string,String[]> = new Map<string, String[]>();
+            let students : {[s: string]: any} = {};
+            let delivNamesMap : {[s: string]: string} = {};
 
-        // Sort the deliverables list
-        let delivKeys = Object.keys(delivNamesMap).sort(stringSort);
+            // Prepare student map and deliverable map data
+            for (var row of data) {
+                let personId = row.personId;
 
-        let headers = ['ID', 'SNUM', 'First', 'Last'];
-
-        headers = headers.concat(delivKeys);
-
-        students['_index'] = headers;
-
-        // UPDATE: At this point, we have all the headers in the Array that will be appended to the Table
-        for (let row of data) {
-            if (this.includeRecord(row, delivId)) {
-                if(typeof personIdMap[row.personId] === 'undefined') {
-                    Log.trace("CS340View::processResponse - error; something is wrong with the data");
-                    continue;
-                }
-
-                const username = personIdMap[row.personId].githubId;
                 const deliverable = row.delivId;
-                const student = students[username];
-                const grade = row.score === null ? '' : row.score;
-                const index = delivKeys.indexOf(deliverable);
 
-                student.snum = personIdMap[row.personId].studentNumber;
-                student.fname = personIdMap[row.personId].fName;
-                student.lname = personIdMap[row.personId].lName;
-                student.username = personIdMap[row.personId].githubId;
-
-                if (typeof student.grades === 'undefined') {
-                    student.grades = [];
+                // Create a new array for the given personId
+                if (typeof students[personId] === 'undefined') {
+                    students[personId] = [];                            // get ready for grades
                 }
 
-                // Gets an action-clickable-comment if a comment exists in the Grade object.
-                let htmlNoComment: string = grade;
-                let htmlComment: string = '<a class="adminGradesView__comment" href="#" data-comment="' + row.comments + '">' + grade + '</a>';
-                let html: string = row.comments === '' ? htmlNoComment : htmlComment;
-
-                student.grades[index] = {
-                    value: grade,
-                    html:  html
-                };
-
-                // row.delivDetails // UNUSED right now
+                if (this.includeRecord(row, delivId)) {
+                    // not captured yet
+                    if (typeof delivNamesMap[deliverable] === 'undefined') {
+                        delivNamesMap[deliverable] = deliverable;
+                    }
+                }
             }
-        }
 
-        // console.log('grade data processed: ' + JSON.stringify(students));
-        return students;
-    }*/
+            // Basic sorting function based on strings
+            const stringSort = function (a: string, b: string) {
+                return (a.localeCompare(b));
+            };
 
+            // Sort the deliverables list
+            let delivKeys = Object.keys(delivNamesMap).sort(stringSort);
+
+            let headers = ['ID', 'SNUM', 'First', 'Last'];
+
+            headers = headers.concat(delivKeys);
+
+            students['_index'] = headers;
+
+            // UPDATE: At this point, we have all the headers in the Array that will be appended to the Table
+            for (let row of data) {
+                if (this.includeRecord(row, delivId)) {
+                    if(typeof personIdMap[row.personId] === 'undefined') {
+                        Log.trace("CS340View::processResponse - error; something is wrong with the data");
+                        continue;
+                    }
+
+                    const username = personIdMap[row.personId].githubId;
+                    const deliverable = row.delivId;
+                    const student = students[username];
+                    const grade = row.score === null ? '' : row.score;
+                    const index = delivKeys.indexOf(deliverable);
+
+                    student.snum = personIdMap[row.personId].studentNumber;
+                    student.fname = personIdMap[row.personId].fName;
+                    student.lname = personIdMap[row.personId].lName;
+                    student.username = personIdMap[row.personId].githubId;
+
+                    if (typeof student.grades === 'undefined') {
+                        student.grades = [];
+                    }
+
+                    // Gets an action-clickable-comment if a comment exists in the Grade object.
+                    let htmlNoComment: string = grade;
+                    let htmlComment: string = '<a class="adminGradesView__comment" href="#" data-comment="' + row.comments + '">' + grade + '</a>';
+                    let html: string = row.comments === '' ? htmlNoComment : htmlComment;
+
+                    student.grades[index] = {
+                        value: grade,
+                        html:  html
+                    };
+
+                    // row.delivDetails // UNUSED right now
+                }
+            }
+
+            // console.log('grade data processed: ' + JSON.stringify(students));
+            return students;
+        }*/
 
 
     // Helper to decide if record should be included in table
-    private includeRecord(data: Grade, delivId: string) : boolean {
-        if(delivId === "all" ||  data.delivId === delivId) {
+    private includeRecord(data: Grade, delivId: string): boolean {
+        if (delivId === "all" || data.delivId === delivId) {
             return true;
         }
         return false;
     }
 
-    private checkIfWarning(gradeInputElement: HTMLInputElement) : boolean {
+    private checkIfWarning(gradeInputElement: HTMLInputElement): boolean {
         // TODO: Complete this
         return false; // stub
     }

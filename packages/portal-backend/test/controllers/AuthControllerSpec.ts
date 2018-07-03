@@ -12,6 +12,8 @@ const teamsFirst = require('./PersonControllerSpec');
 
 describe("AuthController", () => {
 
+    const TIMEOUT = 5000;
+
     let ac: AuthController;
 
     before(async () => {
@@ -34,7 +36,7 @@ describe("AuthController", () => {
     });
 
 
-    it("Should identify a staff correctly.", async () => {
+    it("Should identify a staff correctly.", async function () {
         const pc = new PersonController();
         const p: Person = {
             id:            'rtholmes',
@@ -68,10 +70,10 @@ describe("AuthController", () => {
         let isPriv = await ac.isPrivileged('rtholmes', 'realtoken');
         expect(isPriv.isAdmin).to.be.true;
         expect(isPriv.isStaff).to.be.true;
-    });
+    }).timeout(TIMEOUT);
 
 
-    it("Should identify a non-admin correctly.", async () => {
+    it("Should identify a non-admin correctly.", async function () {
         const pc = new PersonController();
         const p: Person = {
             id:            'user',
@@ -105,7 +107,7 @@ describe("AuthController", () => {
         let isPriv = await ac.isPrivileged('user', 'realtoken');
         expect(isPriv.isAdmin).to.be.false;
         expect(isPriv.isStaff).to.be.false;
-    });
+    }).timeout(TIMEOUT);
 
     // TODO: implement auth controller tests
     /*

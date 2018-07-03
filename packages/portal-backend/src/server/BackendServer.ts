@@ -9,8 +9,8 @@ import Config, {ConfigKey} from "../../../common/Config";
 
 import {Factory} from "../Factory";
 import GeneralRoutes from "./common/GeneralRoutes";
-import {AuthRouteHandler} from "./common/AuthRouteHandler";
-import {AutoTestRouteHandler} from "./common/AutoTestRouteHandler";
+import {AuthRoutes} from "./common/AuthRoutes";
+import {AutoTestRoutes} from "./common/AutoTestRoutes";
 import AdminRoutes from "./common/AdminRoutes";
 
 /**
@@ -95,10 +95,10 @@ export default class BackendServer {
                 Log.info('BackendServer::start() - Registering common handlers');
 
                 // authentication
-                new AuthRouteHandler().registerRoutes(that.rest);
+                new AuthRoutes().registerRoutes(that.rest);
 
                 // autotest
-                new AutoTestRouteHandler().registerRoutes(that.rest);
+                new AutoTestRoutes().registerRoutes(that.rest);
 
                 // general
                 new GeneralRoutes().registerRoutes(that.rest);

@@ -7,8 +7,8 @@ import Config from "../../common/Config";
 import Util from "../../common/Util";
 
 import {IClassPortal} from "../src/autotest/ClassPortal";
-import {GithubService} from "../src/github/GithubService";
-import {GithubAutoTest} from "../src/github/GithubAutoTest";
+import {GitHubService} from "../src/github/GitHubService";
+import {GitHubAutoTest} from "../src/github/GitHubAutoTest";
 import {ICommentEvent, IFeedbackGiven, IPushEvent} from "../src/Types";
 
 import {MockClassPortal} from "../src/autotest/mocks/MockClassPortal";
@@ -24,8 +24,8 @@ describe("GitHubAutoTest", () => {
     let pushes: IPushEvent[];
     let data: MockDataStore;
     let portal: IClassPortal;
-    let gh: GithubService;
-    let at: GithubAutoTest;
+    let gh: GitHubService;
+    let at: GitHubAutoTest;
 
     // now: 1516559187579
     // now -10h: 1516523258762
@@ -40,8 +40,8 @@ describe("GitHubAutoTest", () => {
         data.clearData();
 
         portal = new MockClassPortal();
-        gh = new GithubService();
-        at = new GithubAutoTest(data, portal, gh);
+        gh = new GitHubService();
+        at = new GitHubAutoTest(data, portal, gh);
 
         (<any>Config.getInstance()).config.postback = false;
     });
@@ -68,9 +68,9 @@ describe("GitHubAutoTest", () => {
         expect(at).not.to.equal(null);
 
         let res = await at.handlePushEvent(null);
-        expect(res).to.be.null;
+        expect(res).to.be.false;
         res = await at.handlePushEvent(undefined);
-        expect(res).to.be.null;
+        expect(res).to.be.false;
     });
 
     it("Should be able to receive multiple pushes.", async () => {
@@ -118,9 +118,9 @@ describe("GitHubAutoTest", () => {
         expect(at).not.to.equal(null);
 
         let res = await at.handleCommentEvent(null);
-        expect(res).to.be.null;
+        expect(res).to.be.false;
         res = await at.handleCommentEvent(undefined);
-        expect(res).to.be.null;
+        expect(res).to.be.false;
     });
 
     it("Should be able to receive a comment event.", async () => {

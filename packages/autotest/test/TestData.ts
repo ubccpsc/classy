@@ -1,4 +1,4 @@
-import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven, IPushEvent} from "../src/Types";
+import {IAutoTestResult, ICommentEvent, IContainerInput, IFeedbackGiven, IPushEvent} from "../src/Types";
 
 export class TestData {
     static readonly pushEventA: IPushEvent = {
@@ -98,7 +98,10 @@ export class TestData {
         commitURL: TestData.commentRecordUserA.commitURL
     };
 
-    static readonly outputRecordA: ICommitRecord = {
+    static readonly outputRecordA: IAutoTestResult = {
+        "delivId":   TestData.inputRecordA.delivId,
+        "repoId":    TestData.inputRecordA.pushInfo.repoId,
+        "timestamp": TestData.inputRecordA.pushInfo.timestamp,
         "commitURL": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "commitSHA": "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "input":     TestData.inputRecordA,
@@ -124,7 +127,10 @@ export class TestData {
         }
     };
 
-    static readonly outputRecordB: ICommitRecord = {
+    static readonly outputRecordB: IAutoTestResult = {
+        "delivId":   TestData.inputRecordB.delivId,
+        "repoId":    TestData.inputRecordB.pushInfo.repoId,
+        "timestamp": TestData.inputRecordB.pushInfo.timestamp,
         "commitURL": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4staff",
         "commitSHA": "abe1b0918b872997de4c4d2baf4c263f8d4staff",
         "input":     TestData.inputRecordA,

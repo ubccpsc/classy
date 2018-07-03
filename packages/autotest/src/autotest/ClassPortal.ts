@@ -8,7 +8,9 @@ import {
     AutoTestConfigPayload,
     AutoTestConfigTransport,
     AutoTestDefaultDeliverablePayload,
-    AutoTestDefaultDeliverableTransport
+    AutoTestDefaultDeliverableTransport,
+    AutoTestGradeTransport,
+    Payload
 } from "../../../common/types/PortalTypes";
 
 export interface IClassPortal {
@@ -22,7 +24,6 @@ export interface IClassPortal {
 
     /**
      * Returns whether the username is privileged on the course.
-     * Returns false if anything goes wrong.
      *
      * GET /at/isStaff{:userId}
      *
@@ -31,13 +32,34 @@ export interface IClassPortal {
     isStaff(userName: string): Promise<AutoTestAuthTransport>;
 
     /**
-     * Gets the identifier for the AutoTest docker container that should process requests for this deliverable.
+     * Gets the identifier for the AutoTest docker container that should process
+     * requests for this deliverable.
      *
-     * GET /admin/{:org}/{:delivId}/container
-     *
-     * @param courseId
+     * @param delivId
      */
     getContainerDetails(delivId: string): Promise<AutoTestConfigTransport | null>;
+
+    /**
+     * Send grade for saving. Useful for courses where the container decides
+     * if a grade should be saved (rather than portal-backend making the decision
+     * about what grade should be saved).
+     *
+     * POST at/grade
+     */
+    sendGrade(grade: AutoTestGradeTransport): Promise<Payload>;
+
+    // This seems like it should be here, but AutoTest does all of this itself in
+    // AutoTest::handleExecutionComplete
+
+    // /**
+    //  * Send result for saving
+    //  *
+    //  * POST at/result
+    //  *
+    //  * @param {IAutoTestResult} result
+    //  * @returns {Promise<Payload>}
+    //  */
+    // sendResult(result: IAutoTestResult): Promise<Payload>;
 }
 
 export class ClassPortal implements IClassPortal {
@@ -99,6 +121,27 @@ export class ClassPortal implements IClassPortal {
         }).catch(function (err) {
             Log.error("ClassPortal::getContainerId(..) - ERROR; url: " + url + "; ERROR: " + err);
             return null;
+        });
+    }
+
+    public async sendGrade(grade: AutoTestGradeTransport): Promise<Payload> {
+        const url = this.host + ":" + this.port + "/at/grade/";
+        const opts: rp.RequestPromiseOptions = {rejectUnauthorized: false, method: 'post'};
+        Log.info("ClassPortal::sendGrade(..) - Sending request to " + url);
+        return rp(url, opts).then(function (res) {
+            Log.trace("ClassPortal::sendGrade() - sent; returned payload: " + res);
+            const json: Payload = JSON.parse(res);
+            if (typeof json.success !== 'undefined') {
+                Log.error("ClassPortal::sendGrade(..) - successfully received");
+                return json;
+            } else {
+                Log.error("ClassPortal::sendGrade(..) - ERROR; not successfully received:  " + JSON.stringify(json));
+                return json;
+            }
+        }).catch(function (err) {
+            Log.error("ClassPortal::sendGrade(..) - ERROR; url: " + url + "; ERROR: " + err);
+            const pay: Payload = {failure: {message: err.message, shouldLogout: false}};
+            return pay;
         });
     }
 

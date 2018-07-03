@@ -4,11 +4,12 @@ import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import Util from "../../../common/Util";
 
-import {ICommentEvent, ICommitRecord, IContainerInput, IContainerOutput} from "../Types";
+import {IAutoTestResult, ICommentEvent, IContainerInput, IContainerOutput} from "../Types";
 import {IDataStore} from "./DataStore";
 import {MockGrader} from "./mocks/MockGrader";
 import {Queue} from "./Queue";
 import {AutoTestGradeTransport} from "../../../common/types/PortalTypes";
+import {IClassPortal} from "./ClassPortal";
 
 export interface IAutoTest {
     /**
@@ -32,6 +33,7 @@ export interface IAutoTest {
 
 export abstract class AutoTest implements IAutoTest {
     protected readonly dataStore: IDataStore;
+    protected readonly classPortal: IClassPortal = null;
 
     private regressionQueue = new Queue();
     private standardQueue = new Queue();
@@ -42,8 +44,9 @@ export abstract class AutoTest implements IAutoTest {
     private standardExecution: IContainerInput | null = null;
     private expresssExecution: IContainerInput | null = null;
 
-    constructor(dataStore: IDataStore) {
+    constructor(dataStore: IDataStore, classPortal: IClassPortal) {
         this.dataStore = dataStore;
+        this.classPortal = classPortal;
     }
 
     public addToStandardQueue(input: IContainerInput): void {
@@ -111,12 +114,12 @@ export abstract class AutoTest implements IAutoTest {
      * If subclasses do not want to do anything, they can just `return Promise.resolve();`
      * in their implementation.
      *
-     * @param {ICommitRecord} data
+     * @param {IAutoTestResult} data
      * @returns {Promise<void>}
      */
-    protected abstract processExecution(data: ICommitRecord): Promise<void>;
+    protected abstract processExecution(data: IAutoTestResult): Promise<void>;
 
-    protected async getOutputRecord(commitURL: string, delivId: string): Promise<ICommitRecord | null> {
+    protected async getOutputRecord(commitURL: string, delivId: string): Promise<IAutoTestResult | null> {
         try {
             const ret = await this.dataStore.getOutputRecord(commitURL, delivId);
             return ret;
@@ -169,6 +172,8 @@ export abstract class AutoTest implements IAutoTest {
             } else if (this.standardQueue.indexOf(commitURL) >= 0) {
                 onQueue = true;
             } else if (this.expressQueue.indexOf(commitURL) >= 0) {
+                onQueue = true;
+            } else if (this.regressionQueue.indexOf(commitURL) >= 0) {
                 onQueue = true;
             }
         } catch (err) {
@@ -232,14 +237,14 @@ export abstract class AutoTest implements IAutoTest {
     /**
      * Called when a container completes.
      *
-     * Persist record.
+     * Persist record. (could decide to move this persistence into ClassPortal::sendResult in future)
      * Post back if specified by container output.
      * Post back if requested by TA
      * Post back if requested by user and quota allows (and record feedback given)
      *
      * @param data
      */
-    private async handleExecutionComplete(data: ICommitRecord): Promise<void> {
+    private async handleExecutionComplete(data: IAutoTestResult): Promise<void> {
         try {
             const start = Date.now();
 
@@ -258,6 +263,7 @@ export abstract class AutoTest implements IAutoTest {
 
             Log.info("AutoTest::handleExecutionComplete(..) - start; commit: " + data.commitSHA);
 
+            // NOTE: we could alternatively send this to portal-backend by implementing ClassPortal::sendResult(..)
             await this.dataStore.saveOutputRecord(data);
 
             try {
@@ -302,7 +308,7 @@ export abstract class AutoTest implements IAutoTest {
             Log.trace("AutoTest::invokeContainer(..) - input: " + JSON.stringify(input, null, 2));
             const start = Date.now();
 
-            let record: ICommitRecord = null;
+            let record: IAutoTestResult = null;
             let isProd = true;
             if (input.pushInfo.postbackURL === "EMPTY" || input.pushInfo.postbackURL === "POSTBACK") {
                 Log.warn("AutoTest::invokeContainer(..) - execution skipped; !isProd");
@@ -311,20 +317,21 @@ export abstract class AutoTest implements IAutoTest {
             if (isProd === true) {
                 const atHost: string = Config.getInstance().getProp(ConfigKey.graderHost);
                 const atPort: number = Config.getInstance().getProp(ConfigKey.graderPort);
-                const cpHost: string = Config.getInstance().getProp(ConfigKey.classPortalHost);
-                const cpPort: number = Config.getInstance().getProp(ConfigKey.classPortalPort);
+
                 const image: string = Config.getInstance().getProp(ConfigKey.dockerId);
                 const timeout: number = Config.getInstance().getProp(ConfigKey.timeout);
-                // const org: string = Config.getInstance().getProp(ConfigKey.org);
+
                 const assnUrl: string = input.pushInfo.projectURL;
                 const assnCloneUrl: string = input.pushInfo.cloneURL;
                 const commitSHA: string = input.pushInfo.commitSHA;
                 const commitURL: string = input.pushInfo.commitURL;
-                // const repo: string = input.pushInfo.repoId;
+
                 const timestamp: number = input.pushInfo.timestamp;
                 const delivId: string = input.delivId;
+                const repoId: string = input.pushInfo.repoId;
                 const id: string = `${commitSHA}-${delivId}`;
-                const body = { // TODO: add type (this is used inside the container)
+
+                const body = { // TODO: ncbradley add type (this is used inside the container)
                     "assnId":    delivId,
                     "timestamp": timestamp,
                     "assn":      {
@@ -348,7 +355,7 @@ export abstract class AutoTest implements IAutoTest {
 
                 let output: IContainerOutput = {
                     commitURL:          assnUrl,
-                    timestamp:          Date.now(),
+                    timestamp:          input.pushInfo.timestamp, // want to use the push timestamp, not the done timestamp
                     report:             null,
                     feedback:           "Internal error: the grading service failed to handle the request.",
                     postbackOnComplete: false,
@@ -365,6 +372,9 @@ export abstract class AutoTest implements IAutoTest {
                 Log.trace("AutoTest::invokeContainer(..) - output: " + JSON.stringify(input, null, 2));
 
                 record = {
+                    delivId,
+                    repoId,
+                    timestamp,
                     commitURL,
                     commitSHA,
                     input,
@@ -372,6 +382,8 @@ export abstract class AutoTest implements IAutoTest {
                 };
 
                 // POST the grade to Class Portal
+                // NOTE: it is ok for for this to be here, but the backend should consider
+                // whether or not to honour it (e.g., based on course config or deadlines)
                 try {
                     let score = -1;
                     if (output.report !== null && typeof output.report.scoreOverall !== "undefined") {
@@ -380,24 +392,20 @@ export abstract class AutoTest implements IAutoTest {
                     const gradePayload: AutoTestGradeTransport = {
                         delivId,
                         score,
+
                         repoId:  input.pushInfo.repoId,
                         repoURL: input.pushInfo.projectURL,
 
-                        urlName: input.pushInfo.repoId,
+                        urlName: input.pushInfo.repoId, // could be a short SHA, but this seems better
                         URL:     commitURL,
 
                         comment: output.feedback,
                         timestamp,
                         custom:  {}
                     };
-                    const postGradeOpts: rp.OptionsWithUrl = {
-                        method: "POST",
-                        url:    `https://${cpHost}:${cpPort}/at/grade/`, // ${org}/${repo}/${delivId}
-                        json:   true,
-                        body:   gradePayload,
-                    };
-                    Log.trace("AutoTest::invokeContainer(..) - POST gradePayload: " + JSON.stringify(gradePayload, null, 2));
-                    await rp(postGradeOpts);
+
+
+                    await this.classPortal.sendGrade(gradePayload);
                 } catch (err) {
                     Log.warn("AutoTest::invokeContainer(..) - ERROR for commit: " + input.pushInfo.commitSHA + "; ERROR sending grade: " + err);
                 }

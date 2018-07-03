@@ -9,23 +9,22 @@ import {Test} from "../GlobalSpec";
 import Util from "../../../common/Util";
 import Config, {ConfigKey} from "../../../common/Config";
 
-describe("GitHubActions", () => {
+describe.skip("GitHubActions", () => {
 
     let gh: GitHubActions;
 
     let TIMEOUT = 5000;
 
-    let ORGNAME = 'classytest'; // dedicated test org; ensures we don't kill repos in production
     const REPONAME = getProjectPrefix() + Test.REPONAME1;
     const TEAMNAME = getTeamPrefix() + Test.TEAMNAME1;
 
     let OLDORGNAME: string | null = null;
 
     before(async () => {
-        Test.ORGNAME = ORGNAME; // use real org name so the repos are provisioned correctly
+        Test.ORGNAME = 'classytest';
 
         OLDORGNAME = Config.getInstance().getProp(ConfigKey.org);
-        Config.getInstance().setProp(ConfigKey.org, ORGNAME);
+        Config.getInstance().setProp(ConfigKey.org, Test.ORGNAME); // dedicated test org; ensures we don't kill repos in production
     });
 
     after(async () => {
@@ -45,7 +44,8 @@ describe("GitHubActions", () => {
         "secap_cpscbot",
         "secap_rthse2",
         "secap_ubcbot",
-        "secap_testtest__repo1"
+        "secap_testtest__repo1",
+        "TESTrepo1"
     ];
 
     let TESTTEAMNAMES = [
@@ -53,7 +53,8 @@ describe("GitHubActions", () => {
         "ubcbot",
         "rthse2",
         "cpscbot",
-        "TEST__X__t_TESTteam1"
+        "TEST__X__t_TESTteam1",
+        "TESTteam1"
     ];
 
     it("Clear stale repos and teams.", async function () {

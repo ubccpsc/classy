@@ -2,6 +2,7 @@ import Log from "../../../common/Log";
 
 import {DatabaseController} from "./DatabaseController";
 import {IContainerOutput} from "../../../autotest/src/Types";
+import {RepositoryController} from "./RepositoryController";
 
 export class ResultsController {
 
@@ -29,8 +30,16 @@ export class ResultsController {
         Log.info("ResultController::createResult(..) - start");
         Log.trace("GradesController::createResult(..) - payload: " + JSON.stringify(result));
         try {
-            let outcome = await DatabaseController.getInstance().writeResult(result);
+            const repoId: string | null = null;
+            // TODO: need the PushInfo event for this result! (aka what repoId is it on?)
+            const rc = new RepositoryController();
+            const people = await rc.getPeopleForRepo(repoId);
 
+            // TODO: need delivId too!
+
+            // TODO: add people to results
+            let outcome = await DatabaseController.getInstance().writeResult(result);
+            Log.trace("ResultController::createResult(..) - result written");
             return outcome;
         } catch (err) {
             Log.error("ResultController::createResult(..) - ERROR: " + err);

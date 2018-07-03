@@ -2,10 +2,10 @@ import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
 
-import {ICommitRecord, IContainerInput, IContainerOutput, IGradeReport} from "../../Types";
+import {IAutoTestResult, IContainerInput, IContainerOutput, IGradeReport} from "../../Types";
 
 interface IGrader {
-    execute(): Promise<ICommitRecord>;
+    execute(): Promise<IAutoTestResult>;
 }
 
 export class MockGrader implements IGrader {
@@ -18,7 +18,7 @@ export class MockGrader implements IGrader {
         this.input = input;
     }
 
-    public async execute(): Promise<ICommitRecord> {
+    public async execute(): Promise<IAutoTestResult> {
         try {
             Log.info("MockGrader::execute() - start; commitSHA: " + this.input.pushInfo.commitSHA);
             const oracleToken = Config.getInstance().getProp(ConfigKey.githubOracleToken);
@@ -61,7 +61,10 @@ export class MockGrader implements IGrader {
                 out.feedback = "Build Problem Encountered.";
             }
 
-            const ret: ICommitRecord = {
+            const ret: IAutoTestResult = {
+                delivId:   this.input.delivId,
+                repoId:    this.input.pushInfo.repoId,
+                timestamp: this.input.pushInfo.timestamp,
                 commitURL: this.input.pushInfo.commitURL,
                 commitSHA: this.input.pushInfo.commitSHA,
                 input:     this.input,

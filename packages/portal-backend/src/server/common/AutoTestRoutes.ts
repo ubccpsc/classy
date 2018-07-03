@@ -1,7 +1,7 @@
 import restify = require('restify');
 import * as rp from "request-promise-native";
 
-import Config, {ConfigKey} from "../../../../common/Config";
+import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {
     AutoTestAuthPayload,
@@ -10,27 +10,26 @@ import {
     AutoTestGradeTransport
 } from "../../../../common/types/PortalTypes";
 
-import {IContainerOutput} from "../../../../autotest/src/Types";
+import {IAutoTestResult} from "../../../../autotest/src/Types";
 
 import IREST from "../IREST";
 import {CourseController} from "../../controllers/CourseController";
 import {GitHubController} from "../../controllers/GitHubController";
-import {ResultsController} from "../../controllers/ResultsController";
 
 /**
  * Just a large body of static methods for translating between restify and the remainder of the system.
  */
-export class AutoTestRouteHandler implements IREST {
+export class AutoTestRoutes implements IREST {
 
     public registerRoutes(server: restify.Server) {
         Log.info('AutoTestRouteHandler::registerRoutes() - start');
 
-        server.get('/at/defaultDeliverable', AutoTestRouteHandler.atDefaultDeliverable); // /:org
-        server.get('/at/isStaff/:personId', AutoTestRouteHandler.atIsStaff);
-        server.get('/at/container/:delivId', AutoTestRouteHandler.atContainerDetails);
-        server.post('/at/grade/', AutoTestRouteHandler.atGradeResult); // was: /grade/:org/:repoId/:delivId
-        server.post('/at/result/', AutoTestRouteHandler.atResult);
-        server.post('/githubWebhook', AutoTestRouteHandler.githubWebhook); // forward GitHub Webhooks to AutoTest
+        server.get('/at/defaultDeliverable', AutoTestRoutes.atDefaultDeliverable); // /:org
+        server.get('/at/isStaff/:personId', AutoTestRoutes.atIsStaff);
+        server.get('/at/container/:delivId', AutoTestRoutes.atContainerDetails);
+        server.post('/at/grade/', AutoTestRoutes.atGradeResult); // was: /grade/:org/:repoId/:delivId
+        server.post('/at/result/', AutoTestRoutes.atResult);
+        server.post('/githubWebhook', AutoTestRoutes.githubWebhook); // forward GitHub Webhooks to AutoTest
     }
 
     public static atContainerDetails(req: any, res: any, next: any) {
@@ -39,13 +38,14 @@ export class AutoTestRouteHandler implements IREST {
         // TODO: verify secret
 
         const delivId = req.params.delivId;
+        const name = Config.getInstance().getProp(ConfigKey.name);
 
-        Log.info('AutoTestRouteHandler::atContainerDetails(..) - delivId: ' + delivId);
+        Log.info('AutoTestRouteHandler::atContainerDetails(..) - name: ' + name + '; delivId: ' + delivId);
 
         // TODO: this is just a dummy implementation
         let payload: AutoTestConfigPayload;
-        const org = Config.getInstance().getProp(ConfigKey.org);
-        if ((org === 'secapstone' || org === 'classytest') && delivId !== 'd9997') { // HACK: the && is terrible and is just for testing
+
+        if ((name === ConfigCourses.sdmm || name === ConfigCourses.classytest) && delivId !== 'd9997') { // HACK: the && is terrible and is just for testing
             payload = {success: {dockerImage: 'secapstone-grader', studentDelay: 60 * 60 * 12, maxExecTime: 300, regressionDelivIds: []}};
             res.send(200, payload);
         } else {
@@ -56,18 +56,18 @@ export class AutoTestRouteHandler implements IREST {
 
 
     public static atDefaultDeliverable(req: any, res: any, next: any) {
-        Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - /defaultDeliverable/:org - start GET');
+        Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - /defaultDeliverable/:name - start GET');
 
         // TODO: verify secret
 
-        // const org = req.params.org;
-        const org = Config.getInstance().getProp(ConfigKey.org);
-        Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - org: ' + org);
+        // const name = req.params.name;
+        const name = Config.getInstance().getProp(ConfigKey.name);
+        Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - name: ' + name);
 
         // TODO: this is just a dummy implementation
 
         let payload: AutoTestDefaultDeliverablePayload;
-        if (org === 'secapstone' || org === 'classytest') {
+        if (name === ConfigCourses.sdmm || name === ConfigCourses.classytest) {
             payload = {success: {defaultDeliverable: 'd0'}};
             res.send(200, payload);
         } else {
@@ -88,9 +88,9 @@ export class AutoTestRouteHandler implements IREST {
 
         let sc = new CourseController(new GitHubController());
         sc.handleNewAutoTestGrade(gradeRecord).then(function (success: any) {
-            res.send({success: true}); // respond
+            res.send(200, {success: {success: true}}); // respond
         }).catch(function (err) {
-            res.send({success: true}); // respond true, they can't do anything anyways
+            res.send(400, {failure: {message: 'Failed to receive grade: ' + err}}); // respond true, they can't do anything anyways
             Log.error('AutoTestRouteHandler::atGradeResult(..) - ERROR: ' + err);
         });
     }
@@ -100,17 +100,18 @@ export class AutoTestRouteHandler implements IREST {
 
         // TODO: verify admin secret
 
-        const org = Config.getInstance().getProp(ConfigKey.org);
-        const resultRecord: IContainerOutput = req.body;
+        const resultRecord: IAutoTestResult = req.body;
 
-        Log.info('AutoTestRouteHandler::atResult(..) - org: ' + org + '; body: ' + JSON.stringify(resultRecord));
-        let rc = new ResultsController();
-        rc.createResult(resultRecord).then(function (success) {
-            res.send({success: true}); // respond
-        }).catch(function (err) {
-            res.send({success: true}); // respond true, they can't do anything anyways
-            Log.error('AutoTestRouteHandler::atResult(..) - ERROR: ' + err);
-        });
+        Log.info('AutoTestRouteHandler::atResult(..) - body: ' + JSON.stringify(resultRecord));
+        Log.warn('AutoTestRouteHandler::atResult(..) - NOT IMPLEMENTED');
+        // let rc = new ResultsController();
+        // rc.createResult(resultRecord).then(function (success) {
+        //     res.send({success: true}); // respond
+        // }).catch(function (err) {
+        //     res.send({success: true}); // respond true, they can't do anything anyways
+        //     Log.error('AutoTestRouteHandler::atResult(..) - ERROR: ' + err);
+        // });
+        res.send(200, {success: {worked: true}});
     }
 
     /**
@@ -121,13 +122,13 @@ export class AutoTestRouteHandler implements IREST {
      * @param next
      */
     public static atIsStaff(req: any, res: any, next: any) {
-        Log.info('AutoTestRouteHandler::atIsStaff(..) - /isStaff/:org/:personId - start GET');
+        Log.info('AutoTestRouteHandler::atIsStaff(..) - /isStaff/:personId - start GET');
 
         // TODO: verify secret
-        const org = Config.getInstance().getProp(ConfigKey.org);
+
         const personId = req.params.personId;
 
-        Log.info('AutoTestRouteHandler::atIsStaff(..) - org: ' + org + '; personId: ' + personId);
+        Log.info('AutoTestRouteHandler::atIsStaff(..) - personId: ' + personId);
 
         let payload: AutoTestAuthPayload;
         // TODO: this is just a dummy implementation

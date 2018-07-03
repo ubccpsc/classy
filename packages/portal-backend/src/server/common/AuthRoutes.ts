@@ -9,13 +9,14 @@ import {Auth, Person} from "../../Types";
 import {PersonController} from "../../controllers/PersonController";
 import IREST from "../IREST";
 import {RouteHandler} from "../RouteHandler";
-import restify = require('restify');
+import {AuthTransportPayload} from "../../../../common/types/PortalTypes";
+import restify = require("restify");
 import ClientOAuth2 = require("client-oauth2");
 
 /**
  * Just a large body of static methods for translating between restify and the remainder of the system.
  */
-export class AuthRouteHandler implements IREST {
+export class AuthRoutes implements IREST {
 
     private static ac = new AuthController();
 
@@ -23,38 +24,42 @@ export class AuthRouteHandler implements IREST {
         Log.info("AuthRouteHanlder::registerRoutes() - start");
 
         server.on('MethodNotAllowed', RouteHandler.handlePreflight); // preflights cors requests
-        server.get('/getCredentials', AuthRouteHandler.getCredentials);
-        server.get('/auth', AuthRouteHandler.getAuth);
-        server.get('/githubCallback', AuthRouteHandler.githubCallback);
+        server.get('/getCredentials', AuthRoutes.getCredentials); // verify Classy credentials
+        server.get('/auth', AuthRoutes.getAuth); // start GitHub OAuth flow
+        server.get('/githubCallback', AuthRoutes.githubCallback); // finalize GitHub OAuth flow
     }
 
     public static getCredentials(req: any, res: any, next: any) {
         Log.trace('AuthRouteHandler::getCredentials(..) - start');
         const user = req.headers.user;
         const token = req.headers.token;
-        const org = req.headers.org;
-        Log.info('AuthRouteHandler::getCredentials(..) - org: ' + org + '; user: ' + user + '; token: ' + token);
+        // const org = req.headers.org;
+        Log.info('AuthRouteHandler::getCredentials(..) - user: ' + user + '; token: ' + token);
 
-        AuthRouteHandler.ac.isValid(user, token).then(function (isValid) {
+        let payload: AuthTransportPayload;
+        AuthRoutes.ac.isValid(user, token).then(function (isValid) {
             Log.trace('AuthRouteHandler::getCredentials(..) - in isValid(..)');
             if (isValid === true) {
                 Log.trace('AuthRouteHandler::getCredentials(..) - isValid true');
-                AuthRouteHandler.ac.isPrivileged(user, token).then(function (isPrivileged) {
-
+                AuthRoutes.ac.isPrivileged(user, token).then(function (isPrivileged) {
+                    payload = {success: {personId: user, token: token, isAdmin: isPrivileged.isAdmin, isStaff: isPrivileged.isStaff}};
                     Log.info('RouteHandler::getCredentials(..) - sending 200; isPriv: ' + (isPrivileged.isStaff || isPrivileged.isAdmin));
-                    res.send({user: user, token: token, isAdmin: isPrivileged.isAdmin, isStaff: isPrivileged.isStaff});
+                    res.send(200, payload);
 
                 }).catch(function (err) {
                     Log.info('AuthRouteHandler::getCredentials(..) - isValid true; ERROR: ' + err);
-                    res.send(400, {failure: {message: "Login error (getCredentials valid inner error)."}});
+                    payload = {failure: {message: "Login error (getCredentials valid inner error).", shouldLogout: false}};
+                    res.send(400, payload);
                 });
             } else {
                 Log.trace('AuthRouteHandler::getCredentials(..) - sending 400');
-                res.send(400, {failure: {message: "Login error (getCredentials invalid inner error)."}});
+                payload = {failure: {message: "Login error (getCredentials invalid inner error).", shouldLogout: false}};
+                res.send(400, payload);
             }
         }).catch(function (err) {
             Log.error('AuthRouteHandler::getCredentials(..) - ERROR: ' + err);
-            res.send(400, {failure: {message: "Login error (getCredentials outer error)."}});
+            payload = {failure: {message: "Login error (getCredentials outer error).", shouldLogout: false}};
+            res.send(400, payload);
         });
     }
 
@@ -62,10 +67,10 @@ export class AuthRouteHandler implements IREST {
         Log.trace("AuthRouteHandler::getAuth(..) - /auth redirect start");
         let config = Config.getInstance();
 
-        const org = req.query.org;
-
-        const githubRedirect = config.getProp(ConfigKey.backendUrl) + ':' + config.getProp(ConfigKey.backendPort) + '/githubCallback?org=' + org;
-        Log.info("AuthRouteHandler::getAuth(..) - /auth redirect; course: " + org + "; URL: " + githubRedirect);
+        // const org = req.query.org;
+        const name = config.getProp(ConfigKey.name);
+        const githubRedirect = config.getProp(ConfigKey.backendUrl) + ':' + config.getProp(ConfigKey.backendPort) + '/githubCallback?name=' + name;
+        Log.info("AuthRouteHandler::getAuth(..) - /auth redirect; course: " + name + "; URL: " + githubRedirect);
 
         const setup = {
             clientId:         config.getProp(ConfigKey.githubClientId),
@@ -102,7 +107,8 @@ export class AuthRouteHandler implements IREST {
         // TODO: do we need this redirect?
         const backendUrl = config.getProp(ConfigKey.backendUrl);
         const backendPort = config.getProp(ConfigKey.backendPort);
-        const githubRedirect = backendUrl + ':' + backendPort + '/githubCallback?orgName=secapstone';  // SDMM HardCode
+        // const githubRedirect = backendUrl + ':' + backendPort + '/githubCallback?orgName=secapstone';  // SDMM HardCode
+        const githubRedirect = backendUrl + ':' + backendPort + '/githubCallback?name=' + config.getProp(ConfigKey.name);
         Log.info('AuthRouteHandler::githubCallback(..) - / githubCallback; URL: ' + githubRedirect);
 
         const opts = {

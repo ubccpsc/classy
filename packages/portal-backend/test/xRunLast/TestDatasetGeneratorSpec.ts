@@ -4,6 +4,9 @@ import "mocha";
 import {PersonController} from "../../src/controllers/PersonController";
 import {Deliverable, Person} from "../../src/Types";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
+import {TeamController} from "../../src/controllers/TeamController";
+import {Test} from "../GlobalSpec";
+import {RepositoryController} from "../../src/controllers/RepositoryController";
 
 const loadFirst = require('../GlobalSpec');
 
@@ -34,6 +37,31 @@ describe('TestDatasetGenerator', function () {
             await pc.createPerson(p);
         }
     });
+
+    it('Can generate some teams', async function () {
+        const tc: TeamController = new TeamController();
+        const pc: PersonController = new PersonController();
+        let pA = await pc.getPerson('p1');
+        let pB = await pc.getPerson('p2');
+        await tc.createTeam(Test.TEAMNAME1, [pA, pB], {});
+
+        pA = await pc.getPerson('p3');
+        pB = await pc.getPerson('p4');
+        let pC = await pc.getPerson('p5');
+        await tc.createTeam(Test.TEAMNAME2, [pA, pB, pC], {});
+    });
+
+
+    it('Can generate some repos', async function () {
+        const tc: TeamController = new TeamController();
+
+        const teams = await tc.getAllTeams();
+        const rc: RepositoryController = new RepositoryController();
+
+        await rc.createRepository(Test.REPONAME1, [teams[0]], {});
+        await rc.createRepository(Test.REPONAME2, [teams[1]], {});
+    });
+
 
     it('Can generate some deliverables', async function () {
         const dc: DeliverablesController = new DeliverablesController();

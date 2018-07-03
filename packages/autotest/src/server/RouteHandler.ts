@@ -7,9 +7,9 @@ import Config, {ConfigKey} from "../../../common/Config";
 import {AutoTest} from "../autotest/AutoTest";
 import {ClassPortal} from "../autotest/ClassPortal";
 import {MongoDataStore} from "../autotest/DataStore";
-import {GithubService} from "../github/GithubService";
-import {GithubUtil} from "../github/GithubUtil";
-import {GithubAutoTest} from "../github/GithubAutoTest";
+import {GitHubService} from "../github/GitHubService";
+import {GitHubUtil} from "../github/GitHubUtil";
+import {GitHubAutoTest} from "../github/GitHubAutoTest";
 import {EdXClassPortal} from "../edx/EdxClassPortal";
 import {ICommentEvent, IPushEvent} from "../Types";
 
@@ -20,20 +20,16 @@ export default class RouteHandler {
     public static getAutoTest(): AutoTest {
         if (RouteHandler.autoTest === null) {
 
-            if (Config.getInstance().getProp(ConfigKey.kind) === "ubc") {
-                const data = new MongoDataStore();
-                const portal = new ClassPortal();
-                const gh = new GithubService();
-                const courseId = Config.getInstance().getProp(ConfigKey.name);
-                RouteHandler.autoTest = new GithubAutoTest(data, portal, gh);
-            } else if (Config.getInstance().getProp(ConfigKey.kind) === "edx") {
+            if (Config.getInstance().getProp(ConfigKey.name) === "sdmm") {
                 const data = new MongoDataStore();
                 const portal = new EdXClassPortal();
-                const gh = new GithubService();
-                const courseId = Config.getInstance().getProp(ConfigKey.name);
-                RouteHandler.autoTest = new GithubAutoTest(data, portal, gh);
+                const gh = new GitHubService();
+                RouteHandler.autoTest = new GitHubAutoTest(data, portal, gh);
             } else {
-                Log.error("RouteHandler::getAutoTest() - ERROR; kind not supported");
+                const data = new MongoDataStore();
+                const portal = new ClassPortal();
+                const gh = new GitHubService();
+                RouteHandler.autoTest = new GitHubAutoTest(data, portal, gh);
             }
         }
         return RouteHandler.autoTest;
@@ -51,7 +47,7 @@ export default class RouteHandler {
         const body = req.body;
 
         // cast is unfortunate, but if we're listening to these routes it must be a github AT instance
-        let at: GithubAutoTest = <GithubAutoTest>RouteHandler.getAutoTest();
+        let at: GitHubAutoTest = <GitHubAutoTest>RouteHandler.getAutoTest();
 
         switch (githubEvent) {
             case "ping":
@@ -63,7 +59,7 @@ export default class RouteHandler {
                 try {
                     let commentEvent: ICommentEvent = null;
                     try {
-                        commentEvent = GithubUtil.processComment(body);
+                        commentEvent = GitHubUtil.processComment(body);
                         Log.info("RouteHandler::handleCommentEvent() - request: " + JSON.stringify(commentEvent, null, 2));
                     } catch (err) {
                         Log.error("RouteHandler::handleCommentEvent() - ERROR parsing payload; err: " + err.message + "; payload: " + JSON.stringify(body, null, 2));
@@ -85,7 +81,7 @@ export default class RouteHandler {
                 try {
                     let pushEvent: IPushEvent = null;
                     try {
-                        pushEvent = GithubUtil.processPush(body);
+                        pushEvent = GitHubUtil.processPush(body);
                         Log.info("RouteHandler::handlePushEvent() - request: " + JSON.stringify(pushEvent, null, 2));
                     } catch (err) {
                         Log.error("RouteHandler::handlePushEvent() - ERROR parsing payload; err: " + err.message + "; payload: " + JSON.stringify(body, null, 2));
@@ -110,44 +106,4 @@ export default class RouteHandler {
         return next();
     }
 
-    // /**
-    //  * Handles GitHub POSTs, currently:
-    //  *  - commit_comment
-    //  *  - push
-    //  */
-    // public static postXQueue(req: restify.Request, res: restify.Response, next: restify.Next) {
-    //     const start = Date.now();
-    //     const body = req.body;
-    //     Log.info("RoutHandler::handleXQueue(..) - start; body: " + body);
-    //
-    //     let at: EdxAutoTest = <EdxAutoTest>RouteHandler.getAutoTest();
-    //
-    //     try {
-    //         const xqueueBody = body.xqueue_body;
-    //         const name = xqueueBody.grader_payload;
-    //         const studentResponse = xqueueBody.student_response;
-    //
-    //         at.handleTestRequest('fakeURL', 'fakeDeliv').then(function (data) {
-    //
-    //             // NOTE: THIS WILL NOT WORK
-    //             // We should send 200 right away, but not with this payload
-    //             // payload has to come later, once the queue has processed the request
-    //
-    //             // TODO: turn this into something
-    //             const correct = false;
-    //             const score = 101;
-    //             const message = "MESSAGE";
-    //
-    //             Log.error("RouteHandler::handleXQueue(..) - done; took: " + Util.took(start));
-    //             res.json(200, {"correct": correct, "score": score, "msg": message});
-    //         }).catch(function (err) {
-    //             res.json(400, "Error encountered: " + err);
-    //         });
-    //
-    //     } catch (err) {
-    //         Log.error("RouteHandler::handleXQueue(..) - ERROR: " + err + "; took: " + Util.took(start));
-    //         res.json(400, "Error encountered: " + err);
-    //     }
-    //     return next();
-    // }
 }

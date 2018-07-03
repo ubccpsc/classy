@@ -3,6 +3,8 @@ import "mocha";
 
 import Config from "../../common/Config";
 import {ClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
+import {Backend} from "../../portal-backend/src/Backend";
+import Log from "../../common/Log";
 
 const loadFirst = require('./GlobalSpec');
 
@@ -13,11 +15,23 @@ describe("ClassPortal Service", () => {
     const classId = "secapstone";
     const CURRENT_DEFAULT_DELIV = "d2";
 
-    beforeEach(function () {
-        // cp = new MockClassPortal(); // TODO: change to ClassPortalService not MockClassPortal
-        cp = new ClassPortal(); // TODO: change to ClassPortalService not MockClassPortal
+    let backend: Backend = null;
+    before(function () {
+        Log.test("ClassPortalSpec::before() - start");
+        backend = new Backend();
+        backend.start();
     });
 
+    after(function () {
+        Log.test("ClassPortalSpec::after() - start");
+        backend.stop();
+    });
+
+    beforeEach(function () {
+        cp = new ClassPortal();
+    });
+
+    // NOTE: if this fails it could be because the ClassPortal Backend has not been started yet
     it("Should be able for a staff user to be staff.", async () => {
         try {
             const actual = await cp.isStaff("rtholmes");

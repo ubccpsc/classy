@@ -2,7 +2,8 @@ import restify = require('restify');
 import Log from "../../../../common/Log";
 
 import IREST from "../IREST";
-import {CourseController} from "../../controllers/CourseController";
+import {ConfigTransportPayload} from '../../../../common/types/PortalTypes';
+import Config, {ConfigKey} from '../../../../common/Config';
 
 export default class GeneralRoutes implements IREST {
 
@@ -14,19 +15,25 @@ export default class GeneralRoutes implements IREST {
 
         // returns the org that the backend is currently configured to serve
         // mainly used by the frontend so it uses the correct UI
-        server.get('/org', GeneralRoutes.getOrg);
+        server.get('/config', GeneralRoutes.getConfig);
     }
 
-    public static getOrg(req: any, res: any, next: any) {
-        Log.info('GeneralRoutes::getOrg(..) - start');
+    public static getConfig(req: any, res: any, next: any) {
+        Log.info('GeneralRoutes::getConfig(..) - start');
 
-        const org = CourseController.getOrg();
+        // const org = CourseController.getOrg();
+        // const name = CourseController.getName();
+        const org = Config.getInstance().getProp(ConfigKey.org);
+        const name = Config.getInstance().getProp(ConfigKey.name);
+
+        let payload: ConfigTransportPayload;
         if (org !== null) {
-            const payload = {org: org};
-            Log.trace('GeneralRoutes::getOrg(..) - sending: ' + JSON.stringify(payload));
-            res.send(payload);
+            payload = {success: {org: org, name: name}};
+            Log.trace('GeneralRoutes::getConfig(..) - sending: ' + JSON.stringify(payload));
+            res.send(200, payload);
         } else {
-            res.send(400, {failure: {message: 'Unable to retrieve org (server error)'}});
+            payload = {failure: {message: 'Unable to retrieve config (server error)', shouldLogout: false}};
+            res.send(400, payload);
         }
     }
 

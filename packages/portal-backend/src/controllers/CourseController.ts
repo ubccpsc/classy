@@ -1,7 +1,6 @@
-import Config, {ConfigKey} from "../../../common/Config";
+import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
-import {DeliverableTransport, StudentTransport, AutoTestGradeTransport} from '../../../common/types/PortalTypes';
-import {GradePayload} from "../../../common/types/SDMMTypes";
+import {AutoTestGradeTransport, DeliverableTransport, StudentTransport} from '../../../common/types/PortalTypes';
 
 import {RepositoryController} from "./RepositoryController";
 import {DatabaseController} from "./DatabaseController";
@@ -35,7 +34,7 @@ export interface ICourseController {
      * Gets the person associated with the username.
      *
      * @param {string} githubUsername
-     * @returns {Promise<Person | null>} Returns null if the username is unknown in the org.
+     * @returns {Promise<Person | null>} Returns null if the username is unknown in the course.
      */
     getPerson(githubUsername: string): Promise<Person | null>;
 
@@ -43,7 +42,7 @@ export interface ICourseController {
      *
      * TODO: Convert Person to PersonTransport
      *
-     * Sets the people for the org. Usually populated with classlist (or some such).
+     * Sets the people for the course. Usually populated with classlist (or some such).
      *
      * @param {Person[]} people
      * @returns {Promise<boolean>}
@@ -54,7 +53,7 @@ export interface ICourseController {
      *
      * TODO: Convert Deliverable to DeliverableTransport
      *
-     * Get all the deliverables for an org.
+     * Get all the deliverables for the course.
      *
      * @returns {Promise<Deliverable[]>}
      */
@@ -64,7 +63,7 @@ export interface ICourseController {
      *
      * TODO: convert Deliverable to DeliverableTransport
      *
-     * Sets the deliverables for an org. Will replace deliverables that have the same
+     * Sets the deliverables for the course. Will replace deliverables that have the same
      * Deliverable.id, otherwise it will create new ones.
      *
      * Will _not_ delete any deliverables.
@@ -78,7 +77,7 @@ export interface ICourseController {
      *
      * TODO: Convert Person to PersonTransport and Grade to GradeTransport
      *
-     * If no Person is provided, gets all grades for an org.
+     * If no Person is provided, gets all grades for a course.
      * If a Person is provided, gets all grades for only that person.
      *
      * @param {Person} person
@@ -90,7 +89,7 @@ export interface ICourseController {
      *
      * TODO: convert Grade to GradeTransport
      *
-     * Sets the grades for an org. Any grade that already exists in the system with the
+     * Sets the grades for a course. Any grade that already exists in the system with the
      * same Grade.personId && Grade.delivId will be replaced; new records will be added.
      *
      * Will _not_ delete any existing grades.
@@ -139,7 +138,18 @@ export class CourseController { // don't implement ICourseController yet
         Log.info("CourseController::handleNewGrade( .. ) - start");
 
         try {
-            let peopleIds = await this.rc.getPeopleForRepo(grade.repoId);
+            let repo = await this.rc.getRepository(grade.repoId); // sanity check
+            if (repo === null) {
+                Log.error("CourseController::handleNewGrade( .. ) - invalid repo name: " + grade.repoId);
+                return false;
+            }
+
+            let peopleIds = await this.rc.getPeopleForRepo(grade.repoId); // sanity check
+            if (peopleIds.length < 1) {
+                Log.error("CourseController::handleNewGrade( .. ) - no people to associate grade record with.");
+                return false;
+            }
+
             for (const personId of peopleIds) {
                 let existingGrade = await this.gc.getGrade(personId, grade.delivId);
                 if (existingGrade === null || existingGrade.score < grade.score) {
@@ -149,7 +159,6 @@ export class CourseController { // don't implement ICourseController yet
                     Log.info("CourseController::handleNewGrade( .. ) - grade is not higher");
                 }
             }
-            // createGrade(org: string, repoId: string, delivId: string, score: number, comment: string, URL: string, timestamp: number)
             return true;
         } catch (err) {
             Log.error("CourseController::handleNewGrade( .. ) - ERROR: " + err);
@@ -163,8 +172,8 @@ export class CourseController { // don't implement ICourseController yet
      * @returns {string}
      */
     public static getProjectPrefix(): string {
-        const org = Config.getInstance().getProp(ConfigKey.org);
-        if (org === "secapstonetest" || Config.getInstance().getProp(ConfigKey.name) === "secapstonetest") {
+        const name = Config.getInstance().getProp(ConfigKey.name);
+        if (name === ConfigCourses.classytest) {
             Log.info("CourseController::getProjectPrefix(..) - returning test prefix");
             return "TEST__X__secap_";
         } else {
@@ -175,13 +184,12 @@ export class CourseController { // don't implement ICourseController yet
     /**
      * Public static so tests can use them too.
      *
-     * @param {string} org
      * @returns {string}
      */
     public static getTeamPrefix() {
-        const org = Config.getInstance().getProp(ConfigKey.org);
+        const name = Config.getInstance().getProp(ConfigKey.name);
 
-        if (org === "secapstonetest" || Config.getInstance().getProp(ConfigKey.name) === "secapstonetest") {
+        if (name === ConfigCourses.classytest) {
             Log.info("CourseController::getTeamPrefix(..) - returning test prefix");
             return "TEST__X__t_";
         } else {
@@ -189,19 +197,34 @@ export class CourseController { // don't implement ICourseController yet
         }
     }
 
-    public static getOrg(): string | null {
+    // public static getOrg(): string | null {
+    //     try {
+    //         const org = Config.getInstance().getProp(ConfigKey.org); // valid .org usage
+    //         if (org !== null) {
+    //             return org;
+    //         } else {
+    //             Log.error("CourseController::getOrg() - ERROR: null org");
+    //         }
+    //     } catch (err) {
+    //         Log.error("CourseController::getOrg() - ERROR: " + err.message);
+    //     }
+    //     return null;
+    // }
+
+    public static getName(): string | null {
         try {
-            const org = Config.getInstance().getProp(ConfigKey.org);
-            if (org !== null) {
-                return org;
+            const name = Config.getInstance().getProp(ConfigKey.name);
+            if (name !== null) {
+                return name;
             } else {
-                Log.error("CourseController::getOrg() - ERROR: null org");
+                Log.error("CourseController::getName() - ERROR: null name");
             }
         } catch (err) {
-            Log.error("CourseController::getOrg() - ERROR: " + err.message);
+            Log.error("CourseController::getName() - ERROR: " + err.message);
         }
         return null;
     }
+
 
     /**
      * Gets the students associated with the course.

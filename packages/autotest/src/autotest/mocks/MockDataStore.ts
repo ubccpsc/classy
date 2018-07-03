@@ -4,7 +4,7 @@ import Config, {ConfigKey} from "../../../../common/Config";
 import Util from "../../../../common/Util";
 import Log from "../../../../common/Log";
 
-import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven, IPushEvent} from "../../Types";
+import {ICommentEvent, IAutoTestResult, IContainerInput, IFeedbackGiven, IPushEvent} from "../../Types";
 import {IDataStore} from "../DataStore";
 
 /**
@@ -131,7 +131,7 @@ export class MockDataStore implements IDataStore {
         return null;
     }
 
-    public async saveOutputRecord(outputInfo: ICommitRecord): Promise<void> {
+    public async saveOutputRecord(outputInfo: IAutoTestResult): Promise<void> {
         // Log.info("MockDataStore::saveOutputRecord(..) - start");
         try {
             const start = Date.now();
@@ -148,13 +148,13 @@ export class MockDataStore implements IDataStore {
         }
     }
 
-    public async getOutputRecord(commitURL: string, delivId: string): Promise<ICommitRecord | null> {
+    public async getOutputRecord(commitURL: string, delivId: string): Promise<IAutoTestResult | null> {
         // Log.info("MockDataStore::getOutputRecord(..) - start");
         try {
             const start = Date.now();
 
             // read
-            const outRecords: ICommitRecord[] = await fs.readJSON(this.RECORD_PATH);
+            const outRecords: IAutoTestResult[] = await fs.readJSON(this.RECORD_PATH);
             Log.info("MockDataStore::getOutputRecord(..) - # records: " + outRecords.length);
             // find and return
             for (const record of outRecords) {
@@ -241,10 +241,10 @@ export class MockDataStore implements IDataStore {
         return ret;
     }
 
-    public async getAllData(): Promise<{ records: ICommitRecord[], comments: ICommentEvent[], pushes: IPushEvent[], feedback: IFeedbackGiven[] }> {
+    public async getAllData(): Promise<{ records: IAutoTestResult[], comments: ICommentEvent[], pushes: IPushEvent[], feedback: IFeedbackGiven[] }> {
         Log.info("MockDataStore::getAllData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
 
-        const records: ICommitRecord[] = await fs.readJSON(this.RECORD_PATH);
+        const records: IAutoTestResult[] = await fs.readJSON(this.RECORD_PATH);
         const comments: ICommentEvent[] = await fs.readJSON(this.COMMENT_PATH);
         const pushes: IPushEvent[] = await fs.readJSON(this.PUSH_PATH);
         const feedback: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
