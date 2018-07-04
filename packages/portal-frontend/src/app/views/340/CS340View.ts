@@ -35,7 +35,7 @@ export class CS340View implements IView {
         let opsObject: any = opts;
         if (opsObject.page !== null) {
             console.log("got a non-null page value");
-            if (opsObject.page === "cs340/gradingView.html") {
+            if (opsObject.page === "cs340/GradingView.html") {
                 // do stuff
                 console.log("got into grading");
                 this.populateGradingPage("a1", "jopika").then((result) => {
@@ -47,11 +47,11 @@ export class CS340View implements IView {
 
     public testfunction() {
         console.log("A spooky message!");
-        UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/gradingView.html', {
+        UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/GradingView.html', {
             hello:  "world"
-            , page: Factory.getInstance().getHTMLPrefix() + '/gradingView.html'
+            , page: Factory.getInstance().getHTMLPrefix() + '/GradingView.html'
         }).then(() => {
-            this.renderPage({page: Factory.getInstance().getHTMLPrefix() + '/gradingView.html'});
+            this.renderPage({page: Factory.getInstance().getHTMLPrefix() + '/GradingView.html'});
             console.log("all done!");
         });
     }
@@ -404,24 +404,6 @@ export class CS340View implements IView {
         Log.info("CS340View::submitGrade() - response from api " + response);
 
         return newAssignmentGrade;
-
-        // return {
-        //     assignmentID: "a1",
-        //     studentID: "jopika",
-        //     questions: [
-        //         {
-        //             questionName: "question 1",
-        //             commentName: "",
-        //             subQuestion: [
-        //                 {
-        //                     sectionName: "",
-        //                     grade: 0,
-        //                     feedback   : ""
-        //                 }
-        //             ]
-        //         }
-        //     ]
-        // }
     }
 
     public async getStudentGrade(sid: string, aid: string): Promise<AssignmentGrade | null> {
