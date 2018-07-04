@@ -205,7 +205,6 @@ describe("GitHubAutoTest", () => {
     });
 
     it("Should give a user a 'still processing' message on a commit that has not been finished.", async () => {
-        // This case happens when a comment is made on a commit that AutoTest did not see the push for
         expect(at).not.to.equal(null);
 
         // start fresh
@@ -230,7 +229,6 @@ describe("GitHubAutoTest", () => {
     });
 
     it("Should give a user a response for on a commit once it finishes if they have previously requested it.", async () => {
-        // This case happens when a comment is made on a commit that AutoTest did not see the push for
         expect(at).not.to.equal(null);
 
         // start fresh
@@ -265,7 +263,6 @@ describe("GitHubAutoTest", () => {
     });
 
     it("Should give a user a response for on a commit once it finishes if postback is true.", async () => {
-        // This case happens when a comment is made on a commit that AutoTest did not see the push for
         expect(at).not.to.equal(null);
 
         // start fresh
@@ -298,7 +295,6 @@ describe("GitHubAutoTest", () => {
     });
 
     it("Should give a user a response for on a commit once it finishes if postback is true. They should not be charged if they requested this build.", async () => {
-        // This case happens when a comment is made on a commit that AutoTest did not see the push for
         expect(at).not.to.equal(null);
 
         // start fresh
@@ -331,7 +327,6 @@ describe("GitHubAutoTest", () => {
     });
 
     it("Should give a user the results message on a commit that has been finished.", async () => {
-        // This case happens when a comment is made on a commit that AutoTest did not see the push for
         expect(at).not.to.equal(null);
 
         // start fresh
@@ -366,8 +361,7 @@ describe("GitHubAutoTest", () => {
         Log.test("Test complete.");
     });
 
-    // TODO: figure out what the difference is here
-    it.skip("Should not let a user request results too soon.", async () => {
+    it("Should not let a user request results too soon.", async () => {
         // This case happens when a comment is made on a commit that AutoTest did not see the push for
         expect(at).not.to.equal(null);
 
@@ -377,18 +371,19 @@ describe("GitHubAutoTest", () => {
 
         // SETUP: add a push with no output records
         const fg: IFeedbackGiven = {
-            "commitURL": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263fSOMEOTHER",
-            // "org":       "310",
-            "delivId":   "d1",
-            "timestamp": 1516451273288, ///
+            "commitURL": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263fSOMEOTHER", // different commit
+            "delivId":   "d1", // same deliverable
+            "timestamp": TestData.commentRecordUserA.timestamp, // 1516451273288,
             "personId":  "cs310test"
         };
+        // data.savePush(TestData.inputRecordA);
         data.savePush(TestData.inputRecordA);
         data.saveOutputRecord(TestData.outputRecordA);
         data.saveFeedbackGivenRecord(fg);
         let allData = await data.getAllData();
-        expect(allData.comments.length).to.equal(0);
+        expect(allData.pushes.length).to.equal(1);
         expect(allData.feedback.length).to.equal(1); // the feedback record we inserted from a recent past request
+        expect(allData.comments.length).to.equal(0);
         Log.test("Setup complete");
 
         // TEST: send a comment

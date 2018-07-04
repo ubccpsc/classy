@@ -266,10 +266,11 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 if (record === null) {
                     return null; // no prior requests
                 } else {
-                    const delta = (reqTimestamp - record.timestamp) / 1000;
-                    if (delta >= testDelay) {
+                    const nextTimeslot = record.timestamp + testDelay;
+                    if (reqTimestamp > nextTimeslot) {
                         return null; // enough time has passed
                     } else {
+                        const delta = nextTimeslot - reqTimestamp;
                         const hours = Math.floor(delta / 3600);
                         const minutes = Math.floor((delta - (hours * 3600)) / 60);
                         let msg = "";

@@ -39,7 +39,8 @@ export class MockClassPortal implements IClassPortal {
         const name = Config.getInstance().getProp(ConfigKey.name);
         const testname = Config.getInstance().getProp(ConfigKey.testname);
         if (name === testname) { // 310
-            return {dockerImage: "310container", studentDelay: 100, maxExecTime: 300, regressionDelivIds: []};
+            const delay = 6 * 60 * 60; // 6 hours in seconds
+            return {dockerImage: "310container", studentDelay: delay, maxExecTime: 300, regressionDelivIds: []};
         }
         Log.error('MockClassPortal::getContainerDetails() - MockClassPortal should not be used with: ' + name);
         return null;

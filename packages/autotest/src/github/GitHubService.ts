@@ -1,4 +1,5 @@
-import * as https from "https";
+// import * as https from "https";
+import * as rp from "request-promise-native";
 
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
@@ -44,44 +45,35 @@ export class GitHubService implements IGitHubService {
                     reject(false);
                 }
 
-                const noProtocolUrl = message.url.replace("https://", "");
-                const host = noProtocolUrl.substr(0, noProtocolUrl.indexOf("/"));
-                const path = noProtocolUrl.substr(host.length, noProtocolUrl.length);
+                const org = Config.getInstance().getProp(ConfigKey.org);
+                const hostLength = message.url.indexOf(org);
+                const path = 'repos/' + message.url.substr(hostLength);
+                const host = Config.getInstance().getProp(ConfigKey.githubAPI);
 
+                const body: string = JSON.stringify({body: message.message});
                 const options: any = {
-                    host,
-                    port:    443,
-                    path,
                     method:  "POST",
                     headers: {
                         "Content-Type":  "application/json",
                         "User-Agent":    "UBC-AutoTest",
-                        "Authorization": "token " + Config.getInstance().getProp(ConfigKey.githubBotToken)
-                    }
+                        "Authorization": Config.getInstance().getProp(ConfigKey.githubBotToken)
+                    },
+                    body:    body
                 };
 
-                const body: string = JSON.stringify({body: message.message});
-                options.headers["Content-Length"] = Buffer.byteLength(body);
-
                 if (Config.getInstance().getProp(ConfigKey.postback) === true) {
+
                     Log.trace("GitHubService::postMarkdownToGithub(..) - request: " + JSON.stringify(options, null, 2));
-                    const req = https.request(options, (res: any) => {
-                        Log.trace("GitHubService::postMarkdownToGithub(..) - response received; status: " + res.statusCode);
-                        if (res.statusCode < 300) {
-                            // for debugging; if it works, track it in this array
-                            this.messages.push(message);
-                            fulfill(true);
-                        } else {
-                            reject(false);
-                        }
-                    });
-                    req.on("error", (err: any) => {
-                        Log.error("GitHubService::postMarkdownToGithub(..) - failed; ERROR: " + err);
+                    const url = host + '/' + path;
+                    return rp(url, options).then(function (res) {
+                        Log.trace("GitHubService::postMarkdownToGithub(..) - responded: " + res);
+
+                        fulfill(true);
+                    }).catch(function (err) {
+                        Log.error("GitHubService::postMarkdownToGithub(..) - ERROR: " + err);
                         reject(false);
                     });
-                    req.write(body);
-                    // noinspection TypeScriptValidateJSTypes
-                    req.end();
+
                 } else {
                     Log.trace("GitHubService::postMarkdownToGithub(..) - send skipped (config.postback === false)");
                     this.messages.push(message);

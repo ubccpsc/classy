@@ -11,8 +11,12 @@ import {GitHubService, IGitHubMessage, IGitHubService} from "../src/github/GitHu
 describe("GitHub Markdown Service", () => {
     Config.getInstance();
 
-    const VALID_URL = "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments";
+    // POST /repos/:owner/:repo/commits/:sha/comments
+    const VALID_URL = "https://api.github.com/repos/classytest/PostTestDoNotDelete/commits/c35a0e5968338a9757813b58368f36ddd64b063e/comments";
+    // const VALID_URL = "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments";
     // const INVALID_URL = "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2XXXXXINVALID/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments";
+
+    const TIMEOUT = 5000;
 
     let gh: IGitHubService;
 
@@ -32,8 +36,7 @@ describe("GitHub Markdown Service", () => {
         config.setProp(ConfigKey.postback, postbackVal);
     });
 
-    // TODO: need to update url
-    it.skip("Should be able to post a valid message.", () => {
+    it("Should be able to post a valid message.", function () {
         const post: IGitHubMessage = {
             url:     VALID_URL,
             message: "Automated Test Suite Message"
@@ -47,7 +50,7 @@ describe("GitHub Markdown Service", () => {
             Log.test("Failure (unexpected): " + err);
             expect.fail();
         });
-    });
+    }).timeout(TIMEOUT);
 
     it("Should fail when trying to post an invalid message.", () => {
         const post: any = {

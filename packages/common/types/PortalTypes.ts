@@ -115,8 +115,8 @@ export interface AutoTestConfigPayload {
  */
 export interface AutoTestConfigTransport {
     dockerImage: string,
-    studentDelay: number,
-    maxExecTime: number,
+    studentDelay: number, // interval in seconds between student requests
+    maxExecTime: number, // max time container can try to execute tests for
     regressionDelivIds: string[]
 }
 

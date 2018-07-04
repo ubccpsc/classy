@@ -55,13 +55,13 @@ export class MockDataStore implements IDataStore {
         try {
             const start = Date.now();
             // read
-            const outRecords: IPushEvent[] = await fs.readJSON(this.PUSH_PATH);
+            const outRecords: IContainerInput[] = await fs.readJSON(this.PUSH_PATH);
 
             // find and return
             for (const record of outRecords) {
-                if (record !== null && typeof record.commitURL !== "undefined" && record.commitURL === commitURL) {
+                if (record !== null && typeof record.pushInfo.commitURL !== "undefined" && record.pushInfo.commitURL === commitURL) {
                     Log.info("MockDataStore::getPushRecord(..) - found; took: " + Util.took(start));
-                    return record;
+                    return record.pushInfo;
                 }
             }
 
