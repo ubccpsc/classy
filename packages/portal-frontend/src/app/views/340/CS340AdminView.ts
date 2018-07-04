@@ -34,9 +34,9 @@ export class CS340AdminView extends AdminView {
 
         // Normal structure
         if(name === 'GradingView') {
-            if(typeof optsObject.delivId !== "undefined" || typeof optsObject.sid !== "undefined") {
+            if(typeof optsObject.aid !== "undefined" || typeof optsObject.sid !== "undefined") {
                 // Check if the correct parameters exist
-                this.populateGradingPage(optsObject.delivId, optsObject.sid).then(()=> {
+                this.populateGradingPage(optsObject.aid, optsObject.sid).then(()=> {
                     Log.info("CS340AdminView::renderPage() - finished populating page");
                     return;
                 });
@@ -152,7 +152,7 @@ export class CS340AdminView extends AdminView {
                 Log.info("CS340AdminView::renderStudentGrades(..) - Adding deliverable: " + deliv.id);
                 let newHeader = {
                     id:             deliv.id,
-                    text:           '',
+                    text:           deliv.id,
                     sortable:       false,
                     defaultSort:    false,
                     sortDown:       true,
@@ -187,14 +187,31 @@ export class CS340AdminView extends AdminView {
             ];
             for(const delivCol of filteredDelivArray) {
                 let foundGrade = false;
-                if(typeof gradeMapping[student.userName][delivCol.id] === "undefined") foundGrade = true;
-                let newEntry = {
-                    value: foundGrade? gradeMapping[student.userName][delivCol.id].score:"---",
-                    html: "<a onclick='window.classportal.view.testfunction("+
-                            student.userName + ", " + delivCol.id + ")'>" +
-                    foundGrade?gradeMapping[student.userName][delivCol.id].score.toString():"---" + "</a>",
-                };
-                newRow.push(newEntry);
+                if(typeof gradeMapping[student.userName][delivCol.id] !== "undefined") foundGrade = true;
+                if(foundGrade) {
+                    let newEntry = {
+                        value: gradeMapping[student.userName][delivCol.id].score,
+                        html: "<a onclick='window.classportal.view.transitionGradingPage(\""+
+                        student.userName + "\", \"" + delivCol.id + "\")' href='#'>" +
+                        gradeMapping[student.userName][delivCol.id].score.toString() + "</a>"
+                    };
+                    newRow.push(newEntry);
+
+                } else {
+                    let newEntry = {
+                        value: "---",
+                        html: "<a onclick='window.classportal.view.transitionGradingPage(\""+
+                        student.userName + "\", \"" + delivCol.id + "\")' href='#'> ---" + "</a>",
+                    };
+                    newRow.push(newEntry);
+
+                }
+                // let newEntry = {
+                //     value: foundGrade? gradeMapping[student.userName][delivCol.id].score:"---",
+                //     html: "<a onclick='window.classportal.view.testfunction("+
+                //             student.userName + ", " + delivCol.id + ")'>" +
+                //     foundGrade?gradeMapping[student.userName][delivCol.id].score.toString():"---" + "</a>",
+                // };
             }
             st.addRow(newRow);
         }
