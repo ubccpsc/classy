@@ -21,9 +21,9 @@ export class MockGrader implements IGrader {
     public async execute(): Promise<IAutoTestResult> {
         try {
             Log.info("MockGrader::execute() - start; commitSHA: " + this.input.pushInfo.commitSHA);
-            const oracleToken = Config.getInstance().getProp(ConfigKey.githubOracleToken);
-            const dockerId = Config.getInstance().getProp(ConfigKey.dockerId);
-            const workspace = Config.getInstance().getProp(ConfigKey.workspace);
+            // const oracleToken = Config.getInstance().getProp(ConfigKey.githubOracleToken);
+            // const dockerId = Config.getInstance().getProp(ConfigKey.dockerId);
+            // const workspace = Config.getInstance().getProp(ConfigKey.workspace);
 
             // TODO: This should really become TestDocker.ts or something that can be instantiated
             let timeout = 10000;

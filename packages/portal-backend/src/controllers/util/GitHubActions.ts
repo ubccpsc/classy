@@ -19,8 +19,8 @@ export class GitHubActions {
         // NOTE: this is not very controllable; these would be better as params
         this.org = Config.getInstance().getProp(ConfigKey.org);
         this.apiPath = Config.getInstance().getProp(ConfigKey.githubAPI);
-        this.gitHubUserName = Config.getInstance().getProp(ConfigKey.githubTokenUser);
-        this.gitHubAuthToken = Config.getInstance().getProp(ConfigKey.githubToken);
+        this.gitHubUserName = Config.getInstance().getProp(ConfigKey.githubBotName);
+        this.gitHubAuthToken = Config.getInstance().getProp(ConfigKey.githubBotToken);
     }
 
     /**

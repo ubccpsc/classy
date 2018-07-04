@@ -55,8 +55,8 @@ export class GitHubService implements IGitHubService {
                     method:  "POST",
                     headers: {
                         "Content-Type":  "application/json",
-                        "User-Agent":    "UBC-CPSC310-AutoTest",
-                        "Authorization": "token " + Config.getInstance().getProp(ConfigKey.githubOrgToken)
+                        "User-Agent":    "UBC-AutoTest",
+                        "Authorization": "token " + Config.getInstance().getProp(ConfigKey.githubBotToken)
                     }
                 };
 

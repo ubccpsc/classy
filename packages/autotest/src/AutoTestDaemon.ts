@@ -15,7 +15,7 @@ export class AutoTestDaemon {
     public initServer() {
         Log.info("AutoTestDaemon::initServer() - start");
 
-        const portNum = Number(Config.getInstance().getProp(ConfigKey.port));
+        const portNum = Number(Config.getInstance().getProp(ConfigKey.autotestPort));
 
         // start server
         const s = new Server();

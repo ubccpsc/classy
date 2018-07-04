@@ -25,11 +25,12 @@ export enum ConfigKey {
     backendUrl = "backendUrl",
     frontendPort = "frontendPort",
     backendPort = "backendPort",
+
     mongoUrl = "mongoUrl",
 
     githubAPI = "githubAPI",
-    githubTokenUser = "githubTokenUser",
-    githubToken = "githubToken",
+    githubBotName = "githubBotName",
+    githubBotToken = "githubBotToken",
 
     githubClientId = "githubClientId",
     githubClientSecret = "githubClientSecret",
@@ -43,9 +44,8 @@ export enum ConfigKey {
 
     // autotest
     persistDir = "persistDir",
-    port = "port",
-    githubOracleToken = "githubOracleToken",
-    githubOrgToken = "githubOrgToken",
+    // githubOracleToken = "githubOracleToken",
+    // githubOrgToken = "githubOrgToken",
     dockerId = "dockerId",
     workspace = "workspace",
     graderHost = "graderHost",
@@ -77,45 +77,52 @@ export default class Config {
         // should not be called by clients but typescript does not allow private constructors
         try {
             this.config = {
-                name:               process.env.NAME,
-                org:                process.env.ORG,
-                testorg:            process.env.ORGTEST,
-                dockerId:           process.env.GRADER_DOCKER_ID,
-                workspace:          process.env.GRADER_WORKSPACE,
-                postback:           Boolean(process.env.AUTOTEST_POSTBACK),
-                persistDir:         process.env.GRADER_PERSIST_DIR,
-                port:               Number(process.env.AUTOTEST_PORT),
-                // kind:               process.env.KIND, // REMOVE
-                timeout:            Number(process.env.GRADER_TIMEOUT),
-                botName:            process.env.GH_BOT_USERNAME,
-                githubOrgToken:     process.env.GH_BOT_TOKEN,
-                githubOracleToken:  process.env.GH_ORG_TOKEN,
-                sslCertPath:        process.env.SSL_CERT_PATH,
-                sslKeyPath:         process.env.SSL_KEY_PATH,
-                classPortalHost:    process.env.SERVER_URL,
-                classPortalPort:    process.env.BACKEND_PORT,
-                graderHost:         process.env.SERVER_URL,
-                graderPort:         process.env.GRADER_PORT,
-                mongoUrl:           process.env.DB_URL,
-                frontendPort:       process.env.FRONTEND_PORT,
-                frontendUrl:        process.env.SERVER_URL,
-                backendPort:        process.env.BACKEND_PORT,
-                backendUrl:         process.env.SERVER_URL,
+                name:    process.env.NAME,
+                org:     process.env.ORG,
+                testorg: process.env.ORGTEST,
+
+                dockerId:   process.env.GRADER_DOCKER_ID,
+                workspace:  process.env.GRADER_WORKSPACE,
+                postback:   Boolean(process.env.AUTOTEST_POSTBACK),
+                persistDir: process.env.GRADER_PERSIST_DIR,
+
+
+                timeout: Number(process.env.GRADER_TIMEOUT),
+                botName: process.env.GH_BOT_USERNAME,
+
+                sslCertPath:     process.env.SSL_CERT_PATH,
+                sslKeyPath:      process.env.SSL_KEY_PATH,
+                classPortalHost: process.env.BACKEND_URL,
+                classPortalPort: process.env.BACKEND_PORT,
+
+                mongoUrl: process.env.DB_URL,
+
+                frontendPort: process.env.FRONTEND_PORT,
+                frontendUrl:  process.env.FRONTEND_URL,
+                backendPort:  process.env.BACKEND_PORT,
+                backendUrl:   process.env.BACKEND_URL,
+
                 githubHost:         process.env.GH_HOST,
                 githubAPI:          process.env.GH_API,
-                githubTokenUser:    process.env.GH_BOT_USERNAME,
-                githubToken:        process.env.GH_BOT_TOKEN,
-                autotestUrl:        process.env.SERVER_URL,
-                autotestPort:       process.env.AUTOTEST_PORT,
+                githubBotName:      process.env.GH_BOT_USERNAME,
+                githubBotToken:     process.env.GH_BOT_TOKEN,
                 githubClientId:     process.env.GH_CLIENT_ID,
                 githubClientSecret: process.env.GH_CLIENT_SECRET,
 
+                autotestUrl:  process.env.AUTOTEST_URL,
+                autotestPort: process.env.AUTOTEST_PORT,
+
                 // Not used?
-                sslIntCert: process.env.SSL_INT_CERT,
-                adminUser:  process.env.ADMIN_USER,
-                oracleRepo: process.env.ORACLE_REPO,
+                // sslIntCert: process.env.SSL_INT_CERT,
+                // adminUser:  process.env.ADMIN_USER,
+                // oracleRepo: process.env.ORACLE_REPO,
 
-
+                // Can remove?
+                // kind:               process.env.KIND, // REMOVE
+                // githubOrgToken:     process.env.GH_BOT_TOKEN,
+                // githubOracleToken:  process.env.GH_ORG_TOKEN,
+                // graderHost:         process.env.SERVER_URL,
+                // graderPort:         process.env.GRADER_PORT,
             };
         } catch (err) {
             Log.error("Config::<init> - fatal error reading configuration file: " + err);

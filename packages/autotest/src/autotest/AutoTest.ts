@@ -315,8 +315,8 @@ export abstract class AutoTest implements IAutoTest {
                 isProd = false; // EMPTY and POSTBACK used by test environment
             }
             if (isProd === true) {
-                const atHost: string = Config.getInstance().getProp(ConfigKey.graderHost);
-                const atPort: number = Config.getInstance().getProp(ConfigKey.graderPort);
+                const atHost: string = Config.getInstance().getProp(ConfigKey.backendUrl);
+                const atPort: number = Config.getInstance().getProp(ConfigKey.backendPort);
 
                 const image: string = Config.getInstance().getProp(ConfigKey.dockerId);
                 const timeout: number = Config.getInstance().getProp(ConfigKey.timeout);
