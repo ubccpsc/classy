@@ -143,7 +143,11 @@ export default class Config {
     }
 
     public setProp(prop: ConfigKey, val: any) {
-        Log.error("Config::setProp( " + prop + ", " + val + " ) - should only be done by test suites, not production code");
+        if (Config.getInstance().getProp(ConfigKey.name) !== Config.getInstance().getProp(ConfigKey.testname)) {
+            if ((prop === ConfigKey.name && val === Config.getInstance().getProp(ConfigKey.testname)) === false) {
+                Log.error("Config::setProp( " + prop + ", " + val + " ) - should only be done by test suites, not production code");
+            }
+        }
         this.config[prop] = val;
     }
 }

@@ -4,7 +4,7 @@ import Log from "../../../common/Log";
 import Util from "../../../common/Util";
 import Config, {ConfigKey} from "../../../common/Config";
 
-import {ICommentEvent, IAutoTestResult, IContainerInput, IFeedbackGiven, IPushEvent} from "../Types";
+import {IAutoTestResult, ICommentEvent, IContainerInput, IFeedbackGiven, IPushEvent} from "../Types";
 
 export interface IDataStore {
 
@@ -327,7 +327,7 @@ export class MongoDataStore implements IDataStore {
 
     public async clearData(): Promise<void> {
         Log.warn("MongoDataStore::clearData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
-        if (Config.getInstance().getProp(ConfigKey.name) === "test") {
+        if (Config.getInstance().getProp(ConfigKey.name) === Config.getInstance().getProp(ConfigKey.testname)) {
 
             let col: any = null;
             col = await this.getCollection(this.PUSHCOLL);

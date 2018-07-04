@@ -3,6 +3,7 @@ import "mocha";
 
 import {Queue} from "../src/autotest/Queue";
 import {TestData} from "./TestData";
+import Log from "../../common/Log";
 
 const loadFirst = require('./GlobalSpec');
 
@@ -11,6 +12,12 @@ describe("Queue", () => {
     let q: Queue;
 
     before(function () {
+        Log.test("QueueSpec::before");
+        q = new Queue();
+    });
+
+    after(function () {
+        Log.test("QueueSpec::after");
         q = new Queue();
     });
 

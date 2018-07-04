@@ -12,6 +12,14 @@ import {GitHubUtil} from "../src/github/GitHubUtil";
 describe("GitHub Event Parser", () => {
     Config.getInstance();
 
+    before(() => {
+        Log.test("GitHub Event Parser::before");
+    });
+
+    after(() => {
+        Log.test("GitHub Event Parser::after");
+    });
+
     it("Should fail gracefully with a bad push.", () => {
 
         let actual = GitHubUtil.processPush(null);

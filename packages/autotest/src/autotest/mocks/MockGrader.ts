@@ -27,7 +27,7 @@ export class MockGrader implements IGrader {
 
             // TODO: This should really become TestDocker.ts or something that can be instantiated
             let timeout = 10000;
-            if (Config.getInstance().getProp(ConfigKey.name) === "test") {
+            if (Config.getInstance().getProp(ConfigKey.name) === Config.getInstance().getProp(ConfigKey.testname)) {
                 timeout = 20; // don't slow down tests; don't need a lot to get out of order here
             }
             await Util.timeout(timeout); // simulate the container taking longer than the rest of the process

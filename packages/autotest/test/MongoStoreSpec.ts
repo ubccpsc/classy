@@ -3,10 +3,11 @@ const loadFirst = require('./GlobalSpec');
 import {expect} from "chai";
 import "mocha";
 
-import Config from "../../common/Config";
+import Config, {ConfigKey} from "../../common/Config";
 
 import {IDataStore, MongoDataStore} from "../src/autotest/DataStore";
 import {TestData} from "./TestData";
+import Log from "../../common/Log";
 
 describe("MongoStore", () => {
 
@@ -14,11 +15,13 @@ describe("MongoStore", () => {
     const oldName = (<any>Config.getInstance()).getProp('name'); // .env value to restore after tests
 
     before(function () {
-        (<any>Config.getInstance()).setProp('name', "test"); // force a test name
+        Log.test("MongoStoreSpec::before");
+        Config.getInstance().setProp(ConfigKey.name, Config.getInstance().getProp(ConfigKey.testname)); // force a test name
     });
 
     after(function () {
-        (<any>Config.getInstance()).setProp('name', oldName); // restore name
+        Log.test("MongoStoreSpec::after");
+        Config.getInstance().setProp(ConfigKey.name, oldName); // restore name
     });
 
     beforeEach(async () => {
