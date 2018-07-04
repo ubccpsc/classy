@@ -9,7 +9,7 @@ import Log from "../../common/Log";
 const loadFirst = require('./GlobalSpec');
 
 describe("ClassPortal Service", () => {
-    Config.getInstance("test");
+    Config.getInstance();
 
     let cp: IClassPortal;
     const classId = "secapstone";

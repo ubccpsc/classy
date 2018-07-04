@@ -13,8 +13,9 @@ export class MockClassPortal implements IClassPortal {
 
     public async isStaff(userName: string): Promise<AutoTestAuthTransport> {
         const name = Config.getInstance().getProp(ConfigKey.name);
-        if (name === "test") {
-            if (userName === "staff" || userName === "cs310") {
+        const testname = Config.getInstance().getProp(ConfigKey.testname);
+        if (name === testname) {
+            if (userName === 'staff' || userName === 'cs310') {
                 return {personId: userName, isStaff: true, isAdmin: true};
             } else {
                 return {personId: userName, isStaff: false, isAdmin: false};
@@ -26,7 +27,8 @@ export class MockClassPortal implements IClassPortal {
 
     public async getDefaultDeliverableId(): Promise<AutoTestDefaultDeliverableTransport | null> {
         const name = Config.getInstance().getProp(ConfigKey.name);
-        if (name === 'test') {
+        const testname = Config.getInstance().getProp(ConfigKey.testname);
+        if (name === testname) {
             return {defaultDeliverable: "d1"};
         }
         Log.error('MockClassPortal::getDefaultDeliverableId() - MockClassPortal should not be used with: ' + name);
@@ -35,7 +37,8 @@ export class MockClassPortal implements IClassPortal {
 
     public async getContainerDetails(delivId: string): Promise<AutoTestConfigTransport | null> {
         const name = Config.getInstance().getProp(ConfigKey.name);
-        if (name === "test") { // 310
+        const testname = Config.getInstance().getProp(ConfigKey.testname);
+        if (name === testname) { // 310
             return {dockerImage: "310container", studentDelay: 100, maxExecTime: 300, regressionDelivIds: []};
         }
         Log.error('MockClassPortal::getContainerDetails() - MockClassPortal should not be used with: ' + name);
@@ -43,7 +46,9 @@ export class MockClassPortal implements IClassPortal {
     }
 
     public async sendGrade(grade: AutoTestGradeTransport): Promise<Payload> {
-        if (name === "test") {
+        const name = Config.getInstance().getProp(ConfigKey.name);
+        const testname = Config.getInstance().getProp(ConfigKey.testname);
+        if (name === testname) {
             return {success: {worked: true}};
         } else {
             return {failure: {message: 'did not work', shouldLogout: false}};

@@ -10,7 +10,7 @@ import Log from "../../common/Log";
 import {GitHubUtil} from "../src/github/GitHubUtil";
 
 describe("GitHub Event Parser", () => {
-    Config.getInstance("test");
+    Config.getInstance();
 
     it("Should fail gracefully with a bad push.", () => {
 

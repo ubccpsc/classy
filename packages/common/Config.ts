@@ -20,6 +20,7 @@ export enum ConfigKey {
     name = "name", // name of the course (e.g., cs310, cs340, secapstone, classytest) // should be stable between course instances
     org = "org",
     testorg = "testorg",
+    testname = "testname",
 
     frontendUrl = "frontendUrl",
     backendUrl = "backendUrl",
@@ -61,7 +62,7 @@ export enum ConfigKey {
 
 export default class Config {
 
-    public static getInstance(configName?: string): Config {
+    public static getInstance(): Config {
         if (Config.instance === null) {
             const c = new Config();
             Config.instance = c;
@@ -77,9 +78,10 @@ export default class Config {
         // should not be called by clients but typescript does not allow private constructors
         try {
             this.config = {
-                name:    process.env.NAME,
-                org:     process.env.ORG,
-                testorg: process.env.ORGTEST,
+                name:     process.env.NAME,
+                org:      process.env.ORG,
+                testorg:  process.env.ORGTEST,
+                testname: process.env.NAMETEST,
 
                 dockerId:   process.env.GRADER_DOCKER_ID,
                 workspace:  process.env.GRADER_WORKSPACE,

@@ -3,7 +3,7 @@ import * as fs from "fs-extra";
 import "mocha";
 
 import Log from "../../common/Log";
-import Config from "../../common/Config";
+import Config, {ConfigKey} from "../../common/Config";
 import Util from "../../common/Util";
 
 import {IClassPortal} from "../src/autotest/ClassPortal";
@@ -20,7 +20,8 @@ const loadFirst = require('./GlobalSpec');
 
 describe("GitHubAutoTest", () => {
 
-    Config.getInstance("test");
+    Config.getInstance();
+
     let pushes: IPushEvent[];
     let data: MockDataStore;
     let portal: IClassPortal;
@@ -43,7 +44,9 @@ describe("GitHubAutoTest", () => {
         gh = new GitHubService();
         at = new GitHubAutoTest(data, portal, gh);
 
-        (<any>Config.getInstance()).config.postback = false;
+        Config.getInstance().setProp(ConfigKey.postback, false);
+
+        Log.test("AutoTest::before() - done");
     });
 
     beforeEach(function () {

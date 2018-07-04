@@ -4,9 +4,10 @@ import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
 
 before(async () => {
-    Log.info('GlobalSpec::before() - resetting Config.name for test suite.');
+    Log.info('GlobalSpec::before() - resetting Config.name and Config.org for test suite.');
 
-    Config.getInstance().setProp(ConfigKey.name, 'test'); // TODO: migrate from 'test' to 'classytest'
+    Config.getInstance().setProp(ConfigKey.name, Config.getInstance().getProp(ConfigKey.testname));
+    Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
 });
 
 after(() => {

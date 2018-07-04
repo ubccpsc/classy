@@ -9,7 +9,7 @@ import Log from "../../common/Log";
 import {GitHubService, IGitHubMessage, IGitHubService} from "../src/github/GitHubService";
 
 describe("GitHub Markdown Service", () => {
-    Config.getInstance("test");
+    Config.getInstance();
 
     const VALID_URL = "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments";
     // const INVALID_URL = "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2XXXXXINVALID/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments";

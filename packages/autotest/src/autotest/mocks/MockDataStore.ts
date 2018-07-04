@@ -4,7 +4,7 @@ import Config, {ConfigKey} from "../../../../common/Config";
 import Util from "../../../../common/Util";
 import Log from "../../../../common/Log";
 
-import {ICommentEvent, IAutoTestResult, IContainerInput, IFeedbackGiven, IPushEvent} from "../../Types";
+import {IAutoTestResult, ICommentEvent, IContainerInput, IFeedbackGiven, IPushEvent} from "../../Types";
 import {IDataStore} from "../DataStore";
 
 /**
@@ -254,7 +254,8 @@ export class MockDataStore implements IDataStore {
 
     public clearData(): Promise<void> {
         Log.warn("MockDataStore::clearData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
-        if (Config.getInstance().getProp(ConfigKey.name) === "test") {
+        const testname = Config.getInstance().getProp(ConfigKey.testname);
+        if (Config.getInstance().getProp(ConfigKey.name) === testname) {
             // do it
             fs.removeSync(this.RECORD_PATH);
             fs.removeSync(this.COMMENT_PATH);
