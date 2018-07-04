@@ -460,7 +460,7 @@ export class AdminView implements IView {
         }
     }
 
-    private took(start: number): string {
+    protected took(start: number): string {
         return (Date.now() - start) + ' ms';
     }
 }

@@ -7,6 +7,9 @@ import {
 } from "../../../../../common/types/CS340Types";
 import {UI} from "../../util/UI";
 import {Factory} from "../../Factory";
+import {StudentTransport, StudentTransportPayload} from "../../../../../common/types/PortalTypes";
+import {Deliverable, Grade} from "../../../../../portal-backend/src/Types";
+import {SortableTable, TableCell, TableHeader} from "../../util/SortableTable";
 
 export class CS340AdminView extends AdminView {
 
@@ -15,25 +18,190 @@ export class CS340AdminView extends AdminView {
         super.renderPage(name, opts);
 
         // custom view init here
-        let opsObject : any = opts;
-        if(opsObject.page !== null) {
-            console.log("got a non-null page value");
-            if(opsObject.page === "cs340/gradingView.html") {
-                // do stuff
-                console.log("got into grading");
-                this.populateGradingPage("a1", "jopika").then((result) => {
+        let optsObject : any = opts;
+
+        // Testing framework (check if there is a testing value)
+        if(typeof optsObject.test !== "undefined") {
+            // Testing Page
+            if(optsObject.test === "GradingView") {
+                this.populateGradingPage("a1", "jopika").then(() => {
                     Log.info("CS340View::renderPage() - finished populating");
+                    return;
                 });
             }
+            return;
         }
+
+        // Normal structure
+        if(name === 'GradingView') {
+            if(typeof optsObject.delivId !== "undefined" || typeof optsObject.sid !== "undefined") {
+                // Check if the correct parameters exist
+                this.populateGradingPage(optsObject.delivId, optsObject.sid).then(()=> {
+                    Log.info("CS340AdminView::renderPage() - finished populating page");
+                    return;
+                });
+                return;
+            }
+        }
+        // if(opsObject.page !== null) {
+        //     console.log("got a non-null page value");
+        //     if(opsObject.page === "cs340/GradingView.html") {
+        //         if(typeof opsObject.delivId === 'undefined' || typeof  opsObject.sid === 'undefined') {
+        //
+        //         }
+        //         // do stuff
+        //         console.log("got into grading");
+        //         this.populateGradingPage("a1", "jopika").then((result) => {
+        //             Log.info("CS340View::renderPage() - finished populating");
+        //         });
+        //     }
+        // }
     }
 
-    public handleAdminCustomGrades(opts: any) {
+    public async handleAdminCustomGrades(opts: any) {
         Log.info("CS340AdminView::handleCustomGrades( " + JSON.stringify(opts) + " ) - start");
         // if(opts.delivid === null || opts.sid === null) {
         //     Log.error("CS340AdminView::handleCustomGrades()")
         // }
+        const start = Date.now();
+        UI.showModal("Retrieving student list");
 
+        // Retrieve the studentGradeTable
+        document.getElementById('studentGradeTable').innerHTML = ""; // Clear target
+
+        const studentOptions = this.getOptions();
+        const studentUrl = this.remote + '/admin/students';
+        const studentResponse = await fetch(studentUrl, studentOptions);
+        UI.hideModal();
+        if(studentResponse.status === 200) {
+            Log.info('CS340AdminView::handCustomGrades(..) - Received student list');
+            const studentJson: StudentTransportPayload = await studentResponse.json();
+            if(typeof studentJson.success !== 'undefined' && Array.isArray(studentJson.success)) {
+                Log.info("CS340AdminView::handCustomGrades(..) - took: " + this.took(start));
+                const gradesOptions: any= this.getOptions();
+                gradesOptions.method = 'get';
+                const gradesUrl: string = this.remote + '/getAllGrades';
+                const gradesResponse = await fetch(gradesUrl, gradesOptions);
+
+                if(gradesResponse.status === 200) {
+                    Log.info("CS340AdminView::handCustomGrades(..) - got grades");
+                    const gradesJson = await gradesResponse.json();
+                    const gradeData: Grade[] = gradesJson.response;
+                    // TODO [Jonathan]: Remove the hardcoding(?)
+                    this.renderStudentGrades(studentJson.success, gradeData, "-All-");
+                } else {
+                    Log.trace("CS340AdminView::handCustomGrades(..) - !200 received " +
+                        "when retrieving grade: " + gradesResponse.status);
+                }
+            } else {
+                Log.info("CS340AdminView::handCustomGrades(..) - ERROR: " + studentJson.failure.message);
+                this.showError(studentJson.failure);
+            }
+        } else {
+            Log.trace("CS340AdminView::handCustomGrades(..) - !200 received when retrieving students: " +
+                studentResponse.status);
+            const text = await studentResponse.text();
+            this.showError(text);
+        }
+    }
+
+    private async renderStudentGrades(students: StudentTransport[], grades: Grade[], selectedAssign: string) {
+        Log.info("CS340AdminView::renderStudentGrades( " + students.toString() +
+            ", " + grades.toString() + ", " + selectedAssign + ", " + " ) - start");
+
+        const delivOptions = this.getOptions();
+        const delivUrl: string = this.remote + '/getAllDeliverables';
+        const delivResponse = await fetch(delivUrl, delivOptions);
+
+        if(delivResponse.status !== 200) {
+            Log.trace("CS340AdminView::renderStudentGrades(..) - !200 " +
+                "response received; code:" + delivResponse.status);
+            return;
+        }
+        const delivJson = await delivResponse.json();
+        const delivArray: Deliverable[] = delivJson.response;
+        let tableHeaders: TableHeader[] = [
+            {
+                id:          'id',
+                text:        'Github Id',
+                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
+                defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
+                sortDown:    false, // Whether the column should initially sort descending or ascending.
+                style:       'padding-left: 1em; padding-right: 1em;'
+            },
+            {
+                id:          'fName',
+                text:        'First Name',
+                sortable:    true,
+                defaultSort: false,
+                sortDown:    true,
+                style:       'padding-left: 1em; padding-right: 1em;'
+            },
+            {
+                id:          'lName',
+                text:        'Last Name',
+                sortable:    true,
+                defaultSort: false,
+                sortDown:    true,
+                style:       'padding-left: 1em; padding-right: 1em;'
+            }
+        ];
+        let filteredDelivArray: Deliverable[] = [];
+        for (const deliv of delivArray) {
+            if(selectedAssign === "-All-" || selectedAssign === deliv.id) {
+                Log.info("CS340AdminView::renderStudentGrades(..) - Adding deliverable: " + deliv.id);
+                let newHeader = {
+                    id:             deliv.id,
+                    text:           '',
+                    sortable:       false,
+                    defaultSort:    false,
+                    sortDown:       true,
+                    style:          'padding-left: 1em; padding-right: 1em;',
+                };
+                filteredDelivArray.push(deliv);
+                tableHeaders.push(newHeader);
+            }
+        }
+
+        const st = new SortableTable(tableHeaders, "#studentGradeTable");
+        // For each grade, let
+        let gradeMapping: {[studentId:string]:{[delivId:string]:Grade}} = {};
+        for(const grade of grades) {
+            if (typeof gradeMapping[grade.personId] === 'undefined') {
+                // If there is no mapping from person to map(delivId,grade)
+                // set up the mapping
+                gradeMapping[grade.personId] = {};
+            }
+            // If the grade is a valid AssignmentGrade, place it in the mapping
+            if(grade.custom !== null && typeof grade.custom.assignmentID !== "undefined") {
+                gradeMapping[grade.personId][grade.custom.assignmentID] = grade;
+            }
+        }
+
+        for(const student of students) {
+            // TODO [Jonathan]: Add SID and hideable student names
+            let newRow: TableCell[] = [
+                {value: student.userName, html: '<a href="' + student.userUrl + '">' + student.userName + '</a>'},
+                {value: student.firstName, html: student.firstName},
+                {value: student.lastName, html: student.lastName},
+            ];
+            for(const delivCol of filteredDelivArray) {
+                let foundGrade = false;
+                if(typeof gradeMapping[student.userName][delivCol.id] === "undefined") foundGrade = true;
+                let newEntry = {
+                    value: foundGrade? gradeMapping[student.userName][delivCol.id].score:"---",
+                    html: "<a onclick='window.classportal.view.testfunction("+
+                            student.userName + ", " + delivCol.id + ")'>" +
+                    foundGrade?gradeMapping[student.userName][delivCol.id].score.toString():"---" + "</a>",
+                };
+                newRow.push(newEntry);
+            }
+            st.addRow(newRow);
+        }
+
+        st.generate();
+
+        // TODO [Jonathan]: Add rest of code
     }
 
     /**
@@ -365,15 +533,23 @@ export class CS340AdminView extends AdminView {
 
     public testfunction() {
         console.log("A spooky message!");
-        // UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/gradingView.html', {
+        // UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/GradingView.html', {
         //     hello:"world"
-        //     ,page: Factory.getInstance().getHTMLPrefix() + '/gradingView.html'
+        //     ,page: Factory.getInstance().getHTMLPrefix() + '/GradingView.html'
         // }).then(()=> {
-        //     this.renderPage({page: Factory.getInstance().getHTMLPrefix() + '/gradingView.html'});
+        //     this.renderPage({page: Factory.getInstance().getHTMLPrefix() + '/GradingView.html'});
         //     console.log("all done!");
         // });
-        UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/gradingView.html', {
-            page: Factory.getInstance().getHTMLPrefix() + '/gradingView.html'
+        UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/GradingView.html', {
+            test: "GradingView"
+        });
+    }
+
+    public transitionGradingPage(sid:string, aid:string) {
+        // Move to grading
+        UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/GradingView.html', {
+            sid:sid,
+            aid:aid
         });
     }
 }
