@@ -187,6 +187,7 @@ export class CS340AdminView extends AdminView {
             ];
             for(const delivCol of filteredDelivArray) {
                 let foundGrade = false;
+                if(typeof gradeMapping[student.userName] === "undefined") gradeMapping[student.userName] = {};
                 if(typeof gradeMapping[student.userName][delivCol.id] !== "undefined") foundGrade = true;
                 if(foundGrade) {
                     let newEntry = {
