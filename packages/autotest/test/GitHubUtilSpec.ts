@@ -8,7 +8,7 @@ import Log from "../../common/Log";
 
 import {GitHubUtil} from "../src/github/GitHubUtil";
 
-describe.only("GitHubUtil", () => {
+describe("GitHubUtil", () => {
     Config.getInstance();
 
     before(() => {
