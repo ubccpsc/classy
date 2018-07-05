@@ -5,6 +5,9 @@ import {DatabaseController} from "./DatabaseController";
 import {Auth} from "../Types";
 import {GitHubActions} from "./util/GitHubActions";
 
+/**
+ * Nice OAuth Reference: https://medium.com/typeforms-engineering-blog/the-beginners-guide-to-oauth-dancing-4b8f3666de10
+ */
 export class AuthController {
 
     private dc: DatabaseController = null;
@@ -12,8 +15,6 @@ export class AuthController {
     constructor() {
         this.dc = DatabaseController.getInstance();
     }
-
-    // TODO: Think about the APIs for these methods. What do the controllers need?
 
     public async isValid(personId: string, token: string): Promise<boolean> {
         Log.trace("AuthController::isValid( " + personId + ", ... ) - start");

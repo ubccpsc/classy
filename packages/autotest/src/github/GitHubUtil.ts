@@ -8,23 +8,43 @@ import {ICommentEvent, IPushEvent} from "../Types";
  */
 export class GitHubUtil {
 
-    // public static getTeamOrProject(repositoryName: string): string {
-    //     // NOTE assume repository name is of the form: CS310-2016Fall/cpsc310project_team10
-    //     const idx = repositoryName.lastIndexOf("_") + 1;
-    //     const val = repositoryName.slice(idx);
-    //     Log.trace("GitHubUtil::getTeamOrProject() - input: " + repositoryName + "; output: " + val);
-    //     return val;
-    // }
-
+    /**
+     * Identifies all deliverables mentioned in a string.
+     * Deliverables _must_ be of the form #d1, #d1223, etc.
+     * The '#' is required, the 'd' is required, and a number is required.
+     *
+     * @param message
+     * @returns {string | null}
+     */
     public static parseDeliverableFromComment(message: any): string | null {
-        const matches = message.match("\\S*d\\d+\\S*");
+        const matches = message.match("\\S*#d\\d+\\S*"); // \S*#d|a\d+\S*
         if (matches) {
             let deliv = matches.pop();
-            deliv = deliv.replace(/[^a-z0-9]/gi, ""); // replace all non-alphanumeric with empty string
+            deliv = deliv.replace('#', '');
+            deliv = deliv.trim();
+            // deliv = deliv.replace(/[^a-z0-9]/gi, ""); // replace all non-alphanumeric with empty string
             Log.trace("GitHubUtil::parseDeliverableFromComment() - input: " + message + "; output: " + deliv);
             return deliv;
         }
         return null;
+    }
+
+    public static parseSilentFromComment(message: any): boolean {
+        if (message.indexOf('#silent') >= 0) {
+            Log.trace("GitHubUtil::parseSilentFromComment() - input: " + message + "; silent: true");
+            return true;
+        }
+        Log.trace("GitHubUtil::parseSilentFromComment() - input: " + message + "; silent: false");
+        return false;
+    }
+
+    public static parseForceFromComment(message: any): boolean {
+        if (message.indexOf('#force') >= 0) {
+            Log.trace("GitHubUtil::parseForceFromComment() - input: " + message + "; force: true");
+            return true;
+        }
+        Log.trace("GitHubUtil::parseForceFromComment() - input: " + message + "; force: false");
+        return false;
     }
 
     /**
