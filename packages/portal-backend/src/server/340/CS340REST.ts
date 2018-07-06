@@ -43,9 +43,9 @@ export default class CS340REST implements IREST {
         let ac : AssignmentController = new AssignmentController();
         ac.getAssignmentGrade(sid, aid).then((result) => {
             if(result !== null) {
-                res.send(200, result);
+                res.send(200, {result: result});
             } else {
-                res.send(404, "Not found"); // TODO [Jonathan]: Find proper HTML code for this
+                res.send(404, {result: null, error: "Not found"}); // TODO [Jonathan]: Find proper HTML code for this
             }
         });
 
