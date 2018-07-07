@@ -29,7 +29,7 @@ export class AutoTestRoutes implements IREST {
         server.get('/at/defaultDeliverable', AutoTestRoutes.atDefaultDeliverable); // /:org
         server.get('/at/isStaff/:personId', AutoTestRoutes.atIsStaff);
         server.get('/at/container/:delivId', AutoTestRoutes.atContainerDetails);
-        server.post('/at/grade/', AutoTestRoutes.atGradeResult); // was: /grade/:org/:repoId/:delivId
+        server.post('/at/grade/', AutoTestRoutes.atGrade); // was: /grade/:org/:repoId/:delivId
         server.post('/at/result/', AutoTestRoutes.atResult);
         server.post('/githubWebhook', AutoTestRoutes.githubWebhook); // forward GitHub Webhooks to AutoTest
     }
@@ -97,29 +97,36 @@ export class AutoTestRoutes implements IREST {
     }
 
 
-    public static atGradeResult(req: any, res: any, next: any) {
-        Log.info('AutoTestRouteHandler::atGradeResult(..) - start');
+    public static atGrade(req: any, res: any, next: any) {
+        Log.info('AutoTestRouteHandler::atGrade(..) - start');
 
         let payload: Payload;
 
         const providedSecret = req.headers.token;
         if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
-            Log.warn('AutoTestRouteHandler::atIsStaff(..) - Invalid Secret: ' + providedSecret);
+            Log.warn('AutoTestRouteHandler::atGrade(..) - Invalid Secret: ' + providedSecret);
             payload = {failure: {message: 'Invalid AutoTest Secret: ' + providedSecret, shouldLogout: true}};
             res.send(400, payload);
         } else {
             const gradeRecord: AutoTestGradeTransport = req.body; // turn into json?
 
-            Log.info('AutoTestRouteHandler::atGradeResult(..) - repoId: ' + gradeRecord.repoId + '; delivId: ' + gradeRecord.delivId + '; body: ' + JSON.stringify(gradeRecord));
-            let sc = new CourseController(new GitHubController());
-            sc.handleNewAutoTestGrade(gradeRecord).then(function (success: any) {
-                payload = {success: {success: true}};
-                res.send(200, payload);
-            }).catch(function (err) {
-                payload = {failure: {message: 'Failed to receive grade: ' + err, shouldLogout: false}};
-                res.send(400, payload);
-                Log.error('AutoTestRouteHandler::atGradeResult(..) - ERROR: ' + err);
-            });
+            const validGradeRecord = AutoTestRoutes.validateAutoTestGrade(gradeRecord);
+            if (validGradeRecord !== null) {
+                Log.error('AutoTestRouteHandler::atGrade(..) - valid body not provided: ' + validGradeRecord + '; body: ' + JSON.stringify(gradeRecord));
+                res.send(400, {failure: {message: 'Invalid Grade Record: ' + validGradeRecord, shouldLogout: false}});
+            } else {
+
+                Log.info('AutoTestRouteHandler::atGrade(..) - repoId: ' + gradeRecord.repoId + '; delivId: ' + gradeRecord.delivId + '; body: ' + JSON.stringify(gradeRecord));
+                let sc = new CourseController(new GitHubController());
+                sc.handleNewAutoTestGrade(gradeRecord).then(function (success: any) {
+                    payload = {success: {success: true}};
+                    res.send(200, payload);
+                }).catch(function (err) {
+                    payload = {failure: {message: 'Failed to receive grade: ' + err, shouldLogout: false}};
+                    res.send(400, payload);
+                    Log.error('AutoTestRouteHandler::atGrade(..) - ERROR: ' + err);
+                });
+            }
         }
     }
 
@@ -296,6 +303,74 @@ export class AutoTestRoutes implements IREST {
         if (typeof record.output === 'undefined') {
             const msg = 'output object missing';
             Log.error('AutoTestRoutes::validateAutoTestResult(..) - ERROR: ' + msg);
+            return msg;
+        }
+        return null;
+    }
+
+    /**
+     * Validates the AutoTest grade object.
+     *
+     * @param {AutoTestGradeTransport} record
+     * @returns {string | null} String will contain a description of the error, null if successful.
+     */
+    private static validateAutoTestGrade(record: AutoTestGradeTransport): string | null {
+        // multiple returns is poor, but at least it's quick
+
+        if (typeof record === 'undefined') {
+            const msg = 'object undefined';
+            Log.error('AutoTestRoutes::validateAutoTestGrade(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        if (record === null) {
+            const msg = 'object null';
+            Log.error('AutoTestRoutes::validateAutoTestGrade(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        // just rudimentary checking
+
+        // delivId: string; // invariant: deliv grade is associated with
+        if (typeof record.delivId === 'undefined') {
+            const msg = 'delivId undefined';
+            Log.error('AutoTestRoutes::validateAutoTestGrade(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // score: number; // grade: < 0 will mean 'N/A' in the UI
+        if (typeof record.score === 'undefined') {
+            const msg = 'score undefined';
+            Log.error('AutoTestRoutes::validateAutoTestGrade(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // comment: string; // simple grades will just have a comment
+        if (typeof record.comment === 'undefined') {
+            const msg = 'comment undefined';
+            Log.error('AutoTestRoutes::validateAutoTestGrade(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // urlName: string | null; // description to go with the URL (repo if exists)
+        if (typeof record.urlName === 'undefined') {
+            const msg = 'urlName undefined';
+            Log.error('AutoTestRoutes::validateAutoTestGrade(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // URL: string | null; // commit URL if known, otherwise repo URL (commit / repo if exists)
+        if (typeof record.URL === 'undefined') {
+            const msg = 'URL undefined';
+            Log.error('AutoTestRoutes::validateAutoTestGrade(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // timestamp: number; // even if grade < 0 might as well return when the entry was made
+        if (typeof record.timestamp !== 'number') {
+            const msg = 'timestamp missing';
+            Log.error('AutoTestRoutes::validateAutoTestGrade(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // custom: any;
+        if (typeof record.custom !== 'object') {
+            const msg = 'custom object missing';
+            Log.error('AutoTestRoutes::validateAutoTestGrade(..) - ERROR: ' + msg);
             return msg;
         }
         return null;
