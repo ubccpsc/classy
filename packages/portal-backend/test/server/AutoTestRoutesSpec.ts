@@ -67,7 +67,7 @@ describe.only('AutoTest Routes', function () {
         let body: AutoTestDefaultDeliverablePayload;
         const url = '/at/defaultDeliverable/';
         try {
-            response = await request(app).get(url);
+            response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
         } catch (err) {
             Log.test('ERROR: ' + err);
@@ -102,7 +102,7 @@ describe.only('AutoTest Routes', function () {
         let body: AutoTestAuthPayload;
         const url = '/at/isStaff/rtholmes';
         try {
-            response = await request(app).get(url);
+            response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
         } catch (err) {
             Log.test('ERROR: ' + err);
@@ -121,7 +121,7 @@ describe.only('AutoTest Routes', function () {
         let body: AutoTestAuthPayload;
         const url = '/at/isStaff/INVALIDUSERNAME';
         try {
-            response = await request(app).get(url);
+            response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
         } catch (err) {
             Log.test('ERROR: ' + err);
@@ -141,7 +141,7 @@ describe.only('AutoTest Routes', function () {
         const url = '/at/container/d0';
         let body: AutoTestConfigPayload;
         try {
-            response = await request(app).get(url);
+            response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
         } catch (err) {
             Log.test('ERROR: ' + err);
@@ -162,7 +162,7 @@ describe.only('AutoTest Routes', function () {
         const url = '/at/container/d9997';
         let body: AutoTestConfigPayload;
         try {
-            response = await request(app).get(url);
+            response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
         } catch (err) {
             Log.test('ERROR: ' + err);
@@ -192,7 +192,7 @@ describe.only('AutoTest Routes', function () {
 
         const url = '/at/grade/';
         try {
-            response = await request(app).post(url).send(gradePayload).set('Accept', 'application/json');
+            response = await request(app).post(url).send(gradePayload).set('Accept', 'application/json').set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
@@ -209,7 +209,7 @@ describe.only('AutoTest Routes', function () {
 
         const url = '/githubWebhook';
         try {
-            response = await request(app).post(url).send(body).set('Accept', 'application/json');
+            response = await request(app).post(url).send(body).set('Accept', 'application/json').set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
