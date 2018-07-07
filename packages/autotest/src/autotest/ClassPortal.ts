@@ -68,28 +68,45 @@ export class ClassPortal implements IClassPortal {
     private port: number = Config.getInstance().getProp(ConfigKey.backendPort);
 
     public async isStaff(userName: string): Promise<AutoTestAuthTransport> {
-        const url = this.host + ":" + this.port + "/at/isStaff/" + userName;
-        Log.info("ClassPortal::isStaff(..) - Sending request to " + url);
-        const opts: rp.RequestPromiseOptions = {rejectUnauthorized: false};
-        return rp(url, opts).then(function (res) {
-            Log.trace("ClassPortal::isStaff( " + userName + " ) - success; payload: " + res);
-            const json: AutoTestAuthPayload = JSON.parse(res);
-            if (typeof json.success !== 'undefined') {
-                return json.success;
-            } else {
-                Log.error("ClassPortal::isStaff(..) - ERROR: " + JSON.stringify(json));
-                return {personId: userName, isStaff: false, isAdmin: false}; // if error, give no credentials
-            }
-        }).catch(function (err) {
-            Log.error("ClassPortal::isStaff(..) - ERROR; url: " + url + "; ERROR: " + err);
-            return {personId: userName, isStaff: false, isAdmin: false}; // if error, give no credentials
-        });
+        const NO_ACCESS = {personId: userName, isStaff: false, isAdmin: false}; // if error, give no credentials
+
+        try {
+            const url = this.host + ":" + this.port + "/at/isStaff/" + userName;
+            Log.info("ClassPortal::isStaff(..) - Sending request to " + url);
+            const opts: rp.RequestPromiseOptions = {
+                rejectUnauthorized: false,
+                headers:            {
+                    token: Config.getInstance().getProp(ConfigKey.autotestSecret)
+                }
+            };
+
+            return rp(url, opts).then(function (res) {
+                Log.trace("ClassPortal::isStaff( " + userName + " ) - success; payload: " + res);
+                const json: AutoTestAuthPayload = JSON.parse(res);
+                if (typeof json.success !== 'undefined') {
+                    return json.success;
+                } else {
+                    Log.error("ClassPortal::isStaff(..) - ERROR: " + JSON.stringify(json));
+                    return NO_ACCESS;
+                }
+            }).catch(function (err) {
+                Log.error("ClassPortal::isStaff(..) - ERROR; url: " + url + "; ERROR: " + err);
+                return NO_ACCESS;
+            });
+        } catch (err) {
+            Log.error("ClassPortal::isStaff(..) - ERROR: " + err);
+            return NO_ACCESS;
+        }
     }
 
     public async getDefaultDeliverableId(): Promise<AutoTestDefaultDeliverableTransport | null> {
 
         const url = this.host + ":" + this.port + "/at/defaultDeliverable";
-        const opts: rp.RequestPromiseOptions = {rejectUnauthorized: false};
+        const opts: rp.RequestPromiseOptions = {
+            rejectUnauthorized: false, headers: {
+                token: Config.getInstance().getProp(ConfigKey.autotestSecret)
+            }
+        };
         Log.info("ClassPortal::getDefaultDeliverableId(..) - Sending request to " + url);
         return rp(url, opts).then(function (res) {
             Log.trace("ClassPortal::getDefaultDeliverableId() - success; payload: " + res);
@@ -108,7 +125,11 @@ export class ClassPortal implements IClassPortal {
 
     public async getContainerDetails(delivId: string): Promise<AutoTestConfigTransport | null> {
         const url = this.host + ":" + this.port + "/at/container/" + delivId;
-        const opts: rp.RequestPromiseOptions = {rejectUnauthorized: false};
+        const opts: rp.RequestPromiseOptions = {
+            rejectUnauthorized: false, headers: {
+                token: Config.getInstance().getProp(ConfigKey.autotestSecret)
+            }
+        };
         Log.info("ClassPortal::getContainerId(..) - Sending request to " + url);
         return rp(url, opts).then(function (res) {
             Log.trace("ClassPortal::getContainerId( " + delivId + " ) - success; payload: " + res);
@@ -127,7 +148,11 @@ export class ClassPortal implements IClassPortal {
 
     public async sendGrade(grade: AutoTestGradeTransport): Promise<Payload> {
         const url = this.host + ":" + this.port + "/at/grade/";
-        const opts: rp.RequestPromiseOptions = {rejectUnauthorized: false, method: 'post'};
+        const opts: rp.RequestPromiseOptions = {
+            rejectUnauthorized: false, method: 'post', headers: {
+                token: Config.getInstance().getProp(ConfigKey.autotestSecret)
+            }
+        };
         Log.info("ClassPortal::sendGrade(..) - Sending request to " + url);
         return rp(url, opts).then(function (res) {
             Log.trace("ClassPortal::sendGrade() - sent; returned payload: " + res);
@@ -149,7 +174,11 @@ export class ClassPortal implements IClassPortal {
     public async sendResult(result: IAutoTestResult): Promise<Payload> {
 
         const url = this.host + ":" + this.port + "/at/result/";
-        const opts: rp.RequestPromiseOptions = {rejectUnauthorized: false, method: 'post'};
+        const opts: rp.RequestPromiseOptions = {
+            rejectUnauthorized: false, method: 'post', headers: {
+                token: Config.getInstance().getProp(ConfigKey.autotestSecret)
+            }
+        };
         Log.info("ClassPortal::sendResult(..) - Sending request to " + url);
         return rp(url, opts).then(function (res) {
             Log.trace("ClassPortal::sendResult() - sent; returned payload: " + res);

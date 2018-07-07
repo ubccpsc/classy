@@ -3,8 +3,8 @@ import "mocha";
 
 import Config from "../../common/Config";
 import {ClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
-import {Backend} from "../../portal-backend/src/Backend";
 import Log from "../../common/Log";
+import BackendServer from "../../portal-backend/src/server/BackendServer";
 
 const loadFirst = require('./GlobalSpec');
 
@@ -15,16 +15,18 @@ describe("ClassPortal Service", () => {
     const classId = "secapstone";
     const CURRENT_DEFAULT_DELIV = "d2";
 
-    let backend: Backend = null;
-    before(function () {
+    let backend: BackendServer = null;
+    before(async function () {
         Log.test("ClassPortalSpec::before() - start");
-        backend = new Backend();
-        backend.start();
+        backend = new BackendServer();
+        await backend.start();
+        Log.test("ClassPortalSpec::before() - done");
     });
 
-    after(function () {
+    after(async function () {
         Log.test("ClassPortalSpec::after() - start");
-        backend.stop();
+        await backend.stop();
+        Log.test("ClassPortalSpec::after() - done");
     });
 
     beforeEach(function () {
@@ -35,10 +37,11 @@ describe("ClassPortal Service", () => {
     it("Should be able for a staff user to be staff.", async () => {
         try {
             const actual = await cp.isStaff("rtholmes");
+            Log.test('Actual: ' + actual);
             expect(actual.isStaff).to.equal(true);
             expect(actual.isAdmin).to.equal(true);
         } catch (err) {
-            expect.fail("Should not happen");
+            expect.fail("Should not happen: " + err);
         }
     });
 
