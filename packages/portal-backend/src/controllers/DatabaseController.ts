@@ -394,6 +394,7 @@ export class DatabaseController {
             return this.db;
         } catch (err) {
             Log.error("DatabaseController::open() - ERROR: " + err);
+            Log.error("DatabaseController::open() - ERROR: Host probably does not have a database configured and running (see README.md if this is a test instance).");
         }
     }
 

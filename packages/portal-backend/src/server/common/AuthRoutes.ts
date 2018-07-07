@@ -8,7 +8,6 @@ import {DatabaseController} from "../../controllers/DatabaseController";
 import {Auth, Person} from "../../Types";
 import {PersonController} from "../../controllers/PersonController";
 import IREST from "../IREST";
-import {RouteHandler} from "../RouteHandler";
 import {AuthTransportPayload} from "../../../../common/types/PortalTypes";
 import restify = require("restify");
 import ClientOAuth2 = require("client-oauth2");
@@ -21,12 +20,43 @@ export class AuthRoutes implements IREST {
     private static ac = new AuthController();
 
     public registerRoutes(server: restify.Server) {
-        Log.info("AuthRouteHanlder::registerRoutes() - start");
+        Log.info("AuthRouteHandler::registerRoutes() - start");
 
-        server.on('MethodNotAllowed', RouteHandler.handlePreflight); // preflights cors requests
+        server.on('MethodNotAllowed', AuthRoutes.handlePreflight); // preflights cors requests
         server.get('/getCredentials', AuthRoutes.getCredentials); // verify Classy credentials
         server.get('/auth', AuthRoutes.getAuth); // start GitHub OAuth flow
         server.get('/githubCallback', AuthRoutes.githubCallback); // finalize GitHub OAuth flow
+    }
+
+    /**
+     * Work around some CORS-related issues for OAuth. This looks manky, but don't change it.
+     *
+     * Really.
+     *
+     * Code taken from restify #284
+     *
+     * @param req
+     * @param res
+     */
+    public static handlePreflight(req: any, res: any) {
+        Log.trace("AuthRouteHandler::handlePreflight(..) - " + req.method.toLowerCase() + "; uri: " + req.url);
+
+        const allowHeaders = ['Accept', 'Accept-Version', 'Content-Type', 'Api-Version', 'user-agent', 'user', 'token', 'org', 'name'];
+        if (res.methods.indexOf('OPTIONS') === -1) {
+            res.methods.push('OPTIONS');
+        }
+
+        if (res.methods.indexOf('GET') === -1) {
+            res.methods.push('GET');
+        }
+
+        res.header('Access-Control-Allow-Credentials', true);
+        res.header('Access-Control-Allow-Headers', allowHeaders.join(', '));
+        res.header('Access-Control-Allow-Methods', res.methods.join(', '));
+        res.header('Access-Control-Allow-Origin', req.headers.origin);
+
+        Log.trace("AuthRouteHandler::handlePreflight(..) - sending 204; headers: " + JSON.stringify(res.getHeaders()));
+        return res.send(204);
     }
 
     public static getCredentials(req: any, res: any, next: any) {
