@@ -1,14 +1,15 @@
 import Log from "../../../common/Log";
 
 import {DatabaseController} from "./DatabaseController";
-import {IContainerOutput} from "../../../autotest/src/Types";
+import {IAutoTestResult} from "../../../autotest/src/Types";
 import {RepositoryController} from "./RepositoryController";
+import {Result} from "../Types";
 
 export class ResultsController {
 
     private db: DatabaseController = DatabaseController.getInstance();
 
-    public async getAllResults(): Promise<IContainerOutput[]> {
+    public async getAllResults(): Promise<Result[]> {
         Log.info("ResultsController::getAllResults() - start");
 
         let results = await this.db.getResults();
@@ -26,19 +27,18 @@ export class ResultsController {
     */
 
     // TODO: need to be able to associate a result row with a person or team?
-    public async createResult(result: IContainerOutput): Promise<boolean> {
+    // rc.createResult(resultRecord.delivId, resultRecord.repoId, resultRecord.input, resultRecord.output).then(function (success) {÷
+    public async createResult(record: IAutoTestResult): Promise<boolean> {
         Log.info("ResultController::createResult(..) - start");
-        Log.trace("GradesController::createResult(..) - payload: " + JSON.stringify(result));
+        Log.trace("GradesController::createResult(..) - payload: " + JSON.stringify(record));
         try {
-            const repoId: string | null = null;
-            // TODO: need the PushInfo event for this result! (aka what repoId is it on?)
+
             const rc = new RepositoryController();
-            const people = await rc.getPeopleForRepo(repoId);
+            const people = await rc.getPeopleForRepo(record.repoId);
 
-            // TODO: need delivId too!
+            (<any>record).people = people; // don't know how to augment this record with people to keep the type system happy
 
-            // TODO: add people to results
-            let outcome = await DatabaseController.getInstance().writeResult(result);
+            let outcome = await DatabaseController.getInstance().writeResult(<Result>record);
             Log.trace("ResultController::createResult(..) - result written");
             return outcome;
         } catch (err) {

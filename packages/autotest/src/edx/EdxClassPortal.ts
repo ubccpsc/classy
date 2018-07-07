@@ -6,6 +6,7 @@ import {
     AutoTestGradeTransport,
     Payload
 } from "../../../common/types/PortalTypes";
+import {IAutoTestResult} from "../Types";
 
 /**
  * TODO: This type should go away once the full portal-backend project is finished and spun up.
@@ -41,6 +42,10 @@ export class EdXClassPortal implements IClassPortal {
     }
 
     public async sendGrade(grade: AutoTestGradeTransport): Promise<Payload> {
+        return {success: {worked: true}};
+    }
+
+    public async sendResult(grade: IAutoTestResult): Promise<Payload> {
         return {success: {worked: true}};
     }
 }

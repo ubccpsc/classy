@@ -3,18 +3,20 @@ import * as rp from "request-promise-native";
 
 import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
-import {
-    AutoTestAuthPayload,
-    AutoTestConfigPayload,
-    AutoTestDefaultDeliverablePayload,
-    AutoTestGradeTransport
-} from "../../../../common/types/PortalTypes";
 
 import {IAutoTestResult} from "../../../../autotest/src/Types";
 
 import IREST from "../IREST";
 import {CourseController} from "../../controllers/CourseController";
 import {GitHubController} from "../../controllers/GitHubController";
+import {ResultsController} from "../../controllers/ResultsController";
+import {
+    AutoTestAuthPayload,
+    AutoTestConfigPayload,
+    AutoTestDefaultDeliverablePayload,
+    AutoTestGradeTransport,
+    Payload,
+} from "../../../../common/types/PortalTypes";
 
 /**
  * Just a large body of static methods for translating between restify and the remainder of the system.
@@ -95,23 +97,48 @@ export class AutoTestRoutes implements IREST {
         });
     }
 
+    /**
+     * Receives the container result from AutoTest and persists it in the database.
+     * While the AutoTest container could write the DB directly, this assumes that it
+     * is always running on the same host (which we hope to change in the future) and
+     * this also gives us a chance to validate the result record before writing it
+     * which can be especially helpful especially in terms of debugging.
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
     public static atResult(req: any, res: any, next: any) {
         Log.info('AutoTestRouteHandler::atResult(..) - start');
 
-        // TODO: verify admin secret
+        let payload: Payload = null;
 
-        const resultRecord: IAutoTestResult = req.body;
+        const providedSecret = req.headers.token;
+        if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
+            Log.warn('AutoTestRouteHandler::atResult(..) - Invalid Secret: ' + providedSecret);
+            payload = {failure: {message: 'Invalid AutoTest Secret: ' + providedSecret, shouldLogout: true}};
+            res.send(400, payload);
+        } else {
+            const resultRecord: IAutoTestResult = req.body;
+            Log.trace('AutoTestRouteHandler::atResult(..) - body: ' + JSON.stringify(resultRecord));
 
-        Log.info('AutoTestRouteHandler::atResult(..) - body: ' + JSON.stringify(resultRecord));
-        Log.warn('AutoTestRouteHandler::atResult(..) - NOT IMPLEMENTED');
-        // let rc = new ResultsController();
-        // rc.createResult(resultRecord).then(function (success) {
-        //     res.send({success: true}); // respond
-        // }).catch(function (err) {
-        //     res.send({success: true}); // respond true, they can't do anything anyways
-        //     Log.error('AutoTestRouteHandler::atResult(..) - ERROR: ' + err);
-        // });
-        res.send(200, {success: {worked: true}});
+            const validResultRecord = AutoTestRoutes.validateAutoTestResult(resultRecord);
+            if (validResultRecord !== null) {
+                Log.error('AutoTestRouteHandler::atResult(..) - valid body not provided: ' + validResultRecord + '; body: ' + JSON.stringify(resultRecord));
+                res.send(400, {failure: {message: 'Invalid Result Record: ' + validResultRecord, shouldLogout: false}});
+            } else {
+                Log.warn('AutoTestRouteHandler::atResult(..) - valid result && valid secret');
+                let rc = new ResultsController();
+                rc.createResult(resultRecord).then(function (success) {
+                    payload = {success: {message: 'Result received'}};
+                    res.send(200, payload);
+                }).catch(function (err) {
+                    payload = {failure: {message: 'Error processing result: ' + err, shouldLogout: false}};
+                    res.send(400, payload);
+                    Log.error('AutoTestRouteHandler::atResult(..) - ERROR: ' + err);
+                });
+            }
+        }
     }
 
     /**
@@ -172,6 +199,74 @@ export class AutoTestRoutes implements IREST {
             Log.error('AutoTestRouteHandler::githubWebhook(..) - ERROR: ' + err);
             res.send(400, {error: err}); // respond no
         })
+    }
+
+    /**
+     * Validates the AutoTest result object.
+     *
+     * @param {IAutoTestResult} record
+     * @returns {string | null} String will contain a description of the error, null if successful.
+     */
+    private static validateAutoTestResult(record: IAutoTestResult): string | null {
+        // multiple returns is poor, but at least it's quick
+
+        if (typeof record === 'undefined') {
+            const msg = 'object undefined';
+            Log.error('AutoTestRoutes::validateAutoTestResult(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        if (record === null) {
+            const msg = 'object null';
+            Log.error('AutoTestRoutes::validateAutoTestResult(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        // just rudimentary checking
+
+        // delivId: string; // (already in input)
+        if (typeof record.delivId === 'undefined') {
+            const msg = 'delivId undefined';
+            Log.error('AutoTestRoutes::validateAutoTestResult(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // repoId: string;  // (already in input)
+        if (typeof record.repoId === 'undefined') {
+            const msg = 'repoId undefined';
+            Log.error('AutoTestRoutes::validateAutoTestResult(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // timestamp: number; // timestamp of push, not of any processing (already in input)
+        if (typeof record.timestamp === 'undefined') {
+            const msg = 'timestamp undefined';
+            Log.error('AutoTestRoutes::validateAutoTestResult(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // commitURL: string;
+        if (typeof record.commitURL === 'undefined') {
+            const msg = 'commitURL undefined';
+            Log.error('AutoTestRoutes::validateAutoTestResult(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // commitSHA: string;
+        if (typeof record.commitSHA === 'undefined') {
+            const msg = 'commitSHA undefined';
+            Log.error('AutoTestRoutes::validateAutoTestResult(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // input: IContainerInput;
+        if (typeof record.input !== 'object') {
+            const msg = 'input object missing';
+            Log.error('AutoTestRoutes::validateAutoTestResult(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // output: IContainerOutput;
+        if (typeof record.output === 'undefined') {
+            const msg = 'output object missing';
+            Log.error('AutoTestRoutes::validateAutoTestResult(..) - ERROR: ' + msg);
+            return msg;
+        }
+        return null;
     }
 
 }

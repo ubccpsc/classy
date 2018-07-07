@@ -24,7 +24,7 @@ import restify = require('restify');
 
 const request = require('supertest');
 
-describe('AutoTest Routes', function () {
+describe.only('AutoTest Routes', function () {
 
     const TIMEOUT = 5000;
 
@@ -86,7 +86,7 @@ describe('AutoTest Routes', function () {
         const body = {dummy: true}; // TODO: this should send a real result
 
         try {
-            response = await request(app).post(url).send(body);
+            response = await request(app).post(url).send(body).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
         } catch (err) {
             Log.test('ERROR: ' + err);
         }

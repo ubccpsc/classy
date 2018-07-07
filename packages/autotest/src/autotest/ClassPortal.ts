@@ -12,6 +12,7 @@ import {
     AutoTestGradeTransport,
     Payload
 } from "../../../common/types/PortalTypes";
+import {IAutoTestResult} from "../Types";
 
 export interface IClassPortal {
 
@@ -51,15 +52,15 @@ export interface IClassPortal {
     // This seems like it should be here, but AutoTest does all of this itself in
     // AutoTest::handleExecutionComplete
 
-    // /**
-    //  * Send result for saving
-    //  *
-    //  * POST at/result
-    //  *
-    //  * @param {IAutoTestResult} result
-    //  * @returns {Promise<Payload>}
-    //  */
-    // sendResult(result: IAutoTestResult): Promise<Payload>;
+    /**
+     * Send result for saving
+     *
+     * POST at/result
+     *
+     * @param {IAutoTestResult} result
+     * @returns {Promise<Payload>}
+     */
+    sendResult(result: IAutoTestResult): Promise<Payload>;
 }
 
 export class ClassPortal implements IClassPortal {
@@ -144,5 +145,28 @@ export class ClassPortal implements IClassPortal {
             return pay;
         });
     }
+
+    public async sendResult(result: IAutoTestResult): Promise<Payload> {
+
+        const url = this.host + ":" + this.port + "/at/result/";
+        const opts: rp.RequestPromiseOptions = {rejectUnauthorized: false, method: 'post'};
+        Log.info("ClassPortal::sendResult(..) - Sending request to " + url);
+        return rp(url, opts).then(function (res) {
+            Log.trace("ClassPortal::sendResult() - sent; returned payload: " + res);
+            const json: Payload = JSON.parse(res);
+            if (typeof json.success !== 'undefined') {
+                Log.error("ClassPortal::sendResult(..) - successfully received");
+                return json;
+            } else {
+                Log.error("ClassPortal::sendResult(..) - ERROR; not successfully received:  " + JSON.stringify(json));
+                return json;
+            }
+        }).catch(function (err) {
+            Log.error("ClassPortal::sendResult(..) - ERROR; url: " + url + "; ERROR: " + err);
+            const pay: Payload = {failure: {message: err.message, shouldLogout: false}};
+            return pay;
+        });
+    }
+
 
 }

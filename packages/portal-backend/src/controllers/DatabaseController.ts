@@ -4,9 +4,7 @@ import Log from "../../../common/Log";
 import Util from "../../../common/Util";
 import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 
-import {IContainerOutput} from "../../../autotest/src/Types";
-
-import {Auth, Deliverable, Grade, Person, Repository, Team} from "../Types";
+import {Auth, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
 
 export class DatabaseController {
 
@@ -77,9 +75,9 @@ export class DatabaseController {
         return myTeams;
     }
 
-    public async getResults(): Promise<IContainerOutput[]> {
+    public async getResults(): Promise<Result[]> {
         Log.info("DatabaseController::getResult() - start");
-        return <IContainerOutput[]> await this.readRecords(this.RESULTCOLL, {});
+        return <Result[]> await this.readRecords(this.RESULTCOLL, {});
     }
 
     public async getRepositoriesForPerson(personId: string): Promise<Repository[]> {
@@ -163,10 +161,10 @@ export class DatabaseController {
     /**
      * These are write-only; they should never need to be updated.
      *
-     * @param {IContainerOutput} record
+     * @param {Result} record
      * @returns {Promise<boolean>}
      */
-    public async writeResult(record: IContainerOutput): Promise<boolean> {
+    public async writeResult(record: Result): Promise<boolean> {
         Log.info("DatabaseController::writeResult(..) - start");
         return await this.writeRecord(this.RESULTCOLL, record);
     }

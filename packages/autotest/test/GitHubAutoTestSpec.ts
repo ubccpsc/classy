@@ -378,7 +378,10 @@ describe("GitHubAutoTest", () => {
         };
         // data.savePush(TestData.inputRecordA);
         data.savePush(TestData.inputRecordA);
-        data.saveOutputRecord(TestData.outputRecordA);
+
+        // data.saveOutputRecord(TestData.outputRecordA);
+        expect(true).to.be.false; // TODO: this method went away in autotest, we will have to compensate somehow
+
         data.saveFeedbackGivenRecord(fg);
         let allData = await data.getAllData();
         expect(allData.pushes.length).to.equal(1);

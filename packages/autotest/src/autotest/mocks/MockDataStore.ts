@@ -131,22 +131,22 @@ export class MockDataStore implements IDataStore {
         return null;
     }
 
-    public async saveOutputRecord(outputInfo: IAutoTestResult): Promise<void> {
-        // Log.info("MockDataStore::saveOutputRecord(..) - start");
-        try {
-            const start = Date.now();
-            // read
-            const outRecords = await fs.readJSON(this.RECORD_PATH);
-            // append
-            outRecords.push(outputInfo);
-            // write
-            await fs.writeJSON(this.RECORD_PATH, outRecords);
-
-            Log.info("MockDataStore::saveOutputRecord(..) - done; took: " + Util.took(start));
-        } catch (err) {
-            Log.error("MockDataStore::saveOutputRecord(..) - ERROR: " + err);
-        }
-    }
+    // public async saveOutputRecord(outputInfo: IAutoTestResult): Promise<void> {
+    //     // Log.info("MockDataStore::saveOutputRecord(..) - start");
+    //     try {
+    //         const start = Date.now();
+    //         // read
+    //         const outRecords = await fs.readJSON(this.RECORD_PATH);
+    //         // append
+    //         outRecords.push(outputInfo);
+    //         // write
+    //         await fs.writeJSON(this.RECORD_PATH, outRecords);
+    //
+    //         Log.info("MockDataStore::saveOutputRecord(..) - done; took: " + Util.took(start));
+    //     } catch (err) {
+    //         Log.error("MockDataStore::saveOutputRecord(..) - ERROR: " + err);
+    //     }
+    // }
 
     public async getOutputRecord(commitURL: string, delivId: string): Promise<IAutoTestResult | null> {
         // Log.info("MockDataStore::getOutputRecord(..) - start");

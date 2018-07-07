@@ -118,7 +118,8 @@ describe("MongoStore", () => {
         expect(allData.records).to.be.empty;
 
         // TEST
-        await ds.saveOutputRecord(TestData.outputRecordA);
+        expect(true).to.be.false; // TODO: need to call ClassPortal.sendResult
+        // await ds.saveOutputRecord(TestData.outputRecordA);
 
         // VERIFY
         allData = await ds.getAllData();
@@ -130,7 +131,8 @@ describe("MongoStore", () => {
 
     it("Should be able to retrieve an output event.", async () => {
         // SETUP
-        await ds.saveOutputRecord(TestData.outputRecordA);
+        // await ds.saveOutputRecord(TestData.outputRecordA);
+        expect(true).to.be.false; // TODO: need to call ClassPortal.sendResult
 
         // TEST
         const actual = await ds.getOutputRecord(TestData.outputRecordA.commitURL, TestData.outputRecordA.input.delivId);
@@ -143,7 +145,8 @@ describe("MongoStore", () => {
 
     it("Should return null for an output event that has not been saved.", async () => {
         // SETUP
-        await ds.saveOutputRecord(TestData.outputRecordA);
+        expect(true).to.be.false; // TODO: need to call ClassPortal.sendResult
+        // await ds.saveOutputRecord(TestData.outputRecordA);
 
         // TEST
         const actual = await ds.getOutputRecord(TestData.outputRecordB.commitURL, TestData.outputRecordB.input.delivId);

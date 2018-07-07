@@ -8,6 +8,7 @@ import {
     Payload
 } from "../../../../common/types/PortalTypes";
 import Log from "../../../../common/Log";
+import {IAutoTestResult} from "../../Types";
 
 export class MockClassPortal implements IClassPortal {
 
@@ -47,6 +48,16 @@ export class MockClassPortal implements IClassPortal {
     }
 
     public async sendGrade(grade: AutoTestGradeTransport): Promise<Payload> {
+        const name = Config.getInstance().getProp(ConfigKey.name);
+        const testname = Config.getInstance().getProp(ConfigKey.testname);
+        if (name === testname) {
+            return {success: {worked: true}};
+        } else {
+            return {failure: {message: 'did not work', shouldLogout: false}};
+        }
+    }
+
+    public async sendResult(result: IAutoTestResult): Promise<Payload> {
         const name = Config.getInstance().getProp(ConfigKey.name);
         const testname = Config.getInstance().getProp(ConfigKey.testname);
         if (name === testname) {
