@@ -10,6 +10,13 @@ import {Factory} from "../../Factory";
 import {StudentTransport, StudentTransportPayload} from "../../../../../common/types/PortalTypes";
 import {Deliverable, Grade} from "../../../../../portal-backend/src/Types";
 import {SortableTable, TableCell, TableHeader} from "../../util/SortableTable";
+import {OnsInputElement} from "onsenui";
+
+const ERROR_POTENTIAL_INCORRECT_INPUT: string = "input triggered warning";
+const ERROR_INVALID_INPUT: string = "invalid input";
+const ERROR_NON_NUMERICAL_GRADE: string = "non-numerical grade entered";
+const ERROR_NULL_RUBRIC: string = "null rubric-data";
+const ERROR_MALFORMED_PAGE: string = "malformed page with info elements";
 
 export class CS340AdminView extends AdminView {
 
@@ -187,6 +194,7 @@ export class CS340AdminView extends AdminView {
             ];
             for(const delivCol of filteredDelivArray) {
                 let foundGrade = false;
+                if(typeof gradeMapping[student.userName] === "undefined") gradeMapping[student.userName] = {};
                 if(typeof gradeMapping[student.userName][delivCol.id] !== "undefined") foundGrade = true;
                 if(foundGrade) {
                     let newEntry = {
@@ -308,14 +316,21 @@ export class CS340AdminView extends AdminView {
                 let subErrorBoxElement = document.createElement("div");
                 subErrorBoxElement.setAttribute("class", "subQuestionErrorBox");
 
+
                 // Create the grade input element
                 let gradeInputElement = document.createElement("ons-input");
                 gradeInputElement.setAttribute("type", "number");
-                gradeInputElement.setAttribute("placeHolder", subQuestion.name);
+                if(previousSubmission === null) {
+                    gradeInputElement.setAttribute("placeHolder", subQuestion.name);
+                } else {
+                    gradeInputElement.setAttribute("placeHolder",
+                        previousSubmission.questions[i].subQuestion[j].grade.toString());
+                }
                 gradeInputElement.setAttribute("data-type", subQuestion.name);
                 gradeInputElement.setAttribute("modifier", "underbar");
                 gradeInputElement.setAttribute("class", "subQuestionGradeInput");
-                // gradeInputElement.setAttribute("onchange", "checkIfWarning(this)");
+                gradeInputElement.setAttribute("onchange",
+                    "window.classportal.view.checkIfWarning(this)");
                 gradeInputElement.setAttribute("data-outOf", "" + subQuestion.outOf);
                 gradeInputElement.innerHTML = subQuestion.name + " [out of " + subQuestion.outOf + "]";
 
@@ -409,7 +424,7 @@ export class CS340AdminView extends AdminView {
                 // If the value is not found, set it to a default empty string
                 if (rubricType === null) {
                     rubricType = "";
-                    if(!errorStatus) errorComment = "null rubric-data";
+                    if(!errorStatus) errorComment = ERROR_NULL_RUBRIC;
                     errorStatus = true;
                     continue;
                 }
@@ -417,7 +432,7 @@ export class CS340AdminView extends AdminView {
                 // If the grade value retrieved is not a number, default the value to 0
                 if (isNaN(gradeValue)) {
                     gradeValue = 0;
-                    if(!errorStatus) errorComment = "non-numerical grade entered";
+                    if(!errorStatus) errorComment = ERROR_NON_NUMERICAL_GRADE;
                     errorStatus = true;
                     errorElement.innerHTML = "Error: Must specify a valid number";
                     continue;
@@ -425,7 +440,7 @@ export class CS340AdminView extends AdminView {
                     // If the gradeValue is an actual number
                     // check if there are any warnings about the input value
                     if (this.checkIfWarning(gradeInputElement)) {
-                        if(!errorStatus) errorComment = "input triggered warning";
+                        if(!errorStatus) errorComment = ERROR_POTENTIAL_INCORRECT_INPUT;
                         errorStatus = true;
                         continue;
                     }
@@ -460,14 +475,18 @@ export class CS340AdminView extends AdminView {
         let aInfoIDElements = document.getElementsByClassName("aInfoID");
 
         if (aInfoSIDElements.length !== 1 || aInfoIDElements.length !== 1) {
-            if(!errorStatus) errorComment = "malformed page with info elements";
+            if(!errorStatus) errorComment = ERROR_MALFORMED_PAGE;
 
             errorStatus = true;
         }
 
         if(errorStatus) {
-            Log.error("CS340View::submitGrade() - Unable to submit data; error: " + errorComment);
-            return null;
+            if(errorComment !== ERROR_POTENTIAL_INCORRECT_INPUT || !confirm("Warning: " +
+                "Potential incorrect value entered into page! " +
+                "Do you still wish to save?")) {
+                Log.error("CS340View::submitGrade() - Unable to submit data; error: " + errorComment);
+                return null;
+            }
         }
 
         let sid = aInfoSIDElements[0].innerHTML;
@@ -505,7 +524,23 @@ export class CS340AdminView extends AdminView {
 
     public async getStudentGrade(sid: string, aid: string): Promise<AssignmentGrade | null> {
         // TODO [Jonathan]: Complete this
-        return null;
+        Log.info("CS340View::getStudentGrade(" + sid + ", " + aid + ") - start");
+        let options: any = this.getOptions();
+        options.method = 'get';
+        let uri = this.remote + '/getAssignmentGrade/' + sid + '/' + aid;
+        let response = await fetch(uri, options);
+
+        let reply;
+        if(response.status !== 200) {
+            Log.info("CS340View::getStudentGrade(..) - unable to find grade record");
+            reply =  null;
+        } else {
+            Log.info("CS340View::getStudentGrade(..) - found grade record");
+            let responseJson = await response.json();
+            reply = responseJson.result;
+        }
+        Log.info("CS340View::getStudentGrade(..) - finish");
+        return reply;
     }
 
     public async getGradingRubric(assignmentId: string): Promise<AssignmentGradingRubric | null> {
@@ -543,9 +578,20 @@ export class CS340AdminView extends AdminView {
     //     return options;
     // }
 
-    private checkIfWarning(gradeInputElement: HTMLInputElement) : boolean {
+    private checkIfWarning(gradeInputElement: OnsInputElement) : boolean {
         // TODO: Complete this
-        return false; // stub
+        // data-outOf
+        let gradeValue: number = parseFloat(gradeInputElement.value);
+        let gradeOutOf: number = parseFloat(gradeInputElement.getAttribute("data-outOf"));
+        let parentElement: HTMLElement = gradeInputElement.parentElement;
+        let errorBox = parentElement.getElementsByClassName("errorBox");
+        if(gradeValue < 0 || gradeValue > gradeOutOf) {
+            errorBox[0].innerHTML = "Warning: Grade out of bounds";
+            return true;
+        } else {
+            errorBox[0].innerHTML = "";
+            return false;
+        }
     }
 
     public testfunction() {
