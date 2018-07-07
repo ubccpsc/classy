@@ -37,22 +37,35 @@ export class AutoTestRoutes implements IREST {
     public static atContainerDetails(req: any, res: any, next: any) {
         Log.info('AutoTestRouteHandler::atContainerDetails(..) - /at/container/:delivId - start GET');
 
-        // TODO: verify secret
-
-        const delivId = req.params.delivId;
-        const name = Config.getInstance().getProp(ConfigKey.name);
-
-        Log.info('AutoTestRouteHandler::atContainerDetails(..) - name: ' + name + '; delivId: ' + delivId);
-
-        // TODO: this is just a dummy implementation
         let payload: AutoTestConfigPayload;
-
-        if ((name === ConfigCourses.sdmm || name === ConfigCourses.classytest) && delivId !== 'd9997') { // HACK: the && is terrible and is just for testing
-            payload = {success: {dockerImage: 'secapstone-grader', studentDelay: 60 * 60 * 12, maxExecTime: 300, regressionDelivIds: []}};
-            res.send(200, payload);
-        } else {
-            payload = {failure: {message: 'Could not retrieve container details', shouldLogout: false}};
+        const providedSecret = req.headers.token;
+        if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
+            Log.warn('AutoTestRouteHandler::atDefaultDeliverable(..) - Invalid Secret: ' + providedSecret);
+            payload = {failure: {message: 'Invalid AutoTest Secret: ' + providedSecret, shouldLogout: true}};
             res.send(400, payload);
+        } else {
+            const delivId = req.params.delivId;
+            const name = Config.getInstance().getProp(ConfigKey.name);
+
+            Log.info('AutoTestRouteHandler::atContainerDetails(..) - name: ' + name + '; delivId: ' + delivId);
+
+            // TODO: this is just a dummy implementation
+
+
+            if ((name === ConfigCourses.sdmm || name === ConfigCourses.classytest) && delivId !== 'd9997') { // HACK: the && is terrible and is just for testing
+                payload = {
+                    success: {
+                        dockerImage:        'secapstone-grader',
+                        studentDelay:       60 * 60 * 12,
+                        maxExecTime:        300,
+                        regressionDelivIds: []
+                    }
+                };
+                res.send(200, payload);
+            } else {
+                payload = {failure: {message: 'Could not retrieve container details', shouldLogout: false}};
+                res.send(400, payload);
+            }
         }
     }
 
@@ -60,21 +73,26 @@ export class AutoTestRoutes implements IREST {
     public static atDefaultDeliverable(req: any, res: any, next: any) {
         Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - /defaultDeliverable/:name - start GET');
 
-        // TODO: verify secret
-
-        // const name = req.params.name;
-        const name = Config.getInstance().getProp(ConfigKey.name);
-        Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - name: ' + name);
-
-        // TODO: this is just a dummy implementation
-
         let payload: AutoTestDefaultDeliverablePayload;
-        if (name === ConfigCourses.sdmm || name === ConfigCourses.classytest) {
-            payload = {success: {defaultDeliverable: 'd0'}};
-            res.send(200, payload);
-        } else {
-            payload = {failure: {message: 'No default deliverable found.', shouldLogout: false}};
+        const providedSecret = req.headers.token;
+        if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
+            Log.warn('AutoTestRouteHandler::atDefaultDeliverable(..) - Invalid Secret: ' + providedSecret);
+            payload = {failure: {message: 'Invalid AutoTest Secret: ' + providedSecret, shouldLogout: true}};
             res.send(400, payload);
+        } else {
+
+            const name = Config.getInstance().getProp(ConfigKey.name);
+            Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - name: ' + name);
+
+            // TODO: this is just a dummy implementation
+
+            if (name === ConfigCourses.sdmm || name === ConfigCourses.classytest) {
+                payload = {success: {defaultDeliverable: 'd0'}};
+                res.send(200, payload);
+            } else {
+                payload = {failure: {message: 'No default deliverable found.', shouldLogout: false}};
+                res.send(400, payload);
+            }
         }
     }
 
@@ -82,19 +100,27 @@ export class AutoTestRoutes implements IREST {
     public static atGradeResult(req: any, res: any, next: any) {
         Log.info('AutoTestRouteHandler::atGradeResult(..) - start');
 
-        // TODO: verify admin secret
+        let payload: Payload;
 
-        const gradeRecord: AutoTestGradeTransport = req.body; // turn into json?
+        const providedSecret = req.headers.token;
+        if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
+            Log.warn('AutoTestRouteHandler::atIsStaff(..) - Invalid Secret: ' + providedSecret);
+            payload = {failure: {message: 'Invalid AutoTest Secret: ' + providedSecret, shouldLogout: true}};
+            res.send(400, payload);
+        } else {
+            const gradeRecord: AutoTestGradeTransport = req.body; // turn into json?
 
-        Log.info('AutoTestRouteHandler::atGradeResult(..) - repoId: ' + gradeRecord.repoId + '; delivId: ' + gradeRecord.delivId + '; body: ' + JSON.stringify(gradeRecord));
-
-        let sc = new CourseController(new GitHubController());
-        sc.handleNewAutoTestGrade(gradeRecord).then(function (success: any) {
-            res.send(200, {success: {success: true}}); // respond
-        }).catch(function (err) {
-            res.send(400, {failure: {message: 'Failed to receive grade: ' + err}}); // respond true, they can't do anything anyways
-            Log.error('AutoTestRouteHandler::atGradeResult(..) - ERROR: ' + err);
-        });
+            Log.info('AutoTestRouteHandler::atGradeResult(..) - repoId: ' + gradeRecord.repoId + '; delivId: ' + gradeRecord.delivId + '; body: ' + JSON.stringify(gradeRecord));
+            let sc = new CourseController(new GitHubController());
+            sc.handleNewAutoTestGrade(gradeRecord).then(function (success: any) {
+                payload = {success: {success: true}};
+                res.send(200, payload);
+            }).catch(function (err) {
+                payload = {failure: {message: 'Failed to receive grade: ' + err, shouldLogout: false}};
+                res.send(400, payload);
+                Log.error('AutoTestRouteHandler::atGradeResult(..) - ERROR: ' + err);
+            });
+        }
     }
 
     /**
@@ -151,20 +177,26 @@ export class AutoTestRoutes implements IREST {
     public static atIsStaff(req: any, res: any, next: any) {
         Log.info('AutoTestRouteHandler::atIsStaff(..) - /isStaff/:personId - start GET');
 
-        // TODO: verify secret
-
-        const personId = req.params.personId;
-
-        Log.info('AutoTestRouteHandler::atIsStaff(..) - personId: ' + personId);
-
         let payload: AutoTestAuthPayload;
-        // TODO: this is just a dummy implementation
-        if (personId === 'rtholmes' || personId === 'nickbradley') {
-            payload = {success: {personId: personId, isStaff: true, isAdmin: true}};
-            res.send(200, payload);
+
+        const providedSecret = req.headers.token;
+        if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
+            Log.warn('AutoTestRouteHandler::atIsStaff(..) - Invalid Secret: ' + providedSecret);
+            payload = {failure: {message: 'Invalid AutoTest Secret: ' + providedSecret, shouldLogout: true}};
+            res.send(400, payload);
         } else {
-            payload = {success: {personId: personId, isStaff: false, isAdmin: false}};
-            res.send(200, payload);
+            const personId = req.params.personId;
+
+            Log.info('AutoTestRouteHandler::atIsStaff(..) - personId: ' + personId);
+
+            // TODO: this is just a dummy implementation
+            if (personId === 'rtholmes' || personId === 'nickbradley') {
+                payload = {success: {personId: personId, isStaff: true, isAdmin: true}};
+                res.send(200, payload);
+            } else {
+                payload = {success: {personId: personId, isStaff: false, isAdmin: false}};
+                res.send(200, payload);
+            }
         }
     }
 
