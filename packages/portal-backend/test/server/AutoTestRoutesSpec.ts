@@ -21,6 +21,7 @@ import {
 // const loadFirst = require('../GlobalSpec');
 
 import restify = require('restify');
+import {AutoTestRoutes} from "../../src/server/common/AutoTestRoutes";
 
 const request = require('supertest');
 
@@ -34,12 +35,8 @@ describe('AutoTest Routes', function () {
     before(async () => {
         Log.test('RestifyAutoTestRoutes::before - start');
 
-        Config.getInstance();
-        (<any>Config.getInstance()).config.org = (<any>Config.getInstance()).config.testorg; // force testing environment
-        // (<any>Config.getInstance()).config.name = 'secapstonetest'; // force testing in test environment // TODO: NOT GOOD for 340
-
-        // Test.ORGNAME = Config.getInstance().getProp(ConfigKey.testorg);
-        // Log.info('GlobalSpec::before() - org: ' + Test.ORGNAME);
+        Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
+        Config.getInstance().setProp(ConfigKey.name, Config.getInstance().getProp(ConfigKey.testname));
 
         let db = DatabaseController.getInstance();
         // await db.clearData(); // nuke everything
@@ -59,7 +56,7 @@ describe('AutoTest Routes', function () {
     after(async function () {
         Log.test('RestifyAutoTestRoutes::after - start');
         return server.stop();
-    });//.timeout(TIMEOUT);
+    });
 
     it('Should reject an unauthorized defaultDeliverable request', async function () {
 
@@ -139,6 +136,34 @@ describe('AutoTest Routes', function () {
         expect(response.status).to.equal(200);
         expect(response.body.success).to.not.be.undefined;
         // expect(response.body.success).to.equal(true);
+    }).timeout(TIMEOUT);
+
+    it('Should reject an invalid result', async function () {
+
+        let response = null;
+        const url = '/at/result/';
+
+        const body = { // : IAutoTestResult
+            delivId:   Test.DELIVID0,
+            repoId:    Test.REPONAME1,
+            timestamp: 0,
+            commitURL: 'url',
+            commitSHA: 'sha',
+            input:     {},
+            output:    {}
+        };
+
+        delete body.delivId; // remove required field
+
+        try {
+            response = await request(app).post(url).send(body).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(response.body));
+        expect(response.status).to.equal(400);
+        expect(response.body.success).to.be.undefined;
+        expect(response.body.failure).to.not.be.undefined;
     }).timeout(TIMEOUT);
 
     it('Should reject an unauthorized isStaff request', async function () {
