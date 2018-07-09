@@ -39,6 +39,7 @@ export enum ConfigKey {
 
     autotestUrl = "autotestUrl",
     autotestPort = "autotestPort",
+    autotestSecret = "autotestSecret",
 
     sslKeyPath = "sslKeyPath",
     sslCertPath = "sslCertPath",
@@ -56,8 +57,6 @@ export enum ConfigKey {
     timeout = "timeout",
     botName = "botName",
     postback = "postback",
-
-
 }
 
 export default class Config {
@@ -113,6 +112,7 @@ export default class Config {
 
                 autotestUrl:  process.env.AUTOTEST_URL,
                 autotestPort: process.env.AUTOTEST_PORT,
+                autotestSecret: process.env.AUTOTEST_SECRET,
 
                 // Not used?
                 // sslIntCert: process.env.SSL_INT_CERT,

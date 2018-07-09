@@ -35,7 +35,7 @@ describe("GitHubAutoTest", () => {
     before(function () {
         Log.test("AutoTest::before() - start");
 
-        pushes = fs.readJSONSync(__dirname + "/pushes.json");
+        pushes = fs.readJSONSync(__dirname + "/githubAutoTestData/pushes.json");
 
         data = new MockDataStore();
         data.clearData();
@@ -135,6 +135,7 @@ describe("GitHubAutoTest", () => {
             commitSHA:     pe.commitSHA,
             commitURL:     pe.commitURL,
             personId:      "myUser",
+            repoId:        "d1_project9999",
             // org:           "310",
             delivId:       "d0",
             "postbackURL": "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
@@ -165,8 +166,8 @@ describe("GitHubAutoTest", () => {
             commitSHA:     pushes[2].commitSHA,
             commitURL:     pushes[2].commitURL,
             personId:      "myUser",
-            // org:           "310",
             delivId:       "d0",
+            repoId:        "d1_project9999",
             "postbackURL": "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/cbe1b0918b872997de4c4d2baf4c263f8d4c6dc2/comments",
             timestamp:     1234567891
         };
@@ -376,9 +377,9 @@ describe("GitHubAutoTest", () => {
             "timestamp": TestData.commentRecordUserA.timestamp, // 1516451273288,
             "personId":  "cs310test"
         };
-        // data.savePush(TestData.inputRecordA);
+
         data.savePush(TestData.inputRecordA);
-        data.saveOutputRecord(TestData.outputRecordA);
+
         data.saveFeedbackGivenRecord(fg);
         let allData = await data.getAllData();
         expect(allData.pushes.length).to.equal(1);

@@ -36,9 +36,10 @@ export interface IDataStore {
 
     getCommentRecord(commitURL: string, delivId: string): Promise<ICommentEvent | null>;
 
-    saveOutputRecord(outputInfo: IAutoTestResult): Promise<void>;
+    // DO NOT DO THIS HERE: Classy should validate/save these records
+    // saveOutputRecord(outputInfo: IAutoTestResult): Promise<void>;
 
-    getOutputRecord(commitURL: string, delivId: string): Promise<IAutoTestResult | null>;
+    // getOutputRecord(commitURL: string, delivId: string): Promise<IAutoTestResult | null>;
 
     saveFeedbackGivenRecord(request: IFeedbackGiven): Promise<void>;
 
@@ -210,17 +211,17 @@ export class MongoDataStore implements IDataStore {
         return null;
     }
 
-    public async saveOutputRecord(outputInfo: IAutoTestResult): Promise<void> {
-        Log.trace("MongoDataStore::saveOutputRecord(..) - start");
-        try {
-            const start = Date.now();
-            await this.saveRecord(this.OUTPUTCOLL, outputInfo);
-            Log.trace("MongoDataStore::saveOutputRecord(..) - done; took: " + Util.took(start));
-        } catch (err) {
-            Log.error("MongoDataStore::saveOutputRecord(..) - ERROR: " + err);
-        }
-        return;
-    }
+    // public async saveOutputRecord(outputInfo: IAutoTestResult): Promise<void> {
+    //     Log.trace("MongoDataStore::saveOutputRecord(..) - start");
+    //     try {
+    //         const start = Date.now();
+    //         await this.saveRecord(this.OUTPUTCOLL, outputInfo);
+    //         Log.trace("MongoDataStore::saveOutputRecord(..) - done; took: " + Util.took(start));
+    //     } catch (err) {
+    //         Log.error("MongoDataStore::saveOutputRecord(..) - ERROR: " + err);
+    //     }
+    //     return;
+    // }
 
     public async getOutputRecord(commitURL: string, delivId: string): Promise<IAutoTestResult | null> {
         Log.trace("MongoDataStore::getOutputRecord(..) - start");

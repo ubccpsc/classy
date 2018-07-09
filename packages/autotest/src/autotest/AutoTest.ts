@@ -119,14 +119,14 @@ export abstract class AutoTest implements IAutoTest {
      */
     protected abstract processExecution(data: IAutoTestResult): Promise<void>;
 
-    protected async getOutputRecord(commitURL: string, delivId: string): Promise<IAutoTestResult | null> {
-        try {
-            const ret = await this.dataStore.getOutputRecord(commitURL, delivId);
-            return ret;
-        } catch (err) {
-            Log.error("AutoTest::getOutputRecord() - ERROR: " + err);
-        }
-    }
+    // protected async getOutputRecord(commitURL: string, delivId: string): Promise<IAutoTestResult | null> {
+    //     try {
+    //         const ret = await this.dataStore.getOutputRecord(commitURL, delivId);
+    //         return ret;
+    //     } catch (err) {
+    //         Log.error("AutoTest::getOutputRecord() - ERROR: " + err);
+    //     }
+    // }
 
     /**
      * Returns whether the commitURL is currently executing the given deliverable.
@@ -263,14 +263,16 @@ export abstract class AutoTest implements IAutoTest {
 
             Log.info("AutoTest::handleExecutionComplete(..) - start; commit: " + data.commitSHA);
 
-            // NOTE: we could alternatively send this to portal-backend by implementing ClassPortal::sendResult(..)
-            await this.dataStore.saveOutputRecord(data);
-
             try {
-                await this.processExecution(data);
+                let resultPayload = await this.classPortal.sendResult(data);
+                if (typeof resultPayload.failure !== 'undefined') {
+                    Log.error("AutoTest::handleExecutionComplete(..) - ERROR; Classy rejected result record: " + JSON.stringify(resultPayload));
+                } else {
+                    await this.processExecution(data);
+                }
             } catch (err) {
                 // just eat this error so subtypes do not break our queue handling
-                Log.error("AutoTest::handleExecutionComplete(..) - ERROR; from processExecution: " + err);
+                Log.error("AutoTest::handleExecutionComplete(..) - ERROR; sending/processing: " + err);
             }
 
             // when done clear the execution slot and schedule the next

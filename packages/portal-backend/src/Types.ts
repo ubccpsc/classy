@@ -1,3 +1,5 @@
+import {IAutoTestResult} from "../../autotest/src/Types";
+
 /**
  * These types are the storage-specific types used by the backend.
  *
@@ -125,7 +127,9 @@ export interface Grade {
     custom: any; // {}; not used by the default implementation, but useful for extension (e.g., custom grade values)
 }
 
-
+export interface Result extends IAutoTestResult { // TODO: define this without this extends. This import is no good!
+    people: string[];
+}
 
 /**
  *

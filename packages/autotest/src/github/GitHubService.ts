@@ -45,10 +45,12 @@ export class GitHubService implements IGitHubService {
                     reject(false);
                 }
 
+                /*
                 const org = Config.getInstance().getProp(ConfigKey.org);
                 const hostLength = message.url.indexOf(org);
                 const path = 'repos/' + message.url.substr(hostLength);
                 const host = Config.getInstance().getProp(ConfigKey.githubAPI);
+                */
 
                 const body: string = JSON.stringify({body: message.message});
                 const options: any = {
@@ -64,7 +66,8 @@ export class GitHubService implements IGitHubService {
                 if (Config.getInstance().getProp(ConfigKey.postback) === true) {
 
                     Log.trace("GitHubService::postMarkdownToGithub(..) - request: " + JSON.stringify(options, null, 2));
-                    const url = host + '/' + path;
+                    // const url = host + '/' + path;
+                    const url = message.url; // this url comes from postbackURL which uses the right API format
                     return rp(url, options).then(function (res) {
                         Log.trace("GitHubService::postMarkdownToGithub(..) - responded: " + res);
 

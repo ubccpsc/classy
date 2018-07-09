@@ -4,9 +4,7 @@ import Log from "../../../common/Log";
 import Util from "../../../common/Util";
 import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 
-import {IContainerOutput} from "../../../autotest/src/Types";
-
-import {Auth, Deliverable, Grade, Person, Repository, Team} from "../Types";
+import {Auth, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
 
 export class DatabaseController {
 
@@ -77,9 +75,9 @@ export class DatabaseController {
         return myTeams;
     }
 
-    public async getResults(): Promise<IContainerOutput[]> {
+    public async getResults(): Promise<Result[]> {
         Log.info("DatabaseController::getResult() - start");
-        return <IContainerOutput[]> await this.readRecords(this.RESULTCOLL, {});
+        return <Result[]> await this.readRecords(this.RESULTCOLL, {});
     }
 
     public async getRepositoriesForPerson(personId: string): Promise<Repository[]> {
@@ -163,10 +161,10 @@ export class DatabaseController {
     /**
      * These are write-only; they should never need to be updated.
      *
-     * @param {IContainerOutput} record
+     * @param {Result} record
      * @returns {Promise<boolean>}
      */
-    public async writeResult(record: IContainerOutput): Promise<boolean> {
+    public async writeResult(record: Result): Promise<boolean> {
         Log.info("DatabaseController::writeResult(..) - start");
         return await this.writeRecord(this.RESULTCOLL, record);
     }
@@ -394,6 +392,7 @@ export class DatabaseController {
             return this.db;
         } catch (err) {
             Log.error("DatabaseController::open() - ERROR: " + err);
+            Log.error("DatabaseController::open() - ERROR: Host probably does not have a database configured and running (see README.md if this is a test instance).");
         }
     }
 
@@ -430,6 +429,11 @@ export class DatabaseController {
             const query = {personId: record.personId};
             return await this.updateRecord(this.AUTHCOLL, query, record);
         }
+    }
+
+    public async getResult(delivId: string, repoId: string): Promise<Result> {
+        Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + " ) - start");
+        return <Result> await this.readSingleRecord(this.RESULTCOLL, {"delivId": delivId, "repoId": repoId});
     }
 }
 

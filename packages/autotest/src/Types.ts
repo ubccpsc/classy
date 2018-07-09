@@ -17,6 +17,7 @@ export interface IPushEvent {
 export interface ICommentEvent {
     personId: string; // was username
     delivId: string | null; // string if specified
+    repoId: string;
 
     commitSHA: string;
     commitURL: string;
@@ -45,7 +46,7 @@ export interface IAutoTestResult {
     timestamp: number; // timestamp of push, not of any processing (already in input)
     commitURL: string;
     commitSHA: string;
-    input: IContainerInput;
+    input: IContainerInput; // NOTE: is input required?
     output: IContainerOutput;
 }
 

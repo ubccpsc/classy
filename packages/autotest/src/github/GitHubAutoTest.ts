@@ -8,7 +8,7 @@ import {IClassPortal} from "../autotest/ClassPortal";
 import {IDataStore} from "../autotest/DataStore";
 import {IGitHubService} from "./GitHubService";
 import {AutoTest} from "../autotest/AutoTest";
-import {AutoTestAuthTransport, AutoTestConfigTransport} from "../../../common/types/PortalTypes";
+import {AutoTestAuthTransport, AutoTestConfigTransport, AutoTestResultTransport} from "../../../common/types/PortalTypes";
 
 export interface IGitHubTestManager {
 
@@ -138,7 +138,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(info.personId); // async
             const requestFeedbackDelay: string | null = await this.requestFeedbackDelay(delivId, info.personId, info.timestamp); // ts of comment, not push
             const hasBeenRequestedBefore: IFeedbackGiven = await this.dataStore.getFeedbackGivenRecordForCommit(info.commitURL, info.personId); // students often request grades they have previously 'paid' for
-            const res: IAutoTestResult = await this.getOutputRecord(info.commitURL, delivId); // for any user
+            // const res: IAutoTestResult = await this.getOutputRecord(info.commitURL, delivId); // for any user
+            const res: AutoTestResultTransport = await this.classPortal.getResult(delivId, info.repoId);
             const isCurrentlyRunning: boolean = this.isCommitExecuting(info.commitURL, delivId);
             Log.trace("GitHubAutoTest::handleCommentEvent(..) - isStaff: " + isStaff + "; delay: " + requestFeedbackDelay + "; res: " + res + "; running?: " + isCurrentlyRunning);
 
