@@ -188,12 +188,12 @@ export default class CS340REST implements IREST {
             let person : Person = result;
 
             if(result === null) {
-                res.send(400, {error: "Invalid student ID"});
+                res.send(400, {error: "Invalid student ID, unable to record grade"});
                 return next();
             }
             let repo : Repository = await assignController.getAssignmentRepo(assignId, person);
             if(repo === null) {
-                res.send(400, {error: "no assignment repository created"});
+                res.send(400, {error: "No Assignment Repository found, unable to record grade"});
                 return next();
             }
             let success = await assignController.setAssignmentGrade(repo.id, assignId, reqBody, user);

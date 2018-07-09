@@ -230,19 +230,13 @@ export class CS340AdminView extends AdminView {
                     newRow.push(newEntry);
 
                 }
-                // let newEntry = {
-                //     value: foundGrade? gradeMapping[student.userName][delivCol.id].score:"---",
-                //     html: "<a onclick='window.classportal.view.testfunction("+
-                //             student.userName + ", " + delivCol.id + ")'>" +
-                //     foundGrade?gradeMapping[student.userName][delivCol.id].score.toString():"---" + "</a>",
-                // };
             }
             st.addRow(newRow);
         }
 
         st.generate();
 
-        // TODO [Jonathan]: Add rest of code
+        // TODO [Jonathan]: Add rest of code, regarding student table generation (hideable options)
     }
 
     /**
@@ -263,15 +257,10 @@ export class CS340AdminView extends AdminView {
         }
         Log.info("CS340View::populateGradingPage() - Rubric: " + rubric);
 
-        // TODO: Do something about the previous submission
         let previousSubmission = await this.getStudentGrade(sid, delivId);
 
         let assignmentInfoElement = document.getElementById('assignmentInfoSection');
         let gradingSectionElement = document.getElementById('gradingSection');
-
-        // let assignmentInfoList = document.createElement("ons-list");
-        // let assignmentInfoAssignmentID = document.createElement("ons-list-item");
-        // let assignmentInfoAssignmentStudent = document.createElement("ons-list-item");
 
         let assignmentInfoList  = document.createElement("div");
         let assignmentIDBox     = document.getElementById("aidBox");
@@ -473,11 +462,6 @@ export class CS340AdminView extends AdminView {
             }
 
             let questionNames = document.getElementsByClassName("questionName");
-            // if(questionNames.length !== 1) {
-            //     if(!errorStatus) errorComment = "malformed page with questionName";
-            //     errorStatus = true;
-            //     continue;
-            // }
 
             let newQuestion : QuestionGrade = {
                 questionName: questionNames[i].innerHTML,
@@ -524,7 +508,6 @@ export class CS340AdminView extends AdminView {
         options.method = 'put';
         options.headers.Accept = 'application/json';
         options.json = true;
-        // options.body = JSON.stringify({"value": "response"});
         options.body = JSON.stringify(newAssignmentGrade);
 
         Log.info("CS340View::submitGrade() - request body: " + options.body);
@@ -533,12 +516,18 @@ export class CS340AdminView extends AdminView {
 
         UI.hideModal();
         Log.info("CS340View::submitGrade() - response from api " + response);
+        if(response.status !== 200) {
+            const errResponse = await response.json();
+            Log.info("CS340AdminView::submitGrade() - error submitting grades, code: " + response.status +
+            " error: " + response.statusText);
+            alert(errResponse.error);
+            return null;
+        }
         UI.popPage();
         return newAssignmentGrade;
     }
 
     public async getStudentGrade(sid: string, aid: string): Promise<AssignmentGrade | null> {
-        // TODO [Jonathan]: Complete this
         Log.info("CS340View::getStudentGrade(" + sid + ", " + aid + ") - start");
         let options: any = this.getOptions();
         options.method = 'get';
