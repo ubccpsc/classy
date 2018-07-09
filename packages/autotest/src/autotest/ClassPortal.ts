@@ -2,6 +2,7 @@ import * as rp from "request-promise-native";
 
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
+import {IAutoTestResult} from "../Types";
 import {
     AutoTestAuthPayload,
     AutoTestAuthTransport,
@@ -10,9 +11,10 @@ import {
     AutoTestDefaultDeliverablePayload,
     AutoTestDefaultDeliverableTransport,
     AutoTestGradeTransport,
+    AutoTestResultPayload,
+    AutoTestResultTransport,
     Payload
 } from "../../../common/types/PortalTypes";
-import {IAutoTestResult} from "../Types";
 
 export interface IClassPortal {
 
@@ -53,7 +55,7 @@ export interface IClassPortal {
     // AutoTest::handleExecutionComplete
 
     /**
-     * Send result for saving
+     * Send result for saving.
      *
      * POST at/result
      *
@@ -61,6 +63,15 @@ export interface IClassPortal {
      * @returns {Promise<Payload>}
      */
     sendResult(result: IAutoTestResult): Promise<Payload>;
+
+    /**
+     * Get result for a given delivId / repoId pair. Will return null if a result does not exist.
+     *
+     * @param {string} delivId
+     * @param {string} repoId
+     * @returns {Promise<AutoTestResultTransport | null>}
+     */
+    getResult(delivId: string, repoId: string): Promise<AutoTestResultTransport | null>;
 }
 
 export class ClassPortal implements IClassPortal {
@@ -146,7 +157,7 @@ export class ClassPortal implements IClassPortal {
         });
     }
 
-    public async sendGrade(grade: AutoTestGradeTransport): Promise<Payload> {
+    public async sendGrade(grade: AutoTestGradeTransport): Promise<Payload> { // really just a mechanism to report more verbose errors
         const url = this.host + ":" + this.port + "/at/grade/";
         const opts: rp.RequestPromiseOptions = {
             rejectUnauthorized: false, method: 'post', headers: {
@@ -171,14 +182,19 @@ export class ClassPortal implements IClassPortal {
         });
     }
 
-    public async sendResult(result: IAutoTestResult): Promise<Payload> {
+    public async sendResult(result: IAutoTestResult): Promise<Payload> { // really just a mechanism to report more verbose errors
 
         const url = this.host + ":" + this.port + "/at/result/";
+
+        let payload: AutoTestResultTransport = result;
+
         const opts: rp.RequestPromiseOptions = {
-            rejectUnauthorized: false, method: 'post', headers: {
-                token: Config.getInstance().getProp(ConfigKey.autotestSecret)
-            }
+            rejectUnauthorized: false,
+            method:             'post',
+            body:               payload,
+            headers:            {token: Config.getInstance().getProp(ConfigKey.autotestSecret)}
         };
+
         Log.info("ClassPortal::sendResult(..) - Sending request to " + url);
         return rp(url, opts).then(function (res) {
             Log.trace("ClassPortal::sendResult() - sent; returned payload: " + res);
@@ -194,6 +210,33 @@ export class ClassPortal implements IClassPortal {
             Log.error("ClassPortal::sendResult(..) - ERROR; url: " + url + "; ERROR: " + err);
             const pay: Payload = {failure: {message: err.message, shouldLogout: false}};
             return pay;
+        });
+    }
+
+    public async getResult(delivId: string, repoId: string): Promise<AutoTestResultTransport | null> {
+        Log.info("ClassPortal::getResut( " + delivId + ", " + repoId + " ) - start");
+        const url = this.host + ":" + this.port + "/at/result/" + delivId + "/" + repoId;
+        const opts: rp.RequestPromiseOptions = {
+            rejectUnauthorized: false,
+            method:             'get',
+            headers:            {token: Config.getInstance().getProp(ConfigKey.autotestSecret)}
+        };
+        Log.info("ClassPortal::getResult(..) - Requesting result from: " + url);
+        return rp(url, opts).then(function (res) {
+            Log.trace("ClassPortal::getResult() - sent; returned payload: " + res);
+            const json: AutoTestResultPayload = JSON.parse(res);
+            if (typeof json.success !== 'undefined') {
+                Log.error("ClassPortal::getResult(..) - successfully received");
+                return <AutoTestResultTransport>json.success;
+            } else {
+                Log.error("ClassPortal::getResult(..) - ERROR; not successfully received:  " + JSON.stringify(json));
+                return null;
+            }
+        }).catch(function (err) {
+            Log.error("ClassPortal::getResult(..) - ERROR; url: " + url + "; ERROR: " + err);
+            // const pay: Payload = {failure: {message: err.message, shouldLogout: false}};
+            // return pay;
+            return null;
         });
     }
 

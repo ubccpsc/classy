@@ -70,15 +70,18 @@ export class GitHubUtil {
             const botName = "@" + Config.getInstance().getProp(ConfigKey.botName).toLowerCase();
             const botMentioned: boolean = message.toLowerCase().indexOf(botName) >= 0;
 
+            const repoId = payload.repository.name;
+
             const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can't add requests to a past comment
 
             const commentEvent: ICommentEvent = {
+                delivId,
+                repoId,
                 botMentioned,
                 commitSHA,
                 commitURL,
                 postbackURL,
                 personId: requestor,
-                delivId,
                 timestamp
             };
             Log.trace("GitHubUtil::processComment(..) - handling: " + commentEvent);

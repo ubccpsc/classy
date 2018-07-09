@@ -47,4 +47,14 @@ export class ResultsController {
         }
     }
 
+    public async getResult(delivId: string, repoId: string): Promise<IAutoTestResult | null> {
+        Log.info("ResultController::getResult( " + delivId + ", " + repoId + " ) - start");
+        try {
+            let outcome = await DatabaseController.getInstance().getResult(delivId, repoId);
+            return outcome;
+        } catch (err) {
+            return null;
+        }
+    }
+
 }

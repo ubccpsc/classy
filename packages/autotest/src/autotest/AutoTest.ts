@@ -119,14 +119,14 @@ export abstract class AutoTest implements IAutoTest {
      */
     protected abstract processExecution(data: IAutoTestResult): Promise<void>;
 
-    protected async getOutputRecord(commitURL: string, delivId: string): Promise<IAutoTestResult | null> {
-        try {
-            const ret = await this.dataStore.getOutputRecord(commitURL, delivId);
-            return ret;
-        } catch (err) {
-            Log.error("AutoTest::getOutputRecord() - ERROR: " + err);
-        }
-    }
+    // protected async getOutputRecord(commitURL: string, delivId: string): Promise<IAutoTestResult | null> {
+    //     try {
+    //         const ret = await this.dataStore.getOutputRecord(commitURL, delivId);
+    //         return ret;
+    //     } catch (err) {
+    //         Log.error("AutoTest::getOutputRecord() - ERROR: " + err);
+    //     }
+    // }
 
     /**
      * Returns whether the commitURL is currently executing the given deliverable.

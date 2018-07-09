@@ -15,7 +15,8 @@ import {
     AutoTestConfigPayload,
     AutoTestDefaultDeliverablePayload,
     AutoTestGradeTransport,
-    Payload,
+    Payload
+    AutoTestResultTransport,,
 } from "../../../../common/types/PortalTypes";
 
 /**
@@ -26,11 +27,12 @@ export class AutoTestRoutes implements IREST {
     public registerRoutes(server: restify.Server) {
         Log.info('AutoTestRouteHandler::registerRoutes() - start');
 
-        server.get('/at/defaultDeliverable', AutoTestRoutes.atDefaultDeliverable); // /:org
+        server.get('/at/defaultDeliverable', AutoTestRoutes.atDefaultDeliverable);
         server.get('/at/isStaff/:personId', AutoTestRoutes.atIsStaff);
         server.get('/at/container/:delivId', AutoTestRoutes.atContainerDetails);
-        server.post('/at/grade/', AutoTestRoutes.atGrade); // was: /grade/:org/:repoId/:delivId
+        server.post('/at/grade/', AutoTestRoutes.atGrade);
         server.post('/at/result/', AutoTestRoutes.atResult);
+        server.get('/at/result/:delivId/:repoId', AutoTestRoutes.atGetResult);
         server.post('/githubWebhook', AutoTestRoutes.githubWebhook); // forward GitHub Webhooks to AutoTest
     }
 
@@ -152,7 +154,7 @@ export class AutoTestRoutes implements IREST {
             payload = {failure: {message: 'Invalid AutoTest Secret: ' + providedSecret, shouldLogout: true}};
             res.send(400, payload);
         } else {
-            const resultRecord: IAutoTestResult = req.body;
+            const resultRecord: AutoTestResultTransport = req.body;
             Log.trace('AutoTestRouteHandler::atResult(..) - body: ' + JSON.stringify(resultRecord));
 
             const validResultRecord = AutoTestRoutes.validateAutoTestResult(resultRecord);
@@ -239,6 +241,34 @@ export class AutoTestRoutes implements IREST {
             res.send(400, {error: err}); // respond no
         })
     }
+
+    public static atGetResult(req: any, res: any, next: any) {
+        Log.info('AutoTestRouteHandler::atGetResult(..) - /at/result/:delivId/:repoId - start GET');
+
+        let payload: AutoTest;
+
+        const providedSecret = req.headers.token;
+        if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
+            Log.warn('AutoTestRouteHandler::atGetResult(..) - Invalid Secret: ' + providedSecret);
+            payload = {failure: {message: 'Invalid AutoTest Secret: ' + providedSecret, shouldLogout: true}};
+            res.send(400, payload);
+        } else {
+            const delivId = req.params.delivId;
+            const repoId = req.params.repoId;
+
+            Log.info('AutoTestRouteHandler::atGetResult(..) - delivId: ' + delivId + '; repoId: ' + repoId);
+
+            let rc = new ResultsController();
+            rc.getResult(delivId, repoId).then(function (success) {
+                payload = {success: success};
+                res.send(200, payload);
+            }).catch(function (err) {
+                payload = {failure: {message: err.message, shouldLogout: false}};
+                res.send(400, payload);
+            });
+        }
+    }
+
 
     /**
      * Validates the AutoTest result object.

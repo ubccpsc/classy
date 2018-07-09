@@ -430,5 +430,10 @@ export class DatabaseController {
             return await this.updateRecord(this.AUTHCOLL, query, record);
         }
     }
+
+    public async getResult(delivId: string, repoId: string): Promise<Result> {
+        Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + " ) - start");
+        return <Result> await this.readSingleRecord(this.RESULTCOLL, {"delivId": delivId, "repoId": repoId});
+    }
 }
 

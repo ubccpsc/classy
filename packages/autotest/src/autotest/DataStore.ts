@@ -39,7 +39,7 @@ export interface IDataStore {
     // DO NOT DO THIS HERE: Classy should validate/save these records
     // saveOutputRecord(outputInfo: IAutoTestResult): Promise<void>;
 
-    getOutputRecord(commitURL: string, delivId: string): Promise<IAutoTestResult | null>;
+    // getOutputRecord(commitURL: string, delivId: string): Promise<IAutoTestResult | null>;
 
     saveFeedbackGivenRecord(request: IFeedbackGiven): Promise<void>;
 

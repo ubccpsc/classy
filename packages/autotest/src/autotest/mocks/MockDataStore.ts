@@ -131,42 +131,42 @@ export class MockDataStore implements IDataStore {
         return null;
     }
 
-    // public async saveOutputRecord(outputInfo: IAutoTestResult): Promise<void> {
-    //     // Log.info("MockDataStore::saveOutputRecord(..) - start");
-    //     try {
-    //         const start = Date.now();
-    //         // read
-    //         const outRecords = await fs.readJSON(this.RECORD_PATH);
-    //         // append
-    //         outRecords.push(outputInfo);
-    //         // write
-    //         await fs.writeJSON(this.RECORD_PATH, outRecords);
-    //
-    //         Log.info("MockDataStore::saveOutputRecord(..) - done; took: " + Util.took(start));
-    //     } catch (err) {
-    //         Log.error("MockDataStore::saveOutputRecord(..) - ERROR: " + err);
-    //     }
-    // }
+    public async saveResult(outputInfo: IAutoTestResult): Promise<void> {
+        Log.info("MockDataStore::saveResult(..) - start");
+        try {
+            const start = Date.now();
+            // read
+            const outRecords = await fs.readJSON(this.RECORD_PATH);
+            // append
+            outRecords.push(outputInfo);
+            // write
+            await fs.writeJSON(this.RECORD_PATH, outRecords);
 
-    public async getOutputRecord(commitURL: string, delivId: string): Promise<IAutoTestResult | null> {
-        // Log.info("MockDataStore::getOutputRecord(..) - start");
+            Log.info("MockDataStore::saveResult(..) - done; took: " + Util.took(start));
+        } catch (err) {
+            Log.error("MockDataStore::saveResult(..) - ERROR: " + err);
+        }
+    }
+
+    public async getResult(delivId: string, repoId: string): Promise<IAutoTestResult | null> {
+        Log.info("MockDataStore::getResult(..) - start");
         try {
             const start = Date.now();
 
             // read
             const outRecords: IAutoTestResult[] = await fs.readJSON(this.RECORD_PATH);
-            Log.info("MockDataStore::getOutputRecord(..) - # records: " + outRecords.length);
+            Log.info("MockDataStore::getResult(..) - # records: " + outRecords.length);
             // find and return
             for (const record of outRecords) {
-                if (record !== null && typeof record.commitURL !== "undefined" && record.commitURL === commitURL && record.input.delivId === delivId) {
-                    Log.info("MockDataStore::getOutputRecord(..) - found; took: " + Util.took(start));
+                if (record !== null && typeof record.delivId !== "undefined" && record.delivId === delivId && record.repoId === repoId) {
+                    Log.info("MockDataStore::getResult(..) - found; took: " + Util.took(start));
                     return record;
                 }
             }
             // not found
-            Log.info("MockDataStore::getOutputRecord(..) - not found; took: " + Util.took(start));
+            Log.info("MockDataStore::getResult(..) - not found; took: " + Util.took(start));
         } catch (err) {
-            Log.error("MockDataStore::getOutputRecord(..) - ERROR: " + err);
+            Log.error("MockDataStore::getResult(..) - ERROR: " + err);
         }
         return null;
     }

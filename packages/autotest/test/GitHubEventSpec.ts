@@ -1,5 +1,4 @@
-const loadFirst = require('./GlobalSpec');
-
+import {ICommentEvent} from "../src/Types";
 import {expect} from "chai";
 import * as fs from "fs";
 import "mocha";
@@ -8,6 +7,8 @@ import Config from "../../common/Config";
 import Log from "../../common/Log";
 
 import {GitHubUtil} from "../src/github/GitHubUtil";
+
+const loadFirst = require('./GlobalSpec');
 
 describe("GitHub Event Parser", () => {
     Config.getInstance();
@@ -102,12 +103,13 @@ describe("GitHub Event Parser", () => {
         const actual = GitHubUtil.processComment(JSON.parse(content));
         Log.test(JSON.stringify(actual));
 
-        const expected: any = {
+        const expected: ICommentEvent = {
             "botMentioned": true,
             "commitSHA":    "bbe3980fff47b7d6a921e9f89c6727bea639589c",
             "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/bbe3980fff47b7d6a921e9f89c6727bea639589c",
             // "org":          null,
             "delivId":      "d7",
+            "repoId":       "d1_project9999",
             // "projectURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
             // "repoId":         "d1_project9999",
             "postbackURL":  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments",
@@ -123,7 +125,7 @@ describe("GitHub Event Parser", () => {
         const actual = GitHubUtil.processComment(JSON.parse(content));
         Log.test(JSON.stringify(actual));
 
-        const expected: any = {
+        const expected: ICommentEvent = {
             "botMentioned": true,
             // "repoId":         "d1_project9999",
             "commitSHA":    "bbe3980fff47b7d6a921e9f89c6727bea639589c",
@@ -131,6 +133,7 @@ describe("GitHub Event Parser", () => {
             // "projectURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
             "postbackURL":  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments",
             "personId":     "cs310",
+            "repoId":       "d1_project9999",
             // "org":          null,
             "delivId":      "d7",
             "timestamp":    1516324833000
@@ -144,7 +147,7 @@ describe("GitHub Event Parser", () => {
         const actual = GitHubUtil.processComment(JSON.parse(content));
         Log.test(JSON.stringify(actual));
 
-        const expected: any = {
+        const expected: ICommentEvent = {
             "botMentioned": false,
             // "repoId":         "d1_project9999",
             "commitSHA":    "6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
@@ -152,6 +155,7 @@ describe("GitHub Event Parser", () => {
             // "projectURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
             "postbackURL":  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/6da86d2bdfe8fec9120b60e8d7b71c66077489b6/comments",
             "personId":     "cs310",
+            "repoId":       "d1_project9999",
             // "org":          null,
             "delivId":      null,
             "timestamp":    1516320674000
@@ -165,7 +169,7 @@ describe("GitHub Event Parser", () => {
         const actual = GitHubUtil.processComment(JSON.parse(content));
         Log.test(JSON.stringify(actual));
 
-        const expected: any = {
+        const expected: ICommentEvent = {
             "botMentioned": true,
             // "repoId":         "d1_project9999",
             "commitSHA":    "d5f2203cfa1ae43a45932511ce39b2368f1c72ed",
@@ -173,6 +177,7 @@ describe("GitHub Event Parser", () => {
             // "projectURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
             "postbackURL":  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
             "personId":     "cs310",
+            "repoId":       "d1_project9999",
             // "org":          null,
             "delivId":      "d7",
             "timestamp":    1516324931000

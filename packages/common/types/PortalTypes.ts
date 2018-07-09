@@ -1,3 +1,5 @@
+import {IAutoTestResult} from "../../autotest/src/Types";
+
 /**
  Default portal types should be declared here.
 
@@ -5,15 +7,19 @@
 
  All fields should be primitives.
  */
-import {IContainerOutput} from "../../autotest/src/Types";
 
 export interface FailurePayload {
     message: string;
     shouldLogout: boolean; // almost always false
 }
 
+export interface SuccessPayload {
+    worked: boolean; // almost always true
+    message?: string;
+}
+
 export interface Payload {
-    success?: any; // only set if defined
+    success?: SuccessPayload | any; // only set if defined
     failure?: FailurePayload; // only set if defined
 }
 
@@ -153,11 +159,6 @@ export interface AutoTestResultPayload {
     failure?: FailurePayload; // only set if defined
 }
 
-// TODO: this is not the right type and needs to be fixed
-// maybe update IContainerOutput directly and then refactor
-// this to be actual UI transport types?
-export interface AutoTestResultTransport {
-    delivId: string; // FK
-    repoId: string; // FK
-    output: IContainerOutput;
+export interface AutoTestResultTransport extends IAutoTestResult {
+    // NOTE: this extends should go away, but is easiest right now
 }

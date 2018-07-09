@@ -17,6 +17,7 @@ export interface IPushEvent {
 export interface ICommentEvent {
     personId: string; // was username
     delivId: string | null; // string if specified
+    repoId: string;
 
     commitSHA: string;
     commitURL: string;
