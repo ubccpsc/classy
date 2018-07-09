@@ -21,6 +21,7 @@ export default class CS340REST implements IREST {
         // TODO [Jonathan]: Add the routes here
         server.get('/getAssignmentGrade/:sid/:aid', CS340REST.getAssignmentGrade);
         server.get('/getAssignmentRubric/:aid', CS340REST.getAssignmentRubric);
+        server.get('/getAllAssignmentRubrics', CS340REST.getAllAssignmentRubrics);
         server.get('/getAllDeliverables', CS340REST.getAllDeliverables);
         server.get('/getAllSubmissionsByDelivID/:id', CS340REST.getAllSubmissionsByDelivID);
         server.get('/getAllGrades', CS340REST.getAllGrades);
@@ -66,54 +67,45 @@ export default class CS340REST implements IREST {
 
         // TODO [Jonathan]: Authenticate token
 
-        // let courseController : CourseController = new CourseController(new GitHubController());
-        // let ac : AssignmentController = new AssignmentController();
-
-/*
-    res.send(200, {
-            name: "Assignment 1",
-            comment: "Graded assignment",
-            question: [
-                {
-                    name: "Question 1",
-                    comment: "",
-                    subQuestions: [
-                        {
-                            name: "code quality",
-                            comment: "",
-                            outOf: 5,
-                            modifiers: null
-                        }
-                    ]
-                }
-            ]
-        });
-    */
-        // return next();
-    // TODO: retrieve the information from the deliverable, then return the information
-    let delivController : DeliverablesController = new DeliverablesController();
-        delivController.getDeliverable(aid).then((deliv) => {
-            if(deliv === null) {
-                // TODO [Jonathan]: send an appropriate failure
-                res.send(204, {error: "Deliverable not found, please create the deliverable first"});
-                return next();
-            } else {
-                if (deliv.custom !== null) {
-                    let rubric : AssignmentGradingRubric = deliv.custom;
-                    res.send(200, {response: rubric});
+        // TODO: retrieve the information from the deliverable, then return the information
+        let delivController : DeliverablesController = new DeliverablesController();
+            delivController.getDeliverable(aid).then((deliv) => {
+                if(deliv === null) {
+                    // TODO [Jonathan]: send an appropriate failure
+                    res.send(204, {error: "Deliverable not found, please create the deliverable first"});
+                    return next();
                 } else {
-                    Log.info("cs340REST::getAssignmentRubric(...) - deliv.custom: " + deliv.custom);
+                    if (deliv.custom !== null) {
+                        let rubric : AssignmentGradingRubric = deliv.custom;
+                        res.send(200, {response: rubric});
+                    } else {
+                        Log.info("cs340REST::getAssignmentRubric(...) - deliv.custom: " + deliv.custom);
 
-                    // TODO [Jonathan]: Set this up to inform there was no rubric
-                    res.send(204, {error: "Rubric not found, perhaps the deliverable has no rubric?"});
+                        // TODO [Jonathan]: Set this up to inform there was no rubric
+                        res.send(204, {error: "Rubric not found, perhaps the deliverable has no rubric?"});
+                    }
+                    return next();
                 }
-                return next();
-            }
+            });
+    }
+
+    public static getAllAssignmentRubrics(req: any, res: any, next: any) {
+        Log.info("cs340REST::getAllGradingRubrics(...) - start");
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        let delivController : DeliverablesController = new DeliverablesController();
+        delivController.getAllDeliverables().then((result) => {
+            let assignRubrics: AssignmentGradingRubric[] = [];
+            for(const deliv of result) {
+                if(deliv.custom !== null) {
+                    assignRubrics.push(deliv.custom);
+                }
+           }
+           res.send(200, {response: assignRubrics});
+           return next();
         });
-        //
-        // res.send(404, {
-        //     message: "Not implemented"
-        // });
     }
 
     public static createAssignmentRubric(req: any, res:any, next:any) {
@@ -149,11 +141,12 @@ export default class CS340REST implements IREST {
     }
 
     // Takes all the grades synced up in the database and pushes them to Github
-    // TODO [Jonathan]: Complete this
     public static releaseGrades(req: any, res: any, next: any) {
+        // TODO [Jonathan]: Complete this
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
+
         res.send(404, {
             message: "Not implemented"
         });

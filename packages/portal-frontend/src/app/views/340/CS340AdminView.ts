@@ -154,6 +154,8 @@ export class CS340AdminView extends AdminView {
             }
         ];
         let filteredDelivArray: Deliverable[] = [];
+        let maxGradeMap: {[delivId:string]:number} = {};
+
         for (const deliv of delivArray) {
             if(selectedAssign === "-All-" || selectedAssign === deliv.id) {
                 Log.info("CS340AdminView::renderStudentGrades(..) - Adding deliverable: " + deliv.id);
@@ -167,6 +169,19 @@ export class CS340AdminView extends AdminView {
                 };
                 filteredDelivArray.push(deliv);
                 tableHeaders.push(newHeader);
+
+                // process max grade
+                let maxGrade:number = 0;
+                let assignRubric: AssignmentGradingRubric | null = deliv.custom;
+                if(assignRubric === null) continue;
+
+                for(const questionRubric of assignRubric.questions) {
+                    for(const subQuestionRubric of questionRubric.subQuestions) {
+                        // TODO: Take into account weight
+                        maxGrade += subQuestionRubric.outOf;
+                    }
+                }
+                maxGradeMap[deliv.id] = maxGrade;
             }
         }
 
@@ -201,7 +216,8 @@ export class CS340AdminView extends AdminView {
                         value: gradeMapping[student.userName][delivCol.id].score,
                         html: "<a onclick='window.classportal.view.transitionGradingPage(\""+
                         student.userName + "\", \"" + delivCol.id + "\")' href='#'>" +
-                        gradeMapping[student.userName][delivCol.id].score.toString() + "</a>"
+                        gradeMapping[student.userName][delivCol.id].score.toString() +
+                        "/" + maxGradeMap[delivCol.id] + "</a>"
                     };
                     newRow.push(newEntry);
 
@@ -257,7 +273,9 @@ export class CS340AdminView extends AdminView {
         // let assignmentInfoAssignmentID = document.createElement("ons-list-item");
         // let assignmentInfoAssignmentStudent = document.createElement("ons-list-item");
 
-        let assignmentInfoList = document.createElement("div");
+        let assignmentInfoList  = document.createElement("div");
+        let assignmentIDBox     = document.getElementById("aidBox");
+        let studentIDBox        = document.getElementById("sidBox");
 
         let assignmentInfoAssignmentID = document.createElement("p");
         assignmentInfoAssignmentID.innerHTML = delivId;
@@ -266,8 +284,8 @@ export class CS340AdminView extends AdminView {
         let assignmentInfoStudentID = document.createElement("p");
         assignmentInfoStudentID.innerHTML = sid;
         assignmentInfoStudentID.setAttribute("class", "aInfoSID");
-        assignmentInfoList.appendChild(assignmentInfoAssignmentID);
-        assignmentInfoList.appendChild(assignmentInfoStudentID);
+        assignmentIDBox.appendChild(assignmentInfoAssignmentID);
+        studentIDBox.appendChild(assignmentInfoStudentID);
 
         if (gradingSectionElement === null || assignmentInfoElement === null) {
             Log.error("CS340View::populateGradingPage() - Unable to populate page due to missing elements");
@@ -442,7 +460,6 @@ export class CS340AdminView extends AdminView {
                     if (this.checkIfWarning(gradeInputElement)) {
                         if(!errorStatus) errorComment = ERROR_POTENTIAL_INCORRECT_INPUT;
                         errorStatus = true;
-                        continue;
                     }
                 }
 
@@ -476,7 +493,6 @@ export class CS340AdminView extends AdminView {
 
         if (aInfoSIDElements.length !== 1 || aInfoIDElements.length !== 1) {
             if(!errorStatus) errorComment = ERROR_MALFORMED_PAGE;
-
             errorStatus = true;
         }
 
@@ -498,7 +514,6 @@ export class CS340AdminView extends AdminView {
             questions: questionArray
         };
 
-        // TODO: Record in database the new Grade
         const url = this.remote + '/setAssignmentGrade';
         Log.info("CS340View::submitGrade() - uri: " + url);
 
@@ -518,7 +533,7 @@ export class CS340AdminView extends AdminView {
 
         UI.hideModal();
         Log.info("CS340View::submitGrade() - response from api " + response);
-
+        UI.popPage();
         return newAssignmentGrade;
     }
 
