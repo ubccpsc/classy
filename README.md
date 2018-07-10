@@ -29,6 +29,8 @@ If you want to start a single service, in the `classy/` folder execute `docker-c
 	
 If you want to run the db for testing, in `classy/` run `docker run -p 27017:27017 mongo`
 
+If you want to run the db for development and with persistant data, in `classy/` run `docker run -p 27017:27017 -v <ABSOULTE PATH TO CLASSY>/data/db:/data/db mongo`  
+
 ## Dev setup
 The project has been configured to use [yarn workspaces](https://yarnpkg.com/lang/en/docs/workspaces/#toc-how-to-use-it).
 You should add global dependencies to the root `package.json` and package-specific dependencies in the package-level `package.json`.

@@ -98,7 +98,11 @@ export class AssignmentController {
             }
         }
         if (result.length !== 1) {
-            Log.info("AssignmentController::getAssignmentRepo(...) - non-single repo found: " + result.toString());
+            if(result.length === 0) {
+                Log.info("AssignmentController::getAssignmentRepo(...) - no repo found");
+            } else {
+                Log.info("AssignmentController::getAssignmentRepo(...) - non-single repo found: " + result.toString());
+            }
             return null;
         } else {
             Log.info("AssignmentController::getAssignmentRepo(...) - end");

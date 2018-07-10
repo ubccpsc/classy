@@ -1,5 +1,8 @@
 <ons-page id="GradingView">
     <ons-toolbar>
+        <div class="left">
+            <ons-back-button>Back</ons-back-button>
+        </div>
         <div class="center" id="gradingViewHeader">CS 340</div>
         <div class="right">
             <ons-toolbar-button onclick="myApp.logout();">
@@ -8,18 +11,23 @@
             </ons-toolbar-button>
         </div>
     </ons-toolbar>
-    <ons-modal id="gradingViewModal">
+<!--    <ons-modal id="gradingViewModal">
         <div style="display:flex; flex-direction:column; align-items: center;">
             <div id="modalText" style="padding-top: 1em; padding-bottom: 1em;">Updating. Will take < 5 seconds.</div>
             <ons-progress-circular indeterminate></ons-progress-circular>
         </div>
-    </ons-modal>
+    </ons-modal>-->
 
 <div class="mainBody">
     <link   rel="stylesheet" href="style.css">
     <div id="assignmentInfoSection">
         <!--This will be filled in dynamically-->
-        This is filled
+        <div id="aidBox">
+            <p>Assignment ID</p>
+        </div>
+        <div id="sidBox">
+            <p>Student ID</p>
+        </div>
     </div>
     <div id="gradingSection">
         <!--This will be filled in dynamically-->
