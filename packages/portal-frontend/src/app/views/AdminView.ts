@@ -20,6 +20,7 @@ import {
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 import {OnsButtonElement, OnsFabElement} from "onsenui";
 import {Network} from "../util/Network";
+import {AdminStudentsTab} from "./AdminStudentsTab";
 
 interface AdminTabs {
     deliverables: boolean,
@@ -38,10 +39,13 @@ export class AdminView implements IView {
     private isStaff = false;
     private isAdmin = false;
 
+    private studentsTab:AdminStudentsTab;
+
     constructor(remoteUrl: string, tabs: AdminTabs) {
         Log.info("AdminView::<init>");
         this.remote = remoteUrl;
         this.tabs = tabs;
+        this.studentsTab = new AdminStudentsTab(remoteUrl);
     }
 
     public renderPage(name: string, opts: any) {
@@ -149,7 +153,7 @@ export class AdminView implements IView {
         }
     */
 
-    public showError(failure: any) { // FailurePayload
+    public static showError(failure: any) { // FailurePayload
         Log.error("AdminView::showError(..) - start");
         try {
             // check to see if response is json
@@ -172,7 +176,7 @@ export class AdminView implements IView {
         }
     }
 
-    protected getOptions() {
+    public static getOptions() {
         const options = {
             headers: {
                 'Content-Type': 'application/json',
@@ -206,7 +210,7 @@ export class AdminView implements IView {
             };
         }
 
-        const options = this.getOptions();
+        const options = AdminView.getOptions();
         const url = this.remote + '/admin/deliverables';
         const response = await fetch(url, options);
         UI.hideModal();
@@ -215,17 +219,17 @@ export class AdminView implements IView {
             const json: DeliverableTransportPayload = await response.json();
             // Log.trace('AdminView::handleAdminDeliverables(..)  - payload: ' + JSON.stringify(json));
             if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                Log.trace('AdminView::handleAdminDeliverables(..)  - worked; took: ' + this.took(start));
+                Log.trace('AdminView::handleAdminDeliverables(..)  - worked; took: ' + UI.took(start));
 
                 this.renderDeliverables(json.success);
             } else {
                 Log.trace('AdminView::handleAdminDeliverables(..)  - ERROR: ' + json.failure.message);
-                this.showError(json.failure); // FailurePayload
+                AdminView.showError(json.failure); // FailurePayload
             }
         } else {
             Log.trace('AdminView::handleAdminDeliverables(..)  - !200 received: ' + response.status);
             const text = await response.text();
-            this.showError(text);
+            AdminView.showError(text);
         }
     }
 
@@ -294,7 +298,7 @@ export class AdminView implements IView {
         } catch (err) {
             UI.hideModal();
             Log.error('AdminView::uploadClasslist(..) - ERROR: ' + err.message);
-            this.showError(err);
+            AdminView.showError(err);
         }
 
         Log.trace('AdminView::uploadClasslist(..) - end');
@@ -303,118 +307,9 @@ export class AdminView implements IView {
     // called by reflection in renderPage
     private async handleAdminStudents(opts: any): Promise<void> {
         Log.info('AdminView::handleStudents(..) - start');
-        const start = Date.now();
-        UI.showModal('Retrieving students');
-
-        // NOTE: this could consider if studentListTable has children, and if they do, don't refresh
-        document.getElementById('studentListTable').innerHTML = ''; // clear target
-
-        if (typeof opts.labSection === 'undefined') {
-            opts.labSection = '-All-';
-        }
-
-        const options = this.getOptions();
-        const url = this.remote + '/admin/students';
-        const response = await fetch(url, options);
-        UI.hideModal();
-        if (response.status === 200) {
-            Log.trace('AdminView::handleStudents(..) - 200 received');
-            const json: StudentTransportPayload = await response.json();
-            // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
-            if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                Log.trace('AdminView::handleStudents(..)  - worked; took: ' + this.took(start));
-                this.renderStudents(json.success, opts.labSection);
-            } else {
-                Log.trace('AdminView::handleStudents(..)  - ERROR: ' + json.failure.message);
-                this.showError(json.failure); // FailurePayload
-            }
-        } else {
-            Log.trace('AdminView::handleStudents(..)  - !200 received: ' + response.status);
-            const text = await response.text();
-            this.showError(text);
-        }
+        this.studentsTab.init(opts);
     }
 
-    private renderStudents(students: StudentTransport[], labSection: string) {
-        const headers: TableHeader[] = [
-            {
-                id:          'id',
-                text:        'Github Id',
-                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
-                defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
-                sortDown:    false, // Whether the column should initially sort descending or ascending.
-                style:       'padding-left: 1em; padding-right: 1em;'
-            },
-            {
-                id:          'fName',
-                text:        'First Name',
-                sortable:    true,
-                defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
-            },
-            {
-                id:          'lName',
-                text:        'Last Name',
-                sortable:    true,
-                defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
-            },
-            {
-                id:          'labId',
-                text:        'Lab Section',
-                sortable:    true,
-                defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
-            }
-        ];
-
-        let labSectionsOptions = ['-All-', '-Unspecified-'];
-        const st = new SortableTable(headers, '#studentListTable');
-        for (const student of students) {
-            let row: TableCell[] = [
-                {value: student.userName, html: '<a href="' + student.userUrl + '">' + student.userName + '</a>'},
-                {value: student.firstName, html: student.firstName},
-                {value: student.lastName, html: student.lastName},
-                {value: student.labId, html: student.labId}
-            ];
-            if (labSectionsOptions.indexOf(student.labId) < 0 && student.labId !== '' && student.labId !== null) {
-                labSectionsOptions.push(student.labId);
-            }
-            if (labSection === student.labId || labSection === '-All-' ||
-                (labSection === '-Unspecified-' && student.labId === '')) {
-                st.addRow(row);
-            }
-        }
-
-        st.generate();
-
-        labSectionsOptions = labSectionsOptions.sort();
-        let labSelector = document.querySelector('#studentsListSelect') as HTMLSelectElement;
-        labSelector.innerHTML = '';
-        for (const labId of labSectionsOptions) {
-            let selected = false;
-            if (labId === labSection) {
-                selected = true;
-            }
-            const o: HTMLOptionElement = new Option(labId, labId, false, selected);
-            labSelector.add(o);
-        }
-
-        const that = this;
-        labSelector.onchange = function (evt) {
-            Log.info('AdminView::renderStudents(..) - upload pressed');
-            evt.stopPropagation(); // prevents list item expansion
-
-            let val = labSelector.value.valueOf();
-
-            // that.renderPage('AdminStudents', {labSection: val}); // if we need to re-fetch
-            that.renderStudents(students, val); // if cached data is ok
-        };
-
-    }
 
     private renderDeliverables(deliverables: DeliverableTransport[]) {
         const deliverableList = document.querySelector('#adminDeliverablesList') as HTMLElement;
@@ -455,12 +350,9 @@ export class AdminView implements IView {
         } else {
             fab.onclick = function (evt) {
                 Log.info('AdminView::handleadminEditDeliverablePage(..)::addDeliverable::onClick');
-                that.showError('not implemented');
+                AdminView.showError('not implemented');
             };
         }
     }
 
-    protected took(start: number): string {
-        return (Date.now() - start) + ' ms';
-    }
 }

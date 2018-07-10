@@ -197,4 +197,8 @@ export class UI {
         elem.hide();
     };
 
+    public static took(start: number): string {
+        return (Date.now() - start) + ' ms';
+    }
+
 }
