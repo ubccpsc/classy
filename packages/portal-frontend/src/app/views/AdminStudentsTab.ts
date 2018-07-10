@@ -50,7 +50,7 @@ export class AdminStudentsTab {
     }
 
 
-    private render(students: StudentTransport[], labSection: string) {
+    private render(students: StudentTransport[], labSection: string): void {
         Log.trace("AdminStudentsTab::render(..) - start");
         const headers: TableHeader[] = [
             {

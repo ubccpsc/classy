@@ -10,17 +10,10 @@ import Log from "../../../../common/Log";
 import {UI} from "../util/UI"
 
 import {IView} from "./IView";
-
-import {
-    DeliverableTransport,
-    DeliverableTransportPayload,
-    StudentTransport,
-    StudentTransportPayload
-} from "../../../../common/types/PortalTypes";
-import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 import {OnsButtonElement, OnsFabElement} from "onsenui";
 import {Network} from "../util/Network";
 import {AdminStudentsTab} from "./AdminStudentsTab";
+import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 
 interface AdminTabs {
     deliverables: boolean,
@@ -39,13 +32,15 @@ export class AdminView implements IView {
     private isStaff = false;
     private isAdmin = false;
 
-    private studentsTab:AdminStudentsTab;
+    private studentsTab: AdminStudentsTab;
+    private deliverablesTab: AdminDeliverablesTab;
 
     constructor(remoteUrl: string, tabs: AdminTabs) {
         Log.info("AdminView::<init>");
         this.remote = remoteUrl;
         this.tabs = tabs;
         this.studentsTab = new AdminStudentsTab(remoteUrl);
+        this.deliverablesTab = new AdminDeliverablesTab(remoteUrl, this.isAdmin); // TODO: isAdmin might not be known?
     }
 
     public renderPage(name: string, opts: any) {
@@ -67,6 +62,9 @@ export class AdminView implements IView {
         if (typeof opts.isStaff !== 'undefined') {
             this.isStaff = opts.isStaff;
         }
+
+        this.deliverablesTab.setAdmin(this.isAdmin);
+
         if (this.isAdmin === false) {
             // hide the config tab if we aren't an admin
             Log.info('AdminView::renderPage(..) - !admin; hiding config tab');
@@ -197,40 +195,41 @@ export class AdminView implements IView {
     // called by reflection in renderPage
     private async handleAdminDeliverables(opts: {}): Promise<void> {
         Log.info('AdminView::handleAdminDeliverables(..) - start');
-        UI.showModal('Retrieving deliverables');
-        const start = Date.now();
-
-        const fab = document.querySelector('#adminAddDeliverable') as OnsFabElement;
-        if (this.isAdmin === false) {
-            fab.style.display = 'none';
-        } else {
-            fab.onclick = function (evt) {
-                Log.info('AdminView::handleAdminDeliverables(..)::addDeliverable::onClick');
-                UI.pushPage('editDeliverable.html', {delivId: null});
-            };
-        }
-
-        const options = AdminView.getOptions();
-        const url = this.remote + '/admin/deliverables';
-        const response = await fetch(url, options);
-        UI.hideModal();
-        if (response.status === 200) {
-            Log.trace('AdminView::handleAdminDeliverables(..) - 200 received');
-            const json: DeliverableTransportPayload = await response.json();
-            // Log.trace('AdminView::handleAdminDeliverables(..)  - payload: ' + JSON.stringify(json));
-            if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                Log.trace('AdminView::handleAdminDeliverables(..)  - worked; took: ' + UI.took(start));
-
-                this.renderDeliverables(json.success);
-            } else {
-                Log.trace('AdminView::handleAdminDeliverables(..)  - ERROR: ' + json.failure.message);
-                AdminView.showError(json.failure); // FailurePayload
-            }
-        } else {
-            Log.trace('AdminView::handleAdminDeliverables(..)  - !200 received: ' + response.status);
-            const text = await response.text();
-            AdminView.showError(text);
-        }
+        return this.deliverablesTab.init(opts);
+        // UI.showModal('Retrieving deliverables');
+        // const start = Date.now();
+        //
+        // const fab = document.querySelector('#adminAddDeliverable') as OnsFabElement;
+        // if (this.isAdmin === false) {
+        //     fab.style.display = 'none';
+        // } else {
+        //     fab.onclick = function (evt) {
+        //         Log.info('AdminView::handleAdminDeliverables(..)::addDeliverable::onClick');
+        //         UI.pushPage('editDeliverable.html', {delivId: null});
+        //     };
+        // }
+        //
+        // const options = AdminView.getOptions();
+        // const url = this.remote + '/admin/deliverables';
+        // const response = await fetch(url, options);
+        // UI.hideModal();
+        // if (response.status === 200) {
+        //     Log.trace('AdminView::handleAdminDeliverables(..) - 200 received');
+        //     const json: DeliverableTransportPayload = await response.json();
+        //     // Log.trace('AdminView::handleAdminDeliverables(..)  - payload: ' + JSON.stringify(json));
+        //     if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
+        //         Log.trace('AdminView::handleAdminDeliverables(..)  - worked; took: ' + UI.took(start));
+        //
+        //         this.renderDeliverables(json.success);
+        //     } else {
+        //         Log.trace('AdminView::handleAdminDeliverables(..)  - ERROR: ' + json.failure.message);
+        //         AdminView.showError(json.failure); // FailurePayload
+        //     }
+        // } else {
+        //     Log.trace('AdminView::handleAdminDeliverables(..)  - !200 received: ' + response.status);
+        //     const text = await response.text();
+        //     AdminView.showError(text);
+        // }
     }
 
     // called by reflection in renderPage
@@ -307,38 +306,9 @@ export class AdminView implements IView {
     // called by reflection in renderPage
     private async handleAdminStudents(opts: any): Promise<void> {
         Log.info('AdminView::handleStudents(..) - start');
-        this.studentsTab.init(opts);
+        return this.studentsTab.init(opts);
     }
 
-
-    private renderDeliverables(deliverables: DeliverableTransport[]) {
-        const deliverableList = document.querySelector('#adminDeliverablesList') as HTMLElement;
-
-        deliverableList.innerHTML = '';
-        deliverableList.appendChild(UI.createListHeader('Deliverables'));
-
-        for (const deliv of deliverables) {
-            const main = 'Deliverable: ' + deliv.id;
-            const sub = 'Opens: ' + new Date(deliv.openTimestamp).toLocaleString() + '; Closes: ' + new Date(deliv.closeTimestamp).toLocaleString();
-
-            let editable = false;
-            if (this.isAdmin === true) {
-                editable = true;
-            }
-
-            const elem = UI.createListItem(main, sub, editable);
-            elem.setAttribute('delivId', deliv.id);
-            elem.onclick = function (evt: any) {
-                const delivId = evt.currentTarget.getAttribute('delivId');
-                UI.pushPage('editDeliverable.html', {delivId: delivId});
-            };
-            deliverableList.appendChild(elem);
-        }
-
-        if (deliverables.length === 0) {
-            deliverableList.appendChild(UI.createListItem('Deliverables not yet specified.'));
-        }
-    }
 
     private handleadminEditDeliverablePage(opts: any) {
         Log.warn('AdminView::handleadminEditDeliverablePage( ' + JSON.stringify(opts) + ' ) - NOT IMPLEMENTED');
