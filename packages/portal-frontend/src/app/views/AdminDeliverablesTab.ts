@@ -92,4 +92,20 @@ export class AdminDeliverablesTab {
     }
 
 
+    private handleAdminEditDeliverablePage(opts: any) {
+        Log.warn('AdminView::handleadminEditDeliverablePage( ' + JSON.stringify(opts) + ' ) - NOT IMPLEMENTED');
+        const that = this;
+
+        const fab = document.querySelector('#adminEditDeliverableSave') as OnsFabElement;
+        if (this.isAdmin === false) {
+            fab.style.display = 'none';
+        } else {
+            fab.onclick = function (evt) {
+                Log.info('AdminView::handleadminEditDeliverablePage(..)::addDeliverable::onClick');
+                AdminView.showError('not implemented');
+            };
+        }
+    }
+
+
 }
