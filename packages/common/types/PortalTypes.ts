@@ -120,10 +120,34 @@ export interface AutoTestConfigPayload {
  * Requested per-deliverable.
  */
 export interface AutoTestConfigTransport {
+
+    /**
+     * Name of docker image that should be invoked.
+     */
     dockerImage: string,
-    studentDelay: number, // interval in seconds between student requests
-    maxExecTime: number, // max time container can try to execute tests for
-    regressionDelivIds: string[]
+
+    /**
+     * Interval in seconds between student requests.
+     * e.g., 43,200 (12 hours)
+     */
+    studentDelay: number,
+
+    /**
+     * Max time in seconds before the container should timeout.
+     * e.g., 300 (5 mins)
+     */
+    maxExecTime: number,
+
+    /**
+     * Other deliverables that should be invoked against the container (can be empty array).
+     * e.g., ['d1', 'd2'] for d3 of a project.
+     */
+    regressionDelivIds: string[],
+
+    /**
+     * A custom JSON object that will be passed to the container. Can be {}.
+     */
+    custom: object
 }
 
 export interface AutoTestAuthPayload {

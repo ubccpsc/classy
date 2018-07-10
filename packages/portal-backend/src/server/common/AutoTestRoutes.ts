@@ -61,7 +61,8 @@ export class AutoTestRoutes implements IREST {
                         dockerImage:        'secapstone-grader',
                         studentDelay:       60 * 60 * 12,
                         maxExecTime:        300,
-                        regressionDelivIds: []
+                        regressionDelivIds: [],
+                        custom:             {}
                     }
                 };
                 res.send(200, payload);

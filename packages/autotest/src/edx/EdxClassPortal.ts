@@ -33,14 +33,14 @@ export class EdXClassPortal implements IClassPortal {
         return null;
     }
 
-    public async getContainerDetails(delivId: string): Promise<{ dockerImage: string, studentDelay: number, maxExecTime: number, regressionDelivIds: string[] } | null> {
+    public async getContainerDetails(delivId: string): Promise<{ dockerImage: string, studentDelay: number, maxExecTime: number, regressionDelivIds: string[], custom: object } | null> {
         Log.info("EdXClassPortal::getContainerDetails(..) - start");
         const courseId = Config.getInstance().getProp(ConfigKey.name);
         if (typeof courseId !== "undefined" && courseId !== null && typeof delivId !== "undefined" && delivId !== null) {
             if (courseId === "sdmm") {
                 const delay = 60 * 60 * 12; // 12h in seconds
                 // TODO: update the image and build
-                return {dockerImage: "310container", studentDelay: delay, maxExecTime: 300, regressionDelivIds: []};
+                return {dockerImage: "310container", studentDelay: delay, maxExecTime: 300, regressionDelivIds: [], custom: {}};
             }
         }
         return null;
