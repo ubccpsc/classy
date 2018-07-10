@@ -51,6 +51,8 @@ export class Factory {
             Log.trace("Factory::getView() - instantating new view");
             if (this.name === 'classytest') {
                 this.studentView = new CS310View(backendUrl); // default to 310 for testing
+            } else if (this.name === 'cs310') {
+                this.studentView = new CS310View(backendUrl);
             } else if (this.name === 'sdmm') {
                 this.studentView = new SDMMSummaryView(backendUrl);
             } else if (this.name === 'CS310-2017Jan' || this.name === 'CS310-2017Jan_TEST') {
@@ -77,9 +79,7 @@ export class Factory {
                 config:       true
             };
 
-            if (this.name === 'sdmm') {
-                this.adminView = new AdminView(backendUrl, tabs);
-            } else if (this.name === 'CS310-2017Jan' || this.name === 'CS310-2017Jan_TEST' || this.name === 'classytest') {
+            if (this.name === 'classytest') {
                 // tabs.deliverables = false;
                 // tabs.students = false;
                 // tabs.teams = false;
@@ -87,14 +87,18 @@ export class Factory {
                 // tabs.results = false;
                 // tabs.dashboard = false;
                 // tabs.config = false;
-                this.adminView = new AdminView(backendUrl, tabs);
+                this.adminView = new AdminView(backendUrl, tabs); // default admin
+            } else if (this.name === 'cs310') {
+                this.adminView = new AdminView(backendUrl, tabs); // default admin
+            } else if (this.name === 'sdmm') {
+                this.adminView = new AdminView(backendUrl, tabs); // default admin
             } else if (this.name === 'cs340' || this.name === 'cpsc340') {
                 tabs.teams = false; // no teams
                 tabs.results = false; // no results
                 tabs.dashboard = false; // no dashboard
                 this.adminView = new CS340AdminView(backendUrl, tabs);
             } else {
-                Log.error("Factory::getView() - ERROR; unknown name: " + this.name);
+                Log.error("Factory::getAdminView() - ERROR; unknown name: " + this.name);
             }
         }
         return this.adminView;

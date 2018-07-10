@@ -138,7 +138,7 @@
             </ons-toolbar>
 
             <form id="admin-editable-deliverable-form">
-                <ons-list id="admin-editable-deliverable-list">
+                <ons-list id="admin-editable-deliverable-list" style="padding-bottom: 4.5em;">
                     <input type="hidden" id="adminEditDeliverablePage-id"/>
                     <h2 style="text-align: center;">UI NOT YET LIVE</h2>
                     <ons-list-header>Deliverable Options</ons-list-header>
@@ -150,7 +150,7 @@
                             <span title="A string of lowercase letters, [a-z], followed by any number.">Name</span>
                         </div>
                         <div class="right settingRight">
-                            <ons-input id="adminEditDeliverablePage-name"></ons-input>
+                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-name"></ons-input>
                         </div>
                     </ons-list-item>
 
@@ -305,6 +305,86 @@
                         </div>
                     </ons-list-item>
 
+
+                    <ons-list-header>AutoTest Options</ons-list-header>
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            Docker Image Name
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-atDockerName"></ons-input>
+                        </div>
+                        <div class="expandable-content">
+                            AutoTest Docker Image name that knows how to execute this deliverable.
+                            It must also know how to execute any regression deliverables, if any are specified.
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            Container timeout
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-atContainerTimeout"></ons-input>
+                        </div>
+                        <div class="expandable-content">
+                            This defines how long the AutoTest container will try to run the student code before it times out. E.g., 300 (5
+                            minutes).
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            Student Delay
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-atStudentDelay"></ons-input>
+                        </div>
+                        <div class="expandable-content">
+                            Delay (in seconds) that students must wait between requesting AutoTest feedback.
+                            E.g., 0 for no feedback limit (not recommended!), 43200 (12 hours), 86400 (24 hours).
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            Regression Deliverables
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-atRegressionIds"></ons-input>
+                        </div>
+                        <div class="expandable-content">
+                            Comma separated list of deliverableIds that should be run when this container is invoked.
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            Custom AutoTest parameters
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-atRegressionIds"></ons-input>
+                        </div>
+                        <div class="expandable-content">
+                            This is a JSON object that will be passed to the container when it is invoked.
+                            It must be valid JSON (or {} if you do not want to pass any custom params).
+                        </div>
+                    </ons-list-item>
 
                 </ons-list>
             </form>

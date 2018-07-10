@@ -7,7 +7,6 @@
     color: #424242;
 }
 
-
 .mainBody {
     /* height: 100%; */
     display: flex;
@@ -58,4 +57,12 @@
     padding-left: 2em;
     padding-right: 1em;
     vertical-align: middle;
+}
+
+/**
+Settings Page
+ */
+
+.settingTextInput {
+    background-color: lightsteelblue;
 }
