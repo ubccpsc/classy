@@ -251,9 +251,9 @@ export class CourseController { // don't implement ICourseController yet
     }
 
     /**
-     * Gets the students associated with the course.
+     * Gets the deliverables associated with the course.
      *
-     * @returns {Promise<StudentTransport[]>}
+     * @returns {Promise<DeliverableTransport[]>}
      */
     public async getDeliverables(): Promise<DeliverableTransport[]> {
         let deliverables = await this.dc.getDeliverables();
@@ -262,17 +262,24 @@ export class CourseController { // don't implement ICourseController yet
         for (const deliv of deliverables) {
 
             const delivTransport: DeliverableTransport = {
-                id:                deliv.id,
-                openTimestamp:     deliv.openTimestamp,
-                closeTimestamp:    deliv.closeTimestamp,
+                id:  deliv.id,
+                URL: deliv.URL,
+
+                openTimestamp:  deliv.openTimestamp,
+                closeTimestamp: deliv.closeTimestamp,
+
                 minTeamSize:       deliv.teamMinSize,
                 maxTeamSize:       deliv.teamMaxSize,
                 teamsSameLab:      deliv.teamSameLab,
                 studentsFormTeams: deliv.teamStudentsForm,
-                onOpenAction:      '',
-                onCloseAction:     '',
-                URL:               deliv.URL,
-                gradesReleased:    deliv.gradesReleased
+
+                onOpenAction:  '',
+                onCloseAction: '',
+
+                gradesReleased: deliv.gradesReleased,
+
+                autoTest: deliv.autotest,
+                custom:   deliv.custom
             };
 
             delivs.push(delivTransport);

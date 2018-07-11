@@ -76,7 +76,10 @@ export interface DeliverableTransport {
     onCloseAction: string; // will change to something else
     URL: string; // student-facing description
     gradesReleased: boolean;
-    // autoTestRate: number; // minutes between autotest retries
+
+    autoTest: AutoTestConfigTransport; // autoTest options
+
+    custom: object; // for schemas, etc.
 }
 
 export interface GradeTransportPayload {

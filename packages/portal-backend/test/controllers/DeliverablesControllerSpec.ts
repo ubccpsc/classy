@@ -22,14 +22,21 @@ describe("DeliverablesController", () => {
             openTimestamp:    -1,
             closeTimestamp:   -1,
             gradesReleased:   false,
-            delay:            -1,
+            // delay:            -1,
             teamMinSize:      1,
             teamMaxSize:      1,
             teamSameLab:      false,
             teamStudentsForm: false,
             teamPrefix:       'team_',
             repoPrefix:       'd1_',
-            bootstrapUrl:     '',
+            // bootstrapUrl:     '',
+            autotest:         {
+                dockerImage:        'testImage',
+                studentDelay:       60 * 60 * 12, // 12h
+                maxExecTime:        300,
+                regressionDelivIds: [],
+                custom:             {}
+            },
             custom:           {}
         };
     });

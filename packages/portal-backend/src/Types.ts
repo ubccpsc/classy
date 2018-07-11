@@ -73,6 +73,7 @@ export interface Auth {
 export interface Deliverable {
     readonly id: string; // primary key; invariant. this is the shortname of the deliverable (e.g., d1)
     URL: string; // links to the public deliverable description
+    repoPrefix: string | null; // prefix for repo names (e.g., project_ or d1_)
 
     openTimestamp: number;
     closeTimestamp: number;
@@ -84,13 +85,17 @@ export interface Deliverable {
     teamStudentsForm: boolean;
     teamPrefix: string | null; // prefix for team names (e.g., pTeam_ or d1Team_)
 
-    // autotest fields
-    bootstrapUrl: string | null; // link to bootstrap code
-    repoPrefix: string | null; // prefix for repo name (e.g, project_ or d1_)
-    delay: number; // delay in minutes between grading requests (0 means no delay)
-    // MISSING: any container parametrization (e.g., solution project?)
+    autotest: AutoTestConfig;
 
     custom: any; // {}; not used by the default implementation, but useful for extension (e.g., schemas)
+}
+
+export interface AutoTestConfig {
+    dockerImage: string;
+    studentDelay: number,
+    maxExecTime: number,
+    regressionDelivIds: string[],
+    custom: object;
 }
 
 export interface Team {

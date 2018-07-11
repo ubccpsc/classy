@@ -73,7 +73,7 @@ describe('TestDatasetGenerator', function () {
             openTimestamp:  -1,
             closeTimestamp: -1,
             gradesReleased: false,
-            delay:          300,
+            // delay:          300,
 
             teamMinSize:      1,
             teamMaxSize:      2,
@@ -81,7 +81,15 @@ describe('TestDatasetGenerator', function () {
             teamStudentsForm: true,
             teamPrefix:       'team_',
             repoPrefix:       '',
-            bootstrapUrl:     '',
+            // bootstrapUrl:     '',
+
+            autotest: {
+                dockerImage:        'testImage',
+                studentDelay:       60 * 60 * 12, // 12h
+                maxExecTime:        300,
+                regressionDelivIds: [],
+                custom:             {}
+            },
 
             custom: {}
         };

@@ -146,6 +146,9 @@ export class AdminDeliverablesTab {
             };
         }
 
+        this.setTextField('adminEditDeliverablePage-name', deliv.id, false);
+        this.setTextField('adminEditDeliverablePage-url', deliv.URL, this.isAdmin);
+
         const flatpickrOptions = {
             enableTime:  true,
             time_24hr:   true,
@@ -154,10 +157,66 @@ export class AdminDeliverablesTab {
             defaultDate: new Date()
         };
 
+        flatpickrOptions.defaultDate = new Date(deliv.openTimestamp);
         flatpickr("#adminEditDeliverablePage-open", flatpickrOptions);
+        flatpickrOptions.defaultDate = new Date(deliv.closeTimestamp);
         flatpickr("#adminEditDeliverablePage-close", flatpickrOptions);
 
+        this.setDropdown('adminEditDeliverablePage-minTeamSize', deliv.minTeamSize, this.isAdmin);
+        this.setDropdown('adminEditDeliverablePage-maxTeamSize', deliv.maxTeamSize, this.isAdmin);
+        this.setToggle('adminEditDeliverablePage-inSameLab', deliv.teamsSameLab, this.isAdmin);
+        this.setToggle('adminEditDeliverablePage-studentsMakeTeams', deliv.studentsFormTeams, this.isAdmin);
+
+        this.setToggle('adminEditDeliverablePage-gradesReleased', deliv.gradesReleased, this.isAdmin);
+
+        this.setTextField('adminEditDeliverablePage-atDockerName', deliv.autoTest.dockerImage, this.isAdmin);
+        this.setTextField('adminEditDeliverablePage-atContainerTimeout', deliv.autoTest.maxExecTime+'', this.isAdmin);
+        this.setTextField('adminEditDeliverablePage-atStudentDelay', deliv.autoTest.studentDelay+'', this.isAdmin);
+        this.setTextField('adminEditDeliverablePage-atRegressionIds', deliv.autoTest.regressionDelivIds.toString(), this.isAdmin);
+        this.setTextField('adminEditDeliverablePage-atCustom', JSON.stringify(deliv.autoTest.custom), this.isAdmin);
+
+        this.setTextField('adminEditDeliverablePage-custom', JSON.stringify(deliv.custom), this.isAdmin);
     }
 
+    private setDropdown(fieldName: string, value: string | number, editable: boolean) {
+        const field = document.querySelector('#' + fieldName) as HTMLSelectElement;
+        if (field !== null) {
+            for (let i = 0; i < field.length; i++) {
+                const opt = field.options[i];
+                if (opt.value == value) { // use == so string and number values match
+                    field.selectedIndex = i;
+                }
+            }
 
+            if (editable === false) {
+                field.setAttribute('readonly', '');
+            }
+        } else {
+            Log.error('AdminDeliverablesTab::setDropdown( ' + fieldName + ', ... ) - element does not exist')
+        }
+    }
+
+    private setTextField(fieldName: string, textValue: string, editable: boolean) {
+        const field = document.querySelector('#' + fieldName) as HTMLTextAreaElement;
+        if (field !== null) {
+            field.value = textValue;
+            if (editable === false) {
+                field.setAttribute('readonly', '');
+            }
+        } else {
+            Log.error('AdminDeliverablesTab::setTextField( ' + fieldName + ', ... ) - element does not exist')
+        }
+    }
+
+    private setToggle(fieldName: string, value: boolean, editable: boolean) {
+        const field = document.querySelector('#' + fieldName) as HTMLInputElement;
+        if (field !== null) {
+            field.checked = value;
+            if (editable === false) {
+                field.setAttribute('readonly', '');
+            }
+        } else {
+            Log.error('AdminDeliverablesTab::setToggle( ' + fieldName + ', ... ) - element does not exist')
+        }
+    }
 }

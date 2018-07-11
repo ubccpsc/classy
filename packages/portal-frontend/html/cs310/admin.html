@@ -139,7 +139,7 @@
 
             <form id="admin-editable-deliverable-form">
                 <ons-list id="admin-editable-deliverable-list" style="padding-bottom: 4.5em;">
-                    <input type="hidden" id="adminEditDeliverablePage-id"/>
+                    <input type="hidden" id="adminEditDeliverablePage-id"/> <!-- what is this for? -->
                     <h2 style="text-align: center;">UI NOT YET LIVE</h2>
                     <ons-list-header>Deliverable Options</ons-list-header>
 
@@ -154,7 +154,8 @@
                             <ons-input class="settingTextInput" id="adminEditDeliverablePage-name"></ons-input>
                         </div>
                         <div class="expandable-content">
-                            Deliverable Id. Cannot be changed. Deliverable Ids must consist of a string of lowercase letters, [a-z], followed by any number.
+                            Deliverable Id. Cannot be changed. Deliverable Ids must consist of a string of lowercase letters, [a-z],
+                            followed by any number.
                         </div>
                     </ons-list-item>
 
@@ -170,6 +171,22 @@
                         </div>
                         <div class="expandable-content">
                             Student-facing URL for the deliverable (usually a link to the deliverable description).
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-cogs"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            Custom Deliverable parameters
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-custom"></ons-input>
+                        </div>
+                        <div class="expandable-content">
+                            This is a JSON object that will be stored along with the deliverable and can be used by custom course
+                            controllers. It must be valid JSON (or {} if you do not want to pass any custom params).
                         </div>
                     </ons-list-item>
 
@@ -350,7 +367,7 @@
                             Container timeout
                         </div>
                         <div class="right settingRight">
-                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-atContainerTimeout"></ons-input>
+                            <ons-input class="settingTextInput" maxLength="6" style="width: 5em;" id="adminEditDeliverablePage-atContainerTimeout"></ons-input>
                         </div>
                         <div class="expandable-content">
                             This defines how long the AutoTest container will try to run the student code before it times out. E.g., 300 (5
@@ -366,7 +383,7 @@
                             Student Delay
                         </div>
                         <div class="right settingRight">
-                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-atStudentDelay"></ons-input>
+                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-atStudentDelay" maxLength="6" style="width: 5em;"></ons-input>
                         </div>
                         <div class="expandable-content">
                             Delay (in seconds) that students must wait between requesting AutoTest feedback.
@@ -397,7 +414,7 @@
                             Custom AutoTest parameters
                         </div>
                         <div class="right settingRight">
-                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-atRegressionIds"></ons-input>
+                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-atCustom"></ons-input>
                         </div>
                         <div class="expandable-content">
                             This is a JSON object that will be passed to the container when it is invoked.
