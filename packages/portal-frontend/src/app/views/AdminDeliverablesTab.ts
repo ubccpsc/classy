@@ -6,6 +6,8 @@ import {DeliverableTransport, DeliverableTransportPayload} from "../../../../com
 import {AdminView} from "./AdminView";
 import {OnsFabElement} from "onsenui";
 
+// import flatpickr from "flatpickr";
+declare var flatpickr: any;
 
 export class AdminDeliverablesTab {
 
@@ -65,6 +67,9 @@ export class AdminDeliverablesTab {
         Log.info("AdminDeliverablesTab::render(..) - start");
         const deliverableList = document.querySelector('#adminDeliverablesList') as HTMLElement;
 
+        // FlatPicker.setFlatPickerField(deliverable.open, OPEN_DELIV_KEY);
+        // FlatPicker.setFlatPickerField(deliverable.close, CLOSE_DELIV_KEY);
+
         deliverableList.innerHTML = '';
         deliverableList.appendChild(UI.createListHeader('Deliverables'));
 
@@ -91,9 +96,8 @@ export class AdminDeliverablesTab {
         }
     }
 
-
-    private handleAdminEditDeliverablePage(opts: any) {
-        Log.warn('AdminView::handleadminEditDeliverablePage( ' + JSON.stringify(opts) + ' ) - NOT IMPLEMENTED');
+    public renderEditDeliverablePage(opts: any) {
+        Log.warn('AdminView::renderEditDeliverablePage( ' + JSON.stringify(opts) + ' ) - NOT IMPLEMENTED');
         const that = this;
 
         const fab = document.querySelector('#adminEditDeliverableSave') as OnsFabElement;
@@ -101,10 +105,22 @@ export class AdminDeliverablesTab {
             fab.style.display = 'none';
         } else {
             fab.onclick = function (evt) {
-                Log.info('AdminView::handleadminEditDeliverablePage(..)::addDeliverable::onClick');
+                Log.info('AdminView::renderEditDeliverablePage(..)::addDeliverable::onClick');
                 AdminView.showError('not implemented');
             };
         }
+
+        const flatpickrOptions = {
+            enableTime:  true,
+            time_24hr:   true,
+            utc:         true,
+            dateFormat:  "Y/m/d @ H:i",
+            defaultDate: new Date()
+        };
+
+        flatpickr("#adminEditDeliverablePage-open", flatpickrOptions);
+        flatpickr("#adminEditDeliverablePage-close", flatpickrOptions);
+        
     }
 
 

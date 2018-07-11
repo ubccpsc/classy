@@ -164,4 +164,7 @@ export class AdminView implements IView {
         return this.studentsTab.init(opts);
     }
 
+    private handleadminEditDeliverablePage(opts: any) {
+        this.deliverablesTab.renderEditDeliverablePage(opts);
+    }
 }
