@@ -3,6 +3,10 @@
  *
  * Other courses should _not_ modify this but instead build their own
  * student views, as they need for their own courses.
+ *
+ * As much as possible, this class will forward requests to the tabs
+ * for them to handle their own behaviour.
+ *
  */
 
 import Log from "../../../../common/Log";
@@ -10,7 +14,6 @@ import Log from "../../../../common/Log";
 import {UI} from "../util/UI"
 
 import {IView} from "./IView";
-import {OnsFabElement} from "onsenui";
 import {AdminStudentsTab} from "./AdminStudentsTab";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminConfigTab} from "./AdminConfigTab";
@@ -29,6 +32,7 @@ export class AdminView implements IView {
 
     protected remote: string | null = null;
     private tabs: AdminTabs | null = null;
+    
     private isStaff = false;
     private isAdmin = false;
 
@@ -38,8 +42,10 @@ export class AdminView implements IView {
 
     constructor(remoteUrl: string, tabs: AdminTabs) {
         Log.info("AdminView::<init>");
+
         this.remote = remoteUrl;
         this.tabs = tabs;
+
         this.studentsTab = new AdminStudentsTab(remoteUrl);
         this.deliverablesTab = new AdminDeliverablesTab(remoteUrl, this.isAdmin);
         this.configTab = new AdminConfigTab(remoteUrl, this.isAdmin);
@@ -65,6 +71,7 @@ export class AdminView implements IView {
             this.isStaff = opts.isStaff;
         }
 
+        // update admin property for the tabs that need it
         this.deliverablesTab.setAdmin(this.isAdmin);
         this.configTab.setAdmin(this.isAdmin);
 
