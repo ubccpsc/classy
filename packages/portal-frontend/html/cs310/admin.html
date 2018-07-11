@@ -125,7 +125,7 @@
 
     <!-- NOTE THIS IS REALLY ROUGH AND WILL CHANGE -->
     <template id="editDeliverable.html">
-        <ons-page id="adminEditDeliverablePage">
+        <ons-page id="AdminEditDeliverable">
 
             <ons-toolbar>
                 <div class="center">
@@ -142,15 +142,34 @@
                     <input type="hidden" id="adminEditDeliverablePage-id"/>
                     <h2 style="text-align: center;">UI NOT YET LIVE</h2>
                     <ons-list-header>Deliverable Options</ons-list-header>
-                    <ons-list-item style="display: flex;">
+
+                    <ons-list-item expandable>
                         <div class="left settingIcon">
-                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                            <ons-icon icon="fa-tag"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            <span title="A string of lowercase letters, [a-z], followed by any number.">Name</span>
+                            Deliverable Id
                         </div>
                         <div class="right settingRight">
                             <ons-input class="settingTextInput" id="adminEditDeliverablePage-name"></ons-input>
+                        </div>
+                        <div class="expandable-content">
+                            Deliverable Id. Cannot be changed. Deliverable Ids must consist of a string of lowercase letters, [a-z], followed by any number.
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-link"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            URL
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-url"></ons-input>
+                        </div>
+                        <div class="expandable-content">
+                            Student-facing URL for the deliverable (usually a link to the deliverable description).
                         </div>
                     </ons-list-item>
 
@@ -198,7 +217,7 @@
                     <ons-list-header>Deliverable Dates</ons-list-header>
                     <ons-list-item style="display: flex;">
                         <div class="left settingIcon">
-                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                            <ons-icon icon="ion-calendar"></ons-icon>
                         </div>
                         <div class="center settingLabel">
                             <span title="The date that AutoTest will begin marking Github Repositories for a Deliverable.">Open</span>
@@ -214,7 +233,7 @@
 
                     <ons-list-item style="display: flex;">
                         <div class="left settingIcon">
-                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                            <ons-icon icon="ion-calendar"></ons-icon>
                         </div>
                         <div class="center settingLabel">
                             <span title="The date that AutoTest will stop marking Github Repositories for a Deliverable.">Close</span>
@@ -231,7 +250,7 @@
                     <ons-list-header>Default Team Options</ons-list-header>
                     <ons-list-item style="display: flex;">
                         <div class="left settingIcon">
-                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                            <ons-icon icon="fa-user"></ons-icon>
                         </div>
                         <div class="center settingLabel">
                             <span title="The minimum number of students that are allowed in a team.">Minimum Size</span>
@@ -251,7 +270,7 @@
                     </ons-list-item>
                     <ons-list-item style="display: flex;">
                         <div class="left settingIcon">
-                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                            <ons-icon icon="fa-users"></ons-icon>
                         </div>
                         <div class="center settingLabel">
                             <span title="The maximum number of students that are allowed in a Team.">Maximum Size</span>
@@ -271,7 +290,7 @@
                     </ons-list-item>
                     <ons-list-item style="display: flex;">
                         <div class="left settingIcon">
-                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                            <ons-icon icon="fa-location-arrow"></ons-icon>
                         </div>
                         <div class="center settingLabel">
                             <span title="Enable if the Students for Team Generation and Student-made Teams must be in the same lab based on the Lab List.">Must Be In Same Lab</span>
@@ -282,7 +301,7 @@
                     </ons-list-item>
                     <ons-list-item style="display: flex;">
                         <div class="left settingIcon">
-                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                            <ons-icon icon="fa-plus-square"></ons-icon>
                         </div>
                         <div class="center settingLabel">
                             <span title="Enable if Students are allowed to creat their own team.">Students Make Teams</span>
@@ -295,7 +314,7 @@
                     <ons-list-header>Grade Options</ons-list-header>
                     <ons-list-item style="display: flex;">
                         <div class="left settingIcon">
-                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                            <ons-icon icon="fa-graduation-cap"></ons-icon>
                         </div>
                         <div class="center settingLabel">
                             <span title="Displays Grades for Deliverable underneath Student Area.">Grades Released</span>
@@ -309,7 +328,7 @@
                     <ons-list-header>AutoTest Options</ons-list-header>
                     <ons-list-item expandable>
                         <div class="left settingIcon">
-                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                            <ons-icon icon="fa-cloud"></ons-icon>
                         </div>
                         <div class="center settingLabel">
                             Docker Image Name
@@ -325,7 +344,7 @@
 
                     <ons-list-item expandable>
                         <div class="left settingIcon">
-                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                            <ons-icon icon="md-timer"></ons-icon>
                         </div>
                         <div class="center settingLabel">
                             Container timeout
@@ -341,7 +360,7 @@
 
                     <ons-list-item expandable>
                         <div class="left settingIcon">
-                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                            <ons-icon icon="fa-clock-o"></ons-icon>
                         </div>
                         <div class="center settingLabel">
                             Student Delay
@@ -357,7 +376,7 @@
 
                     <ons-list-item expandable>
                         <div class="left settingIcon">
-                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                            <ons-icon icon="fa-retweet"></ons-icon>
                         </div>
                         <div class="center settingLabel">
                             Regression Deliverables
@@ -372,7 +391,7 @@
 
                     <ons-list-item expandable>
                         <div class="left settingIcon">
-                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                            <ons-icon icon="fa-cogs"></ons-icon>
                         </div>
                         <div class="center settingLabel">
                             Custom AutoTest parameters

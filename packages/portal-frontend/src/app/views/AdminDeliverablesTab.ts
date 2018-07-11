@@ -96,8 +96,44 @@ export class AdminDeliverablesTab {
         }
     }
 
-    public renderEditDeliverablePage(opts: any) {
-        Log.warn('AdminView::renderEditDeliverablePage( ' + JSON.stringify(opts) + ' ) - NOT IMPLEMENTED');
+    public async initEditDeliverablePage(opts: any): Promise<void> {
+        Log.warn('AdminView::initEditDeliverablePage( ' + JSON.stringify(opts) + ' ) - NOT IMPLEMENTED');
+        const start = Date.now();
+        const delivId = opts.delivId;
+
+        UI.showModal('Retrieving ' + delivId + ' details'); // NOTE: not working on this screen
+
+        const options = AdminView.getOptions();
+        const url = this.remote + '/admin/deliverables';
+        const response = await fetch(url, options);
+
+        UI.hideModal();
+        if (response.status === 200) {
+            Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..) - 200 received');
+            const json: DeliverableTransportPayload = await response.json();
+            if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
+                Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..)  - worked; took: ' + UI.took(start));
+
+                for (const deliv of json.success) {
+                    if (deliv.id === delivId) {
+                        this.renderEditDeliverablePage(deliv);
+                        return;
+                    }
+                }
+                Log.error('AdminDeliverablesTab::initEditDeliverablePage(..)  - delivId not found: ' + delivId);
+            } else {
+                Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..)  - ERROR: ' + json.failure.message);
+                AdminView.showError(json.failure); // FailurePayload
+            }
+        } else {
+            Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..)  - !200 received: ' + response.status);
+            const text = await response.text();
+            AdminView.showError(text);
+        }
+    }
+
+    public renderEditDeliverablePage(deliv: DeliverableTransport) {
+        Log.warn('AdminView::renderEditDeliverablePage( ' + JSON.stringify(deliv) + ' ) - NOT IMPLEMENTED');
         const that = this;
 
         const fab = document.querySelector('#adminEditDeliverableSave') as OnsFabElement;
@@ -120,7 +156,7 @@ export class AdminDeliverablesTab {
 
         flatpickr("#adminEditDeliverablePage-open", flatpickrOptions);
         flatpickr("#adminEditDeliverablePage-close", flatpickrOptions);
-        
+
     }
 
 

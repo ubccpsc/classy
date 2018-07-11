@@ -111,12 +111,12 @@ export class UI {
 
     public static showModal(text?: string) {
         // https://onsen.io/v2/api/js/ons-modal.html
-
         if (typeof text === 'undefined') {
             text = null;
         }
 
         const modal = document.querySelector('ons-modal') as OnsModalElement;
+        Log.trace("UI::showModal( " + text + " ) - start; modal: " + modal);
         if (modal !== null) {
             if (text != null) {
                 document.getElementById('modalText').innerHTML = text;
