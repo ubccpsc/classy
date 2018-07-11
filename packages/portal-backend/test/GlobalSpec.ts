@@ -7,7 +7,7 @@ import Log from "../../common/Log";
 import {DatabaseController} from "../src/controllers/DatabaseController";
 
 before(async () => {
-    Log.info('GlobalSpec::before()');
+    Log.info('GlobalSpec::before() - start');
 
     Config.getInstance();
 
@@ -18,6 +18,8 @@ before(async () => {
 
     let db = DatabaseController.getInstance();
     await db.clearData(); // nuke everything
+
+    Log.info('GlobalSpec::before() - done');
 });
 
 after(() => {

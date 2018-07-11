@@ -32,7 +32,7 @@ export class AdminView implements IView {
 
     protected remote: string | null = null;
     private tabs: AdminTabs | null = null;
-    
+
     private isStaff = false;
     private isAdmin = false;
 
