@@ -125,6 +125,7 @@
 
     <!-- NOTE THIS IS REALLY ROUGH AND WILL CHANGE -->
     <template id="editDeliverable.html">
+
         <ons-page id="AdminEditDeliverable">
 
             <ons-toolbar>
@@ -137,10 +138,17 @@
                 <div id="adminEditDeliverablePage-header" class="center"></div>
             </ons-toolbar>
 
+            <ons-modal id="adminProgress">
+                <div style="display:flex; flex-direction:column; align-items: center;">
+                    <div id="modalText" style="padding-top: 1em; padding-bottom: 1em;">Data is being retrieved.</div>
+                    <ons-progress-circular indeterminate></ons-progress-circular>
+                </div>
+            </ons-modal>
+
             <form id="admin-editable-deliverable-form">
                 <ons-list id="admin-editable-deliverable-list" style="padding-bottom: 4.5em;">
                     <input type="hidden" id="adminEditDeliverablePage-id"/> <!-- what is this for? -->
-                    <h2 style="text-align: center;">UI NOT YET LIVE</h2>
+
                     <ons-list-header>Deliverable Options</ons-list-header>
 
                     <ons-list-item expandable>
