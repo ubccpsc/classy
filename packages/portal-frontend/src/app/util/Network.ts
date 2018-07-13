@@ -43,7 +43,9 @@ export class Network {
         console.log('Network::handleRemote( ' + url + ' ) - start');
 
         const OPTIONS_HTTP_POST: object = {
-            credentials: 'include', method: 'post', cors: 'enabled',
+            // credentials: 'include',
+            method:      'post',
+            // cors:        'enabled',
             body:        JSON.stringify(payload), headers: {'Content-Type': 'application/json'}
         };
         const AUTHORIZED_STATUS: string = 'authorized';

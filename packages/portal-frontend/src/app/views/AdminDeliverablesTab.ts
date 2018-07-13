@@ -104,34 +104,40 @@ export class AdminDeliverablesTab {
         const start = Date.now();
         const delivId = opts.delivId;
 
-        UI.showModal('Retrieving ' + delivId + ' details'); // NOTE: not working on this screen
+        if (delivId === null) {
+            // create deliverable, not edit
+            this.renderEditDeliverablePage(null);
 
-        const options = AdminView.getOptions();
-        const url = this.remote + '/admin/deliverables';
-        const response = await fetch(url, options);
-
-        UI.hideModal();
-        if (response.status === 200) {
-            Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..) - 200 received');
-            const json: DeliverableTransportPayload = await response.json();
-            if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..)  - worked; took: ' + UI.took(start));
-
-                for (const deliv of json.success) {
-                    if (deliv.id === delivId) {
-                        this.renderEditDeliverablePage(deliv);
-                        return;
-                    }
-                }
-                Log.error('AdminDeliverablesTab::initEditDeliverablePage(..)  - delivId not found: ' + delivId);
-            } else {
-                Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..)  - ERROR: ' + json.failure.message);
-                AdminView.showError(json.failure); // FailurePayload
-            }
         } else {
-            Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..)  - !200 received: ' + response.status);
-            const text = await response.text();
-            AdminView.showError(text);
+            UI.showModal('Retrieving ' + delivId + ' details'); // NOTE: not working on this screen
+
+            const options = AdminView.getOptions();
+            const url = this.remote + '/admin/deliverables';
+            const response = await fetch(url, options);
+
+            UI.hideModal();
+            if (response.status === 200) {
+                Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..) - 200 received');
+                const json: DeliverableTransportPayload = await response.json();
+                if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
+                    Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..)  - worked; took: ' + UI.took(start));
+
+                    for (const deliv of json.success) {
+                        if (deliv.id === delivId) {
+                            this.renderEditDeliverablePage(deliv);
+                            return;
+                        }
+                    }
+                    Log.error('AdminDeliverablesTab::initEditDeliverablePage(..)  - delivId not found: ' + delivId);
+                } else {
+                    Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..)  - ERROR: ' + json.failure.message);
+                    AdminView.showError(json.failure); // FailurePayload
+                }
+            } else {
+                Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..)  - !200 received: ' + response.status);
+                const text = await response.text();
+                AdminView.showError(text);
+            }
         }
     }
 
@@ -139,19 +145,17 @@ export class AdminDeliverablesTab {
         Log.warn('AdminView::renderEditDeliverablePage( ' + JSON.stringify(deliv) + ' ) - start');
         const that = this;
 
+        // TODO: handle when deliv is null (aka the deliverable is new)
+
         const fab = document.querySelector('#adminEditDeliverableSave') as OnsFabElement;
         if (this.isAdmin === false) {
             fab.style.display = 'none';
         } else {
             fab.onclick = function (evt) {
-                Log.info('AdminView::renderEditDeliverablePage(..)::addDeliverable::onClick');
-                // AdminView.showError('not implemented');
+                Log.info('AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::onClick');
                 that.save();
             };
         }
-
-        this.setTextField('adminEditDeliverablePage-name', deliv.id, false);
-        this.setTextField('adminEditDeliverablePage-url', deliv.URL, this.isAdmin);
 
         const flatpickrOptions = {
             enableTime:  true,
@@ -161,25 +165,53 @@ export class AdminDeliverablesTab {
             defaultDate: new Date()
         };
 
-        flatpickrOptions.defaultDate = new Date(deliv.openTimestamp);
-        this.openPicker = flatpickr("#adminEditDeliverablePage-open", flatpickrOptions);
-        flatpickrOptions.defaultDate = new Date(deliv.closeTimestamp);
-        this.closePicker = flatpickr("#adminEditDeliverablePage-close", flatpickrOptions);
 
-        this.setDropdown('adminEditDeliverablePage-minTeamSize', deliv.minTeamSize, this.isAdmin);
-        this.setDropdown('adminEditDeliverablePage-maxTeamSize', deliv.maxTeamSize, this.isAdmin);
-        this.setToggle('adminEditDeliverablePage-inSameLab', deliv.teamsSameLab, this.isAdmin);
-        this.setToggle('adminEditDeliverablePage-studentsMakeTeams', deliv.studentsFormTeams, this.isAdmin);
+        if (deliv === null) {
+            // new deliverable, set defaults
 
-        this.setToggle('adminEditDeliverablePage-gradesReleased', deliv.gradesReleased, this.isAdmin);
+            flatpickrOptions.defaultDate = new Date();
+            this.openPicker = flatpickr("#adminEditDeliverablePage-open", flatpickrOptions);
+            flatpickrOptions.defaultDate = new Date();
+            this.closePicker = flatpickr("#adminEditDeliverablePage-close", flatpickrOptions);
 
-        this.setTextField('adminEditDeliverablePage-atDockerName', deliv.autoTest.dockerImage, this.isAdmin);
-        this.setTextField('adminEditDeliverablePage-atContainerTimeout', deliv.autoTest.maxExecTime + '', this.isAdmin);
-        this.setTextField('adminEditDeliverablePage-atStudentDelay', deliv.autoTest.studentDelay + '', this.isAdmin);
-        this.setTextField('adminEditDeliverablePage-atRegressionIds', deliv.autoTest.regressionDelivIds.toString(), this.isAdmin);
-        this.setTextField('adminEditDeliverablePage-atCustom', JSON.stringify(deliv.autoTest.custom), this.isAdmin);
+            this.setDropdown('adminEditDeliverablePage-minTeamSize', 1, this.isAdmin);
+            this.setDropdown('adminEditDeliverablePage-maxTeamSize', 1, this.isAdmin);
+            this.setToggle('adminEditDeliverablePage-inSameLab', true, this.isAdmin);
+            this.setToggle('adminEditDeliverablePage-studentsMakeTeams', false, this.isAdmin);
 
-        this.setTextField('adminEditDeliverablePage-custom', JSON.stringify(deliv.custom), this.isAdmin);
+            this.setToggle('adminEditDeliverablePage-gradesReleased', false, this.isAdmin);
+
+            this.setTextField('adminEditDeliverablePage-atContainerTimeout', '300', this.isAdmin);
+            this.setTextField('adminEditDeliverablePage-atStudentDelay', (12 * 60 * 60) + '', this.isAdmin);
+            this.setTextField('adminEditDeliverablePage-atCustom', '{}', this.isAdmin);
+
+            this.setTextField('adminEditDeliverablePage-custom', '{}', this.isAdmin);
+        } else {
+            // edit existing deliverable
+
+            this.setTextField('adminEditDeliverablePage-name', deliv.id, false);
+            this.setTextField('adminEditDeliverablePage-url', deliv.URL, this.isAdmin);
+
+            flatpickrOptions.defaultDate = new Date(deliv.openTimestamp);
+            this.openPicker = flatpickr("#adminEditDeliverablePage-open", flatpickrOptions);
+            flatpickrOptions.defaultDate = new Date(deliv.closeTimestamp);
+            this.closePicker = flatpickr("#adminEditDeliverablePage-close", flatpickrOptions);
+
+            this.setDropdown('adminEditDeliverablePage-minTeamSize', deliv.minTeamSize, this.isAdmin);
+            this.setDropdown('adminEditDeliverablePage-maxTeamSize', deliv.maxTeamSize, this.isAdmin);
+            this.setToggle('adminEditDeliverablePage-inSameLab', deliv.teamsSameLab, this.isAdmin);
+            this.setToggle('adminEditDeliverablePage-studentsMakeTeams', deliv.studentsFormTeams, this.isAdmin);
+
+            this.setToggle('adminEditDeliverablePage-gradesReleased', deliv.gradesReleased, this.isAdmin);
+
+            this.setTextField('adminEditDeliverablePage-atDockerName', deliv.autoTest.dockerImage, this.isAdmin);
+            this.setTextField('adminEditDeliverablePage-atContainerTimeout', deliv.autoTest.maxExecTime + '', this.isAdmin);
+            this.setTextField('adminEditDeliverablePage-atStudentDelay', deliv.autoTest.studentDelay + '', this.isAdmin);
+            this.setTextField('adminEditDeliverablePage-atRegressionIds', deliv.autoTest.regressionDelivIds.toString(), this.isAdmin);
+            this.setTextField('adminEditDeliverablePage-atCustom', JSON.stringify(deliv.autoTest.custom), this.isAdmin);
+
+            this.setTextField('adminEditDeliverablePage-custom', JSON.stringify(deliv.custom), this.isAdmin);
+        }
     }
 
     private setDropdown(fieldName: string, value: string | number, editable: boolean) {
@@ -224,7 +256,7 @@ export class AdminDeliverablesTab {
         }
     }
 
-    private save() {
+    private async save(): Promise<void> {
         Log.info("AdminDeliverablesTab::save() - start");
 
         const id = this.getTextField('adminEditDeliverablePage-name');
@@ -296,6 +328,22 @@ export class AdminDeliverablesTab {
         };
 
         Log.trace("AdminDeliverablesTab::save() - result: " + JSON.stringify(deliv));
+
+        const url = this.remote + '/admin/deliverable';
+        let options: any = AdminView.getOptions();
+        options.method = 'post';
+        options.body = JSON.stringify(deliv);
+
+        let response = await fetch(url, options);
+        let body = await response.json();
+
+        if (typeof body.success !== 'undefined') {
+            // worked
+            UI.showErrorToast("Deliverable saved successfully.");
+            UI.popPage();
+        } else {
+            UI.showAlert(body.failure.message);
+        }
     }
 
     private getTextField(fieldName: string): string {

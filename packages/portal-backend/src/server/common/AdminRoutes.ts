@@ -8,9 +8,10 @@ import IREST from "../IREST";
 import {AuthController} from "../../controllers/AuthController";
 import {CourseController} from "../../controllers/CourseController";
 import {GitHubController} from "../../controllers/GitHubController";
-import {DeliverableTransportPayload, Payload, StudentTransportPayload} from '../../../../common/types/PortalTypes';
+import {DeliverableTransport, DeliverableTransportPayload, Payload, StudentTransportPayload} from '../../../../common/types/PortalTypes';
 import {Person} from "../../Types";
 import {PersonController} from "../../controllers/PersonController";
+import {DeliverablesController} from "../../controllers/DeliverablesController";
 
 export default class AdminRoutes implements IREST {
 
@@ -26,6 +27,8 @@ export default class AdminRoutes implements IREST {
 
         // posting a class list is admin only
         server.post('/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
+        // editing / creating a deliverable is admin only
+        server.post('/admin/deliverable', AdminRoutes.isAdmin, AdminRoutes.postDeliverable);
     }
 
     /**
@@ -289,5 +292,73 @@ export default class AdminRoutes implements IREST {
             handleError('Class list upload unsuccessful: ' + err);
         }
 
+    }
+
+
+    private static postDeliverable(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::postDeliverable(..) - start');
+        let payload: Payload;
+
+        const handleError = function (msg: string) {
+            Log.error('AdminRoutes::postDeliverable(..)::handleError - message: ' + msg);
+            payload = {
+                failure: {
+                    message:      msg,
+                    shouldLogout: false
+                }
+            };
+            res.send(400, payload);
+            return next();
+        };
+
+        try {
+            const delivTrans: DeliverableTransport = req.params;
+            Log.info('AdminRoutes::postDeliverable() - body: ' + delivTrans);
+            const result = AdminRoutes.validateDeliverable(delivTrans);
+            if (result === null) {
+                const dc = new DeliverablesController();
+                let deliv = dc.translateTransport(delivTrans);
+                dc.saveDeliverable(deliv).then(function (saveSucceeded: any) {
+                    // worked
+                    if (saveSucceeded !== null) {
+                        payload = {success: {message: 'Deliverable saved successfully'}};
+                        res.send(200, payload);
+                    } else {
+                        handleError("Deliverable not saved.");
+                    }
+                }).catch(function (err: any) {
+                    handleError("Deliverable not saved. ERROR: " + err);
+                });
+            } else {
+                handleError("Deliverable not saved: " + result);
+            }
+        } catch (err) {
+            Log.error('AdminRoutes::postDeliverable(..) - ERROR: ' + err);
+            handleError('Deliverable creation / update unsuccessful: ' + err);
+        }
+
+    }
+
+    private static validateDeliverable(deliv: DeliverableTransport): string {
+
+        if (typeof deliv === 'undefined') {
+            const msg = 'object undefined';
+            Log.error('AdminRoutes::validateDeliverable(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        if (typeof deliv === null) {
+            const msg = 'object null';
+            Log.error('AdminRoutes::validateDeliverable(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        if (deliv.id.length < 2) {
+            const msg = 'invalid delivId: ' + deliv.id;
+            Log.error('AdminRoutes::validateDeliverable(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        return null;
     }
 }

@@ -2,6 +2,7 @@ import Log from "../../../common/Log";
 
 import {DatabaseController} from "./DatabaseController";
 import {Deliverable} from "../Types";
+import {DeliverableTransport} from "../../../common/types/PortalTypes";
 
 export class DeliverablesController {
 
@@ -33,5 +34,56 @@ export class DeliverablesController {
             Log.error("RepositoryController::createGrade(..) - ERROR: " + err);
             return null;
         }
+    }
+
+    public translateTransport(trans: DeliverableTransport): Deliverable | null {
+
+        // let at: AutoTestConfig = {
+        //     dockerImage,
+        //     maxExecTime,
+        //     studentDelay,
+        //     regressionDelivIds,
+        //     custom: atCustom,
+        // };
+        //
+        // let deliv: DeliverableTransport = {
+        //     id,
+        //     URL,
+        //     openTimestamp,
+        //     closeTimestamp,
+        //     onOpenAction:  '',// TODO: add this
+        //     onCloseAction: '', // TODO: add this
+        //     minTeamSize,
+        //     maxTeamSize,
+        //     studentsFormTeams,
+        //     teamsSameLab,
+        //     gradesReleased,
+        //     autoTest:      at,
+        //     custom
+        // };
+
+        const deliv: Deliverable = {
+            id:         trans.id,
+            URL:        trans.URL,
+            repoPrefix: '', // TODO: remove
+
+            openTimestamp:  trans.openTimestamp,
+            closeTimestamp: trans.closeTimestamp,
+            gradesReleased: trans.gradesReleased,
+
+            teamMinSize:      trans.minTeamSize,
+            teamMaxSize:      trans.maxTeamSize,
+            teamSameLab:      trans.teamsSameLab,
+            teamStudentsForm: trans.studentsFormTeams,
+            teamPrefix:       '', // TODO: remove
+
+            autotest: trans.autoTest,
+
+            custom: trans.custom
+        };
+
+
+        return deliv;
+
     }
 }
