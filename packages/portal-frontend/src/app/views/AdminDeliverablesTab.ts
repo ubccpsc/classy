@@ -5,6 +5,7 @@ import {UI} from "../util/UI"
 import {DeliverableTransport, DeliverableTransportPayload} from "../../../../common/types/PortalTypes";
 import {AdminView} from "./AdminView";
 import {OnsFabElement} from "onsenui";
+import {AutoTestConfig} from "../../../../portal-backend/src/Types";
 
 // import flatpickr from "flatpickr";
 declare var flatpickr: any;
@@ -13,6 +14,8 @@ export class AdminDeliverablesTab {
 
     private remote: string; // url to backend
     private isAdmin: boolean;
+    private openPicker: any; // flatpickr;
+    private closePicker: any; // flatpickr;
 
     constructor(remote: string, isAdmin: boolean) {
         this.remote = remote;
@@ -97,7 +100,7 @@ export class AdminDeliverablesTab {
     }
 
     public async initEditDeliverablePage(opts: any): Promise<void> {
-        Log.warn('AdminView::initEditDeliverablePage( ' + JSON.stringify(opts) + ' ) - NOT IMPLEMENTED');
+        Log.warn('AdminView::initEditDeliverablePage( ' + JSON.stringify(opts) + ' ) - start');
         const start = Date.now();
         const delivId = opts.delivId;
 
@@ -133,7 +136,7 @@ export class AdminDeliverablesTab {
     }
 
     public renderEditDeliverablePage(deliv: DeliverableTransport) {
-        Log.warn('AdminView::renderEditDeliverablePage( ' + JSON.stringify(deliv) + ' ) - NOT IMPLEMENTED');
+        Log.warn('AdminView::renderEditDeliverablePage( ' + JSON.stringify(deliv) + ' ) - start');
         const that = this;
 
         const fab = document.querySelector('#adminEditDeliverableSave') as OnsFabElement;
@@ -142,7 +145,8 @@ export class AdminDeliverablesTab {
         } else {
             fab.onclick = function (evt) {
                 Log.info('AdminView::renderEditDeliverablePage(..)::addDeliverable::onClick');
-                AdminView.showError('not implemented');
+                // AdminView.showError('not implemented');
+                that.save();
             };
         }
 
@@ -158,9 +162,9 @@ export class AdminDeliverablesTab {
         };
 
         flatpickrOptions.defaultDate = new Date(deliv.openTimestamp);
-        flatpickr("#adminEditDeliverablePage-open", flatpickrOptions);
+        this.openPicker = flatpickr("#adminEditDeliverablePage-open", flatpickrOptions);
         flatpickrOptions.defaultDate = new Date(deliv.closeTimestamp);
-        flatpickr("#adminEditDeliverablePage-close", flatpickrOptions);
+        this.closePicker = flatpickr("#adminEditDeliverablePage-close", flatpickrOptions);
 
         this.setDropdown('adminEditDeliverablePage-minTeamSize', deliv.minTeamSize, this.isAdmin);
         this.setDropdown('adminEditDeliverablePage-maxTeamSize', deliv.maxTeamSize, this.isAdmin);
@@ -170,8 +174,8 @@ export class AdminDeliverablesTab {
         this.setToggle('adminEditDeliverablePage-gradesReleased', deliv.gradesReleased, this.isAdmin);
 
         this.setTextField('adminEditDeliverablePage-atDockerName', deliv.autoTest.dockerImage, this.isAdmin);
-        this.setTextField('adminEditDeliverablePage-atContainerTimeout', deliv.autoTest.maxExecTime+'', this.isAdmin);
-        this.setTextField('adminEditDeliverablePage-atStudentDelay', deliv.autoTest.studentDelay+'', this.isAdmin);
+        this.setTextField('adminEditDeliverablePage-atContainerTimeout', deliv.autoTest.maxExecTime + '', this.isAdmin);
+        this.setTextField('adminEditDeliverablePage-atStudentDelay', deliv.autoTest.studentDelay + '', this.isAdmin);
         this.setTextField('adminEditDeliverablePage-atRegressionIds', deliv.autoTest.regressionDelivIds.toString(), this.isAdmin);
         this.setTextField('adminEditDeliverablePage-atCustom', JSON.stringify(deliv.autoTest.custom), this.isAdmin);
 
@@ -217,6 +221,107 @@ export class AdminDeliverablesTab {
             }
         } else {
             Log.error('AdminDeliverablesTab::setToggle( ' + fieldName + ', ... ) - element does not exist')
+        }
+    }
+
+    private save() {
+        Log.info("AdminDeliverablesTab::save() - start");
+
+        const id = this.getTextField('adminEditDeliverablePage-name');
+        const URL = this.getTextField('adminEditDeliverablePage-url');
+
+        const openTimestamp = this.openPicker.latestSelectedDateObj.getTime();
+        const closeTimestamp = this.closePicker.latestSelectedDateObj.getTime();
+
+        const minTeamSize = Number(this.getDropdown('adminEditDeliverablePage-minTeamSize'));
+        const maxTeamSize = Number(this.getDropdown('adminEditDeliverablePage-maxTeamSize'));
+        const teamsSameLab = this.getToggle('adminEditDeliverablePage-inSameLab');
+        const studentsFormTeams = this.getToggle('adminEditDeliverablePage-studentsMakeTeams');
+
+        const gradesReleased = this.getToggle('adminEditDeliverablePage-gradesReleased');
+
+        const dockerImage = this.getTextField('adminEditDeliverablePage-atDockerName');
+        const maxExecTime = Number(this.getTextField('adminEditDeliverablePage-atContainerTimeout'));
+        const studentDelay = Number(this.getTextField('adminEditDeliverablePage-atStudentDelay'));
+
+        const atRegression = this.getTextField('adminEditDeliverablePage-atRegressionIds');
+        const regressionDelivIds: string[] = [];
+        if (atRegression.length > 0) {
+            const parts = atRegression.split(',');
+            for (const p of parts) {
+                regressionDelivIds.push(p);
+            }
+        }
+
+        let atCustomRaw = this.getTextField('adminEditDeliverablePage-atCustom');
+        let atCustom: any = {};
+        if (atCustomRaw.length > 0) {
+            Log.trace("AdminDeliverablesTab::save() - atCustomRaw: " + atCustomRaw);
+            // https://stackoverflow.com/a/34763398 (handle unquoted props (e.g., {foo: false}))
+            atCustomRaw = atCustomRaw.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ');
+            atCustom = JSON.parse(atCustomRaw);
+        }
+
+        let customRaw = this.getTextField('adminEditDeliverablePage-custom');
+        let custom: any = {};
+        if (customRaw.length > 0) {
+            Log.trace("AdminDeliverablesTab::save() - customRaw: " + customRaw);
+            // https://stackoverflow.com/a/34763398 (handle unquoted props (e.g., {foo: false}))
+            customRaw = customRaw.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ');
+            custom = JSON.parse(customRaw);
+        }
+
+        let at: AutoTestConfig = {
+            dockerImage,
+            maxExecTime,
+            studentDelay,
+            regressionDelivIds,
+            custom: atCustom,
+        };
+
+        let deliv: DeliverableTransport = {
+            id,
+            URL,
+            openTimestamp,
+            closeTimestamp,
+            onOpenAction:  '',// TODO: add this
+            onCloseAction: '', // TODO: add this
+            minTeamSize,
+            maxTeamSize,
+            studentsFormTeams,
+            teamsSameLab,
+            gradesReleased,
+            autoTest:      at,
+            custom
+        };
+
+        Log.trace("AdminDeliverablesTab::save() - result: " + JSON.stringify(deliv));
+    }
+
+    private getTextField(fieldName: string): string {
+        const field = document.querySelector('#' + fieldName) as HTMLTextAreaElement;
+        if (field !== null) {
+            return field.value;
+        } else {
+            Log.error('AdminDeliverablesTab::getTextField( ' + fieldName + ' ) - element does not exist')
+        }
+    }
+
+    private getDropdown(fieldName: string): string {
+        const field = document.querySelector('#' + fieldName) as HTMLSelectElement;
+        if (field !== null) {
+            return field.options[field.selectedIndex].value;
+        } else {
+            Log.error('AdminDeliverablesTab::getDropdown( ' + fieldName + ' ) - element does not exist')
+        }
+    }
+
+    private getToggle(fieldName: string): boolean {
+        const field = document.querySelector('#' + fieldName) as HTMLInputElement;
+        if (field !== null) {
+            return field.checked;
+        } else {
+            Log.error('AdminDeliverablesTab::getToggle( ' + fieldName + ' ) - element does not exist')
         }
     }
 }

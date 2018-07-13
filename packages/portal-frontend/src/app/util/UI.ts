@@ -1,7 +1,6 @@
 /**
  * Created by rtholmes on 2017-10-04.
  */
-import {OnsModalElement} from "onsenui";
 import Log from "../../../../common/Log";
 // import {Team} from '../Models';
 
@@ -115,15 +114,21 @@ export class UI {
             text = null;
         }
 
-        const modal = document.querySelector('ons-modal') as OnsModalElement;
-        Log.trace("UI::showModal( " + text + " ) - start; modal: " + modal);
-        if (modal !== null) {
-            if (text != null) {
-                document.getElementById('modalText').innerHTML = text;
+        const modals = document.querySelectorAll('ons-modal') as any; //c OnsModalElement[];
+        for (const m of modals) {
+            Log.trace("UI::showModal( " + text + " ) - start; modal: " + m);
+            if (m !== null) {
+                if (text != null) {
+                    const textFields = document.querySelectorAll('#modalText') as any; //c OnsModalElement[];
+                    for (const t of textFields) {
+                        // document.getElementById('modalText').innerHTML = text;
+                        t.innerHTML = text;
+                    }
+                }
+                m.show({animation: 'fade'});
+            } else {
+                Log.error('UI::showModal(..) - Modal is null');
             }
-            modal.show({animation: 'fade'});
-        } else {
-            Log.error('UI::showModal(..) - Modal is null');
         }
     }
 
@@ -166,12 +171,16 @@ export class UI {
 // </ons-page>
 
     public static hideModal() {
-        const modal = document.querySelector('ons-modal') as OnsModalElement;
-        if (modal !== null) {
-            modal.hide({animation: 'fade'});
-        } else {
-            Log.error('UI::hideModal(..) - Modal is null');
+        const modals = document.querySelectorAll('ons-modal') as any; //c OnsModalElement[];
+        for (const m of modals) {
+            if (m !== null) {
+                m.hide({animation: 'fade'});
+            } else {
+                Log.error('UI::hideModal(..) - Modal is null');
+            }
         }
+        // const modal = document.querySelector('ons-modal') as OnsModalElement;
+
     }
 
     public static showAlert(message: string) {
