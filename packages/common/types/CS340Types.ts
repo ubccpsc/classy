@@ -23,6 +23,14 @@ export interface SubQuestionGrade {
     feedback: string;
 }
 
+// Placed in Deliverable.custom
+export interface AssignmentInfo {
+    seedRepoURL: string;
+    seedRepoPath: string;
+    status: AssignmentStatus;
+    rubric: AssignmentGradingRubric;
+}
+
 // Represents a grading rubric
 export interface AssignmentGradingRubric {
     name: string;
@@ -43,6 +51,16 @@ export interface SubQuestionGradingRubric {
     outOf: number;
     weight: number;
     modifiers: any;         // Custom modifiers - course dependant
+}
+
+
+export enum AssignmentStatus {
+                                    // Repositories Status:
+                                    // Created | Pull | Push  |
+    INACTIVE    = "Inactive",       //         |      |       | Repositories not created or viewable
+    INTIALIZED  = "Initialized",    //    X    |      |       | Repositories are created, not viewable
+    PUBLISHED   = "Published",      //    X    |  X   |   X   | Created and viewable, with push access
+    CLOSED      = "Closed",         //    X    |  X   |       | Created, viewable, no push access
 }
 
 /*

@@ -2,7 +2,7 @@ import {AdminView} from "../AdminView";
 import Log from "../../../../../common/Log";
 import {
     AssignmentGrade,
-    AssignmentGradingRubric, QuestionGrade, SubQuestionGrade,
+    AssignmentGradingRubric, AssignmentInfo, QuestionGrade, SubQuestionGrade,
     SubQuestionGradingRubric
 } from "../../../../../common/types/CS340Types";
 import {UI} from "../../util/UI";
@@ -172,7 +172,9 @@ export class CS340AdminView extends AdminView {
 
                 // process max grade
                 let maxGrade:number = 0;
-                let assignRubric: AssignmentGradingRubric | null = deliv.custom;
+                let assignInfo: AssignmentInfo | null = deliv.custom;
+                if(assignInfo === null) continue;
+                let assignRubric: AssignmentGradingRubric = assignInfo.rubric;
                 if(assignRubric === null) continue;
 
                 for(const questionRubric of assignRubric.questions) {

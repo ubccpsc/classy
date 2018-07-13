@@ -5,7 +5,12 @@ import IREST from "../IREST";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {Deliverable, Grade, Person, Repository} from "../../Types";
 import {AssignmentController} from "../../controllers/340/AssignmentController";
-import {AssignmentGrade, AssignmentGradingRubric, QuestionGrade} from "../../../../common/types/CS340Types";
+import {
+    AssignmentGrade,
+    AssignmentGradingRubric,
+    AssignmentInfo,
+    QuestionGrade
+} from "../../../../common/types/CS340Types";
 import {GradesController} from "../../controllers/GradesController";
 import {PersonController} from "../../controllers/PersonController";
 import {RepositoryController} from "../../controllers/RepositoryController";
@@ -75,8 +80,9 @@ export default class CS340REST implements IREST {
                     res.send(204, {error: "Deliverable not found, please create the deliverable first"});
                     return next();
                 } else {
-                    if (deliv.custom !== null) {
-                        let rubric : AssignmentGradingRubric = deliv.custom;
+                    if (deliv.custom !== null && deliv.custom.rubric !== null) {
+                        let assignInfo : AssignmentInfo = deliv.custom;
+                        let rubric : AssignmentGradingRubric = assignInfo.rubric;
                         res.send(200, {response: rubric});
                     } else {
                         Log.info("cs340REST::getAssignmentRubric(...) - deliv.custom: " + deliv.custom);
@@ -99,8 +105,9 @@ export default class CS340REST implements IREST {
         delivController.getAllDeliverables().then((result) => {
             let assignRubrics: AssignmentGradingRubric[] = [];
             for(const deliv of result) {
-                if(deliv.custom !== null) {
-                    assignRubrics.push(deliv.custom);
+                if(deliv.custom !== null && deliv.custom.rubric !== null) {
+                    let assignInfo: AssignmentInfo = deliv.custom;
+                    assignRubrics.push(assignInfo.rubric);
                 }
            }
            res.send(200, {response: assignRubrics});
@@ -141,6 +148,7 @@ export default class CS340REST implements IREST {
     }
 
     // Takes all the grades synced up in the database and pushes them to Github
+    // TODO [Jonathan]: Add to routeMap handler
     public static releaseGrades(req: any, res: any, next: any) {
         // TODO [Jonathan]: Complete this
         const user = req.headers.user;
@@ -213,7 +221,6 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
-        // TODO [Jonathan]: Return an array of deliverables
         let delivController : DeliverablesController = new DeliverablesController();
 
         delivController.getAllDeliverables().then((result) => {
@@ -287,6 +294,18 @@ export default class CS340REST implements IREST {
         personController.getAllPeople().then(result => {
             res.send(200, {response: result});
         });
+        return next();
+    }
+
+    public static async provisionRepository(req:any, res:any, next:any) {
+        // TODO [Jonathan]: Complete this
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        // get deliverable ID
+
+
         return next();
     }
 }

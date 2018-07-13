@@ -32,19 +32,9 @@ export class CS340View implements IView {
 
     public renderPage(opts: {}) {
         Log.info('CS340View::renderPage() - start; opts: ' + JSON.stringify(opts));
-        let opsObject: any = opts;
-        if (opsObject.page !== null) {
-            console.log("got a non-null page value");
-            if (opsObject.page === "cs340/GradingView.html") {
-                // do stuff
-                console.log("got into grading");
-                this.populateGradingPage("a1", "jopika").then((result) => {
-                    Log.info("CS340View::renderPage() - finished populating");
-                });
-            }
-        }
-    }
 
+    }
+/*
     public testfunction() {
         console.log("A spooky message!");
         UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/GradingView.html', {
@@ -131,12 +121,12 @@ export class CS340View implements IView {
         }
     }
 
-    /**
+    /!**
      * Grabs the page and adds the grading view as specified in the deliverable
      * @param {string} delivId
      * @param {string} sid
      * @returns {Promise<void>}
-     */
+     *!/
     public async populateGradingPage(delivId: string, sid: string) {
         Log.info("CS340View::populateGradingPage() - start");
 
@@ -566,7 +556,7 @@ export class CS340View implements IView {
         return returnArray;
     }
 
-    /*
+    /!*
         // Using the submission data (grades), join the data with student and deliverable information
         private async processData(data: Grade[], delivId: string) {
 
@@ -673,7 +663,7 @@ export class CS340View implements IView {
 
             // console.log('grade data processed: ' + JSON.stringify(students));
             return students;
-        }*/
+        }*!/
 
 
     // Helper to decide if record should be included in table
@@ -687,5 +677,5 @@ export class CS340View implements IView {
     private checkIfWarning(gradeInputElement: HTMLInputElement): boolean {
         // TODO: Complete this
         return false; // stub
-    }
+    }*/
 }
