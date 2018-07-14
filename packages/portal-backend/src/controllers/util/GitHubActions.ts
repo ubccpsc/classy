@@ -538,13 +538,13 @@ export class GitHubActions {
 
     public async isOnAdminTeam(userName: string): Promise<boolean> {
         const isAdmin = await this.isOnTeam('admin', userName);
-        Log.trace('GitHubController::isOnAdminTeam( ' + userName + ' ) - result: ' + isAdmin);
+        Log.trace('GitHubAction::isOnAdminTeam( ' + userName + ' ) - result: ' + isAdmin);
         return isAdmin;
     }
 
     public async isOnStaffTeam(userName: string): Promise<boolean> {
         const isStaff = await this.isOnTeam('staff', userName);
-        Log.trace('GitHubController::isOnStaffTeam( ' + userName + ' ) - result: ' + isStaff);
+        Log.trace('GitHubAction::isOnStaffTeam( ' + userName + ' ) - result: ' + isStaff);
         return isStaff;
     }
 
@@ -553,19 +553,19 @@ export class GitHubActions {
 
         let teamNumber = await gh.getTeamNumber(teamName);
         if (teamNumber < 0) {
-            Log.warn('GitHubController::isOnTeam(..) - team: ' + teamName + ' does not exist for org: ' + gh.org);
+            Log.warn('GitHubAction::isOnTeam(..) - team: ' + teamName + ' does not exist for org: ' + gh.org);
             return false;
         }
 
         let teamMembers = await gh.getTeamMembers(teamNumber);
         for (const member of teamMembers) {
             if (member === userName) {
-                Log.info('GitHubController::isOnTeam(..) - user: ' + userName + ' IS on team: ' + teamName + ' for org: ' + gh.org);
+                Log.info('GitHubAction::isOnTeam(..) - user: ' + userName + ' IS on team: ' + teamName + ' for org: ' + gh.org);
                 return true;
             }
         }
 
-        Log.info('GitHubController::isOnTeam(..) - user: ' + userName + ' is NOT on team: ' + teamName + ' for org: ' + gh.org);
+        Log.info('GitHubAction::isOnTeam(..) - user: ' + userName + ' is NOT on team: ' + teamName + ' for org: ' + gh.org);
         return false;
     }
 

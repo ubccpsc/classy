@@ -72,45 +72,47 @@ export default class AdminRoutes implements IREST {
     }
 
 
-    /**
-     * Handler that succeeds if the user is staff.
-     *
-     * @param req
-     * @param res
-     * @param next
-     */
-    private static isStaff(req: any, res: any, next: any) {
-        Log.info('AdminRoutes::isStaff(..) - start');
-
-        const user = req.headers.user;
-        const token = req.headers.token;
-
-        const ac = new AuthController();
-        ac.isPrivileged(user, token).then(function (priv) {
-                Log.trace('AdminRoutes::isPrivileged(..) - in isStaff: ' + JSON.stringify(priv));
-                if (priv.isStaff === true) {
-                    return next();
-                } else {
-                    res.send(401, {
-                        failure: {
-                            message:      'Authorization error; user not staff.',
-                            shouldLogout: false
-                        }
-                    });
-                    return next(false);
-                }
-            }
-        ).catch(function (err) {
-            Log.error('AdminRoutes::isStaff(..) - ERROR: ' + err.message);
-            res.send(401, {
-                failure: {
-                    message:      'Authorization error; user not staff.',
-                    shouldLogout: false
-                }
-            });
-            return next(false);
-        });
-    }
+    // NOTE: This might not actually be used by anything
+    //
+    // /**
+    //  * Handler that succeeds if the user is staff.
+    //  *
+    //  * @param req
+    //  * @param res
+    //  * @param next
+    //  */
+    // private static isStaff(req: any, res: any, next: any) {
+    //     Log.info('AdminRoutes::isStaff(..) - start');
+    //
+    //     const user = req.headers.user;
+    //     const token = req.headers.token;
+    //
+    //     const ac = new AuthController();
+    //     ac.isPrivileged(user, token).then(function (priv) {
+    //             Log.trace('AdminRoutes::isPrivileged(..) - in isStaff: ' + JSON.stringify(priv));
+    //             if (priv.isStaff === true) {
+    //                 return next();
+    //             } else {
+    //                 res.send(401, {
+    //                     failure: {
+    //                         message:      'Authorization error; user not staff.',
+    //                         shouldLogout: false
+    //                     }
+    //                 });
+    //                 return next(false);
+    //             }
+    //         }
+    //     ).catch(function (err) {
+    //         Log.error('AdminRoutes::isStaff(..) - ERROR: ' + err.message);
+    //         res.send(401, {
+    //             failure: {
+    //                 message:      'Authorization error; user not staff.',
+    //                 shouldLogout: false
+    //             }
+    //         });
+    //         return next(false);
+    //     });
+    // }
 
     /**
      * Handler that succeeds if the user is admin.
@@ -200,7 +202,7 @@ export default class AdminRoutes implements IREST {
             return next();
         }).catch(function (err) {
             Log.error('AdminRoutes::getDeliverables(..) - ERROR: ' + err.message);
-            const payload: StudentTransportPayload = {
+            const payload: Payload = {
                 failure: {
                     message:      'Unable to deliverable list; ERROR: ' + err.message,
                     shouldLogout: false
@@ -294,7 +296,6 @@ export default class AdminRoutes implements IREST {
 
     }
 
-
     private static postDeliverable(req: any, res: any, next: any) {
         Log.info('AdminRoutes::postDeliverable(..) - start');
         let payload: Payload;
@@ -321,6 +322,7 @@ export default class AdminRoutes implements IREST {
                 dc.saveDeliverable(deliv).then(function (saveSucceeded) {
                     if (saveSucceeded !== null) {
                         // worked (would have returned a Deliverable)
+                        Log.info('AdminRoutes::postDeliverable() - done');
                         payload = {success: {message: 'Deliverable saved successfully'}};
                         res.send(200, payload);
                     } else {
@@ -336,5 +338,9 @@ export default class AdminRoutes implements IREST {
             handleError('Deliverable creation / update unsuccessful: ' + err);
         }
     }
+
+    // TODO: upload CSV
+
+    // TODO: fail to upload invalid CSV
 
 }
