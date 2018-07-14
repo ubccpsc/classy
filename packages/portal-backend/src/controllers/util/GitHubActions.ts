@@ -569,43 +569,97 @@ export class GitHubActions {
         return false;
     }
 
-    public async importRepoFS(importRepo: string, studentRepo: string): Promise<boolean> {
+    public async importRepoFS(importRepo: string, studentRepo: string, path?: string): Promise<boolean> {
         Log.info('GitHubAction::importRepoFS( ' + importRepo + ', ' + studentRepo + ' ) - start');
         const that = this;
 
         function addGithubAuthToken(url: string) {
             let start_append = url.indexOf('//') + 2;
             let token = that.gitHubAuthToken;
+            // let token = that.gitHubUserName;
+
             let authKey = token.substr(token.indexOf('token ') + 6) + '@';
+            // let authKey = token + '@';
             // creates "longokenstring@githuburi"
             return url.slice(0, start_append) + authKey + url.slice(start_append);
         }
 
         const exec = require('child-process-promise').exec;
         const tempDir = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
+        const tempDir2 = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
         const tempPath = tempDir.path;
+        const tempPath2 = tempDir2.path;
         const authedStudentRepo = addGithubAuthToken(studentRepo);
         const authedImportRepo = addGithubAuthToken(importRepo);
 
-        return cloneRepo().then(() => {
-            return enterRepoPath()
-                .then(() => {
-                    return removeGitDir();
-                }).then(() => {
-                    return initGitDir();
-                }).then(() => {
-                    return changeGitRemote();
-                }).then(() => {
-                    return addFilesToRepo();
-                }).then(() => {
-                    return pushToNewRepo();
-                }).then(() => {
-                    return Promise.resolve(true); // made it cleanly
-                }).catch((err: any) => {
-                    Log.error('GitHubAction::cloneRepo() - ERROR: ' + err);
-                    return Promise.reject(err);
+        if(path) {
+            return cloneRepo2().then(() => {
+                return moveFiles(path)
+                    .then(() => {
+                        return enterRepoPath();
+                    }).then(() => {
+                        return removeGitDir();
+                    }).then(() => {
+                        return initGitDir();
+                    }).then(() => {
+                        return changeGitRemote();
+                    }).then(() => {
+                        return addFilesToRepo();
+                    }).then(() => {
+                        return pushToNewRepo();
+                    }).then(() => {
+                        return Promise.resolve(true); // made it cleanly
+                    }).catch((err: any) => {
+                        Log.error('GitHubAction::cloneRepo() - ERROR: ' + err);
+                        return Promise.reject(err);
+                    });
+            });
+        } else {
+            return cloneRepo().then(() => {
+                return enterRepoPath()
+                    .then(() => {
+                        return removeGitDir();
+                    }).then(() => {
+                        return initGitDir();
+                    }).then(() => {
+                        return changeGitRemote();
+                    }).then(() => {
+                        return addFilesToRepo();
+                    }).then(() => {
+                        return pushToNewRepo();
+                    }).then(() => {
+                        return Promise.resolve(true); // made it cleanly
+                    }).catch((err: any) => {
+                        Log.error('GitHubAction::cloneRepo() - ERROR: ' + err);
+                        return Promise.reject(err);
+                    });
+            });
+        }
+
+        function moveFiles(filesPath: string) {
+            Log.info('GithubManager::importRepoFS(..)::moveFiles( ' + filesPath + ' ) - moving files');
+            return exec(`cp -r ${tempPath2}/${path} ${tempPath}`)
+                .then(function (result: any) {
+                    Log.info('GithubManager::importRepoFS(..)::moveFiles(..) - done');
+                    Log.trace('GithubManager::importRepoFS(..)::moveFiles(..) - stdout: ' + result.stdout);
+                    if (result.stderr) {
+                        Log.warn('GithubManager::importRepoFS(..)::moveFiles(..) - stderr: ' + result.stderr);
+                    }
                 });
-        });
+        }
+
+        function cloneRepo2() {
+            Log.info('GithubManager::importRepoFS(..)::cloneRepo() - cloning: ' + importRepo);
+            return exec(`git clone ${authedImportRepo} ${tempPath2}`)
+                .then(function (result: any) {
+                    Log.info('GithubManager::importRepoFS(..)::cloneRepo() - done:');
+                    Log.trace('GithubManager::importRepoFS(..)::cloneRepo() - stdout: ' + result.stdout);
+                    if (result.stderr) {
+                        Log.warn('GithubManager::importRepoFS(..)::cloneRepo() - stderr: ' + result.stderr);
+                    }
+                });
+        }
+
 
         function cloneRepo() {
             Log.info('GithubManager::importRepoFS(..)::cloneRepo() - cloning: ' + importRepo);

@@ -14,6 +14,9 @@ import {
 import {GradesController} from "../../controllers/GradesController";
 import {PersonController} from "../../controllers/PersonController";
 import {RepositoryController} from "../../controllers/RepositoryController";
+import {GitHubController} from "../../controllers/GitHubController";
+import {TeamController} from "../../controllers/TeamController";
+import Config, {ConfigKey} from "../../../../common/Config";
 
 export default class CS340REST implements IREST {
     public constructor() {
@@ -33,6 +36,8 @@ export default class CS340REST implements IREST {
         server.put('/setAssignmentGrade', CS340REST.setAssignmentGrade);
         server.get('/getPersonByID/:gitHubUserName', CS340REST.getPersonByID);
         server.get('/getAllPersons', CS340REST.getAllPersons);
+        server.get('/testProvision', CS340REST.testProvision);
+        server.get('/testProvision2', CS340REST.testProvision2);
     }
 
     public static getAssignmentGrade(req: any, res: any, next: any) {
@@ -308,4 +313,52 @@ export default class CS340REST implements IREST {
 
         return next();
     }
+
+    public static async testProvision(req:any, res:any, next:any) {
+        // TODO [Jonathan]: Complete this
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        // get deliverable ID
+        // let ac : AssignmentController = new AssignmentController();
+        let ghc: GitHubController = new GitHubController();
+        let tc: TeamController = new TeamController();
+        let testTeam = await tc.getTeam("team1");
+        const WEBHOOKADDR = Config.getInstance().getProp(ConfigKey.backendUrl) + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/githubWebhook';
+
+        let resultStatus = await ghc.provisionRepository("test_repo", [testTeam], "https://github.com/CPSC340/course_config", WEBHOOKADDR);
+        if(resultStatus) {
+            res.send(200, "Complete!");
+        } else {
+            res.send(400, "Error");
+        }
+        return next();
+    }
+
+
+//    labs/lab1
+
+    public static async testProvision2(req:any, res:any, next:any) {
+        // TODO [Jonathan]: Complete this
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        // get deliverable ID
+        // let ac : AssignmentController = new AssignmentController();
+        let ghc: GitHubController = new GitHubController();
+        let tc: TeamController = new TeamController();
+        let testTeam = await tc.getTeam("team1");
+        const WEBHOOKADDR = Config.getInstance().getProp(ConfigKey.backendUrl) + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/githubWebhook';
+
+        let resultStatus = await ghc.provisionRepository("test_repo", [testTeam], "https://github.com/CPSC340/course_config", WEBHOOKADDR, "labs/lab1/*");
+        if(resultStatus) {
+            res.send(200, "Complete!");
+        } else {
+            res.send(400, "Error");
+        }
+        return next();
+    }
+
 }

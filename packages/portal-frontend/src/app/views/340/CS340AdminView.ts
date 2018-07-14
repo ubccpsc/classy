@@ -614,6 +614,12 @@ export class CS340AdminView extends AdminView {
         });
     }
 
+    public testFunction2() {
+        console.log("-- Begin testing repository provisioning--");
+
+
+    }
+
     public transitionGradingPage(sid:string, aid:string) {
         // Move to grading
         UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/GradingView.html', {
