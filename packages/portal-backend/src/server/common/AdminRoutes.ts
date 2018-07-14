@@ -318,15 +318,15 @@ export default class AdminRoutes implements IREST {
             const result = dc.validateDeliverableTransport(delivTrans);
             if (result === null) {
                 let deliv = dc.translateTransport(delivTrans);
-                dc.saveDeliverable(deliv).then(function (saveSucceeded: any) {
-                    // worked
+                dc.saveDeliverable(deliv).then(function (saveSucceeded) {
                     if (saveSucceeded !== null) {
+                        // worked (would have returned a Deliverable)
                         payload = {success: {message: 'Deliverable saved successfully'}};
                         res.send(200, payload);
                     } else {
                         handleError("Deliverable not saved.");
                     }
-                }).catch(function (err: any) {
+                }).catch(function (err) {
                     handleError("Deliverable not saved. ERROR: " + err);
                 });
             } else {
