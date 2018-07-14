@@ -3,6 +3,7 @@ import Log from "../../../common/Log";
 import {DatabaseController} from "./DatabaseController";
 import {Grade} from "../Types";
 import {GradePayload} from "../../../common/types/SDMMTypes";
+import {AutoTestGradeTransport} from "../../../common/types/PortalTypes";
 
 export class GradesController {
 
@@ -88,4 +89,78 @@ export class GradesController {
             return false;
         }
     }
+
+
+    /**
+     * Validates the AutoTest grade object.
+     *
+     * @param {AutoTestGradeTransport} record
+     * @returns {string | null} String will contain a description of the error, null if successful.
+     */
+    public validateAutoTestGrade(record: AutoTestGradeTransport): string | null {
+        // multiple returns is poor, but at least it's quick
+        Log.info('GradesController::validateAutoTestGrade(..) - start');
+
+        if (typeof record === 'undefined') {
+            const msg = 'object undefined';
+            Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        if (record === null) {
+            const msg = 'object null';
+            Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        // just rudimentary checking
+
+        // delivId: string; // invariant: deliv grade is associated with
+        if (typeof record.delivId === 'undefined') {
+            const msg = 'delivId undefined';
+            Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // score: number; // grade: < 0 will mean 'N/A' in the UI
+        if (typeof record.score === 'undefined') {
+            const msg = 'score undefined';
+            Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // comment: string; // simple grades will just have a comment
+        if (typeof record.comment === 'undefined') {
+            const msg = 'comment undefined';
+            Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // urlName: string | null; // description to go with the URL (repo if exists)
+        if (typeof record.urlName === 'undefined') {
+            const msg = 'urlName undefined';
+            Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // URL: string | null; // commit URL if known, otherwise repo URL (commit / repo if exists)
+        if (typeof record.URL === 'undefined') {
+            const msg = 'URL undefined';
+            Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // timestamp: number; // even if grade < 0 might as well return when the entry was made
+        if (typeof record.timestamp !== 'number') {
+            const msg = 'timestamp missing';
+            Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // custom: any;
+        if (typeof record.custom !== 'object') {
+            const msg = 'custom object missing';
+            Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        Log.info('GradesController::validateAutoTestGrade(..) - done; object is valid');
+
+        return null;
+    }
+
 }
