@@ -43,7 +43,7 @@ export class TeamController {
                 let peopleIds: string[] = people.map(person => person.id);
                 const team: Team = {
                     id:        name,
-                    url:       null,
+                    URL:       null,
                     personIds: peopleIds,
                     custom:    custom
                 };

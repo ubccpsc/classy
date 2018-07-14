@@ -4,7 +4,8 @@
     "description": "SDMM Student Portal Backend",
     "main": "build/App.js",
     "scripts": {
-        "test": "node --require dotenv/config ./node_modules/.bin/mocha --timeout 30000 --recursive",
+		"test": "node --require dotenv/config ./node_modules/.bin/mocha --timeout 30000 --recursive",
+		"testWorks": "node --require dotenv/config ./node_modules/.bin/mocha --timeout 30000 --recursive ./test dotenv_config_path=/Users/rtholmes/GoogleDrive/dev/classy/.env",
         "cover": "nyc --reporter html yarn run test",
         "build": "tsc"
     },
@@ -19,9 +20,11 @@
     },
     "homepage": "https://github.com/ubccpsc/sdmm-portal-backend#readme",
     "dependencies": {
+        "@types/csv-parse": "^1.1.11",
         "awesome-typescript-loader": "^3.4.1",
         "child-process-promise": "^2.2.1",
         "client-oauth2": "^4.1.0",
+        "csv-parse": "^2.5.0",
         "dotenv": "^5.0.1",
         "fs-extra": "^5.0.0",
         "mocha": "^5.1.1",

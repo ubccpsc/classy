@@ -2,24 +2,20 @@
  * Created by rtholmes on 2016-06-19.
  */
 
-import Server from "./server/Server";
 import Log from "./../../common/Log";
-import Config from "../../common/Config";
+import Config, {ConfigKey} from "../../common/Config";
 
-// import {IConfig, AppConfig} from './../../common../../../common/Config';
-// import MongoDB from './db/MongoDB';
+import Server from "./server/Server";
 
 /**
  * Starts the server; doesn't listen to whether the start was successful.
  */
 export class AutoTestDaemon {
 
-    // private config: IConfig = new AppConfig();
-
     public initServer() {
         Log.info("AutoTestDaemon::initServer() - start");
 
-        const portNum = Number(Config.getInstance().getProp("port"));
+        const portNum = Number(Config.getInstance().getProp(ConfigKey.autotestPort));
 
         // start server
         const s = new Server();
@@ -33,7 +29,7 @@ export class AutoTestDaemon {
 
 }
 
-// This ends up starting the whole system and listens on a hardcoded port (4321)
+// This ends up starting the whole system
 Log.info("AutoTest Daemon - starting");
 const app = new AutoTestDaemon();
 app.initServer();
@@ -50,4 +46,3 @@ process.on('unhandledRejection', (reason, p) => {
     }
 });
 Log.info("AutoTestDaemon - registering unhandled rejection; done");
-// Promise.reject('foo');

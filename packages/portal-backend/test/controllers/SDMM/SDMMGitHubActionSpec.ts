@@ -1,6 +1,4 @@
-const loadFirst = require('../../GlobalSpec');
-const rFirst = require('./SDMMControllerSpec'); // so we go last
-
+import {SDMMController} from "../../../src/controllers/SDMM/SDMMController";
 import {expect} from "chai";
 import "mocha";
 
@@ -10,9 +8,13 @@ import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
 import {ActionPayload, GradePayload} from "../../../../common/types/SDMMTypes";
 
-import {GitHubActions, GitHubController} from "../../../src/controllers/GitHubController";
-import {CourseController} from "../../../src/controllers/CourseController";
+import {GitHubController} from "../../../src/controllers/GitHubController";
+import {GitHubActions} from "../../../src/controllers/util/GitHubActions";
 import {GradesController} from "../../../src/controllers/GradesController";
+import Config, {ConfigKey} from "../../../../common/Config";
+
+const loadFirst = require('../../GlobalSpec');
+const rFirst = require('./SDMMControllerSpec'); // so we go last
 
 describe.skip("SDMM:: SDMMGitHubActions", () => {
 
@@ -20,13 +22,20 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
 
     let TIMEOUT = 5000;
 
-    let ORGNAME = 'secapstone';
+    // let ORGNAME = 'secapstone';
     const REPONAME = getProjectPrefix() + Test.REPONAME1;
     const TEAMNAME = getTeamPrefix() + Test.TEAMNAME1;
 
+    let oldOrg: string = null; // track the old org so it can be restored
+
     before(async () => {
-        Test.ORGNAME = ORGNAME; // use real org name so the repos are provisioned correctly
-        // config.name will still be test though
+        // test github actions on a test github instance (for safety)
+        oldOrg = Config.getInstance().getProp(ConfigKey.org);
+        Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
+    });
+
+    before(async () => {
+        Config.getInstance().setProp(ConfigKey.org, oldOrg);
     });
 
     beforeEach(function () {
@@ -241,7 +250,7 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
     it("Should be able to provision d0.", async function () {
         const start = Date.now();
 
-        const sc = new CourseController(new GitHubController());
+        const sc = new SDMMController(new GitHubController());
 
         Log.test('Provisioning three users');
         const p1 = await sc.handleUnknownUser(Test.USERNAMEGITHUB1);
@@ -272,6 +281,7 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
         let grade: GradePayload = {
             score:     65,
             comment:   'test',
+            urlName:   'urlName',
             URL:       'TESTURL',
             timestamp: Date.now(),
             custom:    {}
@@ -281,6 +291,7 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
         grade = {
             score:     70,
             comment:   'test',
+            urlName:   'urlName',
             URL:       'TESTURL',
             timestamp: Date.now(),
             custom:    {}
@@ -290,6 +301,7 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
         grade = {
             score:     75,
             comment:   'test',
+            urlName:   'name',
             URL:       'TESTURL',
             timestamp: Date.now(),
             custom:    {}
@@ -302,7 +314,7 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
     it("Should be able to provision an individual d1.", async function () {
         const start = Date.now();
 
-        const sc = new CourseController(new GitHubController());
+        const sc = new SDMMController(new GitHubController());
 
         Log.test('Provision solo D1');
         const provision = await sc.provision('d1', [Test.USERNAMEGITHUB1]);
@@ -317,7 +329,7 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
     it("Should be able to provision a paired d1.", async function () {
         const start = Date.now();
 
-        const sc = new CourseController(new GitHubController());
+        const sc = new SDMMController(new GitHubController());
 
         Log.test('Provision paired d1');
         const provision = await sc.provision('d1', [Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB3]);
@@ -349,7 +361,7 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
     async function deleteStale(): Promise<true> {
         Log.test('GitHubActionSpec::deleteStale() - start');
 
-        let repos = await gh.listRepos(Test.ORGNAME);
+        let repos = await gh.listRepos();
         expect(repos).to.be.an('array');
         expect(repos.length > 0).to.be.true;
 
@@ -359,19 +371,19 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
             for (const r of TESTREPONAMES) {
                 if (repo.name === r) {
                     Log.info('Removing stale repo: ' + repo.name);
-                    let val = await gh.deleteRepo(Test.ORGNAME, r);
+                    let val = await gh.deleteRepo(r);
                     // expect(val).to.be.true;
                 }
             }
         }
 
-        repos = await gh.listRepos(Test.ORGNAME);
+        repos = await gh.listRepos();
         // delete test repos if needed
         for (const repo of repos as any) {
             Log.info('Evaluating repo: ' + repo.name);
             if (repo.name.indexOf('TEST__X__') === 0) {
                 Log.info('Removing stale repo: ' + repo.name);
-                let val = await gh.deleteRepo(Test.ORGNAME, repo.name);
+                let val = await gh.deleteRepo(repo.name);
                 // expect(val).to.be.true;
                 let teamName = repo.name.substr(15);
                 Log.info('Adding stale team name: ' + repo.name);
@@ -380,7 +392,7 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
         }
 
         // delete teams if needed
-        let teams = await gh.listTeams(Test.ORGNAME);
+        let teams = await gh.listTeams();
         expect(teams).to.be.an('array');
         expect(teams.length > 0).to.be.true;
         Log.test('All Teams: ' + JSON.stringify(teams));
@@ -390,7 +402,7 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
             for (const t of TESTTEAMNAMES) {
                 if (team.name === t) {
                     Log.test("Removing stale team: " + team.name);
-                    let val = await gh.deleteTeam(Test.ORGNAME, team.id);
+                    let val = await gh.deleteTeam(team.id);
                     // expect(val).to.be.true;
                 }
             }

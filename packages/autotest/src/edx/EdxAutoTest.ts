@@ -1,27 +1,23 @@
 import Log from "../../../common/Log";
 
-import {ICommentEvent, ICommitRecord, IContainerInput, IPushEvent} from "../Types";
+import {IAutoTestResult, IContainerInput, IPushEvent} from "../Types";
 
 import {AutoTest} from "../autotest/AutoTest";
-import {IGithubService} from "../github/GithubService";
+import {IGitHubService} from "../github/GitHubService";
 import {IClassPortal} from "../autotest/ClassPortal";
 import {IDataStore} from "../autotest/DataStore";
 
 export class EdxAutoTest extends AutoTest {
 
-    private classPortal: IClassPortal = null;
-    private github: IGithubService = null;
+    private github: IGitHubService = null;
 
-    constructor(courseId: string, dataStore: IDataStore, portal: IClassPortal, github: IGithubService) {
-        super(courseId, dataStore); // this.org = org;
-        this.classPortal = portal;
+    constructor(dataStore: IDataStore, portal: IClassPortal, github: IGitHubService) {
+        super(dataStore, portal);
         this.github = github;
     }
 
     public async handleTestRequest(commitURL: string, delivId: string): Promise<void> {
         Log.info("EdxAutoTest::handleTestRequest(..) - start; url: " + commitURL + "; delivId: " + delivId);
-
-        const start = Date.now();
 
         if (typeof commitURL === "undefined" || commitURL === null) {
             // ERROR
@@ -38,7 +34,7 @@ export class EdxAutoTest extends AutoTest {
         }
 
         const info = await EdxUtil.simulatePushEvent(commitURL);
-        const input: IContainerInput = {org: this.courseId, delivId, pushInfo: info};
+        const input: IContainerInput = {delivId, pushInfo: info};
         await this.dataStore.savePush(input);
 
         this.addToStandardQueue(input);
@@ -47,7 +43,7 @@ export class EdxAutoTest extends AutoTest {
         return Promise.resolve();
     }
 
-    protected processExecution(data: ICommitRecord): Promise<void> {
+    protected processExecution(data: IAutoTestResult): Promise<void> {
         Log.info("EdxAutoTest::processExecution(..) - start; url: " + data.commitURL);
         return Promise.resolve();
     }
@@ -63,16 +59,11 @@ export class EdxUtil {
             cloneURL:    '',
             commitSHA:   '', // SHA
             commitURL:   'commitURL', // full url to commit
-            org:         '', // orgName
             projectURL:  '', // full url to project
             postbackURL: '', // where to send postback results
             timestamp:   -1 // timestamp of push event
         };
         return Promise.resolve(evt);
-    }
-
-    public static convertPayload(request: any): ICommentEvent {
-        return null;
     }
 
 }

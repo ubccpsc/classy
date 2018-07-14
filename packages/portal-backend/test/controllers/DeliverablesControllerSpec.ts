@@ -16,15 +16,27 @@ describe("DeliverablesController", () => {
 
     before(async () => {
         DELIV1 = {
-            id:               Test.DELIVID1,
+            id: Test.DELIVID1,
+
+            URL:              'https://NOTSET',
             openTimestamp:    -1,
             closeTimestamp:   -1,
             gradesReleased:   false,
-            delay:            -1,
+            // delay:            -1,
             teamMinSize:      1,
             teamMaxSize:      1,
             teamSameLab:      false,
             teamStudentsForm: false,
+            teamPrefix:       'team_',
+            repoPrefix:       'd1_',
+            // bootstrapUrl:     '',
+            autotest:         {
+                dockerImage:        'testImage',
+                studentDelay:       60 * 60 * 12, // 12h
+                maxExecTime:        300,
+                regressionDelivIds: [],
+                custom:             {}
+            },
             custom:           {}
         };
     });
@@ -34,23 +46,23 @@ describe("DeliverablesController", () => {
     });
 
     it("Should be able to get all deliverables, even if there are none.", async () => {
-        let delivs = await dc.getAllDeliverables(Test.ORGNAME);
+        let delivs = await dc.getAllDeliverables();
         expect(delivs).to.have.lengthOf(0);
     });
 
     it("Should be able to save a deliverable.", async () => {
-        let delivs = await dc.getAllDeliverables(Test.ORGNAME);
+        let delivs = await dc.getAllDeliverables();
         expect(delivs).to.have.lengthOf(0);
 
         let valid = await dc.saveDeliverable(DELIV1);
         expect(valid).to.not.be.null;
-        delivs = await dc.getAllDeliverables(Test.ORGNAME);
+        delivs = await dc.getAllDeliverables();
         expect(delivs).to.have.lengthOf(1);
         expect(delivs[0].id).to.equal(DELIV1.id);
     });
 
     it("Should update an existing deliverable.", async () => {
-        let delivs = await dc.getAllDeliverables(Test.ORGNAME);
+        let delivs = await dc.getAllDeliverables();
         expect(delivs).to.have.lengthOf(1);
 
         var deliv2: Deliverable = Object.assign({}, DELIV1);
@@ -59,7 +71,7 @@ describe("DeliverablesController", () => {
 
         let valid = await dc.saveDeliverable(deliv2);
         expect(valid).to.not.be.null;
-        delivs = await dc.getAllDeliverables(Test.ORGNAME);
+        delivs = await dc.getAllDeliverables();
         expect(delivs).to.have.lengthOf(1);
         expect(delivs[0].gradesReleased).to.be.true;
         expect(delivs[0].teamMinSize).to.equal(4);

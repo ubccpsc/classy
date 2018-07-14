@@ -1,11 +1,11 @@
-import Config from "../../../../common/Config";
+import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
 
-import {ICommitRecord, IContainerInput, IContainerOutput, IGradeReport} from "../../Types";
+import {IAutoTestResult, IContainerInput, IContainerOutput, IGradeReport} from "../../Types";
 
 interface IGrader {
-    execute(): Promise<ICommitRecord>;
+    execute(): Promise<IAutoTestResult>;
 }
 
 export class MockGrader implements IGrader {
@@ -18,16 +18,16 @@ export class MockGrader implements IGrader {
         this.input = input;
     }
 
-    public async execute(): Promise<ICommitRecord> {
+    public async execute(): Promise<IAutoTestResult> {
         try {
             Log.info("MockGrader::execute() - start; commitSHA: " + this.input.pushInfo.commitSHA);
-            const oracleToken = Config.getInstance().getProp("githubOracleToken");
-            const dockerId = Config.getInstance().getProp("dockerId");
-            const workspace = Config.getInstance().getProp("workspace");
+            // const oracleToken = Config.getInstance().getProp(ConfigKey.githubOracleToken);
+            // const dockerId = Config.getInstance().getProp(ConfigKey.dockerId);
+            // const workspace = Config.getInstance().getProp(ConfigKey.workspace);
 
             // TODO: This should really become TestDocker.ts or something that can be instantiated
             let timeout = 10000;
-            if (Config.getInstance().getProp("name") === "test") {
+            if (Config.getInstance().getProp(ConfigKey.name) === Config.getInstance().getProp(ConfigKey.testname)) {
                 timeout = 20; // don't slow down tests; don't need a lot to get out of order here
             }
             await Util.timeout(timeout); // simulate the container taking longer than the rest of the process
@@ -61,7 +61,10 @@ export class MockGrader implements IGrader {
                 out.feedback = "Build Problem Encountered.";
             }
 
-            const ret: ICommitRecord = {
+            const ret: IAutoTestResult = {
+                delivId:   this.input.delivId,
+                repoId:    this.input.pushInfo.repoId,
+                timestamp: this.input.pushInfo.timestamp,
                 commitURL: this.input.pushInfo.commitURL,
                 commitSHA: this.input.pushInfo.commitSHA,
                 input:     this.input,

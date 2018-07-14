@@ -44,11 +44,12 @@ export class CS310View implements IView {
     }
 
     public checkStatus() {
-        const msg = "Updating status";
+        Log.warn("CS310view::checkStatus() - NOT IMPLEMENTED");
+        // const msg = "Updating status";
         // UI.showModal(msg);
 
-        const url = this.remote + '/currentStatus';
-        this.fetchStatus(url);
+        // const url = this.remote + '/currentStatus';
+        // this.fetchStatus(url);
     }
 
     public renderPage(opts: {}) {
@@ -144,9 +145,10 @@ export class CS310View implements IView {
     private getOptions() {
         const options = {
             headers: {
-                user:  localStorage.user,
-                token: localStorage.token,
-                org:   localStorage.org
+                'Content-Type': 'application/json',
+                'user':         localStorage.user,
+                'token':        localStorage.token,
+                'org':          localStorage.org
             }
         };
         return options;

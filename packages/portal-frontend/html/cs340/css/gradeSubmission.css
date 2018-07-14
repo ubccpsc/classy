@@ -10,7 +10,7 @@
     /* Something goes here */
 }
 
-.subQuestionBody {
+.subQuestionBody
     display: flex;
     flex-direction: row;
     margin-bottom: 25px;

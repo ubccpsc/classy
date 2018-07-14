@@ -12,6 +12,7 @@ import {GradePayload, StatusPayload} from "../../../../../common/types/SDMMTypes
 
 import {UI} from "../../util/UI";
 import {IView} from "../IView";
+import {Factory} from "../../Factory";
 
 export class SDMMSummaryView implements IView {
 
@@ -48,7 +49,7 @@ export class SDMMSummaryView implements IView {
         const msg = "Updating status";
         // UI.showModal(msg);
 
-        const url = this.remote + '/currentStatus';
+        const url = this.remote + '/sdmm/currentStatus';
         this.fetchStatus(url);
     }
 
@@ -56,7 +57,7 @@ export class SDMMSummaryView implements IView {
 
         this.showModal("Provisioning D0 Repository.<br/>This can take up to 5 minutes.<br/>This dialog will clear as soon as the operation is complete.")
 
-        const url = this.remote + '/performAction/provisionD0';
+        const url = this.remote + '/sdmm/performAction/provisionD0';
         Log.info('SDDM::createD0Repository( ' + url + ' ) - start');
 
         let options: any = this.getOptions();
@@ -90,7 +91,7 @@ export class SDMMSummaryView implements IView {
     public async createD1Individual(): Promise<void> {
         Log.info("SDMMSummaryView::createD1Individual() - start");
 
-        const url = this.remote + '/performAction/provisionD1individual';
+        const url = this.remote + '/sdmm/performAction/provisionD1individual';
         Log.info('SDDM::createD1Individual( ' + url + ' ) - start');
 
         this.showModal("Provisioning D1 Repository.<br/>This can take up to 5 minutes.<br/>This dialog will clear as soon as the operation is complete.")
@@ -124,7 +125,7 @@ export class SDMMSummaryView implements IView {
 
         this.showModal("Provisioning D1 Repository.<br/>This can take up to 5 minutes.<br/>This dialog will clear as soon as the operation is complete.")
 
-        const url = this.remote + '/performAction/provisionD1team/' + partnerName;
+        const url = this.remote + '/sdmm/performAction/provisionD1team/' + partnerName;
         // TODO: actually provide team members!!!
         Log.info('SDDM::createD1Team( ' + url + ' ) - start');
 
@@ -343,7 +344,8 @@ export class SDMMSummaryView implements IView {
             headers: {
                 user:  localStorage.user,
                 token: localStorage.token,
-                org:   localStorage.org
+                // org:   localStorage.org
+                name:  Factory.getInstance().getName()
             }
         };
         return options;

@@ -9,7 +9,8 @@ import {Test} from "../../GlobalSpec";
 
 import Config from "../../../../common/Config";
 import Log from "../../../../common/Log";
-import {ActionPayload, FailurePayload, GradePayload, SDMMStatus} from "../../../../common/types/SDMMTypes";
+import {ActionPayload, GradePayload, SDMMStatus} from "../../../../common/types/SDMMTypes";
+import {FailurePayload} from "../../../../common/types/PortalTypes";
 
 import {Person} from "../../../src/Types";
 import {SDMMController} from "../../../src/controllers/SDMM/SDMMController";
@@ -18,7 +19,6 @@ import {RepositoryController} from "../../../src/controllers/RepositoryControlle
 import {TeamController} from "../../../src/controllers/TeamController";
 import {PersonController} from "../../../src/controllers/PersonController";
 import {TestGitHubController} from "../../../src/controllers/GitHubController";
-
 
 export class TestData {
 
@@ -164,6 +164,7 @@ describe("SDDM: SDMMController", () => {
         let grade: GradePayload = {
             score:     59,
             comment:   '',
+            urlName:   '',
             URL:       '',
             timestamp: Date.now(),
             custom:    {}
@@ -175,6 +176,7 @@ describe("SDDM: SDMMController", () => {
         grade = {
             score:     61,
             comment:   '',
+            urlName:   '',
             URL:       '',
             timestamp: Date.now(),
             custom:    {}
@@ -215,6 +217,7 @@ describe("SDDM: SDMMController", () => {
         let grade: GradePayload = {
             score:     59,
             comment:   '',
+            urlName:   '',
             URL:       '',
             timestamp: Date.now(),
             custom:    {}
@@ -226,6 +229,7 @@ describe("SDDM: SDMMController", () => {
         grade = {
             score:     61,
             comment:   '',
+            urlName:   '',
             URL:       '',
             timestamp: Date.now(),
             custom:    {}
@@ -243,6 +247,7 @@ describe("SDDM: SDMMController", () => {
         let grade: GradePayload = {
             score:     59,
             comment:   '',
+            urlName:   '',
             URL:       '',
             timestamp: Date.now(),
             custom:    {}
@@ -254,6 +259,7 @@ describe("SDDM: SDMMController", () => {
         grade = {
             score:     61,
             comment:   '',
+            urlName:   '',
             URL:       '',
             timestamp: Date.now(),
             custom:    {}
@@ -381,6 +387,7 @@ describe("SDDM: SDMMController", () => {
         let gradeR: GradePayload = {
             score:     65,
             comment:   'TESTCOMMENT',
+            urlName:   'TESTURLNAME',
             URL:       'TESTURL',
             timestamp: Date.now(),
             custom:    {}
@@ -479,6 +486,7 @@ describe("SDDM: SDMMController", () => {
         let gradeR: GradePayload = {
             score:     65,
             comment:   'TESTCOMMENT',
+            urlName:   'TESTURLNAME',
             URL:       'TESTURL',
             timestamp: Date.now(),
             custom:    {}
@@ -500,6 +508,7 @@ describe("SDDM: SDMMController", () => {
         gradeR = {
             score:     70,
             comment:   '',
+            urlName:   '',
             URL:       '',
             timestamp: Date.now(),
             custom:    {}

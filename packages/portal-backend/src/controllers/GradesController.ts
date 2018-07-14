@@ -23,7 +23,7 @@ export class GradesController {
     }
 
     public async createGrade(repoId: string, delivId: string, grade: GradePayload): Promise<boolean> {
-        Log.info("GradesController::createGrade( " + repoId + ", " + delivId + ",.. ) - start");
+        Log.info("GradesController::createGrade( " + repoId + ", " + delivId + ", ... ) - start");
         Log.trace("GradesController::createGrade(..) - payload: " + JSON.stringify(grade));
         try {
 
@@ -53,8 +53,7 @@ export class GradesController {
             }
 
             Log.info("GradesController::createGrade(..) - # people: " + allPeopleIds.length);
-
-            for (var personId of allPeopleIds) {
+            for (const personId of allPeopleIds) {
                 // set their grades
                 let gradeRecord = await this.getGrade(personId, delivId);
                 if (gradeRecord === null) {
@@ -64,6 +63,7 @@ export class GradesController {
                         delivId:   delivId,
                         score:     grade.score,
                         comment:   grade.comment,
+                        urlName:   grade.urlName,
                         URL:       grade.URL,
                         timestamp: grade.timestamp,
                         custom:    grade.custom
@@ -71,6 +71,7 @@ export class GradesController {
                     Log.trace("GradesController::createGrade(..) - new grade; personId: " + personId + "; grade: " + JSON.stringify(gradeRecord));
                 } else {
                     // update existing
+                    // personId & delivId are invariant
                     gradeRecord.score = grade.score;
                     gradeRecord.comment = grade.comment;
                     gradeRecord.URL = grade.URL;

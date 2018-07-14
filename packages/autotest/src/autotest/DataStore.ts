@@ -2,9 +2,9 @@ import {Collection, Db, MongoClient} from "mongodb";
 
 import Log from "../../../common/Log";
 import Util from "../../../common/Util";
-import Config from "../../../common/Config";
+import Config, {ConfigKey} from "../../../common/Config";
 
-import {ICommentEvent, ICommitRecord, IContainerInput, IFeedbackGiven, IPushEvent} from "../Types";
+import {IAutoTestResult, ICommentEvent, IContainerInput, IFeedbackGiven, IPushEvent} from "../Types";
 
 export interface IDataStore {
 
@@ -34,24 +34,25 @@ export interface IDataStore {
      */
     saveComment(info: ICommentEvent): Promise<void>;
 
-    getCommentRecord(commitUrl: string, delivId: string): Promise<ICommentEvent | null>;
+    getCommentRecord(commitURL: string, delivId: string): Promise<ICommentEvent | null>;
 
-    saveOutputRecord(outputInfo: ICommitRecord): Promise<void>;
+    // DO NOT DO THIS HERE: Classy should validate/save these records
+    // saveOutputRecord(outputInfo: IAutoTestResult): Promise<void>;
 
-    getOutputRecord(commitUrl: string, delivId: string): Promise<ICommitRecord | null>;
+    // getOutputRecord(commitURL: string, delivId: string): Promise<IAutoTestResult | null>;
 
     saveFeedbackGivenRecord(request: IFeedbackGiven): Promise<void>;
 
-    getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): Promise<IFeedbackGiven | null>;
+    getLatestFeedbackGivenRecord(delivId: string, userName: string): Promise<IFeedbackGiven | null>;
 
-    getFeedbackGivenRecordForCommit(commitUrl: string, userName: string): Promise<IFeedbackGiven | null>; // TODO: should this have delivId?
+    getFeedbackGivenRecordForCommit(commitURL: string, userName: string): Promise<IFeedbackGiven | null>; // TODO: should this have delivId?
 
     /**
      * Debugging / testing only, should not be commonly used.
      *
      * @returns {Promise<{records: ICommitRecord[]; comments: ICommentEvent[]; pushes: IPushEvent[]; feedback: IFeedbackGiven[]}>}
      */
-    getAllData(): Promise<{ records: ICommitRecord[], comments: ICommentEvent[], pushes: IPushEvent[], feedback: IFeedbackGiven[] }>;
+    getAllData(): Promise<{ records: IAutoTestResult[], comments: ICommentEvent[], pushes: IPushEvent[], feedback: IFeedbackGiven[] }>;
 
     /**
      * Debugging only:
@@ -210,19 +211,19 @@ export class MongoDataStore implements IDataStore {
         return null;
     }
 
-    public async saveOutputRecord(outputInfo: ICommitRecord): Promise<void> {
-        Log.trace("MongoDataStore::saveOutputRecord(..) - start");
-        try {
-            const start = Date.now();
-            await this.saveRecord(this.OUTPUTCOLL, outputInfo);
-            Log.trace("MongoDataStore::saveOutputRecord(..) - done; took: " + Util.took(start));
-        } catch (err) {
-            Log.error("MongoDataStore::saveOutputRecord(..) - ERROR: " + err);
-        }
-        return;
-    }
+    // public async saveOutputRecord(outputInfo: IAutoTestResult): Promise<void> {
+    //     Log.trace("MongoDataStore::saveOutputRecord(..) - start");
+    //     try {
+    //         const start = Date.now();
+    //         await this.saveRecord(this.OUTPUTCOLL, outputInfo);
+    //         Log.trace("MongoDataStore::saveOutputRecord(..) - done; took: " + Util.took(start));
+    //     } catch (err) {
+    //         Log.error("MongoDataStore::saveOutputRecord(..) - ERROR: " + err);
+    //     }
+    //     return;
+    // }
 
-    public async getOutputRecord(commitURL: string, delivId: string): Promise<ICommitRecord | null> {
+    public async getOutputRecord(commitURL: string, delivId: string): Promise<IAutoTestResult | null> {
         Log.trace("MongoDataStore::getOutputRecord(..) - start");
         try {
             const start = Date.now();
@@ -252,11 +253,11 @@ export class MongoDataStore implements IDataStore {
         return;
     }
 
-    public async getLatestFeedbackGivenRecord(courseId: string, delivId: string, userName: string): Promise<IFeedbackGiven | null> {
+    public async getLatestFeedbackGivenRecord(delivId: string, userName: string): Promise<IFeedbackGiven | null> {
         Log.trace("MongoDataStore::getLatestFeedbackGivenRecord(..) - start");
         try {
             const start = Date.now();
-            const res = await this.getRecords(this.FEEDBACKCOLL, {"org": courseId, "delivId": delivId, "personId": userName});
+            const res = await this.getRecords(this.FEEDBACKCOLL, {"delivId": delivId, "personId": userName});
             if (res === null) {
                 Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - record not found");
                 return null;
@@ -293,7 +294,7 @@ export class MongoDataStore implements IDataStore {
         return null;
     }
 
-    public async getAllData(): Promise<{ records: ICommitRecord[], comments: ICommentEvent[], pushes: IPushEvent[], feedback: IFeedbackGiven[] }> {
+    public async getAllData(): Promise<{ records: IAutoTestResult[], comments: ICommentEvent[], pushes: IPushEvent[], feedback: IFeedbackGiven[] }> {
         Log.trace("MongoDataStore::getAllData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
         let col: any = null;
 
@@ -310,7 +311,7 @@ export class MongoDataStore implements IDataStore {
         }
 
         col = await this.getCollection(this.OUTPUTCOLL);
-        const records: ICommitRecord[] = await <any>col.find({}).toArray();
+        const records: IAutoTestResult[] = await <any>col.find({}).toArray();
         for (const r of records as any) {
             delete r._id;
         }
@@ -327,7 +328,7 @@ export class MongoDataStore implements IDataStore {
 
     public async clearData(): Promise<void> {
         Log.warn("MongoDataStore::clearData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
-        if (Config.getInstance().getProp("name") === "test") {
+        if (Config.getInstance().getProp(ConfigKey.name) === Config.getInstance().getProp(ConfigKey.testname)) {
 
             let col: any = null;
             col = await this.getCollection(this.PUSHCOLL);
@@ -344,7 +345,9 @@ export class MongoDataStore implements IDataStore {
 
             Log.info("MongoDataStore::clearData() - files removed");
         } else {
-            throw new Error("MongoDataStore::clearData() - can only be called on test configurations");
+            const msg = "MongoDataStore::clearData() - can only be called on test configurations";
+            Log.warn(msg);
+            throw new Error(msg);
         }
         return;
     }
@@ -357,10 +360,10 @@ export class MongoDataStore implements IDataStore {
     private async open(): Promise<Db> {
         Log.trace("MongoDataStore::open() - start");
         if (this.db === null) {
-            const dbName = Config.getInstance().getProp("name");
+            const dbName = Config.getInstance().getProp(ConfigKey.name);
             Log.info("MongoDataStore::open() - db null; making new connection to: " + dbName);
 
-            const client = await MongoClient.connect(Config.getInstance().getProp("mongoUrl")); // 'mongodb://localhost:27017'
+            const client = await MongoClient.connect(Config.getInstance().getProp(ConfigKey.mongoUrl)); // 'mongodb://localhost:27017'
             this.db = await client.db(dbName);
 
             Log.info("MongoDataStore::open() - db null; new connection made");

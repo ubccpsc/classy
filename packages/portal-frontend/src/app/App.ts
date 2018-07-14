@@ -9,6 +9,7 @@ import {Network} from "./util/Network";
 import {OnsButtonElement, OnsPageElement} from "onsenui";
 import {Factory} from "./Factory";
 import {IView} from "./views/IView";
+import {AuthTransportPayload, ConfigTransport, ConfigTransportPayload} from "../../../common/types/PortalTypes";
 
 declare var classportal: any;
 
@@ -47,15 +48,17 @@ export class App {
         const that = this;
 
         // before anything else happens, get the org associated with the backend
-        await this.retrieveOrg();
+        await this.retrieveConfig();
 
         let validated = await that.validateCredentials();
         this.validated = validated;
-        Log.trace('App::init() - validated: ' + validated);
+        // Log.trace('App::init() - validated: ' + validated);
 
         if (validated === true) {
             Log.trace('App::init() - validated: true; simulating mainPageClick');
             that.handleMainPageClick();
+        } else {
+            Log.trace('App::init() - validated: false');
         }
 
         return new Promise(function (fulfill, reject) {
@@ -67,96 +70,54 @@ export class App {
                 that.toggleLoginButton();
 
                 const pageName = page.id;
+                let name: string = null;
 
-                let org: string = null;
+                name = Factory.getInstance().getName();
+                Log.trace('App::init()::init - name : ' + name + '; page: ' + pageName + '; opts: ' + JSON.stringify(event));
 
-                org = Factory.getInstance().getOrg();
-                localStorage.org = org; // TODO: remove; just use the factory to track this
-                Log.trace('App::init()::init - org: ' + org + '; pushed option');
-
-                Log.trace('App::init()::init - page: ' + pageName);
-
+                // Log.trace('App::init()::init - page: ' + pageName);
                 if (pageName === 'index') {
                     Log.trace('App::init()::init - index detected; pushing real target');
                     UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/landing.html');
                     return;
                 }
 
-                if (pageName === 'adminTabsPage') {
-                    // initializing tabs page for the first time
-                    // that.adminController = new AdminController(that, courseId);
-                    Log.warn('App::init()::init - page: ' + pageName + ' NOT IMPLEMENTED');
-                }
-
-                if (pageName === 'studentTabsPage') {
-                    // initializing tabs page for the first time
-                    // that.studentController = new StudentController(that, courseId);
-
-                    Log.info("App::init() - studentTabsPage init; attaching view");
-                    (<any>window).classportal.view = Factory.getInstance().getView(that.backendURL);
-
-                    const view = Factory.getInstance().getView(that.backendURL);
-                    that.view = view;
-
-                    Log.trace("App::init() - studentTabsPage init; view attached");
-                }
-
-                /*
-                // DO NOT DO THIS HERE; DO IT ON SHOW BELOW!
-                // Each page calls its own initialization controller.
-                if (that.studentController !== null) {
-                    if (typeof that.studentController[pageName] === 'function') {
-                        that.studentController[pageName]();//(page);
+                if (that.view === null) {
+                    let v: IView = null;
+                    if (pageName === 'AdminRoot') {
+                        // initializing tabs page for the first time
+                        Log.info("App::init() - AdminRoot init; attaching view");
+                        v = Factory.getInstance().getAdminView(that.backendURL);
+                        Log.trace("App::init() - AdminRoot init; view attached");
+                    } else if (pageName === 'StudentRoot') {
+                        // initializing tabs page for the first time
+                        Log.info("App::init() - StudentRoot init; attaching view");
+                        v = Factory.getInstance().getView(that.backendURL);
+                        Log.trace("App::init() - StudentRoot init; view attached");
+                    } else {
+                        Log.trace("App::init() - unknown page name: " + pageName);
                     }
-                }
-                // Each page calls its own initialization controller.
-                if (that.adminController !== null) {
-                    if (typeof that.adminController[pageName] === 'function') {
-                        that.adminController[pageName]();//(page);
-                    }
-                }
-                */
-                /*
-                                if (pageName === 'main') {
-                                    Log.trace('App::init()::authCheck - starting main.html with auth check');
-                                    const AUTHORIZED_STATUS: string = 'authorized';
 
-                                    that.toggleLoginButton();
+                    (<any>window).classportal.view = v;
+                    that.view = v;
+                }
 
-                                    const URL = that.backendURL + '/currentStatus';  // '/currentUser'; // NOTE: this doesn't seem right
-                                    let OPTIONS_HTTP_GET: RequestInit = {credentials: 'include', mode: 'no-cors'}; // NOTE: not sure about the mode param
-                                    fetch(URL, OPTIONS_HTTP_GET).then((data: any) => {
-                                        if (data.status !== 200) {
-                                            Log.trace('App::init()::authCheck - WARNING: Response status: ' + data.status);
-                                            throw new Error('App::init()::authCheck - API ERROR: ' + data.status);
-                                        }
-                                        return data.json();
-                                    }).then((data: any) => {
-                                        let user = data.response.user;
-                                        localStorage.setItem('userrole', user.userrole);
-                                        localStorage.setItem('username', user.username);
-                                        localStorage.setItem('authStatus', AUTHORIZED_STATUS);
-                                        localStorage.setItem('fname', user.fname);
-                                        that.toggleLoginButton();
-                                    }).catch((err: any) => {
-                                        Log.error('App::init()::authCheck - ERROR: ' + err.message);
-                                    });
-                                }
-                */
                 if (pageName === 'loginPage') {
-
+                    Log.trace("App::init() - loginPage init; attaching login button");
+                    /*
+                    Log.warn("App::init() - loginPage init; NEEDED??");
                     const userrole = String(localStorage.userrole);
-                    // const username = String(localStorage.username);
                     if (userrole === 'student') {
                         UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/student.html', {org: org});
-                    } else if (userrole === 'admin' || userrole === 'superadmin') {
-                        UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/admin.html', {org: org});
+                    } else if (userrole === 'admin') {
+                        UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/admin.html', {org: org, isAdmin: true});
                     }
+                    */
 
                     (document.querySelector('#loginButton') as OnsButtonElement).onclick = function () {
-                        localStorage.setItem('org', org);
-                        const url = that.backendURL + '/auth/?org=' + org;
-                        Log.trace('App::init()::init - login pressed for: ' + org + '; url: ' + url);
+                        // localStorage.setItem('org', org);
+                        const url = that.backendURL + '/auth/?name=' + name;
+                        Log.trace('App::init()::init - login pressed for: ' + name + '; url: ' + url);
                         window.location.replace(url);
                     };
                 }
@@ -174,32 +135,17 @@ export class App {
                 if (typeof options === 'undefined') {
                     options = {};
                 }
-                Log.trace('App::init()::show - page: ' + pageName);
+                Log.trace('App::init()::show - page: ' + pageName + '; validated: ' + validated + '; event: ' + JSON.stringify(event));
 
                 // update login button state
                 that.toggleLoginButton();
 
-                // let validated = await
-                // that.validateCredentials();
-                // let validated = true;
-                Log.trace('App::init()::show - page: ' + pageName + "; validated: " + validated);
-
-                if (pageName === "studentTabsPage" && validated === true) {
-                    Log.trace('studentTabsPage - show!!!');
-                    that.view.renderPage(options);
+                if (that.view !== null) {
+                    Log.trace('App::init()::show - calling view.renderPage for: ' + pageName);
+                    that.view.renderPage(pageName, options);
+                } else {
+                    Log.trace('App::init()::show - view is null; cannot call view.renderPage for: ' + pageName);
                 }
-                /*
-                if (that.studentController !== null) {
-                    if (typeof that.studentController[pageName] === 'function') {
-                        that.studentController[pageName](options);
-                    }
-                }
-                if (that.adminController !== null) {
-                    if (typeof that.adminController[pageName] === 'function') {
-                        that.adminController[pageName](options);
-                    }
-                }
-                */
             });
 
             // TODO: Feels like this needs some kind of guard?
@@ -246,15 +192,16 @@ export class App {
                 // valid username; get role from server
                 Log.info("App::validateCredentials() - valid username: " + username);
 
-                const credentials: any = await this.getServerCredentials(username, token);
-                if (credentials === null) {
+                const credentials = await this.getServerCredentials(username, token);
+                if (credentials === null || typeof credentials.failure !== 'undefined') {
                     Log.info("App::validateCredentials() - server validation failed");
                     this.clearCredentials();
                 } else {
-                    Log.info("App::validateCredentials() - validated with server; isAdmin: " + credentials.isAdmin);
-                    localStorage.setItem('user', credentials.user);
-                    localStorage.setItem('token', credentials.token);
-                    localStorage.setItem('isAdmin', credentials.isAdmin);
+                    Log.info("App::validateCredentials() - validated with server; isAdmin: " + credentials.success.isAdmin + "; isStaff: " + credentials.success.isStaff);
+                    localStorage.setItem('user', credentials.success.personId);
+                    localStorage.setItem('token', credentials.success.token);
+                    localStorage.setItem('isAdmin', credentials.success.isAdmin + '');
+                    localStorage.setItem('isStaff', credentials.success.isStaff + '');
                     return true;
                 }
             } else {
@@ -294,10 +241,10 @@ export class App {
                 'Authorization': 'token ' + token
             }
         }).then(function (resp: any) {
-            Log.trace("App::getGithubCredentials(..) - resp then: " + resp);
+            Log.trace("App::getGithubCredentials(..) - resp status: " + resp.status);
             return resp.json();
         }).then(function (data: any) {
-            Log.trace("App::getGithubCredentials(..) - data then: " + data);
+            Log.trace("App::getGithubCredentials(..) - data then: " + data.login);
             if (typeof data.login !== 'undefined') {
                 return data.login;
             }
@@ -317,51 +264,52 @@ export class App {
      * @param {string} token
      * @returns {Promise<{}>}
      */
-    private getServerCredentials(username: string, token: string): Promise<{}> { // TODO: return should have a type | null
+    private getServerCredentials(username: string, token: string): Promise<AuthTransportPayload> {
         const url = this.backendURL + '/getCredentials';
-        Log.trace("App::getServerCredentials - start; url: " + url);
+        Log.trace('App::getServerCredentials( ' + username + '...) - start; url: ' + url);
         const that = this;
 
-        const org = localStorage.org;
-
+        // const org = localStorage.org;
+        const name = Factory.getInstance().getName();
         const options = {
             headers: {
                 'Content-Type': 'application/json',
                 'User-Agent':   'Portal',
                 'user':         username,
                 'token':        token,
-                'org':          org
+                'name':         name
+                // 'org':          org
             }
         };
         return fetch(url, options).then(function (resp: any) {
-            Log.trace("App::getServerCredentials - resp: " + resp);
+            Log.trace("App::getServerCredentials(..) - resp status: " + resp.status);
             if (resp.status === 204) {
-                Log.trace("App::getServerCredentials - fetching");
+                Log.trace("App::getServerCredentials(..) - fetching");
                 return fetch(url, options);
             } else {
-                Log.trace("App::getServerCredentials - passing through");
-                Log.trace("App::getServerCredentials - code returned: " + resp.status);
+                Log.trace("App::getServerCredentials(..) - passing through");
+                Log.trace("App::getServerCredentials(..) - code returned: " + resp.status);
 
                 if (resp.status === 400) {
                     that.clearCredentials();
                 }
                 return resp;
             }
-        }).then(function (data: any) {
-            Log.trace("App::getServerCredentials - data raw: " + data);
-            return data.json();
-        }).then(function (data: any) {
-            Log.trace("App::getServerCredentials - data json: " + JSON.stringify(data));
+        }).then(function (resp: any) {
+            Log.trace("App::getServerCredentials(..) - data status: " + resp.status);
+            return resp.json();
+        }).then(function (data: AuthTransportPayload) {
+            Log.trace("App::getServerCredentials(..) - data json: " + JSON.stringify(data));
             return data;
         }).catch(function (err: any) {
-            Log.error("App::getServerCredentials - ERROR: " + err);
+            Log.error("App::getServerCredentials(..) - ERROR: " + err);
             return null;
         });
     };
 
-    private async retrieveOrg() {
-        const url = this.backendURL + '/org';
-        Log.trace("App::retrieveOrg() - start; url: " + url);
+    private async retrieveConfig(): Promise<ConfigTransport> {
+        const url = this.backendURL + '/config';
+        Log.trace("App::retrieveConfig() - start; url: " + url);
 
         const options = {
             headers: {
@@ -372,26 +320,34 @@ export class App {
 
         let response = await fetch(url, options);
         if (response.status === 200) {
-            Log.trace('App::retrieveOrg() - 200 received');
-            const json = await response.json();
-            Log.trace('App::retrieveOrg() - payload: ' + JSON.stringify(json) + '; setting org: ' + json.org);
-            Factory.getInstance(json.org);
-            Log.trace("App::retrieveOrg() - done");
+            Log.trace('App::retrieveConfig() - status: ' + response.status);
+            const json: ConfigTransportPayload = await response.json();
+
+            if (typeof json.success !== 'undefined') {
+                Log.trace('App::retrieveConfig() - success; payload: ' + JSON.stringify(json) + '; setting org: ' + json.success.org);
+                Factory.getInstance(json.success.name); // name instead of org
+                return json.success;
+            } else {
+                Log.error('App::retrieveConfig() - failed: ' + JSON.stringify(json) + ')');
+                return {org: 'ERROR', name: 'ERROR'};
+            }
         } else {
-            Log.error('App::retrieveOrg() - ERROR');
+            Log.error('App::retrieveConfig() - ERROR');
+            return {org: 'ERROR', name: 'ERROR'};
         }
     }
 
-    public handleMainPageClick(params?: {}) {
-        Log.info("App::handleMainPageClick(..) - start");
-
+    public handleMainPageClick(params?: any) {
         if (typeof params === 'undefined') {
             params = {};
         }
+        Log.info("App::handleMainPageClick( " + JSON.stringify(params) + " ) - start");
 
         if (this.validated === true) {
             // push to correct handler
-            if (localStorage.kind === 'admin') {
+            params.isAdmin = localStorage.isAdmin === 'true'; // localStorage returns strings
+            params.isStaff = localStorage.isStaff === 'true'; // localStorage returns strings
+            if (params.isAdmin || params.isStaff) {
                 Log.info("App::handleMainPageClick(..) - admin");
                 UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/admin.html', params);
             } else {
@@ -437,25 +393,25 @@ export class App {
     private toggleLoginButton() {
         try {
             if (this.isLoggedIn() === true) {
-                Log.trace("App::toggleLoginButton() - showing logout");
+                // Log.trace("App::toggleLoginButton() - showing logout");
                 const el = document.getElementById('indexLogin');
                 if (el !== null) {
                     el.style.display = 'block';
                 } else {
-                    Log.trace("App::toggleLoginButton() - button not visible");
+                    // Log.trace("App::toggleLoginButton() - button not visible");
                 }
             } else {
-                Log.trace("App::toggleLoginButton() - hiding logout");
+                // Log.trace("App::toggleLoginButton() - hiding logout");
                 const el = document.getElementById('indexLogin');
                 if (el !== null) {
                     el.style.display = 'none';
                 } else {
-                    Log.trace("App::toggleLoginButton() - button not visible");
+                    // Log.trace("App::toggleLoginButton() - button not visible");
                 }
             }
         } catch (err) {
             // silently fail
-            Log.error("APP:toggleLoginButton() - ERROR: " + err);
+            Log.error("App:toggleLoginButton() - ERROR: " + err);
         }
     }
 }

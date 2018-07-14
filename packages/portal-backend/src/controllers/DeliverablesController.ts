@@ -7,8 +7,8 @@ export class DeliverablesController {
 
     private db: DatabaseController = DatabaseController.getInstance();
 
-    public async getAllDeliverables(org: string): Promise<Deliverable[]> {
-        Log.info("DeliverablesController::getAllGrades( " + org + " ) - start");
+    public async getAllDeliverables(): Promise<Deliverable[]> {
+        Log.info("DeliverablesController::getAllGrades() - start");
 
         let delivs = await this.db.getDeliverables();
         return delivs;

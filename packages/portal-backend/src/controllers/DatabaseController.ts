@@ -2,9 +2,9 @@ import {Collection, Db, MongoClient} from "mongodb";
 
 import Log from "../../../common/Log";
 import Util from "../../../common/Util";
-import Config from "../../../common/Config";
+import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 
-import {Auth, Deliverable, Grade, Person, Repository, Team} from "../Types";
+import {Auth, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
 
 export class DatabaseController {
 
@@ -13,6 +13,7 @@ export class DatabaseController {
 
     private readonly PERSONCOLL = 'people';
     private readonly GRADECOLL = 'grades';
+    private readonly RESULTCOLL = 'results';
     private readonly TEAMCOLL = 'teams';
     private readonly DELIVCOLL = 'deliverables';
     private readonly REPOCOLL = 'repositories';
@@ -72,6 +73,11 @@ export class DatabaseController {
             }
         }
         return myTeams;
+    }
+
+    public async getResults(): Promise<Result[]> {
+        Log.info("DatabaseController::getResult() - start");
+        return <Result[]> await this.readRecords(this.RESULTCOLL, {});
     }
 
     public async getRepositoriesForPerson(personId: string): Promise<Repository[]> {
@@ -152,10 +158,21 @@ export class DatabaseController {
         }
     }
 
+    /**
+     * These are write-only; they should never need to be updated.
+     *
+     * @param {Result} record
+     * @returns {Promise<boolean>}
+     */
+    public async writeResult(record: Result): Promise<boolean> {
+        Log.info("DatabaseController::writeResult(..) - start");
+        return await this.writeRecord(this.RESULTCOLL, record);
+    }
+
     /*
     public async deletePerson(record: Person): Promise<boolean> {
         Log.info("DatabaseController::deletePerson(..) - start");
-        return await this.deleteRecord(this.PERSONCOLL, {org: record.org, id: record.id});
+        return await this.deleteRecord(this.PERSONCOLL, {id: record.id});
     }
     */
 
@@ -269,9 +286,21 @@ export class DatabaseController {
 
     public async clearData(): Promise<void> {
         Log.warn("DatabaseController::clearData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
-        const configOrg = Config.getInstance().getProp("testorg");
-        if (configOrg === "test" || configOrg === "secapstonetest" || configOrg === "CS310-2017Jan_TEST") {
-            let cols = [this.PERSONCOLL, this.GRADECOLL, this.TEAMCOLL, this.DELIVCOLL, this.REPOCOLL];
+
+        const configName = Config.getInstance().getProp(ConfigKey.name);
+        Log.warn("DatabaseController::clearData() - name: " + configName);
+
+        if (configName === ConfigCourses.classytest) {
+            // NOTE: can only delete data if the current instance is the main test instance
+
+            // private readonly PERSONCOLL = 'people';
+            // private readonly GRADECOLL = 'grades';
+            // private readonly RESULTCOLL = 'results';
+            // private readonly TEAMCOLL = 'teams';
+            // private readonly DELIVCOLL = 'deliverables';
+            // private readonly REPOCOLL = 'repositories';
+            // private readonly AUTHCOLL = 'auth';
+            let cols = [this.PERSONCOLL, this.GRADECOLL, this.RESULTCOLL, this.TEAMCOLL, this.DELIVCOLL, this.REPOCOLL, this.AUTHCOLL];
             for (const col of cols) {
                 Log.info("DatabaseController::clearData() - removing data for collection: " + col);
                 const collection = await this.getCollection(col);
@@ -346,9 +375,9 @@ export class DatabaseController {
             // Log.trace("DatabaseController::open() - start");
             if (this.db === null) {
 
-                // just use the org name for the db (use a test org name if you want to avoid tests wiping data!!)
-                const dbName = Config.getInstance().getProp('org').trim(); // make sure there are no extra spaces in config
-                const dbHost = Config.getInstance().getProp('mongoUrl').trim(); // make sure there are no extra spaces in config
+                // just use Config.name for the db (use a test org name if you want to avoid tests wiping data!!)
+                const dbName = Config.getInstance().getProp(ConfigKey.name).trim(); // make sure there are no extra spaces in config
+                const dbHost = Config.getInstance().getProp(ConfigKey.mongoUrl).trim(); // make sure there are no extra spaces in config
 
                 // _ are to help diagnose whitespace in dbname/mongoUrl
                 Log.info("DatabaseController::open() - db null; making new connection to: _" + dbName + "_ on: _" + dbHost + "_");
@@ -363,6 +392,7 @@ export class DatabaseController {
             return this.db;
         } catch (err) {
             Log.error("DatabaseController::open() - ERROR: " + err);
+            Log.error("DatabaseController::open() - ERROR: Host probably does not have a database configured and running (see README.md if this is a test instance).");
         }
     }
 
@@ -399,6 +429,11 @@ export class DatabaseController {
             const query = {personId: record.personId};
             return await this.updateRecord(this.AUTHCOLL, query, record);
         }
+    }
+
+    public async getResult(delivId: string, repoId: string): Promise<Result> {
+        Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + " ) - start");
+        return <Result> await this.readSingleRecord(this.RESULTCOLL, {"delivId": delivId, "repoId": repoId});
     }
 }
 

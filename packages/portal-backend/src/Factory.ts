@@ -1,4 +1,4 @@
-import Config from "../../common/Config";
+import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
 
 import IREST from "./server/IREST";
@@ -16,35 +16,35 @@ export class Factory {
      * @returns {IREST}
      */
     public static getCustomRouteHandler(): IREST {
-        const org = Factory.getOrg();
+        const name = Factory.getName();
 
-        if (org === 'sdmm' || org === 'secapstonetest') {
+        if (name === 'sdmm' || name === 'secapstonetest') {
             return new SDMMREST();
-        } else if (org === 'CS310-2017Jan' || org === 'CS310-2017Jan_TEST') {
+        } else if (name === 'cs310' || name === 'classytest') {
             // no custom routes are required for 310
             return new NoCustomRoutes();
-        } else if (org === 'cs340') {
+        } else if (name === 'cs340' || name === 'cpsc340') {
             return new CS340REST();
         } else {
-            Log.error("Factory::getCustomRouteHandler() - unknown org: " + org);
+            Log.error("Factory::getCustomRouteHandler() - unknown name: " + name);
         }
-        return null; // TODO: should not happen; should return a default implementation instead.
+        return new NoCustomRoutes(); // default handler
     }
 
     /**
-     * Gets the org associated with the Backend instance from the .env file.
+     * Gets the name associated with the Backend instance from the .env file.
      *
      * @returns {string | null}
      */
-    private static getOrg(): string | null {
+    private static getName(): string | null {
         try {
-            const org = Config.getInstance().getProp('org');
-            if (org === null) {
-                Log.error("Factory::getOrg() - null org");
+            const name = Config.getInstance().getProp(ConfigKey.name);
+            if (name === null) {
+                Log.error("Factory::getName() - null name");
             }
-            return org;
+            return name;
         } catch (err) {
-            Log.error("Factory::getOrg() - ERROR: " + err);
+            Log.error("Factory::getName() - ERROR: " + err);
         }
         return null;
     }

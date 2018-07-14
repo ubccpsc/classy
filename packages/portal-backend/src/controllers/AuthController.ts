@@ -3,7 +3,11 @@ import Log from "../../../common/Log";
 import {PersonController} from "./PersonController";
 import {DatabaseController} from "./DatabaseController";
 import {Auth} from "../Types";
+import {GitHubActions} from "./util/GitHubActions";
 
+/**
+ * Nice OAuth Reference: https://medium.com/typeforms-engineering-blog/the-beginners-guide-to-oauth-dancing-4b8f3666de10
+ */
 export class AuthController {
 
     private dc: DatabaseController = null;
@@ -11,8 +15,6 @@ export class AuthController {
     constructor() {
         this.dc = DatabaseController.getInstance();
     }
-
-    // TODO: Think about the APIs for these methods. What do the controllers need?
 
     public async isValid(personId: string, token: string): Promise<boolean> {
         Log.trace("AuthController::isValid( " + personId + ", ... ) - start");
@@ -40,19 +42,18 @@ export class AuthController {
         return false;
     }
 
-    public async isAdmin(personId: string, token: string): Promise<boolean> {
-        Log.trace("AuthController::isAdmin( " + personId + ", ... ) - start");
+    public async isPrivileged(personId: string, token: string): Promise<{ isAdmin: boolean, isStaff: boolean }> {
+        Log.trace("AuthController::isPrivileged( " + personId + ", ... ) - start");
         let person = await new PersonController().getPerson(personId);
         if (person !== null) {
             let valid = await this.isValid(personId, token);
             if (valid === true) {
-                // student, ta, prof, ops
-                if (person.kind === "ta" || person.kind === "prof" || person.kind === "ops") {
-                    return true;
-                }
+                const isStaff = await new GitHubActions().isOnStaffTeam(personId);
+                const isAdmin = await new GitHubActions().isOnAdminTeam(personId);
+                return {isAdmin: isAdmin, isStaff: isStaff};
             }
         }
-        return false;
+        return {isAdmin: false, isStaff: false};
     }
 
 }

@@ -5,14 +5,13 @@ import restify = require('restify');
 import * as fs from "fs";
 
 import Log from "../../../common/Log";
-import Config from "../../../common/Config";
+import Config, {ConfigKey} from "../../../common/Config";
 
 import {Factory} from "../Factory";
-
-import {RouteHandler} from "./RouteHandler";
 import GeneralRoutes from "./common/GeneralRoutes";
-
-// import RouteHandler from './RouteHandler';
+import {AuthRoutes} from "./common/AuthRoutes";
+import {AutoTestRoutes} from "./common/AutoTestRoutes";
+import AdminRoutes from "./common/AdminRoutes";
 
 /**
  * This configures the REST endpoints for the server.
@@ -72,8 +71,8 @@ export default class BackendServer {
             try {
                 let https_options: any = {
                     name:        'backend',
-                    key:         fs.readFileSync(that.config.getProp('sslKeyPath')),
-                    certificate: fs.readFileSync(that.config.getProp('sslCertPath'))
+                    key:         fs.readFileSync(that.config.getProp(ConfigKey.sslKeyPath)),
+                    certificate: fs.readFileSync(that.config.getProp(ConfigKey.sslCertPath))
                 };
 
                 if (that.useHttps === false) {
@@ -92,53 +91,30 @@ export default class BackendServer {
                     return next();
                 });
 
-                /**
-                 * Authentication
-                 */
-                that.rest.on('MethodNotAllowed', RouteHandler.handlePreflight); // preflights cors requests
-                that.rest.get('/getCredentials', RouteHandler.getCredentials);
-                that.rest.get('/auth', RouteHandler.getAuth);
-                that.rest.get('/githubCallback', RouteHandler.githubCallback);
+                // Register handlers common between all classy instances
+                Log.info('BackendServer::start() - Registering common handlers');
 
+                // authentication
+                new AuthRoutes().registerRoutes(that.rest);
 
-                /**
-                 * UI routes
-                 */
-                that.rest.get('/currentStatus', RouteHandler.getCurrentStatus);
+                // autotest
+                new AutoTestRoutes().registerRoutes(that.rest);
 
-
-                /**
-                 * AutoTest routes
-                 */
-                that.rest.get('/defaultDeliverable/:org', RouteHandler.atDefaultDeliverable);
-                that.rest.get('/isStaff/:org/:personId', RouteHandler.atIsStaff);
-                that.rest.get('/container/:org/:delivId', RouteHandler.atContainerDetails);
-                that.rest.post('/grade/:org/:repoId/:delivId', RouteHandler.atGradeResult);
-                that.rest.post('/githubWebhook', RouteHandler.githubWebhook); // forward GitHub Webhooks to AutoTest
-
-                /**
-                 * Run individual handlers as needed
-                 */
-                Log.info('BackendServer::start() - Registering individual handlers');
+                // general
                 new GeneralRoutes().registerRoutes(that.rest);
-                Log.info('BackendServer::start() - Registering individual handlers; done');
-                /**
-                 * Register custom route handler.
-                 */
+
+                // admin
+                new AdminRoutes().registerRoutes(that.rest);
+
+                Log.info('BackendServer::start() - Registering common handlers; done');
+
+
+                // Register custom route handler for specific classy instance
                 Log.info('BackendServer::start() - Registering custom handler');
                 Factory.getCustomRouteHandler().registerRoutes(that.rest);
                 Log.info('BackendServer::start() - Registering custom handler; done');
 
-                /**
-                 * Serve up index.html; not needed for server backend
-                 */
-                // that.rest.get('/\/.*/', restify.plugins.serveStatic({
-                //        directory: 'html',
-                //        default:   'index.html'
-                //    })
-                //);
-
-                that.rest.listen(that.config.getProp('backendPort'), function () {
+                that.rest.listen(that.config.getProp(ConfigKey.backendPort), function () {
                     Log.info('BackendServer::start() - restify listening: ' + that.rest.url);
                     fulfill(true);
                 });

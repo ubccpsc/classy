@@ -1,8 +1,13 @@
-import {SDMMSummaryView} from "./views/sdmm/SDMMSummaryView";
+// import {SDMMSummaryView} from "./views/sdmm/SDMMSummaryView";
 import Log from "../../../common/Log";
-import {UI} from "./util/UI";
+
+import {IView} from "./views/IView";
+import {AdminView} from "./views/AdminView";
+
 import {CS310View} from "./views/cs310/CS310View";
 import {CS340View} from "./views/340/CS340View";
+import {CS340AdminView} from "./views/340/CS340AdminView";
+import {SDMMSummaryView} from "./views/sdmm/SDMMSummaryView";
 
 /**
  * Entry point for configuring per-course aspects of the frontend.
@@ -19,7 +24,10 @@ import {CS340View} from "./views/340/CS340View";
 export class Factory {
 
     private static instance: Factory = null;
-    private org: string = null;
+    private name: string = null;
+
+    private studentView: IView | null = null;
+    private adminView: IView | null = null;
 
     /**
      * Use getInstance instead.
@@ -27,46 +35,87 @@ export class Factory {
     private constructor() {
     }
 
-    public static getInstance(org?: string): Factory {
+    public static getInstance(name?: string): Factory {
         if (Factory.instance === null) {
             Factory.instance = new Factory();
         }
-        if (Factory.instance.org === null && typeof org !== 'undefined') { // only set this once (first guard)
-            Log.info("Factory::getInstance(..) - setting org: " + org);
-            Factory.instance.org = org;
+        if (Factory.instance.name === null && typeof name !== 'undefined') { // only set this once (first guard)
+            Log.info("Factory::getInstance(..) - setting org: " + name);
+            Factory.instance.name = name;
         }
         return Factory.instance;
     }
 
-    public getView(backendUrl: string) {
-        // Log.trace("Begin view fetching");
-        if (this.org === 'sdmm') {
-            return new SDMMSummaryView(backendUrl);
-        } else if (this.org === 'CS310-2017Jan' || this.org === 'CS310-2017Jan_TEST') {
-            return new CS310View(backendUrl);
-        } else if (this.org === 'cs340') {
-            // something else
-            // Log.trace("cs340 view detected");
-            return new CS340View(backendUrl);
-
-            // UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/landing.html');
-        } else {
-            Log.error("Factory::getView() - ERROR; unknown org: " + this.org);
+    public getView(backendUrl: string): IView {
+        if (this.studentView === null) {
+            Log.trace("Factory::getView() - instantating new view");
+            if (this.name === 'classytest') {
+                this.studentView = new CS310View(backendUrl); // default to 310 for testing
+            } else if (this.name === 'cs310') {
+                this.studentView = new CS310View(backendUrl);
+            } else if (this.name === 'sdmm') {
+                this.studentView = new SDMMSummaryView(backendUrl);
+            } else if (this.name === 'CS310-2017Jan' || this.name === 'CS310-2017Jan_TEST') {
+                this.studentView = new CS310View(backendUrl);
+            } else if (this.name === 'cs340' || this.name === 'cpsc340') {
+                this.studentView = new CS340View(backendUrl);
+            } else {
+                Log.error("Factory::getView() - ERROR; unknown name: " + this.name);
+            }
         }
+        return this.studentView;
+    }
+
+    public getAdminView(backendUrl: string): IView {
+        if (this.adminView === null) {
+            Log.trace("Factory::getAdminView() - instantating new view for: " + this.name);
+            let tabs = {
+                deliverables: true,
+                students:     true,
+                teams:        true,
+                results:      true,
+                grades:       true,
+                dashboard:    true,
+                config:       true
+            };
+
+            if (this.name === 'classytest') {
+                // tabs.deliverables = false;
+                // tabs.students = false;
+                // tabs.teams = false;
+                // tabs.grades = false;
+                // tabs.results = false;
+                // tabs.dashboard = false;
+                // tabs.config = false;
+                this.adminView = new AdminView(backendUrl, tabs); // default admin
+            } else if (this.name === 'cs310') {
+                this.adminView = new AdminView(backendUrl, tabs); // default admin
+            } else if (this.name === 'sdmm') {
+                this.adminView = new AdminView(backendUrl, tabs); // default admin
+            } else if (this.name === 'cs340' || this.name === 'cpsc340') {
+                tabs.teams = false; // no teams
+                tabs.results = false; // no results
+                tabs.dashboard = false; // no dashboard
+                this.adminView = new CS340AdminView(backendUrl, tabs);
+            } else {
+                Log.error("Factory::getAdminView() - ERROR; unknown name: " + this.name);
+            }
+        }
+        return this.adminView;
     }
 
     /**
      *
-     * Returns the org associated with the course instance.
+     * Returns the name associated with the course instance.
      *
      * @returns {string}
      */
-    public getOrg() {
-        if (this.org === null) {
+    public getName() {
+        if (this.name === null) {
             // Just a sanity check; if this happens we have a real problem with the app init flow
-            Log.error("Factory::getOrg() - org requested before being set!");
+            Log.error("Factory::getName() - name requested before being set!");
         }
-        return this.org;
+        return this.name;
     }
 
     /**
@@ -83,14 +132,16 @@ export class Factory {
      * @returns {string}
      */
     public getHTMLPrefix() {
-        if (this.org === 'sdmm') {
+        if (this.name === 'classytest') {
+            return 'cs310'; // might need to change this per-course for testing
+        } else if (this.name === 'sdmm') {
             return 'sdmm';
-        } else if (this.org === 'CS310-2017Jan' || this.org === 'CS310-2017Jan_TEST') {
+        } else if (this.name === 'cs310') {
             return 'cs310';
-        } else if (this.org === 'cs340') {
+        } else if (this.name === 'cs340' || this.name === 'cpsc340') {
             return 'cs340';
         } else {
-            Log.error("Factory::getHTMLPrefix() - ERROR; unknown org: " + this.org);
+            Log.error("Factory::getHTMLPrefix() - ERROR; unknown name: " + this.name);
         }
     }
 }

@@ -1,122 +1,244 @@
 import * as rp from "request-promise-native";
 
-import Config from "../../../common/Config";
+import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
+import {IAutoTestResult} from "../Types";
+import {
+    AutoTestAuthPayload,
+    AutoTestAuthTransport,
+    AutoTestConfigPayload,
+    AutoTestConfigTransport,
+    AutoTestDefaultDeliverablePayload,
+    AutoTestDefaultDeliverableTransport,
+    AutoTestGradeTransport,
+    AutoTestResultPayload,
+    AutoTestResultTransport,
+    Payload
+} from "../../../common/types/PortalTypes";
 
 export interface IClassPortal {
 
     /**
-     * For a given commitURL, figure out what the default deliverable is at the current time.
      *
-     * NOTE: commitURL could be something simpler too, maybe just org is easiest:
+     * GET /admin/getDefaultDeliverable
      *
-     * GET /admin/getDefaultDeliverable/{:org}
-     *
-     * @param courseId
      */
-    getDefaultDeliverableId(courseId: string): Promise<string | null>;
+    getDefaultDeliverableId(): Promise<AutoTestDefaultDeliverableTransport | null>;
 
     /**
-     * Returns whether the username is staff on the course.
+     * Returns whether the username is privileged on the course.
      *
-     * GET /admin/isStaff/{:org}/{:userId} (or some variant)
+     * GET /at/isStaff{:userId}
      *
-     * @param courseId
      * @param userName
      */
-    isStaff(courseId: string, userName: string): Promise<boolean>;
+    isStaff(userName: string): Promise<AutoTestAuthTransport>;
 
     /**
-     * Gets the identifier for the AutoTest docker container that should process requests for this deliverable.
+     * Gets the identifier for the AutoTest docker container that should process
+     * requests for this deliverable.
      *
-     * GET /admin/{:org}/{:delivId}/container
-     *
-     * @param courseId
+     * @param delivId
      */
-    getContainerDetails(courseId: string, delivId: string): Promise<{ dockerImage: string, studentDelay: number, maxExecTime: number, regressionDelivIds: string[] } | null>;
+    getContainerDetails(delivId: string): Promise<AutoTestConfigTransport | null>;
+
+    /**
+     * Send grade for saving. Useful for courses where the container decides
+     * if a grade should be saved (rather than portal-backend making the decision
+     * about what grade should be saved).
+     *
+     * POST at/grade
+     */
+    sendGrade(grade: AutoTestGradeTransport): Promise<Payload>;
+
+    // This seems like it should be here, but AutoTest does all of this itself in
+    // AutoTest::handleExecutionComplete
+
+    /**
+     * Send result for saving.
+     *
+     * POST at/result
+     *
+     * @param {IAutoTestResult} result
+     * @returns {Promise<Payload>}
+     */
+    sendResult(result: IAutoTestResult): Promise<Payload>;
+
+    /**
+     * Get result for a given delivId / repoId pair. Will return null if a result does not exist.
+     *
+     * @param {string} delivId
+     * @param {string} repoId
+     * @returns {Promise<AutoTestResultTransport | null>}
+     */
+    getResult(delivId: string, repoId: string): Promise<AutoTestResultTransport | null>;
 }
 
 export class ClassPortal implements IClassPortal {
-    private host: string = Config.getInstance().getProp("classPortalHost");
-    private port: number = Config.getInstance().getProp("classPortalPort");
+    private host: string = Config.getInstance().getProp(ConfigKey.backendUrl);
+    private port: number = Config.getInstance().getProp(ConfigKey.backendPort);
 
-    public async isStaff(courseId: string, userName: string): Promise<boolean> {
-        if (typeof courseId === "undefined" || courseId === null || typeof userName === "undefined" || userName === null) {
-            Log.error("ClassPortal::isStaff(..) - missing parameters");
-            return false;
+    public async isStaff(userName: string): Promise<AutoTestAuthTransport> {
+        const NO_ACCESS = {personId: userName, isStaff: false, isAdmin: false}; // if error, give no credentials
+
+        try {
+            const url = this.host + ":" + this.port + "/at/isStaff/" + userName;
+            Log.info("ClassPortal::isStaff(..) - Sending request to " + url);
+            const opts: rp.RequestPromiseOptions = {
+                rejectUnauthorized: false,
+                headers:            {
+                    token: Config.getInstance().getProp(ConfigKey.autotestSecret)
+                }
+            };
+
+            return rp(url, opts).then(function (res) {
+                Log.trace("ClassPortal::isStaff( " + userName + " ) - success; payload: " + res);
+                const json: AutoTestAuthPayload = JSON.parse(res);
+                if (typeof json.success !== 'undefined') {
+                    return json.success;
+                } else {
+                    Log.error("ClassPortal::isStaff(..) - ERROR: " + JSON.stringify(json));
+                    return NO_ACCESS;
+                }
+            }).catch(function (err) {
+                Log.error("ClassPortal::isStaff(..) - ERROR; url: " + url + "; ERROR: " + err);
+                return NO_ACCESS;
+            });
+        } catch (err) {
+            Log.error("ClassPortal::isStaff(..) - ERROR: " + err);
+            return NO_ACCESS;
         }
-
-        const url = "https://" + this.host + ":" + this.port + "/isStaff/" + courseId + "/" + userName;
-        Log.info("ClassPortal::isStaff(..) - Sending request to " + url);
-        return rp(url).then(function (res) {
-            Log.trace("ClassPortal::isStaff( " + courseId + ", " + userName + " ) - success; payload: " + res);
-            const json = JSON.parse(res);
-            return json.isStaff;
-        }).catch(function (err) {
-            Log.trace("ClassPortal::isStaff(..) - ERROR; url: " + url + "; ERROR: " + err);
-            return false; // err on the side of caution
-        });
     }
 
-    public async getDefaultDeliverableId(courseId: string): Promise<string | null> {
-        if (typeof courseId === "undefined" || courseId === null) {
-            Log.error("ClassPortal::getDefaultDeliverableId(..) - missing parameters");
-            return null;
-        }
+    public async getDefaultDeliverableId(): Promise<AutoTestDefaultDeliverableTransport | null> {
 
-        const url = "https://" + this.host + ":" + this.port + "/defaultDeliverable" + "/" + courseId;
+        const url = this.host + ":" + this.port + "/at/defaultDeliverable";
+        const opts: rp.RequestPromiseOptions = {
+            rejectUnauthorized: false, headers: {
+                token: Config.getInstance().getProp(ConfigKey.autotestSecret)
+            }
+        };
         Log.info("ClassPortal::getDefaultDeliverableId(..) - Sending request to " + url);
-        return rp(url).then(function (res) {
-            Log.trace("ClassPortal::getDefaultDeliverableId( " + courseId + " ) - success; payload: " + res);
-            const json = JSON.parse(res);
-            return json.delivId;
+        return rp(url, opts).then(function (res) {
+            Log.trace("ClassPortal::getDefaultDeliverableId() - success; payload: " + res);
+            const json: AutoTestDefaultDeliverablePayload = JSON.parse(res);
+            if (typeof json.success !== 'undefined') {
+                return json.success;
+            } else {
+                Log.trace("ClassPortal::getDefaultDeliverableId() - ERROR: " + JSON.stringify(json));
+                return null;
+            }
         }).catch(function (err) {
-            Log.trace("ClassPortal::getDefaultDeliverableId(..) - ERROR; url: " + url + "; ERROR: " + err);
+            Log.trace("ClassPortal::getDefaultDeliverableId() - ERROR; url: " + url + "; ERROR: " + err);
             return null;
         });
     }
 
-    /**
-     * Gets the delay beween test executions in milliseconds
-     *
-     * @param {string} courseId
-     * @returns {Promise<number>}
-     */
-
-    /*
-    public async getTestDelay(org: string, delivId: string): Promise<number | null> {
-        if (typeof org === "undefined" || org === null || typeof delivId === "undefined" || delivId === null) {
-            Log.error("ClassPortal::getTestDelay(..) - missing parameters");
-            return null;
-        }
-
-        const url = "https://portal.cs.ubc.ca:5000/" + org + "/" + delivId + "/rate";
-        return rp(url).then(function (res) {
-            Log.trace("ClassPortal::getTestDelay( " + org + ", " + delivId + " ) - success; payload: " + res);
-            const json = JSON.parse(res);
-            return json.response;
-        }).catch(function (err) {
-            Log.trace("ClassPortal::getTestDelay(..) - ERROR; url: " + url + "; ERROR: " + err);
-            return null;
-        });
-    }
-*/
-    public async getContainerDetails(courseId: string, delivId: string): Promise<{ dockerImage: string, studentDelay: number, maxExecTime: number, regressionDelivIds: string[] } | null> {
-        if (typeof courseId === "undefined" || courseId === null || typeof delivId === "undefined" || delivId === null) {
-            Log.error("ClassPortal::getContainerId(..) - missing parameters");
-            return null;
-        }
-
-        const url = "https://" + this.host + ":" + this.port + "/container" + "/" + courseId + "/" + delivId;
+    public async getContainerDetails(delivId: string): Promise<AutoTestConfigTransport | null> {
+        const url = this.host + ":" + this.port + "/at/container/" + delivId;
+        const opts: rp.RequestPromiseOptions = {
+            rejectUnauthorized: false, headers: {
+                token: Config.getInstance().getProp(ConfigKey.autotestSecret)
+            }
+        };
         Log.info("ClassPortal::getContainerId(..) - Sending request to " + url);
-        return rp(url).then(function (res) {
-            Log.trace("ClassPortal::getContainerId( " + courseId + ", " + delivId + " ) - success; payload: " + res);
-            const json = JSON.parse(res);
-            return json;
+        return rp(url, opts).then(function (res) {
+            Log.trace("ClassPortal::getContainerId( " + delivId + " ) - success; payload: " + res);
+            const json: AutoTestConfigPayload = JSON.parse(res);
+            if (typeof json.success !== 'undefined') {
+                return json.success;
+            } else {
+                Log.error("ClassPortal::getContainerId(..) - ERROR: " + JSON.stringify(json));
+                return null;
+            }
         }).catch(function (err) {
-            Log.trace("ClassPortal::getContainerId(..) - ERROR; url: " + url + "; ERROR: " + err);
+            Log.error("ClassPortal::getContainerId(..) - ERROR; url: " + url + "; ERROR: " + err);
             return null;
         });
     }
+
+    public async sendGrade(grade: AutoTestGradeTransport): Promise<Payload> { // really just a mechanism to report more verbose errors
+        const url = this.host + ":" + this.port + "/at/grade/";
+        const opts: rp.RequestPromiseOptions = {
+            rejectUnauthorized: false, method: 'post', headers: {
+                token: Config.getInstance().getProp(ConfigKey.autotestSecret)
+            }
+        };
+        Log.info("ClassPortal::sendGrade(..) - Sending request to " + url);
+        return rp(url, opts).then(function (res) {
+            Log.trace("ClassPortal::sendGrade() - sent; returned payload: " + res);
+            const json: Payload = JSON.parse(res);
+            if (typeof json.success !== 'undefined') {
+                Log.error("ClassPortal::sendGrade(..) - successfully received");
+                return json;
+            } else {
+                Log.error("ClassPortal::sendGrade(..) - ERROR; not successfully received:  " + JSON.stringify(json));
+                return json;
+            }
+        }).catch(function (err) {
+            Log.error("ClassPortal::sendGrade(..) - ERROR; url: " + url + "; ERROR: " + err);
+            const pay: Payload = {failure: {message: err.message, shouldLogout: false}};
+            return pay;
+        });
+    }
+
+    public async sendResult(result: IAutoTestResult): Promise<Payload> { // really just a mechanism to report more verbose errors
+
+        const url = this.host + ":" + this.port + "/at/result/";
+
+        let payload: AutoTestResultTransport = result;
+
+        const opts: rp.RequestPromiseOptions = {
+            rejectUnauthorized: false,
+            method:             'post',
+            body:               payload,
+            headers:            {token: Config.getInstance().getProp(ConfigKey.autotestSecret)}
+        };
+
+        Log.info("ClassPortal::sendResult(..) - Sending request to " + url);
+        return rp(url, opts).then(function (res) {
+            Log.trace("ClassPortal::sendResult() - sent; returned payload: " + res);
+            const json: Payload = JSON.parse(res);
+            if (typeof json.success !== 'undefined') {
+                Log.error("ClassPortal::sendResult(..) - successfully received");
+                return json;
+            } else {
+                Log.error("ClassPortal::sendResult(..) - ERROR; not successfully received:  " + JSON.stringify(json));
+                return json;
+            }
+        }).catch(function (err) {
+            Log.error("ClassPortal::sendResult(..) - ERROR; url: " + url + "; ERROR: " + err);
+            const pay: Payload = {failure: {message: err.message, shouldLogout: false}};
+            return pay;
+        });
+    }
+
+    public async getResult(delivId: string, repoId: string): Promise<AutoTestResultTransport | null> {
+        Log.info("ClassPortal::getResut( " + delivId + ", " + repoId + " ) - start");
+        const url = this.host + ":" + this.port + "/at/result/" + delivId + "/" + repoId;
+        const opts: rp.RequestPromiseOptions = {
+            rejectUnauthorized: false,
+            method:             'get',
+            headers:            {token: Config.getInstance().getProp(ConfigKey.autotestSecret)}
+        };
+        Log.info("ClassPortal::getResult(..) - Requesting result from: " + url);
+        return rp(url, opts).then(function (res) {
+            Log.trace("ClassPortal::getResult() - sent; returned payload: " + res);
+            const json: AutoTestResultPayload = JSON.parse(res);
+            if (typeof json.success !== 'undefined') {
+                Log.error("ClassPortal::getResult(..) - successfully received");
+                return <AutoTestResultTransport>json.success;
+            } else {
+                Log.error("ClassPortal::getResult(..) - ERROR; not successfully received:  " + JSON.stringify(json));
+                return null;
+            }
+        }).catch(function (err) {
+            Log.error("ClassPortal::getResult(..) - ERROR; url: " + url + "; ERROR: " + err);
+            // const pay: Payload = {failure: {message: err.message, shouldLogout: false}};
+            // return pay;
+            return null;
+        });
+    }
+
 
 }

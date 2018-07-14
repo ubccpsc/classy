@@ -1,0 +1,339 @@
+<ons-page id="AdminRoot">
+    <ons-toolbar>
+        <div class="center">CPSC 340 Admin Portal</div>
+        <div id='indexLogin' class="right">
+            <ons-toolbar-button onclick="myApp.logout();">
+                <ons-icon icon="fa-sign-out"></ons-icon>
+                <span style="vertical-align: top; font-size: 80%;">Logout</span>
+            </ons-toolbar-button>
+        </div>
+    </ons-toolbar>
+
+    <ons-tabbar id='adminTabbar' swipeable position="top">
+        <ons-tab id="AdminDeliverableTab" page="deliverables.html" label="Deliverables" icon="ion-home, material:md-home" active>
+        </ons-tab>
+
+        <ons-tab id="AdminStudentTab" page="students.html" label="Students" icon="md-face" active-icon="md-face">
+        </ons-tab>
+
+        <ons-tab id="AdminTeamTab" page="teams.html" label="Teams" icon="ion-ios-people">
+        </ons-tab>
+
+        <ons-tab id="AdminGradeTab" page="grades.html" label="Grades" icon="ion-ios-paper-outline">
+        </ons-tab>
+
+        <ons-tab id="AdminCustomGradeTab" page="gradesCustom.html" label="GradesCustom" icon="ion-ios-paper-outline">
+        </ons-tab>
+
+        <ons-tab id="AdminResultTab" page="results.html" label="Results" icon="ion-android-checkmark-circle">
+        </ons-tab>
+
+        <ons-tab id="AdminDashboardTab" page="dashboard.html" label="Dashboard" icon="ion-ios-speedometer-outline">
+        </ons-tab>
+
+        <ons-tab id="AdminConfigTab" page="config.html" label="Config" icon="ion-ios-gear">
+        </ons-tab>
+    </ons-tabbar>
+
+    <!-- Progress modal used by UI util class; only shown when requested -->
+    <ons-modal id="adminProgress">
+        <div style="display:flex; flex-direction:column; align-items: center;">
+            <div id="modalText" style="padding-top: 1em; padding-bottom: 1em;">Data is being retrieved.</div>
+            <ons-progress-circular indeterminate></ons-progress-circular>
+        </div>
+    </ons-modal>
+
+    <template id="deliverables.html">
+<!--        <ons-page id="AdminDeliverables">
+            <p style="text-align: center;">
+                Deliverables Page
+            </p>
+        </ons-page>-->
+        <ons-page id="AdminDeliverables">
+            <ons-list id="adminDeliverablesList">
+                <ons-list-header>Deliverables</ons-list-header>
+            </ons-list>
+            <ons-fab id="adminAddDeliverable" position="bottom right">
+                <ons-icon icon="md-plus"></ons-icon>
+            </ons-fab>
+        </ons-page>
+    </template>
+
+
+    <template id="students.html">
+        <ons-page id="AdminStudents">
+            <ons-list id="AdminStudentsList">
+                <div style="text-align:center; padding: 1em;">
+                    Select Lab (optional):
+                    <select id="studentsListSelect" style="margin-left: 1em;">
+                        <option>-All-</option>
+                    </select></div>
+                <ons-list-header>Students</ons-list-header>
+                <div id="studentListTable" style="width:100%;"></div>
+            </ons-list>
+        </ons-page>
+    </template>
+
+    <template id="teams.html">
+        <ons-page id="AdminTeams">
+            <p style="text-align: center;">
+                Teams Page
+            </p>
+        </ons-page>
+    </template>
+
+    <template id="grades.html">
+        <ons-page id="AdminGrades">
+            <p style="text-align: center;">
+                Grades Page
+            </p>
+        </ons-page>
+    </template>
+
+    <template id="gradesCustom.html">
+        <ons-page id="AdminCustomGrades">
+            <ons-list id="AdminGradesList">
+                <ons-list-header>Grades</ons-list-header>
+                <div id="studentGradeTable" style="width:100%;">Grades</div>
+            </ons-list>
+
+
+<!--            <p style="text-align: center;">
+                CPSC 340 Custom Grades Page
+            </p>
+            <ons-button onclick="window.classportal.view.testfunction()">
+                A button
+            </ons-button>-->
+        </ons-page>
+    </template>
+
+    <template id="results.html">
+        <ons-page id="AdminResults">
+            <p style="text-align: center;">
+                Results Page
+            </p>
+        </ons-page>
+    </template>
+
+    <template id="dashboard.html">
+        <ons-page id="AdminDashboard">
+            <p style="text-align: center;">
+                Dashboard Page
+            </p>
+        </ons-page>
+    </template>
+
+    <template id="config.html">
+        <ons-page id="AdminConfig">
+            <ons-list>
+                <ons-list-header>Upload Classlist</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left">
+                        Select classlist CSV <input id="adminClasslistFile" style="padding-left: 1em" type="file"/>
+                        <ons-button id="adminSubmitClasslist" modifier="medium">Upload Classlist</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        The CSV must have a header row that contains the following columns:
+
+                        <pre>ACCT,SNUM,CWL,LAST,FIRST,LAB</pre>
+                        The corresponding classlist command for this is:
+                        <pre>classlist -T -f "%ACCT,%SN,%CWL,%LN,%FN,%LAB" &lt;COURSENUM&gt;</pre>
+                        ACCT and SNUM are invariants and cannot change although ther fields can be updated (changing GitHub logins presents
+                        its own issues that require manual effort on the part of course staff to handle).
+                        Pre-existing Students, Teams, and Repositories <i>WILL NOT</i> be affected.
+                    </div>
+                </ons-list-item>
+            </ons-list>
+        </ons-page>
+    </template>
+
+    <template id="editDeliverable.html">
+        <ons-page id="adminEditDeliverablePage">
+
+            <ons-toolbar>
+                <div class="center">
+                    CPSC 310 Admin Portal
+                </div>
+                <div class="left">
+                    <ons-back-button></ons-back-button>
+                </div>
+                <div id="adminEditDeliverablePage-header" class="center"></div>
+            </ons-toolbar>
+
+            <form id="admin-editable-deliverable-form">
+                <ons-list id="admin-editable-deliverable-list">
+                    <input type="hidden" id="adminEditDeliverablePage-id"/>
+                    <h2 style="text-align: center;">UI NOT YET LIVE</h2>
+                    <ons-list-header>Deliverable Options</ons-list-header>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="A string of lowercase letters, [a-z], followed by any number.">Name</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input id="adminEditDeliverablePage-name"></ons-input>
+                        </div>
+                    </ons-list-item>
+
+                    <!--
+                    <ons-list-header>Bootstrap Code</ons-list-header>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span>GitHub Bootstrap URL:</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input id="adminEditDeliverablePage-url"></ons-input>
+                        </div>
+                    </ons-list-item>
+                    <ons-list-header>AutoTest</ons-list-header>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span>GitHub URL for AutoTest Solution:</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input id="adminEditDeliverablePage-solutionsUrl"></ons-input>
+                        </div>
+                    </ons-list-item>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="Grade request delay in minutes.">Delay</span>
+                        </div>
+                        <div class="right settingRight">
+                            <input id="adminEditDeliverablePage-rate" type="text" name="duration-picker">
+                        </div>
+                    </ons-list-item>
+                    -->
+
+                    <ons-list-header>Deliverable Dates</ons-list-header>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="The date that AutoTest will begin marking Github Repositories for a Deliverable.">Open</span>
+                        </div>
+                        <div class="right settingRight">
+                            <input id="adminEditDeliverablePage-open" class="flatpickr right settingRight"
+                                   style="text-align: center; margin-left: 1em; margin-right: 1em;"
+                                   type="text"
+                                   placeholder="Select Date..">
+                            </input>
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="The date that AutoTest will stop marking Github Repositories for a Deliverable.">Close</span>
+                        </div>
+                        <div class="right settingRight">
+                            <input id="adminEditDeliverablePage-close" class="flatpickr right settingRight"
+                                   style="text-align: center; margin-left: 1em; margin-right: 1em;"
+                                   type="text"
+                                   placeholder="Select Date..">
+                            </input>
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-header>Default Team Options</ons-list-header>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="The minimum number of students that are allowed in a team.">Minimum Size</span>
+                        </div>
+                        <div class="right settingRight">
+                            <select id="adminEditDeliverablePage-minTeamSize" class="settingSelect">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                            </select>
+                        </div>
+                    </ons-list-item>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="The maximum number of students that are allowed in a Team.">Maximum Size</span>
+                        </div>
+                        <div class="right settingRight">
+                            <select id="adminEditDeliverablePage-maxTeamSize" class="settingSelect">
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                            </select>
+                        </div>
+                    </ons-list-item>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="Enable if the Students for Team Generation and Student-made Teams must be in the same lab based on the Lab List.">Must Be In Same Lab</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-switch id="adminEditDeliverablePage-inSameLab" modifier="list-item" onclick=""></ons-switch>
+                        </div>
+                    </ons-list-item>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="Enable if Students are allowed to creat their own team.">Students Make Teams</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-switch id="adminEditDeliverablePage-studentsMakeTeams" modifier="list-item" onclick=""></ons-switch>
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-header>Grade Options</ons-list-header>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="Displays Grades for Deliverable underneath Student Area.">Grades Released</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-switch id="adminEditDeliverablePage-gradesReleased" modifier="list-item" onclick=""></ons-switch>
+                        </div>
+                    </ons-list-item>
+
+
+                </ons-list>
+            </form>
+
+            <ons-fab id="adminEditDeliverableSave" position="bottom right">
+                <ons-icon icon="md-save"></ons-icon>
+            </ons-fab>
+
+        </ons-page>
+    </template>
+
+</ons-page>
