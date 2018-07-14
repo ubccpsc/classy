@@ -86,16 +86,21 @@ export class AutoTestRoutes implements IREST {
 
             const name = Config.getInstance().getProp(ConfigKey.name);
             Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - name: ' + name);
-
-            // TODO: this is just a dummy implementation
-
-            if (name === ConfigCourses.sdmm || name === ConfigCourses.classytest) {
+            
+            if (name === ConfigCourses.classytest) { // for testing only
                 payload = {success: {defaultDeliverable: 'd0'}};
                 res.send(200, payload);
-            } else {
+                return;
+            }
+
+            const cc = new CourseController(new GitHubController());
+            cc.getCourse().then(function (course) {
+                payload = {success: {defaultDeliverable: course.defaultDeliverableId}};
+                res.send(200, payload);
+            }).catch(function (err) {
                 payload = {failure: {message: 'No default deliverable found.', shouldLogout: false}};
                 res.send(400, payload);
-            }
+            });
         }
     }
 

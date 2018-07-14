@@ -103,7 +103,10 @@
             <ons-list>
                 <ons-list-header>Upload Classlist</ons-list-header>
                 <ons-list-item expandable>
-                    <div class="left">
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
                         Select classlist CSV <input id="adminClasslistFile" style="padding-left: 1em" type="file"/>
                         <ons-button id="adminSubmitClasslist" modifier="medium">Upload Classlist</ons-button>
                     </div>
@@ -118,6 +121,24 @@
                         Pre-existing Students, Teams, and Repositories <i>WILL NOT</i> be affected.
                     </div>
                 </ons-list-item>
+
+                <ons-list-header>Set Default Deliverable (AutoTest Only)</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Default Deliverable
+                        <select id="adminDefaultDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                        <ons-button id="adminSubmitDefaultDeliverable" modifier="medium">Set Default Deliverable</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Setting the default deliverable is only required for AutoTest. This lets the container know what tests
+                        to run by default when a push is made. If you are not using AutoTest or do not want any tests to be run
+                        automatically, just leave this blank.
+                    </div>
+                </ons-list-item>
+
             </ons-list>
         </ons-page>
     </template>
@@ -375,7 +396,8 @@
                             Container timeout
                         </div>
                         <div class="right settingRight">
-                            <ons-input class="settingTextInput" maxLength="6" style="width: 5em;" id="adminEditDeliverablePage-atContainerTimeout"></ons-input>
+                            <ons-input class="settingTextInput" maxLength="6" style="width: 5em;"
+                                       id="adminEditDeliverablePage-atContainerTimeout"></ons-input>
                         </div>
                         <div class="expandable-content">
                             This defines how long the AutoTest container will try to run the student code before it times out. E.g., 300 (5
@@ -391,7 +413,8 @@
                             Student Delay
                         </div>
                         <div class="right settingRight">
-                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-atStudentDelay" maxLength="6" style="width: 5em;"></ons-input>
+                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-atStudentDelay" maxLength="6"
+                                       style="width: 5em;"></ons-input>
                         </div>
                         <div class="expandable-content">
                             Delay (in seconds) that students must wait between requesting AutoTest feedback.

@@ -38,6 +38,8 @@ export class AuthRoutes implements IREST {
      * @param req
      * @param res
      */
+
+    /* istanbul ignore next */
     public static handlePreflight(req: any, res: any) {
         Log.trace("AuthRouteHandler::handlePreflight(..) - " + req.method.toLowerCase() + "; uri: " + req.url);
 
@@ -93,6 +95,7 @@ export class AuthRoutes implements IREST {
         });
     }
 
+    /* istanbul ignore next */
     public static getAuth(req: any, res: any, next: any) {
         Log.trace("AuthRouteHandler::getAuth(..) - /auth redirect start");
         let config = Config.getInstance();
@@ -123,10 +126,14 @@ export class AuthRoutes implements IREST {
      * really think on it over a weekend before deciding to make any edits to _anything_
      * in this method.
      *
+     * Coverage won't happen because of GitHub dependencies.
+     *
      * @param req
      * @param res
      * @param next
      */
+
+    /* istanbul ignore next */
     public static githubCallback(req: any, res: any, next: any) {
         Log.trace("AuthRouteHandler::githubCallback(..) - /githubCallback - start");
         const config = Config.getInstance();
@@ -191,8 +198,8 @@ export class AuthRoutes implements IREST {
 
                 fName:  '',
                 lName:  '',
-                kind:   'student',
-                URL:    'https://github.com/' + username, // HARDCODE (don't hardcode host)
+                kind:   null, // isPriv will fill this in on demand
+                URL:    Config.getInstance().getProp(ConfigKey.githubHost) + '/' + username,
                 labId:  'UNKNOWN',
                 custom: {}
             };

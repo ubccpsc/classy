@@ -47,6 +47,7 @@ export class AdminDeliverablesTab {
         const url = this.remote + '/admin/deliverables';
         const response = await fetch(url, options);
         UI.hideModal();
+
         if (response.status === 200) {
             Log.trace('AdminDeliverablesTab::init(..) - 200 received');
             const json: DeliverableTransportPayload = await response.json();
@@ -109,34 +110,41 @@ export class AdminDeliverablesTab {
             this.renderEditDeliverablePage(null);
 
         } else {
-            UI.showModal('Retrieving ' + delivId + ' details'); // NOTE: not working on this screen
-
-            const options = AdminView.getOptions();
-            const url = this.remote + '/admin/deliverables';
-            const response = await fetch(url, options);
-
-            UI.hideModal();
-            if (response.status === 200) {
-                Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..) - 200 received');
-                const json: DeliverableTransportPayload = await response.json();
-                if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                    Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..)  - worked; took: ' + UI.took(start));
-
-                    for (const deliv of json.success) {
-                        if (deliv.id === delivId) {
-                            this.renderEditDeliverablePage(deliv);
-                            return;
-                        }
-                    }
-                    Log.error('AdminDeliverablesTab::initEditDeliverablePage(..)  - delivId not found: ' + delivId);
-                } else {
-                    Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..)  - ERROR: ' + json.failure.message);
-                    AdminView.showError(json.failure); // FailurePayload
+            // UI.showModal('Retrieving ' + delivId + ' details'); // NOTE: not working on this screen
+            //
+            // const options = AdminView.getOptions();
+            // const url = this.remote + '/admin/deliverables';
+            // const response = await fetch(url, options);
+            //
+            // UI.hideModal();
+            // if (response.status === 200) {
+            //     Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..) - 200 received');
+            //     const json: DeliverableTransportPayload = await response.json();
+            //     if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
+            //         Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..)  - worked; took: ' + UI.took(start));
+            //
+            //         for (const deliv of json.success) {
+            //             if (deliv.id === delivId) {
+            //                 this.renderEditDeliverablePage(deliv);
+            //                 return;
+            //             }
+            //         }
+            //         Log.error('AdminDeliverablesTab::initEditDeliverablePage(..)  - delivId not found: ' + delivId);
+            //     } else {
+            //         Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..)  - ERROR: ' + json.failure.message);
+            //         AdminView.showError(json.failure); // FailurePayload
+            //     }
+            // } else {
+            //     Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..)  - !200 received: ' + response.status);
+            //     const text = await response.text();
+            //     AdminView.showError(text);
+            // }
+            const deliverables = await AdminDeliverablesTab.getDeliverables(this.remote);
+            for (const deliv of deliverables) {
+                if (deliv.id === delivId) {
+                    this.renderEditDeliverablePage(deliv);
+                    return;
                 }
-            } else {
-                Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..)  - !200 received: ' + response.status);
-                const text = await response.text();
-                AdminView.showError(text);
             }
         }
     }
@@ -371,5 +379,36 @@ export class AdminDeliverablesTab {
         } else {
             Log.error('AdminDeliverablesTab::getToggle( ' + fieldName + ' ) - element does not exist')
         }
+    }
+
+    public static async getDeliverables(remote: string): Promise<DeliverableTransport[]> {
+        const options = AdminView.getOptions();
+        const url = remote + '/admin/deliverables';
+        UI.showModal('Retrieving deliverables');
+
+        const response = await fetch(url, options);
+        const start = Date.now();
+
+        UI.hideModal();
+
+        if (response.status === 200) {
+            Log.trace('AdminDeliverablesTab::getDeliverables(..) - 200 received');
+            const json: DeliverableTransportPayload = await response.json();
+            // Log.trace('AdminView::handleAdminDeliverables(..)  - payload: ' + JSON.stringify(json));
+            if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
+                Log.trace('AdminDeliverablesTab::getDeliverables(..)  - worked; took: ' + UI.took(start));
+                return (json.success);
+            } else {
+                Log.trace('AdminDeliverablesTab::getDeliverables(..)  - ERROR: ' + json.failure.message);
+                AdminView.showError(json.failure); // FailurePayload
+            }
+        } else {
+            Log.trace('AdminDeliverablesTab::getDeliverables(..)  - !200 received: ' + response.status);
+            const text = await response.text();
+            AdminView.showError(text);
+        }
+
+        return [];
+
     }
 }

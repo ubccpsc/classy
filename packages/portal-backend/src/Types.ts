@@ -117,6 +117,16 @@ export interface Repository {
     custom: any; // {}; not used by default
 }
 
+/**
+ * This is just a placeholder type to hold course-level data that can change.
+ * (in contrast to course-level static data in the .env file)
+ */
+export interface Course {
+    readonly id: string; // invariant; this is the name of the course
+    defaultDeliverableId: string | null; // Deliverable.id foreign key
+    custom: object;
+}
+
 export interface Grade {
     // this should be the personId associated with the repo, not a staff who invoked it!
     readonly personId: string; // Person.id; grades are really on repos, but we only care about them by person

@@ -52,7 +52,7 @@ export class AuthController {
             if (valid === true) {
                 Log.trace("AuthController::isPrivileged( " + personId + ", ... ) - person.kind: " + person.kind);
 
-                if (person.kind === null) {
+                if (person.kind === null || person.kind === '') {
                     // check github for credentials and cache them
                     const isStaff = await new GitHubActions().isOnStaffTeam(personId);
                     const isAdmin = await new GitHubActions().isOnAdminTeam(personId);

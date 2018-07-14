@@ -33,6 +33,18 @@ export interface ConfigTransport {
     name: string;
 }
 
+export interface CourseTransportPayload {
+    success?: CourseTransport; // only set if defined
+    failure?: FailurePayload; // only set if defined
+}
+
+export interface CourseTransport {
+    id: string;
+    defaultDeliverableId: string;
+    custom: object;
+}
+
+
 export interface AuthTransportPayload {
     success?: AuthTransport; // only set if defined
     failure?: FailurePayload; // only set if defined

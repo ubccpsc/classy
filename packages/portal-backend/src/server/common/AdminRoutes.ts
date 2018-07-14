@@ -8,10 +8,17 @@ import IREST from "../IREST";
 import {AuthController} from "../../controllers/AuthController";
 import {CourseController} from "../../controllers/CourseController";
 import {GitHubController} from "../../controllers/GitHubController";
-import {DeliverableTransport, DeliverableTransportPayload, Payload, StudentTransportPayload} from '../../../../common/types/PortalTypes';
 import {Person} from "../../Types";
 import {PersonController} from "../../controllers/PersonController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
+import {
+    CourseTransport,
+    CourseTransportPayload,
+    DeliverableTransport,
+    DeliverableTransportPayload,
+    Payload,
+    StudentTransportPayload,
+} from '../../../../common/types/PortalTypes';
 
 export default class AdminRoutes implements IREST {
 
@@ -21,14 +28,18 @@ export default class AdminRoutes implements IREST {
     public registerRoutes(server: restify.Server) {
         Log.trace('AdminRoutes::registerRoutes() - start');
 
+        // visible to non-privileged users
+        // NOTHING
+
         // visible to all privileged users
         server.get('/admin/students', AdminRoutes.isPrivileged, AdminRoutes.getStudents);
         server.get('/admin/deliverables', AdminRoutes.isPrivileged, AdminRoutes.getDeliverables);
+        server.get('/admin/course', AdminRoutes.isPrivileged, AdminRoutes.getCourse);
 
-        // posting a class list is admin only
+        // admin-only functions
         server.post('/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
-        // editing / creating a deliverable is admin only
         server.post('/admin/deliverable', AdminRoutes.isAdmin, AdminRoutes.postDeliverable);
+        server.post('/admin/course', AdminRoutes.isAdmin, AdminRoutes.postCourse);
     }
 
     /**
@@ -339,8 +350,78 @@ export default class AdminRoutes implements IREST {
         }
     }
 
-    // TODO: upload CSV
+    /**
+     * Retrieves the course object.
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
+    private static getCourse(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::getCourse(..) - start');
 
-    // TODO: fail to upload invalid CSV
+        const cc = new CourseController(new GitHubController());
+        cc.getCourse().then(function (course) {
+            Log.trace('AdminRoutes::getCourse(..) - in then');
+
+            const payload: CourseTransportPayload = {success: course}; // NOTE: in future course will probably have to be translated to Transport type
+            res.send(payload);
+            return next();
+        }).catch(function (err) {
+            Log.error('AdminRoutes::getCourse(..) - ERROR: ' + err.message);
+            const payload: Payload = {
+                failure: {
+                    message:      'Unable to retrieve course object; ERROR: ' + err.message,
+                    shouldLogout: false
+                }
+            };
+            res.send(400, payload);
+            return next(false);
+        });
+    }
+
+    private static postCourse(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::postCourse(..) - start');
+        let payload: Payload;
+
+        const handleError = function (msg: string) {
+            Log.error('AdminRoutes::postCourse(..)::handleError - message: ' + msg);
+            payload = {
+                failure: {
+                    message:      msg,
+                    shouldLogout: false
+                }
+            };
+            res.send(400, payload);
+            return next();
+        };
+
+        try {
+            const courseTrans: CourseTransport = req.params;
+            Log.info('AdminRoutes::postCourse() - body: ' + courseTrans);
+            const cc = new CourseController(new GitHubController());
+            // const result = cc.validateCourseTransport(courseTrans); // TODO: implement this
+            const result: null = null;
+            if (result === null) {
+                // let deliv = dc.translateTransport(delivTrans);
+                cc.saveCourse(courseTrans).then(function (saveSucceeded) {
+                    if (saveSucceeded !== null) {
+                        // worked (would have returned a Deliverable)
+                        Log.info('AdminRoutes::postCourse() - done');
+                        payload = {success: {message: 'Course object saved successfully'}};
+                        res.send(200, payload);
+                    } else {
+                        handleError("Course object not saved.");
+                    }
+                }).catch(function (err) {
+                    handleError("Course object not saved. ERROR: " + err);
+                });
+            } else {
+                handleError("Course object not saved: " + result);
+            }
+        } catch (err) {
+            handleError('Course object save unsuccessful: ' + err);
+        }
+    }
 
 }
