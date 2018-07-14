@@ -314,9 +314,9 @@ export default class AdminRoutes implements IREST {
         try {
             const delivTrans: DeliverableTransport = req.params;
             Log.info('AdminRoutes::postDeliverable() - body: ' + delivTrans);
-            const result = AdminRoutes.validateDeliverable(delivTrans);
+            const dc = new DeliverablesController();
+            const result = dc.validateDeliverableTransport(delivTrans);
             if (result === null) {
-                const dc = new DeliverablesController();
                 let deliv = dc.translateTransport(delivTrans);
                 dc.saveDeliverable(deliv).then(function (saveSucceeded: any) {
                     // worked
@@ -333,32 +333,8 @@ export default class AdminRoutes implements IREST {
                 handleError("Deliverable not saved: " + result);
             }
         } catch (err) {
-            Log.error('AdminRoutes::postDeliverable(..) - ERROR: ' + err);
             handleError('Deliverable creation / update unsuccessful: ' + err);
         }
-
     }
 
-    private static validateDeliverable(deliv: DeliverableTransport): string {
-
-        if (typeof deliv === 'undefined') {
-            const msg = 'object undefined';
-            Log.error('AdminRoutes::validateDeliverable(..) - ERROR: ' + msg);
-            return msg;
-        }
-
-        if (typeof deliv === null) {
-            const msg = 'object null';
-            Log.error('AdminRoutes::validateDeliverable(..) - ERROR: ' + msg);
-            return msg;
-        }
-
-        if (deliv.id.length < 2) {
-            const msg = 'invalid delivId: ' + deliv.id;
-            Log.error('AdminRoutes::validateDeliverable(..) - ERROR: ' + msg);
-            return msg;
-        }
-
-        return null;
-    }
 }

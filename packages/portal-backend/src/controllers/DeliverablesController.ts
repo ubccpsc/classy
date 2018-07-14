@@ -36,6 +36,34 @@ export class DeliverablesController {
         }
     }
 
+    /**
+     *
+     * @param {DeliverableTransport} deliv
+     * @returns {string|null} null if the deliverable is valid; string describing the error if there is one.
+     */
+    public validateDeliverableTransport(deliv: DeliverableTransport): string | null {
+
+        if (typeof deliv === 'undefined') {
+            const msg = 'object undefined';
+            Log.error('DeliverableController::validateDeliverableTransport(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        if (typeof deliv === null) {
+            const msg = 'object null';
+            Log.error('DeliverableController::validateDeliverableTransport(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        if (deliv.id.length < 2) {
+            const msg = 'invalid delivId: ' + deliv.id;
+            Log.error('DeliverableController::validateDeliverableTransport(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        return null;
+    }
+
     public translateTransport(trans: DeliverableTransport): Deliverable | null {
 
         // let at: AutoTestConfig = {
