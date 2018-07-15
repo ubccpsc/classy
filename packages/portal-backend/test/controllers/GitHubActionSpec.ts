@@ -10,6 +10,7 @@ import Util from "../../../common/Util";
 import Config, {ConfigKey} from "../../../common/Config";
 
 describe.skip("GitHubActions", () => {
+    // TODO: investigate skipping this way: https://stackoverflow.com/a/41908943 (and turning them on/off with an env flag)
 
     let gh: GitHubActions;
 

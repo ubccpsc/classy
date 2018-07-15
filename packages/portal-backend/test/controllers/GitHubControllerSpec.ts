@@ -9,6 +9,7 @@ const loadFirst = require('../GlobalSpec');
 const rFirst = require('./TeamControllerSpec');
 
 describe.skip("GitHubController", () => {
+    // TODO: investigate skipping this way: https://stackoverflow.com/a/41908943 (and turning them on/off with an env flag)
 
     let TIMEOUT = 10000;
 
