@@ -164,6 +164,3 @@ export class TestGitHubController implements IGitHubController {
         return true;
     }
 }
-
-
-

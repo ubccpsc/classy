@@ -151,7 +151,7 @@ describe.skip("GitHubActions", () => {
         Log.test('Team # ' + val);
         expect(val).to.be.greaterThan(0);
 
-        // let bool = await gh.teamExists(Test.ORGNAME, TEAMNAME);
+        // let bool = await gh.teamExists(TEAMNAME);
         // expect(bool).to.be.true;
     }).timeout(TIMEOUT);
 
@@ -269,6 +269,25 @@ describe.skip("GitHubActions", () => {
         let del = await deleteStale();
         expect(del).to.be.true;
     }).timeout(TIMEOUT * 10);
+
+    it("Should be able to create a repo, " +
+        "create a team, add users to it, add it to the repo, " +
+        "and change their permissions", async function() {
+        let githubTeam = await gh.createTeam(TEAMNAME, 'push');
+        expect(githubTeam.teamName).to.be.equal(TEAMNAME);
+        expect(githubTeam.githubTeamNumber).to.be.an('number');
+        expect(githubTeam.githubTeamNumber > 0).to.be.true;
+
+        // Expects adding members to work
+        let addMembers = await gh.addMembersToTeam(githubTeam.teamName, githubTeam.githubTeamNumber, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+        let teamAdd = await gh.addTeamToRepo(githubTeam.githubTeamNumber, REPONAME, 'push');
+
+        let staffTeamNumber = await gh.getTeamNumber('staff');
+        let staffAdd = await gh.addTeamToRepo(staffTeamNumber, REPONAME, 'admin');
+        let permissionEdit = await gh.setRepoPermission(REPONAME, "pull");
+        expect(permissionEdit).to.be.true;
+
+    }).timeout(TIMEOUT);
 
 
     function getProjectPrefix(): string {
