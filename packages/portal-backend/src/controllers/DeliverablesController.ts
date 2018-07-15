@@ -43,7 +43,7 @@ export class DeliverablesController {
             return msg;
         }
 
-        if (typeof deliv === null) {
+        if (deliv === null) {
             const msg = 'object null';
             Log.error('DeliverableController::validateDeliverableTransport(..) - ERROR: ' + msg);
             return msg;
