@@ -25,15 +25,8 @@ export class DeliverablesController {
 
     public async saveDeliverable(deliv: Deliverable): Promise<Deliverable | null> {
         Log.info("DeliverableController::saveDeliverable( " + JSON.stringify(deliv) + " ) - start");
-        try {
-            // let existingDeliverable = await this.getDeliverable(org, deliv.id);
-
-            await this.db.writeDeliverable(deliv); // let this handle the update
-            return deliv;
-        } catch (err) {
-            Log.error("RepositoryController::createGrade(..) - ERROR: " + err);
-            return null;
-        }
+        await this.db.writeDeliverable(deliv); // let this handle the update
+        return deliv;
     }
 
     /**

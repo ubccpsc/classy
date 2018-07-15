@@ -5,6 +5,7 @@ import {Test} from "../GlobalSpec";
 
 import {GradesController} from "../../src/controllers/GradesController";
 import {GradePayload} from "../../../common/types/SDMMTypes";
+import {AutoTestGradeTransport} from "../../../common/types/PortalTypes";
 
 const loadFirst = require('../GlobalSpec');
 const rFirst = require('./RepositoryControllerSpec');
@@ -74,6 +75,38 @@ describe("GradeController", () => {
         let grade = await gc.getGrade(Test.USERNAME1, Test.DELIVID1);
         expect(grade).to.not.be.null;
         expect(grade.score).to.equal(50);
+    });
+
+    it("Should be able to invalidate bad grades.", async () => {
+        let deliv = await gc.validateAutoTestGrade(undefined);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        deliv = await gc.validateAutoTestGrade(null);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        let data: AutoTestGradeTransport = <AutoTestGradeTransport>{};
+        deliv = await gc.validateAutoTestGrade(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        data = <AutoTestGradeTransport>{delivId: 'd0'};
+        deliv = await gc.validateAutoTestGrade(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        data = <AutoTestGradeTransport>{delivId: 'd0', score: 100};
+        deliv = await gc.validateAutoTestGrade(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        data = <AutoTestGradeTransport>{delivId: 'd0', score: 100, comment: 'comment'};
+        deliv = await gc.validateAutoTestGrade(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        // more here
     });
 
 });

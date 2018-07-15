@@ -31,20 +31,15 @@ export class ResultsController {
     public async createResult(record: IAutoTestResult): Promise<boolean> {
         Log.info("ResultController::createResult(..) - start");
         Log.trace("GradesController::createResult(..) - payload: " + JSON.stringify(record));
-        try {
 
-            const rc = new RepositoryController();
-            const people = await rc.getPeopleForRepo(record.repoId);
+        const rc = new RepositoryController();
+        const people = await rc.getPeopleForRepo(record.repoId);
 
-            (<any>record).people = people; // don't know how to augment this record with people to keep the type system happy
+        (<any>record).people = people; // don't know how to augment this record with people to keep the type system happy
 
-            let outcome = await DatabaseController.getInstance().writeResult(<Result>record);
-            Log.trace("ResultController::createResult(..) - result written");
-            return outcome;
-        } catch (err) {
-            Log.error("ResultController::createResult(..) - ERROR: " + err);
-            return false;
-        }
+        let outcome = await DatabaseController.getInstance().writeResult(<Result>record);
+        Log.trace("ResultController::createResult(..) - result written");
+        return outcome;
     }
 
     public async getResult(delivId: string, repoId: string): Promise<IAutoTestResult | null> {

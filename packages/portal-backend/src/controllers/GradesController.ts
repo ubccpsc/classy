@@ -27,11 +27,6 @@ export class GradesController {
         Log.info("GradesController::createGrade( " + repoId + ", " + delivId + ", ... ) - start");
         Log.trace("GradesController::createGrade(..) - payload: " + JSON.stringify(grade));
         try {
-
-            if (typeof (<any>grade).url !== 'undefined') {
-                grade.URL = (<any>grade).url; // TODO: remove this when AutoTest is done being naughty
-            }
-
             // find all people on a repo
             const allPeopleIds: string[] = [];
             let repo = await this.db.getRepository(repoId);

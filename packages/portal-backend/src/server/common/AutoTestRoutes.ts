@@ -30,9 +30,12 @@ export class AutoTestRoutes implements IREST {
         server.get('/at/defaultDeliverable', AutoTestRoutes.atDefaultDeliverable);
         server.get('/at/isStaff/:personId', AutoTestRoutes.atIsStaff);
         server.get('/at/container/:delivId', AutoTestRoutes.atContainerDetails);
+
         server.post('/at/grade/', AutoTestRoutes.atGrade);
+
         server.post('/at/result/', AutoTestRoutes.atPostResult);
         server.get('/at/result/:delivId/:repoId', AutoTestRoutes.atGetResult);
+
         server.post('/githubWebhook', AutoTestRoutes.githubWebhook); // forward GitHub Webhooks to AutoTest
     }
 
@@ -86,12 +89,12 @@ export class AutoTestRoutes implements IREST {
 
             const name = Config.getInstance().getProp(ConfigKey.name);
             Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - name: ' + name);
-            
-            if (name === ConfigCourses.classytest) { // for testing only
-                payload = {success: {defaultDeliverable: 'd0'}};
-                res.send(200, payload);
-                return;
-            }
+
+            // if (name === ConfigCourses.classytest) { // for testing only
+            //     payload = {success: {defaultDeliverable: 'd0'}};
+            //     res.send(200, payload);
+            //     return;
+            // }
 
             const cc = new CourseController(new GitHubController());
             cc.getCourse().then(function (course) {

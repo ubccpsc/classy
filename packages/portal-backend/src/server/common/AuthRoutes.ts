@@ -19,15 +19,6 @@ export class AuthRoutes implements IREST {
 
     private static ac = new AuthController();
 
-    public registerRoutes(server: restify.Server) {
-        Log.info("AuthRouteHandler::registerRoutes() - start");
-
-        server.on('MethodNotAllowed', AuthRoutes.handlePreflight); // preflights cors requests
-        server.get('/getCredentials', AuthRoutes.getCredentials); // verify Classy credentials
-        server.get('/auth', AuthRoutes.getAuth); // start GitHub OAuth flow
-        server.get('/githubCallback', AuthRoutes.githubCallback); // finalize GitHub OAuth flow
-    }
-
     /**
      * Work around some CORS-related issues for OAuth. This looks manky, but don't change it.
      *
@@ -38,8 +29,6 @@ export class AuthRoutes implements IREST {
      * @param req
      * @param res
      */
-
-    /* istanbul ignore next */
     public static handlePreflight(req: any, res: any) {
         Log.trace("AuthRouteHandler::handlePreflight(..) - " + req.method.toLowerCase() + "; uri: " + req.url);
 
@@ -95,7 +84,6 @@ export class AuthRoutes implements IREST {
         });
     }
 
-    /* istanbul ignore next */
     public static getAuth(req: any, res: any, next: any) {
         Log.trace("AuthRouteHandler::getAuth(..) - /auth redirect start");
         let config = Config.getInstance();
@@ -132,8 +120,6 @@ export class AuthRoutes implements IREST {
      * @param res
      * @param next
      */
-
-    /* istanbul ignore next */
     public static githubCallback(req: any, res: any, next: any) {
         Log.trace("AuthRouteHandler::githubCallback(..) - /githubCallback - start");
         const config = Config.getInstance();
@@ -255,6 +241,15 @@ export class AuthRoutes implements IREST {
             // NOTE: should this be returning 400 or something?
             return next();
         });
+    }
+
+    public registerRoutes(server: restify.Server) {
+        Log.info("AuthRouteHandler::registerRoutes() - start");
+
+        server.on('MethodNotAllowed', AuthRoutes.handlePreflight); // preflights cors requests
+        server.get('/getCredentials', AuthRoutes.getCredentials); // verify Classy credentials
+        server.get('/auth', AuthRoutes.getAuth); // start GitHub OAuth flow
+        server.get('/githubCallback', AuthRoutes.githubCallback); // finalize GitHub OAuth flow
     }
 
 }

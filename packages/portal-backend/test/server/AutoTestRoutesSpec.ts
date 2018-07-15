@@ -21,7 +21,6 @@ import {
 // const loadFirst = require('../GlobalSpec');
 
 import restify = require('restify');
-import {AutoTestRoutes} from "../../src/server/common/AutoTestRoutes";
 
 const request = require('supertest');
 
@@ -112,7 +111,7 @@ describe('AutoTest Routes', function () {
         expect(body.failure.shouldLogout).to.be.true;
     });
 
-    it('Should respond to a valid result', async function () {
+    it('Should accept a valid result payload', async function () {
 
         let response = null;
         const url = '/at/result/';
@@ -138,7 +137,7 @@ describe('AutoTest Routes', function () {
         // expect(response.body.success).to.equal(true);
     }).timeout(TIMEOUT);
 
-    it('Should reject an invalid result', async function () {
+    it('Should reject an invalid result payload', async function () {
 
         let response = null;
         const url = '/at/result/';
@@ -165,6 +164,44 @@ describe('AutoTest Routes', function () {
         expect(response.body.success).to.be.undefined;
         expect(response.body.failure).to.not.be.undefined;
     }).timeout(TIMEOUT);
+
+
+    it('Should respond to a valid result request', async function () {
+
+        let response = null;
+        const url = '/at/result/' + Test.DELIVID0 + '/' + Test.REPONAME1;
+        let body = null;
+        try {
+            response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.failure).to.be.undefined;
+    });
+
+
+    it('Should reject an unauthorized result request', async function () {
+
+        let response = null;
+        const url = '/at/result/' + Test.DELIVID0 + '/' + Test.REPONAME1;
+        let body = null;
+        try {
+            response = await request(app).get(url).set('token', 'INVALID');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+        expect(body.failure.shouldLogout).to.be.true;
+    });
+
 
     it('Should reject an unauthorized isStaff request', async function () {
 
