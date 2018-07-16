@@ -193,6 +193,13 @@ export class DatabaseController {
     }
     */
 
+    public async deleteAuth(record: Auth): Promise<boolean> {
+        Log.info("DatabaseController::deleteAuth(..) - start");
+        if (record !== null) {
+            return await this.deleteRecord(this.AUTHCOLL, {personId: record.personId});
+        }
+    }
+
     public async deleteRepository(record: Repository): Promise<boolean> {
         Log.info("DatabaseController::deleteRepository(..) - start");
         if (record !== null) {

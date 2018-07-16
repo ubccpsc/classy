@@ -86,4 +86,24 @@ export class AuthController {
         return {isAdmin: false, isStaff: false};
     }
 
+    /**
+     * Deauthenticates a user. This resets their Person.kind field and removes any Auth record they might have.
+     *
+     * @param {string} personId
+     * @returns {Promise<boolean>}
+     */
+    public async removeAuthentication(personId: string): Promise<boolean> {
+        Log.trace("AuthController::removeAuthentication() - start");
+        const pc = new PersonController();
+        const person = await pc.getPerson(personId);
+        person.kind = null;
+        pc.writePerson(person);
+
+        const auth = await this.dc.getAuth(personId);
+        await this.dc.deleteAuth(auth);
+
+        Log.trace("AuthController::removeAuthentication() - done");
+        return true; // if it doesn't throw an exception it must have worked enough
+    }
+
 }

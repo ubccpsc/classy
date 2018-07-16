@@ -50,6 +50,7 @@ export class App {
         // before anything else happens, get the org associated with the backend
         await this.retrieveConfig();
 
+
         let validated = await that.validateCredentials();
         this.validated = validated;
         // Log.trace('App::init() - validated: ' + validated);
