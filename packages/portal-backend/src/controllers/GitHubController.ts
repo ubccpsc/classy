@@ -123,13 +123,13 @@ export class GitHubController implements IGitHubController {
             let targetUrl = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/' + repoName; // valid .org use
 
             Log.trace("GitHubController::provisionRepository() - importing project (slow)");
-            let output;
+            let success;
             if (path) {
-                output = await gh.importRepoFS(importUrl, targetUrl, path);
+                success = await gh.importRepoFS(importUrl, targetUrl, path);
             } else {
-                output = await gh.importRepoFS(importUrl, targetUrl);
+                success = await gh.importRepoFS(importUrl, targetUrl);
             }
-            Log.trace('GHA::provisionRepository(..) - import complete; success: ' + output);
+            Log.trace('GHA::provisionRepository(..) - import complete; success: ' + success);
             // expect(output).to.be.true;
 
             Log.trace('GHA::provisionRepository(..) - successfully completed for: ' + repoName + '; took: ' + Util.took(start));
