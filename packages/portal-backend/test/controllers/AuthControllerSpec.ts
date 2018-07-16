@@ -109,6 +109,38 @@ describe("AuthController", () => {
         expect(isPriv.isStaff).to.be.false;
     }).timeout(TIMEOUT);
 
+
+    it("Should be able to logout a real user.", async () => {
+        const personId = 'rtholmes';
+        const dc = DatabaseController.getInstance();
+        const pc = new PersonController();
+
+        let auth = await dc.getAuth(personId);
+        let person = await pc.getPerson(personId);
+        expect(person.kind).to.not.be.null;
+
+        let workedEnough = await ac.removeAuthentication(personId);
+        expect(workedEnough).to.be.true;
+
+        auth = await dc.getAuth('rtholmes');
+        expect(auth).to.be.null; // shouldn't exist for a logged out person
+
+        person = await pc.getPerson(personId);
+        expect(person.kind).to.be.null; // should be null after being logged out
+    });
+
+    it("Should not fail to logout a user who does not exist.", async () => {
+        // this seems strange, but really we just want it to not crash
+        let workedEnough = await ac.removeAuthentication(Test.USERNAME3);
+        expect(workedEnough).to.be.true;
+
+        workedEnough = await ac.removeAuthentication(undefined);
+        expect(workedEnough).to.be.true;
+
+        workedEnough = await ac.removeAuthentication(null);
+        expect(workedEnough).to.be.true;
+    });
+
     // TODO: implement auth controller tests
     /*
     let rc: RepositoryController;

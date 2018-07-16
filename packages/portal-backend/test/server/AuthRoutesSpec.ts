@@ -121,5 +121,30 @@ describe('Auth Routes', function () {
         expect(body.failure).to.not.be.undefined;
     });
 
+    it('Should be able to logout a student', async function () {
+
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        let auth = await dc.getAuth(Test.USERNAME1);
+        expect(auth).to.not.be.null;
+
+        let response = null;
+        let body: AuthTransportPayload;
+        const url = '/logout';
+        try {
+            Log.test('Making request');
+            response = await request(app).get(url).set('user', auth.personId).set('token', auth.token);
+            Log.test('Response received');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test('checking assertions on: response');
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+    }).timeout(TIMEOUT);
+
 });
 

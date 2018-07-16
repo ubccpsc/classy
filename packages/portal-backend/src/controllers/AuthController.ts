@@ -18,9 +18,15 @@ export class AuthController {
 
     public async isValid(personId: string, token: string): Promise<boolean> {
         Log.trace("AuthController::isValid( " + personId + ", ... ) - start");
+
+        if (typeof personId === 'undefined' || personId === null || typeof token === 'undefined' || token === null) {
+            // these are never valid; this would be caught below, but this is just to be extra cautious
+            return false;
+        }
+
         let person = new PersonController().getPerson(personId);
         if (person !== null) {
-            let valid = await this.verifyToken(personId, token);
+            const valid = await this.verifyToken(personId, token);
             return valid;
         }
         return false;
@@ -60,13 +66,17 @@ export class AuthController {
 
                     if (isStaff === true && isAdmin === true) {
                         person.kind = 'adminstaff';
-                        dc.writePerson(person);
+                        await dc.writePerson(person);
                     } else if (isStaff === true) {
                         person.kind = 'staff';
-                        dc.writePerson(person);
+                        await dc.writePerson(person);
                     } else if (isAdmin === true) {
                         person.kind = 'admin';
-                        dc.writePerson(person);
+                        await dc.writePerson(person);
+                    } else {
+                        // shouldn't happen: students shouldn't have null kind
+                        person.kind = 'student';
+                        await dc.writePerson(person);
                     }
                 }
 
@@ -94,14 +104,21 @@ export class AuthController {
      */
     public async removeAuthentication(personId: string): Promise<boolean> {
         Log.trace("AuthController::removeAuthentication() - start");
-        const pc = new PersonController();
-        const person = await pc.getPerson(personId);
-        person.kind = null;
-        pc.writePerson(person);
+        if (typeof personId != 'undefined' && personId !== null) {
+            const pc = new PersonController();
+            const person = await pc.getPerson(personId);
 
-        const auth = await this.dc.getAuth(personId);
-        await this.dc.deleteAuth(auth);
+            if (person.kind !== 'student') {
+                // Students stay students _forever_
+                // Shis is just a safe option.
+                // Students do become TAs during the term for courses they were already students in.
+                person.kind = null;
+                await pc.writePerson(person);
+            }
 
+            const auth = await this.dc.getAuth(personId);
+            await this.dc.deleteAuth(auth);
+        }
         Log.trace("AuthController::removeAuthentication() - done");
         return true; // if it doesn't throw an exception it must have worked enough
     }

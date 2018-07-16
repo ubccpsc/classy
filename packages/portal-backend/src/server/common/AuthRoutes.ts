@@ -8,7 +8,7 @@ import {DatabaseController} from "../../controllers/DatabaseController";
 import {Auth, Person} from "../../Types";
 import {PersonController} from "../../controllers/PersonController";
 import IREST from "../IREST";
-import {AuthTransportPayload} from "../../../../common/types/PortalTypes";
+import {AuthTransportPayload, Payload} from "../../../../common/types/PortalTypes";
 import restify = require("restify");
 import ClientOAuth2 = require("client-oauth2");
 
@@ -19,7 +19,6 @@ export class AuthRoutes implements IREST {
 
     private static ac = new AuthController();
 
-
     public registerRoutes(server: restify.Server) {
         Log.info("AuthRouteHandler::registerRoutes() - start");
 
@@ -27,7 +26,7 @@ export class AuthRoutes implements IREST {
 
         // user endpoints
         server.get('/getCredentials', AuthRoutes.getCredentials); // verify Classy credentials
-        server.post('/logout', AuthRoutes.postLogout); // verify Classy credentials
+        server.get('/logout', AuthRoutes.getLogout);
 
         // GitHub OAuth endpoints
         server.get('/auth', AuthRoutes.getAuth); // start GitHub OAuth flow
@@ -65,26 +64,37 @@ export class AuthRoutes implements IREST {
         return res.send(204);
     }
 
-    public static postLogout(req: any, res: any, next: any) {
-        Log.trace('AuthRouteHandler::postLogout(..) - start');
-        const user = req.headers.user;
-        const token = req.headers.token;
-        // const org = req.headers.org;
-        Log.info('AuthRouteHandler::postLogout(..) - user: ' + user + '; token: ' + token);
+    public static getLogout(req: any, res: any, next: any) {
+        Log.trace('AuthRouteHandler::getLogout(..) - start');
+        let user = req.headers.user;
+        let token = req.headers.token;
 
-        let payload: AuthTransportPayload;
+        if (typeof user === 'undefined') {
+            user = null;
+        }
+        if (typeof token === 'undefined') {
+            token = null;
+        }
+
+        Log.info('AuthRouteHandler::getLogout(..) - user: ' + user + '; token: ' + token);
+
+        let payload: Payload;
         AuthRoutes.ac.isValid(user, token).then(function (isValid) {
-            // todo
             if (isValid === true) {
-                // logout
-                const ac = new AuthController();
-                ac.removeAuthentication(user);
+                Log.info('AuthRouteHandler::getLogout(..) - user: ' + user + '; valid user');
             } else {
                 // loglout anyways? if your user / token is stale we still need log you out
                 // but that could mean someone else could spoof-log you out too
+                Log.warn('AuthRouteHandler::getLogout(..) - user: ' + user + '; invalid user');
             }
+            // logout
+            const ac = new AuthController();
+            return ac.removeAuthentication(user);
+        }).then(function (success) {
+            payload = {success: {message: "Logout successful"}};
+            res.send(200, payload);
         }).catch(function (err) {
-            Log.error('AuthRouteHandler::postLogout(..) - ERROR: ' + err);
+            Log.error('AuthRouteHandler::getLogout(..) - ERROR: ' + err);
             payload = {failure: {message: 'Logout failed: ' + err, shouldLogout: false}};
             res.send(400, payload);
         });

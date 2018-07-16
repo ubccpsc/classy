@@ -214,16 +214,44 @@ export class App {
         return false;
     }
 
-    private clearCredentials() {
+    private async clearCredentials(): Promise<void> {
         Log.info("App::clearCredentials() - start");
+        const that = this;
 
-        // TODO: erase credentials on server too
+        const user = localStorage.getItem('user'); // null if missing
+        const token = localStorage.getItem('token'); // null if missing
 
-        // invalid username; logout
-        this.validated = false;
-        localStorage.clear(); // erase cached info
-        document.cookie = "token=empty;expires=" + new Date(0).toUTCString(); // clear the cookies
-        location.href = location.href; // force refresh the page
+        const url = this.backendURL + '/logout';
+        Log.trace('App::clearCredentials( ' + user + '...) - start; url: ' + url);
+
+        const name = Factory.getInstance().getName();
+        const options = {
+            headers: {
+                'Content-Type': 'application/json',
+                'User-Agent':   'Portal',
+                'user':         user,
+                'token':        token,
+                'name':         name
+            }
+        };
+
+        const finishLogout = function (): void {
+            // invalid username; logout
+            that.validated = false;
+            localStorage.clear(); // erase cached info
+            document.cookie = "token=empty;expires=" + new Date(0).toUTCString(); // clear the cookies
+            location.href = location.href; // force refresh the page
+            return;
+        };
+
+        return fetch(url, options).then(function (resp: any) {
+            Log.info("App::clearCredentials() - status: " + resp.status);
+            return finishLogout();
+        }).catch(function (err: any) {
+            Log.error("App::clearCredentials(..) - ERROR: " + err);
+            // finish local logout anyways
+            return finishLogout();
+        });
     }
 
     /**
@@ -236,7 +264,7 @@ export class App {
      */
     private getGithubCredentials(token: string): Promise<string | null> {
         Log.trace("App::getGithubCredentials(..) - start");
-        return fetch('https://api.github.com/user', {
+        return fetch('https://api.github.com/user', { // HARDCODE: API Server must not be here
             headers: {
                 'Content-Type':  'application/json',
                 'Authorization': 'token ' + token
@@ -279,7 +307,6 @@ export class App {
                 'user':         username,
                 'token':        token,
                 'name':         name
-                // 'org':          org
             }
         };
         return fetch(url, options).then(function (resp: any) {
