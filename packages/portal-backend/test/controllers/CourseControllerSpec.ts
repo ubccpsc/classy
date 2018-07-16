@@ -147,4 +147,33 @@ describe("CourseController", () => {
         expect(res).to.be.an('boolean');
         expect(res).to.be.false;
     });
+
+    it("Should should be able to get the course object.", async () => {
+        const res = await cc.getCourse();
+
+        expect(res).to.be.an('object');
+        expect(res.id).to.be.an('string');
+        expect(res.defaultDeliverableId).to.not.be.undefined;
+        expect(res.custom).to.be.an('object');
+    });
+
+    it("Should should be able to update the course object.", async () => {
+        const NEWID = Date.now() + 'id';
+        const res = await cc.getCourse();
+        expect(res.defaultDeliverableId).to.not.equal(NEWID);
+
+        res.defaultDeliverableId = NEWID;
+        (<any>res.custom).fooProperty = 'asdfasdf';
+        await cc.saveCourse(res);
+
+        const newRes = await cc.getCourse();
+        expect(newRes.defaultDeliverableId).to.equal(NEWID);
+        expect((<any>newRes.custom).fooProperty).to.equal('asdfasdf');
+
+        // reset course id
+        res.defaultDeliverableId = null;
+        delete (<any>res.custom).fooProperty;
+        await cc.saveCourse(res);
+    });
+
 });

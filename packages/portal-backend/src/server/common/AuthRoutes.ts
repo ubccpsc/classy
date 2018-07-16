@@ -19,11 +19,17 @@ export class AuthRoutes implements IREST {
 
     private static ac = new AuthController();
 
+
     public registerRoutes(server: restify.Server) {
         Log.info("AuthRouteHandler::registerRoutes() - start");
 
         server.on('MethodNotAllowed', AuthRoutes.handlePreflight); // preflights cors requests
+
+        // user endpoints
         server.get('/getCredentials', AuthRoutes.getCredentials); // verify Classy credentials
+        server.post('/logout', AuthRoutes.postLogout); // verify Classy credentials
+
+        // GitHub OAuth endpoints
         server.get('/auth', AuthRoutes.getAuth); // start GitHub OAuth flow
         server.get('/githubCallback', AuthRoutes.githubCallback); // finalize GitHub OAuth flow
     }
@@ -57,6 +63,31 @@ export class AuthRoutes implements IREST {
 
         Log.trace("AuthRouteHandler::handlePreflight(..) - sending 204; headers: " + JSON.stringify(res.getHeaders()));
         return res.send(204);
+    }
+
+    public static postLogout(req: any, res: any, next: any) {
+        Log.trace('AuthRouteHandler::postLogout(..) - start');
+        const user = req.headers.user;
+        const token = req.headers.token;
+        // const org = req.headers.org;
+        Log.info('AuthRouteHandler::postLogout(..) - user: ' + user + '; token: ' + token);
+
+        let payload: AuthTransportPayload;
+        AuthRoutes.ac.isValid(user, token).then(function (isValid) {
+            // todo
+            if (isValid === true) {
+                // logout
+                const ac = new AuthController();
+                ac.removeAuthentication(user);
+            } else {
+                // loglout anyways? if your user / token is stale we still need log you out
+                // but that could mean someone else could spoof-log you out too
+            }
+        }).catch(function (err) {
+            Log.error('AuthRouteHandler::postLogout(..) - ERROR: ' + err);
+            payload = {failure: {message: 'Logout failed: ' + err, shouldLogout: false}};
+            res.send(400, payload);
+        });
     }
 
     public static getCredentials(req: any, res: any, next: any) {
@@ -122,6 +153,8 @@ export class AuthRoutes implements IREST {
      * Handles the GitHub OAuth callback. This seems complicated, and is, so you should
      * really think on it over a weekend before deciding to make any edits to _anything_
      * in this method.
+     *
+     * Coverage won't happen because of GitHub dependencies.
      *
      * @param req
      * @param res
@@ -191,8 +224,8 @@ export class AuthRoutes implements IREST {
 
                 fName:  '',
                 lName:  '',
-                kind:   'student',
-                URL:    'https://github.com/' + username, // HARDCODE (don't hardcode host)
+                kind:   null, // isPriv will fill this in on demand
+                URL:    Config.getInstance().getProp(ConfigKey.githubHost) + '/' + username,
                 labId:  'UNKNOWN',
                 custom: {}
             };
@@ -249,5 +282,4 @@ export class AuthRoutes implements IREST {
             return next();
         });
     }
-
 }

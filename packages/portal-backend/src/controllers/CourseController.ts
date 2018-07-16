@@ -5,7 +5,7 @@ import {AutoTestGradeTransport, DeliverableTransport, StudentTransport} from '..
 import {RepositoryController} from "./RepositoryController";
 import {DatabaseController} from "./DatabaseController";
 import {GradesController} from "./GradesController";
-import {Deliverable, Grade, Person} from "../Types";
+import {Course, Deliverable, Grade, Person} from "../Types";
 import {IGitHubController} from "./GitHubController";
 import {TeamController} from "./TeamController";
 import {PersonController} from "./PersonController";
@@ -223,6 +223,31 @@ export class CourseController { // don't implement ICourseController yet
             Log.error("CourseController::getName() - ERROR: " + err.message);
         }
         return null;
+    }
+
+    public async getCourse(): Promise<Course> {
+        let record: Course = await this.dc.getCourseRecord();
+        if (record === null) {
+            // create default and write it
+            record = {
+                id:                   Config.getInstance().getProp(ConfigKey.name),
+                defaultDeliverableId: null,
+                custom:               {}
+            };
+            await this.dc.writeCourseRecord(record);
+        }
+        return record;
+    }
+
+    public async saveCourse(course: Course): Promise<boolean> {
+        let record: Course = await this.dc.getCourseRecord();
+        if (record !== null) {
+            // merge the new with the old
+            record.defaultDeliverableId = course.defaultDeliverableId;
+            const custom = Object.assign({}, record.custom, course.custom); // merge custom properties
+            record.custom = custom;
+        }
+        return await this.dc.writeCourseRecord(record);
     }
 
 

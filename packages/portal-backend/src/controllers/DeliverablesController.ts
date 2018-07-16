@@ -25,42 +25,42 @@ export class DeliverablesController {
 
     public async saveDeliverable(deliv: Deliverable): Promise<Deliverable | null> {
         Log.info("DeliverableController::saveDeliverable( " + JSON.stringify(deliv) + " ) - start");
-        try {
-            // let existingDeliverable = await this.getDeliverable(org, deliv.id);
+        await this.db.writeDeliverable(deliv); // let this handle the update
+        return deliv;
+    }
 
-            await this.db.writeDeliverable(deliv); // let this handle the update
-            return deliv;
-        } catch (err) {
-            Log.error("RepositoryController::createGrade(..) - ERROR: " + err);
-            return null;
+    /**
+     *
+     * @param {DeliverableTransport} deliv
+     * @returns {string|null} null if the deliverable is valid; string describing the error if there is one.
+     */
+    public validateDeliverableTransport(deliv: DeliverableTransport): string | null {
+        Log.trace('DeliverablesController::validateDeliverableTransport(..) - start');
+
+        if (typeof deliv === 'undefined') {
+            const msg = 'object undefined';
+            Log.error('DeliverableController::validateDeliverableTransport(..) - ERROR: ' + msg);
+            return msg;
         }
+
+        if (deliv === null) {
+            const msg = 'object null';
+            Log.error('DeliverableController::validateDeliverableTransport(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+
+        if (typeof deliv.id === 'undefined' || deliv.id === null || deliv.id.length < 2) {
+            const msg = 'invalid delivId: ' + deliv.id;
+            Log.error('DeliverableController::validateDeliverableTransport(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        Log.trace('DeliverablesController::validateDeliverableTransport(..) - done; object is valid');
+        return null;
     }
 
     public translateTransport(trans: DeliverableTransport): Deliverable | null {
-
-        // let at: AutoTestConfig = {
-        //     dockerImage,
-        //     maxExecTime,
-        //     studentDelay,
-        //     regressionDelivIds,
-        //     custom: atCustom,
-        // };
-        //
-        // let deliv: DeliverableTransport = {
-        //     id,
-        //     URL,
-        //     openTimestamp,
-        //     closeTimestamp,
-        //     onOpenAction:  '',// TODO: add this
-        //     onCloseAction: '', // TODO: add this
-        //     minTeamSize,
-        //     maxTeamSize,
-        //     studentsFormTeams,
-        //     teamsSameLab,
-        //     gradesReleased,
-        //     autoTest:      at,
-        //     custom
-        // };
 
         const deliv: Deliverable = {
             id:         trans.id,

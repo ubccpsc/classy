@@ -2,18 +2,70 @@ import {expect} from "chai";
 import "mocha";
 
 import {PersonController} from "../../src/controllers/PersonController";
-import {Deliverable, Person} from "../../src/Types";
+import {Auth, Course, Deliverable, Person} from "../../src/Types";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {TeamController} from "../../src/controllers/TeamController";
 import {Test} from "../GlobalSpec";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
+import {DatabaseController} from "../../src/controllers/DatabaseController";
+import Config, {ConfigKey} from "../../../common/Config";
 
 const loadFirst = require('../GlobalSpec');
 
 describe('TestDatasetGenerator', function () {
 
+
+    it('Can generate the course object', async function () {
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        let course: Course = {
+            id:                   Config.getInstance().getProp(ConfigKey.testname),
+            defaultDeliverableId: 'd0',
+            custom:               {}
+        };
+
+        await dc.writeCourseRecord(course);
+
+    });
+
     it('Can generate some students', async function () {
         const pc: PersonController = new PersonController();
+
+        // create an admin
+        let p: Person = {
+            id:            Test.USERNAMEADMIN,
+            csId:          Test.USERNAMEADMIN,
+            githubId:      Test.USERNAMEADMIN,
+            studentNumber: -1,
+
+            fName: 'adminFirst',
+            lName: 'adminLast',
+            kind:  null,
+            URL:   null,
+
+            labId: null,
+
+            custom: {}
+        };
+        await pc.createPerson(p);
+
+        // create a student
+        p = {
+            id:            Test.USERNAME1,
+            csId:          Test.USERNAME1,
+            githubId:      Test.USERNAME1,
+            studentNumber: -1,
+
+            fName: 'adminFirst',
+            lName: 'adminLast',
+            kind:  'student',
+            URL:   null,
+
+            labId: null,
+
+            custom: {}
+        };
+        await pc.createPerson(p);
 
         for (let i = 0; i < 100; i++) {
             const pid = 'p' + i;
@@ -36,6 +88,18 @@ describe('TestDatasetGenerator', function () {
 
             await pc.createPerson(p);
         }
+    });
+
+    it('Can generate some auth tokens', async function () {
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        // create for an admin
+        let a: Auth = {personId: Test.USERNAMEADMIN, token: 'TEST_TOKENADMIN'};
+        await dc.writeAuth(a);
+
+        // create for a student
+        a = {personId: Test.USERNAME1, token: 'TEST_TOKENSTUDENT'};
+        await dc.writeAuth(a);
     });
 
     it('Can generate some teams', async function () {

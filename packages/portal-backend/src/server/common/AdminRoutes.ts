@@ -8,10 +8,17 @@ import IREST from "../IREST";
 import {AuthController} from "../../controllers/AuthController";
 import {CourseController} from "../../controllers/CourseController";
 import {GitHubController} from "../../controllers/GitHubController";
-import {DeliverableTransport, DeliverableTransportPayload, Payload, StudentTransportPayload} from '../../../../common/types/PortalTypes';
 import {Person} from "../../Types";
 import {PersonController} from "../../controllers/PersonController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
+import {
+    CourseTransport,
+    CourseTransportPayload,
+    DeliverableTransport,
+    DeliverableTransportPayload,
+    Payload,
+    StudentTransportPayload,
+} from '../../../../common/types/PortalTypes';
 
 export default class AdminRoutes implements IREST {
 
@@ -21,14 +28,18 @@ export default class AdminRoutes implements IREST {
     public registerRoutes(server: restify.Server) {
         Log.trace('AdminRoutes::registerRoutes() - start');
 
+        // visible to non-privileged users
+        // NOTHING
+
         // visible to all privileged users
         server.get('/admin/students', AdminRoutes.isPrivileged, AdminRoutes.getStudents);
         server.get('/admin/deliverables', AdminRoutes.isPrivileged, AdminRoutes.getDeliverables);
+        server.get('/admin/course', AdminRoutes.isPrivileged, AdminRoutes.getCourse);
 
-        // posting a class list is admin only
+        // admin-only functions
         server.post('/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
-        // editing / creating a deliverable is admin only
         server.post('/admin/deliverable', AdminRoutes.isAdmin, AdminRoutes.postDeliverable);
+        server.post('/admin/course', AdminRoutes.isAdmin, AdminRoutes.postCourse);
     }
 
     /**
@@ -72,45 +83,47 @@ export default class AdminRoutes implements IREST {
     }
 
 
-    /**
-     * Handler that succeeds if the user is staff.
-     *
-     * @param req
-     * @param res
-     * @param next
-     */
-    private static isStaff(req: any, res: any, next: any) {
-        Log.info('AdminRoutes::isStaff(..) - start');
-
-        const user = req.headers.user;
-        const token = req.headers.token;
-
-        const ac = new AuthController();
-        ac.isPrivileged(user, token).then(function (priv) {
-                Log.trace('AdminRoutes::isPrivileged(..) - in isStaff: ' + JSON.stringify(priv));
-                if (priv.isStaff === true) {
-                    return next();
-                } else {
-                    res.send(401, {
-                        failure: {
-                            message:      'Authorization error; user not staff.',
-                            shouldLogout: false
-                        }
-                    });
-                    return next(false);
-                }
-            }
-        ).catch(function (err) {
-            Log.error('AdminRoutes::isStaff(..) - ERROR: ' + err.message);
-            res.send(401, {
-                failure: {
-                    message:      'Authorization error; user not staff.',
-                    shouldLogout: false
-                }
-            });
-            return next(false);
-        });
-    }
+    // NOTE: This might not actually be used by anything
+    //
+    // /**
+    //  * Handler that succeeds if the user is staff.
+    //  *
+    //  * @param req
+    //  * @param res
+    //  * @param next
+    //  */
+    // private static isStaff(req: any, res: any, next: any) {
+    //     Log.info('AdminRoutes::isStaff(..) - start');
+    //
+    //     const user = req.headers.user;
+    //     const token = req.headers.token;
+    //
+    //     const ac = new AuthController();
+    //     ac.isPrivileged(user, token).then(function (priv) {
+    //             Log.trace('AdminRoutes::isPrivileged(..) - in isStaff: ' + JSON.stringify(priv));
+    //             if (priv.isStaff === true) {
+    //                 return next();
+    //             } else {
+    //                 res.send(401, {
+    //                     failure: {
+    //                         message:      'Authorization error; user not staff.',
+    //                         shouldLogout: false
+    //                     }
+    //                 });
+    //                 return next(false);
+    //             }
+    //         }
+    //     ).catch(function (err) {
+    //         Log.error('AdminRoutes::isStaff(..) - ERROR: ' + err.message);
+    //         res.send(401, {
+    //             failure: {
+    //                 message:      'Authorization error; user not staff.',
+    //                 shouldLogout: false
+    //             }
+    //         });
+    //         return next(false);
+    //     });
+    // }
 
     /**
      * Handler that succeeds if the user is admin.
@@ -200,7 +213,7 @@ export default class AdminRoutes implements IREST {
             return next();
         }).catch(function (err) {
             Log.error('AdminRoutes::getDeliverables(..) - ERROR: ' + err.message);
-            const payload: StudentTransportPayload = {
+            const payload: Payload = {
                 failure: {
                     message:      'Unable to deliverable list; ERROR: ' + err.message,
                     shouldLogout: false
@@ -294,7 +307,6 @@ export default class AdminRoutes implements IREST {
 
     }
 
-
     private static postDeliverable(req: any, res: any, next: any) {
         Log.info('AdminRoutes::postDeliverable(..) - start');
         let payload: Payload;
@@ -314,51 +326,102 @@ export default class AdminRoutes implements IREST {
         try {
             const delivTrans: DeliverableTransport = req.params;
             Log.info('AdminRoutes::postDeliverable() - body: ' + delivTrans);
-            const result = AdminRoutes.validateDeliverable(delivTrans);
+            const dc = new DeliverablesController();
+            const result = dc.validateDeliverableTransport(delivTrans);
             if (result === null) {
-                const dc = new DeliverablesController();
                 let deliv = dc.translateTransport(delivTrans);
-                dc.saveDeliverable(deliv).then(function (saveSucceeded: any) {
-                    // worked
+                dc.saveDeliverable(deliv).then(function (saveSucceeded) {
                     if (saveSucceeded !== null) {
+                        // worked (would have returned a Deliverable)
+                        Log.info('AdminRoutes::postDeliverable() - done');
                         payload = {success: {message: 'Deliverable saved successfully'}};
                         res.send(200, payload);
                     } else {
                         handleError("Deliverable not saved.");
                     }
-                }).catch(function (err: any) {
+                }).catch(function (err) {
                     handleError("Deliverable not saved. ERROR: " + err);
                 });
             } else {
                 handleError("Deliverable not saved: " + result);
             }
         } catch (err) {
-            Log.error('AdminRoutes::postDeliverable(..) - ERROR: ' + err);
             handleError('Deliverable creation / update unsuccessful: ' + err);
         }
-
     }
 
-    private static validateDeliverable(deliv: DeliverableTransport): string {
+    /**
+     * Retrieves the course object.
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
+    private static getCourse(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::getCourse(..) - start');
 
-        if (typeof deliv === 'undefined') {
-            const msg = 'object undefined';
-            Log.error('AdminRoutes::validateDeliverable(..) - ERROR: ' + msg);
-            return msg;
-        }
+        const cc = new CourseController(new GitHubController());
+        cc.getCourse().then(function (course) {
+            Log.trace('AdminRoutes::getCourse(..) - in then');
 
-        if (typeof deliv === null) {
-            const msg = 'object null';
-            Log.error('AdminRoutes::validateDeliverable(..) - ERROR: ' + msg);
-            return msg;
-        }
-
-        if (deliv.id.length < 2) {
-            const msg = 'invalid delivId: ' + deliv.id;
-            Log.error('AdminRoutes::validateDeliverable(..) - ERROR: ' + msg);
-            return msg;
-        }
-
-        return null;
+            const payload: CourseTransportPayload = {success: course}; // NOTE: in future course will probably have to be translated to Transport type
+            res.send(payload);
+            return next();
+        }).catch(function (err) {
+            Log.error('AdminRoutes::getCourse(..) - ERROR: ' + err.message);
+            const payload: Payload = {
+                failure: {
+                    message:      'Unable to retrieve course object; ERROR: ' + err.message,
+                    shouldLogout: false
+                }
+            };
+            res.send(400, payload);
+            return next(false);
+        });
     }
+
+    private static postCourse(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::postCourse(..) - start');
+        let payload: Payload;
+
+        const handleError = function (msg: string) {
+            Log.error('AdminRoutes::postCourse(..)::handleError - message: ' + msg);
+            payload = {
+                failure: {
+                    message:      msg,
+                    shouldLogout: false
+                }
+            };
+            res.send(400, payload);
+            return next();
+        };
+
+        try {
+            const courseTrans: CourseTransport = req.params;
+            Log.info('AdminRoutes::postCourse() - body: ' + courseTrans);
+            const cc = new CourseController(new GitHubController());
+            // const result = cc.validateCourseTransport(courseTrans); // TODO: implement this
+            const result: null = null;
+            if (result === null) {
+                // let deliv = dc.translateTransport(delivTrans);
+                cc.saveCourse(courseTrans).then(function (saveSucceeded) {
+                    if (saveSucceeded !== null) {
+                        // worked (would have returned a Deliverable)
+                        Log.info('AdminRoutes::postCourse() - done');
+                        payload = {success: {message: 'Course object saved successfully'}};
+                        res.send(200, payload);
+                    } else {
+                        handleError("Course object not saved.");
+                    }
+                }).catch(function (err) {
+                    handleError("Course object not saved. ERROR: " + err);
+                });
+            } else {
+                handleError("Course object not saved: " + result);
+            }
+        } catch (err) {
+            handleError('Course object save unsuccessful: ' + err);
+        }
+    }
+
 }

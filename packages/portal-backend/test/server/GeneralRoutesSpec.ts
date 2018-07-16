@@ -8,7 +8,7 @@ import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 
 import BackendServer from "../../src/server/BackendServer";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
-import {ConfigTransportPayload} from "../../../common/types/PortalTypes";
+import {ConfigTransportPayload, StudentTransportPayload} from "../../../common/types/PortalTypes";
 import restify = require('restify');
 
 const request = require('supertest');

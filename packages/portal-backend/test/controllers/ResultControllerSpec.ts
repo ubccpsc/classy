@@ -2,6 +2,7 @@ import {expect} from "chai";
 import "mocha";
 import * as fs from "fs-extra";
 import {ResultsController} from "../../src/controllers/ResultsController";
+import {AutoTestResultTransport} from "../../../common/types/PortalTypes";
 
 const loadFirst = require('../GlobalSpec');
 
@@ -33,5 +34,53 @@ describe("ResultController", () => {
         results = await rc.getAllResults();
         expect(results).to.have.lengthOf(1);
     });
+
+    it("Should be able to invalidate bad results.", async () => {
+        let deliv = await rc.validateAutoTestResult(undefined);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        deliv = await rc.validateAutoTestResult(null);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        let data: AutoTestResultTransport = <AutoTestResultTransport>{};
+        deliv = await rc.validateAutoTestResult(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        data = <AutoTestResultTransport>{delivId: 'd0'};
+        deliv = await rc.validateAutoTestResult(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        data = <AutoTestResultTransport>{delivId: 'd0', repoId: 'r1'};
+        deliv = await rc.validateAutoTestResult(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        data = <AutoTestResultTransport>{delivId: 'd0', repoId: 'r1', timestamp: 1001};
+        deliv = await rc.validateAutoTestResult(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        data = <AutoTestResultTransport>{delivId: 'd0', repoId: 'r1', timestamp: 1001, commitURL: 'url'};
+        deliv = await rc.validateAutoTestResult(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        data = <AutoTestResultTransport>{delivId: 'd0', repoId: 'r1', timestamp: 1001, commitURL: 'url', commitSHA: 'sha'};
+        deliv = await rc.validateAutoTestResult(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        data = <AutoTestResultTransport>{delivId: 'd0', repoId: 'r1', timestamp: 1001, commitURL: 'url', commitSHA: 'sha', input: {}};
+        deliv = await rc.validateAutoTestResult(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        // more here
+    });
+
 
 });

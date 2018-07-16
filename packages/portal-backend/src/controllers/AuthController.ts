@@ -44,16 +44,66 @@ export class AuthController {
 
     public async isPrivileged(personId: string, token: string): Promise<{ isAdmin: boolean, isStaff: boolean }> {
         Log.trace("AuthController::isPrivileged( " + personId + ", ... ) - start");
-        let person = await new PersonController().getPerson(personId);
+        const pc = new PersonController();
+        const dc = DatabaseController.getInstance();
+        let person = await pc.getPerson(personId);
         if (person !== null) {
             let valid = await this.isValid(personId, token);
             if (valid === true) {
-                const isStaff = await new GitHubActions().isOnStaffTeam(personId);
-                const isAdmin = await new GitHubActions().isOnAdminTeam(personId);
-                return {isAdmin: isAdmin, isStaff: isStaff};
+                Log.trace("AuthController::isPrivileged( " + personId + ", ... ) - person.kind: " + person.kind);
+
+                if (person.kind === null || person.kind === '') {
+                    // check github for credentials and cache them
+                    const isStaff = await new GitHubActions().isOnStaffTeam(personId);
+                    const isAdmin = await new GitHubActions().isOnAdminTeam(personId);
+                    Log.trace("AuthController::isPrivileged( " + personId + ", ... ) - caching new credentials; admin: " + isAdmin + "; staff: " + isStaff);
+
+                    if (isStaff === true && isAdmin === true) {
+                        person.kind = 'adminstaff';
+                        dc.writePerson(person);
+                    } else if (isStaff === true) {
+                        person.kind = 'staff';
+                        dc.writePerson(person);
+                    } else if (isAdmin === true) {
+                        person.kind = 'admin';
+                        dc.writePerson(person);
+                    }
+                }
+
+                if (person.kind === 'student') {
+                    return {isAdmin: false, isStaff: false};
+                } else if (person.kind === 'admin') {
+                    return {isAdmin: true, isStaff: false};
+                } else if (person.kind === 'staff') {
+                    return {isAdmin: false, isStaff: true};
+                } else if (person.kind === 'adminstaff') {
+                    return {isAdmin: true, isStaff: true};
+                } else {
+                    Log.trace("AuthController::isPrivileged( " + personId + ", ... ) - unknown kind: " + person.kind);
+                }
             }
         }
         return {isAdmin: false, isStaff: false};
+    }
+
+    /**
+     * Deauthenticates a user. This resets their Person.kind field and removes any Auth record they might have.
+     *
+     * @param {string} personId
+     * @returns {Promise<boolean>}
+     */
+    public async removeAuthentication(personId: string): Promise<boolean> {
+        Log.trace("AuthController::removeAuthentication() - start");
+        const pc = new PersonController();
+        const person = await pc.getPerson(personId);
+        person.kind = null;
+        pc.writePerson(person);
+
+        const auth = await this.dc.getAuth(personId);
+        await this.dc.deleteAuth(auth);
+
+        Log.trace("AuthController::removeAuthentication() - done");
+        return true; // if it doesn't throw an exception it must have worked enough
     }
 
 }

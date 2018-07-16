@@ -30,6 +30,21 @@ export class PersonController {
     }
 
     /**
+     * Writes a person record. If the person exists, they will be updated.
+     *
+     * Person.id is invariant so that is the field that will be used for matching.
+     *
+     * @param {Person} person
+     * @returns {Promise<boolean>}
+     */
+    public async writePerson(person: Person): Promise<boolean> {
+        Log.info("PersonController::writePerson( " + person.id + " ) - start");
+
+        let successful = await this.db.writePerson(person);
+        return successful;
+    }
+
+    /**
      * Validates github username for the specified org.
      *
      * This sets the Person.URL field, confirming that they have

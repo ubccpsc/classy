@@ -4,13 +4,14 @@ import Log from "../../../common/Log";
 import Util from "../../../common/Util";
 import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 
-import {Auth, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
+import {Auth, Course, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
 
 export class DatabaseController {
 
     private static instance: DatabaseController = null;
     private db: Db = null;
 
+    private readonly COURSECOLL = 'course';
     private readonly PERSONCOLL = 'people';
     private readonly GRADECOLL = 'grades';
     private readonly RESULTCOLL = 'results';
@@ -56,6 +57,11 @@ export class DatabaseController {
     public async getRepositories(): Promise<Repository[]> {
         Log.info("DatabaseController::getRepositories() - start");
         return <Repository[]> await this.readRecords(this.REPOCOLL, {});
+    }
+
+    public async getCourseRecord(): Promise<Course> {
+        Log.info("DatabaseController::getCourseRecord() - start");
+        return <Course> await this.readSingleRecord(this.COURSECOLL, {"id": Config.getInstance().getProp(ConfigKey.name)});
     }
 
     public async getTeams(): Promise<Team[]> {
@@ -158,6 +164,17 @@ export class DatabaseController {
         }
     }
 
+    public async writeCourseRecord(record: Course): Promise<boolean> {
+        Log.info("DatabaseController::writeCourseRecord(..) - start");
+        const existingRecord = await this.getCourseRecord();
+        if (existingRecord === null) {
+            return await this.writeRecord(this.COURSECOLL, record);
+        } else {
+            const query = {id: record.id};
+            return await this.updateRecord(this.COURSECOLL, query, record);
+        }
+    }
+
     /**
      * These are write-only; they should never need to be updated.
      *
@@ -175,6 +192,13 @@ export class DatabaseController {
         return await this.deleteRecord(this.PERSONCOLL, {id: record.id});
     }
     */
+
+    public async deleteAuth(record: Auth): Promise<boolean> {
+        Log.info("DatabaseController::deleteAuth(..) - start");
+        if (record !== null) {
+            return await this.deleteRecord(this.AUTHCOLL, {personId: record.personId});
+        }
+    }
 
     public async deleteRepository(record: Repository): Promise<boolean> {
         Log.info("DatabaseController::deleteRepository(..) - start");
@@ -239,6 +263,7 @@ export class DatabaseController {
         }
     }
 
+
     public async writeRecord(colName: string, record: {}): Promise<boolean> {
         Log.info("DatabaseController::writeRecord( " + colName + ", ...) - start");
         Log.trace("DatabaseController::writeRecord(..) - col: " + colName + "; record: " + JSON.stringify(record));
@@ -293,14 +318,7 @@ export class DatabaseController {
         if (configName === ConfigCourses.classytest) {
             // NOTE: can only delete data if the current instance is the main test instance
 
-            // private readonly PERSONCOLL = 'people';
-            // private readonly GRADECOLL = 'grades';
-            // private readonly RESULTCOLL = 'results';
-            // private readonly TEAMCOLL = 'teams';
-            // private readonly DELIVCOLL = 'deliverables';
-            // private readonly REPOCOLL = 'repositories';
-            // private readonly AUTHCOLL = 'auth';
-            let cols = [this.PERSONCOLL, this.GRADECOLL, this.RESULTCOLL, this.TEAMCOLL, this.DELIVCOLL, this.REPOCOLL, this.AUTHCOLL];
+            let cols = [this.PERSONCOLL, this.GRADECOLL, this.RESULTCOLL, this.TEAMCOLL, this.DELIVCOLL, this.REPOCOLL, this.AUTHCOLL, this.COURSECOLL];
             for (const col of cols) {
                 Log.info("DatabaseController::clearData() - removing data for collection: " + col);
                 const collection = await this.getCollection(col);

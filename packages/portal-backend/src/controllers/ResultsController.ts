@@ -31,20 +31,15 @@ export class ResultsController {
     public async createResult(record: IAutoTestResult): Promise<boolean> {
         Log.info("ResultController::createResult(..) - start");
         Log.trace("GradesController::createResult(..) - payload: " + JSON.stringify(record));
-        try {
 
-            const rc = new RepositoryController();
-            const people = await rc.getPeopleForRepo(record.repoId);
+        const rc = new RepositoryController();
+        const people = await rc.getPeopleForRepo(record.repoId);
 
-            (<any>record).people = people; // don't know how to augment this record with people to keep the type system happy
+        (<any>record).people = people; // don't know how to augment this record with people to keep the type system happy
 
-            let outcome = await DatabaseController.getInstance().writeResult(<Result>record);
-            Log.trace("ResultController::createResult(..) - result written");
-            return outcome;
-        } catch (err) {
-            Log.error("ResultController::createResult(..) - ERROR: " + err);
-            return false;
-        }
+        let outcome = await DatabaseController.getInstance().writeResult(<Result>record);
+        Log.trace("ResultController::createResult(..) - result written");
+        return outcome;
     }
 
     public async getResult(delivId: string, repoId: string): Promise<IAutoTestResult | null> {
@@ -56,5 +51,79 @@ export class ResultsController {
             return null;
         }
     }
+
+    /**
+     * Validates the AutoTest result object.
+     *
+     * @param {IAutoTestResult} record
+     * @returns {string | null} String will contain a description of the error, null if successful.
+     */
+    public validateAutoTestResult(record: IAutoTestResult): string | null {
+        // multiple returns is poor, but at least it's quick
+
+        Log.info('ResultsController::validateAutoTestResult(..) - start');
+
+        if (typeof record === 'undefined') {
+            const msg = 'object undefined';
+            Log.error('ResultsController::validateAutoTestResult(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        if (record === null) {
+            const msg = 'object null';
+            Log.error('ResultsController::validateAutoTestResult(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        // just rudimentary checking
+
+        // delivId: string; // (already in input)
+        if (typeof record.delivId === 'undefined') {
+            const msg = 'delivId undefined';
+            Log.error('ResultsController::validateAutoTestResult(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // repoId: string;  // (already in input)
+        if (typeof record.repoId === 'undefined') {
+            const msg = 'repoId undefined';
+            Log.error('ResultsController::validateAutoTestResult(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // timestamp: number; // timestamp of push, not of any processing (already in input)
+        if (typeof record.timestamp === 'undefined') {
+            const msg = 'timestamp undefined';
+            Log.error('ResultsController::validateAutoTestResult(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // commitURL: string;
+        if (typeof record.commitURL === 'undefined') {
+            const msg = 'commitURL undefined';
+            Log.error('ResultsController::validateAutoTestResult(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // commitSHA: string;
+        if (typeof record.commitSHA === 'undefined') {
+            const msg = 'commitSHA undefined';
+            Log.error('ResultsController::validateAutoTestResult(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // input: IContainerInput;
+        if (typeof record.input !== 'object') {
+            const msg = 'input object missing';
+            Log.error('ResultsController::validateAutoTestResult(..) - ERROR: ' + msg);
+            return msg;
+        }
+        // output: IContainerOutput;
+        if (typeof record.output === 'undefined') {
+            const msg = 'output object missing';
+            Log.error('ResultsController::validateAutoTestResult(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        Log.info('ResultsController::validateAutoTestResult(..) - done; object is valid');
+
+        return null;
+    }
+
 
 }

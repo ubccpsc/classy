@@ -6,13 +6,14 @@ import Log from "../../../common/Log";
 import BackendServer from "../../src/server/BackendServer";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {AuthTransportPayload} from "../../../common/types/PortalTypes";
+import {Test} from "../GlobalSpec";
 import restify = require('restify');
 
 const request = require('supertest');
 
 describe('Auth Routes', function () {
 
-    const TIMEOUT = 5000;
+    const TIMEOUT = 1000 * 10;
 
     var app: restify.Server = null;
 
@@ -45,20 +46,47 @@ describe('Auth Routes', function () {
         return server.stop();
     });
 
-    it('Should be able to get some credentials', async function () {
+    it('Should be able to get some credentials for an admin', async function () {
 
         const dc: DatabaseController = DatabaseController.getInstance();
 
-        let auth = await dc.getAuth('rtholmes');
+        let auth = await dc.getAuth(Test.USERNAMEADMIN);
         expect(auth).to.not.be.null;
 
         let response = null;
         let body: AuthTransportPayload;
         const url = '/getCredentials';
         try {
-            Log.test('making request');
+            Log.test('Making request');
             response = await request(app).get(url).set('user', auth.personId).set('token', auth.token);
-            Log.test('response received');
+            Log.test('Response received');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test('checking assertions on: response');
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.personId).to.equal(auth.personId);
+        expect(body.success.token).to.equal(auth.token);
+    }).timeout(TIMEOUT);
+
+    it('Should be able to get some credentials for a student', async function () {
+
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        let auth = await dc.getAuth(Test.USERNAME1);
+        expect(auth).to.not.be.null;
+
+        let response = null;
+        let body: AuthTransportPayload;
+        const url = '/getCredentials';
+        try {
+            Log.test('Making request');
+            response = await request(app).get(url).set('user', auth.personId).set('token', auth.token);
+            Log.test('Response received');
             body = response.body;
         } catch (err) {
             Log.test('ERROR: ' + err);
@@ -76,7 +104,7 @@ describe('Auth Routes', function () {
 
         const dc: DatabaseController = DatabaseController.getInstance();
 
-        let auth = await dc.getAuth('rtholmes');
+        let auth = await dc.getAuth(Test.USERNAMEADMIN);
         expect(auth).to.not.be.null;
 
         let response = null;

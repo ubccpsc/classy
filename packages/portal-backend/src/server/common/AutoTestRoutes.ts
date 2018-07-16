@@ -4,8 +4,6 @@ import * as rp from "request-promise-native";
 import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 
-import {IAutoTestResult} from "../../../../autotest/src/Types";
-
 import IREST from "../IREST";
 import {CourseController} from "../../controllers/CourseController";
 import {GitHubController} from "../../controllers/GitHubController";
@@ -19,6 +17,7 @@ import {
     AutoTestResultTransport,
     Payload,
 } from "../../../../common/types/PortalTypes";
+import {GradesController} from "../../controllers/GradesController";
 
 /**
  * Just a large body of static methods for translating between restify and the remainder of the system.
@@ -31,9 +30,12 @@ export class AutoTestRoutes implements IREST {
         server.get('/at/defaultDeliverable', AutoTestRoutes.atDefaultDeliverable);
         server.get('/at/isStaff/:personId', AutoTestRoutes.atIsStaff);
         server.get('/at/container/:delivId', AutoTestRoutes.atContainerDetails);
+
         server.post('/at/grade/', AutoTestRoutes.atGrade);
+
         server.post('/at/result/', AutoTestRoutes.atPostResult);
         server.get('/at/result/:delivId/:repoId', AutoTestRoutes.atGetResult);
+
         server.post('/githubWebhook', AutoTestRoutes.githubWebhook); // forward GitHub Webhooks to AutoTest
     }
 
@@ -88,15 +90,20 @@ export class AutoTestRoutes implements IREST {
             const name = Config.getInstance().getProp(ConfigKey.name);
             Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - name: ' + name);
 
-            // TODO: this is just a dummy implementation
+            // if (name === ConfigCourses.classytest) { // for testing only
+            //     payload = {success: {defaultDeliverable: 'd0'}};
+            //     res.send(200, payload);
+            //     return;
+            // }
 
-            if (name === ConfigCourses.sdmm || name === ConfigCourses.classytest) {
-                payload = {success: {defaultDeliverable: 'd0'}};
+            const cc = new CourseController(new GitHubController());
+            cc.getCourse().then(function (course) {
+                payload = {success: {defaultDeliverable: course.defaultDeliverableId}};
                 res.send(200, payload);
-            } else {
+            }).catch(function (err) {
                 payload = {failure: {message: 'No default deliverable found.', shouldLogout: false}};
                 res.send(400, payload);
-            }
+            });
         }
     }
 
@@ -114,7 +121,8 @@ export class AutoTestRoutes implements IREST {
         } else {
             const gradeRecord: AutoTestGradeTransport = req.body; // turn into json?
 
-            const validGradeRecord = AutoTestRoutes.validateAutoTestGrade(gradeRecord);
+            const gc: GradesController = new GradesController();
+            const validGradeRecord = gc.validateAutoTestGrade(gradeRecord);
             if (validGradeRecord !== null) {
                 Log.error('AutoTestRouteHandler::atGrade(..) - valid body not provided: ' + validGradeRecord + '; body: ' + JSON.stringify(gradeRecord));
                 res.send(400, {failure: {message: 'Invalid Grade Record: ' + validGradeRecord, shouldLogout: false}});
@@ -159,7 +167,8 @@ export class AutoTestRoutes implements IREST {
             const resultRecord: AutoTestResultTransport = req.body;
             Log.trace('AutoTestRouteHandler::atPostResult(..) - body: ' + JSON.stringify(resultRecord));
 
-            const validResultRecord = AutoTestRoutes.validateAutoTestResult(resultRecord);
+            const rc = new ResultsController();
+            const validResultRecord = rc.validateAutoTestResult(resultRecord);
             if (validResultRecord !== null) {
                 Log.error('AutoTestRouteHandler::atPostResult(..) - valid body not provided: ' + validResultRecord + '; body: ' + JSON.stringify(resultRecord));
                 res.send(400, {failure: {message: 'Invalid Result Record: ' + validResultRecord, shouldLogout: false}});
@@ -269,143 +278,6 @@ export class AutoTestRoutes implements IREST {
                 res.send(400, payload);
             });
         }
-    }
-
-
-    /**
-     * Validates the AutoTest result object.
-     *
-     * @param {IAutoTestResult} record
-     * @returns {string | null} String will contain a description of the error, null if successful.
-     */
-    private static validateAutoTestResult(record: IAutoTestResult): string | null {
-        // multiple returns is poor, but at least it's quick
-
-        if (typeof record === 'undefined') {
-            const msg = 'object undefined';
-            Log.error('AutoTestRoutes::validateAutoTestResult(..) - ERROR: ' + msg);
-            return msg;
-        }
-
-        if (record === null) {
-            const msg = 'object null';
-            Log.error('AutoTestRoutes::validateAutoTestResult(..) - ERROR: ' + msg);
-            return msg;
-        }
-
-        // just rudimentary checking
-
-        // delivId: string; // (already in input)
-        if (typeof record.delivId === 'undefined') {
-            const msg = 'delivId undefined';
-            Log.error('AutoTestRoutes::validateAutoTestResult(..) - ERROR: ' + msg);
-            return msg;
-        }
-        // repoId: string;  // (already in input)
-        if (typeof record.repoId === 'undefined') {
-            const msg = 'repoId undefined';
-            Log.error('AutoTestRoutes::validateAutoTestResult(..) - ERROR: ' + msg);
-            return msg;
-        }
-        // timestamp: number; // timestamp of push, not of any processing (already in input)
-        if (typeof record.timestamp === 'undefined') {
-            const msg = 'timestamp undefined';
-            Log.error('AutoTestRoutes::validateAutoTestResult(..) - ERROR: ' + msg);
-            return msg;
-        }
-        // commitURL: string;
-        if (typeof record.commitURL === 'undefined') {
-            const msg = 'commitURL undefined';
-            Log.error('AutoTestRoutes::validateAutoTestResult(..) - ERROR: ' + msg);
-            return msg;
-        }
-        // commitSHA: string;
-        if (typeof record.commitSHA === 'undefined') {
-            const msg = 'commitSHA undefined';
-            Log.error('AutoTestRoutes::validateAutoTestResult(..) - ERROR: ' + msg);
-            return msg;
-        }
-        // input: IContainerInput;
-        if (typeof record.input !== 'object') {
-            const msg = 'input object missing';
-            Log.error('AutoTestRoutes::validateAutoTestResult(..) - ERROR: ' + msg);
-            return msg;
-        }
-        // output: IContainerOutput;
-        if (typeof record.output === 'undefined') {
-            const msg = 'output object missing';
-            Log.error('AutoTestRoutes::validateAutoTestResult(..) - ERROR: ' + msg);
-            return msg;
-        }
-        return null;
-    }
-
-    /**
-     * Validates the AutoTest grade object.
-     *
-     * @param {AutoTestGradeTransport} record
-     * @returns {string | null} String will contain a description of the error, null if successful.
-     */
-    private static validateAutoTestGrade(record: AutoTestGradeTransport): string | null {
-        // multiple returns is poor, but at least it's quick
-
-        if (typeof record === 'undefined') {
-            const msg = 'object undefined';
-            Log.error('AutoTestRoutes::validateAutoTestGrade(..) - ERROR: ' + msg);
-            return msg;
-        }
-
-        if (record === null) {
-            const msg = 'object null';
-            Log.error('AutoTestRoutes::validateAutoTestGrade(..) - ERROR: ' + msg);
-            return msg;
-        }
-
-        // just rudimentary checking
-
-        // delivId: string; // invariant: deliv grade is associated with
-        if (typeof record.delivId === 'undefined') {
-            const msg = 'delivId undefined';
-            Log.error('AutoTestRoutes::validateAutoTestGrade(..) - ERROR: ' + msg);
-            return msg;
-        }
-        // score: number; // grade: < 0 will mean 'N/A' in the UI
-        if (typeof record.score === 'undefined') {
-            const msg = 'score undefined';
-            Log.error('AutoTestRoutes::validateAutoTestGrade(..) - ERROR: ' + msg);
-            return msg;
-        }
-        // comment: string; // simple grades will just have a comment
-        if (typeof record.comment === 'undefined') {
-            const msg = 'comment undefined';
-            Log.error('AutoTestRoutes::validateAutoTestGrade(..) - ERROR: ' + msg);
-            return msg;
-        }
-        // urlName: string | null; // description to go with the URL (repo if exists)
-        if (typeof record.urlName === 'undefined') {
-            const msg = 'urlName undefined';
-            Log.error('AutoTestRoutes::validateAutoTestGrade(..) - ERROR: ' + msg);
-            return msg;
-        }
-        // URL: string | null; // commit URL if known, otherwise repo URL (commit / repo if exists)
-        if (typeof record.URL === 'undefined') {
-            const msg = 'URL undefined';
-            Log.error('AutoTestRoutes::validateAutoTestGrade(..) - ERROR: ' + msg);
-            return msg;
-        }
-        // timestamp: number; // even if grade < 0 might as well return when the entry was made
-        if (typeof record.timestamp !== 'number') {
-            const msg = 'timestamp missing';
-            Log.error('AutoTestRoutes::validateAutoTestGrade(..) - ERROR: ' + msg);
-            return msg;
-        }
-        // custom: any;
-        if (typeof record.custom !== 'object') {
-            const msg = 'custom object missing';
-            Log.error('AutoTestRoutes::validateAutoTestGrade(..) - ERROR: ' + msg);
-            return msg;
-        }
-        return null;
     }
 
 }

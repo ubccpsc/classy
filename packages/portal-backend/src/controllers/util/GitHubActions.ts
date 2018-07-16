@@ -538,13 +538,13 @@ export class GitHubActions {
 
     public async isOnAdminTeam(userName: string): Promise<boolean> {
         const isAdmin = await this.isOnTeam('admin', userName);
-        Log.trace('GitHubController::isOnAdminTeam( ' + userName + ' ) - result: ' + isAdmin);
+        Log.trace('GitHubAction::isOnAdminTeam( ' + userName + ' ) - result: ' + isAdmin);
         return isAdmin;
     }
 
     public async isOnStaffTeam(userName: string): Promise<boolean> {
         const isStaff = await this.isOnTeam('staff', userName);
-        Log.trace('GitHubController::isOnStaffTeam( ' + userName + ' ) - result: ' + isStaff);
+        Log.trace('GitHubAction::isOnStaffTeam( ' + userName + ' ) - result: ' + isStaff);
         return isStaff;
     }
 
@@ -553,19 +553,19 @@ export class GitHubActions {
 
         let teamNumber = await gh.getTeamNumber(teamName);
         if (teamNumber < 0) {
-            Log.warn('GitHubController::isOnTeam(..) - team: ' + teamName + ' does not exist for org: ' + gh.org);
+            Log.warn('GitHubAction::isOnTeam(..) - team: ' + teamName + ' does not exist for org: ' + gh.org);
             return false;
         }
 
         let teamMembers = await gh.getTeamMembers(teamNumber);
         for (const member of teamMembers) {
             if (member === userName) {
-                Log.info('GitHubController::isOnTeam(..) - user: ' + userName + ' IS on team: ' + teamName + ' for org: ' + gh.org);
+                Log.info('GitHubAction::isOnTeam(..) - user: ' + userName + ' IS on team: ' + teamName + ' for org: ' + gh.org);
                 return true;
             }
         }
 
-        Log.info('GitHubController::isOnTeam(..) - user: ' + userName + ' is NOT on team: ' + teamName + ' for org: ' + gh.org);
+        Log.info('GitHubAction::isOnTeam(..) - user: ' + userName + ' is NOT on team: ' + teamName + ' for org: ' + gh.org);
         return false;
     }
 
@@ -748,4 +748,83 @@ export class GitHubActions {
         });
     }
 
+    /**
+     * Changes permissions for all teams for the given repository
+     * @param {string} repoName
+     * @param {string} permissionLevel - one of: 'push' 'pull'
+     * @returns {Promise<boolean>}
+     */
+    public setRepoPermission(repoName: string, permissionLevel: string): Promise<boolean> {
+        let ctx = this;
+        Log.info("GithubAction::setRepoPermission( " + repoName + ", " + permissionLevel + " ) - start");
+
+        return new Promise(function (fulfill, reject) {
+            // Check if permissionLevel is one of: {push, pull}
+            // We don't want to be able to grant a team admin access!
+            if(permissionLevel !== "pull" && permissionLevel !== "push") {
+                Log.error("GitHubAction::setRepoPermission(..) - ERROR, Invalid permissionLevel: " + permissionLevel);
+                reject(false);
+            }
+            // Make sure the repo exists
+            ctx.repoExists(repoName).then(function (repoExists: boolean) {
+                if(repoExists) {
+                    Log.info("GitHubAction::setRepoPermission(..) - repo exists");
+                    Log.info("GitHubAction::setRepoPermission(..) - getting teams associated with repo");
+                    const teamsUri = ctx.apiPath + '/repos/' + ctx.org + '/' + repoName + '/teams';
+                    Log.trace("GitHubAction::setRepoPermission(..) - URI: " + teamsUri);
+                    const teamOptions = {
+                        method: 'GET',
+                        uri: teamsUri,
+                        headers: {
+                            'Authorization': ctx.gitHubAuthToken,
+                            'User-Agent':    ctx.gitHubUserName,
+                            'Accept':        'application/json'
+                        },
+                        json: true
+                    };
+
+                    // Change each team's permission
+                    rp(teamOptions).then(function (responseData: any) {
+                        Log.info("GitHubAction::setRepoPermission(..) - setting permission for teams on repo");
+                        for(const team of responseData) {
+                            // Don't change teams that have admin permission
+                            if(team.permission !== "admin") {
+                                Log.info("GitHubAction::setRepoPermission(..) - set team: " + team.name + " to " + permissionLevel);
+                                const permissionUri = ctx.apiPath + '/teams/' + team.id + '/repos/' + ctx.org + '/' + repoName;
+                                Log.trace("GitHubAction::setRepoPermission(..) - URI: " + permissionUri);
+                                const permissionOptions = {
+                                    method:  'PUT',
+                                    uri:     permissionUri,
+                                    headers: {
+                                        'Authorization': ctx.gitHubAuthToken,
+                                        'User-Agent':    ctx.gitHubUserName,
+                                        'Accept':        'application/json'
+                                    },
+                                    body: {
+                                        permission: permissionLevel
+                                    },
+                                    json: true
+                                };
+
+                                rp(permissionOptions).then(function () {
+                                    Log.info("GitHubAction::setRepoPermission(..) - changed team: " + team.id + " permissions");
+                                }).catch(function (err) {
+                                    Log.error("GitHubAction::setRepoPermission(..) - ERROR: " + err);
+                                    fulfill(false);
+                                });
+                            }
+                        }
+                    });
+                    fulfill(true);
+                } else {
+                    Log.info("GitHubAction::setRepoPermission(..) - repo does not exists; unable to revoke push");
+                    fulfill(false);
+                }
+            }).catch(function (err) {
+                // If we get an error; something went wrong
+                Log.error("GitHubAction::setRepoPermission(..) - ERROR: " + JSON.stringify(err));
+                reject(err);
+            });
+        });
+    }
 }

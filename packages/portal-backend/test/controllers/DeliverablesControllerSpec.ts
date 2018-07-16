@@ -5,6 +5,7 @@ import {Test} from "../GlobalSpec";
 
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {Deliverable} from "../../src/Types";
+import {DeliverableTransport} from "../../../common/types/PortalTypes";
 
 const loadFirst = require('../GlobalSpec');
 
@@ -81,6 +82,20 @@ describe("DeliverablesController", () => {
         let deliv = await dc.getDeliverable(Test.DELIVID1);
         expect(deliv).to.not.be.null;
         expect(deliv.id).to.equal(Test.DELIVID1);
+    });
+
+    it("Should be able to invalidate bad deliverables.", async () => {
+        let deliv = await dc.validateDeliverableTransport(undefined);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        deliv = await dc.validateDeliverableTransport(null);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        deliv = await dc.validateDeliverableTransport(<DeliverableTransport>{id: 'a'});
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
     });
 
 });
