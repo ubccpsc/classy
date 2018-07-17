@@ -70,7 +70,11 @@ jobs:
             name: Configure local git
 
       - run:
-            command: cd packages/portal-backend && yarn coverCI
+            command: |
+                      set -e
+                      cd packages/portal-backend
+                      yarn coverCI
+#            command: cd packages/portal-backend && yarn coverCI
             name: Running backend tests / coverage
             environment:
               MOCHA_FILE: packages/portal-backend/testOutput/test-results.xml

@@ -45,7 +45,8 @@ describe("GitHubActions", () => {
         Log.test('GitHubActionSpec::BeforeEach - "' + (<any>this).currentTest.title + '"');
 
         const ci = process.env.CI;
-        if (typeof ci !== 'undefined' && Boolean(ci) === true) {
+        const override = false; // set to true if you want to run these tests locally
+        if (override || typeof ci !== 'undefined' && Boolean(ci) === true) {
             Log.test("GitHubActionSpec::beforeEach() - running in CI; not skipping");
             gh = new GitHubActions();
         } else {
