@@ -14,11 +14,11 @@ jobs:
       # documented at https://circleci.com/docs/2.0/circleci-images/
       # - image: circleci/mongo:3.4.4
 
-    working_directory: ~/
-    
+#    working_directory: ~/repo
+
     steps:
       - checkout
-      
+
       # Download and cache dependencies
       - restore_cache:
           keys:
@@ -37,6 +37,4 @@ jobs:
 
       - run: cd packages/portal-backend && yarn build
 
-#      - run: yarn test
-
-#      - run: yarn cover
+      - run: cd packages/portal-backend && yarn test
