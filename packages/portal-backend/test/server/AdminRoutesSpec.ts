@@ -208,6 +208,7 @@ describe('Admin Routes', function () {
         // and we _still_ want it all to fail
 
         const dc: DatabaseController = DatabaseController.getInstance();
+        await dc.writeAuth({personId: Test.USERNAME1, token: 'testtoken'}); // create an auth record
         const auth = await dc.getAuth(Test.USERNAME1);
         const token = auth.token;
 

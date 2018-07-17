@@ -31,7 +31,7 @@ const TEST_REPO_ID = "A2_REPO_STUDENT0";
 const TEST_ASSN_ID = "A2";
 
 
-describe("CS340: AssignmentController", () => {
+describe.skip("CS340: AssignmentController", () => {
     let ac: AssignmentController = new AssignmentController();
     let gc: GradesController = new GradesController();
     let tc = new TeamController();
