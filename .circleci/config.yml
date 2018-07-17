@@ -27,6 +27,7 @@ jobs:
           - v1-dependencies-
 
       - run: yarn install
+          name: Install packages
 
       - run: cd packages/common && yarn install
 #          name: Preparing common
@@ -42,7 +43,7 @@ jobs:
           key: v1-dependencies-{{ checksum "package.json" }}
 
      # openssl aes-256-cbc -e -in ../.env -out .config -k $KEY
-      - run: cd .circleci && openssl aes-256-cbc -d -in .config -out ../.env -k $KEY
+      - run: cd .circleci && openssl aes-256-cbc -d -in .config -out ../.env -k $ENVKEY
 #          name: Setting up .env 
 
       - run: cd packages/common && ../../node_modules/typescript/bin/tsc
