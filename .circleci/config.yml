@@ -33,7 +33,7 @@ jobs:
             - node_modules
           key: v1-dependencies-{{ checksum "package.json" }}
 
-      - run: cd packages/portal-common && ../../node_modules/typescript/bin/tsc
+      - run: cd packages/common && ../../node_modules/typescript/bin/tsc
 
       - run: cd packages/portal-backend && ../../node_modules/typescript/bin/tsc
 
