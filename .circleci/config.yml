@@ -40,7 +40,7 @@ jobs:
           key: v1-dependencies-{{ checksum "package.json" }}
 
      # openssl aes-256-cbc -e -in ../.env -out .config -k $KEY
-      - run: cd .circeci && openssl aes-256-cbc -d -in .config -out ../.env -k $KEY
+      - run: cd .circleci && openssl aes-256-cbc -d -in .config -out ../.env -k $KEY
       
       - run: cd packages/common && ../../node_modules/typescript/bin/tsc
 
@@ -49,4 +49,5 @@ jobs:
       - run: cd packages/portal-backend && yarn test
 
       - run: rm .env
+          when: always
 
