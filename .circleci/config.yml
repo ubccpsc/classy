@@ -28,9 +28,15 @@ jobs:
 
       - run: yarn install
 
+      - run: cd packages/common && yarn install
+
+      - run: cd packages/portal-backend && yarn install      
+
       - save_cache:
           paths:
             - node_modules
+#            - packages/common/node_modules
+#            - packages/portal-backend/node_modules
           key: v1-dependencies-{{ checksum "package.json" }}
 
       - run: cd packages/common && ../../node_modules/typescript/bin/tsc
