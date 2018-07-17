@@ -51,7 +51,9 @@ jobs:
       - run: cd packages/common && ../../node_modules/typescript/bin/tsc
 #          name: Building common
 
-      - run: cd packages/portal-backend && ../../node_modules/typescript/bin/tsc
+      - run: 
+            command: cd packages/portal-backend && ../../node_modules/typescript/bin/tsc
+            name: Building backend
 #          name: Building backend
 
 #      - run: cd packages/portal-backend && yarn testCI
@@ -67,7 +69,9 @@ jobs:
 #      - store_artifacts:
 #          path: packages/portal-backend/test-results.xml
 
-      - run: rm .env && rm packages/portal-backend/ssl/fullchain.pem && rm packages/portal-backend/ssl/privkey.pem
-
+      - run: 
+            command: rm .env && rm packages/portal-backend/ssl/fullchain.pem && rm packages/portal-backend/ssl/privkey.pem
+            name: Cleaning up
+            when: always
 #          name: Cleaning up
 
