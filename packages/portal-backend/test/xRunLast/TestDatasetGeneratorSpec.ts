@@ -67,7 +67,7 @@ describe('TestDatasetGenerator', function () {
         };
         await pc.createPerson(p);
 
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < 40; i++) {
             const pid = 'p' + i;
 
             let p: Person = {

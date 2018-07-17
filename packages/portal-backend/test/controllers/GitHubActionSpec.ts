@@ -9,7 +9,8 @@ import {Test} from "../GlobalSpec";
 import Util from "../../../common/Util";
 import Config, {ConfigKey} from "../../../common/Config";
 
-describe.skip("GitHubActions", () => {
+describe("GitHubActions", () => {
+
     // TODO: investigate skipping this way: https://stackoverflow.com/a/41908943 (and turning them on/off with an env flag)
 
     let gh: GitHubActions;
@@ -33,18 +34,24 @@ describe.skip("GitHubActions", () => {
     // });
 
     before(async () => {
+        Log.test("GitHubActionSpec::before() - start");
+
         // test github actions on a test github instance (for safety)
         oldOrg = Config.getInstance().getProp(ConfigKey.org);
         Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
     });
 
-    before(async () => {
-        Config.getInstance().setProp(ConfigKey.org, oldOrg);
-    });
-
     beforeEach(function () {
-        Log.test('BeforeTest: "' + (<any>this).currentTest.title + '"');
-        gh = new GitHubActions();
+        Log.test('GitHubActionSpec::BeforeEach - "' + (<any>this).currentTest.title + '"');
+
+        const ci = process.env.CI;
+        if (typeof ci !== 'undefined' && Boolean(ci) === true) {
+            Log.test("GitHubActionSpec::beforeEach() - running in CI; not skipping");
+            gh = new GitHubActions();
+        } else {
+            Log.test("GitHubActionSpec::beforeEach() - skipping (not CI)");
+            this.skip();
+        }
     });
 
     afterEach(function () {
@@ -273,7 +280,7 @@ describe.skip("GitHubActions", () => {
 
     it("Should be able to create a repo, " +
         "create a team, add users to it, add it to the repo, " +
-        "and change their permissions", async function() {
+        "and change their permissions", async function () {
         let githubTeam = await gh.createTeam(TEAMNAME, 'push');
         expect(githubTeam.teamName).to.be.equal(TEAMNAME);
         expect(githubTeam.githubTeamNumber).to.be.an('number');

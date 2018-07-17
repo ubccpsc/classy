@@ -4,11 +4,12 @@ import "mocha";
 import {GitHubController} from "../../src/controllers/GitHubController";
 import {TeamController} from "../../src/controllers/TeamController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
+import Log from "../../../common/Log";
 
 const loadFirst = require('../GlobalSpec');
 const rFirst = require('./TeamControllerSpec');
 
-describe.skip("GitHubController", () => {
+describe("GitHubController", () => {
     // TODO: investigate skipping this way: https://stackoverflow.com/a/41908943 (and turning them on/off with an env flag)
 
     let TIMEOUT = 10000;
@@ -18,8 +19,16 @@ describe.skip("GitHubController", () => {
     before(async () => {
     });
 
-    beforeEach(() => {
-        gc = new GitHubController();
+    beforeEach(function () {
+        Log.test('GitHubController::BeforeEach - "' + (<any>this).currentTest.title + '"');
+        const ci = process.env.CI;
+        if (typeof ci !== 'undefined' && Boolean(ci) === true) {
+            Log.test("GitHubController::beforeEach() - running in CI; not skipping");
+            gc = new GitHubController();
+        } else {
+            Log.test("GitHubController::beforeEach() - skipping (not CI)");
+            this.skip();
+        }
     });
 
     it("Should be able to get a team url for a valid team.", async () => {
