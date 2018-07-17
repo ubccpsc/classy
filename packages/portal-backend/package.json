@@ -5,7 +5,7 @@
     "main": "build/App.js",
     "scripts": {
         "test": "node --require dotenv/config ./node_modules/.bin/mocha --timeout 30000 --recursive",
-        "testCI": "node --require dotenv/config ./node_modules/.bin/mocha --reporter mocha-junit-reporter --timeout 30000 --recursive --exit",
+        "testCI": "node --require dotenv/config ./node_modules/.bin/mocha --reporter mocha-junit-reporter --timeout 5000 --recursive --exit",
         "cover": "nyc --reporter html yarn run test",
         "coverCI": "nyc --reporter html yarn run test",
         "build": "tsc"
