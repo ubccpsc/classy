@@ -52,7 +52,7 @@ jobs:
       - run: cd packages/portal-backend && ../../node_modules/typescript/bin/tsc
 #          name: Building backend
 
-      - run: cd packages/portal-backend && yarn test
+      - run: cd packages/portal-backend && yarn testCI
 #          name: Backend tests
 
       - run: rm .env
