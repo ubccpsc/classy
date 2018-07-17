@@ -27,7 +27,6 @@ jobs:
           - v1-dependencies-
 
       - run: yarn install
-          name: Install packages
 
       - run: cd packages/common && yarn install
 #          name: Preparing common
