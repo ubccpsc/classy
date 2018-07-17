@@ -73,12 +73,16 @@ jobs:
             command: |
                       set -e
                       cd packages/portal-backend
-                      yarn coverCI
+                      yarn testCI
 #            command: cd packages/portal-backend && yarn coverCI
             name: Running backend tests / coverage
             environment:
               MOCHA_FILE: packages/portal-backend/testOutput/test-results.xml
             when: always
+
+      - run: 
+            command: cd packages/portal-backend && yarn coverCI
+            name: Running coverage
 
       - store_test_results:
           path: packages/portal-backend/testOutput
