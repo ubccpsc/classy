@@ -4,8 +4,8 @@
     "description": "SDMM Student Portal Backend",
     "main": "build/App.js",
     "scripts": {
-		"test": "node --require dotenv/config ./node_modules/.bin/mocha --timeout 30000 --recursive",
-		"testWorks": "node --require dotenv/config ./node_modules/.bin/mocha --timeout 30000 --recursive ./test dotenv_config_path=/Users/rtholmes/GoogleDrive/dev/classy/.env",
+        "test": "node --require dotenv/config ./node_modules/.bin/mocha --timeout 30000 --recursive",
+        "testWorks": "node --require dotenv/config ./node_modules/.bin/mocha --timeout 30000 --recursive ./test dotenv_config_path=/Users/rtholmes/GoogleDrive/dev/classy/.env",
         "cover": "nyc --reporter html yarn run test",
         "build": "tsc"
     },
