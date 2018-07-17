@@ -29,9 +29,11 @@ jobs:
       - run: yarn install
 
       - run: cd packages/common && yarn install
+          name: Preparing common
 
       - run: cd packages/portal-backend && yarn install      
-
+          name: Preparing backend
+          
       - save_cache:
           paths:
             - node_modules
@@ -41,13 +43,17 @@ jobs:
 
      # openssl aes-256-cbc -e -in ../.env -out .config -k $KEY
       - run: cd .circleci && openssl aes-256-cbc -d -in .config -out ../.env -k $KEY
-      
+          name: Setting up .env 
+              
       - run: cd packages/common && ../../node_modules/typescript/bin/tsc
-
+          name: Building common
+          
       - run: cd packages/portal-backend && ../../node_modules/typescript/bin/tsc
-
+          name: Building backend
+          
       - run: cd packages/portal-backend && yarn test
+          name: Backend tests
 
       - run: rm .env
-
+          name: Cleaning up
 
