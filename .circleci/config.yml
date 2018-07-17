@@ -66,14 +66,17 @@ jobs:
             name: Building backend
 
       - run:
-            command: cd packages/portal-backend && yarn testCI
+            command: cd packages/portal-backend && yarn coverCI
+            name: Running backend tests / coverage
             environment:
-              MOCHA_FILE: packages/portal-backend/testReports/test-results.xml
+              MOCHA_FILE: packages/portal-backend/testOutput/test-results.xml
             when: always
+
       - store_test_results:
-          path: packages/portal-backend/testReports
-#      - store_artifacts:
-#          path: packages/portal-backend/test-results.xml
+          path: packages/portal-backend/testOutput
+
+      - store_artifacts:
+          path: packages/portal-backend/testOutput
 
       - run: 
             command: rm .env && rm packages/portal-backend/ssl/fullchain.pem && rm packages/portal-backend/ssl/privkey.pem
