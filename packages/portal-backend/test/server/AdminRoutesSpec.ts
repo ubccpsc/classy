@@ -57,7 +57,7 @@ describe('Admin Routes', function () {
         });
     });
 
-    after(function () {
+    after(async () => {
         Log.test('AdminRoutes::after - start');
         return server.stop();
     });
