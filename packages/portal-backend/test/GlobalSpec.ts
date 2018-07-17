@@ -24,7 +24,7 @@ before(async () => {
 
 after(() => {
     Log.info('GlobalSpec::after()');
-    process.exit();
+    // process.exit();
 });
 
 export class Test {
