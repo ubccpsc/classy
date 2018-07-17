@@ -65,6 +65,10 @@ jobs:
             command: cd packages/portal-backend && ../../node_modules/typescript/bin/tsc
             name: Building backend
 
+      - run: 
+            command: git config --global user.email "CI@test.com" && git config --global user.name "CI Test Name"
+            name: Configure local git
+
       - run:
             command: cd packages/portal-backend && yarn coverCI
             name: Running backend tests / coverage
