@@ -7,7 +7,7 @@
         "test": "node --require dotenv/config ./node_modules/.bin/mocha --timeout 30000 --recursive",
         "testCI": "node --require dotenv/config ./node_modules/.bin/mocha --reporter mocha-junit-reporter --reporter-options mochaFile=./testOutput/test-results.xml --timeout 5000 --recursive --exit",
         "cover": "nyc --reporter html yarn run test",
-        "coverCI": "./node_modules/.bin/nyc --reporter html --report-dir ./testOutput yarn run testCI",
+        "coverCI": "./node_modules/.bin/nyc --reporter html --report-dir ./testOutput --reporter=text-lcov yarn run testCI | coveralls",
         "build": "tsc"
     },
     "repository": {
@@ -25,6 +25,7 @@
         "awesome-typescript-loader": "^3.4.1",
         "child-process-promise": "^2.2.1",
         "client-oauth2": "^4.2.1",
+        "coveralls": "^3.0.2",
         "csv-parse": "^2.5.0",
         "dotenv": "^5.0.1",
         "fs-extra": "^5.0.0",
