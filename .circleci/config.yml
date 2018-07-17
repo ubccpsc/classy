@@ -44,6 +44,8 @@ jobs:
 
      # openssl aes-256-cbc -e -in ../.env -out .config -k $KEY
       - run: cd .circleci && openssl aes-256-cbc -d -in .config -out ../.env -k $ENVKEY
+      - run: cd .circleci && openssl aes-256-cbc -d -in c1.enc -out ../packages/portal-backend/ssl/fullchain.pem -k $ENVKEY
+      - run: cd .circleci && openssl aes-256-cbc -d -in c2.enc -out ../packages/portal-backend/ssl/privkey.pem -k $ENVKEY      
 #          name: Setting up .env 
 
       - run: cd packages/common && ../../node_modules/typescript/bin/tsc
@@ -65,6 +67,7 @@ jobs:
       - store_artifacts:
           path: ~/junit
 
-      - run: rm .env
+      - run: rm .env && rm packages/portal-backend/ssl/fullchain.pem && rm packages/portal-backend/ssl/privkey.pem
+
 #          name: Cleaning up
 
