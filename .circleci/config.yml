@@ -63,9 +63,9 @@ jobs:
               MOCHA_FILE: packages/portal-backend/test-results.xml
             when: always
       - store_test_results:
-          path: ~/junit
-      - store_artifacts:
-          path: ~/junit
+          path: packages/portal-backend/test-results.xml
+#      - store_artifacts:
+#          path: packages/portal-backend/test-results.xml
 
       - run: rm .env && rm packages/portal-backend/ssl/fullchain.pem && rm packages/portal-backend/ssl/privkey.pem
 
