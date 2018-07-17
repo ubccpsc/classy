@@ -55,15 +55,15 @@ jobs:
 #      - run: cd packages/portal-backend && yarn testCI
 #          name: Backend tests
 
-    - run:
-        command: cd packages/portal-backend && yarn testCI
-        environment:
-          MOCHA_FILE: junit/test-results.xml
-        when: always
-    - store_test_results:
-        path: ~/junit
-    - store_artifacts:
-        path: ~/junit
+      - run:
+            command: cd packages/portal-backend && yarn testCI
+            environment:
+              MOCHA_FILE: junit/test-results.xml
+            when: always
+      - store_test_results:
+          path: ~/junit
+      - store_artifacts:
+          path: ~/junit
 
       - run: rm .env
 #          name: Cleaning up
