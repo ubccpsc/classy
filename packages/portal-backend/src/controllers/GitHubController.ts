@@ -50,7 +50,7 @@ export class GitHubController implements IGitHubController {
         return teamUrl;
     }
 
-    public async provisionRepository(repoName: string, teams: Team[], importUrl: string, webhookAddress: string): Promise<boolean> {
+    public async provisionRepository(repoName: string, teams: Team[], importUrl: string, webhookAddress: string, path?: string): Promise<boolean> {
         Log.info("GitHubController::provisionRepository( " + repoName + ", ...) - start");
         const start = Date.now();
         try {
@@ -123,8 +123,13 @@ export class GitHubController implements IGitHubController {
             let targetUrl = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/' + repoName; // valid .org use
 
             Log.trace("GitHubController::provisionRepository() - importing project (slow)");
-            let output = await gh.importRepoFS(importUrl, targetUrl);
-            Log.trace('GHA::provisionRepository(..) - import complete; success: ' + output);
+            let success;
+            if (path) {
+                success = await gh.importRepoFS(importUrl, targetUrl, path);
+            } else {
+                success = await gh.importRepoFS(importUrl, targetUrl);
+            }
+            Log.trace('GHA::provisionRepository(..) - import complete; success: ' + success);
             // expect(output).to.be.true;
 
             Log.trace('GHA::provisionRepository(..) - successfully completed for: ' + repoName + '; took: ' + Util.took(start));
