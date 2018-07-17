@@ -43,7 +43,7 @@ jobs:
           key: v1-dependencies-{{ checksum "package.json" }}
 
      # openssl aes-256-cbc -e -in ../.env -out .config -k $KEY
-      - run: cd .circleci && openssl aes-256-cbc -d -in .config -out ../.env -k $ENVKEY
+      - run: cd .circleci && openssl aes-256-cbc -d -in env.enc -out ../.env -k $ENVKEY
       - run: cd .circleci && openssl aes-256-cbc -d -in c1.enc -out ../packages/portal-backend/ssl/fullchain.pem -k $ENVKEY
       - run: cd .circleci && openssl aes-256-cbc -d -in c2.enc -out ../packages/portal-backend/ssl/privkey.pem -k $ENVKEY      
 #          name: Setting up .env 

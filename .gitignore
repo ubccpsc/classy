@@ -28,6 +28,7 @@ packages/common/**/*.map
 packages/portal-backend/test/**/*.js
 packages/portal-backend/test/**/*.map
 
+.circleci/
 
 # MacOS
 **/.DS_Store
