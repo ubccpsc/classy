@@ -21,7 +21,7 @@ jobs:
 
       # Download and cache dependencies
       - restore_cache:
-          keys:
+        keys:
           - v1-dependencies-{{ checksum "package.json" }}
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
@@ -29,31 +29,31 @@ jobs:
       - run: yarn install
 
       - run: cd packages/common && yarn install
-          name: Preparing common
+        name: Preparing common
 
       - run: cd packages/portal-backend && yarn install      
-          name: Preparing backend
+        name: Preparing backend
           
       - save_cache:
-          paths:
-            - node_modules
+        paths:
+          - node_modules
 #            - packages/common/node_modules
 #            - packages/portal-backend/node_modules
-          key: v1-dependencies-{{ checksum "package.json" }}
+        key: v1-dependencies-{{ checksum "package.json" }}
 
      # openssl aes-256-cbc -e -in ../.env -out .config -k $KEY
       - run: cd .circleci && openssl aes-256-cbc -d -in .config -out ../.env -k $KEY
-          name: Setting up .env 
+        name: Setting up .env 
               
       - run: cd packages/common && ../../node_modules/typescript/bin/tsc
-          name: Building common
+        name: Building common
           
       - run: cd packages/portal-backend && ../../node_modules/typescript/bin/tsc
-          name: Building backend
+        name: Building backend
           
       - run: cd packages/portal-backend && yarn test
-          name: Backend tests
+        name: Backend tests
 
       - run: rm .env
-          name: Cleaning up
+        name: Cleaning up
 
