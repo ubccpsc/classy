@@ -787,6 +787,13 @@ client-oauth2@^4.1.0:
     popsicle "^9.1.0"
     safe-buffer "^5.1.1"
 
+client-oauth2@^4.2.1:
+  version "4.2.1"
+  resolved "https://registry.yarnpkg.com/client-oauth2/-/client-oauth2-4.2.1.tgz#ca1a15b88150c72457c3c217b9779b0e881cfbf7"
+  dependencies:
+    popsicle "^9.1.0"
+    safe-buffer "^5.1.1"
+
 cliui@^2.1.0:
   version "2.1.0"
   resolved "https://registry.yarnpkg.com/cliui/-/cliui-2.1.0.tgz#4b475760ff80264c762c3a1719032e91c7fea0d1"
