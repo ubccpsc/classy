@@ -60,10 +60,10 @@ jobs:
       - run:
             command: cd packages/portal-backend && yarn testCI
             environment:
-              MOCHA_FILE: packages/portal-backend/test-results.xml
+              MOCHA_FILE: packages/portal-backend/testReports/test-results.xml
             when: always
       - store_test_results:
-          path: packages/portal-backend/test-results.xml
+          path: packages/portal-backend/testReports
 #      - store_artifacts:
 #          path: packages/portal-backend/test-results.xml
 
