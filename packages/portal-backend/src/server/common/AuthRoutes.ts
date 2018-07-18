@@ -170,20 +170,18 @@ export class AuthRoutes implements IREST {
      * @param res
      * @param next
      */
+    /* istanbul ignore next */
     public static githubCallback(req: any, res: any, next: any) {
         Log.trace("AuthRouteHandler::githubCallback(..) - /githubCallback - start");
         const config = Config.getInstance();
-        // const org = req.query.org;
-
         const personController = new PersonController();
 
-        // TODO: do we need this redirect?
         const backendUrl = config.getProp(ConfigKey.backendUrl);
         const backendPort = config.getProp(ConfigKey.backendPort);
-        // const githubRedirect = backendUrl + ':' + backendPort + '/githubCallback?orgName=secapstone';  // SDMM HardCode
+        // TODO: do we need this redirect?
         const githubRedirect = backendUrl + ':' + backendPort + '/githubCallback?name=' + config.getProp(ConfigKey.name);
-        Log.info('AuthRouteHandler::githubCallback(..) - / githubCallback; URL: ' + githubRedirect);
 
+        Log.info('AuthRouteHandler::githubCallback(..) - / githubCallback; URL: ' + githubRedirect);
         const opts = {
             clientId:         config.getProp(ConfigKey.githubClientId),
             clientSecret:     config.getProp(ConfigKey.githubClientSecret),
