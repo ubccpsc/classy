@@ -5,6 +5,7 @@ import {GitHubController} from "../../src/controllers/GitHubController";
 import {TeamController} from "../../src/controllers/TeamController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import Log from "../../../common/Log";
+import Config, {ConfigKey} from "../../../common/Config";
 
 const loadFirst = require('../GlobalSpec');
 const rFirst = require('./TeamControllerSpec');
@@ -16,8 +17,18 @@ describe("GitHubController", () => {
 
     let gc: GitHubController;
 
-    before(async () => {
+    const OLDORG = Config.getInstance().getProp(ConfigKey.org);
+
+    before(() => {
+        Log.test("GitHubControllerSpec::before() - start; forcing testorg");
+        Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg)); // force testorg so real org does not get deleted or modified
     });
+
+    after(() => {
+        Log.test("GitHubControllerSpec::after() - start; replacing original org");
+        Config.getInstance().setProp(ConfigKey.org, OLDORG);
+    });
+
 
     beforeEach(function () {
         Log.test('GitHubController::BeforeEach - "' + (<any>this).currentTest.title + '"');

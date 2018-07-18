@@ -1,7 +1,8 @@
 import Log from "../../../common/Log";
 
 import {DatabaseController} from "./DatabaseController";
-import {Person} from "../Types";
+import {Person, Repository} from "../Types";
+import Util from "../../../common/Util";
 
 export class PersonController {
 
@@ -38,7 +39,7 @@ export class PersonController {
      * @returns {Promise<boolean>}
      */
     public async writePerson(person: Person): Promise<boolean> {
-        Log.info("PersonController::writePerson( " + person.id + " ) - start");
+        Log.trace("PersonController::writePerson( " + person.id + " ) - start");
 
         let successful = await this.db.writePerson(person);
         return successful;
@@ -50,25 +51,32 @@ export class PersonController {
      * This sets the Person.URL field, confirming that they have
      * successfully logged in.
      *
-     * @param {string} githubUsername
+     * @param {string} personId
      * @returns {boolean}
      */
-    public async getPerson(githubUsername: string): Promise<Person | null> {
-        Log.info("PersonController::getPerson( " + githubUsername + " ) - start");
+    public async getPerson(personId: string): Promise<Person | null> {
+        Log.trace("PersonController::getPerson( " + personId + " ) - start");
 
-        let person = await this.db.getPerson(githubUsername);
-
+        let person = await this.db.getPerson(personId);
         if (person === null) {
             // in this case, return false, because login failed
-            Log.info("PersonController::getPerson( " + githubUsername + " ) - unknown person for this org - failing");
+            Log.trace("PersonController::getPerson( " + personId + " ) - unknown person for this org - failing");
             return null;
         }
         return person;
     }
 
     public async getAllPeople(): Promise<Person[]> {
-        Log.info("PersonController::getAllPeople() - start");
+        Log.trace("PersonController::getAllPeople() - start");
         return await this.db.getPeople();
+    }
+
+    public async getRepos(personId: string): Promise<Repository[] | null> {
+        Log.trace('PersonController::getRepos( ' + personId + ' ) - start');
+        const start = Date.now();
+        let repos = await this.db.getRepositoriesForPerson(personId);
+        Log.trace('PersonController::getRepos( ' + personId + ' ) - # repos: ' + repos.length + '; took: ' + Util.took(start));
+        return repos;
     }
 
     // /**

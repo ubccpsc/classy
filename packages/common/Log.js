@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+/* tslint:disable:no-console */
 var LogLevel;
 (function (LogLevel) {
     LogLevel[LogLevel["TRACE"] = 0] = "TRACE";
@@ -32,6 +33,9 @@ switch (("TRACE").toUpperCase()) {
     default:
         LOG_LEVEL = LogLevel.TRACE;
 }
+/**
+ * Collection of logging methods. Useful for making the output easier to read and understand.
+ */
 class Log {
     static trace(msg) {
         if (Log.Level <= LogLevel.TRACE) {

@@ -78,4 +78,12 @@ describe("RepositoryController", () => {
         expect(people).to.contain('user1');
         expect(people).to.contain('user2');
     });
+
+    it("Should be able to find repos for a person.", async () => {
+        // test should be in PersonControllerSpec but the repos are made here...
+        const pc = new PersonController();
+        const repos = await pc.getRepos(Test.USERNAME1);
+        expect(repos).to.have.lengthOf(1);
+    });
+
 });
