@@ -45,7 +45,7 @@ describe("GitHubActions", () => {
         Log.test('GitHubActionSpec::BeforeEach - "' + (<any>this).currentTest.title + '"');
 
         const ci = process.env.CI;
-        const override = false; // set to true if you want to run these tests locally
+        const override = true; // set to true if you want to run these tests locally
         if (override || typeof ci !== 'undefined' && Boolean(ci) === true) {
             Log.test("GitHubActionSpec::beforeEach() - running in CI; not skipping");
             gh = new GitHubActions();
@@ -274,11 +274,6 @@ describe("GitHubActions", () => {
         (<any>gh).gitHubAuthToken = old; // restore token
     }).timeout(TIMEOUT);
 
-    it("Clear stale repos and teams.", async function () {
-        let del = await deleteStale();
-        expect(del).to.be.true;
-    }).timeout(TIMEOUT * 10);
-
     it("Should be able to create a repo, " +
         "create a team, add users to it, add it to the repo, " +
         "and change their permissions", async function () {
@@ -297,6 +292,11 @@ describe("GitHubActions", () => {
         expect(permissionEdit).to.be.true;
 
     }).timeout(TIMEOUT);
+
+    it("Clear stale repos and teams.", async function () {
+        let del = await deleteStale();
+        expect(del).to.be.true;
+    }).timeout(TIMEOUT * 10);
 
 
     function getProjectPrefix(): string {

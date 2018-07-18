@@ -1,6 +1,14 @@
 # Classy
 
-_TODO_ Description
+[![CircleCI](https://circleci.com/gh/ubccpsc/classy.svg?style=svg)](https://circleci.com/gh/ubccpsc/classy)
+[![Coverage Status](https://coveralls.io/repos/github/ubccpsc/classy/badge.svg?branch=master)](https://coveralls.io/github/ubccpsc/classy?branch=master)
+
+Classy is a classroom management system developed by the Department of Computer Science at UBC. Classy is tightly integrated with GitHub and has the ability to automatically provision student repositories, create teams, and mark assignments. Administrators can configure deliverables, enter grades, and view comprehensive dashboards of all student test executions. Students can use the system to create teams (if required) and view their grades and assignment feedback.
+
+Primary contributors:
+
+* [Reid Holmes](https://www.cs.ubc.ca/~rtholmes/)
+* [Nick Bradley](https://nickbradley.github.io/)
 
 ## Classy setup
 You will need to ensure the required environment variables, which you can see in `packages/common/Config.ts`, are set.

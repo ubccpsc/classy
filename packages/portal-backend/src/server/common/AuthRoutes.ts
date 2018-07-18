@@ -40,9 +40,12 @@ export class AuthRoutes implements IREST {
      *
      * Code taken from restify #284
      *
+     * Run often by browsers, but never with the unit test suite.
+     *
      * @param req
      * @param res
      */
+    /* istanbul ignore next */    
     public static handlePreflight(req: any, res: any) {
         Log.trace("AuthRouteHandler::handlePreflight(..) - " + req.method.toLowerCase() + "; uri: " + req.url);
 
@@ -134,6 +137,10 @@ export class AuthRoutes implements IREST {
         });
     }
 
+    /**
+     * Requires manual testing w/ live GitHub instance.
+     */
+    /* istanbul ignore next */
     public static getAuth(req: any, res: any, next: any) {
         Log.trace("AuthRouteHandler::getAuth(..) - /auth redirect start");
         let config = Config.getInstance();
@@ -170,20 +177,18 @@ export class AuthRoutes implements IREST {
      * @param res
      * @param next
      */
+    /* istanbul ignore next */
     public static githubCallback(req: any, res: any, next: any) {
         Log.trace("AuthRouteHandler::githubCallback(..) - /githubCallback - start");
         const config = Config.getInstance();
-        // const org = req.query.org;
-
         const personController = new PersonController();
 
-        // TODO: do we need this redirect?
         const backendUrl = config.getProp(ConfigKey.backendUrl);
         const backendPort = config.getProp(ConfigKey.backendPort);
-        // const githubRedirect = backendUrl + ':' + backendPort + '/githubCallback?orgName=secapstone';  // SDMM HardCode
+        // TODO: do we need this redirect?
         const githubRedirect = backendUrl + ':' + backendPort + '/githubCallback?name=' + config.getProp(ConfigKey.name);
-        Log.info('AuthRouteHandler::githubCallback(..) - / githubCallback; URL: ' + githubRedirect);
 
+        Log.info('AuthRouteHandler::githubCallback(..) - / githubCallback; URL: ' + githubRedirect);
         const opts = {
             clientId:         config.getProp(ConfigKey.githubClientId),
             clientSecret:     config.getProp(ConfigKey.githubClientSecret),
