@@ -2,6 +2,11 @@
 
 _TODO_ Description
 
+## Dev status
+
+[![CircleCI](https://circleci.com/gh/ubccpsc/classy.svg?style=svg)](https://circleci.com/gh/ubccpsc/classy)
+[![Coverage Status](https://coveralls.io/repos/github/ubccpsc/classy/badge.svg?branch=master)](https://coveralls.io/github/ubccpsc/classy?branch=master)
+
 ## Classy setup
 You will need to ensure the required environment variables, which you can see in `packages/common/Config.ts`, are set.
 This can be done by copying `.env.sample` to `.env` in the root of the project and modifying as needed. It is ***CRUCIAL*** that your `.env` file is never committed to version control.
