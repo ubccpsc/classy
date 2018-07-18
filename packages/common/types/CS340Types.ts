@@ -6,7 +6,7 @@
 export interface AssignmentGrade {
     assignmentID: string;               // Unique Assignment ID per course
     studentID: string;                  // Unique Student ID per course
-    questions: QuestionGrade[];    // SubQuestions
+    questions: QuestionGrade[];         // SubQuestions
 }
 
 // Represents the Question's grade, comprised of an arbitrary amount of subQuestions
@@ -29,6 +29,14 @@ export interface AssignmentInfo {
     seedRepoPath: string;
     status: AssignmentStatus;
     rubric: AssignmentGradingRubric;
+    repositories: string[];             // Associated Repositories based on IDs
+}
+
+// Placed in Repository.custom <<PENDING>>
+export interface AssignmentRepositoryInfo {
+    assignmentId: string[];
+    status: AssignmentStatus;
+    assignedTeams: string[]; // team.id[]
 }
 
 // Represents a grading rubric
@@ -50,17 +58,17 @@ export interface SubQuestionGradingRubric {
     comment: string;
     outOf: number;
     weight: number;
-    modifiers: any;         // Custom modifiers - course dependant
+    modifiers: any;                 // Custom modifiers - course dependant
 }
 
 
 export enum AssignmentStatus {
-                                    // Repositories Status:
-                                    // Created | Pull | Push  |
-    INACTIVE    = "Inactive",       //         |      |       | Repositories not created or viewable
-    INTIALIZED  = "Initialized",    //    X    |      |       | Repositories are created, not viewable
-    PUBLISHED   = "Published",      //    X    |  X   |   X   | Created and viewable, with push access
-    CLOSED      = "Closed",         //    X    |  X   |       | Created, viewable, no push access
+                            // Repositories Status:
+                            // Created | Pull | Push  |
+    INACTIVE    = 1,        //         |      |       | Repositories not created or viewable
+    INITIALIZED = 2,        //    X    |      |       | Repositories are created, not viewable
+    PUBLISHED   = 3,        //    X    |  X   |   X   | Created and viewable, with push access
+    CLOSED      = 4,        //    X    |  X   |       | Created, viewable, no push access
 }
 
 /*

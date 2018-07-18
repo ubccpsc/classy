@@ -33,6 +33,10 @@ export default class CS340REST implements IREST {
         server.put('/setAssignmentGrade', CS340REST.setAssignmentGrade);
         server.get('/getPersonByID/:gitHubUserName', CS340REST.getPersonByID);
         server.get('/getAllPersons', CS340REST.getAllPersons);
+        server.get('/updateAssignmentStatus/:delivid', CS340REST.updateAssignmentStatus);
+        server.get('/testPublishRepository/:repoId', CS340REST.testPublishRepository);
+        server.post('/initializeAllRepositories/:delivid', CS340REST.initializeAllRepositories);
+        server.post('/publishAllRepositories/:delivid', CS340REST.publishAllRepositories);
     }
 
     public static getAssignmentGrade(req: any, res: any, next: any) {
@@ -171,7 +175,7 @@ export default class CS340REST implements IREST {
         if(typeof req.body === 'string') {
             reqBody = JSON.parse(req.body);
         } else {
-            reqBody = req.body
+            reqBody = req.body;
         }
 
         if(reqBody === null) {
@@ -308,4 +312,99 @@ export default class CS340REST implements IREST {
 
         return next();
     }
+
+    public static async updateAssignmentStatus(req:any, res:any, next:any) {
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        // get deliverable ID
+        let delivid: string = req.params.delivid;
+
+        let assignController: AssignmentController = new AssignmentController();
+        let newResult = await assignController.updateAssignmentStatus(delivid);
+
+        res.send(200, newResult);
+        return next();
+    }
+
+    public static async testPublishRepository(req:any, res:any, next:any) {
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        let repoId: string = req.params.repoId;
+
+
+        let assignController: AssignmentController = new AssignmentController();
+        let success = await assignController.publishAssignmentRepo(repoId);
+
+        res.send(200, success);
+
+        return next();
+    }
+
+    public static async initializeAllRepositories(req:any, res:any, next:any) {
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        // let
+        Log.info("CS340REST::intializeAllRepositories(..) - start");
+        let delivId: string = req.params.delivid;
+
+        // validate this is a valid deliverable
+        let delivController: DeliverablesController = new DeliverablesController();
+        let deliv: Deliverable = await delivController.getDeliverable(delivId);
+
+        if (deliv === null) {
+            res.send(400, {error: "Invalid deliverable specified"});
+            return next();
+        }
+
+        if(deliv.custom === null) {
+            res.send(400, {error: "Assignment not set up properly"});
+            return next();
+        }
+
+        let assignController: AssignmentController = new AssignmentController();
+        let success = await assignController.initializeAllRepositories(delivId);
+
+        res.send(200, {response: success});
+
+        return next();
+    }
+
+
+    public static async publishAllRepositories(req:any, res:any, next:any) {
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        // let
+        Log.info("CS340REST::intializeAllRepositories(..) - start");
+        let delivId: string = req.params.delivid;
+
+        // validate this is a valid deliverable
+        let delivController: DeliverablesController = new DeliverablesController();
+        let deliv: Deliverable = await delivController.getDeliverable(delivId);
+
+        if (deliv === null) {
+            res.send(400, {error: "Invalid deliverable specified"});
+            return next();
+        }
+
+        if(deliv.custom === null) {
+            res.send(400, {error: "Assignment not set up properly"});
+            return next();
+        }
+
+        let assignController: AssignmentController = new AssignmentController();
+        let success = await assignController.publishAllRepositories(delivId);
+
+        res.send(200, {response: success});
+
+        return next();
+    }
+
 }
