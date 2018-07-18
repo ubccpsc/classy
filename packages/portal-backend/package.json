@@ -10,6 +10,7 @@
         "coverCIworked": "./node_modules/.bin/nyc --reporter html --report-dir ./testOutput --reporter=text-lcov yarn run testCI | coveralls",
         "coverCI": "./node_modules/.bin/nyc --reporter html --report-dir ./testOutput --reporter=text-lcov yarn run testCI",
         "coveralls": "./node_modules/.bin/nyc report --report-dir ./testOutput --reporter=text-lcov | coveralls",
+        "codecov": "./node_modules/.bin/nyc report --report-dir ./testOutput --reporter=json > ./testOutput/coverage.json && codecov --token=$CODECOV_TOKEN",
         "build": "tsc"
     },
     "repository": {
@@ -27,6 +28,7 @@
         "awesome-typescript-loader": "^3.4.1",
         "child-process-promise": "^2.2.1",
         "client-oauth2": "^4.2.1",
+        "codecov": "^3.0.4",
         "coveralls": "^3.0.2",
         "csv-parse": "^2.5.0",
         "dotenv": "^5.0.1",

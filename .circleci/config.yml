@@ -82,7 +82,12 @@ jobs:
 
       - run: 
             command: cd packages/portal-backend && yarn coveralls
-            name: Running backend coverage
+            name: Running backend coveralls
+            when: always
+
+      - run: 
+            command: cd packages/portal-backend && yarn codecov
+            name: Running backend codecov
             when: always
 
       - store_test_results:
