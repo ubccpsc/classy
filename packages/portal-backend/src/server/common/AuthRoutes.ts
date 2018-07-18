@@ -40,9 +40,12 @@ export class AuthRoutes implements IREST {
      *
      * Code taken from restify #284
      *
+     * Run often by browsers, but never with the unit test suite.
+     *
      * @param req
      * @param res
      */
+    /* istanbul ignore next */    
     public static handlePreflight(req: any, res: any) {
         Log.trace("AuthRouteHandler::handlePreflight(..) - " + req.method.toLowerCase() + "; uri: " + req.url);
 
@@ -134,6 +137,10 @@ export class AuthRoutes implements IREST {
         });
     }
 
+    /**
+     * Requires manual testing w/ live GitHub instance.
+     */
+    /* istanbul ignore next */
     public static getAuth(req: any, res: any, next: any) {
         Log.trace("AuthRouteHandler::getAuth(..) - /auth redirect start");
         let config = Config.getInstance();
