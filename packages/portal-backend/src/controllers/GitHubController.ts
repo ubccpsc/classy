@@ -90,21 +90,22 @@ export class GitHubController implements IGitHubController {
 
             let teamValue = null;
             try {
-                // HARDCODE: assume one team
                 Log.trace("GitHubController::provisionRepository() - create GitHub team");
-                teamValue = await gh.createTeam(teams[0].id, 'push');
-                Log.trace('GHA::provisionRepository(..) createTeam: ' + teamValue.teamName);
+                for(const team of teams) {
+                    teamValue = await gh.createTeam(team.id, 'push');
+                    Log.trace('GHA::provisionRepository(..) createTeam: ' + teamValue.teamName);
+
+                    Log.trace("GitHubController::provisionRepository() - add members to GitHub team");
+                    let addMembers = await gh.addMembersToTeam(teamValue.teamName, teamValue.githubTeamNumber, team.personIds);
+                    Log.trace('GHA::provisionRepository(..) - addMembers: ' + addMembers.teamName);
+
+                    Log.trace("GitHubController::provisionRepository() - add team to repo");
+                    let teamAdd = await gh.addTeamToRepo(teamValue.githubTeamNumber, repoName, 'push');
+                    Log.trace('GHA::provisionRepository(..) - team name: ' + teamAdd.teamName);
+                }
             } catch (err) {
                 Log.error("GitHubController::provisionRepository() - create team ERROR: " + err);
             }
-
-            Log.trace("GitHubController::provisionRepository() - add members to GitHub team");
-            let addMembers = await gh.addMembersToTeam(teamValue.teamName, teamValue.githubTeamNumber, teams[0].personIds);
-            Log.trace('GHA::provisionRepository(..) - addMembers: ' + addMembers.teamName);
-
-            Log.trace("GitHubController::provisionRepository() - add team to repo");
-            let teamAdd = await gh.addTeamToRepo(teamValue.githubTeamNumber, repoName, 'push');
-            Log.trace('GHA::provisionRepository(..) - team name: ' + teamAdd.teamName);
 
             Log.trace("GitHubController::provisionRepository() - add staff team to repo");
             let staffTeamNumber = await gh.getTeamNumber('staff');
