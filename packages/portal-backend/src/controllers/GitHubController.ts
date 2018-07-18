@@ -43,7 +43,6 @@ export class GitHubController implements IGitHubController {
     }
 
     public async getTeamUrl(team: Team): Promise<string> {
-        // const teamUrl = "https://github.com/orgs/SECapstone/teams/" + team.id;
         const c = Config.getInstance();
         const teamUrl = c.getProp(ConfigKey.githubHost) + '/orgs/' + c.getProp(ConfigKey.org) + '/teams/' + team.id; // valid .org use
         Log.info("GitHubController::getTeamUrl( " + team.id + " ) - URL: " + teamUrl);
@@ -57,7 +56,7 @@ export class GitHubController implements IGitHubController {
             const gh = new GitHubActions();
 
             if (teams.length < 1 || teams.length > 1) {
-                Log.info("GitHubController::provisionRepository(..) - only the first team will be added to the repo");
+                Log.warn("GitHubController::provisionRepository(..) - only the first team will be added to the repo");
             }
 
             try {
@@ -116,7 +115,6 @@ export class GitHubController implements IGitHubController {
             Log.trace("GitHubController::provisionRepository() - add webhook");
             let createHook = await gh.addWebhook(repoName, webhookAddress);
             Log.trace('GHA::provisionRepository(..) - webook successful: ' + createHook);
-            // expect(createHook).to.be.true;
 
             // perform import
             const c = Config.getInstance();
@@ -125,7 +123,6 @@ export class GitHubController implements IGitHubController {
             Log.trace("GitHubController::provisionRepository() - importing project (slow)");
             let output = await gh.importRepoFS(importUrl, targetUrl);
             Log.trace('GHA::provisionRepository(..) - import complete; success: ' + output);
-            // expect(output).to.be.true;
 
             Log.trace('GHA::provisionRepository(..) - successfully completed for: ' + repoName + '; took: ' + Util.took(start));
             return true;

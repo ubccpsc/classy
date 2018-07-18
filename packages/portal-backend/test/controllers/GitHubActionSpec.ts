@@ -17,27 +17,17 @@ describe("GitHubActions", () => {
 
     let TIMEOUT = 5000;
 
+    let DELAY_SEC = 1000;
+    let DELAY_SHORT = 200;
+
     const REPONAME = getProjectPrefix() + Test.REPONAME1;
     const TEAMNAME = getTeamPrefix() + Test.TEAMNAME1;
 
-    let oldOrg: string | null = null;
-
-    // before(async () => {
-    //     Test.ORGNAME = 'classytest';
-    //
-    //     OLDORGNAME = Config.getInstance().getProp(ConfigKey.org);
-    //     Config.getInstance().setProp(ConfigKey.org, Test.ORGNAME); // dedicated test org; ensures we don't kill repos in production
-    // });
-    //
-    // after(async () => {
-    //     Config.getInstance().setProp(ConfigKey.org, OLDORGNAME);
-    // });
+    const OLDORG = Config.getInstance().getProp(ConfigKey.org);
 
     before(async () => {
-        Log.test("GitHubActionSpec::before() - start");
-
+        Log.test("GitHubActionSpec::before() - start; forcing testorg");
         // test github actions on a test github instance (for safety)
-        oldOrg = Config.getInstance().getProp(ConfigKey.org);
         Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
     });
 
@@ -45,7 +35,7 @@ describe("GitHubActions", () => {
         Log.test('GitHubActionSpec::BeforeEach - "' + (<any>this).currentTest.title + '"');
 
         const ci = process.env.CI;
-        const override = true; // set to true if you want to run these tests locally
+        const override = false; // set to true if you want to run these tests locally
         if (override || typeof ci !== 'undefined' && Boolean(ci) === true) {
             Log.test("GitHubActionSpec::beforeEach() - running in CI; not skipping");
             gh = new GitHubActions();
@@ -57,6 +47,12 @@ describe("GitHubActions", () => {
 
     afterEach(function () {
         Log.test('AfterTest: "' + (<any>this).currentTest.title + '"');
+    });
+
+    after(async () => {
+        Log.test("GitHubActionSpec::after() - start; replacing original org");
+        // return to original org
+        Config.getInstance().setProp(ConfigKey.org, OLDORG);
     });
 
     let TESTREPONAMES = ["testtest__repo1",
@@ -79,7 +75,7 @@ describe("GitHubActions", () => {
     it("Clear stale repos and teams.", async function () {
         let del = await deleteStale();
         expect(del).to.be.true;
-    }).timeout(TIMEOUT * 10);
+    }).timeout(TIMEOUT * 100);
 
     it("Should not be possible to find a repo that does not exist.", async function () {
         let val = await gh.repoExists(REPONAME);
@@ -178,6 +174,33 @@ describe("GitHubActions", () => {
         expect(val.length).to.be.greaterThan(0);
         expect(val).to.contain('rtholmes');
     }).timeout(TIMEOUT);
+
+
+    it("Should be able to create many teams and get their numbers (tests team paging).", async function () {
+
+        gh.PAGE_SIZE = 2; // force a small page size for testing
+        // should be able to create the teams
+        for (let i = 0; i < 4; i++) {
+            const teamname = TEAMNAME + '_paging-' + i;
+            let val = await gh.createTeam(teamname, 'push');
+            await gh.delay(200);
+            Log.test("Team details: " + JSON.stringify(val));
+            expect(val.teamName).to.equal(teamname);
+            expect(val.githubTeamNumber).to.be.an('number');
+            expect(val.githubTeamNumber).to.be.greaterThan(0);
+        }
+
+        // should be able to get their number
+        for (let i = 0; i < 4; i++) {
+            const teamname = TEAMNAME + '_paging-' + i;
+            await gh.delay(200);
+            let val = await gh.getTeamNumber(teamname);
+            Log.test("Team details: " + JSON.stringify(val));
+            expect(val).to.be.an('number');
+            expect(val).to.be.greaterThan(0);
+        }
+
+    }).timeout(TIMEOUT * 20);
 
     it("Should be able to clone a source repo into a newly created repository.", async function () {
         const start = Date.now();
@@ -320,6 +343,7 @@ describe("GitHubActions", () => {
                 if (repo.name === r) {
                     Log.info('Removing stale repo: ' + repo.name);
                     let val = await gh.deleteRepo(r);
+                    await gh.delay(DELAY_SHORT);
                     // expect(val).to.be.true;
                 }
             }
@@ -329,7 +353,7 @@ describe("GitHubActions", () => {
         // delete test repos if needed
         for (const repo of repos as any) {
             Log.info('Evaluating repo: ' + repo.name);
-            if (repo.name.indexOf('TEST__X__') === 0) {
+            if (repo.name.indexOf('TEST__X__') === 0 || repo.name.startsWith(REPONAME)) {
                 Log.info('Removing stale repo: ' + repo.name);
                 let val = await gh.deleteRepo(repo.name);
                 // expect(val).to.be.true;
@@ -347,11 +371,20 @@ describe("GitHubActions", () => {
         Log.test('Stale Teams: ' + JSON.stringify(TESTTEAMNAMES));
         for (const team of teams as any) {
             // Log.info('Evaluating team: ' + JSON.stringify(team));
+            let done = false;
             for (const t of TESTTEAMNAMES) {
                 if (team.name === t) {
                     Log.test("Removing stale team: " + team.name);
                     let val = await gh.deleteTeam(team.id);
-                    // expect(val).to.be.true;
+                    await gh.delay(DELAY_SHORT);
+                    done = true;
+                }
+            }
+            if (done === false) {
+                if (team.name.startsWith(TEAMNAME) === true) {
+                    Log.test("Removing stale team: " + team.name);
+                    let val = await gh.deleteTeam(team.id);
+                    await gh.delay(DELAY_SHORT);
                 }
             }
         }

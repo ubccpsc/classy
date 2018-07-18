@@ -14,6 +14,7 @@ export class GitHubActions {
     private readonly org: string | null = null;
 
     private DELAY_SEC = 1000;
+    public PAGE_SIZE = 100; // public for testing; 100 is the max; 10 is good for tests
 
     constructor() {
         // NOTE: this is not very controllable; these would be better as params
@@ -181,15 +182,15 @@ export class GitHubActions {
                 headers: {
                     'Authorization': ctx.gitHubAuthToken,
                     'User-Agent':    ctx.gitHubUserName,
-                    'Accept':        'application/json'
+                    'Accept':        'application/vnd.github.hellcat-preview+json' // 'application/json', // custom because this is a preview api
                 }
             };
 
             rp(options).then(function (body: any) {
                 Log.info("GitHubAction::deleteTeam(..) - success; body: " + body);
                 fulfill(true);
-            }).catch(function () { // err: any
-                Log.error("GitHubAction::deleteTeam(..) - failed");
+            }).catch(function (err) { // err: any
+                Log.error("GitHubAction::deleteTeam(..) - failed; ERROR: " + err);
                 fulfill(false);
             });
         });
@@ -230,36 +231,119 @@ export class GitHubActions {
 
     /**
      * Lists the teams for the current org.
-     * @returns {Promise<string>}
+     *
+     * NOTE: this is a slow operation (if there are many teams) so try not to do it too much!
+     *
+     * @returns {Promise<{id: number, name: string}[]>}
      */
-    public listTeams(): Promise<string> {
-        let ctx = this;
+    public async listTeams(): Promise<{ id: number, name: string }[]> {
+        // NOTE: This simple version is the non-paginated version.
+        //
+        // let ctx = this;
+        //
+        // Log.info("GitHubAction::listTeams( " + ctx.org + " ) - start");
+        // return new Promise(function (fulfill, reject) {
+        //
+        //     // GET /orgs/:org/repos
+        //     const uri = ctx.apiPath + '/orgs/' + ctx.org + '/teams';
+        //     const options = {
+        //         method:  'GET',
+        //         uri:     uri,
+        //         headers: {
+        //             'Authorization': ctx.gitHubAuthToken,
+        //             'User-Agent':    ctx.gitHubUserName,
+        //             'Accept':        'application/json'
+        //         }
+        //     };
+        //
+        //     // NOTE: do not know how this will do with paging if there are lots of teams
+        //     rp(options).then(function (body: any) {
+        //         Log.info("GitHubAction::listTeams(..) - success; body: " + body);
+        //         fulfill(JSON.parse(body));
+        //     }).catch(function (err: any) {
+        //         Log.error("GitHubAction::listTeams(..) - ERROR: " + JSON.stringify(err) + '\n; for URI: ' + uri);
+        //         reject(err);
+        //     });
+        //
+        // });
 
-        Log.info("GitHubAction::listTeams( " + ctx.org + " ) - start");
-        return new Promise(function (fulfill, reject) {
 
-            // GET /orgs/:org/repos
-            const uri = ctx.apiPath + '/orgs/' + ctx.org + '/teams';
-            const options = {
-                method:  'GET',
-                uri:     uri,
-                headers: {
-                    'Authorization': ctx.gitHubAuthToken,
-                    'User-Agent':    ctx.gitHubUserName,
-                    'Accept':        'application/json'
+        Log.info("GitHubManager::listTeams(..) - start");
+        const ctx = this;
+        const uri = ctx.apiPath + '/orgs/' + ctx.org + '/teams?per_page=' + ctx.PAGE_SIZE; // per_page max is 100; 10 is useful for testing pagination though
+        const options = {
+            method:                  'GET',
+            uri:                     uri,
+            headers:                 {
+                'Authorization': ctx.gitHubAuthToken,
+                'User-Agent':    ctx.gitHubUserName,
+                'Accept':        'application/json'
+            },
+            resolveWithFullResponse: true,
+            json:                    true
+        };
+
+        const fullResponse = await rp(options);
+
+        let teamsRaw: any[] = [];
+        let paginationPromises: any[] = [];
+        if (typeof fullResponse.headers.link !== 'undefined') {
+            // first save the responses from the first page:
+            teamsRaw = fullResponse.body;
+
+            let lastPage: number = -1;
+            const linkText = fullResponse.headers.link;
+            const linkParts = linkText.split(',');
+            for (const p of linkParts) {
+                const pparts = p.split(';');
+                if (pparts[1].indexOf('last')) {
+                    const pText = pparts[0].split('&page=')[1];
+                    lastPage = pText.match(/\d+/)[0];
+                    // Log.trace('last page: ' + lastPage);
                 }
-            };
+            }
 
-            // NOTE: do not know how this will do with paging if there are lots of teams
-            rp(options).then(function (body: any) {
-                Log.info("GitHubAction::listTeams(..) - success; body: " + body);
-                fulfill(JSON.parse(body));
-            }).catch(function (err: any) {
-                Log.error("GitHubAction::listTeams(..) - ERROR: " + JSON.stringify(err) + '\n; for URI: ' + uri);
-                reject(err);
-            });
+            let pageBase = '';
+            for (const p of linkParts) {
+                const pparts = p.split(';');
+                if (pparts[1].indexOf('next')) {
+                    let pText = pparts[0].split('&page=')[0].trim();
+                    // Log.trace('pt: ' + pText);
+                    pText = pText.substring(1);
+                    pText = pText + "&page=";
+                    pageBase = pText;
+                    // Log.trace('page base: ' + pageBase);
+                }
+            }
 
-        });
+            Log.trace("GitHubManager::listTeams(..) - handling pagination; #pages: " + lastPage);
+            for (let i = 2; i <= lastPage; i++) {
+                const pageUri = pageBase + i;
+                // Log.trace('page to request: ' + page);
+                options.uri = pageUri;
+                await ctx.delay(100); // NOTE: this needs to be slowed down to prevent DNS problems (issuing 10+ concurrent dns requests can be problematic)
+                paginationPromises.push(rp(options));
+            }
+        } else {
+            teamsRaw = fullResponse.body;
+            // don't put anything on the paginationPromise if it isn't paginated
+        }
+
+        // this block won't do anything if we just did the teamsRaw thing above (aka no pagination)
+        const bodies: any[] = await Promise.all(paginationPromises);
+        for (const body of bodies) {
+            teamsRaw = teamsRaw.concat(body.body);
+        }
+        Log.trace("GitHubManager::listTeams(..) - total team count: " + teamsRaw.length);
+
+        let teams: { id: number, name: string }[] = [];
+        for (const team of teamsRaw) {
+            const id = team.id;
+            const name = team.name;
+            teams.push({id: id, name: name});
+        }
+
+        return teams;
     }
 
 
@@ -343,12 +427,12 @@ export class GitHubActions {
         Log.info("GitHubAction::createTeam( " + ctx.org + ", " + teamName + ", " + permission + ", ... ) - start");
 
         try {
-            const theTeamExists = await this.getTeamNumber(teamName) >= 0;
-            Log.info('teamexstsvalue: ' + theTeamExists);
-            if (theTeamExists === true) {
-                const teamNumber = await this.getTeamNumber(teamName);
-                return {teamName: teamName, githubTeamNumber: teamNumber};
+            const teamNum = await this.getTeamNumber(teamName);
+            if (teamNum > 0) {
+                Log.info("GitHubAction::createTeam( " + teamName + ", ... ) - success; exists: " + teamNum);
+                return {teamName: teamName, githubTeamNumber: teamNum};
             } else {
+                Log.info('GitHubAction::createTeam( ' + teamName + ', ... ) - does not exist; creating');
                 const uri = ctx.apiPath + '/orgs/' + ctx.org + '/teams';
                 const options = {
                     method:  'POST',
@@ -366,7 +450,7 @@ export class GitHubActions {
                 };
                 const body = await rp(options);
                 let id = body.id;
-                Log.info("GitHubAction::createTeam(..) - success: " + id);
+                Log.info("GitHubAction::createTeam(..) - success; new: " + id);
                 return {teamName: teamName, githubTeamNumber: id};
             }
         } catch (err) {
@@ -480,7 +564,7 @@ export class GitHubActions {
 
                 if (teamId < 0) {
                     // reject('GitHubAction::getTeamNumber(..) - ERROR: Could not find team: ' + teamName);
-                    Log.warn('GitHubAction::getTeamNumber(..) - WARN: Could not find team: ' + teamName);
+                    Log.info('GitHubAction::getTeamNumber(..) - WARN: Could not find team: ' + teamName);
                     fulfill(-1);
                 } else {
                     fulfill(teamId);
@@ -518,7 +602,7 @@ export class GitHubActions {
                 }
             };
 
-            // NOTE: not sure how this will respond to paging if there are lots of teams
+            // NOTE: not sure how this will respond to paging if there are lots of members on the team
             rp(options).then(function (body: any) {
                 Log.info("GitHubAction::getTeamMembers(..) - success; body: " + body);
                 let resp = JSON.parse(body);
@@ -693,7 +777,9 @@ export class GitHubActions {
         }
     }
 
-    private delay(ms: number): Promise<{}> {
+    // just a useful delay function for when we need to wait for GH to do something
+    // or we want a test to be able to slow itself down
+    public delay(ms: number): Promise<{}> {
         // logger.info("GitHubManager::delay( " + ms + ") - start");
         return new Promise(function (resolve) {
             let fire = new Date(new Date().getTime() + ms);
@@ -715,34 +801,34 @@ export class GitHubActions {
         return new Promise(function (fulfill, reject) {
             // Check if permissionLevel is one of: {push, pull}
             // We don't want to be able to grant a team admin access!
-            if(permissionLevel !== "pull" && permissionLevel !== "push") {
+            if (permissionLevel !== "pull" && permissionLevel !== "push") {
                 Log.error("GitHubAction::setRepoPermission(..) - ERROR, Invalid permissionLevel: " + permissionLevel);
                 reject(false);
             }
             // Make sure the repo exists
             ctx.repoExists(repoName).then(function (repoExists: boolean) {
-                if(repoExists) {
+                if (repoExists) {
                     Log.info("GitHubAction::setRepoPermission(..) - repo exists");
                     Log.info("GitHubAction::setRepoPermission(..) - getting teams associated with repo");
                     const teamsUri = ctx.apiPath + '/repos/' + ctx.org + '/' + repoName + '/teams';
                     Log.trace("GitHubAction::setRepoPermission(..) - URI: " + teamsUri);
                     const teamOptions = {
-                        method: 'GET',
-                        uri: teamsUri,
+                        method:  'GET',
+                        uri:     teamsUri,
                         headers: {
                             'Authorization': ctx.gitHubAuthToken,
                             'User-Agent':    ctx.gitHubUserName,
                             'Accept':        'application/json'
                         },
-                        json: true
+                        json:    true
                     };
 
                     // Change each team's permission
                     rp(teamOptions).then(function (responseData: any) {
                         Log.info("GitHubAction::setRepoPermission(..) - setting permission for teams on repo");
-                        for(const team of responseData) {
+                        for (const team of responseData) {
                             // Don't change teams that have admin permission
-                            if(team.permission !== "admin") {
+                            if (team.permission !== "admin") {
                                 Log.info("GitHubAction::setRepoPermission(..) - set team: " + team.name + " to " + permissionLevel);
                                 const permissionUri = ctx.apiPath + '/teams/' + team.id + '/repos/' + ctx.org + '/' + repoName;
                                 Log.trace("GitHubAction::setRepoPermission(..) - URI: " + permissionUri);
@@ -754,10 +840,10 @@ export class GitHubActions {
                                         'User-Agent':    ctx.gitHubUserName,
                                         'Accept':        'application/json'
                                     },
-                                    body: {
+                                    body:    {
                                         permission: permissionLevel
                                     },
-                                    json: true
+                                    json:    true
                                 };
 
                                 rp(permissionOptions).then(function () {
