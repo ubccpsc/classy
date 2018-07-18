@@ -112,7 +112,8 @@ export class DatabaseController {
             }
         ];
 
-        const records: any[] = await (<any>this.getCollection(this.REPOCOLL)).aggregate(query).toArray();
+        const collection = await this.getCollection(this.REPOCOLL);
+        const records: any[] = await collection.aggregate(query).toArray();
 
         return records;
     }
