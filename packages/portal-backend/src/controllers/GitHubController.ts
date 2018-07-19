@@ -49,6 +49,36 @@ export class GitHubController implements IGitHubController {
         return teamUrl;
     }
 
+    /**
+     * Creates the given repository on GitHub. Returns the Repository object when it is done (or null if it failed).
+     *
+     * Repository.URL should be set once the repo is created successfully (this is how we can track that the repo exists on GitHub).
+     *
+     * @param {string} repoName The name of the Repository
+     * @param {string} importUrl The repo it should be imported from (if null, no import should take place)
+     * @param {string} path? The subset of the importUrl repo that should be added to the root of the new repo. If this is null, undefined, or '', the whole importUrl is imported.
+     * @returns {Promise<Repository|null>}
+     */
+    public async createRepository(repoName: string, importUrl: string, path?: string): Promise<Repository | null> {
+        const WEBHOOKADDR = Config.getInstance().getProp(ConfigKey.backendUrl) + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/githubWebhook';
+
+        // still add staff team with push, just not students
+
+        return null;
+    }
+
+    /**
+     * Releases a repository to a team.
+     *
+     * @param {Repository} repo The repository to be released.
+     * @param {Team} team The team to be added.
+     * @param {asCollaborators} Whether the team members should be added as a collaborators or whether a GitHub team should be created for them.
+     * @returns {Promise<Repository | null>}
+     */
+    public async releaseRepository(repo: Repository, team: Team, asCollaborators: boolean): Promise<Repository | null> {
+        return null;
+    }
+
     public async provisionRepository(repoName: string, teams: Team[], importUrl: string, webhookAddress: string): Promise<boolean> {
         Log.info("GitHubController::provisionRepository( " + repoName + ", ...) - start");
         const start = Date.now();
@@ -90,7 +120,7 @@ export class GitHubController implements IGitHubController {
             let teamValue = null;
             try {
                 Log.trace("GitHubController::provisionRepository() - create GitHub team");
-                for(const team of teams) {
+                for (const team of teams) {
                     teamValue = await gh.createTeam(team.id, 'push');
                     Log.trace('GHA::provisionRepository(..) createTeam: ' + teamValue.teamName);
 
