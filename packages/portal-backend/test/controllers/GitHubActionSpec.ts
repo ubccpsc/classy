@@ -179,8 +179,10 @@ describe("GitHubActions", () => {
     it("Should be able to create many teams and get their numbers (tests team paging).", async function () {
 
         gh.PAGE_SIZE = 2; // force a small page size for testing
+        const NUM_TEAMS = 4; // could do 100 for a special test, but this is really slow
+
         // should be able to create the teams
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < NUM_TEAMS; i++) {
             const teamname = TEAMNAME + '_paging-' + i;
             let val = await gh.createTeam(teamname, 'push');
             await gh.delay(200);
@@ -191,7 +193,7 @@ describe("GitHubActions", () => {
         }
 
         // should be able to get their number
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < NUM_TEAMS; i++) {
             const teamname = TEAMNAME + '_paging-' + i;
             await gh.delay(200);
             let val = await gh.getTeamNumber(teamname);
@@ -201,6 +203,40 @@ describe("GitHubActions", () => {
         }
 
     }).timeout(TIMEOUT * 20);
+
+    it("Should be able to create many repos and get them back (tests repo paging).", async function () {
+
+        const NUM_REPOS = 4;
+
+        gh.PAGE_SIZE = 2; // force a small page size for testing
+        // should be able to create the teams
+        for (let i = 0; i < NUM_REPOS; i++) {
+            const reponame = REPONAME + '_paging-' + i;
+            let val = await gh.createRepo(reponame);
+            await gh.delay(200);
+            Log.test("Repo details: " + JSON.stringify(val));
+            expect(val.indexOf(reponame)).to.be.greaterThan(-1);
+            expect(val).to.be.an('string');
+        }
+
+        let allRepos = await gh.listRepos();
+        // should be able to get their number
+        for (let i = 0; i < NUM_REPOS; i++) {
+            const reponame = REPONAME + '_paging-' + i;
+            let found = false;
+            for (const repo of allRepos) {
+                if (repo.name === reponame) {
+                    Log.test("Found repo: "+reponame);
+                    found = true;
+                }
+            }
+            if (found === false){
+                Log.test("Missing repo: "+reponame);
+            }
+            // expect(found).to.be.true;
+        }
+
+    }).timeout(TIMEOUT * 1000);
 
     it("Should be able to clone a source repo into a newly created repository.", async function () {
         const start = Date.now();

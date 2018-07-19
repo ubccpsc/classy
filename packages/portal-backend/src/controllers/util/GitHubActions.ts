@@ -198,79 +198,18 @@ export class GitHubActions {
 
     /**
      *
-     * @returns {Promise<string>}
-     */
-    public listRepos(): Promise<string> {
-        let ctx = this;
-
-        Log.info("GitHubAction::listRepos( " + ctx.org + " ) - start");
-        return new Promise(function (fulfill, reject) {
-
-            // GET /orgs/:org/repos
-            const uri = ctx.apiPath + '/orgs/' + ctx.org + '/repos';
-            const options = {
-                method:  'GET',
-                uri:     uri,
-                headers: {
-                    'Authorization': ctx.gitHubAuthToken,
-                    'User-Agent':    ctx.gitHubUserName,
-                    'Accept':        'application/json'
-                }
-            };
-
-            rp(options).then(function (body: any) {
-                Log.info("GitHubAction::listRepos(..) - success; body: " + body);
-                fulfill(JSON.parse(body));
-            }).catch(function (err: any) {
-                Log.error("GitHubAction::listRepos(..) - ERROR: " + JSON.stringify(err));
-                reject(err);
-            });
-
-        });
-    }
-
-    /**
-     * Lists the teams for the current org.
+     * Gets all repos in an org.
      *
-     * NOTE: this is a slow operation (if there are many teams) so try not to do it too much!
-     *
-     * @returns {Promise<{id: number, name: string}[]>}
+     * @returns {Promise<{ id: number, name: string, url: string }[]>} // this is just a subset of the return, but it is the subset we actually use
      */
-    public async listTeams(): Promise<{ id: number, name: string }[]> {
-        // NOTE: This simple version is the non-paginated version.
-        //
-        // let ctx = this;
-        //
-        // Log.info("GitHubAction::listTeams( " + ctx.org + " ) - start");
-        // return new Promise(function (fulfill, reject) {
-        //
-        //     // GET /orgs/:org/repos
-        //     const uri = ctx.apiPath + '/orgs/' + ctx.org + '/teams';
-        //     const options = {
-        //         method:  'GET',
-        //         uri:     uri,
-        //         headers: {
-        //             'Authorization': ctx.gitHubAuthToken,
-        //             'User-Agent':    ctx.gitHubUserName,
-        //             'Accept':        'application/json'
-        //         }
-        //     };
-        //
-        //     // NOTE: do not know how this will do with paging if there are lots of teams
-        //     rp(options).then(function (body: any) {
-        //         Log.info("GitHubAction::listTeams(..) - success; body: " + body);
-        //         fulfill(JSON.parse(body));
-        //     }).catch(function (err: any) {
-        //         Log.error("GitHubAction::listTeams(..) - ERROR: " + JSON.stringify(err) + '\n; for URI: ' + uri);
-        //         reject(err);
-        //     });
-        //
-        // });
-
-
-        Log.info("GitHubManager::listTeams(..) - start");
+    public async listRepos(): Promise<{ id: number, name: string, url: string }[]> {
         const ctx = this;
-        const uri = ctx.apiPath + '/orgs/' + ctx.org + '/teams?per_page=' + ctx.PAGE_SIZE; // per_page max is 100; 10 is useful for testing pagination though
+
+
+        Log.info("GitHubManager::listRepos(..) - start");
+
+        // GET /orgs/:org/repos
+        const uri = ctx.apiPath + '/orgs/' + ctx.org + '/repos?per_page=' + ctx.PAGE_SIZE; // per_page max is 100; 10 is useful for testing pagination though
         const options = {
             method:                  'GET',
             uri:                     uri,
@@ -283,13 +222,33 @@ export class GitHubActions {
             json:                    true
         };
 
-        const fullResponse = await rp(options);
+        const raw: any = await ctx.handlePagination(options);
 
-        let teamsRaw: any[] = [];
+        let rows: { id: number, name: string, url: string }[] = [];
+        for (const entry of raw) {
+            const id = entry.id;
+            const name = entry.name;
+            const url = entry.url;
+            rows.push({id: id, name: name, url: url});
+        }
+
+        return rows;
+    }
+
+
+    public async handlePagination(rpOptions: rp.RequestPromiseOptions): Promise<object[]> {
+        Log.info("GitHubActions::handlePagination(..) - start");
+
+        rpOptions.resolveWithFullResponse = true; // in case clients forget
+        rpOptions.json = true; // in case clients forget
+
+        const fullResponse = await rp(<any>rpOptions); // rpOptions is the right type already
+
+        let raw: any[] = [];
         let paginationPromises: any[] = [];
         if (typeof fullResponse.headers.link !== 'undefined') {
             // first save the responses from the first page:
-            teamsRaw = fullResponse.body;
+            raw = fullResponse.body;
 
             let lastPage: number = -1;
             const linkText = fullResponse.headers.link;
@@ -316,25 +275,54 @@ export class GitHubActions {
                 }
             }
 
-            Log.trace("GitHubManager::listTeams(..) - handling pagination; #pages: " + lastPage);
+            Log.trace("GitHubManager::handlePagination(..) - handling pagination; #pages: " + lastPage);
             for (let i = 2; i <= lastPage; i++) {
                 const pageUri = pageBase + i;
                 // Log.trace('page to request: ' + page);
-                options.uri = pageUri;
-                await ctx.delay(100); // NOTE: this needs to be slowed down to prevent DNS problems (issuing 10+ concurrent dns requests can be problematic)
-                paginationPromises.push(rp(options));
+                (<any>rpOptions).uri = pageUri; // not sure why this is needed
+                await this.delay(100); // NOTE: this needs to be slowed down to prevent DNS problems (issuing 10+ concurrent dns requests can be problematic)
+                paginationPromises.push(rp(<any>rpOptions));
             }
         } else {
-            teamsRaw = fullResponse.body;
+            Log.trace("GitHubManager::handlePagination(..) - single page");
+            raw = fullResponse.body;
             // don't put anything on the paginationPromise if it isn't paginated
         }
 
-        // this block won't do anything if we just did the teamsRaw thing above (aka no pagination)
+        // this block won't do anything if we just did the raw thing above (aka no pagination)
         const bodies: any[] = await Promise.all(paginationPromises);
         for (const body of bodies) {
-            teamsRaw = teamsRaw.concat(body.body);
+            raw = raw.concat(body.body);
         }
-        Log.trace("GitHubManager::listTeams(..) - total team count: " + teamsRaw.length);
+        Log.trace("GitHubManager::handlePagination(..) - total count: " + raw.length);
+
+        return raw;
+    }
+
+    /**
+     * Lists the teams for the current org.
+     *
+     * NOTE: this is a slow operation (if there are many teams) so try not to do it too much!
+     *
+     * @returns {Promise<{id: number, name: string}[]>}
+     */
+    public async listTeams(): Promise<{ id: number, name: string }[]> {
+        Log.info("GitHubManager::listTeams(..) - start");
+        const ctx = this;
+        const uri = ctx.apiPath + '/orgs/' + ctx.org + '/teams?per_page=' + ctx.PAGE_SIZE; // per_page max is 100; 10 is useful for testing pagination though
+        const options = {
+            method:                  'GET',
+            uri:                     uri,
+            headers:                 {
+                'Authorization': ctx.gitHubAuthToken,
+                'User-Agent':    ctx.gitHubUserName,
+                'Accept':        'application/json'
+            },
+            resolveWithFullResponse: true,
+            json:                    true
+        };
+
+        const teamsRaw: any = await ctx.handlePagination(options);
 
         let teams: { id: number, name: string }[] = [];
         for (const team of teamsRaw) {
