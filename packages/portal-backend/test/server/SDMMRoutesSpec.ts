@@ -8,6 +8,7 @@ import BackendServer from "../../src/server/BackendServer";
 import {Person} from "../../src/Types";
 import {PersonController} from "../../src/controllers/PersonController";
 import Config, {ConfigKey} from "../../../common/Config";
+import {GitHubActions} from "../../src/controllers/util/GitHubActions";
 
 const loadFirst = require('../GlobalSpec');
 
@@ -19,15 +20,22 @@ const https = require('https');
 // NOTE: skipped for now because the infrastructure spins up classytest
 // which means the right routes aren't being started in the backend
 // need to change how this loads to enable the right routes to be started
-describe.skip('SDMM Routes', function () {
+describe('SDMM Routes', function () {
 
     var app: restify.Server = null;
     var server: BackendServer = null;
 
+    var OLDNAME = Config.getInstance().getProp(ConfigKey.name);
+    var OLDORG = Config.getInstance().getProp(ConfigKey.org);
+
     before(function () {
         Log.test('SDMMFrontendRoutes::before - start');
+
+        Config.getInstance().setProp(ConfigKey.name, 'sdmm');
+
         // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
         server = new BackendServer(false);
+
 
         return server.start().then(function () {
             Log.test('SDMMFrontendRoutes::before - server started');
@@ -41,10 +49,12 @@ describe.skip('SDMM Routes', function () {
 
     after(function () {
         Log.test('SDMMFrontendRoutes::after - start');
+        Config.getInstance().setProp(ConfigKey.name, OLDNAME);
+        Config.getInstance().setProp(ConfigKey.org, OLDORG);
         return server.stop();
     });
 
-    it('Should respond to a valid status request', async function () {
+    it('Should respond to a valid status request.', async function () {
 
         const PERSON1: Person = {
             id:            Test.USERNAME1,
@@ -64,7 +74,7 @@ describe.skip('SDMM Routes', function () {
         await pc.createPerson(PERSON1);
 
         let response = null;
-        const url = '/currentStatus/';
+        const url = '/sdmm/currentStatus/';
         try {
             const name = Config.getInstance().getProp(ConfigKey.name);
             response = await request(app).get(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
@@ -79,11 +89,51 @@ describe.skip('SDMM Routes', function () {
 
         expect(response.body.success.status).to.equal('D0PRE');
 
-        expect(response.body.success.d0).to.be.null;
-        expect(response.body.success.d1).to.be.null;
+        expect(response.body.success.d0).to.not.be.null;
+        expect(response.body.success.d1).to.not.be.null;
         expect(response.body.success.d2).to.be.null;
         expect(response.body.success.d3).to.be.null;
     });
+
+    it('Should provision a d0 repo.', async function () {
+
+        let response = null;
+        const url = '/sdmm/performAction/provisionD0';
+        try {
+            const gha = new GitHubActions();
+            const deleted = await gha.deleteRepo('secap_user1'); // make sure the repo doesn't exist
+
+            const name = Config.getInstance().getProp(ConfigKey.name);
+            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        // works on its own but not with others
+        Log.test(response.status + " -> " + JSON.stringify(response.body));
+        expect(response.status).to.equal(200);
+
+        expect(response.body.success).to.not.be.undefined;
+        expect(response.body.success.message).to.equal('Repository successfully created.');
+    }).timeout(1000 * 30);
+
+    it('Should fail provision repo that already exists.', async function () {
+
+        let response = null;
+        const url = '/sdmm/performAction/provisionD0';
+        try {
+            const name = Config.getInstance().getProp(ConfigKey.name);
+            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        // works on its own but not with others
+        Log.test(response.status + " -> " + JSON.stringify(response.body));
+        expect(response.status).to.equal(200);
+
+        expect(response.body.failure).to.not.be.undefined;
+        // expect(response.body.failure.message).to.equal('Error provisioning d0 repo.');
+    }).timeout(1000 * 10);
+
 
 });
 
