@@ -353,7 +353,7 @@ export class SDMMController extends CourseController {
             let existingRepo = await this.rc.getRepository(repoName);
             if (existingRepo !== null) {
                 // repo already exists; warn and fail
-                throw new Error("SDMMController::provisionD0Repo(..) - repo already exists: " + repoName);
+                throw new Error("Failed to provision d0 repo; already exists: " + repoName);
             }
             const repoCustom = {d0enabled: true, d1enabled: false, d2enabled: false, d3enabled: false, sddmD3pr: false}; // d0 repo for now
             const repo = await this.rc.createRepository(repoName, [team], repoCustom);
