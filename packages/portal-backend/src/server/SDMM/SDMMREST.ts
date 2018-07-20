@@ -24,7 +24,7 @@ export default class SDMMREST implements IREST {
         Log.info('SDMMREST::performAction(..) - /performAction - start');
         const user = req.headers.user;
         const token = req.headers.token;
-        const org = req.headers.org;
+        // const org = req.headers.org;
         const action = req.params.action;
         const param = req.params.param; // might not be set
 
@@ -32,13 +32,15 @@ export default class SDMMREST implements IREST {
 
         let sc: SDMMController = new SDMMController(new GitHubController());
 
+        let payload: Payload;
         if (action === 'provisionD0') {
             sc.provision("d0", [user]).then(function (provisionResult) {
                 Log.trace('SDMMREST::performAction(..) - sending 200; result: ' + JSON.stringify(provisionResult));
                 res.send(provisionResult);
             }).catch(function (err) {
                 Log.trace('SDMMREST::performAction(..) - sending 400');
-                res.send(400, {failure: {message: 'Unable to provision d0 repository; please try again later.'}});
+                payload = {failure: {message: err.message, shouldLogout: false}};
+                res.send(400, payload);
             });
 
         } else if (action === 'provisionD1individual') {
@@ -52,7 +54,8 @@ export default class SDMMREST implements IREST {
                 res.send(provisionResult);
             }).catch(function (err) {
                 Log.trace('SDMMREST::performAction(..) - sending 400');
-                res.send(400, {failure: {message: 'Unable to provision d1 repository; please try again later.'}});
+                payload = {failure: {message: err.message, shouldLogout: false}}; // 'Unable to provision d1 repository; please try again later.'
+                res.send(400, payload);
             });
         } else if (action === 'provisionD1team') {
             sc.provision("d1", [user, param]).then(function (provisionResult) {
@@ -64,12 +67,13 @@ export default class SDMMREST implements IREST {
                 res.send(provisionResult);
             }).catch(function (err) {
                 Log.trace('SDMMREST::performAction(..) - sending 400');
-                res.send(400, {failure: {message: 'Unable to provision d1 repository; please try again later.'}});
+                payload = {failure: {message: err.message, shouldLogout: false}}; // 'Unable to provision d1 repository; please try again later.'
+                res.send(400, payload);
             });
-
         } else {
             Log.trace('SDMMREST::performAction(..) - /performAction - unknown action: ' + action);
-            res.send(404, {error: 'Unknown action'});
+            payload = {failure: {message: 'Unable to perform action.', shouldLogout: false}};
+            res.send(404, payload);
         }
     }
 
@@ -87,8 +91,6 @@ export default class SDMMREST implements IREST {
         const token = req.headers.token;
 
         // TODO: verify token
-
-        // const org = Config.getInstance().getProp('org');
 
         let sc: SDMMController = new SDMMController(new GitHubController());
         sc.getStatus(user).then(function (status: StatusPayload) {

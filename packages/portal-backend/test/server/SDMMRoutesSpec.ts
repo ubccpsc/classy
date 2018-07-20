@@ -102,12 +102,10 @@ describe('SDMM Routes', function () {
         }
         // works on its own but not with others
         Log.test(response.status + " -> " + JSON.stringify(response.body));
-        expect(response.status).to.equal(200); // TODO: should be 400
+        expect(response.status).to.equal(200);
 
         expect(response.body.success).to.not.be.undefined;
-
         expect(response.body.success.status).to.equal('D0PRE');
-
         expect(response.body.success.d0).to.not.be.null;
         expect(response.body.success.d1).to.not.be.null;
         expect(response.body.success.d2).to.be.null;
@@ -126,7 +124,7 @@ describe('SDMM Routes', function () {
         }
         // works on its own but not with others
         Log.test(response.status + " -> " + JSON.stringify(response.body));
-        expect(response.status).to.equal(200); // TODO: should be 400
+        expect(response.status).to.equal(400);
 
         expect(response.body.failure).to.not.be.undefined;
         expect(response.body.failure.message).to.equal('Username not registered; contact course staff.');
@@ -169,7 +167,7 @@ describe('SDMM Routes', function () {
         }
         // works on its own but not with others
         Log.test(response.status + " -> " + JSON.stringify(response.body));
-        expect(response.status).to.equal(200); // TODO: should be 400
+        expect(response.status).to.equal(400);
 
         expect(response.body.failure).to.not.be.undefined;
         expect(response.body.failure.message).to.equal('Current d0 grade is not sufficient to move on to d1.');
@@ -226,7 +224,7 @@ describe('SDMM Routes', function () {
         }
         // works on its own but not with others
         Log.test(response.status + " -> " + JSON.stringify(response.body));
-        expect(response.status).to.equal(200); // TODO: should be 400
+        expect(response.status).to.equal(400);
 
         expect(response.body.failure).to.not.be.undefined;
         expect(response.body.failure.message).to.equal('Unknown person somerandmomusernamethatdoesnotexist requested to be on team; please make sure they are registered with the course.');

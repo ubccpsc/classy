@@ -10,7 +10,6 @@ import {Test} from "../../GlobalSpec";
 import Config from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {ActionPayload, GradePayload, SDMMStatus} from "../../../../common/types/SDMMTypes";
-import {FailurePayload} from "../../../../common/types/PortalTypes";
 
 import {Person} from "../../../src/Types";
 import {SDMMController} from "../../../src/controllers/SDMM/SDMMController";
@@ -283,9 +282,14 @@ describe("SDDM: SDMMController", () => {
     });
 
     it("Should not be able to provision a d0 repo for a random person.", async () => {
-        let payload = await sc.provision(Test.DELIVID0, ["this is a random name #@"]);
-        expect(payload.failure).to.not.be.undefined;
-        Log.test(payload.failure.message);
+        let val = null;
+        try {
+            await sc.provision(Test.DELIVID0, ["this is a random name #@"]);
+        } catch (err) {
+            val = err;
+        }
+        expect(val.message).to.not.be.undefined;
+        expect(val.message).to.equal('Username not registered; contact course staff.');
     });
 
     /**
@@ -310,25 +314,30 @@ describe("SDDM: SDMMController", () => {
         expect(allTeams).to.be.empty;
 
         // don't provision for non-existent users
-        let payload = await sc.provision(Test.DELIVID0, [data.PERSON1.id, '23234#$Q#@#invalid']);
-        expect(payload.failure).to.not.be.undefined;
-        Log.test(payload.failure.message);
+        let val = null;
+        try {
+            await sc.provision(Test.DELIVID0, ['23234#$Q#@#invalid']);
+        } catch (err) {
+            val = err;
+        }
+        expect(val).to.not.be.null;
+        expect(val.message).to.equal('Username not registered; contact course staff.');
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.be.empty;
 
         // don't create a d0 repo with multiple people
-        payload = await sc.provision(Test.DELIVID0, [data.PERSON1.id, data.PERSON2.id]);
-        expect(payload.failure).to.not.be.undefined;
-        Log.test(payload.failure.message);
+        val = null;
+        try {
+            await sc.provision(Test.DELIVID0, [data.PERSON1.id, data.PERSON2.id]);
+        } catch (err) {
+            val = err;
+        }
+        expect(val).to.not.be.null;
+        expect(val.message).to.equal('D0 for indivduals only; contact course staff.');
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.be.empty;
-
-        // also shouldn't be able to provision someone who hasn't been created yet
-        payload = await sc.provision(Test.DELIVID0, [data.PERSON3.id]);
-        expect(payload.failure).to.not.be.undefined;
-        Log.test(payload.failure.message);
     });
 
 
@@ -362,9 +371,14 @@ describe("SDDM: SDMMController", () => {
         let person = await pc.getPerson(data.PERSON1.id);
         expect(person).to.not.be.null;
 
-        let payload = await sc.provision(Test.DELIVID1, [data.PERSON1.id]);
-        expect(payload.failure).to.not.be.undefined;
-        Log.test((<FailurePayload>payload.failure).message);
+        let val = null;
+        try {
+            await sc.provision(Test.DELIVID1, [data.PERSON1.id]);
+        } catch (err) {
+            val = err;
+        }
+        expect(val).to.not.be.null;
+        expect(val.message).to.equal('Current d0 grade is not sufficient to move on to d1.');
 
         let allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(1);
@@ -421,9 +435,14 @@ describe("SDDM: SDMMController", () => {
         expect(allTeams[0].custom.sdmmd1).to.be.true; // should be provisioned for d1 now
 
         // try to do it again (should fail)  // makes sure they can't get multiple d1 repos
-        payload = await sc.provision(Test.DELIVID1, [data.PERSON1.id]); // do it
-        expect(payload.failure).to.not.be.undefined;
-        Log.test((<FailurePayload>payload.failure).message);
+        let val = null;
+        try {
+            await sc.provision(Test.DELIVID1, [data.PERSON1.id]); // do it
+        } catch (err) {
+            val = err;
+        }
+        expect(val).to.not.be.null;
+        expect(val.message).to.equal('D1 repo has already been assigned: TEST__X__secap_sddmU1');
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(1); // no new repo
@@ -438,9 +457,14 @@ describe("SDDM: SDMMController", () => {
         expect(allRepos).to.have.lengthOf(0); // no new repo
 
         // don't allow pairing with someone who doesn't exist
-        let payload = await sc.provision(Test.DELIVID1, [data.PERSON2.id, "asdf32#@@#INVALIDPERSON"]);
-        expect(payload.failure).to.not.be.undefined;
-        Log.test((<FailurePayload>payload.failure).message);
+        let val = null;
+        try {
+            await sc.provision(Test.DELIVID1, [data.PERSON2.id, "asdf32#@@#INVALIDPERSON"]);
+        } catch (err) {
+            val = err;
+        }
+        expect(val).to.not.be.null;
+        expect(val.message).to.equal('All teammates must have achieved a score of 60% or more to join a team.');
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(0);
@@ -449,9 +473,14 @@ describe("SDDM: SDMMController", () => {
         expect(allTeams).to.have.lengthOf(0);
 
         // don't allow pairing with someone with insufficient d0 credit
-        payload = await sc.provision(Test.DELIVID1, [data.PERSON2.id, data.PERSON3.id]);
-        expect(payload.failure).to.not.be.undefined;
-        Log.test((<FailurePayload>payload.failure).message);
+        val = null;
+        try {
+            await sc.provision(Test.DELIVID1, [data.PERSON2.id, data.PERSON3.id]);
+        } catch (err) {
+            val = err;
+        }
+        expect(val).to.not.be.null;
+        expect(val.message).to.equal('All teammates must have achieved a score of 60% or more to join a team.');
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(0);
@@ -462,14 +491,24 @@ describe("SDDM: SDMMController", () => {
         // and some other reasons you can't provision d1 repos
 
         // need at least one person
-        payload = await sc.provision(Test.DELIVID1, []);
-        expect(payload.success).to.be.undefined;
-        expect(payload.failure).to.not.be.undefined;
+        val = null;
+        try {
+            await sc.provision(Test.DELIVID1, []);
+        } catch (err) {
+            val = err;
+        }
+        expect(val).to.not.be.null;
+        expect(val.message).to.equal('Invalid # of people; contact course staff.');
 
         // can't form a group with yourself
-        payload = await sc.provision(Test.DELIVID1, [data.PERSON2.id, data.PERSON2.id]);
-        expect(payload.success).to.be.undefined;
-        expect(payload.failure).to.not.be.undefined; // person2 doesn't exist
+        val = null;
+        try {
+            await sc.provision(Test.DELIVID1, [data.PERSON2.id, data.PERSON2.id]);
+        } catch (err) {
+            val = err;
+        }
+        expect(val).to.not.be.null;
+        expect(val.message).to.equal("D1 duplicate users; if you wish to work alone, please select 'work individually'.");
     });
 
 
