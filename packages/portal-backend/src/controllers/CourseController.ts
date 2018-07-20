@@ -166,37 +166,6 @@ export class CourseController { // don't implement ICourseController yet
         }
     }
 
-    /**
-     * Public static so tests can use them too.
-     *
-     * @returns {string}
-     */
-    public static getProjectPrefix(): string {
-        const name = Config.getInstance().getProp(ConfigKey.name);
-        if (name === ConfigCourses.classytest) {
-            Log.info("CourseController::getProjectPrefix(..) - returning test prefix");
-            return "TEST__X__secap_";
-        } else {
-            return "secap_";
-        }
-    }
-
-    /**
-     * Public static so tests can use them too.
-     *
-     * @returns {string}
-     */
-    public static getTeamPrefix() {
-        const name = Config.getInstance().getProp(ConfigKey.name);
-
-        if (name === ConfigCourses.classytest) {
-            Log.info("CourseController::getTeamPrefix(..) - returning test prefix");
-            return "TEST__X__t_";
-        } else {
-            return "t_";
-        }
-    }
-
     // public static getOrg(): string | null {
     //     try {
     //         const org = Config.getInstance().getProp(ConfigKey.org); // valid .org usage

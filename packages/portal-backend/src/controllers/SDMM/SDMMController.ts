@@ -21,7 +21,7 @@ export class SDMMController extends CourseController {
      *
      * @param {string} delivId
      * @param {string[]} peopleIds people order matters; requestor should be peopleIds[0]
-     * @returns {Promise<ResponsePayload>}
+     * @returns {Promise<Payload>}
      */
     public async provision(delivId: string, peopleIds: string[]): Promise<Payload> {
         Log.info("SDMMController::provision( " + delivId + ", ... ) - start");
@@ -85,7 +85,8 @@ export class SDMMController extends CourseController {
      *
      * This confirms the SDMM status. The approach is conservative (and hence slow).
      *
-     * It will try to use checkStatus first to speed itself up.
+     * TODO: try to use checkStatus first to speed itself up.
+     *
      * Status chain:
      *
      * D0PRE
@@ -111,7 +112,7 @@ export class SDMMController extends CourseController {
                 throw new Error('Unknown person: ' + personId);
             }
 
-            const reportedStatus = person.custom.sddmStatus;
+            // const reportedStatus = person.custom.sddmStatus;
             // most of the time the status doesn't change, so let's just check that first:
             // const statusCorrect = await this.checkStatus(personId);
             // if (statusCorrect === true) {
@@ -258,7 +259,7 @@ export class SDMMController extends CourseController {
 
             // let currentStatus = person.custom.sddmStatus;
             person.custom.sddmStatus = currentStatus;
-            this.dc.writePerson(person);
+            await this.dc.writePerson(person);
 
             Log.info("SDMMController::computeStatusString( " + personId + ' ) - done; took: ' + Util.took(start));
             return currentStatus;
@@ -322,8 +323,9 @@ export class SDMMController extends CourseController {
         try {
             const name = personId;
             const person = await this.pc.getPerson(name);
-            const teamName = name;
-            const repoName = CourseController.getProjectPrefix() + teamName;
+            const teamName = SDMMController.getTeamPrefix() + name;
+            // const repoName = "secap_" + teamName;
+            const repoName = SDMMController.getProjectPrefix() + teamName;
 
             if (person === null) {
                 // return early
@@ -368,13 +370,11 @@ export class SDMMController extends CourseController {
                 Log.info("SDMMController::provisionD0Repo(..) - d0 github provisioning successful");
 
                 // update local team and repo with github values
-                const repoUrl = await this.gh.getRepositoryUrl(repo);
-                repo.URL = repoUrl;
-                this.dc.writeRepository(repo);
+                repo.URL = await this.gh.getRepositoryUrl(repo);
+                await this.dc.writeRepository(repo); // don't really need to wait, but this is conservative
 
-                const teamUrl = await this.gh.getTeamUrl(team);
-                team.URL = teamUrl;
-                this.dc.writeTeam(team);
+                team.URL = await this.gh.getTeamUrl(team);
+                await this.dc.writeTeam(team); // don't really need to wait, but this is conservative
 
                 // create grade entry
                 let grade: GradePayload = {
@@ -449,10 +449,9 @@ export class SDMMController extends CourseController {
                 Log.info("SDMMController::updateIndividualD0toD1( " + personId + " ) - correct status: " + personStatus);
             }
 
-            const name = personId;
-            // const person = await this.pc.getPerson(name);
-            const teamName = name;
-            const repoName = CourseController.getProjectPrefix() + teamName;
+            const teamName = SDMMController.getTeamPrefix() + personId;
+            // const repoName = "secap_" + teamName;
+            const repoName = SDMMController.getProjectPrefix() + teamName;
 
             // find local team & repo
             const team = await this.tc.getTeam(teamName);
@@ -514,11 +513,12 @@ export class SDMMController extends CourseController {
             while (teamName === null) {
                 let str = crypto.randomBytes(256).toString('hex');
                 str = str.substr(0, 6);
-                const name = CourseController.getTeamPrefix() + str; // team prefix
-                Log.trace("SDMMController::provisionD1Repo(..) - checking name: " + str);
-                let team = await this.tc.getTeam(str);
+                const name = SDMMController.getTeamPrefix() + str; // teamname with prefix
+                // const name = str; // NOTE: 't_' missed in initial deployment so we'll leave it off
+                Log.trace("SDMMController::provisionD1Repo(..) - checking name: " + name);
+                let team = await this.tc.getTeam(name);
                 if (team === null) {
-                    teamName = str;
+                    teamName = name;
                     Log.trace("SDMMController::provisionD1Repo(..) - name available; using: " + teamName);
                 }
             }
@@ -531,21 +531,11 @@ export class SDMMController extends CourseController {
                     if (grade !== null && grade.score > 59) {
                         people.push(person)
                     } else {
-                        // return {
-                        //     failure: {
-                        //         shouldLogout: false,
-                        //         message:      "All teammates must have achieved a score of 60% or more to join a team."
-                        //     }
-                        // };
+                        Log.error("SDMMController::provisionD1Repo(..) - user does not have sufficient grade: " + pid);
                         throw new Error("All teammates must have achieved a score of 60% or more to join a team.");
                     }
                 } else {
-                    // return {
-                    //     failure: {
-                    //         shouldLogout: false,
-                    //         message:      "Unknown person " + pid + " requested to be on team; please make sure they are registered with the course."
-                    //     }
-                    // };
+                    Log.error("SDMMController::provisionD1Repo(..) - unknown user: " + pid);
                     throw new Error("Unknown person " + pid + " requested to be on team; please make sure they are registered with the course.");
                 }
             }
@@ -554,12 +544,7 @@ export class SDMMController extends CourseController {
                 let personStatus = await this.computeStatusString(p.id);
                 if (personStatus !== SDMMStatus[SDMMStatus.D1UNLOCKED]) {
                     Log.info("SDMMController::provisionD1Repo( " + p.id + " ) - bad status: " + personStatus);
-                    // return {
-                    //     failure: {
-                    //         shouldLogout: false,
-                    //         message:      "All teammates must be eligible to join a team and must not already be performing d1 in another team or on their own."
-                    //     }
-                    // };
+                    Log.error("SDMMController::provisionD1Repo(..) - user does not have the right status to advance: " + p.id + '; status: ' + personStatus);
                     throw new Error("All teammates must be eligible to join a team and must not already be performing d1 in another team or on their own.");
                 } else {
                     Log.info("SDMMController::provisionD1Repo( " + p.id + " ) - correct status: " + personStatus);
@@ -571,13 +556,12 @@ export class SDMMController extends CourseController {
             const team = await this.tc.createTeam(teamName, people, teamCustom);
 
             // create local repo
-            const repoName = CourseController.getProjectPrefix() + teamName;
+            const repoName = SDMMController.getProjectPrefix() + teamName;
             const repoCustom = {d0enabled: false, d1enabled: true, d2enabled: true, d3enabled: true, sddmD3pr: false}; // d0 repo for now
             const repo = await this.rc.createRepository(repoName, [team], repoCustom);
 
             // create remote repo
             const INPUTREPO = "https://github.com/SECapstone/bootstrap"; // HARDCODED for SDMM
-            // set to the backendUrl:backendPort, not autotestUrl:autotestPort since the backend will be publicly visible
             const WEBHOOKADDR = Config.getInstance().getProp(ConfigKey.backendUrl) + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/githubWebhook';
             const provisionResult = await this.gh.provisionRepository(repoName, [team], INPUTREPO, WEBHOOKADDR);
 
@@ -585,13 +569,11 @@ export class SDMMController extends CourseController {
                 Log.info("SDMMController::provisionD1Repo(..) - d1 github provisioning successful");
 
                 // update local team and repo with github values
-                const repoUrl = await this.gh.getRepositoryUrl(repo);
-                repo.URL = repoUrl;
-                this.dc.writeRepository(repo);
+                repo.URL = await this.gh.getRepositoryUrl(repo);
+                await this.dc.writeRepository(repo); // don't really need to wait, but this is conservative
 
-                const teamUrl = await this.gh.getTeamUrl(team);
-                team.URL = teamUrl;
-                this.dc.writeTeam(team);
+                team.URL = await this.gh.getTeamUrl(team);
+                await this.dc.writeTeam(team); // don't really need to wait, but this is conservative
 
                 // create grade entries
                 let grade: GradePayload = {
@@ -611,17 +593,26 @@ export class SDMMController extends CourseController {
                 return {success: {message: "D1 repository successfully provisioned.", status: statusPayload}};
             } else {
                 Log.error("SDMMController::provisionD1Repo(..) - something went wrong provisioning this repo; see logs above.");
-                // return {failure: {shouldLogout: false, message: "Error encountered creating d1 repo; contact course staff."}};
                 throw new Error("Error encountered creating d1 repo; contact course staff.");
             }
         } catch (err) {
             Log.error("SDMMController::provisionD1Repo(..) - ERROR: " + err);
-            // return {failure: {shouldLogout: false, message: "Error encountered provisioning d1 repo; contact course staff."}};
-            // throw new Error("Error encountered provisioning d1 repo; contact course staff.");
             throw new Error(err.message);
         }
     }
 
+    /**
+     * SDMM is self-paced so the system needs to decide what status each learner has
+     * (e.g., are they on d0, d1, d2, d3) and whether they are eligible to progress
+     * to the next deliverable. This calculates the learner's status and allows
+     * them to advance if they have met the prerequisites.
+     *
+     * This also provisions a StatusPayload which returns all existing status information
+     * to the learner in their dashboard.
+     *
+     * @param {string} personId
+     * @returns {Promise<StatusPayload>}
+     */
     public async getStatus(personId: string): Promise<StatusPayload> {
         Log.info("SDMMController::getStatus( " + personId + " ) - start");
         const start = Date.now();
@@ -695,6 +686,16 @@ export class SDMMController extends CourseController {
         return statusPayload;
     }
 
+    /**
+     * In the SDMM users are not known in advance (aka there is no classlist and we only learn about
+     * learners for the first time when they try to login to GitHub). Because of this, when we encounter
+     * a GitHub id we have not seen before we need to provision that person as if we always knew about them.
+     *
+     * This is _NOT_ what traditional courses are going to want to do as it allows _anyone_ to join a course.
+     *
+     * @param {string} githubUsername
+     * @returns {Promise<Person | null>}
+     */
     public async handleUnknownUser(githubUsername: string): Promise<Person | null> {
         const name = Config.getInstance().getProp(ConfigKey.name);
         Log.info("SDDMController::handleUnknownUser( " + githubUsername + " ) - start");
@@ -728,6 +729,48 @@ export class SDMMController extends CourseController {
 
         Log.error("SDDMController::handleUnknownUser() - not a SDDM course");
         return null;
+    }
+
+    /**
+     * Public static so tests can use them too.
+     *
+     * @returns {string}
+     */
+    public static getProjectPrefix(): string {
+        const name = Config.getInstance().getProp(ConfigKey.name);
+        if (name === ConfigCourses.classytest) {
+            Log.info("SDMMController::getProjectPrefix(..) - returning test prefix");
+            return "TEST__X__p_";
+        } else if (name === 'sdmm') {
+            Log.trace("SDMMController::getProjectPrefix(..) - returning sdmm prefix");
+            return "secap_";
+        } else {
+            // NOTE: non-sdmm courses shouldn't use this...
+            Log.error("SDMMController::getProjectPrefix(..) - unhandled course: " + name);
+            return "project_";
+        }
+    }
+
+    /**
+     * Public static so tests can use them too.
+     *
+     * @returns {string}
+     */
+    public static getTeamPrefix() {
+        const name = Config.getInstance().getProp(ConfigKey.name);
+
+        if (name === ConfigCourses.classytest) {
+            Log.info("SDMMController::getTeamPrefix(..) - returning test prefix");
+            return "TEST__X__t_";
+        } else if (name === 'sdmm') {
+            Log.trace("SDMMController::getTeamPrefix(..) - returning sdmm prefix");
+            // NOTE: was supposed to be "t_" but we made a mistake in initial deployment so we're stuck with no prefix
+            return "";
+        } else {
+            // NOTE: non-sdmm courses shouldn't use this...
+            Log.error("SDMMController::getTeamPrefix(..) - unhandled course: " + name);
+            return "t_";
+        }
     }
 
 }

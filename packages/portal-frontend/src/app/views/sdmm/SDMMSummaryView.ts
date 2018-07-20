@@ -68,17 +68,13 @@ export class SDMMSummaryView implements IView {
             Log.trace('SDDM::createD0Repository(..) - 200 received');
             let json = await response.json();
 
-            if (typeof json.success !== 'undefined') {
-                this.longAction(2000, "D0 Repository created");
-            } else {
-                // this.longAction(5000, "Error encountered:<br/>" + json.message);
-                this.showError(json);
-            }
+            this.longAction(2000, "D0 Repository created");
 
-            // TODO: refresh
             this.checkStatus();
         } else {
-            Log.trace('SDDM::createD0Repository(..) - !200 received');
+            Log.trace('SDDM::createD0Repository(..) - !200 received; status: ' + response.status);
+            let json = await response.json();
+            this.showError(json);
         }
         return;
     }
@@ -103,17 +99,15 @@ export class SDMMSummaryView implements IView {
         if (response.status === 200) {
             Log.trace('SDDM::createD1Individual(..) - 200 received');
             let json = await response.json();
-            if (typeof json.success !== 'undefined') {
-                this.longAction(2000, "D1 Repository created");
-                UI.hideModal();
-            } else {
-                this.showError(json);
-            }
 
-            // TODO: refresh
+            this.longAction(2000, "D1 Repository created");
+            UI.hideModal();
+
             this.checkStatus();
         } else {
-            Log.trace('SDDM::createD1Individual(..) - !200 received');
+            Log.trace('SDDM::createD1Individual(..) - !200 received; status: ' + response.status);
+            let json = await response.json();
+            this.showError(json);
         }
         return;
 
@@ -136,16 +130,14 @@ export class SDMMSummaryView implements IView {
         if (response.status === 200) {
             Log.trace('SDDM::createD1Team(..) - 200 received');
             let json = await response.json();
-            if (typeof json.success !== 'undefined') {
-                this.longAction(2000, "D1 Repository created");
-            } else {
-                this.showError(json);
-            }
 
-            // TODO: refresh
+            this.longAction(2000, "D1 Repository created");
+
             this.checkStatus();
         } else {
-            Log.trace('SDDM::createD1Team(..) - !200 received');
+            Log.trace('SDDM::createD1Team(..) - !200 received; status: ' + response.status);
+            let json = await response.json();
+            this.showError(json);
         }
         return;
     }
@@ -294,20 +286,17 @@ export class SDMMSummaryView implements IView {
             let json = await response.json();
             Log.trace('SDDM::fetchStatus(..) - payload: ' + JSON.stringify(json));
 
-            if (typeof json.success !== 'undefined') {
-                Log.trace('SDDM::fetchStatus(..) - status: ' + json.success.status);
-                this.updateState(json.success); // StatusPayload
-            } else {
-                Log.trace('SDDM::fetchStatus(..) - ERROR: ' + json.failure.message);
-                this.showError(json.failure); // FailurePayload
-            }
-
+            Log.trace('SDDM::fetchStatus(..) - status: ' + json.success.status);
+            this.updateState(json.success); // StatusPayload
         } else {
-            Log.trace('SDDM::fetchStatus(..) - !200 received');
+            Log.trace('SDDM::fetchStatus(..) - !200 received: ' + response.status);
+            let json = await response.json();
+            Log.trace('SDDM::fetchStatus(..) - ERROR: ' + json.failure.message);
+            this.showError(json.failure); // FailurePayload
+
         }
         return;
     }
-
 
     public showError(failure: any) { // FailurePayload
         Log.error("SDDM::showError(..) - failure: " + JSON.stringify(failure));

@@ -392,9 +392,11 @@ describe("SDDM: SDMMController", () => {
     });
 
     it("Should be able to upgrade a d0 repo for an individual.", async () => {
+        Log.test("getting person");
         let person = await pc.getPerson(data.PERSON1.id);
         expect(person).to.not.be.null;
 
+        Log.test("getting repo");
         let allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(1);
 
@@ -407,28 +409,32 @@ describe("SDDM: SDMMController", () => {
             custom:    {}
         };
 
+        Log.test("setting d0 grade");
         let grade = await gc.createGrade(allRepos[0].id, Test.DELIVID0, gradeR);
         expect(grade).to.be.true;
 
+        Log.test("checking status");
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(1);
         expect(allRepos[0].custom.d0enabled).to.be.true;
         expect(allRepos[0].custom.d1enabled).to.be.false;
 
-        Log.test('provisioning');
+        Log.test('provisioning d1 repo');
         let payload = await sc.provision(Test.DELIVID1, [data.PERSON1.id]); // do it
-        Log.test('provisioning complete');
+        Log.test('provisioning d1 repo complete');
         expect(payload.success).to.not.be.undefined;
         expect(payload.failure).to.be.undefined;
         const status = (<ActionPayload>payload.success).status;
         expect(status.status).to.equal(SDMMStatus[SDMMStatus.D1]);
         Log.test((<ActionPayload>payload.success).message);
 
+        Log.test("checking d1 repo status");
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(1); // no new repo
         expect(allRepos[0].custom.d0enabled).to.be.true;
         expect(allRepos[0].custom.d1enabled).to.be.true; // should be provisioned for d1 now
 
+        Log.test("checking d1 team status");
         let allTeams = await tc.getTeamsForPerson(person);
         expect(allTeams).to.have.lengthOf(1);
         expect(allTeams[0].custom.sdmmd0).to.be.true;
@@ -437,12 +443,13 @@ describe("SDDM: SDMMController", () => {
         // try to do it again (should fail)  // makes sure they can't get multiple d1 repos
         let val = null;
         try {
+            Log.test("ensuring we can't provision d1 again");
             await sc.provision(Test.DELIVID1, [data.PERSON1.id]); // do it
         } catch (err) {
             val = err;
         }
         expect(val).to.not.be.null;
-        expect(val.message).to.equal('D1 repo has already been assigned: TEST__X__secap_sddmU1');
+        expect(val.message).to.equal('D1 repo has already been assigned: TEST__X__p_TEST__X__t_sddmU1');
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(1); // no new repo
