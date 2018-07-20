@@ -55,6 +55,24 @@ describe('SDMM Routes', function () {
         return server.stop();
     });
 
+    it('Should not be able to get status for an invalid user.', async function () {
+        let response = null;
+        const url = '/sdmm/currentStatus/';
+        try {
+            const name = Config.getInstance().getProp(ConfigKey.name);
+            response = await request(app).get(url).set({name: name, user: 'ivaliduserstatusrequest', token: 'testtoken'});
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        // works on its own but not with others
+        Log.test(response.status + " -> " + JSON.stringify(response.body));
+
+        expect(response.status).to.equal(400);
+        expect(response.body.failure).to.not.be.undefined;
+        expect(response.body.failure.message).to.equal('Error computing status for ivaliduserstatusrequest; contact course staff.');
+    });
+
+
     it('Should respond to a valid status request.', async function () {
 
         const PERSON1: Person = {
@@ -84,7 +102,7 @@ describe('SDMM Routes', function () {
         }
         // works on its own but not with others
         Log.test(response.status + " -> " + JSON.stringify(response.body));
-        expect(response.status).to.equal(200);
+        expect(response.status).to.equal(200); // TODO: should be 400
 
         expect(response.body.success).to.not.be.undefined;
 
@@ -95,6 +113,24 @@ describe('SDMM Routes', function () {
         expect(response.body.success.d2).to.be.null;
         expect(response.body.success.d3).to.be.null;
     });
+
+    it('Should not be able to provision a d0 repo for a user that does not exist.', async function () {
+
+        let response = null;
+        const url = '/sdmm/performAction/provisionD0';
+        try {
+            const name = Config.getInstance().getProp(ConfigKey.name);
+            response = await request(app).post(url).send({}).set({name: name, user: 'invalidusername1221', token: 'testtoken'});
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        // works on its own but not with others
+        Log.test(response.status + " -> " + JSON.stringify(response.body));
+        expect(response.status).to.equal(200); // TODO: should be 400
+
+        expect(response.body.failure).to.not.be.undefined;
+        expect(response.body.failure.message).to.equal('Username not registered; contact course staff.');
+    }).timeout(1000 * 30);
 
     it('Should provision a d0 repo.', async function () {
 
@@ -133,7 +169,7 @@ describe('SDMM Routes', function () {
         }
         // works on its own but not with others
         Log.test(response.status + " -> " + JSON.stringify(response.body));
-        expect(response.status).to.equal(200);
+        expect(response.status).to.equal(200); // TODO: should be 400
 
         expect(response.body.failure).to.not.be.undefined;
         expect(response.body.failure.message).to.equal('Current d0 grade is not sufficient to move on to d1.');
@@ -190,7 +226,7 @@ describe('SDMM Routes', function () {
         }
         // works on its own but not with others
         Log.test(response.status + " -> " + JSON.stringify(response.body));
-        expect(response.status).to.equal(200);
+        expect(response.status).to.equal(200); // TODO: should be 400
 
         expect(response.body.failure).to.not.be.undefined;
         expect(response.body.failure.message).to.equal('Unknown person somerandmomusernamethatdoesnotexist requested to be on team; please make sure they are registered with the course.');
@@ -228,7 +264,7 @@ describe('SDMM Routes', function () {
     //     }
     //     // works on its own but not with others
     //     Log.test(response.status + " -> " + JSON.stringify(response.body));
-    //     expect(response.status).to.equal(200);
+    //     expect(response.status).to.equal(200); // TODO: should be 400
     //
     //     expect(response.body.failure).to.not.be.undefined;
     //     expect(response.body.failure.message).to.equal('All teammates must have achieved a score of 60% or more to join a team.');
@@ -305,7 +341,7 @@ describe('SDMM Routes', function () {
     //     }
     //     // works on its own but not with others
     //     Log.test(response.status + " -> " + JSON.stringify(response.body));
-    //     expect(response.status).to.equal(200);
+    //     expect(response.status).to.equal(200); // TODO: should be 400
     //
     //     expect(response.body.failure).to.not.be.undefined;
     //     // expect(response.body.failure.message).to.equal('Error provisioning d0 repo.');

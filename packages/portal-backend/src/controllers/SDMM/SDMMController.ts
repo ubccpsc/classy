@@ -24,39 +24,39 @@ export class SDMMController extends CourseController {
      * @returns {Promise<ResponsePayload>}
      */
     public async provision(delivId: string, peopleIds: string[]): Promise<Payload> {
-        Log.info("CourseController::provision( " + delivId + ", ... ) - start");
+        Log.info("SDMMController::provision( " + delivId + ", ... ) - start");
 
         try {
             const name = Config.getInstance().getProp(ConfigKey.name);
             if (name !== ConfigCourses.sdmm && name !== ConfigCourses.classytest) {
-                Log.error("CourseController::provision(..) - SDMMController should not be used for other courses");
+                Log.error("SDMMController::provision(..) - SDMMController should not be used for other courses");
                 return {failure: {shouldLogout: false, message: "Invalid course; contact course staff."}};
             }
 
             if (peopleIds.length < 1) {
-                Log.error("CourseController::provision(..) - there needs to be at least one person on a repo");
+                Log.error("SDMMController::provision(..) - there needs to be at least one person on a repo");
                 return {failure: {shouldLogout: false, message: "Invalid # of people; contact course staff."}};
             }
 
             if (delivId === "d0") {
                 if (peopleIds.length === 1) {
-                    Log.info("CourseController::provision(..) - provisioning new d0 repo for " + peopleIds[0]);
+                    Log.info("SDMMController::provision(..) - provisioning new d0 repo for " + peopleIds[0]);
                     return await this.provisionD0Repo(peopleIds[0]);
                 } else {
-                    Log.error("CourseController::provision(..) - d0 repos are only for individuals");
+                    Log.error("SDMMController::provision(..) - d0 repos are only for individuals");
                     return {failure: {shouldLogout: false, message: "D0 for indivduals only; contact course staff."}};
                 }
             } else if (delivId === "d1") {
 
                 if (peopleIds.length === 1) {
-                    Log.info("CourseController::provision(..) - updating existing d0 repo to d1 for " + peopleIds[0]);
+                    Log.info("SDMMController::provision(..) - updating existing d0 repo to d1 for " + peopleIds[0]);
                     return await this.updateIndividualD0toD1(peopleIds[0]);
                 } else if (peopleIds.length === 2) {
-                    Log.info("CourseController::provision(..) - provisioning new d1 repo for " + JSON.stringify(peopleIds));
+                    Log.info("SDMMController::provision(..) - provisioning new d1 repo for " + JSON.stringify(peopleIds));
                     if (peopleIds[0] !== peopleIds[1]) {
                         return await this.provisionD1Repo(peopleIds);
                     } else {
-                        Log.error("CourseController::provision(..) - d1 duplicate users");
+                        Log.error("SDMMController::provision(..) - d1 duplicate users");
                         return {
                             failure: {
                                 shouldLogout: false,
@@ -65,15 +65,15 @@ export class SDMMController extends CourseController {
                         };
                     }
                 } else {
-                    Log.error("CourseController::provision(..) - d1 can only be performed by single students or pairs of students.");
+                    Log.error("SDMMController::provision(..) - d1 can only be performed by single students or pairs of students.");
                     return {failure: {shouldLogout: false, message: "D1 can only be performed by single students or pairs of students."}};
                 }
             } else {
-                Log.warn("CourseController::provision(..) - new repo not needed for delivId: " + delivId);
+                Log.warn("SDMMController::provision(..) - new repo not needed for delivId: " + delivId);
                 return {failure: {shouldLogout: false, message: "Repo not needed; contact course staff."}};
             }
         } catch (err) {
-            Log.error("CourseController::provision(..) - ERROR: " + err);
+            Log.error("SDMMController::provision(..) - ERROR: " + err);
             return {failure: {shouldLogout: false, message: "Unknown error creating repo; contact course staff."}};
         }
 
@@ -99,20 +99,21 @@ export class SDMMController extends CourseController {
      * @returns {Promise<string>} null if the personId is not even known
      */
     private async computeStatusString(personId: string): Promise<string | null> {
-        Log.info("CourseController::getStatus( " + personId + ' ) - start');
+        Log.info("SDMMController::computeStatusString( " + personId + ' ) - start');
         const start = Date.now();
+
         try {
             const person = await this.dc.getPerson(personId);
             if (person === null) {
-                Log.info("CourseController::getStatus(..) - ERROR; person null");
-                return null;
+                Log.warn("SDMMController::computeStatusString(..) - person null: " + personId);
+                throw new Error('Unknown person: ' + personId);
             }
 
             const reportedStatus = person.custom.sddmStatus;
             // most of the time the status doesn't change, so let's just check that first:
             // const statusCorrect = await this.checkStatus(personId);
             // if (statusCorrect === true) {
-            //    Log.info("CourseController::getStatus(..) - check successful; skipping");
+            //    Log.info("SDMMController::getStatus(..) - check successful; skipping");
             //    return reportedStatus;
             // }
 
@@ -130,10 +131,10 @@ export class SDMMController extends CourseController {
                     }
 
                     if (d0Repo !== null) {
-                        Log.info("CourseController::getStatus(..) - elevating D0PRE to D0");
+                        Log.info("SDMMController::computeStatusString(..) - elevating D0PRE to D0");
                         currentStatus = SDMMStatus[SDMMStatus.D0];
                     } else {
-                        Log.info("CourseController::getStatus(..) - NOT elevating from D0PRE");
+                        Log.info("SDMMController::computeStatusString(..) - NOT elevating from D0PRE");
                     }
                 }
             }
@@ -143,10 +144,10 @@ export class SDMMController extends CourseController {
                 // if their d0 score >= 60, make them D1UNLOCKED
                 const d0Grade = await this.dc.getGrade(personId, "d0");
                 if (d0Grade && d0Grade.score >= 60) {
-                    Log.info("CourseController::getStatus(..) - elevating D0 to D1UNLOCKED");
+                    Log.info("SDMMController::computeStatusString(..) - elevating D0 to D1UNLOCKED");
                     currentStatus = SDMMStatus[SDMMStatus.D1UNLOCKED];
                 } else {
-                    Log.info("CourseController::getStatus(..) - NOT elevating from D0");
+                    Log.info("SDMMController::computeStatusString(..) - NOT elevating from D0");
                 }
             }
 
@@ -163,10 +164,10 @@ export class SDMMController extends CourseController {
                 }
 
                 if (d1team !== null) {
-                    Log.info("CourseController::getStatus(..) - elevating D1UNLOCKED to D1TEAMSET");
+                    Log.info("SDMMController::computeStatusString(..) - elevating D1UNLOCKED to D1TEAMSET");
                     currentStatus = SDMMStatus[SDMMStatus.D1TEAMSET];
                 } else {
-                    Log.info("CourseController::getStatus(..) - NOT elevating from D1UNLOCKED");
+                    Log.info("SDMMController::computeStatusString(..) - NOT elevating from D1UNLOCKED");
                 }
             }
 
@@ -181,10 +182,10 @@ export class SDMMController extends CourseController {
                     }
                 }
                 if (d1repo !== null) {
-                    Log.info("CourseController::getStatus(..) - elevating D1TEAMSET to D1");
+                    Log.info("SDMMController::computeStatusString(..) - elevating D1TEAMSET to D1");
                     currentStatus = SDMMStatus[SDMMStatus.D1];
                 } else {
-                    Log.info("CourseController::getStatus(..) - NOT elevating from D1TEAMSET");
+                    Log.info("SDMMController::computeStatusString(..) - NOT elevating from D1TEAMSET");
                 }
             }
 
@@ -193,7 +194,7 @@ export class SDMMController extends CourseController {
                 // if their d1 score > 60, make them D2
                 let d1Grade = await this.gc.getGrade(personId, "d1");
                 if (d1Grade && d1Grade.score >= 60) {
-                    Log.info("CourseController::getStatus(..) - elevating D1 to D2");
+                    Log.info("SDMMController::computeStatusString(..) - elevating D1 to D2");
                     let allRepos = await this.rc.getReposForPerson(person);
                     for (const r of allRepos) {
                         if (r.custom.d1enabled === true) {
@@ -204,7 +205,7 @@ export class SDMMController extends CourseController {
                     }
                     currentStatus = SDMMStatus[SDMMStatus.D2];
                 } else {
-                    Log.info("CourseController::getStatus(..) - NOT elevating from D1");
+                    Log.info("SDMMController::computeStatusString(..) - NOT elevating from D1");
                 }
             }
 
@@ -213,10 +214,10 @@ export class SDMMController extends CourseController {
                 // if their d2 core > 60, make them D3PRE
                 let d2Grade = await this.gc.getGrade(personId, "d2");
                 if (d2Grade && d2Grade.score >= 60) {
-                    Log.info("CourseController::getStatus(..) - elevating D2 to D3PRE");
+                    Log.info("SDMMController::computeStatusString(..) - elevating D2 to D3PRE");
                     currentStatus = SDMMStatus[SDMMStatus.D3PRE];
                 } else {
-                    Log.info("CourseController::getStatus(..) - NOT elevating from D2");
+                    Log.info("SDMMController::computeStatusString(..) - NOT elevating from D2");
                 }
             }
 
@@ -232,10 +233,10 @@ export class SDMMController extends CourseController {
                     }
                 }
                 if (prComplete === true) {
-                    Log.info("CourseController::getStatus(..) - elevating D3PRE to D3");
+                    Log.info("SDMMController::computeStatusString(..) - elevating D3PRE to D3");
                     currentStatus = SDMMStatus[SDMMStatus.D3];// "D3";
                 } else {
-                    Log.info("CourseController::getStatus(..) - NOT elevating from D3PRE");
+                    Log.info("SDMMController::computeStatusString(..) - NOT elevating from D3PRE");
                 }
             }
 
@@ -250,18 +251,18 @@ export class SDMMController extends CourseController {
                         await this.dc.writeRepository(r);
                     }
                 }
-                Log.info("CourseController::getStatus(..) - NOT elevating from D3");
+                Log.info("SDMMController::computeStatusString(..) - NOT elevating from D3");
             }
 
             // let currentStatus = person.custom.sddmStatus;
             person.custom.sddmStatus = currentStatus;
             this.dc.writePerson(person);
 
-            Log.info("CourseController::getStatus( " + personId + ' ) - done; took: ' + Util.took(start));
+            Log.info("SDMMController::computeStatusString( " + personId + ' ) - done; took: ' + Util.took(start));
             return currentStatus;
         } catch (err) {
-            Log.error("CourseController::getStatus( " + personId + ' ) - ERROR: ' + err);
-            return "UNKNOWN";
+            Log.error("SDMMController::computeStatusString( " + personId + ' ) - ERROR: ' + err);
+            throw new Error("Error computing status for " + personId + "; contact course staff.");
         }
     }
 
@@ -287,12 +288,12 @@ export class SDMMController extends CourseController {
 
     /*
     private async checkStatus(personId: string): Promise<boolean> {
-        Log.info("CourseController::getStatus( " + personId + ' ) - start');
+        Log.info("SDMMController::getStatus( " + personId + ' ) - start');
         const start = Date.now();
         try {
             const person = await this.dc.getPerson(personId);
             if (person === null) {
-                Log.info("CourseController::checkStatus(..) - ERROR; person null");
+                Log.info("SDMMController::checkStatus(..) - ERROR; person null");
                 return null;
             }
 
@@ -307,13 +308,13 @@ export class SDMMController extends CourseController {
             return false;
 
         } catch (err) {
-            Log.info("CourseController::checkStatus(..) - ERROR: " + err);
+            Log.info("SDMMController::checkStatus(..) - ERROR: " + err);
         }
     }
 */
 
     private async provisionD0Repo(personId: string): Promise<Payload> {
-        Log.info("CourseController::provisionD0Repo( " + personId + " ) - start");
+        Log.info("SDMMController::provisionD0Repo( " + personId + " ) - start");
         const start = Date.now();
 
         try {
@@ -329,17 +330,17 @@ export class SDMMController extends CourseController {
 
             let personStatus = await this.computeStatusString(personId);
             if (personStatus !== SDMMStatus[SDMMStatus.D0PRE]) {
-                Log.info("CourseController::provisionD0Repo( " + personId + " ) - bad status: " + personStatus);
+                Log.info("SDMMController::provisionD0Repo( " + personId + " ) - bad status: " + personStatus);
                 return {failure: {shouldLogout: false, message: "User is not eligible for D0."}};
             } else {
-                Log.info("CourseController::provisionD0Repo( " + personId + " ) - correct status: " + personStatus);
+                Log.info("SDMMController::provisionD0Repo( " + personId + " ) - correct status: " + personStatus);
             }
 
             // create local team
             let existingTeam = await this.tc.getTeam(teamName);
             if (existingTeam !== null) {
                 // team already exists; warn and fail
-                throw new Error("CourseController::provisionD0Repo(..) - team already exists: " + teamName);
+                throw new Error("SDMMController::provisionD0Repo(..) - team already exists: " + teamName);
             }
             const teamCustom = {sdmmd0: true, sdmmd1: false, sdmmd2: false, sdmmd3: false}; // d0 team for now
             const team = await this.tc.createTeam(teamName, [person], teamCustom);
@@ -348,7 +349,7 @@ export class SDMMController extends CourseController {
             let existingRepo = await this.rc.getRepository(repoName);
             if (existingRepo !== null) {
                 // repo already exists; warn and fail
-                throw new Error("CourseController::provisionD0Repo(..) - repo already exists: " + repoName);
+                throw new Error("SDMMController::provisionD0Repo(..) - repo already exists: " + repoName);
             }
             const repoCustom = {d0enabled: true, d1enabled: false, d2enabled: false, d3enabled: false, sddmD3pr: false}; // d0 repo for now
             const repo = await this.rc.createRepository(repoName, [team], repoCustom);
@@ -360,7 +361,7 @@ export class SDMMController extends CourseController {
             const provisionResult = await this.gh.provisionRepository(repoName, [team], INPUTREPO, WEBHOOKADDR);
 
             if (provisionResult === true) {
-                Log.info("CourseController::provisionD0Repo(..) - d0 github provisioning successful");
+                Log.info("SDMMController::provisionD0Repo(..) - d0 github provisioning successful");
 
                 // update local team and repo with github values
                 const repoUrl = await this.gh.getRepositoryUrl(repo);
@@ -383,42 +384,42 @@ export class SDMMController extends CourseController {
                 await this.gc.createGrade(repo.id, 'd0', grade);
 
                 const statusPayload = await this.getStatus(personId);
-                Log.info("CourseController::provisionD0Repo(..) - d0 final provisioning successful; took: " + Util.took(start));
+                Log.info("SDMMController::provisionD0Repo(..) - d0 final provisioning successful; took: " + Util.took(start));
 
                 return {success: {message: "Repository successfully created.", status: statusPayload}};
             } else {
-                Log.error("CourseController::provisionD0Repo(..) - something went wrong provisioning this repo; see logs above.");
+                Log.error("SDMMController::provisionD0Repo(..) - something went wrong provisioning this repo; see logs above.");
 
                 // d0pre people should not have teams
                 const delTeam = await this.dc.deleteTeam(team);
                 // d0pre people should not have repos
                 const delRepo = await this.dc.deleteRepository(repo);
-                Log.info("CourseController::provisionD0Repo(..) - team removed: " + delTeam + ", repo removed: " + delRepo);
+                Log.info("SDMMController::provisionD0Repo(..) - team removed: " + delTeam + ", repo removed: " + delRepo);
 
                 return {failure: {shouldLogout: false, message: "Error provisioning d0 repo."}};
             }
         } catch (err) {
-            Log.error("CourseController::provisionD0Repo(..) - ERROR: " + err);
+            Log.error("SDMMController::provisionD0Repo(..) - ERROR: " + err);
             return {failure: {shouldLogout: false, message: "Error creating d0 repo; contact course staff."}};
         }
     }
 
     private async updateIndividualD0toD1(personId: string): Promise<Payload> {
-        Log.info("CourseController::updateIndividualD0toD1( " + personId + " ) - start");
+        Log.info("SDMMController::updateIndividualD0toD1( " + personId + " ) - start");
         const start = Date.now();
 
         try {
             // make sure person exists
             const person = await this.pc.getPerson(personId);
             if (person === null) {
-                Log.error("CourseController::updateIndividualD0toD1(..) - person does not exist: " + personId);
+                Log.error("SDMMController::updateIndividualD0toD1(..) - person does not exist: " + personId);
                 return {failure: {shouldLogout: false, message: "Username not registered with course."}};
             }
 
             // make sure the person has suffient d0 grade
             let grade = await this.gc.getGrade(personId, "d0"); // make sure they can move on
             if (grade === null || grade.score < 60) {
-                Log.error("CourseController::updateIndividualD0toD1(..) - person does not exist: " + personId);
+                Log.error("SDMMController::updateIndividualD0toD1(..) - person does not exist: " + personId);
                 return {failure: {shouldLogout: false, message: "Current d0 grade is not sufficient to move on to d1."}};
             }
 
@@ -426,16 +427,16 @@ export class SDMMController extends CourseController {
             let myRepos = await this.rc.getReposForPerson(person);
             for (const r of myRepos) {
                 if (r.custom.d1enabled === true) {
-                    Log.error("CourseController::updateIndividualD0toD1(..) - person already has a d1 repo: " + r.id);
+                    Log.error("SDMMController::updateIndividualD0toD1(..) - person already has a d1 repo: " + r.id);
                     return {failure: {shouldLogout: false, message: "D1 repo has already been assigned: " + r.id}};
                 }
             }
 
             let personStatus = await this.computeStatusString(personId);
             if (personStatus !== SDMMStatus[SDMMStatus.D1UNLOCKED]) {
-                Log.info("CourseController::updateIndividualD0toD1( " + personId + " ) - bad status: " + personStatus);
+                Log.info("SDMMController::updateIndividualD0toD1( " + personId + " ) - bad status: " + personStatus);
             } else {
-                Log.info("CourseController::updateIndividualD0toD1( " + personId + " ) - correct status: " + personStatus);
+                Log.info("SDMMController::updateIndividualD0toD1( " + personId + " ) - correct status: " + personStatus);
             }
 
             const name = personId;
@@ -471,15 +472,15 @@ export class SDMMController extends CourseController {
                 await this.gc.createGrade(repo.id, 'd2', grade);
                 await this.gc.createGrade(repo.id, 'd3', grade);
             } else {
-                Log.error("CourseController::updateIndividualD0toD1(..) - unable to find team: " + teamName + ' or repo: ' + repoName);
+                Log.error("SDMMController::updateIndividualD0toD1(..) - unable to find team: " + teamName + ' or repo: ' + repoName);
                 return {failure: {shouldLogout: false, message: "Invalid team updating d0 repo; contact course staff."}};
             }
 
             const statusPayload = await this.getStatus(personId);
-            Log.info("CourseController::updateIndividualD0toD1(..) - d0 to d1 individual upgrade successful; took: " + Util.took(start));
+            Log.info("SDMMController::updateIndividualD0toD1(..) - d0 to d1 individual upgrade successful; took: " + Util.took(start));
             return {success: {message: "D0 repo successfully updated to D1.", status: statusPayload}};
         } catch (err) {
-            Log.error("CourseController::updateIndividualD0toD1(..) - ERROR: " + err);
+            Log.error("SDMMController::updateIndividualD0toD1(..) - ERROR: " + err);
             return {failure: {shouldLogout: false, message: "Error updating d0 repo; contact course staff."}};
         }
     }
@@ -489,7 +490,7 @@ export class SDMMController extends CourseController {
      * @returns {Promise<Payload>}
      */
     private async provisionD1Repo(peopleIds: string[]): Promise<Payload> {
-        Log.info("CourseController::provisionD1Repo( " + JSON.stringify(peopleIds) + " ) - start");
+        Log.info("SDMMController::provisionD1Repo( " + JSON.stringify(peopleIds) + " ) - start");
         const start = Date.now();
 
         try {
@@ -501,11 +502,11 @@ export class SDMMController extends CourseController {
                 let str = crypto.randomBytes(256).toString('hex');
                 str = str.substr(0, 6);
                 const name = CourseController.getTeamPrefix() + str; // team prefix
-                Log.trace("CourseController::provisionD1Repo(..) - checking name: " + str);
+                Log.trace("SDMMController::provisionD1Repo(..) - checking name: " + str);
                 let team = await this.tc.getTeam(str);
                 if (team === null) {
                     teamName = str;
-                    Log.trace("CourseController::provisionD1Repo(..) - name available; using: " + teamName);
+                    Log.trace("SDMMController::provisionD1Repo(..) - name available; using: " + teamName);
                 }
             }
 
@@ -537,7 +538,7 @@ export class SDMMController extends CourseController {
             for (const p of people) {
                 let personStatus = await this.computeStatusString(p.id);
                 if (personStatus !== SDMMStatus[SDMMStatus.D1UNLOCKED]) {
-                    Log.info("CourseController::provisionD1Repo( " + p.id + " ) - bad status: " + personStatus);
+                    Log.info("SDMMController::provisionD1Repo( " + p.id + " ) - bad status: " + personStatus);
                     return {
                         failure: {
                             shouldLogout: false,
@@ -545,7 +546,7 @@ export class SDMMController extends CourseController {
                         }
                     };
                 } else {
-                    Log.info("CourseController::provisionD1Repo( " + p.id + " ) - correct status: " + personStatus);
+                    Log.info("SDMMController::provisionD1Repo( " + p.id + " ) - correct status: " + personStatus);
                 }
             }
 
@@ -565,7 +566,7 @@ export class SDMMController extends CourseController {
             const provisionResult = await this.gh.provisionRepository(repoName, [team], INPUTREPO, WEBHOOKADDR);
 
             if (provisionResult === true) {
-                Log.info("CourseController::provisionD1Repo(..) - d1 github provisioning successful");
+                Log.info("SDMMController::provisionD1Repo(..) - d1 github provisioning successful");
 
                 // update local team and repo with github values
                 const repoUrl = await this.gh.getRepositoryUrl(repo);
@@ -590,20 +591,20 @@ export class SDMMController extends CourseController {
                 await this.gc.createGrade(repo.id, 'd3', grade);
 
                 const statusPayload = await this.getStatus(peopleIds[0]);
-                Log.info("CourseController::provisionD1Repo(..) - d1 final provisioning successful; took: " + Util.took(start));
+                Log.info("SDMMController::provisionD1Repo(..) - d1 final provisioning successful; took: " + Util.took(start));
                 return {success: {message: "D1 repository successfully provisioned.", status: statusPayload}};
             } else {
-                Log.error("CourseController::provisionD1Repo(..) - something went wrong provisioning this repo; see logs above.");
+                Log.error("SDMMController::provisionD1Repo(..) - something went wrong provisioning this repo; see logs above.");
                 return {failure: {shouldLogout: false, message: "Error encountered creating d1 repo; contact course staff."}};
             }
         } catch (err) {
-            Log.error("CourseController::provisionD1Repo(..) - ERROR: " + err);
+            Log.error("SDMMController::provisionD1Repo(..) - ERROR: " + err);
             return {failure: {shouldLogout: false, message: "Error encountered provisioning d1 repo; contact course staff."}};
         }
     }
 
     public async getStatus(personId: string): Promise<StatusPayload> {
-        Log.info("CourseController::getStatus( " + personId + " ) - start");
+        Log.info("SDMMController::getStatus( " + personId + " ) - start");
         const start = Date.now();
 
         const myStatus = await this.computeStatusString(personId);
@@ -670,7 +671,7 @@ export class SDMMController extends CourseController {
             d3:     myD3
         };
 
-        Log.trace("CourseController::getStatus( " + personId + " ) - took: " + Util.took(start));
+        Log.trace("SDMMController::getStatus( " + personId + " ) - took: " + Util.took(start));
 
         return statusPayload;
     }

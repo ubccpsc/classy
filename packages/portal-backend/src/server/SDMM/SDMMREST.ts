@@ -2,7 +2,6 @@ import restify = require('restify');
 import Log from "../../../../common/Log";
 
 import IREST from "../IREST";
-import {CourseController} from "../../controllers/CourseController";
 import {GitHubController} from "../../controllers/GitHubController";
 
 import {Payload, StatusPayload} from "../../../../common/types/SDMMTypes";
@@ -31,7 +30,7 @@ export default class SDMMREST implements IREST {
 
         // TODO: verify token
 
-        let sc: SDMMController= new SDMMController(new GitHubController());
+        let sc: SDMMController = new SDMMController(new GitHubController());
 
         if (action === 'provisionD0') {
             sc.provision("d0", [user]).then(function (provisionResult) {
@@ -91,7 +90,7 @@ export default class SDMMREST implements IREST {
 
         // const org = Config.getInstance().getProp('org');
 
-        let sc: SDMMController= new SDMMController(new GitHubController());
+        let sc: SDMMController = new SDMMController(new GitHubController());
         sc.getStatus(user).then(function (status: StatusPayload) {
             Log.info('SDMMREST::getCurrentStatus(..) - sending 200; user: ' + user);
             Log.trace('SDMMREST::getCurrentStatus(..) - sending 200; user: ' + user + '; status: ' + JSON.stringify(status));
@@ -99,7 +98,7 @@ export default class SDMMREST implements IREST {
             res.send(ret);
         }).catch(function (err) {
             Log.info('SDMMREST::getCurrentStatus(..) - sending 400');
-            res.send(400, {failure: {message: err}});
+            res.send(400, {failure: {message: err.message}});
         });
     }
 
