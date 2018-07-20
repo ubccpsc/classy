@@ -21,14 +21,17 @@ export class AuthController {
 
         if (typeof personId === 'undefined' || personId === null || typeof token === 'undefined' || token === null) {
             // these are never valid; this would be caught below, but this is just to be extra cautious
+            Log.trace("AuthController::isValid( " + personId + ", ... ) - false; undefined | null encoutered");
             return false;
         }
 
         let person = new PersonController().getPerson(personId);
         if (person !== null) {
             const valid = await this.verifyToken(personId, token);
+            Log.trace("AuthController::isValid( " + personId + ", ... ) - " + valid + "; !null person");
             return valid;
         }
+        Log.trace("AuthController::isValid( " + personId + ", ... ) - false; null person");
         return false;
     }
 

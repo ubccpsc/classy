@@ -45,7 +45,8 @@ export class AuthRoutes implements IREST {
      * @param req
      * @param res
      */
-    /* istanbul ignore next */    
+
+    /* istanbul ignore next */
     public static handlePreflight(req: any, res: any) {
         Log.trace("AuthRouteHandler::handlePreflight(..) - " + req.method.toLowerCase() + "; uri: " + req.url);
 
@@ -80,13 +81,25 @@ export class AuthRoutes implements IREST {
         }
 
         Log.info('AuthRouteHandler::getLogout(..) - user: ' + user + '; token: ' + token);
-
         let payload: Payload;
+
+        const handleError = function (msg: string) {
+            Log.error('AuthRouteHandler::getLogout(..) - ERROR: ' + msg);
+            payload = {failure: {message: 'Logout failed: ' + msg, shouldLogout: false}};
+            res.send(400, payload);
+            return next();
+        };
+
+        if (user === null) {
+            Log.warn('AuthRouteHandler::getLogout(..) - cannot logout unspecified user: ' + user);
+            handleError("unknown user.");
+        }
+
         AuthRoutes.ac.isValid(user, token).then(function (isValid) {
             if (isValid === true) {
                 Log.info('AuthRouteHandler::getLogout(..) - user: ' + user + '; valid user');
             } else {
-                // loglout anyways? if your user / token is stale we still need log you out
+                // logout anyways? if your user / token is stale we still need log you out
                 // but that could mean someone else could spoof-log you out too
                 Log.warn('AuthRouteHandler::getLogout(..) - user: ' + user + '; invalid user');
             }
@@ -97,9 +110,8 @@ export class AuthRoutes implements IREST {
             payload = {success: {message: "Logout successful"}};
             res.send(200, payload);
         }).catch(function (err) {
-            Log.error('AuthRouteHandler::getLogout(..) - ERROR: ' + err);
-            payload = {failure: {message: 'Logout failed: ' + err, shouldLogout: false}};
-            res.send(400, payload);
+            Log.error('AuthRouteHandler::getLogout(..) - unexpected ERROR: ' + err.message);
+            handleError(err.message);
         });
     }
 
@@ -119,7 +131,6 @@ export class AuthRoutes implements IREST {
                     payload = {success: {personId: user, token: token, isAdmin: isPrivileged.isAdmin, isStaff: isPrivileged.isStaff}};
                     Log.info('RouteHandler::getCredentials(..) - sending 200; isPriv: ' + (isPrivileged.isStaff || isPrivileged.isAdmin));
                     res.send(200, payload);
-
                 }).catch(function (err) {
                     Log.info('AuthRouteHandler::getCredentials(..) - isValid true; ERROR: ' + err);
                     payload = {failure: {message: "Login error (getCredentials valid inner error).", shouldLogout: false}};
@@ -140,6 +151,7 @@ export class AuthRoutes implements IREST {
     /**
      * Requires manual testing w/ live GitHub instance.
      */
+
     /* istanbul ignore next */
     public static getAuth(req: any, res: any, next: any) {
         Log.trace("AuthRouteHandler::getAuth(..) - /auth redirect start");
@@ -177,6 +189,7 @@ export class AuthRoutes implements IREST {
      * @param res
      * @param next
      */
+
     /* istanbul ignore next */
     public static githubCallback(req: any, res: any, next: any) {
         Log.trace("AuthRouteHandler::githubCallback(..) - /githubCallback - start");

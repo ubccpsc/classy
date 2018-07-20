@@ -46,7 +46,7 @@ describe('Auth Routes', function () {
         return server.stop();
     });
 
-    it('Should be able to get some credentials for an admin', async function () {
+    it('Should be able to get some credentials for an admin.', async function () {
 
         const dc: DatabaseController = DatabaseController.getInstance();
 
@@ -73,7 +73,7 @@ describe('Auth Routes', function () {
         expect(body.success.token).to.equal(auth.token);
     }).timeout(TIMEOUT);
 
-    it('Should be able to get some credentials for a student', async function () {
+    it('Should be able to get some credentials for a student.', async function () {
 
         const dc: DatabaseController = DatabaseController.getInstance();
 
@@ -100,7 +100,7 @@ describe('Auth Routes', function () {
         expect(body.success.token).to.equal(auth.token);
     }).timeout(TIMEOUT);
 
-    it('Should fail to get credentials if the token is bad', async function () {
+    it('Should fail to get credentials if the token is bad.', async function () {
 
         const dc: DatabaseController = DatabaseController.getInstance();
 
@@ -121,7 +121,7 @@ describe('Auth Routes', function () {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should be able to logout a student', async function () {
+    it('Should be able to logout a student.', async function () {
 
         const dc: DatabaseController = DatabaseController.getInstance();
 
@@ -145,6 +145,111 @@ describe('Auth Routes', function () {
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
     }).timeout(TIMEOUT);
+
+    /**
+     * This one is a bit controversial:
+     *
+     * While this means students _could_ log each other out, it also means that we
+     * don't get into states where people can't logout on their own. Better safe
+     * than sorry in this dimension.
+     */
+    it('Should be able to logout even if token is bad.', async function () {
+
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        // make sure there is a token to logout
+        await dc.writeAuth({personId: Test.USERNAME1, token: 'testtoken'});
+
+        let auth = await dc.getAuth(Test.USERNAME1);
+        expect(auth).to.not.be.null;
+
+        let response = null;
+        let body: AuthTransportPayload;
+        const url = '/logout';
+        try {
+            Log.test('Making undefined token request');
+            // undefined token
+            response = await request(app).get(url).set('user', auth.personId);
+            Log.test('Response received');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test('checking assertions on: response');
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+
+        try {
+            Log.test('Making null token request');
+            // null token
+            response = await request(app).get(url).set('user', auth.personId).set('token', null);
+            Log.test('Response received');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test('checking assertions on: response');
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+
+    }).timeout(TIMEOUT);
+
+    /**
+     * This one is a bit controversial:
+     *
+     * While this means students _could_ log each other out, it also means that we
+     * don't get into states where people can't logout on their own. Better safe
+     * than sorry in this dimension.
+     */
+    it('Should fail to logout if user is bad.', async function () {
+
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        // make sure there is a token to logout
+        await dc.writeAuth({personId: Test.USERNAME1, token: 'testtoken'});
+
+        let auth = await dc.getAuth(Test.USERNAME1);
+        expect(auth).to.not.be.null;
+
+        let response = null;
+        let body: AuthTransportPayload;
+        const url = '/logout';
+        try {
+            Log.test('Making undefined user request');
+            // undefined user
+            response = await request(app).get(url).set('token', auth.token);
+            Log.test('Response received');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test('checking assertions on: response');
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.failure).to.not.be.undefined;
+
+        try {
+            Log.test('Making null user request');
+            // null user
+            response = await request(app).get(url).set('user', null).set('token', auth.token);
+            Log.test('Response received');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test('checking assertions on: response');
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.failure).to.not.be.undefined;
+
+    }).timeout(TIMEOUT);
+
 
 });
 
