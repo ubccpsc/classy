@@ -140,31 +140,31 @@ export class AdminView implements IView {
     }
 
     // called by reflection in renderPage
-    private async handleAdminRoot(opts: {}): Promise<void> {
+    protected async handleAdminRoot(opts: {}): Promise<void> {
         Log.info('AdminView::handleAdminRoot(..) - start');
         // Can init frame here if needed
         return;
     }
 
     // called by reflection in renderPage
-    private async handleAdminDeliverables(opts: {}): Promise<void> {
+    protected async handleAdminDeliverables(opts: {}): Promise<void> {
         Log.info('AdminView::handleAdminDeliverables(..) - start');
         return this.deliverablesTab.init(opts);
     }
 
     // called by reflection in renderPage
-    private async handleAdminConfig(opts: {}): Promise<void> {
+    protected async handleAdminConfig(opts: {}): Promise<void> {
         Log.info('AdminView::handleAdminConfig(..) - start');
         return this.configTab.init(opts);
     }
 
     // called by reflection in renderPage
-    private async handleAdminStudents(opts: any): Promise<void> {
+    protected async handleAdminStudents(opts: any): Promise<void> {
         Log.info('AdminView::handleStudents(..) - start');
         return this.studentsTab.init(opts);
     }
 
-    private handleAdminEditDeliverable(opts: any) {
+    protected handleAdminEditDeliverable(opts: any) {
         this.deliverablesTab.initEditDeliverablePage(opts); // this will call render
     }
 }
