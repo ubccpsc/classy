@@ -20,19 +20,25 @@ export class AuthController {
         Log.trace("AuthController::isValid( " + personId + ", ... ) - start");
 
         if (typeof personId === 'undefined' || personId === null || typeof token === 'undefined' || token === null) {
+            // invalid person
             // these are never valid; this would be caught below, but this is just to be extra cautious
             Log.trace("AuthController::isValid( " + personId + ", ... ) - false; undefined | null encoutered");
             return false;
         }
 
-        let person = new PersonController().getPerson(personId);
+        const pc = new PersonController();
+        let person = await pc.getPerson(personId);
+        Log.trace("AuthController::isValid( " + personId + ", ... ) - person: " + JSON.stringify(person));
         if (person !== null) {
+            // person exists
             const valid = await this.verifyToken(personId, token);
             Log.trace("AuthController::isValid( " + personId + ", ... ) - " + valid + "; !null person");
             return valid;
+        } else {
+            // person does not exist
+            Log.trace("AuthController::isValid( " + personId + ", ... ) - false; null person");
+            return false;
         }
-        Log.trace("AuthController::isValid( " + personId + ", ... ) - false; null person");
-        return false;
     }
 
     private async verifyToken(personId: string, token: string): Promise<boolean> {
@@ -111,19 +117,26 @@ export class AuthController {
             const pc = new PersonController();
             const person = await pc.getPerson(personId);
 
-            if (person.kind !== 'student') {
-                // Students stay students _forever_
-                // Shis is just a safe option.
-                // Students do become TAs during the term for courses they were already students in.
-                person.kind = null;
-                await pc.writePerson(person);
-            }
+            if (person === null) {
+                Log.trace("AuthController::removeAuthentication() - person does not exist");
+                return false; // just say it worked although nothing happened
+            } else {
+                if (person.kind !== 'student') {
+                    // Students stay students _forever_
+                    // Shis is just a safe option.
+                    // Students do become TAs during the term for courses they were already students in.
+                    person.kind = null;
+                    await pc.writePerson(person);
+                }
 
-            const auth = await this.dc.getAuth(personId);
-            await this.dc.deleteAuth(auth);
+                const auth = await this.dc.getAuth(personId);
+                await this.dc.deleteAuth(auth);
+                Log.info("AuthController::removeAuthentication( " + personId + " ) - done");
+                return true;
+            }
         }
-        Log.trace("AuthController::removeAuthentication() - done");
-        return true; // if it doesn't throw an exception it must have worked enough
+        Log.error("AuthController::removeAuthentication() - no person provided");
+        return false; // if it doesn't throw an exception it must have worked enough
     }
 
 }

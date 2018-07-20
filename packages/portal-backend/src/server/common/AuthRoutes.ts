@@ -107,8 +107,12 @@ export class AuthRoutes implements IREST {
             const ac = new AuthController();
             return ac.removeAuthentication(user);
         }).then(function (success) {
-            payload = {success: {message: "Logout successful"}};
-            res.send(200, payload);
+            if (success) {
+                payload = {success: {message: "Logout successful"}};
+                res.send(200, payload);
+            } else {
+                handleError("Logout unsuccessful.");
+            }
         }).catch(function (err) {
             Log.error('AuthRouteHandler::getLogout(..) - unexpected ERROR: ' + err.message);
             handleError(err.message);
@@ -119,32 +123,31 @@ export class AuthRoutes implements IREST {
         Log.trace('AuthRouteHandler::getCredentials(..) - start');
         const user = req.headers.user;
         const token = req.headers.token;
-        // const org = req.headers.org;
         Log.info('AuthRouteHandler::getCredentials(..) - user: ' + user + '; token: ' + token);
+
+        const handleError = function (msg: string) {
+            payload = {failure: {message: msg, shouldLogout: false}};
+            res.send(400, payload);
+            return next();
+        };
 
         let payload: AuthTransportPayload;
         AuthRoutes.ac.isValid(user, token).then(function (isValid) {
             Log.trace('AuthRouteHandler::getCredentials(..) - in isValid(..)');
             if (isValid === true) {
                 Log.trace('AuthRouteHandler::getCredentials(..) - isValid true');
-                AuthRoutes.ac.isPrivileged(user, token).then(function (isPrivileged) {
-                    payload = {success: {personId: user, token: token, isAdmin: isPrivileged.isAdmin, isStaff: isPrivileged.isStaff}};
-                    Log.info('RouteHandler::getCredentials(..) - sending 200; isPriv: ' + (isPrivileged.isStaff || isPrivileged.isAdmin));
-                    res.send(200, payload);
-                }).catch(function (err) {
-                    Log.info('AuthRouteHandler::getCredentials(..) - isValid true; ERROR: ' + err);
-                    payload = {failure: {message: "Login error (getCredentials valid inner error).", shouldLogout: false}};
-                    res.send(400, payload);
-                });
+                return AuthRoutes.ac.isPrivileged(user, token);
             } else {
-                Log.trace('AuthRouteHandler::getCredentials(..) - sending 400');
-                payload = {failure: {message: "Login error (getCredentials invalid inner error).", shouldLogout: false}};
-                res.send(400, payload);
+                Log.error('AuthRouteHandler::getCredentials(..) - isValid false');
+                handleError("Login error; user not valid.");
             }
+        }).then(function (isPrivileged) {
+            payload = {success: {personId: user, token: token, isAdmin: isPrivileged.isAdmin, isStaff: isPrivileged.isStaff}};
+            Log.info('RouteHandler::getCredentials(..) - sending 200; isPriv: ' + (isPrivileged.isStaff || isPrivileged.isAdmin));
+            res.send(200, payload);
         }).catch(function (err) {
-            Log.error('AuthRouteHandler::getCredentials(..) - ERROR: ' + err);
-            payload = {failure: {message: "Login error (getCredentials outer error).", shouldLogout: false}};
-            res.send(400, payload);
+            Log.info('AuthRouteHandler::getCredentials(..) - ERROR: ' + err);
+            handleError("Login error.");
         });
     }
 

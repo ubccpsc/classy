@@ -59,7 +59,6 @@ export class PersonController {
 
         let person = await this.db.getPerson(personId);
         if (person === null) {
-            // in this case, return false, because login failed
             Log.trace("PersonController::getPerson( " + personId + " ) - unknown person for this org - failing");
             return null;
         }

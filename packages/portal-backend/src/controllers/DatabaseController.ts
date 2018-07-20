@@ -355,8 +355,8 @@ export class DatabaseController {
             }
         } catch (err) {
             Log.error("DatabaseController::readSingleRecord(..) - ERROR: " + err);
+            return null;
         }
-        return null;
     }
 
     private async readRecords(column: string, query: {} | null): Promise<{}[]> {

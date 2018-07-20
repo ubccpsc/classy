@@ -24,13 +24,13 @@ describe("AuthController", () => {
     });
 
     it("Should not validate a user who does not exist.", async () => {
-        let isValid = await ac.isValid(Test.USERNAME3, ''); // not registered
+        let isValid = await ac.isValid('aUserwhoDoesNotExist_sadmewnmdsv', ''); // not registered
         expect(isValid).to.be.false;
     });
 
 
-    it("Should not let invalid be admins.", async () => {
-        let isPriv = await ac.isPrivileged(Test.USERNAME3, ''); // not registered
+    it("Should not let a person who does not exist be privileged.", async () => {
+        let isPriv = await ac.isPrivileged('aUserwhoDoesNotExist_sadmewnmdsvKKDSS', ''); // not registered
         expect(isPriv.isAdmin).to.be.false;
         expect(isPriv.isStaff).to.be.false;
     });
@@ -129,16 +129,16 @@ describe("AuthController", () => {
         expect(person.kind).to.be.null; // should be null after being logged out
     });
 
-    it("Should not fail to logout a user who does not exist.", async () => {
+    it("Should be able to handle trying to logout users who do not exist.", async () => {
         // this seems strange, but really we just want it to not crash
-        let workedEnough = await ac.removeAuthentication(Test.USERNAME3);
-        expect(workedEnough).to.be.true;
-
-        workedEnough = await ac.removeAuthentication(undefined);
-        expect(workedEnough).to.be.true;
+        let workedEnough = await ac.removeAuthentication(undefined);
+        expect(workedEnough).to.be.false;
 
         workedEnough = await ac.removeAuthentication(null);
-        expect(workedEnough).to.be.true;
+        expect(workedEnough).to.be.false;
+
+        workedEnough = await ac.removeAuthentication('totallyMADEUPname12388291900d');
+        expect(workedEnough).to.be.false; // can't
     });
 
     // TODO: implement auth controller tests
