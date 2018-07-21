@@ -30,7 +30,7 @@ export class AuthRoutes implements IREST {
 
         // GitHub OAuth endpoints
         server.get('/portal/auth', AuthRoutes.getAuth); // start GitHub OAuth flow
-        server.get('/portal/authCallback', AuthRoutes.githubCallback); // finalize GitHub OAuth flow
+        server.get('/portal/authCallback', AuthRoutes.authCallback); // finalize GitHub OAuth flow
     }
 
     /**
@@ -162,6 +162,7 @@ export class AuthRoutes implements IREST {
 
         // const org = req.query.org;
         const name = config.getProp(ConfigKey.name);
+        // NICK: this seems like it might cause problems with the router:
         const githubRedirect = config.getProp(ConfigKey.backendUrl) + ':' + config.getProp(ConfigKey.backendPort) + '/portal/authCallback?name=' + name;
         Log.info("AuthRouteHandler::getAuth(..) - /auth redirect; course: " + name + "; URL: " + githubRedirect);
 
@@ -194,17 +195,20 @@ export class AuthRoutes implements IREST {
      */
 
     /* istanbul ignore next */
-    public static githubCallback(req: any, res: any, next: any) {
-        Log.trace("AuthRouteHandler::githubCallback(..) - /portal/authCallback - start");
+    public static authCallback(req: any, res: any, next: any) {
+        Log.trace("AuthRouteHandler::authCallback(..) - /portal/authCallback - start");
         const config = Config.getInstance();
         const personController = new PersonController();
+
+        Log.trace('req: ' + req + '; res: ' + res + '; next: ' + next);
 
         const backendUrl = config.getProp(ConfigKey.backendUrl);
         const backendPort = config.getProp(ConfigKey.backendPort);
         // TODO: do we need this redirect?
+        // NICK: this lookls like it might cause problems with the router:
         const githubRedirect = backendUrl + ':' + backendPort + '/portal/authCallback?name=' + config.getProp(ConfigKey.name);
 
-        Log.info('AuthRouteHandler::githubCallback(..) - / githubCallback; URL: ' + githubRedirect);
+        Log.info('AuthRouteHandler::authCallback(..) - / authCallback; URL: ' + githubRedirect);
         const opts = {
             clientId:         config.getProp(ConfigKey.githubClientId),
             clientSecret:     config.getProp(ConfigKey.githubClientSecret),
@@ -222,7 +226,7 @@ export class AuthRoutes implements IREST {
         // Log.info('RouteHandler::githubCallback(..) - opts: ' + JSON.stringify(opts));
 
         githubAuth.code.getToken(req.url).then(function (user) {
-            Log.trace("AuthRouteHandler::githubCallback(..) - token acquired");
+            Log.trace("AuthRouteHandler::authCallback(..) - token acquired");
 
             token = user.accessToken;
             const options = {
@@ -239,10 +243,10 @@ export class AuthRoutes implements IREST {
             // associate a username with a token on the backend if needed
             return rp(options);
         }).then(function (ans) {
-            Log.info("AuthRouteHandler::githubCallback(..) - /portal/authCallback - GH username received");
+            Log.info("AuthRouteHandler::authCallback(..) - /portal/authCallback - GH username received");
             const body = JSON.parse(ans);
             const username = body.login;
-            Log.info("AuthRouteHandler::githubCallback(..) - /portal/authCallback - GH username: " + username);
+            Log.info("AuthRouteHandler::authCallback(..) - /portal/authCallback - GH username: " + username);
 
             // NOTE: this is not what you want for non micromasters
             // this will create a person every time
@@ -268,34 +272,36 @@ export class AuthRoutes implements IREST {
 
             return DatabaseController.getInstance().writeAuth(auth);
         }).then(function (authWritten) {
-            Log.info("AuthRouteHandler::githubCallback(..) - authWritten: " + authWritten);
+            Log.info("AuthRouteHandler::authCallback(..) - authWritten: " + authWritten);
 
             // TODO: this should really handoff to an org-based controller to decide if we should
             // create a new person or return an error. This is fine for SDMM, but will need to
             // change in the future.
 
-            // NOTE: this creates a new user; for most courses we would instead prefer to reject them here
-            // if they are not registered with the org in advance
-
             return personController.createPerson(p);
         }).then(function (person) {
-            Log.info("AuthRouteHandler::githubCallback(..) - person: " + person);
+            Log.info("AuthRouteHandler::authCallback(..) - person: " + JSON.stringify(person) + "; token: " + token);
             let feUrl = config.getProp(ConfigKey.frontendUrl);
             let fePort = config.getProp(ConfigKey.frontendPort);
 
             if (person !== null) {
+                // this is tricky; need to redirect to the client with a cookie being set on the connection
                 // only header method that worked for me
                 res.setHeader("Set-Cookie", "token=" + token);
+                res.setHeader('user', 'bob');
                 if (feUrl.indexOf('//') > 0) {
                     feUrl = feUrl.substr(feUrl.indexOf('//') + 2, feUrl.length);
                 }
-                Log.trace("RouteHandler::githubCallback(..) - /githubCallback - redirect URL: " + feUrl);
+                Log.trace("RouteHandler::authCallback(..) - /authCallback - redirect URL: " + feUrl);
+
                 res.redirect({
                     hostname: feUrl,
-                    pathname: '/index.html',
+                    pathname: 'index.html',//'/index.html',
+                    // query:    {gh: token}, // not a real solution, need cookies so this is transparent
                     port:     fePort
                 }, next);
             } else {
+                Log.trace("RouteHandler::authCallback(..) - /authCallback - redirect (NO PERSON!) URL: " + feUrl);
                 // TODO: specify 'unknown user' error message (SDMM will always be true, but for future courses this won't be true)
                 res.redirect({
                     hostname: feUrl,
@@ -303,12 +309,9 @@ export class AuthRoutes implements IREST {
                     port:     fePort
                 }, next);
             }
-            // res.redirect('https://localhost:3000/index.html', next);
-            // res.send({success: true, data: 'myFoo'});
-
         }).catch(function (err) {
             // code incorrect or expired
-            Log.error("AuthRouteHandler::githubCallback(..) - /githubCallback - ERROR: " + err);
+            Log.error("AuthRouteHandler::authCallback(..) - /authCallback - ERROR: " + err);
             // NOTE: should this be returning 400 or something?
             return next();
         });

@@ -399,16 +399,35 @@ export class App {
 
     private readCookie(name: string) {
         Log.trace("App::readCookie( " + name + " ) - start; cookie string: " + document.cookie);
+        // this used to work but isn't now
         let s: string[] = decodeURI(document.cookie).split(';');
         for (let i = 0; i < s.length; i++) {
             let row = s[i].split('=', 2);
             if (row.length === 2) {
                 let key = row[0].trim(); // firefox sometimes has an extraneous space before the key
                 if (key === name) {
+                    Log.trace("App::readCookie( " + name + " ) - cookie found");
                     return row[1].trim();
                 }
             }
         }
+        // this is not great, it would be better if this token was hidden
+
+        let getParameterByName = function (name: string) {
+            let url = window.location.href;
+            name = name.replace(/[\[\]]/g, '\\$&');
+            let regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        };
+        let token = getParameterByName('gh');
+        if (token !== null) {
+            Log.trace("App::readCookie( " + name + " ) - query param found");
+            return token;
+        }
+        Log.trace("App::readCookie( " + name + " ) - no token found");
         return null;
     }
 
