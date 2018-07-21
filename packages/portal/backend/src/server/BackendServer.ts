@@ -91,13 +91,6 @@ export default class BackendServer {
                     return next();
                 });
 
-                // serves up the root directory
-                that.rest.get('/\/.*/', restify.plugins.serveStatic({
-                        directory: '../frontend/html',
-                        default:   'index.html'
-                    })
-                );
-
                 // Register handlers common between all classy instances
                 Log.info('BackendServer::start() - Registering common handlers');
 
@@ -120,6 +113,13 @@ export default class BackendServer {
                 Log.info('BackendServer::start() - Registering custom handler');
                 Factory.getCustomRouteHandler().registerRoutes(that.rest);
                 Log.info('BackendServer::start() - Registering custom handler; done');
+
+                // serves up the root directory
+                that.rest.get('/\/.*/', restify.plugins.serveStatic({
+                        directory: '../frontend/html',
+                        default:   'index.html'
+                    })
+                );
 
                 that.rest.listen(that.config.getProp(ConfigKey.backendPort), function () {
                     Log.info('BackendServer::start() - restify listening: ' + that.rest.url);
