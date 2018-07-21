@@ -44,6 +44,11 @@ export class DatabaseController {
         return <Person> await this.readSingleRecord(this.PERSONCOLL, {"id": recordId});
     }
 
+    public async getGitHubPerson(recordId: string): Promise<Person | null> {
+        Log.info("DatabaseController::getGitHubPerson( " + recordId + " ) - start");
+        return <Person> await this.readSingleRecord(this.PERSONCOLL, {"githubId": recordId});
+    }
+
     public async getRepository(recordId: string): Promise<Repository | null> {
         Log.info("DatabaseController::getRepository( " + recordId + " ) - start");
         return <Repository> await this.readSingleRecord(this.REPOCOLL, {"id": recordId});

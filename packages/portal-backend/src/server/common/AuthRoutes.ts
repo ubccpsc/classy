@@ -9,6 +9,7 @@ import {Auth, Person} from "../../Types";
 import {PersonController} from "../../controllers/PersonController";
 import IREST from "../IREST";
 import {AuthTransportPayload, Payload} from "../../../../common/types/PortalTypes";
+import {Factory} from "../../Factory";
 import restify = require("restify");
 import ClientOAuth2 = require("client-oauth2");
 
@@ -192,7 +193,7 @@ export class AuthRoutes implements IREST {
         const config = Config.getInstance();
         const personController = new PersonController();
 
-        Log.trace('req: ' + req + '; res: ' + res + '; next: ' + next);
+        // Log.trace('req: ' + req + '; res: ' + res + '; next: ' + next);
 
         const opts = {
             clientId:         config.getProp(ConfigKey.githubClientId),
@@ -205,6 +206,7 @@ export class AuthRoutes implements IREST {
         const githubAuth = new ClientOAuth2(opts);
         let token: string | null = null;
         let p: Person = null;
+        let username: string | null = null;
 
         Log.trace("AuthRouteHandler::authCallback(..) - /authCallback - setup: " + JSON.stringify(opts));
 
@@ -223,51 +225,56 @@ export class AuthRoutes implements IREST {
             };
 
             // this extra check isn't strictly required, but means we can
-            // associate a username with a token on the backend if needed
+            // associate a GitHub username with a token on the backend
             return rp(options);
         }).then(function (ans) {
+            // we now have a github username
+
             Log.info("AuthRouteHandler::authCallback(..) - /portal/authCallback - GH username received");
             const body = JSON.parse(ans);
-            const username = body.login;
+            username = body.login;
             Log.info("AuthRouteHandler::authCallback(..) - /portal/authCallback - GH username: " + username);
 
-            // NOTE: this is not what you want for non micromasters
-            // this will create a person every time
-            // but for ubc courses we want to give a reject message for unknown users
-            p = {
-                id:            username,
-                csId:          username,
-                githubId:      username,
-                studentNumber: null,
+            return personController.getGitHubPerson(username);
+        }).then(function (person: Person | null) {
+            // we now know if that github username is known for the course
 
-                fName:  '',
-                lName:  '',
-                kind:   null, // isPriv will fill this in on demand
-                URL:    Config.getInstance().getProp(ConfigKey.githubHost) + '/' + username,
-                labId:  'UNKNOWN',
-                custom: {}
-            };
+            if (person === null) {
+                Log.info("AuthRouteHandler::authCallback(..) - /portal/authCallback - github username not registered");
+                const cc = Factory.getCourseController();
+                return cc.handleUnknownUser(username);
+            } else {
+                Log.info("AuthRouteHandler::authCallback(..) - /portal/authCallback - github username IS registered");
+                return Promise.resolve(person);
+            }
+        }).then(function (person: Person | null) {
+            // now we either have the person in the course or there will never be one
 
-            const auth: Auth = {
-                personId: username,
-                token:    token
-            };
+            if (person !== null) {
+                Log.info("AuthRouteHandler::authCallback(..) - /portal/authCallback - registering auth for person: " + person.githubId);
+                const auth: Auth = {
+                    personId: username,
+                    token:    token
+                };
+                p = person;
+                return DatabaseController.getInstance().writeAuth(auth);
+            } else {
+                // auth not written
+                Log.info("AuthRouteHandler::authCallback(..) - /portal/authCallback - not registering auth");
+            }
 
-            return DatabaseController.getInstance().writeAuth(auth);
         }).then(function (authWritten) {
-            Log.info("AuthRouteHandler::authCallback(..) - authWritten: " + authWritten);
+            // Log.info("AuthRouteHandler::authCallback(..) - authWritten: " + authWritten);
 
             // TODO: this should really handoff to an org-based controller to decide if we should
             // create a new person or return an error. This is fine for SDMM, but will need to
             // change in the future.
 
-            return personController.createPerson(p);
-        }).then(function (person) {
-            Log.info("AuthRouteHandler::authCallback(..) - person: " + JSON.stringify(person) + "; token: " + token);
+            Log.info("AuthRouteHandler::authCallback(..) - preparing redirect for: " + JSON.stringify(p));
             let feUrl = config.getProp(ConfigKey.frontendUrl);
             let fePort = config.getProp(ConfigKey.frontendPort);
 
-            if (person !== null) {
+            if (p !== null) {
                 // this is tricky; need to redirect to the client with a cookie being set on the connection
                 // only header method that worked for me
                 res.setHeader("Set-Cookie", "token=" + token);
@@ -275,7 +282,7 @@ export class AuthRoutes implements IREST {
                 if (feUrl.indexOf('//') > 0) {
                     feUrl = feUrl.substr(feUrl.indexOf('//') + 2, feUrl.length);
                 }
-                Log.trace("RouteHandler::authCallback(..) - /authCallback - redirect URL: " + feUrl);
+                Log.trace("RouteHandler::authCallback(..) - /authCallback - redirect homepage URL: " + feUrl);
 
                 res.redirect({
                     hostname: feUrl,
@@ -284,11 +291,12 @@ export class AuthRoutes implements IREST {
                     port:     fePort
                 }, next);
             } else {
-                Log.trace("RouteHandler::authCallback(..) - /authCallback - redirect (NO PERSON!) URL: " + feUrl);
-                // TODO: specify 'unknown user' error message (SDMM will always be true, but for future courses this won't be true)
+
+                Log.trace("RouteHandler::authCallback(..) - /authCallback - redirect logout URL: " + feUrl);
+
                 res.redirect({
                     hostname: feUrl,
-                    pathname: '/index.html',
+                    pathname: '/index.html', // TODO: This should redirect to some kind of 'invalid user' or 'not registered' page
                     port:     fePort
                 }, next);
             }

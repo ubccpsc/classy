@@ -5,6 +5,9 @@ import IREST from "./server/IREST";
 import SDMMREST from "./server/SDMM/SDMMREST";
 import CS340REST from "./server/340/CS340REST";
 import NoCustomRoutes from "./server/common/NoCustomRoutes";
+import {CourseController} from "./controllers/CourseController";
+import {SDMMController} from "./controllers/SDMM/SDMMController";
+import {GitHubController, IGitHubController} from "./controllers/GitHubController";
 
 export class Factory {
 
@@ -29,6 +32,27 @@ export class Factory {
             Log.error("Factory::getCustomRouteHandler() - unknown name: " + name);
         }
         return new NoCustomRoutes(); // default handler
+    }
+
+    public static getCourseController(ghController?: IGitHubController): CourseController {
+        const name = Factory.getName();
+
+        if (typeof ghController === 'undefined') {
+            ghController = new GitHubController();
+        } else {
+            // really only for testing
+            Log.trace("Factory::getCourseController() - using provided controller");
+        }
+
+        if (name === 'sdmm' || name === 'secapstonetest') {
+            return new SDMMController(ghController);
+        } else if (name === 'cs310' || name === 'classytest') {
+            return new CourseController(ghController);
+        } else if (name === 'cs340' || name === 'cpsc340') {
+            return new CourseController(ghController);
+        } else {
+            Log.error("Factory::getCourseController() - unknown name: " + name);
+        }
     }
 
     /**

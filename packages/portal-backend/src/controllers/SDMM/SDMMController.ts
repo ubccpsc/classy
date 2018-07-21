@@ -15,7 +15,6 @@ export class SDMMController extends CourseController {
         super(ghController);
     }
 
-
     /**
      * Performs a complete provisioning task for a given deliverable and set of people.
      *
@@ -714,7 +713,7 @@ export class SDMMController extends CourseController {
 
                 fName:  '',
                 lName:  '',
-                kind:   'student',
+                kind:   null,
                 URL:    'https://github.com/' + githubUsername, // HARDCODE
                 labId:  'UNKNOWN',
                 custom: {}

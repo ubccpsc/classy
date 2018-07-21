@@ -1,4 +1,4 @@
-import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
+import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {AutoTestGradeTransport, DeliverableTransport, StudentTransport} from '../../../common/types/PortalTypes';
 
@@ -128,6 +128,12 @@ export class CourseController { // don't implement ICourseController yet
         this.gh = ghController;
     }
 
+    /**
+     * This endpoint just lets subclasses change the behaviour for when users are unknown.
+     *
+     * @param {string} githubUsername
+     * @returns {Promise<Person | null>}
+     */
     public async handleUnknownUser(githubUsername: string): Promise<Person | null> {
         Log.info("CourseController::handleUnknownUser( " + githubUsername + " ) - person unknown; returning null");
 

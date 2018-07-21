@@ -46,10 +46,22 @@ export class PersonController {
     }
 
     /**
-     * Validates github username for the specified org.
+     * Finds the person based on their githubId.
      *
-     * This sets the Person.URL field, confirming that they have
-     * successfully logged in.
+     * @param {string} githubId
+     * @returns {Promise<Person | null>}
+     */
+    public async getGitHubPerson(githubId: string): Promise<Person | null> {
+        let person = await this.db.getGitHubPerson(githubId);
+        if (person === null) {
+            Log.trace("PersonController::getgetGitHubPersonPerson( " + githubId + " ) - unknown githubId");
+            return null;
+        }
+        return person;
+    }
+
+    /**
+     * Finds the person based on their id.
      *
      * @param {string} personId
      * @returns {boolean}
