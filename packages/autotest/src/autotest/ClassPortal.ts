@@ -20,7 +20,7 @@ export interface IClassPortal {
 
     /**
      *
-     * GET /admin/getDefaultDeliverable
+     * GET /portal/admin/getDefaultDeliverable
      *
      */
     getDefaultDeliverableId(): Promise<AutoTestDefaultDeliverableTransport | null>;
@@ -28,7 +28,7 @@ export interface IClassPortal {
     /**
      * Returns whether the username is privileged on the course.
      *
-     * GET /at/isStaff{:userId}
+     * GET /portal/at/isStaff{:userId}
      *
      * @param userName
      */
@@ -47,7 +47,7 @@ export interface IClassPortal {
      * if a grade should be saved (rather than portal-backend making the decision
      * about what grade should be saved).
      *
-     * POST at/grade
+     * POST /portal/at/grade
      */
     sendGrade(grade: AutoTestGradeTransport): Promise<Payload>;
 
@@ -57,7 +57,7 @@ export interface IClassPortal {
     /**
      * Send result for saving.
      *
-     * POST at/result
+     * POST /portal/at/result
      *
      * @param {IAutoTestResult} result
      * @returns {Promise<Payload>}
@@ -82,7 +82,7 @@ export class ClassPortal implements IClassPortal {
         const NO_ACCESS = {personId: userName, isStaff: false, isAdmin: false}; // if error, give no credentials
 
         try {
-            const url = this.host + ":" + this.port + "/at/isStaff/" + userName;
+            const url = this.host + ":" + this.port + "/portal/at/isStaff/" + userName;
             Log.info("ClassPortal::isStaff(..) - Sending request to " + url);
             const opts: rp.RequestPromiseOptions = {
                 rejectUnauthorized: false,
@@ -112,7 +112,7 @@ export class ClassPortal implements IClassPortal {
 
     public async getDefaultDeliverableId(): Promise<AutoTestDefaultDeliverableTransport | null> {
 
-        const url = this.host + ":" + this.port + "/at/defaultDeliverable";
+        const url = this.host + ":" + this.port + "/portal/at/defaultDeliverable";
         const opts: rp.RequestPromiseOptions = {
             rejectUnauthorized: false, headers: {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
@@ -135,7 +135,7 @@ export class ClassPortal implements IClassPortal {
     }
 
     public async getContainerDetails(delivId: string): Promise<AutoTestConfigTransport | null> {
-        const url = this.host + ":" + this.port + "/at/container/" + delivId;
+        const url = this.host + ":" + this.port + "/portal/at/container/" + delivId;
         const opts: rp.RequestPromiseOptions = {
             rejectUnauthorized: false, headers: {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
@@ -158,7 +158,7 @@ export class ClassPortal implements IClassPortal {
     }
 
     public async sendGrade(grade: AutoTestGradeTransport): Promise<Payload> { // really just a mechanism to report more verbose errors
-        const url = this.host + ":" + this.port + "/at/grade/";
+        const url = this.host + ":" + this.port + "/portal/at/grade/";
         const opts: rp.RequestPromiseOptions = {
             rejectUnauthorized: false, method: 'post', headers: {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
@@ -184,7 +184,7 @@ export class ClassPortal implements IClassPortal {
 
     public async sendResult(result: IAutoTestResult): Promise<Payload> { // really just a mechanism to report more verbose errors
 
-        const url = this.host + ":" + this.port + "/at/result/";
+        const url = this.host + ":" + this.port + "/portal/at/result/";
 
         let payload: AutoTestResultTransport = result;
 
@@ -215,7 +215,7 @@ export class ClassPortal implements IClassPortal {
 
     public async getResult(delivId: string, repoId: string): Promise<AutoTestResultTransport | null> {
         Log.info("ClassPortal::getResut( " + delivId + ", " + repoId + " ) - start");
-        const url = this.host + ":" + this.port + "/at/result/" + delivId + "/" + repoId;
+        const url = this.host + ":" + this.port + "/portal/at/result/" + delivId + "/" + repoId;
         const opts: rp.RequestPromiseOptions = {
             rejectUnauthorized: false,
             method:             'get',

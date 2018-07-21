@@ -25,12 +25,12 @@ export class AuthRoutes implements IREST {
         server.on('MethodNotAllowed', AuthRoutes.handlePreflight); // preflights cors requests
 
         // user endpoints
-        server.get('/getCredentials', AuthRoutes.getCredentials); // verify Classy credentials
-        server.get('/logout', AuthRoutes.getLogout);
+        server.get('/portal/getCredentials', AuthRoutes.getCredentials); // verify Classy credentials
+        server.get('/portal/logout', AuthRoutes.getLogout);
 
         // GitHub OAuth endpoints
-        server.get('/auth', AuthRoutes.getAuth); // start GitHub OAuth flow
-        server.get('/githubCallback', AuthRoutes.githubCallback); // finalize GitHub OAuth flow
+        server.get('/portal/auth', AuthRoutes.getAuth); // start GitHub OAuth flow
+        server.get('/portal/authCallback', AuthRoutes.githubCallback); // finalize GitHub OAuth flow
     }
 
     /**
@@ -162,7 +162,7 @@ export class AuthRoutes implements IREST {
 
         // const org = req.query.org;
         const name = config.getProp(ConfigKey.name);
-        const githubRedirect = config.getProp(ConfigKey.backendUrl) + ':' + config.getProp(ConfigKey.backendPort) + '/githubCallback?name=' + name;
+        const githubRedirect = config.getProp(ConfigKey.backendUrl) + ':' + config.getProp(ConfigKey.backendPort) + '/portal/authCallback?name=' + name;
         Log.info("AuthRouteHandler::getAuth(..) - /auth redirect; course: " + name + "; URL: " + githubRedirect);
 
         const setup = {
@@ -195,14 +195,14 @@ export class AuthRoutes implements IREST {
 
     /* istanbul ignore next */
     public static githubCallback(req: any, res: any, next: any) {
-        Log.trace("AuthRouteHandler::githubCallback(..) - /githubCallback - start");
+        Log.trace("AuthRouteHandler::githubCallback(..) - /portal/authCallback - start");
         const config = Config.getInstance();
         const personController = new PersonController();
 
         const backendUrl = config.getProp(ConfigKey.backendUrl);
         const backendPort = config.getProp(ConfigKey.backendPort);
         // TODO: do we need this redirect?
-        const githubRedirect = backendUrl + ':' + backendPort + '/githubCallback?name=' + config.getProp(ConfigKey.name);
+        const githubRedirect = backendUrl + ':' + backendPort + '/portal/authCallback?name=' + config.getProp(ConfigKey.name);
 
         Log.info('AuthRouteHandler::githubCallback(..) - / githubCallback; URL: ' + githubRedirect);
         const opts = {
@@ -239,10 +239,10 @@ export class AuthRoutes implements IREST {
             // associate a username with a token on the backend if needed
             return rp(options);
         }).then(function (ans) {
-            Log.info("AuthRouteHandler::githubCallback(..) - /githubCallback - GH username received");
+            Log.info("AuthRouteHandler::githubCallback(..) - /portal/authCallback - GH username received");
             const body = JSON.parse(ans);
             const username = body.login;
-            Log.info("AuthRouteHandler::githubCallback(..) - /githubCallback - GH username: " + username);
+            Log.info("AuthRouteHandler::githubCallback(..) - /portal/authCallback - GH username: " + username);
 
             // NOTE: this is not what you want for non micromasters
             // this will create a person every time

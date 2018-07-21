@@ -44,7 +44,7 @@ export class AdminDeliverablesTab {
         }
 
         const options = AdminView.getOptions();
-        const url = this.remote + '/admin/deliverables';
+        const url = this.remote + '/portal/admin/deliverables';
         const response = await fetch(url, options);
         UI.hideModal();
 
@@ -113,7 +113,7 @@ export class AdminDeliverablesTab {
             // UI.showModal('Retrieving ' + delivId + ' details'); // NOTE: not working on this screen
             //
             // const options = AdminView.getOptions();
-            // const url = this.remote + '/admin/deliverables';
+            // const url = this.remote + '/portal/admin/deliverables';
             // const response = await fetch(url, options);
             //
             // UI.hideModal();
@@ -337,7 +337,7 @@ export class AdminDeliverablesTab {
 
         Log.trace("AdminDeliverablesTab::save() - result: " + JSON.stringify(deliv));
 
-        const url = this.remote + '/admin/deliverable';
+        const url = this.remote + '/portal/admin/deliverable';
         let options: any = AdminView.getOptions();
         options.method = 'post';
         options.body = JSON.stringify(deliv);
@@ -383,7 +383,7 @@ export class AdminDeliverablesTab {
 
     public static async getDeliverables(remote: string): Promise<DeliverableTransport[]> {
         const options = AdminView.getOptions();
-        const url = remote + '/admin/deliverables';
+        const url = remote + '/portal/admin/deliverables';
         UI.showModal('Retrieving deliverables');
 
         const response = await fetch(url, options);

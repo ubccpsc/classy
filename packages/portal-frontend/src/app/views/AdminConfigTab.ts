@@ -89,7 +89,7 @@ export class AdminConfigTab {
 
     public async uploadClasslist(fileList: FileList) {
         Log.info('AdminView::uploadClasslist(..) - start');
-        const url = this.remote + '/admin/classlist';
+        const url = this.remote + '/portal/admin/classlist';
 
         UI.showModal('Uploading classlist.');
 
@@ -137,7 +137,7 @@ export class AdminConfigTab {
 
         Log.trace('AdminView::defaultDeliverablePressed(..) - value: ' + value);
 
-        const url = this.remote + '/admin/course';
+        const url = this.remote + '/portal/admin/course';
         let options: any = AdminView.getOptions();
         options.method = 'post';
         options.body = JSON.stringify(this.course);
@@ -160,7 +160,7 @@ export class AdminConfigTab {
 
         // get class options
         const options = AdminView.getOptions();
-        let url = remote + '/admin/course';
+        let url = remote + '/portal/admin/course';
         let response = await fetch(url, options);
 
         let courseOptions: CourseTransport = null;

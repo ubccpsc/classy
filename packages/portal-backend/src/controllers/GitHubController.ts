@@ -60,7 +60,7 @@ export class GitHubController implements IGitHubController {
      * @returns {Promise<Repository|null>}
      */
     public async createRepository(repoName: string, importUrl: string, path?: string): Promise<Repository | null> {
-        const WEBHOOKADDR = Config.getInstance().getProp(ConfigKey.backendUrl) + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/githubWebhook';
+        const WEBHOOKADDR = Config.getInstance().getProp(ConfigKey.backendUrl) + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/portal/githubWebhook';
 
         // still add staff team with push, just not students
 

@@ -66,7 +66,7 @@ describe('Admin Routes', function () {
 
         let response = null;
         let body: StudentTransportPayload;
-        const url = '/admin/students';
+        const url = '/portal/admin/students';
         try {
             response = await request(app).get(url).set({user: userName, token: userToken});
             body = response.body;
@@ -86,7 +86,7 @@ describe('Admin Routes', function () {
 
         let response = null;
         let body: StudentTransportPayload;
-        const url = '/admin/students';
+        const url = '/portal/admin/students';
         try {
             response = await request(app).get(url).set({user: Test.USERNAME1, token: userToken});
             body = response.body;
@@ -103,7 +103,7 @@ describe('Admin Routes', function () {
 
         let response = null;
         let body: DeliverableTransportPayload;
-        const url = '/admin/deliverables';
+        const url = '/portal/admin/deliverables';
         try {
             response = await request(app).get(url).set({user: userName, token: userToken});
             body = response.body;
@@ -125,7 +125,7 @@ describe('Admin Routes', function () {
 
         let response = null;
         let body: Payload;
-        const url = '/admin/deliverable';
+        const url = '/portal/admin/deliverable';
         try {
             const deliv: DeliverableTransport = {
                 id:                'd' + new Date().getTime(),
@@ -164,7 +164,7 @@ describe('Admin Routes', function () {
 
         let response = null;
         let body: Payload;
-        const url = '/admin/deliverable';
+        const url = '/portal/admin/deliverable';
         try {
             const deliv: DeliverableTransport = {
                 id:                null,
@@ -214,7 +214,7 @@ describe('Admin Routes', function () {
 
         let response = null;
         let body: Payload;
-        const url = '/admin/deliverable';
+        const url = '/portal/admin/deliverable';
         try {
             const deliv: DeliverableTransport = {
                 id:                'd' + new Date().getTime(),
@@ -255,7 +255,7 @@ describe('Admin Routes', function () {
         let body: Payload;
         const newTime = new Date().getTime();
         const dc = new DeliverablesController();
-        const url = '/admin/deliverable';
+        const url = '/portal/admin/deliverable';
         try {
             let originalDelivs = await dc.getAllDeliverables();
             const d0 = originalDelivs[0];
@@ -311,7 +311,7 @@ describe('Admin Routes', function () {
 
         let response = null;
         let body: Payload;
-        const url = '/admin/classlist';
+        const url = '/portal/admin/classlist';
         try {
             response = await request(app).post(url).attach('classlist', 'test/data/classlistValid.csv').set({
                 user:  userName,
@@ -333,7 +333,7 @@ describe('Admin Routes', function () {
 
         let response = null;
         let body: Payload;
-        const url = '/admin/classlist';
+        const url = '/portal/admin/classlist';
         try {
             response = await request(app).post(url).attach('classlist', 'test/data/classlistInvalid.csv').set({
                 user:  userName,
@@ -366,7 +366,7 @@ describe('Admin Routes', function () {
 
         let response = null;
         let body: CourseTransportPayload;
-        const url = '/admin/course';
+        const url = '/portal/admin/course';
         try {
             response = await request(app).get(url).set({user: userName, token: userToken});
             body = response.body;
@@ -384,7 +384,7 @@ describe('Admin Routes', function () {
 
         let response = null;
         let body: Payload;
-        const url = '/admin/course';
+        const url = '/portal/admin/course';
         try {
             const newId = Date.now() + 'id';
 

@@ -59,7 +59,7 @@ describe('SDMM Routes', function () {
         // NOTE: this subsumed valid uers checks since only valid users can have valid auth tokens
 
         let response = null;
-        const url = '/sdmm/currentStatus/';
+        const url = '/portal/sdmm/currentStatus/';
         try {
             const name = Config.getInstance().getProp(ConfigKey.name);
             response = await request(app).get(url).set({name: name, user: 'ivaliduserstatusrequest', token: 'testtoken'});
@@ -99,7 +99,7 @@ describe('SDMM Routes', function () {
         await pc.createPerson(PERSON1);
 
         let response = null;
-        const url = '/sdmm/currentStatus/';
+        const url = '/portal/sdmm/currentStatus/';
         try {
             const name = Config.getInstance().getProp(ConfigKey.name);
             response = await request(app).get(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
@@ -121,7 +121,7 @@ describe('SDMM Routes', function () {
     it('Should not be able perform an unknown action.', async function () {
 
         let response = null;
-        const url = '/sdmm/performAction/doRandomInvalidThing';
+        const url = '/portal/sdmm/performAction/doRandomInvalidThing';
         try {
             // const gha = new GitHubActions();
             // const deleted = await gha.deleteRepo('secap_user1'); // make sure the repo doesn't exist
@@ -141,7 +141,7 @@ describe('SDMM Routes', function () {
 
     it('Should fail to perform an action if the token is invalid.', async function () {
         let response = null;
-        const url = '/sdmm/performAction/provisionD0';
+        const url = '/portal/sdmm/performAction/provisionD0';
         try {
             const name = Config.getInstance().getProp(ConfigKey.name);
             response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAME1, token: 'SUPERinvalidTOKEN'});
@@ -159,7 +159,7 @@ describe('SDMM Routes', function () {
     it('Should fail to provision a d0 repo if one already exists.', async function () {
 
         let response = null;
-        const url = '/sdmm/performAction/provisionD0';
+        const url = '/portal/sdmm/performAction/provisionD0';
         const rc = new RepositoryController();
         let repo = null;
         try {
@@ -185,7 +185,7 @@ describe('SDMM Routes', function () {
     it('Should provision a d0 repo.', async function () {
 
         let response = null;
-        const url = '/sdmm/performAction/provisionD0';
+        const url = '/portal/sdmm/performAction/provisionD0';
         try {
             const gha = new GitHubActions();
             const deleted = await gha.deleteRepo('secap_user1'); // make sure the repo doesn't exist
@@ -207,7 +207,7 @@ describe('SDMM Routes', function () {
     it('Should not be able provision a d1 repo if their d0 grade is too low.', async function () {
 
         let response = null;
-        const url = '/sdmm/performAction/provisionD1individual';
+        const url = '/portal/sdmm/performAction/provisionD1individual';
         try {
             // const gha = new GitHubActions();
             // const deleted = await gha.deleteRepo('secap_user1'); // make sure the repo doesn't exist
@@ -228,7 +228,7 @@ describe('SDMM Routes', function () {
     it('Should be able provision a d1 individual repo.', async function () {
 
         let response = null;
-        const url = '/sdmm/performAction/provisionD1individual';
+        const url = '/portal/sdmm/performAction/provisionD1individual';
         try {
             // const gha = new GitHubActions();
             // const deleted = await gha.deleteRepo('secap_user1'); // make sure the repo doesn't exist
@@ -264,7 +264,7 @@ describe('SDMM Routes', function () {
     it('Should fail to provision a d1 team repo if both users are not known.', async function () {
 
         let response = null;
-        const url = '/sdmm/performAction/provisionD1team/somerandmomusernamethatdoesnotexist';
+        const url = '/portal/sdmm/performAction/provisionD1team/somerandmomusernamethatdoesnotexist';
         try {
             const gha = new GitHubActions();
             const deleted = await gha.deleteRepo('secap_user1'); // make sure the repo doesn't exist

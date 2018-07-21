@@ -86,30 +86,30 @@ export class CS310View implements IView {
         }
     }
 
-    public async fetchStatus(url: string): Promise<void> {
-        Log.info('CS310View::fetchStatus( ' + url + ' ) - start');
-
-        let options = this.getOptions();
-        let response = await fetch(url, options);
-        UI.hideModal();
-        if (response.status === 200) {
-            Log.trace('CS310View::fetchStatus(..) - 200 received');
-            let json = await response.json();
-            Log.trace('CS310View::fetchStatus(..) - payload: ' + JSON.stringify(json));
-
-            if (typeof json.success !== 'undefined') {
-                Log.trace('CS310View::fetchStatus(..) - status: ' + json.success.status);
-                // this.updateState(json.success); // StatusPayload
-            } else {
-                Log.trace('CS310View::fetchStatus(..) - ERROR: ' + json.failure.message);
-                this.showError(json.failure); // FailurePayload
-            }
-
-        } else {
-            Log.trace('CS310View::fetchStatus(..) - !200 received');
-        }
-        return;
-    }
+    // public async fetchStatus(url: string): Promise<void> {
+    //     Log.info('CS310View::fetchStatus( ' + url + ' ) - start');
+    //
+    //     let options = this.getOptions();
+    //     let response = await fetch(url, options);
+    //     UI.hideModal();
+    //     if (response.status === 200) {
+    //         Log.trace('CS310View::fetchStatus(..) - 200 received');
+    //         let json = await response.json();
+    //         Log.trace('CS310View::fetchStatus(..) - payload: ' + JSON.stringify(json));
+    //
+    //         if (typeof json.success !== 'undefined') {
+    //             Log.trace('CS310View::fetchStatus(..) - status: ' + json.success.status);
+    //             // this.updateState(json.success); // StatusPayload
+    //         } else {
+    //             Log.trace('CS310View::fetchStatus(..) - ERROR: ' + json.failure.message);
+    //             this.showError(json.failure); // FailurePayload
+    //         }
+    //
+    //     } else {
+    //         Log.trace('CS310View::fetchStatus(..) - !200 received');
+    //     }
+    //     return;
+    // }
 
 
     public showError(failure: any) { // FailurePayload

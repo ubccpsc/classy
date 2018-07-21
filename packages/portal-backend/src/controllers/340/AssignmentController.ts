@@ -105,7 +105,7 @@ export class AssignmentController {
         let seedURL = assignInfo.seedRepoURL;
         let seedPath = assignInfo.seedRepoPath;
         const WEBHOOKADDR = Config.getInstance().getProp(ConfigKey.backendUrl) + ':'
-            + Config.getInstance().getProp(ConfigKey.backendPort) + '/githubWebhook';
+            + Config.getInstance().getProp(ConfigKey.backendPort) + '/portal/githubWebhook';
 
         // attempt to provision the repository
         let provisionAttempt: boolean;

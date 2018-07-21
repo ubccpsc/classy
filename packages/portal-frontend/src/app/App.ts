@@ -85,6 +85,7 @@ export class App {
 
                 if (that.view === null) {
                     let v: IView = null;
+                    Log.info("App::init() - init; null view; pageName: " + pageName);
                     if (pageName === 'AdminRoot') {
                         // initializing tabs page for the first time
                         Log.info("App::init() - AdminRoot init; attaching view");
@@ -117,7 +118,7 @@ export class App {
 
                     (document.querySelector('#loginButton') as OnsButtonElement).onclick = function () {
                         // localStorage.setItem('org', org);
-                        const url = that.backendURL + '/auth/?name=' + name;
+                        const url = that.backendURL + '/portal/auth/?name=' + name;
                         Log.trace('App::init()::init - login pressed for: ' + name + '; url: ' + url);
                         window.location.replace(url);
                     };
@@ -221,7 +222,7 @@ export class App {
         const user = localStorage.getItem('user'); // null if missing
         const token = localStorage.getItem('token'); // null if missing
 
-        const url = this.backendURL + '/logout';
+        const url = this.backendURL + '/portal/logout';
         Log.trace('App::clearCredentials( ' + user + '...) - start; url: ' + url);
 
         const name = Factory.getInstance().getName();
@@ -294,7 +295,7 @@ export class App {
      * @returns {Promise<{}>}
      */
     private getServerCredentials(username: string, token: string): Promise<AuthTransportPayload> {
-        const url = this.backendURL + '/getCredentials';
+        const url = this.backendURL + '/portal/getCredentials';
         Log.trace('App::getServerCredentials( ' + username + '...) - start; url: ' + url);
         const that = this;
 
@@ -336,7 +337,7 @@ export class App {
     };
 
     private async retrieveConfig(): Promise<ConfigTransport> {
-        const url = this.backendURL + '/config';
+        const url = this.backendURL + '/portal/config';
         Log.trace("App::retrieveConfig() - start; url: " + url);
 
         const options = {
@@ -460,5 +461,3 @@ if (typeof classportal === 'undefined') {
     Log.error("App.ts - init ERROR: " + err);
 });
 Log.info('App.ts - App prepared');
-
-

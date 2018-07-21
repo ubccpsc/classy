@@ -32,14 +32,14 @@ export default class AdminRoutes implements IREST {
         // NOTHING
 
         // visible to all privileged users
-        server.get('/admin/students', AdminRoutes.isPrivileged, AdminRoutes.getStudents);
-        server.get('/admin/deliverables', AdminRoutes.isPrivileged, AdminRoutes.getDeliverables);
-        server.get('/admin/course', AdminRoutes.isPrivileged, AdminRoutes.getCourse);
+        server.get('/portal/admin/students', AdminRoutes.isPrivileged, AdminRoutes.getStudents);
+        server.get('/portal/admin/deliverables', AdminRoutes.isPrivileged, AdminRoutes.getDeliverables);
+        server.get('/portal/admin/course', AdminRoutes.isPrivileged, AdminRoutes.getCourse);
 
         // admin-only functions
-        server.post('/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
-        server.post('/admin/deliverable', AdminRoutes.isAdmin, AdminRoutes.postDeliverable);
-        server.post('/admin/course', AdminRoutes.isAdmin, AdminRoutes.postCourse);
+        server.post('/portal/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
+        server.post('/portal/admin/deliverable', AdminRoutes.isAdmin, AdminRoutes.postDeliverable);
+        server.post('/portal/admin/course', AdminRoutes.isAdmin, AdminRoutes.postCourse);
     }
 
     /**

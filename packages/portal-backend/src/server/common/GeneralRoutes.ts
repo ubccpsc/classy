@@ -15,7 +15,7 @@ export default class GeneralRoutes implements IREST {
 
         // returns the org that the backend is currently configured to serve
         // mainly used by the frontend so it uses the correct UI
-        server.get('/config', GeneralRoutes.getConfig);
+        server.get('/portal/config', GeneralRoutes.getConfig);
     }
 
     public static getConfig(req: any, res: any, next: any) {

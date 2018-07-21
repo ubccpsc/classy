@@ -55,7 +55,7 @@ describe('Auth Routes', function () {
 
         let response = null;
         let body: AuthTransportPayload;
-        const url = '/getCredentials';
+        const url = '/portal/getCredentials';
         try {
             Log.test('Making request');
             response = await request(app).get(url).set('user', auth.personId).set('token', auth.token);
@@ -82,7 +82,7 @@ describe('Auth Routes', function () {
 
         let response = null;
         let body: AuthTransportPayload;
-        const url = '/getCredentials';
+        const url = '/portal/getCredentials';
         try {
             Log.test('Making request');
             response = await request(app).get(url).set('user', auth.personId).set('token', auth.token);
@@ -109,7 +109,7 @@ describe('Auth Routes', function () {
 
         let response = null;
         let body: AuthTransportPayload;
-        const url = '/getCredentials';
+        const url = '/portal/getCredentials';
         try {
             response = await request(app).get(url).set('user', auth.personId).set('token', 'totallyINVALIDtoken');
             body = response.body;
@@ -130,7 +130,7 @@ describe('Auth Routes', function () {
 
         let response = null;
         let body: AuthTransportPayload;
-        const url = '/logout';
+        const url = '/portal/logout';
         try {
             Log.test('Making request');
             response = await request(app).get(url).set('user', auth.personId).set('token', auth.token);
@@ -165,7 +165,7 @@ describe('Auth Routes', function () {
 
         let response = null;
         let body: AuthTransportPayload;
-        const url = '/logout';
+        const url = '/portal/logout';
         try {
             Log.test('Making undefined token request');
             // undefined token
@@ -217,7 +217,7 @@ describe('Auth Routes', function () {
 
         let response = null;
         let body: AuthTransportPayload;
-        const url = '/logout';
+        const url = '/portal/logout';
         try {
             Log.test('Making undefined user request');
             // undefined user

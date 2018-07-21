@@ -60,7 +60,7 @@ describe('AutoTest Routes', function () {
     it('Should reject an unauthorized defaultDeliverable request', async function () {
 
         let response = null;
-        const url = '/at/defaultDeliverable/';
+        const url = '/portal/at/defaultDeliverable/';
         let body = null;
         try {
             response = await request(app).get(url).set('token', 'INVALID');
@@ -79,7 +79,7 @@ describe('AutoTest Routes', function () {
 
         let response = null;
         let body: AutoTestDefaultDeliverablePayload;
-        const url = '/at/defaultDeliverable/';
+        const url = '/portal/at/defaultDeliverable/';
         try {
             response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
@@ -95,7 +95,7 @@ describe('AutoTest Routes', function () {
     it('Should reject an authorized result', async function () {
 
         let response = null;
-        const url = '/at/result/';
+        const url = '/portal/at/result/';
 
         let body = null;
         try {
@@ -114,7 +114,7 @@ describe('AutoTest Routes', function () {
     it('Should accept a valid result payload', async function () {
 
         let response = null;
-        const url = '/at/result/';
+        const url = '/portal/at/result/';
 
         const body = { // : IAutoTestResult
             delivId:   Test.DELIVID0,
@@ -140,7 +140,7 @@ describe('AutoTest Routes', function () {
     it('Should reject an invalid result payload', async function () {
 
         let response = null;
-        const url = '/at/result/';
+        const url = '/portal/at/result/';
 
         const body = { // : IAutoTestResult
             delivId:   Test.DELIVID0,
@@ -169,7 +169,7 @@ describe('AutoTest Routes', function () {
     it('Should respond to a valid result request', async function () {
 
         let response = null;
-        const url = '/at/result/' + Test.DELIVID0 + '/' + Test.REPONAME1;
+        const url = '/portal/at/result/' + Test.DELIVID0 + '/' + Test.REPONAME1;
         let body = null;
         try {
             response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
@@ -187,7 +187,7 @@ describe('AutoTest Routes', function () {
     it('Should reject an unauthorized result request', async function () {
 
         let response = null;
-        const url = '/at/result/' + Test.DELIVID0 + '/' + Test.REPONAME1;
+        const url = '/portal/at/result/' + Test.DELIVID0 + '/' + Test.REPONAME1;
         let body = null;
         try {
             response = await request(app).get(url).set('token', 'INVALID');
@@ -206,7 +206,7 @@ describe('AutoTest Routes', function () {
     it('Should reject an unauthorized isStaff request', async function () {
 
         let response = null;
-        const url = '/at/isStaff/rtholmes';
+        const url = '/portal/at/isStaff/rtholmes';
         let body = null;
         try {
             response = await request(app).get(url).set('token', 'INVALID');
@@ -225,7 +225,7 @@ describe('AutoTest Routes', function () {
 
         let response = null;
         let body: AutoTestAuthPayload;
-        const url = '/at/isStaff/rtholmes';
+        const url = '/portal/at/isStaff/rtholmes';
         try {
             response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
@@ -244,7 +244,7 @@ describe('AutoTest Routes', function () {
 
         let response = null;
         let body: AutoTestAuthPayload;
-        const url = '/at/isStaff/INVALIDUSERNAME';
+        const url = '/portal/at/isStaff/INVALIDUSERNAME';
         try {
             response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
@@ -263,7 +263,7 @@ describe('AutoTest Routes', function () {
     it('Should reject an unauthorized container request', async function () {
 
         let response = null;
-        const url = '/at/container/d0';
+        const url = '/portal/at/container/d0';
         let body = null;
         try {
             response = await request(app).get(url).set('token', 'INVALID');
@@ -282,7 +282,7 @@ describe('AutoTest Routes', function () {
     it('Should respond to a valid container request for a deliverable', async function () {
 
         let response = null;
-        const url = '/at/container/d0';
+        const url = '/portal/at/container/d0';
         let body: AutoTestConfigPayload;
         try {
             response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
@@ -303,7 +303,7 @@ describe('AutoTest Routes', function () {
     it('Should respond to an invalid container request', async function () {
 
         let response = null;
-        const url = '/at/container/d9997';
+        const url = '/portal/at/container/d9997';
         let body: AutoTestConfigPayload;
         try {
             response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
@@ -321,7 +321,7 @@ describe('AutoTest Routes', function () {
     it('Should reject an unauthorized grade request', async function () {
 
         let response = null;
-        const url = '/at/grade';
+        const url = '/portal/at/grade';
         let body = null;
         try {
             response = await request(app).post(url).send({}).set('token', 'INVALID');
@@ -352,7 +352,7 @@ describe('AutoTest Routes', function () {
             custom:    {}
         };
 
-        const url = '/at/grade/';
+        const url = '/portal/at/grade/';
         try {
             response = await request(app).post(url).send(gradePayload).set('Accept', 'application/json').set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
         } catch (err) {
@@ -382,7 +382,7 @@ describe('AutoTest Routes', function () {
 
         delete gradePayload.score; // remove field
 
-        const url = '/at/grade/';
+        const url = '/portal/at/grade/';
         try {
             response = await request(app).post(url).send(gradePayload).set('Accept', 'application/json').set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
         } catch (err) {
@@ -399,7 +399,7 @@ describe('AutoTest Routes', function () {
 
         let body = fs.readJSONSync("../../packages/autotest/test/githubEvents/push_master-branch.json"); // __dirname
 
-        const url = '/githubWebhook';
+        const url = '/portal/githubWebhook';
         try {
             response = await request(app).post(url).send(body).set('Accept', 'application/json').set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
         } catch (err) {

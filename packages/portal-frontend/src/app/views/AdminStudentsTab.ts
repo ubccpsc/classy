@@ -28,7 +28,7 @@ export class AdminStudentsTab {
         }
 
         const options = AdminView.getOptions();
-        const url = this.remote + '/admin/students';
+        const url = this.remote + '/portal/admin/students';
         const response = await fetch(url, options);
         UI.hideModal();
         if (response.status === 200) {

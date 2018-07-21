@@ -3,10 +3,6 @@
  */
 import Log from "../../../../common/Log";
 
-// import 'whatwg-fetch';
-// import {IsAuthenticatedResponse} from '../Models';
-
-
 export class AuthHelper {
 
     private backendURL: string;
@@ -53,7 +49,7 @@ export class AuthHelper {
 
     private getCurrentUser(): Promise<object> {
         let that = this;
-        let url = that.backendURL + 'currentUser';
+        let url = that.backendURL + '/portal/currentUser'; // TODO: what is this route???
         Log.trace('AuthHelper::getCurrentUser( ' + url + ' ) - start');
 
         return fetch(url, that.OPTIONS_HTTP_GET).then((data: any) => {
@@ -74,7 +70,7 @@ export class AuthHelper {
 
     private isLoggedIn(): Promise<object> {
         let that = this;
-        let url = that.backendURL + 'isAuthenticated';
+        let url = that.backendURL + '/portal/isAuthenticated'; // TODO: what is this route???
         Log.trace('AuthHelper::isLoggedIn( ' + url + ' ) - start');
         const AUTHORIZED_STATUS: string = 'authorized';
         let authStatus = String(localStorage.getItem('authStatus'));

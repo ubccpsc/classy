@@ -47,7 +47,7 @@ describe('General Routes', function () {
 
         let response = null;
         let body: ConfigTransportPayload;
-        const url = '/config';
+        const url = '/portal/config';
         try {
             response = await request(app).get(url);
             body = response.body;

@@ -27,16 +27,16 @@ export class AutoTestRoutes implements IREST {
     public registerRoutes(server: restify.Server) {
         Log.info('AutoTestRouteHandler::registerRoutes() - start');
 
-        server.get('/at/defaultDeliverable', AutoTestRoutes.atDefaultDeliverable);
-        server.get('/at/isStaff/:personId', AutoTestRoutes.atIsStaff);
-        server.get('/at/container/:delivId', AutoTestRoutes.atContainerDetails);
+        server.get('/portal/at/defaultDeliverable', AutoTestRoutes.atDefaultDeliverable);
+        server.get('/portal/at/isStaff/:personId', AutoTestRoutes.atIsStaff);
+        server.get('/portal/at/container/:delivId', AutoTestRoutes.atContainerDetails);
 
-        server.post('/at/grade/', AutoTestRoutes.atGrade);
+        server.post('/portal/at/grade/', AutoTestRoutes.atGrade);
 
-        server.post('/at/result/', AutoTestRoutes.atPostResult);
-        server.get('/at/result/:delivId/:repoId', AutoTestRoutes.atGetResult);
+        server.post('/portal/at/result/', AutoTestRoutes.atPostResult);
+        server.get('/portal/at/result/:delivId/:repoId', AutoTestRoutes.atGetResult);
 
-        server.post('/githubWebhook', AutoTestRoutes.githubWebhook); // forward GitHub Webhooks to AutoTest
+        server.post('/portal/githubWebhook', AutoTestRoutes.githubWebhook); // forward GitHub Webhooks to AutoTest
     }
 
     public static atContainerDetails(req: any, res: any, next: any) {
@@ -235,7 +235,7 @@ export class AutoTestRoutes implements IREST {
 
         // TODO: is there any way to verify this actually came from GitHub?
 
-        const url = Config.getInstance().getProp(ConfigKey.autotestUrl) + ':' + Config.getInstance().getProp(ConfigKey.autotestPort) + '/githubWebhook';
+        const url = Config.getInstance().getProp(ConfigKey.autotestUrl) + ':' + Config.getInstance().getProp(ConfigKey.autotestPort) + '/portal/githubWebhook';
         const options = {
             uri:     url,
             method:  'POST',
