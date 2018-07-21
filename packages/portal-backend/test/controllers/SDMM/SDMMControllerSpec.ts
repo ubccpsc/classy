@@ -598,5 +598,30 @@ describe("SDDM: SDMMController", () => {
         // expect(allTeams[0].custom.sdmmd1).to.be.false;
     });
 
+    it("Should not be able to provision a d1 team with more than two people.", async () => {
+        let payload = null;
+        let ex = null;
+        try {
+            payload = await sc.provision(Test.DELIVID1, [data.PERSON1.id, data.PERSON2.id, data.PERSON3.id]);
+        } catch (err) {
+            ex = err;
+        }
+        expect(payload).to.be.null;
+        expect(ex).to.not.be.null;
+        expect(ex.message).to.equal('D1 can only be performed by single students or pairs of students.');
+    });
+
+    it("Should not be able to provision a deliverable (d2) that does not need to be provisioned.", async () => {
+        let payload = null;
+        let ex = null;
+        try {
+            payload = await sc.provision(Test.DELIVID2, [data.PERSON1.id, data.PERSON2.id]);
+        } catch (err) {
+            ex = err;
+        }
+        expect(payload).to.be.null;
+        expect(ex).to.not.be.null;
+        expect(ex.message).to.equal('Repo not needed; contact course staff.');
+    });
 
 });

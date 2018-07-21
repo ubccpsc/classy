@@ -201,7 +201,7 @@ describe('SDMM Routes', function () {
 
         expect(response.body.success).to.not.be.undefined;
         expect(response.body.success.message).to.equal('Repository successfully created.');
-    }).timeout(1000 * 30);
+    }).timeout(1000 * 60);
 
 
     it('Should not be able provision a d1 repo if their d0 grade is too low.', async function () {

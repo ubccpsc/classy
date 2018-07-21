@@ -10,6 +10,15 @@ import {GradePayload, Payload, SDMMStatus, StatusPayload} from "../../../../comm
 import Util from "../../../../common/Util";
 import {PersonController} from "../PersonController";
 
+/**
+ * Handles the SDMM course. This controller is different than for other courses because the SDMM
+ * is self-paced. This means learners need to be able to be created and provision repositories
+ * on demand based on their performance in the course.
+ *
+ * The controller is also somewhat more defensive than is normal because the SDMM is open to
+ * anyone on the internet, so we are a bit more careful about validating the inputs being
+ * provided to the backend than we might normally for a course being offered on campus.
+ */
 export class SDMMController extends CourseController {
 
     public constructor(ghController: IGitHubController) {
@@ -27,12 +36,6 @@ export class SDMMController extends CourseController {
         Log.info("SDMMController::provision( " + delivId + ", ... ) - start");
 
         try {
-            const name = Config.getInstance().getProp(ConfigKey.name);
-            if (name !== ConfigCourses.sdmm && name !== ConfigCourses.classytest) {
-                Log.error("SDMMController::provision(..) - SDMMController should not be used for other courses");
-                throw new Error("Invalid course; contact course staff.");
-            }
-
             if (peopleIds.length < 1) {
                 Log.error("SDMMController::provision(..) - there needs to be at least one person on a repo");
                 throw new Error("Invalid # of people; contact course staff.");
@@ -71,14 +74,13 @@ export class SDMMController extends CourseController {
             Log.error("SDMMController::provision(..) - ERROR: " + err);
             throw new Error(err.message);
         }
-
     }
 
     /**
      *
      * This confirms the SDMM status. The approach is conservative (and hence slow).
      *
-     * TODO: try to use checkStatus first to speed itself up.
+     * NOTE: we can try to use checkStatus first to speed itself up if performance ends up being problematic.
      *
      * Status chain:
      *
@@ -674,39 +676,32 @@ export class SDMMController extends CourseController {
      * @returns {Promise<Person | null>}
      */
     public async handleUnknownUser(githubUsername: string): Promise<Person | null> {
-        const name = Config.getInstance().getProp(ConfigKey.name);
         Log.info("SDDMController::handleUnknownUser( " + githubUsername + " ) - start");
-        if (name === ConfigCourses.sdmm || name === ConfigCourses.classytest) {
-            Log.info("SDDMController::handleUnknownUser(..) - new person for this course; - provisioning");
 
-            // in the secapstone we don't know who the students are in advance
-            // in this case, we will create Person objects on demand
+        // in the secapstone we don't know who the students are in advance
+        // in this case, we will create Person objects on demand
 
-            // make person
-            let newPerson: Person = {
-                id:            githubUsername,
-                csId:          githubUsername, // sdmm doesn't have these
-                githubId:      githubUsername,
-                studentNumber: null,
+        // make person
+        let newPerson: Person = {
+            id:            githubUsername,
+            csId:          githubUsername, // sdmm doesn't have these
+            githubId:      githubUsername,
+            studentNumber: null,
 
-                fName:  '',
-                lName:  '',
-                kind:   null,
-                URL:    'https://github.com/' + githubUsername, // HARDCODE
-                labId:  'UNKNOWN',
-                custom: {}
-            };
+            fName:  '',
+            lName:  '',
+            kind:   null,
+            URL:    'https://github.com/' + githubUsername, // HARDCODE
+            labId:  'UNKNOWN',
+            custom: {}
+        };
 
-            newPerson.custom.sdmmStatus = 'd0pre'; // new users always start in d0pre state
+        newPerson.custom.sdmmStatus = 'd0pre'; // new users always start in d0pre state
 
-            const pc = new PersonController();
-            newPerson = await pc.createPerson(newPerson);
+        const pc = new PersonController();
+        newPerson = await pc.createPerson(newPerson);
 
-            return newPerson;
-        }
-
-        Log.error("SDDMController::handleUnknownUser() - not a SDDM course");
-        return null;
+        return newPerson;
     }
 
     /**
