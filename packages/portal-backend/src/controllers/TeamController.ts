@@ -37,25 +37,21 @@ export class TeamController {
 
     public async createTeam(name: string, people: Person[], custom: any): Promise<Team | null> {
         Log.info("TeamController::createTeam( " + name + ",.. ) - start");
-        try {
-            let existingTeam = await this.getTeam(name);
-            if (existingTeam === null) {
-                let peopleIds: string[] = people.map(person => person.id);
-                const team: Team = {
-                    id:        name,
-                    URL:       null,
-                    personIds: peopleIds,
-                    custom:    custom
-                };
-                await this.db.writeTeam(team);
-                return await this.db.getTeam(name);
-            } else {
-                Log.info("TeamController::createTeam( " + name + ",.. ) - team exists: " + JSON.stringify(existingTeam));
-                return await this.db.getTeam(name);
-            }
-        } catch (err) {
-            Log.error("TeamController::createTeam(..) - ERROR: " + err);
-            return null;
+
+        let existingTeam = await this.getTeam(name);
+        if (existingTeam === null) {
+            let peopleIds: string[] = people.map(person => person.id);
+            const team: Team = {
+                id:        name,
+                URL:       null,
+                personIds: peopleIds,
+                custom:    custom
+            };
+            await this.db.writeTeam(team);
+            return await this.db.getTeam(name);
+        } else {
+            Log.info("TeamController::createTeam( " + name + ",.. ) - team exists: " + JSON.stringify(existingTeam));
+            return await this.db.getTeam(name);
         }
     }
 

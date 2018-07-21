@@ -106,7 +106,39 @@ describe("GradeController", () => {
         expect(deliv).to.not.be.null;
         expect(deliv).to.be.an('string');
 
-        // more here
+        data = <AutoTestGradeTransport>{delivId: 'd0', score: 100, comment: 'comment', urlName: 'urlName'};
+        deliv = await gc.validateAutoTestGrade(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        data = <AutoTestGradeTransport>{delivId: 'd0', score: 100, comment: 'comment', urlName: 'urlName', URL: 'http://url'};
+        deliv = await gc.validateAutoTestGrade(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        data = <AutoTestGradeTransport>{
+            delivId:   'd0',
+            score:     100,
+            comment:   'comment',
+            urlName:   'urlName',
+            URL:       'http://url',
+            timestamp: Date.now()
+        };
+        deliv = await gc.validateAutoTestGrade(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        data = <AutoTestGradeTransport>{
+            delivId:   'd0',
+            score:     100,
+            comment:   'comment',
+            urlName:   'urlName',
+            URL:       'http://url',
+            timestamp: Date.now(),
+            custom:    {}
+        };
+        deliv = await gc.validateAutoTestGrade(data);
+        expect(deliv).to.be.null;
     });
 
 });

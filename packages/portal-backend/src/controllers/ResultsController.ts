@@ -12,7 +12,7 @@ export class ResultsController {
     public async getAllResults(): Promise<Result[]> {
         Log.info("ResultsController::getAllResults() - start");
 
-        let results = await this.db.getResults();
+        const results = await this.db.getResults();
         return results;
     }
 
@@ -29,7 +29,7 @@ export class ResultsController {
     // TODO: need to be able to associate a result row with a person or team?
     // rc.createResult(resultRecord.delivId, resultRecord.repoId, resultRecord.input, resultRecord.output).then(function (success) {÷
     public async createResult(record: IAutoTestResult): Promise<boolean> {
-        Log.info("ResultController::createResult(..) - start");
+        Log.info("ResultsController::createResult(..) - start");
         Log.trace("GradesController::createResult(..) - payload: " + JSON.stringify(record));
 
         const rc = new RepositoryController();
@@ -38,18 +38,15 @@ export class ResultsController {
         (<any>record).people = people; // don't know how to augment this record with people to keep the type system happy
 
         let outcome = await DatabaseController.getInstance().writeResult(<Result>record);
-        Log.trace("ResultController::createResult(..) - result written");
+        Log.trace("ResultsController::createResult(..) - result written");
         return outcome;
     }
 
     public async getResult(delivId: string, repoId: string): Promise<IAutoTestResult | null> {
-        Log.info("ResultController::getResult( " + delivId + ", " + repoId + " ) - start");
-        try {
-            let outcome = await DatabaseController.getInstance().getResult(delivId, repoId);
-            return outcome;
-        } catch (err) {
-            return null;
-        }
+        Log.info("ResultsController::getResult( " + delivId + ", " + repoId + " ) - start");
+
+        const outcome = await DatabaseController.getInstance().getResult(delivId, repoId);
+        return outcome;
     }
 
     /**
@@ -75,7 +72,7 @@ export class ResultsController {
             return msg;
         }
 
-        // just rudimentary checking
+        // rudimentary checking
 
         // delivId: string; // (already in input)
         if (typeof record.delivId === 'undefined') {
@@ -121,9 +118,6 @@ export class ResultsController {
         }
 
         Log.info('ResultsController::validateAutoTestResult(..) - done; object is valid');
-
         return null;
     }
-
-
 }
