@@ -158,27 +158,19 @@ export class AuthRoutes implements IREST {
     /* istanbul ignore next */
     public static getAuth(req: any, res: any, next: any) {
         Log.trace("AuthRouteHandler::getAuth(..) - /auth redirect start");
+
         let config = Config.getInstance();
-
-        // const org = req.query.org;
-        const name = config.getProp(ConfigKey.name);
-        // NICK: this seems like it might cause problems with the router:
-        const githubRedirect = config.getProp(ConfigKey.backendUrl) + ':' + config.getProp(ConfigKey.backendPort) + '/authCallback?name=' + name;
-        Log.info("AuthRouteHandler::getAuth(..) - /auth redirect; course: " + name + "; URL: " + githubRedirect);
-
         const setup = {
             clientId:         config.getProp(ConfigKey.githubClientId),
             clientSecret:     config.getProp(ConfigKey.githubClientSecret),
             accessTokenUri:   config.getProp(ConfigKey.githubHost) + '/login/oauth/access_token',
             authorizationUri: config.getProp(ConfigKey.githubHost) + '/login/oauth/authorize',
-            redirectUri:      githubRedirect,
             scopes:           ['']
         };
 
         const githubAuth = new ClientOAuth2(setup);
-
         const uri = githubAuth.code.getUri();
-        Log.trace("AuthRouteHandler::getAuth(..) - /auth uri: " + uri);
+        Log.info("AuthRouteHandler::getAuth(..) - /auth uri: " + uri + "; setup: " + JSON.stringify(setup));
         res.redirect(uri, next);
     }
 
@@ -196,34 +188,25 @@ export class AuthRoutes implements IREST {
 
     /* istanbul ignore next */
     public static authCallback(req: any, res: any, next: any) {
-        Log.trace("AuthRouteHandler::authCallback(..) - /portal/authCallback - start");
+        Log.trace("AuthRouteHandler::authCallback(..) - /authCallback - start");
         const config = Config.getInstance();
         const personController = new PersonController();
 
         Log.trace('req: ' + req + '; res: ' + res + '; next: ' + next);
 
-        const backendUrl = config.getProp(ConfigKey.backendUrl);
-        const backendPort = config.getProp(ConfigKey.backendPort);
-        // TODO: do we need this redirect?
-        // NICK: this lookls like it might cause problems with the router:
-        const githubRedirect = backendUrl + ':' + backendPort + '/authCallback?name=' + config.getProp(ConfigKey.name);
-
-        Log.info('AuthRouteHandler::authCallback(..) - / authCallback; URL: ' + githubRedirect);
         const opts = {
             clientId:         config.getProp(ConfigKey.githubClientId),
             clientSecret:     config.getProp(ConfigKey.githubClientSecret),
             accessTokenUri:   config.getProp(ConfigKey.githubHost) + '/login/oauth/access_token',
             authorizationUri: config.getProp(ConfigKey.githubHost) + '/login/oauth/authorize',
-            redirectUri:      githubRedirect,
             scopes:           ['']
         };
 
         const githubAuth = new ClientOAuth2(opts);
-
         let token: string | null = null;
         let p: Person = null;
 
-        // Log.info('RouteHandler::githubCallback(..) - opts: ' + JSON.stringify(opts));
+        Log.trace("AuthRouteHandler::authCallback(..) - /authCallback - setup: " + JSON.stringify(opts));
 
         githubAuth.code.getToken(req.url).then(function (user) {
             Log.trace("AuthRouteHandler::authCallback(..) - token acquired");
