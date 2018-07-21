@@ -27,17 +27,11 @@ export class App {
 
         // configure the frontend and backend URLs
         // uses the browser location and figures it out from there
-        // means the backend must run on the same host as the frontend
-        // but with port 5000
         // TODO: this will need to be tested better before putting it into production
         let location = window.location.href;
         location = location.substr(0, location.indexOf('/', 10)); // peel off anything after the host/port
         this.frontendURL = location;
-        if (location.indexOf('3000') > 0) {
-            this.backendURL = location.replace('3000', '5000');
-        } else {
-            this.backendURL = location + ':5000/';
-        }
+        this.backendURL = location;
 
         Log.trace('App::<init> - frontend: ' + this.frontendURL);
         Log.trace('App::<init> - backend: ' + this.backendURL);
