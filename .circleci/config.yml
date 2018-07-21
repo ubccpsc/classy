@@ -58,11 +58,11 @@ jobs:
             name: Configuring SSL-2
 
       - run:
-            command: cd packages/common && ../../node_modules/typescript/bin/tsc
+            command: cd packages/common && yarn tsc
             name: Building common
 
       - run:
-            command: cd packages/portal/backend && ../../node_modules/typescript/bin/tsc
+            command: cd packages/portal/backend && yarn tsc
             name: Building backend
 
       - run:
