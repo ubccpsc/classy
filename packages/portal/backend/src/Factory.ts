@@ -1,5 +1,5 @@
-import Config, {ConfigKey} from "../../common/Config";
-import Log from "../../common/Log";
+import Config, {ConfigKey} from "../../../common/Config";
+import Log from "../../../common/Log";
 
 import IREST from "./server/IREST";
 import SDMMREST from "./server/SDMM/SDMMREST";

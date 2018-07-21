@@ -4,8 +4,8 @@ import "mocha";
 import {Test} from "../GlobalSpec";
 
 import {GradesController} from "../../src/controllers/GradesController";
-import {GradePayload} from "../../../common/types/SDMMTypes";
-import {AutoTestGradeTransport} from "../../../common/types/PortalTypes";
+import {GradePayload} from "../../../../common/types/SDMMTypes";
+import {AutoTestGradeTransport} from "../../../../common/types/PortalTypes";
 
 const loadFirst = require('../GlobalSpec');
 const rFirst = require('./RepositoryControllerSpec');

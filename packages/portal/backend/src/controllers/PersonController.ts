@@ -1,8 +1,8 @@
-import Log from "../../../common/Log";
+import Log from "../../../../common/Log";
 
 import {DatabaseController} from "./DatabaseController";
 import {Person, Repository} from "../Types";
-import Util from "../../../common/Util";
+import Util from "../../../../common/Util";
 
 export class PersonController {
 

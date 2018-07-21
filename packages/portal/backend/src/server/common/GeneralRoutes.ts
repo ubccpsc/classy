@@ -1,9 +1,9 @@
 import restify = require('restify');
-import Log from "../../../../common/Log";
+import Log from "../../../../../common/Log";
 
 import IREST from "../IREST";
-import {ConfigTransportPayload} from '../../../../common/types/PortalTypes';
-import Config, {ConfigKey} from '../../../../common/Config';
+import {ConfigTransportPayload} from '../../../../../common/types/PortalTypes';
+import Config, {ConfigKey} from '../../../../../common/Config';
 
 export default class GeneralRoutes implements IREST {
 

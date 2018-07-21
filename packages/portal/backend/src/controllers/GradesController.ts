@@ -1,9 +1,9 @@
-import Log from "../../../common/Log";
+import Log from "../../../../common/Log";
 
 import {DatabaseController} from "./DatabaseController";
 import {Grade} from "../Types";
-import {GradePayload} from "../../../common/types/SDMMTypes";
-import {AutoTestGradeTransport} from "../../../common/types/PortalTypes";
+import {GradePayload} from "../../../../common/types/SDMMTypes";
+import {AutoTestGradeTransport} from "../../../../common/types/PortalTypes";
 
 export class GradesController {
 

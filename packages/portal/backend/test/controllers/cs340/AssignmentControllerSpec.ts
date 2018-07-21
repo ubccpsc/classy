@@ -8,7 +8,7 @@ import {AssignmentController} from "../../../src/controllers/340/AssignmentContr
 import {RepositoryController} from "../../../src/controllers/RepositoryController";
 import {TeamController} from "../../../src/controllers/TeamController";
 import {Grade, Repository, Team} from "../../../src/Types";
-import {AssignmentGrade} from "../../../../common/types/CS340Types";
+import {AssignmentGrade} from "../../../../../common/types/CS340Types";
 
 const loadFirst = require('../../GlobalSpec');
 const dFirst = require('../GradeControllerSpec');

@@ -1,5 +1,5 @@
 // import {SDMMSummaryView} from "./views/sdmm/SDMMSummaryView";
-import Log from "../../../common/Log";
+import Log from "../../../../common/Log";
 
 import {IView} from "./views/IView";
 import {AdminView} from "./views/AdminView";
@@ -18,7 +18,7 @@ import {SDMMSummaryView} from "./views/sdmm/SDMMSummaryView";
  *
  * The current org will be pulled from the backend when App starts and
  * set here; this means that the org should only be specified in the
- * .env file on the portal-backend.
+ * .env file on the backend.
  *
  */
 export class Factory {

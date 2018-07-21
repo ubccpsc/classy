@@ -5,7 +5,7 @@ import {Test} from "../GlobalSpec";
 
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {Deliverable} from "../../src/Types";
-import {DeliverableTransport} from "../../../common/types/PortalTypes";
+import {DeliverableTransport} from "../../../../common/types/PortalTypes";
 
 const loadFirst = require('../GlobalSpec');
 

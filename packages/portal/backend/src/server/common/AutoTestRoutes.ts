@@ -1,8 +1,8 @@
 import restify = require('restify');
 import * as rp from "request-promise-native";
 
-import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
-import Log from "../../../../common/Log";
+import Config, {ConfigCourses, ConfigKey} from "../../../../../common/Config";
+import Log from "../../../../../common/Log";
 
 import IREST from "../IREST";
 import {CourseController} from "../../controllers/CourseController";
@@ -16,7 +16,7 @@ import {
     AutoTestResultPayload,
     AutoTestResultTransport,
     Payload,
-} from "../../../../common/types/PortalTypes";
+} from "../../../../../common/types/PortalTypes";
 import {GradesController} from "../../controllers/GradesController";
 
 /**

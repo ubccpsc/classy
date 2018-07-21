@@ -1,4 +1,4 @@
-import {IAutoTestResult} from "../../autotest/src/Types";
+import {IAutoTestResult} from "../../../autotest/src/Types";
 
 /**
  * These types are the storage-specific types used by the backend.

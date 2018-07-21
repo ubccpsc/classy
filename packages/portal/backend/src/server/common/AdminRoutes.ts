@@ -1,5 +1,5 @@
 import restify = require('restify');
-import Log from "../../../../common/Log";
+import Log from "../../../../../common/Log";
 
 import * as fs from 'fs';
 import * as parse from 'csv-parse';
@@ -18,7 +18,7 @@ import {
     DeliverableTransportPayload,
     Payload,
     StudentTransportPayload,
-} from '../../../../common/types/PortalTypes';
+} from '../../../../../common/types/PortalTypes';
 
 export default class AdminRoutes implements IREST {
 

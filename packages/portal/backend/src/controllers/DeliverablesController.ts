@@ -1,8 +1,8 @@
-import Log from "../../../common/Log";
+import Log from "../../../../common/Log";
 
 import {DatabaseController} from "./DatabaseController";
 import {Deliverable} from "../Types";
-import {DeliverableTransport} from "../../../common/types/PortalTypes";
+import {DeliverableTransport} from "../../../../common/types/PortalTypes";
 
 export class DeliverablesController {
 

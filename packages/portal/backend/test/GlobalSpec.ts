@@ -1,8 +1,8 @@
 import {expect} from "chai";
 import "mocha";
 
-import Config, {ConfigCourses, ConfigKey} from "../../common/Config";
-import Log from "../../common/Log";
+import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
+import Log from "../../../common/Log";
 
 import {DatabaseController} from "../src/controllers/DatabaseController";
 

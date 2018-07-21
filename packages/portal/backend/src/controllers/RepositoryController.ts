@@ -1,4 +1,4 @@
-import Log from "../../../common/Log";
+import Log from "../../../../common/Log";
 
 import {DatabaseController} from "./DatabaseController";
 import {Person, Repository, Team} from "../Types";

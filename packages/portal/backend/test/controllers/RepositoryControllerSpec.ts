@@ -6,7 +6,7 @@ import {Test} from "../GlobalSpec";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
 import {PersonController} from "../../src/controllers/PersonController";
-import Log from "../../../common/Log";
+import Log from "../../../../common/Log";
 
 const loadFirst = require('../GlobalSpec');
 const teamsFirst = require('./TeamControllerSpec');

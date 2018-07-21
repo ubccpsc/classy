@@ -1,10 +1,10 @@
-import Log from "../../../../common/Log";
+import Log from "../../../../../common/Log";
 
 import {UI} from "../util/UI"
 import {AdminView} from "./AdminView";
 import {OnsButtonElement} from "onsenui";
 import {Network} from "../util/Network";
-import {CourseTransport, CourseTransportPayload} from "../../../../common/types/PortalTypes";
+import {CourseTransport, CourseTransportPayload} from "../../../../../common/types/PortalTypes";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 
 

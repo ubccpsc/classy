@@ -3,13 +3,13 @@
  */
 
 import {UI} from "./util/UI";
-import Log from "../../../common/Log";
+import Log from "../../../../common/Log";
 import {Network} from "./util/Network";
 
 import {OnsButtonElement, OnsPageElement} from "onsenui";
 import {Factory} from "./Factory";
 import {IView} from "./views/IView";
-import {AuthTransportPayload, ConfigTransport, ConfigTransportPayload} from "../../../common/types/PortalTypes";
+import {AuthTransportPayload, ConfigTransport, ConfigTransportPayload} from "../../../../common/types/PortalTypes";
 
 declare var classportal: any;
 

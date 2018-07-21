@@ -7,9 +7,9 @@ import "mocha";
 import {Test} from "../../GlobalSpec";
 
 
-import Config from "../../../../common/Config";
-import Log from "../../../../common/Log";
-import {ActionPayload, GradePayload, SDMMStatus} from "../../../../common/types/SDMMTypes";
+import Config from "../../../../../common/Config";
+import Log from "../../../../../common/Log";
+import {ActionPayload, GradePayload, SDMMStatus} from "../../../../../common/types/SDMMTypes";
 
 import {Person} from "../../../src/Types";
 import {SDMMController} from "../../../src/controllers/SDMM/SDMMController";

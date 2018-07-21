@@ -1,11 +1,11 @@
 import {expect} from "chai";
 import "mocha";
 
-import Log from "../../../common/Log";
+import Log from "../../../../common/Log";
 
 import BackendServer from "../../src/server/BackendServer";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
-import {AuthTransportPayload} from "../../../common/types/PortalTypes";
+import {AuthTransportPayload} from "../../../../common/types/PortalTypes";
 import {Test} from "../GlobalSpec";
 import restify = require('restify');
 

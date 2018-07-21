@@ -1,12 +1,12 @@
 import {expect} from "chai";
 import "mocha";
-import Log from "../../../common/Log";
+import Log from "../../../../common/Log";
 
 import BackendServer from "../../src/server/BackendServer";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {Test} from "../GlobalSpec";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
-import Config, {ConfigKey} from "../../../common/Config";
+import Config, {ConfigKey} from "../../../../common/Config";
 import {
     CourseTransport,
     CourseTransportPayload,
@@ -14,7 +14,7 @@ import {
     DeliverableTransportPayload,
     Payload,
     StudentTransportPayload,
-} from "../../../common/types/PortalTypes";
+} from "../../../../common/types/PortalTypes";
 import restify = require('restify');
 
 const request = require('supertest');

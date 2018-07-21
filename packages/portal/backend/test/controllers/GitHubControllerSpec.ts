@@ -4,8 +4,8 @@ import "mocha";
 import {GitHubController} from "../../src/controllers/GitHubController";
 import {TeamController} from "../../src/controllers/TeamController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
-import Log from "../../../common/Log";
-import Config, {ConfigKey} from "../../../common/Config";
+import Log from "../../../../common/Log";
+import Config, {ConfigKey} from "../../../../common/Config";
 
 const loadFirst = require('../GlobalSpec');
 const rFirst = require('./TeamControllerSpec');

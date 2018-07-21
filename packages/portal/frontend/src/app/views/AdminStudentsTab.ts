@@ -1,8 +1,8 @@
-import Log from "../../../../common/Log";
+import Log from "../../../../../common/Log";
 
 import {UI} from "../util/UI"
 
-import {StudentTransport, StudentTransportPayload} from "../../../../common/types/PortalTypes";
+import {StudentTransport, StudentTransportPayload} from "../../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 import {AdminView} from "./AdminView";
 

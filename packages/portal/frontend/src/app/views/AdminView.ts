@@ -9,7 +9,7 @@
  *
  */
 
-import Log from "../../../../common/Log";
+import Log from "../../../../../common/Log";
 
 import {UI} from "../util/UI"
 

@@ -2,7 +2,7 @@ import {expect} from "chai";
 import "mocha";
 import * as fs from "fs-extra";
 import {ResultsController} from "../../src/controllers/ResultsController";
-import {AutoTestResultTransport} from "../../../common/types/PortalTypes";
+import {AutoTestResultTransport} from "../../../../common/types/PortalTypes";
 
 const loadFirst = require('../GlobalSpec');
 
@@ -26,7 +26,7 @@ describe("ResultController", () => {
         let results = await rc.getAllResults();
         expect(results).to.have.lengthOf(0);
 
-        const fullPath = "../autotest/test/githubAutoTestData/outputRecords.json";
+        const fullPath = "../../autotest/test/githubAutoTestData/outputRecords.json";
         let data = fs.readJSONSync(fullPath);
         let output = await rc.createResult(data[0]);
         expect(output).to.be.true;

@@ -1,11 +1,11 @@
-import Log from "../../../../common/Log";
+import Log from "../../../../../common/Log";
 
 import {UI} from "../util/UI"
 
-import {DeliverableTransport, DeliverableTransportPayload} from "../../../../common/types/PortalTypes";
+import {DeliverableTransport, DeliverableTransportPayload} from "../../../../../common/types/PortalTypes";
 import {AdminView} from "./AdminView";
 import {OnsFabElement} from "onsenui";
-import {AutoTestConfig} from "../../../../portal-backend/src/Types";
+import {AutoTestConfig} from "../../../../backend/src/Types";
 
 // import flatpickr from "flatpickr";
 declare var flatpickr: any;

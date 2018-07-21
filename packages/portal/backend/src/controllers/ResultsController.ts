@@ -1,7 +1,7 @@
-import Log from "../../../common/Log";
+import Log from "../../../../common/Log";
 
 import {DatabaseController} from "./DatabaseController";
-import {IAutoTestResult} from "../../../autotest/src/Types";
+import {IAutoTestResult} from "../../../../autotest/src/Types";
 import {RepositoryController} from "./RepositoryController";
 import {Result} from "../Types";
 

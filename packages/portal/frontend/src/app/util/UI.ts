@@ -1,7 +1,7 @@
 /**
  * Created by rtholmes on 2017-10-04.
  */
-import Log from "../../../../common/Log";
+import Log from "../../../../../common/Log";
 // import {Team} from '../Models';
 
 const OPEN_DELIV_KEY = 'open';

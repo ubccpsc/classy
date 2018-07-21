@@ -1,5 +1,5 @@
 import restify = require('restify');
-import Log from "../../../../common/Log";
+import Log from "../../../../../common/Log";
 
 import IREST from "../IREST";
 

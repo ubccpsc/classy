@@ -4,14 +4,14 @@ import "mocha";
 
 import {Test} from "../../GlobalSpec";
 
-import Log from "../../../../common/Log";
-import Util from "../../../../common/Util";
-import {ActionPayload, GradePayload} from "../../../../common/types/SDMMTypes";
+import Log from "../../../../../common/Log";
+import Util from "../../../../../common/Util";
+import {ActionPayload, GradePayload} from "../../../../../common/types/SDMMTypes";
 
 import {GitHubController} from "../../../src/controllers/GitHubController";
 import {GitHubActions} from "../../../src/controllers/util/GitHubActions";
 import {GradesController} from "../../../src/controllers/GradesController";
-import Config, {ConfigKey} from "../../../../common/Config";
+import Config, {ConfigKey} from "../../../../../common/Config";
 
 const loadFirst = require('../../GlobalSpec');
 const rFirst = require('./SDMMControllerSpec'); // so we go last

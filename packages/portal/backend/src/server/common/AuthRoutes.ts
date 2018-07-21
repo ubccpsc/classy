@@ -1,14 +1,14 @@
 import * as rp from "request-promise-native";
 
-import Config, {ConfigKey} from "../../../../common/Config";
-import Log from "../../../../common/Log";
+import Config, {ConfigKey} from "../../../../../common/Config";
+import Log from "../../../../../common/Log";
 
 import {AuthController} from "../../controllers/AuthController";
 import {DatabaseController} from "../../controllers/DatabaseController";
 import {Auth, Person} from "../../Types";
 import {PersonController} from "../../controllers/PersonController";
 import IREST from "../IREST";
-import {AuthTransportPayload, Payload} from "../../../../common/types/PortalTypes";
+import {AuthTransportPayload, Payload} from "../../../../../common/types/PortalTypes";
 import {Factory} from "../../Factory";
 import restify = require("restify");
 import ClientOAuth2 = require("client-oauth2");

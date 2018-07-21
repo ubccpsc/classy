@@ -1,6 +1,6 @@
-import Config, {ConfigKey} from "../../../common/Config";
-import Log from "../../../common/Log";
-import {AutoTestGradeTransport, DeliverableTransport, StudentTransport} from '../../../common/types/PortalTypes';
+import Config, {ConfigKey} from "../../../../common/Config";
+import Log from "../../../../common/Log";
+import {AutoTestGradeTransport, DeliverableTransport, StudentTransport} from '../../../../common/types/PortalTypes';
 
 import {RepositoryController} from "./RepositoryController";
 import {DatabaseController} from "./DatabaseController";

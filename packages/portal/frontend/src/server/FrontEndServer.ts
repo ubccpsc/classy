@@ -5,8 +5,8 @@
 import restify = require('restify');
 import * as fs from "fs";
 
-import Config, {ConfigKey} from "../../../common/Config";
-import Log from "../../../common/Log";
+import Config, {ConfigKey} from "../../../../common/Config";
+import Log from "../../../../common/Log";
 
 /**
  * This configures the REST endpoints for the server.

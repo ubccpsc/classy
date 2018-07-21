@@ -6,7 +6,7 @@
  */
 
 import {OnsButtonElement, OnsSelectElement} from "onsenui";
-import Log from "../../../../../common/Log";
+import Log from "../../../../../../common/Log";
 import {UI} from "../../util/UI";
 import {
     AssignmentGrade,
@@ -14,10 +14,10 @@ import {
     QuestionGrade,
     SubQuestionGrade,
     SubQuestionGradingRubric
-} from "../../../../../common/types/CS340Types";
+} from "../../../../../../common/types/CS340Types";
 
 import {IView} from "../IView";
-import {Deliverable, Grade, Person} from "../../../../../portal-backend/src/Types";
+import {Deliverable, Grade, Person} from "../../../../../backend/src/Types";
 import {Factory} from "../../Factory";
 import {SortableTable, TableHeader} from "../../util/SortableTable";
 

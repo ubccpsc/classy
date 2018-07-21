@@ -4,8 +4,8 @@
 import restify = require('restify');
 import * as fs from "fs";
 
-import Log from "../../../common/Log";
-import Config, {ConfigKey} from "../../../common/Config";
+import Log from "../../../../common/Log";
+import Config, {ConfigKey} from "../../../../common/Config";
 
 import {Factory} from "../Factory";
 import GeneralRoutes from "./common/GeneralRoutes";

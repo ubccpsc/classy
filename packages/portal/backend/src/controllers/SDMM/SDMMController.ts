@@ -4,10 +4,10 @@ import {CourseController} from "../CourseController";
 import {IGitHubController} from "../GitHubController";
 import {Grade, Person, Team} from "../../Types";
 
-import Log from "../../../../common/Log";
-import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
-import {GradePayload, Payload, SDMMStatus, StatusPayload} from "../../../../common/types/SDMMTypes";
-import Util from "../../../../common/Util";
+import Log from "../../../../../common/Log";
+import Config, {ConfigCourses, ConfigKey} from "../../../../../common/Config";
+import {GradePayload, Payload, SDMMStatus, StatusPayload} from "../../../../../common/types/SDMMTypes";
+import Util from "../../../../../common/Util";
 import {PersonController} from "../PersonController";
 
 /**

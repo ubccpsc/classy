@@ -4,10 +4,10 @@ import {expect} from "chai";
 import "mocha";
 
 import {GitHubActions} from "../../src/controllers/util/GitHubActions";
-import Log from "../../../common/Log";
+import Log from "../../../../common/Log";
 import {Test} from "../GlobalSpec";
-import Util from "../../../common/Util";
-import Config, {ConfigKey} from "../../../common/Config";
+import Util from "../../../../common/Util";
+import Config, {ConfigKey} from "../../../../common/Config";
 
 describe("GitHubActions", () => {
 

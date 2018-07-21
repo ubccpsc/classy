@@ -7,8 +7,8 @@ import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {TestGitHubController} from "../../src/controllers/GitHubController";
-import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
-import {AutoTestGradeTransport} from "../../../common/types/PortalTypes";
+import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
+import {AutoTestGradeTransport} from "../../../../common/types/PortalTypes";
 import {Test} from "../GlobalSpec";
 
 const load1 = require('../GlobalSpec');

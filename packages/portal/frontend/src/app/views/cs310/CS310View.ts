@@ -7,7 +7,7 @@
 
 import {OnsModalElement} from "onsenui";
 
-import Log from "../../../../../common/Log";
+import Log from "../../../../../../common/Log";
 
 import {UI} from "../../util/UI";
 import {IView} from "../IView";

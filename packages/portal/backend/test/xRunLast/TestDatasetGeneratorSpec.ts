@@ -8,7 +8,7 @@ import {TeamController} from "../../src/controllers/TeamController";
 import {Test} from "../GlobalSpec";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
-import Config, {ConfigKey} from "../../../common/Config";
+import Config, {ConfigKey} from "../../../../common/Config";
 
 const loadFirst = require('../GlobalSpec');
 

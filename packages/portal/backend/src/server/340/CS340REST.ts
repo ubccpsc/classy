@@ -1,5 +1,5 @@
 import restify = require('restify');
-import Log from "../../../../common/Log";
+import Log from "../../../../../common/Log";
 
 import IREST from "../IREST";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
@@ -10,7 +10,7 @@ import {
     AssignmentGradingRubric,
     AssignmentInfo,
     QuestionGrade
-} from "../../../../common/types/CS340Types";
+} from "../../../../../common/types/CS340Types";
 import {GradesController} from "../../controllers/GradesController";
 import {PersonController} from "../../controllers/PersonController";
 import {RepositoryController} from "../../controllers/RepositoryController";

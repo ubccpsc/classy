@@ -1,13 +1,13 @@
 import {expect} from "chai";
 import "mocha";
 
-import Log from "../../../common/Log";
+import Log from "../../../../common/Log";
 import {Test} from "../GlobalSpec";
 
 import BackendServer from "../../src/server/BackendServer";
 import {Grade, Person} from "../../src/Types";
 import {PersonController} from "../../src/controllers/PersonController";
-import Config, {ConfigKey} from "../../../common/Config";
+import Config, {ConfigKey} from "../../../../common/Config";
 import {GitHubActions} from "../../src/controllers/util/GitHubActions";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";

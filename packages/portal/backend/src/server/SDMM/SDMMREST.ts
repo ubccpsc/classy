@@ -1,10 +1,10 @@
 import restify = require('restify');
-import Log from "../../../../common/Log";
+import Log from "../../../../../common/Log";
 
 import IREST from "../IREST";
 import {GitHubController} from "../../controllers/GitHubController";
 
-import {Payload, StatusPayload} from "../../../../common/types/SDMMTypes";
+import {Payload, StatusPayload} from "../../../../../common/types/SDMMTypes";
 import {SDMMController} from "../../controllers/SDMM/SDMMController";
 import {AuthController} from "../../controllers/AuthController";
 

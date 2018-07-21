@@ -1,14 +1,14 @@
 import {AdminView} from "../AdminView";
-import Log from "../../../../../common/Log";
+import Log from "../../../../../../common/Log";
 import {
     AssignmentGrade,
     AssignmentGradingRubric, AssignmentInfo, QuestionGrade, SubQuestionGrade,
     SubQuestionGradingRubric
-} from "../../../../../common/types/CS340Types";
+} from "../../../../../../common/types/CS340Types";
 import {UI} from "../../util/UI";
 import {Factory} from "../../Factory";
-import {StudentTransport, StudentTransportPayload} from "../../../../../common/types/PortalTypes";
-import {Deliverable, Grade} from "../../../../../portal-backend/src/Types";
+import {StudentTransport, StudentTransportPayload} from "../../../../../../common/types/PortalTypes";
+import {Deliverable, Grade} from "../../../../../backend/src/Types";
 import {SortableTable, TableCell, TableHeader} from "../../util/SortableTable";
 import {OnsInputElement} from "onsenui";
 

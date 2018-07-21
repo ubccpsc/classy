@@ -5,7 +5,7 @@ import {
     AssignmentGradingRubric,
     QuestionGrade,
     QuestionGradingRubric, SubQuestionGradingRubric
-} from "../../../../../common/types/CS340Types";
+} from "../../../../../../common/types/CS340Types";
 
 import {UI} from "../../util/UI";
 import {IView} from "../IView";

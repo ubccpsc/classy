@@ -2,19 +2,19 @@ import {GradesController} from "../GradesController";
 import {DatabaseController} from "../DatabaseController";
 import {Deliverable, Grade, Person, Repository, Team} from "../../Types";
 // import {GradePayload} from "../GradesController";
-import Log from "../../../../common/Log";
-import {GradePayload} from "../../../../common/types/SDMMTypes";
+import Log from "../../../../../common/Log";
+import {GradePayload} from "../../../../../common/types/SDMMTypes";
 import {
     AssignmentGrade,
     AssignmentInfo,
     AssignmentRepositoryInfo,
     AssignmentStatus
-} from "../../../../common/types/CS340Types";
+} from "../../../../../common/types/CS340Types";
 import {RepositoryController} from "../RepositoryController";
 import {TeamController} from "../TeamController";
 import {DeliverablesController} from "../DeliverablesController";
 import {GitHubController} from "../GitHubController";
-import Config, {ConfigKey} from "../../../../common/Config";
+import Config, {ConfigKey} from "../../../../../common/Config";
 import {PersonController} from "../PersonController";
 import {GitHubActions} from "../util/GitHubActions";
 

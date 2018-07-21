@@ -1,6 +1,6 @@
-import Log from "../../../common/Log";
-import Config, {ConfigKey} from "../../../common/Config";
-import Util from "../../../common/Util";
+import Log from "../../../../common/Log";
+import Config, {ConfigKey} from "../../../../common/Config";
+import Util from "../../../../common/Util";
 
 import {Repository, Team} from "../Types";
 import {GitHubActions} from "./util/GitHubActions";
