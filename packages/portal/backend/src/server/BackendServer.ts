@@ -64,7 +64,7 @@ export default class BackendServer {
      */
     public start(): Promise<boolean> {
         Log.info('BackendServer::start() - start');
-        Log.info('BackendServer::start() - config: ' + this.config);
+        Log.info('BackendServer::start() - config: ' + JSON.stringify(this.config));
 
         let that = this;
         return new Promise(function (fulfill, reject) {
@@ -90,6 +90,13 @@ export default class BackendServer {
                     res.header("Access-Control-Allow-Headers", "X-Requested-With Content-Type token user org");
                     return next();
                 });
+
+                // serves up the root directory
+                that.rest.get('/\/.*/', restify.plugins.serveStatic({
+                        directory: '../frontend/html',
+                        default:   'index.html'
+                    })
+                );
 
                 // Register handlers common between all classy instances
                 Log.info('BackendServer::start() - Registering common handlers');
