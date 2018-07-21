@@ -30,7 +30,7 @@ export class AuthRoutes implements IREST {
 
         // GitHub OAuth endpoints
         server.get('/portal/auth', AuthRoutes.getAuth); // start GitHub OAuth flow
-        server.get('/portal/authCallback', AuthRoutes.authCallback); // finalize GitHub OAuth flow
+        server.get('/authCallback', AuthRoutes.authCallback); // finalize GitHub OAuth flow
     }
 
     /**
@@ -163,7 +163,7 @@ export class AuthRoutes implements IREST {
         // const org = req.query.org;
         const name = config.getProp(ConfigKey.name);
         // NICK: this seems like it might cause problems with the router:
-        const githubRedirect = config.getProp(ConfigKey.backendUrl) + ':' + config.getProp(ConfigKey.backendPort) + '/portal/authCallback?name=' + name;
+        const githubRedirect = config.getProp(ConfigKey.backendUrl) + ':' + config.getProp(ConfigKey.backendPort) + '/authCallback?name=' + name;
         Log.info("AuthRouteHandler::getAuth(..) - /auth redirect; course: " + name + "; URL: " + githubRedirect);
 
         const setup = {
@@ -206,7 +206,7 @@ export class AuthRoutes implements IREST {
         const backendPort = config.getProp(ConfigKey.backendPort);
         // TODO: do we need this redirect?
         // NICK: this lookls like it might cause problems with the router:
-        const githubRedirect = backendUrl + ':' + backendPort + '/portal/authCallback?name=' + config.getProp(ConfigKey.name);
+        const githubRedirect = backendUrl + ':' + backendPort + '/authCallback?name=' + config.getProp(ConfigKey.name);
 
         Log.info('AuthRouteHandler::authCallback(..) - / authCallback; URL: ' + githubRedirect);
         const opts = {
