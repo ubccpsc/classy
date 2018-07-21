@@ -85,7 +85,7 @@ export class PersonController {
     public async getRepos(personId: string): Promise<Repository[] | null> {
         Log.trace('PersonController::getRepos( ' + personId + ' ) - start');
         const start = Date.now();
-        let repos = await this.db.getRepositoriesForPerson(personId);
+        const repos = await this.db.getRepositoriesForPerson(personId);
         Log.trace('PersonController::getRepos( ' + personId + ' ) - # repos: ' + repos.length + '; took: ' + Util.took(start));
         return repos;
     }

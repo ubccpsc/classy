@@ -124,6 +124,20 @@ describe("SDDM: SDMMController", () => {
         (<any>Config.getInstance()).config.org = OLD_ORG;
     });
 
+    it("Should not be able to get a status for an invalid user.", async () => {
+        let status = null;
+        let ex = null;
+        try {
+            status = await sc.getStatus('invalidUserWhoDoesNotExist29922');
+        } catch (err) {
+            ex = err;
+        }
+
+        expect(ex).to.not.be.null;
+        expect(ex.message).to.equal('Error computing status for invalidUserWhoDoesNotExist29922; contact course staff.');
+        expect(status).to.be.null;
+    });
+
     it("Should be able to get a D0PRE status.", async () => {
         await sc.handleUnknownUser(data.USER); // provision user
 

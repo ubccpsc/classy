@@ -111,4 +111,21 @@ describe("PersonController", () => {
         expect(people).to.have.lengthOf(3);
     });
 
+    it("Should be able to get a person.", async () => {
+        let person = await pc.getPerson(PERSON1.id);
+        expect(person).to.not.be.null;
+        expect(person.id).to.equal(PERSON1.id);
+
+        person = await pc.getPerson('randomIDthatDoesNotexist23232333');
+        expect(person).to.be.null;
+
+        person = await pc.getGitHubPerson(PERSON1.githubId);
+        expect(person).to.not.be.null;
+        expect(person.id).to.equal(PERSON1.githubId);
+
+        person = await pc.getGitHubPerson('randomIDthatDoesNotexist23232333');
+        expect(person).to.be.null;
+    });
+
+
 });

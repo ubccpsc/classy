@@ -76,8 +76,8 @@ export class DatabaseController {
 
     public async getTeamsForPerson(personId: string): Promise<Team[]> {
         Log.info("DatabaseController::getTeams() - start");
-        let teams = await this.readRecords(this.TEAMCOLL, {});
-        let myTeams = [];
+        const teams = await this.readRecords(this.TEAMCOLL, {});
+        const myTeams = [];
         for (const t of teams as Team[]) {
             if (t.personIds.indexOf(personId) >= 0) {
                 myTeams.push(t);
@@ -93,8 +93,6 @@ export class DatabaseController {
 
     public async getRepositoriesForPerson(personId: string): Promise<Repository[]> {
         Log.info("DatabaseController::getRepositoriesForPerson() - start");
-
-        // NOTE: UNTESTED (except in mongo console)
 
         let query = [{
             "$lookup": {
@@ -224,7 +222,7 @@ export class DatabaseController {
         Log.trace("DatabaseController::deleteRecord( " + colName + ", " + JSON.stringify(query) + " ) - start");
         try {
             const collection = await this.getCollection(colName);
-            let res = await collection.deleteOne(query);
+            const res = await collection.deleteOne(query);
             Log.trace("DatabaseController::deleteRecord(..) - delete complete; result: " + JSON.stringify(res));
             return true;
         } catch (err) {
@@ -248,7 +246,7 @@ export class DatabaseController {
     public async writeGrade(record: Grade): Promise<boolean> {
         Log.info("DatabaseController::writeGrade(..) - start");
         Log.trace("DatabaseController::writeGrade(..) - grade: " + JSON.stringify(record));
-        let gradeExists = await this.getGrade(record.personId, record.delivId);
+        const gradeExists = await this.getGrade(record.personId, record.delivId);
         if (gradeExists === null) {
             return await this.writeRecord(this.GRADECOLL, record);
         } else {
@@ -291,10 +289,7 @@ export class DatabaseController {
         try {
             const collection = await this.getCollection(colName);
             const copy = Object.assign({}, record);
-            let res = await collection.replaceOne(
-                query,
-                record
-            );
+            const res = await collection.replaceOne(query, record);
             Log.trace("DatabaseController::updateRecord(..) - write complete; res: " + JSON.stringify(res));
             return true;
         } catch (err) {
@@ -324,7 +319,7 @@ export class DatabaseController {
         if (configName === ConfigCourses.classytest) {
             // NOTE: can only delete data if the current instance is the main test instance
 
-            let cols = [this.PERSONCOLL, this.GRADECOLL, this.RESULTCOLL, this.TEAMCOLL, this.DELIVCOLL, this.REPOCOLL, this.AUTHCOLL, this.COURSECOLL];
+            const cols = [this.PERSONCOLL, this.GRADECOLL, this.RESULTCOLL, this.TEAMCOLL, this.DELIVCOLL, this.REPOCOLL, this.AUTHCOLL, this.COURSECOLL];
             for (const col of cols) {
                 Log.info("DatabaseController::clearData() - removing data for collection: " + col);
                 const collection = await this.getCollection(col);
@@ -337,17 +332,18 @@ export class DatabaseController {
         return;
     }
 
-    private async readSingleRecord(column: string, query: {} | null): Promise<{} | null> {
+    /**
+     *
+     * @param {string} column
+     * @param {{}} query
+     * @returns {Promise<{} | null>}
+     */
+    private async readSingleRecord(column: string, query: {}): Promise<{} | null> {
         try {
             Log.trace("DatabaseController::readSingleRecord( " + column + ", " + JSON.stringify(query) + " ) - start");
             const start = Date.now();
-            let col = await this.getCollection(column);
-            if (query === null) {
-                query = {};
-            }
-            //if (typeof key !== 'undefined' && key !== null && typeof value !== 'undefined' && value !== null) {
-            //    query[key] = value;
-            // }
+            const col = await this.getCollection(column);
+
             const records: any[] = await <any>col.find(query).toArray();
             if (records === null || records.length === 0) {
                 Log.trace("DatabaseController::readSingleRecord(..) - done; no records found; took: " + Util.took(start));
@@ -364,14 +360,18 @@ export class DatabaseController {
         }
     }
 
-    private async readRecords(column: string, query: {} | null): Promise<{}[]> {
+    /**
+     *
+     * @param {string} column
+     * @param {{}} query send {} if all results for that column are wanted
+     * @returns {Promise<{}[]>}
+     */
+    private async readRecords(column: string, query: {}): Promise<{}[]> {
         try {
             Log.trace("DatabaseController::readRecords( " + column + ", " + JSON.stringify(query) + " ) - start");
             const start = Date.now();
-            let col = await this.getCollection(column);
-            if (query === null) {
-                query = {};
-            }
+            const col = await this.getCollection(column);
+
             const records: any[] = await <any>col.find(query).toArray();
             if (records === null || records.length === 0) {
                 Log.trace("DatabaseController::readRecords(..) - done; no records found for: " + JSON.stringify(query) + " in: " + column + "; took: " + Util.took(start));
@@ -379,7 +379,7 @@ export class DatabaseController {
             } else {
                 Log.trace("DatabaseController::readRecords(..) - done; # records: " + records.length + ". took: " + Util.took(start));
                 for (const r of records) {
-                    delete r._id;// remove the record id, just so we can't use it
+                    delete r._id; // remove the record id, just so we can't use it
                 }
                 return records;
             }
@@ -422,31 +422,13 @@ export class DatabaseController {
 
     public async getAuth(personId: string): Promise<Auth | null> {
         Log.trace("DatabaseController::getAuthToken( " + personId + " ) - start");
-        let auth = <Auth> await this.readSingleRecord(this.AUTHCOLL, {"personId": personId});
+        const auth = <Auth> await this.readSingleRecord(this.AUTHCOLL, {"personId": personId});
         return auth;
     }
 
-    /*
-    public async verifyAuthToken(org: string, personId: string, token: string): Promise<boolean> {
-        Log.trace("DatabaseController::verifyToken( " + org + ", " + personId + " ) - start");
-        let auth = <Auth> await this.readSingleRecord(this.AUTHCOLL, {"org": org, "personId": personId});
-        if (auth !== null) {
-            if (auth.token === token) {
-                Log.info("DatabaseController::verifyToken( " + org + ", " + personId + " ) - token verified");
-                return true;
-            } else {
-                Log.info("DatabaseController::verifyToken( " + org + ", " + personId + " ) - token !verified");
-                return false;
-            }
-        }
-        Log.info("DatabaseController::verifyToken( " + org + ", " + personId + " ) - no token stored");
-        return false;
-    }
-
-*/
     public async writeAuth(record: Auth): Promise<boolean> {
         Log.info("DatabaseController::writeAuth(..) - start");
-        let auth = <Auth> await this.readSingleRecord(this.AUTHCOLL, {"personId": record.personId});
+        const auth = <Auth> await this.readSingleRecord(this.AUTHCOLL, {"personId": record.personId});
         if (auth === null) {
             return await this.writeRecord(this.AUTHCOLL, record);
         } else {

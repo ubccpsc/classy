@@ -8,6 +8,7 @@ import Log from "../../../../common/Log";
 import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
 import {GradePayload, Payload, SDMMStatus, StatusPayload} from "../../../../common/types/SDMMTypes";
 import Util from "../../../../common/Util";
+import {PersonController} from "../PersonController";
 
 export class SDMMController extends CourseController {
 
@@ -29,13 +30,11 @@ export class SDMMController extends CourseController {
             const name = Config.getInstance().getProp(ConfigKey.name);
             if (name !== ConfigCourses.sdmm && name !== ConfigCourses.classytest) {
                 Log.error("SDMMController::provision(..) - SDMMController should not be used for other courses");
-                // return {failure: {shouldLogout: false, message: "Invalid course; contact course staff."}};
                 throw new Error("Invalid course; contact course staff.");
             }
 
             if (peopleIds.length < 1) {
                 Log.error("SDMMController::provision(..) - there needs to be at least one person on a repo");
-                // return {failure: {shouldLogout: false, message: "Invalid # of people; contact course staff."}};
                 throw new Error("Invalid # of people; contact course staff.");
             }
 
@@ -45,7 +44,6 @@ export class SDMMController extends CourseController {
                     return await this.provisionD0Repo(peopleIds[0]);
                 } else {
                     Log.error("SDMMController::provision(..) - d0 repos are only for individuals");
-                    // return {failure: {shouldLogout: false, message: "D0 for indivduals only; contact course staff."}};
                     throw new Error("D0 for indivduals only; contact course staff.");
                 }
             } else if (delivId === "d1") {
@@ -59,22 +57,18 @@ export class SDMMController extends CourseController {
                         return await this.provisionD1Repo(peopleIds);
                     } else {
                         Log.error("SDMMController::provision(..) - d1 duplicate users");
-                        // return {failure: {shouldLogout: false, message: "D1 duplicate users; if you wish to work alone, please select 'work individually'."}};
                         throw new Error("D1 duplicate users; if you wish to work alone, please select 'work individually'.");
                     }
                 } else {
                     Log.error("SDMMController::provision(..) - d1 can only be performed by single students or pairs of students.");
-                    // return {failure: {shouldLogout: false, message: "D1 can only be performed by single students or pairs of students."}};
                     throw new Error("D1 can only be performed by single students or pairs of students.");
                 }
             } else {
                 Log.warn("SDMMController::provision(..) - new repo not needed for delivId: " + delivId);
-                // return {failure: {shouldLogout: false, message: "Repo not needed; contact course staff."}};
                 throw new Error("Repo not needed; contact course staff.");
             }
         } catch (err) {
             Log.error("SDMMController::provision(..) - ERROR: " + err);
-            // return {failure: {shouldLogout: false, message: "Unknown error creating repo; contact course staff."}};
             throw new Error(err.message);
         }
 
@@ -323,19 +317,15 @@ export class SDMMController extends CourseController {
             const name = personId;
             const person = await this.pc.getPerson(name);
             const teamName = SDMMController.getTeamPrefix() + name;
-            // const repoName = "secap_" + teamName;
             const repoName = SDMMController.getProjectPrefix() + teamName;
 
             if (person === null) {
-                // return early
-                // return {failure: {shouldLogout: false, message: "Username not registered; contact course staff."}};
                 throw new Error("Username not registered; contact course staff.");
             }
 
             let personStatus = await this.computeStatusString(personId);
             if (personStatus !== SDMMStatus[SDMMStatus.D0PRE]) {
                 Log.info("SDMMController::provisionD0Repo( " + personId + " ) - bad status: " + personStatus);
-                // return {failure: {shouldLogout: false, message: "User is not eligible for D0."}};
                 throw new Error("User is not eligible for D0.");
             } else {
                 Log.info("SDMMController::provisionD0Repo( " + personId + " ) - correct status: " + personStatus);
@@ -360,8 +350,7 @@ export class SDMMController extends CourseController {
             const repo = await this.rc.createRepository(repoName, [team], repoCustom);
 
             // create remote repo
-            const INPUTREPO = "https://github.com/SECapstone/bootstrap"; // HARDCODED for SDMM D0
-            // set to the backendUrl:backendPort, not autotestUrl:autotestPort since the backend will be publicly visible
+            const INPUTREPO = "https://github.com/SECapstone/bootstrap";
             const WEBHOOKADDR = Config.getInstance().getProp(ConfigKey.backendUrl) + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/portal/githubWebhook';
             const provisionResult = await this.gh.provisionRepository(repoName, [team], INPUTREPO, WEBHOOKADDR);
 
@@ -399,14 +388,11 @@ export class SDMMController extends CourseController {
                 const delRepo = await this.dc.deleteRepository(repo);
                 Log.info("SDMMController::provisionD0Repo(..) - team removed: " + delTeam + ", repo removed: " + delRepo);
 
-                // return {failure: {shouldLogout: false, message: "Error provisioning d0 repo."}};
                 throw new Error("Error provisioning d0 repo.");
             }
         } catch (err) {
             Log.error("SDMMController::provisionD0Repo(..) - ERROR: " + err);
-            // return {failure: {shouldLogout: false, message: "Error creating d0 repo; contact course staff."}};
-            // throw new Error("Error creating d0 repo; contact course staff.");
-            throw new Error(err.message);
+            throw new Error(err.message); // more specific message from errors above
         }
     }
 
@@ -419,7 +405,6 @@ export class SDMMController extends CourseController {
             const person = await this.pc.getPerson(personId);
             if (person === null) {
                 Log.error("SDMMController::updateIndividualD0toD1(..) - person does not exist: " + personId);
-                // return {failure: {shouldLogout: false, message: "Username not registered with course."}};
                 throw new Error("Username not registered with course.");
             }
 
@@ -427,7 +412,6 @@ export class SDMMController extends CourseController {
             let grade = await this.gc.getGrade(personId, "d0"); // make sure they can move on
             if (grade === null || grade.score < 60) {
                 Log.error("SDMMController::updateIndividualD0toD1(..) - insufficient d0 grade for: " + personId);
-                // return {failure: {shouldLogout: false, message: "Current d0 grade is not sufficient to move on to d1."}};
                 throw new Error("Current d0 grade is not sufficient to move on to d1.");
             }
 
@@ -436,7 +420,6 @@ export class SDMMController extends CourseController {
             for (const r of myRepos) {
                 if (r.custom.d1enabled === true) {
                     Log.error("SDMMController::updateIndividualD0toD1(..) - person already has a d1 repo: " + r.id);
-                    // return {failure: {shouldLogout: false, message: "D1 repo has already been assigned: " + r.id}};
                     throw new Error("D1 repo has already been assigned: " + r.id);
                 }
             }
@@ -449,7 +432,6 @@ export class SDMMController extends CourseController {
             }
 
             const teamName = SDMMController.getTeamPrefix() + personId;
-            // const repoName = "secap_" + teamName;
             const repoName = SDMMController.getProjectPrefix() + teamName;
 
             // find local team & repo
@@ -481,7 +463,6 @@ export class SDMMController extends CourseController {
                 await this.gc.createGrade(repo.id, 'd3', grade);
             } else {
                 Log.error("SDMMController::updateIndividualD0toD1(..) - unable to find team: " + teamName + ' or repo: ' + repoName);
-                // return {failure: {shouldLogout: false, message: "Invalid team updating d0 repo; contact course staff."}};
                 throw new Error("Invalid team updating d0 repo; contact course staff.");
             }
 
@@ -490,9 +471,7 @@ export class SDMMController extends CourseController {
             return {success: {message: "D0 repo successfully updated to D1.", status: statusPayload}};
         } catch (err) {
             Log.error("SDMMController::updateIndividualD0toD1(..) - ERROR: " + err);
-            // return {failure: {shouldLogout: false, message: "Error updating d0 repo; contact course staff."}};
-            // throw new Error("Error updating d0 repo; contact course staff.");
-            throw new Error(err.message);
+            throw new Error(err.message); // more specific message from errors above
         }
     }
 
@@ -542,7 +521,6 @@ export class SDMMController extends CourseController {
             for (const p of people) {
                 let personStatus = await this.computeStatusString(p.id);
                 if (personStatus !== SDMMStatus[SDMMStatus.D1UNLOCKED]) {
-                    Log.info("SDMMController::provisionD1Repo( " + p.id + " ) - bad status: " + personStatus);
                     Log.error("SDMMController::provisionD1Repo(..) - user does not have the right status to advance: " + p.id + '; status: ' + personStatus);
                     throw new Error("All teammates must be eligible to join a team and must not already be performing d1 in another team or on their own.");
                 } else {
@@ -721,8 +699,9 @@ export class SDMMController extends CourseController {
 
             newPerson.custom.sdmmStatus = 'd0pre'; // new users always start in d0pre state
 
-            // add to database
-            await this.dc.writePerson(newPerson);
+            const pc = new PersonController();
+            newPerson = await pc.createPerson(newPerson);
+
             return newPerson;
         }
 
