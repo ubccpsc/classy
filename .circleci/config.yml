@@ -34,7 +34,7 @@ jobs:
             name: Preparing common
 
       - run:
-            command: cd packages/portal/backend && yarn install
+            command: cd packages/portal/backend && mkdir -p ssl/ && yarn install
             name: Preparing backend
 
       - save_cache:
