@@ -49,8 +49,6 @@ jobs:
             command: cd .circleci && openssl aes-256-cbc -d -in env.enc -out ../.env -k $ENVKEY
             name: Configuring .env
 
-      - run: ls -a
-
       - run:
             command: cd .circleci && openssl aes-256-cbc -d -in c1.enc -out ../packages/portal/backend/ssl/fullchain.pem -k $ENVKEY
             name: Configuring SSL-1
