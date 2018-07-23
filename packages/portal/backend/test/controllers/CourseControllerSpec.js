@@ -51,9 +51,9 @@ describe("CourseController", () => {
     it("Should not be able to get a user that doesn't exist.", () => __awaiter(this, void 0, void 0, function* () {
         const USERNAME = "UNKNOWNUSER" + new Date().getTime();
         const res = yield cc.handleUnknownUser(USERNAME);
-        chai_1.expect(res).to.equal(null); // nothing should be returned
-        const person = yield pc.getPerson(USERNAME); // get user
-        chai_1.expect(person).to.equal(null); // should not exist
+        chai_1.expect(res).to.equal(null);
+        const person = yield pc.getPerson(USERNAME);
+        chai_1.expect(person).to.equal(null);
     }));
     it("Should be able to get a list of students.", () => __awaiter(this, void 0, void 0, function* () {
         const res = yield cc.getStudents();
@@ -67,7 +67,7 @@ describe("CourseController", () => {
             studentNum: 1,
             labId: 'l1a'
         };
-        chai_1.expect(res).to.deep.include(s); // make sure at least one student with the right format is in there
+        chai_1.expect(res).to.deep.include(s);
     }));
     it("Should be able to get a list of deliverables.", () => __awaiter(this, void 0, void 0, function* () {
         const res = yield cc.getDeliverables();
@@ -82,8 +82,6 @@ describe("CourseController", () => {
             teamsSameLab: true,
             studentsFormTeams: true
         };
-        // Log.test(JSON.stringify(res));
-        // expect(res).to.deep.include(d); // make sure at least one deliverable with the right format is in there
     }));
     it("Should be able to handle a new AutoTest grade.", () => __awaiter(this, void 0, void 0, function* () {
         const grade = {
@@ -134,7 +132,6 @@ describe("CourseController", () => {
         const newRes = yield cc.getCourse();
         chai_1.expect(newRes.defaultDeliverableId).to.equal(NEWID);
         chai_1.expect(newRes.custom.fooProperty).to.equal('asdfasdf');
-        // reset course id
         res.defaultDeliverableId = null;
         delete res.custom.fooProperty;
         yield cc.saveCourse(res);

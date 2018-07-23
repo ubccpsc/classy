@@ -18,13 +18,12 @@ const Config_1 = require("../../../../common/Config");
 const loadFirst = require('../GlobalSpec');
 const rFirst = require('./TeamControllerSpec');
 describe("GitHubController", () => {
-    // TODO: investigate skipping this way: https://stackoverflow.com/a/41908943 (and turning them on/off with an env flag)
     let TIMEOUT = 10000;
     let gc;
     const OLDORG = Config_1.default.getInstance().getProp(Config_1.ConfigKey.org);
     before(() => {
         Log_1.default.test("GitHubControllerSpec::before() - start; forcing testorg");
-        Config_1.default.getInstance().setProp(Config_1.ConfigKey.org, Config_1.default.getInstance().getProp(Config_1.ConfigKey.testorg)); // force testorg so real org does not get deleted or modified
+        Config_1.default.getInstance().setProp(Config_1.ConfigKey.org, Config_1.default.getInstance().getProp(Config_1.ConfigKey.testorg));
     });
     after(() => {
         Log_1.default.test("GitHubControllerSpec::after() - start; replacing original org");
@@ -33,7 +32,7 @@ describe("GitHubController", () => {
     beforeEach(function () {
         Log_1.default.test('GitHubController::BeforeEach - "' + this.currentTest.title + '"');
         const ci = process.env.CI;
-        const override = false; // set to true if you want to run these tests locally
+        const override = false;
         if (override || typeof ci !== 'undefined' && Boolean(ci) === true) {
             Log_1.default.test("GitHubController::beforeEach() - running in CI; not skipping");
             gc = new GitHubController_1.GitHubController();

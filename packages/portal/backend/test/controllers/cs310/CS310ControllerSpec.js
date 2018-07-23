@@ -20,7 +20,6 @@ describe("CS310: CS310Controller", () => {
     after(() => __awaiter(this, void 0, void 0, function* () {
     }));
     it("Should not fail.", () => __awaiter(this, void 0, void 0, function* () {
-        // empty tests
         chai_1.expect(true).to.be.true;
     }));
 });

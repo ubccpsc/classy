@@ -78,9 +78,9 @@ describe("PersonController", () => {
         people = yield pc.getAllPeople();
         chai_1.expect(people).to.have.lengthOf(1);
         person = yield pc.createPerson(PERSON1);
-        chai_1.expect(person).to.not.be.null; // returns the existing one
+        chai_1.expect(person).to.not.be.null;
         people = yield pc.getAllPeople();
-        chai_1.expect(people).to.have.lengthOf(1); // should still be the same number
+        chai_1.expect(people).to.have.lengthOf(1);
     }));
     it("Should be able to add a more users.", () => __awaiter(this, void 0, void 0, function* () {
         let people = yield pc.getAllPeople();

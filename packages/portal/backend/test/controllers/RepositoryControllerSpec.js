@@ -69,7 +69,6 @@ describe("RepositoryController", () => {
         chai_1.expect(people).to.contain('user2');
     }));
     it("Should be able to find repos for a person.", () => __awaiter(this, void 0, void 0, function* () {
-        // test should be in PersonControllerSpec but the repos are made here...
         const pc = new PersonController_1.PersonController();
         const repos = yield pc.getRepos(GlobalSpec_1.Test.USERNAME1);
         chai_1.expect(repos).to.have.lengthOf(1);

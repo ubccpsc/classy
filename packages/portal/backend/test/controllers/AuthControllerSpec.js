@@ -24,11 +24,11 @@ describe("AuthController", () => {
         ac = new AuthController_1.AuthController();
     });
     it("Should not validate a user who does not exist.", () => __awaiter(this, void 0, void 0, function* () {
-        let isValid = yield ac.isValid('aUserwhoDoesNotExist_sadmewnmdsv', ''); // not registered
+        let isValid = yield ac.isValid('aUserwhoDoesNotExist_sadmewnmdsv', '');
         chai_1.expect(isValid).to.be.false;
     }));
     it("Should not let a person who does not exist be privileged.", () => __awaiter(this, void 0, void 0, function* () {
-        let isPriv = yield ac.isPrivileged('aUserwhoDoesNotExist_sadmewnmdsvKKDSS', ''); // not registered
+        let isPriv = yield ac.isPrivileged('aUserwhoDoesNotExist_sadmewnmdsvKKDSS', '');
         chai_1.expect(isPriv.isAdmin).to.be.false;
         chai_1.expect(isPriv.isStaff).to.be.false;
     }));
@@ -104,75 +104,17 @@ describe("AuthController", () => {
         let workedEnough = yield ac.removeAuthentication(personId);
         chai_1.expect(workedEnough).to.be.true;
         auth = yield dc.getAuth('rtholmes');
-        chai_1.expect(auth).to.be.null; // shouldn't exist for a logged out person
+        chai_1.expect(auth).to.be.null;
         person = yield pc.getPerson(personId);
-        chai_1.expect(person.kind).to.be.null; // should be null after being logged out
+        chai_1.expect(person.kind).to.be.null;
     }));
     it("Should be able to handle trying to logout users who do not exist.", () => __awaiter(this, void 0, void 0, function* () {
-        // this seems strange, but really we just want it to not crash
         let workedEnough = yield ac.removeAuthentication(undefined);
         chai_1.expect(workedEnough).to.be.false;
         workedEnough = yield ac.removeAuthentication(null);
         chai_1.expect(workedEnough).to.be.false;
         workedEnough = yield ac.removeAuthentication('totallyMADEUPname12388291900d');
-        chai_1.expect(workedEnough).to.be.false; // can't
+        chai_1.expect(workedEnough).to.be.false;
     }));
-    // TODO: implement auth controller tests
-    /*
-    let rc: RepositoryController;
-    let tc: TeamController;
-    let pc: PersonController;
-
-    before(async () => {
-    });
-
-    beforeEach(() => {
-        tc = new TeamController();
-        rc = new RepositoryController();
-        pc = new PersonController();
-    });
-
-    it("Should be able to get all repositories, even if there are none.", async () => {
-        let repos = await rc.getAllRepos(Test.ORGNAME);
-        expect(repos).to.have.lengthOf(0);
-    });
-
-    it("Should be able to create a repo.", async () => {
-        let repos = await rc.getAllRepos(Test.ORGNAME);
-        expect(repos).to.have.lengthOf(0);
-
-        let team = await tc.getTeam(Test.ORGNAME, Test.TEAMNAME1);
-        expect(team).to.not.be.null;
-
-        let repo = await rc.createRepository(Test.ORGNAME, Test.REPONAME1, [team], {});
-        expect(repo).to.not.be.null;
-
-        repos = await rc.getAllRepos(Test.ORGNAME);
-        expect(repos).to.have.lengthOf(1);
-    });
-
-    it("Should not create a repo a second time.", async () => {
-        let repos = await rc.getAllRepos(Test.ORGNAME);
-        expect(repos).to.have.lengthOf(1);
-
-        let team = await tc.getTeam(Test.ORGNAME, Test.TEAMNAME1);
-        expect(team).to.not.be.null;
-
-        let repo = await rc.createRepository(Test.ORGNAME, Test.REPONAME1, [team], {});
-        expect(repo).to.not.be.null;
-
-        repos = await rc.getAllRepos(Test.ORGNAME);
-        expect(repos).to.have.lengthOf(1);
-    });
-
-    it("Should be able to find all repos for a user.", async () => {
-        let repos = await rc.getAllRepos(Test.ORGNAME);
-        expect(repos).to.have.lengthOf(1);
-
-        const person = await pc.getPerson(Test.ORGNAME, Test.USERNAME1);
-        repos = await rc.getReposForPerson(person);
-        expect(repos).to.have.lengthOf(1);
-    });
-    */
 });
 //# sourceMappingURL=AuthControllerSpec.js.map

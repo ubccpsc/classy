@@ -44,7 +44,7 @@ describe("GradeController", () => {
     }));
     it("Should be able to update a grade.", () => __awaiter(this, void 0, void 0, function* () {
         let grades = yield gc.getAllGrades();
-        chai_1.expect(grades).to.have.lengthOf(2); // from previous
+        chai_1.expect(grades).to.have.lengthOf(2);
         let grade = {
             score: 50,
             comment: 'commentup',
@@ -56,14 +56,14 @@ describe("GradeController", () => {
         let valid = yield gc.createGrade(GlobalSpec_1.Test.REPONAME1, GlobalSpec_1.Test.DELIVID1, grade);
         chai_1.expect(valid).to.be.true;
         grades = yield gc.getAllGrades();
-        chai_1.expect(grades).to.have.lengthOf(2); // still two (one for each teammember)
+        chai_1.expect(grades).to.have.lengthOf(2);
         chai_1.expect(grades[0].score).to.equal(50);
         chai_1.expect(grades[0].comment).to.equal('commentup');
         chai_1.expect(grades[0].URL).to.equal('URLup');
     }));
     it("Should be able to get a grade for a user.", () => __awaiter(this, void 0, void 0, function* () {
         let grades = yield gc.getAllGrades();
-        chai_1.expect(grades).to.have.lengthOf(2); // from previous
+        chai_1.expect(grades).to.have.lengthOf(2);
         let grade = yield gc.getGrade(GlobalSpec_1.Test.USERNAME1, GlobalSpec_1.Test.DELIVID1);
         chai_1.expect(grade).to.not.be.null;
         chai_1.expect(grade.score).to.equal(50);

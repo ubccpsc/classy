@@ -32,7 +32,6 @@ describe('TestDatasetGenerator', function () {
     it('Can generate some students', function () {
         return __awaiter(this, void 0, void 0, function* () {
             const pc = new PersonController_1.PersonController();
-            // create an admin
             let p = {
                 id: GlobalSpec_1.Test.USERNAMEADMIN,
                 csId: GlobalSpec_1.Test.USERNAMEADMIN,
@@ -46,7 +45,6 @@ describe('TestDatasetGenerator', function () {
                 custom: {}
             };
             yield pc.createPerson(p);
-            // create a student
             p = {
                 id: GlobalSpec_1.Test.USERNAME1,
                 csId: GlobalSpec_1.Test.USERNAME1,
@@ -81,10 +79,8 @@ describe('TestDatasetGenerator', function () {
     it('Can generate some auth tokens', function () {
         return __awaiter(this, void 0, void 0, function* () {
             const dc = DatabaseController_1.DatabaseController.getInstance();
-            // create for an admin
             let a = { personId: GlobalSpec_1.Test.USERNAMEADMIN, token: 'TEST_TOKENADMIN' };
             yield dc.writeAuth(a);
-            // create for a student
             a = { personId: GlobalSpec_1.Test.USERNAME1, token: 'TEST_TOKENSTUDENT' };
             yield dc.writeAuth(a);
         });
@@ -120,14 +116,12 @@ describe('TestDatasetGenerator', function () {
                 openTimestamp: -1,
                 closeTimestamp: -1,
                 gradesReleased: false,
-                // delay:          300,
                 teamMinSize: 1,
                 teamMaxSize: 2,
                 teamSameLab: true,
                 teamStudentsForm: true,
                 teamPrefix: 'team_',
                 repoPrefix: '',
-                // bootstrapUrl:     '',
                 autotest: {
                     dockerImage: 'testImage',
                     studentDelay: 60 * 60 * 12,

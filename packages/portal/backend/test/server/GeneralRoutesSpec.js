@@ -20,11 +20,7 @@ describe('General Routes', function () {
     var server = null;
     before(() => __awaiter(this, void 0, void 0, function* () {
         Log_1.default.test('GeneralRoutes::before - start');
-        // Config.getInstance().setProp(ConfigKey.name, ConfigCourses.classytest);
-        // Test.ORGNAME = Config.getInstance().getProp(ConfigKey.testorg);
         let db = DatabaseController_1.DatabaseController.getInstance();
-        // await db.clearData(); // nuke everything
-        // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
         server = new BackendServer_1.default(false);
         return server.start().then(function () {
             Log_1.default.test('GeneralRoutes::before - server started');
@@ -53,7 +49,7 @@ describe('General Routes', function () {
             chai_1.expect(response.status).to.equal(200);
             chai_1.expect(body.success).to.not.be.undefined;
             chai_1.expect(body.success.org).to.not.be.undefined;
-            chai_1.expect(body.success.org).to.equal(Config_1.default.getInstance().getProp(Config_1.ConfigKey.org)); // valid .org usage
+            chai_1.expect(body.success.org).to.equal(Config_1.default.getInstance().getProp(Config_1.ConfigKey.org));
             chai_1.expect(body.success.name).to.equal(Config_1.default.getInstance().getProp(Config_1.ConfigKey.name));
         });
     });

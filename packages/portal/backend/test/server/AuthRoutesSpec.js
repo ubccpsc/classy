@@ -19,14 +19,9 @@ describe('Auth Routes', function () {
     const TIMEOUT = 1000 * 10;
     var app = null;
     var server = null;
-    // let oldOrg: string | null = null;
     before(() => __awaiter(this, void 0, void 0, function* () {
         Log_1.default.test('AuthRoutes::before - start');
-        // oldOrg = Config.getInstance().getProp(ConfigKey.org);
-        // Config.getInstance().setProp(ConfigKey.name, ConfigCourses.classytest); // force testing environment
         let db = DatabaseController_1.DatabaseController.getInstance();
-        // await db.clearData(); // nuke everything
-        // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
         server = new BackendServer_1.default(false);
         return server.start().then(function () {
             Log_1.default.test('AuthRoutes::before - server started');
@@ -132,17 +127,9 @@ describe('Auth Routes', function () {
             chai_1.expect(body.success).to.not.be.undefined;
         });
     }).timeout(TIMEOUT);
-    /**
-     * This one is a bit controversial:
-     *
-     * While this means students _could_ log each other out, it also means that we
-     * don't get into states where people can't logout on their own. Better safe
-     * than sorry in this dimension.
-     */
     it('Should be able to logout even if token is bad.', function () {
         return __awaiter(this, void 0, void 0, function* () {
             const dc = DatabaseController_1.DatabaseController.getInstance();
-            // make sure there is a token to logout
             yield dc.writeAuth({ personId: GlobalSpec_1.Test.USERNAME1, token: 'testtoken' });
             let auth = yield dc.getAuth(GlobalSpec_1.Test.USERNAME1);
             chai_1.expect(auth).to.not.be.null;
@@ -151,7 +138,6 @@ describe('Auth Routes', function () {
             const url = '/portal/logout';
             try {
                 Log_1.default.test('Making undefined token request');
-                // undefined token
                 response = yield request(app).get(url).set('user', auth.personId);
                 Log_1.default.test('Response received');
                 body = response.body;
@@ -165,7 +151,6 @@ describe('Auth Routes', function () {
             chai_1.expect(body.success).to.not.be.undefined;
             try {
                 Log_1.default.test('Making null token request');
-                // null token
                 response = yield request(app).get(url).set('user', auth.personId).set('token', null);
                 Log_1.default.test('Response received');
                 body = response.body;
@@ -179,17 +164,9 @@ describe('Auth Routes', function () {
             chai_1.expect(body.success).to.not.be.undefined;
         });
     }).timeout(TIMEOUT);
-    /**
-     * This one is a bit controversial:
-     *
-     * While this means students _could_ log each other out, it also means that we
-     * don't get into states where people can't logout on their own. Better safe
-     * than sorry in this dimension.
-     */
     it('Should fail to logout if user is bad.', function () {
         return __awaiter(this, void 0, void 0, function* () {
             const dc = DatabaseController_1.DatabaseController.getInstance();
-            // make sure there is a token to logout
             yield dc.writeAuth({ personId: GlobalSpec_1.Test.USERNAME1, token: 'testtoken' });
             let auth = yield dc.getAuth(GlobalSpec_1.Test.USERNAME1);
             chai_1.expect(auth).to.not.be.null;
@@ -198,7 +175,6 @@ describe('Auth Routes', function () {
             const url = '/portal/logout';
             try {
                 Log_1.default.test('Making undefined user request');
-                // undefined user
                 response = yield request(app).get(url).set('token', auth.token);
                 Log_1.default.test('Response received');
                 body = response.body;
@@ -212,7 +188,6 @@ describe('Auth Routes', function () {
             chai_1.expect(body.failure).to.not.be.undefined;
             try {
                 Log_1.default.test('Making null user request');
-                // null user
                 response = yield request(app).get(url).set('user', null).set('token', auth.token);
                 Log_1.default.test('Response received');
                 body = response.body;

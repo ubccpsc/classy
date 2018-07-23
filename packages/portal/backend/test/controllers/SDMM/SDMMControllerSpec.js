@@ -24,8 +24,6 @@ const PersonController_1 = require("../../../src/controllers/PersonController");
 const GitHubController_1 = require("../../../src/controllers/GitHubController");
 class TestData {
     constructor() {
-        // NOTE: does not use the Test. values on purpose to make it easier
-        // to validate status without having to nuke the db first
         this.TEAMD0 = "sddmd0test";
         this.TEAMD1 = "sddmd1test";
         this.REPOD0 = "sddmd0repotest";
@@ -87,7 +85,6 @@ describe("SDDM: SDMMController", () => {
     let OLD_ORG = null;
     before(() => __awaiter(this, void 0, void 0, function* () {
         Log_1.default.test("SDMMControllerSpec::before()");
-        // Force SDMM tests to run in an SDMM org
         Config_1.default.getInstance();
         OLD_ORG = Config_1.default.getInstance().config.org;
         Config_1.default.getInstance().config.org = 'secapstonetest';
@@ -102,7 +99,6 @@ describe("SDDM: SDMMController", () => {
         pc = new PersonController_1.PersonController();
     });
     after(() => __awaiter(this, void 0, void 0, function* () {
-        // Force SDMM tests to run in an SDMM org
         Log_1.default.test("SDMMControllerSpec::after()");
         Config_1.default.getInstance();
         Config_1.default.getInstance().config.org = OLD_ORG;
@@ -121,20 +117,11 @@ describe("SDDM: SDMMController", () => {
         chai_1.expect(status).to.be.null;
     }));
     it("Should be able to get a D0PRE status.", () => __awaiter(this, void 0, void 0, function* () {
-        yield sc.handleUnknownUser(data.USER); // provision user
-        yield pc.getPerson(data.USER); // get user
+        yield sc.handleUnknownUser(data.USER);
+        yield pc.getPerson(data.USER);
         let status = yield sc.getStatus(data.USER);
         chai_1.expect(status.status).to.equal("D0PRE");
     }));
-    /* D0PRE
-        * D0
-        * D1UNLOCKED
-        * D1TEAMSET
-        * D1
-        * D2
-        * D3PRE
-        * D3
-        */
     it("Should be able to get a D0 status.", () => __awaiter(this, void 0, void 0, function* () {
         let status = yield sc.getStatus(data.USER);
         chai_1.expect(status.status).to.equal("D0PRE");
@@ -158,7 +145,7 @@ describe("SDDM: SDMMController", () => {
         };
         yield gc.createGrade(data.REPOD0, "d0", grade);
         status = yield sc.getStatus(data.USER);
-        chai_1.expect(status.status).to.equal("D0"); // 59 is too low
+        chai_1.expect(status.status).to.equal("D0");
         grade = {
             score: 61,
             comment: '',
@@ -202,7 +189,7 @@ describe("SDDM: SDMMController", () => {
         };
         yield gc.createGrade(data.REPOD1, "d1", grade);
         status = yield sc.getStatus(data.USER);
-        chai_1.expect(status.status).to.equal("D1"); // 59 is too low
+        chai_1.expect(status.status).to.equal("D1");
         grade = {
             score: 61,
             comment: '',
@@ -228,7 +215,7 @@ describe("SDDM: SDMMController", () => {
         };
         yield gc.createGrade(data.REPOD1, "d2", grade);
         status = yield sc.getStatus(data.USER);
-        chai_1.expect(status.status).to.equal("D2"); // 59 is too low
+        chai_1.expect(status.status).to.equal("D2");
         grade = {
             score: 61,
             comment: '',
@@ -261,13 +248,6 @@ describe("SDDM: SDMMController", () => {
         chai_1.expect(val.message).to.not.be.undefined;
         chai_1.expect(val.message).to.equal('Username not registered; contact course staff.');
     }));
-    /**
-     *
-     *
-     * Provisioning tests. These do need to run in order.
-     *
-     *
-     */
     it("Should not allow multiple people to be added to a d0 repo.", () => __awaiter(this, void 0, void 0, function* () {
         let person = yield pc.createPerson(data.PERSON1);
         chai_1.expect(person).to.not.be.null;
@@ -277,7 +257,6 @@ describe("SDDM: SDMMController", () => {
         chai_1.expect(allRepos).to.be.empty;
         let allTeams = yield tc.getTeamsForPerson(person);
         chai_1.expect(allTeams).to.be.empty;
-        // don't provision for non-existent users
         let val = null;
         try {
             yield sc.provision(GlobalSpec_1.Test.DELIVID0, ['23234#$Q#@#invalid']);
@@ -289,7 +268,6 @@ describe("SDDM: SDMMController", () => {
         chai_1.expect(val.message).to.equal('Username not registered; contact course staff.');
         allRepos = yield rc.getReposForPerson(person);
         chai_1.expect(allRepos).to.be.empty;
-        // don't create a d0 repo with multiple people
         val = null;
         try {
             yield sc.provision(GlobalSpec_1.Test.DELIVID0, [data.PERSON1.id, data.PERSON2.id]);
@@ -336,11 +314,11 @@ describe("SDDM: SDMMController", () => {
         let allRepos = yield rc.getReposForPerson(person);
         chai_1.expect(allRepos).to.have.lengthOf(1);
         chai_1.expect(allRepos[0].custom.d0enabled).to.be.true;
-        chai_1.expect(allRepos[0].custom.d1enabled).to.be.false; // should stay d0
+        chai_1.expect(allRepos[0].custom.d1enabled).to.be.false;
         let allTeams = yield tc.getTeamsForPerson(person);
         chai_1.expect(allTeams).to.have.lengthOf(1);
         chai_1.expect(allTeams[0].custom.sdmmd0).to.be.true;
-        chai_1.expect(allTeams[0].custom.sdmmd1).to.be.false; // should stay d0
+        chai_1.expect(allTeams[0].custom.sdmmd1).to.be.false;
     }));
     it("Should be able to upgrade a d0 repo for an individual.", () => __awaiter(this, void 0, void 0, function* () {
         Log_1.default.test("getting person");
@@ -366,7 +344,7 @@ describe("SDDM: SDMMController", () => {
         chai_1.expect(allRepos[0].custom.d0enabled).to.be.true;
         chai_1.expect(allRepos[0].custom.d1enabled).to.be.false;
         Log_1.default.test('provisioning d1 repo');
-        let payload = yield sc.provision(GlobalSpec_1.Test.DELIVID1, [data.PERSON1.id]); // do it
+        let payload = yield sc.provision(GlobalSpec_1.Test.DELIVID1, [data.PERSON1.id]);
         Log_1.default.test('provisioning d1 repo complete');
         chai_1.expect(payload.success).to.not.be.undefined;
         chai_1.expect(payload.failure).to.be.undefined;
@@ -375,19 +353,18 @@ describe("SDDM: SDMMController", () => {
         Log_1.default.test(payload.success.message);
         Log_1.default.test("checking d1 repo status");
         allRepos = yield rc.getReposForPerson(person);
-        chai_1.expect(allRepos).to.have.lengthOf(1); // no new repo
+        chai_1.expect(allRepos).to.have.lengthOf(1);
         chai_1.expect(allRepos[0].custom.d0enabled).to.be.true;
-        chai_1.expect(allRepos[0].custom.d1enabled).to.be.true; // should be provisioned for d1 now
+        chai_1.expect(allRepos[0].custom.d1enabled).to.be.true;
         Log_1.default.test("checking d1 team status");
         let allTeams = yield tc.getTeamsForPerson(person);
         chai_1.expect(allTeams).to.have.lengthOf(1);
         chai_1.expect(allTeams[0].custom.sdmmd0).to.be.true;
-        chai_1.expect(allTeams[0].custom.sdmmd1).to.be.true; // should be provisioned for d1 now
-        // try to do it again (should fail)  // makes sure they can't get multiple d1 repos
+        chai_1.expect(allTeams[0].custom.sdmmd1).to.be.true;
         let val = null;
         try {
             Log_1.default.test("ensuring we can't provision d1 again");
-            yield sc.provision(GlobalSpec_1.Test.DELIVID1, [data.PERSON1.id]); // do it
+            yield sc.provision(GlobalSpec_1.Test.DELIVID1, [data.PERSON1.id]);
         }
         catch (err) {
             val = err;
@@ -395,14 +372,13 @@ describe("SDDM: SDMMController", () => {
         chai_1.expect(val).to.not.be.null;
         chai_1.expect(val.message).to.equal('D1 repo has already been assigned: TEST__X__p_TEST__X__t_sddmU1');
         allRepos = yield rc.getReposForPerson(person);
-        chai_1.expect(allRepos).to.have.lengthOf(1); // no new repo
+        chai_1.expect(allRepos).to.have.lengthOf(1);
     }));
     it("Should not be able to form a d1 team if a member does not exist or has insufficient d0 standing.", () => __awaiter(this, void 0, void 0, function* () {
-        let person = yield pc.getPerson(data.PERSON2.id); // person2; person1 has a d1 repo from previous upgrade
+        let person = yield pc.getPerson(data.PERSON2.id);
         chai_1.expect(person).to.not.be.null;
         let allRepos = yield rc.getReposForPerson(person);
-        chai_1.expect(allRepos).to.have.lengthOf(0); // no new repo
-        // don't allow pairing with someone who doesn't exist
+        chai_1.expect(allRepos).to.have.lengthOf(0);
         let val = null;
         try {
             yield sc.provision(GlobalSpec_1.Test.DELIVID1, [data.PERSON2.id, "asdf32#@@#INVALIDPERSON"]);
@@ -416,7 +392,6 @@ describe("SDDM: SDMMController", () => {
         chai_1.expect(allRepos).to.have.lengthOf(0);
         let allTeams = yield tc.getTeamsForPerson(person);
         chai_1.expect(allTeams).to.have.lengthOf(0);
-        // don't allow pairing with someone with insufficient d0 credit
         val = null;
         try {
             yield sc.provision(GlobalSpec_1.Test.DELIVID1, [data.PERSON2.id, data.PERSON3.id]);
@@ -430,8 +405,6 @@ describe("SDDM: SDMMController", () => {
         chai_1.expect(allRepos).to.have.lengthOf(0);
         allTeams = yield tc.getTeamsForPerson(person);
         chai_1.expect(allTeams).to.have.lengthOf(0);
-        // and some other reasons you can't provision d1 repos
-        // need at least one person
         val = null;
         try {
             yield sc.provision(GlobalSpec_1.Test.DELIVID1, []);
@@ -441,7 +414,6 @@ describe("SDDM: SDMMController", () => {
         }
         chai_1.expect(val).to.not.be.null;
         chai_1.expect(val.message).to.equal('Invalid # of people; contact course staff.');
-        // can't form a group with yourself
         val = null;
         try {
             yield sc.provision(GlobalSpec_1.Test.DELIVID1, [data.PERSON2.id, data.PERSON2.id]);
@@ -453,7 +425,6 @@ describe("SDDM: SDMMController", () => {
         chai_1.expect(val.message).to.equal("D1 duplicate users; if you wish to work alone, please select 'work individually'.");
     }));
     it("Should be able to form a d1 team with a partner.", () => __awaiter(this, void 0, void 0, function* () {
-        // prepare person 2
         let person2 = yield pc.getPerson(data.PERSON2.id);
         chai_1.expect(person2).to.not.be.null;
         let payload = yield sc.provision(GlobalSpec_1.Test.DELIVID0, [person2.id]);
@@ -471,14 +442,11 @@ describe("SDDM: SDMMController", () => {
         };
         let grade = yield gc.createGrade(allRepos[0].id, GlobalSpec_1.Test.DELIVID0, gradeR);
         chai_1.expect(grade).to.be.true;
-        // prepare person3
         let person3 = yield pc.createPerson(data.PERSON3);
         chai_1.expect(person3).to.not.be.null;
-        // create d0 payload for person2
         payload = yield sc.provision(GlobalSpec_1.Test.DELIVID0, [person3.id]);
         chai_1.expect(payload.success).to.not.be.undefined;
         chai_1.expect(payload.success.status.status).to.equal(SDMMTypes_1.SDMMStatus[SDMMTypes_1.SDMMStatus.D0]);
-        // create d0 grade for person2
         allRepos = yield rc.getReposForPerson(person3);
         chai_1.expect(allRepos).to.have.lengthOf(1);
         gradeR = {
@@ -491,7 +459,6 @@ describe("SDDM: SDMMController", () => {
         };
         grade = yield gc.createGrade(allRepos[0].id, GlobalSpec_1.Test.DELIVID0, gradeR);
         chai_1.expect(grade).to.be.true;
-        // try to upgrade them to d1
         Log_1.default.test('Updating to d1');
         payload = yield sc.provision(GlobalSpec_1.Test.DELIVID1, [person2.id, person3.id]);
         chai_1.expect(payload.success).to.not.be.undefined;
@@ -501,12 +468,8 @@ describe("SDDM: SDMMController", () => {
         Log_1.default.test(payload.message);
         allRepos = yield rc.getReposForPerson(person2);
         chai_1.expect(allRepos).to.have.lengthOf(2);
-        // expect(allRepos[0].custom.d0enabled).to.be.true;
-        // expect(allRepos[0].custom.d1enabled).to.be.false;
         let allTeams = yield tc.getTeamsForPerson(person2);
         chai_1.expect(allTeams).to.have.lengthOf(2);
-        // expect(allTeams[0].custom.sdmmd0).to.be.true;
-        // expect(allTeams[0].custom.sdmmd1).to.be.false;
     }));
     it("Should not be able to provision a d1 team with more than two people.", () => __awaiter(this, void 0, void 0, function* () {
         let payload = null;

@@ -17,7 +17,6 @@ const GlobalSpec_1 = require("../GlobalSpec");
 const Util_1 = require("../../../../common/Util");
 const Config_1 = require("../../../../common/Config");
 describe("GitHubActions", () => {
-    // TODO: investigate skipping this way: https://stackoverflow.com/a/41908943 (and turning them on/off with an env flag)
     let gh;
     let TIMEOUT = 5000;
     let DELAY_SEC = 1000;
@@ -27,13 +26,12 @@ describe("GitHubActions", () => {
     const OLDORG = Config_1.default.getInstance().getProp(Config_1.ConfigKey.org);
     before(() => __awaiter(this, void 0, void 0, function* () {
         Log_1.default.test("GitHubActionSpec::before() - start; forcing testorg");
-        // test github actions on a test github instance (for safety)
         Config_1.default.getInstance().setProp(Config_1.ConfigKey.org, Config_1.default.getInstance().getProp(Config_1.ConfigKey.testorg));
     }));
     beforeEach(function () {
         Log_1.default.test('GitHubActionSpec::BeforeEach - "' + this.currentTest.title + '"');
         const ci = process.env.CI;
-        const override = false; // set to true if you want to run these tests locally
+        const override = false;
         if (override || typeof ci !== 'undefined' && Boolean(ci) === true) {
             Log_1.default.test("GitHubActionSpec::beforeEach() - running in CI; not skipping");
             gh = new GitHubActions_1.GitHubActions();
@@ -48,7 +46,6 @@ describe("GitHubActions", () => {
     });
     after(() => __awaiter(this, void 0, void 0, function* () {
         Log_1.default.test("GitHubActionSpec::after() - start; replacing original org");
-        // return to original org
         Config_1.default.getInstance().setProp(Config_1.ConfigKey.org, OLDORG);
     }));
     let TESTREPONAMES = ["testtest__repo1",
@@ -80,7 +77,6 @@ describe("GitHubActions", () => {
     }).timeout(TIMEOUT);
     it("Should not be possible to delete a repo that does not exist.", function () {
         return __awaiter(this, void 0, void 0, function* () {
-            // and it should do so without crashing
             let val = yield gh.deleteRepo(REPONAME);
             chai_1.expect(val).to.be.false;
         });
@@ -142,7 +138,7 @@ describe("GitHubActions", () => {
             chai_1.expect(val.githubTeamNumber).to.be.an('number');
             chai_1.expect(val.githubTeamNumber > 0).to.be.true;
             let addMembers = yield gh.addMembersToTeam(val.teamName, val.githubTeamNumber, [GlobalSpec_1.Test.USERNAMEGITHUB1, GlobalSpec_1.Test.USERNAMEGITHUB2]);
-            chai_1.expect(addMembers.teamName).to.equal(TEAMNAME); // not a strong test
+            chai_1.expect(addMembers.teamName).to.equal(TEAMNAME);
             let teamAdd = yield gh.addTeamToRepo(val.githubTeamNumber, REPONAME, 'push');
             chai_1.expect(teamAdd.githubTeamNumber).to.equal(val.githubTeamNumber);
             let staffTeamNumber = yield gh.getTeamNumber('staff');
@@ -155,8 +151,6 @@ describe("GitHubActions", () => {
             let val = yield gh.getTeamNumber(TEAMNAME);
             Log_1.default.test('Team # ' + val);
             chai_1.expect(val).to.be.greaterThan(0);
-            // let bool = await gh.teamExists(TEAMNAME);
-            // expect(bool).to.be.true;
         });
     }).timeout(TIMEOUT);
     it("Should get an empty array of team members for a team that does not exist.", function () {
@@ -178,9 +172,8 @@ describe("GitHubActions", () => {
     }).timeout(TIMEOUT);
     it("Should be able to create many teams and get their numbers (tests team paging).", function () {
         return __awaiter(this, void 0, void 0, function* () {
-            gh.PAGE_SIZE = 2; // force a small page size for testing
-            const NUM_TEAMS = 4; // could do 100 for a special test, but this is really slow
-            // should be able to create the teams
+            gh.PAGE_SIZE = 2;
+            const NUM_TEAMS = 4;
             for (let i = 0; i < NUM_TEAMS; i++) {
                 const teamname = TEAMNAME + '_paging-' + i;
                 let val = yield gh.createTeam(teamname, 'push');
@@ -190,7 +183,6 @@ describe("GitHubActions", () => {
                 chai_1.expect(val.githubTeamNumber).to.be.an('number');
                 chai_1.expect(val.githubTeamNumber).to.be.greaterThan(0);
             }
-            // should be able to get their number
             for (let i = 0; i < NUM_TEAMS; i++) {
                 const teamname = TEAMNAME + '_paging-' + i;
                 yield gh.delay(200);
@@ -204,8 +196,7 @@ describe("GitHubActions", () => {
     it("Should be able to create many repos and get them back (tests repo paging).", function () {
         return __awaiter(this, void 0, void 0, function* () {
             const NUM_REPOS = 4;
-            gh.PAGE_SIZE = 2; // force a small page size for testing
-            // should be able to create the teams
+            gh.PAGE_SIZE = 2;
             for (let i = 0; i < NUM_REPOS; i++) {
                 const reponame = REPONAME + '_paging-' + i;
                 let val = yield gh.createRepo(reponame);
@@ -215,7 +206,6 @@ describe("GitHubActions", () => {
                 chai_1.expect(val).to.be.an('string');
             }
             let allRepos = yield gh.listRepos();
-            // should be able to get their number
             for (let i = 0; i < NUM_REPOS; i++) {
                 const reponame = REPONAME + '_paging-' + i;
                 let found = false;
@@ -228,7 +218,6 @@ describe("GitHubActions", () => {
                 if (found === false) {
                     Log_1.default.test("Missing repo: " + reponame);
                 }
-                // expect(found).to.be.true;
             }
         });
     }).timeout(TIMEOUT * 1000);
@@ -236,95 +225,80 @@ describe("GitHubActions", () => {
         return __awaiter(this, void 0, void 0, function* () {
             const start = Date.now();
             let targetUrl = Config_1.default.getInstance().getProp(Config_1.ConfigKey.githubHost) + '/' + Config_1.default.getInstance().getProp(Config_1.ConfigKey.org) + '/' + REPONAME;
-            let importUrl = 'https://github.com/SECapstone/bootstrap'; // this is hard coded, but at least it's public
+            let importUrl = 'https://github.com/SECapstone/bootstrap';
             let output = yield gh.importRepoFS(importUrl, targetUrl);
             chai_1.expect(output).to.be.true;
             Log_1.default.test('Full clone took: ' + Util_1.default.took(start));
         });
-    }).timeout(120 * 1000); // 2 minutes
-    /**
-     * This test is terrible, but gets the coverage tools to stop complaining.
-     */
+    }).timeout(120 * 1000);
     it("Should make sure that actions can actually fail.", function () {
         return __awaiter(this, void 0, void 0, function* () {
             if (1 > 0)
-                return; // terrible skip
+                return;
             const old = gh.gitHubAuthToken;
             gh.gitHubAuthToken = "FOOFOOFOO";
             try {
                 yield gh.createRepo('INVALIDREPONAME');
             }
             catch (err) {
-                // expected
             }
             try {
                 yield gh.deleteRepo('INVALIDREPONAME');
             }
             catch (err) {
-                // expected
             }
             try {
                 yield gh.listRepos();
             }
             catch (err) {
-                // expected
             }
             try {
                 yield gh.createTeam('INVALIDTEAMNAMER', 'push');
             }
             catch (err) {
-                // expected
             }
             try {
                 yield gh.getTeamNumber('INVALIDTEAMNAMER');
             }
             catch (err) {
-                // expected
             }
             try {
                 yield gh.deleteTeam(-1);
             }
             catch (err) {
-                // expected
             }
             try {
                 yield gh.addTeamToRepo(-1, 'INVALIDREPONAME', 'push');
             }
             catch (err) {
-                // expected
             }
             try {
                 yield gh.addMembersToTeam('INVALIDTEAMNAME', -1, ['INVALIDPERSONNAME']);
             }
             catch (err) {
-                // expected
             }
             try {
                 yield gh.listTeams();
             }
             catch (err) {
-                // expected
             }
             try {
                 yield gh.listWebhooks('INVALIDREPONAME');
             }
             catch (err) {
-                // expected
             }
             try {
                 yield gh.addWebhook('INVALIDREPONAME', 'INVALIDENDPOINT');
             }
             catch (err) {
-                // expected
             }
             try {
                 yield gh.importRepoFS('https://localhost', 'https://localhost');
             }
             catch (err) {
-                // expected
             }
             Log_1.default.test('after expected fail');
-            gh.gitHubAuthToken = old; // restore token
+            gh.gitHubAuthToken = old;
         });
     }).timeout(TIMEOUT);
     it("Should be able to create a repo, " +
@@ -335,7 +309,6 @@ describe("GitHubActions", () => {
             chai_1.expect(githubTeam.teamName).to.be.equal(TEAMNAME);
             chai_1.expect(githubTeam.githubTeamNumber).to.be.an('number');
             chai_1.expect(githubTeam.githubTeamNumber > 0).to.be.true;
-            // Expects adding members to work
             let addMembers = yield gh.addMembersToTeam(githubTeam.teamName, githubTeam.githubTeamNumber, [GlobalSpec_1.Test.USERNAMEGITHUB1, GlobalSpec_1.Test.USERNAMEGITHUB2]);
             let teamAdd = yield gh.addTeamToRepo(githubTeam.githubTeamNumber, REPONAME, 'push');
             let staffTeamNumber = yield gh.getTeamNumber('staff');
@@ -361,39 +334,31 @@ describe("GitHubActions", () => {
             Log_1.default.test('GitHubActionSpec::deleteStale() - start');
             let repos = yield gh.listRepos();
             chai_1.expect(repos).to.be.an('array');
-            // expect(repos.length > 0).to.be.true; // test org can be empty
-            // delete test repos if needed
             for (const repo of repos) {
                 for (const r of TESTREPONAMES) {
                     if (repo.name === r) {
                         Log_1.default.info('Removing stale repo: ' + repo.name);
                         let val = yield gh.deleteRepo(r);
                         yield gh.delay(DELAY_SHORT);
-                        // expect(val).to.be.true;
                     }
                 }
             }
             repos = yield gh.listRepos();
-            // delete test repos if needed
             for (const repo of repos) {
                 Log_1.default.info('Evaluating repo: ' + repo.name);
                 if (repo.name.indexOf('TEST__X__') === 0 || repo.name.startsWith(REPONAME)) {
                     Log_1.default.info('Removing stale repo: ' + repo.name);
                     let val = yield gh.deleteRepo(repo.name);
-                    // expect(val).to.be.true;
                     let teamName = repo.name.substr(15);
                     Log_1.default.info('Adding stale team name: ' + repo.name);
                     TESTTEAMNAMES.push(teamName);
                 }
             }
-            // delete teams if needed
             let teams = yield gh.listTeams();
             chai_1.expect(teams).to.be.an('array');
-            // expect(teams.length > 0).to.be.true; // can have 0 teams
             Log_1.default.test('All Teams: ' + JSON.stringify(teams));
             Log_1.default.test('Stale Teams: ' + JSON.stringify(TESTTEAMNAMES));
             for (const team of teams) {
-                // Log.info('Evaluating team: ' + JSON.stringify(team));
                 let done = false;
                 for (const t of TESTTEAMNAMES) {
                     if (team.name === t) {

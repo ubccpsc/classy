@@ -108,6 +108,13 @@ export class CS340AdminView extends AdminView {
             that.releaseRepoPressed();
         };
 
+        (document.querySelector('#adminDeleteRepositories') as OnsButtonElement).onclick = function (evt) {// DEBUG
+            Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');// DEBUG
+                                    // DEBUG
+            that.deleteRepoPressed();// DEBUG
+        };// DEBUG
+
+
     }
 
     private async selectDeliverablePressed(): Promise<void> {
@@ -119,16 +126,19 @@ export class CS340AdminView extends AdminView {
         const checkStatusButton = document.querySelector('#adminCheckStatus') as OnsButtonElement;
         const createRepoButton  = document.querySelector('#adminCreateRepositories') as OnsButtonElement;
         const releaseRepoButton = document.querySelector('#adminReleaseRepositories') as OnsButtonElement;
+        const deleteRepoButton  = document.querySelector('#adminDeleteRepositories') as OnsButtonElement; // DEBUG
 
         if(delivId === null) {
             Log.info('CS340AdminView::selectDeliverable(..) - did not select deliv, locking buttons');
             checkStatusButton.disabled = true;
             createRepoButton.disabled = true;
             releaseRepoButton.disabled = true;
+            deleteRepoButton.disabled = true; // DEBUG
         } else {
             checkStatusButton.disabled = false;
             createRepoButton.disabled = false;
             releaseRepoButton.disabled = false;
+            deleteRepoButton.disabled = false; // DEBUG
         }
 
         Log.info('CS340AdminView::selectDeliverablePressed(..) - finished');
@@ -276,6 +286,44 @@ export class CS340AdminView extends AdminView {
 
         this.checkStatusAndUpdate();
         Log.info('CS340AdminView::releaseRepoPressed(..) - finish');
+
+        return;
+    }
+
+    private async deleteRepoPressed(): Promise<void> {
+        Log.warn('CS340AdminView::deleteRepoPressed(..) - start');
+        // Log.warn('CS340AdminView::deleteRepoPressed(..) - start');
+
+        const delivIDBox = document.querySelector('#adminActionDeliverableID') as HTMLParagraphElement;
+        const delivID = delivIDBox.innerHTML;
+
+        Log.warn('CS340AdminView::deleteRepoPressed(..) - ' + delivID + " selected, beginning repo deleting");
+
+        UI.showModal("Deleting repositories, please wait...");
+
+        const url = this.remote + '/deleteAllRepositories/' + delivID;
+        let options: any = AdminView.getOptions();
+
+        options.method = 'post';
+        let response = await fetch(url, options);
+        UI.hideModal();
+
+
+        const jsonResponse = await response.json();
+        if(response.status === 200) {
+            if(jsonResponse.response == true) {
+                UI.notification("Success; All repositories deleted!");
+            } else {
+                UI.notification("Error: Some repositories were not deleted, please try again");
+            }
+        } else {
+            Log.error("Issue with deleting repositories; status: " + response.status);
+
+            UI.notification("Error: " + jsonResponse.error);
+        }
+
+        this.checkStatusAndUpdate();
+        Log.warn('CS340AdminView::deleteRepoPressed(..) - finish');
 
         return;
     }

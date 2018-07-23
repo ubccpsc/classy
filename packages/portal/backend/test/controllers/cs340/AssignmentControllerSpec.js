@@ -36,10 +36,8 @@ describe.skip("CS340: AssignmentController", () => {
     let tc = new TeamController_1.TeamController();
     let rc = new RepositoryController_1.RepositoryController();
     before(() => __awaiter(this, void 0, void 0, function* () {
-        // nothing
     }));
     beforeEach(() => {
-        // initialize a new controller before each tests
         ac = new AssignmentController_1.AssignmentController();
     });
     it("Attempting to retrieve an assignment grade that doesn't exist should return null.", () => __awaiter(this, void 0, void 0, function* () {
@@ -47,7 +45,6 @@ describe.skip("CS340: AssignmentController", () => {
         chai_1.expect(assignmentGrades).equals(null);
     }));
     it("Should be able to create an assignment grade.", () => __awaiter(this, void 0, void 0, function* () {
-        // Check there is no grade associated with the assignment specified
         let assignmentGrade = yield ac.getAssignmentGrade(TEST_STUDENT_ID_0, "a2");
         chai_1.expect(assignmentGrade).equals(null);
         let aPayload = {
@@ -88,19 +85,17 @@ describe.skip("CS340: AssignmentController", () => {
         yield ac.setAssignmentGrade(GlobalSpec_1.Test.REPONAME2, TEST_ASSN_ID, aPayload);
         let aGrade = yield ac.getAssignmentGrade(GlobalSpec_1.Test.USERNAME1, TEST_ASSN_ID);
         let grade = yield gc.getGrade(GlobalSpec_1.Test.USERNAME1, TEST_ASSN_ID);
-        // Check if the assignment information is set properly
         chai_1.expect(aGrade).to.not.be.null;
         chai_1.expect(aGrade.assignmentID).equals("a2");
         chai_1.expect(aGrade.studentID).equals(TEST_STUDENT_ID_0);
         chai_1.expect(aGrade.questions).to.have.lengthOf(2);
-        // Check if the grade is set properly
         chai_1.expect(grade).to.not.be.null;
         chai_1.expect(grade.score).equals(11);
     }));
     it("Should be able to update a grade.", () => __awaiter(this, void 0, void 0, function* () {
         let team1 = yield tc.getTeam(GlobalSpec_1.Test.TEAMNAME1);
         let repo2 = yield rc.getRepository(GlobalSpec_1.Test.REPONAME2);
-        let previousGradeRecords = yield gc.getAllGrades(); // Pre command count
+        let previousGradeRecords = yield gc.getAllGrades();
         let aPayload = {
             assignmentID: "a2",
             studentID: TEST_STUDENT_ID_0,
@@ -130,7 +125,7 @@ describe.skip("CS340: AssignmentController", () => {
             ]
         };
         yield ac.setAssignmentGrade(GlobalSpec_1.Test.REPONAME2, TEST_ASSN_ID, aPayload);
-        let afterGradeRecords = yield gc.getAllGrades(); // Post command count
+        let afterGradeRecords = yield gc.getAllGrades();
         chai_1.expect(previousGradeRecords.length - afterGradeRecords.length).to.equal(0);
         let grade = yield gc.getGrade(GlobalSpec_1.Test.USERNAME1, TEST_ASSN_ID);
         chai_1.expect(grade).to.not.be.null;

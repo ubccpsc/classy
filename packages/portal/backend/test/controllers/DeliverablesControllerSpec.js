@@ -15,7 +15,7 @@ const DeliverablesController_1 = require("../../src/controllers/DeliverablesCont
 const loadFirst = require('../GlobalSpec');
 describe("DeliverablesController", () => {
     let dc;
-    let DELIV1 = null; // delivs are complex so just use one for the whole suite
+    let DELIV1 = null;
     before(() => __awaiter(this, void 0, void 0, function* () {
         DELIV1 = {
             id: GlobalSpec_1.Test.DELIVID1,
@@ -23,14 +23,12 @@ describe("DeliverablesController", () => {
             openTimestamp: -1,
             closeTimestamp: -1,
             gradesReleased: false,
-            // delay:            -1,
             teamMinSize: 1,
             teamMaxSize: 1,
             teamSameLab: false,
             teamStudentsForm: false,
             teamPrefix: 'team_',
             repoPrefix: 'd1_',
-            // bootstrapUrl:     '',
             autotest: {
                 dockerImage: 'testImage',
                 studentDelay: 60 * 60 * 12,
