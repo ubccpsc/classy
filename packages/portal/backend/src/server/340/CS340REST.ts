@@ -24,22 +24,22 @@ export default class CS340REST implements IREST {
         Log.trace("CS340REST::registerRoutes() - start");
 
         // TODO [Jonathan]: Add the routes here
-        server.get('/getAssignmentGrade/:sid/:aid', CS340REST.getAssignmentGrade);
-        server.get('/getAssignmentRubric/:aid', CS340REST.getAssignmentRubric);
-        server.get('/getAllAssignmentRubrics', CS340REST.getAllAssignmentRubrics);
-        server.get('/getAllDeliverables', CS340REST.getAllDeliverables);
-        server.get('/getAllSubmissionsByDelivID/:id', CS340REST.getAllSubmissionsByDelivID);
-        server.get('/getAllGrades', CS340REST.getAllGrades);
-        server.put('/setAssignmentGrade', CS340REST.setAssignmentGrade);
-        server.get('/getPersonByID/:gitHubUserName', CS340REST.getPersonByID);
-        server.get('/getAllPersons', CS340REST.getAllPersons);
-        server.get('/updateAssignmentStatus/:delivid', CS340REST.updateAssignmentStatus);
-        server.get('/getAssignmentStatus/:delivid', CS340REST.getAssignmentStatus);
+        server.get( '/portal/getAssignmentGrade/:sid/:aid', CS340REST.getAssignmentGrade);
+        server.get( '/portal/getAssignmentRubric/:aid', CS340REST.getAssignmentRubric);
+        server.get( '/portal/getAllAssignmentRubrics', CS340REST.getAllAssignmentRubrics);
+        server.get( '/portal/getAllDeliverables', CS340REST.getAllDeliverables);
+        server.get( '/portal/getAllSubmissionsByDelivID/:id', CS340REST.getAllSubmissionsByDelivID);
+        server.get( '/portal/getAllGrades', CS340REST.getAllGrades);
+        server.put( '/portal/setAssignmentGrade', CS340REST.setAssignmentGrade);
+        server.get( '/portal/getPersonByID/:gitHubUserName', CS340REST.getPersonByID);
+        server.get( '/portal/getAllPersons', CS340REST.getAllPersons);
+        server.get( '/portal/updateAssignmentStatus/:delivid', CS340REST.updateAssignmentStatus);
+        server.get( '/portal/getAssignmentStatus/:delivid', CS340REST.getAssignmentStatus);
+        server.post('/portal/initializeAllRepositories/:delivid', CS340REST.initializeAllRepositories);
+        server.post('/portal/publishAllRepositories/:delivid', CS340REST.publishAllRepositories);
+        server.post('/portal/deleteRepository/:delivid/:reponame', CS340REST.deleteRepository);
+        server.post('/portal/deleteAllRepositories/:delivid', CS340REST.deleteAllRepositories);
         // server.get('/testPublishRepository/:repoId', CS340REST.testPublishRepository);
-        server.post('/initializeAllRepositories/:delivid', CS340REST.initializeAllRepositories);
-        server.post('/publishAllRepositories/:delivid', CS340REST.publishAllRepositories);
-        server.post('/deleteRepository/:delivid/:reponame', CS340REST.deleteRepository);
-        server.post('/deleteAllRepositories/:delivid', CS340REST.deleteAllRepositories);
     }
 
     public static getAssignmentGrade(req: any, res: any, next: any) {

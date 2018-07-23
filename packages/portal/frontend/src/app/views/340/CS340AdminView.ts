@@ -166,9 +166,9 @@ export class CS340AdminView extends AdminView {
 
         if(update) {
             UI.showModal("Recalcuating status, this may take a while");
-            url = this.remote + '/updateAssignmentStatus/' + value;
+            url = this.remote + '/portal/updateAssignmentStatus/' + value;
         } else {
-            url = this.remote + '/getAssignmentStatus/' + value;
+            url = this.remote + '/portal/getAssignmentStatus/' + value;
         }
 
         let options: any = AdminView.getOptions();
@@ -226,7 +226,7 @@ export class CS340AdminView extends AdminView {
 
         UI.showModal("Creating repositories, please wait... This action may take a while....");
 
-        const url = this.remote + '/initializeAllRepositories/' + delivID;
+        const url = this.remote + '/portal/initializeAllRepositories/' + delivID;
         let options: any = AdminView.getOptions();
 
         options.method = 'post';
@@ -263,7 +263,7 @@ export class CS340AdminView extends AdminView {
 
         UI.showModal("Releasing repositories, please wait...");
 
-        const url = this.remote + '/publishAllRepositories/' + delivID;
+        const url = this.remote + '/portal/publishAllRepositories/' + delivID;
         let options: any = AdminView.getOptions();
 
         options.method = 'post';
@@ -301,7 +301,7 @@ export class CS340AdminView extends AdminView {
 
         UI.showModal("Deleting repositories, please wait...");
 
-        const url = this.remote + '/deleteAllRepositories/' + delivID;
+        const url = this.remote + '/portal/deleteAllRepositories/' + delivID;
         let options: any = AdminView.getOptions();
 
         options.method = 'post';
@@ -355,7 +355,7 @@ export class CS340AdminView extends AdminView {
 
     private async getDeliverables() {
         const delivOptions = AdminView.getOptions();
-        const delivUrl: string = this.remote + '/getAllDeliverables';
+        const delivUrl: string = this.remote + '/portal/getAllDeliverables';
         const delivResponse = await fetch(delivUrl, delivOptions);
 
         if(delivResponse.status !== 200) {
@@ -381,7 +381,7 @@ export class CS340AdminView extends AdminView {
         document.getElementById('studentGradeTable').innerHTML = ""; // Clear target
 
         const studentOptions = AdminView.getOptions();
-        const studentUrl = this.remote + '/admin/students';
+        const studentUrl = this.remote + '/portal/admin/students';
         const studentResponse = await fetch(studentUrl, studentOptions);
         UI.hideModal();
         if(studentResponse.status === 200) {
@@ -391,7 +391,7 @@ export class CS340AdminView extends AdminView {
                 Log.info("CS340AdminView::handCustomGrades(..) - took: " + UI.took(start));
                 const gradesOptions: any= AdminView.getOptions();
                 gradesOptions.method = 'get';
-                const gradesUrl: string = this.remote + '/getAllGrades';
+                const gradesUrl: string = this.remote + '/portal/getAllGrades';
                 const gradesResponse = await fetch(gradesUrl, gradesOptions);
 
                 if(gradesResponse.status === 200) {
@@ -421,7 +421,7 @@ export class CS340AdminView extends AdminView {
             ", " + grades.toString() + ", " + selectedAssign + ", " + " ) - start");
 
         // const delivOptions = AdminView.getOptions();
-        // const delivUrl: string = this.remote + '/getAllDeliverables';
+        // const delivUrl: string = this.remote + '/portal/getAllDeliverables';
         // const delivResponse = await fetch(delivUrl, delivOptions);
         //
         // if(delivResponse.status !== 200) {
@@ -806,7 +806,7 @@ export class CS340AdminView extends AdminView {
             questions: questionArray
         };
 
-        const url = this.remote + '/setAssignmentGrade';
+        const url = this.remote + '/portal/setAssignmentGrade';
         Log.info("CS340View::submitGrade() - uri: " + url);
 
         UI.showModal("Submitting grade, please wait...");
@@ -839,7 +839,7 @@ export class CS340AdminView extends AdminView {
         Log.info("CS340View::getStudentGrade(" + sid + ", " + aid + ") - start");
         let options: any = AdminView.getOptions();
         options.method = 'get';
-        let uri = this.remote + '/getAssignmentGrade/' + sid + '/' + aid;
+        let uri = this.remote + '/portal/getAssignmentGrade/' + sid + '/' + aid;
         let response = await fetch(uri, options);
 
         let reply;
@@ -857,7 +857,7 @@ export class CS340AdminView extends AdminView {
 
     public async getGradingRubric(assignmentId: string): Promise<AssignmentGradingRubric | null> {
         Log.info("CS340View::getGradingRubric(" + assignmentId + ") - start");
-        const url = this.remote + '/getAssignmentRubric/' + assignmentId;
+        const url = this.remote + '/portal/getAssignmentRubric/' + assignmentId;
         Log.info("CS340View::getGradingRubric(...) - uri: " + url);
 
         UI.showModal("Getting grading rubric, please wait...");
@@ -883,7 +883,7 @@ export class CS340AdminView extends AdminView {
         Log.info("CS340View::initializeRepositories(" + assignmentId + ") - start");
         // Log.info("CS340View::initializeRepositories(..) - ");
 
-        const url = this.remote + '/initializeAllRepositories/' + assignmentId;
+        const url = this.remote + '/portal/initializeAllRepositories/' + assignmentId;
         Log.info("CS340View::initializeRepositories(..) - uri: " + url);
 
         let options: any = AdminView.getOptions();
