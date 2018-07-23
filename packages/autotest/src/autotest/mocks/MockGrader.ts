@@ -2,7 +2,7 @@ import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
 
-import {IAutoTestResult, IContainerInput, IContainerOutput, IGradeReport} from "../../Types";
+import {IAutoTestResult, IContainerInput, IContainerOutput, IGradeReport} from "../../../../common/types/AutoTestTypes";
 
 interface IGrader {
     execute(): Promise<IAutoTestResult>;

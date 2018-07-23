@@ -1,6 +1,6 @@
 import {IClassPortal} from "../autotest/ClassPortal";
 import Config, {ConfigKey} from "../../../common/Config";
-import {IAutoTestResult} from "../Types";
+import {IAutoTestResult} from "../../../common/types/AutoTestTypes";
 import {
     AutoTestAuthTransport,
     AutoTestDefaultDeliverableTransport,

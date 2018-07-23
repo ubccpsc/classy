@@ -4,7 +4,7 @@ import Config, {ConfigKey} from "../../../../common/Config";
 import Util from "../../../../common/Util";
 import Log from "../../../../common/Log";
 
-import {IAutoTestResult, ICommentEvent, IContainerInput, IFeedbackGiven, IPushEvent} from "../../Types";
+import {IAutoTestResult, ICommentEvent, IContainerInput, IFeedbackGiven, IPushEvent} from "../../../../common/types/AutoTestTypes";
 import {IDataStore} from "../DataStore";
 
 /**

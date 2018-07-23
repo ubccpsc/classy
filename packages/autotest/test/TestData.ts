@@ -1,4 +1,4 @@
-import {IAutoTestResult, ICommentEvent, IContainerInput, IFeedbackGiven, IPushEvent} from "../src/Types";
+import {IAutoTestResult, ICommentEvent, IContainerInput, IFeedbackGiven, IPushEvent} from "../../common/types/AutoTestTypes";
 
 export class TestData {
     static readonly pushEventA: IPushEvent = {

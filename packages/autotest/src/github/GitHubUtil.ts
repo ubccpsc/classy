@@ -1,7 +1,7 @@
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
-import {ICommentEvent, IPushEvent} from "../Types";
+import {ICommentEvent, IPushEvent} from "../../../common/types/AutoTestTypes";
 
 /**
  * Translator class to turn REST payloads into IPushEvent and ICommentEvents.

@@ -4,7 +4,7 @@ import "mocha";
 import Config from "../../common/Config";
 import {ClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
 import Log from "../../common/Log";
-import BackendServer from "../../portal-backend/src/server/BackendServer";
+import BackendServer from "../../portal/backend/src/server/BackendServer";
 
 const loadFirst = require('./GlobalSpec');
 

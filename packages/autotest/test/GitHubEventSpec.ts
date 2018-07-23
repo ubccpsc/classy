@@ -1,4 +1,4 @@
-import {ICommentEvent} from "../src/Types";
+import {ICommentEvent} from "../../common/types/AutoTestTypes";
 import {expect} from "chai";
 import * as fs from "fs";
 import "mocha";

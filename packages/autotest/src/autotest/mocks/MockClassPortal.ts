@@ -1,7 +1,7 @@
 import {IClassPortal} from "../ClassPortal";
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
-import {IAutoTestResult} from "../../Types";
+import {IAutoTestResult} from "../../../../common/types/AutoTestTypes";
 import {
     AutoTestAuthTransport,
     AutoTestConfigTransport,

@@ -9,7 +9,7 @@ import Util from "../../common/Util";
 import {IClassPortal} from "../src/autotest/ClassPortal";
 import {GitHubService} from "../src/github/GitHubService";
 import {GitHubAutoTest} from "../src/github/GitHubAutoTest";
-import {ICommentEvent, IFeedbackGiven, IPushEvent} from "../src/Types";
+import {ICommentEvent, IFeedbackGiven, IPushEvent} from "../../common/types/AutoTestTypes";
 
 import {MockClassPortal} from "../src/autotest/mocks/MockClassPortal";
 import {MockDataStore} from "../src/autotest/mocks/MockDataStore";
