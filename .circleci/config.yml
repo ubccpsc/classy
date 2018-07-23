@@ -97,7 +97,7 @@ jobs:
           path: packages/portal/backend/testOutput
 
       - run:
-            command: rm .env && rm packages/portal/backend/ssl/fullchain.pem && rm packages/portal/backend/ssl/privkey.pem
+            command: rm .env && rm packages/portal-backend/ssl/fullchain.pem && rm packages/portal-backend/ssl/privkey.pem
             name: Cleaning up
             when: always
 
