@@ -34,9 +34,12 @@ export default class CS340REST implements IREST {
         server.get('/getPersonByID/:gitHubUserName', CS340REST.getPersonByID);
         server.get('/getAllPersons', CS340REST.getAllPersons);
         server.get('/updateAssignmentStatus/:delivid', CS340REST.updateAssignmentStatus);
-        server.get('/testPublishRepository/:repoId', CS340REST.testPublishRepository);
+        server.get('/getAssignmentStatus/:delivid', CS340REST.getAssignmentStatus);
+        // server.get('/testPublishRepository/:repoId', CS340REST.testPublishRepository);
         server.post('/initializeAllRepositories/:delivid', CS340REST.initializeAllRepositories);
         server.post('/publishAllRepositories/:delivid', CS340REST.publishAllRepositories);
+        server.post('/deleteRepository/:delivid/:reponame', CS340REST.deleteRepository);
+        server.post('/deleteAllRepositories/:delivid', CS340REST.deleteAllRepositories);
     }
 
     public static getAssignmentGrade(req: any, res: any, next: any) {
@@ -313,6 +316,25 @@ export default class CS340REST implements IREST {
         return next();
     }
 
+    public static async getAssignmentStatus(req:any, res:any, next:any) {
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        // get deliverable ID
+        let delivid: string = req.params.delivid;
+
+        let assignController: AssignmentController = new AssignmentController();
+        let newResult = await assignController.getAssignmentStatus(delivid);
+        if(newResult === null) {
+            res.send(400, {error: "Assignment not initialized properly"});
+        } else {
+            res.send(200, {response: newResult});
+        }
+
+        return next();
+    }
+
     public static async updateAssignmentStatus(req:any, res:any, next:any) {
         const user = req.headers.user;
         const token = req.headers.token;
@@ -324,11 +346,11 @@ export default class CS340REST implements IREST {
         let assignController: AssignmentController = new AssignmentController();
         let newResult = await assignController.updateAssignmentStatus(delivid);
 
-        res.send(200, newResult);
+        res.send(200, {response: newResult});
         return next();
     }
 
-    public static async testPublishRepository(req:any, res:any, next:any) {
+/*    public static async testPublishRepository(req:any, res:any, next:any) {
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
@@ -342,7 +364,7 @@ export default class CS340REST implements IREST {
         res.send(200, success);
 
         return next();
-    }
+    }*/
 
     public static async initializeAllRepositories(req:any, res:any, next:any) {
         const user = req.headers.user;
@@ -407,4 +429,45 @@ export default class CS340REST implements IREST {
         return next();
     }
 
+    public static async deleteRepository(req:any, res:any, next:any) {
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        Log.warn("CS340REST::deleteRepository(..) - start");
+        let repoName: string = req.params.reponame;
+        let delivId: string = req.params.delivid;
+
+        let assignController: AssignmentController = new AssignmentController();
+        let success = await assignController.deleteAssignmentRepository(repoName, delivId);
+
+        if(success === null) {
+            res.send(400, {error: "Unable to delete repository " + repoName + " from deliverable "+ delivId});
+        } else {
+            res.send(200, {response: success});
+        }
+
+        return next();
+    }
+
+
+    public static async deleteAllRepositories(req:any, res:any, next:any) {
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        Log.warn("CS340REST::deleteRepository(..) - start");
+        let delivId: string = req.params.delivid;
+
+        let assignController: AssignmentController = new AssignmentController();
+        let success = await assignController.deleteAllAssignmentRepositories(delivId);
+
+        if(success === null) {
+            res.send(400, {error: "Unable to delete all repositories from " + delivId});
+        } else {
+            res.send(200, {response: success});
+        }
+
+        return next();
+    }
 }

@@ -2,15 +2,16 @@ import {AdminView} from "../AdminView";
 import Log from "../../../../../common/Log";
 import {
     AssignmentGrade,
-    AssignmentGradingRubric, AssignmentInfo, QuestionGrade, SubQuestionGrade,
+    AssignmentGradingRubric, AssignmentInfo, AssignmentStatus, QuestionGrade, SubQuestionGrade,
     SubQuestionGradingRubric
 } from "../../../../../common/types/CS340Types";
 import {UI} from "../../util/UI";
 import {Factory} from "../../Factory";
-import {StudentTransport, StudentTransportPayload} from "../../../../../common/types/PortalTypes";
+import {DeliverableTransport, StudentTransport, StudentTransportPayload} from "../../../../../common/types/PortalTypes";
 import {Deliverable, Grade} from "../../../../../portal-backend/src/Types";
 import {SortableTable, TableCell, TableHeader} from "../../util/SortableTable";
-import {OnsInputElement} from "onsenui";
+import {OnsButtonElement, OnsInputElement} from "onsenui";
+import {AdminDeliverablesTab} from "../AdminDeliverablesTab";
 
 const ERROR_POTENTIAL_INCORRECT_INPUT: string = "input triggered warning";
 const ERROR_INVALID_INPUT: string = "invalid input";
@@ -50,6 +51,12 @@ export class CS340AdminView extends AdminView {
                 return;
             }
         }
+
+        if(name === 'AdminEditDeliverable') {
+            Log.info("CS340AdminView::renderPage() - Deliverable editing page triggered");
+
+            return;
+        }
         // if(opsObject.page !== null) {
         //     console.log("got a non-null page value");
         //     if(opsObject.page === "cs340/GradingView.html") {
@@ -63,6 +70,255 @@ export class CS340AdminView extends AdminView {
         //         });
         //     }
         // }
+    }
+
+    protected async handleAdminEditDeliverable(opts: any) {
+        //options: {"animationOptions":{},"delivId":"a3","page":"editDeliverable.html"}
+        await super.handleAdminEditDeliverable(opts);
+        // if the deliverable is an assignment, do something(?)
+    }
+
+    protected async handleAdminConfig(opts: any) {
+        let that = this;
+        await super.handleAdminConfig(opts);
+        const selectDelivDropdown: HTMLSelectElement = document.querySelector('#adminActionDeliverableSelect') as HTMLSelectElement;
+        await this.populateDeliverableDropdown(selectDelivDropdown);
+
+        (document.querySelector('#adminActionSelectDeliverable') as OnsButtonElement).onclick = function (evt) {
+            Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');
+
+            that.selectDeliverablePressed();
+        };
+
+        (document.querySelector('#adminCheckStatus') as OnsButtonElement).onclick = function (evt) {
+            Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');
+
+            that.checkStatusAndUpdate(true);
+        };
+
+        (document.querySelector('#adminCreateRepositories') as OnsButtonElement).onclick = function (evt) {
+            Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');
+
+            that.createRepoPressed();
+        };
+
+        (document.querySelector('#adminReleaseRepositories') as OnsButtonElement).onclick = function (evt) {
+            Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');
+
+            that.releaseRepoPressed();
+        };
+
+    }
+
+    private async selectDeliverablePressed(): Promise<void> {
+        Log.info('CS340AdminView::selectDeliverablePressed(..) - start');
+        // Log.info('CS340AdminView::selectDeliverable(..) - ');
+        const delivId: string | null = await this.checkStatusAndUpdate();
+
+        // (un)lock other buttons
+        const checkStatusButton = document.querySelector('#adminCheckStatus') as OnsButtonElement;
+        const createRepoButton  = document.querySelector('#adminCreateRepositories') as OnsButtonElement;
+        const releaseRepoButton = document.querySelector('#adminReleaseRepositories') as OnsButtonElement;
+
+        if(delivId === null) {
+            Log.info('CS340AdminView::selectDeliverable(..) - did not select deliv, locking buttons');
+            checkStatusButton.disabled = true;
+            createRepoButton.disabled = true;
+            releaseRepoButton.disabled = true;
+        } else {
+            checkStatusButton.disabled = false;
+            createRepoButton.disabled = false;
+            releaseRepoButton.disabled = false;
+        }
+
+        Log.info('CS340AdminView::selectDeliverablePressed(..) - finished');
+
+        return;
+    }
+
+    private async checkStatusAndUpdate(update: boolean = false): Promise<string | null> {
+        Log.info('CS340AdminView::checkStatusAndUpdate(..) - start');
+
+        const delivDropdown = document.querySelector('#adminActionDeliverableSelect') as HTMLSelectElement;
+        const value = delivDropdown.value;
+
+        const statusBox = document.querySelector('#adminActionStatusText') as HTMLParagraphElement;
+        statusBox.innerHTML = "";
+
+        const delivIDBox = document.querySelector('#adminActionDeliverableID') as HTMLParagraphElement;
+        delivIDBox.innerHTML = "";
+
+        if(value === null || value == "null") return null;
+        if(value === "--N/A--") return null;
+
+        Log.trace("CS340AdminView::checkStatusAndUpdate(..) - value: " + value);
+        let url: string;
+
+        if(update) {
+            UI.showModal("Recalcuating status, this may take a while");
+            url = this.remote + '/updateAssignmentStatus/' + value;
+        } else {
+            url = this.remote + '/getAssignmentStatus/' + value;
+        }
+
+        let options: any = AdminView.getOptions();
+
+        options.method = 'get';
+        let response = await fetch(url, options);
+
+        if(update) UI.hideModal();
+
+        if(response.status === 200) {
+            let responsejson = await response.json();
+            // get the textbox
+            switch (responsejson.response) {
+                case AssignmentStatus.INACTIVE: {
+                    statusBox.innerHTML = ": INACTIVE";
+                    break;
+                }
+                case AssignmentStatus.INITIALIZED: {
+                    statusBox.innerHTML = ": INITIALIZED";
+                    break;
+                }
+                case AssignmentStatus.PUBLISHED: {
+                    statusBox.innerHTML = ": PUBLISHED";
+                    break;
+                }
+                case AssignmentStatus.CLOSED: {
+                    statusBox.innerHTML = ": CLOSED";
+                    break;
+                }
+                default: {
+                    Log.trace('CS340AdminView::checkStatusAndUpdate(..) - error; ' +
+                        'deliverable not set up properly');
+
+                    UI.notification("Broken Status; value: " + responsejson.response);
+                    return null;
+                }
+            }
+        } else {
+            UI.notification("Deliverable not set up properly!");
+            return null;
+        }
+
+        delivIDBox.innerHTML = value;
+        return value;
+    }
+
+    private async createRepoPressed(): Promise<void> {
+        Log.info('CS340AdminView::createRepoPressed(..) - start');
+        // Log.info('CS340AdminView::createRepoPressed(..) - start');
+
+        const delivIDBox = document.querySelector('#adminActionDeliverableID') as HTMLParagraphElement;
+        const delivID = delivIDBox.innerHTML;
+
+        Log.info('CS340AdminView::createRepoPressed(..) - ' + delivID + " selected, beginning repo creation");
+
+        UI.showModal("Creating repositories, please wait... This action may take a while....");
+
+        const url = this.remote + '/initializeAllRepositories/' + delivID;
+        let options: any = AdminView.getOptions();
+
+        options.method = 'post';
+        let response = await fetch(url, options);
+        UI.hideModal();
+
+        const jsonResponse = await response.json();
+        if(response.status === 200) {
+            if(jsonResponse.response == true) {
+                UI.notification("Success; All repositories created!");
+            } else {
+                UI.notification("Error: Some repositories were not created, please try again");
+            }
+        } else {
+            Log.error("Issue with creating repositories; status: " + response.status);
+
+            UI.notification("Error: " + jsonResponse.error);
+        }
+
+        this.checkStatusAndUpdate();
+        Log.info('CS340AdminView::createRepoPressed(..) - finish');
+
+        return;
+    }
+
+    private async releaseRepoPressed(): Promise<void> {
+        Log.info('CS340AdminView::releaseRepoPressed(..) - start');
+        // Log.info('CS340AdminView::releaseRepoPressed(..) - start');
+
+        const delivIDBox = document.querySelector('#adminActionDeliverableID') as HTMLParagraphElement;
+        const delivID = delivIDBox.innerHTML;
+
+        Log.info('CS340AdminView::releaseRepoPressed(..) - ' + delivID + " selected, beginning repo publishing");
+
+        UI.showModal("Releasing repositories, please wait...");
+
+        const url = this.remote + '/publishAllRepositories/' + delivID;
+        let options: any = AdminView.getOptions();
+
+        options.method = 'post';
+        let response = await fetch(url, options);
+        UI.hideModal();
+
+
+        const jsonResponse = await response.json();
+        if(response.status === 200) {
+            if(jsonResponse.response == true) {
+                UI.notification("Success; All repositories released!");
+            } else {
+                UI.notification("Error: Some repositories were not released, please try again");
+            }
+        } else {
+            Log.error("Issue with releasing repositories; status: " + response.status);
+
+            UI.notification("Error: " + jsonResponse.error);
+        }
+
+        this.checkStatusAndUpdate();
+        Log.info('CS340AdminView::releaseRepoPressed(..) - finish');
+
+        return;
+    }
+
+    private async populateDeliverableDropdown(dropDown: HTMLSelectElement): Promise<void> {
+        const deliverables = await this.getDeliverables();
+        // const delivDropdown = document.querySelector('#adminDefaultDeliverableSelect') as HTMLSelectElement;
+        let delivOptions = ['--N/A--'];
+        for (const deliv of deliverables) {
+            delivOptions.push(deliv.id);
+        }
+        delivOptions = delivOptions.sort();
+
+        dropDown.innerHTML = '';
+        for (const delivId of delivOptions) {
+            let selected = false;
+
+            let value = delivId;
+            if (delivId.startsWith('--')) {
+                // handle the null case
+                value = null;
+            }
+
+            const o: HTMLOptionElement = new Option(delivId, value, false, selected);
+            dropDown.add(o);
+        }
+        return;
+    }
+
+    private async getDeliverables() {
+        const delivOptions = AdminView.getOptions();
+        const delivUrl: string = this.remote + '/getAllDeliverables';
+        const delivResponse = await fetch(delivUrl, delivOptions);
+
+        if(delivResponse.status !== 200) {
+            Log.trace("CS340AdminView::renderStudentGrades(..) - !200 " +
+                "response received; code:" + delivResponse.status);
+            return;
+        }
+        const delivJson = await delivResponse.json();
+        const delivArray: Deliverable[] = delivJson.response;
+
+        return delivArray;
     }
 
     public async handleAdminCustomGrades(opts: any) {
@@ -116,17 +372,19 @@ export class CS340AdminView extends AdminView {
         Log.info("CS340AdminView::renderStudentGrades( " + students.toString() +
             ", " + grades.toString() + ", " + selectedAssign + ", " + " ) - start");
 
-        const delivOptions = AdminView.getOptions();
-        const delivUrl: string = this.remote + '/getAllDeliverables';
-        const delivResponse = await fetch(delivUrl, delivOptions);
+        // const delivOptions = AdminView.getOptions();
+        // const delivUrl: string = this.remote + '/getAllDeliverables';
+        // const delivResponse = await fetch(delivUrl, delivOptions);
+        //
+        // if(delivResponse.status !== 200) {
+        //     Log.trace("CS340AdminView::renderStudentGrades(..) - !200 " +
+        //         "response received; code:" + delivResponse.status);
+        //     return;
+        // }
+        // const delivJson = await delivResponse.json();
+        // const delivArray: Deliverable[] = delivJson.response;
+        const delivArray: Deliverable[] = await this.getDeliverables();
 
-        if(delivResponse.status !== 200) {
-            Log.trace("CS340AdminView::renderStudentGrades(..) - !200 " +
-                "response received; code:" + delivResponse.status);
-            return;
-        }
-        const delivJson = await delivResponse.json();
-        const delivArray: Deliverable[] = delivJson.response;
         let tableHeaders: TableHeader[] = [
             {
                 id:          'id',
@@ -173,9 +431,9 @@ export class CS340AdminView extends AdminView {
                 // process max grade
                 let maxGrade:number = 0;
                 let assignInfo: AssignmentInfo | null = deliv.custom;
-                if(assignInfo === null) continue;
+                if(assignInfo === null || typeof assignInfo === 'undefined') continue;
                 let assignRubric: AssignmentGradingRubric = assignInfo.rubric;
-                if(assignRubric === null) continue;
+                if(assignRubric === null || typeof assignRubric === 'undefined') continue;
 
                 for(const questionRubric of assignRubric.questions) {
                     for(const subQuestionRubric of questionRubric.subQuestions) {
@@ -571,6 +829,31 @@ export class CS340AdminView extends AdminView {
             Log.trace('CS340View::getGradingRubric(...) - !200; Code: ' + response.status);
             return null;
         }
+    }
+
+    public async initializeRepositories(assignmentId: string): Promise<boolean> {
+        Log.info("CS340View::initializeRepositories(" + assignmentId + ") - start");
+        // Log.info("CS340View::initializeRepositories(..) - ");
+
+        const url = this.remote + '/initializeAllRepositories/' + assignmentId;
+        Log.info("CS340View::initializeRepositories(..) - uri: " + url);
+
+        let options: any = AdminView.getOptions();
+        options.method = 'post';
+
+        UI.showModal("Initializing repositories, this will take a while...");
+        let response = await fetch(url, options);
+        UI.hideModal();
+
+        let jsonResponse = await response.json();
+        if (response.status === 200) {
+            Log.info("CS340View::initializeRepositories(..) - completed: " + jsonResponse.response);
+            return jsonResponse.response;
+        } else {
+            Log.info("CS340View::initializeRepositories(..) - !200; Code: " + jsonResponse.error);
+            UI.notification(jsonResponse.error);
+        }
+        return false;
     }
 
     // protected getOptions() {

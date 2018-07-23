@@ -95,7 +95,7 @@ export class AssignmentController {
             return null;
         }
         let assignInfo: AssignmentInfo = deliverable.custom;
-        if(assignInfo === null) {
+        if(assignInfo === null || typeof assignInfo.seedRepoURL === 'undefined') {
             Log.error("AssignmentController::createAssignmentRepo(..) - deliverable " + delivId + " is" +
                 "not an assignment.");
             return null;
@@ -137,6 +137,8 @@ export class AssignmentController {
         let repository = await this.rc.createRepository(repoName, teams, assignRepoInfo);
         // record the url
         repository.URL = await this.ghc.getRepositoryUrl(repository);
+
+        await this.db.writeRepository(repository);
 
         if(!assignInfo.repositories.includes(repository.id)) {
             Log.info("AssignmentController::createAssignmentRepo(..) - adding repository to list");
@@ -204,7 +206,7 @@ export class AssignmentController {
 
         // once you are done, update the assignment information
         if(!anyError) {
-            assignInfo.status = AssignmentStatus.INACTIVE;
+            assignInfo.status = AssignmentStatus.INITIALIZED;
         }
 
         await this.dc.saveDeliverable(deliv);
@@ -212,10 +214,82 @@ export class AssignmentController {
         return true;
     }
 
-    // TODO: Finish this
-    public async deleteAssignmentRepository(repoName: string) {
 
+    public async deleteAssignmentRepository(repoName: string, delivId: string, single: boolean = true): Promise<boolean | null>{
+        Log.info("AssignmentController::deleteAssignmentRepository( " + repoName + ", " + delivId + " ) - start");
+        // Log.info("AssignmentController::deleteAssignmentRepository(..) - start");
+
+        let deliverable: Deliverable = await this.dc.getDeliverable(delivId);
+        if(deliverable === null) {
+            Log.error("AssignmentController::deleteAssignmentRepository(..) - error: could not retrieve " +
+                "deliverable based on delivId: " + delivId);
+            return null;
+        }
+        let assignInfo: AssignmentInfo = deliverable.custom;
+        if(assignInfo === null || typeof assignInfo.repositories === 'undefined') {
+            Log.error("AssignmentController::deleteAssignmentRepository(..) - deliverable " + delivId + " is" +
+                "not an assignment.");
+            return null;
+        }
+
+        if(! await this.gha.deleteRepo(repoName)) {
+            return false;
+        }
+
+        if(single) {
+            const pos = assignInfo.repositories.indexOf(repoName);
+            if(pos != -1) {
+                assignInfo.repositories.splice(pos, 1);
+            }
+
+            // save update information to database
+            await this.dc.saveDeliverable(deliverable);
+        }
+
+        let repoRecord: Repository = await this.rc.getRepository(repoName);
+        if(repoRecord === null) {
+            Log.error("AssignmentController::deleteAssignmentRepository(..) - error: unable" +
+                " to retrieve repository from database");
+
+            return null;
+        }
+
+        // TODO: Clean up teams as well
+        // for(const teamId of repoRecord.teamIds) {
+        //
+        // }
+
+        Log.info("AssignmentController::deleteAssignmentRepository(..) - deleted repository " + repoName);
+        return await this.db.deleteRepository(repoRecord);
     }
+
+    public async deleteAllAssignmentRepositories(delivId: string): Promise<boolean> {
+        Log.info("AssignmentController::deleteAllAssignmentRepositories( " + delivId + ") - start");
+
+        let deliv: Deliverable =  await this.dc.getDeliverable(delivId);
+        // get assignment information
+        if(deliv.custom === null || typeof (deliv.custom as AssignmentInfo).repositories === 'undefined') {
+            Log.error("AssignmentController::deleteAllAssignmentRepositories(..) - " +
+                "assignment not set up properly");
+            return false;
+        }
+
+        let assignInfo: AssignmentInfo = deliv.custom;
+        for(const repoName of assignInfo.repositories) {
+            await this.deleteAssignmentRepository(repoName, delivId, false);
+        }
+
+
+        // clear out repositories
+        assignInfo.repositories = [];
+
+        // update deliverable
+        await this.dc.saveDeliverable(deliv);
+
+        return true;
+    }
+
+
 
     public async publishAssignmentRepo(repoId: string): Promise<boolean> {
         Log.info("AssignmentController::publishAssignmentRepo( " + repoId + " ) - start");
@@ -284,7 +358,6 @@ export class AssignmentController {
             if(!await this.publishAssignmentRepo(repo.id)) {
                 Log.error("AssignmentController::publishAllRepositories(..) - unable to publish " +
                     " repository " + repo.id);
-
                 anyError = true;
             }
         }
@@ -312,6 +385,12 @@ export class AssignmentController {
         }
 
         if(deliv.custom === null) {
+            Log.error("AssignmentController::getAssignmentStatus(..) - error: " +
+                delivId + " has no assignment status");
+            return null;
+        }
+
+        if(!('seedRepoURL' in deliv.custom)) {
             Log.error("AssignmentController::getAssignmentStatus(..) - error: " +
                 delivId + " has no assignment status");
             return null;
