@@ -35,7 +35,7 @@ export class App {
         this.backendURL = location;
         if (location.indexOf('//localhost:3000') >= 0) {
             Log.info('App::<init> - rewriting backend URL for testing');
-            this.backendURL = this.backendURL.replace('3000', '5000');
+            // this.backendURL = this.backendURL.replace('3000', '5000');
         }
 
         Log.trace('App::<init> - frontend: ' + this.frontendURL);
