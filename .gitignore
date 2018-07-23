@@ -17,16 +17,18 @@
 # Compiled source
 **/src/**/*.js
 **/src/**/*.map
-**/test/*.js
-**/test/*.map
+**/test/**/*.js
+**/test/**/*.map
 **/html/**/*.js
 **/html/**/*.map
 **/bin/
+
 packages/common/**/*.js
 packages/common/**/*.map
-
-packages/portal-backend/test/**/*.js
-packages/portal-backend/test/**/*.map
+packages/portal/backend/**/*.js
+packages/portal/backend/**/*.map
+packages/portal/frontend/**/*.js
+packages/portal/frontend/**/*.map
 
 .circleci/
 
@@ -38,4 +40,4 @@ packages/portal-backend/test/**/*.map
 
 # Misc
 ssl/
-data/
+/data/
