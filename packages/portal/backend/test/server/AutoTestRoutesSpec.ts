@@ -397,7 +397,7 @@ describe('AutoTest Routes', function () {
     it('Should be able to receive a Webhook event from GitHub', async function () {
         let response = null;
 
-        let body = fs.readJSONSync("../../packages/../autotest/test/githubEvents/push_master-branch.json"); // __dirname
+        let body = fs.readJSONSync(__dirname + "/../../../../autotest/test/githubEvents/push_master-branch.json"); // __dirname
 
         const url = '/portal/githubWebhook';
         try {

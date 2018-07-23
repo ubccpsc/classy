@@ -313,7 +313,7 @@ describe('Admin Routes', function () {
         let body: Payload;
         const url = '/portal/admin/classlist';
         try {
-            response = await request(app).post(url).attach('classlist', 'test/data/classlistValid.csv').set({
+            response = await request(app).post(url).attach('classlist', __dirname + '/../data/classlistValid.csv').set({
                 user:  userName,
                 token: userToken
             });
@@ -335,7 +335,7 @@ describe('Admin Routes', function () {
         let body: Payload;
         const url = '/portal/admin/classlist';
         try {
-            response = await request(app).post(url).attach('classlist', 'test/data/classlistInvalid.csv').set({
+            response = await request(app).post(url).attach('classlist', __dirname + '/../data/classlistInvalid.csv').set({
                 user:  userName,
                 token: userToken
             });
