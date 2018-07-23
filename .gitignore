@@ -25,6 +25,10 @@
 
 packages/common/**/*.js
 packages/common/**/*.map
+packages/portal/backend/**/*.js
+packages/portal/backend/**/*.map
+packages/portal/frontend/**/*.js
+packages/portal/frontend/**/*.map
 
 .circleci/
 
