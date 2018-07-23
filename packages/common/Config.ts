@@ -28,9 +28,9 @@ export enum ConfigKey {
     testorg = "testorg",
     testname = "testname",
 
-    frontendUrl = "frontendUrl",
+    // frontendUrl = "frontendUrl",
     backendUrl = "backendUrl",
-    frontendPort = "frontendPort",
+    // frontendPort = "frontendPort",
     backendPort = "backendPort",
 
     mongoUrl = "mongoUrl",

@@ -271,8 +271,8 @@ export class AuthRoutes implements IREST {
             // change in the future.
 
             Log.info("AuthRouteHandler::authCallback(..) - preparing redirect for: " + JSON.stringify(p));
-            let feUrl = config.getProp(ConfigKey.frontendUrl);
-            let fePort = config.getProp(ConfigKey.frontendPort);
+            let feUrl = config.getProp(ConfigKey.backendUrl);
+            let fePort = config.getProp(ConfigKey.backendPort);
 
             if (p !== null) {
                 // this is tricky; need to redirect to the client with a cookie being set on the connection
