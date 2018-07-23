@@ -1,7 +1,13 @@
 const dotenv = require('dotenv');
-dotenv.config({path: '../../.env'});
+const result = dotenv.config({path: __dirname + '/../../.env'});
 
 import Log from "./Log";
+
+if (result.error) {
+    Log.error("Failed to parse .env " + result.error);
+    throw result.error
+}
+
 
 /**
  * Master list of courses supported by Classy. Config.name should
