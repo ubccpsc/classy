@@ -3,7 +3,7 @@ import Config, {ConfigKey} from "../../../../common/Config";
 import Util from "../../../../common/Util";
 
 import {Repository, Team} from "../Types";
-import {GitHubActions} from "./util/GitHubActions";
+import {GitHubActions} from "./GitHubActions";
 
 export interface IGitHubController {
     /**

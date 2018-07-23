@@ -9,7 +9,7 @@ import Util from "../../../../../common/Util";
 import {ActionPayload, GradePayload} from "../../../../../common/types/SDMMTypes";
 
 import {GitHubController} from "../../../src/controllers/GitHubController";
-import {GitHubActions} from "../../../src/controllers/util/GitHubActions";
+import {GitHubActions} from "../../../src/controllers/GitHubActions";
 import {GradesController} from "../../../src/controllers/GradesController";
 import Config, {ConfigKey} from "../../../../../common/Config";
 

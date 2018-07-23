@@ -264,11 +264,8 @@ export class AuthRoutes implements IREST {
             }
 
         }).then(function (authWritten) {
-            // Log.info("AuthRouteHandler::authCallback(..) - authWritten: " + authWritten);
+            // auth written (or not); we only really care about the state of p at this point
 
-            // TODO: this should really handoff to an org-based controller to decide if we should
-            // create a new person or return an error. This is fine for SDMM, but will need to
-            // change in the future.
 
             Log.info("AuthRouteHandler::authCallback(..) - preparing redirect for: " + JSON.stringify(p));
             let feUrl = config.getProp(ConfigKey.backendUrl);

@@ -3,7 +3,7 @@ import Log from "../../../../common/Log";
 import {PersonController} from "./PersonController";
 import {DatabaseController} from "./DatabaseController";
 import {Auth} from "../Types";
-import {GitHubActions} from "./util/GitHubActions";
+import {GitHubActions} from "./GitHubActions";
 
 /**
  * Nice OAuth Reference: https://medium.com/typeforms-engineering-blog/the-beginners-guide-to-oauth-dancing-4b8f3666de10

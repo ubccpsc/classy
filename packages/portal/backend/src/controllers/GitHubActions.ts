@@ -1,8 +1,8 @@
 import * as rp from "request-promise-native";
 
-import Config, {ConfigKey} from "../../../../../common/Config";
-import Log from "../../../../../common/Log";
-import {GitTeamTuple} from "../GitHubController";
+import Config, {ConfigKey} from "../../../../common/Config";
+import Log from "../../../../common/Log";
+import {GitTeamTuple} from "./GitHubController";
 
 const tmp = require('tmp-promise');
 

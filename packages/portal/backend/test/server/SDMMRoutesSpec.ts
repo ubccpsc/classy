@@ -8,7 +8,7 @@ import BackendServer from "../../src/server/BackendServer";
 import {Grade, Person} from "../../src/Types";
 import {PersonController} from "../../src/controllers/PersonController";
 import Config, {ConfigKey} from "../../../../common/Config";
-import {GitHubActions} from "../../src/controllers/util/GitHubActions";
+import {GitHubActions} from "../../src/controllers/GitHubActions";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 

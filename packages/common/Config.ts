@@ -1,7 +1,7 @@
 const dotenv = require('dotenv');
 const result = dotenv.config({path: __dirname + '/../../.env'});
 
-import Log from "./Log";
+import Log, {LogLevel} from "./Log";
 
 if (result.error) {
     Log.error("Failed to parse .env " + result.error);
@@ -116,8 +116,8 @@ export default class Config {
                 githubClientId:     process.env.GH_CLIENT_ID,
                 githubClientSecret: process.env.GH_CLIENT_SECRET,
 
-                autotestUrl:  process.env.AUTOTEST_URL,
-                autotestPort: process.env.AUTOTEST_PORT,
+                autotestUrl:    process.env.AUTOTEST_URL,
+                autotestPort:   process.env.AUTOTEST_PORT,
                 autotestSecret: process.env.AUTOTEST_SECRET,
 
                 // Not used?
@@ -132,6 +132,15 @@ export default class Config {
                 // graderHost:         process.env.SERVER_URL,
                 // graderPort:         process.env.GRADER_PORT,
             };
+
+            // this is not a great place for this
+            // but at least it should happen near the start of any execution
+            Log.info("Log::<init>");
+            const ci = process.env.CI;
+            if (typeof ci !== 'undefined' && Boolean(ci) === true) {
+                Log.Level = LogLevel.INFO; // change to INFO from TRACE if on CI
+            }
+
         } catch (err) {
             Log.error("Config::<init> - fatal error reading configuration file: " + err);
         }

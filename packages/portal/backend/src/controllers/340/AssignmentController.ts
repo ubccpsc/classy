@@ -16,7 +16,7 @@ import {DeliverablesController} from "../DeliverablesController";
 import {GitHubController} from "../GitHubController";
 import Config, {ConfigKey} from "../../../../../common/Config";
 import {PersonController} from "../PersonController";
-import {GitHubActions} from "../util/GitHubActions";
+import {GitHubActions} from "../GitHubActions";
 
 /*
  * Definition of controller object
