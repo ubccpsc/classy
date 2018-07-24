@@ -1,5 +1,5 @@
 /* tslint:disable:no-console */
-enum LogLevel {
+export enum LogLevel {
     TRACE,
     INFO,
     WARN,

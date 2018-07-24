@@ -48,7 +48,7 @@ export class CS310View implements IView {
         // const msg = "Updating status";
         // UI.showModal(msg);
 
-        // const url = this.remote + '/currentStatus';
+        // const url = this.remote + '/portal/currentStatus';
         // this.fetchStatus(url);
     }
 

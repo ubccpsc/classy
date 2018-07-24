@@ -30,8 +30,13 @@ export class App {
         // TODO: this will need to be tested better before putting it into production
         let location = window.location.href;
         location = location.substr(0, location.indexOf('/', 10)); // peel off anything after the host/port
+        Log.trace('App::<init> - location: ' + location);
         this.frontendURL = location;
         this.backendURL = location;
+        if (location.indexOf('//localhost:3000') >= 0) {
+            Log.info('App::<init> - rewriting backend URL for testing');
+            // this.backendURL = this.backendURL.replace('3000', '5000');
+        }
 
         Log.trace('App::<init> - frontend: ' + this.frontendURL);
         Log.trace('App::<init> - backend: ' + this.backendURL);

@@ -1,8 +1,8 @@
 import * as rp from "request-promise-native";
 
-import Config, {ConfigKey} from "../../../../../common/Config";
-import Log from "../../../../../common/Log";
-import {GitTeamTuple} from "../GitHubController";
+import Config, {ConfigKey} from "../../../../common/Config";
+import Log from "../../../../common/Log";
+import {GitTeamTuple} from "./GitHubController";
 
 const tmp = require('tmp-promise');
 
@@ -107,7 +107,7 @@ export class GitHubActions {
                     };
 
                     rp(options).then(function (body: any) {
-                        Log.info("GitHubAction::deleteRepo(..) - success; body: " + body);
+                        Log.info("GitHubAction::deleteRepo(..) - success"); // body: " + body);
                         fulfill(true);
                     }).catch(function (err: any) {
                         Log.error("GitHubAction::deleteRepo(..) - ERROR: " + JSON.stringify(err));
@@ -152,7 +152,7 @@ export class GitHubActions {
             };
 
             rp(options).then(function (body: any) {
-                Log.info("GitHubAction::repoExists(..) - true; body: " + body);
+                Log.info("GitHubAction::repoExists(..) - true"); // body: " + body);
                 fulfill(true);
             }).catch(function () { // err: any
                 // Log.trace("GitHubAction::repoExists(..) - ERROR: " + JSON.stringify(err));
@@ -187,7 +187,7 @@ export class GitHubActions {
             };
 
             rp(options).then(function (body: any) {
-                Log.info("GitHubAction::deleteTeam(..) - success; body: " + body);
+                Log.info("GitHubAction::deleteTeam(..) - success"); // body: " + body);
                 fulfill(true);
             }).catch(function (err) { // err: any
                 Log.error("GitHubAction::deleteTeam(..) - failed; ERROR: " + err);
@@ -538,7 +538,7 @@ export class GitHubActions {
      */
     public getTeamNumber(teamName: string): Promise<number> {
         let ctx = this;
-        Log.info("GitHubAction::getTeamNumber( " + ctx.org + ", " + teamName + " ) - start");
+        Log.info("GitHubAction::getTeamNumber( " + teamName + " ) - start");
 
         return new Promise(function (fulfill, reject) {
             let teamId = -1;
@@ -576,7 +576,7 @@ export class GitHubActions {
     public getTeamMembers(teamNumber: number): Promise<string[]> {
         let ctx = this;
 
-        Log.info("GitHubAction::getTeamMembers( " + ctx.org + ", " + teamNumber + " ) - start");
+        Log.info("GitHubAction::getTeamMembers( " +  teamNumber + " ) - start");
         return new Promise(function (fulfill) {
 
             const uri = ctx.apiPath + '/teams/' + teamNumber + '/members';
@@ -592,7 +592,7 @@ export class GitHubActions {
 
             // NOTE: not sure how this will respond to paging if there are lots of members on the team
             rp(options).then(function (body: any) {
-                Log.info("GitHubAction::getTeamMembers(..) - success; body: " + body);
+                Log.info("GitHubAction::getTeamMembers(..) - success"); //  body: " + body);
                 let resp = JSON.parse(body);
                 let ids: string[] = [];
                 for (const result of resp) {

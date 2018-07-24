@@ -15,11 +15,13 @@ export class Factory {
      * Returns a custom route handler for a course. This will be used to configure
      * Restify with any custom routes required for the course backend. Only one
      * custom handler is permitted per instance.
-     *
+     * @param {string} name? optional name (for testing or overriding the default; usually not needed)
      * @returns {IREST}
      */
-    public static getCustomRouteHandler(): IREST {
-        const name = Factory.getName();
+    public static getCustomRouteHandler(name?: string): IREST {
+        if (typeof name === 'undefined') {
+            name = Factory.getName();
+        }
 
         if (name === 'sdmm' || name === 'secapstonetest') {
             return new SDMMREST();
@@ -34,8 +36,16 @@ export class Factory {
         return new NoCustomRoutes(); // default handler
     }
 
-    public static getCourseController(ghController?: IGitHubController): CourseController {
-        const name = Factory.getName();
+    /**
+     *
+     * @param {IGitHubController} ghController
+     * @param {string} name? optional name (for testing or overriding the default; usually not needed)
+     * @returns {CourseController}
+     */
+    public static getCourseController(ghController?: IGitHubController, name?: string): CourseController {
+        if (typeof name === 'undefined') {
+            name = Factory.getName();
+        }
 
         if (typeof ghController === 'undefined') {
             ghController = new GitHubController();
@@ -52,6 +62,7 @@ export class Factory {
             return new CourseController(ghController);
         } else {
             Log.error("Factory::getCourseController() - unknown name: " + name);
+            throw new Error("Unknown course name: " + name);
         }
     }
 
@@ -61,15 +72,12 @@ export class Factory {
      * @returns {string | null}
      */
     private static getName(): string | null {
-        try {
-            const name = Config.getInstance().getProp(ConfigKey.name);
-            if (name === null) {
-                Log.error("Factory::getName() - null name");
-            }
-            return name;
-        } catch (err) {
-            Log.error("Factory::getName() - ERROR: " + err);
+        const name = Config.getInstance().getProp(ConfigKey.name);
+        if (name === null) {
+            const msg = "Factory::getName() - null name; this is almost certainly an error with your .env file.";
+            Log.error(msg);
+            throw new Error(msg);
         }
-        return null;
+        return name;
     }
 }

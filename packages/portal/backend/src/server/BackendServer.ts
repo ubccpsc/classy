@@ -64,77 +64,71 @@ export default class BackendServer {
      */
     public start(): Promise<boolean> {
         Log.info('BackendServer::start() - start');
-        Log.info('BackendServer::start() - config: ' + JSON.stringify(this.config));
-
+        Log.trace('BackendServer::start() - config: ' + JSON.stringify(this.config));
         let that = this;
         return new Promise(function (fulfill, reject) {
-            try {
-                let https_options: any = {
-                    name:        'backend',
-                    key:         fs.readFileSync(that.config.getProp(ConfigKey.sslKeyPath)),
-                    certificate: fs.readFileSync(that.config.getProp(ConfigKey.sslCertPath))
-                };
 
-                if (that.useHttps === false) {
-                    Log.warn('BackendServer::start() - disabling HTTPS; should only be used in testing!');
-                    https_options = {name: 'backend'};
-                }
+            let https_options: any = {
+                name:        'backend',
+                key:         fs.readFileSync(that.config.getProp(ConfigKey.sslKeyPath)),
+                certificate: fs.readFileSync(that.config.getProp(ConfigKey.sslCertPath))
+            };
 
-                that.rest = restify.createServer(https_options);
-
-                that.rest.use(restify.plugins.queryParser());
-                that.rest.use(restify.plugins.bodyParser({mapParams: true})); // NEW
-
-                that.rest.use(function crossOrigin(req, res, next) {
-                    res.header("Access-Control-Allow-Origin", "*");
-                    res.header("Access-Control-Allow-Headers", "X-Requested-With Content-Type token user org");
-                    return next();
-                });
-
-                // Register handlers common between all classy instances
-                Log.info('BackendServer::start() - Registering common handlers');
-
-                // authentication
-                new AuthRoutes().registerRoutes(that.rest);
-
-                // autotest
-                new AutoTestRoutes().registerRoutes(that.rest);
-
-                // general
-                new GeneralRoutes().registerRoutes(that.rest);
-
-                // admin
-                new AdminRoutes().registerRoutes(that.rest);
-
-                Log.info('BackendServer::start() - Registering common handlers; done');
-
-
-                // Register custom route handler for specific classy instance
-                Log.info('BackendServer::start() - Registering custom handler');
-                Factory.getCustomRouteHandler().registerRoutes(that.rest);
-                Log.info('BackendServer::start() - Registering custom handler; done');
-
-                // serves up the root directory
-                that.rest.get('/\/.*/', restify.plugins.serveStatic({
-                        directory: __dirname + '/../../../frontend/html',
-                        default:   'index.html'
-                    })
-                );
-
-                that.rest.listen(that.config.getProp(ConfigKey.backendPort), function () {
-                    Log.info('BackendServer::start() - restify listening: ' + that.rest.url);
-                    fulfill(true);
-                });
-
-                that.rest.on('error', function (err: string) {
-                    // catches errors in restify start; unusual syntax due to internal node not using normal exceptions here
-                    Log.info('BackendServer::start() - restify ERROR: ' + err);
-                    reject(err);
-                });
-            } catch (err) {
-                Log.error('BackendServer::start() - ERROR: ' + err);
-                reject(err);
+            if (that.useHttps === false) {
+                Log.warn('BackendServer::start() - disabling HTTPS; should only be used in testing!');
+                https_options = {name: 'backend'};
             }
+
+            that.rest = restify.createServer(https_options);
+            that.rest.use(restify.plugins.queryParser());
+            that.rest.use(restify.plugins.bodyParser({mapParams: true}));
+
+            that.rest.use(function crossOrigin(req, res, next) {
+                res.header("Access-Control-Allow-Origin", "*");
+                res.header("Access-Control-Allow-Headers", "X-Requested-With Content-Type token user org");
+                return next();
+            });
+
+            // Register handlers common between all classy instances
+            Log.info('BackendServer::start() - Registering common handlers');
+
+            // authentication
+            new AuthRoutes().registerRoutes(that.rest);
+
+            // autotest
+            new AutoTestRoutes().registerRoutes(that.rest);
+
+            // general
+            new GeneralRoutes().registerRoutes(that.rest);
+
+            // admin
+            new AdminRoutes().registerRoutes(that.rest);
+
+            Log.info('BackendServer::start() - Registering common handlers; done');
+
+            // Register custom route handler for specific classy instance
+            Log.info('BackendServer::start() - Registering custom handler');
+
+            Factory.getCustomRouteHandler().registerRoutes(that.rest);
+
+            Log.info('BackendServer::start() - Registering custom handler; done');
+
+            // serve up the static frontend resources
+            that.rest.get('/\/.*/', restify.plugins.serveStatic({
+                directory: __dirname + '/../../../frontend/html',
+                default:   'index.html'
+            }));
+
+            that.rest.listen(that.config.getProp(ConfigKey.backendPort), function () {
+                Log.info('BackendServer::start() - restify listening: ' + that.rest.url);
+                fulfill(true);
+            });
+
+            that.rest.on('error', function (err: string) {
+                // catches errors in restify start; unusual syntax due to internal node not using normal exceptions here
+                Log.error('BackendServer::start() - restify ERROR: ' + err);
+                reject(err);
+            });
         });
     }
 }

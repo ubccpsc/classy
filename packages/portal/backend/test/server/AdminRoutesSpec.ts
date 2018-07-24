@@ -345,7 +345,7 @@ describe('Admin Routes', function () {
             expect(body.failure).to.not.be.undefined;
             expect(body.failure.message).to.be.an('string'); // test column missing
 
-            response = await request(app).post(url).attach('classlist', 'test/data/classlistEmpty.csv').set({
+            response = await request(app).post(url).attach('classlist', __dirname + '/../data/classlistEmpty.csv').set({
                 user:  userName,
                 token: userToken
             });

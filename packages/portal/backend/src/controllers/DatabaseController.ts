@@ -198,22 +198,22 @@ export class DatabaseController {
     */
 
     public async deleteAuth(record: Auth): Promise<boolean> {
-        Log.info("DatabaseController::deleteAuth(..) - start");
         if (record !== null) {
+            Log.info("DatabaseController::deleteAuth( " + record.personId + " ) - start");
             return await this.deleteRecord(this.AUTHCOLL, {personId: record.personId});
         }
     }
 
     public async deleteRepository(record: Repository): Promise<boolean> {
-        Log.info("DatabaseController::deleteRepository(..) - start");
         if (record !== null) {
+            Log.info("DatabaseController::deleteRepository( " + record.id + " ) - start");
             return await this.deleteRecord(this.REPOCOLL, {id: record.id});
         }
     }
 
     public async deleteTeam(record: Team): Promise<boolean> {
-        Log.info("DatabaseController::deleteTeam(..) - start");
         if (record !== null) {
+            Log.info("DatabaseController::deleteTeam( " + record.id + " ) - start");
             return await this.deleteRecord(this.TEAMCOLL, {id: record.id});
         }
     }
@@ -269,7 +269,7 @@ export class DatabaseController {
 
 
     public async writeRecord(colName: string, record: {}): Promise<boolean> {
-        Log.info("DatabaseController::writeRecord( " + colName + ", ...) - start");
+        Log.trace("DatabaseController::writeRecord( " + colName + ", ...) - start");
         Log.trace("DatabaseController::writeRecord(..) - col: " + colName + "; record: " + JSON.stringify(record));
         try {
             const collection = await this.getCollection(colName);
@@ -284,7 +284,7 @@ export class DatabaseController {
     }
 
     public async updateRecord(colName: string, query: {}, record: {}): Promise<boolean> {
-        Log.info("DatabaseController::updateRecord( " + colName + ", ...) - start");
+        Log.trace("DatabaseController::updateRecord( " + colName + ", ...) - start");
         Log.trace("DatabaseController::updateRecord(..) - colName: " + colName + "; record: " + JSON.stringify(record));
         try {
             const collection = await this.getCollection(colName);
@@ -427,7 +427,7 @@ export class DatabaseController {
     }
 
     public async writeAuth(record: Auth): Promise<boolean> {
-        Log.info("DatabaseController::writeAuth(..) - start");
+        Log.info("DatabaseController::writeAuth( " + record.personId + ", ... ) - start");
         const auth = <Auth> await this.readSingleRecord(this.AUTHCOLL, {"personId": record.personId});
         if (auth === null) {
             return await this.writeRecord(this.AUTHCOLL, record);

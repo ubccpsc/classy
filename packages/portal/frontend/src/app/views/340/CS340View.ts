@@ -99,7 +99,7 @@ export class CS340View implements IView {
 
     public async getGradingRubric(assignmentId: string): Promise<AssignmentGradingRubric | null> {
         Log.info("CS340View::getGradingRubric(" + assignmentId + ") - start");
-        const url = this.remote + '/getAssignmentRubric/' + assignmentId;
+        const url = this.remote + '/portal/getAssignmentRubric/' + assignmentId;
         Log.info("CS340View::getGradingRubric(...) - uri: " + url);
 
         UI.showModal("Getting grading rubric, please wait...");
@@ -373,7 +373,7 @@ export class CS340View implements IView {
         };
 
         // TODO: Record in database the new Grade
-        const url = this.remote + '/setAssignmentGrade';
+        const url = this.remote + '/portal/setAssignmentGrade';
         Log.info("CS340View::submitGrade() - uri: " + url);
 
         UI.showModal("Submitting grade, please wait...");
@@ -410,7 +410,7 @@ export class CS340View implements IView {
     public async renderDeliverables() {
         // TODO [Jonathan]: Get the deliverables
         Log.info("CS340View::getAllDeliverables() - start");
-        const url = this.remote + '/getAllDeliverables';
+        const url = this.remote + '/portal/getAllDeliverables';
         UI.showModal("Getting all deliverables, please wait...");
 
         let options: any = this.getOptions();
@@ -472,7 +472,7 @@ export class CS340View implements IView {
     public async renderStudentSubmissions(delivId: string) {
         Log.info("CS340View::renderStudentSubmissions(" + delivId + ") -- start");
         let gradeTable = document.getElementById("grades-table");
-        const submissionRetrieveURL = this.remote + '/getAllSubmissionsByDelivID/' + delivId;
+        const submissionRetrieveURL = this.remote + '/portal/getAllSubmissionsByDelivID/' + delivId;
 
         UI.showModal("Loading submissions, please wait...");
         let options: any = this.getOptions();
@@ -498,7 +498,7 @@ export class CS340View implements IView {
                 }
 
                 // Get all students and their associated information, then store in a map for constant time access
-                const url = this.remote + '/getAllPersons';
+                const url = this.remote + '/portal/getAllPersons';
                 let options: any = this.getOptions();
                 options.method = 'get';
                 let response = await fetch(url, options);
@@ -561,7 +561,7 @@ export class CS340View implements IView {
         private async processData(data: Grade[], delivId: string) {
 
             Log.info("CS340View::processResponse - start");
-            const url = this.remote + '/getAllPersons';
+            const url = this.remote + '/portal/getAllPersons';
             let options : any = this.getOptions();
             options.method = 'get';
             let response = await fetch(url, options);

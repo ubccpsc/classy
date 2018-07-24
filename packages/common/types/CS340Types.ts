@@ -32,7 +32,7 @@ export interface AssignmentInfo {
     repositories: string[];             // Associated Repositories based on IDs
 }
 
-// Placed in Repository.custom <<PENDING>>
+// Placed in Repository.custom
 export interface AssignmentRepositoryInfo {
     assignmentId: string[];
     status: AssignmentStatus;
