@@ -7,32 +7,19 @@ http {
         listen   80 default_server;
         listen   [::]:80;
 
-        return 301 https://<%= ENV["SERVER_NAME"] %>$request_uri;
+        return 301 https://$host$request_uri;
     }
     server {
         listen   443 default_server ssl;
 
-        ssl_certificate        /etc/ssl/fullchain.pem;
-        ssl_certificate_key    /etc/ssl/privkey.pem;
-
-        location /ui {
-            rewrite ^/ui/?$ /ui/index.html permanent;
-            rewrite /ui/(.+) /ui/$1 break;
-            proxy_set_header   X-Forwarded-For $remote_addr;
-            proxy_set_header   Host $http_host;
-            proxy_pass         http://reference_ui:11315/;
-        }
-
-       location /geolocation {
-            proxy_set_header   X-Forwarded-For $remote_addr;
-            proxy_set_header   Host $http_host;
-            proxy_pass         "http://geolocation:11316/";
-       }
+        ssl_certificate        <%= ENV["SSL_CERT_PATH"] %>;
+        ssl_certificate_key    <%= ENV["SSL_KEY_PATH"] %>;
 
        location / {
            proxy_set_header   X-Forwarded-For $remote_addr;
            proxy_set_header   Host $http_host;
-           proxy_pass         "https://portal_frontend:1443/";
+           # portal is the name of the service and is automatically added to the hosts file
+           proxy_pass         "https://portal:<%= ENV["BACKEND_PORT"] %>/";
        }
     }
 }
