@@ -66,6 +66,10 @@ jobs:
             name: Building backend
 
       - run:
+            command: cd packages/autotest && ../../node_modules/typescript/bin/tsc
+            name: Building autotest
+
+      - run:
             command: git config --global user.email "CI@test.com" && git config --global user.name "CI Test Name"
             name: Configure local git
 
@@ -74,10 +78,19 @@ jobs:
                       set -e
                       cd packages/portal/backend
                       yarn coverCI
-#            command: cd packages/portal-backend && yarn coverCI
             name: Running backend tests
             environment:
               MOCHA_FILE: packages/portal/backend/testOutput/test-results.xml
+            when: always
+
+      - run:
+            command: |
+                      set -e
+                      cd packages/portal/autotest
+                      yarn coverCI
+            name: Running autotest tests
+            environment:
+              MOCHA_FILE: packages/portal/autotest/testOutput/test-results.xml
             when: always
 
       - run:
@@ -86,15 +99,22 @@ jobs:
             when: always
 
       - run:
+            command: cd packages/autotest && yarn coveralls
+            name: Running autotest coveralls
+            when: always
+
+      - run:
             command: cd packages/portal/backend && yarn codecov
             name: Running backend codecov
             when: always
 
       - store_test_results:
-          path: packages/portal/backend/testOutput
+          - path: packages/portal/backend/testOutput
+          - path: packages/portal/autotest/testOutput          
 
       - store_artifacts:
-          path: packages/portal/backend/testOutput
+          - path: packages/portal/backend/testOutput
+          - path: packages/portal/autotest/testOutput          
 
       - run:
             command: rm .env && rm packages/portal/backend/ssl/fullchain.pem && rm packages/portal/backend/ssl/privkey.pem
