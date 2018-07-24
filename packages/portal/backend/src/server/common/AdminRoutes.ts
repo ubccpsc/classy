@@ -55,30 +55,23 @@ export default class AdminRoutes implements IREST {
         const user = req.headers.user;
         const token = req.headers.token;
 
+        const handleError = function (msg: string) {
+            Log.info('AdminRoutes::isPrivileged(..) - ERROR: ' + msg); // intentionally info
+            res.send(401, {failure: {message: msg, shouldLogout: false}});
+            return next(false);
+        };
+
         const ac = new AuthController();
         ac.isPrivileged(user, token).then(function (priv) {
-                Log.trace('AdminRoutes::isPrivileged(..) - in isPrivileged: ' + JSON.stringify(priv));
-                if (priv.isStaff === true || priv.isAdmin === true) {
-                    return next();
-                } else {
-                    res.send(401, {
-                        failure: {
-                            message:      'Authorization error; user not priviliged',
-                            shouldLogout: false
-                        }
-                    });
-                    return next(false);
-                }
+            Log.trace('AdminRoutes::isPrivileged(..) - in isPrivileged: ' + JSON.stringify(priv));
+            if (priv.isStaff === true || priv.isAdmin === true) {
+                return next();
+            } else {
+                return handleError('Authorization error; user not priviliged');
             }
-        ).catch(function (err) {
+        }).catch(function (err) {
             Log.error('AdminRoutes::isPrivileged(..) - ERROR: ' + err.message);
-            res.send(401, {
-                failure: {
-                    message:      'Authorization error; user not priviliged',
-                    shouldLogout: false
-                }
-            });
-            return next(false);
+            return handleError('Authorization error; user not priviliged');
         });
     }
 
@@ -138,30 +131,24 @@ export default class AdminRoutes implements IREST {
         const user = req.headers.user;
         const token = req.headers.token;
 
+        const handleError = function (msg: string) {
+            Log.info('AdminRoutes::isAdmin(..) - ERROR: ' + msg); // intentionally info
+            res.send(401, {failure: {message: msg, shouldLogout: false}});
+            return next(false);
+        };
+
         const ac = new AuthController();
         ac.isPrivileged(user, token).then(function (priv) {
                 Log.trace('AdminRoutes::isAdmin(..) - in isAdmin: ' + JSON.stringify(priv));
                 if (priv.isAdmin === true) {
                     return next();
                 } else {
-                    res.send(401, {
-                        failure: {
-                            message:      'Authorization error; user not admin.',
-                            shouldLogout: false
-                        }
-                    });
-                    return next(false);
+                    return handleError('Authorization error; user not admin.');
                 }
             }
         ).catch(function (err) {
             Log.error('AdminRoutes::isAdmin(..) - ERROR: ' + err.message);
-            res.send(401, {
-                failure: {
-                    message:      'Authorization error; user not admin.',
-                    shouldLogout: false
-                }
-            });
-            return next(false);
+            return handleError('Authorization error; user not admin.');
         });
     }
 
@@ -253,7 +240,7 @@ export default class AdminRoutes implements IREST {
             const parser = parse(options, (err, data) => {
                 if (err) {
                     const msg = 'Class list parse error: ' + err;
-                    handleError(msg);
+                    return handleError(msg);
                 } else {
                     Log.info('AdminRoutes::postClasslist(..) - parse successful');
                     const pc = new PersonController();
@@ -291,10 +278,10 @@ export default class AdminRoutes implements IREST {
                             Log.info('AdminRoutes::postClasslist(..) - end');
                         } else {
                             const msg = 'Class list upload not successful; no students were processed from CSV.';
-                            handleError(msg);
+                            return handleError(msg);
                         }
                     }).catch(function (err) {
-                        handleError('Class list upload error: ' + err);
+                        return handleError('Class list upload error: ' + err);
                     });
                 }
             });
@@ -302,7 +289,7 @@ export default class AdminRoutes implements IREST {
             rs.pipe(parser);
         } catch (err) {
             Log.error('AdminRoutes::postClasslist(..) - ERROR: ' + err);
-            handleError('Class list upload unsuccessful: ' + err);
+            return handleError('Class list upload unsuccessful: ' + err);
         }
 
     }
@@ -337,16 +324,16 @@ export default class AdminRoutes implements IREST {
                         payload = {success: {message: 'Deliverable saved successfully'}};
                         res.send(200, payload);
                     } else {
-                        handleError("Deliverable not saved.");
+                        return handleError("Deliverable not saved.");
                     }
                 }).catch(function (err) {
-                    handleError("Deliverable not saved. ERROR: " + err);
+                    return handleError("Deliverable not saved. ERROR: " + err);
                 });
             } else {
-                handleError("Deliverable not saved: " + result);
+                return handleError("Deliverable not saved: " + result);
             }
         } catch (err) {
-            handleError('Deliverable creation / update unsuccessful: ' + err);
+            return handleError('Deliverable creation / update unsuccessful: ' + err);
         }
     }
 
@@ -411,16 +398,17 @@ export default class AdminRoutes implements IREST {
                         payload = {success: {message: 'Course object saved successfully'}};
                         res.send(200, payload);
                     } else {
-                        handleError("Course object not saved.");
+                        return handleError("Course object not saved.");
                     }
                 }).catch(function (err) {
-                    handleError("Course object not saved. ERROR: " + err);
+                    return handleError("Course object not saved. ERROR: " + err);
                 });
             } else {
-                handleError("Course object not saved: " + result);
+                return handleError("Course object not saved: " + result);
             }
         } catch (err) {
-            handleError('Course object save unsuccessful: ' + err);
+            Log.error('AdminRoutes::postCourse() - ERROR: ' + err.message);
+            return handleError('Course object save unsuccessful: ' + err);
         }
     }
 
