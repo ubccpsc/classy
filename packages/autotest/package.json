@@ -19,6 +19,7 @@
     "node": ">= 8.9 < 9"
   },
   "dependencies": {
+    "coveralls": "^3.0.2",
     "dotenv": "4.0.0",
     "fs-extra": "5.0.0",
     "jszip": "3.1.5",
@@ -28,7 +29,9 @@
     "nyc": "^12.0.2",
     "request": "^2.83.0",
     "request-promise-native": "^1.0.5",
-    "restify": "^6.3.4"
+    "restify": "^6.3.4",
+    "ts-node": "^7.0.0",
+    "typescript": "^2.9.2"
   },
   "scripts": {
     "build": "tsc",

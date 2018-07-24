@@ -102,10 +102,11 @@ jobs:
             name: Running backend coveralls
             when: always
 
-      - run:
-            command: cd packages/autotest && yarn coveralls
-            name: Running autotest coveralls
-            when: always
+# skip coveralls uploading for autotest for now
+#      - run:
+#            command: cd packages/autotest && yarn coveralls
+#            name: Running autotest coveralls
+#            when: always
 
       - run:
             command: cd packages/portal/backend && yarn codecov
