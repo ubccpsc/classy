@@ -1,6 +1,8 @@
 version: "3"
 
 services:
+    # TODO Allow the 310-specific nginx-conf to be specified
+    # This needs to be supported in the container
     router:
         build:
             args:
@@ -26,3 +28,50 @@ services:
                 - PORT=11315  # Must match port in nginx.conf; Dockerfile must EXPOSE this port
             context: https://${GH_ORG_TOKEN}@github.ubc.ca/cpsc310/project_oracle.git#frontend-prod
             dockerfile: ui.dockerfile
+    autotest:
+            build:
+                args:
+                    - PORT=11333
+                context: ./packages/autotest
+            depends_on:
+                - db
+                - grader
+            env_file: .env
+            volumes:
+                - "./ssl:/app/packages/autotest/ssl"
+        grader:
+            build: ./packages/grader
+            env_file: .env
+            environment:
+                - "HOST_DIR=/home/w-sdmm/autotest/data/runs"
+                - "HOST_NAME=172.28.2.0"
+                - "SOCK_PORT=7777"
+                - "USER_UID=81193"
+                - "DOCKER_NET=${COMPOSE_PROJECT_NAME}_grader"
+                - "GITHUB_TOKEN=${GH_BOT_TOKEN}"
+            networks:
+                default:
+                grader:
+                    ipv4_address: 172.28.2.0
+            expose:
+                - ${GRADER_PORT_REST}
+            ports:
+                - "7777:7777" # Socket endpoint for grader; not exposed globally
+            volumes:
+                - /var/run/docker.sock:/var/run/docker.sock
+                - "${GRADER_HOST_DIR}:${GRADER_PERSIST_DIR}"
+            cap_add:
+                - NET_ADMIN
+            privileged: true
+    networks:
+        grader:
+            driver: bridge
+            driver_opts:
+                ip-range: "172.28.5.0/24"
+                gateway: "172.28.5.254"
+            ipam:
+                config:
+                    - subnet: "172.28.0.0/16"
+
+# TODO
+# extend portal to depend on autotest
