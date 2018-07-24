@@ -42,7 +42,7 @@
     "testCI": "node ./node_modules/.bin/mocha --reporter mocha-junit-reporter --reporter-options mochaFile=../../testOutput/autotest/test/test-results.xml --timeout 10000 --recursive --exit",
     "cover": "nyc --reporter text --reporter html yarn run test",
     "coverCI": "./node_modules/.bin/nyc --reporter html --report-dir ../../testOutput/autotest/coverage --reporter=text-lcov yarn run testCI",
-    "coveralls": "./node_modules/.bin/nyc report --report-dir ../../testOutput/autotest/coverage --reporter=text-lcov | coveralls",
+    "coveralls": "./node_modules/.bin/nyc report --report-dir ../../testOutput/autotest/coverage --reporter=text-lcov | ./node_modules/coveralls/bin/coveralls.js",
     "run:dev": "nohup node ./src/AutoTestDaemon.js 310 &> nohup.out &",
     "run:prod": "LOG_LEVEL=INFO nohup node ./src/AutoTestDaemon.js 310 &> nohup.out &"
   }

@@ -88,7 +88,7 @@ jobs:
             when: always
 
       - run:
-            command: cd packages/autotest && ../../node_modules/junit-viewer/bin/junit-viewer --results=../../testOutput/autotest/test/test-results.xml --save=../../testOutput/autotest/test/index.html
+            command: cd packages/autotest && ./node_modules/junit-viewer/bin/junit-viewer --results=../../testOutput/autotest/test/test-results.xml --save=../../testOutput/autotest/test/index.html
             name: Converting autotest test results to HTML
             when: always
 
@@ -103,7 +103,7 @@ jobs:
             when: always
 
       - run:
-            command: cd packages/portal/backend && ../../../node_modules/junit-viewer/bin/junit-viewer --results=../../../testOutput/backend/test/test-results.xml --save=../../../testOutput/backend/test/index.html
+            command: cd packages/portal/backend && ./node_modules/junit-viewer/bin/junit-viewer --results=../../../testOutput/backend/test/test-results.xml --save=../../../testOutput/backend/test/index.html
             name: Converting backend test results to HTML
             when: always
 
@@ -112,11 +112,10 @@ jobs:
             name: Running backend coveralls
             when: always
 
-# skip coveralls uploading for autotest for now
-#      - run:
-#            command: cd packages/autotest && yarn coveralls
-#            name: Running autotest coveralls
-#            when: always
+      - run:
+            command: cd packages/autotest && yarn coveralls
+            name: Running autotest coveralls
+            when: always
 
       - run:
             command: cd packages/portal/backend && yarn codecov
