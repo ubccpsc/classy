@@ -80,7 +80,7 @@ jobs:
                       yarn coverCI
             name: Running backend tests
             environment:
-              MOCHA_FILE: packages/portal/backend/testOutput/test-results.xml
+              MOCHA_FILE: testOutput/backend/test-results.xml
             when: always
 
       - run:
@@ -90,7 +90,7 @@ jobs:
                       yarn coverCI
             name: Running autotest tests
             environment:
-              MOCHA_FILE: packages/portal/autotest/testOutput/test-results.xml
+              MOCHA_FILE: testOutput/autotest/test-results.xml
             when: always
 
       - run:
@@ -109,12 +109,10 @@ jobs:
             when: always
 
       - store_test_results:
-          - path: packages/portal/backend/testOutput
-          - path: packages/portal/autotest/testOutput          
+          path: testOutput
 
       - store_artifacts:
-          - path: packages/portal/backend/testOutput
-          - path: packages/portal/autotest/testOutput          
+          path: testOutput
 
       - run:
             command: rm .env && rm packages/portal/backend/ssl/fullchain.pem && rm packages/portal/backend/ssl/privkey.pem

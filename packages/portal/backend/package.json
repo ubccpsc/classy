@@ -5,11 +5,11 @@
     "main": "build/App.js",
     "scripts": {
         "test": "node --require dotenv/config ./node_modules/.bin/mocha --timeout 30000 --recursive --exit",
-        "testCI": "node ./node_modules/.bin/mocha --reporter mocha-junit-reporter --reporter-options mochaFile=./testOutput/test-results.xml --timeout 5000 --recursive --exit",
+        "testCI": "node ./node_modules/.bin/mocha --reporter mocha-junit-reporter --reporter-options mochaFile=../../../testOutput/backend/test-results.xml --timeout 5000 --recursive --exit",
         "cover": "nyc --reporter html yarn run test",
-        "coverCI": "./node_modules/.bin/nyc --reporter html --report-dir ./testOutput --reporter=text-lcov yarn run testCI",
-        "coveralls": "./node_modules/.bin/nyc report --report-dir ./testOutput --reporter=text-lcov | coveralls",
-        "codecov": "./node_modules/.bin/nyc report --report-dir ./testOutput --reporter=json > ./testOutput/coverage.json && codecov --token=$CODECOV_TOKEN",
+        "coverCI": "./node_modules/.bin/nyc --reporter html --report-dir ../../../testOutput/backend --reporter=text-lcov yarn run testCI",
+        "coveralls": "./node_modules/.bin/nyc report --report-dir ../../../testOutput/backend --reporter=text-lcov | coveralls",
+        "codecov": "./node_modules/.bin/nyc report --report-dir ../../../testOutput/backend --reporter=json > ../../../testOutput/backend/coverage.json && codecov --token=$CODECOV_TOKEN",
         "build": "tsc"
     },
     "repository": {
