@@ -23,6 +23,7 @@
     "dotenv": "4.0.0",
     "fs-extra": "5.0.0",
     "jszip": "3.1.5",
+    "junit-viewer": "^4.11.1",
     "mocha": "^5.2.0",
     "mocha-junit-reporter": "^1.17.0",
     "mongodb": "^3.0.2",
@@ -38,10 +39,10 @@
     "build:prod": "tsc --outDir bin --sourceMap false",
     "lint": "tslint -c tslint.json 'src/**/*.ts' 'test/**/*.ts'",
     "test": "mocha --require=dotenv/config --require ts-node/register --timeout 10000",
-    "testCI": "node ./node_modules/.bin/mocha --reporter mocha-junit-reporter --reporter-options mochaFile=../../testOutput/autotest/test-results.xml --timeout 10000 --recursive --exit",
+    "testCI": "node ./node_modules/.bin/mocha --reporter mocha-junit-reporter --reporter-options mochaFile=../../testOutput/autotest/test/test-results.xml --timeout 10000 --recursive --exit",
     "cover": "nyc --reporter text --reporter html yarn run test",
-    "coverCI": "./node_modules/.bin/nyc --reporter html --report-dir ../../testOutput/autotest --reporter=text-lcov yarn run testCI",
-    "coveralls": "./node_modules/.bin/nyc report --report-dir ../../testOutput/autotest --reporter=text-lcov | coveralls",
+    "coverCI": "./node_modules/.bin/nyc --reporter html --report-dir ../../testOutput/autotest/coverage --reporter=text-lcov yarn run testCI",
+    "coveralls": "./node_modules/.bin/nyc report --report-dir ../../testOutput/autotest/coverage --reporter=text-lcov | coveralls",
     "run:dev": "nohup node ./src/AutoTestDaemon.js 310 &> nohup.out &",
     "run:prod": "LOG_LEVEL=INFO nohup node ./src/AutoTestDaemon.js 310 &> nohup.out &"
   }
