@@ -34,6 +34,10 @@ jobs:
             name: Preparing common
 
       - run:
+            command: cd packages/autotest && yarn install
+            name: Preparing autotest
+
+      - run:
             command: cd packages/portal/backend && mkdir -p ssl/ && yarn install
             name: Preparing backend
 
@@ -86,7 +90,7 @@ jobs:
       - run:
             command: |
                       set -e
-                      cd packages/portal/autotest
+                      cd packages/autotest
                       yarn coverCI
             name: Running autotest tests
             environment:
