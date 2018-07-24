@@ -183,7 +183,6 @@ describe('SDMM Routes', function () {
     }).timeout(1000 * 30);
 
     it('Should provision a d0 repo.', async function () {
-
         let response = null;
         const url = '/portal/sdmm/performAction/provisionD0';
         try {

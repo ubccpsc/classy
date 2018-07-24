@@ -143,6 +143,10 @@ export class AuthRoutes implements IREST {
                 handleError("Login error; user not valid.");
             }
         }).then(function (isPrivileged) {
+            if (typeof isPrivileged === 'undefined') {
+                Log.warn('RouteHandler::getCredentials(..) - failsafe; DEBUG this case?');
+                isPrivileged = {isAdmin: false, isStaff: false}; // fail safe
+            }
             payload = {success: {personId: user, token: token, isAdmin: isPrivileged.isAdmin, isStaff: isPrivileged.isStaff}};
             Log.info('RouteHandler::getCredentials(..) - sending 200; isPriv: ' + (isPrivileged.isStaff || isPrivileged.isAdmin));
             res.send(200, payload);
@@ -267,7 +271,7 @@ export class AuthRoutes implements IREST {
             // auth written (or not); we only really care about the state of p at this point
 
 
-            Log.info("AuthRouteHandler::authCallback(..) - preparing redirect for: " + JSON.stringify(p));
+            Log.info("AuthRoutes::authCallback(..) - preparing redirect for: " + JSON.stringify(p));
             let feUrl = config.getProp(ConfigKey.backendUrl);
             let fePort = config.getProp(ConfigKey.backendPort);
 
@@ -279,7 +283,7 @@ export class AuthRoutes implements IREST {
                 if (feUrl.indexOf('//') > 0) {
                     feUrl = feUrl.substr(feUrl.indexOf('//') + 2, feUrl.length);
                 }
-                Log.trace("RouteHandler::authCallback(..) - /authCallback - redirect homepage URL: " + feUrl);
+                Log.trace("AuthRoutes::authCallback(..) - /authCallback - redirect homepage URL: " + feUrl);
 
                 res.redirect({
                     hostname: feUrl,
@@ -289,7 +293,7 @@ export class AuthRoutes implements IREST {
                 }, next);
             } else {
 
-                Log.trace("RouteHandler::authCallback(..) - /authCallback - redirect logout URL: " + feUrl);
+                Log.trace("AuthRoutes::authCallback(..) - /authCallback - redirect logout URL: " + feUrl);
 
                 res.redirect({
                     hostname: feUrl,
@@ -299,7 +303,7 @@ export class AuthRoutes implements IREST {
             }
         }).catch(function (err) {
             // code incorrect or expired
-            Log.error("AuthRouteHandler::authCallback(..) - /authCallback - ERROR: " + err);
+            Log.error("AuthRoutes::authCallback(..) - /authCallback - ERROR: " + err);
             // NOTE: should this be returning 400 or something?
             return next();
         });

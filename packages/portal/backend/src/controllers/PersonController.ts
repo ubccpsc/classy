@@ -67,6 +67,7 @@ export class PersonController {
      * @returns {boolean}
      */
     public async getPerson(personId: string): Promise<Person | null> {
+        Log.trace("PersonController::getPerson( ... ) - start");
         Log.trace("PersonController::getPerson( " + personId + " ) - start");
 
         let person = await this.db.getPerson(personId);

@@ -198,22 +198,22 @@ export class DatabaseController {
     */
 
     public async deleteAuth(record: Auth): Promise<boolean> {
-        Log.info("DatabaseController::deleteAuth( "+record.personId+" ) - start");
         if (record !== null) {
+            Log.info("DatabaseController::deleteAuth( " + record.personId + " ) - start");
             return await this.deleteRecord(this.AUTHCOLL, {personId: record.personId});
         }
     }
 
     public async deleteRepository(record: Repository): Promise<boolean> {
-        Log.info("DatabaseController::deleteRepository( "+record.id+" ) - start");
         if (record !== null) {
+            Log.info("DatabaseController::deleteRepository( " + record.id + " ) - start");
             return await this.deleteRecord(this.REPOCOLL, {id: record.id});
         }
     }
 
     public async deleteTeam(record: Team): Promise<boolean> {
-        Log.info("DatabaseController::deleteTeam( "+record.id+" ) - start");
         if (record !== null) {
+            Log.info("DatabaseController::deleteTeam( " + record.id + " ) - start");
             return await this.deleteRecord(this.TEAMCOLL, {id: record.id});
         }
     }
