@@ -11,7 +11,7 @@ import {GitHubService} from "../github/GitHubService";
 import {GitHubUtil} from "../github/GitHubUtil";
 import {GitHubAutoTest} from "../github/GitHubAutoTest";
 import {EdXClassPortal} from "../edx/EdxClassPortal";
-import {ICommentEvent, IPushEvent} from "../Types";
+import {ICommentEvent, IPushEvent} from "../../../common/types/AutoTestTypes";
 
 export default class RouteHandler {
 

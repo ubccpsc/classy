@@ -1,4 +1,4 @@
-import {IContainerInput} from "../Types";
+import {IContainerInput} from "../../../common/types/AutoTestTypes";
 
 export class Queue {
 

@@ -1,6 +1,6 @@
 import Log from "../../../common/Log";
 
-import {IAutoTestResult, IContainerInput, IPushEvent} from "../Types";
+import {IAutoTestResult, IContainerInput, IPushEvent} from "../../../common/types/AutoTestTypes";
 
 import {AutoTest} from "../autotest/AutoTest";
 import {IGitHubService} from "../github/GitHubService";

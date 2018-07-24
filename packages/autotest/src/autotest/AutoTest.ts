@@ -4,7 +4,7 @@ import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import Util from "../../../common/Util";
 
-import {IAutoTestResult, ICommentEvent, IContainerInput, IContainerOutput} from "../Types";
+import {IAutoTestResult, ICommentEvent, IContainerInput, IContainerOutput} from "../../../common/types/AutoTestTypes";
 import {IDataStore} from "./DataStore";
 import {MockGrader} from "./mocks/MockGrader";
 import {Queue} from "./Queue";

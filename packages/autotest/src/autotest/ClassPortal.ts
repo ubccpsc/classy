@@ -2,7 +2,7 @@ import * as rp from "request-promise-native";
 
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
-import {IAutoTestResult} from "../Types";
+import {IAutoTestResult} from "../../../common/types/AutoTestTypes";
 import {
     AutoTestAuthPayload,
     AutoTestAuthTransport,

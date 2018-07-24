@@ -1,4 +1,4 @@
-import {IAutoTestResult} from "../../autotest/src/Types";
+import {IAutoTestResult} from "./AutoTestTypes";
 
 /**
  Default portal types should be declared here.
