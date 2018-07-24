@@ -41,3 +41,4 @@ packages/portal/frontend/**/*.map
 # Misc
 ssl/
 /data/
+.rsyncexclude
