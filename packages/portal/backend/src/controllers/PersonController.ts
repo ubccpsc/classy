@@ -19,15 +19,27 @@ export class PersonController {
         let existingPerson = await this.db.getPerson(personPrototype.id);
 
         if (existingPerson === null) {
-            Log.trace("PersonController::createPerson(..) - writing");
-            let successful = await this.db.writePerson(personPrototype);
-            if (successful === true) {
-                Log.trace("PersonController::createPerson(..) - retrieving");
-                const person = await this.db.getPerson(personPrototype.id);
-                return person;
-            }
+            await this.db.writePerson(personPrototype);
+
+            Log.trace("PersonController::createPerson(..) - created");
+            const person = await this.db.getPerson(personPrototype.id);
+            return person;
+
+        } else {
+            // merge people
+            existingPerson.labId = personPrototype.labId; // can update
+            existingPerson.githubId = personPrototype.githubId; // can update
+            existingPerson.URL = personPrototype.URL; // can update (along with githubId)
+            // NOTE: existingPerson.custom is _not_ deleted ; unsure if this is the right thing
+            // existingPerson.custom = {};
+            
+            await this.db.writePerson(existingPerson);
+
+            Log.trace("PersonController::createPerson(..) - updated");
+            const person = await this.db.getPerson(personPrototype.id);
+            return person;
         }
-        return existingPerson;
+
     }
 
     /**
