@@ -26,7 +26,7 @@ describe("GitHubUtil", () => {
         expect(actual).to.equal("d1");
 
         actual = GitHubUtil.parseDeliverableFromComment("@ubcbot d1");
-        expect(actual).to.be.null
+        expect(actual).to.be.null;
 
         actual = GitHubUtil.parseDeliverableFromComment("@ubcbot #d101");
         expect(actual).to.equal("d101");
