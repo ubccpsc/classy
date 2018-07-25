@@ -55,7 +55,7 @@ export class SDMMSummaryView implements IView {
 
     public async createD0Repository(): Promise<void> {
 
-        this.showModal("Provisioning D0 Repository.<br/>This can take up to 5 minutes.<br/>This dialog will clear as soon as the operation is complete.")
+        this.showModal("Provisioning D0 Repository.<br/>This can take up to 5 minutes.<br/>This dialog will clear as soon as the operation is complete.");
 
         const url = this.remote + '/portal/sdmm/performAction/provisionD0';
         Log.info('SDDM::createD0Repository( ' + url + ' ) - start');
@@ -90,7 +90,7 @@ export class SDMMSummaryView implements IView {
         const url = this.remote + '/portal/sdmm/performAction/provisionD1individual';
         Log.info('SDDM::createD1Individual( ' + url + ' ) - start');
 
-        this.showModal("Provisioning D1 Repository.<br/>This can take up to 5 minutes.<br/>This dialog will clear as soon as the operation is complete.")
+        this.showModal("Provisioning D1 Repository.<br/>This can take up to 5 minutes.<br/>This dialog will clear as soon as the operation is complete.");
 
         let options: any = this.getOptions();
         options.method = 'post';
@@ -117,7 +117,7 @@ export class SDMMSummaryView implements IView {
         Log.info("SDMMSummaryView::createD1Team() - start");
         // this.longAction(5000, 'Configuring D1 Team<br/>Will take < 10 seconds');
 
-        this.showModal("Provisioning D1 Repository.<br/>This can take up to 5 minutes.<br/>This dialog will clear as soon as the operation is complete.")
+        this.showModal("Provisioning D1 Repository.<br/>This can take up to 5 minutes.<br/>This dialog will clear as soon as the operation is complete.");
 
         const url = this.remote + '/portal/sdmm/performAction/provisionD1team/' + partnerName;
         // TODO: actually provide team members!!!

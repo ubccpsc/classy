@@ -361,6 +361,40 @@ describe('Admin Routes', function () {
         }
     });
 
+    it('Should be able to upload an updated classlist', async function () {
+
+        const dc = DatabaseController.getInstance();
+        let people = await dc.getPeople();
+        const peopleLength = people.length;
+        const person = await dc.getPerson('l8z1');
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/admin/classlist';
+        try {
+            response = await request(app).post(url).attach('classlist', __dirname + '/../data/classlistValidUpdate.csv').set({
+                user:  userName,
+                token: userToken
+            });
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+            expect.fail('should not happen');
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.message).to.be.an('string');
+
+        people = await dc.getPeople();
+        expect(peopleLength).to.equal(people.length); // no new people should have been added
+        const newPerson = await dc.getPerson('l8z1');
+        expect(person.githubId).to.not.equal(newPerson.githubId); // should have been updated
+        expect(person.labId).to.not.equal(newPerson.labId); // should have been updated
+        expect(person.studentNumber).to.equal(newPerson.studentNumber); // should be the same
+
+    });
+
 
     it('Should be able to get the course object', async function () {
 

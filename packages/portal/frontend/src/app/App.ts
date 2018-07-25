@@ -27,7 +27,6 @@ export class App {
 
         // configure the frontend and backend URLs
         // uses the browser location and figures it out from there
-        // TODO: this will need to be tested better before putting it into production
         let location = window.location.href;
         location = location.substr(0, location.indexOf('/', 10)); // peel off anything after the host/port
         Log.trace('App::<init> - location: ' + location);
@@ -410,22 +409,21 @@ export class App {
                 }
             }
         }
-        // this is not great, it would be better if this token was hidden
-
-        let getParameterByName = function (name: string) {
-            let url = window.location.href;
-            name = name.replace(/[\[\]]/g, '\\$&');
-            let regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
-                results = regex.exec(url);
-            if (!results) return null;
-            if (!results[2]) return '';
-            return decodeURIComponent(results[2].replace(/\+/g, ' '));
-        };
-        let token = getParameterByName('gh');
-        if (token !== null) {
-            Log.trace("App::readCookie( " + name + " ) - query param found");
-            return token;
-        }
+        // this was a hack that we should not use
+        // let getParameterByName = function (name: string) {
+        //     let url = window.location.href;
+        //     name = name.replace(/[\[\]]/g, '\\$&');
+        //     let regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+        //         results = regex.exec(url);
+        //     if (!results) return null;
+        //     if (!results[2]) return '';
+        //     return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        // };
+        // let token = getParameterByName('gh');
+        // if (token !== null) {
+        //     Log.trace("App::readCookie( " + name + " ) - query param found");
+        //     return token;
+        // }
         Log.trace("App::readCookie( " + name + " ) - no token found");
         return null;
     }

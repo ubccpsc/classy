@@ -16,7 +16,7 @@ function sleep(ms) {
         "skipNames":    [],
         "custom":       [],
         "feedback":     ""
-    }
+    };
 
     fs.writeFileSync("/io/store/report.json", JSON.stringify(report));
 
