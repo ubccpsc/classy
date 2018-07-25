@@ -21,7 +21,6 @@ export class UI {
      * Onsen convenience functions
      */
     public static pushPage(pageId: string, options?: any): any {
-
         if (typeof options === 'undefined') {
             options = {};
         }

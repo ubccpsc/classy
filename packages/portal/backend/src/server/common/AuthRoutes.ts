@@ -256,11 +256,11 @@ export class AuthRoutes implements IREST {
 
             if (person !== null) {
                 Log.info("AuthRoutes::authCallback(..) - /portal/authCallback - registering auth for person: " + person.githubId);
+                p = person;
                 const auth: Auth = {
-                    personId: username,
+                    personId: person.id, // use person.id, not username (aka githubId)
                     token:    token
                 };
-                p = person;
                 return DatabaseController.getInstance().writeAuth(auth);
             } else {
                 // auth not written
@@ -280,13 +280,14 @@ export class AuthRoutes implements IREST {
             if (p !== null) {
                 // this is tricky; need to redirect to the client with a cookie being set on the connection
                 // only header method that worked for me
-                res.setHeader("Set-Cookie", "token=" + token);
-                Log.trace("AuthRoutes::authCallback(..) - /authCallback - redirect homepage URL: " + feUrl);
+                // const cookie = "token=" + token + '; user=' + p.id;
+                const cookie = "token=" + token + '__' + p.id; // Firefox doesn't like multiple tokens (line above)
+                res.setHeader("Set-Cookie", cookie);
+                Log.trace("AuthRoutes::authCallback(..) - /authCallback - redirect homepage URL: " + feUrl + "; cookie: " + cookie);
 
                 res.redirect({
                     hostname: feUrl,
-                    pathname: 'index.html',//'/index.html',
-                    // query:    {gh: token}, // not a real solution, need cookies so this is transparent
+                    pathname: 'index.html',
                     port:     fePort
                 }, next);
             } else {

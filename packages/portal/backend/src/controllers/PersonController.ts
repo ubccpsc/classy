@@ -111,8 +111,14 @@ export class PersonController {
 
         let person = await this.db.getPerson(personId);
         if (person === null) {
-            Log.trace("PersonController::getPerson( " + personId + " ) - unknown person for this org - failing");
+            Log.trace("PersonController::getPerson( " + personId + " ) - unknown person for this org checking githubId");
+            // person = await this.getGitHubPerson(personId);
+            //if (person === null) {
+            Log.trace("PersonController::getPerson( " + personId + " ) - unknown person for this org.");
             return null;
+            //} else {
+            //              Log.trace("PersonController::getPerson( " + personId + " ) - personId is actually a githubId");
+//            }
         }
         return person;
     }
