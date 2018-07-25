@@ -110,11 +110,11 @@ export class AssignmentController {
         // attempt to provision the repository
         let provisionAttempt: boolean;
         if(seedPath.trim() === "") {
-            // todo: set this to have no team to provision
-            provisionAttempt = await this.ghc.provisionRepository(repoName, [], seedURL, WEBHOOKADDR);
+            // provisionAttempt = await this.ghc.provisionRepository(repoName, [], seedURL, WEBHOOKADDR);
+            provisionAttempt = await this.ghc.createRepository(repoName, seedURL);
         } else {
-            // todo: set this to have no team to provision
             // provisionAttempt = await dthis.ghc.provisionRepository(repoName, [], seedURL, WEBHOOKADDR, seedPath);
+            provisionAttempt = await this.ghc.createRepository(repoName, seedURL, seedPath.trim());
         }
 
         if(!provisionAttempt) {
@@ -134,6 +134,7 @@ export class AssignmentController {
             assignRepoInfo.assignedTeams.push(team.id);
         }
 
+        // creates repository record
         let repository = await this.rc.createRepository(repoName, teams, assignRepoInfo);
         // record the url
         repository.URL = await this.ghc.getRepositoryUrl(repository);
@@ -214,7 +215,112 @@ export class AssignmentController {
         return true;
     }
 
+    public async publishAssignmentRepo(repoId: string): Promise<boolean> {
+        Log.info("AssignmentController::publishAssignmentRepo( " + repoId + " ) - start");
+        // Log.info("AssignmentController::publishAssignmentRepo(..)");
+        let repo: Repository = await this.rc.getRepository(repoId);
+        if(repo.custom === null) {
+            Log.error("AssignmentController::publishAssignmentRepo(..) - error: repository " + repoId +
+                " not created properly");
+            return false;
+        }
 
+        // check if assignment is ready to be published
+        let repoInfo: AssignmentRepositoryInfo = repo.custom;
+        if(repoInfo.status !== AssignmentStatus.INITIALIZED) {
+            Log.error("AssignmentController::publishAssignmentRepo(..) - error: repository " + repoId +
+            " is not initialized");
+            switch(repoInfo.status) {
+                case AssignmentStatus.INACTIVE: {
+                    Log.error("AssignmentController::publishAssignmentRepo(..) - status: INACTIVE");
+                    break;
+                }
+                case AssignmentStatus.PUBLISHED: {
+                    Log.error("AssignmentController::publishAssignmentRepo(..) - status: PUBLISHED");
+                    break;
+                }
+                case AssignmentStatus.CLOSED: {
+                    Log.error("AssignmentController::publishAssignmentRepo(..) - status: CLOSED");
+                    break;
+                }
+            }
+            return false;
+        }
+
+        let teamList: Team[] = [];
+        for(const teamId of repoInfo.assignedTeams) {
+            let team = await this.tc.getTeam(teamId);
+            if(team === null) {
+                Log.error("AssignmentController::publishAssignmentRepo(..) - invalid team: " + teamId + " " +
+                    "skipping and continuing...");
+                continue;
+            }
+            teamList.push(team);
+            // let githubTeamNumber = await this.gha.getTeamNumber(team.id);
+            // if(githubTeamNumber === -1) {
+            //     Log.error("AssignmentController::publishAssignmentRepo(..) - team not created on Github");
+            //     return false;
+            // }
+            //
+            // await this.gha.addTeamToRepo(githubTeamNumber, repo.id, "push");
+        }
+
+        let success: boolean = await this.ghc.releaseRepository(repo, teamList, false);
+
+        if(success) {
+            repoInfo.status = AssignmentStatus.PUBLISHED;
+            await this.db.writeRepository(repo);
+        } else {
+            Log.error("AssignmentController::publishAssignmentRepo(..) - unable to release repo");
+            return false;
+        }
+
+        Log.info("AssignmentController::publishAssignmentRepo(..) - finish");
+        return true;
+    }
+
+    public async publishAllRepositories(delivId: string): Promise<boolean> {
+        Log.info("AssignmentController::publishAllRepositories( " + delivId + ") - start");
+        // Log.info("AssignmentController::publishAllRepositories(..)");
+        let deliv = await this.dc.getDeliverable(delivId);
+        if(deliv.custom === null) {
+            Log.error("AssignmentController::publishAllRepositories(..) - error: assignment not " +
+                "set up properly");
+            return false;
+        }
+
+        let assignInfo: AssignmentInfo = deliv.custom;
+
+        let anyError: boolean = false;
+        for(const repoId of assignInfo.repositories) {
+            let repo: Repository = await this.rc.getRepository(repoId);
+            if(!await this.publishAssignmentRepo(repo.id)) {
+                Log.error("AssignmentController::publishAllRepositories(..) - unable to publish " +
+                    " repository " + repo.id);
+                anyError = true;
+            }
+        }
+
+        if(anyError) {
+            Log.error("AssignmentController::publishAllRepositories(..) - unable to publish all" +
+                " repositories");
+            return false;
+        }
+
+        assignInfo.status = AssignmentStatus.PUBLISHED;
+        await this.dc.saveDeliverable(deliv);
+        Log.info("AssignmentController::publishAllRepositories(..) - finish");
+        return true;
+    }
+
+    /**
+     * Deletes the given assignment repository
+     * @param {string} repoName: repository name to delete
+     * @param {string} delivId: deliverable ID to delete record from
+     * @param {boolean} single: indicates if this is a one-off operation; if {true},
+     * will modify database to remove repo from assignment record
+     * @returns {Promise<boolean | null>} indicates success of deletion
+     */
     public async deleteAssignmentRepository(repoName: string, delivId: string, single: boolean = true): Promise<boolean | null>{
         Log.info("AssignmentController::deleteAssignmentRepository( " + repoName + ", " + delivId + " ) - start");
         // Log.info("AssignmentController::deleteAssignmentRepository(..) - start");
@@ -263,6 +369,12 @@ export class AssignmentController {
         return await this.db.deleteRepository(repoRecord);
     }
 
+
+    /**
+     * Deletes all repositories associated with the deliverable
+     * @param {string} delivId: deliverable to delete
+     * @returns {Promise<boolean>} indicates success of deleting all repositories
+     */
     public async deleteAllAssignmentRepositories(delivId: string): Promise<boolean> {
         Log.info("AssignmentController::deleteAllAssignmentRepositories( " + delivId + ") - start");
 
@@ -286,91 +398,6 @@ export class AssignmentController {
         // update deliverable
         await this.dc.saveDeliverable(deliv);
 
-        return true;
-    }
-
-
-
-    public async publishAssignmentRepo(repoId: string): Promise<boolean> {
-        Log.info("AssignmentController::publishAssignmentRepo( " + repoId + " ) - start");
-        // Log.info("AssignmentController::publishAssignmentRepo(..)");
-        let repo: Repository = await this.rc.getRepository(repoId);
-        if(repo.custom === null) {
-            Log.error("AssignmentController::publishAssignmentRepo(..) - error: repository " + repoId +
-                " not created properly");
-            return false;
-        }
-        let repoInfo: AssignmentRepositoryInfo = repo.custom;
-        if(repoInfo.status !== AssignmentStatus.INITIALIZED) {
-            Log.error("AssignmentController::publishAssignmentRepo(..) - error: repository " + repoId +
-            " is not initialized");
-            switch(repoInfo.status) {
-                case AssignmentStatus.INACTIVE: {
-                    Log.error("AssignmentController::publishAssignmentRepo(..) - status: INACTIVE");
-                    break;
-                }
-                case AssignmentStatus.PUBLISHED: {
-                    Log.error("AssignmentController::publishAssignmentRepo(..) - status: PUBLISHED");
-                    break;
-                }
-                case AssignmentStatus.CLOSED: {
-                    Log.error("AssignmentController::publishAssignmentRepo(..) - status: CLOSED");
-                    break;
-                }
-            }
-            return false;
-        }
-
-        for(const teamId of repoInfo.assignedTeams) {
-            let team = await this.tc.getTeam(teamId);
-            let githubTeamNumber = await this.gha.getTeamNumber(team.id);
-            if(githubTeamNumber === -1) {
-                Log.error("AssignmentController::publishAssignmentRepo(..) - team not created on Github");
-                return false;
-            }
-
-            await this.gha.addTeamToRepo(githubTeamNumber, repo.id, "push");
-        }
-
-        repoInfo.status = AssignmentStatus.PUBLISHED;
-
-        await this.db.writeRepository(repo);
-        Log.info("AssignmentController::publishAssignmentRepo(..) - finish");
-
-        return true;
-    }
-
-    public async publishAllRepositories(delivId: string): Promise<boolean> {
-        Log.info("AssignmentController::publishAllRepositories( " + delivId + ") - start");
-        // Log.info("AssignmentController::publishAllRepositories(..)");
-        let deliv = await this.dc.getDeliverable(delivId);
-        if(deliv.custom === null) {
-            Log.error("AssignmentController::publishAllRepositories(..) - error: assignment not " +
-                "set up properly");
-            return false;
-        }
-
-        let assignInfo: AssignmentInfo = deliv.custom;
-
-        let anyError: boolean = false;
-        for(const repoId of assignInfo.repositories) {
-            let repo: Repository = await this.rc.getRepository(repoId);
-            if(!await this.publishAssignmentRepo(repo.id)) {
-                Log.error("AssignmentController::publishAllRepositories(..) - unable to publish " +
-                    " repository " + repo.id);
-                anyError = true;
-            }
-        }
-
-        if(anyError) {
-            Log.error("AssignmentController::publishAllRepositories(..) - unable to publish all" +
-                " repositories");
-            return false;
-        }
-
-        assignInfo.status = AssignmentStatus.PUBLISHED;
-        await this.dc.saveDeliverable(deliv);
-        Log.info("AssignmentController::publishAllRepositories(..) - finish");
         return true;
     }
 

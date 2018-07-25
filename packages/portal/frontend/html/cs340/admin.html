@@ -10,7 +10,8 @@
     </ons-toolbar>
 
     <ons-tabbar id='adminTabbar' swipeable position="top">
-        <ons-tab id="AdminDeliverableTab" page="deliverables.html" label="Deliverables" icon="ion-home, material:md-home" active>
+        <ons-tab id="AdminDeliverableTab" page="deliverables.html" label="Deliverables"
+                 icon="ion-home, material:md-home" active>
         </ons-tab>
 
         <ons-tab id="AdminStudentTab" page="students.html" label="Students" icon="md-face" active-icon="md-face">
@@ -44,11 +45,11 @@
     </ons-modal>
 
     <template id="deliverables.html">
-<!--        <ons-page id="AdminDeliverables">
-            <p style="text-align: center;">
-                Deliverables Page
-            </p>
-        </ons-page>-->
+        <!--        <ons-page id="AdminDeliverables">
+                    <p style="text-align: center;">
+                        Deliverables Page
+                    </p>
+                </ons-page>-->
         <ons-page id="AdminDeliverables">
             <ons-list id="adminDeliverablesList">
                 <ons-list-header>Deliverables</ons-list-header>
@@ -98,12 +99,12 @@
             </ons-list>
 
 
-<!--            <p style="text-align: center;">
-                CPSC 340 Custom Grades Page
-            </p>
-            <ons-button onclick="window.classportal.view.testfunction()">
-                A button
-            </ons-button>-->
+            <!--            <p style="text-align: center;">
+                            CPSC 340 Custom Grades Page
+                        </p>
+                        <ons-button onclick="window.classportal.view.testfunction()">
+                            A button
+                        </ons-button>-->
         </ons-page>
     </template>
 
@@ -141,7 +142,8 @@
                         <pre>ACCT,SNUM,CWL,LAST,FIRST,LAB</pre>
                         The corresponding classlist command for this is:
                         <pre>classlist -T -f "%ACCT,%SN,%CWL,%LN,%FN,%LAB" &lt;COURSENUM&gt;</pre>
-                        ACCT and SNUM are invariants and cannot change although ther fields can be updated (changing GitHub logins presents
+                        ACCT and SNUM are invariants and cannot change although ther fields can be updated (changing
+                        GitHub logins presents
                         its own issues that require manual effort on the part of course staff to handle).
                         Pre-existing Students, Teams, and Repositories <i>WILL NOT</i> be affected.
                     </div>
@@ -154,12 +156,16 @@
                     </div>
                     <div class="center">
                         Default Deliverable
-                        <select id="adminDefaultDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
-                        <ons-button id="adminSubmitDefaultDeliverable" modifier="medium">Set Default Deliverable</ons-button>
+                        <select id="adminDefaultDeliverableSelect"
+                                style="margin-left: 1em; margin-right: 1em;"></select>
+                        <ons-button id="adminSubmitDefaultDeliverable" modifier="medium">Set Default Deliverable
+                        </ons-button>
                     </div>
                     <div class="expandable-content">
-                        Setting the default deliverable is only required for AutoTest. This lets the container know what tests
-                        to run by default when a push is made. If you are not using AutoTest or do not want any tests to be run
+                        Setting the default deliverable is only required for AutoTest. This lets the container know what
+                        tests
+                        to run by default when a push is made. If you are not using AutoTest or do not want any tests to
+                        be run
                         automatically, just leave this blank.
                     </div>
                 </ons-list-item>
@@ -174,12 +180,18 @@
                         Selected Deliverable:
                         <select id="adminActionDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
                         <ons-button id="adminActionSelectDeliverable" modifier="medium">Select Deliverable</ons-button>
-                        <p id="adminActionDeliverableID" style="margin-left: 1em; font-weight: bold;"> </p>
+                        <p id="adminActionDeliverableID" style="margin-left: 1em; font-weight: bold;"></p>
                         <p id="adminActionStatusText" style="margin-right: 1em;width: 6.5em;"></p>
-                        <ons-button id="adminCheckStatus" style="margin-left: 1em; margin-right: 1em;" disabled="true">Recalculate Status</ons-button>
+                        <ons-button id="adminCheckStatus" style="margin-left: 1em; margin-right: 1em;" disabled="true">
+                            Recalculate Status
+                        </ons-button>
                         <ons-button id="adminCreateRepositories" disabled="true">Create Repositories</ons-button>
-                        <ons-button id="adminReleaseRepositories" style="margin-left: 1em" disabled="true">Release Repositories</ons-button>
-                        <ons-button id="adminDeleteRepositories" style="margin-left: 1em" disabled="true">DEBUG: Delete Repositories</ons-button>
+                        <ons-button id="adminReleaseRepositories" style="margin-left: 1em" disabled="true">Release
+                            Repositories
+                        </ons-button>
+                        <ons-button id="adminDeleteRepositories" style="margin-left: 1em" disabled="true">DEBUG: Delete
+                            Repositories
+                        </ons-button>
                     </div>
                     <div class="expandable-content">
                         Controls early repository provisioning and releasing of deliverables.
@@ -198,7 +210,7 @@
 
             <ons-toolbar>
                 <div class="center">
-                    CPSC 310 Admin Portal
+                    CPSC 340 Admin Portal
                 </div>
                 <div class="left">
                     <ons-back-button></ons-back-button>
@@ -230,7 +242,8 @@
                             <ons-input class="settingTextInput" id="adminEditDeliverablePage-name"></ons-input>
                         </div>
                         <div class="expandable-content">
-                            Deliverable Id. Cannot be changed. Deliverable Ids must consist of a string of lowercase letters, [a-z],
+                            Deliverable Id. Cannot be changed. Deliverable Ids must consist of a string of lowercase
+                            letters, [a-z],
                             followed by any number.
                         </div>
                     </ons-list-item>
@@ -261,7 +274,8 @@
                             <ons-input class="settingTextInput" id="adminEditDeliverablePage-custom"></ons-input>
                         </div>
                         <div class="expandable-content">
-                            This is a JSON object that will be stored along with the deliverable and can be used by custom course
+                            This is a JSON object that will be stored along with the deliverable and can be used by
+                            custom course
                             controllers. It must be valid JSON (or {} if you do not want to pass any custom params).
                         </div>
                     </ons-list-item>
@@ -312,7 +326,8 @@
                             <ons-icon icon="ion-calendar"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            <span title="The date that AutoTest will begin marking Github Repositories for a Deliverable.">Open</span>
+                            <span
+                                title="The date that AutoTest will begin marking Github Repositories for a Deliverable.">Open</span>
                         </div>
                         <div class="right settingRight">
                             <input id="adminEditDeliverablePage-open" class="flatpickr right settingRight"
@@ -328,7 +343,8 @@
                             <ons-icon icon="ion-calendar"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            <span title="The date that AutoTest will stop marking Github Repositories for a Deliverable.">Close</span>
+                            <span
+                                title="The date that AutoTest will stop marking Github Repositories for a Deliverable.">Close</span>
                         </div>
                         <div class="right settingRight">
                             <input id="adminEditDeliverablePage-close" class="flatpickr right settingRight"
@@ -385,10 +401,12 @@
                             <ons-icon icon="fa-location-arrow"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            <span title="Enable if the Students for Team Generation and Student-made Teams must be in the same lab based on the Lab List.">Must Be In Same Lab</span>
+                            <span
+                                title="Enable if the Students for Team Generation and Student-made Teams must be in the same lab based on the Lab List.">Must Be In Same Lab</span>
                         </div>
                         <div class="right settingRight">
-                            <ons-switch id="adminEditDeliverablePage-inSameLab" modifier="list-item" onclick=""></ons-switch>
+                            <ons-switch id="adminEditDeliverablePage-inSameLab" modifier="list-item"
+                                        onclick=""></ons-switch>
                         </div>
                     </ons-list-item>
                     <ons-list-item style="display: flex;">
@@ -396,10 +414,12 @@
                             <ons-icon icon="fa-plus-square"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            <span title="Enable if Students are allowed to creat their own team.">Students Make Teams</span>
+                            <span
+                                title="Enable if Students are allowed to creat their own team.">Students Make Teams</span>
                         </div>
                         <div class="right settingRight">
-                            <ons-switch id="adminEditDeliverablePage-studentsMakeTeams" modifier="list-item" onclick=""></ons-switch>
+                            <ons-switch id="adminEditDeliverablePage-studentsMakeTeams" modifier="list-item"
+                                        onclick=""></ons-switch>
                         </div>
                     </ons-list-item>
 
@@ -409,10 +429,12 @@
                             <ons-icon icon="fa-graduation-cap"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            <span title="Displays Grades for Deliverable underneath Student Area.">Grades Released</span>
+                            <span
+                                title="Displays Grades for Deliverable underneath Student Area.">Grades Released</span>
                         </div>
                         <div class="right settingRight">
-                            <ons-switch id="adminEditDeliverablePage-gradesReleased" modifier="list-item" onclick=""></ons-switch>
+                            <ons-switch id="adminEditDeliverablePage-gradesReleased" modifier="list-item"
+                                        onclick=""></ons-switch>
                         </div>
                     </ons-list-item>
 
@@ -446,7 +468,8 @@
                                        id="adminEditDeliverablePage-atContainerTimeout"></ons-input>
                         </div>
                         <div class="expandable-content">
-                            This defines how long the AutoTest container will try to run the student code before it times out. E.g., 300 (5
+                            This defines how long the AutoTest container will try to run the student code before it
+                            times out. E.g., 300 (5
                             minutes).
                         </div>
                     </ons-list-item>
@@ -459,7 +482,8 @@
                             Student Delay
                         </div>
                         <div class="right settingRight">
-                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-atStudentDelay" maxLength="6"
+                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-atStudentDelay"
+                                       maxLength="6"
                                        style="width: 5em;"></ons-input>
                         </div>
                         <div class="expandable-content">
@@ -476,7 +500,8 @@
                             Regression Deliverables
                         </div>
                         <div class="right settingRight">
-                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-atRegressionIds"></ons-input>
+                            <ons-input class="settingTextInput"
+                                       id="adminEditDeliverablePage-atRegressionIds"></ons-input>
                         </div>
                         <div class="expandable-content">
                             Comma separated list of deliverableIds that should be run when this container is invoked.

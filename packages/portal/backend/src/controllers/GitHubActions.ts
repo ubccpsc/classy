@@ -641,7 +641,7 @@ export class GitHubActions {
         return false;
     }
 
-    public async importRepoFS(importRepo: string, studentRepo: string): Promise<boolean> {
+    public async importRepoFS(importRepo: string, studentRepo: string, seedFilePath?: string): Promise<boolean> {
         Log.info('GitHubAction::importRepoFS( ' + importRepo + ', ' + studentRepo + ' ) - start');
         const that = this;
 
@@ -659,7 +659,7 @@ export class GitHubActions {
         const authedStudentRepo = addGithubAuthToken(studentRepo);
         const authedImportRepo = addGithubAuthToken(importRepo);
 
-        return cloneRepo().then(() => {
+        let actionChain = () => {
             return enterRepoPath()
                 .then(() => {
                     return removeGitDir();
@@ -677,11 +677,36 @@ export class GitHubActions {
                     Log.error('GitHubAction::cloneRepo() - ERROR: ' + err);
                     return Promise.reject(err);
                 });
-        });
+        };
 
-        function cloneRepo() {
+        if(seedFilePath) {
+            const tempDir2 = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
+            const tempPath2 = tempDir2.path;
+
+            return cloneRepo(tempPath2).then(() => {
+                moveFiles(tempPath2, seedFilePath, tempPath).then(actionChain());
+            });
+        } else {
+            return cloneRepo(tempPath).then(actionChain);
+        }
+
+
+        function moveFiles(originPath: string, filesLocation: string, destPath: string) {
+            Log.info('GithubManager::importRepoFS(..)::moveFiles( ' + originPath + ', '
+                + filesLocation + ', ' + destPath + ') - moving files');
+            return exec(`cp -r ${originPath}/${filesLocation} ${destPath}`)
+                .then(function (result: any) {
+                    Log.info('GithubManager::importRepoFS(..)::moveFiles(..) - done');
+                    Log.trace('GithubManager::importRepoFS(..)::moveFiles(..) - stdout: ' + result.stdout);
+                    if (result.stderr) {
+                        Log.warn('GithubManager::importRepoFS(..)::moveFiles(..) - stderr: ' + result.stderr);
+                    }
+                });
+        }
+
+        function cloneRepo(repoPath: string) {
             Log.info('GithubManager::importRepoFS(..)::cloneRepo() - cloning: ' + importRepo);
-            return exec(`git clone ${authedImportRepo} ${tempPath}`)
+            return exec(`git clone ${authedImportRepo} ${repoPath}`)
                 .then(function (result: any) {
                     Log.info('GithubManager::importRepoFS(..)::cloneRepo() - done:');
                     Log.trace('GithubManager::importRepoFS(..)::cloneRepo() - stdout: ' + result.stdout);

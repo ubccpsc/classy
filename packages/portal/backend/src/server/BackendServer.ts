@@ -64,8 +64,7 @@ export default class BackendServer {
      */
     public start(): Promise<boolean> {
         Log.info('BackendServer::start() - start');
-        Log.trace('BackendServer::start() - config: ' + JSON.stringify(this.config));
-
+            
         let that = this;
         return new Promise(function (fulfill, reject) {
 
