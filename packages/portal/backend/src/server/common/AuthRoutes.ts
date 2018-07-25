@@ -21,7 +21,7 @@ export class AuthRoutes implements IREST {
     private static ac = new AuthController();
 
     public registerRoutes(server: restify.Server) {
-        Log.info("AuthRouteHandler::registerRoutes() - start");
+        Log.info("AuthRoutes::registerRoutes() - start");
 
         server.on('MethodNotAllowed', AuthRoutes.handlePreflight); // preflights cors requests
 
@@ -49,7 +49,7 @@ export class AuthRoutes implements IREST {
 
     /* istanbul ignore next */
     public static handlePreflight(req: any, res: any) {
-        Log.trace("AuthRouteHandler::handlePreflight(..) - " + req.method.toLowerCase() + "; uri: " + req.url);
+        Log.trace("AuthRoutes::handlePreflight(..) - " + req.method.toLowerCase() + "; uri: " + req.url);
 
         const allowHeaders = ['Accept', 'Accept-Version', 'Content-Type', 'Api-Version', 'user-agent', 'user', 'token', 'org', 'name'];
         if (res.methods.indexOf('OPTIONS') === -1) {
@@ -65,7 +65,7 @@ export class AuthRoutes implements IREST {
         res.header('Access-Control-Allow-Methods', res.methods.join(', '));
         res.header('Access-Control-Allow-Origin', req.headers.origin);
 
-        Log.trace("AuthRouteHandler::handlePreflight(..) - sending 204; headers: " + JSON.stringify(res.getHeaders()));
+        Log.trace("AuthRoutes::handlePreflight(..) - sending 204; headers: " + JSON.stringify(res.getHeaders()));
         return res.send(204);
     }
 
@@ -81,28 +81,28 @@ export class AuthRoutes implements IREST {
             token = null;
         }
 
-        Log.info('AuthRouteHandler::getLogout(..) - user: ' + user + '; token: ' + token);
+        Log.info('AuthRoutes::getLogout(..) - user: ' + user + '; token: ' + token);
         let payload: Payload;
 
         const handleError = function (msg: string) {
-            Log.error('AuthRouteHandler::getLogout(..) - ERROR: ' + msg);
+            Log.error('AuthRoutes::getLogout(..) - ERROR: ' + msg);
             payload = {failure: {message: 'Logout failed: ' + msg, shouldLogout: false}};
             res.send(400, payload);
             return next();
         };
 
         if (user === null) {
-            Log.warn('AuthRouteHandler::getLogout(..) - cannot logout unspecified user: ' + user);
+            Log.warn('AuthRoutes::getLogout(..) - cannot logout unspecified user: ' + user);
             handleError("unknown user.");
         }
 
         AuthRoutes.ac.isValid(user, token).then(function (isValid) {
             if (isValid === true) {
-                Log.info('AuthRouteHandler::getLogout(..) - user: ' + user + '; valid user');
+                Log.info('AuthRoutes::getLogout(..) - user: ' + user + '; valid user');
             } else {
                 // logout anyways? if your user / token is stale we still need log you out
                 // but that could mean someone else could spoof-log you out too
-                Log.warn('AuthRouteHandler::getLogout(..) - user: ' + user + '; invalid user');
+                Log.warn('AuthRoutes::getLogout(..) - user: ' + user + '; invalid user');
             }
             // logout
             const ac = new AuthController();
@@ -115,16 +115,16 @@ export class AuthRoutes implements IREST {
                 handleError("Logout unsuccessful.");
             }
         }).catch(function (err) {
-            Log.error('AuthRouteHandler::getLogout(..) - unexpected ERROR: ' + err.message);
+            Log.error('AuthRoutes::getLogout(..) - unexpected ERROR: ' + err.message);
             handleError(err.message);
         });
     }
 
     public static getCredentials(req: any, res: any, next: any) {
-        Log.trace('AuthRouteHandler::getCredentials(..) - start');
+        Log.trace('AuthRoutes::getCredentials(..) - start');
         const user = req.headers.user;
         const token = req.headers.token;
-        Log.info('AuthRouteHandler::getCredentials(..) - user: ' + user + '; token: ' + token);
+        Log.info('AuthRoutes::getCredentials(..) - user: ' + user + '; token: ' + token);
 
         const handleError = function (msg: string) {
             payload = {failure: {message: msg, shouldLogout: false}};
@@ -134,24 +134,24 @@ export class AuthRoutes implements IREST {
 
         let payload: AuthTransportPayload;
         AuthRoutes.ac.isValid(user, token).then(function (isValid) {
-            Log.trace('AuthRouteHandler::getCredentials(..) - in isValid(..)');
+            Log.trace('AuthRoutes::getCredentials(..) - in isValid(..)');
             if (isValid === true) {
-                Log.trace('AuthRouteHandler::getCredentials(..) - isValid true');
+                Log.trace('AuthRoutes::getCredentials(..) - isValid true');
                 return AuthRoutes.ac.isPrivileged(user, token);
             } else {
-                Log.error('AuthRouteHandler::getCredentials(..) - isValid false');
+                Log.error('AuthRoutes::getCredentials(..) - isValid false');
                 handleError("Login error; user not valid.");
             }
         }).then(function (isPrivileged) {
             if (typeof isPrivileged === 'undefined') {
-                Log.warn('RouteHandler::getCredentials(..) - failsafe; DEBUG this case?');
+                Log.warn('AuthRoutes::getCredentials(..) - failsafe; DEBUG this case?');
                 isPrivileged = {isAdmin: false, isStaff: false}; // fail safe
             }
             payload = {success: {personId: user, token: token, isAdmin: isPrivileged.isAdmin, isStaff: isPrivileged.isStaff}};
-            Log.info('RouteHandler::getCredentials(..) - sending 200; isPriv: ' + (isPrivileged.isStaff || isPrivileged.isAdmin));
+            Log.info('AuthRoutes::getCredentials(..) - sending 200; isPriv: ' + (isPrivileged.isStaff || isPrivileged.isAdmin));
             res.send(200, payload);
         }).catch(function (err) {
-            Log.info('AuthRouteHandler::getCredentials(..) - ERROR: ' + err);
+            Log.info('AuthRoutes::getCredentials(..) - ERROR: ' + err);
             handleError("Login error.");
         });
     }
@@ -162,7 +162,7 @@ export class AuthRoutes implements IREST {
 
     /* istanbul ignore next */
     public static getAuth(req: any, res: any, next: any) {
-        Log.trace("AuthRouteHandler::getAuth(..) - /auth redirect start");
+        Log.trace("AuthRoutes::getAuth(..) - /auth redirect start");
 
         let config = Config.getInstance();
         const setup = {
@@ -175,7 +175,7 @@ export class AuthRoutes implements IREST {
 
         const githubAuth = new ClientOAuth2(setup);
         const uri = githubAuth.code.getUri();
-        Log.info("AuthRouteHandler::getAuth(..) - /auth uri: " + uri + "; setup: " + JSON.stringify(setup));
+        Log.info("AuthRoutes::getAuth(..) - /auth uri: " + uri + "; setup: " + JSON.stringify(setup));
         res.redirect(uri, next);
     }
 
@@ -193,7 +193,7 @@ export class AuthRoutes implements IREST {
 
     /* istanbul ignore next */
     public static authCallback(req: any, res: any, next: any) {
-        Log.trace("AuthRouteHandler::authCallback(..) - /authCallback - start");
+        Log.trace("AuthRoutes::authCallback(..) - /authCallback - start");
         const config = Config.getInstance();
         const personController = new PersonController();
 
@@ -212,10 +212,10 @@ export class AuthRoutes implements IREST {
         let p: Person = null;
         let username: string | null = null;
 
-        Log.trace("AuthRouteHandler::authCallback(..) - /authCallback - setup: " + JSON.stringify(opts));
+        Log.trace("AuthRoutes::authCallback(..) - /authCallback - setup: " + JSON.stringify(opts));
 
         githubAuth.code.getToken(req.url).then(function (user) {
-            Log.trace("AuthRouteHandler::authCallback(..) - token acquired");
+            Log.trace("AuthRoutes::authCallback(..) - token acquired");
 
             token = user.accessToken;
             const options = {
@@ -234,28 +234,28 @@ export class AuthRoutes implements IREST {
         }).then(function (ans) {
             // we now have a github username
 
-            Log.info("AuthRouteHandler::authCallback(..) - /portal/authCallback - GH username received");
+            Log.info("AuthRoutes::authCallback(..) - /portal/authCallback - GH username received");
             const body = JSON.parse(ans);
             username = body.login;
-            Log.info("AuthRouteHandler::authCallback(..) - /portal/authCallback - GH username: " + username);
+            Log.info("AuthRoutes::authCallback(..) - /portal/authCallback - GH username: " + username);
 
             return personController.getGitHubPerson(username);
         }).then(function (person: Person | null) {
             // we now know if that github username is known for the course
 
             if (person === null) {
-                Log.info("AuthRouteHandler::authCallback(..) - /portal/authCallback - github username not registered");
+                Log.info("AuthRoutes::authCallback(..) - /portal/authCallback - github username not registered");
                 const cc = Factory.getCourseController();
                 return cc.handleUnknownUser(username);
             } else {
-                Log.info("AuthRouteHandler::authCallback(..) - /portal/authCallback - github username IS registered");
+                Log.info("AuthRoutes::authCallback(..) - /portal/authCallback - github username IS registered");
                 return Promise.resolve(person);
             }
         }).then(function (person: Person | null) {
             // now we either have the person in the course or there will never be one
 
             if (person !== null) {
-                Log.info("AuthRouteHandler::authCallback(..) - /portal/authCallback - registering auth for person: " + person.githubId);
+                Log.info("AuthRoutes::authCallback(..) - /portal/authCallback - registering auth for person: " + person.githubId);
                 const auth: Auth = {
                     personId: username,
                     token:    token
@@ -264,25 +264,23 @@ export class AuthRoutes implements IREST {
                 return DatabaseController.getInstance().writeAuth(auth);
             } else {
                 // auth not written
-                Log.info("AuthRouteHandler::authCallback(..) - /portal/authCallback - not registering auth");
+                Log.info("AuthRoutes::authCallback(..) - /portal/authCallback - not registering auth");
             }
 
         }).then(function (authWritten) {
             // auth written (or not); we only really care about the state of p at this point
 
-
             Log.info("AuthRoutes::authCallback(..) - preparing redirect for: " + JSON.stringify(p));
             let feUrl = config.getProp(ConfigKey.backendUrl);
+            if (feUrl.indexOf('//') > 0) {
+                feUrl = feUrl.substr(feUrl.indexOf('//') + 2, feUrl.length);
+            }
             let fePort = config.getProp(ConfigKey.backendPort);
 
             if (p !== null) {
                 // this is tricky; need to redirect to the client with a cookie being set on the connection
                 // only header method that worked for me
                 res.setHeader("Set-Cookie", "token=" + token);
-                res.setHeader('user', 'bob');
-                if (feUrl.indexOf('//') > 0) {
-                    feUrl = feUrl.substr(feUrl.indexOf('//') + 2, feUrl.length);
-                }
                 Log.trace("AuthRoutes::authCallback(..) - /authCallback - redirect homepage URL: " + feUrl);
 
                 res.redirect({
@@ -292,12 +290,10 @@ export class AuthRoutes implements IREST {
                     port:     fePort
                 }, next);
             } else {
-
-                Log.trace("AuthRoutes::authCallback(..) - /authCallback - redirect logout URL: " + feUrl);
-
+                Log.info("AuthRoutes::authCallback(..) - /authCallback - person (GitHub id: " + username + " ) not registered for course; redirecting to invalid user screen.");
                 res.redirect({
                     hostname: feUrl,
-                    pathname: '/index.html', // TODO: This should redirect to some kind of 'invalid user' or 'not registered' page
+                    pathname: 'invalid.html',
                     port:     fePort
                 }, next);
             }

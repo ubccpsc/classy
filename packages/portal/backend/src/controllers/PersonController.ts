@@ -3,6 +3,7 @@ import Log from "../../../../common/Log";
 import {DatabaseController} from "./DatabaseController";
 import {Person, Repository} from "../Types";
 import Util from "../../../../common/Util";
+import {GitHubActions} from "./GitHubActions";
 
 export class PersonController {
 
@@ -19,15 +20,27 @@ export class PersonController {
         let existingPerson = await this.db.getPerson(personPrototype.id);
 
         if (existingPerson === null) {
-            Log.trace("PersonController::createPerson(..) - writing");
-            let successful = await this.db.writePerson(personPrototype);
-            if (successful === true) {
-                Log.trace("PersonController::createPerson(..) - retrieving");
-                const person = await this.db.getPerson(personPrototype.id);
-                return person;
-            }
+            await this.db.writePerson(personPrototype);
+
+            Log.trace("PersonController::createPerson(..) - created");
+            const person = await this.db.getPerson(personPrototype.id);
+            return person;
+
+        } else {
+            // merge people
+            existingPerson.labId = personPrototype.labId; // can update
+            existingPerson.githubId = personPrototype.githubId; // can update
+            existingPerson.URL = personPrototype.URL; // can update (along with githubId)
+            // NOTE: existingPerson.custom is _not_ deleted ; unsure if this is the right thing
+            // existingPerson.custom = {};
+
+            await this.db.writePerson(existingPerson);
+
+            Log.trace("PersonController::createPerson(..) - updated");
+            const person = await this.db.getPerson(personPrototype.id);
+            return person;
         }
-        return existingPerson;
+
     }
 
     /**
@@ -54,8 +67,34 @@ export class PersonController {
     public async getGitHubPerson(githubId: string): Promise<Person | null> {
         let person = await this.db.getGitHubPerson(githubId);
         if (person === null) {
-            Log.trace("PersonController::getgetGitHubPersonPerson( " + githubId + " ) - unknown githubId");
-            return null;
+            Log.trace("PersonController::getgetGitHubPersonPerson( " + githubId + " ) - githubId not yet registered.");
+
+            // user not registered but might be admin or staff
+            const gh = new GitHubActions();
+            const isAdmin = await gh.isOnAdminTeam(githubId);
+            const isStaff = await gh.isOnStaffTeam(githubId);
+
+            if (isAdmin === true || isStaff === true) {
+                Log.trace("PersonController::getgetGitHubPersonPerson( " + githubId + " ) - githubId is admin or staff.");
+                person = {
+                    id:            githubId,
+                    githubId:      githubId,
+                    csId:          githubId,
+                    URL:           null,
+                    studentNumber: null,
+                    fName:         githubId,
+                    lName:         githubId,
+                    labId:         null,
+                    kind:          null, // will be filled in later
+                    custom:        {}
+                };
+                person = await this.createPerson(person);
+                return person;
+            } else {
+                Log.trace("PersonController::getgetGitHubPersonPerson( " + githubId + " ) - githubId is unknown and not admin/staff.");
+                return null;
+            }
+
         }
         return person;
     }
