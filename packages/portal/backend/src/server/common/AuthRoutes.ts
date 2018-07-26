@@ -257,7 +257,7 @@ export class AuthRoutes implements IREST {
             if (person !== null) {
                 Log.info("AuthRoutes::authCallback(..) - /portal/authCallback - registering auth for person: " + person.githubId);
                 const auth: Auth = {
-                    personId: username,
+                    personId: person.id, // use person.id, not username (aka githubId)
                     token:    token
                 };
                 p = person;
