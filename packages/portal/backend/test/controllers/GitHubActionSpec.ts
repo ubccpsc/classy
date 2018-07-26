@@ -59,7 +59,9 @@ describe("GitHubActions", () => {
         "secap_rthse2",
         "secap_ubcbot",
         "secap_testtest__repo1",
-        "TESTrepo1"
+        "TESTrepo1",
+        "TESTrepo2",
+        "TESTrepo3",
     ];
 
     let TESTTEAMNAMES = [
@@ -251,7 +253,7 @@ describe("GitHubActions", () => {
     it("Should be able to clone a source repository, and select files to create a new repository.", async function () {
         const start = Date.now();
         let targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/'
-            + Config.getInstance().getProp(ConfigKey.org) + '/' + getProjectPrefix() + Test.REPONAME1;
+            + Config.getInstance().getProp(ConfigKey.org) + '/' + getProjectPrefix() + "TESTrepo3";
         let importUrl = 'https://github.com/SECapstone/capstone'; // hardcoded public repo
         let selectedFiles = 'AutoTest.md';
 
