@@ -5,6 +5,8 @@ import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
 import {DatabaseController} from "../src/controllers/DatabaseController";
+import {Deliverable} from "../src/Types";
+import Util from "../../../common/Util";
 
 before(async () => {
     Log.info('GlobalSpec::before() - start');
@@ -50,4 +52,32 @@ export class Test {
 
     public static readonly REPONAME1 = 'TESTrepo1';
     public static readonly REPONAME2 = 'TESTrepo2';
+
+    public static getDeliverable(delivId: string): Deliverable {
+        let deliv: Deliverable = {
+            id: delivId,
+
+            URL:              'https://NOTSET',
+            openTimestamp:    -1,
+            closeTimestamp:   -1,
+            gradesReleased:   false,
+            // delay:            -1,
+            teamMinSize:      1,
+            teamMaxSize:      1,
+            teamSameLab:      false,
+            teamStudentsForm: false,
+            teamPrefix:       'team_',
+            repoPrefix:       '',
+            // bootstrapUrl:     '',
+            autotest:         {
+                dockerImage:        'testImage',
+                studentDelay:       60 * 60 * 12, // 12h
+                maxExecTime:        300,
+                regressionDelivIds: [],
+                custom:             {}
+            },
+            custom:           {}
+        };
+        return <Deliverable>Util.clone(deliv);
+    }
 }

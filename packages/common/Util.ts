@@ -14,6 +14,17 @@ export default class Util {
         return Date.now() - start + " ms";
     }
 
+    /**
+     * Makes a copy of an object.
+     *
+     * @param {{}} obj
+     * @returns {{}}
+     */
+    public static clone(obj: {}): {} {
+        const ret = Object.assign({}, obj);
+        return ret;
+    }
+
     /*
     public static async yarn(name: string, options: SpawnOptions) {
         const yarnCmd = process.env.YARN_PATH;
