@@ -235,7 +235,7 @@ export class AutoTestRoutes implements IREST {
 
         // TODO: is there any way to verify this actually came from GitHub?
 
-        const url = Config.getInstance().getProp(ConfigKey.autotestUrl) + ':' + Config.getInstance().getProp(ConfigKey.autotestPort) + '/portal/githubWebhook';
+        const url = Config.getInstance().getProp(ConfigKey.autotestUrl) + ':' + Config.getInstance().getProp(ConfigKey.autotestPort) + '/githubWebhook';
         const options = {
             uri:     url,
             method:  'POST',
