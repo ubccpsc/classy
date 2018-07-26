@@ -2,6 +2,7 @@
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {Test} from "../GlobalSpec";
 import Log from "../../../../common/Log";
+import {TeamController} from "../../src/controllers/TeamController";
 
 export class FrontendDatasetGenerator {
 
@@ -32,6 +33,10 @@ export class FrontendDatasetGenerator {
         await this.dc.writeDeliverable(deliv);
 
         deliv = Test.getDeliverable(Test.DELIVID2);
+        deliv.gradesReleased = true;
+        await this.dc.writeDeliverable(deliv);
+
+        deliv = Test.getDeliverable(Test.DELIVIDPROJ);
         deliv.gradesReleased = true;
         await this.dc.writeDeliverable(deliv);
     }
@@ -65,7 +70,36 @@ export class FrontendDatasetGenerator {
     async createTeams(): Promise<void> {
         Log.info("FrontendDatasetGenerator::createTeams() - start");
 
-        return null;
+        const tc = new TeamController();
+        const deliv = await this.dc.getDeliverable(Test.DELIVIDPROJ);
+
+        for (let i = 0; i < 100; i++) {
+            // try i times to make a team
+            let p1 = Test.getPerson('student_' + this.getRandomInt(50));
+            let p2 = Test.getPerson('student_' + this.getRandomInt(50));
+            if (p1.id !== p2.id) {
+
+                const p1Teams = await tc.getTeamsForPerson(p1);
+                const p2Teams = await tc.getTeamsForPerson(p2);
+                let p1Team = null;
+                let p2Team = null;
+                for (const t of p1Teams) {
+                    if (t.id.indexOf(deliv.id) >= 0) {
+                        p1Team = t;
+                    }
+                }
+                for (const t of p2Teams) {
+                    if (t.id.indexOf(deliv.id) >= 0) {
+                        p2Team = t;
+                    }
+                }
+
+                if (p1Team !== null && p2Team !== null) {
+                    const team = Test.getTeam(deliv.id + '_team' + i, [p1.id, p2.id]);
+                    await this.dc.writeTeam(team);
+                }
+            }
+        }
     }
 
     async createGrades(): Promise<void> {

@@ -5,7 +5,7 @@ import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
 import {DatabaseController} from "../src/controllers/DatabaseController";
-import {Deliverable, Grade, Person} from "../src/Types";
+import {Deliverable, Grade, Person, Team} from "../src/Types";
 import Util from "../../../common/Util";
 
 if (typeof it === 'function') {
@@ -44,6 +44,7 @@ export class Test {
     public static readonly USERNAMEGITHUB2 = "rthse2";
     public static readonly USERNAMEGITHUB3 = "ubcbot";
 
+    public static readonly DELIVIDPROJ = 'project';
     public static readonly DELIVID0 = 'd0';
     public static readonly DELIVID1 = 'd1';
     public static readonly DELIVID2 = 'd2';
@@ -114,5 +115,15 @@ export class Test {
             custom: {}
         };
         return <Grade>Util.clone(grade);
+    }
+
+    public static getTeam(teamId: string, people: string[]): Team {
+        let team: Team = {
+            id:        teamId,
+            URL:       'https://team/' + teamId,
+            personIds: people,
+            custom:    {}
+        };
+        return <Team>Util.clone(team);
     }
 }
