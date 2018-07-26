@@ -248,18 +248,18 @@ describe("GitHubActions", () => {
         Log.test('Full clone took: ' + Util.took(start));
     }).timeout(120 * 1000); // 2 minutes
 
-    // it("Should be able to clone a source repository, and select files to create a new repository.", async function () {
-    //     const start = Date.now();
-    //     let targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/'
-    //         + Config.getInstance().getProp(ConfigKey.org) + '/' + getProjectPrefix() + Test.REPONAME1;
-    //     let importUrl = 'https://github.com/SECapstone/capstone'; // hardcoded public repo
-    //     let selectedFiles = 'AutoTest.md';
-    //
-    //     let output = await gh.importRepoFS(importUrl, targetUrl, selectedFiles);
-    //     expect(output).to.be.true;
-    //
-    //     Log.test('Partial clone took: ' + Util.took(start));
-    // }).timeout(120 * 1000);
+    it("Should be able to clone a source repository, and select files to create a new repository.", async function () {
+        const start = Date.now();
+        let targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/'
+            + Config.getInstance().getProp(ConfigKey.org) + '/' + getProjectPrefix() + Test.REPONAME1;
+        let importUrl = 'https://github.com/SECapstone/capstone'; // hardcoded public repo
+        let selectedFiles = 'AutoTest.md';
+
+        let output = await gh.importRepoFS(importUrl, targetUrl, selectedFiles);
+        expect(output).to.be.true;
+
+        Log.test('Partial clone took: ' + Util.took(start));
+    }).timeout(120 * 1000);
 
     /**
      * This test is terrible, but gets the coverage tools to stop complaining.
