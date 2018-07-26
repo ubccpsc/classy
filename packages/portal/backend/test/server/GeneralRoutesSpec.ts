@@ -100,5 +100,31 @@ describe('General Routes', function () {
         expect(body.success[1].score).to.equal(null);
     });
 
+    it('Should not be able to get get grades without a valid token.', async function () {
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        // get user
+        let auth = await dc.getAuth(Test.USERNAME1);
+        expect(auth).to.not.be.null;
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/grades';
+        try {
+            Log.test('Making request');
+            response = await request(app).get(url).set('user', auth.personId).set('token', 'INVALIDTOKEN');
+            Log.test('Response received');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(401);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+        expect(body.failure.message).to.equal('Authorization error; invalid token.');
+    });
+
 });
 

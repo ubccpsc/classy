@@ -61,7 +61,7 @@ export default class GeneralRoutes implements IREST {
             if (isValid === true) {
                 return gc.getReleasedGradesForPerson(user);
             } else {
-                return handleError(401, 'Authorization error; user not valid');
+                return handleError(401, 'Authorization error; invalid token.');
             }
         }).then(function (grades) {
             const gradeTrans: GradeTransport[] = [];
