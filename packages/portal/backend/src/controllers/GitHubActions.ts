@@ -659,35 +659,84 @@ export class GitHubActions {
         const authedStudentRepo = addGithubAuthToken(studentRepo);
         const authedImportRepo = addGithubAuthToken(importRepo);
 
-        let actionChain = () => {
-            return enterRepoPath()
-                .then(() => {
-                    return removeGitDir();
-                }).then(() => {
-                    return initGitDir();
-                }).then(() => {
-                    return changeGitRemote();
-                }).then(() => {
-                    return addFilesToRepo();
-                }).then(() => {
-                    return pushToNewRepo();
-                }).then(() => {
-                    return Promise.resolve(true); // made it cleanly
-                }).catch((err: any) => {
-                    Log.error('GitHubAction::cloneRepo() - ERROR: ' + err);
-                    return Promise.reject(err);
-                });
-        };
+        // let actionChain = () => {
+        //     return enterRepoPath()
+        //         .then(() => {
+        //             return removeGitDir();
+        //         }).then(() => {
+        //             return initGitDir();
+        //         }).then(() => {
+        //             return changeGitRemote();
+        //         }).then(() => {
+        //             return addFilesToRepo();
+        //         }).then(() => {
+        //             return pushToNewRepo();
+        //         }).then(() => {
+        //             return Promise.resolve(true); // made it cleanly
+        //         }).catch((err: any) => {
+        //             Log.error('GitHubAction::cloneRepo() - ERROR: ' + err);
+        //             return Promise.reject(err);
+        //         });
+        // };
+        //
+        // if(seedFilePath) {
+        //     const tempDir2 = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
+        //     const tempPath2 = tempDir2.path;
+        //
+        //     return cloneRepo(tempPath2).then(() => {
+        //         moveFiles(tempPath2, seedFilePath, tempPath).then(actionChain());
+        //     });
+        // } else {
+        //     return cloneRepo(tempPath).then(actionChain);
+        // }
 
         if(seedFilePath) {
             const tempDir2 = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
             const tempPath2 = tempDir2.path;
-
+            // First clone to a temporary directory
+            // then move only the required files
+            // then proceed as normal
             return cloneRepo(tempPath2).then(() => {
-                moveFiles(tempPath2, seedFilePath, tempPath).then(actionChain());
+                return moveFiles(tempPath2, seedFilePath, tempPath)
+                    .then(() => {
+                        return enterRepoPath();
+                    }).then(() => {
+                        return removeGitDir();
+                    }).then(() => {
+                        return initGitDir();
+                    }).then(() => {
+                        return changeGitRemote();
+                    }).then(() => {
+                        return addFilesToRepo();
+                    }).then(() => {
+                        return pushToNewRepo();
+                    }).then(() => {
+                        return Promise.resolve(true); // made it cleanly
+                    }).catch((err: any) => {
+                        Log.error('GitHubAction::cloneRepo() - ERROR: ' + err);
+                        return Promise.reject(err);
+                    });
             });
         } else {
-            return cloneRepo(tempPath).then(actionChain);
+            return cloneRepo(tempPath).then(() => {
+                return enterRepoPath()
+                    .then(() => {
+                        return removeGitDir();
+                    }).then(() => {
+                        return initGitDir();
+                    }).then(() => {
+                        return changeGitRemote();
+                    }).then(() => {
+                        return addFilesToRepo();
+                    }).then(() => {
+                        return pushToNewRepo();
+                    }).then(() => {
+                        return Promise.resolve(true); // made it cleanly
+                    }).catch((err: any) => {
+                        Log.error('GitHubAction::cloneRepo() - ERROR: ' + err);
+                        return Promise.reject(err);
+                    });
+            });
         }
 
 
