@@ -22,11 +22,7 @@ describe('General Routes', function () {
     before(async () => {
         Log.test('GeneralRoutes::before - start');
 
-        // Config.getInstance().setProp(ConfigKey.name, ConfigCourses.classytest);
-        // Test.ORGNAME = Config.getInstance().getProp(ConfigKey.testorg);
-
         let db = DatabaseController.getInstance();
-        // await db.clearData(); // nuke everything
 
         // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
         server = new BackendServer(false);

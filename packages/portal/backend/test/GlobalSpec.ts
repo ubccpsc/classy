@@ -5,25 +5,28 @@ import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
 import {DatabaseController} from "../src/controllers/DatabaseController";
-import {Deliverable} from "../src/Types";
+import {Deliverable, Grade, Person} from "../src/Types";
 import Util from "../../../common/Util";
 
-before(async () => {
-    Log.info('GlobalSpec::before() - start');
+if (typeof it === 'function') {
+    // only if we're running in mocha
+    before(async () => {
+        Log.info('GlobalSpec::before() - start');
 
-    Config.getInstance();
+        Config.getInstance();
 
-    Config.getInstance().setProp(ConfigKey.name, ConfigCourses.classytest); // force testing env
+        Config.getInstance().setProp(ConfigKey.name, ConfigCourses.classytest); // force testing env
 
-    let db = DatabaseController.getInstance();
-    await db.clearData(); // nuke everything
+        let db = DatabaseController.getInstance();
+        await db.clearData(); // nuke everything
 
-    Log.info('GlobalSpec::before() - done');
-});
+        Log.info('GlobalSpec::before() - done');
+    });
 
-after(() => {
-    Log.info('GlobalSpec::after()');
-});
+    after(() => {
+        Log.info('GlobalSpec::after()');
+    });
+}
 
 export class Test {
 
@@ -75,5 +78,41 @@ export class Test {
             custom:           {}
         };
         return <Deliverable>Util.clone(deliv);
+    }
+
+    public static getPerson(id: string): Person {
+        let p: Person = {
+            id:            id,
+            csId:          id,
+            githubId:      id,
+            studentNumber: null,
+
+            fName: 'f' + id,
+            lName: 'l' + id,
+            kind:  null,
+            URL:   null,
+
+            labId: null,
+
+            custom: {}
+        };
+        return <Person>Util.clone(p);
+    }
+
+    public static getGrade(delivId: string, personId: string, score: number): Grade {
+        let grade: Grade = {
+            personId: personId,
+            delivId:  delivId,
+
+            score:     score,
+            comment:   '',
+            timestamp: Date.now(),
+
+            urlName: 'urlName',
+            URL:     'url',
+
+            custom: {}
+        };
+        return <Grade>Util.clone(grade);
     }
 }

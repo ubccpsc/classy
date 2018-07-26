@@ -181,8 +181,8 @@ export class CS310View implements IView {
                 comment = '';
             }
             let row: TableCell[] = [
-                {value: grade.delivId, html: '<a href="' + grade.URL + '">' + grade.delivId + '</a>'},
-                {value: score, html: score + ''},
+                {value: grade.delivId, html: grade.delivId},
+                {value: score, html: '<a href="' + grade.URL + '">' + score + '</a>'},
                 {value: comment, html: comment}
             ];
             st.addRow(row);
