@@ -11,6 +11,8 @@ import Log from "../../../../../../common/Log";
 
 import {UI} from "../../util/UI";
 import {IView} from "../IView";
+import {GradeTransport} from "../../../../../../common/types/PortalTypes";
+import {SortableTable, TableCell, TableHeader} from "../../util/SortableTable";
 
 export class CS310View implements IView {
 
@@ -55,7 +57,34 @@ export class CS310View implements IView {
     public renderPage(opts: {}) {
         Log.info('CS310View::renderPage() - start; options: ' + opts);
 
-        this.checkStatus();
+        // this.checkStatus();
+
+        this.initGrades();
+    }
+
+    private async initGrades(): Promise<void> {
+        // studentGradeDiv
+        UI.showModal('Fetching Grades');
+        let options = this.getOptions();
+        const url = this.remote + '/portal/grades';
+        let response = await fetch(url, options);
+        UI.hideModal();
+        if (response.status === 200) {
+            Log.trace('CS310View::initGrades(..) - 200 received');
+            let json = await response.json();
+            Log.trace('CS310View::initGrades(..) - payload: ' + JSON.stringify(json));
+
+            if (typeof json.success !== 'undefined') {
+                Log.trace('CS310View::initGrades(..) - success: ' + json.success);
+                this.renderGrades(<GradeTransport[]>json.success);
+            } else {
+                Log.trace('CS310View::initGrades(..) - ERROR: ' + json.failure.message);
+                this.showError(json.failure);
+            }
+
+        } else {
+            Log.trace('CS310View::initGrades(..) - !200 received');
+        }
     }
 
     public showModal(text?: string) {
@@ -86,32 +115,6 @@ export class CS310View implements IView {
         }
     }
 
-    // public async fetchStatus(url: string): Promise<void> {
-    //     Log.info('CS310View::fetchStatus( ' + url + ' ) - start');
-    //
-    //     let options = this.getOptions();
-    //     let response = await fetch(url, options);
-    //     UI.hideModal();
-    //     if (response.status === 200) {
-    //         Log.trace('CS310View::fetchStatus(..) - 200 received');
-    //         let json = await response.json();
-    //         Log.trace('CS310View::fetchStatus(..) - payload: ' + JSON.stringify(json));
-    //
-    //         if (typeof json.success !== 'undefined') {
-    //             Log.trace('CS310View::fetchStatus(..) - status: ' + json.success.status);
-    //             // this.updateState(json.success); // StatusPayload
-    //         } else {
-    //             Log.trace('CS310View::fetchStatus(..) - ERROR: ' + json.failure.message);
-    //             this.showError(json.failure); // FailurePayload
-    //         }
-    //
-    //     } else {
-    //         Log.trace('CS310View::fetchStatus(..) - !200 received');
-    //     }
-    //     return;
-    // }
-
-
     public showError(failure: any) { // FailurePayload
         Log.error("CS310View::showError(..) - failure: " + JSON.stringify(failure));
         if (typeof failure === 'string') {
@@ -124,24 +127,6 @@ export class CS310View implements IView {
         }
     }
 
-    /*
-    if (data.status !== 200 && data.status !== 405 && data.status !== 401) {
-        console.log('Network::handleRemote() WARNING: Repsonse status: ' + data.status);
-        throw new Error('Network::handleRemote() - API ERROR: ' + data.status);
-    } else if (data.status !== 200 && data.status === 405 || data.status === 401) {
-        console.error('Network::getRemotePost() Permission denied for your userrole.');
-        alert('You are not authorized to access this endpoint. Please re-login.');
-        // location.reload();
-    } else {
-        console.log('Network::handleRemote() 200 return');
-        data.json().then(function (json: any) {
-            // view.render(json); // calls render instead of the function
-            console.log('Network::handleRemote() this is the data: ' + JSON.stringify(json));
-
-        });
-    }
-    */
-
     private getOptions() {
         const options = {
             headers: {
@@ -152,5 +137,58 @@ export class CS310View implements IView {
             }
         };
         return options;
+    }
+
+    private renderGrades(grades: GradeTransport[]) {
+        Log.trace("CS310View::renderGrades() - start");
+
+        const headers: TableHeader[] = [
+            {
+                id:          'id',
+                text:        'Deliv Id',
+                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
+                defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
+                sortDown:    false, // Whether the column should initially sort descending or ascending.
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
+            },
+            {
+                id:          'grade',
+                text:        'Grade',
+                sortable:    true,
+                defaultSort: false,
+                sortDown:    true,
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
+            },
+            {
+                id:          'comment',
+                text:        'Comment',
+                sortable:    false,
+                defaultSort: false,
+                sortDown:    true,
+                style:       'padding-left: 1em; padding-right: 1em; text-align: left;'
+            }
+        ];
+
+        const st = new SortableTable(headers, '#studentGradeTable');
+        for (const grade of grades) {
+
+            let score: number | string = grade.score;
+            if (score === null) {
+                score = 'Not Set';
+            }
+            let comment = grade.comment;
+            if (comment === null) {
+                comment = '';
+            }
+            let row: TableCell[] = [
+                {value: grade.delivId, html: '<a href="' + grade.URL + '">' + grade.delivId + '</a>'},
+                {value: score, html: score + ''},
+                {value: comment, html: comment}
+            ];
+            st.addRow(row);
+        }
+
+        st.generate();
+
     }
 }

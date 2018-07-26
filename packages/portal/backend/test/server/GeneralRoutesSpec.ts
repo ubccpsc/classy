@@ -64,7 +64,6 @@ describe('General Routes', function () {
     });
 
     it('Should be able to get get a released grade for a user.', async function () {
-
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user

@@ -75,8 +75,8 @@ describe("RepositoryController", () => {
         let people = await rc.getPeopleForRepo(repos[0].id);
         Log.test(JSON.stringify(people));
         expect(people).to.have.lengthOf(2);
-        expect(people).to.contain('user1');
-        expect(people).to.contain('user2');
+        expect(people).to.contain(Test.USERNAME1);
+        expect(people).to.contain(Test.USERNAME2);
     });
 
     it("Should be able to find repos for a person.", async () => {

@@ -25,8 +25,6 @@ export default class GeneralRoutes implements IREST {
     public static getConfig(req: any, res: any, next: any) {
         Log.info('GeneralRoutes::getConfig(..) - start');
 
-        // const org = CourseController.getOrg();
-        // const name = CourseController.getName();
         const org = Config.getInstance().getProp(ConfigKey.org);
         const name = Config.getInstance().getProp(ConfigKey.name);
 
