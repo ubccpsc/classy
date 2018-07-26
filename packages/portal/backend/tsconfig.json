@@ -17,6 +17,7 @@
   },
   "include": [
     "src/**/*.ts",
+    "src-util/**/*.ts",
     "test/**/*.ts",
     "../common/**/*.ts"
   ],

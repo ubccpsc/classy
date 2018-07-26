@@ -1,8 +1,8 @@
 /* istanbul ignore file */
-import {DatabaseController} from "../../src/controllers/DatabaseController";
-import {Test} from "../GlobalSpec";
-import Log from "../../../../common/Log";
-import {TeamController} from "../../src/controllers/TeamController";
+import {DatabaseController} from "../src/controllers/DatabaseController";
+import {Test} from "../test/GlobalSpec";
+import Log from "../../../common/Log";
+import {TeamController} from "../src/controllers/TeamController";
 
 export class FrontendDatasetGenerator {
 
