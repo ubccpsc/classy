@@ -117,9 +117,10 @@ export class Test {
         return <Grade>Util.clone(grade);
     }
 
-    public static getTeam(teamId: string, people: string[]): Team {
+    public static getTeam(teamId: string, delivId: string, people: string[]): Team {
         let team: Team = {
             id:        teamId,
+            delivId:   delivId,
             URL:       'https://team/' + teamId,
             personIds: people,
             custom:    {}

@@ -100,6 +100,7 @@ export interface AutoTestConfig {
 
 export interface Team {
     readonly id: string; // invariant; is the name of the team
+    readonly delivId: string; // invariant; this is the deliverable the team is for
 
     URL: string | null; // null when not yet created
     personIds: string[]; // Person.id[] - foreign key

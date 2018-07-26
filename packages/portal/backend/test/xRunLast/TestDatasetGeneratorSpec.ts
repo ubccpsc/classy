@@ -105,14 +105,17 @@ describe('TestDatasetGenerator', function () {
     it('Can generate some teams', async function () {
         const tc: TeamController = new TeamController();
         const pc: PersonController = new PersonController();
+        const dc = DatabaseController.getInstance();
+
         let pA = await pc.getPerson('p1');
         let pB = await pc.getPerson('p2');
-        await tc.createTeam(Test.TEAMNAME1, [pA, pB], {});
+        const deliv = await dc.getDeliverable('d0');
+        await tc.createTeam(Test.TEAMNAME1, deliv, [pA, pB], {});
 
         pA = await pc.getPerson('p3');
         pB = await pc.getPerson('p4');
         let pC = await pc.getPerson('p5');
-        await tc.createTeam(Test.TEAMNAME2, [pA, pB, pC], {});
+        await tc.createTeam(Test.TEAMNAME2, deliv, [pA, pB, pC], {});
     });
 
 

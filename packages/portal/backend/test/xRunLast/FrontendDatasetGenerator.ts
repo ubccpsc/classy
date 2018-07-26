@@ -95,7 +95,7 @@ export class FrontendDatasetGenerator {
                 }
 
                 if (p1Team !== null && p2Team !== null) {
-                    const team = Test.getTeam(deliv.id + '_team' + i, [p1.id, p2.id]);
+                    const team = Test.getTeam(deliv.id + '_team' + i, deliv.id, [p1.id, p2.id]);
                     await this.dc.writeTeam(team);
                 }
             }

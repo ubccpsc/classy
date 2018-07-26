@@ -5,6 +5,7 @@ import {Test} from "../GlobalSpec";
 
 import {PersonController} from "../../src/controllers/PersonController";
 import {TeamController} from "../../src/controllers/TeamController";
+import {DatabaseController} from "../../src/controllers/DatabaseController";
 
 const loadFirst = require('../GlobalSpec');
 const pFirst = require('./PersonControllerSpec');
@@ -13,13 +14,19 @@ describe("TeamController", () => {
 
     let tc: TeamController;
     let pc: PersonController;
+    let dc: DatabaseController;
 
     before(async () => {
+        tc = new TeamController();
+        pc = new PersonController();
+        dc = DatabaseController.getInstance();
+
+        const deliv = Test.getDeliverable(Test.DELIVID0);
+        dc.writeDeliverable(deliv);
     });
 
     beforeEach(() => {
-        tc = new TeamController();
-        pc = new PersonController();
+
     });
 
     it("Should be able to get all teams, even if there are none.", async () => {
@@ -36,7 +43,8 @@ describe("TeamController", () => {
         expect(p1).to.not.be.null;
         expect(p2).to.not.be.null;
 
-        let team = await tc.createTeam(Test.TEAMNAME1, [p1, p2], {});
+        let deliv = await dc.getDeliverable(Test.DELIVID0);
+        let team = await tc.createTeam(Test.TEAMNAME1, deliv, [p1, p2], {});
         expect(team).to.not.be.null;
 
         teams = await tc.getAllTeams();
@@ -52,7 +60,8 @@ describe("TeamController", () => {
         expect(p1).to.not.be.null;
         expect(p2).to.not.be.null;
 
-        let team = await tc.createTeam(Test.TEAMNAME1, [p1, p2], {});
+        let deliv = await dc.getDeliverable(Test.DELIVID0);
+        let team = await tc.createTeam(Test.TEAMNAME1, deliv, [p1, p2], {});
         expect(team).to.not.be.null;
 
         teams = await tc.getAllTeams();
@@ -67,7 +76,8 @@ describe("TeamController", () => {
         let person = await pc.getPerson(Test.USERNAME3);
         expect(person).to.not.be.null;
 
-        let team = await tc.createTeam(Test.TEAMNAME2, [person], {});
+        let deliv = await dc.getDeliverable(Test.DELIVID0);
+        let team = await tc.createTeam(Test.TEAMNAME2, deliv, [person], {});
         expect(team).to.not.be.null;
 
         teams = await tc.getAllTeams();

@@ -4,12 +4,7 @@ import {Deliverable, Grade, Person, Repository, Team} from "../../Types";
 // import {GradePayload} from "../GradesController";
 import Log from "../../../../../common/Log";
 import {GradePayload} from "../../../../../common/types/SDMMTypes";
-import {
-    AssignmentGrade,
-    AssignmentInfo,
-    AssignmentRepositoryInfo,
-    AssignmentStatus
-} from "../../../../../common/types/CS340Types";
+import {AssignmentGrade, AssignmentInfo, AssignmentRepositoryInfo, AssignmentStatus} from "../../../../../common/types/CS340Types";
 import {RepositoryController} from "../RepositoryController";
 import {TeamController} from "../TeamController";
 import {DeliverablesController} from "../DeliverablesController";
@@ -67,13 +62,13 @@ export class AssignmentController {
             return false;
         }
 
-        Log.trace("AssignmentController::setAssignmentGrade() - " + (markerId? 'Marked by ' + markerId : 'Marked assignment'));
+        Log.trace("AssignmentController::setAssignmentGrade() - " + (markerId ? 'Marked by ' + markerId : 'Marked assignment'));
 
         let newGradePayload: GradePayload = {
             // assignmentID: assnPayload.assignmentID,
             // studentID: assnPayload.studentID,
             score:     totalGrade,
-            comment:   markerId? 'Marked by ' + markerId : 'Marked assignment',
+            comment:   markerId ? 'Marked by ' + markerId : 'Marked assignment',
             urlName:   repo.id,
             URL:       repo.URL,
             timestamp: Date.now(),
@@ -89,13 +84,13 @@ export class AssignmentController {
         Log.info("AssignmentController::createAssignmentRepo( " + repoName + ", " + delivId + ",... ) - start");
         // get assignment information
         let deliverable: Deliverable = await this.dc.getDeliverable(delivId);
-        if(deliverable === null) {
+        if (deliverable === null) {
             Log.error("AssignmentController::createAssignmentRepo(..) - error: could not retrieve " +
                 "deliverable based on delivId: " + delivId);
             return null;
         }
         let assignInfo: AssignmentInfo = deliverable.custom;
-        if(assignInfo === null || typeof assignInfo.seedRepoURL === 'undefined') {
+        if (assignInfo === null || typeof assignInfo.seedRepoURL === 'undefined') {
             Log.error("AssignmentController::createAssignmentRepo(..) - deliverable " + delivId + " is" +
                 "not an assignment.");
             return null;
@@ -109,7 +104,7 @@ export class AssignmentController {
 
         // attempt to provision the repository
         let provisionAttempt: boolean;
-        if(seedPath.trim() === "") {
+        if (seedPath.trim() === "") {
             // provisionAttempt = await this.ghc.provisionRepository(repoName, [], seedURL, WEBHOOKADDR);
             provisionAttempt = await this.ghc.createRepository(repoName, seedURL);
         } else {
@@ -117,20 +112,20 @@ export class AssignmentController {
             provisionAttempt = await this.ghc.createRepository(repoName, seedURL, seedPath.trim());
         }
 
-        if(!provisionAttempt) {
+        if (!provisionAttempt) {
             Log.error("AssignmentController::createAssignmentRepo(..) - error: unable to create repository");
             return null;
         }
 
         // save repository information to database
         let assignRepoInfo: AssignmentRepositoryInfo = {
-            assignmentId: [delivId],
-            status: AssignmentStatus.INITIALIZED,
+            assignmentId:  [delivId],
+            status:        AssignmentStatus.INITIALIZED,
             assignedTeams: []
         };
 
         // add all the teams
-        for(const team of teams) {
+        for (const team of teams) {
             assignRepoInfo.assignedTeams.push(team.id);
         }
 
@@ -141,7 +136,7 @@ export class AssignmentController {
 
         await this.db.writeRepository(repository);
 
-        if(!assignInfo.repositories.includes(repository.id)) {
+        if (!assignInfo.repositories.includes(repository.id)) {
             Log.info("AssignmentController::createAssignmentRepo(..) - adding repository to list");
             deliverable.custom.repositories.push(repository.id);
             // save the assignment information back
@@ -156,9 +151,9 @@ export class AssignmentController {
     public async initializeAllRepositories(delivId: string): Promise<boolean> {
         Log.info("AssignmentController::initializeAllRepositories( " + delivId + ") - start");
         // Log.info("AssignmentController::initializeAllRepositories(..)");
-        let deliv: Deliverable =  await this.dc.getDeliverable(delivId);
+        let deliv: Deliverable = await this.dc.getDeliverable(delivId);
         // get assignment information
-        if(deliv.custom === null) {
+        if (deliv.custom === null) {
             Log.error("AssignmentController::initializeAllRepositories(..) - assignment not set up" +
                 "properly");
             return false;
@@ -168,19 +163,19 @@ export class AssignmentController {
         // get all students
         let allPeople: Person[] = await this.pc.getAllPeople();
         let allStudents: Person[] = [];
-        for(const person of allPeople) {
-            if(person.kind === "student") {
+        for (const person of allPeople) {
+            if (person.kind === "student") {
                 allStudents.push(person);
             }
         }
 
         let anyError: boolean = false;
         // todo: teams?
-        for(const student of allStudents) {
+        for (const student of allStudents) {
             // for each student, create a team
             let teamName = deliv.teamPrefix + student.githubId;
-            let newTeam: Team = await this.tc.createTeam(teamName, [student], null);
-            if(newTeam === null) {
+            let newTeam: Team = await this.tc.createTeam(teamName, deliv, [student], null);
+            if (newTeam === null) {
                 Log.error("AssignmentController::initializeAllRepositories(..) - error creating team " +
                     teamName + " for student " + student.id);
             }
@@ -193,8 +188,8 @@ export class AssignmentController {
             let repoName: string = deliv.repoPrefix + student.githubId;
             let provisionedRepo = await this.createAssignmentRepo(repoName, delivId, [newTeam]);
 
-            if(provisionedRepo !== null) {
-                if(assignInfo.repositories === null || typeof assignInfo.repositories === 'undefined') assignInfo.repositories = [];
+            if (provisionedRepo !== null) {
+                if (assignInfo.repositories === null || typeof assignInfo.repositories === 'undefined') assignInfo.repositories = [];
                 assignInfo.repositories.push(provisionedRepo.id);
                 Log.info("AssignmentController::initializeAllRepositories(..) - added repo " +
                     repoName + "to assignment");
@@ -206,7 +201,7 @@ export class AssignmentController {
         }
 
         // once you are done, update the assignment information
-        if(!anyError) {
+        if (!anyError) {
             assignInfo.status = AssignmentStatus.INITIALIZED;
         }
 
@@ -219,7 +214,7 @@ export class AssignmentController {
         Log.info("AssignmentController::publishAssignmentRepo( " + repoId + " ) - start");
         // Log.info("AssignmentController::publishAssignmentRepo(..)");
         let repo: Repository = await this.rc.getRepository(repoId);
-        if(repo.custom === null) {
+        if (repo.custom === null) {
             Log.error("AssignmentController::publishAssignmentRepo(..) - error: repository " + repoId +
                 " not created properly");
             return false;
@@ -227,10 +222,10 @@ export class AssignmentController {
 
         // check if assignment is ready to be published
         let repoInfo: AssignmentRepositoryInfo = repo.custom;
-        if(repoInfo.status !== AssignmentStatus.INITIALIZED) {
+        if (repoInfo.status !== AssignmentStatus.INITIALIZED) {
             Log.error("AssignmentController::publishAssignmentRepo(..) - error: repository " + repoId +
-            " is not initialized");
-            switch(repoInfo.status) {
+                " is not initialized");
+            switch (repoInfo.status) {
                 case AssignmentStatus.INACTIVE: {
                     Log.error("AssignmentController::publishAssignmentRepo(..) - status: INACTIVE");
                     break;
@@ -248,9 +243,9 @@ export class AssignmentController {
         }
 
         let teamList: Team[] = [];
-        for(const teamId of repoInfo.assignedTeams) {
+        for (const teamId of repoInfo.assignedTeams) {
             let team = await this.tc.getTeam(teamId);
-            if(team === null) {
+            if (team === null) {
                 Log.error("AssignmentController::publishAssignmentRepo(..) - invalid team: " + teamId + " " +
                     "skipping and continuing...");
                 continue;
@@ -267,7 +262,7 @@ export class AssignmentController {
 
         let success: boolean = await this.ghc.releaseRepository(repo, teamList, false);
 
-        if(success) {
+        if (success) {
             repoInfo.status = AssignmentStatus.PUBLISHED;
             await this.db.writeRepository(repo);
         } else {
@@ -283,7 +278,7 @@ export class AssignmentController {
         Log.info("AssignmentController::publishAllRepositories( " + delivId + ") - start");
         // Log.info("AssignmentController::publishAllRepositories(..)");
         let deliv = await this.dc.getDeliverable(delivId);
-        if(deliv.custom === null) {
+        if (deliv.custom === null) {
             Log.error("AssignmentController::publishAllRepositories(..) - error: assignment not " +
                 "set up properly");
             return false;
@@ -292,16 +287,16 @@ export class AssignmentController {
         let assignInfo: AssignmentInfo = deliv.custom;
 
         let anyError: boolean = false;
-        for(const repoId of assignInfo.repositories) {
+        for (const repoId of assignInfo.repositories) {
             let repo: Repository = await this.rc.getRepository(repoId);
-            if(!await this.publishAssignmentRepo(repo.id)) {
+            if (!await this.publishAssignmentRepo(repo.id)) {
                 Log.error("AssignmentController::publishAllRepositories(..) - unable to publish " +
                     " repository " + repo.id);
                 anyError = true;
             }
         }
 
-        if(anyError) {
+        if (anyError) {
             Log.error("AssignmentController::publishAllRepositories(..) - unable to publish all" +
                 " repositories");
             return false;
@@ -321,30 +316,30 @@ export class AssignmentController {
      * will modify database to remove repo from assignment record
      * @returns {Promise<boolean | null>} indicates success of deletion
      */
-    public async deleteAssignmentRepository(repoName: string, delivId: string, single: boolean = true): Promise<boolean | null>{
+    public async deleteAssignmentRepository(repoName: string, delivId: string, single: boolean = true): Promise<boolean | null> {
         Log.info("AssignmentController::deleteAssignmentRepository( " + repoName + ", " + delivId + " ) - start");
         // Log.info("AssignmentController::deleteAssignmentRepository(..) - start");
 
         let deliverable: Deliverable = await this.dc.getDeliverable(delivId);
-        if(deliverable === null) {
+        if (deliverable === null) {
             Log.error("AssignmentController::deleteAssignmentRepository(..) - error: could not retrieve " +
                 "deliverable based on delivId: " + delivId);
             return null;
         }
         let assignInfo: AssignmentInfo = deliverable.custom;
-        if(assignInfo === null || typeof assignInfo.repositories === 'undefined') {
+        if (assignInfo === null || typeof assignInfo.repositories === 'undefined') {
             Log.error("AssignmentController::deleteAssignmentRepository(..) - deliverable " + delivId + " is" +
                 "not an assignment.");
             return null;
         }
 
-        if(! await this.gha.deleteRepo(repoName)) {
+        if (!await this.gha.deleteRepo(repoName)) {
             return false;
         }
 
-        if(single) {
+        if (single) {
             const pos = assignInfo.repositories.indexOf(repoName);
-            if(pos != -1) {
+            if (pos != -1) {
                 assignInfo.repositories.splice(pos, 1);
             }
 
@@ -353,7 +348,7 @@ export class AssignmentController {
         }
 
         let repoRecord: Repository = await this.rc.getRepository(repoName);
-        if(repoRecord === null) {
+        if (repoRecord === null) {
             Log.error("AssignmentController::deleteAssignmentRepository(..) - error: unable" +
                 " to retrieve repository from database");
 
@@ -378,16 +373,16 @@ export class AssignmentController {
     public async deleteAllAssignmentRepositories(delivId: string): Promise<boolean> {
         Log.info("AssignmentController::deleteAllAssignmentRepositories( " + delivId + ") - start");
 
-        let deliv: Deliverable =  await this.dc.getDeliverable(delivId);
+        let deliv: Deliverable = await this.dc.getDeliverable(delivId);
         // get assignment information
-        if(deliv.custom === null || typeof (deliv.custom as AssignmentInfo).repositories === 'undefined') {
+        if (deliv.custom === null || typeof (deliv.custom as AssignmentInfo).repositories === 'undefined') {
             Log.error("AssignmentController::deleteAllAssignmentRepositories(..) - " +
                 "assignment not set up properly");
             return false;
         }
 
         let assignInfo: AssignmentInfo = deliv.custom;
-        for(const repoName of assignInfo.repositories) {
+        for (const repoName of assignInfo.repositories) {
             await this.deleteAssignmentRepository(repoName, delivId, false);
         }
 
@@ -403,21 +398,21 @@ export class AssignmentController {
 
     // Retrieves the status of a given assignment
     // Warning: This might be stale
-    public async getAssignmentStatus(delivId: string) : Promise<AssignmentStatus | null> {
+    public async getAssignmentStatus(delivId: string): Promise<AssignmentStatus | null> {
         Log.info("AssignmentController::getAssignmentStatus( " + delivId + ") - start");
-        let deliv =  await this.dc.getDeliverable(delivId);
-        if(deliv === null) {
+        let deliv = await this.dc.getDeliverable(delivId);
+        if (deliv === null) {
             Log.error("AssignmentController::getAssignmentStatus(..) - error: nothing found");
             return null;
         }
 
-        if(deliv.custom === null) {
+        if (deliv.custom === null) {
             Log.error("AssignmentController::getAssignmentStatus(..) - error: " +
                 delivId + " has no assignment status");
             return null;
         }
 
-        if(!('seedRepoURL' in deliv.custom)) {
+        if (!('seedRepoURL' in deliv.custom)) {
             Log.error("AssignmentController::getAssignmentStatus(..) - error: " +
                 delivId + " has no assignment status");
             return null;
@@ -432,13 +427,13 @@ export class AssignmentController {
     // iterates over checking each status of the assigned repository
     public async updateAssignmentStatus(delivId: string): Promise<AssignmentStatus | null> {
         Log.info("AssignmentController::updateAssignmentStatus( " + delivId + ") - start");
-        let deliv =  await this.dc.getDeliverable(delivId);
-        if(deliv === null) {
+        let deliv = await this.dc.getDeliverable(delivId);
+        if (deliv === null) {
             Log.error("AssignmentController::updateAssignmentStatus(..) - error: nothing found");
             return null;
         }
 
-        if(deliv.custom === null) {
+        if (deliv.custom === null) {
             Log.error("AssignmentController::updateAssignmentStatus(..) - error: " +
                 delivId + " has no assignment status");
             return null;
@@ -446,22 +441,22 @@ export class AssignmentController {
         // get all students, check if all repositories are created yet
         let allPeople: Person[] = await this.pc.getAllPeople();
         let allStudents: Person[] = [];
-        for(const person of allPeople) {
-            if(person.kind === "student") {
+        for (const person of allPeople) {
+            if (person.kind === "student") {
                 allStudents.push(person);
             }
         }
 
-        let studentRepoMapping: {[studentId:string]:Repository[]} = {};
+        let studentRepoMapping: { [studentId: string]: Repository[] } = {};
         let assignInfo: AssignmentInfo = deliv.custom;
         let repoList: string[] = assignInfo.repositories;
-        for(const repoId of repoList) {
+        for (const repoId of repoList) {
             let repo: Repository = await this.rc.getRepository(repoId);
             // retrieve all the students associated with the repository, and then record it
-            for(const teamId of repo.teamIds) {
+            for (const teamId of repo.teamIds) {
                 let team: Team = await this.tc.getTeam(teamId);
-                for(const personId of team.personIds) {
-                    if(typeof studentRepoMapping[personId] === 'undefined') {
+                for (const personId of team.personIds) {
+                    if (typeof studentRepoMapping[personId] === 'undefined') {
                         studentRepoMapping[personId] = [];
                     }
                     studentRepoMapping[personId].push(repo);
@@ -471,8 +466,8 @@ export class AssignmentController {
 
         // verify all students have a repository
         let newStatus = AssignmentStatus.CLOSED;
-        for(const student of allStudents) {
-            if(typeof studentRepoMapping[student.id] === 'undefined') {
+        for (const student of allStudents) {
+            if (typeof studentRepoMapping[student.id] === 'undefined') {
                 // this means a repository is missing,
                 (deliv.custom as AssignmentInfo).status = AssignmentStatus.INACTIVE;
                 await this.dc.saveDeliverable(deliv);
@@ -480,8 +475,8 @@ export class AssignmentController {
             } else {
                 // if the student has repositories,
                 let studentRepos: Repository[] = studentRepoMapping[student.id];
-                for(const repo of studentRepos) {
-                    if(repo.custom === null) {
+                for (const repo of studentRepos) {
+                    if (repo.custom === null) {
                         // a repo is not classified properly
                         Log.error("AssignmentController::updateAssignmentStatus(..) - error: " +
                             "repository " + repo.id + " is not set up properly");
@@ -499,7 +494,7 @@ export class AssignmentController {
                     //         repoInfo.status === AssignmentStatus.CLOSED) {
                     //     currentStatus = repoInfo.status;
                     // }
-                    if(repoInfo.status < newStatus) {
+                    if (repoInfo.status < newStatus) {
                         newStatus = repoInfo.status;
                     }
                 }
@@ -519,25 +514,25 @@ export class AssignmentController {
         Log.info("AssignmentController::getAssignmentRepo( " + delivId + ", " + person + " ) - start");
 
         let deliv = await this.dc.getDeliverable(delivId);
-        if(deliv === null) {
+        if (deliv === null) {
             Log.error("AssignmentController::getAssignmentRepo(..) - error: unable to find " +
                 "assignment " + delivId);
             return null;
         }
 
-        if(deliv.custom === null) {
+        if (deliv.custom === null) {
             Log.error("AssignmentController::getAssignmentRepo(..) - error: deliverable not " +
                 "setup with rubric");
             return null;
         }
 
         let assignInfo: AssignmentInfo = deliv.custom;
-        for(const repoId of assignInfo.repositories) {
+        for (const repoId of assignInfo.repositories) {
             let repo: Repository = await this.rc.getRepository(repoId);
-            for(const teamId of repo.teamIds) {
+            for (const teamId of repo.teamIds) {
                 let team: Team = await this.tc.getTeam(teamId);
-                if(team === null) continue;
-                if(team.personIds.includes(person.id)) {
+                if (team === null) continue;
+                if (team.personIds.includes(person.id)) {
                     Log.info("AssignmentController::getAssignmentRepo(..) - found repository: " + repoId);
                     return repo;
                 }
