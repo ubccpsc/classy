@@ -30,7 +30,28 @@ if (typeof it === 'function') {
 
 export class Test {
 
-//    public static ORGNAME = "NOTSETYET"; // TODO: fix this
+    /**
+     * Determines whether slow tests should be executed. They will _always_ run on CI, but
+     * you can also set override = true to execute them locally. This is important if you
+     * are editing code that touches the stuff that might be slow (e.g., specifically
+     * GitHub-related functions.
+     *
+     * @returns {boolean}
+     */
+    public static runSlowTest() {
+        // set to true if you want to run these slow tests locally (they will always run on CI)
+        // const override = false; // NOTE: should NOT be commented out when committing
+        const override = true; // NOTE: should be commented out when committing
+
+        const ci = process.env.CI;
+        if (override || typeof ci !== 'undefined' && Boolean(ci) === true) {
+            Log.test("Test::runSlowTest() - running in CI or overriden; not skipping");
+            return true;
+        } else {
+            Log.test("Test::runSlowTest() - skipping (not CI)");
+            return false;
+        }
+    }
 
     public static readonly TEAMNAME1 = 'TESTteam1';
     public static readonly TEAMNAME2 = 'TESTteam2';

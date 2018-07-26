@@ -271,34 +271,38 @@ export class AuthRoutes implements IREST {
             // auth written (or not); we only really care about the state of p at this point
 
             Log.info("AuthRoutes::authCallback(..) - preparing redirect for: " + JSON.stringify(p));
-            
-            // TODO @rtholmes: make sure this is working for local tests.
 
-            //let feUrl = config.getProp(ConfigKey.backendUrl);
-            let feUrl = req.headers["host"];
+            let feUrl = req.headers.host;
             if (feUrl.indexOf('//') > 0) {
                 feUrl = feUrl.substr(feUrl.indexOf('//') + 2, feUrl.length);
             }
-            let fePort = config.getProp(ConfigKey.backendPort);
+            let fePort = 443; // default to ssl port
+            if (feUrl.indexOf(':') > 0) {
+                fePort = feUrl.substr(feUrl.indexOf(':') + 1, feUrl.length);
+                feUrl = feUrl.substr(0, feUrl.indexOf(':'));
+            }
+
+            Log.trace("AuthRoutes::authCallback(..) - /authCallback - redirect hostname: " + feUrl + "; fePort: " + fePort);
 
             if (p !== null) {
                 // this is tricky; need to redirect to the client with a cookie being set on the connection
                 // only header method that worked for me
-                res.setHeader("Set-Cookie", "token=" + token);
-                Log.trace("AuthRoutes::authCallback(..) - /authCallback - redirect homepage URL: " + feUrl);
+                // res.setHeader("Set-Cookie", "token=" + token);
+                const cookie = "token=" + token + '__' + p.id; // Firefox doesn't like multiple tokens (line above)
+                res.setHeader("Set-Cookie", cookie);
+                Log.trace("AuthRoutes::authCallback(..) - /authCallback - redirect homepage; cookie: " + cookie);
 
                 res.redirect({
                     hostname: feUrl,
-                    pathname: 'index.html',//'/index.html',
-                    // query:    {gh: token}, // not a real solution, need cookies so this is transparent
-                    //port:     fePort
+                    pathname: 'index.html',
+                    port:     fePort
                 }, next);
             } else {
                 Log.info("AuthRoutes::authCallback(..) - /authCallback - person (GitHub id: " + username + " ) not registered for course; redirecting to invalid user screen.");
                 res.redirect({
                     hostname: feUrl,
                     pathname: 'invalid.html',
-                    //port:     fePort
+                    port:     fePort
                 }, next);
             }
         }).catch(function (err) {

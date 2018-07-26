@@ -34,9 +34,8 @@ describe("GitHubActions", () => {
     beforeEach(function () {
         Log.test('GitHubActionSpec::BeforeEach - "' + (<any>this).currentTest.title + '"');
 
-        const ci = process.env.CI;
-        const override = false; // set to true if you want to run these tests locally
-        if (override || typeof ci !== 'undefined' && Boolean(ci) === true) {
+        const exec = Test.runSlowTest();
+        if (exec === true) {
             Log.test("GitHubActionSpec::beforeEach() - running in CI; not skipping");
             gh = new GitHubActions();
         } else {
@@ -226,12 +225,12 @@ describe("GitHubActions", () => {
             let found = false;
             for (const repo of allRepos) {
                 if (repo.name === reponame) {
-                    Log.test("Found repo: "+reponame);
+                    Log.test("Found repo: " + reponame);
                     found = true;
                 }
             }
-            if (found === false){
-                Log.test("Missing repo: "+reponame);
+            if (found === false) {
+                Log.test("Missing repo: " + reponame);
             }
             // expect(found).to.be.true;
         }

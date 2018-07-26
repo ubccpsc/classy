@@ -6,7 +6,7 @@ import {TeamController} from "../../src/controllers/TeamController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import Log from "../../../../common/Log";
 import Config, {ConfigKey} from "../../../../common/Config";
-import {Repository, Team} from "../../src/Types";
+import {Test} from "../GlobalSpec";
 
 const loadFirst = require('../GlobalSpec');
 const rFirst = require('./TeamControllerSpec');
@@ -33,9 +33,9 @@ describe("GitHubController", () => {
 
     beforeEach(function () {
         Log.test('GitHubController::BeforeEach - "' + (<any>this).currentTest.title + '"');
-        const ci = process.env.CI;
-        const override = false; // set to true if you want to run these tests locally
-        if (override || typeof ci !== 'undefined' && Boolean(ci) === true) {
+
+        const exec = Test.runSlowTest();
+        if (exec === true) {
             Log.test("GitHubController::beforeEach() - running in CI; not skipping");
             gc = new GitHubController();
         } else {
