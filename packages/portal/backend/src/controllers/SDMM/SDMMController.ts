@@ -340,7 +340,8 @@ export class SDMMController extends CourseController {
                 throw new Error("SDMMController::provisionD0Repo(..) - team already exists: " + teamName);
             }
             const teamCustom = {sdmmd0: true, sdmmd1: false, sdmmd2: false, sdmmd3: false}; // d0 team for now
-            const team = await this.tc.createTeam(teamName, [person], teamCustom);
+            const deliv = await this.dc.getDeliverable('d0');
+            const team = await this.tc.createTeam(teamName, deliv, [person], teamCustom);
 
             // create local repo
             let existingRepo = await this.rc.getRepository(repoName);
@@ -532,7 +533,8 @@ export class SDMMController extends CourseController {
 
             // create local team
             const teamCustom = {sdmmd0: false, sdmmd1: true, sdmmd2: true, sdmmd3: true}; // configure for project
-            const team = await this.tc.createTeam(teamName, people, teamCustom);
+            const deliv = await this.dc.getDeliverable('d1');
+            const team = await this.tc.createTeam(teamName, deliv, people, teamCustom);
 
             // create local repo
             const repoName = SDMMController.getProjectPrefix() + teamName;

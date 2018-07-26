@@ -3,7 +3,10 @@ import Log from "../../../../common/Log";
 import {DatabaseController} from "./DatabaseController";
 import {Grade} from "../Types";
 import {GradePayload} from "../../../../common/types/SDMMTypes";
-import {AutoTestGradeTransport} from "../../../../common/types/PortalTypes";
+import {AutoTestGradeTransport, GradeTransport} from "../../../../common/types/PortalTypes";
+import {DeliverablesController} from "./DeliverablesController";
+import Config, {ConfigKey} from "../../../../common/Config";
+import {Test} from "../../test/GlobalSpec";
 
 export class GradesController {
 
@@ -21,6 +24,43 @@ export class GradesController {
 
         let grade = await this.db.getGrade(personId, delivId);
         return grade;
+    }
+
+    public async getReleasedGradesForPerson(personId: string): Promise<Grade[]> {
+        Log.trace("GradesController::getReleasedGradesForPerson( " + personId + " ) - start");
+
+        const delivc = new DeliverablesController();
+        const delivs = await delivc.getAllDeliverables();
+        let grades = [];
+        for (const deliv of delivs) {
+            if (deliv.gradesReleased === true) {
+                Log.trace("GradesController::getReleasedGradesForPerson( " + personId + " ) - open deliv: " + deliv.id);
+                let grade = await this.getGrade(personId, deliv.id);
+                if (grade === null) {
+                    // create empty grade
+                    grade = {
+                        personId:  personId,
+                        delivId:   deliv.id,
+                        score:     null,
+                        comment:   null,
+                        timestamp: -1,
+                        URL:       null,
+                        urlName:   null,
+                        custom:    {}
+                    };
+                }
+                grades.push(grade);
+            } else {
+                Log.trace("GradesController::getReleasedGradesForPerson( " + personId + " ) - closed deliv: " + deliv.id);
+            }
+        }
+
+        // sort grades by delivid
+        grades = grades.sort(function (g1: Grade, g2: Grade): number {
+            return g1.delivId.localeCompare(g2.delivId);
+        });
+
+        return grades;
     }
 
     public async createGrade(repoId: string, delivId: string, grade: GradePayload): Promise<boolean> {
@@ -154,4 +194,25 @@ export class GradesController {
         return null;
     }
 
+    public translateGrade(grade: Grade): GradeTransport {
+        const config = Config.getInstance();
+
+        const g: GradeTransport = {
+            personId:  grade.personId,
+            personURL: config.getProp(ConfigKey.githubHost) + '/' + grade.personId,
+
+            delivId: grade.delivId,
+
+            score:   grade.score,
+            comment: grade.comment,
+
+            urlName: grade.urlName,
+            URL:     grade.URL,
+
+            timestamp: grade.timestamp,
+            custom:    grade.custom
+        };
+
+        return g;
+    }
 }

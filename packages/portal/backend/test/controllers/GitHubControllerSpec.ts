@@ -6,6 +6,7 @@ import {TeamController} from "../../src/controllers/TeamController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import Log from "../../../../common/Log";
 import Config, {ConfigKey} from "../../../../common/Config";
+import {Repository, Team} from "../../src/Types";
 
 const loadFirst = require('../GlobalSpec');
 const rFirst = require('./TeamControllerSpec');
@@ -72,5 +73,51 @@ describe("GitHubController", () => {
         const provisioned = await gc.provisionRepository(repos[0].id, teams, importUrl, webhook);
         expect(provisioned).to.be.true;
     }).timeout(TIMEOUT * 2);
+
+    // it("Should be able to create a repo.", async function () {
+    //     // setup
+    //     let rc: RepositoryController = new RepositoryController();
+    //     let allRepos: Repository[] = await rc.getAllRepos();
+    //     let repoCount: number = allRepos.length;
+    //
+    //     expect(repoCount).to.be.greaterThan(1);
+    //
+    //
+    //     let importURL = 'https://github.com/SECapstone/capstone';
+    //     const success = await gc.createRepository(allRepos[1].id, importURL);
+    //     expect(success).to.be.true;
+    // });
+    //
+    // it("Should be able to create a repo with a custom path.", async function () {
+    //     // setup
+    //     let rc: RepositoryController = new RepositoryController();
+    //     let allRepos: Repository[] = await rc.getAllRepos();
+    //     let repoCount: number = allRepos.length;
+    //
+    //     expect(repoCount).to.be.greaterThan(1);
+    //
+    //     let importURL = 'https://github.com/SECapstone/capstone';
+    //     const success = await gc.createRepository(allRepos[1].id, importURL, "AutoTest.md");
+    //     expect(success).to.be.true;
+    // });
+    //
+    // it("Should be able to release a repo.", async function () {
+    //     // setup
+    //     let rc: RepositoryController = new RepositoryController();
+    //     let allRepos: Repository[] = await rc.getAllRepos();
+    //     let repoCount: number = allRepos.length;
+    //
+    //     expect(repoCount).to.be.greaterThan(1);
+    //
+    //     let tc: TeamController = new TeamController();
+    //     let allTeams: Team[] = await tc.getAllTeams();
+    //     let teamCount: number = allTeams.length;
+    //
+    //     expect(repoCount).to.be.greaterThan(1);
+    //
+    //     const success = await gc.releaseRepository(allRepos[1], allTeams[1], false);
+    //     expect(success).to.be.true;
+    // });
+
 
 });

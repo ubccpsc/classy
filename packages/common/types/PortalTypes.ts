@@ -94,6 +94,18 @@ export interface DeliverableTransport {
     custom: object; // for schemas, etc.
 }
 
+export interface TeamTransportPayload {
+    success?: TeamTransport[]; // only set if defined
+    failure?: FailurePayload; // only set if defined
+}
+
+export interface TeamTransport {
+    id: string;
+    delivId: string;
+    people: string[];
+    URL: string | null;
+}
+
 export interface GradeTransportPayload {
     success?: GradeTransport[]; // only set if defined
     failure?: FailurePayload; // only set if defined

@@ -40,7 +40,7 @@ export class Factory {
             Factory.instance = new Factory();
         }
         if (Factory.instance.name === null && typeof name !== 'undefined') { // only set this once (first guard)
-            Log.info("Factory::getInstance(..) - setting org: " + name);
+            Log.info("Factory::getInstance(..) - setting name: " + name);
             Factory.instance.name = name;
         }
         return Factory.instance;
@@ -48,7 +48,7 @@ export class Factory {
 
     public getView(backendUrl: string): IView {
         if (this.studentView === null) {
-            Log.trace("Factory::getView() - instantating new view");
+            Log.trace("Factory::getView() - instantating new view for: " + this.name);
             if (this.name === 'classytest') {
                 this.studentView = new CS310View(backendUrl); // default to 310 for testing
             } else if (this.name === 'cs310') {
@@ -132,6 +132,7 @@ export class Factory {
      * @returns {string}
      */
     public getHTMLPrefix() {
+        Log.trace("Factory::getHTMLPrefix() - getting prefix for: " + this.name);
         if (this.name === 'classytest') {
             return 'cs310'; // might need to change this per-course for testing
         } else if (this.name === 'sdmm') {

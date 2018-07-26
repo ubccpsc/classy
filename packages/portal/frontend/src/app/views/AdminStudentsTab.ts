@@ -89,12 +89,17 @@ export class AdminStudentsTab {
 
         let labSectionsOptions = ['-All-', '-Unspecified-'];
         const st = new SortableTable(headers, '#studentListTable');
+
         for (const student of students) {
+            let labId = '';
+            if (student.labId !== null && student.labId.length > 0) {
+                labId = student.labId;
+            }
             let row: TableCell[] = [
                 {value: student.userName, html: '<a href="' + student.userUrl + '">' + student.userName + '</a>'},
                 {value: student.firstName, html: student.firstName},
                 {value: student.lastName, html: student.lastName},
-                {value: student.labId, html: student.labId}
+                {value: labId, html: labId}
             ];
             if (labSectionsOptions.indexOf(student.labId) < 0 && student.labId !== '' && student.labId !== null) {
                 labSectionsOptions.push(student.labId);

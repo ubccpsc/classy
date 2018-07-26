@@ -1,6 +1,6 @@
 import Log from "../../../../common/Log";
 import {DatabaseController} from "./DatabaseController";
-import {Person, Team} from "../Types";
+import {Deliverable, Person, Team} from "../Types";
 
 export class TeamController {
 
@@ -35,14 +35,19 @@ export class TeamController {
         return myTeams;
     }
 
-    public async createTeam(name: string, people: Person[], custom: any): Promise<Team | null> {
+    public async createTeam(name: string, deliv: Deliverable, people: Person[], custom: any): Promise<Team | null> {
         Log.info("TeamController::createTeam( " + name + ",.. ) - start");
+
+        if (deliv === null) {
+            throw new Error("TeamController::createTeam() - null deliverable provided.");
+        }
 
         let existingTeam = await this.getTeam(name);
         if (existingTeam === null) {
             let peopleIds: string[] = people.map(person => person.id);
             const team: Team = {
                 id:        name,
+                delivId:   deliv.id,
                 URL:       null,
                 personIds: peopleIds,
                 custom:    custom

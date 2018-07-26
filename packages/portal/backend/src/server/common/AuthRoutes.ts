@@ -271,7 +271,11 @@ export class AuthRoutes implements IREST {
             // auth written (or not); we only really care about the state of p at this point
 
             Log.info("AuthRoutes::authCallback(..) - preparing redirect for: " + JSON.stringify(p));
-            let feUrl = config.getProp(ConfigKey.backendUrl);
+            
+            // TODO @rtholmes: make sure this is working for local tests.
+
+            //let feUrl = config.getProp(ConfigKey.backendUrl);
+            let feUrl = req.headers["host"];
             if (feUrl.indexOf('//') > 0) {
                 feUrl = feUrl.substr(feUrl.indexOf('//') + 2, feUrl.length);
             }
@@ -287,14 +291,14 @@ export class AuthRoutes implements IREST {
                     hostname: feUrl,
                     pathname: 'index.html',//'/index.html',
                     // query:    {gh: token}, // not a real solution, need cookies so this is transparent
-                    port:     fePort
+                    //port:     fePort
                 }, next);
             } else {
                 Log.info("AuthRoutes::authCallback(..) - /authCallback - person (GitHub id: " + username + " ) not registered for course; redirecting to invalid user screen.");
                 res.redirect({
                     hostname: feUrl,
                     pathname: 'invalid.html',
-                    port:     fePort
+                    //port:     fePort
                 }, next);
             }
         }).catch(function (err) {

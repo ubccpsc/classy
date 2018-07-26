@@ -162,7 +162,14 @@ export default class AdminRoutes implements IREST {
     private static getStudents(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getStudents(..) - start');
 
+        const handleError = function (code: number, msg: string) {
+            const payload: Payload = {failure: {message: msg, shouldLogout: false}};
+            res.send(code, payload);
+            return next(false);
+        };
+
         const cc = new CourseController(new GitHubController());
+        // handled by preceeding action in chain above (see registerRoutes)
         cc.getStudents().then(function (students) {
             Log.trace('AdminRoutes::getStudents(..) - in then; # students: ' + students.length);
             const payload: StudentTransportPayload = {success: students};
@@ -170,14 +177,7 @@ export default class AdminRoutes implements IREST {
             return next();
         }).catch(function (err) {
             Log.error('AdminRoutes::getStudents(..) - ERROR: ' + err.message);
-            const payload: StudentTransportPayload = {
-                failure: {
-                    message:      'Unable to retrieve student list; ERROR: ' + err.message,
-                    shouldLogout: false
-                }
-            };
-            res.send(400, payload);
-            return next(false);
+            return handleError(400, 'Unable to retrieve student list.');
         });
     }
 
@@ -193,6 +193,7 @@ export default class AdminRoutes implements IREST {
         Log.info('AdminRoutes::getDeliverables(..) - start');
 
         const cc = new CourseController(new GitHubController());
+        // handled by preceeding action in chain above (see registerRoutes)
         cc.getDeliverables().then(function (delivs) {
             Log.trace('AdminRoutes::getDeliverables(..) - in then; # deliverables: ' + delivs.length);
             const payload: DeliverableTransportPayload = {success: delivs};
@@ -213,6 +214,8 @@ export default class AdminRoutes implements IREST {
 
     private static postClasslist(req: any, res: any, next: any) {
         Log.info('AdminRoutes::postClasslist(..) - start');
+
+        // handled by preceeding action in chain above (see registerRoutes)
 
         const handleError = function (msg: string) {
             Log.error('AdminRoutes::postClasslist(..)::handleError - message: ' + msg);
@@ -291,12 +294,13 @@ export default class AdminRoutes implements IREST {
             Log.error('AdminRoutes::postClasslist(..) - ERROR: ' + err);
             return handleError('Class list upload unsuccessful: ' + err);
         }
-
     }
 
     private static postDeliverable(req: any, res: any, next: any) {
         Log.info('AdminRoutes::postDeliverable(..) - start');
         let payload: Payload;
+
+        // handled by preceeding action in chain above (see registerRoutes)
 
         const handleError = function (msg: string) {
             Log.error('AdminRoutes::postDeliverable(..)::handleError - message: ' + msg);

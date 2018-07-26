@@ -98,7 +98,7 @@ export class SortableTable {
         }
         table += this.endTable();
 
-        var div = document.querySelector(this.divName);
+        const div = document.querySelector(this.divName);
         if (div !== null) {
             div.innerHTML = '';
             div.innerHTML = table;
@@ -144,8 +144,6 @@ export class SortableTable {
 
     private endTable() {
         let tableSuffix = '</table>';
-
-
         return tableSuffix;
     }
 
@@ -154,13 +152,15 @@ export class SortableTable {
         let row = '';
 
         if (isOdd) {
-            row = '<tr class="sortableRow" style="color: black; background: white">';
+            row = '<tr class="sortableRow" style="color: black; background: white;">';
         } else {
-            row = '<tr class="sortableRow" style="color: black; background: lightgrey">';
+            row = '<tr class="sortableRow" style="color: black; background: lightgrey;">';
         }
 
+        let i = 0;
         for (let col of cols) {
-            row += '<td class="sortableCell" style="color: black;">' + (<any>col).html + '</td>';
+            row += '<td class="sortableCell" style="color: black; ' + this.headers[i].style + '">' + (<any>col).html + '</td>';
+            i++;
         }
         row += '</tr>';
         return row;

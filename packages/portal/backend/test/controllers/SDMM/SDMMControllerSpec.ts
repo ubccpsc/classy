@@ -1,6 +1,4 @@
-const loadFirst = require('../../GlobalSpec');
-const rBefore = require('../GradeControllerSpec');
-
+import {DatabaseController} from "../../../src/controllers/DatabaseController";
 import {expect} from "chai";
 import "mocha";
 
@@ -18,6 +16,9 @@ import {RepositoryController} from "../../../src/controllers/RepositoryControlle
 import {TeamController} from "../../../src/controllers/TeamController";
 import {PersonController} from "../../../src/controllers/PersonController";
 import {TestGitHubController} from "../../../src/controllers/GitHubController";
+
+const loadFirst = require('../../GlobalSpec');
+const rBefore = require('../GradeControllerSpec');
 
 export class TestData {
 
@@ -93,6 +94,7 @@ describe("SDDM: SDMMController", () => {
     let tc: TeamController;
     let rc: RepositoryController;
     let pc: PersonController;
+    let dc: DatabaseController;
 
     let data: TestData;
 
@@ -115,6 +117,7 @@ describe("SDDM: SDMMController", () => {
         gc = new GradesController();
         tc = new TeamController();
         pc = new PersonController();
+        dc = DatabaseController.getInstance();
     });
 
     after(async () => {
@@ -162,7 +165,8 @@ describe("SDDM: SDMMController", () => {
         expect(status.status).to.equal("D0PRE");
 
         const person = await pc.getPerson(data.USER);
-        const team = await tc.createTeam(data.TEAMD0, [person], {sdmmd0: true});
+        const deliv = await dc.getDeliverable('d0');
+        const team = await tc.createTeam(data.TEAMD0, deliv, [person], {sdmmd0: true});
         const repo = await rc.createRepository(data.REPOD0, [team], {d0enabled: true});
         expect(repo).to.not.be.null;
 
@@ -204,7 +208,8 @@ describe("SDDM: SDMMController", () => {
         expect(status.status).to.equal("D1UNLOCKED");
 
         const person = await pc.getPerson(data.USER);
-        const team = await tc.createTeam(data.TEAMD1, [person], {sdmmd1: true});
+        const deliv = await dc.getDeliverable('d1');
+        const team = await tc.createTeam(data.TEAMD1, deliv, [person], {sdmmd1: true});
         expect(team).to.not.be.null;
 
         status = await sc.getStatus(data.USER);

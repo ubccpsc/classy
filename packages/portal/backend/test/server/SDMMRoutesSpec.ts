@@ -123,9 +123,6 @@ describe('SDMM Routes', function () {
         let response = null;
         const url = '/portal/sdmm/performAction/doRandomInvalidThing';
         try {
-            // const gha = new GitHubActions();
-            // const deleted = await gha.deleteRepo('secap_user1'); // make sure the repo doesn't exist
-
             const name = Config.getInstance().getProp(ConfigKey.name);
             response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
         } catch (err) {
@@ -163,7 +160,7 @@ describe('SDMM Routes', function () {
         const rc = new RepositoryController();
         let repo = null;
         try {
-            repo = await rc.createRepository('secap_user1', [], {});
+            repo = await rc.createRepository('secap_'+Test.USERNAME1, [], {});
             const name = Config.getInstance().getProp(ConfigKey.name);
             response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
         } catch (err) {
@@ -171,14 +168,14 @@ describe('SDMM Routes', function () {
         }
         const dc = DatabaseController.getInstance();
         await dc.deleteRepository(repo); // cleanup repo
-        await dc.deleteTeam(await dc.getTeam('user1')); // cleanup team
+        await dc.deleteTeam(await dc.getTeam(Test.USERNAME1)); // cleanup team
 
         // works on its own but not with others
         Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(400);
 
         expect(response.body.failure).to.not.be.undefined;
-        expect(response.body.failure.message).to.equal('Failed to provision d0 repo; already exists: secap_user1');
+        expect(response.body.failure.message).to.equal('Failed to provision d0 repo; already exists: secap_'+Test.USERNAME1);
 
     }).timeout(1000 * 30);
 
@@ -187,7 +184,7 @@ describe('SDMM Routes', function () {
         const url = '/portal/sdmm/performAction/provisionD0';
         try {
             const gha = new GitHubActions();
-            const deleted = await gha.deleteRepo('secap_user1'); // make sure the repo doesn't exist
+            const deleted = await gha.deleteRepo('secap_'+Test.USERNAME1); // make sure the repo doesn't exist
 
             const name = Config.getInstance().getProp(ConfigKey.name);
             response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
@@ -208,9 +205,6 @@ describe('SDMM Routes', function () {
         let response = null;
         const url = '/portal/sdmm/performAction/provisionD1individual';
         try {
-            // const gha = new GitHubActions();
-            // const deleted = await gha.deleteRepo('secap_user1'); // make sure the repo doesn't exist
-
             const name = Config.getInstance().getProp(ConfigKey.name);
             response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
         } catch (err) {
@@ -229,9 +223,6 @@ describe('SDMM Routes', function () {
         let response = null;
         const url = '/portal/sdmm/performAction/provisionD1individual';
         try {
-            // const gha = new GitHubActions();
-            // const deleted = await gha.deleteRepo('secap_user1'); // make sure the repo doesn't exist
-
             const dc = DatabaseController.getInstance();
             const g: Grade = {
                 personId:  Test.USERNAME1,
@@ -266,7 +257,7 @@ describe('SDMM Routes', function () {
         const url = '/portal/sdmm/performAction/provisionD1team/somerandmomusernamethatdoesnotexist';
         try {
             const gha = new GitHubActions();
-            const deleted = await gha.deleteRepo('secap_user1'); // make sure the repo doesn't exist
+            const deleted = await gha.deleteRepo('secap_'+Test.USERNAME1); // make sure the repo doesn't exist
 
             const name = Config.getInstance().getProp(ConfigKey.name);
             response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAME1, token: 'testtoken'});

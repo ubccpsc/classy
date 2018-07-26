@@ -6,6 +6,7 @@ import {Test} from "../GlobalSpec";
 import {GradesController} from "../../src/controllers/GradesController";
 import {GradePayload} from "../../../../common/types/SDMMTypes";
 import {AutoTestGradeTransport} from "../../../../common/types/PortalTypes";
+import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 
 const loadFirst = require('../GlobalSpec');
 const rFirst = require('./RepositoryControllerSpec');
@@ -68,7 +69,7 @@ describe("GradeController", () => {
         expect(grades[0].URL).to.equal('URLup');
     });
 
-    it("Should be able to get a grade for a user.", async () => {
+    it("Should be able to get a grade for a user and deliverable.", async () => {
         let grades = await gc.getAllGrades();
         expect(grades).to.have.lengthOf(2); // from previous
 
@@ -76,6 +77,40 @@ describe("GradeController", () => {
         expect(grade).to.not.be.null;
         expect(grade.score).to.equal(50);
     });
+
+    it("Should be able to get all released grades for a user.", async () => {
+        let grades = await gc.getAllGrades();
+        expect(grades).to.have.lengthOf(2); // from previous
+
+        // close deliv
+        const dc = new DeliverablesController();
+        let deliv = await dc.getDeliverable(Test.DELIVID1);
+        deliv.gradesReleased = false;
+        await dc.saveDeliverable(deliv);
+
+        grades = await gc.getReleasedGradesForPerson(Test.USERNAME1);
+        expect(grades.length).to.equal(0); // no deliverables have grades released
+
+        deliv = await dc.getDeliverable(Test.DELIVID1);
+        deliv.gradesReleased = true;
+        await dc.saveDeliverable(deliv);
+
+        grades = await gc.getReleasedGradesForPerson(Test.USERNAME1);
+        expect(grades.length).to.equal(1); // no deliverables have grades released
+        expect(grades[0].score).to.equal(50);
+
+        // check with a released deliverable that has no grade record
+        deliv = Test.getDeliverable(Test.DELIVID2);
+        deliv.gradesReleased = true;
+        await dc.saveDeliverable(deliv);
+        grades = await gc.getReleasedGradesForPerson(Test.USERNAME1);
+        expect(grades.length).to.equal(2); // no deliverables have grades released
+        expect(grades[0].delivId).to.equal(Test.DELIVID1);
+        expect(grades[0].score).to.equal(50);
+        expect(grades[1].delivId).to.equal(Test.DELIVID2);
+        expect(grades[1].score).to.equal(null);
+    });
+
 
     it("Should be able to invalidate bad grades.", async () => {
         let deliv = await gc.validateAutoTestGrade(undefined);

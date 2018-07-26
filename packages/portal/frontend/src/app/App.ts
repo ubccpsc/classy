@@ -178,21 +178,41 @@ export class App {
      */
     private async validateCredentials(): Promise<boolean> {
         Log.info("App::validateCredentials() - start");
-        let token = this.readCookie('token');
+
+        let token = null; // this.readCookie('token');
+        let userId = null; // this.readCookie('user');
+        const tokenString = this.readCookie('token');
+        if (tokenString !== null) {
+            const tokenParts = tokenString.split('__'); // Firefox doesn't like multiple tokens
+            if (tokenParts.length === 1) {
+                token = tokenParts[0];
+            } else if (tokenParts.length === 2) {
+                token = tokenParts[0];
+                userId = tokenParts[1];
+            }
+        }
+
         if (token === null) {
-            Log.info("App::validateCredentials() - not set on cookie");
+            Log.info("App::validateCredentials() - token not set on cookie");
             token = localStorage.getItem('token');
-        } else if (token === null) {
-            Log.info("App::validateCredentials() - token not set on cookie or localstorage; clearing for safety");
+        }
+
+        if (userId === null) {
+            Log.info("App::validateCredentials() - userId not set on cookie");
+            token = localStorage.getItem('user');
+        }
+
+        if (token === null || userId === null) {
+            Log.info("App::validateCredentials() - user or token not set on cookie or localstorage; clearing for safety");
             this.clearCredentials();
         } else {
             Log.info("App::validateCredentials() - token available");
-            const username = await this.getGithubCredentials(token);
-            if (username !== null) {
+            const githubId = await this.getGithubCredentials(token);
+            if (githubId !== null) {
                 // valid username; get role from server
-                Log.info("App::validateCredentials() - valid username: " + username);
+                Log.info("App::validateCredentials() - valid GitHub id: " + githubId);
 
-                const credentials = await this.getServerCredentials(username, token);
+                const credentials = await this.getServerCredentials(userId, token); // send userId, not githubId
                 if (credentials === null || typeof credentials.failure !== 'undefined') {
                     Log.info("App::validateCredentials() - server validation failed");
                     this.clearCredentials();
@@ -220,37 +240,41 @@ export class App {
         const user = localStorage.getItem('user'); // null if missing
         const token = localStorage.getItem('token'); // null if missing
 
-        const url = this.backendURL + '/portal/logout';
-        Log.trace('App::clearCredentials( ' + user + '...) - start; url: ' + url);
+        if (user !== null) {
+            // if user is null there's no point really; backend won't know who to logout
 
-        const name = Factory.getInstance().getName();
-        const options = {
-            headers: {
-                'Content-Type': 'application/json',
-                'User-Agent':   'Portal',
-                'user':         user,
-                'token':        token,
-                'name':         name
-            }
-        };
+            const url = this.backendURL + '/portal/logout';
+            Log.trace('App::clearCredentials( ' + user + '...) - start; url: ' + url);
 
-        const finishLogout = function (): void {
-            // invalid username; logout
-            that.validated = false;
-            localStorage.clear(); // erase cached info
-            document.cookie = "token=empty;expires=" + new Date(0).toUTCString(); // clear the cookies
-            location.href = location.href; // force refresh the page
-            return;
-        };
+            const name = Factory.getInstance().getName();
+            const options = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'User-Agent':   'Portal',
+                    'user':         user,
+                    'token':        token,
+                    'name':         name
+                }
+            };
 
-        return fetch(url, options).then(function (resp: any) {
-            Log.info("App::clearCredentials() - status: " + resp.status);
-            return finishLogout();
-        }).catch(function (err: any) {
-            Log.error("App::clearCredentials(..) - ERROR: " + err);
-            // finish local logout anyways
-            return finishLogout();
-        });
+            const finishLogout = function (): void {
+                // invalid username; logout
+                that.validated = false;
+                localStorage.clear(); // erase cached info
+                document.cookie = "token=empty;expires=" + new Date(0).toUTCString(); // clear the cookies
+                location.href = location.href; // force refresh the page
+                return;
+            };
+
+            return fetch(url, options).then(function (resp: any) {
+                Log.info("App::clearCredentials() - status: " + resp.status);
+                return finishLogout();
+            }).catch(function (err: any) {
+                Log.error("App::clearCredentials(..) - ERROR: " + err);
+                // finish local logout anyways
+                return finishLogout();
+            });
+        }
     }
 
     /**
@@ -371,6 +395,7 @@ export class App {
         Log.info("App::handleMainPageClick( " + JSON.stringify(params) + " ) - start");
 
         if (this.validated === true) {
+            Log.info("App::handleMainPageClick(..) - authorized");
             // push to correct handler
             params.isAdmin = localStorage.isAdmin === 'true'; // localStorage returns strings
             params.isStaff = localStorage.isStaff === 'true'; // localStorage returns strings

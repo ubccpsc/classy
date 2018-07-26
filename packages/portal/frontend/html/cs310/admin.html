@@ -68,9 +68,17 @@
 
     <template id="teams.html">
         <ons-page id="AdminTeams">
-            <p style="text-align: center;">
-                Teams Page
-            </p>
+            <ons-list id="AdminStudentsList">
+                <div style="text-align:center; padding: 1em;">
+                    Select Deliverable:
+                    <select id="teamsListSelect" style="margin-left: 1em;">
+                        <option value="''">-Not Selected-</option>
+                    </select></div>
+                <ons-list-header>Formed Teams</ons-list-header>
+                <div id="teamsListTable" style="width:100%;"></div>
+                <ons-list-header>Individuals</ons-list-header>
+                <div id="teamsIndividualListTable" style="width:100%;"></div>
+            </ons-list>
         </ons-page>
     </template>
 
