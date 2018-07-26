@@ -64,16 +64,16 @@ export class DatabaseValidator {
                 grade.comment = null;
             }
 
-            if (typeof grade.urlName === 'undefined') {
-                Log.warn("DatabaseValidator::validateGrades() - missing Grade.urlName for: " + JSON.stringify(grade));
-                isValid = false;
-                grade.urlName = null;
-            }
-
             if (typeof grade.URL === 'undefined') {
                 Log.warn("DatabaseValidator::validateGrades() - missing Grade.URL for: " + JSON.stringify(grade));
                 isValid = false;
                 grade.URL = null;
+            }
+
+            if (typeof grade.urlName === 'undefined') {
+                Log.warn("DatabaseValidator::validateGrades() - missing Grade.urlName for: " + JSON.stringify(grade));
+                isValid = false;
+                grade.urlName = grade.URL; // will be set in the block above (not great, as these can be pretty long)
             }
 
             if (typeof grade.custom === 'undefined') {
@@ -176,12 +176,14 @@ export class DatabaseValidator {
                 Log.warn("DatabaseValidator::validateTeams() - missing Team.delivId for: " + team.id);
                 isValid = false;
                 // team.delivId= ''; // TODO: unique per repair?
+                // team.delivId = 'project'; /// TODO: SDMM ONLY
             }
 
             if (typeof team.URL === 'undefined') {
                 Log.warn("DatabaseValidator::validateTeams() - missing Team.URL for: " + team.id);
                 isValid = false;
                 team.URL = null;
+                // team.URL = 'https://github.com/orgs/SECapstone/teams/' + team.id; // TODO: SDMM ONLY
             }
 
             if (typeof team.personIds === 'undefined') {
