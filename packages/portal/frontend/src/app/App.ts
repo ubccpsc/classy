@@ -95,10 +95,10 @@ export class App {
                         v = Factory.getInstance().getView(that.backendURL);
                         Log.trace("App::init() - StudentRoot init; view attached");
                     } else {
-                        Log.trace("App::init() - unknown page name: " + pageName);
+                        Log.warn("App::init() - UNKNOWN page name: " + pageName);
                     }
 
-                    (<any>window).classportal.view = v;
+                    (<any>window).myApp.view = v; // convenience reference so UI elements can access view code
                     that.view = v;
                 }
 

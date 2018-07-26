@@ -1,6 +1,6 @@
-<ons-page id="studentTabsPage">
+<ons-page id="StudentRoot">
     <ons-toolbar>
-        <div class="center" id="studentTabsHeader">SDMM Capstone PortalXXX</div>
+        <div class="center" id="studentTabsHeader">SDMM Capstone Portal</div>
         <div class="right">
             <ons-toolbar-button onclick="myApp.logout();">
                 <ons-icon icon="fa-sign-out"></ons-icon>
@@ -16,7 +16,7 @@
     </ons-modal>
     <ons-list>
         <ons-list-item style="display: none">
-            <select id="sdmmSelect" onchange="window.classportal.view.sdmmSelectChanged()">
+            <select id="sdmmSelect" onchange="myApp.view.sdmmSelectChanged()">
                 <option>D0PRE</option>
                 <option>D0</option>
 
@@ -37,7 +37,7 @@
                     Before D0 can be started a repository must be provisioned.
                 </div>
                 <div style="padding-top: 0.5em;">
-                    <ons-button onclick="myApp.sdmm.createD0Repository();">Provision D0 Repository</ons-button>
+                    <ons-button onclick="myApp.view.createD0Repository();">Provision D0 Repository</ons-button>
                 </div>
             </div>
         </ons-list-item>
@@ -68,10 +68,10 @@
                     GitHub username.
                 </div>
                 <div style="padding-top: 0.5em;">
-                    <ons-button onclick="myApp.sdmm.createD1Individual();">Work individually for d1, d2, and d3.</ons-button>
+                    <ons-button onclick="myApp.view.createD1Individual();">Work individually for d1, d2, and d3.</ons-button>
                 </div>
                 <div style="padding-top: 0.5em;">
-                    <ons-button onclick="myApp.sdmm.d1TeamDialog();">Select partner for d1, d2, and d3.</ons-button>
+                    <ons-button onclick="myApp.view.d1TeamDialog();">Select partner for d1, d2, and d3.</ons-button>
                 </div>
             </div>
         </ons-list-item>
@@ -81,7 +81,7 @@
                     Before D1 can be started a repository must be provisioned.
                 </div>
                 <div style="padding-top: 0.5em;">
-                    <ons-button onclick="myApp.sdmm.createD1Repository();">Provision D1 Repository</ons-button>
+                    <ons-button onclick="myApp.view.createD1Repository();">Provision D1 Repository</ons-button>
                 </div>
             </div>
         </ons-list-item>
@@ -122,7 +122,7 @@
                     the pull request; you will still have to merge this request in your GitHub repository.
                 </div>
                 <div style="padding-top: 0.5em;">
-                    <ons-button onclick="myApp.sdmm.createD3PullRequest();">Initiate D3 Pull Request</ons-button>
+                    <ons-button onclick="myApp.view.createD3PullRequest();">Initiate D3 Pull Request</ons-button>
                 </div>
             </div>
         </ons-list-item>
