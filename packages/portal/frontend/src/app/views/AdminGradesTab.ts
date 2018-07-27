@@ -42,15 +42,15 @@ export class AdminGradesTab {
                 id:          'githubId',
                 text:        'GitHub Id',
                 sortable:    true,
-                defaultSort: false,
-                sortDown:    true,
+                defaultSort: true,
+                sortDown:    false,
                 style:       'padding-left: 1em; padding-right: 1em;'
             },
             {
                 id:          'snum',
                 text:        'SNUM',
                 sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
-                defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
+                defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown:    false, // Whether the column should initially sort descending or ascending.
                 style:       'padding-left: 1em; padding-right: 1em;'
             },

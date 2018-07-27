@@ -165,7 +165,7 @@ export class Test {
     public static getResult(delivId: string, repoId: string, people: string[], score: number): Result {
 
         const ts = Date.now() - Math.random() * 1000 * 600;
-        const projectURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' + repoId;
+        const projectURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
         const commitURL = projectURL + '/commits/FOOOSHA';
         let output: IContainerOutput = {
             commitURL:          commitURL,

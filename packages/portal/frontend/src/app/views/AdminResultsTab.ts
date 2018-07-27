@@ -46,7 +46,7 @@ export class AdminResultsTab {
                 id:          'delivId',
                 text:        'Deliverable',
                 sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
-                defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
+                defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown:    false, // Whether the column should initially sort descending or ascending.
                 style:       'padding-left: 1em; padding-right: 1em;'
             },
@@ -54,7 +54,7 @@ export class AdminResultsTab {
                 id:          'timstamp',
                 text:        'Timestamp',
                 sortable:    true,
-                defaultSort: false,
+                defaultSort: true,
                 sortDown:    true,
                 style:       'padding-left: 1em; padding-right: 1em;'
             },
@@ -81,12 +81,11 @@ export class AdminResultsTab {
         // this loop couldn't possibly be less efficient
         for (const result of results) {
 
+            let ts = new Date(result.timestamp).toLocaleTimeString();
             let row: TableCell[] = [
                 {value: result.repoId, html: '<a href="' + result.input.pushInfo.projectURL + '">' + result.repoId + '</a>'},
                 {value: result.delivId, html: result.delivId},
-                {value:   result.timestamp,
-                    html: '<a href="' + result.commitURL + '">' + new Date(result.timestamp).toLocaleTimeString() + '</a>'
-                },
+                {value: result.timestamp, html: '<a href="' + result.commitURL + '">' + ts + '</a>'},
                 {value: result.output.state, html: result.output.state},
                 {value: result.output.report.scoreOverall, html: result.output.report.scoreOverall + ''}
             ];

@@ -1,8 +1,8 @@
 import {expect} from "chai";
 import "mocha";
-import * as fs from "fs-extra";
 import {ResultsController} from "../../src/controllers/ResultsController";
 import {AutoTestResultTransport} from "../../../../common/types/PortalTypes";
+import {Test} from "../GlobalSpec";
 
 const loadFirst = require('../GlobalSpec');
 
@@ -26,9 +26,12 @@ describe("ResultController", () => {
         let results = await rc.getAllResults();
         expect(results).to.have.lengthOf(0);
 
-        const fullPath = __dirname + "/../../../../autotest/test/githubAutoTestData/outputRecords.json";
-        let data = fs.readJSONSync(fullPath);
-        let output = await rc.createResult(data[0]);
+        // const fullPath = __dirname + "/../../../../autotest/test/githubAutoTestData/outputRecords.json";
+        // let data = fs.readJSONSync(fullPath);
+        // let output = await rc.createResult(data[0]);
+        // public static getResult(delivId: string, repoId: string, people: string[], score: number): Result {
+        const result = Test.getResult(Test.DELIVID0, Test.REPONAME1, [Test.USERNAME1], 50);
+        let output = await rc.createResult(result);
         expect(output).to.be.true;
 
         results = await rc.getAllResults();
