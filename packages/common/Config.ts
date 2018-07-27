@@ -56,7 +56,7 @@ export enum ConfigKey {
     // githubOrgToken = "githubOrgToken",
     dockerId = "dockerId",
     workspace = "workspace",
-    graderHost = "graderHost",
+    graderUrl = "graderHost",
     graderPort = "graderPort",
     classPortalHost = "classPortalHost",
     classPortalPort = "classPortalPort",
@@ -129,8 +129,8 @@ export default class Config {
                 // kind:               process.env.KIND, // REMOVE
                 // githubOrgToken:     process.env.GH_BOT_TOKEN,
                 // githubOracleToken:  process.env.GH_ORG_TOKEN,
-                // graderHost:         process.env.SERVER_URL,
-                // graderPort:         process.env.GRADER_PORT,
+                graderUrl:          process.env.GRADER_URL,
+                graderPort:         process.env.GRADER_PORT,
             };
 
             // this is not a great place for this
