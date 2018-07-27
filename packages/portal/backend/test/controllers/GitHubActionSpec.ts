@@ -1,3 +1,5 @@
+import {TeamController} from "../../src/controllers/TeamController";
+
 const loadFirst = require('../GlobalSpec');
 
 import {expect} from "chai";
@@ -8,6 +10,9 @@ import Log from "../../../../common/Log";
 import {Test} from "../GlobalSpec";
 import Util from "../../../../common/Util";
 import Config, {ConfigKey} from "../../../../common/Config";
+import {RepositoryController} from "../../src/controllers/RepositoryController";
+import {DeliverablesController} from "../../src/controllers/DeliverablesController";
+import {PersonController} from "../../src/controllers/PersonController";
 
 describe("GitHubActions", () => {
 
@@ -21,6 +26,7 @@ describe("GitHubActions", () => {
     let DELAY_SHORT = 200;
 
     const REPONAME = getProjectPrefix() + Test.REPONAME1;
+    const REPONAME3 = getProjectPrefix() + Test.REPONAME3;
     const TEAMNAME = getTeamPrefix() + Test.TEAMNAME1;
 
     const OLDORG = Config.getInstance().getProp(ConfigKey.org);
@@ -70,7 +76,9 @@ describe("GitHubActions", () => {
         "rthse2",
         "cpscbot",
         "TEST__X__t_TESTteam1",
-        "TESTteam1"
+        "TESTteam1",
+        "TESTteam2",
+        "TESTteam3",
     ];
 
     it("Clear stale repos and teams.", async function () {
@@ -95,7 +103,7 @@ describe("GitHubActions", () => {
         expect(val).to.equal(name);
     }).timeout(TIMEOUT);
 
-    it("Should not be possible to find a repo that does exist.", async function () {
+    it("Should be possible to find a repo that does exist.", async function () {
         let val = await gh.repoExists(REPONAME);
         expect(val).to.be.true;
     }).timeout(TIMEOUT);
@@ -251,9 +259,37 @@ describe("GitHubActions", () => {
     }).timeout(120 * 1000); // 2 minutes
 
     it("Should be able to clone a source repository, and select files to create a new repository.", async function () {
+        let tc: TeamController = new TeamController();
+        let rc: RepositoryController = new RepositoryController();
+        let dc: DeliverablesController = new DeliverablesController();
+        let pc: PersonController = new PersonController();
+
+        // get some persons
+        let p1 = await pc.getPerson(Test.USERNAME1);
+        let p2 = await pc.getPerson(Test.USERNAME2);
+        expect(p1).to.not.be.null;
+        expect(p2).to.not.be.null;
+
+        // get the deliverable
+        let deliv = await dc.getDeliverable(Test.DELIVID0);
+        expect(deliv).to.not.be.null;
+
+        // create the team
+        let team = await tc.createTeam(Test.TEAMNAME3, deliv, [p1, p2], {});
+        expect(team).to.not.be.null;
+        // create the repository
+        let repo = await rc.createRepository(Test.REPONAME3, [team], {});
+        expect(repo).to.not.be.null;
+
+        let val = await gh.createRepo(REPONAME3);
+        const newName = Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
+        expect(val).to.equal(newName);
+
         const start = Date.now();
-        let targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/'
-            + Config.getInstance().getProp(ConfigKey.org) + '/' + getProjectPrefix() + "TESTrepo3";
+        let targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
+
+        // let targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/'
+        //     + Config.getInstance().getProp(ConfigKey.org) + '/' + getProjectPrefix() + REPONAME3;
         let importUrl = 'https://github.com/SECapstone/capstone'; // hardcoded public repo
         let selectedFiles = 'AutoTest.md';
 
