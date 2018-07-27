@@ -17,7 +17,9 @@ export class FrontendDatasetGenerator {
         await this.createDeliverables();
         await this.createPeople();
         await this.createTeams();
+        await this.createRepositories();
         await this.createGrades();
+        await this.createResults();
         Log.info("FrontendDatasetGenerator::create() - done");
     }
 
@@ -132,6 +134,34 @@ export class FrontendDatasetGenerator {
 
             grade = Test.getGrade(deliv, user, score);
             await this.dc.writeGrade(grade);
+        }
+    }
+
+    async createRepositories(): Promise<void> {
+        Log.info("FrontendDatasetGenerator::createRepositories() - start");
+        // make a repository for each team
+
+        const teams = await this.dc.getTeams();
+        for (const team of teams) {
+            const repoName = team.id;
+            const repo = Test.getRepository(repoName, team.id);
+            await this.dc.writeRepository(repo);
+        }
+    }
+
+    async createResults(): Promise<void> {
+        Log.info("FrontendDatasetGenerator::createResults() - start");
+
+        // 100 random results
+        let teams = await this.dc.getTeams();
+
+        for (let i = 0; i < 100; i++) {
+            let index = this.getRandomInt(teams.length);
+            let team = teams[index];
+
+            let score = this.getRandomInt(100);
+            const result = Test.getResult(team.delivId, team.id, team.personIds, score);
+            await this.dc.writeResult(result);
         }
     }
 

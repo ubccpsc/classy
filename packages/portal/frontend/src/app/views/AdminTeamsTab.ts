@@ -22,7 +22,6 @@ export class AdminTeamsTab {
     public async init(opts: any): Promise<void> {
         Log.info('AdminTeamsTab::init(..) - start');
         const start = Date.now();
-        UI.showModal('Retrieving teams');
 
         document.getElementById('teamsListTable').innerHTML = ''; // clear target
         document.getElementById('teamsIndividualListTable').innerHTML = ''; // clear target
@@ -34,12 +33,13 @@ export class AdminTeamsTab {
             opts.delivId = '-None-';
         }
 
+        UI.showModal('Retrieving teams.');
         this.teams = await AdminTeamsTab.getTeams(this.remote);
         this.renderTeams(this.teams, opts.delivId);
 
         this.students = await AdminStudentsTab.getStudents(this.remote);
         this.renderIndividuals(this.teams, this.students, opts.delivId);
-
+        UI.hideModal();
     }
 
     private render(teams: TeamTransport[], delivId: string): void {
@@ -85,6 +85,7 @@ export class AdminTeamsTab {
 
         let delivOptions = ['-None-'];
         const st = new SortableTable(headers, '#teamsListTable');
+        let listContainsStudents = false;
 
         for (const team of teams) {
             let p1 = '';
@@ -113,6 +114,7 @@ export class AdminTeamsTab {
             }
             if (delivId === team.delivId && team.people.length > 1) {
                 st.addRow(row);
+                listContainsStudents = true;
             }
         }
 
@@ -142,11 +144,20 @@ export class AdminTeamsTab {
             that.renderIndividuals(that.teams, that.students, val); // if cached data is ok
         };
 
+        if (st.numRows() > 0) {
+            UI.showSection('teamsListTable');
+            UI.hideSection('teamsListTableNone');
+        } else {
+            UI.hideSection('teamsListTable');
+            UI.showSection('teamsListTableNone');
+        }
+
     }
 
 
     private renderIndividuals(teams: TeamTransport[], students: StudentTransport[], delivId: string): void {
         Log.trace("AdminTeamsTab::renderTeams(..) - start");
+
         const headers: TableHeader[] = [
             {
                 id:          'id',
@@ -157,7 +168,6 @@ export class AdminTeamsTab {
                 style:       'padding-left: 1em; padding-right: 1em;'
             }
         ];
-
 
         const st = new SortableTable(headers, '#teamsIndividualListTable');
 
@@ -171,6 +181,7 @@ export class AdminTeamsTab {
             }
         }
 
+        let listContainsStudents = false;
         for (const student of students) {
             if (studentsOnTeams.indexOf(student.userName) < 0) {
                 let row: TableCell[] = [
@@ -178,19 +189,31 @@ export class AdminTeamsTab {
                 ];
                 if (delivId !== '-None-') {
                     st.addRow(row);
+                    listContainsStudents = true;
                 }
             }
         }
 
         st.generate();
+
+        if (st.numRows() > 0) {
+            UI.showSection('teamsIndividualListTable');
+            UI.hideSection('teamsIndividualListTableNone');
+        } else {
+            UI.hideSection('teamsIndividualListTable');
+            UI.showSection('teamsIndividualListTableNone');
+        }
+
     }
 
     public static async getTeams(remote: string): Promise<TeamTransport[]> {
+        Log.info("AdminTeamsTab::getTeams( .. ) - start");
+
         const start = Date.now();
         const options = AdminView.getOptions();
         const url = remote + '/portal/admin/teams';
         const response = await fetch(url, options);
-        UI.hideModal();
+
         if (response.status === 200) {
             Log.trace('AdminTeamsTab::getTeams(..) - 200 received');
             const json: TeamTransportPayload = await response.json();
@@ -206,5 +229,7 @@ export class AdminTeamsTab {
             const text = await response.text();
             AdminView.showError(text);
         }
+
+        return [];
     }
 }

@@ -271,7 +271,7 @@ export class AutoTestRoutes implements IREST {
 
             let rc = new ResultsController();
             rc.getResult(delivId, repoId).then(function (result) {
-                payload = {success: result};
+                payload = {success: [result]};
                 res.send(200, payload);
             }).catch(function (err) {
                 payload = {failure: {message: err.message, shouldLogout: false}};

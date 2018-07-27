@@ -8,7 +8,7 @@ import {TeamController} from "../../src/controllers/TeamController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {TestGitHubController} from "../../src/controllers/GitHubController";
 import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
-import {AutoTestGradeTransport, TeamTransport} from "../../../../common/types/PortalTypes";
+import {AutoTestGradeTransport, GradeTransport, TeamTransport} from "../../../../common/types/PortalTypes";
 import {Test} from "../GlobalSpec";
 import Log from "../../../../common/Log";
 
@@ -92,6 +92,37 @@ describe("CourseController", () => {
             "URL":     null
         };
         expect(res).to.deep.include(t); // make sure at least one student with the right format is in there
+    });
+
+    it("Should be able to get a list of grades.", async () => {
+        const res = await cc.getGrades();
+        expect(res).to.be.an('array');
+        expect(res.length).to.be.greaterThan(0);
+
+        Log.test('grades: ' + JSON.stringify(res));
+        const t: GradeTransport = {
+            "personId":  "rthse2",
+            "personURL": "https://github.com/rthse2",
+            "delivId":   "d1",
+            "score":     50,
+            "comment":   "commentup",
+            "urlName":   "urlName",
+            "URL":       "URLup",
+            "timestamp": 1517446860000,
+            "custom":    {}
+        };
+        expect(res).to.deep.include(t); // make sure at least one student with the right format is in there
+    });
+
+    it("Should be able to get a list of results.", async () => {
+        const res = await cc.getResults();
+        expect(res).to.be.an('array');
+        // expect(res.length).to.be.greaterThan(0);
+        expect(res.length).to.equal(0); // TODO: insert some results!!!
+
+        // Log.test('results: ' + JSON.stringify(res));
+        // const t = res[0];
+        // expect(res).to.deep.include(t); // make sure at least one student with the right format is in there
     });
 
     it("Should be able to get a list of deliverables.", async () => {
