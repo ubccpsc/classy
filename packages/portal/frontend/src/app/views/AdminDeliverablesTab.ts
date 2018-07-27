@@ -30,8 +30,6 @@ export class AdminDeliverablesTab {
     // called by reflection in renderPage
     public async init(opts: any): Promise<void> {
         Log.info('AdminDeliverablesTab::init(..) - start');
-        UI.showModal('Retrieving deliverables');
-        const start = Date.now();
 
         const fab = document.querySelector('#adminAddDeliverable') as OnsFabElement;
         if (this.isAdmin === false) {
@@ -43,28 +41,10 @@ export class AdminDeliverablesTab {
             };
         }
 
-        const options = AdminView.getOptions();
-        const url = this.remote + '/portal/admin/deliverables';
-        const response = await fetch(url, options);
+        UI.showModal('Retrieving deliverables.');
+        const delivs = await AdminDeliverablesTab.getDeliverables(this.remote);
+        this.render(delivs);
         UI.hideModal();
-
-        if (response.status === 200) {
-            Log.trace('AdminDeliverablesTab::init(..) - 200 received');
-            const json: DeliverableTransportPayload = await response.json();
-            // Log.trace('AdminView::handleAdminDeliverables(..)  - payload: ' + JSON.stringify(json));
-            if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                Log.trace('AdminDeliverablesTab::init(..)  - worked; took: ' + UI.took(start));
-
-                this.render(json.success);
-            } else {
-                Log.trace('AdminDeliverablesTab::init(..)  - ERROR: ' + json.failure.message);
-                AdminView.showError(json.failure); // FailurePayload
-            }
-        } else {
-            Log.trace('AdminDeliverablesTab::init(..)  - !200 received: ' + response.status);
-            const text = await response.text();
-            AdminView.showError(text);
-        }
     }
 
     private render(deliverables: DeliverableTransport[]) {
@@ -382,19 +362,17 @@ export class AdminDeliverablesTab {
     }
 
     public static async getDeliverables(remote: string): Promise<DeliverableTransport[]> {
-        const options = AdminView.getOptions();
-        const url = remote + '/portal/admin/deliverables';
-        UI.showModal('Retrieving deliverables');
-
-        const response = await fetch(url, options);
+        Log.info("AdminDeliverablesTab::getDeliverables( .. ) - start");
         const start = Date.now();
 
-        UI.hideModal();
+        const options = AdminView.getOptions();
+        const url = remote + '/portal/admin/deliverables';
+        const response = await fetch(url, options);
 
         if (response.status === 200) {
             Log.trace('AdminDeliverablesTab::getDeliverables(..) - 200 received');
             const json: DeliverableTransportPayload = await response.json();
-            // Log.trace('AdminView::handleAdminDeliverables(..)  - payload: ' + JSON.stringify(json));
+            // Log.trace('AdminView::getDeliverables(..)  - payload: ' + JSON.stringify(json));
             if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
                 Log.trace('AdminDeliverablesTab::getDeliverables(..)  - worked; took: ' + UI.took(start));
                 return (json.success);

@@ -17,8 +17,6 @@ export class AdminStudentsTab {
     // called by reflection in renderPage
     public async init(opts: any): Promise<void> {
         Log.info('AdminStudentsTab::init(..) - start');
-        const start = Date.now();
-        UI.showModal('Retrieving students');
 
         // NOTE: this could consider if studentListTable has children, and if they do, don't refresh
         document.getElementById('studentListTable').innerHTML = ''; // clear target
@@ -27,13 +25,17 @@ export class AdminStudentsTab {
             opts.labSection = '-All-';
         }
 
+        UI.showModal('Retrieving students.');
         const students = await AdminStudentsTab.getStudents(this.remote);
+        UI.hideModal();
+
         this.render(students, opts.labSection);
     }
 
 
     private render(students: StudentTransport[], labSection: string): void {
         Log.trace("AdminStudentsTab::render(..) - start");
+
         const headers: TableHeader[] = [
             {
                 id:          'id',
@@ -116,14 +118,25 @@ export class AdminStudentsTab {
             // that.renderPage('AdminStudents', {labSection: val}); // if we need to re-fetch
             that.render(students, val); // if cached data is ok
         };
+
+        if (st.numRows() > 0) {
+            document.getElementById('studentListTable').style.display = 'inherit'; // show the section
+            document.getElementById('studentListTableNone').style.display = 'none'; // hide the section
+        } else {
+            document.getElementById('studentListTable').style.display = 'none'; // hide the section
+            document.getElementById('studentListTableNone').style.display = 'inherit'; // show the section
+        }
+
     }
 
     public static async getStudents(remote: string): Promise<StudentTransport[]> {
+        Log.info("AdminStudentsTab::getStudents( .. ) - start");
+
         const start = Date.now();
-        const options = AdminView.getOptions();
         const url = remote + '/portal/admin/students';
+        const options = AdminView.getOptions();
         const response = await fetch(url, options);
-        UI.hideModal();
+
         if (response.status === 200) {
             Log.trace('AdminStudentsTab::getStudents(..) - 200 received');
             const json: StudentTransportPayload = await response.json();
@@ -140,5 +153,7 @@ export class AdminStudentsTab {
             const text = await response.text();
             AdminView.showError(text);
         }
+
+        return [];
     }
 }

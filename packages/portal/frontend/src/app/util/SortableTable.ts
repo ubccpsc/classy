@@ -291,6 +291,10 @@ export class SortableTable {
         this.downloadCSV(csv.join('\n'), fileName);
     }
 
+    public numRows(): number {
+        return this.rows.length;
+    }
+
     private attachDownload() {
         this.exportTableToCSV('classy.csv');
     }

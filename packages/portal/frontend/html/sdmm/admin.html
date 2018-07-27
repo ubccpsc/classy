@@ -60,8 +60,13 @@
                     <select id="studentsListSelect" style="margin-left: 1em;">
                         <option>-All-</option>
                     </select></div>
-                <ons-list-header>Students</ons-list-header>
-                <div id="studentListTable" style="width:100%;"></div>
+                <div id="studentListTableResults">
+                    <ons-list-header>Students</ons-list-header>
+                    <div id="studentListTable" style="width:100%;"></div>
+                </div>
+                <div id="studentListTableNone" class="noResultsRow">
+                    No Results
+                </div>
             </ons-list>
         </ons-page>
     </template>
@@ -76,9 +81,14 @@
                     </select></div>
                 <ons-list-header>Formed Teams</ons-list-header>
                 <div id="teamsListTable" style="width:100%;"></div>
+                <div id="teamsListTableNone" class="noResultsRow">
+                    No Results
+                </div>
                 <ons-list-header>Individuals</ons-list-header>
                 <div id="teamsIndividualListTable" style="width:100%;">
-                    NOT IMPLEMENTED YET
+                </div>
+                <div id="teamsIndividualListTableNone" class="noResultsRow">
+                    No Results
                 </div>
             </ons-list>
         </ons-page>
