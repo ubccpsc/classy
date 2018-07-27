@@ -51,6 +51,12 @@ export class SortableTable {
      * @param {TableCell[]} row
      */
     public addRow(row: TableCell[]) {
+        for (const cell of row) {
+            if (cell.value === null || cell.value === 'null') {
+                cell.value = 'N/A';
+                cell.html = 'N/A';
+            }
+        }
         this.rows.push(row);
     }
 
@@ -60,6 +66,14 @@ export class SortableTable {
      * @param {TableCell[][]} rows
      */
     public addRows(rows: TableCell[][]) {
+        for (const row of rows) {
+            for (const cell of row) {
+                if (cell.value === null || cell.value === 'null') {
+                    cell.value = 'N/A';
+                    cell.html = 'N/A';
+                }
+            }
+        }
         this.rows = rows;
     }
 

@@ -39,20 +39,19 @@ export class AdminGradesTab {
 
         const headers: TableHeader[] = [
             {
-                id:          'id',
-                text:        'Id',
-                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
-                defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
-                sortDown:    false, // Whether the column should initially sort descending or ascending.
-                style:       'padding-left: 1em; padding-right: 1em;'
-            },
-            /*
-            {
                 id:          'githubId',
-                text:        'gitHubId',
+                text:        'GitHub Id',
                 sortable:    true,
                 defaultSort: false,
                 sortDown:    true,
+                style:       'padding-left: 1em; padding-right: 1em;'
+            },
+            {
+                id:          'snum',
+                text:        'SNUM',
+                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
+                defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
+                sortDown:    false, // Whether the column should initially sort descending or ascending.
                 style:       'padding-left: 1em; padding-right: 1em;'
             },
             {
@@ -73,13 +72,13 @@ export class AdminGradesTab {
             },
             {
                 id:          'labId',
-                text:        'Lab Section',
+                text:        'Lab',
                 sortable:    true,
                 defaultSort: false,
                 sortDown:    true,
                 style:       'padding-left: 1em; padding-right: 1em;'
             }
-            */
+
             // more sections dynamically added
         ];
 
@@ -99,8 +98,20 @@ export class AdminGradesTab {
 
         // this loop couldn't possibly be less efficient
         for (const student of students) {
+            // let snum = 'N/A';
+            // if (student.studentNum !== null && student.studentNum >= 0) {
+            //     snum = student.studentNum + '';
+            // }
+            // let lab = 'N/A';
+            // if (student.labId !== null && student.labId.length > 0) {
+            //     lab = student.labId;
+            // }
             let row: TableCell[] = [
-                {value: student.userName, html: '<a href="' + student.userUrl + '">' + student.userName + '</a>'}
+                {value: student.userName, html: '<a href="' + student.userUrl + '">' + student.userName + '</a>'},
+                {value: student.studentNum, html: student.studentNum + ''},
+                {value: student.firstName, html: student.firstName},
+                {value: student.lastName, html: student.lastName},
+                {value: student.labId, html: student.labId}
             ];
             for (const deliv of delivs) {
                 let tableCell: TableCell = null;
