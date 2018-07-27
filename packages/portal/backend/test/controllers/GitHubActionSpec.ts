@@ -402,6 +402,30 @@ describe("GitHubActions", () => {
 
     }).timeout(TIMEOUT);
 
+
+    it("Should not be able to bulk edit permissions to admins", async function () {
+        let githubTeam = await gh.createTeam(TEAMNAME, 'push');
+        expect(githubTeam.teamName).to.be.equal(TEAMNAME);
+        expect(githubTeam.githubTeamNumber).to.be.an('number');
+        expect(githubTeam.githubTeamNumber > 0).to.be.true;
+
+        // Expects adding members to work
+        let addMembers = await gh.addMembersToTeam(githubTeam.teamName, githubTeam.githubTeamNumber, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+        let teamAdd = await gh.addTeamToRepo(githubTeam.githubTeamNumber, REPONAME, 'push');
+
+        let staffTeamNumber = await gh.getTeamNumber('staff');
+        let staffAdd = await gh.addTeamToRepo(staffTeamNumber, REPONAME, 'admin');
+        // let permissionEdit = gh.setRepoPermission(REPONAME, "admin");
+        // permissionEdit.returns(Promise.reject());
+        // return gh.setRepoPermission(REPONAME, "admin").should.be.rejected;
+        return gh.setRepoPermission(REPONAME, "admin").then(function fulfilled(result) {
+            throw new Error("Promise was unexpectedly fulfilled. Result: " + result);
+        }, function rejected(error) {
+            Log.info("Success!");
+        });
+
+    }).timeout(TIMEOUT);
+
     it("Clear stale repos and teams.", async function () {
         let del = await deleteStale();
         expect(del).to.be.true;
