@@ -415,13 +415,10 @@ describe("GitHubActions", () => {
 
         let staffTeamNumber = await gh.getTeamNumber('staff');
         let staffAdd = await gh.addTeamToRepo(staffTeamNumber, REPONAME, 'admin');
-        // let permissionEdit = gh.setRepoPermission(REPONAME, "admin");
-        // permissionEdit.returns(Promise.reject());
-        // return gh.setRepoPermission(REPONAME, "admin").should.be.rejected;
         return gh.setRepoPermission(REPONAME, "admin").then(function fulfilled(result) {
             throw new Error("Promise was unexpectedly fulfilled. Result: " + result);
-        }, function rejected(error) {
-            Log.info("Success!");
+        }, function rejected() {
+
         });
 
     }).timeout(TIMEOUT);

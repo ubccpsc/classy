@@ -129,6 +129,8 @@ export class GitHubController implements IGitHubController {
             Log.error('GithubController::createRepository(..) - ERROR: ' + err);
             return false;
         }
+
+
     }
 
     /**
@@ -146,9 +148,9 @@ export class GitHubController implements IGitHubController {
         const gh = new GitHubActions();
         // let ac: AssignmentController = new AssignmentController();
 
-        if(repo.custom === null) return false;
-        let repoInfo: AssignmentRepositoryInfo = repo.custom;
-        if(typeof repoInfo.assignedTeams === 'undefined' || repoInfo.assignedTeams === null) return false;
+        // if(repo.custom === null) return false;
+        // let repoInfo: AssignmentRepositoryInfo = repo.custom;
+        // if(typeof repoInfo.assignedTeams === 'undefined' || repoInfo.assignedTeams === null) return false;
 
         // let assignedTeams: string[] = repoInfo.repoInfo.assignedTeams;
 
