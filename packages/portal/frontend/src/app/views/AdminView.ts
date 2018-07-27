@@ -18,6 +18,7 @@ import {AdminStudentsTab} from "./AdminStudentsTab";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminConfigTab} from "./AdminConfigTab";
 import {AdminTeamsTab} from "./AdminTeamsTab";
+import {AdminGradesTab} from "./AdminGradesTab";
 
 interface AdminTabs {
     deliverables: boolean,
@@ -40,7 +41,9 @@ export class AdminView implements IView {
     private deliverablesTab: AdminDeliverablesTab;
     private studentsTab: AdminStudentsTab;
     private teamsTab: AdminTeamsTab;
+    private gradesTab: AdminGradesTab;
     private configTab: AdminConfigTab;
+
 
     constructor(remoteUrl: string, tabs: AdminTabs) {
         Log.info("AdminView::<init>");
@@ -48,9 +51,10 @@ export class AdminView implements IView {
         this.remote = remoteUrl;
         this.tabs = tabs;
 
+        this.deliverablesTab = new AdminDeliverablesTab(remoteUrl, this.isAdmin);
         this.studentsTab = new AdminStudentsTab(remoteUrl);
         this.teamsTab = new AdminTeamsTab(remoteUrl);
-        this.deliverablesTab = new AdminDeliverablesTab(remoteUrl, this.isAdmin);
+        this.gradesTab = new AdminGradesTab(remoteUrl);
         this.configTab = new AdminConfigTab(remoteUrl, this.isAdmin);
     }
 
@@ -171,6 +175,12 @@ export class AdminView implements IView {
     protected async handleAdminTeams(opts: any): Promise<void> {
         Log.info('AdminView::handleTeams(..) - start');
         return this.teamsTab.init(opts);
+    }
+
+    // called by reflection in renderPage
+    protected async handleAdminGrades(opts: any): Promise<void> {
+        Log.info('AdminView::handleGrades(..) - start');
+        return this.gradesTab.init(opts);
     }
 
     protected handleAdminEditDeliverable(opts: any) {

@@ -1,6 +1,12 @@
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
-import {AutoTestGradeTransport, DeliverableTransport, StudentTransport, TeamTransport} from '../../../../common/types/PortalTypes';
+import {
+    AutoTestGradeTransport,
+    DeliverableTransport,
+    GradeTransport,
+    StudentTransport,
+    TeamTransport
+} from '../../../../common/types/PortalTypes';
 
 import {RepositoryController} from "./RepositoryController";
 import {DatabaseController} from "./DatabaseController";
@@ -269,6 +275,31 @@ export class CourseController { // don't implement ICourseController yet
 
         }
         return teams;
+    }
+
+    /**
+     * Gets the grades associated with the course.
+     *
+     * @returns {Promise<GradeTransport[]>}
+     */
+    public async getGrades(): Promise<GradeTransport[]> {
+        let allGrades = await this.gc.getAllGrades();
+        let grades: GradeTransport[] = [];
+        for (const grade of allGrades) {
+            const gradeTrans: GradeTransport = {
+                personId:  grade.personId,
+                personURL: Config.getInstance().getProp(ConfigKey.githubHost) + '/' + grade.personId,
+                delivId:   grade.delivId,
+                score:     grade.score,
+                comment:   grade.comment,
+                urlName:   grade.urlName,
+                URL:       grade.URL,
+                timestamp: grade.timestamp,
+                custom:    grade.custom
+            };
+            grades.push(gradeTrans);
+        }
+        return grades;
     }
 
     /**

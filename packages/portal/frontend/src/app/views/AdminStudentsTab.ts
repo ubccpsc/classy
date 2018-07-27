@@ -120,13 +120,12 @@ export class AdminStudentsTab {
         };
 
         if (st.numRows() > 0) {
-            document.getElementById('studentListTable').style.display = 'inherit'; // show the section
-            document.getElementById('studentListTableNone').style.display = 'none'; // hide the section
+            UI.showSection('studentListTable');
+            UI.hideSection('studentListTableNone');
         } else {
-            document.getElementById('studentListTable').style.display = 'none'; // hide the section
-            document.getElementById('studentListTableNone').style.display = 'inherit'; // show the section
+            UI.showSection('studentListTable');
+            UI.hideSection('studentListTableNone');
         }
-
     }
 
     public static async getStudents(remote: string): Promise<StudentTransport[]> {

@@ -88,37 +88,7 @@ export class AdminDeliverablesTab {
         if (delivId === null) {
             // create deliverable, not edit
             this.renderEditDeliverablePage(null);
-
         } else {
-            // UI.showModal('Retrieving ' + delivId + ' details'); // NOTE: not working on this screen
-            //
-            // const options = AdminView.getOptions();
-            // const url = this.remote + '/portal/admin/deliverables';
-            // const response = await fetch(url, options);
-            //
-            // UI.hideModal();
-            // if (response.status === 200) {
-            //     Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..) - 200 received');
-            //     const json: DeliverableTransportPayload = await response.json();
-            //     if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-            //         Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..)  - worked; took: ' + UI.took(start));
-            //
-            //         for (const deliv of json.success) {
-            //             if (deliv.id === delivId) {
-            //                 this.renderEditDeliverablePage(deliv);
-            //                 return;
-            //             }
-            //         }
-            //         Log.error('AdminDeliverablesTab::initEditDeliverablePage(..)  - delivId not found: ' + delivId);
-            //     } else {
-            //         Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..)  - ERROR: ' + json.failure.message);
-            //         AdminView.showError(json.failure); // FailurePayload
-            //     }
-            // } else {
-            //     Log.trace('AdminDeliverablesTab::initEditDeliverablePage(..)  - !200 received: ' + response.status);
-            //     const text = await response.text();
-            //     AdminView.showError(text);
-            // }
             const deliverables = await AdminDeliverablesTab.getDeliverables(this.remote);
             for (const deliv of deliverables) {
                 if (deliv.id === delivId) {
