@@ -21,6 +21,8 @@ import {PersonController} from "../PersonController";
  */
 export class SDMMController extends CourseController {
 
+    private GRADE_TO_ADVANCE = 60;
+
     public constructor(ghController: IGitHubController) {
         super(ghController);
     }
@@ -141,7 +143,7 @@ export class SDMMController extends CourseController {
             if (currentStatus === SDMMStatus[SDMMStatus.D0]) {
                 // if their d0 score >= 60, make them D1UNLOCKED
                 const d0Grade = await this.dc.getGrade(personId, "d0");
-                if (d0Grade && d0Grade.score >= 60) {
+                if (d0Grade && d0Grade.score !== null && d0Grade.score >= this.GRADE_TO_ADVANCE) {
                     Log.info("SDMMController::computeStatusString(..) - elevating D0 to D1UNLOCKED");
                     currentStatus = SDMMStatus[SDMMStatus.D1UNLOCKED];
                 } else {
@@ -191,7 +193,7 @@ export class SDMMController extends CourseController {
             if (currentStatus === SDMMStatus[SDMMStatus.D1]) {
                 // if their d1 score > 60, make them D2
                 let d1Grade = await this.gc.getGrade(personId, "d1");
-                if (d1Grade && d1Grade.score >= 60) {
+                if (d1Grade && d1Grade.score !== null && d1Grade.score >= this.GRADE_TO_ADVANCE) {
                     Log.info("SDMMController::computeStatusString(..) - elevating D1 to D2");
                     let allRepos = await this.rc.getReposForPerson(person);
                     for (const r of allRepos) {
@@ -211,7 +213,7 @@ export class SDMMController extends CourseController {
             if (currentStatus === SDMMStatus[SDMMStatus.D2]) {
                 // if their d2 core > 60, make them D3PRE
                 let d2Grade = await this.gc.getGrade(personId, "d2");
-                if (d2Grade && d2Grade.score >= 60) {
+                if (d2Grade && d2Grade.score !== null && d2Grade.score >= this.GRADE_TO_ADVANCE) {
                     Log.info("SDMMController::computeStatusString(..) - elevating D2 to D3PRE");
                     currentStatus = SDMMStatus[SDMMStatus.D3PRE];
                 } else {
@@ -369,7 +371,7 @@ export class SDMMController extends CourseController {
 
                 // create grade entry
                 let grade: GradePayload = {
-                    score:     -1,
+                    score:     null,
                     comment:   'Repo Provisioned',
                     urlName:   repo.id,
                     URL:       repo.URL,
@@ -413,7 +415,7 @@ export class SDMMController extends CourseController {
 
             // make sure the person has suffient d0 grade
             let grade = await this.gc.getGrade(personId, "d0"); // make sure they can move on
-            if (grade === null || grade.score < 60) {
+            if (grade === null || grade.score === null || grade.score < this.GRADE_TO_ADVANCE) {
                 Log.error("SDMMController::updateIndividualD0toD1(..) - insufficient d0 grade for: " + personId);
                 throw new Error("Current d0 grade is not sufficient to move on to d1.");
             }
@@ -454,7 +456,7 @@ export class SDMMController extends CourseController {
 
                 // create grade entries
                 let grade: GradePayload = {
-                    score:     -1,
+                    score:     null,
                     comment:   'Repo Provisioned',
                     urlName:   repo.id,
                     URL:       repo.URL,
@@ -558,7 +560,7 @@ export class SDMMController extends CourseController {
 
                 // create grade entries
                 let grade: GradePayload = {
-                    score:     -1,
+                    score:     null,
                     comment:   'Repo Provisioned',
                     urlName:   repo.id,
                     URL:       repo.URL,

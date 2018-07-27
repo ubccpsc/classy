@@ -6,7 +6,6 @@ import {GradePayload} from "../../../../common/types/SDMMTypes";
 import {AutoTestGradeTransport, GradeTransport} from "../../../../common/types/PortalTypes";
 import {DeliverablesController} from "./DeliverablesController";
 import Config, {ConfigKey} from "../../../../common/Config";
-import {Test} from "../../test/GlobalSpec";
 
 export class GradesController {
 
@@ -48,6 +47,9 @@ export class GradesController {
                         urlName:   null,
                         custom:    {}
                     };
+                }
+                if (grade.score !== null && grade.score < 0) {
+                    grade.score = null; // null if not set (not -1)
                 }
                 grades.push(grade);
             } else {

@@ -1,6 +1,6 @@
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
-import {AutoTestGradeTransport, DeliverableTransport, StudentTransport} from '../../../../common/types/PortalTypes';
+import {AutoTestGradeTransport, DeliverableTransport, StudentTransport, TeamTransport} from '../../../../common/types/PortalTypes';
 
 import {RepositoryController} from "./RepositoryController";
 import {DatabaseController} from "./DatabaseController";
@@ -248,6 +248,27 @@ export class CourseController { // don't implement ICourseController yet
             }
         }
         return students;
+    }
+
+    /**
+     * Gets the teams associated with the course.
+     *
+     * @returns {Promise<TeamTransport[]>}
+     */
+    public async getTeams(): Promise<TeamTransport[]> {
+        let allTeams = await this.tc.getAllTeams();
+        let teams: TeamTransport[] = [];
+        for (const team of allTeams) {
+            const teamTransport: TeamTransport = {
+                id:      team.id,
+                delivId: team.delivId,
+                people:  team.personIds,
+                URL:     team.URL
+            };
+            teams.push(teamTransport);
+
+        }
+        return teams;
     }
 
     /**

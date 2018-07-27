@@ -27,26 +27,8 @@ export class AdminStudentsTab {
             opts.labSection = '-All-';
         }
 
-        const options = AdminView.getOptions();
-        const url = this.remote + '/portal/admin/students';
-        const response = await fetch(url, options);
-        UI.hideModal();
-        if (response.status === 200) {
-            Log.trace('AdminStudentsTab::init(..) - 200 received');
-            const json: StudentTransportPayload = await response.json();
-            // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
-            if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                Log.trace('AdminStudentsTab::init(..)  - worked; took: ' + UI.took(start));
-                this.render(json.success, opts.labSection);
-            } else {
-                Log.trace('AdminStudentsTab::init(..)  - ERROR: ' + json.failure.message);
-                AdminView.showError(json.failure); // FailurePayload
-            }
-        } else {
-            Log.trace('AdminView::init(..)  - !200 received: ' + response.status);
-            const text = await response.text();
-            AdminView.showError(text);
-        }
+        const students = await AdminStudentsTab.getStudents(this.remote);
+        this.render(students, opts.labSection);
     }
 
 
@@ -134,6 +116,29 @@ export class AdminStudentsTab {
             // that.renderPage('AdminStudents', {labSection: val}); // if we need to re-fetch
             that.render(students, val); // if cached data is ok
         };
+    }
 
+    public static async getStudents(remote: string): Promise<StudentTransport[]> {
+        const start = Date.now();
+        const options = AdminView.getOptions();
+        const url = remote + '/portal/admin/students';
+        const response = await fetch(url, options);
+        UI.hideModal();
+        if (response.status === 200) {
+            Log.trace('AdminStudentsTab::getStudents(..) - 200 received');
+            const json: StudentTransportPayload = await response.json();
+            // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
+            if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
+                Log.trace('AdminStudentsTab::getStudents(..)  - worked; took: ' + UI.took(start));
+                return json.success;
+            } else {
+                Log.trace('AdminStudentsTab::getStudents(..)  - ERROR: ' + json.failure.message);
+                AdminView.showError(json.failure); // FailurePayload
+            }
+        } else {
+            Log.trace('AdminView::getStudents(..)  - !200 received: ' + response.status);
+            const text = await response.text();
+            AdminView.showError(text);
+        }
     }
 }

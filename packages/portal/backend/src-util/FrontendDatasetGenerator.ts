@@ -1,8 +1,8 @@
 /* istanbul ignore file */
-import {DatabaseController} from "../../src/controllers/DatabaseController";
-import {Test} from "../GlobalSpec";
-import Log from "../../../../common/Log";
-import {TeamController} from "../../src/controllers/TeamController";
+import {DatabaseController} from "../src/controllers/DatabaseController";
+import {Test} from "../test/GlobalSpec";
+import Log from "../../../common/Log";
+import {TeamController} from "../src/controllers/TeamController";
 
 export class FrontendDatasetGenerator {
 
@@ -84,18 +84,20 @@ export class FrontendDatasetGenerator {
                 let p1Team = null;
                 let p2Team = null;
                 for (const t of p1Teams) {
-                    if (t.id.indexOf(deliv.id) >= 0) {
+                    if (t.delivId === deliv.id) {
                         p1Team = t;
                     }
                 }
                 for (const t of p2Teams) {
-                    if (t.id.indexOf(deliv.id) >= 0) {
+                    if (t.delivId === deliv.id) {
                         p2Team = t;
                     }
                 }
 
-                if (p1Team !== null && p2Team !== null) {
+                if (p1Team === null && p2Team === null) {
+                    // both members not on a team
                     const team = Test.getTeam(deliv.id + '_team' + i, deliv.id, [p1.id, p2.id]);
+                    Log.info("FrontendDatasetGenerator::createTeams() - creating team: " + team.id);
                     await this.dc.writeTeam(team);
                 }
             }
