@@ -1,12 +1,5 @@
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
-import {
-    AutoTestGradeTransport,
-    DeliverableTransport,
-    GradeTransport,
-    StudentTransport,
-    TeamTransport
-} from '../../../../common/types/PortalTypes';
 
 import {RepositoryController} from "./RepositoryController";
 import {DatabaseController} from "./DatabaseController";
@@ -15,6 +8,15 @@ import {Course, Deliverable, Grade, Person} from "../Types";
 import {IGitHubController} from "./GitHubController";
 import {TeamController} from "./TeamController";
 import {PersonController} from "./PersonController";
+import {ResultsController} from "./ResultsController";
+import {
+    AutoTestGradeTransport,
+    AutoTestResultTransport,
+    DeliverableTransport,
+    GradeTransport,
+    StudentTransport,
+    TeamTransport
+} from '../../../../common/types/PortalTypes';
 
 /**
  * This is the high-level interfaces that provides intermediate access to the
@@ -127,6 +129,8 @@ export class CourseController { // don't implement ICourseController yet
     protected rc = new RepositoryController();
     protected tc = new TeamController();
     protected gc = new GradesController();
+    protected resC = new ResultsController();
+
     protected gh: IGitHubController = null;
 
     constructor(ghController: IGitHubController) {
@@ -300,6 +304,21 @@ export class CourseController { // don't implement ICourseController yet
             grades.push(gradeTrans);
         }
         return grades;
+    }
+
+    /**
+     * Gets the results associated with the course.
+     *
+     * @returns {Promise<AutoTestGradeTransport[]>}
+     */
+    public async getResults(): Promise<AutoTestResultTransport[]> {
+        let allResults = await this.resC.getAllResults();
+        let results: AutoTestResultTransport[] = [];
+        for (const result of allResults) {
+            const resultTrans: AutoTestResultTransport = result;
+            results.push(resultTrans);
+        }
+        return results;
     }
 
     /**

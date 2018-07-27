@@ -74,7 +74,7 @@ export interface IGradeReport {
     failNames: string[];
     errorNames: string[];
     skipNames: string[];
-    custom: any[];
+    custom: {};
     feedback: string;
 }
 

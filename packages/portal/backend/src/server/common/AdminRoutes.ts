@@ -12,6 +12,7 @@ import {Person} from "../../Types";
 import {PersonController} from "../../controllers/PersonController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {
+    AutoTestResultPayload,
     CourseTransport,
     CourseTransportPayload,
     DeliverableTransport,
@@ -19,7 +20,7 @@ import {
     GradeTransportPayload,
     Payload,
     StudentTransportPayload,
-    TeamTransportPayload,
+    TeamTransportPayload
 } from '../../../../../common/types/PortalTypes';
 
 export default class AdminRoutes implements IREST {
@@ -39,6 +40,7 @@ export default class AdminRoutes implements IREST {
         server.get('/portal/admin/students', AdminRoutes.isPrivileged, AdminRoutes.getStudents);
         server.get('/portal/admin/teams', AdminRoutes.isPrivileged, AdminRoutes.getTeams);
         server.get('/portal/admin/grades', AdminRoutes.isPrivileged, AdminRoutes.getGrades);
+        server.get('/portal/admin/results', AdminRoutes.isPrivileged, AdminRoutes.getResults);
 
 
         // admin-only functions
@@ -211,6 +213,36 @@ export default class AdminRoutes implements IREST {
             return next();
         }).catch(function (err) {
             Log.error('AdminRoutes::getTeams(..) - ERROR: ' + err.message);
+            return handleError(400, 'Unable to retrieve team list.');
+        });
+    }
+
+
+    /**
+     * Returns a AutoTestResultPayload.
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
+    private static getResults(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::getResults(..) - start');
+
+        const handleError = function (code: number, msg: string) {
+            const payload: Payload = {failure: {message: msg, shouldLogout: false}};
+            res.send(code, payload);
+            return next(false);
+        };
+
+        const cc = new CourseController(new GitHubController());
+        // handled by preceeding action in chain above (see registerRoutes)
+        cc.getResults().then(function (results) {
+            Log.trace('AdminRoutes::getResults(..) - in then; # results: ' + results.length);
+            const payload: AutoTestResultPayload = {success: results};
+            res.send(payload);
+            return next();
+        }).catch(function (err) {
+            Log.error('AdminRoutes::getResults(..) - ERROR: ' + err.message);
             return handleError(400, 'Unable to retrieve team list.');
         });
     }

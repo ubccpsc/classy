@@ -114,6 +114,17 @@ describe("CourseController", () => {
         expect(res).to.deep.include(t); // make sure at least one student with the right format is in there
     });
 
+    it("Should be able to get a list of results.", async () => {
+        const res = await cc.getResults();
+        expect(res).to.be.an('array');
+        // expect(res.length).to.be.greaterThan(0);
+        expect(res.length).to.equal(0); // TODO: insert some results!!!
+
+        // Log.test('results: ' + JSON.stringify(res));
+        // const t = res[0];
+        // expect(res).to.deep.include(t); // make sure at least one student with the right format is in there
+    });
+
     it("Should be able to get a list of deliverables.", async () => {
 
         const res = await cc.getDeliverables();

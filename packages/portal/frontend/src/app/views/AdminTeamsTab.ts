@@ -40,7 +40,6 @@ export class AdminTeamsTab {
         this.students = await AdminStudentsTab.getStudents(this.remote);
         this.renderIndividuals(this.teams, this.students, opts.delivId);
         UI.hideModal();
-
     }
 
     private render(teams: TeamTransport[], delivId: string): void {
