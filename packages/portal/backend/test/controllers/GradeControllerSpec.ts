@@ -36,7 +36,7 @@ describe("GradeController", () => {
             comment:   'comment',
             urlName:   'urlName',
             URL:       'URL',
-            timestamp: Date.now(),
+            timestamp: new Date(Date.UTC(2018, 1, 1, 1, 1)).getTime(),
             custom:    {}
         };
 
@@ -56,7 +56,7 @@ describe("GradeController", () => {
             comment:   'commentup',
             urlName:   'urlName',
             URL:       'URLup',
-            timestamp: Date.now(),
+            timestamp: new Date(Date.UTC(2018, 1, 1, 1, 1)).getTime(),
             custom:    {}
         };
 
@@ -157,7 +157,7 @@ describe("GradeController", () => {
             comment:   'comment',
             urlName:   'urlName',
             URL:       'http://url',
-            timestamp: Date.now()
+            timestamp: new Date(Date.UTC(2018, 1, 1, 1, 1)).getTime(),
         };
         deliv = await gc.validateAutoTestGrade(data);
         expect(deliv).to.not.be.null;
@@ -169,7 +169,7 @@ describe("GradeController", () => {
             comment:   'comment',
             urlName:   'urlName',
             URL:       'http://url',
-            timestamp: Date.now(),
+            timestamp: new Date(Date.UTC(2018, 1, 1, 1, 1)).getTime(),
             custom:    {}
         };
         deliv = await gc.validateAutoTestGrade(data);
