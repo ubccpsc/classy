@@ -409,6 +409,5 @@ export class AdminDeliverablesTab {
         }
 
         return [];
-
     }
 }

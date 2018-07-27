@@ -400,8 +400,12 @@ export class DatabaseController {
             if (this.db === null) {
 
                 // just use Config.name for the db (use a test org name if you want to avoid tests wiping data!!)
-                const dbName = Config.getInstance().getProp(ConfigKey.name).trim(); // make sure there are no extra spaces in config
+                let dbName = Config.getInstance().getProp(ConfigKey.name).trim(); // make sure there are no extra spaces in config
                 const dbHost = Config.getInstance().getProp(ConfigKey.mongoUrl).trim(); // make sure there are no extra spaces in config
+
+                if (dbName === 'sdmm') {
+                    dbName = 'secapstone'; // NOTE: this is just an unfortunate historical artifact
+                }
 
                 // _ are to help diagnose whitespace in dbname/mongoUrl
                 Log.info("DatabaseController::open() - db null; making new connection to: _" + dbName + "_ on: _" + dbHost + "_");

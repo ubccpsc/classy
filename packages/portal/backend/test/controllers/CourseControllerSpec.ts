@@ -8,8 +8,9 @@ import {TeamController} from "../../src/controllers/TeamController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {TestGitHubController} from "../../src/controllers/GitHubController";
 import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
-import {AutoTestGradeTransport} from "../../../../common/types/PortalTypes";
+import {AutoTestGradeTransport, TeamTransport} from "../../../../common/types/PortalTypes";
 import {Test} from "../GlobalSpec";
+import Log from "../../../../common/Log";
 
 const load1 = require('../GlobalSpec');
 const load2 = require('./GradeControllerSpec');
@@ -78,6 +79,20 @@ describe("CourseController", () => {
         expect(res).to.deep.include(s); // make sure at least one student with the right format is in there
     });
 
+    it("Should be able to get a list of teams.", async () => {
+        const res = await cc.getTeams();
+        expect(res).to.be.an('array');
+        expect(res.length).to.be.greaterThan(0);
+
+        Log.test('teams: ' + JSON.stringify(res));
+        const t: TeamTransport = {
+            "id":      "TESTteam1",
+            "delivId": "d0",
+            "people":  ["rthse2", "user2"],
+            "URL":     null
+        };
+        expect(res).to.deep.include(t); // make sure at least one student with the right format is in there
+    });
 
     it("Should be able to get a list of deliverables.", async () => {
 

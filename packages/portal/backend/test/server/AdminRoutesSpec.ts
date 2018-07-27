@@ -14,6 +14,7 @@ import {
     DeliverableTransportPayload,
     Payload,
     StudentTransportPayload,
+    TeamTransportPayload
 } from "../../../../common/types/PortalTypes";
 import restify = require('restify');
 
@@ -87,6 +88,42 @@ describe('Admin Routes', function () {
         let response = null;
         let body: StudentTransportPayload;
         const url = '/portal/admin/students';
+        try {
+            response = await request(app).get(url).set({user: Test.USERNAME1, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(401);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+    });
+
+    it('Should be able to get a list of teams', async function () {
+
+        let response = null;
+        let body: TeamTransportPayload;
+        const url = '/portal/admin/teams';
+        try {
+            response = await request(app).get(url).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success).to.be.an('array');
+
+        // should confirm body.success objects (at least one)
+    });
+
+    it('Should not be able to get a list of teams if the requestor is not privileged', async function () {
+
+        let response = null;
+        let body: StudentTransportPayload;
+        const url = '/portal/admin/teams';
         try {
             response = await request(app).get(url).set({user: Test.USERNAME1, token: userToken});
             body = response.body;

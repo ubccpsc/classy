@@ -18,6 +18,7 @@ import {
     DeliverableTransportPayload,
     Payload,
     StudentTransportPayload,
+    TeamTransportPayload
 } from '../../../../../common/types/PortalTypes';
 
 export default class AdminRoutes implements IREST {
@@ -33,6 +34,7 @@ export default class AdminRoutes implements IREST {
 
         // visible to all privileged users
         server.get('/portal/admin/students', AdminRoutes.isPrivileged, AdminRoutes.getStudents);
+        server.get('/portal/admin/teams', AdminRoutes.isPrivileged, AdminRoutes.getTeams);
         server.get('/portal/admin/deliverables', AdminRoutes.isPrivileged, AdminRoutes.getDeliverables);
         server.get('/portal/admin/course', AdminRoutes.isPrivileged, AdminRoutes.getCourse);
 
@@ -181,6 +183,34 @@ export default class AdminRoutes implements IREST {
         });
     }
 
+    /**
+     * Returns a TeamsTransportPayload.
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
+    private static getTeams(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::getTeams(..) - start');
+
+        const handleError = function (code: number, msg: string) {
+            const payload: Payload = {failure: {message: msg, shouldLogout: false}};
+            res.send(code, payload);
+            return next(false);
+        };
+
+        const cc = new CourseController(new GitHubController());
+        // handled by preceeding action in chain above (see registerRoutes)
+        cc.getTeams().then(function (teams) {
+            Log.trace('AdminRoutes::getTeams(..) - in then; # teams: ' + teams.length);
+            const payload: TeamTransportPayload = {success: teams};
+            res.send(payload);
+            return next();
+        }).catch(function (err) {
+            Log.error('AdminRoutes::getTeams(..) - ERROR: ' + err.message);
+            return handleError(400, 'Unable to retrieve team list.');
+        });
+    }
 
     /**
      * Returns a StudentTransportPayload.
