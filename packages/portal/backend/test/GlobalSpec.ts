@@ -55,6 +55,7 @@ export class Test {
 
     public static readonly TEAMNAME1 = 'TESTteam1';
     public static readonly TEAMNAME2 = 'TESTteam2';
+    public static readonly TEAMNAME3 = 'TESTteam3';
 
     public static readonly USERNAMEADMIN = 'ubcbot'; // should be admin on any test org
     public static readonly USERNAME1 = 'rthse2'; // real account for testing users
@@ -73,6 +74,7 @@ export class Test {
 
     public static readonly REPONAME1 = 'TESTrepo1';
     public static readonly REPONAME2 = 'TESTrepo2';
+    public static readonly REPONAME3 = 'TESTrepo3';
 
     public static getDeliverable(delivId: string): Deliverable {
         let deliv: Deliverable = {
