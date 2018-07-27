@@ -170,7 +170,7 @@ export class CourseController { // don't implement ICourseController yet
                 let existingGrade = await this.gc.getGrade(personId, grade.delivId);
                 if (existingGrade === null || existingGrade.score < grade.score) {
                     Log.info("CourseController::handleNewGrade( .. ) - grade is higher; updating");
-                    this.gc.createGrade(grade.repoId, grade.delivId, grade);
+                    await this.gc.createGrade(grade.repoId, grade.delivId, grade);
                 } else {
                     Log.info("CourseController::handleNewGrade( .. ) - grade is not higher");
                 }

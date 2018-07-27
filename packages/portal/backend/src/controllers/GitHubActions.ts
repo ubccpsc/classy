@@ -245,7 +245,7 @@ export class GitHubActions {
         const fullResponse = await rp(<any>rpOptions); // rpOptions is the right type already
 
         let raw: any[] = [];
-        let paginationPromises: any[] = [];
+        const paginationPromises: any[] = [];
         if (typeof fullResponse.headers.link !== 'undefined') {
             // first save the responses from the first page:
             raw = fullResponse.body;

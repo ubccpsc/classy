@@ -93,7 +93,7 @@ export class DatabaseValidator {
             if (isValid === false) {
                 Log.info("DatabaseValidator::validateGrades() - grade needs updating: " + this.gradeStr(grade));
                 if (this.DRY_RUN === false) {
-                    this.dc.writeGrade(grade);
+                    await this.dc.writeGrade(grade);
                 } else {
                     Log.info("\t DatabaseValidator::validateGrades() - grade needs updating: " + this.gradeStr(grade) + "; NOT WRITTEN (DRY_RUN === true)");
                 }
@@ -147,7 +147,7 @@ export class DatabaseValidator {
             if (isValid === false) {
                 Log.info("DatabaseValidator::validateRepositories() - repo needs updating: " + repo.id);
                 if (this.DRY_RUN === false) {
-                    this.dc.writeRepository(repo);
+                    await this.dc.writeRepository(repo);
                 } else {
                     Log.info("\t DatabaseValidator::validateRepositories() - repo needs updating: " + repo.id + "; NOT WRITTEN (DRY_RUN === true)");
                 }
@@ -209,7 +209,7 @@ export class DatabaseValidator {
             if (isValid === false) {
                 Log.info("DatabaseValidator::validateTeams() - team needs updating: " + team.id);
                 if (this.DRY_RUN === false) {
-                    this.dc.writeTeam(team);
+                    await this.dc.writeTeam(team);
                 } else {
                     Log.info("\t DatabaseValidator::validateTeams() - team needs updating: " + team.id + "; NOT WRITTEN (DRY_RUN === true)");
                 }
@@ -322,7 +322,7 @@ export class DatabaseValidator {
             if (isValid === false) {
                 Log.info("DatabaseValidator::validateDeliverables() - deliv needs updating: " + deliv.id);
                 if (this.DRY_RUN === false) {
-                    this.dc.writeDeliverable(deliv);
+                    await this.dc.writeDeliverable(deliv);
                 } else {
                     Log.info("\t DatabaseValidator::validateDeliverables() - deliv needs updating: " + deliv.id + "; NOT WRITTEN (DRY_RUN === true)");
                 }
@@ -389,7 +389,7 @@ export class DatabaseValidator {
             if (isValid === false) {
                 Log.info("DatabaseValidator::validatePeople() - person needs updating: " + person.id);
                 if (this.DRY_RUN === false) {
-                    this.dc.writePerson(person);
+                    await this.dc.writePerson(person);
                 } else {
                     Log.info("\t DatabaseValidator::validatePeople() - person needs updating: " + person.id + "; NOT WRITTEN (DRY_RUN === true)");
                 }

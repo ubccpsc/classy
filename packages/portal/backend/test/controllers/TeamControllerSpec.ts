@@ -22,7 +22,7 @@ describe("TeamController", () => {
         dc = DatabaseController.getInstance();
 
         const deliv = Test.getDeliverable(Test.DELIVID0);
-        dc.writeDeliverable(deliv);
+        await dc.writeDeliverable(deliv);
     });
 
     beforeEach(() => {
