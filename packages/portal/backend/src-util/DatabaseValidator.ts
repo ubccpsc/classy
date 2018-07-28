@@ -1,12 +1,12 @@
-import {DatabaseController} from "../src/controllers/DatabaseController";
 import Log from "../../../common/Log";
-import {PersonController} from "../src/controllers/PersonController";
-import {Deliverable, Grade, Person, Repository, Team} from "../src/Types";
-import {DeliverablesController} from "../src/controllers/DeliverablesController";
-import {TeamController} from "../src/controllers/TeamController";
-import {RepositoryController} from "../src/controllers/RepositoryController";
-import {GradesController} from "../src/controllers/GradesController";
 import Util from "../../../common/Util";
+import {DatabaseController} from "../src/controllers/DatabaseController";
+import {DeliverablesController} from "../src/controllers/DeliverablesController";
+import {GradesController} from "../src/controllers/GradesController";
+import {PersonController} from "../src/controllers/PersonController";
+import {RepositoryController} from "../src/controllers/RepositoryController";
+import {TeamController} from "../src/controllers/TeamController";
+import {Deliverable, Grade, Person, Repository, Team} from "../src/Types";
 
 export class DatabaseValidator {
 
@@ -95,14 +95,14 @@ export class DatabaseValidator {
                 if (this.DRY_RUN === false) {
                     await this.dc.writeGrade(grade);
                 } else {
-                    Log.info("\t DatabaseValidator::validateGrades() - grade needs updating: " + this.gradeStr(grade) + "; NOT WRITTEN (DRY_RUN === true)");
+                    Log.info("\t DatabaseValidator::validateGrades() - grade needs updating: " +
+                        this.gradeStr(grade) + "; NOT WRITTEN (DRY_RUN === true)");
                 }
             }
         }
 
         Log.info("DatabaseValidator::validateGrades() - done; # grades processed: " + grades.length);
     }
-
 
     private async validateRepositories(): Promise<void> {
         Log.info("DatabaseValidator::validateRepositories() - start");
@@ -149,14 +149,14 @@ export class DatabaseValidator {
                 if (this.DRY_RUN === false) {
                     await this.dc.writeRepository(repo);
                 } else {
-                    Log.info("\t DatabaseValidator::validateRepositories() - repo needs updating: " + repo.id + "; NOT WRITTEN (DRY_RUN === true)");
+                    Log.info("\t DatabaseValidator::validateRepositories() - repo needs updating: " +
+                        repo.id + "; NOT WRITTEN (DRY_RUN === true)");
                 }
             }
         }
 
         Log.info("DatabaseValidator::validateRepositories() - done; # repos processed: " + repos.length);
     }
-
 
     private async validateTeams(): Promise<void> {
         Log.info("DatabaseValidator::validateTeams() - start");
@@ -211,7 +211,8 @@ export class DatabaseValidator {
                 if (this.DRY_RUN === false) {
                     await this.dc.writeTeam(team);
                 } else {
-                    Log.info("\t DatabaseValidator::validateTeams() - team needs updating: " + team.id + "; NOT WRITTEN (DRY_RUN === true)");
+                    Log.info("\t DatabaseValidator::validateTeams() - team needs updating: " +
+                        team.id + "; NOT WRITTEN (DRY_RUN === true)");
                 }
             }
         }
@@ -275,7 +276,6 @@ export class DatabaseValidator {
                 deliv.teamMaxSize = 1;
             }
 
-
             if (typeof deliv.teamSameLab === 'undefined') {
                 Log.warn("DatabaseValidator::validateDeliverables() - missing Deliv.teamSameLab for: " + deliv.id);
                 isValid = false;
@@ -324,14 +324,14 @@ export class DatabaseValidator {
                 if (this.DRY_RUN === false) {
                     await this.dc.writeDeliverable(deliv);
                 } else {
-                    Log.info("\t DatabaseValidator::validateDeliverables() - deliv needs updating: " + deliv.id + "; NOT WRITTEN (DRY_RUN === true)");
+                    Log.info("\t DatabaseValidator::validateDeliverables() - deliv needs updating: " +
+                        deliv.id + "; NOT WRITTEN (DRY_RUN === true)");
                 }
             }
         }
 
         Log.info("DatabaseValidator::validateDeliverables() - done; # delivs processed: " + delivs.length);
     }
-
 
     private async validatePeople(): Promise<void> {
         Log.info("DatabaseValidator::validatePeople() - start");
@@ -391,21 +391,20 @@ export class DatabaseValidator {
                 if (this.DRY_RUN === false) {
                     await this.dc.writePerson(person);
                 } else {
-                    Log.info("\t DatabaseValidator::validatePeople() - person needs updating: " + person.id + "; NOT WRITTEN (DRY_RUN === true)");
+                    Log.info("\t DatabaseValidator::validatePeople() - person needs updating: " + person.id +
+                        "; NOT WRITTEN (DRY_RUN === true)");
                 }
             }
         }
         Log.info("DatabaseValidator::validatePeople() - done; # people processed: " + people.length);
     }
-
-
 }
 
 const dv = new DatabaseValidator();
 const start = Date.now();
-dv.validate().then(function (out) {
+dv.validate().then(function(out) {
     Log.info("DatabaseValidator::validate() - complete; took: " + Util.took(start));
-}).catch(function (err) {
+}).catch(function(err) {
     Log.error("DatabaseValidator::validate() - ERROR: " + err.message);
     process.exit();
 });

@@ -18,7 +18,6 @@ import {IAutoTestResult} from "../../../common/types/AutoTestTypes";
  * worth the complexity.
  */
 
-
 /**
  * A goal of these types is to make it easier (and more efficient)
  * to perform the most common queries. These include:
@@ -29,7 +28,8 @@ import {IAutoTestResult} from "../../../common/types/AutoTestTypes";
  * 3) List all results for a deliverable for each user
  *     Harder. Problem is we don't have a 1:1 mapping between repo and deliverable.
  *     Or maybe we just need to roll with this:
- *          Join person with Teams (on Person.id -> Teams.members) as t and to Repositories (t.id ->  Repository.teams) as r
+ *          Join person with Teams (on Person.id -> Teams.members) as t and to Repositories
+ *          (t.id ->  Repository.teams) as r
  *          Iterate through each person record.
  *              Find all results for the desired delivId for any r above. Return for each person.
  *              This doesn't combine teams, but makes it so people won't be missed.
@@ -44,9 +44,9 @@ import {IAutoTestResult} from "../../../common/types/AutoTestTypes";
  *
  * R1) Store a new result (XXX THINKING IN PROGRESS)
  *      * result.delivId (needed to create a grade record)
- *      * result.repoId (needed to get a list of people to create grade records on (see #5 above, list all people on repo)
+ *      * result.repoId (needed to get a list of people to create grade records on (see #5 above,
+ *      list all people on repo)
  */
-
 
 export interface Person {
     readonly id: string; // primary key (this will duplicate csId or githubId (in CS it will always be csId))
@@ -92,9 +92,9 @@ export interface Deliverable {
 
 export interface AutoTestConfig {
     dockerImage: string;
-    studentDelay: number,
-    maxExecTime: number,
-    regressionDelivIds: string[],
+    studentDelay: number;
+    maxExecTime: number;
+    regressionDelivIds: string[];
     custom: object;
 }
 

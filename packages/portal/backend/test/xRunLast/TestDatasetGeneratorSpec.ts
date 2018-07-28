@@ -1,24 +1,25 @@
 import {expect} from "chai";
 import "mocha";
 
-import {PersonController} from "../../src/controllers/PersonController";
-import {Auth, Course, Deliverable, Person} from "../../src/Types";
-import {DeliverablesController} from "../../src/controllers/DeliverablesController";
-import {TeamController} from "../../src/controllers/TeamController";
-import {Test} from "../GlobalSpec";
-import {RepositoryController} from "../../src/controllers/RepositoryController";
-import {DatabaseController} from "../../src/controllers/DatabaseController";
 import Config, {ConfigKey} from "../../../../common/Config";
+import {DatabaseController} from "../../src/controllers/DatabaseController";
+import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 
-const loadFirst = require('../GlobalSpec');
+import {PersonController} from "../../src/controllers/PersonController";
+import {RepositoryController} from "../../src/controllers/RepositoryController";
+import {TeamController} from "../../src/controllers/TeamController";
+import {Auth, Course, Deliverable, Person} from "../../src/Types";
 
-describe('TestDatasetGenerator', function () {
+import {Test} from "../GlobalSpec";
 
+// const loadFirst = require('../GlobalSpec');
 
-    it('Can generate the course object', async function () {
+describe('TestDatasetGenerator', function() {
+
+    it('Can generate the course object', async function() {
         const dc: DatabaseController = DatabaseController.getInstance();
 
-        let course: Course = {
+        const course: Course = {
             id:                   Config.getInstance().getProp(ConfigKey.testname),
             defaultDeliverableId: 'd0',
             custom:               {}
@@ -28,7 +29,7 @@ describe('TestDatasetGenerator', function () {
 
     });
 
-    it('Can generate some students', async function () {
+    it('Can generate some students', async function() {
         const pc: PersonController = new PersonController();
 
         // create an admin
@@ -70,7 +71,7 @@ describe('TestDatasetGenerator', function () {
         for (let i = 0; i < 40; i++) {
             const pid = 'p' + i;
 
-            let p: Person = {
+            p = {
                 id:            pid,
                 csId:          pid,
                 githubId:      pid,
@@ -90,7 +91,7 @@ describe('TestDatasetGenerator', function () {
         }
     });
 
-    it('Can generate some auth tokens', async function () {
+    it('Can generate some auth tokens', async function() {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // create for an admin
@@ -102,7 +103,7 @@ describe('TestDatasetGenerator', function () {
         await dc.writeAuth(a);
     });
 
-    it('Can generate some teams', async function () {
+    it('Can generate some teams', async function() {
         const tc: TeamController = new TeamController();
         const pc: PersonController = new PersonController();
         const dc = DatabaseController.getInstance();
@@ -114,12 +115,11 @@ describe('TestDatasetGenerator', function () {
 
         pA = await pc.getPerson('p3');
         pB = await pc.getPerson('p4');
-        let pC = await pc.getPerson('p5');
+        const pC = await pc.getPerson('p5');
         await tc.createTeam(Test.TEAMNAME2, deliv, [pA, pB, pC], {});
     });
 
-
-    it('Can generate some repos', async function () {
+    it('Can generate some repos', async function() {
         const tc: TeamController = new TeamController();
 
         const teams = await tc.getAllTeams();
@@ -129,8 +129,7 @@ describe('TestDatasetGenerator', function () {
         await rc.createRepository(Test.REPONAME2, [teams[1]], {});
     });
 
-
-    it('Can generate some deliverables', async function () {
+    it('Can generate some deliverables', async function() {
         const dc: DeliverablesController = new DeliverablesController();
 
         const d: Deliverable = {
@@ -171,6 +170,5 @@ describe('TestDatasetGenerator', function () {
             await dc.saveDeliverable(deliv);
         }
     });
-
 
 });

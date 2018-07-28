@@ -1,8 +1,8 @@
+import Log from "../../../common/Log";
 /* istanbul ignore file */
 import {DatabaseController} from "../src/controllers/DatabaseController";
-import {Test} from "../test/GlobalSpec";
-import Log from "../../../common/Log";
 import {TeamController} from "../src/controllers/TeamController";
+import {Test} from "../test/GlobalSpec";
 
 export class FrontendDatasetGenerator {
 
@@ -12,7 +12,7 @@ export class FrontendDatasetGenerator {
         this.dc = DatabaseController.getInstance();
     }
 
-    async create(): Promise<void> {
+    public async create(): Promise<void> {
         Log.info("FrontendDatasetGenerator::create() - start");
         await this.createDeliverables();
         await this.createPeople();
@@ -23,7 +23,7 @@ export class FrontendDatasetGenerator {
         Log.info("FrontendDatasetGenerator::create() - done");
     }
 
-    async createDeliverables(): Promise<void> {
+    private async createDeliverables(): Promise<void> {
         Log.info("FrontendDatasetGenerator::createDeliverables() - start");
 
         let deliv = Test.getDeliverable(Test.DELIVID0);
@@ -43,7 +43,7 @@ export class FrontendDatasetGenerator {
         await this.dc.writeDeliverable(deliv);
     }
 
-    async createPeople(): Promise<void> {
+    private async createPeople(): Promise<void> {
         Log.info("FrontendDatasetGenerator::createPeople() - start");
 
         let person = Test.getPerson(Test.USERNAMEADMIN);
@@ -69,7 +69,7 @@ export class FrontendDatasetGenerator {
         }
     }
 
-    async createTeams(): Promise<void> {
+    private async createTeams(): Promise<void> {
         Log.info("FrontendDatasetGenerator::createTeams() - start");
 
         const tc = new TeamController();
@@ -77,8 +77,8 @@ export class FrontendDatasetGenerator {
 
         for (let i = 0; i < 100; i++) {
             // try i times to make a team
-            let p1 = Test.getPerson('student_' + this.getRandomInt(50));
-            let p2 = Test.getPerson('student_' + this.getRandomInt(50));
+            const p1 = Test.getPerson('student_' + this.getRandomInt(50));
+            const p2 = Test.getPerson('student_' + this.getRandomInt(50));
             if (p1.id !== p2.id) {
 
                 const p1Teams = await tc.getTeamsForPerson(p1);
@@ -106,7 +106,7 @@ export class FrontendDatasetGenerator {
         }
     }
 
-    async createGrades(): Promise<void> {
+    private async createGrades(): Promise<void> {
         Log.info("FrontendDatasetGenerator::createGrades() - start");
 
         // public static getGrade(delivId: string, personId: string, score: number): Grade {
@@ -126,18 +126,18 @@ export class FrontendDatasetGenerator {
         await this.dc.writeGrade(grade);
 
         // 100 random scores
-        let delivnames = [Test.DELIVID0, Test.DELIVID1, Test.DELIVID3];
+        const delivnames = [Test.DELIVID0, Test.DELIVID1, Test.DELIVID3];
         for (let i = 0; i < 100; i++) {
-            let user = 'student_' + this.getRandomInt(50);
-            let deliv = delivnames[this.getRandomInt(3)];
-            let score = this.getRandomInt(100);
+            const user = 'student_' + this.getRandomInt(50);
+            const deliv = delivnames[this.getRandomInt(3)];
+            const score = this.getRandomInt(100);
 
             grade = Test.getGrade(deliv, user, score);
             await this.dc.writeGrade(grade);
         }
     }
 
-    async createRepositories(): Promise<void> {
+    private async createRepositories(): Promise<void> {
         Log.info("FrontendDatasetGenerator::createRepositories() - start");
         // make a repository for each team
 
@@ -149,17 +149,17 @@ export class FrontendDatasetGenerator {
         }
     }
 
-    async createResults(): Promise<void> {
+    private async createResults(): Promise<void> {
         Log.info("FrontendDatasetGenerator::createResults() - start");
 
         // 100 random results
-        let teams = await this.dc.getTeams();
+        const teams = await this.dc.getTeams();
 
         for (let i = 0; i < 100; i++) {
-            let index = this.getRandomInt(teams.length);
-            let team = teams[index];
+            const index = this.getRandomInt(teams.length);
+            const team = teams[index];
 
-            let score = this.getRandomInt(100);
+            const score = this.getRandomInt(100);
             const result = Test.getResult(team.delivId, team.id, team.personIds, score);
             await this.dc.writeResult(result);
         }
@@ -174,11 +174,10 @@ if (typeof it === 'function') {
     Log.warn("Frontend data not generated (test suite execution)");
 } else {
     const fedg = new FrontendDatasetGenerator();
-    fedg.create().then(function (done) {
+    fedg.create().then(function() { // done
         Log.info('create done');
         process.exit();
-    }).catch(function (err) {
+    }).catch(function(err) {
         Log.error('create ERROR: ' + err);
     });
 }
-

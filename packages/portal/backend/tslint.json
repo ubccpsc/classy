@@ -1,0 +1,11 @@
+{
+  "extends": "tslint:recommended",
+  "rules": {
+    "quotemark": false,
+    "trailing-comma": "never",
+    "interface-name": "never-prefix",
+    "only-arrow-functions": false,
+    "object-literal-sort-keys": false,
+    "no-floating-promises": true
+  }
+}

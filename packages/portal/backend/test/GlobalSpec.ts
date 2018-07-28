@@ -3,11 +3,11 @@ import "mocha";
 
 import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
+import {IContainerInput, IContainerOutput} from "../../../common/types/AutoTestTypes";
+import Util from "../../../common/Util";
 
 import {DatabaseController} from "../src/controllers/DatabaseController";
 import {Deliverable, Grade, Person, Repository, Result, Team} from "../src/Types";
-import Util from "../../../common/Util";
-import {IContainerInput, IContainerOutput} from "../../../common/types/AutoTestTypes";
 
 if (typeof it === 'function') {
     // only if we're running in mocha
@@ -215,6 +215,6 @@ export class Test {
             people:    people
         };
 
-        return <Result>Util.clone(result);
+        return <Result> Util.clone(result);
     }
 }

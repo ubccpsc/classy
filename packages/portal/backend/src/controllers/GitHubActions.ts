@@ -576,7 +576,7 @@ export class GitHubActions {
     public getTeamMembers(teamNumber: number): Promise<string[]> {
         let ctx = this;
 
-        Log.info("GitHubAction::getTeamMembers( " +  teamNumber + " ) - start");
+        Log.info("GitHubAction::getTeamMembers( " + teamNumber + " ) - start");
         return new Promise(function (fulfill) {
 
             const uri = ctx.apiPath + '/teams/' + teamNumber + '/members';
@@ -690,7 +690,7 @@ export class GitHubActions {
         //     return cloneRepo(tempPath).then(actionChain);
         // }
 
-        if(seedFilePath) {
+        if (seedFilePath) {
             const tempDir2 = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
             const tempPath2 = tempDir2.path;
             // First clone to a temporary directory
@@ -867,7 +867,9 @@ export class GitHubActions {
                 Log.error("GitHubAction::setRepoPermission(..) - ERROR, Invalid permissionLevel: " + permissionLevel);
                 reject(false);
             }
+
             // Make sure the repo exists
+            // tslint:disable-next-line:no-floating-promises
             ctx.repoExists(repoName).then(function (repoExists: boolean) {
                 if (repoExists) {
                     Log.info("GitHubAction::setRepoPermission(..) - repo exists");
@@ -886,6 +888,7 @@ export class GitHubActions {
                     };
 
                     // Change each team's permission
+                    // tslint:disable-next-line:no-floating-promises
                     rp(teamOptions).then(function (responseData: any) {
                         Log.info("GitHubAction::setRepoPermission(..) - setting permission for teams on repo");
                         for (const team of responseData) {
