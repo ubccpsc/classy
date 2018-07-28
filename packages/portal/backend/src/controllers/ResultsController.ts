@@ -1,9 +1,9 @@
 import Log from "../../../../common/Log";
+import {IAutoTestResult} from "../../../../common/types/AutoTestTypes";
+import {Result} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
-import {IAutoTestResult} from "../../../../common/types/AutoTestTypes";
 import {RepositoryController} from "./RepositoryController";
-import {Result} from "../Types";
 
 export class ResultsController {
 
@@ -35,9 +35,9 @@ export class ResultsController {
         const rc = new RepositoryController();
         const people = await rc.getPeopleForRepo(record.repoId);
 
-        (<any>record).people = people; // don't know how to augment this record with people to keep the type system happy
+        (record as any).people = people; // don't know how to augment this record with people to keep the type system happy
 
-        let outcome = await DatabaseController.getInstance().writeResult(<Result>record);
+        const outcome = await DatabaseController.getInstance().writeResult(record as Result);
         Log.trace("ResultsController::createResult(..) - result written");
         return outcome;
     }
