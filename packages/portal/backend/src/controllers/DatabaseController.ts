@@ -1,12 +1,24 @@
 import {Collection, Db, MongoClient} from "mongodb";
+import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
 
 import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
-import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
 
 import {Auth, Course, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
 
 export class DatabaseController {
+
+    /**
+     * Returns the current controller; shares Mongo connections.
+     *
+     * @returns {DatabaseController}
+     */
+    public static getInstance() {
+        if (DatabaseController.instance === null) {
+            DatabaseController.instance = new DatabaseController();
+        }
+        return DatabaseController.instance;
+    }
 
     private static instance: DatabaseController = null;
     private db: Db = null;
@@ -25,18 +37,6 @@ export class DatabaseController {
      */
     private constructor() {
         Log.info("DatabaseController::<init> - creating new controller");
-    }
-
-    /**
-     * Returns the current controller; shares Mongo connections.
-     *
-     * @returns {DatabaseController}
-     */
-    public static getInstance() {
-        if (DatabaseController.instance === null) {
-            DatabaseController.instance = new DatabaseController();
-        }
-        return DatabaseController.instance;
     }
 
     public async getPerson(recordId: string): Promise<Person | null> {

@@ -2,16 +2,17 @@ import * as rp from "request-promise-native";
 
 import Config, {ConfigKey} from "../../../../../common/Config";
 import Log from "../../../../../common/Log";
+import {AuthTransportPayload, Payload} from "../../../../../common/types/PortalTypes";
 
 import {AuthController} from "../../controllers/AuthController";
 import {DatabaseController} from "../../controllers/DatabaseController";
-import {Auth, Person} from "../../Types";
 import {PersonController} from "../../controllers/PersonController";
-import IREST from "../IREST";
-import {AuthTransportPayload, Payload} from "../../../../../common/types/PortalTypes";
 import {Factory} from "../../Factory";
-import restify = require("restify");
+import {Auth, Person} from "../../Types";
+import IREST from "../IREST";
+
 import ClientOAuth2 = require("client-oauth2");
+import restify = require("restify");
 
 /**
  * Just a large body of static methods for translating between restify and the remainder of the system.
@@ -84,7 +85,7 @@ export class AuthRoutes implements IREST {
         Log.info('AuthRoutes::getLogout(..) - user: ' + user + '; token: ' + token);
         let payload: Payload;
 
-        const handleError = function (msg: string) {
+        const handleError = function(msg: string) {
             Log.error('AuthRoutes::getLogout(..) - ERROR: ' + msg);
             payload = {failure: {message: 'Logout failed: ' + msg, shouldLogout: false}};
             res.send(400, payload);
@@ -96,7 +97,7 @@ export class AuthRoutes implements IREST {
             handleError("unknown user.");
         }
 
-        AuthRoutes.ac.isValid(user, token).then(function (isValid) {
+        AuthRoutes.ac.isValid(user, token).then(function(isValid) {
             if (isValid === true) {
                 Log.info('AuthRoutes::getLogout(..) - user: ' + user + '; valid user');
             } else {
@@ -107,14 +108,14 @@ export class AuthRoutes implements IREST {
             // logout
             const ac = new AuthController();
             return ac.removeAuthentication(user);
-        }).then(function (success) {
+        }).then(function(success) {
             if (success) {
                 payload = {success: {message: "Logout successful"}};
                 res.send(200, payload);
             } else {
                 handleError("Logout unsuccessful.");
             }
-        }).catch(function (err) {
+        }).catch(function(err) {
             Log.error('AuthRoutes::getLogout(..) - unexpected ERROR: ' + err.message);
             handleError(err.message);
         });
@@ -126,14 +127,14 @@ export class AuthRoutes implements IREST {
         const token = req.headers.token;
         Log.info('AuthRoutes::getCredentials(..) - user: ' + user + '; token: ' + token);
 
-        const handleError = function (msg: string) {
+        const handleError = function(msg: string) {
             payload = {failure: {message: msg, shouldLogout: false}};
             res.send(400, payload);
             return next();
         };
 
         let payload: AuthTransportPayload;
-        AuthRoutes.ac.isValid(user, token).then(function (isValid) {
+        AuthRoutes.ac.isValid(user, token).then(function(isValid) {
             Log.trace('AuthRoutes::getCredentials(..) - in isValid(..)');
             if (isValid === true) {
                 Log.trace('AuthRoutes::getCredentials(..) - isValid true');
@@ -142,7 +143,7 @@ export class AuthRoutes implements IREST {
                 Log.error('AuthRoutes::getCredentials(..) - isValid false');
                 handleError("Login error; user not valid.");
             }
-        }).then(function (isPrivileged) {
+        }).then(function(isPrivileged) {
             if (typeof isPrivileged === 'undefined') {
                 Log.warn('AuthRoutes::getCredentials(..) - failsafe; DEBUG this case?');
                 isPrivileged = {isAdmin: false, isStaff: false}; // fail safe
@@ -150,7 +151,7 @@ export class AuthRoutes implements IREST {
             payload = {success: {personId: user, token: token, isAdmin: isPrivileged.isAdmin, isStaff: isPrivileged.isStaff}};
             Log.info('AuthRoutes::getCredentials(..) - sending 200; isPriv: ' + (isPrivileged.isStaff || isPrivileged.isAdmin));
             res.send(200, payload);
-        }).catch(function (err) {
+        }).catch(function(err) {
             Log.info('AuthRoutes::getCredentials(..) - ERROR: ' + err);
             handleError("Login error.");
         });
@@ -164,7 +165,7 @@ export class AuthRoutes implements IREST {
     public static getAuth(req: any, res: any, next: any) {
         Log.trace("AuthRoutes::getAuth(..) - /auth redirect start");
 
-        let config = Config.getInstance();
+        const config = Config.getInstance();
         const setup = {
             clientId:         config.getProp(ConfigKey.githubClientId),
             clientSecret:     config.getProp(ConfigKey.githubClientSecret),
@@ -214,7 +215,7 @@ export class AuthRoutes implements IREST {
 
         Log.trace("AuthRoutes::authCallback(..) - /authCallback - setup: " + JSON.stringify(opts));
 
-        githubAuth.code.getToken(req.url).then(function (user) {
+        githubAuth.code.getToken(req.url).then(function(user) {
             Log.trace("AuthRoutes::authCallback(..) - token acquired");
 
             token = user.accessToken;
@@ -231,7 +232,7 @@ export class AuthRoutes implements IREST {
             // this extra check isn't strictly required, but means we can
             // associate a GitHub username with a token on the backend
             return rp(options);
-        }).then(function (ans) {
+        }).then(function(ans) {
             // we now have a github username
 
             Log.info("AuthRoutes::authCallback(..) - /portal/authCallback - GH username received");
@@ -240,7 +241,7 @@ export class AuthRoutes implements IREST {
             Log.info("AuthRoutes::authCallback(..) - /portal/authCallback - GH username: " + username);
 
             return personController.getGitHubPerson(username);
-        }).then(function (person: Person | null) {
+        }).then(function(person: Person | null) {
             // we now know if that github username is known for the course
 
             if (person === null) {
@@ -251,7 +252,7 @@ export class AuthRoutes implements IREST {
                 Log.info("AuthRoutes::authCallback(..) - /portal/authCallback - github username IS registered");
                 return Promise.resolve(person);
             }
-        }).then(function (person: Person | null) {
+        }).then(function(person: Person | null) {
             // now we either have the person in the course or there will never be one
 
             if (person !== null) {
@@ -267,7 +268,7 @@ export class AuthRoutes implements IREST {
                 Log.info("AuthRoutes::authCallback(..) - /portal/authCallback - not registering auth");
             }
 
-        }).then(function (authWritten) {
+        }).then(function() { // authWritten
             // auth written (or not); we only really care about the state of p at this point
 
             Log.info("AuthRoutes::authCallback(..) - preparing redirect for: " + JSON.stringify(p));
@@ -298,14 +299,15 @@ export class AuthRoutes implements IREST {
                     port:     fePort
                 }, next);
             } else {
-                Log.info("AuthRoutes::authCallback(..) - /authCallback - person (GitHub id: " + username + " ) not registered for course; redirecting to invalid user screen.");
+                Log.info("AuthRoutes::authCallback(..) - /authCallback - person (GitHub id: " + username +
+                    " ) not registered for course; redirecting to invalid user screen.");
                 res.redirect({
                     hostname: feUrl,
                     pathname: 'invalid.html',
                     port:     fePort
                 }, next);
             }
-        }).catch(function (err) {
+        }).catch(function(err) {
             // code incorrect or expired
             Log.error("AuthRoutes::authCallback(..) - /authCallback - ERROR: " + err);
             // NOTE: should this be returning 400 or something?

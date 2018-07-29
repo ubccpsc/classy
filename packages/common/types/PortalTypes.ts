@@ -206,7 +206,7 @@ export interface AutoTestDefaultDeliverableTransport {
 }
 
 export interface AutoTestResultPayload {
-    success?: AutoTestResultTransport; // only set if defined
+    success?: AutoTestResultTransport[]; // only set if defined
     failure?: FailurePayload; // only set if defined
 }
 

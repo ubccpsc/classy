@@ -1,11 +1,11 @@
+import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
+import {AutoTestGradeTransport, GradeTransport} from "../../../../common/types/PortalTypes";
+import {GradePayload} from "../../../../common/types/SDMMTypes";
+import {Grade} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
-import {Grade} from "../Types";
-import {GradePayload} from "../../../../common/types/SDMMTypes";
-import {AutoTestGradeTransport, GradeTransport} from "../../../../common/types/PortalTypes";
 import {DeliverablesController} from "./DeliverablesController";
-import Config, {ConfigKey} from "../../../../common/Config";
 
 export class GradesController {
 
@@ -14,14 +14,14 @@ export class GradesController {
     public async getAllGrades(): Promise<Grade[]> {
         Log.info("GradesController::getAllGrades() - start");
 
-        let grades = await this.db.getGrades();
+        const grades = await this.db.getGrades();
         return grades;
     }
 
     public async getGrade(personId: string, delivId: string): Promise<Grade | null> {
         Log.info("GradesController::getGrade( " + personId + ", " + delivId + " ) - start");
 
-        let grade = await this.db.getGrade(personId, delivId);
+        const grade = await this.db.getGrade(personId, delivId);
         return grade;
     }
 
@@ -58,7 +58,7 @@ export class GradesController {
         }
 
         // sort grades by delivid
-        grades = grades.sort(function (g1: Grade, g2: Grade): number {
+        grades = grades.sort(function(g1: Grade, g2: Grade): number {
             return g1.delivId.localeCompare(g2.delivId);
         });
 
@@ -71,11 +71,11 @@ export class GradesController {
 
         // find all people on a repo
         const allPeopleIds: string[] = [];
-        let repo = await this.db.getRepository(repoId);
+        const repo = await this.db.getRepository(repoId);
         const teamIds = repo.teamIds;
         if (teamIds !== null) {
             for (const tid of teamIds) {
-                let team = await this.db.getTeam(tid);
+                const team = await this.db.getTeam(tid);
                 for (const t of team.personIds) {
                     let found = false;
                     for (const ap of allPeopleIds) {
@@ -106,7 +106,8 @@ export class GradesController {
                     timestamp: grade.timestamp,
                     custom:    grade.custom
                 };
-                Log.trace("GradesController::createGrade(..) - new grade; personId: " + personId + "; grade: " + JSON.stringify(gradeRecord));
+                Log.trace("GradesController::createGrade(..) - new grade; personId: " +
+                    personId + "; grade: " + JSON.stringify(gradeRecord));
             } else {
                 // update existing
                 // personId & delivId are invariant
@@ -115,14 +116,14 @@ export class GradesController {
                 gradeRecord.URL = grade.URL;
                 gradeRecord.timestamp = grade.timestamp;
                 gradeRecord.custom = grade.custom;
-                Log.trace("GradesController::createGrade(..) - updating grade; personId: " + personId + "; grade: " + JSON.stringify(gradeRecord));
+                Log.trace("GradesController::createGrade(..) - updating grade; personId: " +
+                    personId + "; grade: " + JSON.stringify(gradeRecord));
             }
             await this.db.writeGrade(gradeRecord);
         }
 
         return true; // if an exception hasn't been thrown we must be ok
     }
-
 
     /**
      * Validates the AutoTest grade object.

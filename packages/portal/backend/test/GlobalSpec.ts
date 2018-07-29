@@ -3,10 +3,11 @@ import "mocha";
 
 import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
+import {IContainerInput, IContainerOutput} from "../../../common/types/AutoTestTypes";
+import Util from "../../../common/Util";
 
 import {DatabaseController} from "../src/controllers/DatabaseController";
-import {Deliverable, Grade, Person, Team} from "../src/Types";
-import Util from "../../../common/Util";
+import {Deliverable, Grade, Person, Repository, Result, Team} from "../src/Types";
 
 if (typeof it === 'function') {
     // only if we're running in mocha
@@ -144,10 +145,76 @@ export class Test {
         let team: Team = {
             id:        teamId,
             delivId:   delivId,
-            URL:       'https://team/' + teamId,
+            URL:       Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Config.getInstance().getProp(ConfigKey.org) + '/teams/' + teamId,
             personIds: people,
             custom:    {}
         };
         return <Team>Util.clone(team);
+    }
+
+    public static getRepository(id: string, teamId: string): Repository {
+        let repo: Repository = {
+            id:      id,
+            URL:     Config.getInstance().getProp(ConfigKey.githubHost) + '/' + id,
+            teamIds: [teamId],
+            custom:  {}
+        };
+        return <Repository>Util.clone(repo);
+    }
+
+    public static getResult(delivId: string, repoId: string, people: string[], score: number): Result {
+
+        const ts = Date.now() - Math.random() * 1000 * 600;
+        const projectURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
+        const commitURL = projectURL + '/commits/FOOOSHA';
+        let output: IContainerOutput = {
+            commitURL:          commitURL,
+            timestamp:          ts,
+            report:             {
+                scoreOverall: score,
+                scoreTest:    Math.random() * 100,
+                scoreCover:   Math.random() * 100,
+                passNames:    [],
+                failNames:    [],
+                errorNames:   [],
+                skipNames:    [],
+                custom:       {},
+                feedback:     'feedback'
+            },
+            feedback:           'feedback',
+            postbackOnComplete: true,
+            custom:             {},
+            attachments:        [],
+            state:              'SUCCESS' // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
+        };
+
+        let input: IContainerInput = {
+            pushInfo: {
+                repoId: repoId,
+
+                branch:    'master',
+                cloneURL:  'cloneURL',
+                commitSHA: 'sha',
+                commitURL: commitURL,
+
+                projectURL:  projectURL,
+                postbackURL: 'postbackURL',
+                timestamp:   ts
+            },
+            delivId:  delivId
+        };
+
+        let result: Result = {
+            delivId:   delivId,
+            repoId:    repoId,
+            timestamp: ts,
+            commitURL: commitURL,
+            commitSHA: 'SHA',
+            input:     input, // just fake this
+            output:    output,
+            people:    people
+        };
+
+        return <Result> Util.clone(result);
     }
 }

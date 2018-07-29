@@ -60,8 +60,13 @@
                     <select id="studentsListSelect" style="margin-left: 1em;">
                         <option>-All-</option>
                     </select></div>
-                <ons-list-header>Students</ons-list-header>
-                <div id="studentListTable" style="width:100%;"></div>
+                <div id="studentListTableResults">
+                    <ons-list-header>Students</ons-list-header>
+                    <div id="studentListTable" style="width:100%;"></div>
+                </div>
+                <div id="studentListTableNone" class="noResultsRow">
+                    No Results
+                </div>
             </ons-list>
         </ons-page>
     </template>
@@ -76,9 +81,14 @@
                     </select></div>
                 <ons-list-header>Formed Teams</ons-list-header>
                 <div id="teamsListTable" style="width:100%;"></div>
+                <div id="teamsListTableNone" class="noResultsRow">
+                    No Results
+                </div>
                 <ons-list-header>Individuals</ons-list-header>
                 <div id="teamsIndividualListTable" style="width:100%;">
-                    NOT IMPLEMENTED YET
+                </div>
+                <div id="teamsIndividualListTableNone" class="noResultsRow">
+                    No Results
                 </div>
             </ons-list>
         </ons-page>
@@ -86,25 +96,47 @@
 
     <template id="grades.html">
         <ons-page id="AdminGrades">
-            <p style="text-align: center;">
-                Grades Page
-            </p>
+            <ons-list id="AdminGradesList">
+                <ons-list-header>Grade Overview</ons-list-header>
+                <div id="gradesListTable" style="width:100%;"></div>
+                <div id="gradesListTableNone" class="noResultsRow">
+                    No Results
+                </div>
+            </ons-list>
         </ons-page>
     </template>
 
     <template id="results.html">
         <ons-page id="AdminResults">
-            <p style="text-align: center;">
-                Results Page
-            </p>
+            <ons-list id="AdminResultsList">
+                <div style="text-align:center; padding: 1em;">
+                    Select Deliverable:
+                    <select id="resultsListSelect" style="margin-left: 1em;">
+                        <option value="''">-All-</option>
+                    </select></div>
+                <ons-list-header>Results</ons-list-header>
+                <div id="resultsListTable" style="width:100%;"></div>
+                <div id="resultsListTableNone" class="noResultsRow">
+                    No Results
+                </div>
+            </ons-list>
         </ons-page>
     </template>
 
     <template id="dashboard.html">
         <ons-page id="AdminDashboard">
-            <p style="text-align: center;">
-                Dashboard Page
-            </p>
+            <ons-list id="AdminDashboardList">
+                <div style="text-align:center; padding: 1em;">
+                    Select Deliverable:
+                    <select id="dashboardListSelect" style="margin-left: 1em;">
+                        <option value="''">-None-</option>
+                    </select></div>
+                <ons-list-header>Dashboard</ons-list-header>
+                <div id="dashboardListTable" style="width:100%;"></div>
+                <div id="dashboardListTableNone" class="noResultsRow">
+                    No Results
+                </div>
+            </ons-list>
         </ons-page>
     </template>
 

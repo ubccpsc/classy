@@ -1,11 +1,9 @@
-import Log from "../../../../common/Log";
 import Config, {ConfigKey} from "../../../../common/Config";
+import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
 
 import {Repository, Team} from "../Types";
 import {GitHubActions} from "./GitHubActions";
-import {AssignmentController} from "./340/AssignmentController";
-import {AssignmentRepositoryInfo} from "../../../../common/types/CS340Types";
 
 export interface IGitHubController {
     /**
@@ -29,8 +27,8 @@ export interface IGitHubController {
 }
 
 export interface GitTeamTuple {
-    teamName: string,
-    githubTeamNumber: number
+    teamName: string;
+    githubTeamNumber: number;
 }
 
 export class GitHubController implements IGitHubController {
@@ -46,7 +44,7 @@ export class GitHubController implements IGitHubController {
 
     public async getTeamUrl(team: Team): Promise<string> {
         const c = Config.getInstance();
-        const teamUrl = c.getProp(ConfigKey.githubHost) + '/orgs/' + c.getProp(ConfigKey.org) + '/teams/' + team.id; // valid .org use
+        const teamUrl = c.getProp(ConfigKey.githubHost) + '/orgs/' + c.getProp(ConfigKey.org) + '/teams/' + team.id;
         Log.info("GitHubController::getTeamUrl( " + team.id + " ) - URL: " + teamUrl);
         return teamUrl;
     }
@@ -54,15 +52,21 @@ export class GitHubController implements IGitHubController {
     /**
      * Creates the given repository on GitHub. Returns the Repository object when it is done (or null if it failed).
      *
-     * Repository.URL should be set once the repo is created successfully (this is how we can track that the repo exists on GitHub).
+     * Repository.URL should be set once the repo is created successfully
+     * (this is how we can track that the repo exists on GitHub).
      *
      * @param {string} repoName: The name of the Repository
      * @param {string} importUrl: The repo it should be imported from (if null, no import should take place)
-     * @param {string} path?: The subset of the importUrl repo that should be added to the root of the new repo. If this is null, undefined, or '', the whole importUrl is imported.
+     * @param {string} path?: The subset of the importUrl repo that should be added to the root of the new repo.
+     * If this is null, undefined, or '', the whole importUrl is imported.
      * @returns {Promise<boolean>}
      */
     public async createRepository(repoName: string, importUrl: string, path?: string): Promise<boolean> {
-        const WEBHOOKADDR = Config.getInstance().getProp(ConfigKey.backendUrl) + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/portal/githubWebhook';
+        const config = Config.getInstance();
+        const host = config.getProp(ConfigKey.backendUrl);
+        const port = config.getProp(ConfigKey.backendPort);
+        const WEBHOOKADDR = host + ':' + port + '/portal/githubWebhook';
+
         Log.info("GitHubController::createRepository( " + repoName + ", ...) - start");
         // Log.info("GitHubController::createRepository(..) - ");
         const startTime = Date.now();
@@ -71,8 +75,8 @@ export class GitHubController implements IGitHubController {
 
             try {
                 Log.trace("GitHubController::createRepository(..) - see if repo already exists");
-                let repoVal = await gh.repoExists(repoName);
-                if(repoVal === true) {
+                const repoVal = await gh.repoExists(repoName);
+                if (repoVal === true) {
                     // unable to create a repository if it already exists!
                     Log.error("GitHubController::createRepository(..) - Error: Repository already exists;" +
                         " failed to create a new repository");
@@ -86,12 +90,12 @@ export class GitHubController implements IGitHubController {
             try {
                 // create the repository
                 Log.trace("GitHubController::createRepository() - create GitHub repo");
-                let repoVal = await gh.createRepo(repoName);
+                const repoVal = await gh.createRepo(repoName);
                 Log.trace('GHA::createRepository(..) - success; repo: ' + repoVal);
             } catch (err) {
                 Log.error('GHA::createRepository(..) - create repo error: ' + err);
                 // repo creation failed; remove if needed (requires createRepo be permissive if already exists)
-                let res = await gh.deleteRepo(repoName);
+                const res = await gh.deleteRepo(repoName);
                 Log.info('GHA::createRepository(..) - repo removed: ' + res);
 
                 return false;
@@ -99,30 +103,31 @@ export class GitHubController implements IGitHubController {
 
             // still add staff team with push, just not students
             Log.trace("GitHubController::createRepository() - add staff team to repo");
-            let staffTeamNumber = await gh.getTeamNumber('staff');
+            const staffTeamNumber = await gh.getTeamNumber('staff');
             Log.trace('GHA::createRepository(..) - staffTeamNumber: ' + staffTeamNumber);
-            let staffAdd = await gh.addTeamToRepo(staffTeamNumber, repoName, 'admin');
+            const staffAdd = await gh.addTeamToRepo(staffTeamNumber, repoName, 'admin');
             Log.trace('GHA::createRepository(..) - team name: ' + staffAdd.teamName);
 
             // add webhooks
             Log.trace("GitHubController::createRepository() - add webhook");
-            let createHook = await gh.addWebhook(repoName, WEBHOOKADDR);
+            const createHook = await gh.addWebhook(repoName, WEBHOOKADDR);
             Log.trace('GHA::createRepository(..) - webook successful: ' + createHook);
 
             // perform import
             const c = Config.getInstance();
-            let targetUrl = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/' + repoName; // valid .org use
+            const targetUrl = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/' + repoName;
 
             Log.trace("GitHubController::createRepository() - importing project (slow)");
             let output;
-            if(path) {
+            if (path) {
                 output = await gh.importRepoFS(importUrl, targetUrl, path);
             } else {
                 output = await gh.importRepoFS(importUrl, targetUrl);
             }
             Log.trace('GHA::createRepository(..) - import complete; success: ' + output);
 
-            Log.trace('GithubController::createRepository(..) - successfully completed for: ' + repoName + '; took: ' + Util.took(startTime));
+            Log.trace('GithubController::createRepository(..) - successfully completed for: ' +
+                repoName + '; took: ' + Util.took(startTime));
 
             return true;
         } catch (err) {
@@ -136,48 +141,43 @@ export class GitHubController implements IGitHubController {
      *
      * @param {Repository} repo: The repository to be released.
      * @param {Team[]} teams: The teams to be added.
-     * @param {boolean} asCollaborators: Whether the team members should be added as a collaborators or whether a GitHub team should be created for them.
+     * @param {boolean} asCollaborators: Whether the team members should be added as a collaborators
+     * or whether a GitHub team should be created for them.
      * @returns {Promise<Repository | null>}
      */
-    public async releaseRepository(repo: Repository, teams: Team[], asCollaborators: boolean = false): Promise<boolean> {
+    public async releaseRepository(repo: Repository,
+                                   teams: Team[],
+                                   asCollaborators: boolean = false): Promise<boolean> {
         Log.info("GitHubController::releaseRepository( {" + repo.id + ", ...}, ...) - start");
-        // Log.info("GitHubController::releaseRepository(..) - ");
 
         const gh = new GitHubActions();
-        // let ac: AssignmentController = new AssignmentController();
 
-        if(repo.custom === null) return false;
-        let repoInfo: AssignmentRepositoryInfo = repo.custom;
-        if(typeof repoInfo.assignedTeams === 'undefined' || repoInfo.assignedTeams === null) return false;
-
-        // let assignedTeams: string[] = repoInfo.repoInfo.assignedTeams;
-
-        for(const team of teams) {
-            if(asCollaborators) {
+        for (const team of teams) {
+            if (asCollaborators) {
                 Log.info("GitHubController::releaseRepository(..) - releasing repository as " +
                     "individual collaborators");
                 Log.error("GitHubController::releaseRepository(..) - ERROR: Not implemented");
-                continue;
+                throw new Error("GitHubController - w/ collaborators NOT IMPLEMENTED");
             } else {
                 // using GithubTeams
                 // see if the team exists
                 let teamNum = await gh.getTeamNumber(team.id);
-                if(teamNum === -1) {
+                if (teamNum === -1) {
                     // did not find a team, create one first
                     Log.info("GitHubController::releaseRepository(..) - did not find team, creating");
-                    let newTeam = await gh.createTeam(team.id, "push");
+                    const newTeam = await gh.createTeam(team.id, "push");
                     Log.info("GitHubController::releaseRepository(..) - created team " +
                         "with #: " + newTeam.githubTeamNumber);
 
                     teamNum = newTeam.githubTeamNumber;
                     // add the students to the team
-                    let teamTuple: GitTeamTuple = await gh.addMembersToTeam(team.id, teamNum, team.personIds);
+                    const teamTuple: GitTeamTuple = await gh.addMembersToTeam(team.id, teamNum, team.personIds);
                     Log.info("GitHubController::releaseRepository(..) - added members to team");
 
                 }
                 // now, add the team to the repository
-                let teamAdd = await gh.addTeamToRepo(teamNum, repo.id, "push");
-                Log.info("GitHubController::releaseRepository(..) - added team ("+ team.id +"" +
+                const teamAdd = await gh.addTeamToRepo(teamNum, repo.id, "push");
+                Log.info("GitHubController::releaseRepository(..) - added team (" + team.id + "" +
                     ") with push permissions to repository (" + repo.id + ")");
             }
         }
@@ -186,7 +186,10 @@ export class GitHubController implements IGitHubController {
         return true;
     }
 
-    public async provisionRepository(repoName: string, teams: Team[], importUrl: string, webhookAddress: string): Promise<boolean> {
+    public async provisionRepository(repoName: string,
+                                     teams: Team[],
+                                     importUrl: string,
+                                     webhookAddress: string): Promise<boolean> {
         Log.info("GitHubController::provisionRepository( " + repoName + ", ...) - start");
         const start = Date.now();
         try {
@@ -198,7 +201,7 @@ export class GitHubController implements IGitHubController {
 
             try {
                 Log.trace("GitHubController::provisionRepository() - see if repo already exists");
-                let repoVal = await gh.repoExists(repoName);
+                const repoVal = await gh.repoExists(repoName);
                 Log.trace('GHA::provisionRepository(..) - repo exists: ' + repoVal);
                 if (repoVal === true) {
                     // this is fatal, we can't provision a repo that already exists
@@ -213,13 +216,13 @@ export class GitHubController implements IGitHubController {
             try {
                 // create a repo
                 Log.trace("GitHubController::provisionRepository() - create GitHub repo");
-                let repoVal = await gh.createRepo(repoName);
+                const repoVal = await gh.createRepo(repoName);
                 Log.trace('GHA::provisionRepository(..) - repo: ' + repoVal);
                 // expect(repoVal).to.equal('https://github.com/SECapstone/' + Test.REPONAME1);
             } catch (err) {
                 Log.error('GHA::provisionRepository(..) - create repo error: ' + err);
                 // repo creation failed; remove if needed (requires createRepo be permissive if already exists)
-                let res = await gh.deleteRepo(repoName);
+                const res = await gh.deleteRepo(repoName);
                 Log.info('GHA::provisionRepository(..) - repo removed: ' + res);
                 return false;
             }
@@ -232,11 +235,11 @@ export class GitHubController implements IGitHubController {
                     Log.trace('GHA::provisionRepository(..) createTeam: ' + teamValue.teamName);
 
                     Log.trace("GitHubController::provisionRepository() - add members to GitHub team");
-                    let addMembers = await gh.addMembersToTeam(teamValue.teamName, teamValue.githubTeamNumber, team.personIds);
+                    const addMembers = await gh.addMembersToTeam(teamValue.teamName, teamValue.githubTeamNumber, team.personIds);
                     Log.trace('GHA::provisionRepository(..) - addMembers: ' + addMembers.teamName);
 
                     Log.trace("GitHubController::provisionRepository() - add team to repo");
-                    let teamAdd = await gh.addTeamToRepo(teamValue.githubTeamNumber, repoName, 'push');
+                    const teamAdd = await gh.addTeamToRepo(teamValue.githubTeamNumber, repoName, 'push');
                     Log.trace('GHA::provisionRepository(..) - team name: ' + teamAdd.teamName);
                 }
             } catch (err) {
@@ -244,25 +247,26 @@ export class GitHubController implements IGitHubController {
             }
 
             Log.trace("GitHubController::provisionRepository() - add staff team to repo");
-            let staffTeamNumber = await gh.getTeamNumber('staff');
+            const staffTeamNumber = await gh.getTeamNumber('staff');
             Log.trace('GHA::provisionRepository(..) - staffTeamNumber: ' + staffTeamNumber);
-            let staffAdd = await gh.addTeamToRepo(staffTeamNumber, repoName, 'admin');
+            const staffAdd = await gh.addTeamToRepo(staffTeamNumber, repoName, 'admin');
             Log.trace('GHA::provisionRepository(..) - team name: ' + staffAdd.teamName);
 
             // add webhooks
             Log.trace("GitHubController::provisionRepository() - add webhook");
-            let createHook = await gh.addWebhook(repoName, webhookAddress);
+            const createHook = await gh.addWebhook(repoName, webhookAddress);
             Log.trace('GHA::provisionRepository(..) - webook successful: ' + createHook);
 
             // perform import
             const c = Config.getInstance();
-            let targetUrl = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/' + repoName; // valid .org use
+            const targetUrl = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/' + repoName;
 
             Log.trace("GitHubController::provisionRepository() - importing project (slow)");
-            let output = await gh.importRepoFS(importUrl, targetUrl);
+            const output = await gh.importRepoFS(importUrl, targetUrl);
             Log.trace('GHA::provisionRepository(..) - import complete; success: ' + output);
 
-            Log.trace('GHA::provisionRepository(..) - successfully completed for: ' + repoName + '; took: ' + Util.took(start));
+            Log.trace('GHA::provisionRepository(..) - successfully completed for: ' +
+                repoName + '; took: ' + Util.took(start));
             return true;
         } catch (err) {
             Log.error('GitHubController::provisionRepository(..) - ERROR: ' + err);
@@ -289,7 +293,10 @@ export class TestGitHubController implements IGitHubController {
         return "TODO";
     }
 
-    public async provisionRepository(repoName: string, teams: Team[], sourceRepo: string, webhookAddress: string): Promise<boolean> {
+    public async provisionRepository(repoName: string,
+                                     teams: Team[],
+                                     sourceRepo: string,
+                                     webhookAddress: string): Promise<boolean> {
         Log.error("TestGitHubController::provisionRepository(..) - NOT IMPLEMENTED");
         return true;
     }

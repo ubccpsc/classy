@@ -1,17 +1,18 @@
 /**
  * Created by rtholmes on 2018-02-23.
  */
-import restify = require('restify');
 import * as fs from "fs";
 
-import Log from "../../../../common/Log";
 import Config, {ConfigKey} from "../../../../common/Config";
 
+import Log from "../../../../common/Log";
+
 import {Factory} from "../Factory";
-import GeneralRoutes from "./common/GeneralRoutes";
+import AdminRoutes from "./common/AdminRoutes";
 import {AuthRoutes} from "./common/AuthRoutes";
 import {AutoTestRoutes} from "./common/AutoTestRoutes";
-import AdminRoutes from "./common/AdminRoutes";
+import GeneralRoutes from "./common/GeneralRoutes";
+import restify = require('restify');
 
 /**
  * This configures the REST endpoints for the server.
@@ -46,9 +47,9 @@ export default class BackendServer {
      */
     public stop(): Promise<boolean> {
         Log.info('BackendServer::stop() - start');
-        let that = this;
-        return new Promise(function (fulfill) {
-            that.rest.close(function () {
+        const that = this;
+        return new Promise(function(fulfill) {
+            that.rest.close(function() {
                 Log.info('BackendServer::stop() - done');
                 fulfill(true);
             });
@@ -65,9 +66,10 @@ export default class BackendServer {
     public start(): Promise<boolean> {
         Log.info('BackendServer::start() - start');
 
-        let that = this;
-        return new Promise(function (fulfill, reject) {
+        const that = this;
+        return new Promise(function(fulfill, reject) {
 
+            // noinspection TsLint
             let https_options: any = {
                 name:        'backend',
                 key:         fs.readFileSync(that.config.getProp(ConfigKey.sslKeyPath)),
@@ -119,12 +121,12 @@ export default class BackendServer {
                 default:   'index.html'
             }));
 
-            that.rest.listen(that.config.getProp(ConfigKey.backendPort), function () {
+            that.rest.listen(that.config.getProp(ConfigKey.backendPort), function() {
                 Log.info('BackendServer::start() - restify listening: ' + that.rest.url);
                 fulfill(true);
             });
 
-            that.rest.on('error', function (err: string) {
+            that.rest.on('error', function(err: string) {
                 // catches errors in restify start; unusual syntax due to internal node not using normal exceptions here
                 Log.error('BackendServer::start() - restify ERROR: ' + err);
                 reject(err);

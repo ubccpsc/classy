@@ -1,0 +1,17 @@
+{
+  "extends": "tslint:recommended",
+  "rules": {
+    "max-line-length": [
+      true,
+      140
+    ],
+	"member-ordering": "fields-first",
+    "object-literal-shorthand": false,
+    "quotemark": false,
+    "trailing-comma": "never",
+    "interface-name": "never-prefix",
+    "only-arrow-functions": false,
+    "object-literal-sort-keys": false,
+    "no-floating-promises": true
+  }
+}

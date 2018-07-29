@@ -66,3 +66,9 @@ Settings Page
 .settingTextInput {
     background-color: lightsteelblue;
 }
+
+.noResultsRow {
+    text-align: center;
+    padding-top: 1em;
+    padding-bottom: 1em;
+}

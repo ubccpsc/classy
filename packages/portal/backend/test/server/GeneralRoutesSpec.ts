@@ -69,10 +69,10 @@ describe('General Routes', function () {
         // prepare deliverables
         let deliv = Test.getDeliverable(Test.DELIVID1);
         deliv.gradesReleased = true;
-        dc.writeDeliverable(deliv);
+        await dc.writeDeliverable(deliv);
         deliv = Test.getDeliverable(Test.DELIVID2);
         deliv.gradesReleased = true;
-        dc.writeDeliverable(deliv);
+        await dc.writeDeliverable(deliv);
 
         let response = null;
         let body: Payload;
