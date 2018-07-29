@@ -1,14 +1,13 @@
+## Must run as ROOT user to invoke docker and IP Tables commands
+
 FROM classy:base
 
-ARG GRADER_PORT_REST
-ARG GRADER_PORT_SOCK
+ARG PORT
 
-ENV GRADER_PORT_REST ${GRADER_PORT_REST:-3000}
-ENV GRADER_PORT_SOCK ${GRADER_PORT_SOCK:-7777}
+ENV GRADER_PORT ${PORT:-3000}
 ENV NODE_ENV ${NODE_ENV:-production}
 
-EXPOSE $GRADER_PORT_REST
-EXPOSE $GRADER_PORT_SOCK
+EXPOSE $PORT
 
 VOLUME [ "/temp" ]
 VOLUME [ "/archive" ]
@@ -22,7 +21,6 @@ COPY package.json package.json
 COPY src/ src/
 RUN chown -R node /app
 
-USER node
 RUN yarn install --pure-lockfile --non-interactive --production=false \
  && tsc --outDir /app --sourceMap false \
  && cp package.json /app/grader \

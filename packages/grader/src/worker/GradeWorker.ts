@@ -77,7 +77,7 @@ export class GradeWorker implements IGradeWorker {
             // docker-compose file.
             const hostVol: string = this.host.mount + this.workspace.replace("/data", "");
             const containerOptions: IDockerContainerOptions = {
-                "--env": [`ASSIGNMENT=${this.assnId}`, `USER_UID=${this.host.uid}`, `HOST_NAME=${this.host.name}`, `HOST_PORT=${this.host.port}`],
+                "--env": [`ASSIGNMENT=${this.assnId}`, `USER_UID=${this.host.uid}`],  // , `HOST_NAME=${this.host.name}`, `HOST_PORT=${this.host.port}`
                 "--volume": [`${hostVol}/assn:/assn`, `${hostVol}/output:/output`],
                 "--network": this.host.net,
             };
@@ -92,14 +92,14 @@ export class GradeWorker implements IGradeWorker {
             cntrFirewall = new ContainerFirewall(fwId, cntrAddr, new FirewallController());
 
             Log.info("Register container socket listener");
-            this.ss.getSocket(cntrAddr).then((sock) => {
-                socket = sock;
-                socket.on("data", async (data: string) => {
-                    const response = await this.handleContainerMessage(data, cntrFirewall);
-                    socket.write(response);
-                    // socket.end();
-                });
-            });
+            // this.ss.getSocket(cntrAddr).then((sock) => {
+            //     socket = sock;
+            //     socket.on("data", async (data: string) => {
+            //         const response = await this.handleContainerMessage(data, cntrFirewall);
+            //         socket.write(response);
+            //         // socket.end();
+            //     });
+            // });
 
             Log.info("Register timeout");
             // Set a timer to kill the container if it doesn't finish in the time alloted
@@ -149,9 +149,10 @@ export class GradeWorker implements IGradeWorker {
             out.feedback = "Error running container.";
             out.state = "FAIL";
         } finally {
-            if (typeof socket !== "undefined") {
-                socket.end();
-            }
+            // if (typeof socket !== "undefined") {
+            //     socket.end();
+            // }
+
             cntr.remove();
             try {
                 cntrFirewall.delete();
@@ -172,8 +173,10 @@ export class GradeWorker implements IGradeWorker {
         await fs.mkdirp(`${this.workspace}/output`);
         const assnRepo = await this.prepareRepo(assnUrl, assnDir, assnRef);
         await new Promise((resolve, reject) => {
+            Log.trace(`GradeWorker::preRun() - Changing ownership of ${this.workspace} to ${this.host.uid}.`);
             exec(`chown -R ${this.host.uid} ${this.workspace}`, (error) => {
                 if (error) {
+                    Log.error("GradeWorker::preRun() - Failed to change owner. " + error);
                     reject(error);
                 }
                 resolve();
