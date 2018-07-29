@@ -157,8 +157,7 @@ export class GitHubController implements IGitHubController {
                 Log.info("GitHubController::releaseRepository(..) - releasing repository as " +
                     "individual collaborators");
                 Log.error("GitHubController::releaseRepository(..) - ERROR: Not implemented");
-                throw new Error("NOT IMPLEMENTED");
-                continue;
+                throw new Error("GitHubController - w/ collaborators NOT IMPLEMENTED");
             } else {
                 // using GithubTeams
                 // see if the team exists
