@@ -1,13 +1,7 @@
-import restify = require('restify');
 import * as rp from "request-promise-native";
 
 import Config, {ConfigCourses, ConfigKey} from "../../../../../common/Config";
 import Log from "../../../../../common/Log";
-
-import IREST from "../IREST";
-import {CourseController} from "../../controllers/CourseController";
-import {GitHubController} from "../../controllers/GitHubController";
-import {ResultsController} from "../../controllers/ResultsController";
 import {
     AutoTestAuthPayload,
     AutoTestConfigPayload,
@@ -15,9 +9,16 @@ import {
     AutoTestGradeTransport,
     AutoTestResultPayload,
     AutoTestResultTransport,
-    Payload,
+    Payload
 } from "../../../../../common/types/PortalTypes";
+import {CourseController} from "../../controllers/CourseController";
+import {GitHubController} from "../../controllers/GitHubController";
 import {GradesController} from "../../controllers/GradesController";
+import {ResultsController} from "../../controllers/ResultsController";
+
+import IREST from "../IREST";
+
+import restify = require('restify');
 
 /**
  * Just a large body of static methods for translating between restify and the remainder of the system.
@@ -56,8 +57,8 @@ export class AutoTestRoutes implements IREST {
 
             // TODO: this is just a dummy implementation
 
-
-            if ((name === ConfigCourses.sdmm || name === ConfigCourses.classytest) && delivId !== 'd9997') { // HACK: the && is terrible and is just for testing
+            if ((name === ConfigCourses.sdmm || name === ConfigCourses.classytest) && delivId !== 'd9997') {
+                // HACK: the && is terrible and is just for testing
                 payload = {
                     success: {
                         dockerImage:        'secapstone-grader',
@@ -74,7 +75,6 @@ export class AutoTestRoutes implements IREST {
             }
         }
     }
-
 
     public static atDefaultDeliverable(req: any, res: any, next: any) {
         Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - /defaultDeliverable/:name - start GET');
@@ -97,16 +97,15 @@ export class AutoTestRoutes implements IREST {
             // }
 
             const cc = new CourseController(new GitHubController());
-            cc.getCourse().then(function (course) {
+            cc.getCourse().then(function(course) {
                 payload = {success: {defaultDeliverable: course.defaultDeliverableId}};
                 res.send(200, payload);
-            }).catch(function (err) {
+            }).catch(function(err) {
                 payload = {failure: {message: 'No default deliverable found.', shouldLogout: false}};
                 res.send(400, payload);
             });
         }
     }
-
 
     public static atGrade(req: any, res: any, next: any) {
         Log.info('AutoTestRouteHandler::atGrade(..) - start');
@@ -124,16 +123,17 @@ export class AutoTestRoutes implements IREST {
             const gc: GradesController = new GradesController();
             const validGradeRecord = gc.validateAutoTestGrade(gradeRecord);
             if (validGradeRecord !== null) {
-                Log.error('AutoTestRouteHandler::atGrade(..) - valid body not provided: ' + validGradeRecord + '; body: ' + JSON.stringify(gradeRecord));
+                Log.error('AutoTestRouteHandler::atGrade(..) - valid body not provided: ' +
+                    validGradeRecord + '; body: ' + JSON.stringify(gradeRecord));
                 res.send(400, {failure: {message: 'Invalid Grade Record: ' + validGradeRecord, shouldLogout: false}});
             } else {
-
-                Log.info('AutoTestRouteHandler::atGrade(..) - repoId: ' + gradeRecord.repoId + '; delivId: ' + gradeRecord.delivId + '; body: ' + JSON.stringify(gradeRecord));
-                let sc = new CourseController(new GitHubController());
-                sc.handleNewAutoTestGrade(gradeRecord).then(function (success: any) {
+                Log.info('AutoTestRouteHandler::atGrade(..) - repoId: ' + gradeRecord.repoId +
+                    '; delivId: ' + gradeRecord.delivId + '; body: ' + JSON.stringify(gradeRecord));
+                const sc = new CourseController(new GitHubController());
+                sc.handleNewAutoTestGrade(gradeRecord).then(function(success: any) {
                     payload = {success: {success: true}};
                     res.send(200, payload);
-                }).catch(function (err) {
+                }).catch(function(err) {
                     payload = {failure: {message: 'Failed to receive grade: ' + err, shouldLogout: false}};
                     res.send(400, payload);
                     Log.error('AutoTestRouteHandler::atGrade(..) - ERROR: ' + err);
@@ -170,15 +170,15 @@ export class AutoTestRoutes implements IREST {
             const rc = new ResultsController();
             const validResultRecord = rc.validateAutoTestResult(resultRecord);
             if (validResultRecord !== null) {
-                Log.error('AutoTestRouteHandler::atPostResult(..) - valid body not provided: ' + validResultRecord + '; body: ' + JSON.stringify(resultRecord));
+                Log.error('AutoTestRouteHandler::atPostResult(..) - valid body not provided: ' +
+                    validResultRecord + '; body: ' + JSON.stringify(resultRecord));
                 res.send(400, {failure: {message: 'Invalid Result Record: ' + validResultRecord, shouldLogout: false}});
             } else {
                 Log.warn('AutoTestRouteHandler::atPostResult(..) - valid result && valid secret');
-                let rc = new ResultsController();
-                rc.createResult(resultRecord).then(function (success) {
+                rc.createResult(resultRecord).then(function(success) {
                     payload = {success: {message: 'Result received'}};
                     res.send(200, payload);
-                }).catch(function (err) {
+                }).catch(function(err) {
                     payload = {failure: {message: 'Error processing result: ' + err, shouldLogout: false}};
                     res.send(400, payload);
                     Log.error('AutoTestRouteHandler::atPostResult(..) - ERROR: ' + err);
@@ -220,7 +220,6 @@ export class AutoTestRoutes implements IREST {
         }
     }
 
-
     /**
      * This route forwards GitHub webhooks from the public-facing backend to AutoTest's
      * endpoint (which can be internal and protected).
@@ -235,7 +234,8 @@ export class AutoTestRoutes implements IREST {
 
         // TODO: is there any way to verify this actually came from GitHub?
 
-        const url = Config.getInstance().getProp(ConfigKey.autotestUrl) + ':' + Config.getInstance().getProp(ConfigKey.autotestPort) + '/githubWebhook';
+        const atHost = Config.getInstance().getProp(ConfigKey.autotestUrl);
+        const url = atHost + ':' + Config.getInstance().getProp(ConfigKey.autotestPort) + '/githubWebhook';
         const options = {
             uri:     url,
             method:  'POST',
@@ -244,13 +244,13 @@ export class AutoTestRoutes implements IREST {
             body:    webhookBody
         };
 
-        return rp(options).then(function (succ) {
+        return rp(options).then(function(succ) {
             Log.info('AutoTestRouteHandler::githubWebhook(..) - success: ' + JSON.stringify(succ));
             res.send(200, succ); // send interpretation back to GitHub
-        }).catch(function (err) {
+        }).catch(function(err) {
             Log.error('AutoTestRouteHandler::githubWebhook(..) - ERROR: ' + err);
             res.send(400, {error: err}); // respond no
-        })
+        });
     }
 
     public static atGetResult(req: any, res: any, next: any) {
@@ -269,15 +269,14 @@ export class AutoTestRoutes implements IREST {
 
             Log.info('AutoTestRouteHandler::atGetResult(..) - delivId: ' + delivId + '; repoId: ' + repoId);
 
-            let rc = new ResultsController();
-            rc.getResult(delivId, repoId).then(function (result) {
+            const rc = new ResultsController();
+            rc.getResult(delivId, repoId).then(function(result) {
                 payload = {success: [result]};
                 res.send(200, payload);
-            }).catch(function (err) {
+            }).catch(function(err) {
                 payload = {failure: {message: err.message, shouldLogout: false}};
                 res.send(400, payload);
             });
         }
     }
-
 }

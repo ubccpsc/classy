@@ -1,8 +1,8 @@
 /**
  * Created by rtholmes on 2018-02-23.
  */
-import restify = require('restify');
 import * as fs from "fs";
+
 import Config, {ConfigKey} from "../../../../common/Config";
 
 import Log from "../../../../common/Log";
@@ -12,6 +12,7 @@ import AdminRoutes from "./common/AdminRoutes";
 import {AuthRoutes} from "./common/AuthRoutes";
 import {AutoTestRoutes} from "./common/AutoTestRoutes";
 import GeneralRoutes from "./common/GeneralRoutes";
+import restify = require('restify');
 
 /**
  * This configures the REST endpoints for the server.

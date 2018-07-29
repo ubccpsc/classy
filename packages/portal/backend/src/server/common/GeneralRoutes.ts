@@ -1,16 +1,13 @@
 import restify = require('restify');
-import Log from "../../../../../common/Log";
-
-import IREST from "../IREST";
-import {ConfigTransportPayload, GradeTransport, GradeTransportPayload, Payload} from '../../../../../common/types/PortalTypes';
 import Config, {ConfigKey} from '../../../../../common/Config';
+import Log from "../../../../../common/Log";
+import {ConfigTransportPayload, GradeTransport, GradeTransportPayload, Payload} from '../../../../../common/types/PortalTypes';
 import {AuthController} from "../../controllers/AuthController";
 import {GradesController} from "../../controllers/GradesController";
 
-export default class GeneralRoutes implements IREST {
+import IREST from "../IREST";
 
-    public constructor() {
-    }
+export default class GeneralRoutes implements IREST {
 
     public registerRoutes(server: restify.Server) {
         Log.trace('GeneralRoutes::registerRoutes() - start');
@@ -47,7 +44,7 @@ export default class GeneralRoutes implements IREST {
         const user = req.headers.user;
         const token = req.headers.token;
 
-        const handleError = function (code: number, msg: string) {
+        const handleError = function(code: number, msg: string) {
             Log.info('GeneralRoutes::getGrades(..) - ERROR: ' + msg); // intentionally info
             const payload: Payload = {failure: {message: msg, shouldLogout: false}};
             res.send(code, payload);
@@ -56,21 +53,21 @@ export default class GeneralRoutes implements IREST {
 
         const ac = new AuthController();
         const gc: GradesController = new GradesController();
-        ac.isValid(user, token).then(function (isValid) {
+        ac.isValid(user, token).then(function(isValid) {
             Log.trace('GeneralRoutes::getGrades(..) - in isValid: ' + isValid);
             if (isValid === true) {
                 return gc.getReleasedGradesForPerson(user);
             } else {
                 return handleError(401, 'Authorization error; invalid token.');
             }
-        }).then(function (grades) {
+        }).then(function(grades) {
             const gradeTrans: GradeTransport[] = [];
             for (const grade of grades) {
                 gradeTrans.push(gc.translateGrade(grade));
             }
             const payload: GradeTransportPayload = {success: gradeTrans};
             res.send(200, payload);
-        }).catch(function (err) {
+        }).catch(function(err) {
             Log.error('GeneralRoutes::getGrades(..) - ERROR: ' + err.message);
             return handleError(400, 'Error retrieving grades.');
         });

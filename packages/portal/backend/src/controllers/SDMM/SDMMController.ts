@@ -1,13 +1,13 @@
 import * as crypto from 'crypto';
+import Config, {ConfigCourses, ConfigKey} from "../../../../../common/Config";
+
+import Log from "../../../../../common/Log";
+import {GradePayload, Payload, SDMMStatus, StatusPayload} from "../../../../../common/types/SDMMTypes";
+import Util from "../../../../../common/Util";
+import {Grade, Person, Team} from "../../Types";
 
 import {CourseController} from "../CourseController";
 import {IGitHubController} from "../GitHubController";
-import {Grade, Person, Team} from "../../Types";
-
-import Log from "../../../../../common/Log";
-import Config, {ConfigCourses, ConfigKey} from "../../../../../common/Config";
-import {GradePayload, Payload, SDMMStatus, StatusPayload} from "../../../../../common/types/SDMMTypes";
-import Util from "../../../../../common/Util";
 import {PersonController} from "../PersonController";
 
 /**
@@ -20,6 +20,48 @@ import {PersonController} from "../PersonController";
  * provided to the backend than we might normally for a course being offered on campus.
  */
 export class SDMMController extends CourseController {
+
+    /**
+     * Public static so tests can use them too.
+     *
+     * @returns {string}
+     */
+    public static getProjectPrefix(): string {
+        const name = Config.getInstance().getProp(ConfigKey.name);
+        if (name === ConfigCourses.classytest) {
+            Log.info("SDMMController::getProjectPrefix(..) - returning test prefix");
+            return "TEST__X__p_";
+        } else if (name === 'sdmm') {
+            Log.trace("SDMMController::getProjectPrefix(..) - returning sdmm prefix");
+            return "secap_";
+        } else {
+            // NOTE: non-sdmm courses shouldn't use this...
+            Log.error("SDMMController::getProjectPrefix(..) - unhandled course: " + name);
+            return "project_";
+        }
+    }
+
+    /**
+     * Public static so tests can use them too.
+     *
+     * @returns {string}
+     */
+    public static getTeamPrefix() {
+        const name = Config.getInstance().getProp(ConfigKey.name);
+
+        if (name === ConfigCourses.classytest) {
+            Log.info("SDMMController::getTeamPrefix(..) - returning test prefix");
+            return "TEST__X__t_";
+        } else if (name === 'sdmm') {
+            Log.trace("SDMMController::getTeamPrefix(..) - returning sdmm prefix");
+            // NOTE: was supposed to be "t_" but we made a mistake in initial deployment so we're stuck with no prefix
+            return "";
+        } else {
+            // NOTE: non-sdmm courses shouldn't use this...
+            Log.error("SDMMController::getTeamPrefix(..) - unhandled course: " + name);
+            return "t_";
+        }
+    }
 
     private GRADE_TO_ADVANCE = 60;
 
@@ -79,6 +121,129 @@ export class SDMMController extends CourseController {
     }
 
     /**
+     * SDMM is self-paced so the system needs to decide what status each learner has
+     * (e.g., are they on d0, d1, d2, d3) and whether they are eligible to progress
+     * to the next deliverable. This calculates the learner's status and allows
+     * them to advance if they have met the prerequisites.
+     *
+     * This also provisions a StatusPayload which returns all existing status information
+     * to the learner in their dashboard.
+     *
+     * @param {string} personId
+     * @returns {Promise<StatusPayload>}
+     */
+    public async getStatus(personId: string): Promise<StatusPayload> {
+        Log.info("SDMMController::getStatus( " + personId + " ) - start");
+        const start = Date.now();
+
+        const myStatus = await this.computeStatusString(personId);
+
+        let myD0: GradePayload = null;
+        let myD1: GradePayload = null;
+        let myD2: GradePayload = null;
+        let myD3: GradePayload = null;
+
+        const d0Grade: Grade = await this.dc.getGrade(personId, 'd0');
+        const d1Grade: Grade = await this.dc.getGrade(personId, 'd1');
+        const d2Grade: Grade = await this.dc.getGrade(personId, 'd2');
+        const d3Grade: Grade = await this.dc.getGrade(personId, 'd3');
+
+        if (d0Grade !== null) {
+            myD0 = {
+                score:     d0Grade.score,
+                urlName:   d0Grade.urlName,
+                URL:       d0Grade.URL,
+                comment:   '',
+                timestamp: d0Grade.timestamp,
+                custom:    {}
+            };
+        }
+
+        if (d1Grade !== null) {
+            myD1 = {
+                score:     d1Grade.score,
+                urlName:   d1Grade.urlName,
+                URL:       d1Grade.URL,
+                comment:   '',
+                timestamp: d1Grade.timestamp,
+                custom:    {}
+            };
+        }
+
+        if (d2Grade !== null) {
+            myD2 = {
+                score:     d2Grade.score,
+                urlName:   d2Grade.urlName,
+                URL:       d2Grade.URL,
+                comment:   '',
+                timestamp: d2Grade.timestamp,
+                custom:    {}
+            };
+        }
+
+        if (d3Grade !== null) {
+            myD3 = {
+                score:     d3Grade.score,
+                urlName:   d3Grade.urlName,
+                URL:       d3Grade.URL,
+                comment:   '',
+                timestamp: d3Grade.timestamp,
+                custom:    {}
+            };
+        }
+
+        const statusPayload = {
+            status: myStatus,
+            d0:     myD0,
+            d1:     myD1,
+            d2:     myD2,
+            d3:     myD3
+        };
+
+        Log.trace("SDMMController::getStatus( " + personId + " ) - took: " + Util.took(start));
+        return statusPayload;
+    }
+
+    /**
+     * In the SDMM users are not known in advance (aka there is no classlist and we only learn about
+     * learners for the first time when they try to login to GitHub). Because of this, when we encounter
+     * a GitHub id we have not seen before we need to provision that person as if we always knew about them.
+     *
+     * This is _NOT_ what traditional courses are going to want to do as it allows _anyone_ to join a course.
+     *
+     * @param {string} githubUsername
+     * @returns {Promise<Person | null>}
+     */
+    public async handleUnknownUser(githubUsername: string): Promise<Person | null> {
+        Log.info("SDDMController::handleUnknownUser( " + githubUsername + " ) - start");
+
+        // in the secapstone we don't know who the students are in advance
+        // in this case, we will create Person objects on demand
+
+        // make person
+        let newPerson: Person = {
+            id:            githubUsername,
+            csId:          githubUsername, // sdmm doesn't have these
+            githubId:      githubUsername,
+            studentNumber: null,
+
+            fName:  '',
+            lName:  '',
+            kind:   null,
+            URL:    'https://github.com/' + githubUsername, // HARDCODE
+            labId:  'UNKNOWN',
+            custom: {}
+        };
+
+        newPerson.custom.sdmmStatus = 'd0pre'; // new users always start in d0pre state
+
+        const pc = new PersonController();
+        newPerson = await pc.createPerson(newPerson);
+
+        return newPerson;
+    }
+
+    /**
      *
      * This confirms the SDMM status. The approach is conservative (and hence slow).
      *
@@ -124,7 +289,7 @@ export class SDMMController extends CourseController {
                 // make sure d0 doesn't exist for a person, if it does, make them D0
 
                 let d0Repo = null;
-                let repos = await this.rc.getReposForPerson(person);
+                const repos = await this.rc.getReposForPerson(person);
                 for (const r of repos) {
                     if (r.custom.d0enabled === true) {
                         d0Repo = r;
@@ -192,10 +357,10 @@ export class SDMMController extends CourseController {
             // D1
             if (currentStatus === SDMMStatus[SDMMStatus.D1]) {
                 // if their d1 score > 60, make them D2
-                let d1Grade = await this.gc.getGrade(personId, "d1");
+                const d1Grade = await this.gc.getGrade(personId, "d1");
                 if (d1Grade && d1Grade.score !== null && d1Grade.score >= this.GRADE_TO_ADVANCE) {
                     Log.info("SDMMController::computeStatusString(..) - elevating D1 to D2");
-                    let allRepos = await this.rc.getReposForPerson(person);
+                    const allRepos = await this.rc.getReposForPerson(person);
                     for (const r of allRepos) {
                         if (r.custom.d1enabled === true) {
                             // is a project repo
@@ -212,7 +377,7 @@ export class SDMMController extends CourseController {
             // D2
             if (currentStatus === SDMMStatus[SDMMStatus.D2]) {
                 // if their d2 core > 60, make them D3PRE
-                let d2Grade = await this.gc.getGrade(personId, "d2");
+                const d2Grade = await this.gc.getGrade(personId, "d2");
                 if (d2Grade && d2Grade.score !== null && d2Grade.score >= this.GRADE_TO_ADVANCE) {
                     Log.info("SDMMController::computeStatusString(..) - elevating D2 to D3PRE");
                     currentStatus = SDMMStatus[SDMMStatus.D3PRE];
@@ -224,7 +389,7 @@ export class SDMMController extends CourseController {
             // D3PRE
             if (currentStatus === SDMMStatus[SDMMStatus.D3PRE]) {
                 // if their d1 repo has custom.sddmD3pr===true, make them D3
-                let allRepos = await this.rc.getReposForPerson(person);
+                const allRepos = await this.rc.getReposForPerson(person);
                 let prComplete = false;
                 for (const r of allRepos) {
                     if (r.custom.d2enabled === true && r.custom.sddmD3pr === true) {
@@ -234,7 +399,7 @@ export class SDMMController extends CourseController {
                 }
                 if (prComplete === true) {
                     Log.info("SDMMController::computeStatusString(..) - elevating D3PRE to D3");
-                    currentStatus = SDMMStatus[SDMMStatus.D3];// "D3";
+                    currentStatus = SDMMStatus[SDMMStatus.D3]; // "D3";
                 } else {
                     Log.info("SDMMController::computeStatusString(..) - NOT elevating from D3PRE");
                 }
@@ -243,7 +408,7 @@ export class SDMMController extends CourseController {
             // D3
             // nothing else to be done
             if (currentStatus === SDMMStatus[SDMMStatus.D3]) {
-                let allRepos = await this.rc.getReposForPerson(person);
+                const allRepos = await this.rc.getReposForPerson(person);
                 for (const r of allRepos) {
                     if (r.custom.d2enabled === true) {
                         // is a project repo
@@ -303,7 +468,7 @@ export class SDMMController extends CourseController {
                 return false;
             }
 
-            // TODO: actually do this if it looks like getStatus is proving to be too slow
+            // NOTE: actually do this if it looks like getStatus is proving to be too slow
 
             return false;
 
@@ -327,7 +492,7 @@ export class SDMMController extends CourseController {
                 throw new Error("Username not registered; contact course staff.");
             }
 
-            let personStatus = await this.computeStatusString(personId);
+            const personStatus = await this.computeStatusString(personId);
             if (personStatus !== SDMMStatus[SDMMStatus.D0PRE]) {
                 Log.info("SDMMController::provisionD0Repo( " + personId + " ) - bad status: " + personStatus);
                 throw new Error("User is not eligible for D0.");
@@ -336,7 +501,7 @@ export class SDMMController extends CourseController {
             }
 
             // create local team
-            let existingTeam = await this.tc.getTeam(teamName);
+            const existingTeam = await this.tc.getTeam(teamName);
             if (existingTeam !== null) {
                 // team already exists; warn and fail
                 throw new Error("SDMMController::provisionD0Repo(..) - team already exists: " + teamName);
@@ -346,7 +511,7 @@ export class SDMMController extends CourseController {
             const team = await this.tc.createTeam(teamName, deliv, [person], teamCustom);
 
             // create local repo
-            let existingRepo = await this.rc.getRepository(repoName);
+            const existingRepo = await this.rc.getRepository(repoName);
             if (existingRepo !== null) {
                 // repo already exists; warn and fail
                 throw new Error("Failed to provision d0 repo; already exists: " + repoName);
@@ -356,7 +521,8 @@ export class SDMMController extends CourseController {
 
             // create remote repo
             const INPUTREPO = "https://github.com/SECapstone/bootstrap";
-            const WEBHOOKADDR = Config.getInstance().getProp(ConfigKey.backendUrl) + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/portal/githubWebhook';
+            const host = Config.getInstance().getProp(ConfigKey.backendUrl);
+            const WEBHOOKADDR = host + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/portal/githubWebhook';
             const provisionResult = await this.gh.provisionRepository(repoName, [team], INPUTREPO, WEBHOOKADDR);
 
             if (provisionResult === true) {
@@ -370,7 +536,7 @@ export class SDMMController extends CourseController {
                 await this.dc.writeTeam(team); // don't really need to wait, but this is conservative
 
                 // create grade entry
-                let grade: GradePayload = {
+                const grade: GradePayload = {
                     score:     null,
                     comment:   'Repo Provisioned',
                     urlName:   repo.id,
@@ -414,14 +580,14 @@ export class SDMMController extends CourseController {
             }
 
             // make sure the person has suffient d0 grade
-            let grade = await this.gc.getGrade(personId, "d0"); // make sure they can move on
+            const grade = await this.gc.getGrade(personId, "d0"); // make sure they can move on
             if (grade === null || grade.score === null || grade.score < this.GRADE_TO_ADVANCE) {
                 Log.error("SDMMController::updateIndividualD0toD1(..) - insufficient d0 grade for: " + personId);
                 throw new Error("Current d0 grade is not sufficient to move on to d1.");
             }
 
             // make sure the person does not already have a d1 repo
-            let myRepos = await this.rc.getReposForPerson(person);
+            const myRepos = await this.rc.getReposForPerson(person);
             for (const r of myRepos) {
                 if (r.custom.d1enabled === true) {
                     Log.error("SDMMController::updateIndividualD0toD1(..) - person already has a d1 repo: " + r.id);
@@ -429,7 +595,7 @@ export class SDMMController extends CourseController {
                 }
             }
 
-            let personStatus = await this.computeStatusString(personId);
+            const personStatus = await this.computeStatusString(personId);
             if (personStatus !== SDMMStatus[SDMMStatus.D1UNLOCKED]) {
                 Log.info("SDMMController::updateIndividualD0toD1( " + personId + " ) - bad status: " + personStatus);
             } else {
@@ -455,7 +621,7 @@ export class SDMMController extends CourseController {
                 await this.dc.writeTeam(team);
 
                 // create grade entries
-                let grade: GradePayload = {
+                const newGrade: GradePayload = {
                     score:     null,
                     comment:   'Repo Provisioned',
                     urlName:   repo.id,
@@ -463,9 +629,9 @@ export class SDMMController extends CourseController {
                     timestamp: Date.now(),
                     custom:    {}
                 };
-                await this.gc.createGrade(repo.id, 'd1', grade);
-                await this.gc.createGrade(repo.id, 'd2', grade);
-                await this.gc.createGrade(repo.id, 'd3', grade);
+                await this.gc.createGrade(repo.id, 'd1', newGrade);
+                await this.gc.createGrade(repo.id, 'd2', newGrade);
+                await this.gc.createGrade(repo.id, 'd3', newGrade);
             } else {
                 Log.error("SDMMController::updateIndividualD0toD1(..) - unable to find team: " + teamName + ' or repo: ' + repoName);
                 throw new Error("Invalid team updating d0 repo; contact course staff.");
@@ -499,35 +665,38 @@ export class SDMMController extends CourseController {
                 const name = SDMMController.getTeamPrefix() + str; // teamname with prefix
                 // const name = str; // NOTE: 't_' missed in initial deployment so we'll leave it off
                 Log.trace("SDMMController::provisionD1Repo(..) - checking name: " + name);
-                let team = await this.tc.getTeam(name);
-                if (team === null) {
+                const teamWithName = await this.tc.getTeam(name);
+                if (teamWithName === null) {
                     teamName = name;
                     Log.trace("SDMMController::provisionD1Repo(..) - name available; using: " + teamName);
                 }
             }
 
-            let people: Person[] = [];
+            const people: Person[] = [];
             for (const pid of peopleIds) {
-                let person = await this.dc.getPerson(pid); // make sure the person exists
+                const person = await this.dc.getPerson(pid); // make sure the person exists
                 if (person !== null) {
-                    let grade = await this.gc.getGrade(pid, "d0"); // make sure they can move on
+                    const grade = await this.gc.getGrade(pid, "d0"); // make sure they can move on
                     if (grade !== null && grade.score > 59) {
-                        people.push(person)
+                        people.push(person);
                     } else {
                         Log.error("SDMMController::provisionD1Repo(..) - user does not have sufficient grade: " + pid);
                         throw new Error("All teammates must have achieved a score of 60% or more to join a team.");
                     }
                 } else {
                     Log.error("SDMMController::provisionD1Repo(..) - unknown user: " + pid);
-                    throw new Error("Unknown person " + pid + " requested to be on team; please make sure they are registered with the course.");
+                    throw new Error("Unknown person " + pid +
+                        " requested to be on team; please make sure they are registered with the course.");
                 }
             }
 
             for (const p of people) {
-                let personStatus = await this.computeStatusString(p.id);
+                const personStatus = await this.computeStatusString(p.id);
                 if (personStatus !== SDMMStatus[SDMMStatus.D1UNLOCKED]) {
-                    Log.error("SDMMController::provisionD1Repo(..) - user does not have the right status to advance: " + p.id + '; status: ' + personStatus);
-                    throw new Error("All teammates must be eligible to join a team and must not already be performing d1 in another team or on their own.");
+                    Log.error("SDMMController::provisionD1Repo(..) - user does not have the right status to advance: " +
+                        p.id + '; status: ' + personStatus);
+                    throw new Error("All teammates must be eligible to join a team and must not " +
+                        "already be performing d1 in another team or on their own.");
                 } else {
                     Log.info("SDMMController::provisionD1Repo( " + p.id + " ) - correct status: " + personStatus);
                 }
@@ -545,7 +714,8 @@ export class SDMMController extends CourseController {
 
             // create remote repo
             const INPUTREPO = "https://github.com/SECapstone/bootstrap"; // HARDCODED for SDMM
-            const WEBHOOKADDR = Config.getInstance().getProp(ConfigKey.backendUrl) + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/portal/githubWebhook';
+            const host = Config.getInstance().getProp(ConfigKey.backendUrl);
+            const WEBHOOKADDR = host + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/portal/githubWebhook';
             const provisionResult = await this.gh.provisionRepository(repoName, [team], INPUTREPO, WEBHOOKADDR);
 
             if (provisionResult === true) {
@@ -559,7 +729,7 @@ export class SDMMController extends CourseController {
                 await this.dc.writeTeam(team); // don't really need to wait, but this is conservative
 
                 // create grade entries
-                let grade: GradePayload = {
+                const grade: GradePayload = {
                     score:     null,
                     comment:   'Repo Provisioned',
                     urlName:   repo.id,
@@ -583,171 +753,4 @@ export class SDMMController extends CourseController {
             throw new Error(err.message);
         }
     }
-
-    /**
-     * SDMM is self-paced so the system needs to decide what status each learner has
-     * (e.g., are they on d0, d1, d2, d3) and whether they are eligible to progress
-     * to the next deliverable. This calculates the learner's status and allows
-     * them to advance if they have met the prerequisites.
-     *
-     * This also provisions a StatusPayload which returns all existing status information
-     * to the learner in their dashboard.
-     *
-     * @param {string} personId
-     * @returns {Promise<StatusPayload>}
-     */
-    public async getStatus(personId: string): Promise<StatusPayload> {
-        Log.info("SDMMController::getStatus( " + personId + " ) - start");
-        const start = Date.now();
-
-        const myStatus = await this.computeStatusString(personId);
-
-        let myD0: GradePayload = null;
-        let myD1: GradePayload = null;
-        let myD2: GradePayload = null;
-        let myD3: GradePayload = null;
-
-        let d0Grade: Grade = await this.dc.getGrade(personId, 'd0');
-        let d1Grade: Grade = await this.dc.getGrade(personId, 'd1');
-        let d2Grade: Grade = await this.dc.getGrade(personId, 'd2');
-        let d3Grade: Grade = await this.dc.getGrade(personId, 'd3');
-
-        if (d0Grade !== null) {
-            myD0 = {
-                score:     d0Grade.score,
-                urlName:   d0Grade.urlName,
-                URL:       d0Grade.URL,
-                comment:   '',
-                timestamp: d0Grade.timestamp,
-                custom:    {}
-            }
-        }
-
-        if (d1Grade !== null) {
-            myD1 = {
-                score:     d1Grade.score,
-                urlName:   d1Grade.urlName,
-                URL:       d1Grade.URL,
-                comment:   '',
-                timestamp: d1Grade.timestamp,
-                custom:    {}
-            }
-        }
-
-        if (d2Grade !== null) {
-            myD2 = {
-                score:     d2Grade.score,
-                urlName:   d2Grade.urlName,
-                URL:       d2Grade.URL,
-                comment:   '',
-                timestamp: d2Grade.timestamp,
-                custom:    {}
-            }
-        }
-
-        if (d3Grade !== null) {
-            myD3 = {
-                score:     d3Grade.score,
-                urlName:   d3Grade.urlName,
-                URL:       d3Grade.URL,
-                comment:   '',
-                timestamp: d3Grade.timestamp,
-                custom:    {}
-            }
-        }
-
-        let statusPayload = {
-            status: myStatus,
-            d0:     myD0,
-            d1:     myD1,
-            d2:     myD2,
-            d3:     myD3
-        };
-
-        Log.trace("SDMMController::getStatus( " + personId + " ) - took: " + Util.took(start));
-
-        return statusPayload;
-    }
-
-    /**
-     * In the SDMM users are not known in advance (aka there is no classlist and we only learn about
-     * learners for the first time when they try to login to GitHub). Because of this, when we encounter
-     * a GitHub id we have not seen before we need to provision that person as if we always knew about them.
-     *
-     * This is _NOT_ what traditional courses are going to want to do as it allows _anyone_ to join a course.
-     *
-     * @param {string} githubUsername
-     * @returns {Promise<Person | null>}
-     */
-    public async handleUnknownUser(githubUsername: string): Promise<Person | null> {
-        Log.info("SDDMController::handleUnknownUser( " + githubUsername + " ) - start");
-
-        // in the secapstone we don't know who the students are in advance
-        // in this case, we will create Person objects on demand
-
-        // make person
-        let newPerson: Person = {
-            id:            githubUsername,
-            csId:          githubUsername, // sdmm doesn't have these
-            githubId:      githubUsername,
-            studentNumber: null,
-
-            fName:  '',
-            lName:  '',
-            kind:   null,
-            URL:    'https://github.com/' + githubUsername, // HARDCODE
-            labId:  'UNKNOWN',
-            custom: {}
-        };
-
-        newPerson.custom.sdmmStatus = 'd0pre'; // new users always start in d0pre state
-
-        const pc = new PersonController();
-        newPerson = await pc.createPerson(newPerson);
-
-        return newPerson;
-    }
-
-    /**
-     * Public static so tests can use them too.
-     *
-     * @returns {string}
-     */
-    public static getProjectPrefix(): string {
-        const name = Config.getInstance().getProp(ConfigKey.name);
-        if (name === ConfigCourses.classytest) {
-            Log.info("SDMMController::getProjectPrefix(..) - returning test prefix");
-            return "TEST__X__p_";
-        } else if (name === 'sdmm') {
-            Log.trace("SDMMController::getProjectPrefix(..) - returning sdmm prefix");
-            return "secap_";
-        } else {
-            // NOTE: non-sdmm courses shouldn't use this...
-            Log.error("SDMMController::getProjectPrefix(..) - unhandled course: " + name);
-            return "project_";
-        }
-    }
-
-    /**
-     * Public static so tests can use them too.
-     *
-     * @returns {string}
-     */
-    public static getTeamPrefix() {
-        const name = Config.getInstance().getProp(ConfigKey.name);
-
-        if (name === ConfigCourses.classytest) {
-            Log.info("SDMMController::getTeamPrefix(..) - returning test prefix");
-            return "TEST__X__t_";
-        } else if (name === 'sdmm') {
-            Log.trace("SDMMController::getTeamPrefix(..) - returning sdmm prefix");
-            // NOTE: was supposed to be "t_" but we made a mistake in initial deployment so we're stuck with no prefix
-            return "";
-        } else {
-            // NOTE: non-sdmm courses shouldn't use this...
-            Log.error("SDMMController::getTeamPrefix(..) - unhandled course: " + name);
-            return "t_";
-        }
-    }
-
 }
