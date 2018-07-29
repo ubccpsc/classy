@@ -3,23 +3,24 @@ events {
 }
 
 http {
+    include    /etc/nginx/proxy.conf;
+
     server {
-        listen   80 default_server;
-        listen   [::]:80;
+        listen   8080 default_server;
+        listen   [::]:8080;
 
         return 301 https://$host$request_uri;
     }
     server {
-        listen   443 default_server ssl;
+        listen   8443 default_server ssl;
 
         ssl_certificate        <%= ENV["SSL_CERT_PATH"] %>;
         ssl_certificate_key    <%= ENV["SSL_KEY_PATH"] %>;
 
-       location / {
-           proxy_set_header   X-Forwarded-For $remote_addr;
-           proxy_set_header   Host $http_host;
-           # portal is the name of the service and is automatically added to the hosts file
-           proxy_pass         "https://portal:<%= ENV["BACKEND_PORT"] %>/";
-       }
+        # pass requests to the portal service (which is automatically defined in the hosts file by docker)
+        location / {
+            proxy_pass         "https://<%= ENV["CONTAINER_NAME_PORTAL"] %>:<%= ENV["BACKEND_PORT"] %>/";
+        }
+
     }
 }
