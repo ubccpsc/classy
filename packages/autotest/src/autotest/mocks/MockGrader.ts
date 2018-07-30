@@ -41,7 +41,7 @@ export class MockGrader implements IGrader {
                 errorNames:   [],
                 skipNames:    [],
                 custom:       {},
-                feedback:     ""
+                feedback:     "Test execution complete."
             };
 
             const out: IContainerOutput = {
