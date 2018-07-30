@@ -262,6 +262,42 @@ describe('AutoTest Routes', function() {
         expect(body.success.isAdmin).to.be.false;
     });
 
+    it('Should reject an unauthorized personId request', async function() {
+
+        let response = null;
+        const url = '/portal/at/personId/rtholmes';
+        let body = null;
+        try {
+            response = await request(app).get(url).set('token', 'INVALID');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+        expect(body.failure.shouldLogout).to.be.true;
+    });
+
+    it('Should respond to a valid personId request', async function() {
+
+        let response = null;
+        let body: AutoTestAuthPayload;
+        const url = '/portal/at/personId/' + Test.USERNAME1;
+        try {
+            response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.personId).to.not.be.undefined;
+        expect(body.success.personId).to.be.an('string'); // TODO: check what it is?
+    });
+
     it('Should reject an unauthorized container request', async function() {
 
         let response = null;

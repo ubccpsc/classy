@@ -1,17 +1,17 @@
 import * as restify from "restify";
+import Config, {ConfigKey} from "../../../common/Config";
 
 import Log from "../../../common/Log";
+import {IPushEvent} from "../../../common/types/AutoTestTypes";
 import Util from "../../../common/Util";
-import Config, {ConfigKey} from "../../../common/Config";
 
 import {AutoTest} from "../autotest/AutoTest";
 import {ClassPortal} from "../autotest/ClassPortal";
 import {MongoDataStore} from "../autotest/DataStore";
+import {EdXClassPortal} from "../edx/EdxClassPortal";
+import {GitHubAutoTest} from "../github/GitHubAutoTest";
 import {GitHubService} from "../github/GitHubService";
 import {GitHubUtil} from "../github/GitHubUtil";
-import {GitHubAutoTest} from "../github/GitHubAutoTest";
-import {EdXClassPortal} from "../edx/EdxClassPortal";
-import {ICommentEvent, IPushEvent} from "../../../common/types/AutoTestTypes";
 
 export default class RouteHandler {
 
@@ -57,17 +57,19 @@ export default class RouteHandler {
                 break;
             case "commit_comment":
                 try {
-                    let commentEvent: ICommentEvent = null;
-                    try {
-                        commentEvent = GitHubUtil.processComment(body);
-                        Log.info("RouteHandler::handleCommentEvent() - request: " + JSON.stringify(commentEvent, null, 2));
-                    } catch (err) {
-                        Log.error("RouteHandler::handleCommentEvent() - ERROR parsing payload; err: " + err.message + "; payload: " + JSON.stringify(body, null, 2));
-                        throw new Error("Failed to parse comment event payload");
-                    }
-                    at.handleCommentEvent(commentEvent).then((result: boolean) => { // TODO: validate result properties; add an interface
-                        Log.info("RouteHandler::commitComment() - success; result: " + result + "; took: " + Util.took(start));
+                    // let commentEvent: ICommentEvent = null;
+                    // try {
+                    //     commentEvent =
+                    //     Log.info("RouteHandler::handleCommentEvent() - request: " + JSON.stringify(commentEvent, null, 2));
+                    // } catch (err) {
+                    //     Log.error("RouteHandler::handleCommentEvent() - ERROR parsing payload; err: " + err.message + "; payload: " + JSON.stringify(body, null, 2));
+                    //     throw new Error("Failed to parse comment event payload");
+                    // }
+                    GitHubUtil.processComment(body).then(function(commentEvent) {
                         res.json(200, commentEvent); // report back our interpretation of the hook
+                        return at.handleCommentEvent(commentEvent);
+                    }).then((result: boolean) => { // TODO: validate result properties; add an interface
+                        Log.info("RouteHandler::commitComment() - success; result: " + result + "; took: " + Util.took(start));
                     }).catch((err: any) => {
                         Log.error("RouteHandler::commitComment() - failure; ERROR: " + err + "; took: " + Util.took(start));
                         res.json(400, "Failed to process commit comment.");

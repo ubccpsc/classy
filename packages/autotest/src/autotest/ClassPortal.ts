@@ -11,12 +11,23 @@ import {
     AutoTestDefaultDeliverablePayload,
     AutoTestDefaultDeliverableTransport,
     AutoTestGradeTransport,
+    AutoTestPersonIdTransport,
     AutoTestResultPayload,
     AutoTestResultTransport,
     Payload
 } from "../../../common/types/PortalTypes";
 
 export interface IClassPortal {
+
+
+    /**
+     * Returns the personId for a given githubId (since githubIds are not guaranteed to be stable).
+     *
+     * GET /portal/at/personId/{:githubId}
+     *
+     * @param userName
+     */
+    getPersonId(userName: string): Promise<AutoTestPersonIdTransport | null>;
 
     /**
      *
@@ -28,7 +39,7 @@ export interface IClassPortal {
     /**
      * Returns whether the username is privileged on the course.
      *
-     * GET /portal/at/isStaff{:userId}
+     * GET /portal/at/isStaff/{:githubId}
      *
      * @param userName
      */
@@ -91,7 +102,7 @@ export class ClassPortal implements IClassPortal {
                 }
             };
 
-            return rp(url, opts).then(function (res) {
+            return rp(url, opts).then(function(res) {
                 Log.trace("ClassPortal::isStaff( " + userName + " ) - success; payload: " + res);
                 const json: AutoTestAuthPayload = JSON.parse(res);
                 if (typeof json.success !== 'undefined') {
@@ -100,7 +111,7 @@ export class ClassPortal implements IClassPortal {
                     Log.error("ClassPortal::isStaff(..) - ERROR: " + JSON.stringify(json));
                     return NO_ACCESS;
                 }
-            }).catch(function (err) {
+            }).catch(function(err) {
                 Log.error("ClassPortal::isStaff(..) - ERROR; url: " + url + "; ERROR: " + err);
                 return NO_ACCESS;
             });
@@ -109,6 +120,40 @@ export class ClassPortal implements IClassPortal {
             return NO_ACCESS;
         }
     }
+
+
+    public async getPersonId(githubId: string): Promise<AutoTestPersonIdTransport> {
+        // const NO_ACCESS = {personId: userName, isStaff: false, isAdmin: false}; // if error, give no credentials
+
+        try {
+            const url = this.host + ":" + this.port + "/portal/at/personId/" + githubId;
+            Log.info("ClassPortal::personId(..) - Sending request to " + url);
+            const opts: rp.RequestPromiseOptions = {
+                rejectUnauthorized: false,
+                headers:            {
+                    token: Config.getInstance().getProp(ConfigKey.autotestSecret)
+                }
+            };
+
+            return rp(url, opts).then(function(res) {
+                Log.trace("ClassPortal::personId( " + githubId + " ) - success; payload: " + res);
+                const json: Payload = JSON.parse(res);
+                if (typeof json.success !== 'undefined') {
+                    return json.success; // AutoTestPersonIdTransport
+                } else {
+                    Log.error("ClassPortal::personId(..) - ERROR: " + JSON.stringify(json));
+                    return null;
+                }
+            }).catch(function(err) {
+                Log.error("ClassPortal::personId(..) - ERROR; url: " + url + "; ERROR: " + err);
+                return null;
+            });
+        } catch (err) {
+            Log.error("ClassPortal::personId(..) - ERROR: " + err);
+            return null;
+        }
+    }
+
 
     public async getDefaultDeliverableId(): Promise<AutoTestDefaultDeliverableTransport | null> {
 
@@ -119,7 +164,7 @@ export class ClassPortal implements IClassPortal {
             }
         };
         Log.info("ClassPortal::getDefaultDeliverableId(..) - Sending request to " + url);
-        return rp(url, opts).then(function (res) {
+        return rp(url, opts).then(function(res) {
             Log.trace("ClassPortal::getDefaultDeliverableId() - success; payload: " + res);
             const json: AutoTestDefaultDeliverablePayload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
@@ -128,7 +173,7 @@ export class ClassPortal implements IClassPortal {
                 Log.trace("ClassPortal::getDefaultDeliverableId() - ERROR: " + JSON.stringify(json));
                 return null;
             }
-        }).catch(function (err) {
+        }).catch(function(err) {
             Log.trace("ClassPortal::getDefaultDeliverableId() - ERROR; url: " + url + "; ERROR: " + err);
             return null;
         });
@@ -142,7 +187,7 @@ export class ClassPortal implements IClassPortal {
             }
         };
         Log.info("ClassPortal::getContainerId(..) - Sending request to " + url);
-        return rp(url, opts).then(function (res) {
+        return rp(url, opts).then(function(res) {
             Log.trace("ClassPortal::getContainerId( " + delivId + " ) - success; payload: " + res);
             const json: AutoTestConfigPayload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
@@ -151,7 +196,7 @@ export class ClassPortal implements IClassPortal {
                 Log.error("ClassPortal::getContainerId(..) - ERROR: " + JSON.stringify(json));
                 return null;
             }
-        }).catch(function (err) {
+        }).catch(function(err) {
             Log.error("ClassPortal::getContainerId(..) - ERROR; url: " + url + "; ERROR: " + err);
             return null;
         });
@@ -165,7 +210,7 @@ export class ClassPortal implements IClassPortal {
             }
         };
         Log.info("ClassPortal::sendGrade(..) - Sending request to " + url);
-        return rp(url, opts).then(function (res) {
+        return rp(url, opts).then(function(res) {
             Log.trace("ClassPortal::sendGrade() - sent; returned payload: " + res);
             const json: Payload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
@@ -175,7 +220,7 @@ export class ClassPortal implements IClassPortal {
                 Log.error("ClassPortal::sendGrade(..) - ERROR; not successfully received:  " + JSON.stringify(json));
                 return json;
             }
-        }).catch(function (err) {
+        }).catch(function(err) {
             Log.error("ClassPortal::sendGrade(..) - ERROR; url: " + url + "; ERROR: " + err);
             const pay: Payload = {failure: {message: err.message, shouldLogout: false}};
             return pay;
@@ -196,7 +241,7 @@ export class ClassPortal implements IClassPortal {
         };
 
         Log.info("ClassPortal::sendResult(..) - Sending request to " + url);
-        return rp(url, opts).then(function (res) {
+        return rp(url, opts).then(function(res) {
             Log.trace("ClassPortal::sendResult() - sent; returned payload: " + res);
             const json: Payload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
@@ -206,7 +251,7 @@ export class ClassPortal implements IClassPortal {
                 Log.error("ClassPortal::sendResult(..) - ERROR; not successfully received:  " + JSON.stringify(json));
                 return json;
             }
-        }).catch(function (err) {
+        }).catch(function(err) {
             Log.error("ClassPortal::sendResult(..) - ERROR; url: " + url + "; ERROR: " + err);
             const pay: Payload = {failure: {message: err.message, shouldLogout: false}};
             return pay;
@@ -222,7 +267,7 @@ export class ClassPortal implements IClassPortal {
             headers:            {token: Config.getInstance().getProp(ConfigKey.autotestSecret)}
         };
         Log.info("ClassPortal::getResult(..) - Requesting result from: " + url);
-        return rp(url, opts).then(function (res) {
+        return rp(url, opts).then(function(res) {
             Log.trace("ClassPortal::getResult() - sent; returned payload: " + res);
             const json: AutoTestResultPayload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
@@ -237,7 +282,7 @@ export class ClassPortal implements IClassPortal {
                 Log.error("ClassPortal::getResult(..) - ERROR; not successfully received:  " + JSON.stringify(json));
                 return null;
             }
-        }).catch(function (err) {
+        }).catch(function(err) {
             Log.error("ClassPortal::getResult(..) - ERROR; url: " + url + "; ERROR: " + err);
             // const pay: Payload = {failure: {message: err.message, shouldLogout: false}};
             // return pay;

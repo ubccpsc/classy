@@ -202,7 +202,11 @@ export interface AutoTestDefaultDeliverablePayload {
  * Requested per-deliverable.
  */
 export interface AutoTestDefaultDeliverableTransport {
-    defaultDeliverable: string
+    defaultDeliverable: string;
+}
+
+export interface AutoTestPersonIdTransport {
+    personId: string | null;
 }
 
 export interface AutoTestResultPayload {

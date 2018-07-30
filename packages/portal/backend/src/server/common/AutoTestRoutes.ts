@@ -1,7 +1,9 @@
 import * as rp from "request-promise-native";
+import * as restify from 'restify';
 
 import Config, {ConfigCourses, ConfigKey} from "../../../../../common/Config";
 import Log from "../../../../../common/Log";
+
 import {
     AutoTestAuthPayload,
     AutoTestConfigPayload,
@@ -11,14 +13,14 @@ import {
     AutoTestResultTransport,
     Payload
 } from "../../../../../common/types/PortalTypes";
+
 import {CourseController} from "../../controllers/CourseController";
 import {GitHubController} from "../../controllers/GitHubController";
 import {GradesController} from "../../controllers/GradesController";
+import {PersonController} from "../../controllers/PersonController";
 import {ResultsController} from "../../controllers/ResultsController";
 
 import IREST from "../IREST";
-
-import restify = require('restify');
 
 /**
  * Just a large body of static methods for translating between restify and the remainder of the system.
@@ -29,7 +31,8 @@ export class AutoTestRoutes implements IREST {
         Log.info('AutoTestRouteHandler::registerRoutes() - start');
 
         server.get('/portal/at/defaultDeliverable', AutoTestRoutes.atDefaultDeliverable);
-        server.get('/portal/at/isStaff/:personId', AutoTestRoutes.atIsStaff);
+        server.get('/portal/at/isStaff/:githubId', AutoTestRoutes.atIsStaff);
+        server.get('/portal/at/personId/:githubId', AutoTestRoutes.atPersonId);
         server.get('/portal/at/container/:delivId', AutoTestRoutes.atContainerDetails);
 
         server.post('/portal/at/grade/', AutoTestRoutes.atGrade);
@@ -195,7 +198,7 @@ export class AutoTestRoutes implements IREST {
      * @param next
      */
     public static atIsStaff(req: any, res: any, next: any) {
-        Log.info('AutoTestRouteHandler::atIsStaff(..) - /isStaff/:personId - start GET');
+        Log.info('AutoTestRouteHandler::atIsStaff(..) - /isStaff/:githubId - start GET');
 
         let payload: AutoTestAuthPayload;
 
@@ -205,18 +208,51 @@ export class AutoTestRoutes implements IREST {
             payload = {failure: {message: 'Invalid AutoTest Secret: ' + providedSecret, shouldLogout: true}};
             res.send(400, payload);
         } else {
-            const personId = req.params.personId;
+            const githubId = req.params.githubId;
 
-            Log.info('AutoTestRouteHandler::atIsStaff(..) - personId: ' + personId);
+            Log.info('AutoTestRouteHandler::atIsStaff(..) - personId: ' + githubId);
 
             // TODO: this is just a dummy implementation
-            if (personId === 'rtholmes' || personId === 'nickbradley') {
-                payload = {success: {personId: personId, isStaff: true, isAdmin: true}};
+            if (githubId === 'rtholmes' || githubId === 'nickbradley') {
+                payload = {success: {personId: githubId, isStaff: true, isAdmin: true}};
                 res.send(200, payload);
             } else {
-                payload = {success: {personId: personId, isStaff: false, isAdmin: false}};
+                payload = {success: {personId: githubId, isStaff: false, isAdmin: false}};
                 res.send(200, payload);
             }
+        }
+    }
+
+    public static atPersonId(req: any, res: any, next: any) {
+        Log.info('AutoTestRouteHandler::atPersonId(..) - /isStaff/:githubId - start GET');
+
+        let payload: Payload;
+
+        const providedSecret = req.headers.token;
+        if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
+            Log.warn('AutoTestRouteHandler::atPersonId(..) - Invalid Secret: ' + providedSecret);
+            payload = {failure: {message: 'Invalid AutoTest Secret: ' + providedSecret, shouldLogout: true}};
+            res.send(400, payload);
+        } else {
+            const githubId = req.params.githubId;
+
+            Log.info('AutoTestRouteHandler::atPersonId(..) - githubId: ' + githubId);
+
+            const pc = new PersonController();
+            pc.getGitHubPerson(githubId).then(function(person) {
+                if (person !== null) {
+                    payload = {success: {personId: person.id}}; // PersonTransportPayload
+                    res.send(200, payload);
+                    return next(false);
+                } else {
+                    payload = {success: {personId: null}};
+                    res.send(200, payload);
+                }
+            }).catch(function(err) {
+                Log.error('AutoTestRouteHandler::atPersonId(..) - ERROR: ' + err);
+                payload = {success: {personId: null}};
+                res.send(200, payload);
+            });
         }
     }
 

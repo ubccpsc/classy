@@ -1,6 +1,6 @@
-//
-// Types needed from the Container's POV
-//
+/**
+ * Pertinent properties from GitHub push webhook events.
+ */
 export interface IPushEvent {
     repoId: string; // was repo
 
@@ -14,8 +14,11 @@ export interface IPushEvent {
     timestamp: number; // timestamp of push event
 }
 
+/**
+ * Pertinent properties from GitHub comment webhook events.
+ */
 export interface ICommentEvent {
-    personId: string; // was username
+    personId: string; // NOTE: this is received as a github id!
     delivId: string | null; // string if specified
     repoId: string;
 
@@ -54,6 +57,9 @@ export interface IAutoTestResult {
     output: IContainerOutput; // Returned by the Grader service
 }
 
+/**
+ * Primary data structure that the course container is invoked with.
+ */
 export interface IContainerInput {
     delivId: string; // Specifies what delivId the Grader should execute against.
     pushInfo: IPushEvent; // Details about the push event that led to this request.
@@ -61,19 +67,7 @@ export interface IContainerInput {
 }
 
 /**
- * This is the main type that is returned by the Grader.
- */
-export interface IContainerOutput {
-    timestamp: number; // time when complete
-    report: IGradeReport;
-    postbackOnComplete: boolean;
-    attachments: IAttachment[];
-    state: string; // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
-    custom: {};
-}
-
-/**
- * This is the data structure that is returned by the course container.
+ * Primary data structure that the course container returns.
  */
 export interface IGradeReport {
     scoreOverall: number; // must be set
@@ -82,7 +76,7 @@ export interface IGradeReport {
 
     // The semantics of these four categories are up to the container
     // we only differentiate them so the report UI can render them uniquely.
-    // Insert [] if a category is not being used.
+    // Set to [] for any unused property.
     passNames: string[];
     failNames: string[];
     errorNames: string[];
@@ -95,21 +89,42 @@ export interface IGradeReport {
     // Enables custom values to be returned to the UI layer.
     // PLEASE: do not store large objects in here or it will
     // significantly impact the performance of the dashboard.
-    // Use attachements instead for large bits of data you wish
+    // Use attachments instead for large bits of data you wish
     // to persist.
     custom: {};
 }
 
+/**
+ * Primary data structure that is returned by a Grader.
+ */
+export interface IContainerOutput {
+    timestamp: number; // time when complete
+    report: IGradeReport;
+    postbackOnComplete: boolean;
+    attachments: IAttachment[];
+    state: string; // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
+    custom: {};
+}
+
+/**
+ * Description of attachments that are saved in files on disk. This
+ * helps minimize database size making it easier to backup and much
+ * quicker to search and traverse (especially over the network).
+ */
 export interface IAttachment {
     name: string; // file identifier attachment (e.g., stdio.txt)
     path: string; // path to file (including name)
     content_type: string;
 }
 
+/**
+ * Description of the configuration parameters for the AutoTest container.
+ * These can be specified per-deliverable in the Portal UI.
+ */
 export interface AutoTestConfig {
     dockerImage: string;
     studentDelay: number;
     maxExecTime: number;
     regressionDelivIds: string[];
-    custom: object;
+    custom: {};
 }
