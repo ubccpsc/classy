@@ -41,13 +41,20 @@ export interface IFeedbackGiven {
  *
  */
 export interface IAutoTestResult {
-    delivId: string; // (already in input)
-    repoId: string;  // (already in input)
+    delivId: string; // foreign key into Deliverables (so we know what this run is scoring)
+    repoId: string;  // foreign key into Repositories (so we know what repository (and people) this run is for)
     timestamp: number; // timestamp of push, not of any processing (already in input)
     commitURL: string;
-    commitSHA: string;
-    input: IContainerInput; // NOTE: is input required?
-    output: IContainerOutput;
+    commitSHA: string; // can be used to index into the AutoTest collections (pushes, comments, & feedback)
+
+    input: IContainerInput; // NOTE: could get rid of this with delivId and repoId above
+
+    output: IContainerOutput; // NOTE: could get rid of this if we add the fields below:
+    // report: IGradeReport;
+    // postbackOnComplete: boolean;
+    // attachments: IAttachment[];
+    // state: string; // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
+    // custom: {}; // Used to add extra info to a Result (not necessairly a grade)
 }
 
 export interface IContainerInput {
@@ -66,16 +73,35 @@ export interface IContainerOutput {
     state: string; // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
 }
 
+
 export interface IGradeReport {
-    scoreOverall: number;
-    scoreTest: number;
-    scoreCover: number;
+    // MISSING:
+    // delivId: string; // foreign key into deliverables
+    // repoId: string; // foreign key into repositories
+    // timestamp: number; // timestamp for when report was generated
+
+    scoreOverall: number; // must be set
+    scoreTest: number | null; // null means not valid for this report
+    scoreCover: number | null; // null means not valid for this report
+
+    // The semantics of these four categories are up to the container
+    // we only differentiate them so the report UI can render them uniquely.
+    // Insert [] if a category is not being used.
     passNames: string[];
     failNames: string[];
     errorNames: string[];
     skipNames: string[];
-    custom: {};
+
+    // This is the text of the feedback (in markdown) that the container wants
+    // to return to the user.
     feedback: string;
+
+    // Enables custom values to be returned to the UI layer.
+    // PLEASE: do not store large objects in here or it will
+    // significantly impact the performance of the dashboard.
+    // Use attachements instead for large bits of data you wish
+    // to persist.
+    custom: {};
 }
 
 export interface IAttachment {
