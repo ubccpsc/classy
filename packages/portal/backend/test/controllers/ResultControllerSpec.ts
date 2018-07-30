@@ -48,43 +48,37 @@ describe("ResultController", () => {
         expect(deliv).to.not.be.null;
         expect(deliv).to.be.an('string');
 
-        let data: AutoTestResultTransport = <AutoTestResultTransport>{};
+        let data: AutoTestResultTransport = {} as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
         expect(deliv).to.be.an('string');
 
-        data = <AutoTestResultTransport>{delivId: 'd0'};
+        data = {delivId: 'd0'} as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
         expect(deliv).to.be.an('string');
 
-        data = <AutoTestResultTransport>{delivId: 'd0', repoId: 'r1'};
+        data = {delivId: 'd0', repoId: 'r1'} as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
         expect(deliv).to.be.an('string');
 
-        data = <AutoTestResultTransport>{delivId: 'd0', repoId: 'r1', timestamp: 1001};
+        data = {delivId: 'd0', repoId: 'r1', commitURL: 'url'}as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
         expect(deliv).to.be.an('string');
 
-        data = <AutoTestResultTransport>{delivId: 'd0', repoId: 'r1', timestamp: 1001, commitURL: 'url'};
+        data = {delivId: 'd0', repoId: 'r1', commitURL: 'url', commitSHA: 'sha'}as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
         expect(deliv).to.be.an('string');
 
-        data = <AutoTestResultTransport>{delivId: 'd0', repoId: 'r1', timestamp: 1001, commitURL: 'url', commitSHA: 'sha'};
-        deliv = await rc.validateAutoTestResult(data);
-        expect(deliv).to.not.be.null;
-        expect(deliv).to.be.an('string');
-
-        data = <AutoTestResultTransport>{delivId: 'd0', repoId: 'r1', timestamp: 1001, commitURL: 'url', commitSHA: 'sha', input: {}};
+        data = {delivId: 'd0', repoId: 'r1', commitURL: 'url', commitSHA: 'sha', input: {}}as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
         expect(deliv).to.be.an('string');
 
         // more here
     });
-
 
 });

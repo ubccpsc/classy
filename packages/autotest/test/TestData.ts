@@ -35,13 +35,27 @@ export class TestData {
     };
 
     static readonly inputRecordA: IContainerInput = {
-        "delivId":  "d0",
-        "pushInfo": TestData.pushEventA
+        "delivId":         "d0",
+        "containerConfig": {
+            dockerImage:        "imageName",
+            studentDelay:       300,
+            maxExecTime:        6000,
+            regressionDelivIds: [],
+            custom:             {}
+        },
+        "pushInfo":        TestData.pushEventA
     };
 
     static readonly inputRecordB: IContainerInput = {
-        "delivId":  "d0",
-        "pushInfo": TestData.pushEventB
+        "delivId":         "d0",
+        "containerConfig": {
+            dockerImage:        "imageName",
+            studentDelay:       300,
+            maxExecTime:        6000,
+            regressionDelivIds: [],
+            custom:             {}
+        },
+        "pushInfo":        TestData.pushEventB
     };
 
     static readonly commentRecordUserA: ICommentEvent = {
@@ -96,12 +110,12 @@ export class TestData {
     static readonly outputRecordA: IAutoTestResult = {
         "delivId":   TestData.inputRecordA.delivId,
         "repoId":    TestData.inputRecordA.pushInfo.repoId,
-        "timestamp": TestData.inputRecordA.pushInfo.timestamp,
+        // "timestamp": TestData.inputRecordA.pushInfo.timestamp,
         "commitURL": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "commitSHA": "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "input":     TestData.inputRecordA,
         "output":    {
-            "commitURL":          "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
+            //  "commitURL":          "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
             "timestamp":          1516523418918,
             "report":             {
                 "scoreOverall": 50,
@@ -112,9 +126,9 @@ export class TestData {
                 "errorNames":   [],
                 "skipNames":    [],
                 "custom":       [],
-                "feedback":     ""
+                "feedback":     "Test Feedback"
             },
-            "feedback":           "Test Feedback",
+            // "feedback":           "Test Feedback",
             "postbackOnComplete": false,
             "custom":             {},
             "attachments":        [],
@@ -125,12 +139,12 @@ export class TestData {
     static readonly outputRecordB: IAutoTestResult = {
         "delivId":   TestData.inputRecordB.delivId,
         "repoId":    TestData.inputRecordB.pushInfo.repoId,
-        "timestamp": TestData.inputRecordB.pushInfo.timestamp,
+        // "timestamp": TestData.inputRecordB.pushInfo.timestamp,
         "commitURL": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4staff",
         "commitSHA": "abe1b0918b872997de4c4d2baf4c263f8d4staff",
         "input":     TestData.inputRecordA,
         "output":    {
-            "commitURL":          "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4staff",
+            //  "commitURL":          "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4staff",
             "timestamp":          1516523418918,
             "report":             {
                 "scoreOverall": 50,
@@ -141,9 +155,9 @@ export class TestData {
                 "errorNames":   [],
                 "skipNames":    [],
                 "custom":       [],
-                "feedback":     ""
+                "feedback":     "Test Feedback"
             },
-            "feedback":           "Test Feedback",
+            // "feedback":           "Test Feedback",
             "postbackOnComplete": false,
             "custom":             {},
             "attachments":        [],

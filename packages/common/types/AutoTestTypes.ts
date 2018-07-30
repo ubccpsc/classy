@@ -41,45 +41,41 @@ export interface IFeedbackGiven {
  *
  */
 export interface IAutoTestResult {
-    delivId: string; // foreign key into Deliverables (so we know what this run is scoring)
-    repoId: string;  // foreign key into Repositories (so we know what repository (and people) this run is for)
-    timestamp: number; // timestamp of push, not of any processing (already in input)
+    delivId: string; // foreign key into Deliverables (so we know what this run is scoring) (intentional duplication with input.delivId)
+    repoId: string;  // foreign key into Repositories (so we know what repository (and people) this run is for) (intentional duplication with input.pushInfo.repoId)
+
+    // input.pushInfo.timestamp // timestamp of push
+    // output.timestamp // timestamp of grading completion
+
     commitURL: string;
     commitSHA: string; // can be used to index into the AutoTest collections (pushes, comments, & feedback)
 
-    input: IContainerInput; // NOTE: could get rid of this with delivId and repoId above
-
-    output: IContainerOutput; // NOTE: could get rid of this if we add the fields below:
-    // report: IGradeReport;
-    // postbackOnComplete: boolean;
-    // attachments: IAttachment[];
-    // state: string; // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
-    // custom: {}; // Used to add extra info to a Result (not necessairly a grade)
+    input: IContainerInput; // Prepared by AutoTest service
+    output: IContainerOutput; // Returned by the Grader service
 }
 
 export interface IContainerInput {
-    pushInfo: IPushEvent;
-    delivId: string;
+    delivId: string; // Specifies what delivId the Grader should execute against.
+    pushInfo: IPushEvent; // Details about the push event that led to this request.
+    containerConfig: AutoTestConfig; // Container configuration details.
 }
 
+/**
+ * This is the main type that is returned by the Grader.
+ */
 export interface IContainerOutput {
-    commitURL: string;
     timestamp: number; // time when complete
     report: IGradeReport;
-    feedback: string; // markdown
     postbackOnComplete: boolean;
-    custom: {};
     attachments: IAttachment[];
     state: string; // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
+    custom: {};
 }
 
-
+/**
+ * This is the data structure that is returned by the course container.
+ */
 export interface IGradeReport {
-    // MISSING:
-    // delivId: string; // foreign key into deliverables
-    // repoId: string; // foreign key into repositories
-    // timestamp: number; // timestamp for when report was generated
-
     scoreOverall: number; // must be set
     scoreTest: number | null; // null means not valid for this report
     scoreCover: number | null; // null means not valid for this report
@@ -105,7 +101,15 @@ export interface IGradeReport {
 }
 
 export interface IAttachment {
-    name: string;
-    data: any;
+    name: string; // file identifier attachment (e.g., stdio.txt)
+    path: string; // path to file (including name)
     content_type: string;
+}
+
+export interface AutoTestConfig {
+    dockerImage: string;
+    studentDelay: number;
+    maxExecTime: number;
+    regressionDelivIds: string[];
+    custom: object;
 }
