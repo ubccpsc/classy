@@ -161,7 +161,7 @@ export class ResultsController {
         }
 
         // check the report (use helper fcn because other parts of the code might want to validate this too)
-        if (typeof record.output.report === 'undefined' || typeof record.output.report !== 'object') {
+        if (typeof record.output.report === 'undefined' || typeof record.output.report !== 'object' || record.output.report === null) {
             const msg = 'output.report missing or not an object';
             Log.error('ResultsController::validateAutoTestResult(..) - ERROR: ' + msg);
             return msg;
@@ -179,6 +179,8 @@ export class ResultsController {
     }
 
     public static validateGradeReport(report: IGradeReport): string | null {
+        Log.trace('ResultsController::validateGradeReport(..) - input: ' + JSON.stringify(report));
+
         if (typeof report.scoreOverall === 'undefined' || typeof report.scoreOverall !== 'number') {
             const msg = 'output.report.scoreOverall missing or not a number';
             Log.error('ResultsController::validateGradeReport(..) - ERROR: ' + msg);

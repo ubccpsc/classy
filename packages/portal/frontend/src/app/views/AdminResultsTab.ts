@@ -1,9 +1,9 @@
 import Log from "../../../../../common/Log";
 
-import {UI} from "../util/UI"
-
 import {AutoTestResultPayload, AutoTestResultTransport} from "../../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
+
+import {UI} from "../util/UI"
 import {AdminView} from "./AdminView";
 
 
@@ -81,11 +81,14 @@ export class AdminResultsTab {
         // this loop couldn't possibly be less efficient
         for (const result of results) {
 
-            let ts = new Date(result.timestamp).toLocaleTimeString();
+
+            // const ts = result.input.pushInfo.timestamp;
+            const ts = result.output.timestamp;
+            const tsString = new Date(ts).toLocaleTimeString();
             let row: TableCell[] = [
                 {value: result.repoId, html: '<a href="' + result.input.pushInfo.projectURL + '">' + result.repoId + '</a>'},
                 {value: result.delivId, html: result.delivId},
-                {value: result.timestamp, html: '<a href="' + result.commitURL + '">' + ts + '</a>'},
+                {value: ts, html: '<a href="' + result.commitURL + '">' + tsString + '</a>'},
                 {value: result.output.state, html: result.output.state},
                 {value: result.output.report.scoreOverall, html: result.output.report.scoreOverall + ''}
             ];

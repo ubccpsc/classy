@@ -10,7 +10,7 @@
     "object-literal-shorthand": false,
     "quotemark": false,
     "trailing-comma": "never",
-    "interface-name": "never-prefix",
+    "interface-name": [false, "never-prefix"],
     "only-arrow-functions": false,
     "object-literal-sort-keys": false,
     "no-floating-promises": true
