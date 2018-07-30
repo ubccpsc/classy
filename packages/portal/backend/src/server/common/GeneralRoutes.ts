@@ -1,6 +1,8 @@
-import restify = require('restify');
+import * as restify from "restify";
+
 import Config, {ConfigKey} from '../../../../../common/Config';
 import Log from "../../../../../common/Log";
+
 import {
     ConfigTransportPayload,
     GradeTransport,
@@ -8,7 +10,8 @@ import {
     Payload,
     TeamTransport,
     TeamTransportPayload
-} from '../../../../../common/types/PortalTypes';
+} from "../../../../../common/types/PortalTypes";
+
 import {AuthController} from "../../controllers/AuthController";
 import {GradesController} from "../../controllers/GradesController";
 import {PersonController} from "../../controllers/PersonController";
@@ -25,8 +28,10 @@ export default class GeneralRoutes implements IREST {
         // mainly used by the frontend so it uses the correct UI
         server.get('/portal/config', GeneralRoutes.getConfig);
 
+        // used by students to get their (released) grades
         server.get('/portal/grades', GeneralRoutes.getGrades);
 
+        // used by students to get their teams
         server.get('/portal/teams', GeneralRoutes.getTeams);
     }
 
@@ -67,23 +72,6 @@ export default class GeneralRoutes implements IREST {
         });
     }
 
-    private static async performGetGrades(user: string, token: string): Promise<GradeTransport[]> {
-        const ac = new AuthController();
-        const isValid = await ac.isValid(user, token);
-        if (isValid === false) {
-            Log.trace('GeneralRoutes::performGetGrades(..) - in isValid: ' + isValid);
-            throw new Error('Invalid credentials');
-        } else {
-            const gc: GradesController = new GradesController();
-            const grades = await gc.getReleasedGradesForPerson(user);
-            const gradeTrans: GradeTransport[] = [];
-            for (const grade of grades) {
-                gradeTrans.push(gc.translateGrade(grade));
-            }
-            return gradeTrans;
-        }
-    }
-
     public static getTeams(req: any, res: any, next: any) {
         Log.info('GeneralRoutes::getTeams(..) - start');
 
@@ -100,6 +88,23 @@ export default class GeneralRoutes implements IREST {
             res.send(400, payload);
             return next(false);
         });
+    }
+
+    private static async performGetGrades(user: string, token: string): Promise<GradeTransport[]> {
+        const ac = new AuthController();
+        const isValid = await ac.isValid(user, token);
+        if (isValid === false) {
+            Log.trace('GeneralRoutes::performGetGrades(..) - in isValid: ' + isValid);
+            throw new Error('Invalid credentials');
+        } else {
+            const gc: GradesController = new GradesController();
+            const grades = await gc.getReleasedGradesForPerson(user);
+            const gradeTrans: GradeTransport[] = [];
+            for (const grade of grades) {
+                gradeTrans.push(gc.translateGrade(grade));
+            }
+            return gradeTrans;
+        }
     }
 
     private static async performGetTeams(user: string, token: string): Promise<TeamTransport[]> {
@@ -126,5 +131,4 @@ export default class GeneralRoutes implements IREST {
             }
         }
     }
-
 }

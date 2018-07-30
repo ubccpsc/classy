@@ -1,10 +1,10 @@
 import {expect} from "chai";
 import "mocha";
 
-import {Test} from "../GlobalSpec";
-
 import {PersonController} from "../../src/controllers/PersonController";
 import {Person} from "../../src/Types";
+
+import {Test} from "../GlobalSpec";
 
 const loadFirst = require('../GlobalSpec');
 const dFirst = require('./DeliverablesControllerSpec');
@@ -67,7 +67,7 @@ describe("PersonController", () => {
     });
 
     it("Should be able to be validate a new user.", async () => {
-        let people = await pc.getAllPeople();
+        const people = await pc.getAllPeople();
         expect(people).to.have.lengthOf(0);
 
         let person = await pc.getPerson(PERSON1.id);
@@ -125,7 +125,6 @@ describe("PersonController", () => {
 
         person = await pc.getGitHubPerson('randomIDthatDoesNotexist23232333');
         expect(person).to.be.null;
-    });
-
+    }).timeout(5000);
 
 });

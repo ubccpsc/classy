@@ -1,10 +1,11 @@
 import {expect} from "chai";
 import "mocha";
-import {ResultsController} from "../../src/controllers/ResultsController";
 import {AutoTestResultTransport} from "../../../../common/types/PortalTypes";
+import {ResultsController} from "../../src/controllers/ResultsController";
 import {Test} from "../GlobalSpec";
 
 const loadFirst = require('../GlobalSpec');
+const loadSecond = require('./CourseControllerSpec'); // make sure it runs before github controller (which should be last of the controllers)
 
 describe("ResultController", () => {
 

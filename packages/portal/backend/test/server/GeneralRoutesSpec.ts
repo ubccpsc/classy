@@ -123,8 +123,12 @@ describe('General Routes', function() {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USERNAME1);
+        await dc.writeAuth({personId: Test.USERNAME3, token: Date.now() + '_token'});
+        const auth = await dc.getAuth(Test.USERNAME3);
         expect(auth).to.not.be.null;
+
+        // const team = Test.getTeam(Test.TEAMNAME3, Test.DELIVID0, [Test.USERNAME3]);
+        // await dc.writeTeam(team);
 
         // prepare deliverables
         // let deliv = Test.getDeliverable(Test.DELIVID1);
@@ -151,7 +155,7 @@ describe('General Routes', function() {
         expect(body.success).to.not.be.undefined;
         expect(body.success.length).to.equal(1);
         expect(body.success[0].delivId).to.equal(Test.DELIVID0);
-        expect(body.success[0].id).to.equal(Test.TEAMNAME1);
+        expect(body.success[0].id).to.equal(Test.TEAMNAME2);
     });
 
     it('Should not be able to get get teams without a valid token.', async function() {
