@@ -65,7 +65,8 @@ permission with the host (this is done in the docker-compose.yml file).
     docker-compose up --detach
     ```
 
-You should now be able to go to <https://classy.cs.ubc.ca>.
+You should now be able to open portal in your web browser by navigating to the host you've installed classy on (e.g. 
+<https://classy.cs.ubc.ca>).
 
 ## Deploying AutoTest Extensions (for CS310 and SDMM)
 
