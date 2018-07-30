@@ -9,7 +9,8 @@ import BackendServer from "../../portal/backend/src/server/BackendServer";
 
 import {GitHubUtil} from "../src/github/GitHubUtil";
 
-const loadFirst = require('./GlobalSpec');
+// const loadFirst = require('./GlobalSpec');
+import './GlobalSpec'; // load first
 
 describe("GitHub Event Parser", () => {
     Config.getInstance();
@@ -84,7 +85,7 @@ describe("GitHub Event Parser", () => {
         const actual = GitHubUtil.processPush(JSON.parse(content));
 
         const expected: any = null;
-        expect(actual).to.equal(null); // nothing to do when a branch is deleted
+        expect(actual).to.equal(expected); // nothing to do when a branch is deleted
     });
 
     it("Should be able to parse a push to a branch.", () => {
