@@ -1,14 +1,15 @@
-import {IClassPortal} from "../autotest/ClassPortal";
 import Config, {ConfigKey} from "../../../common/Config";
+import Log from "../../../common/Log";
 import {IAutoTestResult} from "../../../common/types/AutoTestTypes";
 import {
     AutoTestAuthTransport,
     AutoTestDefaultDeliverableTransport,
     AutoTestGradeTransport,
+    AutoTestPersonIdTransport,
     AutoTestResultTransport,
-    Payload,
+    Payload
 } from "../../../common/types/PortalTypes";
-import Log from "../../../common/Log";
+import {IClassPortal} from "../autotest/ClassPortal";
 
 /**
  * TODO: This type should go away once the full portal-backend project is finished and spun up.
@@ -33,7 +34,7 @@ export class EdXClassPortal implements IClassPortal {
         return null;
     }
 
-    public async getContainerDetails(delivId: string): Promise<{ dockerImage: string, studentDelay: number, maxExecTime: number, regressionDelivIds: string[], custom: object } | null> {
+    public async getContainerDetails(delivId: string): Promise<{dockerImage: string, studentDelay: number, maxExecTime: number, regressionDelivIds: string[], custom: object} | null> {
         Log.info("EdXClassPortal::getContainerDetails(..) - start");
         const courseId = Config.getInstance().getProp(ConfigKey.name);
         if (typeof courseId !== "undefined" && courseId !== null && typeof delivId !== "undefined" && delivId !== null) {
@@ -59,6 +60,11 @@ export class EdXClassPortal implements IClassPortal {
     getResult(delivId: string, repoId: string): Promise<AutoTestResultTransport | null> {
         Log.info("EdXClassPortal::getResult(..) - start");
         return null;
+    }
+
+    getPersonId(githubId: string): Promise<AutoTestPersonIdTransport | null> {
+        // usernames are the same for edX
+        return Promise.resolve({personId: githubId});
     }
 }
 

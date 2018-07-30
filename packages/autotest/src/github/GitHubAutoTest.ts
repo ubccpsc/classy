@@ -1,14 +1,14 @@
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
-import Util from "../../../common/Util";
 
 import {IAutoTestResult, ICommentEvent, IContainerInput, IFeedbackGiven, IPushEvent} from "../../../common/types/AutoTestTypes";
+import {AutoTestAuthTransport, AutoTestConfigTransport, AutoTestResultTransport} from "../../../common/types/PortalTypes";
+import Util from "../../../common/Util";
+import {AutoTest} from "../autotest/AutoTest";
 
 import {IClassPortal} from "../autotest/ClassPortal";
 import {IDataStore} from "../autotest/DataStore";
 import {IGitHubService} from "./GitHubService";
-import {AutoTest} from "../autotest/AutoTest";
-import {AutoTestAuthTransport, AutoTestConfigTransport, AutoTestResultTransport} from "../../../common/types/PortalTypes";
 
 export interface IGitHubTestManager {
 
@@ -63,7 +63,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             }
 
             if (delivId !== null) {
-                const input: IContainerInput = {delivId, pushInfo: info};
+                const containerConfig = await this.getContainerConfig(delivId);
+                const input: IContainerInput = {delivId, pushInfo: info, containerConfig: containerConfig};
                 await this.savePushInfo(input);
                 this.addToStandardQueue(input);
                 this.tick();
@@ -172,7 +173,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 Log.trace("GitHubAutoTest::handleCommentEvent(..) - commit: " + info.commitSHA + "; execution complete");
                 // true if staff, requested before, or over feedback delay interval
                 if (shouldPost === true) {
-                    await this.github.postMarkdownToGithub({url: info.postbackURL, message: res.output.feedback});
+                    await this.github.postMarkdownToGithub({url: info.postbackURL, message: res.output.report.feedback});
                     await this.saveFeedbackGiven(delivId, info.personId, info.timestamp, info.commitURL);
                     await this.saveCommentInfo(info); // user or TA; only for analytics since feedback has been given
                 }
@@ -220,14 +221,14 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             if (data.output.postbackOnComplete === true) {
                 // do this first, doesn't count against quota
                 Log.info("GitHubAutoTest::processExecution(..) - postback: true");
-                await this.github.postMarkdownToGithub({url: data.input.pushInfo.postbackURL, message: data.output.feedback});
+                await this.github.postMarkdownToGithub({url: data.input.pushInfo.postbackURL, message: data.output.report.feedback});
                 // NOTE: if the feedback was requested for this build it shouldn't count
                 // since we're not calling saveFeedback this is right
                 // but if we replay the commit comments, we would see it there, so be careful
             } else if (pushRequested !== null) {
                 // feedback has been previously requested
                 Log.info("GitHubAutoTest::processExecution(..) - feedback requested");
-                await this.github.postMarkdownToGithub({url: data.input.pushInfo.postbackURL, message: data.output.feedback});
+                await this.github.postMarkdownToGithub({url: data.input.pushInfo.postbackURL, message: data.output.report.feedback});
                 await this.saveFeedbackGiven(data.input.delivId, pushRequested.personId, pushRequested.timestamp, data.commitURL);
             } else {
                 // do nothing
@@ -338,6 +339,21 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     }
 
     /**
+     * Gets the container details for this deliverable
+     */
+    private async getContainerConfig(delivId: string): Promise<AutoTestConfigTransport | null> {
+        Log.trace("GitHubAutoTest::getContainerConfig() - start");
+        try {
+            let details = await this.classPortal.getContainerDetails(delivId);
+            Log.trace("GitHubAutoTest::getContainerConfig() - RESPONSE: " + details);
+            return details;
+        } catch (err) {
+            Log.error("GitHubAutoTest::getContainerConfig() - ERROR: " + err);
+        }
+    }
+
+
+    /**
      * Tracks that feedback was given for the specified user at the specified time.
      *
      * @param courseId
@@ -352,7 +368,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 commitURL,
                 delivId,
                 timestamp,
-                personId: userName,
+                personId: userName
             };
             await this.dataStore.saveFeedbackGivenRecord(record);
         } catch (err) {

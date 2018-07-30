@@ -1,4 +1,5 @@
 import Log from "../../../../common/Log";
+import {TeamTransport} from "../../../../common/types/PortalTypes";
 import {Deliverable, Person, Team} from "../Types";
 import {DatabaseController} from "./DatabaseController";
 
@@ -23,13 +24,18 @@ export class TeamController {
     public async getTeamsForPerson(myPerson: Person): Promise<Team[]> {
         Log.info("TeamController::getTeamsForPerson( " + myPerson.id + " ) - start");
 
-        const myTeams: Team[] = [];
+        let myTeams: Team[] = [];
         const allTeams = await this.db.getTeams();
         for (const team of allTeams) {
             if (team.personIds.indexOf(myPerson.id) >= 0) {
                 myTeams.push(team);
             }
         }
+
+        // sort by delivIds
+        myTeams = myTeams.sort(function(a: Team, b: Team) {
+            return a.delivId.localeCompare(b.delivId);
+        });
 
         Log.info("TeamController::getTeamsForPerson( " + myPerson.id + " ) - done; # teams: " + myTeams.length);
         return myTeams;
@@ -58,6 +64,17 @@ export class TeamController {
             Log.info("TeamController::createTeam( " + name + ",.. ) - team exists: " + JSON.stringify(existingTeam));
             return await this.db.getTeam(name);
         }
+    }
+
+    public translateTeam(team: Team): TeamTransport {
+        const t: TeamTransport = {
+            id:      team.id,
+            delivId: team.delivId,
+            people:  team.personIds,
+            URL:     team.URL
+        };
+
+        return t;
     }
 
 }

@@ -5,7 +5,8 @@
       true,
       140
     ],
-	"member-ordering": "fields-first",
+    "no-unused-expression": false,
+    "member-ordering": "fields-first",
     "object-literal-shorthand": false,
     "quotemark": false,
     "trailing-comma": "never",

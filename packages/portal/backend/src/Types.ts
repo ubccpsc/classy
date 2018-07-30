@@ -1,4 +1,4 @@
-import {IAutoTestResult} from "../../../common/types/AutoTestTypes";
+import {IAutoTestResult, AutoTestConfig} from "../../../common/types/AutoTestTypes";
 
 /**
  * These types are the storage-specific types used by the backend.
@@ -88,14 +88,6 @@ export interface Deliverable {
     autotest: AutoTestConfig;
 
     custom: any; // {}; not used by the default implementation, but useful for extension (e.g., schemas)
-}
-
-export interface AutoTestConfig {
-    dockerImage: string;
-    studentDelay: number;
-    maxExecTime: number;
-    regressionDelivIds: string[];
-    custom: object;
 }
 
 export interface Team {

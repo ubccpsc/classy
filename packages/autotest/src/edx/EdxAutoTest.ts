@@ -3,9 +3,9 @@ import Log from "../../../common/Log";
 import {IAutoTestResult, IContainerInput, IPushEvent} from "../../../common/types/AutoTestTypes";
 
 import {AutoTest} from "../autotest/AutoTest";
-import {IGitHubService} from "../github/GitHubService";
 import {IClassPortal} from "../autotest/ClassPortal";
 import {IDataStore} from "../autotest/DataStore";
+import {IGitHubService} from "../github/GitHubService";
 
 export class EdxAutoTest extends AutoTest {
 
@@ -34,7 +34,8 @@ export class EdxAutoTest extends AutoTest {
         }
 
         const info = await EdxUtil.simulatePushEvent(commitURL);
-        const input: IContainerInput = {delivId, pushInfo: info};
+        const container = await this.classPortal.getContainerDetails(delivId);
+        const input: IContainerInput = {delivId, pushInfo: info, containerConfig: container};
         await this.dataStore.savePush(input);
 
         this.addToStandardQueue(input);

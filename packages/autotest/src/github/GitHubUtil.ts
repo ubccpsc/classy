@@ -2,6 +2,7 @@ import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
 import {ICommentEvent, IPushEvent} from "../../../common/types/AutoTestTypes";
+import {ClassPortal} from "../autotest/ClassPortal";
 
 /**
  * Translator class to turn REST payloads into IPushEvent and ICommentEvents.
@@ -53,7 +54,7 @@ export class GitHubUtil {
      * @param payload
      * @returns {ICommentEvent}
      */
-    public static processComment(payload: any): ICommentEvent {
+    public static async processComment(payload: any): Promise<ICommentEvent> {
         try {
             const commitSHA = payload.comment.commit_id;
             let commitURL = payload.comment.html_url;  // this is the comment Url
@@ -61,7 +62,7 @@ export class GitHubUtil {
 
             const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
 
-            const requestor = String(payload.comment.user.login).toLowerCase();
+            const requestor = String(payload.comment.user.login); // .toLowerCase();
             const message = payload.comment.body;
             const delivId = GitHubUtil.parseDeliverableFromComment(message);
 
@@ -74,6 +75,9 @@ export class GitHubUtil {
 
             const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can't add requests to a past comment
 
+            const cp = new ClassPortal();
+            const personResponse = await cp.getPersonId(requestor); // need to get this from portal backend (this is a gitHubId, not a personId)
+
             const commentEvent: ICommentEvent = {
                 delivId,
                 repoId,
@@ -81,7 +85,7 @@ export class GitHubUtil {
                 commitSHA,
                 commitURL,
                 postbackURL,
-                personId: requestor,
+                personId: personResponse.personId,
                 timestamp
             };
             Log.trace("GitHubUtil::processComment(..) - handling: " + commentEvent);
