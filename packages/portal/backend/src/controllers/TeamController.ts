@@ -1,4 +1,5 @@
 import Log from "../../../../common/Log";
+import {TeamTransport} from "../../../../common/types/PortalTypes";
 import {Deliverable, Person, Team} from "../Types";
 import {DatabaseController} from "./DatabaseController";
 
@@ -58,6 +59,17 @@ export class TeamController {
             Log.info("TeamController::createTeam( " + name + ",.. ) - team exists: " + JSON.stringify(existingTeam));
             return await this.db.getTeam(name);
         }
+    }
+
+    public translateTeam(team: Team): TeamTransport {
+        const t: TeamTransport = {
+            id:      team.id,
+            delivId: team.delivId,
+            people:  team.personIds,
+            URL:     team.URL
+        };
+
+        return t;
     }
 
 }
