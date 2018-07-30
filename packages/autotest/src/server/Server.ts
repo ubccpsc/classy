@@ -57,8 +57,8 @@ export default class Server {
 
                 that.rest = restify.createServer({
                     name:        "AutoTest",
-                    key:         fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslKeyPath)),
-                    certificate: fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslCertPath))
+                    // key:         fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslKeyPath)),
+                    // certificate: fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslCertPath))
                 });
 
                 // support CORS

@@ -117,7 +117,7 @@ export default class BackendServer {
 
             // serve up the static frontend resources
             that.rest.get('/\/.*/', restify.plugins.serveStatic({
-                directory: '../frontend/html',
+                directory: __dirname + '/../../../frontend/html',
                 default:   'index.html'
             }));
 

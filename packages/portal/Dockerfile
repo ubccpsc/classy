@@ -8,20 +8,30 @@ ENV BACKEND_PORT $PORT
 
 EXPOSE $PORT
 
-VOLUME /app/packages/portal-backend/ssl
+RUN apk add --no-cache git && \
+  git config --global user.email "${GH_BOT_USERNAME}" && \
+  git config --global user.name "${GH_BOT_EMAIL}"
 
-RUN apk add --no-cache git
 
-WORKDIR /app/packages/portal-backend
-COPY package.json ./
-COPY src/ src/
-COPY html/ html/
+WORKDIR /app/packages/portal
+
+COPY frontend/package.json frontend/webpack.config.js frontend/
+COPY frontend/src/ frontend/src/
+COPY frontend/html/ frontend/html/
+
+COPY backend/package.json backend/
+COPY backend/src/ backend/src/
+COPY backend/html/ backend/html/
+
 RUN chown -R node /app
 
 USER node
-RUN yarn install \
- && tsc \
- && git config --global user.email "${GH_BOT_USERNAME}" \
- && git config --global user.name "${GH_BOT_EMAIL}"
 
-CMD ["node", "src/BackendDaemon.js"]
+# This is a mess due to the dependencies between the frontend and backend
+RUN cd /app/ && yarn install && \
+  cd packages/portal/backend/ && yarn install && \
+  cd ../frontend/ && yarn install && \
+  cd ../backend/ && tsc && \
+  cd ../frontend/ && tsc && yarn webpack
+
+CMD ["node", "/app/packages/portal/backend/src/Backend.js"]
