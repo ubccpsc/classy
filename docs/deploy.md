@@ -4,10 +4,10 @@
 
 The following software should be installed on the host before attempting to deploy Classy.
 
-- Docker
-- Docker Compose
-- Git (must be version compatible with docker v18; working with Git v2.16)
-- Certbot (Let's Encrypt)
+- Docker (Docker version 18.03.1-ce, build 9ee9f40)
+- Docker Compose (docker-compose version 1.22.0, build f46880fe)
+- Git (must be version compatible with docker v18; working with git version 2.16.4)
+- Certbot (Let's Encrypt, certbot 0.25.1)
 
 ## Deploying Classy (Base)
 
