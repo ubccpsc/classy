@@ -1,4 +1,6 @@
+import * as ClientOAuth2 from "client-oauth2";
 import * as rp from "request-promise-native";
+import * as restify from "restify";
 
 import Config, {ConfigKey} from "../../../../../common/Config";
 import Log from "../../../../../common/Log";
@@ -9,10 +11,10 @@ import {DatabaseController} from "../../controllers/DatabaseController";
 import {PersonController} from "../../controllers/PersonController";
 import {Factory} from "../../Factory";
 import {Auth, Person} from "../../Types";
+
 import IREST from "../IREST";
 
-import ClientOAuth2 = require("client-oauth2");
-import restify = require("restify");
+// import ClientOAuth2 = require("client-oauth2");
 
 /**
  * Just a large body of static methods for translating between restify and the remainder of the system.
@@ -127,34 +129,35 @@ export class AuthRoutes implements IREST {
         const token = req.headers.token;
         Log.info('AuthRoutes::getCredentials(..) - user: ' + user + '; token: ' + token);
 
-        const handleError = function(msg: string) {
-            payload = {failure: {message: msg, shouldLogout: false}};
-            res.send(400, payload);
-            return next();
-        };
-
         let payload: AuthTransportPayload;
-        AuthRoutes.ac.isValid(user, token).then(function(isValid) {
-            Log.trace('AuthRoutes::getCredentials(..) - in isValid(..)');
-            if (isValid === true) {
-                Log.trace('AuthRoutes::getCredentials(..) - isValid true');
-                return AuthRoutes.ac.isPrivileged(user, token);
-            } else {
-                Log.error('AuthRoutes::getCredentials(..) - isValid false');
-                handleError("Login error; user not valid.");
-            }
-        }).then(function(isPrivileged) {
-            if (typeof isPrivileged === 'undefined') {
-                Log.warn('AuthRoutes::getCredentials(..) - failsafe; DEBUG this case?');
-                isPrivileged = {isAdmin: false, isStaff: false}; // fail safe
-            }
+        AuthRoutes.performGetCredentials(user, token).then(function(isPrivileged) {
             payload = {success: {personId: user, token: token, isAdmin: isPrivileged.isAdmin, isStaff: isPrivileged.isStaff}};
             Log.info('AuthRoutes::getCredentials(..) - sending 200; isPriv: ' + (isPrivileged.isStaff || isPrivileged.isAdmin));
             res.send(200, payload);
+            return next(true);
         }).catch(function(err) {
-            Log.info('AuthRoutes::getCredentials(..) - ERROR: ' + err);
-            handleError("Login error.");
+            Log.warn("AuthRoutes::getCredentials(..) - ERROR: " + err.message);
+            payload = {failure: {message: err.message, shouldLogout: false}};
+            res.send(400, payload);
+            return next(false);
         });
+    }
+
+    private static async performGetCredentials(user: string, token: string): Promise<{isAdmin: boolean, isStaff: boolean}> {
+        const isValid = await AuthRoutes.ac.isValid(user, token);
+        Log.trace('AuthRoutes::getCredentials(..) - in isValid(..)');
+        if (isValid === false) {
+            Log.error('AuthRoutes::getCredentials(..) - isValid false');
+            throw new Error("Login error; user not valid.");
+        }
+        Log.trace('AuthRoutes::getCredentials(..) - isValid true');
+        let isPrivileged = await AuthRoutes.ac.isPrivileged(user, token);
+
+        if (typeof isPrivileged === 'undefined' || isPrivileged === null) {
+            Log.warn('AuthRoutes::getCredentials(..) - failsafe; DEBUG this case?');
+            isPrivileged = {isAdmin: false, isStaff: false}; // fail safe
+        }
+        return {isAdmin: isPrivileged.isAdmin, isStaff: isPrivileged.isStaff};
     }
 
     /**
