@@ -104,7 +104,6 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      * @param info
      */
     public async handleCommentEvent(info: ICommentEvent): Promise<boolean> {
-        const that = this;
         try {
             const start = Date.now();
 
@@ -356,7 +355,6 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     /**
      * Tracks that feedback was given for the specified user at the specified time.
      *
-     * @param courseId
      * @param delivId
      * @param userName
      * @param timestamp

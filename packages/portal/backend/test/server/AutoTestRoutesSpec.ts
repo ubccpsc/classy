@@ -1,15 +1,19 @@
 import {expect} from "chai";
 import * as fs from "fs-extra";
 import "mocha";
-import Config, {ConfigKey} from "../../../../common/Config";
+import * as restify from "restify";
+import * as request from "supertest";
 
+import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
+
 import {
     AutoTestAuthPayload,
     AutoTestConfigPayload,
     AutoTestDefaultDeliverablePayload,
     AutoTestGradeTransport
 } from "../../../../common/types/PortalTypes";
+
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 
 import BackendServer from "../../src/server/BackendServer";
@@ -20,24 +24,20 @@ import {Test} from "../GlobalSpec";
 // It should be at the top of every test file.
 // const loadFirst = require('../GlobalSpec');
 
-import restify = require('restify');
-
-const request = require('supertest');
-
 describe('AutoTest Routes', function() {
 
     const TIMEOUT = 5000;
 
-    var app: restify.Server = null;
+    let app: restify.Server = null;
 
-    var server: BackendServer = null;
+    let server: BackendServer = null;
     before(async () => {
         Log.test('RestifyAutoTestRoutes::before - start');
 
         Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
         Config.getInstance().setProp(ConfigKey.name, Config.getInstance().getProp(ConfigKey.testname));
 
-        let db = DatabaseController.getInstance();
+        DatabaseController.getInstance(); // invoke early
         // await db.clearData(); // nuke everything
 
         // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
@@ -391,7 +391,11 @@ describe('AutoTest Routes', function() {
 
         const url = '/portal/at/grade/';
         try {
-            response = await request(app).post(url).send(gradePayload).set('Accept', 'application/json').set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
+            response = await request(app)
+                .post(url)
+                .send(gradePayload)
+                .set('Accept', 'application/json')
+                .set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
@@ -421,7 +425,11 @@ describe('AutoTest Routes', function() {
 
         const url = '/portal/at/grade/';
         try {
-            response = await request(app).post(url).send(gradePayload).set('Accept', 'application/json').set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
+            response = await request(app)
+                .post(url)
+                .send(gradePayload)
+                .set('Accept', 'application/json')
+                .set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
@@ -438,7 +446,10 @@ describe('AutoTest Routes', function() {
 
         const url = '/portal/githubWebhook';
         try {
-            response = await request(app).post(url).send(body).set('Accept', 'application/json').set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
+            response = await request(app)
+                .post(url).send(body)
+                .set('Accept', 'application/json')
+                .set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
         } catch (err) {
             Log.test('ERROR: ' + err);
         }

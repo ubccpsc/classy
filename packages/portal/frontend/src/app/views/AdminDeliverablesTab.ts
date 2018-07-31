@@ -5,7 +5,7 @@ import {UI} from "../util/UI"
 import {DeliverableTransport, DeliverableTransportPayload} from "../../../../../common/types/PortalTypes";
 import {AdminView} from "./AdminView";
 import {OnsFabElement} from "onsenui";
-import {AutoTestConfig} from "../../../../backend/src/Types";
+import {AutoTestConfig} from "../../../../../common/types/AutoTestTypes";
 
 // import flatpickr from "flatpickr";
 declare var flatpickr: any;
@@ -266,7 +266,7 @@ export class AdminDeliverablesTab {
             maxExecTime,
             studentDelay,
             regressionDelivIds,
-            custom: atCustom,
+            custom: atCustom
         };
 
         let deliv: DeliverableTransport = {

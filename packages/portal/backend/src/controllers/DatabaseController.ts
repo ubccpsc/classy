@@ -350,7 +350,7 @@ export class DatabaseController {
                 return null;
             } else {
                 Log.trace("DatabaseController::readSingleRecord(..) - done; # records: " + records.length + "; took: " + Util.took(start));
-                let record = records[0];
+                const record = records[0];
                 delete record._id; // remove the record id, just so we can't use it
                 return record;
             }
@@ -366,7 +366,7 @@ export class DatabaseController {
      * @param {{}} query send {} if all results for that column are wanted
      * @returns {Promise<{}[]>}
      */
-    private async readRecords(column: string, query: {}): Promise<{}[]> {
+    public async readRecords(column: string, query: {}): Promise<{}[]> {
         try {
             Log.trace("DatabaseController::readRecords( " + column + ", " + JSON.stringify(query) + " ) - start");
             const start = Date.now();
@@ -374,10 +374,12 @@ export class DatabaseController {
 
             const records: any[] = await <any>col.find(query).toArray();
             if (records === null || records.length === 0) {
-                Log.trace("DatabaseController::readRecords(..) - done; no records found for: " + JSON.stringify(query) + " in: " + column + "; took: " + Util.took(start));
+                Log.trace("DatabaseController::readRecords(..) - done; no records found for: " +
+                    JSON.stringify(query) + " in: " + column + "; took: " + Util.took(start));
                 return [];
             } else {
-                Log.trace("DatabaseController::readRecords(..) - done; # records: " + records.length + ". took: " + Util.took(start));
+                Log.trace("DatabaseController::readRecords(..) - done; # records: " +
+                    records.length + ". took: " + Util.took(start));
                 for (const r of records) {
                     delete r._id; // remove the record id, just so we can't use it
                 }
