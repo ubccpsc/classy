@@ -228,7 +228,7 @@ describe('Admin Routes', function () {
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
         expect(body.success).to.be.an('array');
-        expect(body.success).to.have.lengthOf(5);
+        expect(body.success).to.have.lengthOf(6);
 
         const dc = new DeliverablesController();
         const actual = dc.validateDeliverableTransport(body.success[0]);
