@@ -38,6 +38,8 @@ export class AssignmentController {
         if (grade === null) return null;
 
         const assignmentGrade: AssignmentGrade = grade.custom;
+        if(typeof assignmentGrade.questions === 'undefined' ||
+            typeof assignmentGrade.assignmentID === 'undefined') return null;
         return assignmentGrade;
     }
 
@@ -99,12 +101,10 @@ export class AssignmentController {
         // retrieve provisioning information
         let seedURL = assignInfo.seedRepoURL;
         let seedPath = assignInfo.seedRepoPath;
-        const WEBHOOKADDR = Config.getInstance().getProp(ConfigKey.backendUrl) + ':'
-            + Config.getInstance().getProp(ConfigKey.backendPort) + '/portal/githubWebhook';
 
         // attempt to provision the repository
         let provisionAttempt: boolean;
-        if (seedPath.trim() === "") {
+        if (seedPath.trim() === "" || seedPath.trim() === "*" || seedPath.trim() === "/*") {
             // provisionAttempt = await this.ghc.provisionRepository(repoName, [], seedURL, WEBHOOKADDR);
             provisionAttempt = await this.ghc.createRepository(repoName, seedURL);
         } else {

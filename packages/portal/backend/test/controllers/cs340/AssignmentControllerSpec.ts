@@ -7,8 +7,19 @@ import {GradesController} from "../../../src/controllers/GradesController";
 import {AssignmentController} from "../../../src/controllers/340/AssignmentController";
 import {RepositoryController} from "../../../src/controllers/RepositoryController";
 import {TeamController} from "../../../src/controllers/TeamController";
-import {Grade, Repository, Team} from "../../../src/Types";
-import {AssignmentGrade} from "../../../../../common/types/CS340Types";
+import {Deliverable, Grade, Repository, Team} from "../../../src/Types";
+import {
+    AssignmentGrade,
+    AssignmentGradingRubric,
+    AssignmentInfo,
+    AssignmentStatus
+} from "../../../../../common/types/CS340Types";
+import Log from "../../../../../common/Log";
+import {GitHubController} from "../../../src/controllers/GitHubController";
+import {GitHubActions} from "../../../src/controllers/GitHubActions";
+import {DeliverablesController} from "../../../src/controllers/DeliverablesController";
+import Config, {ConfigKey} from "../../../../../common/Config";
+import {PersonController} from "../../../src/controllers/PersonController";
 
 const loadFirst = require('../../GlobalSpec');
 const dFirst = require('../GradeControllerSpec');
@@ -28,22 +39,112 @@ const TEST_STUDENT_MAP = [
 
 const TEST_REPO_ID = "A2_REPO_STUDENT0";
 
-const TEST_ASSN_ID = "A2";
+const TEST_ASSIGN_NAME = "test_assignDeliv3";
+const TEST_REPO_PREFIX = "test_assignDeliv3_";
+const ORIGINAL_ORG = Config.getInstance().getProp(ConfigKey.org);
 
 
-describe.skip("CS340: AssignmentController", () => {
+const TIMEOUT = 7500;
+
+let DELAY_SEC = 1000;
+let DELAY_SHORT = 200;
+
+
+describe("CS340: AssignmentController", () => {
     let ac: AssignmentController = new AssignmentController();
     let gc: GradesController = new GradesController();
-    let tc = new TeamController();
-    let rc = new RepositoryController();
+    let tc: TeamController = new TeamController();
+    let rc: RepositoryController = new RepositoryController();
+    let dc: DeliverablesController = new DeliverablesController();
+    let pc: PersonController = new PersonController();
+    let gh: GitHubController = new GitHubController();
+    let gha: GitHubActions= new GitHubActions();
+
+    let numberOfStudents: number;
 
     before(async () => {
-        // nothing
+        let peopleList = await pc.getAllPeople();
+        numberOfStudents = peopleList.length;
+
+        // change org to testing org for safety
+        Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
+        // create assignment Deliverables
+        let newAssignmentStatus: AssignmentStatus = AssignmentStatus.INACTIVE;
+
+        let newAssignmentGradingRubric: AssignmentGradingRubric = {
+            name : TEST_ASSIGN_NAME,
+            comment : "test assignment",
+            questions : [
+                {
+                    name : "question 1",
+                    comment : "",
+                    subQuestions : [
+                        {
+                            name : "rubric",
+                            comment : "rubric question",
+                            outOf : 5,
+                            weight : 0.25,
+                            modifiers : null
+                        }
+                    ]
+                },
+                {
+                    name : "question 2",
+                    comment : "",
+                    subQuestions : [
+                        {
+                            name : "code quality",
+                            comment : "",
+                            outOf : 6,
+                            weight : 0.5,
+                            modifiers : null
+                        }
+                    ]
+                }
+            ]
+        };
+
+
+        let newAssignmentInfo: AssignmentInfo = {
+            seedRepoURL: "https://github.com/SECapstone/capstone",
+                seedRepoPath: "",
+                status: newAssignmentStatus,
+                rubric: newAssignmentGradingRubric,
+                repositories: [],
+        };
+
+        let newDeliv: Deliverable = {
+            id: TEST_ASSIGN_NAME,
+            URL: "",
+            repoPrefix: TEST_REPO_PREFIX,
+            openTimestamp: -1 ,
+            closeTimestamp: -2,
+            gradesReleased: false,
+            teamMinSize: 1,
+            teamMaxSize: 1,
+            teamSameLab: false,
+            teamStudentsForm: false,
+            teamPrefix: TEST_REPO_PREFIX,
+            autotest: null,
+            custom: newAssignmentInfo
+        };
+
+
+        let newDelivSuccess = await dc.saveDeliverable(newDeliv);
+
+        expect(newDelivSuccess).to.not.be.null;
+        Log.info("Successfully created new Assignment Deliverable for testing")
     });
 
     beforeEach(() => {
         // initialize a new controller before each tests
         ac = new AssignmentController();
+    });
+
+    after(() => {
+        Log.test("AssignmentControllerSpec::after() - start; replacing original org");
+        // return to original org
+        Config.getInstance().setProp(ConfigKey.org, ORIGINAL_ORG);
     });
 
     it("Attempting to retrieve an assignment grade that doesn't exist should return null.", async () => {
@@ -91,12 +192,12 @@ describe.skip("CS340: AssignmentController", () => {
         };
         let team1: Team = await tc.getTeam(Test.TEAMNAME1);
 
-        let repo2: Repository = await rc.createRepository(Test.REPONAME2, [team1], null);
+        let repo3: Repository = await rc.createRepository(Test.REPONAME3, [team1], null);
 
-        await ac.setAssignmentGrade(Test.REPONAME2, TEST_ASSN_ID, aPayload);
+        await ac.setAssignmentGrade(Test.REPONAME3, TEST_ASSIGN_NAME, aPayload);
 
-        let aGrade: AssignmentGrade = await ac.getAssignmentGrade(Test.USERNAME1, TEST_ASSN_ID);
-        let grade: Grade = await gc.getGrade(Test.USERNAME1, TEST_ASSN_ID);
+        let aGrade: AssignmentGrade = await ac.getAssignmentGrade(Test.USERNAME1, TEST_ASSIGN_NAME);
+        let grade: Grade = await gc.getGrade(Test.USERNAME1, TEST_ASSIGN_NAME);
         // Check if the assignment information is set properly
         expect(aGrade).to.not.be.null;
         expect(aGrade.assignmentID).equals("a2");
@@ -110,7 +211,7 @@ describe.skip("CS340: AssignmentController", () => {
 
     it("Should be able to update a grade.", async () => {
         let team1: Team = await tc.getTeam(Test.TEAMNAME1);
-        let repo2: Repository = await rc.getRepository(Test.REPONAME2);
+        let repo2: Repository = await rc.getRepository(Test.REPONAME3);
 
         let previousGradeRecords = await gc.getAllGrades(); // Pre command count
 
@@ -143,18 +244,18 @@ describe.skip("CS340: AssignmentController", () => {
             ]
         };
 
-        await ac.setAssignmentGrade(Test.REPONAME2, TEST_ASSN_ID, aPayload);
+        await ac.setAssignmentGrade(Test.REPONAME3, TEST_ASSIGN_NAME, aPayload);
 
         let afterGradeRecords = await gc.getAllGrades(); // Post command count
 
         expect(previousGradeRecords.length - afterGradeRecords.length).to.equal(0);
 
-        let grade: Grade = await gc.getGrade(Test.USERNAME1, TEST_ASSN_ID);
+        let grade: Grade = await gc.getGrade(Test.USERNAME1, TEST_ASSIGN_NAME);
         expect(grade).to.not.be.null;
         expect(grade.score).to.equal(8);
     });
 
-    it("Should be able to handle arbitrary subquestion sizes", async () => {
+    it("Should be able to handle arbitrary subquestion sizes.", async () => {
         let aPayload = {
             assignmentID: "a2",
             studentID:    TEST_STUDENT_ID_0,
@@ -204,16 +305,225 @@ describe.skip("CS340: AssignmentController", () => {
             ]
         };
 
-        let success = await ac.setAssignmentGrade(Test.REPONAME2, TEST_ASSN_ID, aPayload);
+        let success = await ac.setAssignmentGrade(Test.REPONAME3, TEST_ASSIGN_NAME, aPayload);
         expect(success).to.be.true;
 
-        let newGrade = await gc.getGrade(Test.USERNAME1, TEST_ASSN_ID);
+        let newGrade = await gc.getGrade(Test.USERNAME1, TEST_ASSIGN_NAME);
         expect(newGrade).to.not.be.null;
         expect(newGrade.score).to.be.equal(31);
 
-        let aGrade = await ac.getAssignmentGrade(Test.USERNAME1, TEST_ASSN_ID);
+        let aGrade = await ac.getAssignmentGrade(Test.USERNAME1, TEST_ASSIGN_NAME);
 
         expect(aGrade.studentID).to.be.equal(aPayload.studentID);
         expect(aGrade.assignmentID).to.be.equal(aPayload.assignmentID);
     });
+
+    it("Clean stale repositories.", async function() {
+        Log.info("Cleaning stale repositories");
+        await deleteStale();
+        Log.info("Cleaned all stale information");
+    }).timeout( 2 * TIMEOUT);
+
+    it("Should be able to create an Assignment Repos.", async function() {
+        let allStudents = await pc.getAllPeople();
+        expect(allStudents.length).to.be.greaterThan(0);
+
+        let allTeams = await tc.getAllTeams();
+        expect(allTeams.length).to.be.greaterThan(0);
+
+        let newAssignRepo: Repository = await ac.createAssignmentRepo(TEST_REPO_PREFIX +
+            allStudents[0].id,
+            TEST_ASSIGN_NAME, [allTeams[0]]);
+
+        expect(newAssignRepo).to.not.be.null;
+    }).timeout(3 * TIMEOUT);
+
+    it("Should be able to release an Assignment Repo.", async function() {
+        let allStudents = await pc.getAllPeople();
+        expect(allStudents.length).to.be.greaterThan(0);
+
+        let success = await ac.publishAssignmentRepo(TEST_REPO_PREFIX + allStudents[0].id);
+        expect(success).to.be.true;
+    }).timeout(2 * TIMEOUT);
+
+    it("Should be able to delete Assignment Repo, along with it's records.", async function() {
+        let allStudents = await pc.getAllPeople();
+        expect(allStudents.length).to.be.greaterThan(0);
+
+        let repoName = TEST_REPO_PREFIX + allStudents[0].id;
+
+        let success: boolean = await ac.deleteAssignmentRepository(repoName, TEST_ASSIGN_NAME, true);
+        expect(success).to.be.true;
+        // TODO: verify records are deleted
+    });
+
+    describe("Slow Assignment Tests", () => {
+        if(1 > 0) return; // skipping, this test takes minutes otherwise
+
+        it("Should be able to create all Assignment Repositories at once.", async function() {
+            let allStudents = await pc.getAllPeople();
+            let studentCount = allStudents.length;
+            expect(studentCount).to.be.greaterThan(0);
+
+            let oldGithubRepoArray = await gha.listRepos();
+            let oldGithubRepoCount = oldGithubRepoArray.length;
+
+            let success = await ac.initializeAllRepositories(TEST_ASSIGN_NAME);
+            expect(success).to.be.true;
+
+            let newGithubRepoArray = await gha.listRepos();
+            let newGithubRepoCount = newGithubRepoArray.length;
+
+            expect(newGithubRepoCount).to.be.greaterThan(oldGithubRepoCount);
+        }).timeout(numberOfStudents * 2 * TIMEOUT);
+
+        it("Should be able to publish all Assignment Repositories at once.", async function() {
+            let allStudents = await pc.getAllPeople();
+            let studentCount = allStudents.length;
+            expect(studentCount).to.be.greaterThan(0);
+
+            let success = await ac.publishAllRepositories(TEST_ASSIGN_NAME);
+            expect(success).to.be.true;
+
+            // TODO: Verify
+        }).timeout(numberOfStudents * TIMEOUT);
+
+        it("Should be able to delete all Assignment Repositories, along with their records", async function() {
+            let allStudents = await pc.getAllPeople();
+            let studentCount = allStudents.length;
+            expect(studentCount).to.be.greaterThan(0);
+
+            let oldGithubRepoArray = await gha.listRepos();
+            let oldGithubRepoCount = oldGithubRepoArray.length;
+
+            let success = await ac.deleteAllAssignmentRepositories(TEST_ASSIGN_NAME);
+            expect(success).to.be.true;
+
+            let newGithubRepoArray = await gha.listRepos();
+            let newGithubRepoCount = newGithubRepoArray.length;
+
+            expect(newGithubRepoCount).to.be.lessThan(oldGithubRepoCount);
+        }).timeout(numberOfStudents * 2 * TIMEOUT);
+    });
+
+
+    /*
+     *
+     */
+
+    it("Clean stale repositories", async function() {
+        Log.info("Cleaning stale repositories");
+        await deleteStale();
+        Log.info("Cleaned all stale information");
+    }).timeout( 2 * TIMEOUT);
+
+
+
+
+    /*
+        ========= IMPORTED CODE FROM GITHUBACTIONSPEC ===========
+     */
+
+    const OLDORG = Config.getInstance().getProp(ConfigKey.org);
+
+    async function deleteStale(): Promise<true> {
+        Log.test('GitHubActionSpec::deleteStale() - start');
+        let gh: GitHubActions = new GitHubActions();
+        let repos = await gh.listRepos();
+        expect(repos).to.be.an('array');
+        // expect(repos.length > 0).to.be.true; // test org can be empty
+
+        // delete test repos if needed
+        for (const repo of repos as any) {
+            for (const r of TESTREPONAMES) {
+                if (repo.name === r) {
+                    Log.info('Removing stale repo: ' + repo.name);
+                    let val = await gh.deleteRepo(r);
+                    await gh.delay(DELAY_SHORT);
+                    // expect(val).to.be.true;
+                }
+            }
+        }
+
+        repos = await gh.listRepos();
+        // delete test repos if needed
+        for (const repo of repos as any) {
+            Log.info('Evaluating repo: ' + repo.name);
+            if (repo.name.indexOf('TEST__X__') === 0 ||
+                repo.name.startsWith(REPONAME) ||
+                repo.name.startsWith("test_")) {
+                Log.info('Removing stale repo: ' + repo.name);
+                let val = await gh.deleteRepo(repo.name);
+                // expect(val).to.be.true;
+                let teamName = repo.name.substr(15);
+                Log.info('Adding stale team name: ' + repo.name);
+                TESTTEAMNAMES.push(teamName);
+            }
+        }
+
+        // delete teams if needed
+        let teams = await gh.listTeams();
+        expect(teams).to.be.an('array');
+        // expect(teams.length > 0).to.be.true; // can have 0 teams
+        Log.test('All Teams: ' + JSON.stringify(teams));
+        Log.test('Stale Teams: ' + JSON.stringify(TESTTEAMNAMES));
+        for (const team of teams as any) {
+            // Log.info('Evaluating team: ' + JSON.stringify(team));
+            let done = false;
+            for (const t of TESTTEAMNAMES) {
+                if (team.name === t ||
+                    team.name.startsWith(TEST_REPO_PREFIX)
+                ) {
+                    Log.test("Removing stale team: " + team.name);
+                    let val = await gh.deleteTeam(team.id);
+                    await gh.delay(DELAY_SHORT);
+                    done = true;
+                }
+            }
+            if (done === false) {
+                if (team.name.startsWith(TEAMNAME) === true) {
+                    Log.test("Removing stale team: " + team.name);
+                    let val = await gh.deleteTeam(team.id);
+                    await gh.delay(DELAY_SHORT);
+                }
+            }
+        }
+        Log.test('GitHubActionSpec::deleteStale() - done');
+        return true;
+    }
+
 });
+
+const REPONAME = getProjectPrefix() + TEST_ASSIGN_NAME;
+const REPONAME3 = getProjectPrefix() + Test.REPONAME3;
+const TEAMNAME = getTeamPrefix() + Test.TEAMNAME1;
+
+let TESTREPONAMES = [
+    "testtest__repo1",
+    "secap_cpscbot",
+    "secap_rthse2",
+    "secap_ubcbot",
+    "secap_testtest__repo1",
+    "TESTrepo1",
+    "TESTrepo2",
+    "TESTrepo3",
+];
+
+let TESTTEAMNAMES = [
+    "rtholmes",
+    "ubcbot",
+    "rthse2",
+    "cpscbot",
+    "TEST__X__t_TESTteam1",
+    "TESTteam1",
+    "TESTteam2",
+    "TESTteam3",
+];
+
+function getProjectPrefix(): string {
+    return "TEST__X__secap_";
+}
+
+function getTeamPrefix() {
+    return "TEST__X__t_";
+}
