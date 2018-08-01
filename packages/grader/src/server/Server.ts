@@ -1,19 +1,21 @@
-import * as fs from "fs";
 import * as restify from "restify";
 import Log from "../../../common/Log";
-import RouteHandler from "./RouteHandler";
+import {IContainerInput, IContainerOutput} from "../../../common/types/AutoTestTypes";
+import {GradeTask} from "../task/GradeTask";
+import {DockerContainer, IDockerContainer} from "../docker/DockerContainer";
+import {Repository} from "../git/Repository";
+import {Workspace} from "../storage/Workspace";
 
 /**
  * This configures the REST endpoints for the server.
  */
 export default class Server {
-    private rest: restify.Server;
-    private port: number;
+    private readonly rest: restify.Server;
+    private readonly port: number;
 
-    // private config: IConfig; // for SSL params
-
-    constructor() {
-        // this.config = new AppConfig(); // for SSL params
+    constructor(port: number, name: string) {
+        this.rest = restify.createServer({ name });
+        this.port = port;
     }
 
     /**
@@ -30,26 +32,6 @@ export default class Server {
     }
 
     /**
-     * Sets the port on this instance of a server
-     * @returns {void}
-     */
-    public setPort(portNum: number) {
-        Log.info("Server::setPort()");
-        this.port = portNum;
-    }
-
-    /**
-     * Gets the port that was set on this instance of a server
-     * @returns {number}
-     */
-
-    /*
-    public getPort() {
-        return this.port;
-    }
-    */
-
-    /**
      * Starts the server. Returns a promise with a boolean value. Promises are used
      * here because starting the server takes some time and we want to know when it
      * is done (and if it worked).
@@ -62,18 +44,6 @@ export default class Server {
 
                 Log.info("Server::start() - start");
 
-                /*
-                that.rest = restify.createServer({
-                    name:        "AutoTest",
-                    key:         fs.readFileSync(that.config.getSSLKeyPath()).toString(),
-                    certificate: fs.readFileSync(that.config.getSSLCertPath()).toString(),
-                    ca:          fs.readFileSync(that.config.getSSLIntCertPath()).toString(),
-                });
-                */
-                this.rest = restify.createServer({ // Non SSL version
-                    name: "ContainerHost"
-                });
-
                 // support CORS
                 this.rest.use(
                     function crossOrigin(req: any, res: any, next: any) {
@@ -82,32 +52,6 @@ export default class Server {
                         return next();
                     }
                 );
-
-                // Worker pool endpoints
-                // this.rest.get("/worker-pool/status");
-                // this.rest.post("/worker-pool/task/grade", restify.plugins.bodyParser(), RouteHandler.postGradingTask);
-                this.rest.put("/task/grade/:id", restify.plugins.bodyParser(), RouteHandler.putGradingTask);
-
-                // Worker endpoints
-                // this.rest.get("/worker/:id/status");
-                // this.rest.put("/worker/:id/status");  // change stop a worker
-
-                // Archive endpoints
-                // this.rest.get("/archive/:id");
-
-                // Return the test queue stats
-                // that.rest.get("/queue", restify.bodyParser(), RouteHandler.queueStats);
-
-                // GitHub Webhook endpoints
-
-                // if (Config.getInstance().getProp("kind") === "ubc") {
-                //     this.rest.post("/submit", restify.plugins.bodyParser(), RouteHandler.postGithubHook);
-                // } else if (Config.getInstance().getProp("kind") === "edx") {
-                //     Log.info("Server::start() - xqueue request received - start");
-                //     this.rest.post("/", restify.plugins.bodyParser(), RouteHandler.postXQueue);
-                // }
-
-
 
                 this.rest.listen(this.port, () => {
                     Log.info("Server::start() - restify listening: " + this.rest.url);
@@ -119,6 +63,47 @@ export default class Server {
                     Log.info("Server::start() - restify ERROR: " + err);
                     reject(err);
                 });
+
+                // TODO add endpoint for serving static files
+
+                this.rest.put("/task/grade/:id", restify.plugins.bodyParser(),
+                    async (req: restify.Request, res: restify.Response, next: restify.Next) => {
+                    try {
+                        req.socket.setTimeout(0);  // don't close the connection
+                        const id = req.params.id;
+                        const input: IContainerInput = req.body;
+                        const uid: number = Number(process.env.UID);
+                        const token: string = process.env.GH_BOT_TOKEN.replace("token ", "");
+
+                        // Add parameters to create the grading container. We'll be lazy and use the custom field.
+                        input.containerConfig.custom = {
+                            "--env": [
+                                `ASSIGNMENT=${input.delivId}`,
+                                `USER_UID=${uid}`
+                            ],
+                            "--volume": [
+                                `${process.env.GRADER_HOST_DIR}/${id}/assn:/assn`,
+                                `${process.env.GRADER_HOST_DIR}/${id}/output:/output`
+                            ],
+                            "--network": process.env.DOCKER_NET
+                        };
+
+                        // Inject the GitHub token into the cloneURL so we can clone the repo.
+                        input.pushInfo.cloneURL = input.pushInfo.cloneURL.replace("://", `://${token}@`);
+
+                        const workspace: Workspace = new Workspace(process.env.GRADER_PERSIST_DIR + "/" + id, uid);
+                        const container: IDockerContainer = new DockerContainer(input.containerConfig.dockerImage);
+                        const repo: Repository = new Repository();
+                        const output: IContainerOutput = await new GradeTask(input, workspace, container, repo).execute();
+                        res.json(200, output);
+                    } catch (err) {
+                        Log.error("Failed to handle grading task: " + err);
+                        res.json(400, err);
+                    }
+
+                    next();
+                });
+
 
             } catch (err) {
                 Log.error("Server::start() - ERROR: " + err);

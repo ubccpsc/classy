@@ -1,15 +1,10 @@
-import * as fs from "fs-extra";
 import {IDockerContainer} from "../docker/DockerContainer";
 import {Repository} from "../git/Repository";
 import Log from "../../../common/Log";
 import {IContainerInput, IContainerOutput} from "../../../common/types/AutoTestTypes";
 import {Workspace} from "../storage/Workspace";
 
-export interface IGradeWorker {
-    execute(): Promise<IContainerOutput>;
-}
-
-export class GradeWorker implements IGradeWorker {
+export class GradeTask {
     private readonly input: IContainerInput;
     private readonly workspace: Workspace;
     private readonly container: IDockerContainer;
@@ -47,7 +42,7 @@ export class GradeWorker implements IGradeWorker {
         try {
             await this.workspace.mkdir("output");
 
-            Log.trace("GraderWorker::execute() - Clone repo " +
+            Log.trace("GradeTask::execute() - Clone repo " +
                 this.input.pushInfo.cloneURL.match(/\/(.+)\.git/)[0] + " and checkout " +
                 this.input.pushInfo.commitSHA.substring(0,6) + "."
             );
@@ -63,9 +58,7 @@ export class GradeWorker implements IGradeWorker {
             await this.workspace.chown();
 
             Log.trace("GradeTask::execute() - Create grading container.");
-            //const container: IDockerContainer = new DockerContainer(this.input.containerConfig.dockerImage);
             try {
-                // We set the custom field in the constructor.
                 await this.container.create(this.input.containerConfig.custom);
 
                 Log.trace("GradeTask::execute() - Start grading container " + this.container.shortId);
@@ -76,7 +69,7 @@ export class GradeWorker implements IGradeWorker {
                 Log.trace("GradeTask::execute() - Write log for container " + this.container.shortId + " to " +
                     this.workspace + "/" + "stdio.txt");
                 const [, log] = await this.container.logs();
-                await fs.writeFile(`${this.workspace.rootDir}/stdio.txt`, log);
+                await this.workspace.writeFile("stdio.txt", log);
 
                 if (this.containerState === "TIMEOUT") {
                     out.report.feedback = "Container did not complete in the allotted time.";
@@ -84,7 +77,8 @@ export class GradeWorker implements IGradeWorker {
                     out.state = "TIMEOUT";
                 } else {
                     try {
-                        out.report = await fs.readJson(`${this.workspace.rootDir}/output/report.json`);
+                        // TODO Verify that the report is actually valid
+                        out.report = await this.workspace.readJson("output/report.json");
                         out.postbackOnComplete = exitCode !== 0;
                         out.state = "SUCCESS";
                     } catch (err) {
@@ -94,7 +88,7 @@ export class GradeWorker implements IGradeWorker {
                     }
                 }
             } catch (err) {
-                Log.error(`GradeWorker::execute() - ERROR Running grading container. ${err}`);
+                Log.error(`GradeTask::execute() - ERROR Running grading container. ${err}`);
             } finally {
                 try {
                     Log.trace("GradeTask::execute() - Remove container " + this.container.should);
@@ -104,7 +98,7 @@ export class GradeWorker implements IGradeWorker {
                 }
             }
         } catch (err) {
-            Log.warn(`GradeWorker::execute() - ERROR Processing ${this.input.pushInfo.commitSHA.substring(0,6)}. ${err}`);
+            Log.warn(`GradeTask::execute() - ERROR Processing ${this.input.pushInfo.commitSHA.substring(0,6)}. ${err}`);
         } finally {
             try {
                 Log.trace("GradeTask::execute() - Remove cloned repo.");
@@ -148,93 +142,4 @@ export class GradeWorker implements IGradeWorker {
         didFinish = true;
         return Number(cmdOut);
     }
-
-    // protected async runContainer(out: IContainerOutput): Promise<IContainerOutput> {
-    //     const cntr: IDockerContainer = new DockerContainer(this.input.containerConfig.dockerImage);
-    //
-    //     let containerState: string;
-    //
-    //     try {
-    //
-    //         // We set the custom field in the constructor.
-    //         await cntr.create(this.input.containerConfig.custom);
-    //         await cntr.start();
-    //         const [, cntrAddr] = await cntr.inspect("{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}");
-    //
-    //         Log.info(`Container ${cntr.id.substring(0, 7)} started with IP ${cntrAddr}`);
-    //
-    //         Log.info("Register timeout");
-    //         // Set a timer to kill the container if it doesn't finish in the time alloted
-    //         let didFinish = false;
-    //         let didTimeout = false;
-    //         if (this.input.containerConfig.maxExecTime > 0) {
-    //             setTimeout(async () => {
-    //                 if (!didFinish) {
-    //                     didTimeout = true;
-    //                     await cntr.stop();
-    //                 }
-    //             }, this.input.containerConfig.maxExecTime);
-    //         }
-    //
-    //         const [, cmdOut] = await cntr.wait();
-    //         const cntrCode = Number(cmdOut);
-    //         Log.info("Container done with code " + cntrCode);
-    //         didFinish = true;
-    //         if (didTimeout) {
-    //             containerState = "TIMEOUT";
-    //         }
-    //         let [, log] = await cntr.logs();
-    //         await fs.writeFile(`${this.workspace}/stdio.txt`, log);
-    //
-    //         try {
-    //             if (containerState === "TIMEOUT") {
-    //                 out.report.feedback = "Container did not complete in the allotted time.";
-    //                 out.postbackOnComplete = true;
-    //                 out.containerState = "TIMEOUT";
-    //             } else {
-    //                 const report: IGradeReport = await fs.readJson(`${this.workspace}/output/report.json`);
-    //                 out.report = report;
-    //                 out.postbackOnComplete = cntrCode !== 0;
-    //                 out.containerState = "SUCCESS";
-    //             }
-    //         } catch (err) {
-    //             Log.warn(`RouteHandler::postGradingTask(..) - ERROR Reading grade report. ${err}`);
-    //             out.report.feedback = "Failed to read grade report.";
-    //             out.containerState = "INVALID_REPORT";
-    //         }
-    //     } catch (err) {
-    //         Log.warn(`RouteHandler::postGradingTask(..) - ERROR Processing commit ${this.input.pushInfo.commitSHA}. ${err}`);
-    //         out.report.feedback = "Error running container.";
-    //         out.containerState = "FAIL";
-    //     } finally {
-    //         cntr.remove();
-    //     }
-    //
-    //     return out;
-    // }
-
-    // protected async preRun(): Promise<void> {
-    //     Log.info(`GradeTask::preRun() - Start`);
-    //     const assnUrl = this.input.pushInfo.cloneURL;
-    //     const assnDir = `${this.workspace}/assn`;
-    //     const assnRef = this.input.pushInfo.commitSHA;
-    //
-    //     await fs.mkdirp(`${this.workspace}/output`);
-    //     const assnRepo = await this.prepareRepo(assnUrl, assnDir, assnRef);
-    //     await new Promise((resolve, reject) => {
-    //         Log.trace(`GradeTask::preRun() - Changing ownership of ${this.workspace} to ${this.uid}.`);
-    //         exec(`chown -R ${this.uid} ${this.workspace}`, (error) => {
-    //             if (error) {
-    //                 Log.error("GradeTask::preRun() - Failed to change owner. " + error);
-    //                 reject(error);
-    //             }
-    //             resolve();
-    //         });
-    //     });
-    // }
-    //
-    // protected async postRun(): Promise<void> {
-    //     Log.info(`GradeTask::postRun() - Start`);
-    //     return fs.remove(`${this.workspace}/assn`);
-    // }
 }

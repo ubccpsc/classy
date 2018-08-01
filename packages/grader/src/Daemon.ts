@@ -1,8 +1,6 @@
 import Server from "./server/Server";
 
 (async () => {
-    const s = new Server();
-    s.setPort(Number(process.env.GRADER_PORT));
+    const s = new Server(Number(process.env.GRADER_PORT), "Grader");
     await s.start();
-    console.log("Running")
 })();
