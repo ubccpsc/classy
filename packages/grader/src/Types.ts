@@ -34,11 +34,3 @@ export interface IFirewallRule {
     module?: "state";
     state?: string;
 }
-
-export interface IHostEnv {
-    // name: string;  // hostname or ip address
-    // port: number;  // (will be used for the socket server)
-    uid: number;   // the id of the host user that will run containers. this ensures files are written with the consistent permissions on the host.
-    net: string;   // the name of the (sub)net that the grading container should connect to
-    mount: string; // the path to the mounted host directory
-}
