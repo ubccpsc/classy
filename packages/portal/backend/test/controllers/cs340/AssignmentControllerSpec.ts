@@ -20,6 +20,7 @@ import {GitHubActions} from "../../../src/controllers/GitHubActions";
 import {DeliverablesController} from "../../../src/controllers/DeliverablesController";
 import Config, {ConfigKey} from "../../../../../common/Config";
 import {PersonController} from "../../../src/controllers/PersonController";
+import {DatabaseController} from "../../../src/controllers/DatabaseController";
 
 const loadFirst = require('../../GlobalSpec');
 const dFirst = require('../GradeControllerSpec');
@@ -58,7 +59,8 @@ describe("CS340: AssignmentController", () => {
     let dc: DeliverablesController = new DeliverablesController();
     let pc: PersonController = new PersonController();
     let gh: GitHubController = new GitHubController();
-    let gha: GitHubActions= new GitHubActions();
+    let gha: GitHubActions;
+    let db: DatabaseController = DatabaseController.getInstance();
 
     let numberOfStudents: number;
 
@@ -68,6 +70,7 @@ describe("CS340: AssignmentController", () => {
 
         // change org to testing org for safety
         Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
+        gha = new GitHubActions();
         // create assignment Deliverables
         let newAssignmentStatus: AssignmentStatus = AssignmentStatus.INACTIVE;
 
@@ -134,6 +137,15 @@ describe("CS340: AssignmentController", () => {
 
         expect(newDelivSuccess).to.not.be.null;
         Log.info("Successfully created new Assignment Deliverable for testing")
+
+        // this.ac
+        // this.gc
+        // this.tc
+        // this.rc
+        // this.dc
+        // this.pc
+        // this.gh
+        // this.gha
     });
 
     beforeEach(() => {
@@ -358,7 +370,17 @@ describe("CS340: AssignmentController", () => {
     });
 
     describe("Slow Assignment Tests", () => {
-        if(1 > 0) return; // skipping, this test takes minutes otherwise
+
+        beforeEach(function () {
+            const exec = Test.runSlowTest();
+
+            if(exec) {
+                Log.test("AssignmentControllerSpec::slowTests - running; this may take a while...");
+            } else {
+                Log.test("AssignmentControllerSpec::slowTests - skipping (would take multiple minutes otherwise)");
+                this.skip();
+            }
+        });
 
         it("Should be able to create all Assignment Repositories at once.", async function() {
             let allStudents = await pc.getAllPeople();
@@ -404,6 +426,7 @@ describe("CS340: AssignmentController", () => {
 
             expect(newGithubRepoCount).to.be.lessThan(oldGithubRepoCount);
         }).timeout(numberOfStudents * 2 * TIMEOUT);
+
     });
 
 
