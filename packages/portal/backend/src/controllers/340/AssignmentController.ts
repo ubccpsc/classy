@@ -404,6 +404,14 @@ export class AssignmentController {
             await this.deleteAssignmentRepository(repoName, delivId, false);
         }
 
+        // check teams and make sure that the team records is deleted
+        let allTeams = await this.tc.getAllTeams();
+        for (const team of allTeams) {
+            if (team.delivId === delivId) {
+                await this.db.deleteTeam(team);
+                continue;
+            }
+        }
 
         // clear out repositories
         assignInfo.repositories = [];
