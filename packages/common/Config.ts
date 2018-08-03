@@ -56,7 +56,7 @@ export enum ConfigKey {
     // githubOrgToken = "githubOrgToken",
     dockerId = "dockerId",
     workspace = "workspace",
-    graderUrl = "graderHost",
+    graderUrl = "graderUrl",
     graderPort = "graderPort",
     classPortalHost = "classPortalHost",
     classPortalPort = "classPortalPort",
