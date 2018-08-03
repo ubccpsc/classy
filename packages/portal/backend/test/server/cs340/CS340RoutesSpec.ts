@@ -10,6 +10,7 @@ const request = require('supertest');
 import {Test} from "../../GlobalSpec";
 import restify = require('restify');
 import {QuestionGrade} from "../../../../../common/types/CS340Types";
+import {PersonController} from "../../../src/controllers/PersonController";
 
 const loadFirst = require('../../GlobalSpec');
 const https = require('https');
@@ -123,25 +124,52 @@ describe("CS340: Routes", () => {
 
     it("Should be able to set a student's grade", async function() {
         let aid = "test_assignDeliv3";
+        let pc: PersonController = new PersonController();
+        let allPeople = await pc.getAllPeople();
 
-        let newGrade: QuestionGrade[] = [
-            {
-                questionName: "",
-                commentName: "",
-                subQuestion: [
-                    {},
+        expect(allPeople.length).to.be.at.least(0);
 
-                ]
-            },
-
-
-        ];
-
+        let aPayload = {
+            assignmentID: aid,
+            studentID:    allPeople[0],
+            questions:    [
+                {
+                    questionName: "Question 1",
+                    commentName:  "",
+                    subQuestion:  [
+                        {
+                            sectionName: "code",
+                            grade:       4,
+                            feedback:    "Good job!"
+                        },
+                        {
+                            sectionName: "reasoning",
+                            grade:       5,
+                            feedback:    ""
+                        }
+                    ]
+                },
+                {
+                    questionName: "Question 2",
+                    commentName:  "",
+                    subQuestion:  [
+                        {
+                            sectionName: "code",
+                            grade:       4,
+                            feedback:    "Improper implementation"
+                        }
+                    ]
+                }
+            ]
+        };
 
         let response = null;
-        const url = '/portal/cs340/getAllAssignmentRubrics/';
+        const url = '/portal/cs340/setAssignmentGrade';
+
+        // TODO: Verify this
+
         try{
-            response = await request(app).put(url).send({assignmentID: aid, studentID: Test.USERNAME1}).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).put(url).send(aPayload).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -154,32 +182,128 @@ describe("CS340: Routes", () => {
 
 
     it("Should be able to get all grades", async function() {
+        let response = null;
+        const url = '/portal/cs340/getAllGrades';
+        try{
+            response = await request(app).get(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            fail(err);
+        }
 
+        expect(response).to.not.be.null;
+        expect(response.status).to.be.equal(200);
+        expect(response.body.response).to.not.be.null;
     });
 
     it("Should be able to get a specific grade using student ID and assignment ID", async function() {
+        let aid = "test_assignDeliv3";
+        let pc: PersonController = new PersonController();
+        let allPeople = await pc.getAllPeople();
 
+        expect(allPeople.length).to.be.at.least(0);
+        let sid = allPeople[0];
+
+        let response = null;
+        const url = '/portal/cs340/getAssignmentGrade/' + sid + '/' + aid;
+        try{
+            response = await request(app).get(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            fail(err);
+        }
+
+        expect(response).to.not.be.null;
+        expect(response.status).to.be.equal(200);
+        expect(response.body.response).to.not.be.null;
     });
 
     it("Should be able to get all Submissions using assignment ID.", async function() {
+        let aid = "test_assignDeliv3";
 
+        let response = null;
+        const url = '/portal/cs340/getAllSubmissionsByDelivID/' + aid;
+        try{
+            response = await request(app).get(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            fail(err);
+        }
+
+        expect(response).to.not.be.null;
+        expect(response.status).to.be.equal(200);
+        expect(response.body.response).to.not.be.null;
     });
 
     it("Should be able to get a person using their Github username", async function() {
+        let pc: PersonController = new PersonController();
+        let allPeople = await pc.getAllPeople();
 
+        expect(allPeople.length).to.be.at.least(0);
+        let sid = allPeople[0].githubId;
+
+        let response = null;
+        const url = '/portal/cs340/getPersonByID/' + sid;
+        try{
+            response = await request(app).get(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            fail(err);
+        }
+
+        expect(response).to.not.be.null;
+        expect(response.status).to.be.equal(200);
+        expect(response.body.response).to.not.be.null;
     });
 
     it("Should be able to get all persons", async function() {
+        let response = null;
+        const url = '/portal/cs340/getAllPersons' ;
+        try{
+            response = await request(app).get(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            fail(err);
+        }
 
+        expect(response).to.not.be.null;
+        expect(response.status).to.be.equal(200);
+        expect(response.body.response).to.not.be.null;
     });
 
     it("Should be able to update the assignment status", async function() {
+        let response = null;
+        let aid = "test_assignDeliv3";
 
+        const url = '/portal/cs340/updateAssignmentStatus/' + aid;
+        try{
+            response = await request(app).get(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            fail(err);
+        }
+
+        expect(response).to.not.be.null;
+        expect(response.status).to.be.equal(200);
+        expect(response.body.response).to.not.be.null;
     });
 
 
     it("Should be able to get the assignment status", async function() {
+        let response = null;
+        let aid = "test_assignDeliv3";
 
+        const url = '/portal/cs340/getAssignmentStatus/' + aid;
+        try{
+            response = await request(app).get(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            fail(err);
+        }
+
+        expect(response).to.not.be.null;
+        expect(response.status).to.be.equal(200);
+        expect(response.body.response).to.not.be.null;
     });
 
 
