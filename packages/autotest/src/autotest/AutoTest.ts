@@ -356,7 +356,7 @@ export abstract class AutoTest implements IAutoTest {
                     Log.warn("AutoTest::invokeContainer(..) - ERROR for commit: " + input.pushInfo.commitSHA + "; ERROR with grading service: " + err);
                 }
 
-                Log.trace("AutoTest::invokeContainer(..) - output: " + JSON.stringify(input, null, 2));
+                Log.trace("AutoTest::invokeContainer(..) - output: " + JSON.stringify(output, null, 2));
 
                 record = {
                     delivId,

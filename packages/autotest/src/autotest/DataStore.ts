@@ -21,7 +21,7 @@ export interface IDataStore {
      *
      * @param info
      */
-    savePush(info: IContainerInput): Promise<void>;
+    savePush(info: IPushEvent): Promise<void>;
 
     /**
      * Saves comment event (to its own table).
@@ -156,7 +156,7 @@ export class MongoDataStore implements IDataStore {
         Log.trace("MongoDataStore::getPushRecord(..) - start");
         try {
             const start = Date.now();
-            const res = await this.getSingleRecord(this.PUSHCOLL, {"pushInfo.commitURL": commitURL});
+            const res = await this.getSingleRecord(this.PUSHCOLL, {"commitURL": commitURL});
             if (res === null) {
                 Log.trace("MongoDataStore::getPushRecord(..) - record not found for: " + commitURL);
             } else {
@@ -170,7 +170,7 @@ export class MongoDataStore implements IDataStore {
     }
 
 
-    public async savePush(info: IContainerInput): Promise<void> {
+    public async savePush(info: IPushEvent): Promise<void> {
         Log.trace("MongoDataStore::savePush(..) - start; push: " + JSON.stringify(info));
         const start = Date.now();
         try {
