@@ -38,7 +38,6 @@ const TEST_STUDENT_MAP = [
     TEST_STUDENT_ID_3
 ];
 
-const TEST_REPO_ID = "A2_REPO_STUDENT0";
 
 const TEST_ASSIGN_NAME = "test_assignDeliv3";
 const TEST_REPO_PREFIX = "test_assignDeliv3_";
@@ -337,6 +336,15 @@ describe("CS340: AssignmentController", () => {
     }).timeout( 2 * TIMEOUT);
 
     it("Should be able to create an Assignment Repos.", async function() {
+        const exec = Test.runSlowTest();
+
+        if(exec) {
+            Log.test("AssignmentControllerSpec::slowTests - running; this may take a while...");
+        } else {
+            Log.test("AssignmentControllerSpec::slowTests - skipping (would take multiple minutes otherwise)");
+            this.skip();
+        }
+
         let allStudents = await pc.getAllPeople();
         expect(allStudents.length).to.be.greaterThan(0);
 
@@ -351,6 +359,15 @@ describe("CS340: AssignmentController", () => {
     }).timeout(3 * TIMEOUT);
 
     it("Should be able to release an Assignment Repo.", async function() {
+        const exec = Test.runSlowTest();
+
+        if(exec) {
+            Log.test("AssignmentControllerSpec::slowTests - running; this may take a while...");
+        } else {
+            Log.test("AssignmentControllerSpec::slowTests - skipping (would take multiple minutes otherwise)");
+            this.skip();
+        }
+
         let allStudents = await pc.getAllPeople();
         expect(allStudents.length).to.be.greaterThan(0);
 
@@ -359,6 +376,15 @@ describe("CS340: AssignmentController", () => {
     }).timeout(2 * TIMEOUT);
 
     it("Should be able to delete Assignment Repo, along with it's records.", async function() {
+        const exec = Test.runSlowTest();
+
+        if(exec) {
+            Log.test("AssignmentControllerSpec::slowTests - running; this may take a while...");
+        } else {
+            Log.test("AssignmentControllerSpec::slowTests - skipping (would take multiple minutes otherwise)");
+            this.skip();
+        }
+
         let allStudents = await pc.getAllPeople();
         expect(allStudents.length).to.be.greaterThan(0);
 
