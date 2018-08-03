@@ -373,7 +373,7 @@ describe("CS340: AssignmentController", () => {
 
         let success = await ac.publishAssignmentRepo(TEST_REPO_PREFIX + allStudents[0].id);
         expect(success).to.be.true;
-    }).timeout(2 * TIMEOUT);
+    }).timeout(3 * TIMEOUT);
 
     it("Should be able to delete Assignment Repo, along with it's records.", async function() {
         const exec = Test.runSlowTest();

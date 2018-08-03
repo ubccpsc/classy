@@ -346,23 +346,26 @@ describe("CS340: Routes", () => {
     }).timeout(2 * TIMEOUT);
 
     it("Should be able to set a student's grade", async function() {
+        Log.test("CS340RoutesSpec:: should be able to set a student's grade");
+
         let aid = "test_assignDeliv3";
         let pc: PersonController = new PersonController();
         let allPeople = await pc.getAllPeople();
 
         expect(allPeople.length).to.be.at.least(0);
 
-        // find UBCBOT
+        // find rthse2
         let index = -1;
         for(let i = 0; i < allPeople.length; i++) {
-            if(allPeople[i].githubId === 'ubcbot') {
+            if(allPeople[i].githubId === 'rthse2') {
+
                 index = i;
                 break;
             }
         }
 
         if(index === -1) {
-            fail("Unable to find UBC bot in records, something is wrong with the database...");
+            fail("Unable to find rthse2 in records, something is wrong with the database...");
         }
 
         let aPayload = {
@@ -417,23 +420,26 @@ describe("CS340: Routes", () => {
     }).timeout(2 * TIMEOUT);
 
     it("Should be able to get a specific grade using student ID and assignment ID", async function() {
+
+        Log.test("CS340RoutesSpec:: get specific grade");
+
         let aid = "test_assignDeliv3";
         let pc: PersonController = new PersonController();
         let allPeople = await pc.getAllPeople();
 
         expect(allPeople.length).to.be.at.least(0);
 
-        // find UBCBOT
+        // find rthse2
         let index = -1;
         for(let i = 0; i < allPeople.length; i++) {
-            if(allPeople[i].githubId === 'ubcbot') {
+            if(allPeople[i].githubId === 'rthse2') {
                 index = i;
                 break;
             }
         }
 
         if(index === -1) {
-            fail("Unable to find UBC bot in records, something is wrong with the database...");
+            fail("Unable to find rthse2 in records, something is wrong with the database...");
         }
 
         let sid = allPeople[index].id;
@@ -463,17 +469,17 @@ describe("CS340: Routes", () => {
 
         expect(allPeople.length).to.be.at.least(0);
 
-        // find UBCBOT
+        // find rthse2
         let index = -1;
         for(let i = 0; i < allPeople.length; i++) {
-            if(allPeople[i].githubId === 'ubcbot') {
+            if(allPeople[i].githubId === 'rthse2') {
                 index = i;
                 break;
             }
         }
 
         if(index === -1) {
-            fail("Unable to find UBC bot in records, something is wrong with the database...");
+            fail("Unable to find rthse2 in records, something is wrong with the database...");
         }
 
         let sid = allPeople[index].githubId;
