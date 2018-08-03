@@ -186,7 +186,6 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     msg += " Your results will be posted here as soon as they are ready.";
                     if (onQueue === false) {
                         const pe = await this.dataStore.getPushRecord(info.commitURL);
-                        // TODO @nickbradley Check to see if this is where we should be adding the delivId and containerConfig
                         if (pe !== null) {
                             Log.info("GitHubAutoTest::handleCommentEvent(..) - commit: " + info.commitSHA + "; - element not on queue; adding.");
                             await this.handlePushEvent(pe, info.delivId);
