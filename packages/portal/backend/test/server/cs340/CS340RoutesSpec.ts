@@ -346,6 +346,8 @@ describe("CS340: Routes", () => {
     }).timeout(2 * TIMEOUT);
 
     it("Should be able to set a student's grade", async function() {
+        Log.test("CS340RoutesSpec:: should be able to set a student's grade");
+
         let aid = "test_assignDeliv3";
         let pc: PersonController = new PersonController();
         let allPeople = await pc.getAllPeople();
@@ -417,6 +419,7 @@ describe("CS340: Routes", () => {
     }).timeout(2 * TIMEOUT);
 
     it("Should be able to get a specific grade using student ID and assignment ID", async function() {
+        Log.test("CS340RoutesSpec:: get specific grade");
         let aid = "test_assignDeliv3";
         let pc: PersonController = new PersonController();
         let allPeople = await pc.getAllPeople();
