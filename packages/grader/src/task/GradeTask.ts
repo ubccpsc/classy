@@ -134,7 +134,7 @@ export class GradeTask {
                     const [exitCode, ] = await container.stop();
                     return exitCode;
                 }
-            }, this.input.containerConfig.maxExecTime);
+            }, this.input.containerConfig.maxExecTime * 1000);
         }
 
         // cmdOut is the exit code from the container
