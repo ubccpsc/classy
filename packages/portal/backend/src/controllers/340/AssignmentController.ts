@@ -409,7 +409,6 @@ export class AssignmentController {
         for (const team of allTeams) {
             if (team.delivId === delivId) {
                 await this.db.deleteTeam(team);
-                continue;
             }
         }
 
