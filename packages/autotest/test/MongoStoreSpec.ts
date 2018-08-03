@@ -43,7 +43,7 @@ describe("MongoStore", () => {
         allData = await ds.getAllData();
         expect(allData.pushes.length).to.equal(1);
         const actual = allData.pushes[0];
-        const expected = TestData.inputRecordA;
+        const expected = TestData.inputRecordA.pushInfo;
         expect(actual).to.deep.include(expected);
     });
 
@@ -56,7 +56,7 @@ describe("MongoStore", () => {
 
         // VERIFY
         expect(actual).to.not.be.null;
-        const expected = TestData.inputRecordA;
+        const expected = TestData.inputRecordA.pushInfo;
         expect(actual).to.deep.include(expected);
     });
 
