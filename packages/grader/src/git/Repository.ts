@@ -8,12 +8,7 @@ import * as path from "path";
 export class Repository {
     public path: string;
 
-    /**
-     * Creates a new Repository instance rooted at specified directory. Commands execute against this instance.
-     * @param dir The location of the repository.
-     */
-    constructor(dir: string) {
-        this.path = path.resolve(dir);
+    constructor() {
     }
 
     /**
@@ -48,9 +43,11 @@ export class Repository {
     /**
      * Wrapper for git-clone. Credentials with read permission on the repository should be specified in the url.
      * @param url The location, including credentials, of the repository.
+     * @param dir The path on the locally machine to clone the files.
      * @throws When the repository cannot be cloned.
      */
-    public async clone(url: string): Promise<void> {
+    public async clone(url: string, dir: string): Promise<void> {
+        this.path = path.resolve(dir);
         return new Promise<void>((resolve, reject) => {
             exec(`git clone ${url} ${this.path}`, { env: {GIT_TERMINAL_PROMPT: 0} }, (error, stdout, stderr) => {
                 if (error) {
@@ -58,6 +55,17 @@ export class Repository {
                 }
                 console.log("GIT CLONE", stdout, stderr);
                 resolve();
+            });
+        });
+    }
+
+    public async getSha(): Promise<string> {
+        return new Promise<string>((resolve, reject) => {
+            exec(`git rev-parse HEAD`, { cwd: this.path }, (error, stdout, stderr) => {
+                if (error) {
+                    reject(error);
+                }
+                resolve(stdout);
             });
         });
     }

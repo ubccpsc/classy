@@ -57,6 +57,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
             Log.info("GitHubAutoTest::handlePushEvent(..) - start; commit: " + info.commitSHA);
             const start = Date.now();
+            await this.savePushInfo(info);
 
             if (typeof delivId === "undefined" || delivId === null) {
                 delivId = await this.getDelivId(); // current default deliverable
@@ -65,7 +66,6 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             if (delivId !== null) {
                 const containerConfig = await this.getContainerConfig(delivId);
                 const input: IContainerInput = {delivId, pushInfo: info, containerConfig: containerConfig};
-                await this.savePushInfo(input);
                 this.addToStandardQueue(input);
                 this.tick();
             } else {
@@ -297,9 +297,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      *
      * @param {IContainerInput} info
      */
-    private async savePushInfo(info: IContainerInput) {
+    private async savePushInfo(info: IPushEvent) {
         try {
-            Log.trace("GitHubAutoTest::savePushInfo(..) - commit: " + info.pushInfo.commitSHA);
+            Log.trace("GitHubAutoTest::savePushInfo(..) - commit: " + info.commitSHA);
             await this.dataStore.savePush(info);
         } catch (err) {
             Log.error("GitHubAutoTest::savePushInfo(..) - ERROR: " + err);
@@ -331,10 +331,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             if (typeof str.defaultDeliverable !== "undefined") {
                 return str.defaultDeliverable;
             }
-            return null;
         } catch (err) {
             Log.error("GitHubAutoTest::getDelivId() - ERROR: " + err);
         }
+        return null;
     }
 
     /**

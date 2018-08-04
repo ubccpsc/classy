@@ -6,6 +6,7 @@ import {Command} from "../util/Command";
  */
 export interface IDockerContainer {
     id: string;
+    shortId: string;
     /**
      * Creates a container from the image with the specified options.
      *
@@ -102,6 +103,12 @@ export class DockerContainer extends Command implements IDockerContainer {
 
     public get id(): string {
         return this._id;
+    }
+
+    public get shortId(): string {
+        if (this._id) {
+            return this._id.substring(0,6);
+        }
     }
 
     public async create(options: IDockerContainerOptions = {}): Promise<CommandResult> {

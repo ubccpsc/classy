@@ -377,7 +377,7 @@ describe("GitHubAutoTest", () => {
             "personId":  "cs310test"
         };
 
-        data.savePush(TestData.inputRecordA);
+        data.savePush(TestData.inputRecordA.pushInfo);
 
         data.saveFeedbackGivenRecord(fg);
         let allData = await data.getAllData();
