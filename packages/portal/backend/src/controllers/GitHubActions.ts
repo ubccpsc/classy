@@ -34,7 +34,7 @@ export class GitHubActions {
         let ctx = this;
 
         Log.info("GitHubAction::createRepo( " + ctx.org + ", " + repoName + " ) - start");
-        return new Promise(function (fulfill, reject) {
+        return new Promise(function(fulfill, reject) {
 
             const uri = ctx.apiPath + '/orgs/' + ctx.org + '/repos';
             const options = {
@@ -57,17 +57,17 @@ export class GitHubActions {
                 json:    true
             };
             let url: string | null = null;
-            rp(options).then(function (body: any) {
+            rp(options).then(function(body: any) {
                 // body.html_url;
                 // body.name;
                 // body.id;
                 url = body.html_url;
                 Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; delaying to prep repo.");
                 return ctx.delay(ctx.DELAY_SEC);
-            }).then(function () {
+            }).then(function() {
                 Log.info("GitHubAction::createRepo(..) - repo created: " + repoName);
                 fulfill(url);
-            }).catch(function (err: any) {
+            }).catch(function(err: any) {
                 Log.error("GitHubAction::createRepo(..) - ERROR: " + JSON.stringify(err));
                 reject(err);
             });
@@ -87,9 +87,9 @@ export class GitHubActions {
 
         // first make sure the repo exists
 
-        return new Promise(function (fulfill, reject) {
+        return new Promise(function(fulfill, reject) {
 
-            ctx.repoExists(repoName).then(function (repoExists: boolean) {
+            ctx.repoExists(repoName).then(function(repoExists: boolean) {
 
                 if (repoExists === true) {
                     Log.info("GitHubAction::deleteRepo(..) - repo exists; deleting");
@@ -106,10 +106,10 @@ export class GitHubActions {
                         }
                     };
 
-                    rp(options).then(function (body: any) {
+                    rp(options).then(function(body: any) {
                         Log.info("GitHubAction::deleteRepo(..) - success"); // body: " + body);
                         fulfill(true);
-                    }).catch(function (err: any) {
+                    }).catch(function(err: any) {
                         Log.error("GitHubAction::deleteRepo(..) - ERROR: " + JSON.stringify(err));
                         reject(err);
                     });
@@ -117,7 +117,7 @@ export class GitHubActions {
                     Log.info("GitHubAction::deleteRepo(..) - repo does not exists; not deleting");
                     fulfill(false);
                 }
-            }).catch(function (err) {
+            }).catch(function(err) {
                 Log.error("GitHubAction::deleteRepo(..) - ERROR: " + JSON.stringify(err));
                 reject(err);
             });
@@ -137,7 +137,7 @@ export class GitHubActions {
         let ctx = this;
         Log.info("GitHubAction::repoExists( " + ctx.org + ", " + repoName + " ) - start");
 
-        return new Promise(function (fulfill) {
+        return new Promise(function(fulfill) {
 
             const uri = ctx.apiPath + '/repos/' + ctx.org + '/' + repoName;
             Log.trace("GitHubAction::repoExists(..) - URI: " + uri);
@@ -151,10 +151,10 @@ export class GitHubActions {
                 }
             };
 
-            rp(options).then(function (body: any) {
+            rp(options).then(function(body: any) {
                 Log.info("GitHubAction::repoExists(..) - true"); // body: " + body);
                 fulfill(true);
-            }).catch(function () { // err: any
+            }).catch(function() { // err: any
                 // Log.trace("GitHubAction::repoExists(..) - ERROR: " + JSON.stringify(err));
                 Log.info("GitHubAction::repoExists(..) - false");
                 fulfill(false);
@@ -172,7 +172,7 @@ export class GitHubActions {
         let ctx = this;
 
         Log.info("GitHubAction::deleteTeam( " + ctx.org + ", " + teamId + " ) - start");
-        return new Promise(function (fulfill) {
+        return new Promise(function(fulfill) {
 
             const uri = ctx.apiPath + '/teams/' + teamId;
             Log.trace("GitHubAction::deleteRepo(..) - URI: " + uri);
@@ -186,10 +186,10 @@ export class GitHubActions {
                 }
             };
 
-            rp(options).then(function (body: any) {
+            rp(options).then(function(body: any) {
                 Log.info("GitHubAction::deleteTeam(..) - success"); // body: " + body);
                 fulfill(true);
-            }).catch(function (err) { // err: any
+            }).catch(function(err) { // err: any
                 Log.error("GitHubAction::deleteTeam(..) - failed; ERROR: " + err);
                 fulfill(false);
             });
@@ -202,7 +202,7 @@ export class GitHubActions {
      *
      * @returns {Promise<{ id: number, name: string, url: string }[]>} // this is just a subset of the return, but it is the subset we actually use
      */
-    public async listRepos(): Promise<{ id: number, name: string, url: string }[]> {
+    public async listRepos(): Promise<{id: number, name: string, url: string}[]> {
         const ctx = this;
 
 
@@ -224,12 +224,52 @@ export class GitHubActions {
 
         const raw: any = await ctx.handlePagination(options);
 
-        let rows: { id: number, name: string, url: string }[] = [];
+        let rows: {id: number, name: string, url: string}[] = [];
         for (const entry of raw) {
             const id = entry.id;
             const name = entry.name;
             const url = entry.url;
             rows.push({id: id, name: name, url: url});
+        }
+
+        return rows;
+    }
+
+    /**
+     * Gets all people in an org.
+     *
+     * @returns {Promise<{ id: number, type: string, url: string, name: string }[]>}
+     * this is just a subset of the return, but it is the subset we actually use
+     */
+    public async listPeople(): Promise<{id: number, type: string, url: string, name: string}[]> {
+        const ctx = this;
+
+
+        Log.info("GitHubManager::listRepos(..) - start");
+
+        // GET /orgs/:org/members
+        const uri = ctx.apiPath + '/orgs/' + ctx.org + '/members'; // per_page max is 100; 10 is useful for testing pagination though
+        const options = {
+            method:                  'GET',
+            uri:                     uri,
+            headers:                 {
+                'Authorization': ctx.gitHubAuthToken,
+                'User-Agent':    ctx.gitHubUserName,
+                'Accept':        'application/json'
+            },
+            resolveWithFullResponse: true,
+            json:                    true
+        };
+
+        const raw: any = await ctx.handlePagination(options);
+
+        let rows: {id: number, type: string, url: string, name: string}[] = [];
+        for (const entry of raw) {
+            const id = entry.id;
+            const type = entry.type;
+            const url = entry.url;
+            const name = entry.login;
+            rows.push({id: id, type: type, url: url, name: name});
         }
 
         return rows;
@@ -245,7 +285,7 @@ export class GitHubActions {
         const fullResponse = await rp(<any>rpOptions); // rpOptions is the right type already
 
         let raw: any[] = [];
-        let paginationPromises: any[] = [];
+        const paginationPromises: any[] = [];
         if (typeof fullResponse.headers.link !== 'undefined') {
             // first save the responses from the first page:
             raw = fullResponse.body;
@@ -306,7 +346,7 @@ export class GitHubActions {
      *
      * @returns {Promise<{id: number, name: string}[]>}
      */
-    public async listTeams(): Promise<{ id: number, name: string }[]> {
+    public async listTeams(): Promise<{id: number, name: string}[]> {
         Log.info("GitHubManager::listTeams(..) - start");
         const ctx = this;
         const uri = ctx.apiPath + '/orgs/' + ctx.org + '/teams?per_page=' + ctx.PAGE_SIZE; // per_page max is 100; 10 is useful for testing pagination though
@@ -324,7 +364,7 @@ export class GitHubActions {
 
         const teamsRaw: any = await ctx.handlePagination(options);
 
-        let teams: { id: number, name: string }[] = [];
+        let teams: {id: number, name: string}[] = [];
         for (const team of teamsRaw) {
             const id = team.id;
             const name = team.name;
@@ -339,7 +379,7 @@ export class GitHubActions {
         let ctx = this;
         Log.info("GitHubAction::listWebhooks( " + ctx.org + ", " + repoName + " ) - start");
 
-        return new Promise(function (fulfill, reject) {
+        return new Promise(function(fulfill, reject) {
 
             // POST /repos/:owner/:repo/hooks
             const uri = ctx.apiPath + '/repos/' + ctx.org + '/' + repoName + '/hooks';
@@ -353,10 +393,10 @@ export class GitHubActions {
                 json:    true
             };
 
-            rp(opts).then(function (results: any) {
+            rp(opts).then(function(results: any) {
                 Log.info("GitHubAction::listWebhooks(..) - success: " + results);
                 fulfill(results);
-            }).catch(function (err: any) {
+            }).catch(function(err: any) {
                 Log.error("GitHubAction::listWebhooks(..) - ERROR: " + err);
                 reject(err);
             });
@@ -367,7 +407,7 @@ export class GitHubActions {
         let ctx = this;
         Log.info("GitHubAction::addWebhook( " + ctx.org + ", " + repoName + ", " + webhookEndpoint + " ) - start");
 
-        return new Promise(function (fulfill, reject) {
+        return new Promise(function(fulfill, reject) {
 
             // POST /repos/:owner/:repo/hooks
             const uri = ctx.apiPath + '/repos/' + ctx.org + '/' + repoName + '/hooks';
@@ -390,10 +430,10 @@ export class GitHubActions {
                 json:    true
             };
 
-            rp(opts).then(function (results: any) {
+            rp(opts).then(function(results: any) {
                 Log.info("GitHubAction::addWebhook(..) - success: " + results);
                 fulfill(true);
-            }).catch(function (err: any) {
+            }).catch(function(err: any) {
                 Log.error("GitHubAction::addWebhook(..) - ERROR: " + err);
                 reject(err);
             });
@@ -410,7 +450,7 @@ export class GitHubActions {
      * @param permission 'admin', 'pull', 'push' // admin for staff, push for students
      * @returns {Promise<number>} team id
      */
-    public async createTeam(teamName: string, permission: string): Promise<{ teamName: string, githubTeamNumber: number }> {
+    public async createTeam(teamName: string, permission: string): Promise<{teamName: string, githubTeamNumber: number}> {
         let ctx = this;
         Log.info("GitHubAction::createTeam( " + ctx.org + ", " + teamName + ", " + permission + ", ... ) - start");
 
@@ -459,7 +499,7 @@ export class GitHubActions {
         let ctx = this;
         Log.info("GitHubAction::addMembersToTeam( " + teamName + ", ... ) - start; id: " + githubTeamId + "; members: " + JSON.stringify(members));
 
-        return new Promise(function (fulfill, reject) {
+        return new Promise(function(fulfill, reject) {
             let promises: any = [];
             for (const member of members) {
                 Log.info("GitHubAction::addMembersToTeam(..) - adding member: " + member);
@@ -479,10 +519,10 @@ export class GitHubActions {
                 promises.push(rp(opts));
             }
 
-            Promise.all(promises).then(function (results: any) {
+            Promise.all(promises).then(function(results: any) {
                 Log.info("GitHubAction::addMembersToTeam(..) - success: " + JSON.stringify(results));
                 fulfill({teamName: teamName, githubTeamNumber: githubTeamId});
-            }).catch(function (err: any) {
+            }).catch(function(err: any) {
                 Log.error("GitHubAction::addMembersToTeam(..) - ERROR: " + err);
                 reject(err);
             });
@@ -500,7 +540,7 @@ export class GitHubActions {
     public addTeamToRepo(teamId: number, repoName: string, permission: string): Promise<GitTeamTuple> {
         let ctx = this;
         Log.info("GitHubAction::addTeamToRepo( " + teamId + ", " + repoName + " ) - start");
-        return new Promise(function (fulfill, reject) {
+        return new Promise(function(fulfill, reject) {
 
             const uri = ctx.apiPath + '/teams/' + teamId + '/repos/' + ctx.org + '/' + repoName;
             const options = {
@@ -517,10 +557,10 @@ export class GitHubActions {
                 json:    true
             };
 
-            rp(options).then(function () { // body
+            rp(options).then(function() { // body
                 Log.info("GitHubAction::addTeamToRepo(..) - success; team: " + teamId + "; repo: " + repoName);
                 fulfill({githubTeamNumber: teamId, teamName: 'NOTSETHERE'});
-            }).catch(function (err: any) {
+            }).catch(function(err: any) {
                 Log.error("GitHubAction::addTeamToRepo(..) - ERROR: " + err);
                 reject(err);
             });
@@ -540,9 +580,9 @@ export class GitHubActions {
         let ctx = this;
         Log.info("GitHubAction::getTeamNumber( " + teamName + " ) - start");
 
-        return new Promise(function (fulfill, reject) {
+        return new Promise(function(fulfill, reject) {
             let teamId = -1;
-            ctx.listTeams().then(function (teamList: any) {
+            ctx.listTeams().then(function(teamList: any) {
                 for (const team of teamList) {
                     if (team.name === teamName) {
                         teamId = team.id;
@@ -557,7 +597,7 @@ export class GitHubActions {
                 } else {
                     fulfill(teamId);
                 }
-            }).catch(function (err) {
+            }).catch(function(err) {
                 Log.error("GitHubAction::getTeamNumber(..) - could not match team: " + teamName + "; ERROR: " + err);
                 reject(err);
             });
@@ -576,8 +616,8 @@ export class GitHubActions {
     public getTeamMembers(teamNumber: number): Promise<string[]> {
         let ctx = this;
 
-        Log.info("GitHubAction::getTeamMembers( " +  teamNumber + " ) - start");
-        return new Promise(function (fulfill) {
+        Log.info("GitHubAction::getTeamMembers( " + teamNumber + " ) - start");
+        return new Promise(function(fulfill) {
 
             const uri = ctx.apiPath + '/teams/' + teamNumber + '/members';
             const options = {
@@ -591,7 +631,7 @@ export class GitHubActions {
             };
 
             // NOTE: not sure how this will respond to paging if there are lots of members on the team
-            rp(options).then(function (body: any) {
+            rp(options).then(function(body: any) {
                 Log.info("GitHubAction::getTeamMembers(..) - success"); //  body: " + body);
                 let resp = JSON.parse(body);
                 let ids: string[] = [];
@@ -600,7 +640,7 @@ export class GitHubActions {
                 }
 
                 fulfill(ids);
-            }).catch(function (err: any) {
+            }).catch(function(err: any) {
                 Log.warn("GitHubAction::getTeamMembers(..) - ERROR: " + JSON.stringify(err));
                 // just return empy [] rather than failing
                 fulfill([]);
@@ -690,7 +730,7 @@ export class GitHubActions {
         //     return cloneRepo(tempPath).then(actionChain);
         // }
 
-        if(seedFilePath) {
+        if (seedFilePath) {
             const tempDir2 = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
             const tempPath2 = tempDir2.path;
             // First clone to a temporary directory
@@ -744,7 +784,7 @@ export class GitHubActions {
             Log.info('GithubManager::importRepoFS(..)::moveFiles( ' + originPath + ', '
                 + filesLocation + ', ' + destPath + ') - moving files');
             return exec(`cp -r ${originPath}/${filesLocation} ${destPath}`)
-                .then(function (result: any) {
+                .then(function(result: any) {
                     Log.info('GithubManager::importRepoFS(..)::moveFiles(..) - done');
                     Log.trace('GithubManager::importRepoFS(..)::moveFiles(..) - stdout: ' + result.stdout);
                     if (result.stderr) {
@@ -756,7 +796,7 @@ export class GitHubActions {
         function cloneRepo(repoPath: string) {
             Log.info('GithubManager::importRepoFS(..)::cloneRepo() - cloning: ' + importRepo);
             return exec(`git clone ${authedImportRepo} ${repoPath}`)
-                .then(function (result: any) {
+                .then(function(result: any) {
                     Log.info('GithubManager::importRepoFS(..)::cloneRepo() - done:');
                     Log.trace('GithubManager::importRepoFS(..)::cloneRepo() - stdout: ' + result.stdout);
                     if (result.stderr) {
@@ -768,7 +808,7 @@ export class GitHubActions {
         function enterRepoPath() {
             Log.info('GithubManager::importRepoFS(..)::enterRepoPath() - entering: ' + tempPath);
             return exec(`cd ${tempPath}`)
-                .then(function (result: any) {
+                .then(function(result: any) {
                     Log.info('GithubManager::importRepoFS(..)::enterRepoPath() - done:');
                     Log.trace('GithubManager::importRepoFS(..)::enterRepoPath() - stdout: ' + result.stdout);
                     if (result.stderr) {
@@ -780,7 +820,7 @@ export class GitHubActions {
         function removeGitDir() {
             Log.info('GithubManager::importRepoFS(..)::removeGitDir() - removing .git from cloned repo');
             return exec(`cd ${tempPath} && rm -rf .git`)
-                .then(function (result: any) {
+                .then(function(result: any) {
                     Log.info('GithubManager::importRepoFS(..)::removeGitDir() - done:');
                     console.log('GithubManager::importRepoFS(..)::removeGitDir() - stdout: ', result.stdout);
                     console.log('GithubManager::importRepoFS(..)::removeGitDir() - stderr: ', result.stderr);
@@ -790,7 +830,7 @@ export class GitHubActions {
         function initGitDir() {
             Log.info('GithubManager::importRepoFS(..)::initGitDir() - start');
             return exec(`cd ${tempPath} && git init`)
-                .then(function (result: any) {
+                .then(function(result: any) {
                     Log.info('GithubManager::importRepoFS(..)::initGitDir() - done:');
                     Log.trace('GithubManager::importRepoFS(..)::initGitDir() - stdout: ' + result.stdout);
                     if (result.stderr) {
@@ -803,7 +843,7 @@ export class GitHubActions {
             Log.info('GithubManager::importRepoFS(..)::changeGitRemote() - start');
             const command = `cd ${tempPath} && git remote add origin ${authedStudentRepo}.git && git fetch --all`;
             return exec(command)
-                .then(function (result: any) {
+                .then(function(result: any) {
                     Log.info('GithubManager::importRepoFS(..)::changeGitRemote() - done:');
                     Log.trace('GithubManager::importRepoFS(..)::changeGitRemote() - stdout: ' + result.stdout);
                     if (result.stderr) {
@@ -816,7 +856,7 @@ export class GitHubActions {
             Log.info('GithubManager::importRepoFS(..)::addFilesToRepo() - start');
             const command = `cd ${tempPath} && git add . && git commit -m "Starter files"`;
             return exec(command)
-                .then(function (result: any) {
+                .then(function(result: any) {
                     Log.info('GithubManager::importRepoFS(..)::addFilesToRepo() - done:');
                     Log.trace('GithubManager::importRepoFS(..)::addFilesToRepo() - stdout: ' + result.stdout);
                     if (result.stderr) {
@@ -829,7 +869,7 @@ export class GitHubActions {
             Log.info('GithubManager::importRepoFS(..)::pushToNewRepo() - start');
             let command = `cd ${tempPath} && git push origin master`;
             return exec(command)
-                .then(function (result: any) {
+                .then(function(result: any) {
                     Log.info('GithubManager::importRepoFS(..)::pushToNewRepo() - done: ');
                     Log.trace('GithubManager::importRepoFS(..)::pushToNewRepo() - stdout: ' + result.stdout);
                     if (result.stderr) {
@@ -843,7 +883,7 @@ export class GitHubActions {
     // or we want a test to be able to slow itself down
     public delay(ms: number): Promise<{}> {
         // logger.info("GitHubManager::delay( " + ms + ") - start");
-        return new Promise(function (resolve) {
+        return new Promise(function(resolve) {
             let fire = new Date(new Date().getTime() + ms);
             Log.info("GitHubAction::delay( " + ms + " ms ) - waiting; will trigger at " + fire.toLocaleTimeString());
             setTimeout(resolve, ms);
@@ -860,15 +900,17 @@ export class GitHubActions {
         let ctx = this;
         Log.info("GithubAction::setRepoPermission( " + repoName + ", " + permissionLevel + " ) - start");
 
-        return new Promise(function (fulfill, reject) {
+        return new Promise(function(fulfill, reject) {
             // Check if permissionLevel is one of: {push, pull}
             // We don't want to be able to grant a team admin access!
             if (permissionLevel !== "pull" && permissionLevel !== "push") {
                 Log.error("GitHubAction::setRepoPermission(..) - ERROR, Invalid permissionLevel: " + permissionLevel);
                 reject(false);
             }
+
             // Make sure the repo exists
-            ctx.repoExists(repoName).then(function (repoExists: boolean) {
+            // tslint:disable-next-line:no-floating-promises
+            ctx.repoExists(repoName).then(function(repoExists: boolean) {
                 if (repoExists) {
                     Log.info("GitHubAction::setRepoPermission(..) - repo exists");
                     Log.info("GitHubAction::setRepoPermission(..) - getting teams associated with repo");
@@ -886,7 +928,8 @@ export class GitHubActions {
                     };
 
                     // Change each team's permission
-                    rp(teamOptions).then(function (responseData: any) {
+                    // tslint:disable-next-line:no-floating-promises
+                    rp(teamOptions).then(function(responseData: any) {
                         Log.info("GitHubAction::setRepoPermission(..) - setting permission for teams on repo");
                         for (const team of responseData) {
                             // Don't change teams that have admin permission
@@ -908,9 +951,9 @@ export class GitHubActions {
                                     json:    true
                                 };
 
-                                rp(permissionOptions).then(function () {
+                                rp(permissionOptions).then(function() {
                                     Log.info("GitHubAction::setRepoPermission(..) - changed team: " + team.id + " permissions");
-                                }).catch(function (err) {
+                                }).catch(function(err) {
                                     Log.error("GitHubAction::setRepoPermission(..) - ERROR: " + err);
                                     fulfill(false);
                                 });
@@ -922,7 +965,7 @@ export class GitHubActions {
                     Log.info("GitHubAction::setRepoPermission(..) - repo does not exists; unable to revoke push");
                     fulfill(false);
                 }
-            }).catch(function (err) {
+            }).catch(function(err) {
                 // If we get an error; something went wrong
                 Log.error("GitHubAction::setRepoPermission(..) - ERROR: " + JSON.stringify(err));
                 reject(err);

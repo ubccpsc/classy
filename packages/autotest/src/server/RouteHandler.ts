@@ -2,6 +2,7 @@ import * as restify from "restify";
 import Config, {ConfigKey} from "../../../common/Config";
 
 import Log from "../../../common/Log";
+import {CommitTarget} from "../../../common/types/AutoTestTypes";
 import Util from "../../../common/Util";
 
 import {AutoTest} from "../autotest/AutoTest";
@@ -11,7 +12,6 @@ import {EdXClassPortal} from "../edx/EdxClassPortal";
 import {GitHubAutoTest} from "../github/GitHubAutoTest";
 import {GitHubService} from "../github/GitHubService";
 import {GitHubUtil} from "../github/GitHubUtil";
-import {CommitTarget} from "../../../common/types/AutoTestTypes";
 
 export default class RouteHandler {
 

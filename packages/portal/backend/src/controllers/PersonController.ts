@@ -1,8 +1,8 @@
 import Log from "../../../../common/Log";
+import Util from "../../../../common/Util";
+import {Person, Repository} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
-import {Person, Repository} from "../Types";
-import Util from "../../../../common/Util";
 import {GitHubActions} from "./GitHubActions";
 
 export class PersonController {
@@ -17,7 +17,7 @@ export class PersonController {
      */
     public async createPerson(personPrototype: Person): Promise<Person | null> {
         Log.info("PersonController::createPerson( " + personPrototype.id + " ) - start");
-        let existingPerson = await this.db.getPerson(personPrototype.id);
+        const existingPerson = await this.db.getPerson(personPrototype.id);
 
         if (existingPerson === null) {
             await this.db.writePerson(personPrototype);
@@ -54,7 +54,7 @@ export class PersonController {
     public async writePerson(person: Person): Promise<boolean> {
         Log.trace("PersonController::writePerson( " + person.id + " ) - start");
 
-        let successful = await this.db.writePerson(person);
+        const successful = await this.db.writePerson(person);
         return successful;
     }
 
@@ -109,16 +109,11 @@ export class PersonController {
         Log.trace("PersonController::getPerson( ... ) - start");
         Log.trace("PersonController::getPerson( " + personId + " ) - start");
 
-        let person = await this.db.getPerson(personId);
+        const person = await this.db.getPerson(personId);
         if (person === null) {
             Log.trace("PersonController::getPerson( " + personId + " ) - unknown person for this org checking githubId");
-            // person = await this.getGitHubPerson(personId);
-            //if (person === null) {
             Log.trace("PersonController::getPerson( " + personId + " ) - unknown person for this org.");
             return null;
-            //} else {
-            //              Log.trace("PersonController::getPerson( " + personId + " ) - personId is actually a githubId");
-//            }
         }
         return person;
     }

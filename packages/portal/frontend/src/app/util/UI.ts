@@ -209,4 +209,23 @@ export class UI {
         return (Date.now() - start) + ' ms';
     }
 
+    public static showSection(id: string) {
+        const el =
+            document.getElementById(id);
+        if (el === null) {
+            Log.error("UI::showSection( " + id + " ) - unknown id");
+        } else {
+            el.style.display = 'inherit'; // show the section
+        }
+    }
+
+    public static hideSection(id: string) {
+        const el =
+            document.getElementById(id);
+        if (el === null) {
+            Log.error("UI::hideSection( " + id + " ) - unknown id");
+        } else {
+            el.style.display = 'none'; // show the section
+        }
+    }
 }

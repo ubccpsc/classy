@@ -8,13 +8,14 @@ import {Test} from "../GlobalSpec";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import Config, {ConfigKey} from "../../../../common/Config";
 import {
+    AutoTestResultPayload,
     CourseTransport,
     CourseTransportPayload,
     DeliverableTransport,
     DeliverableTransportPayload,
     Payload,
     StudentTransportPayload,
-    TeamTransportPayload
+    TeamTransportPayload,
 } from "../../../../common/types/PortalTypes";
 import restify = require('restify');
 
@@ -136,6 +137,82 @@ describe('Admin Routes', function () {
         expect(body.failure).to.not.be.undefined;
     });
 
+
+    it('Should be able to get a list of students', async function () {
+
+        let response = null;
+        let body: StudentTransportPayload;
+        const url = '/portal/admin/grades';
+        try {
+            response = await request(app).get(url).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success).to.be.an('array');
+        // expect(body.success).to.have.lengthOf(101);
+
+        // should confirm body.success objects (at least one)
+    });
+
+
+    it('Should not be able to get a list of grades if the requestor is not privileged', async function () {
+
+        let response = null;
+        let body: StudentTransportPayload;
+        const url = '/portal/admin/grades';
+        try {
+            response = await request(app).get(url).set({user: Test.USERNAME1, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(401);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+    });
+
+    it('Should be able to get a list of results', async function () {
+
+        let response = null;
+        let body: AutoTestResultPayload;
+        const url = '/portal/admin/results';
+        try {
+            response = await request(app).get(url).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success).to.be.an('array');
+        // expect(body.success).to.have.lengthOf(101);
+
+        // should confirm body.success objects (at least one)
+    });
+
+    it('Should not be able to get a list of results if the requestor is not privileged', async function () {
+
+        let response = null;
+        let body: AutoTestResultPayload;
+        const url = '/portal/admin/results';
+        try {
+            response = await request(app).get(url).set({user: Test.USERNAME1, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(401);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+    });
+
     it('Should be able to get a list of deliverables', async function () {
 
         let response = null;
@@ -151,7 +228,7 @@ describe('Admin Routes', function () {
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
         expect(body.success).to.be.an('array');
-        expect(body.success).to.have.lengthOf(5);
+        expect(body.success).to.have.lengthOf(6);
 
         const dc = new DeliverablesController();
         const actual = dc.validateDeliverableTransport(body.success[0]);
@@ -382,7 +459,7 @@ describe('Admin Routes', function () {
             expect(body.failure).to.not.be.undefined;
             expect(body.failure.message).to.be.an('string'); // test column missing
 
-            response = await request(app).post(url).attach('classlist', 'test/data/classlistEmpty.csv').set({
+            response = await request(app).post(url).attach('classlist', __dirname + '/../data/classlistEmpty.csv').set({
                 user:  userName,
                 token: userToken
             });

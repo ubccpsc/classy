@@ -1,6 +1,7 @@
 import Log from "../../../../common/Log";
-import {DatabaseController} from "./DatabaseController";
+import {TeamTransport} from "../../../../common/types/PortalTypes";
 import {Deliverable, Person, Team} from "../Types";
+import {DatabaseController} from "./DatabaseController";
 
 export class TeamController {
 
@@ -9,14 +10,14 @@ export class TeamController {
     public async getAllTeams(): Promise<Team[]> {
         Log.info("TeamController::getAllTeams() - start");
 
-        let teams = await this.db.getTeams();
+        const teams = await this.db.getTeams();
         return teams;
     }
 
     public async getTeam(name: string): Promise<Team | null> {
         Log.info("TeamController::getAllTeams( " + name + " ) - start");
 
-        let team = await this.db.getTeam(name);
+        const team = await this.db.getTeam(name);
         return team;
     }
 
@@ -24,12 +25,17 @@ export class TeamController {
         Log.info("TeamController::getTeamsForPerson( " + myPerson.id + " ) - start");
 
         let myTeams: Team[] = [];
-        let allTeams = await this.db.getTeams();
+        const allTeams = await this.db.getTeams();
         for (const team of allTeams) {
             if (team.personIds.indexOf(myPerson.id) >= 0) {
                 myTeams.push(team);
             }
         }
+
+        // sort by delivIds
+        myTeams = myTeams.sort(function(a: Team, b: Team) {
+            return a.delivId.localeCompare(b.delivId);
+        });
 
         Log.info("TeamController::getTeamsForPerson( " + myPerson.id + " ) - done; # teams: " + myTeams.length);
         return myTeams;
@@ -42,9 +48,9 @@ export class TeamController {
             throw new Error("TeamController::createTeam() - null deliverable provided.");
         }
 
-        let existingTeam = await this.getTeam(name);
+        const existingTeam = await this.getTeam(name);
         if (existingTeam === null) {
-            let peopleIds: string[] = people.map(person => person.id);
+            const peopleIds: string[] = people.map((person) => person.id);
             const team: Team = {
                 id:        name,
                 delivId:   deliv.id,
@@ -58,6 +64,17 @@ export class TeamController {
             Log.info("TeamController::createTeam( " + name + ",.. ) - team exists: " + JSON.stringify(existingTeam));
             return await this.db.getTeam(name);
         }
+    }
+
+    public translateTeam(team: Team): TeamTransport {
+        const t: TeamTransport = {
+            id:      team.id,
+            delivId: team.delivId,
+            people:  team.personIds,
+            URL:     team.URL
+        };
+
+        return t;
     }
 
 }

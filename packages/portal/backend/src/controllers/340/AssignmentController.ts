@@ -38,6 +38,8 @@ export class AssignmentController {
         if (grade === null) return null;
 
         const assignmentGrade: AssignmentGrade = grade.custom;
+        if(typeof assignmentGrade.questions === 'undefined' ||
+            typeof assignmentGrade.assignmentID === 'undefined') return null;
         return assignmentGrade;
     }
 
@@ -99,12 +101,10 @@ export class AssignmentController {
         // retrieve provisioning information
         let seedURL = assignInfo.seedRepoURL;
         let seedPath = assignInfo.seedRepoPath;
-        const WEBHOOKADDR = Config.getInstance().getProp(ConfigKey.backendUrl) + ':'
-            + Config.getInstance().getProp(ConfigKey.backendPort) + '/portal/githubWebhook';
 
         // attempt to provision the repository
         let provisionAttempt: boolean;
-        if (seedPath.trim() === "") {
+        if (seedPath.trim() === "" || seedPath.trim() === "*" || seedPath.trim() === "/*") {
             // provisionAttempt = await this.ghc.provisionRepository(repoName, [], seedURL, WEBHOOKADDR);
             provisionAttempt = await this.ghc.createRepository(repoName, seedURL);
         } else {
@@ -171,13 +171,30 @@ export class AssignmentController {
 
         let anyError: boolean = false;
         // todo: teams?
+        let peopleList = await this.gha.listPeople();
+        let personVerification: { [githubID: string]: any } = {};
+
+        // create a map of personID to
+        for(const person of peopleList) {
+            if(typeof personVerification[person.name] === 'undefined') personVerification[person.name] = person;
+        }
+
+
         for (const student of allStudents) {
+            // verify student is a person in the org, if not, skip it (DATABASE INCONSISTENCY!?)
+            if(typeof personVerification[student.githubId] === 'undefined') {
+                Log.error("AssignmentController::initializeAllRepositories(..) - ERROR: " +
+                    "database inconsistency; student exists that is not registered in Github. " +
+                    "Student ID: " + student.id + "; Student Github ID: " + student.githubId);
+                continue;
+            }
+
             // for each student, create a team
             let teamName = deliv.teamPrefix + student.githubId;
             let newTeam: Team = await this.tc.createTeam(teamName, deliv, [student], null);
             if (newTeam === null) {
                 Log.error("AssignmentController::initializeAllRepositories(..) - error creating team " +
-                    teamName + " for student " + student.id);
+                    teamName + " for student " + student.githubId);
             }
 
             let newGithubTeam = await this.gha.createTeam(teamName, "push");
@@ -187,6 +204,7 @@ export class AssignmentController {
             // if success, add it to the AssignmentInfo
             let repoName: string = deliv.repoPrefix + student.githubId;
             let provisionedRepo = await this.createAssignmentRepo(repoName, delivId, [newTeam]);
+
 
             if (provisionedRepo !== null) {
                 if (assignInfo.repositories === null || typeof assignInfo.repositories === 'undefined') assignInfo.repositories = [];
@@ -386,6 +404,13 @@ export class AssignmentController {
             await this.deleteAssignmentRepository(repoName, delivId, false);
         }
 
+        // check teams and make sure that the team records is deleted
+        let allTeams = await this.tc.getAllTeams();
+        for (const team of allTeams) {
+            if (team.delivId === delivId) {
+                await this.db.deleteTeam(team);
+            }
+        }
 
         // clear out repositories
         assignInfo.repositories = [];

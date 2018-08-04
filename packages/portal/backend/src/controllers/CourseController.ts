@@ -1,14 +1,22 @@
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
-import {AutoTestGradeTransport, DeliverableTransport, StudentTransport, TeamTransport} from '../../../../common/types/PortalTypes';
+import {
+    AutoTestGradeTransport,
+    AutoTestResultTransport,
+    DeliverableTransport,
+    GradeTransport,
+    StudentTransport,
+    TeamTransport
+} from '../../../../common/types/PortalTypes';
+import {Course, Deliverable, Grade, Person} from "../Types";
+import {DatabaseController} from "./DatabaseController";
+import {IGitHubController} from "./GitHubController";
+import {GradesController} from "./GradesController";
+import {PersonController} from "./PersonController";
 
 import {RepositoryController} from "./RepositoryController";
-import {DatabaseController} from "./DatabaseController";
-import {GradesController} from "./GradesController";
-import {Course, Deliverable, Grade, Person} from "../Types";
-import {IGitHubController} from "./GitHubController";
+import {ResultsController} from "./ResultsController";
 import {TeamController} from "./TeamController";
-import {PersonController} from "./PersonController";
 
 /**
  * This is the high-level interfaces that provides intermediate access to the
@@ -50,14 +58,11 @@ export interface ICourseController {
     setPeople(people: Person[]): Promise<boolean>;
 
     /**
+     * Gets the deliverables associated with the course.
      *
-     * TODO: Convert Deliverable to DeliverableTransport
-     *
-     * Get all the deliverables for the course.
-     *
-     * @returns {Promise<Deliverable[]>}
+     * @returns {Promise<DeliverableTransport[]>}
      */
-    getDeliverables(): Promise<Deliverable[]>;
+    getDeliverables(): Promise<DeliverableTransport[]>;
 
     /**
      *
@@ -106,21 +111,31 @@ export interface ICourseController {
      */
     getStudents(): Promise<StudentTransport[]>;
 
-    /**
-     * Gets the deliverables associated with the course.
-     *
-     * @returns {Promise<DeliverableTransport[]>}
-     */
-    getDeliverables(): Promise<DeliverableTransport[]>;
 }
 
 export class CourseController { // don't implement ICourseController yet
+
+    public static getName(): string | null {
+        try {
+            const name = Config.getInstance().getProp(ConfigKey.name);
+            if (name !== null) {
+                return name;
+            } else {
+                Log.error("CourseController::getName() - ERROR: null name");
+            }
+        } catch (err) {
+            Log.error("CourseController::getName() - ERROR: " + err.message);
+        }
+        return null;
+    }
 
     protected dc = DatabaseController.getInstance();
     protected pc = new PersonController();
     protected rc = new RepositoryController();
     protected tc = new TeamController();
     protected gc = new GradesController();
+    protected resC = new ResultsController();
+
     protected gh: IGitHubController = null;
 
     constructor(ghController: IGitHubController) {
@@ -144,23 +159,23 @@ export class CourseController { // don't implement ICourseController yet
         Log.info("CourseController::handleNewGrade( .. ) - start");
 
         try {
-            let repo = await this.rc.getRepository(grade.repoId); // sanity check
+            const repo = await this.rc.getRepository(grade.repoId); // sanity check
             if (repo === null) {
                 Log.error("CourseController::handleNewGrade( .. ) - invalid repo name: " + grade.repoId);
                 return false;
             }
 
-            let peopleIds = await this.rc.getPeopleForRepo(grade.repoId); // sanity check
+            const peopleIds = await this.rc.getPeopleForRepo(grade.repoId); // sanity check
             if (peopleIds.length < 1) {
                 Log.error("CourseController::handleNewGrade( .. ) - no people to associate grade record with.");
                 return false;
             }
 
             for (const personId of peopleIds) {
-                let existingGrade = await this.gc.getGrade(personId, grade.delivId);
+                const existingGrade = await this.gc.getGrade(personId, grade.delivId);
                 if (existingGrade === null || existingGrade.score < grade.score) {
                     Log.info("CourseController::handleNewGrade( .. ) - grade is higher; updating");
-                    this.gc.createGrade(grade.repoId, grade.delivId, grade);
+                    await this.gc.createGrade(grade.repoId, grade.delivId, grade);
                 } else {
                     Log.info("CourseController::handleNewGrade( .. ) - grade is not higher");
                 }
@@ -170,34 +185,6 @@ export class CourseController { // don't implement ICourseController yet
             Log.error("CourseController::handleNewGrade( .. ) - ERROR: " + err);
             return false;
         }
-    }
-
-    // public static getOrg(): string | null {
-    //     try {
-    //         const org = Config.getInstance().getProp(ConfigKey.org); // valid .org usage
-    //         if (org !== null) {
-    //             return org;
-    //         } else {
-    //             Log.error("CourseController::getOrg() - ERROR: null org");
-    //         }
-    //     } catch (err) {
-    //         Log.error("CourseController::getOrg() - ERROR: " + err.message);
-    //     }
-    //     return null;
-    // }
-
-    public static getName(): string | null {
-        try {
-            const name = Config.getInstance().getProp(ConfigKey.name);
-            if (name !== null) {
-                return name;
-            } else {
-                Log.error("CourseController::getName() - ERROR: null name");
-            }
-        } catch (err) {
-            Log.error("CourseController::getName() - ERROR: " + err.message);
-        }
-        return null;
     }
 
     public async getCourse(): Promise<Course> {
@@ -215,7 +202,7 @@ export class CourseController { // don't implement ICourseController yet
     }
 
     public async saveCourse(course: Course): Promise<boolean> {
-        let record: Course = await this.dc.getCourseRecord();
+        const record: Course = await this.dc.getCourseRecord();
         if (record !== null) {
             // merge the new with the old
             record.defaultDeliverableId = course.defaultDeliverableId;
@@ -225,15 +212,14 @@ export class CourseController { // don't implement ICourseController yet
         return await this.dc.writeCourseRecord(record);
     }
 
-
     /**
      * Gets the students associated with the course.
      *
      * @returns {Promise<StudentTransport[]>}
      */
     public async getStudents(): Promise<StudentTransport[]> {
-        let people = await this.pc.getAllPeople();
-        let students: StudentTransport[] = [];
+        const people = await this.pc.getAllPeople();
+        const students: StudentTransport[] = [];
         for (const person of people) {
             if (person.kind === 'student') {
                 const studentTransport = {
@@ -256,8 +242,8 @@ export class CourseController { // don't implement ICourseController yet
      * @returns {Promise<TeamTransport[]>}
      */
     public async getTeams(): Promise<TeamTransport[]> {
-        let allTeams = await this.tc.getAllTeams();
-        let teams: TeamTransport[] = [];
+        const allTeams = await this.tc.getAllTeams();
+        const teams: TeamTransport[] = [];
         for (const team of allTeams) {
             const teamTransport: TeamTransport = {
                 id:      team.id,
@@ -272,14 +258,54 @@ export class CourseController { // don't implement ICourseController yet
     }
 
     /**
+     * Gets the grades associated with the course.
+     *
+     * @returns {Promise<GradeTransport[]>}
+     */
+    public async getGrades(): Promise<GradeTransport[]> {
+        const allGrades = await this.gc.getAllGrades();
+        const grades: GradeTransport[] = [];
+        for (const grade of allGrades) {
+            const gradeTrans: GradeTransport = {
+                personId:  grade.personId,
+                personURL: Config.getInstance().getProp(ConfigKey.githubHost) + '/' + grade.personId,
+                delivId:   grade.delivId,
+                score:     grade.score,
+                comment:   grade.comment,
+                urlName:   grade.urlName,
+                URL:       grade.URL,
+                timestamp: grade.timestamp,
+                custom:    grade.custom
+            };
+            grades.push(gradeTrans);
+        }
+        return grades;
+    }
+
+    /**
+     * Gets the results associated with the course.
+     *
+     * @returns {Promise<AutoTestGradeTransport[]>}
+     */
+    public async getResults(): Promise<AutoTestResultTransport[]> {
+        const allResults = await this.resC.getAllResults();
+        const results: AutoTestResultTransport[] = [];
+        for (const result of allResults) {
+            const resultTrans: AutoTestResultTransport = result;
+            results.push(resultTrans);
+        }
+        return results;
+    }
+
+    /**
      * Gets the deliverables associated with the course.
      *
      * @returns {Promise<DeliverableTransport[]>}
      */
     public async getDeliverables(): Promise<DeliverableTransport[]> {
-        let deliverables = await this.dc.getDeliverables();
+        const deliverables = await this.dc.getDeliverables();
 
-        let delivs: DeliverableTransport[] = [];
+        const delivs: DeliverableTransport[] = [];
         for (const deliv of deliverables) {
 
             const delivTransport: DeliverableTransport = {
@@ -308,6 +334,5 @@ export class CourseController { // don't implement ICourseController yet
 
         return delivs;
     }
-
 
 }

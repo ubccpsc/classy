@@ -3,10 +3,11 @@ import "mocha";
 
 import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
+import {IContainerInput, IContainerOutput} from "../../../common/types/AutoTestTypes";
+import Util from "../../../common/Util";
 
 import {DatabaseController} from "../src/controllers/DatabaseController";
-import {Deliverable, Grade, Person, Team} from "../src/Types";
-import Util from "../../../common/Util";
+import {Deliverable, Grade, Person, Repository, Result, Team} from "../src/Types";
 
 if (typeof it === 'function') {
     // only if we're running in mocha
@@ -77,7 +78,7 @@ export class Test {
     public static readonly REPONAME3 = 'TESTrepo3';
 
     public static getDeliverable(delivId: string): Deliverable {
-        let deliv: Deliverable = {
+        const deliv: Deliverable = {
             id: delivId,
 
             URL:              'https://NOTSET',
@@ -101,11 +102,11 @@ export class Test {
             },
             custom:           {}
         };
-        return <Deliverable>Util.clone(deliv);
+        return Util.clone(deliv) as Deliverable;
     }
 
     public static getPerson(id: string): Person {
-        let p: Person = {
+        const p: Person = {
             id:            id,
             csId:          id,
             githubId:      id,
@@ -120,11 +121,11 @@ export class Test {
 
             custom: {}
         };
-        return <Person>Util.clone(p);
+        return Util.clone(p) as Person;
     }
 
     public static getGrade(delivId: string, personId: string, score: number): Grade {
-        let grade: Grade = {
+        const grade: Grade = {
             personId: personId,
             delivId:  delivId,
 
@@ -137,17 +138,92 @@ export class Test {
 
             custom: {}
         };
-        return <Grade>Util.clone(grade);
+        return Util.clone(grade) as Grade;
     }
 
     public static getTeam(teamId: string, delivId: string, people: string[]): Team {
-        let team: Team = {
+        const team: Team = {
             id:        teamId,
             delivId:   delivId,
-            URL:       'https://team/' + teamId,
+            URL:       Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
+                       Config.getInstance().getProp(ConfigKey.org) + '/teams/' + teamId,
             personIds: people,
             custom:    {}
         };
-        return <Team>Util.clone(team);
+        return Util.clone(team) as Team;
+    }
+
+    public static getRepository(id: string, teamId: string): Repository {
+        const repo: Repository = {
+            id:      id,
+            URL:     Config.getInstance().getProp(ConfigKey.githubHost) + '/' + id,
+            teamIds: [teamId],
+            custom:  {}
+        };
+        return Util.clone(repo) as Repository;
+    }
+
+    public static getResult(delivId: string, repoId: string, people: string[], score: number): Result {
+
+        const ts = Date.now() - Math.random() * 1000 * 600;
+        const projectURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
+            Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
+        const commitURL = projectURL + '/commits/FOOOSHA';
+        const output: IContainerOutput = {
+            // commitURL:          commitURL,
+            timestamp:          ts,
+            report:             {
+                scoreOverall: score,
+                scoreTest:    Math.random() * 100,
+                scoreCover:   Math.random() * 100,
+                passNames:    [],
+                failNames:    [],
+                errorNames:   [],
+                skipNames:    [],
+                custom:       {},
+                feedback:     'feedback'
+            },
+            postbackOnComplete: true,
+            custom:             {},
+            attachments:        [],
+            state:              'SUCCESS' // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
+        };
+
+        const input: IContainerInput = {
+            pushInfo:        {
+                delivId: delivId,
+                repoId:  repoId,
+
+                // branch:    'master',
+                // cloneURL:  'cloneURL',
+                commitSHA: 'sha',
+                commitURL: commitURL,
+
+                // projectURL:  projectURL,
+                postbackURL: 'postbackURL',
+                timestamp:   ts
+            },
+            containerConfig: {
+                dockerImage:        "imageName",
+                studentDelay:       300,
+                maxExecTime:        6000,
+                regressionDelivIds: [],
+                custom:             {}
+            },
+            delivId:         delivId
+        };
+
+        const result: Result = {
+            delivId:   delivId,
+            repoId:    repoId,
+            // timestamp: ts,
+            commitURL: commitURL,
+            commitSHA: 'SHA',
+            input:     input,
+            output:    output,
+            people:    people
+        };
+
+        return Util.clone(result) as Result;
     }
 }

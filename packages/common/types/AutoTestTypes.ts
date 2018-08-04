@@ -20,17 +20,7 @@ export interface CommitTarget {
 export interface IPushEvent extends CommitTarget {
     // Nothing in PushEvent that CommitTarget does not already know about
 
-    // repoId: string; // was repo
     // branch: string; // really refs // TODO: needed?
-
-    // cloneURL: string; // TODO: needed?
-
-    // commitSHA: string; // SHA
-    // commitURL: string; // full url to commit
-
-    // projectURL: string; // full url to project // TODO: not needed: Repository already has this
-    // postbackURL: string; // where to send postback results
-    // timestamp: number; // timestamp of push event
 }
 
 /**
@@ -39,18 +29,6 @@ export interface IPushEvent extends CommitTarget {
 export interface ICommentEvent extends CommitTarget {
     personId: string; // NOTE: this is received as a github id!
     botMentioned: boolean; // was the bot mentioned (e.g., can ignore comments that don't mention the bot)
-
-    // delivId: string | null; // string if specified
-
-    // repoId: string;
-
-    // commitSHA: string;
-    // commitURL: string;
-
-
-    // postbackURL: string; // where to send postback results
-
-    // timestamp: number; // timestamp of the latest comment update (safer than comment creation)
 }
 
 export interface IFeedbackGiven {
