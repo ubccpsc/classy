@@ -195,7 +195,7 @@ export class Test {
                 repoId:  repoId,
 
                 // branch:    'master',
-                // cloneURL:  'cloneURL',
+                cloneURL:  'cloneURL',
                 commitSHA: 'sha',
                 commitURL: commitURL,
 
