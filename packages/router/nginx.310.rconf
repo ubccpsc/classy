@@ -24,10 +24,6 @@ http {
             proxy_pass         http://<%= ENV["CONTAINER_NAME_UI"] %>:<%= ENV["UI_PORT"] %>/;
         }
 
-        location /geolocation {
-            proxy_pass         "http://<%= ENV["CONTAINER_NAME_GEO"] %>:<%= ENV["GEO_PORT"] %>/";
-        }
-
         # pass requests to the portal service (which is automatically defined in the hosts file by docker)
         location / {
             proxy_pass         "https://<%= ENV["CONTAINER_NAME_PORTAL"] %>:<%= ENV["BACKEND_PORT"] %>/";
