@@ -86,7 +86,8 @@ export class AdminResultsTab {
             const ts = result.output.timestamp;
             const tsString = new Date(ts).toLocaleTimeString();
             let row: TableCell[] = [
-                {value: result.repoId, html: '<a href="' + result.input.pushInfo.projectURL + '">' + result.repoId + '</a>'},
+                // {value: result.repoId, html: '<a href="' + result.input.pushInfo.projectURL + '">' + result.repoId + '</a>'},
+                {value: result.repoId, html: result.repoId},
                 {value: result.delivId, html: result.delivId},
                 {value: ts, html: '<a href="' + result.commitURL + '">' + tsString + '</a>'},
                 {value: result.output.state, html: result.output.state},

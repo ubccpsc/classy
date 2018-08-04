@@ -55,12 +55,13 @@ export class EdxUtil {
     public static async simulatePushEvent(commitURL: string): Promise<IPushEvent | null> {
         Log.info("EdxUtil::simulatePushEvent(..) - start; url: " + commitURL);
         const evt: IPushEvent = {
-            branch:      '', // really refs
+            delivId:     null,
+            // branch:      '', // really refs
             repoId:      '', // repoId name
-            cloneURL:    '',
+            // cloneURL:    '',
             commitSHA:   '', // SHA
             commitURL:   'commitURL', // full url to commit
-            projectURL:  '', // full url to project
+            // projectURL:  '', // full url to project
             postbackURL: '', // where to send postback results
             timestamp:   -1 // timestamp of push event
         };

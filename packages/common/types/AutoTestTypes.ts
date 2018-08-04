@@ -1,33 +1,34 @@
-/**
- * Pertinent properties from GitHub push webhook events.
- */
-export interface IPushEvent {
-    repoId: string; // was repo
-
-    branch: string; // really refs
-    cloneURL: string;
-    commitSHA: string; // SHA
-    commitURL: string; // full url to commit
-
-    projectURL: string; // full url to project
-    postbackURL: string; // where to send postback results
-    timestamp: number; // timestamp of push event
-}
-
-/**
- * Pertinent properties from GitHub comment webhook events.
- */
-export interface ICommentEvent {
-    personId: string; // NOTE: this is received as a github id!
-    delivId: string | null; // string if specified
+export interface CommitTarget {
+    /**
+     * The delivId the commit should be executed against. If the course does not
+     * have a default id and one is not specified (e.g., in a commit comment)
+     * we cannot create a CommitTarget.
+     */
+    delivId: string;
     repoId: string;
 
     commitSHA: string;
     commitURL: string;
 
-    botMentioned: boolean; // was the bot mentioned (e.g., can ignore comments that don't mention the bot)
     postbackURL: string; // where to send postback results
-    timestamp: number; // timestamp of the latest comment update (safer than comment creation)
+    timestamp: number; // timestamp of push event
+}
+
+/**
+ * Pertinent properties from GitHub push webhook events.
+ */
+export interface IPushEvent extends CommitTarget {
+    // Nothing in PushEvent that CommitTarget does not already know about
+
+    // branch: string; // really refs // TODO: needed?
+}
+
+/**
+ * Pertinent properties from GitHub comment webhook events.
+ */
+export interface ICommentEvent extends CommitTarget {
+    personId: string; // NOTE: this is received as a github id!
+    botMentioned: boolean; // was the bot mentioned (e.g., can ignore comments that don't mention the bot)
 }
 
 export interface IFeedbackGiven {

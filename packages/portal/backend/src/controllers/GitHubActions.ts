@@ -235,6 +235,46 @@ export class GitHubActions {
         return rows;
     }
 
+    /**
+     * Gets all people in an org.
+     *
+     * @returns {Promise<{ id: number, type: string, url: string, name: string }[]>}
+     * this is just a subset of the return, but it is the subset we actually use
+     */
+    public async listPeople(): Promise<{id: number, type: string, url: string, name: string}[]> {
+        const ctx = this;
+
+
+        Log.info("GitHubManager::listRepos(..) - start");
+
+        // GET /orgs/:org/members
+        const uri = ctx.apiPath + '/orgs/' + ctx.org + '/members'; // per_page max is 100; 10 is useful for testing pagination though
+        const options = {
+            method:                  'GET',
+            uri:                     uri,
+            headers:                 {
+                'Authorization': ctx.gitHubAuthToken,
+                'User-Agent':    ctx.gitHubUserName,
+                'Accept':        'application/json'
+            },
+            resolveWithFullResponse: true,
+            json:                    true
+        };
+
+        const raw: any = await ctx.handlePagination(options);
+
+        let rows: {id: number, type: string, url: string, name: string}[] = [];
+        for (const entry of raw) {
+            const id = entry.id;
+            const type = entry.type;
+            const url = entry.url;
+            const name = entry.login;
+            rows.push({id: id, type: type, url: url, name: name});
+        }
+
+        return rows;
+    }
+
 
     public async handlePagination(rpOptions: rp.RequestPromiseOptions): Promise<object[]> {
         Log.info("GitHubActions::handlePagination(..) - start");

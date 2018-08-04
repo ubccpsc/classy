@@ -2,7 +2,7 @@ import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
 import {ICommentEvent, IPushEvent} from "../../../common/types/AutoTestTypes";
-import {ClassPortal} from "../autotest/ClassPortal";
+import {ClassPortal, IClassPortal} from "../autotest/ClassPortal";
 
 /**
  * Translator class to turn REST payloads into IPushEvent and ICommentEvents.
@@ -78,6 +78,11 @@ export class GitHubUtil {
             const cp = new ClassPortal();
             const personResponse = await cp.getPersonId(requestor); // need to get this from portal backend (this is a gitHubId, not a personId)
 
+            if (delivId === null) {
+                Log.warn("GitHubUtil::processComment() - no deliverable specified");
+                return null;
+            }
+
             const commentEvent: ICommentEvent = {
                 delivId,
                 repoId,
@@ -105,7 +110,7 @@ export class GitHubUtil {
      * @param payload
      * @returns {IPushEvent}
      */
-    public static processPush(payload: any): IPushEvent | null {
+    public static async processPush(payload: any, portal: IClassPortal): Promise<IPushEvent | null> {
         try {
             // const team = GitHubUtil.getTeamOrProject(payload.repository.name);
             const repo = payload.repository.name;
@@ -138,13 +143,21 @@ export class GitHubUtil {
 
             const timestamp = payload.repository.pushed_at * 1000;
 
+            const delivIdTrans = await portal.getDefaultDeliverableId();
+
+            if (delivIdTrans === null) {
+                Log.warn("GitHubUtil::processComment() - no default deliverable for course");
+                return null;
+            }
+
             const pushEvent: IPushEvent = {
-                branch,
-                repoId: repo,
-                cloneURL,
+                delivId: delivIdTrans.defaultDeliverable,
+                // branch,
+                repoId:  repo,
+                // cloneURL,
                 commitSHA,
                 commitURL,
-                projectURL,
+                // projectURL,
                 postbackURL,
                 timestamp
             };

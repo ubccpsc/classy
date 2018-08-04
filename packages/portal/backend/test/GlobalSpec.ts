@@ -18,7 +18,7 @@ if (typeof it === 'function') {
 
         Config.getInstance().setProp(ConfigKey.name, ConfigCourses.classytest); // force testing env
 
-        let db = DatabaseController.getInstance();
+        const db = DatabaseController.getInstance();
         await db.clearData(); // nuke everything
 
         Log.info('GlobalSpec::before() - done');
@@ -145,7 +145,8 @@ export class Test {
         const team: Team = {
             id:        teamId,
             delivId:   delivId,
-            URL:       Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Config.getInstance().getProp(ConfigKey.org) + '/teams/' + teamId,
+            URL:       Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
+                       Config.getInstance().getProp(ConfigKey.org) + '/teams/' + teamId,
             personIds: people,
             custom:    {}
         };
@@ -165,7 +166,8 @@ export class Test {
     public static getResult(delivId: string, repoId: string, people: string[], score: number): Result {
 
         const ts = Date.now() - Math.random() * 1000 * 600;
-        const projectURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
+        const projectURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
+            Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
         const commitURL = projectURL + '/commits/FOOOSHA';
         const output: IContainerOutput = {
             // commitURL:          commitURL,
@@ -189,14 +191,15 @@ export class Test {
 
         const input: IContainerInput = {
             pushInfo:        {
-                repoId: repoId,
+                delivId: delivId,
+                repoId:  repoId,
 
-                branch:    'master',
-                cloneURL:  'cloneURL',
+                // branch:    'master',
+                // cloneURL:  'cloneURL',
                 commitSHA: 'sha',
                 commitURL: commitURL,
 
-                projectURL:  projectURL,
+                // projectURL:  projectURL,
                 postbackURL: 'postbackURL',
                 timestamp:   ts
             },

@@ -2,36 +2,39 @@ import {IAutoTestResult, ICommentEvent, IContainerInput, IFeedbackGiven, IPushEv
 
 export class TestData {
     static readonly pushEventA: IPushEvent = {
-        "branch":      "master",
-        "cloneURL":    "",
+        // "branch":      "master",
+        // "cloneURL":    "",
         "commitSHA":   "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "commitURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
-        "projectURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/",
+        // "projectURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/",
         "postbackURL": "EMPTY",
         "repoId":      "d0_team999",
-        "timestamp":   1516472872288
+        "timestamp":   1516472872288,
+        "delivId":     "d0"
     };
 
     static readonly pushEventB: IPushEvent = {
-        "branch":      "master",
-        "cloneURL":    "",
+        // "branch":      "master",
+        // "cloneURL":    "",
         "commitSHA":   "eventb0918b872997de4c4d2baf4c263f8d4c6dc2",
         "commitURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/eventb0918b872997de4c4d2baf4c263f8d4c6dc2",
-        "projectURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/",
+        // "projectURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/",
         "postbackURL": "EMPTY",
         "repoId":      "d0_team999",
-        "timestamp":   1516992872288
+        "timestamp":   1516992872288,
+        "delivId":     "d0"
     };
 
     static readonly pushEventPostback: IPushEvent = {
-        "branch":      "master",
-        "cloneURL":    "",
+        // "branch":      "master",
+        // "cloneURL":    "",
         "commitSHA":   "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         "commitURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
-        "projectURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/",
+        // "projectURL": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/",
         "postbackURL": "POSTBACK",
         "repoId":      "d0_team999",
-        "timestamp":   1516472872288
+        "timestamp":   1516472872288,
+        "delivId":     "d0"
     };
 
     static readonly inputRecordA: IContainerInput = {
