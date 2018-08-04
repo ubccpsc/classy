@@ -95,7 +95,7 @@ You should now be able to open portal in your web browser by navigating to the h
     # Add exceptions here. Depending on where the services are hosted, use ONE of the two forms below.
     # If the service is hosted on the SAME machine on a specific port (HOST_IP is the ip of the host--i.e. from
     # nslookup classy.cs.ubc.ca; SERVICE_PORT is the port used by the service):
-    sudo iptables -I INPUT -s 172.28.0.0/16 -d HOST_IP --dport SERVICE_PORT -j ACCEPT
+    sudo iptables -I INPUT -s 172.28.0.0/16 -d HOST_IP -p tcp --dport SERVICE_PORT -j ACCEPT
     
     # If the service is hosted externally on a DIFFERENT machine:
     sudo iptables -I FORWARD -s 172.28.0.0/16 -d HOST_IP -j ACCEPT
@@ -131,6 +131,9 @@ You should now be able to open portal in your web browser by navigating to the h
 
     # Should fail because an exception for 8.8.8.8 has not been added to iptables
     docker run --net grading_net alpine ping 8.8.8.8 -c 5
+
+    # This should return an HTTP status code
+    docker run --net grading_net alpine wget HOST_IP:SERVICE_PORT --timeout=20
     ```
     
 The system should now be able to receive commit and comment events from GitHub and process them accordingly.
