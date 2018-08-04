@@ -3,9 +3,9 @@ import Log from "../../../common/Log";
 import {IAutoTestResult, IContainerInput, IPushEvent} from "../../../common/types/AutoTestTypes";
 
 import {AutoTest} from "../autotest/AutoTest";
-import {IGitHubService} from "../github/GitHubService";
 import {IClassPortal} from "../autotest/ClassPortal";
 import {IDataStore} from "../autotest/DataStore";
+import {IGitHubService} from "../github/GitHubService";
 
 export class EdxAutoTest extends AutoTest {
 
@@ -34,7 +34,8 @@ export class EdxAutoTest extends AutoTest {
         }
 
         const info = await EdxUtil.simulatePushEvent(commitURL);
-        const input: IContainerInput = {delivId, pushInfo: info};
+        const container = await this.classPortal.getContainerDetails(delivId);
+        const input: IContainerInput = {delivId, pushInfo: info, containerConfig: container};
         await this.dataStore.savePush(input);
 
         this.addToStandardQueue(input);
@@ -54,12 +55,13 @@ export class EdxUtil {
     public static async simulatePushEvent(commitURL: string): Promise<IPushEvent | null> {
         Log.info("EdxUtil::simulatePushEvent(..) - start; url: " + commitURL);
         const evt: IPushEvent = {
-            branch:      '', // really refs
+            delivId:     null,
+            // branch:      '', // really refs
             repoId:      '', // repoId name
-            cloneURL:    '',
+            // cloneURL:    '',
             commitSHA:   '', // SHA
             commitURL:   'commitURL', // full url to commit
-            projectURL:  '', // full url to project
+            // projectURL:  '', // full url to project
             postbackURL: '', // where to send postback results
             timestamp:   -1 // timestamp of push event
         };

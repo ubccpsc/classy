@@ -1,8 +1,7 @@
+import Log from "../../../../../common/Log";
+import {Person} from "../../Types";
 import {CourseController} from "../CourseController";
 import {IGitHubController} from "../GitHubController";
-import {Person} from "../../Types";
-
-import Log from "../../../../../common/Log";
 
 export class CS310Controller extends CourseController {
 

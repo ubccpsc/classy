@@ -1,4 +1,3 @@
-import {IClassPortal} from "../ClassPortal";
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {IAutoTestResult} from "../../../../common/types/AutoTestTypes";
@@ -7,9 +6,11 @@ import {
     AutoTestConfigTransport,
     AutoTestDefaultDeliverableTransport,
     AutoTestGradeTransport,
+    AutoTestPersonIdTransport,
     AutoTestResultTransport,
-    Payload,
+    Payload
 } from "../../../../common/types/PortalTypes";
+import {IClassPortal} from "../ClassPortal";
 import {MockDataStore} from "./MockDataStore";
 
 export class MockClassPortal implements IClassPortal {
@@ -81,6 +82,10 @@ export class MockClassPortal implements IClassPortal {
 
         const ds = new MockDataStore();
         return await ds.getResult(delivId, repoId);
+    }
+
+    getPersonId(userName: string): Promise<AutoTestPersonIdTransport | null> {
+        return Promise.resolve({personId: userName});
     }
 
 }

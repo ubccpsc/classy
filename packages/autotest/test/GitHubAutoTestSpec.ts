@@ -1,22 +1,21 @@
 import {expect} from "chai";
 import * as fs from "fs-extra";
 import "mocha";
+import Config, {ConfigKey} from "../../common/Config";
 
 import Log from "../../common/Log";
-import Config, {ConfigKey} from "../../common/Config";
+import {ICommentEvent, IFeedbackGiven, IPushEvent} from "../../common/types/AutoTestTypes";
 import Util from "../../common/Util";
 
 import {IClassPortal} from "../src/autotest/ClassPortal";
-import {GitHubService} from "../src/github/GitHubService";
-import {GitHubAutoTest} from "../src/github/GitHubAutoTest";
-import {ICommentEvent, IFeedbackGiven, IPushEvent} from "../../common/types/AutoTestTypes";
 
 import {MockClassPortal} from "../src/autotest/mocks/MockClassPortal";
 import {MockDataStore} from "../src/autotest/mocks/MockDataStore";
+import {GitHubAutoTest} from "../src/github/GitHubAutoTest";
+import {GitHubService} from "../src/github/GitHubService";
 
+import "./GlobalSpec"; // load first
 import {TestData} from "./TestData";
-
-const loadFirst = require('./GlobalSpec');
 
 describe("GitHubAutoTest", () => {
 
@@ -32,7 +31,7 @@ describe("GitHubAutoTest", () => {
     // now -10h: 1516523258762
     // now - 24h: 1516472872288
 
-    before(function () {
+    before(function() {
         Log.test("AutoTest::before() - start");
 
         pushes = fs.readJSONSync(__dirname + "/githubAutoTestData/pushes.json");
@@ -49,12 +48,12 @@ describe("GitHubAutoTest", () => {
         Log.test("AutoTest::before() - done");
     });
 
-    beforeEach(function () {
+    beforeEach(function() {
         Log.test("AutoTest::beforeEach() - start");
         data.clearData();
     });
 
-    afterEach(async function () {
+    afterEach(async function() {
         // pause after each test so async issues don't persist
         // this is a hack, but makes the tests more deterministic
         Log.test("AutoTest::afterEach() - start");

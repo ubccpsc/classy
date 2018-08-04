@@ -17,7 +17,7 @@ export class Command implements ICommand {
         Log.trace(`Command::executeCommand(..) -> ${this.cmdName} ${args.join(" ")}`);
         return new Promise<CommandResult>((resolve, reject) => {
             let output: Buffer = Buffer.allocUnsafe(0);
-            options["uid"] = 0;
+            // options["uid"] = 0;
             const cmd: ChildProcess = spawn(this.cmdName, args, options);
             cmd.on(`error`, (err) => {
                 reject(err);

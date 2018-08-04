@@ -2,6 +2,7 @@ import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
 import {ICommentEvent, IPushEvent} from "../../../common/types/AutoTestTypes";
+import {ClassPortal} from "../autotest/ClassPortal";
 
 /**
  * Translator class to turn REST payloads into IPushEvent and ICommentEvents.
@@ -53,7 +54,7 @@ export class GitHubUtil {
      * @param payload
      * @returns {ICommentEvent}
      */
-    public static processComment(payload: any): ICommentEvent {
+    public static async processComment(payload: any): Promise<ICommentEvent> {
         try {
             const commitSHA = payload.comment.commit_id;
             let commitURL = payload.comment.html_url;  // this is the comment Url
@@ -61,7 +62,7 @@ export class GitHubUtil {
 
             const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
 
-            const requestor = String(payload.comment.user.login).toLowerCase();
+            const requestor = String(payload.comment.user.login); // .toLowerCase();
             const message = payload.comment.body;
             const delivId = GitHubUtil.parseDeliverableFromComment(message);
 
@@ -74,6 +75,14 @@ export class GitHubUtil {
 
             const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can't add requests to a past comment
 
+            const cp = new ClassPortal();
+            const personResponse = await cp.getPersonId(requestor); // need to get this from portal backend (this is a gitHubId, not a personId)
+
+            if (delivId === null) {
+                Log.warn("GitHubUtil::processComment() - no deliverable specified");
+                return null;
+            }
+
             const commentEvent: ICommentEvent = {
                 delivId,
                 repoId,
@@ -81,7 +90,7 @@ export class GitHubUtil {
                 commitSHA,
                 commitURL,
                 postbackURL,
-                personId: requestor,
+                personId: personResponse.personId,
                 timestamp
             };
             Log.trace("GitHubUtil::processComment(..) - handling: " + commentEvent);
@@ -101,7 +110,7 @@ export class GitHubUtil {
      * @param payload
      * @returns {IPushEvent}
      */
-    public static processPush(payload: any): IPushEvent | null {
+    public static async processPush(payload: any): Promise<IPushEvent | null> {
         try {
             // const team = GitHubUtil.getTeamOrProject(payload.repository.name);
             const repo = payload.repository.name;
@@ -134,13 +143,22 @@ export class GitHubUtil {
 
             const timestamp = payload.repository.pushed_at * 1000;
 
+            const cp = new ClassPortal();
+            const delivIdTrans = await cp.getDefaultDeliverableId()
+
+            if (delivIdTrans === null) {
+                Log.warn("GitHubUtil::processComment() - no default deliverable for course");
+                return null;
+            }
+
             const pushEvent: IPushEvent = {
-                branch,
-                repoId: repo,
-                cloneURL,
+                delivId: delivIdTrans.defaultDeliverable,
+                // branch,
+                repoId:  repo,
+                // cloneURL,
                 commitSHA,
                 commitURL,
-                projectURL,
+                // projectURL,
                 postbackURL,
                 timestamp
             };

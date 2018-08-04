@@ -1,12 +1,14 @@
-import {DatabaseController} from "../src/controllers/DatabaseController";
+import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
-import {PersonController} from "../src/controllers/PersonController";
-import {Deliverable, Grade, Person, Repository, Team} from "../src/Types";
-import {DeliverablesController} from "../src/controllers/DeliverablesController";
-import {TeamController} from "../src/controllers/TeamController";
-import {RepositoryController} from "../src/controllers/RepositoryController";
-import {GradesController} from "../src/controllers/GradesController";
 import Util from "../../../common/Util";
+import {DatabaseController} from "../src/controllers/DatabaseController";
+import {DeliverablesController} from "../src/controllers/DeliverablesController";
+import {GradesController} from "../src/controllers/GradesController";
+import {PersonController} from "../src/controllers/PersonController";
+import {RepositoryController} from "../src/controllers/RepositoryController";
+import {ResultsController} from "../src/controllers/ResultsController";
+import {TeamController} from "../src/controllers/TeamController";
+import {Deliverable, Grade, Person, Repository, Result, Team} from "../src/Types";
 
 export class DatabaseValidator {
 
@@ -27,6 +29,8 @@ export class DatabaseValidator {
         await this.validateTeams();
         await this.validateRepositories();
         await this.validateGrades();
+
+        await this.validateResults();
     }
 
     private gradeStr(g: Grade) {
@@ -56,30 +60,35 @@ export class DatabaseValidator {
                 Log.warn("DatabaseValidator::validateGrades() - missing Grade.score for: " + JSON.stringify(grade));
                 isValid = false;
                 grade.score = null;
+                Log.warn("\t setting to: " + grade.score);
             }
 
             if (typeof grade.comment === 'undefined') {
                 Log.warn("DatabaseValidator::validateGrades() - missing Grade.comment for: " + JSON.stringify(grade));
                 isValid = false;
                 grade.comment = null;
+                Log.warn("\t setting to: " + grade.comment);
             }
 
             if (typeof grade.URL === 'undefined') {
                 Log.warn("DatabaseValidator::validateGrades() - missing Grade.URL for: " + JSON.stringify(grade));
                 isValid = false;
                 grade.URL = null;
+                Log.warn("\t setting to: " + grade.URL);
             }
 
             if (typeof grade.urlName === 'undefined') {
                 Log.warn("DatabaseValidator::validateGrades() - missing Grade.urlName for: " + JSON.stringify(grade));
                 isValid = false;
                 grade.urlName = grade.URL; // will be set in the block above (not great, as these can be pretty long)
+                Log.warn("\t setting to: " + grade.URL);
             }
 
             if (typeof grade.custom === 'undefined') {
                 Log.warn("DatabaseValidator::validateGrades() - missing Grade.custom for: " + JSON.stringify(grade));
                 isValid = false;
                 grade.custom = {};
+                Log.warn("\t setting to: " + grade.custom);
             }
 
             //
@@ -92,17 +101,18 @@ export class DatabaseValidator {
             // check
             if (isValid === false) {
                 Log.info("DatabaseValidator::validateGrades() - grade needs updating: " + this.gradeStr(grade));
-                if (this.DRY_RUN === false) {
-                    this.dc.writeGrade(grade);
+                const localOverride = false;
+                if (this.DRY_RUN === false || localOverride) {
+                    await this.dc.writeGrade(grade);
                 } else {
-                    Log.info("\t DatabaseValidator::validateGrades() - grade needs updating: " + this.gradeStr(grade) + "; NOT WRITTEN (DRY_RUN === true)");
+                    Log.info("\t DatabaseValidator::validateGrades() - grade needs updating: " +
+                        this.gradeStr(grade) + "; NOT WRITTEN (DRY_RUN === true)");
                 }
             }
         }
 
         Log.info("DatabaseValidator::validateGrades() - done; # grades processed: " + grades.length);
     }
-
 
     private async validateRepositories(): Promise<void> {
         Log.info("DatabaseValidator::validateRepositories() - start");
@@ -147,9 +157,10 @@ export class DatabaseValidator {
             if (isValid === false) {
                 Log.info("DatabaseValidator::validateRepositories() - repo needs updating: " + repo.id);
                 if (this.DRY_RUN === false) {
-                    this.dc.writeRepository(repo);
+                    await this.dc.writeRepository(repo);
                 } else {
-                    Log.info("\t DatabaseValidator::validateRepositories() - repo needs updating: " + repo.id + "; NOT WRITTEN (DRY_RUN === true)");
+                    Log.info("\t DatabaseValidator::validateRepositories() - repo needs updating: " +
+                        repo.id + "; NOT WRITTEN (DRY_RUN === true)");
                 }
             }
         }
@@ -157,66 +168,90 @@ export class DatabaseValidator {
         Log.info("DatabaseValidator::validateRepositories() - done; # repos processed: " + repos.length);
     }
 
-
     private async validateTeams(): Promise<void> {
         Log.info("DatabaseValidator::validateTeams() - start");
         const teamsC = new TeamController();
+        try {
+            const teams = await teamsC.getAllTeams();
+            for (const team of teams as Team[]) {
+                Log.trace("DatabaseValidator::validateTeams() - checking team: " + team.id);
+                let isValid: boolean = true;
 
-        const teams = await teamsC.getAllTeams();
-        for (const team of teams as Team[]) {
-            Log.trace("DatabaseValidator::validateTeams() - checking team: " + team.id);
-            let isValid: boolean = true;
+                if (typeof team.id === 'undefined') {
+                    isValid = false;
+                    throw new Error("Unsolveable problem: Team.id missing.");
+                }
 
-            if (typeof team.id === 'undefined') {
-                isValid = false;
-                throw new Error("Unsolveable problem: Team.id missing.");
-            }
+                if (typeof team.delivId === 'undefined') {
+                    Log.warn("DatabaseValidator::validateTeams() - missing Team.delivId for: " + team.id);
+                    isValid = false;
 
-            if (typeof team.delivId === 'undefined') {
-                Log.warn("DatabaseValidator::validateTeams() - missing Team.delivId for: " + team.id);
-                isValid = false;
-                // team.delivId= ''; // TODO: unique per repair?
-                // team.delivId = 'project'; /// TODO: SDMM ONLY
-            }
+                    if (Config.getInstance().getProp(ConfigKey.name) === ConfigCourses.sdmm) {
+                        if (typeof team.custom !== null) {
+                            if (team.custom.sdmmd0) {
+                                (team as any).delivId = 'd0';
+                            }
+                            if (team.custom.sdmmd1 || team.custom.sdmmd2 || team.custom.sdmmd3) {
+                                (team as any).delivId = 'project';
+                            }
+                        }
+                    } else {
+                        // team.delivId= ''; // TODO: unique per repair?
+                    }
 
-            if (typeof team.URL === 'undefined') {
-                Log.warn("DatabaseValidator::validateTeams() - missing Team.URL for: " + team.id);
-                isValid = false;
-                team.URL = null;
-                // team.URL = 'https://github.com/orgs/SECapstone/teams/' + team.id; // TODO: SDMM ONLY
-            }
+                    Log.warn("\tSetting to: " + team.delivId);
+                }
 
-            if (typeof team.personIds === 'undefined') {
-                Log.warn("DatabaseValidator::validateTeams() - missing Team.personIds for: " + team.id);
-                isValid = false;
-                team.personIds = [];
-            }
+                if (typeof team.URL === 'undefined') {
+                    Log.warn("DatabaseValidator::validateTeams() - missing Team.URL for: " + team.id);
+                    isValid = false;
+                    // team.URL = null;
+                    if (Config.getInstance().getProp(ConfigKey.name) === ConfigCourses.sdmm) {
+                        team.URL = 'https://github.com/orgs/SECapstone/teams/' + team.id.toLowerCase();
+                    }
+                    // TODO: define replacement
+                    Log.warn("\tSetting to: " + team.URL);
+                }
 
-            if (typeof team.custom === 'undefined') {
-                Log.warn("DatabaseValidator::validateTeams() - missing Team.custom for: " + team.id);
-                isValid = false;
-                team.custom = {};
-            }
+                if (typeof team.personIds === 'undefined') {
+                    Log.warn("DatabaseValidator::validateTeams() - missing Team.personIds for: " + team.id);
+                    isValid = false;
+                    team.personIds = [];
+                    Log.warn("\tSetting to: " + team.personIds);
+                }
 
-            //
-            // if (typeof deliv.XXX === 'undefined') {
-            //     Log.warn("DatabaseValidator::validateDeliverables() - missing Deliv.XXX for: " + deliv.id);
-            //     isValid = false;
-            //     deliv.XXX = XXX;
-            // }
+                if (typeof team.custom === 'undefined') {
+                    Log.warn("DatabaseValidator::validateTeams() - missing Team.custom for: " + team.id);
+                    isValid = false;
+                    team.custom = {};
+                    Log.warn("\tSetting to: " + team.custom);
+                }
 
-            // check
-            if (isValid === false) {
-                Log.info("DatabaseValidator::validateTeams() - team needs updating: " + team.id);
-                if (this.DRY_RUN === false) {
-                    this.dc.writeTeam(team);
+                //
+                // if (typeof deliv.XXX === 'undefined') {
+                //     Log.warn("DatabaseValidator::validateDeliverables() - missing Deliv.XXX for: " + deliv.id);
+                //     isValid = false;
+                //     deliv.XXX = XXX;
+                // }
+
+                // check
+                if (isValid === false) {
+                    Log.info("DatabaseValidator::validateTeams() - team needs updating: " + team.id);
+                    const localOverride = false;
+                    if (this.DRY_RUN === false || localOverride) {
+                        await this.dc.writeTeam(team);
+                    } else {
+                        Log.info("\t DatabaseValidator::validateTeams() - team needs updating: " +
+                            team.id + "; NOT WRITTEN (DRY_RUN === true)");
+                    }
                 } else {
-                    Log.info("\t DatabaseValidator::validateTeams() - team needs updating: " + team.id + "; NOT WRITTEN (DRY_RUN === true)");
+                    // Log.info("DatabaseValidator::validateTeams() - team valid: " + team.id + "; obj: " + JSON.stringify(team));
                 }
             }
+            Log.info("DatabaseValidator::validateTeams() - done; # teams processed: " + teams.length);
+        } catch (err) {
+            Log.error("DatabaseValidator::validateTeams() - ERROR: " + err.message);
         }
-
-        Log.info("DatabaseValidator::validateTeams() - done; # teams processed: " + teams.length);
     }
 
     private async validateDeliverables(): Promise<void> {
@@ -275,7 +310,6 @@ export class DatabaseValidator {
                 deliv.teamMaxSize = 1;
             }
 
-
             if (typeof deliv.teamSameLab === 'undefined') {
                 Log.warn("DatabaseValidator::validateDeliverables() - missing Deliv.teamSameLab for: " + deliv.id);
                 isValid = false;
@@ -322,16 +356,16 @@ export class DatabaseValidator {
             if (isValid === false) {
                 Log.info("DatabaseValidator::validateDeliverables() - deliv needs updating: " + deliv.id);
                 if (this.DRY_RUN === false) {
-                    this.dc.writeDeliverable(deliv);
+                    await this.dc.writeDeliverable(deliv);
                 } else {
-                    Log.info("\t DatabaseValidator::validateDeliverables() - deliv needs updating: " + deliv.id + "; NOT WRITTEN (DRY_RUN === true)");
+                    Log.info("\t DatabaseValidator::validateDeliverables() - deliv needs updating: " +
+                        deliv.id + "; NOT WRITTEN (DRY_RUN === true)");
                 }
             }
         }
 
         Log.info("DatabaseValidator::validateDeliverables() - done; # delivs processed: " + delivs.length);
     }
-
 
     private async validatePeople(): Promise<void> {
         Log.info("DatabaseValidator::validatePeople() - start");
@@ -389,23 +423,170 @@ export class DatabaseValidator {
             if (isValid === false) {
                 Log.info("DatabaseValidator::validatePeople() - person needs updating: " + person.id);
                 if (this.DRY_RUN === false) {
-                    this.dc.writePerson(person);
+                    await this.dc.writePerson(person);
                 } else {
-                    Log.info("\t DatabaseValidator::validatePeople() - person needs updating: " + person.id + "; NOT WRITTEN (DRY_RUN === true)");
+                    Log.info("\t DatabaseValidator::validatePeople() - person needs updating: " + person.id +
+                        "; NOT WRITTEN (DRY_RUN === true)");
                 }
             }
         }
         Log.info("DatabaseValidator::validatePeople() - done; # people processed: " + people.length);
     }
 
+    private async validateResults(): Promise<void> {
+        Log.info("DatabaseValidator::validateResults() - start");
+        const resultsC = new ResultsController();
+        let results = await resultsC.getAllResults();
 
+        if (Config.getInstance().getProp(ConfigKey.name) === ConfigCourses.sdmm) {
+            // preprocess sdmm results differently
+
+            const outputRecords = await this.dc.readRecords('output', {});
+            for (const output of outputRecords as any) {
+                Log.trace('considering: output record: ' + output.commitSHA);
+
+                // see if result exists
+                let resultExists = false;
+                for (const result of results) {
+                    if (result.commitSHA === output.commitSHA) {
+                        resultExists = true;
+                    }
+                }
+
+                if (resultExists === false) {
+
+                    const repoId = output.input.pushInfo.repoId;
+
+                    const rc = new RepositoryController();
+                    const personIds = await rc.getPeopleForRepo(repoId);
+
+                    // construct result
+                    const newResult: Result = {
+                        people:    personIds,
+                        delivId:   output.input.delivId,
+                        repoId:    repoId,
+                        commitURL: output.commitURL,
+                        commitSHA: output.commitSHA,
+                        input:     output.input,
+                        output:    output.output
+                    };
+
+                    if (newResult.output.report === null) {
+                        Log.trace("Inserting empty grade report.");
+
+                        // insert blank report (using existing feedback if possible)
+                        let feedback = output.feedback;
+                        if (typeof feedback !== 'string') {
+                            feedback = 'Result failed to generate';
+                        }
+
+                        newResult.output.report = {
+                            scoreOverall: 0,
+                            scoreCover:   null,
+                            scoreTest:    null,
+                            feedback:     feedback,
+                            passNames:    [],
+                            skipNames:    [],
+                            failNames:    [],
+                            errorNames:   [],
+                            custom:       {}
+                        };
+                    }
+
+                    const validResult = resultsC.validateAutoTestResult(newResult);
+                    if (validResult === null) {
+                        // valid
+                        Log.trace("NEW RESULT (valid); obj: " + JSON.stringify(newResult));
+
+                        const localOverride = true;
+                        if (this.DRY_RUN === false || localOverride) {
+                            // await this.dc.writeRepository(repo);
+                            await this.dc.writeResult(newResult);
+                        } else {
+                            Log.info("\t DatabaseValidator::validateResults() - SDMM result needs updating: " +
+                                newResult + "; NOT WRITTEN (DRY_RUN === true)");
+                        }
+
+                    } else {
+                        Log.error("NEW RESULT (INVALID); obj: " + JSON.stringify(newResult));
+                    }
+                }
+            }
+
+            Log.info("DatabaseValidator::validateResults() - done; # SDMM results processed: " + outputRecords.length);
+        }
+
+        // update results in case anything was new from the last step:
+        results = await resultsC.getAllResults();
+        for (const result of results as Result[]) {
+            Log.trace("DatabaseValidator::validateRepositories() - checking result: " + result);
+            let isValid: boolean = true;
+
+            // delivId: string; // foreign key into Deliverables (so we know what this run is scoring) (intentional duplication with input.delivId)
+            // repoId: string;  // foreign key into Repositories (so we know what repository (and people) this run is for) (intentional duplication with input.pushInfo.repoId)
+            //
+            // // input.pushInfo.timestamp // timestamp of push
+            // // output.timestamp // timestamp of grading completion
+            //
+            // commitURL: string;
+            // commitSHA: string; // can be used to index into the AutoTest collections (pushes, comments, & feedback)
+            //
+            // input: IContainerInput; // Prepared by AutoTest service
+            // output: IContainerOutput; // Returned by the Grader service
+            //
+
+            if (typeof result.delivId === 'undefined') {
+                isValid = false;
+                throw new Error("Unsolveable problem: Result.id missing.");
+            }
+
+            if (typeof result.repoId === 'undefined') {
+                throw new Error("DatabaseValidator::validateResults() - missing Result.repoId for: " + result);
+            }
+
+            if (typeof result.commitURL === 'undefined') {
+                Log.warn("DatabaseValidator::validateResults() - missing Result.commitURL for: " + result);
+                isValid = false;
+            }
+
+            if (typeof result.commitSHA === 'undefined') {
+                Log.warn("DatabaseValidator::validateResults() - missing Result.commitSHA for: " + result);
+                isValid = false;
+            }
+
+            if (typeof result.input === 'undefined') {
+                Log.warn("DatabaseValidator::validateResults() - missing Result.input for: " + result);
+                isValid = false;
+            }
+
+            if (typeof result.commitSHA === 'undefined') {
+                Log.warn("DatabaseValidator::validateResults() - missing Result.output for: " + result);
+                isValid = false;
+            }
+
+            // check
+            if (isValid === false) {
+                Log.info("DatabaseValidator::validateResults() - repo needs updating: " + result);
+                const localOverride = false;
+                if (this.DRY_RUN === false || localOverride) {
+                    // await this.dc.writeRepository(repo);
+                    await this.dc.writeResult(result);
+                } else {
+                    Log.info("\t DatabaseValidator::validateResults() - result needs updating: " +
+                        result + "; NOT WRITTEN (DRY_RUN === true)");
+                }
+            }
+        }
+
+        Log.info("DatabaseValidator::validateResults() - done; # results processed: " + results.length);
+    }
 }
 
 const dv = new DatabaseValidator();
 const start = Date.now();
-dv.validate().then(function (out) {
+dv.validate().then(function(out) {
     Log.info("DatabaseValidator::validate() - complete; took: " + Util.took(start));
-}).catch(function (err) {
+}).catch(function(err) {
     Log.error("DatabaseValidator::validate() - ERROR: " + err.message);
     process.exit();
 });

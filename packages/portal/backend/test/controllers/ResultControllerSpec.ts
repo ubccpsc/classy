@@ -1,10 +1,11 @@
 import {expect} from "chai";
 import "mocha";
-import * as fs from "fs-extra";
-import {ResultsController} from "../../src/controllers/ResultsController";
 import {AutoTestResultTransport} from "../../../../common/types/PortalTypes";
+import {ResultsController} from "../../src/controllers/ResultsController";
+import {Test} from "../GlobalSpec";
 
 const loadFirst = require('../GlobalSpec');
+const loadSecond = require('./CourseControllerSpec'); // make sure it runs before github controller (which should be last of the controllers)
 
 describe("ResultController", () => {
 
@@ -26,9 +27,12 @@ describe("ResultController", () => {
         let results = await rc.getAllResults();
         expect(results).to.have.lengthOf(0);
 
-        const fullPath = __dirname + "/../../../../autotest/test/githubAutoTestData/outputRecords.json";
-        let data = fs.readJSONSync(fullPath);
-        let output = await rc.createResult(data[0]);
+        // const fullPath = __dirname + "/../../../../autotest/test/githubAutoTestData/outputRecords.json";
+        // let data = fs.readJSONSync(fullPath);
+        // let output = await rc.createResult(data[0]);
+        // public static getResult(delivId: string, repoId: string, people: string[], score: number): Result {
+        const result = Test.getResult(Test.DELIVID0, Test.REPONAME1, [Test.USERNAME1], 50);
+        let output = await rc.createResult(result);
         expect(output).to.be.true;
 
         results = await rc.getAllResults();
@@ -44,43 +48,37 @@ describe("ResultController", () => {
         expect(deliv).to.not.be.null;
         expect(deliv).to.be.an('string');
 
-        let data: AutoTestResultTransport = <AutoTestResultTransport>{};
+        let data: AutoTestResultTransport = {} as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
         expect(deliv).to.be.an('string');
 
-        data = <AutoTestResultTransport>{delivId: 'd0'};
+        data = {delivId: 'd0'} as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
         expect(deliv).to.be.an('string');
 
-        data = <AutoTestResultTransport>{delivId: 'd0', repoId: 'r1'};
+        data = {delivId: 'd0', repoId: 'r1'} as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
         expect(deliv).to.be.an('string');
 
-        data = <AutoTestResultTransport>{delivId: 'd0', repoId: 'r1', timestamp: 1001};
+        data = {delivId: 'd0', repoId: 'r1', commitURL: 'url'}as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
         expect(deliv).to.be.an('string');
 
-        data = <AutoTestResultTransport>{delivId: 'd0', repoId: 'r1', timestamp: 1001, commitURL: 'url'};
+        data = {delivId: 'd0', repoId: 'r1', commitURL: 'url', commitSHA: 'sha'}as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
         expect(deliv).to.be.an('string');
 
-        data = <AutoTestResultTransport>{delivId: 'd0', repoId: 'r1', timestamp: 1001, commitURL: 'url', commitSHA: 'sha'};
-        deliv = await rc.validateAutoTestResult(data);
-        expect(deliv).to.not.be.null;
-        expect(deliv).to.be.an('string');
-
-        data = <AutoTestResultTransport>{delivId: 'd0', repoId: 'r1', timestamp: 1001, commitURL: 'url', commitSHA: 'sha', input: {}};
+        data = {delivId: 'd0', repoId: 'r1', commitURL: 'url', commitSHA: 'sha', input: {}}as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
         expect(deliv).to.be.an('string');
 
         // more here
     });
-
 
 });

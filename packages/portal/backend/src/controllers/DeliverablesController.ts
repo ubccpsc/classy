@@ -1,8 +1,8 @@
 import Log from "../../../../common/Log";
+import {DeliverableTransport} from "../../../../common/types/PortalTypes";
+import {Deliverable} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
-import {Deliverable} from "../Types";
-import {DeliverableTransport} from "../../../../common/types/PortalTypes";
 
 export class DeliverablesController {
 
@@ -11,17 +11,16 @@ export class DeliverablesController {
     public async getAllDeliverables(): Promise<Deliverable[]> {
         Log.info("DeliverablesController::getAllGrades() - start");
 
-        let delivs = await this.db.getDeliverables();
+        const delivs = await this.db.getDeliverables();
         return delivs;
     }
 
     public async getDeliverable(delivId: string): Promise<Deliverable | null> {
         Log.info("DeliverablesController::getDeliverable( " + delivId + " ) - start");
 
-        let deliv = await this.db.getDeliverable(delivId);
+        const deliv = await this.db.getDeliverable(delivId);
         return deliv;
     }
-
 
     public async saveDeliverable(deliv: Deliverable): Promise<Deliverable | null> {
         Log.info("DeliverableController::saveDeliverable( " + JSON.stringify(deliv) + " ) - start");
@@ -48,7 +47,6 @@ export class DeliverablesController {
             Log.error('DeliverableController::validateDeliverableTransport(..) - ERROR: ' + msg);
             return msg;
         }
-
 
         if (typeof deliv.id === 'undefined' || deliv.id === null || deliv.id.length < 2) {
             const msg = 'invalid delivId: ' + deliv.id;
@@ -82,8 +80,6 @@ export class DeliverablesController {
             custom: trans.custom
         };
 
-
         return deliv;
-
     }
 }

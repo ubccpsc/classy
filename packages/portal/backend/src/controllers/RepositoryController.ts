@@ -1,7 +1,7 @@
 import Log from "../../../../common/Log";
+import {Person, Repository, Team} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
-import {Person, Repository, Team} from "../Types";
 import {TeamController} from "./TeamController";
 
 export class RepositoryController {
@@ -44,13 +44,12 @@ export class RepositoryController {
         return myRepos;
     }
 
-
     public async createRepository(name: string, teams: Team[], custom: any): Promise<Repository | null> {
         Log.info("RepositoryController::createRepository( " + name + ",.. ) - start");
 
         const existingRepo = await this.getRepository(name);
         if (existingRepo === null) {
-            const teamIds: string[] = teams.map(team => team.id);
+            const teamIds: string[] = teams.map((team) => team.id);
 
             const repo: Repository = {
                 id:      name,
@@ -72,9 +71,9 @@ export class RepositoryController {
         // TODO: implement PR functionality
 
         // NOTE: this impl is more complex than it needs to be but is erring on the side of caution
-        let repo = await this.getRepository(repoId);
-        let customA = Object.assign({}, repo.custom);
-        let customB = Object.assign(customA, custom); // overwrite with new fields
+        const repo = await this.getRepository(repoId);
+        const customA = Object.assign({}, repo.custom);
+        const customB = Object.assign(customA, custom); // overwrite with new fields
         repo.custom = customB;
         await this.db.writeRepository(repo);
         return await this.getRepository(repoId);
@@ -88,7 +87,7 @@ export class RepositoryController {
         const repo = await this.getRepository(repoId);
         if (repo !== null) {
             for (const teamId of repo.teamIds) {
-                let team = await tc.getTeam(teamId);
+                const team = await tc.getTeam(teamId);
                 for (const personId of team.personIds) {
                     if (peopleIds.indexOf(personId) < 0) {
                         peopleIds.push(personId);

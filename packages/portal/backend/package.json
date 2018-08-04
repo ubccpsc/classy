@@ -24,6 +24,7 @@
     "homepage": "https://github.com/ubccpsc/sdmm-portal-backend#readme",
     "dependencies": {
         "@types/csv-parse": "^1.1.11",
+        "@types/supertest": "^2.0.5",
         "awesome-typescript-loader": "^3.4.1",
         "child-process-promise": "^2.2.1",
         "client-oauth2": "^4.2.1",
@@ -44,6 +45,7 @@
         "supertest": "^3.0.0",
         "tmp-promise": "^1.0.4",
         "ts-node": "^7.0.0",
+        "types": "^0.1.1",
         "typescript": "^2.9.2"
     }
 }

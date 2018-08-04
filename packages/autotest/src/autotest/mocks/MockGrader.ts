@@ -1,8 +1,8 @@
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
-import Util from "../../../../common/Util";
 
 import {IAutoTestResult, IContainerInput, IContainerOutput, IGradeReport} from "../../../../common/types/AutoTestTypes";
+import Util from "../../../../common/Util";
 
 interface IGrader {
     execute(): Promise<IAutoTestResult>;
@@ -40,15 +40,15 @@ export class MockGrader implements IGrader {
                 failNames:    [],
                 errorNames:   [],
                 skipNames:    [],
-                custom:       [],
-                feedback:     ""
+                custom:       {},
+                feedback:     "Test execution complete."
             };
 
             const out: IContainerOutput = {
-                commitURL:          this.input.pushInfo.commitURL,
+                // commitURL:          this.input.pushInfo.commitURL,
                 timestamp:          Date.now(),
                 report:             gradeReport,
-                feedback:           "Test execution complete.",
+                // feedback:           "Test execution complete.",
                 postbackOnComplete: false,
                 custom:             {},
                 attachments:        [],
@@ -58,13 +58,13 @@ export class MockGrader implements IGrader {
             // just a hack to test postback events
             if (this.input.pushInfo.postbackURL === "POSTBACK") {
                 out.postbackOnComplete = true;
-                out.feedback = "Build Problem Encountered.";
+                out.report.feedback = "Build Problem Encountered.";
             }
 
             const ret: IAutoTestResult = {
                 delivId:   this.input.delivId,
                 repoId:    this.input.pushInfo.repoId,
-                timestamp: this.input.pushInfo.timestamp,
+                // timestamp: this.input.pushInfo.timestamp,
                 commitURL: this.input.pushInfo.commitURL,
                 commitSHA: this.input.pushInfo.commitSHA,
                 input:     this.input,

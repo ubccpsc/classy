@@ -2,14 +2,14 @@ import * as rp from "request-promise-native";
 
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
-import Util from "../../../common/Util";
 
 import {IAutoTestResult, ICommentEvent, IContainerInput, IContainerOutput} from "../../../common/types/AutoTestTypes";
+import {AutoTestGradeTransport} from "../../../common/types/PortalTypes";
+import Util from "../../../common/Util";
+import {IClassPortal} from "./ClassPortal";
 import {IDataStore} from "./DataStore";
 import {MockGrader} from "./mocks/MockGrader";
 import {Queue} from "./Queue";
-import {AutoTestGradeTransport} from "../../../common/types/PortalTypes";
-import {IClassPortal} from "./ClassPortal";
 
 export interface IAutoTest {
     /**
@@ -44,6 +44,7 @@ export abstract class AutoTest implements IAutoTest {
     private standardExecution: IContainerInput | null = null;
     private expresssExecution: IContainerInput | null = null;
 
+    // noinspection TypeScriptAbstractClassConstructorCanBeMadeProtected
     constructor(dataStore: IDataStore, classPortal: IClassPortal) {
         this.dataStore = dataStore;
         this.classPortal = classPortal;
@@ -69,6 +70,7 @@ export abstract class AutoTest implements IAutoTest {
                     updated = true;
                     Log.info("AutoTest::tick(..) - standard queue clear; launching new job - commit: " + info.pushInfo.commitSHA);
                     this.standardExecution = info;
+                    // noinspection JSIgnoredPromiseFromCall
                     this.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
                 }
             }
@@ -80,6 +82,7 @@ export abstract class AutoTest implements IAutoTest {
                     updated = true;
                     Log.info("AutoTest::tick(..) - express queue clear; launching new job - commit: " + info.pushInfo.commitSHA);
                     this.expresssExecution = info;
+                    // noinspection JSIgnoredPromiseFromCall
                     this.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
                 }
             }
@@ -90,6 +93,7 @@ export abstract class AutoTest implements IAutoTest {
                     updated = true;
                     Log.info("AutoTest::tick(..) - regression queue clear; launching new job - commit: " + info.pushInfo.commitSHA);
                     this.regressionExecution = info;
+                    // noinspection JSIgnoredPromiseFromCall
                     this.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
                 }
             }
@@ -118,15 +122,6 @@ export abstract class AutoTest implements IAutoTest {
      * @returns {Promise<void>}
      */
     protected abstract processExecution(data: IAutoTestResult): Promise<void>;
-
-    // protected async getOutputRecord(commitURL: string, delivId: string): Promise<IAutoTestResult | null> {
-    //     try {
-    //         const ret = await this.dataStore.getOutputRecord(commitURL, delivId);
-    //         return ret;
-    //     } catch (err) {
-    //         Log.error("AutoTest::getOutputRecord() - ERROR: " + err);
-    //     }
-    // }
 
     /**
      * Returns whether the commitURL is currently executing the given deliverable.
@@ -162,6 +157,7 @@ export abstract class AutoTest implements IAutoTest {
      * Checks to see of a commitURL is queued or is currently being executed
      *
      * @param {string} commitURL
+     * @param {string} delivId
      * @returns {boolean}
      */
     protected isOnQueue(commitURL: string, delivId: string): boolean {
@@ -317,14 +313,9 @@ export abstract class AutoTest implements IAutoTest {
                 isProd = false; // EMPTY and POSTBACK used by test environment
             }
             if (isProd === true) {
-                const atHost: string = Config.getInstance().getProp(ConfigKey.backendUrl);
-                const atPort: number = Config.getInstance().getProp(ConfigKey.backendPort);
+                const graderUrl: string = Config.getInstance().getProp(ConfigKey.graderUrl);
+                const graderPort: number = Config.getInstance().getProp(ConfigKey.graderPort);
 
-                const image: string = Config.getInstance().getProp(ConfigKey.dockerId);
-                const timeout: number = Config.getInstance().getProp(ConfigKey.timeout);
-
-                const assnUrl: string = input.pushInfo.projectURL;
-                const assnCloneUrl: string = input.pushInfo.cloneURL;
                 const commitSHA: string = input.pushInfo.commitSHA;
                 const commitURL: string = input.pushInfo.commitURL;
 
@@ -333,34 +324,28 @@ export abstract class AutoTest implements IAutoTest {
                 const repoId: string = input.pushInfo.repoId;
                 const id: string = `${commitSHA}-${delivId}`;
 
-                const body = { // TODO: ncbradley add type (this is used inside the container)
-                    "assnId":    delivId,
-                    "timestamp": timestamp,
-                    "assn":      {
-                        "url":      assnUrl,
-                        "cloneUrl": assnCloneUrl,
-                        "commit":   commitSHA
-                    },
-                    "container": {
-                        "image":   image,
-                        "timeout": timeout * 1000,
-                        "logSize": 0
-                    }
-                };
                 const gradeServiceOpts: rp.OptionsWithUrl = {
                     method:  "PUT",
-                    url:     `http://${atHost}:${atPort}/task/grade/${id}`,
-                    body,
+                    url:     `${graderUrl}:${graderPort}/task/grade/${id}`,
+                    body:    input,
                     json:    true, // Automatically stringifies the body to JSON,
                     timeout: 360000  // enough time that the container will have timed out
                 };
 
-                let output: IContainerOutput = {
-                    commitURL:          assnUrl,
-                    timestamp:          input.pushInfo.timestamp, // want to use the push timestamp, not the done timestamp
-                    report:             null,
-                    feedback:           "Internal error: the grading service failed to handle the request.",
-                    postbackOnComplete: false,
+                let output: IContainerOutput = { // NOTE: This is only populated in case the rp line below fails
+                    timestamp:          Date.now(), // this is the done timestamp
+                    report:             {
+                        scoreOverall: 0,
+                        scoreCover:   null,
+                        scoreTest:    null,
+                        feedback:     'Internal error: The grading service failed to handle the request.',
+                        passNames:    [],
+                        skipNames:    [],
+                        failNames:    [],
+                        errorNames:   [],
+                        custom:       {}
+                    },
+                    postbackOnComplete: false, // NOTE: should this be true? Crash(y) failures should probably be reported.
                     custom:             {},
                     attachments:        [],
                     state:              "FAIL"
@@ -376,11 +361,10 @@ export abstract class AutoTest implements IAutoTest {
                 record = {
                     delivId,
                     repoId,
-                    timestamp,
                     commitURL,
                     commitSHA,
                     input,
-                    output,
+                    output
                 };
 
                 // POST the grade to Class Portal
@@ -393,21 +377,21 @@ export abstract class AutoTest implements IAutoTest {
                     }
                     const gradePayload: AutoTestGradeTransport = {
                         delivId,
+                        repoId: record.delivId, // input.pushInfo.repoId,
+
                         score,
 
-                        repoId:  input.pushInfo.repoId,
-                        repoURL: input.pushInfo.projectURL,
+                        repoURL: record.repoId, // input.pushInfo.projectURL,
 
-                        urlName: input.pushInfo.repoId, // could be a short SHA, but this seems better
+                        urlName: record.repoId, // could be a short SHA, but this seems better
                         URL:     commitURL,
 
-                        comment: output.feedback,
+                        comment: output.report.feedback,
                         timestamp,
                         custom:  {}
                     };
 
-
-                    await this.classPortal.sendGrade(gradePayload);
+                    await this.classPortal.sendGrade(gradePayload); // this is just the Grade record, not the Report record
                 } catch (err) {
                     Log.warn("AutoTest::invokeContainer(..) - ERROR for commit: " + input.pushInfo.commitSHA + "; ERROR sending grade: " + err);
                 }

@@ -1,89 +1,75 @@
-version: "3"
+# Before deploying, make sure you have done the following:
+# - created a user `classy` on the host
+# - installed SSL certificates for the host
+# - created a `.env` file in the same dir as this file and populated appropriately
+# - opened port 80 and port 443 (publicly)
+#
+# A few high-level notes about this config file:
+# - At deploy-time, all services have access to the values in the .env file; however, they are only accessible to the
+#   running service if the env_file directive is specified. If you only need to pass a subset of the env vars, use the
+#   environment directive and list only the var keys you need.
+# - As configured, only ports 80 and 443 are seen by the host; all other ports listed (with the expose directive) are
+#   only accessible to linked services (i.e. those listed in the depends_on directive). If a service should be publicly
+#   accessible, consider listing it in the proxy service instead of opening additional ports on the host.
+# - In general, services should be started as non-root users. Here, we launch services as the classy user (configured on
+#   the host) using the user directive.
+# - Services specified here can be extended (and additional services can be added) by creating additional
+#   docker-compose.yml files. See https://docs.docker.com/compose/extends/#example-use-case.
+
+version: "3.5"
 
 services:
-    router:
+    # Not an actual service but the image is used as the base for portal (and other services) so include it to make sure
+    # it is updated when there are changes. Otherwise, a stale base image might be used which can cause some confusing
+    # errors to crop up.
+    base:
+        build:
+            context: .
+    proxy:
         build:
             args:
-                - SERVER_NAME
-            context: ./packages/router
+                - UID
+                - SSL_CERT_PATH
+                - SSL_KEY_PATH
+                - CONTAINER_NAME_PORTAL
+                - BACKEND_PORT
+            context: packages/router
+        container_name: ${CONTAINER_NAME_ROUTER}
         depends_on:
-            - portal_frontend
+            - portal
         ports:
-            - "80:80"
-            - "443:443"
+            - "80:8080"
+            - "443:8443"
+        restart: always
+        user: "${UID}"
         volumes:
-            - "./ssl:/etc/ssl"
-    portal_frontend:
+            - "${HOST_SSL_CERT_PATH}:${SSL_CERT_PATH}"
+            - "${HOST_SSL_KEY_PATH}:${SSL_KEY_PATH}"
+    portal:
         build:
             args:
-                - PORT=1443  # Must match port in nginx.conf; Dockerfile must EXPOSE this port
-            context: ./packages/portal-frontend
-        depends_on:
-            - portal_backend
-        env_file: .env
-        volumes:
-            - "./ssl:/app/packages/portal-frontend/ssl"
-    portal_backend:
-        build:
-            args:
-                - PORT=5000
                 - GH_BOT_USERNAME
                 - GH_BOT_EMAIL
-            context: ./packages/portal-backend
+                - PORT=${BACKEND_PORT}
+            context: packages/portal
+        container_name: ${CONTAINER_NAME_PORTAL}
         depends_on:
+            - base
             - db
         env_file: .env
-        depends_on:
-            - autotest
+        expose:
+            - ${BACKEND_PORT}
+        restart: always
+        user: "${UID}"
         volumes:
-                - "./ssl:/app/packages/portal-backend/ssl"
+            - "${HOST_SSL_CERT_PATH}:${SSL_CERT_PATH}"
+            - "${HOST_SSL_KEY_PATH}:${SSL_KEY_PATH}"
     db:
+        container_name: ${CONTAINER_NAME_DATABASE}
+        expose:
+            - "27017"
         image: mongo:3-jessie
-        ports:
-            - "27017:27017"
+        restart: always
+        user: "${UID}"
         volumes:
             - ./data/db:/data/db
-    autotest:
-        build:
-            args:
-                - PORT=11333
-            context: ./packages/autotest
-        depends_on:
-            - db
-            - grader
-        env_file: .env
-        volumes:
-            - "./ssl:/app/packages/autotest/ssl"
-    grader:
-        build: ./packages/grader
-        env_file: .env
-        environment:
-            - "HOST_DIR=/home/w-sdmm/autotest/data/runs"
-            - "HOST_NAME=172.28.2.0"
-            - "SOCK_PORT=7777"
-            - "USER_UID=81193"
-            - "DOCKER_NET=${COMPOSE_PROJECT_NAME}_grader"
-            - "GITHUB_TOKEN=${GH_BOT_TOKEN}"
-        networks:
-            default:
-            grader:
-                ipv4_address: 172.28.2.0
-        expose:
-            - ${GRADER_PORT_REST}
-        ports:
-            - "7777:7777" # Socket endpoint for grader; not exposed globally
-        volumes:
-            - /var/run/docker.sock:/var/run/docker.sock
-            - "${GRADER_HOST_DIR}:${GRADER_PERSIST_DIR}"
-        cap_add:
-            - NET_ADMIN
-        privileged: true
-networks:
-    grader:
-        driver: bridge
-        driver_opts:
-            ip-range: "172.28.5.0/24"
-            gateway: "172.28.5.254"
-        ipam:
-            config:
-                - subnet: "172.28.0.0/16"
