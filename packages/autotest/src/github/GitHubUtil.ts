@@ -154,7 +154,7 @@ export class GitHubUtil {
                 delivId: delivIdTrans.defaultDeliverable,
                 // branch,
                 repoId:  repo,
-                // cloneURL,
+                cloneURL,
                 commitSHA,
                 commitURL,
                 // projectURL,

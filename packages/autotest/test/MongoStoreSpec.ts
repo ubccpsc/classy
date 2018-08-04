@@ -37,32 +37,32 @@ describe("MongoStore", () => {
         expect(allData.pushes).to.be.empty;
 
         // TEST
-        await ds.savePush(TestData.inputRecordA);
+        await ds.savePush(TestData.inputRecordA.pushInfo);
 
         // VERIFY
         allData = await ds.getAllData();
         expect(allData.pushes.length).to.equal(1);
         const actual = allData.pushes[0];
-        const expected = TestData.inputRecordA;
+        const expected = TestData.inputRecordA.pushInfo;
         expect(actual).to.deep.include(expected);
     });
 
     it("Should be able to retrieve a push event.", async () => {
         // SETUP
-        await ds.savePush(TestData.inputRecordA);
+        await ds.savePush(TestData.inputRecordA.pushInfo);
 
         // TEST
         const actual = await ds.getPushRecord(TestData.inputRecordA.pushInfo.commitURL);
 
         // VERIFY
         expect(actual).to.not.be.null;
-        const expected = TestData.inputRecordA;
+        const expected = TestData.inputRecordA.pushInfo;
         expect(actual).to.deep.include(expected);
     });
 
     it("Should return null for a push event that has not been saved.", async () => {
         // SETUP
-        await ds.savePush(TestData.inputRecordA);
+        await ds.savePush(TestData.inputRecordA.pushInfo);
 
         // TEST
         const actual = await ds.getPushRecord(TestData.inputRecordB.pushInfo.commitURL);

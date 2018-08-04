@@ -34,10 +34,9 @@ export class EdxAutoTest extends AutoTest {
         }
 
         const info = await EdxUtil.simulatePushEvent(commitURL);
+        await this.dataStore.savePush(info);
         const container = await this.classPortal.getContainerDetails(delivId);
         const input: IContainerInput = {delivId, pushInfo: info, containerConfig: container};
-        await this.dataStore.savePush(input);
-
         this.addToStandardQueue(input);
         this.tick();
 
@@ -58,7 +57,7 @@ export class EdxUtil {
             delivId:     null,
             // branch:      '', // really refs
             repoId:      '', // repoId name
-            // cloneURL:    '',
+            cloneURL:    '',
             commitSHA:   '', // SHA
             commitURL:   'commitURL', // full url to commit
             // projectURL:  '', // full url to project

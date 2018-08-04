@@ -1,8 +1,9 @@
+import * as rp from "request-promise-native";
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {IAutoTestResult} from "../../../common/types/AutoTestTypes";
 import {
-    AutoTestAuthTransport,
+    AutoTestAuthTransport, AutoTestConfigPayload,
     AutoTestDefaultDeliverableTransport,
     AutoTestGradeTransport,
     AutoTestPersonIdTransport,
@@ -16,6 +17,8 @@ import {IClassPortal} from "../autotest/ClassPortal";
  * The SDMM backend instance should be able to provide all of this directly.
  */
 export class EdXClassPortal implements IClassPortal {
+    private host: string = Config.getInstance().getProp(ConfigKey.backendUrl);
+    private port: number = Config.getInstance().getProp(ConfigKey.backendPort);
 
     public async isStaff(userName: string): Promise<AutoTestAuthTransport> {
         Log.info("EdXClassPortal::isStaff(..) - start");
@@ -36,15 +39,35 @@ export class EdXClassPortal implements IClassPortal {
 
     public async getContainerDetails(delivId: string): Promise<{dockerImage: string, studentDelay: number, maxExecTime: number, regressionDelivIds: string[], custom: object} | null> {
         Log.info("EdXClassPortal::getContainerDetails(..) - start");
-        const courseId = Config.getInstance().getProp(ConfigKey.name);
-        if (typeof courseId !== "undefined" && courseId !== null && typeof delivId !== "undefined" && delivId !== null) {
-            if (courseId === "sdmm") {
-                const delay = 60 * 60 * 12; // 12h in seconds
-                // TODO: update the image and build
-                return {dockerImage: "310container", studentDelay: delay, maxExecTime: 300, regressionDelivIds: [], custom: {}};
+        // const courseId = Config.getInstance().getProp(ConfigKey.name);
+        // if (typeof courseId !== "undefined" && courseId !== null && typeof delivId !== "undefined" && delivId !== null) {
+        //     if (courseId === "sdmm") {
+        //         const delay = 60 * 60 * 12; // 12h in seconds
+        //         // TODO: update the image and build
+        //         return {dockerImage: "310container", studentDelay: delay, maxExecTime: 300, regressionDelivIds: [], custom: {}};
+        //     }
+        // }
+        // return null;
+        const url = this.host + ":" + this.port + "/portal/at/container/" + delivId;
+        const opts: rp.RequestPromiseOptions = {
+            rejectUnauthorized: false, headers: {
+                token: Config.getInstance().getProp(ConfigKey.autotestSecret)
             }
-        }
-        return null;
+        };
+        Log.info("ClassPortal::getContainerId(..) - Sending request to " + url);
+        return rp(url, opts).then(function(res) {
+            Log.trace("ClassPortal::getContainerId( " + delivId + " ) - success; payload: " + res);
+            const json: AutoTestConfigPayload = JSON.parse(res);
+            if (typeof json.success !== 'undefined') {
+                return json.success;
+            } else {
+                Log.error("ClassPortal::getContainerId(..) - ERROR: " + JSON.stringify(json));
+                return null;
+            }
+        }).catch(function(err) {
+            Log.error("ClassPortal::getContainerId(..) - ERROR; url: " + url + "; ERROR: " + err);
+            return null;
+        });
     }
 
     public async sendGrade(grade: AutoTestGradeTransport): Promise<Payload> {
