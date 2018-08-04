@@ -82,7 +82,7 @@ export default class RouteHandler {
                 await at.handleCommentEvent(commentEvent);
                 return commentEvent;
             case "push":
-                const pushEvent = await GitHubUtil.processPush(body);
+                const pushEvent = await GitHubUtil.processPush(body, new ClassPortal());
                 Log.trace("RouteHandler::handleWebhook() - push request: " + JSON.stringify(pushEvent, null, 2));
                 await at.handlePushEvent(pushEvent);
                 return pushEvent;

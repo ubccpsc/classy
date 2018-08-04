@@ -18,7 +18,7 @@ if (typeof it === 'function') {
 
         Config.getInstance().setProp(ConfigKey.name, ConfigCourses.classytest); // force testing env
 
-        let db = DatabaseController.getInstance();
+        const db = DatabaseController.getInstance();
         await db.clearData(); // nuke everything
 
         Log.info('GlobalSpec::before() - done');
