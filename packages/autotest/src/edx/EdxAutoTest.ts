@@ -57,7 +57,7 @@ export class EdxUtil {
             delivId:     null,
             // branch:      '', // really refs
             repoId:      '', // repoId name
-            // cloneURL:    '',
+            cloneURL:    '',
             commitSHA:   '', // SHA
             commitURL:   'commitURL', // full url to commit
             // projectURL:  '', // full url to project
