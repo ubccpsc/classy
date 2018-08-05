@@ -20,12 +20,8 @@ http {
         location /ui {
             port_in_redirect   off;  # Don't redirect to 8443 (https://serverfault.com/q/227742)
             rewrite            ^/ui/?$ /ui/index.html permanent;
-            rewrite            /ui/(.+) /ui/$1 break;
+            rewrite            /ui(/.+) $1 break;
             proxy_pass         http://<%= ENV["CONTAINER_NAME_UI"] %>:<%= ENV["UI_PORT"] %>/;
-        }
-
-        location /geolocation {
-            proxy_pass         "http://<%= ENV["CONTAINER_NAME_GEO"] %>:<%= ENV["GEO_PORT"] %>/";
         }
 
         # pass requests to the portal service (which is automatically defined in the hosts file by docker)

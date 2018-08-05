@@ -7,17 +7,17 @@ services:
     proxy:
         build:
             args:
-                - CONTAINER_NAME_GEO
                 - CONTAINER_NAME_UI
-                - GEO_PORT
                 - UI_PORT
             dockerfile: 310.dockerfile
         depends_on:
             - reference_ui
-            - geolocation
     portal:
         depends_on:
             - autotest
+        # Hack for SDMM since the github webhook hits the port directly
+        ports:
+            - 5000:${BACKEND_PORT}
     autotest:
         build:
             args:
@@ -39,12 +39,15 @@ services:
                 - PORT=${GRADER_PORT}
             context: packages/grader
         container_name: ${CONTAINER_NAME_GRADER}
+        depends_on:
+          - base
         # DO NOT PASS THE ENTIRE ENVIRONMENT FILE
         # Students could log the token values
         environment:
             - GH_BOT_TOKEN  # Only access student repos not oracle
             - UID
             - GRADER_HOST_DIR
+            - GRADER_PERSIST_DIR
             - GRADER_PORT
             - DOCKER_NET=${GRADE_NET_NAME}
             - HOSTS_ALLOW
@@ -66,14 +69,15 @@ services:
                 - GEO_PORT
             context: https://${COURSE_GH_ORG_TOKEN}@github.ubc.ca/cpsc310/cpsc310geocoder.git
         container_name: ${CONTAINER_NAME_GEO}
-        expose:
-            - ${GEO_PORT}
+        ports:
+            - ${GEO_PORT}:${GEO_PORT}
         restart: always
         user: "${UID}"
     reference_ui:
         build:
             args:
                 - UI_PORT
+                - UID
             context: https://${COURSE_GH_ORG_TOKEN}@github.ubc.ca/cpsc310/project_oracle.git#frontend-prod
             dockerfile: ui.dockerfile
         container_name: ${CONTAINER_NAME_UI}

@@ -72,4 +72,4 @@ services:
         restart: always
         user: "${UID}"
         volumes:
-            - ./data/db:/data/db
+            - /var/opt/classy/db:/data/db
