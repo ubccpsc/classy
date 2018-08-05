@@ -13,13 +13,13 @@ import {Test} from "../GlobalSpec";
 
 const loadFirst = require('../GlobalSpec');
 
-describe.only("GitHubActions", () => {
+describe("GitHubActions", () => {
 
     // TODO: investigate skipping this way: https://stackoverflow.com/a/41908943 (and turning them on/off with an env flag)
 
     let gh: GitHubActions;
 
-    let TIMEOUT = 5000;
+    let TIMEOUT = 20000; // was 5000
 
     let DELAY_SEC = 1000;
     let DELAY_SHORT = 200;
@@ -39,7 +39,7 @@ describe.only("GitHubActions", () => {
     beforeEach(function() {
         Log.test('GitHubActionSpec::BeforeEach - "' + (<any>this).currentTest.title + '"');
 
-        const exec = Test.runSlowTest();
+        let exec = Test.runSlowTest();
         // exec = true;
         if (exec === true) {
             Log.test("GitHubActionSpec::beforeEach() - running in CI; not skipping");
@@ -67,7 +67,9 @@ describe.only("GitHubActions", () => {
         "secap_testtest__repo1",
         "TESTrepo1",
         "TESTrepo2",
-        "TESTrepo3"
+        "TESTrepo3",
+        REPONAME,
+        REPONAME3
     ];
 
     const TESTTEAMNAMES = [
@@ -78,7 +80,8 @@ describe.only("GitHubActions", () => {
         "TEST__X__t_TESTteam1",
         "TESTteam1",
         "TESTteam2",
-        "TESTteam3"
+        "TESTteam3",
+        TEAMNAME
     ];
 
     it("Clear stale repos and teams.", async function() {
@@ -285,24 +288,21 @@ describe.only("GitHubActions", () => {
         // create the team
         const team = await tc.createTeam(Test.TEAMNAME3, deliv, [p1, p2], {});
         expect(team).to.not.be.null;
+
         // create the repository
         const repo = await rc.createRepository(Test.REPONAME3, [team], {});
         expect(repo).to.not.be.null;
-
         const val = await gh.createRepo(REPONAME3);
         const newName = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
         expect(val).to.equal(newName);
 
+        // perform the import
         const start = Date.now();
         const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
-
-        // let targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/'
-        //     + Config.getInstance().getProp(ConfigKey.org) + '/' + getProjectPrefix() + REPONAME3;
         const importUrl = 'https://github.com/SECapstone/capstone'; // hardcoded public repo
         const selectedFiles = 'AutoTest.md';
-
         const output = await gh.importRepoFS(importUrl, targetUrl, selectedFiles);
         expect(output).to.be.true;
 
