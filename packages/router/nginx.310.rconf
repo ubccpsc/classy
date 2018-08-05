@@ -17,10 +17,10 @@ http {
         ssl_certificate        <%= ENV["SSL_CERT_PATH"] %>;
         ssl_certificate_key    <%= ENV["SSL_KEY_PATH"] %>;
 
-        location /ui/ {
+        location /ui {
             port_in_redirect   off;  # Don't redirect to 8443 (https://serverfault.com/q/227742)
             rewrite            ^/ui/?$ /ui/index.html permanent;
-            rewrite            /ui/(.+) /ui/$1 break;
+            rewrite            /ui(/.+) $1 break;
             proxy_pass         http://<%= ENV["CONTAINER_NAME_UI"] %>:<%= ENV["UI_PORT"] %>/;
         }
 
