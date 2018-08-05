@@ -43,7 +43,7 @@ describe("GitHub Event Parser", () => {
 
             custom: {}
         };
-        // person needs to exist so we can do GitHubId <-> PersonId mapping 
+        // person needs to exist so we can do GitHubId <-> PersonId mapping
         await pc.createPerson(p);
 
         Log.test("GitHubEventParserSpec::before() - done");

@@ -78,6 +78,112 @@ describe("ResultController", () => {
         expect(deliv).to.not.be.null;
         expect(deliv).to.be.an('string');
 
+        data = {
+            delivId:   'd0',
+            repoId:    'r1',
+            commitURL: 'url',
+            commitSHA: 'sha',
+            input:     {delivId: 'd0', pushInfo: {}}
+        }as AutoTestResultTransport;
+        deliv = await rc.validateAutoTestResult(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        data = {
+            delivId:   'd0',
+            repoId:    'r1',
+            commitURL: 'url',
+            commitSHA: 'sha',
+            input:     {delivId: 'd0', pushInfo: {}}
+        }as AutoTestResultTransport;
+        deliv = await rc.validateAutoTestResult(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        data = {
+            delivId:   'd0',
+            repoId:    'r1',
+            commitURL: 'url',
+            commitSHA: 'sha',
+            input:     {delivId: 'd0', pushInfo: {}},
+            output:    {}
+        }as AutoTestResultTransport;
+        deliv = await rc.validateAutoTestResult(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        data = {
+            delivId:   'd0',
+            repoId:    'r1',
+            commitURL: 'url',
+            commitSHA: 'sha',
+            input:     {delivId: 'd0', pushInfo: {}},
+            output:    {timestamp: Date.now()}
+        }as AutoTestResultTransport;
+        deliv = await rc.validateAutoTestResult(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        data = {
+            delivId:   'd0',
+            repoId:    'r1',
+            commitURL: 'url',
+            commitSHA: 'sha',
+            input:     {delivId: 'd0', pushInfo: {}},
+            output:    {timestamp: Date.now(), postbackOnComplete: false}
+        }as AutoTestResultTransport;
+        deliv = await rc.validateAutoTestResult(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        data = {
+            delivId:   'd0',
+            repoId:    'r1',
+            commitURL: 'url',
+            commitSHA: 'sha',
+            input:     {delivId: 'd0', pushInfo: {}},
+            output:    {timestamp: Date.now(), postbackOnComplete: false, attachments: []}
+        }as AutoTestResultTransport;
+        deliv = await rc.validateAutoTestResult(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        data = {
+            delivId:   'd0',
+            repoId:    'r1',
+            commitURL: 'url',
+            commitSHA: 'sha',
+            input:     {delivId: 'd0', pushInfo: {}},
+            output:    {timestamp: Date.now(), postbackOnComplete: false, attachments: [], state: 'SUCCESS'}
+        }as AutoTestResultTransport;
+        deliv = await rc.validateAutoTestResult(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        data = {
+            delivId:   'd0',
+            repoId:    'r1',
+            commitURL: 'url',
+            commitSHA: 'sha',
+            input:     {delivId: 'd0', pushInfo: {}},
+            output:    {timestamp: Date.now(), postbackOnComplete: false, attachments: [], state: 'SUCCESS', custom: {}}
+        }as AutoTestResultTransport;
+        deliv = await rc.validateAutoTestResult(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        data = {
+            delivId:   'd0',
+            repoId:    'r1',
+            commitURL: 'url',
+            commitSHA: 'sha',
+            input:     {delivId: 'd0', pushInfo: {}},
+            output:    {timestamp: Date.now(), postbackOnComplete: false, attachments: [], state: 'SUCCESS', custom: {}, report: {}}
+        }as AutoTestResultTransport;
+        deliv = await rc.validateAutoTestResult(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
         // more here
     });
 

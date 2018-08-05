@@ -21,7 +21,6 @@ import {PersonController} from "../../controllers/PersonController";
 import {Person} from "../../Types";
 
 import IREST from "../IREST";
-
 import restify = require('restify');
 
 export default class AdminRoutes implements IREST {
@@ -460,6 +459,21 @@ export default class AdminRoutes implements IREST {
         });
     }
 
+    private static async handlePostCourse(courseTrans: CourseTransport): Promise<boolean> {
+        const cc = new CourseController(new GitHubController());
+        // const result = cc.validateCourseTransport(courseTrans); // TODO: implement this
+        const result: null = null;
+        if (result === null) {
+            const saveSucceeded = await cc.saveCourse(courseTrans);
+            if (saveSucceeded !== null) {
+                Log.info('AdminRoutes::handlePostCourse() - done');
+                return true;
+            } else {
+                throw new Error("Course object not saved.");
+            }
+        }
+    }
+
     private static postCourse(req: any, res: any, next: any) {
         Log.info('AdminRoutes::postCourse(..) - start');
         let payload: Payload;
@@ -476,33 +490,15 @@ export default class AdminRoutes implements IREST {
             return next();
         };
 
-        try {
-            const courseTrans: CourseTransport = req.params;
-            Log.info('AdminRoutes::postCourse() - body: ' + courseTrans);
-            const cc = new CourseController(new GitHubController());
-            // const result = cc.validateCourseTransport(courseTrans); // TODO: implement this
-            const result: null = null;
-            if (result === null) {
-                // let deliv = dc.translateTransport(delivTrans);
-                cc.saveCourse(courseTrans).then(function(saveSucceeded) {
-                    if (saveSucceeded !== null) {
-                        // worked (would have returned a Deliverable)
-                        Log.info('AdminRoutes::postCourse() - done');
-                        payload = {success: {message: 'Course object saved successfully'}};
-                        res.send(200, payload);
-                    } else {
-                        return handleError("Course object not saved.");
-                    }
-                }).catch(function(err) {
-                    return handleError("Course object not saved. ERROR: " + err);
-                });
-            } else {
-                return handleError("Course object not saved: " + result);
-            }
-        } catch (err) {
-            Log.error('AdminRoutes::postCourse() - ERROR: ' + err.message);
-            return handleError('Course object save unsuccessful: ' + err);
-        }
+        const courseTrans: CourseTransport = req.params;
+        Log.info('AdminRoutes::postCourse() - body: ' + courseTrans);
+        AdminRoutes.handlePostCourse(courseTrans).then(function(success) {
+            payload = {success: {message: 'Course object saved successfully'}};
+            res.send(200, payload);
+            return next();
+        }).catch(function(err) {
+            return handleError(err);
+        });
     }
 
 }
