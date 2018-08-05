@@ -15,6 +15,9 @@ services:
     portal:
         depends_on:
             - autotest
+        # Hack for SDMM since the github webhook hits the port directly
+        ports:
+            - ${BACKEND_PORT}:5000
     autotest:
         build:
             args:
