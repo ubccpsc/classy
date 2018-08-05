@@ -1,20 +1,19 @@
+import {expect} from "chai";
+import "mocha";
+import Config, {ConfigKey} from "../../../../common/Config";
+import Log from "../../../../common/Log";
+import Util from "../../../../common/Util";
+import {DeliverablesController} from "../../src/controllers/DeliverablesController";
+
+import {GitHubActions} from "../../src/controllers/GitHubActions";
+import {PersonController} from "../../src/controllers/PersonController";
+import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
+import {Test} from "../GlobalSpec";
 
 const loadFirst = require('../GlobalSpec');
 
-import {expect} from "chai";
-import "mocha";
-
-import {GitHubActions} from "../../src/controllers/GitHubActions";
-import Log from "../../../../common/Log";
-import {Test} from "../GlobalSpec";
-import Util from "../../../../common/Util";
-import Config, {ConfigKey} from "../../../../common/Config";
-import {RepositoryController} from "../../src/controllers/RepositoryController";
-import {DeliverablesController} from "../../src/controllers/DeliverablesController";
-import {PersonController} from "../../src/controllers/PersonController";
-
-describe("GitHubActions", () => {
+describe.only("GitHubActions", () => {
 
     // TODO: investigate skipping this way: https://stackoverflow.com/a/41908943 (and turning them on/off with an env flag)
 
@@ -37,10 +36,11 @@ describe("GitHubActions", () => {
         Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
     });
 
-    beforeEach(function () {
+    beforeEach(function() {
         Log.test('GitHubActionSpec::BeforeEach - "' + (<any>this).currentTest.title + '"');
 
         const exec = Test.runSlowTest();
+        // exec = true;
         if (exec === true) {
             Log.test("GitHubActionSpec::beforeEach() - running in CI; not skipping");
             gh = new GitHubActions();
@@ -50,7 +50,7 @@ describe("GitHubActions", () => {
         }
     });
 
-    afterEach(function () {
+    afterEach(function() {
         Log.test('AfterTest: "' + (<any>this).currentTest.title + '"');
     });
 
@@ -60,17 +60,17 @@ describe("GitHubActions", () => {
         Config.getInstance().setProp(ConfigKey.org, OLDORG);
     });
 
-    let TESTREPONAMES = ["testtest__repo1",
+    const TESTREPONAMES = ["testtest__repo1",
         "secap_cpscbot",
         "secap_rthse2",
         "secap_ubcbot",
         "secap_testtest__repo1",
         "TESTrepo1",
         "TESTrepo2",
-        "TESTrepo3",
+        "TESTrepo3"
     ];
 
-    let TESTTEAMNAMES = [
+    const TESTTEAMNAMES = [
         "rtholmes",
         "ubcbot",
         "rthse2",
@@ -78,90 +78,96 @@ describe("GitHubActions", () => {
         "TEST__X__t_TESTteam1",
         "TESTteam1",
         "TESTteam2",
-        "TESTteam3",
+        "TESTteam3"
     ];
 
-    it("Clear stale repos and teams.", async function () {
-        let del = await deleteStale();
+    it("Clear stale repos and teams.", async function() {
+        const del = await deleteStale();
         expect(del).to.be.true;
     }).timeout(TIMEOUT * 100);
 
-    it("Should not be possible to find a repo that does not exist.", async function () {
-        let val = await gh.repoExists(REPONAME);
+    it("Should not be possible to find a repo that does not exist.", async function() {
+        const val = await gh.repoExists(REPONAME);
         expect(val).to.be.false;
     }).timeout(TIMEOUT);
 
-    it("Should not be possible to delete a repo that does not exist.", async function () {
+    it("Should not be possible to delete a repo that does not exist.", async function() {
         // and it should do so without crashing
-        let val = await gh.deleteRepo(REPONAME);
+        const val = await gh.deleteRepo(REPONAME);
         expect(val).to.be.false;
     }).timeout(TIMEOUT);
 
-    it("Should be able to create a repo.", async function () {
-        let val = await gh.createRepo(REPONAME);
-        const name = Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME;
+    it("Should be able to create a repo.", async function() {
+        const rc = new RepositoryController();
+        await rc.createRepository(REPONAME, [], {});
+
+        const val = await gh.createRepo(REPONAME);
+        const name = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
+            Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME;
         expect(val).to.equal(name);
     }).timeout(TIMEOUT);
 
-    it("Should be possible to find a repo that does exist.", async function () {
-        let val = await gh.repoExists(REPONAME);
+    it("Should be possible to find a repo that does exist.", async function() {
+        const val = await gh.repoExists(REPONAME);
         expect(val).to.be.true;
     }).timeout(TIMEOUT);
 
-    it("Should be able to remove a repo that does exist.", async function () {
-        let val = await gh.deleteRepo(REPONAME);
+    it("Should be able to remove a repo that does exist.", async function() {
+        const val = await gh.deleteRepo(REPONAME);
         expect(val).to.be.true;
     }).timeout(TIMEOUT);
 
-    it("Should be able to create the repo again.", async function () {
-        let val = await gh.createRepo(REPONAME);
-        const name = Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME;
+    it("Should be able to create the repo again.", async function() {
+        const val = await gh.createRepo(REPONAME);
+        const name = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
+            Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME;
         expect(val).to.equal(name);
     }).timeout(TIMEOUT);
 
-    it("Should be able to list a webhook.", async function () {
-        let val = await gh.listWebhooks(REPONAME);
+    it("Should be able to list a webhook.", async function() {
+        const val = await gh.listWebhooks(REPONAME);
         expect(val).to.be.empty;
     }).timeout(TIMEOUT);
 
-    it("Should be able to create a webhook.", async function () {
+    it("Should be able to create a webhook.", async function() {
         let hooks = await gh.listWebhooks(REPONAME);
         expect(hooks).to.be.empty;
 
-        let createHook = await gh.addWebhook(REPONAME, 'https://localhost/test');
+        const createHook = await gh.addWebhook(REPONAME, 'https://localhost/test');
         expect(createHook).to.be.true;
 
         hooks = await gh.listWebhooks(REPONAME);
         expect(hooks).to.have.lengthOf(1);
     }).timeout(TIMEOUT);
 
-    it("Should not be possible to get a team number for a team that does not exist.", async function () {
-        let val = await gh.getTeamNumber(TEAMNAME);
+    it("Should not be possible to get a team number for a team that does not exist.", async function() {
+        const val = await gh.getTeamNumber(TEAMNAME);
         Log.test('Team # ' + val);
         expect(val).to.be.lessThan(0);
     }).timeout(TIMEOUT);
 
-    it("Should be able to create a team, add users to it, and add it to the repo.", async function () {
-        let val = await gh.createTeam(TEAMNAME, 'push');
+    it("Should be able to create a team, add users to it, and add it to the repo.", async function() {
+        const val = await gh.createTeam(TEAMNAME, 'push');
         Log.test("Team details: " + JSON.stringify(val));
         expect(val.teamName).to.equal(TEAMNAME);
         expect(val.githubTeamNumber).to.be.an('number');
         expect(val.githubTeamNumber > 0).to.be.true;
 
-        let addMembers = await gh.addMembersToTeam(val.teamName, val.githubTeamNumber, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+        const addMembers = await gh.addMembersToTeam(val.teamName, val.githubTeamNumber,
+            [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
         expect(addMembers.teamName).to.equal(TEAMNAME); // not a strong test
 
-        let teamAdd = await gh.addTeamToRepo(val.githubTeamNumber, REPONAME, 'push');
+        const teamAdd = await gh.addTeamToRepo(val.githubTeamNumber, REPONAME, 'push');
         expect(teamAdd.githubTeamNumber).to.equal(val.githubTeamNumber);
 
-        let staffTeamNumber = await gh.getTeamNumber('staff');
-        let staffAdd = await gh.addTeamToRepo(staffTeamNumber, REPONAME, 'admin');
+        const staffTeamNumber = await gh.getTeamNumber('staff');
+        const staffAdd = await gh.addTeamToRepo(staffTeamNumber, REPONAME, 'admin');
         expect(staffAdd.githubTeamNumber).to.equal(staffTeamNumber);
 
     }).timeout(TIMEOUT);
 
-    it("Should be possible to get a team number for a team that does exist.", async function () {
-        let val = await gh.getTeamNumber(TEAMNAME);
+    it("Should be possible to get a team number for a team that does exist.", async function() {
+        const val = await gh.getTeamNumber(TEAMNAME);
         Log.test('Team # ' + val);
         expect(val).to.be.greaterThan(0);
 
@@ -169,23 +175,22 @@ describe("GitHubActions", () => {
         // expect(bool).to.be.true;
     }).timeout(TIMEOUT);
 
-    it("Should get an empty array of team members for a team that does not exist.", async function () {
-        let val = await gh.getTeamMembers(-1337);
+    it("Should get an empty array of team members for a team that does not exist.", async function() {
+        const val = await gh.getTeamMembers(-1337);
         Log.test('# Team members: ' + val.length);
         expect(val.length).to.equal(0);
     }).timeout(TIMEOUT);
 
-    it("Should be able to get member names for a valid team.", async function () {
-        let teamnum = await gh.getTeamNumber('staff');
+    it("Should be able to get member names for a valid team.", async function() {
+        const teamnum = await gh.getTeamNumber('staff');
         expect(teamnum).to.be.greaterThan(0);
-        let val = await gh.getTeamMembers(teamnum);
+        const val = await gh.getTeamMembers(teamnum);
         Log.test('# Team members: ' + val.length);
         expect(val.length).to.be.greaterThan(0);
         expect(val).to.contain('rtholmes');
     }).timeout(TIMEOUT);
 
-
-    it("Should be able to create many teams and get their numbers (tests team paging).", async function () {
+    it("Should be able to create many teams and get their numbers (tests team paging).", async function() {
 
         gh.PAGE_SIZE = 2; // force a small page size for testing
         const NUM_TEAMS = 4; // could do 100 for a special test, but this is really slow
@@ -193,7 +198,7 @@ describe("GitHubActions", () => {
         // should be able to create the teams
         for (let i = 0; i < NUM_TEAMS; i++) {
             const teamname = TEAMNAME + '_paging-' + i;
-            let val = await gh.createTeam(teamname, 'push');
+            const val = await gh.createTeam(teamname, 'push');
             await gh.delay(200);
             Log.test("Team details: " + JSON.stringify(val));
             expect(val.teamName).to.equal(teamname);
@@ -205,7 +210,7 @@ describe("GitHubActions", () => {
         for (let i = 0; i < NUM_TEAMS; i++) {
             const teamname = TEAMNAME + '_paging-' + i;
             await gh.delay(200);
-            let val = await gh.getTeamNumber(teamname);
+            const val = await gh.getTeamNumber(teamname);
             Log.test("Team details: " + JSON.stringify(val));
             expect(val).to.be.an('number');
             expect(val).to.be.greaterThan(0);
@@ -213,22 +218,24 @@ describe("GitHubActions", () => {
 
     }).timeout(TIMEOUT * 20);
 
-    it("Should be able to create many repos and get them back (tests repo paging).", async function () {
+    it("Should be able to create many repos and get them back (tests repo paging).", async function() {
 
         const NUM_REPOS = 4;
+        const rc = new RepositoryController();
 
         gh.PAGE_SIZE = 2; // force a small page size for testing
         // should be able to create the teams
         for (let i = 0; i < NUM_REPOS; i++) {
             const reponame = REPONAME + '_paging-' + i;
-            let val = await gh.createRepo(reponame);
+            await rc.createRepository(reponame, [], {});
+            const val = await gh.createRepo(reponame);
             await gh.delay(200);
             Log.test("Repo details: " + JSON.stringify(val));
             expect(val.indexOf(reponame)).to.be.greaterThan(-1);
             expect(val).to.be.an('string');
         }
 
-        let allRepos = await gh.listRepos();
+        const allRepos = await gh.listRepos();
         // should be able to get their number
         for (let i = 0; i < NUM_REPOS; i++) {
             const reponame = REPONAME + '_paging-' + i;
@@ -247,53 +254,56 @@ describe("GitHubActions", () => {
 
     }).timeout(TIMEOUT * 1000);
 
-    it("Should be able to clone a source repo into a newly created repository.", async function () {
+    it("Should be able to clone a source repo into a newly created repository.", async function() {
         const start = Date.now();
-        let targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME;
-        let importUrl = 'https://github.com/SECapstone/bootstrap'; // this is hard coded, but at least it's public
+        const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
+            Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME;
+        const importUrl = 'https://github.com/SECapstone/bootstrap'; // this is hard coded, but at least it's public
 
-        let output = await gh.importRepoFS(importUrl, targetUrl);
+        const output = await gh.importRepoFS(importUrl, targetUrl);
         expect(output).to.be.true;
 
         Log.test('Full clone took: ' + Util.took(start));
     }).timeout(120 * 1000); // 2 minutes
 
-    it("Should be able to clone a source repository, and select files to create a new repository.", async function () {
-        let tc: TeamController = new TeamController();
-        let rc: RepositoryController = new RepositoryController();
-        let dc: DeliverablesController = new DeliverablesController();
-        let pc: PersonController = new PersonController();
+    it("Should be able to clone a source repository, and select files to create a new repository.", async function() {
+        const tc: TeamController = new TeamController();
+        const rc: RepositoryController = new RepositoryController();
+        const dc: DeliverablesController = new DeliverablesController();
+        const pc: PersonController = new PersonController();
 
         // get some persons
-        let p1 = await pc.getPerson(Test.USERNAME1);
-        let p2 = await pc.getPerson(Test.USERNAME2);
+        const p1 = await pc.getPerson(Test.USERNAME1);
+        const p2 = await pc.getPerson(Test.USERNAME2);
         expect(p1).to.not.be.null;
         expect(p2).to.not.be.null;
 
         // get the deliverable
-        let deliv = await dc.getDeliverable(Test.DELIVID0);
+        const deliv = await dc.getDeliverable(Test.DELIVID0);
         expect(deliv).to.not.be.null;
 
         // create the team
-        let team = await tc.createTeam(Test.TEAMNAME3, deliv, [p1, p2], {});
+        const team = await tc.createTeam(Test.TEAMNAME3, deliv, [p1, p2], {});
         expect(team).to.not.be.null;
         // create the repository
-        let repo = await rc.createRepository(Test.REPONAME3, [team], {});
+        const repo = await rc.createRepository(Test.REPONAME3, [team], {});
         expect(repo).to.not.be.null;
 
-        let val = await gh.createRepo(REPONAME3);
-        const newName = Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
+        const val = await gh.createRepo(REPONAME3);
+        const newName = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
+            Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
         expect(val).to.equal(newName);
 
         const start = Date.now();
-        let targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
+        const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
+            Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
 
         // let targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/'
         //     + Config.getInstance().getProp(ConfigKey.org) + '/' + getProjectPrefix() + REPONAME3;
-        let importUrl = 'https://github.com/SECapstone/capstone'; // hardcoded public repo
-        let selectedFiles = 'AutoTest.md';
+        const importUrl = 'https://github.com/SECapstone/capstone'; // hardcoded public repo
+        const selectedFiles = 'AutoTest.md';
 
-        let output = await gh.importRepoFS(importUrl, targetUrl, selectedFiles);
+        const output = await gh.importRepoFS(importUrl, targetUrl, selectedFiles);
         expect(output).to.be.true;
 
         Log.test('Partial clone took: ' + Util.took(start));
@@ -302,10 +312,10 @@ describe("GitHubActions", () => {
     /**
      * This test is terrible, but gets the coverage tools to stop complaining.
      */
-    it("Should make sure that actions can actually fail.", async function () {
+    it("Should make sure that actions can actually fail.", async function() {
         if (1 > 0) return; // terrible skip
-        const old = (<any>gh).gitHubAuthToken;
-        (<any>gh).gitHubAuthToken = "FOOFOOFOO";
+        const old = (gh as any).gitHubAuthToken;
+        (gh as any).gitHubAuthToken = "FOOFOOFOO";
 
         try {
             await gh.createRepo('INVALIDREPONAME');
@@ -380,41 +390,40 @@ describe("GitHubActions", () => {
         }
 
         Log.test('after expected fail');
-        (<any>gh).gitHubAuthToken = old; // restore token
+        (gh as any).gitHubAuthToken = old; // restore token
     }).timeout(TIMEOUT);
 
     it("Should be able to create a repo, " +
         "create a team, add users to it, add it to the repo, " +
-        "and change their permissions", async function () {
-        let githubTeam = await gh.createTeam(TEAMNAME, 'push');
+        "and change their permissions", async function() {
+        const githubTeam = await gh.createTeam(TEAMNAME, 'push');
         expect(githubTeam.teamName).to.be.equal(TEAMNAME);
         expect(githubTeam.githubTeamNumber).to.be.an('number');
         expect(githubTeam.githubTeamNumber > 0).to.be.true;
 
         // Expects adding members to work
-        let addMembers = await gh.addMembersToTeam(githubTeam.teamName, githubTeam.githubTeamNumber, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
-        let teamAdd = await gh.addTeamToRepo(githubTeam.githubTeamNumber, REPONAME, 'push');
+        const addMembers = await gh.addMembersToTeam(githubTeam.teamName, githubTeam.githubTeamNumber, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+        const teamAdd = await gh.addTeamToRepo(githubTeam.githubTeamNumber, REPONAME, 'push');
 
-        let staffTeamNumber = await gh.getTeamNumber('staff');
-        let staffAdd = await gh.addTeamToRepo(staffTeamNumber, REPONAME, 'admin');
-        let permissionEdit = await gh.setRepoPermission(REPONAME, "pull");
+        const staffTeamNumber = await gh.getTeamNumber('staff');
+        const staffAdd = await gh.addTeamToRepo(staffTeamNumber, REPONAME, 'admin');
+        const permissionEdit = await gh.setRepoPermission(REPONAME, "pull");
         expect(permissionEdit).to.be.true;
 
     }).timeout(TIMEOUT);
 
-
-    it("Should not be able to bulk edit permissions to admins", async function () {
-        let githubTeam = await gh.createTeam(TEAMNAME, 'push');
+    it("Should not be able to bulk edit permissions to admins", async function() {
+        const githubTeam = await gh.createTeam(TEAMNAME, 'push');
         expect(githubTeam.teamName).to.be.equal(TEAMNAME);
         expect(githubTeam.githubTeamNumber).to.be.an('number');
         expect(githubTeam.githubTeamNumber > 0).to.be.true;
 
         // Expects adding members to work
-        let addMembers = await gh.addMembersToTeam(githubTeam.teamName, githubTeam.githubTeamNumber, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
-        let teamAdd = await gh.addTeamToRepo(githubTeam.githubTeamNumber, REPONAME, 'push');
+        const addMembers = await gh.addMembersToTeam(githubTeam.teamName, githubTeam.githubTeamNumber, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+        const teamAdd = await gh.addTeamToRepo(githubTeam.githubTeamNumber, REPONAME, 'push');
 
-        let staffTeamNumber = await gh.getTeamNumber('staff');
-        let staffAdd = await gh.addTeamToRepo(staffTeamNumber, REPONAME, 'admin');
+        const staffTeamNumber = await gh.getTeamNumber('staff');
+        const staffAdd = await gh.addTeamToRepo(staffTeamNumber, REPONAME, 'admin');
         return gh.setRepoPermission(REPONAME, "admin").then(function fulfilled(result) {
             throw new Error("Promise was unexpectedly fulfilled. Result: " + result);
         }, function rejected() {
@@ -423,11 +432,10 @@ describe("GitHubActions", () => {
 
     }).timeout(TIMEOUT);
 
-    it("Clear stale repos and teams.", async function () {
-        let del = await deleteStale();
+    it("Clear stale repos and teams.", async function() {
+        const del = await deleteStale();
         expect(del).to.be.true;
     }).timeout(TIMEOUT * 10);
-
 
     function getProjectPrefix(): string {
         return "TEST__X__secap_";
@@ -449,7 +457,7 @@ describe("GitHubActions", () => {
             for (const r of TESTREPONAMES) {
                 if (repo.name === r) {
                     Log.info('Removing stale repo: ' + repo.name);
-                    let val = await gh.deleteRepo(r);
+                    const val = await gh.deleteRepo(r);
                     await gh.delay(DELAY_SHORT);
                     // expect(val).to.be.true;
                 }
@@ -462,16 +470,16 @@ describe("GitHubActions", () => {
             Log.info('Evaluating repo: ' + repo.name);
             if (repo.name.indexOf('TEST__X__') === 0 || repo.name.startsWith(REPONAME)) {
                 Log.info('Removing stale repo: ' + repo.name);
-                let val = await gh.deleteRepo(repo.name);
+                await gh.deleteRepo(repo.name);
                 // expect(val).to.be.true;
-                let teamName = repo.name.substr(15);
+                const teamName = repo.name.substr(15);
                 Log.info('Adding stale team name: ' + repo.name);
                 TESTTEAMNAMES.push(teamName);
             }
         }
 
         // delete teams if needed
-        let teams = await gh.listTeams();
+        const teams = await gh.listTeams();
         expect(teams).to.be.an('array');
         // expect(teams.length > 0).to.be.true; // can have 0 teams
         Log.test('All Teams: ' + JSON.stringify(teams));
@@ -482,7 +490,7 @@ describe("GitHubActions", () => {
             for (const t of TESTTEAMNAMES) {
                 if (team.name === t) {
                     Log.test("Removing stale team: " + team.name);
-                    let val = await gh.deleteTeam(team.id);
+                    await gh.deleteTeam(team.id);
                     await gh.delay(DELAY_SHORT);
                     done = true;
                 }
@@ -490,7 +498,7 @@ describe("GitHubActions", () => {
             if (done === false) {
                 if (team.name.startsWith(TEAMNAME) === true) {
                     Log.test("Removing stale team: " + team.name);
-                    let val = await gh.deleteTeam(team.id);
+                    await gh.deleteTeam(team.id);
                     await gh.delay(DELAY_SHORT);
                 }
             }
