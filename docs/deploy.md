@@ -24,15 +24,22 @@ permission with the host (this is done in the docker-compose.yml file).
     ```bash
     adduser --system --shell /bin/nologin classy
     ```
+    
+    Note: make sure you logout and back in to see the new user and group.
 
 2. Install classy
 
     ```bash
-    git clone git@github.com:ubccpsc/classy.git ~/classy
-    sudo mkdir /opt/classy
-    sudo cp -r ~/classy /opt/classy && rm -rf ~/classy
+    git clone https://github.com/ubccpsc/classy.git ~/classy
+    sudo cp -r ~/classy /opt && rm -rf ~/classy
     sudo chown root:classy /opt/classy
     sudo chmod g+rwx,o-rwx /opt/classy
+ 
+    # Set GRADER_HOST_DIR to /var/opt/classy/runs
+    # Set database storage to /var/opt/classy/db
+    sudo mkdir /var/opt/classy
+    sudo chown root:classy /var/opt/classy
+    sudo chmod g+rwx,o-rwx /var/opt/classy
     ```
 
 3. Configure the `.env`
@@ -76,6 +83,7 @@ You should now be able to open portal in your web browser by navigating to the h
     ```bash
     docker build --tag cpsc310image \
                  --build-arg USER_UID=$(id -u classy) \
+                 --build-arg COURSE=cs310 \
                  --file grade.dockerfile \
            https://GITHUB_TOKEN@github.ubc.ca/cpsc310/project_oracle.git
     ```
