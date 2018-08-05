@@ -83,6 +83,10 @@ export class RepositoryController {
         if (existingRepo === null) {
             const teamIds: string[] = teams.map((team) => team.id);
 
+            if (custom === null) {
+                custom = {}; // custom must not be null
+            }
+
             const repo: Repository = {
                 id:       name,
                 URL:      null,
