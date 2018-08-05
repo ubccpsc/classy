@@ -291,6 +291,10 @@ export class SDMMController extends CourseController {
                 let d0Repo = null;
                 const repos = await this.rc.getReposForPerson(person);
                 for (const r of repos) {
+                    if (typeof r.custom.d0enabled === 'undefined') {
+                        r.custom.d0enabled = false; // if we don't know what it is it must be false
+                    }
+
                     if (r.custom.d0enabled === true) {
                         d0Repo = r;
                     }
