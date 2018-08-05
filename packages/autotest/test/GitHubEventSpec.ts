@@ -5,7 +5,9 @@ import "mocha";
 import Config from "../../common/Config";
 import Log from "../../common/Log";
 import {ICommentEvent} from "../../common/types/AutoTestTypes";
+import {PersonController} from "../../portal/backend/src/controllers/PersonController";
 import BackendServer from "../../portal/backend/src/server/BackendServer";
+import {Person} from "../../portal/backend/src/Types";
 import {MockClassPortal} from "../src/autotest/mocks/MockClassPortal";
 
 import {GitHubUtil} from "../src/github/GitHubUtil";
@@ -16,12 +18,34 @@ describe("GitHub Event Parser", () => {
     Config.getInstance();
 
     const GITHUBID = 'rthse2';
+    const TIMEOUT = 1000;
 
     let backend: BackendServer = null;
     before(async function() {
         Log.test("GitHubEventParserSpec::before() - start");
         backend = new BackendServer();
         await backend.start();
+
+        const pc = new PersonController();
+        const id = GITHUBID;
+        const p: Person = {
+            id:            id,
+            csId:          id,
+            githubId:      id,
+            studentNumber: null,
+
+            fName: 'f' + id,
+            lName: 'l' + id,
+            kind:  null,
+            URL:   null,
+
+            labId: null,
+
+            custom: {}
+        };
+        // person needs to exist so we can do GitHubId <-> PersonId mapping 
+        await pc.createPerson(p);
+
         Log.test("GitHubEventParserSpec::before() - done");
     });
 
@@ -131,7 +155,7 @@ describe("GitHub Event Parser", () => {
         };
 
         expect(actual).to.deep.equal(expected);
-    });
+    }).timeout(TIMEOUT * 10);
 
     it("Should be able to parse a comment on a master commit with multiple deliverables and a mention.", async () => {
         const content = readFile("comment_master_bot_two-deliv.json");
@@ -153,7 +177,7 @@ describe("GitHub Event Parser", () => {
         };
 
         expect(actual).to.deep.equal(expected);
-    });
+    }).timeout(TIMEOUT * 10);
 
     it("Should be able to parse a comment on a master commit with no deliverables and no mention.", async () => {
         const content = readFile("comment_master_no-bot_no-deliv.json");
@@ -176,7 +200,7 @@ describe("GitHub Event Parser", () => {
         //
         const expected: any = null;
         expect(actual).to.deep.equal(expected);
-    });
+    }).timeout(TIMEOUT * 10);
 
     it("Should be able to parse a comment on another branch with one deliverable and a mention.", async () => {
         const content = readFile("comment_other-branch_bot_one-deliv.json");
@@ -198,7 +222,7 @@ describe("GitHub Event Parser", () => {
         };
 
         expect(actual).to.deep.equal(expected);
-    });
+    }).timeout(TIMEOUT * 10);
 
     function readFile(fName: string): string {
         return fs.readFileSync("./test/githubEvents/" + fName, "utf8");

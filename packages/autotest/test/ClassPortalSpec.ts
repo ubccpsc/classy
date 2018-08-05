@@ -1,10 +1,12 @@
 import {expect} from "chai";
 import "mocha";
 
-import Config from "../../common/Config";
-import {ClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
+import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
+import {DatabaseController} from "../../portal/backend/src/controllers/DatabaseController";
 import BackendServer from "../../portal/backend/src/server/BackendServer";
+import {Course} from "../../portal/backend/src/Types";
+import {ClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
 
 const loadFirst = require('./GlobalSpec');
 
@@ -16,20 +18,20 @@ describe("ClassPortal Service", () => {
     const CURRENT_DEFAULT_DELIV = "d2";
 
     let backend: BackendServer = null;
-    before(async function () {
+    before(async function() {
         Log.test("ClassPortalSpec::before() - start");
         backend = new BackendServer();
         await backend.start();
         Log.test("ClassPortalSpec::before() - done");
     });
 
-    after(async function () {
+    after(async function() {
         Log.test("ClassPortalSpec::after() - start");
         await backend.stop();
         Log.test("ClassPortalSpec::after() - done");
     });
 
-    beforeEach(function () {
+    beforeEach(function() {
         cp = new ClassPortal();
     });
 
@@ -114,9 +116,21 @@ describe("ClassPortal Service", () => {
 
     it("Should return a default deliverable if the course has one.", async () => {
         try {
+            // setup
+            const db = DatabaseController.getInstance();
+            const course: Course = {
+                id:                   Config.getInstance().getProp(ConfigKey.name),
+                defaultDeliverableId: 'd0',
+                custom:               {}
+            };
+            await db.writeCourseRecord(course);
+
+            // test
             const actual = await cp.getDefaultDeliverableId();
-            expect(actual.defaultDeliverable).to.equal("d0");
+            Log.test("Actual: " + JSON.stringify(actual));
+            expect(actual.defaultDeliverable).to.equal('d0');
         } catch (err) {
+            Log.error("ERROR: " + err);
             expect.fail("Should not happen");
         }
     });
