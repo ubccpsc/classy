@@ -257,6 +257,9 @@ export class DatabaseController {
 
     public async writeRepository(record: Repository): Promise<boolean> {
         Log.info("DatabaseController::writeRepository(..) - start");
+        if (record.custom === null) {
+            record.custom = {}; // make sure this always exists
+        }
         Log.trace("DatabaseController::writeRepository(..) - repo: " + JSON.stringify(record));
         const existingRepo = await this.getRepository(record.id);
         if (existingRepo === null) {
