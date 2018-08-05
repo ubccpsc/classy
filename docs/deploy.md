@@ -37,9 +37,10 @@ permission with the host (this is done in the docker-compose.yml file).
  
     # Set GRADER_HOST_DIR to /var/opt/classy/runs
     # Set database storage to /var/opt/classy/db
-    sudo mkdir /var/opt/classy
-    sudo chown root:classy /var/opt/classy
-    sudo chmod g+rwx,o-rwx /var/opt/classy
+    sudo mkdir /var/opt/classy/db
+    sudo mkdir /var/opt/classy/runs
+    sudo chown -R classy:classy /var/opt/classy
+    sudo chmod -R g+rwx,o-rwx /var/opt/classy
     ```
 
 3. Configure the `.env`
@@ -63,8 +64,17 @@ permission with the host (this is done in the docker-compose.yml file).
     3. Edit the `.env` file and update the paths specified in HOST_SSL_CERT_PATH and HOST_SSL_KEY_PATH (you should just
        need to increment the version by 1), and
     4. Restart any services that use the SSL certificates (e.g. proxy and portal).
+
+5. Build the base image (see issue [#46](https://github.com/ubccpsc/classy/issues/46)).
     
-5. Build and start the system:
+    ```bash
+    cd /opt/classy
+    docker build -t classy:base .
+    ```
+    
+    Note: due to the mentioned bug, this needs to be run anytime a change is made to the _common_ package. 
+
+6. Build and start the system:
 
     ```bash
     cd /opt/classy
@@ -121,7 +131,7 @@ You should now be able to open portal in your web browser by navigating to the h
                    build
     docker-compose --file docker-compose.yml \
                    --file docker-compose.310.yml \
-                   up --detached
+                   up --detach
     ```
     Note: the docker-compose.310.yml file also specifies a subnet which is created the first time the `up` command is run.
     
