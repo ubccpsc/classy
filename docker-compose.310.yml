@@ -17,7 +17,7 @@ services:
             - autotest
         # Hack for SDMM since the github webhook hits the port directly
         ports:
-            - ${BACKEND_PORT}:5000
+            - 5000:${BACKEND_PORT}
     autotest:
         build:
             args:
