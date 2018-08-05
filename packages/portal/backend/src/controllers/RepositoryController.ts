@@ -44,18 +44,51 @@ export class RepositoryController {
         return myRepos;
     }
 
+    /**
+     * Updates an existing repository record.
+     *
+     * @param {Repository} repo
+     * @returns {Promise<Repository>}
+     */
+    public async updateRepository(repo: Repository): Promise<Repository> {
+        Log.info("RepositoryController::updateRepository( .. ) - start");
+        if (typeof repo === 'undefined' || repo === null) {
+            return null;
+        }
+
+        const existingRepo = await this.getRepository(name);
+        if (existingRepo === null) {
+            // repo not in db, create new one
+            const teams: Team[] = [];
+            const tc = new TeamController();
+            for (const tid of repo.teamIds) {
+                const team = await tc.getTeam(tid);
+                teams.push(team);
+            }
+            await this.createRepository(repo.id, teams, repo.custom);
+        } else {
+            // overwrie existing repo
+            const customExisting = Object.assign({}, existingRepo.custom); // overwrite with new fields
+            const customCombined = Object.assign(customExisting, existingRepo.custom);
+            repo.custom = customCombined;
+            await this.db.writeRepository(repo);
+        }
+        return await this.db.getRepository(repo.id);
+    }
+
     public async createRepository(name: string, teams: Team[], custom: any): Promise<Repository | null> {
-        Log.info("RepositoryController::createRepository( " + name + ",.. ) - start");
+        Log.info("RepositoryController::createRepository( " + name + ", .. ) - start");
 
         const existingRepo = await this.getRepository(name);
         if (existingRepo === null) {
             const teamIds: string[] = teams.map((team) => team.id);
 
             const repo: Repository = {
-                id:      name,
-                URL:     null,
-                teamIds: teamIds,
-                custom:  custom
+                id:       name,
+                URL:      null,
+                cloneURL: null,
+                teamIds:  teamIds,
+                custom:   custom
             };
 
             await this.db.writeRepository(repo);

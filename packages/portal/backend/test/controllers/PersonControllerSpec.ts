@@ -17,6 +17,8 @@ describe("PersonController", () => {
     let PERSON2: Person = null;
     let PERSON3: Person = null;
 
+    const TIMEOUT = 1000;
+
     before(async () => {
         PERSON1 = {
             id:            Test.USERNAME1,
@@ -125,6 +127,6 @@ describe("PersonController", () => {
 
         person = await pc.getGitHubPerson('randomIDthatDoesNotexist23232333');
         expect(person).to.be.null;
-    }).timeout(5000);
+    }).timeout(TIMEOUT * 30);
 
 });

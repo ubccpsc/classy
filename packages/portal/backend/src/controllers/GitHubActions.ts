@@ -2,6 +2,7 @@ import * as rp from "request-promise-native";
 
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
+import {DatabaseController} from "./DatabaseController";
 import {GitTeamTuple} from "./GitHubController";
 
 const tmp = require('tmp-promise');
@@ -16,63 +17,67 @@ export class GitHubActions {
     private DELAY_SEC = 1000;
     public PAGE_SIZE = 100; // public for testing; 100 is the max; 10 is good for tests
 
+    private dc: DatabaseController = null;
+
     constructor() {
         // NOTE: this is not very controllable; these would be better as params
         this.org = Config.getInstance().getProp(ConfigKey.org);
         this.apiPath = Config.getInstance().getProp(ConfigKey.githubAPI);
         this.gitHubUserName = Config.getInstance().getProp(ConfigKey.githubBotName);
         this.gitHubAuthToken = Config.getInstance().getProp(ConfigKey.githubBotToken);
+        this.dc = DatabaseController.getInstance();
     }
 
     /**
      * Creates a given repo and returns its URL. If the repo exists, return the URL for that repo.
      *
-     * @param repoName
+     * Also updates the Repository object in the datastore with the URL and cloneURL.
+     *
+     * @param repoId The name of the repo. Must be unique within the organization.
      * @returns {Promise<string>} provisioned team URL
      */
-    public createRepo(repoName: string): Promise<string> {
-        let ctx = this;
+    public async createRepo(repoId: string): Promise<string> {
+        const ctx = this;
 
-        Log.info("GitHubAction::createRepo( " + ctx.org + ", " + repoName + " ) - start");
-        return new Promise(function(fulfill, reject) {
+        Log.info("GitHubAction::createRepo( " + repoId + " ) - start");
 
-            const uri = ctx.apiPath + '/orgs/' + ctx.org + '/repos';
-            const options = {
-                method:  'POST',
-                uri:     uri,
-                headers: {
-                    'Authorization': ctx.gitHubAuthToken,
-                    'User-Agent':    ctx.gitHubUserName,
-                    'Accept':        'application/json'
-                },
-                body:    {
-                    name:          repoName,
-                    // In Dev and Test, Github free Org Repos cannot be private.
-                    private:       true,
-                    has_issues:    true,
-                    has_wiki:      false,
-                    has_downloads: false,
-                    auto_init:     false
-                },
-                json:    true
-            };
-            let url: string | null = null;
-            rp(options).then(function(body: any) {
-                // body.html_url;
-                // body.name;
-                // body.id;
-                url = body.html_url;
-                Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; delaying to prep repo.");
-                return ctx.delay(ctx.DELAY_SEC);
-            }).then(function() {
-                Log.info("GitHubAction::createRepo(..) - repo created: " + repoName);
-                fulfill(url);
-            }).catch(function(err: any) {
-                Log.error("GitHubAction::createRepo(..) - ERROR: " + JSON.stringify(err));
-                reject(err);
-            });
+        const repo = await this.dc.getRepository(repoId);
+        if (repo === null) {
+            Log.error("GitHubAction::createRepo(..) - unknown Repository object: " + repoId);
+            throw new Error("GitHubAction::createRepo(..) - Repository not in datastore: " + repoId);
+        }
 
-        });
+        const uri = ctx.apiPath + '/orgs/' + ctx.org + '/repos';
+        const options = {
+            method:  'POST',
+            uri:     uri,
+            headers: {
+                'Authorization': ctx.gitHubAuthToken,
+                'User-Agent':    ctx.gitHubUserName,
+                'Accept':        'application/json'
+            },
+            body:    {
+                name:          repoId,
+                // In Dev and Test, Github free Org Repos cannot be private.
+                private:       true,
+                has_issues:    true,
+                has_wiki:      false,
+                has_downloads: false,
+                auto_init:     false
+            },
+            json:    true
+        };
+
+        const body = await rp(options);
+        const url = body.html_url;
+        repo.URL = url; // only update this field in the existing Repository record
+        repo.cloneURL = body.clone_url; // only update this field in the existing Repository record
+        await this.dc.writeRepository(repo);
+
+        Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; delaying to prep repo.");
+        await ctx.delay(ctx.DELAY_SEC);
+
+        return url;
     }
 
     /**

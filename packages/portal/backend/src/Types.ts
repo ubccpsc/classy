@@ -104,7 +104,8 @@ export interface Team {
 export interface Repository {
     readonly id: string; // invariant; is the name of the repo
 
-    URL: string | null; // null when not yet created
+    URL: string | null; // URL for project in version control system; null if not yet created
+    cloneURL: string | null; // git clone URL for project; null if not yet created
     teamIds: string[]; // Team.id[] - foreign key
 
     custom: any; // {}; not used by default

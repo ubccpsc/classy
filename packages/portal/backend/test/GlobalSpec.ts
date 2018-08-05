@@ -155,10 +155,11 @@ export class Test {
 
     public static getRepository(id: string, teamId: string): Repository {
         const repo: Repository = {
-            id:      id,
-            URL:     Config.getInstance().getProp(ConfigKey.githubHost) + '/' + id,
-            teamIds: [teamId],
-            custom:  {}
+            id:       id,
+            URL:      Config.getInstance().getProp(ConfigKey.githubHost) + '/' + id,
+            cloneURL: Config.getInstance().getProp(ConfigKey.githubHost) + '/' + id + '.git',
+            teamIds:  [teamId],
+            custom:   {}
         };
         return Util.clone(repo) as Repository;
     }
