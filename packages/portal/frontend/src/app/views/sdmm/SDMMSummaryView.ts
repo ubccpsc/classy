@@ -5,8 +5,6 @@
  * student views, as they need for their own courses.
  */
 
-import {OnsModalElement} from "onsenui";
-
 import Log from "../../../../../../common/Log";
 import {GradePayload, StatusPayload} from "../../../../../../common/types/SDMMTypes";
 import {Factory} from "../../Factory";
@@ -26,13 +24,13 @@ export class SDMMSummaryView implements IView {
     private longAction(duration: number, msg?: string) {
         const that = this;
         if (typeof msg !== 'undefined') {
-            that.showModal(msg);
+            UI.showModal(msg);
         } else {
-            that.showModal();
+            UI.showModal();
         }
 
         setTimeout(function() {
-            that.hideModal();
+            UI.hideModal();
         }, duration);
 
         setTimeout(function() {
@@ -55,7 +53,7 @@ export class SDMMSummaryView implements IView {
 
     public async createD0Repository(): Promise<void> {
 
-        this.showModal("Provisioning D0 Repository.<br/>This can take up to 5 minutes.<br/>This dialog will clear as soon as the operation is complete.");
+        UI.showModal("Provisioning D0 Repository.<br/>This can take up to 5 minutes.<br/>This dialog will clear as soon as the operation is complete.");
 
         const url = this.remote + '/portal/sdmm/performAction/provisionD0';
         Log.info('SDDM::createD0Repository( ' + url + ' ) - start');
@@ -90,7 +88,7 @@ export class SDMMSummaryView implements IView {
         const url = this.remote + '/portal/sdmm/performAction/provisionD1individual';
         Log.info('SDDM::createD1Individual( ' + url + ' ) - start');
 
-        this.showModal("Provisioning D1 Repository.<br/>This can take up to 5 minutes.<br/>This dialog will clear as soon as the operation is complete.");
+        UI.showModal("Provisioning D1 Repository.<br/>This can take up to 5 minutes.<br/>This dialog will clear as soon as the operation is complete.");
 
         let options: any = this.getOptions();
         options.method = 'post';
@@ -117,7 +115,7 @@ export class SDMMSummaryView implements IView {
         Log.info("SDMMSummaryView::createD1Team() - start");
         // this.longAction(5000, 'Configuring D1 Team<br/>Will take < 10 seconds');
 
-        this.showModal("Provisioning D1 Repository.<br/>This can take up to 5 minutes.<br/>This dialog will clear as soon as the operation is complete.");
+        UI.showModal("Provisioning D1 Repository.<br/>This can take up to 5 minutes.<br/>This dialog will clear as soon as the operation is complete.");
 
         const url = this.remote + '/portal/sdmm/performAction/provisionD1team/' + partnerName;
         // TODO: actually provide team members!!!
@@ -247,33 +245,33 @@ export class SDMMSummaryView implements IView {
         }
     }
 
-    public showModal(text?: string) {
-        // https://onsen.io/v2/api/js/ons-modal.html
+    // public showModal(text?: string) {
+    //     // https://onsen.io/v2/api/js/ons-modal.html
+    //
+    //     if (typeof text === 'undefined') {
+    //         text = null;
+    //     }
+    //
+    //     const modal = document.querySelector('ons-modal') as OnsModalElement;
+    //     if (modal !== null) {
+    //         modal.style.backgroundColor = '#444444'; // modal opaque
+    //         if (text != null) {
+    //             document.getElementById('modalText').innerHTML = text;
+    //         }
+    //         modal.show({animation: 'fade'});
+    //     } else {
+    //         console.log('UI::showModal(..) - Modal is null');
+    //     }
+    // }
 
-        if (typeof text === 'undefined') {
-            text = null;
-        }
-
-        const modal = document.querySelector('ons-modal') as OnsModalElement;
-        if (modal !== null) {
-            modal.style.backgroundColor = '#444444'; // modal opaque
-            if (text != null) {
-                document.getElementById('modalText').innerHTML = text;
-            }
-            modal.show({animation: 'fade'});
-        } else {
-            console.log('UI::showModal(..) - Modal is null');
-        }
-    }
-
-    public hideModal() {
-        const modal = document.querySelector('ons-modal') as OnsModalElement;
-        if (modal !== null) {
-            modal.hide({animation: 'fade'});
-        } else {
-            console.log('UI::hideModal(..) - Modal is null');
-        }
-    }
+    // public hideModal() {
+    //     const modal = document.querySelector('ons-modal') as OnsModalElement;
+    //     if (modal !== null) {
+    //         modal.hide({animation: 'fade'});
+    //     } else {
+    //         console.log('UI::hideModal(..) - Modal is null');
+    //     }
+    // }
 
     public async fetchStatus(url: string): Promise<void> {
         Log.info('SDDM::fetchStatus( ' + url + ' ) - start');

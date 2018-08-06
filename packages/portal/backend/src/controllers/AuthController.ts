@@ -107,7 +107,7 @@ export class AuthController {
             } else {
                 if (person.kind !== 'student') {
                     // Students stay students _forever_
-                    // Shis is just a safe option.
+                    // This is just a safe option.
                     // Students do become TAs during the term for courses they were already students in.
                     person.kind = null;
                     await pc.writePerson(person);
