@@ -302,7 +302,7 @@ export abstract class AutoTest implements IAutoTest {
      */
     private async invokeContainer(input: IContainerInput) {
         try {
-            Log.info("AutoTest::invokeContainer(..) - start; commit: " + input.pushInfo.commitSHA);
+            Log.info("AutoTest::invokeContainer(..) - start; delivId: " + input.delivId + "; commit: " + input.pushInfo.commitSHA);
             Log.trace("AutoTest::invokeContainer(..) - input: " + JSON.stringify(input, null, 2));
             const start = Date.now();
 
@@ -401,9 +401,9 @@ export abstract class AutoTest implements IAutoTest {
                 record = await grader.execute();
             }
 
-            Log.info("AutoTest::invokeContainer(..) - complete; commit: " + input.pushInfo.commitSHA + "; took: " + Util.took(start));
+            Log.info("AutoTest::invokeContainer(..) - complete; delivId: " + input.delivId + "; commit: " + input.pushInfo.commitSHA + "; took: " + Util.took(start));
             await this.handleExecutionComplete(record);
-            Log.info("AutoTest::invokeContainer(..) - done; commit: " + input.pushInfo.commitSHA + "; took: " + Util.took(start));
+            // Log.info("AutoTest::invokeContainer(..) - done; commit: " + input.pushInfo.commitSHA + "; took: " + Util.took(start));
         } catch (err) {
             Log.error("AutoTest::invokeContainer(..) - ERROR for commit: " + input.pushInfo.commitSHA + "; ERROR: " + err);
         }

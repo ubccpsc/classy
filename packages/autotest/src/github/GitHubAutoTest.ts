@@ -328,7 +328,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         try {
             let str = await this.classPortal.getDefaultDeliverableId();
             Log.trace("GitHubAutoTest::getDelivId() - RESPONSE: " + str);
-            if (typeof str.defaultDeliverable !== "undefined") {
+            if (str !== null && typeof str.defaultDeliverable !== "undefined") {
                 return str.defaultDeliverable;
             }
         } catch (err) {
