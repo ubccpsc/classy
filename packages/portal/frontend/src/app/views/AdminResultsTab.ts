@@ -1,6 +1,6 @@
 import Log from "../../../../../common/Log";
 
-import {AutoTestResultPayload, AutoTestResultTransport} from "../../../../../common/types/PortalTypes";
+import {AutoTestResultSummaryPayload, AutoTestResultSummaryTransport} from "../../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 
 import {UI} from "../util/UI"
@@ -30,7 +30,7 @@ export class AdminResultsTab {
     }
 
 
-    private render(results: AutoTestResultTransport[]): void {
+    private render(results: AutoTestResultSummaryTransport[]): void {
         Log.trace("AdminResultsTab::render(..) - start");
 
         const headers: TableHeader[] = [
@@ -81,17 +81,27 @@ export class AdminResultsTab {
         // this loop couldn't possibly be less efficient
         for (const result of results) {
 
+            // repoId
+            // repoURL
+            // delivId
+            // state
+            // timestamp
+            // commitSHA
+            // commitURL
+            // scoreOverall
+            // scoreCover
+            // scoreTests
 
             // const ts = result.input.pushInfo.timestamp;
-            const ts = result.output.timestamp;
-            const tsString = new Date(ts).toLocaleTimeString();
+            const ts = result.timestamp;
+            const tsString = new Date(ts).toLocaleDateString() + ' @ ' + new Date(ts).toLocaleTimeString();
             let row: TableCell[] = [
-                // {value: result.repoId, html: '<a href="' + result.input.pushInfo.projectURL + '">' + result.repoId + '</a>'},
-                {value: result.repoId, html: result.repoId},
+                {value: result.repoId, html: '<a href="' + result.repoURL + '">' + result.repoId + '</a>'},
+                // {value: result.repoId, html: result.repoId},
                 {value: result.delivId, html: result.delivId},
                 {value: ts, html: '<a href="' + result.commitURL + '">' + tsString + '</a>'},
-                {value: result.output.state, html: result.output.state},
-                {value: result.output.report.scoreOverall, html: result.output.report.scoreOverall + ''}
+                {value: result.state, html: result.state},
+                {value: result.scoreOverall, html: result.scoreOverall + ''}
             ];
 
             st.addRow(row);
@@ -108,7 +118,7 @@ export class AdminResultsTab {
         }
     }
 
-    public static async getResults(remote: string): Promise<AutoTestResultTransport[]> {
+    public static async getResults(remote: string): Promise<AutoTestResultSummaryTransport[]> {
         Log.info("AdminResultsTab::getResults( .. ) - start");
 
         const start = Date.now();
@@ -118,7 +128,7 @@ export class AdminResultsTab {
 
         if (response.status === 200) {
             Log.trace('AdminResultsTab::getResults(..) - 200 received');
-            const json: AutoTestResultPayload = await response.json();
+            const json: AutoTestResultSummaryPayload = await response.json();
             // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
             if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
                 Log.trace('AdminResultsTab::getResults(..)  - worked; took: ' + UI.took(start));

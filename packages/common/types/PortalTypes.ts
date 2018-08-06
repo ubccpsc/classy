@@ -1,5 +1,3 @@
-import {IAutoTestResult} from "./AutoTestTypes";
-
 /**
  Default portal types should be declared here.
 
@@ -7,6 +5,7 @@ import {IAutoTestResult} from "./AutoTestTypes";
 
  All fields should be primitives.
  */
+import {IAutoTestResult} from "./AutoTestTypes";
 
 export interface FailurePayload {
     message: string;
@@ -216,4 +215,22 @@ export interface AutoTestResultPayload {
 
 export interface AutoTestResultTransport extends IAutoTestResult {
     // NOTE: this extends should go away, but is easiest right now
+}
+
+export interface AutoTestResultSummaryPayload {
+    success?: AutoTestResultSummaryTransport[]; // only set if defined
+    failure?: FailurePayload; // only set if defined
+}
+
+export interface AutoTestResultSummaryTransport {
+    repoId: string;
+    repoURL: string;
+    delivId: string;
+    state: string;
+    timestamp: number;
+    commitSHA: string;
+    commitURL: string;
+    scoreOverall: number | null; // null if state !== 'SUCCESS'
+    scoreCover: number | null; // null if state !== 'SUCCESS'
+    scoreTests: number | null; // null if state !== 'SUCCESS'
 }

@@ -3,7 +3,7 @@ import * as parse from 'csv-parse';
 import * as fs from 'fs';
 import Log from "../../../../../common/Log";
 import {
-    AutoTestResultPayload,
+    AutoTestResultSummaryPayload,
     CourseTransport,
     CourseTransportPayload,
     DeliverableTransport,
@@ -37,7 +37,8 @@ export default class AdminRoutes implements IREST {
         server.get('/portal/admin/students', AdminRoutes.isPrivileged, AdminRoutes.getStudents);
         server.get('/portal/admin/teams', AdminRoutes.isPrivileged, AdminRoutes.getTeams);
         server.get('/portal/admin/grades', AdminRoutes.isPrivileged, AdminRoutes.getGrades);
-        server.get('/portal/admin/results', AdminRoutes.isPrivileged, AdminRoutes.getResults);
+        server.get('/portal/admin/results', AdminRoutes.isPrivileged, AdminRoutes.getResults); // result summaries
+        // server.get('/portal/admin/dashboard', AdminRoutes.isPrivileged, AdminRoutes.getDashboard); // detailed results
 
         // admin-only functions
         server.post('/portal/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
@@ -232,7 +233,7 @@ export default class AdminRoutes implements IREST {
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getResults().then(function(results) {
             Log.trace('AdminRoutes::getResults(..) - in then; # results: ' + results.length);
-            const payload: AutoTestResultPayload = {success: results};
+            const payload: AutoTestResultSummaryPayload = {success: results};
             res.send(payload);
             return next();
         }).catch(function(err) {

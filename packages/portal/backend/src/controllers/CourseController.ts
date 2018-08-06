@@ -2,7 +2,7 @@ import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {
     AutoTestGradeTransport,
-    AutoTestResultTransport,
+    AutoTestResultSummaryTransport,
     DeliverableTransport,
     GradeTransport,
     StudentTransport,
@@ -287,11 +287,44 @@ export class CourseController { // don't implement ICourseController yet
      *
      * @returns {Promise<AutoTestGradeTransport[]>}
      */
-    public async getResults(): Promise<AutoTestResultTransport[]> {
+    public async getResults(): Promise<AutoTestResultSummaryTransport[]> {
+
         const allResults = await this.resC.getAllResults();
-        const results: AutoTestResultTransport[] = [];
+        const results: AutoTestResultSummaryTransport[] = [];
         for (const result of allResults) {
-            const resultTrans: AutoTestResultTransport = result;
+            // const repo = await rc.getRepository(result.repoId); // this happens a lot and ends up being too slow
+            const repoId = result.input.pushInfo.repoId;
+            const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
+                Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
+            let scoreOverall = null;
+            let scoreCover = null;
+            let scoreTest = null;
+
+            if (typeof result.output !== 'undefined' && typeof result.output.report !== 'undefined') {
+                const report = result.output.report;
+                if (typeof report.scoreOverall !== 'undefined') {
+                    scoreOverall = report.scoreOverall;
+                }
+                if (typeof report.scoreTest !== 'undefined') {
+                    scoreTest = report.scoreTest;
+                }
+                if (typeof report.scoreCover !== 'undefined') {
+                    scoreCover = report.scoreCover;
+                }
+            }
+
+            const resultTrans: AutoTestResultSummaryTransport = {
+                repoId:       repoId,
+                repoURL:      repoURL,
+                delivId:      result.delivId,
+                state:        result.output.state,
+                timestamp:    result.output.timestamp,
+                commitSHA:    result.input.pushInfo.commitSHA,
+                commitURL:    result.input.pushInfo.commitURL,
+                scoreOverall: scoreOverall,
+                scoreCover:   scoreCover,
+                scoreTests:   scoreTest
+            };
             results.push(resultTrans);
         }
         return results;
