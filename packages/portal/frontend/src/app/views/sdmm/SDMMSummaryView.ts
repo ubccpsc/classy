@@ -9,17 +9,17 @@ import {OnsModalElement} from "onsenui";
 
 import Log from "../../../../../../common/Log";
 import {GradePayload, StatusPayload} from "../../../../../../common/types/SDMMTypes";
+import {Factory} from "../../Factory";
 
 import {UI} from "../../util/UI";
 import {IView} from "../IView";
-import {Factory} from "../../Factory";
 
 export class SDMMSummaryView implements IView {
 
     private remote: string = null;
 
     constructor(remoteUrl: string) {
-        Log.info("SDMMSummaryView::<init>");
+        Log.trace("SDMMSummaryView::<init>");
         this.remote = remoteUrl;
     }
 
@@ -31,11 +31,11 @@ export class SDMMSummaryView implements IView {
             that.showModal();
         }
 
-        setTimeout(function () {
+        setTimeout(function() {
             that.hideModal();
         }, duration);
 
-        setTimeout(function () {
+        setTimeout(function() {
             let sel = <any>document.getElementById('sdmmSelect');
             if (sel !== null) {
                 sel.selectedIndex = sel.selectedIndex + 1;
@@ -191,7 +191,7 @@ export class SDMMSummaryView implements IView {
                 'sdmmd0provision',
                 'sdmmd1locked',
                 'sdmmd2locked',
-                'sdmmd3locked',
+                'sdmmd3locked'
             ]);
         } else if (value === 'D0') {
             this.showStatusD0(status);
@@ -201,7 +201,7 @@ export class SDMMSummaryView implements IView {
                 'sdmmd0status',
                 'sdmmd1teams',
                 'sdmmd2locked',
-                'sdmmd3locked',
+                'sdmmd3locked'
             ]);
         } else if (value === 'D1TEAMSET') {
             this.showStatusD1(status); // still do the d0 status
@@ -209,7 +209,7 @@ export class SDMMSummaryView implements IView {
                 'sdmmd0status',
                 'sdmmd1provision',
                 'sdmmd2locked',
-                'sdmmd3locked',
+                'sdmmd3locked'
             ]);
         } else if (value === 'D1') {
             this.showStatusD1(status);
@@ -222,7 +222,7 @@ export class SDMMSummaryView implements IView {
                 'sdmmd0status',
                 'sdmmd1status',
                 'sdmmd2status',
-                'sdmmd3provision',
+                'sdmmd3provision'
             ]);
         } else if (value === 'D3') {
             this.showStatusD3(status);
@@ -284,8 +284,7 @@ export class SDMMSummaryView implements IView {
         if (response.status === 200) {
             Log.trace('SDDM::fetchStatus(..) - 200 received');
             let json = await response.json();
-            Log.trace('SDDM::fetchStatus(..) - payload: ' + JSON.stringify(json));
-
+            // Log.trace('SDDM::fetchStatus(..) - payload: ' + JSON.stringify(json));
             Log.trace('SDDM::fetchStatus(..) - status: ' + json.success.status);
             this.updateState(json.success); // StatusPayload
         } else {
@@ -349,7 +348,7 @@ export class SDMMSummaryView implements IView {
                 'sdmmd0status',
                 'sdmmd1locked',
                 'sdmmd2locked',
-                'sdmmd3locked',
+                'sdmmd3locked'
             ]);
 
             if (status.d0 !== null) {
@@ -397,7 +396,7 @@ export class SDMMSummaryView implements IView {
                 'sdmmd0status',
                 'sdmmd1status',
                 'sdmmd2locked',
-                'sdmmd3locked',
+                'sdmmd3locked'
             ]);
 
             let row = document.getElementById('sdmmd0status');
@@ -420,14 +419,14 @@ export class SDMMSummaryView implements IView {
     }
 
     private showStatusD2(status: any | undefined) {
-        Log.info("SDDM::showStatusD2(..) - start: " + JSON.stringify(status));
+        Log.trace("SDDM::showStatusD2(..) - start: " + JSON.stringify(status));
         try {
 
             this.show([
                 'sdmmd0status',
                 'sdmmd1status',
                 'sdmmd2status',
-                'sdmmd3locked',
+                'sdmmd3locked'
             ]);
 
             let row = document.getElementById('sdmmd0status');
@@ -457,14 +456,14 @@ export class SDMMSummaryView implements IView {
 
 
     private showStatusD3(status: any | undefined) {
-        Log.info("SDDM::showStatusD3(..) - start: " + JSON.stringify(status));
+        Log.trace("SDDM::showStatusD3(..) - start: " + JSON.stringify(status));
         try {
 
             this.show([
                 'sdmmd0status',
                 'sdmmd1status',
                 'sdmmd2status',
-                'sdmmd3status',
+                'sdmmd3status'
             ]);
 
             let row = document.getElementById('sdmmd0status');

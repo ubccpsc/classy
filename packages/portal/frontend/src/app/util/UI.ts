@@ -24,7 +24,7 @@ export class UI {
         if (typeof options === 'undefined') {
             options = {};
         }
-        Log.info('UI::pushPage( ' + pageId + ', ' + JSON.stringify(options) + ' )');
+        Log.trace('UI::pushPage( ' + pageId + ', ' + JSON.stringify(options) + ' )');
 
         const nav = document.querySelector('#myNavigator') as any;// as ons.OnsNavigatorElement;
         if (nav !== null) {
