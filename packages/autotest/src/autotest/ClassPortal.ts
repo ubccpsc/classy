@@ -228,7 +228,6 @@ export class ClassPortal implements IClassPortal {
     }
 
     public async sendResult(result: IAutoTestResult): Promise<Payload> { // really just a mechanism to report more verbose errors
-
         const url = this.host + ":" + this.port + "/portal/at/result/";
 
         let payload: AutoTestResultTransport = result;
@@ -240,7 +239,7 @@ export class ClassPortal implements IClassPortal {
             headers:            {token: Config.getInstance().getProp(ConfigKey.autotestSecret)}
         };
 
-        Log.info("ClassPortal::sendResult(..) - Sending request to " + url);
+        Log.info("ClassPortal::sendResult(..) - Sending request to " + url + ' for repoId: ' + result.repoId + '; delivId: ' + result.delivId + '; SHA: ' + result.input.pushInfo.commitSHA);
         return rp(url, opts).then(function(res) {
             Log.trace("ClassPortal::sendResult() - sent; returned payload: " + res);
             const json: Payload = JSON.parse(res);

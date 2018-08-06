@@ -78,10 +78,11 @@ export class GitHubUtil {
             const cp = new ClassPortal();
             const personResponse = await cp.getPersonId(requestor); // need to get this from portal backend (this is a gitHubId, not a personId)
 
-            if (delivId === null) {
-                Log.warn("GitHubUtil::processComment() - no deliverable specified");
-                return null;
-            }
+            // this is ok: if delivId is null, just pass it along
+            // if (delivId === null) {
+            //     Log.warn("GitHubUtil::processComment() - no deliverable specified");
+            //     return null;
+            // }
 
             const commentEvent: ICommentEvent = {
                 delivId,

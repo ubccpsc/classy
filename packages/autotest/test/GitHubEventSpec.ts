@@ -184,21 +184,20 @@ describe("GitHub Event Parser", () => {
         const actual = await GitHubUtil.processComment(JSON.parse(content));
         Log.test(JSON.stringify(actual));
 
-        // const expected: ICommentEvent = {
-        //     "botMentioned": false,
-        //     // "repoId":         "d1_project9999",
-        //     "commitSHA":    "6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
-        //     "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
-        //     // "projectURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
-        //     "postbackURL":  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/6da86d2bdfe8fec9120b60e8d7b71c66077489b6/comments",
-        //     "personId":     GITHUBID,
-        //     "repoId":       "d1_project9999",
-        //     // "org":          null,
-        //     "delivId":      null,
-        //     "timestamp":    1516320674000
-        // };
-        //
-        const expected: any = null;
+        const expected: ICommentEvent = {
+            "botMentioned": false,
+            // "repoId":         "d1_project9999",
+            "commitSHA":    "6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
+            "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
+            // "projectURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
+            "postbackURL":  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/6da86d2bdfe8fec9120b60e8d7b71c66077489b6/comments",
+            "personId":     GITHUBID,
+            "repoId":       "d1_project9999",
+            // "org":          null,
+            "delivId":      null,
+            "timestamp":    1516320674000
+        };
+        // const expected: any = null;
         expect(actual).to.deep.equal(expected);
     }).timeout(TIMEOUT * 10);
 

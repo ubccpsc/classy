@@ -286,9 +286,12 @@ export class AutoTestRoutes implements IREST {
         return rp(options).then(function(succ) {
             Log.info('AutoTestRouteHandler::githubWebhook(..) - success: ' + JSON.stringify(succ));
             res.send(200, succ); // send interpretation back to GitHub
+            next();
         }).catch(function(err) {
             Log.error('AutoTestRouteHandler::githubWebhook(..) - ERROR: ' + err);
+            Log.error('AutoTestRouteHandler::githubWebhook(..) - ERROR; webhook body: ' + JSON.stringify(webhookBody));
             res.send(400, {error: err}); // respond no
+            next(false);
         });
     }
 
