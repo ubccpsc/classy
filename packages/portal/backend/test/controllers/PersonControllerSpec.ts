@@ -5,9 +5,8 @@ import {PersonController} from "../../src/controllers/PersonController";
 import {Person} from "../../src/Types";
 
 import {Test} from "../GlobalSpec";
-
-const loadFirst = require('../GlobalSpec');
-const dFirst = require('./DeliverablesControllerSpec');
+import '../GlobalSpec';
+import './DeliverablesControllerSpec';
 
 describe("PersonController", () => {
 

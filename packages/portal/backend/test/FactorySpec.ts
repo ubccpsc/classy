@@ -3,20 +3,19 @@ import "mocha";
 
 import {Factory} from "../src/Factory";
 
-const loadFirst = require('./GlobalSpec');
+import './GlobalSpec';
 
-describe('Factory', function () {
+describe('Factory', function() {
 
     /**
      * These are all terrible tests and just make sure that _some_ object is returned.
      */
-    it('Can get the route handler for courses', async function () {
+    it('Can get the route handler for courses', async function() {
         let actual = Factory.getCustomRouteHandler('classytest');
         expect(actual).to.not.be.null;
 
         actual = Factory.getCustomRouteHandler('sdmm');
         expect(actual).to.not.be.null;
-
 
         actual = Factory.getCustomRouteHandler('cs310');
         expect(actual).to.not.be.null;
@@ -35,7 +34,7 @@ describe('Factory', function () {
         expect(ex).to.be.null;
     });
 
-    it('Can get the course controller for courses', async function () {
+    it('Can get the course controller for courses', async function() {
         let actual = Factory.getCourseController(null, 'classytest');
         expect(actual).to.not.be.null;
 

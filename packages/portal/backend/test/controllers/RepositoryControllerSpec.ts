@@ -1,16 +1,15 @@
 import {expect} from "chai";
 import "mocha";
+
 import Log from "../../../../common/Log";
 import {PersonController} from "../../src/controllers/PersonController";
-
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
 import {Repository} from "../../src/Types";
 
 import {Test} from "../GlobalSpec";
-
-const loadFirst = require('../GlobalSpec');
-const teamsFirst = require('./TeamControllerSpec');
+import '../GlobalSpec'; // load first
+import './TeamControllerSpec'; // load first
 
 describe("RepositoryController", () => {
 
