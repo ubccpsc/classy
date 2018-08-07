@@ -1,25 +1,22 @@
-import "mocha";
 import {expect} from "chai";
+import "mocha";
+import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
+import Log from "../../../../common/Log";
+import {AutoTestGradeTransport, GradeTransport, TeamTransport} from "../../../../common/types/PortalTypes";
 
 import {CourseController} from "../../src/controllers/CourseController";
+import {TestGitHubController} from "../../src/controllers/GitHubController";
 import {GradesController} from "../../src/controllers/GradesController";
+import {PersonController} from "../../src/controllers/PersonController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
-import {PersonController} from "../../src/controllers/PersonController";
-import {TestGitHubController} from "../../src/controllers/GitHubController";
-import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
-import {AutoTestGradeTransport, GradeTransport, TeamTransport} from "../../../../common/types/PortalTypes";
 import {Test} from "../GlobalSpec";
-import Log from "../../../../common/Log";
 
 const load1 = require('../GlobalSpec');
 const load2 = require('./GradeControllerSpec');
 const load3 = require('../xRunLast/TestDatasetGeneratorSpec');
 
 export class TestData {
-
-    constructor() {
-    }
 }
 
 describe("CourseController", () => {
@@ -31,10 +28,6 @@ describe("CourseController", () => {
     let pc: PersonController;
 
     let data: TestData;
-
-    before(async () => {
-
-    });
 
     beforeEach(() => {
         data = new TestData();
@@ -86,10 +79,10 @@ describe("CourseController", () => {
 
         Log.test('teams: ' + JSON.stringify(res));
         const t: TeamTransport = {
-            "id":      "TESTteam1",
-            "delivId": "d0",
-            "people":  ["rthse2", "user2"],
-            "URL":     null
+            id:      "TESTteam1",
+            delivId: "d0",
+            people:  ["rthse2", "user2"],
+            URL:     null
         };
         expect(res).to.deep.include(t); // make sure at least one student with the right format is in there
     });
@@ -101,15 +94,15 @@ describe("CourseController", () => {
 
         Log.test('grades: ' + JSON.stringify(res));
         const t: GradeTransport = {
-            "personId":  "rthse2",
-            "personURL": "https://github.com/rthse2",
-            "delivId":   "d1",
-            "score":     50,
-            "comment":   "commentup",
-            "urlName":   "urlName",
-            "URL":       "URLup",
-            "timestamp": 1517446860000,
-            "custom":    {}
+            personId:  "rthse2",
+            personURL: "https://github.com/rthse2",
+            delivId:   "d1",
+            score:     50,
+            comment:   "commentup",
+            urlName:   "urlName",
+            URL:       "URLup",
+            timestamp: 1517446860000,
+            custom:    {}
         };
         expect(res).to.deep.include(t); // make sure at least one student with the right format is in there
     });
@@ -163,7 +156,7 @@ describe("CourseController", () => {
             custom:    {},
 
             repoId:  Test.REPONAME1,
-            repoURL: 'repoUrl',
+            repoURL: 'repoUrl'
         };
 
         const res = await cc.handleNewAutoTestGrade(grade);
@@ -186,7 +179,7 @@ describe("CourseController", () => {
             custom:    {},
 
             repoId:  'INVALIDID',
-            repoURL: 'repoUrl',
+            repoURL: 'repoUrl'
         };
 
         const res = await cc.handleNewAutoTestGrade(grade);
@@ -194,7 +187,7 @@ describe("CourseController", () => {
         expect(res).to.be.false;
     });
 
-    it("Should should be able to get the course object.", async () => {
+    it("Should be able to get the course object.", async () => {
         const res = await cc.getCourse();
 
         expect(res).to.be.an('object');
@@ -203,23 +196,44 @@ describe("CourseController", () => {
         expect(res.custom).to.be.an('object');
     });
 
-    it("Should should be able to update the course object.", async () => {
+    it("Should be able to update the course object.", async () => {
         const NEWID = Date.now() + 'id';
         const res = await cc.getCourse();
         expect(res.defaultDeliverableId).to.not.equal(NEWID);
 
         res.defaultDeliverableId = NEWID;
-        (<any>res.custom).fooProperty = 'asdfasdf';
+        (res.custom as any).fooProperty = 'asdfasdf';
         await cc.saveCourse(res);
 
         const newRes = await cc.getCourse();
         expect(newRes.defaultDeliverableId).to.equal(NEWID);
-        expect((<any>newRes.custom).fooProperty).to.equal('asdfasdf');
+        expect((newRes.custom as any).fooProperty).to.equal('asdfasdf');
 
         // reset course id
         res.defaultDeliverableId = null;
-        delete (<any>res.custom).fooProperty;
+        delete (res.custom as any).fooProperty;
         await cc.saveCourse(res);
+    });
+
+    it("Should not be able to validate an invalid course object.", function() {
+        let res = null;
+        try {
+            CourseController.validateCourseTransport(null);
+            res = 'NOT THROWN';
+        } catch (err) {
+            res = 'THROW CAUGHT';
+        }
+        expect(res).to.equal('THROW CAUGHT');
+
+        let course: any = {id: 'foo'};
+        res = CourseController.validateCourseTransport(course);
+        expect(res).to.not.be.null;
+        expect(res).to.be.an('string');
+
+        course = {id: 'foo', defaultDeliverableId: 'bar'};
+        res = CourseController.validateCourseTransport(course);
+        expect(res).to.not.be.null;
+        expect(res).to.be.an('string');
     });
 
 });

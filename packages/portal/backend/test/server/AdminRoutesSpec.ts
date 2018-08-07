@@ -1,12 +1,7 @@
 import {expect} from "chai";
 import "mocha";
-import Log from "../../../../common/Log";
-
-import BackendServer from "../../src/server/BackendServer";
-import {DatabaseController} from "../../src/controllers/DatabaseController";
-import {Test} from "../GlobalSpec";
-import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import Config, {ConfigKey} from "../../../../common/Config";
+import Log from "../../../../common/Log";
 import {
     AutoTestResultPayload,
     CourseTransport,
@@ -15,15 +10,20 @@ import {
     DeliverableTransportPayload,
     Payload,
     StudentTransportPayload,
-    TeamTransportPayload,
+    TeamTransportPayload
 } from "../../../../common/types/PortalTypes";
+import {DatabaseController} from "../../src/controllers/DatabaseController";
+import {DeliverablesController} from "../../src/controllers/DeliverablesController";
+
+import BackendServer from "../../src/server/BackendServer";
+import {Test} from "../GlobalSpec";
 import restify = require('restify');
 
 const request = require('supertest');
 
 const loadFirst = require("./AuthRoutesSpec");
 
-describe('Admin Routes', function () {
+describe('Admin Routes', function() {
 
     const TIMEOUT = 5000;
 
@@ -45,16 +45,16 @@ describe('Admin Routes', function () {
         // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
         server = new BackendServer(false);
 
-        return server.start().then(function () {
+        return server.start().then(function() {
             Log.test('AdminRoutes::before - server started');
             app = server.getServer();
 
             const dc: DatabaseController = DatabaseController.getInstance();
             return dc.getAuth(userName);
-        }).then(function (auth) {
+        }).then(function(auth) {
             Log.test('AdminRoutes::before - token set');
             userToken = auth.token;
-        }).catch(function (err) {
+        }).catch(function(err) {
             Log.test('AdminRoutes::before - server might already be started: ' + err);
         });
     });
@@ -64,7 +64,7 @@ describe('Admin Routes', function () {
         return server.stop();
     });
 
-    it('Should be able to get a list of students', async function () {
+    it('Should be able to get a list of students', async function() {
 
         let response = null;
         let body: StudentTransportPayload;
@@ -84,7 +84,7 @@ describe('Admin Routes', function () {
         // should confirm body.success objects (at least one)
     });
 
-    it('Should not be able to get a list of students if the requestor is not privileged', async function () {
+    it('Should not be able to get a list of students if the requestor is not privileged', async function() {
 
         let response = null;
         let body: StudentTransportPayload;
@@ -101,7 +101,7 @@ describe('Admin Routes', function () {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should be able to get a list of teams', async function () {
+    it('Should be able to get a list of teams', async function() {
 
         let response = null;
         let body: TeamTransportPayload;
@@ -120,7 +120,7 @@ describe('Admin Routes', function () {
         // should confirm body.success objects (at least one)
     });
 
-    it('Should not be able to get a list of teams if the requestor is not privileged', async function () {
+    it('Should not be able to get a list of teams if the requestor is not privileged', async function() {
 
         let response = null;
         let body: StudentTransportPayload;
@@ -138,7 +138,7 @@ describe('Admin Routes', function () {
     });
 
 
-    it('Should be able to get a list of students', async function () {
+    it('Should be able to get a list of students', async function() {
 
         let response = null;
         let body: StudentTransportPayload;
@@ -159,7 +159,7 @@ describe('Admin Routes', function () {
     });
 
 
-    it('Should not be able to get a list of grades if the requestor is not privileged', async function () {
+    it('Should not be able to get a list of grades if the requestor is not privileged', async function() {
 
         let response = null;
         let body: StudentTransportPayload;
@@ -176,7 +176,7 @@ describe('Admin Routes', function () {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should be able to get a list of results', async function () {
+    it('Should be able to get a list of results', async function() {
 
         let response = null;
         let body: AutoTestResultPayload;
@@ -196,7 +196,7 @@ describe('Admin Routes', function () {
         // should confirm body.success objects (at least one)
     });
 
-    it('Should not be able to get a list of results if the requestor is not privileged', async function () {
+    it('Should not be able to get a list of results if the requestor is not privileged', async function() {
 
         let response = null;
         let body: AutoTestResultPayload;
@@ -213,7 +213,7 @@ describe('Admin Routes', function () {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should be able to get a list of deliverables', async function () {
+    it('Should be able to get a list of deliverables', async function() {
 
         let response = null;
         let body: DeliverableTransportPayload;
@@ -235,7 +235,7 @@ describe('Admin Routes', function () {
         expect(actual).to.be.null; // make sure at least one of the deliverables validates
     });
 
-    it('Should be able to create a new deliverable', async function () {
+    it('Should be able to create a new deliverable', async function() {
 
         let response = null;
         let body: Payload;
@@ -274,7 +274,7 @@ describe('Admin Routes', function () {
         expect(body.success.message).to.be.an('string');
     });
 
-    it('Should fail to create a new deliverable if the object is invalid', async function () {
+    it('Should fail to create a new deliverable if the object is invalid', async function() {
 
         let response = null;
         let body: Payload;
@@ -313,7 +313,7 @@ describe('Admin Routes', function () {
         expect(body.failure.message).to.be.an('string');
     });
 
-    it('Should fail to create a new deliverable if the user is not an admin', async function () {
+    it('Should fail to create a new deliverable if the user is not an admin', async function() {
 
         // this test looks like overkill
         // but we want to have
@@ -363,7 +363,7 @@ describe('Admin Routes', function () {
         expect(body.failure.message).to.be.an('string');
     });
 
-    it('Should be able to update a deliverable', async function () {
+    it('Should be able to update a deliverable', async function() {
 
         let response = null;
         let body: Payload;
@@ -421,7 +421,7 @@ describe('Admin Routes', function () {
         Log.test('update did update the value');
     });
 
-    it('Should be able to upload a new classlist', async function () {
+    it('Should be able to upload a new classlist', async function() {
 
         let response = null;
         let body: Payload;
@@ -443,7 +443,7 @@ describe('Admin Routes', function () {
     });
 
 
-    it('Should fail to upload bad classlists', async function () {
+    it('Should fail to upload bad classlists', async function() {
 
         let response = null;
         let body: Payload;
@@ -475,7 +475,7 @@ describe('Admin Routes', function () {
         }
     });
 
-    it('Should be able to upload an updated classlist', async function () {
+    it('Should be able to upload an updated classlist', async function() {
 
         const dc = DatabaseController.getInstance();
         let people = await dc.getPeople();
@@ -510,7 +510,7 @@ describe('Admin Routes', function () {
     });
 
 
-    it('Should be able to get the course object', async function () {
+    it('Should be able to get the course object', async function() {
 
         let response = null;
         let body: CourseTransportPayload;
@@ -528,7 +528,7 @@ describe('Admin Routes', function () {
         // TODO: check its properties
     });
 
-    it('Should be able to update the course object', async function () {
+    it('Should be able to update the course object', async function() {
 
         let response = null;
         let body: Payload;
@@ -559,5 +559,30 @@ describe('Admin Routes', function () {
         }
     });
 
-});
+    it('Should not be able to update the course object with invalid settings', async function() {
 
+        let response = null;
+        let body: Payload;
+        const url = '/portal/admin/course';
+        try {
+            const newId = Date.now() + 'id';
+
+            const course: any = {
+                // id: 'some id', // THIS IS A REQUIRED FIELD
+                defaultDeliverableId: newId,
+                custom:               {}
+            };
+            response = await request(app).post(url).send(course).set({user: userName, token: userToken});
+            body = response.body;
+            Log.test(response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(400);
+            expect(body.success).to.be.undefined;
+            expect(body.failure).to.not.be.undefined;
+            expect(body.failure.message).to.be.an('string');
+
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+    });
+
+});

@@ -3,6 +3,7 @@ import Log from "../../../../common/Log";
 import {
     AutoTestGradeTransport,
     AutoTestResultSummaryTransport,
+    CourseTransport,
     DeliverableTransport,
     GradeTransport,
     StudentTransport,
@@ -368,4 +369,37 @@ export class CourseController { // don't implement ICourseController yet
         return delivs;
     }
 
+    /**
+     * Validates the CourseTransport object.
+     *
+     * @param {CourseTransport} courseTrans
+     * @returns {string | null} null if objct is valid; string description of error if not.
+     */
+    public static validateCourseTransport(courseTrans: CourseTransport): string | null {
+        if (typeof courseTrans === 'undefined' || courseTrans === null) {
+            const msg = 'Course not populated.';
+            Log.error('CourseController::validateCourseTransport(..) - ERROR: ' + msg);
+            throw new Error(msg);
+        }
+
+        if (typeof courseTrans.id !== 'string') {
+            const msg = 'Course.id not specified';
+            Log.error('CourseController::validateCourseTransport(..) - ERROR: ' + msg);
+            throw new Error(msg);
+        }
+
+        if (typeof courseTrans.defaultDeliverableId !== 'string') {
+            const msg = 'defaultDeliverableId not specified';
+            Log.error('CourseController::validateCourseTransport(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        if (typeof courseTrans.custom !== 'object') {
+            const msg = 'custom not specified';
+            Log.error('CourseController::validateCourseTransport(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        return null;
+    }
 }

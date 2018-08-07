@@ -1,6 +1,6 @@
 import * as parse from 'csv-parse';
-
 import * as fs from 'fs';
+import * as restify from 'restify'; // = require('restify');
 import Log from "../../../../../common/Log";
 import {
     AutoTestResultSummaryPayload,
@@ -21,7 +21,6 @@ import {PersonController} from "../../controllers/PersonController";
 import {Person} from "../../Types";
 
 import IREST from "../IREST";
-import restify = require('restify');
 
 export default class AdminRoutes implements IREST {
 
@@ -389,44 +388,40 @@ export default class AdminRoutes implements IREST {
         Log.info('AdminRoutes::postDeliverable(..) - start');
         let payload: Payload;
 
-        // handled by preceeding action in chain above (see registerRoutes)
+        // isValid handled by preceeding action in chain above (see registerRoutes)
 
         const handleError = function(msg: string) {
             Log.error('AdminRoutes::postDeliverable(..)::handleError - message: ' + msg);
-            payload = {
-                failure: {
-                    message:      msg,
-                    shouldLogout: false
-                }
-            };
+            payload = {failure: {message: msg, shouldLogout: false}};
             res.send(400, payload);
             return next();
         };
 
-        try {
-            const delivTrans: DeliverableTransport = req.params;
-            Log.info('AdminRoutes::postDeliverable() - body: ' + delivTrans);
-            const dc = new DeliverablesController();
-            const result = dc.validateDeliverableTransport(delivTrans);
-            if (result === null) {
-                const deliv = dc.translateTransport(delivTrans);
-                dc.saveDeliverable(deliv).then(function(saveSucceeded) {
-                    if (saveSucceeded !== null) {
-                        // worked (would have returned a Deliverable)
-                        Log.info('AdminRoutes::postDeliverable() - done');
-                        payload = {success: {message: 'Deliverable saved successfully'}};
-                        res.send(200, payload);
-                    } else {
-                        return handleError("Deliverable not saved.");
-                    }
-                }).catch(function(err) {
-                    return handleError("Deliverable not saved. ERROR: " + err);
-                });
+        const delivTrans: DeliverableTransport = req.params;
+        Log.info('AdminRoutes::postDeliverable() - body: ' + delivTrans);
+        AdminRoutes.handlePostDeliverable(delivTrans).then(function(success) {
+            Log.info('AdminRoutes::postDeliverable() - done');
+            payload = {success: {message: 'Deliverable saved successfully'}};
+            res.send(200, payload);
+        }).catch(function(err) {
+            handleError(err.message);
+        });
+    }
+
+    private static async handlePostDeliverable(delivTrans: DeliverableTransport): Promise<boolean> {
+        const dc = new DeliverablesController();
+        const result = dc.validateDeliverableTransport(delivTrans);
+        if (result === null) {
+            const deliv = dc.translateTransport(delivTrans);
+            const saveSucceeded = await dc.saveDeliverable(deliv);
+            if (saveSucceeded !== null) {
+                // worked (would have returned a Deliverable)
+                return true;
             } else {
-                return handleError("Deliverable not saved: " + result);
+                throw new Error("Deliverable not saved.");
             }
-        } catch (err) {
-            return handleError('Deliverable creation / update unsuccessful: ' + err);
+        } else {
+            throw new Error("Deliverable not saved: " + result);
         }
     }
 
@@ -462,8 +457,7 @@ export default class AdminRoutes implements IREST {
 
     private static async handlePostCourse(courseTrans: CourseTransport): Promise<boolean> {
         const cc = new CourseController(new GitHubController());
-        // const result = cc.validateCourseTransport(courseTrans); // TODO: implement this
-        const result: null = null;
+        const result = CourseController.validateCourseTransport(courseTrans);
         if (result === null) {
             const saveSucceeded = await cc.saveCourse(courseTrans);
             if (saveSucceeded !== null) {
@@ -472,6 +466,8 @@ export default class AdminRoutes implements IREST {
             } else {
                 throw new Error("Course object not saved.");
             }
+        } else {
+            throw new Error("Course object not saved: " + result);
         }
     }
 
@@ -481,14 +477,9 @@ export default class AdminRoutes implements IREST {
 
         const handleError = function(msg: string) {
             Log.error('AdminRoutes::postCourse(..)::handleError - message: ' + msg);
-            payload = {
-                failure: {
-                    message:      msg,
-                    shouldLogout: false
-                }
-            };
+            payload = {failure: {message: msg, shouldLogout: false}};
             res.send(400, payload);
-            return next();
+            return next(false);
         };
 
         const courseTrans: CourseTransport = req.params;
@@ -496,9 +487,9 @@ export default class AdminRoutes implements IREST {
         AdminRoutes.handlePostCourse(courseTrans).then(function(success) {
             payload = {success: {message: 'Course object saved successfully'}};
             res.send(200, payload);
-            return next();
+            return next(true);
         }).catch(function(err) {
-            return handleError(err);
+            return handleError(err.message);
         });
     }
 
