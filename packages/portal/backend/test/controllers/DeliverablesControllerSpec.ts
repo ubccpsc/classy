@@ -1,13 +1,13 @@
 import {expect} from "chai";
 import "mocha";
-
-import {Test} from "../GlobalSpec";
+import {DeliverableTransport} from "../../../../common/types/PortalTypes";
 
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {Deliverable} from "../../src/Types";
-import {DeliverableTransport} from "../../../../common/types/PortalTypes";
 
-const loadFirst = require('../GlobalSpec');
+import {Test} from "../GlobalSpec";
+
+import '../GlobalSpec';
 
 describe("DeliverablesController", () => {
 
@@ -47,7 +47,7 @@ describe("DeliverablesController", () => {
     });
 
     it("Should be able to get all deliverables, even if there are none.", async () => {
-        let delivs = await dc.getAllDeliverables();
+        const delivs = await dc.getAllDeliverables();
         expect(delivs).to.have.lengthOf(0);
     });
 
@@ -55,7 +55,7 @@ describe("DeliverablesController", () => {
         let delivs = await dc.getAllDeliverables();
         expect(delivs).to.have.lengthOf(0);
 
-        let valid = await dc.saveDeliverable(DELIV1);
+        const valid = await dc.saveDeliverable(DELIV1);
         expect(valid).to.not.be.null;
         delivs = await dc.getAllDeliverables();
         expect(delivs).to.have.lengthOf(1);
@@ -66,11 +66,11 @@ describe("DeliverablesController", () => {
         let delivs = await dc.getAllDeliverables();
         expect(delivs).to.have.lengthOf(1);
 
-        var deliv2: Deliverable = Object.assign({}, DELIV1);
+        const deliv2: Deliverable = Object.assign({}, DELIV1);
         deliv2.gradesReleased = true;
         deliv2.teamMinSize = 4;
 
-        let valid = await dc.saveDeliverable(deliv2);
+        const valid = await dc.saveDeliverable(deliv2);
         expect(valid).to.not.be.null;
         delivs = await dc.getAllDeliverables();
         expect(delivs).to.have.lengthOf(1);
@@ -79,7 +79,7 @@ describe("DeliverablesController", () => {
     });
 
     it("Should be able to get a specific deliverable.", async () => {
-        let deliv = await dc.getDeliverable(Test.DELIVID1);
+        const deliv = await dc.getDeliverable(Test.DELIVID1);
         expect(deliv).to.not.be.null;
         expect(deliv.id).to.equal(Test.DELIVID1);
     });
@@ -93,7 +93,7 @@ describe("DeliverablesController", () => {
         expect(deliv).to.not.be.null;
         expect(deliv).to.be.an('string');
 
-        deliv = await dc.validateDeliverableTransport(<DeliverableTransport>{id: 'a'});
+        deliv = await dc.validateDeliverableTransport({id: 'a'} as DeliverableTransport);
         expect(deliv).to.not.be.null;
         expect(deliv).to.be.an('string');
     });

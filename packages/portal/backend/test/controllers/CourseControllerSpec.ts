@@ -12,9 +12,10 @@ import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
 import {Test} from "../GlobalSpec";
 
-const load1 = require('../GlobalSpec');
-const load2 = require('./GradeControllerSpec');
-const load3 = require('../xRunLast/TestDatasetGeneratorSpec');
+import '../GlobalSpec'; // load first
+import './GradeControllerSpec'; // load first
+
+import '../xRunLast/TestDatasetGeneratorSpec'; // load first
 
 export class TestData {
 }
@@ -124,18 +125,18 @@ describe("CourseController", () => {
         expect(res).to.be.an('array');
         expect(res.length).to.be.greaterThan(0);
 
-        const e = { // : DeliverableTransport only partial so type skipped
-            id: 'd1',
-
-            url:            'http://NOTSET',
-            gradesReleased: false,
-
-            minTeamSize:       1,
-            maxTeamSize:       2,
-            teamsSameLab:      true,
-            studentsFormTeams: true
-
-        };
+        // const e = { // : DeliverableTransport only partial so type skipped
+        //     id: 'd1',
+        //
+        //     url:            'http://NOTSET',
+        //     gradesReleased: false,
+        //
+        //     minTeamSize:       1,
+        //     maxTeamSize:       2,
+        //     teamsSameLab:      true,
+        //     studentsFormTeams: true
+        //
+        // };
 
         // Log.test(JSON.stringify(res));
         // expect(res).to.deep.include(d); // make sure at least one deliverable with the right format is in there

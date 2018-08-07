@@ -56,7 +56,7 @@ export class RepositoryController {
             return null;
         }
 
-        const existingRepo = await this.getRepository(name);
+        const existingRepo = await this.getRepository(repo.id);
         if (existingRepo === null) {
             // repo not in db, create new one
             const teams: Team[] = [];

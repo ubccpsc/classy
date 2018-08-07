@@ -1,24 +1,22 @@
-import {DatabaseController} from "../../../src/controllers/DatabaseController";
 import {expect} from "chai";
 import "mocha";
 
-import {Test} from "../../GlobalSpec";
-
-
-import Config from "../../../../../common/Config";
+import Config, {ConfigKey} from "../../../../../common/Config";
 import Log from "../../../../../common/Log";
 import {ActionPayload, GradePayload, SDMMStatus} from "../../../../../common/types/SDMMTypes";
 
-import {Person} from "../../../src/Types";
-import {SDMMController} from "../../../src/controllers/SDMM/SDMMController";
-import {GradesController} from "../../../src/controllers/GradesController";
-import {RepositoryController} from "../../../src/controllers/RepositoryController";
-import {TeamController} from "../../../src/controllers/TeamController";
-import {PersonController} from "../../../src/controllers/PersonController";
+import {DatabaseController} from "../../../src/controllers/DatabaseController";
 import {TestGitHubController} from "../../../src/controllers/GitHubController";
+import {GradesController} from "../../../src/controllers/GradesController";
+import {PersonController} from "../../../src/controllers/PersonController";
+import {RepositoryController} from "../../../src/controllers/RepositoryController";
+import {SDMMController} from "../../../src/controllers/SDMM/SDMMController";
+import {TeamController} from "../../../src/controllers/TeamController";
+import {Person} from "../../../src/Types";
 
-const loadFirst = require('../../GlobalSpec');
-const rBefore = require('../GradeControllerSpec');
+import {Test} from "../../GlobalSpec";
+import '../../GlobalSpec'; // load first
+import '../GradeControllerSpec'; // load first
 
 export class TestData {
 
@@ -104,8 +102,8 @@ describe("SDDM: SDMMController", () => {
         Log.test("SDMMControllerSpec::before()");
         // Force SDMM tests to run in an SDMM org
         Config.getInstance();
-        OLD_ORG = (<any>Config.getInstance()).config.org;
-        (<any>Config.getInstance()).config.org = 'secapstonetest';
+        OLD_ORG = Config.getInstance().getProp(ConfigKey.org);
+        Config.getInstance().setProp(ConfigKey.org, 'secapstonetest');
     });
 
     beforeEach(() => {
@@ -124,7 +122,7 @@ describe("SDDM: SDMMController", () => {
         // Force SDMM tests to run in an SDMM org
         Log.test("SDMMControllerSpec::after()");
         Config.getInstance();
-        (<any>Config.getInstance()).config.org = OLD_ORG;
+        Config.getInstance().setProp(ConfigKey.org, OLD_ORG);
     });
 
     it("Should not be able to get a status for an invalid user.", async () => {
@@ -146,10 +144,9 @@ describe("SDDM: SDMMController", () => {
 
         await pc.getPerson(data.USER); // get user
 
-        let status = await sc.getStatus(data.USER);
+        const status = await sc.getStatus(data.USER);
         expect(status.status).to.equal("D0PRE");
     });
-
 
     /* D0PRE
         * D0
@@ -320,16 +317,16 @@ describe("SDDM: SDMMController", () => {
      */
 
     it("Should not allow multiple people to be added to a d0 repo.", async () => {
-        let person = await pc.createPerson(data.PERSON1);
+        const person = await pc.createPerson(data.PERSON1);
         expect(person).to.not.be.null;
 
-        let person2 = await pc.createPerson(data.PERSON2);
+        const person2 = await pc.createPerson(data.PERSON2);
         expect(person2).to.not.be.null;
 
         let allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.be.empty;
 
-        let allTeams = await tc.getTeamsForPerson(person);
+        const allTeams = await tc.getTeamsForPerson(person);
         expect(allTeams).to.be.empty;
 
         // don't provision for non-existent users
@@ -359,9 +356,8 @@ describe("SDDM: SDMMController", () => {
         expect(allRepos).to.be.empty;
     });
 
-
     it("Should be able to provision a d0 repo for an individual.", async () => {
-        let person = await pc.getPerson(data.PERSON1.id);
+        const person = await pc.getPerson(data.PERSON1.id);
         expect(person).to.not.be.null;
 
         let allRepos = await rc.getReposForPerson(person);
@@ -370,10 +366,10 @@ describe("SDDM: SDMMController", () => {
         let allTeams = await tc.getTeamsForPerson(person);
         expect(allTeams).to.be.empty;
 
-        let payload = await sc.provision(Test.DELIVID0, [data.PERSON1.id]);
+        const payload = await sc.provision(Test.DELIVID0, [data.PERSON1.id]);
         expect(payload.success).to.not.be.undefined;
         expect(payload.failure).to.be.undefined;
-        const status = (<ActionPayload>payload.success).status;
+        const status = (payload.success as ActionPayload).status;
         expect(status.status).to.equal(SDMMStatus[SDMMStatus.D0]);
 
         allRepos = await rc.getReposForPerson(person);
@@ -385,9 +381,8 @@ describe("SDDM: SDMMController", () => {
         expect(allTeams[0].custom.sdmmd0).to.be.true;
     });
 
-
     it("Should not upgrade a d0 repo for an individual if the grade is too low.", async () => {
-        let person = await pc.getPerson(data.PERSON1.id);
+        const person = await pc.getPerson(data.PERSON1.id);
         expect(person).to.not.be.null;
 
         let val = null;
@@ -399,12 +394,12 @@ describe("SDDM: SDMMController", () => {
         expect(val).to.not.be.null;
         expect(val.message).to.equal('Current d0 grade is not sufficient to move on to d1.');
 
-        let allRepos = await rc.getReposForPerson(person);
+        const allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(1);
         expect(allRepos[0].custom.d0enabled).to.be.true;
         expect(allRepos[0].custom.d1enabled).to.be.false; // should stay d0
 
-        let allTeams = await tc.getTeamsForPerson(person);
+        const allTeams = await tc.getTeamsForPerson(person);
         expect(allTeams).to.have.lengthOf(1);
         expect(allTeams[0].custom.sdmmd0).to.be.true;
         expect(allTeams[0].custom.sdmmd1).to.be.false; // should stay d0
@@ -412,14 +407,14 @@ describe("SDDM: SDMMController", () => {
 
     it("Should be able to upgrade a d0 repo for an individual.", async () => {
         Log.test("getting person");
-        let person = await pc.getPerson(data.PERSON1.id);
+        const person = await pc.getPerson(data.PERSON1.id);
         expect(person).to.not.be.null;
 
         Log.test("getting repo");
         let allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(1);
 
-        let gradeR: GradePayload = {
+        const gradeR: GradePayload = {
             score:     65,
             comment:   'TESTCOMMENT',
             urlName:   'TESTURLNAME',
@@ -429,7 +424,7 @@ describe("SDDM: SDMMController", () => {
         };
 
         Log.test("setting d0 grade");
-        let grade = await gc.createGrade(allRepos[0].id, Test.DELIVID0, gradeR);
+        const grade = await gc.createGrade(allRepos[0].id, Test.DELIVID0, gradeR);
         expect(grade).to.be.true;
 
         Log.test("checking status");
@@ -439,13 +434,13 @@ describe("SDDM: SDMMController", () => {
         expect(allRepos[0].custom.d1enabled).to.be.false;
 
         Log.test('provisioning d1 repo');
-        let payload = await sc.provision(Test.DELIVID1, [data.PERSON1.id]); // do it
+        const payload = await sc.provision(Test.DELIVID1, [data.PERSON1.id]); // do it
         Log.test('provisioning d1 repo complete');
         expect(payload.success).to.not.be.undefined;
         expect(payload.failure).to.be.undefined;
-        const status = (<ActionPayload>payload.success).status;
+        const status = (payload.success as ActionPayload).status;
         expect(status.status).to.equal(SDMMStatus[SDMMStatus.D1]);
-        Log.test((<ActionPayload>payload.success).message);
+        Log.test((payload.success as ActionPayload).message);
 
         Log.test("checking d1 repo status");
         allRepos = await rc.getReposForPerson(person);
@@ -454,7 +449,7 @@ describe("SDDM: SDMMController", () => {
         expect(allRepos[0].custom.d1enabled).to.be.true; // should be provisioned for d1 now
 
         Log.test("checking d1 team status");
-        let allTeams = await tc.getTeamsForPerson(person);
+        const allTeams = await tc.getTeamsForPerson(person);
         expect(allTeams).to.have.lengthOf(1);
         expect(allTeams[0].custom.sdmmd0).to.be.true;
         expect(allTeams[0].custom.sdmmd1).to.be.true; // should be provisioned for d1 now
@@ -474,9 +469,8 @@ describe("SDDM: SDMMController", () => {
         expect(allRepos).to.have.lengthOf(1); // no new repo
     });
 
-
     it("Should not be able to form a d1 team if a member does not exist or has insufficient d0 standing.", async () => {
-        let person = await pc.getPerson(data.PERSON2.id); // person2; person1 has a d1 repo from previous upgrade
+        const person = await pc.getPerson(data.PERSON2.id); // person2; person1 has a d1 repo from previous upgrade
         expect(person).to.not.be.null;
 
         let allRepos = await rc.getReposForPerson(person);
@@ -537,14 +531,13 @@ describe("SDDM: SDMMController", () => {
         expect(val.message).to.equal("D1 duplicate users; if you wish to work alone, please select 'work individually'.");
     });
 
-
     it("Should be able to form a d1 team with a partner.", async () => {
         // prepare person 2
-        let person2 = await pc.getPerson(data.PERSON2.id);
+        const person2 = await pc.getPerson(data.PERSON2.id);
         expect(person2).to.not.be.null;
         let payload = await sc.provision(Test.DELIVID0, [person2.id]);
         expect(payload.success).to.not.be.undefined;
-        expect((<ActionPayload>payload.success).status.status).to.equal(SDMMStatus[SDMMStatus.D0]);
+        expect((payload.success as ActionPayload).status.status).to.equal(SDMMStatus[SDMMStatus.D0]);
 
         let allRepos = await rc.getReposForPerson(person2);
         expect(allRepos).to.have.lengthOf(1);
@@ -560,12 +553,12 @@ describe("SDDM: SDMMController", () => {
         expect(grade).to.be.true;
 
         // prepare person3
-        let person3 = await pc.createPerson(data.PERSON3);
+        const person3 = await pc.createPerson(data.PERSON3);
         expect(person3).to.not.be.null;
         // create d0 payload for person2
         payload = await sc.provision(Test.DELIVID0, [person3.id]);
         expect(payload.success).to.not.be.undefined;
-        expect((<ActionPayload>payload.success).status.status).to.equal(SDMMStatus[SDMMStatus.D0]);
+        expect((payload.success as ActionPayload).status.status).to.equal(SDMMStatus[SDMMStatus.D0]);
 
         // create d0 grade for person2
         allRepos = await rc.getReposForPerson(person3);
@@ -581,15 +574,14 @@ describe("SDDM: SDMMController", () => {
         grade = await gc.createGrade(allRepos[0].id, Test.DELIVID0, gradeR);
         expect(grade).to.be.true;
 
-
         // try to upgrade them to d1
         Log.test('Updating to d1');
         payload = await sc.provision(Test.DELIVID1, [person2.id, person3.id]);
         expect(payload.success).to.not.be.undefined;
         expect(payload.failure).to.be.undefined;
-        const status = (<ActionPayload>payload.success).status;
+        const status = (payload.success as ActionPayload).status;
         expect(status.status).to.equal(SDMMStatus[SDMMStatus.D1]);
-        Log.test((<ActionPayload>payload).message);
+        Log.test((payload as ActionPayload).message);
 
         allRepos = await rc.getReposForPerson(person2);
         expect(allRepos).to.have.lengthOf(2);
@@ -597,7 +589,7 @@ describe("SDDM: SDMMController", () => {
         // expect(allRepos[0].custom.d0enabled).to.be.true;
         // expect(allRepos[0].custom.d1enabled).to.be.false;
 
-        let allTeams = await tc.getTeamsForPerson(person2);
+        const allTeams = await tc.getTeamsForPerson(person2);
         expect(allTeams).to.have.lengthOf(2);
         // expect(allTeams[0].custom.sdmmd0).to.be.true;
         // expect(allTeams[0].custom.sdmmd1).to.be.false;
