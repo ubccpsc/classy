@@ -290,7 +290,7 @@ describe("GitHubActions", () => {
         expect(team).to.not.be.null;
 
         // create the repository
-        const repo = await rc.createRepository(Test.REPONAME3, [team], {});
+        const repo = await rc.createRepository(REPONAME3, [team], {});
         expect(repo).to.not.be.null;
         const val = await gh.createRepo(REPONAME3);
         const newName = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +

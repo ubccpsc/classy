@@ -98,6 +98,21 @@ export class AssignmentController {
             return null;
         }
 
+        // save repository information to database
+        let assignRepoInfo: AssignmentRepositoryInfo = {
+            assignmentId:  [delivId],
+            status:        AssignmentStatus.INITIALIZED,
+            assignedTeams: []
+        };
+
+        // add all the teams
+        for (const team of teams) {
+            assignRepoInfo.assignedTeams.push(team.id);
+        }
+
+        // creates repository record
+        let repository = await this.rc.createRepository(repoName, teams, assignRepoInfo);
+
         // retrieve provisioning information
         let seedURL = assignInfo.seedRepoURL;
         let seedPath = assignInfo.seedRepoPath;
@@ -117,24 +132,10 @@ export class AssignmentController {
             return null;
         }
 
-        // save repository information to database
-        let assignRepoInfo: AssignmentRepositoryInfo = {
-            assignmentId:  [delivId],
-            status:        AssignmentStatus.INITIALIZED,
-            assignedTeams: []
-        };
-
-        // add all the teams
-        for (const team of teams) {
-            assignRepoInfo.assignedTeams.push(team.id);
-        }
-
-        // creates repository record
-        let repository = await this.rc.createRepository(repoName, teams, assignRepoInfo);
-        // record the url
-        repository.URL = await this.ghc.getRepositoryUrl(repository);
-
-        await this.db.writeRepository(repository);
+        // // record the url
+        // repository.URL = await this.ghc.getRepositoryUrl(repository);
+        //
+        // await this.db.writeRepository(repository);
 
         if (!assignInfo.repositories.includes(repository.id)) {
             Log.info("AssignmentController::createAssignmentRepo(..) - adding repository to list");
