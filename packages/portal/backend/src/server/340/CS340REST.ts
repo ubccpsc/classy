@@ -55,6 +55,9 @@ export default class CS340REST implements IREST {
             } else {
                 res.send(404, {result: null, error: "Not found"}); // TODO [Jonathan]: Find proper HTML code for this
             }
+        }).catch((error) => {
+            Log.error("CS340REST::getAssignmentGrade - Error: " + error);
+            res.send(500, error);
         });
 
         /*        res.send(404, {
@@ -92,9 +95,12 @@ export default class CS340REST implements IREST {
                     // TODO [Jonathan]: Set this up to inform there was no rubric
                     res.send(204, {error: "Rubric not found, perhaps the deliverable has no rubric?"});
                 }
-                return next();
             }
+        }).catch((error) => {
+            Log.error("CS340REST::getAssignmentRubric - Error: " + error);
+            res.send(500, error);
         });
+        return next();
     }
 
     public static getAllAssignmentRubrics(req: any, res: any, next: any) {
@@ -113,8 +119,11 @@ export default class CS340REST implements IREST {
                 }
             }
             res.send(200, {response: assignRubrics});
-            return next();
+        }).catch((error) => {
+            Log.error("CS340REST::getAllAssignmentRubrics - Error: " + error);
+            res.send(500, error);
         });
+        return next();
     }
 
     public static createAssignmentRubric(req: any, res: any, next: any) {
@@ -133,7 +142,12 @@ export default class CS340REST implements IREST {
         let delivControl: DeliverablesController = new DeliverablesController();
         delivControl.saveDeliverable(newDeliv).then((result) => {
             res.send(200, result);
+        }).catch((error) => {
+            Log.error("CS340REST::createAssignmentRubric - Error: " + error);
+            res.send(500, error);
         });
+
+        return next();
 
         // let newDeliv : Deliverable = {
         //     id: "",
@@ -157,9 +171,11 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
-        res.send(404, {
+        res.send(501, {
             message: "Not implemented"
         });
+
+        return next();
     }
 
     public static setAssignmentGrade(req: any, res: any, next: any) {
@@ -212,10 +228,13 @@ export default class CS340REST implements IREST {
             } else {
                 res.send(500, {error: "Unable to write to database"});
             }
-
             Log.info("CS340REST::setAssignmentGrade() - end");
-            return next();
+
+        }).catch((error) => {
+            Log.error("CS340REST::setAssignmentGrade - Error: " + error);
+            res.send(500, error);
         });
+        return next();
     }
 
     public static getAllDeliverables(req: any, res: any, next: any) {
@@ -227,6 +246,9 @@ export default class CS340REST implements IREST {
 
         delivController.getAllDeliverables().then((result) => {
             res.send(200, {response: result});
+        }).catch((error) => {
+            Log.error("CS340REST::getAllDeliverables - Error: " + error);
+            res.send(500, error);
         });
 
         // return next();
@@ -240,6 +262,9 @@ export default class CS340REST implements IREST {
         let gradeController: GradesController = new GradesController();
         gradeController.getAllGrades().then((result) => {
             res.send(200, {response: result});
+        }).catch((error) => {
+            Log.error("CS340REST::getAllgrades - Error: " + error);
+            res.send(500, error);
         });
     }
 
@@ -262,6 +287,9 @@ export default class CS340REST implements IREST {
                 }
             }
             res.send(200, {response: resultArray});
+        }).catch((error) => {
+            Log.error("CS340REST::getAllSubmissionByDelivID - Error: " + error);
+            res.send(500, error);
         });
 
         return next();
@@ -281,6 +309,9 @@ export default class CS340REST implements IREST {
             } else {
                 res.send(200, {response: result});
             }
+        }).catch((error) => {
+            Log.error("CS340REST::getPersonByID - Error: " + error);
+            res.send(500, error);
         });
 
         return next();
@@ -295,6 +326,9 @@ export default class CS340REST implements IREST {
 
         personController.getAllPeople().then(result => {
             res.send(200, {response: result});
+        }).catch((error) => {
+            Log.error("CS340REST::getAllPersons - Error: " + error);
+            res.send(500, error);
         });
         return next();
     }
@@ -306,7 +340,7 @@ export default class CS340REST implements IREST {
         const org = req.headers.org;
 
         // get deliverable ID
-
+        res.send(501, "Single Repository Provisioning - Not Implemented");
 
         return next();
     }
