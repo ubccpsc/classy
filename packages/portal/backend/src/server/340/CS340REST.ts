@@ -171,11 +171,8 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
-        res.send(404, {
+        res.send(501, {
             message: "Not implemented"
-        }).catch((error) => {
-            Log.error("CS340REST::releaseGrades - Error: " + error);
-            res.send(500, error);
         });
 
         return next();
