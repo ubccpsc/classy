@@ -15,6 +15,7 @@ import {
 } from "../../../../../common/types/PortalTypes";
 
 import {CourseController} from "../../controllers/CourseController";
+import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GitHubController} from "../../controllers/GitHubController";
 import {GradesController} from "../../controllers/GradesController";
 import {PersonController} from "../../controllers/PersonController";
@@ -61,9 +62,13 @@ export class AutoTestRoutes implements IREST {
 
             Log.info('AutoTestRouteHandler::atContainerDetails(..) - name: ' + name + '; delivId: ' + delivId);
 
-            // TODO: this is just a dummy implementation
+            const handleError = function() {
+                payload = {failure: {message: 'Could not retrieve container details', shouldLogout: false}};
+                res.send(400, payload);
+                return next(false);
+            };
 
-            if ((name === ConfigCourses.sdmm || name === ConfigCourses.classytest) && delivId !== 'd9997') {
+            if (name === ConfigCourses.classytest && delivId !== 'd9997') {
                 // HACK: the && is terrible and is just for testing
                 payload = {
                     success: {
@@ -75,9 +80,21 @@ export class AutoTestRoutes implements IREST {
                     }
                 };
                 res.send(200, payload);
+                return next(true);
             } else {
-                payload = {failure: {message: 'Could not retrieve container details', shouldLogout: false}};
-                res.send(400, payload);
+
+                const dc = new DeliverablesController();
+                dc.getDeliverable(delivId).then(function(deliv) {
+                    if (deliv !== null) {
+                        payload = {success: deliv.autotest};
+                        res.send(200, payload);
+                        return next(true);
+                    } else {
+                        handleError();
+                    }
+                }).catch(function(err) {
+                    handleError();
+                });
             }
         }
     }
