@@ -23,7 +23,7 @@ export class EdXClassPortal extends ClassPortal {
      * @returns {Promise<AutoTestDefaultDeliverableTransport | null>}
      */
     public async getDefaultDeliverableId(): Promise<AutoTestDefaultDeliverableTransport | null> {
-        Log.info("EdXClassPortal::getDefaultDeliverableId(..) - start");
+        Log.info("EdXClassPortal::getDefaultDeliverableId(..) - returning null (no default deliverable for SDMM)");
         // no default deliverable for edx
         return null;
     }
@@ -77,6 +77,7 @@ export class EdXClassPortal extends ClassPortal {
         const payload: AutoTestPersonIdTransport = {
             personId: githubId
         };
+        Log.info("EdXClassPortal::getPersonId( " + githubId + " ) - returning: " + JSON.stringify(payload));
         return Promise.resolve(payload);
     }
 }
