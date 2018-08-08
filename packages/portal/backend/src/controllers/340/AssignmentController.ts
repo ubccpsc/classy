@@ -4,7 +4,13 @@ import {Deliverable, Grade, Person, Repository, Team} from "../../Types";
 // import {GradePayload} from "../GradesController";
 import Log from "../../../../../common/Log";
 import {GradePayload} from "../../../../../common/types/SDMMTypes";
-import {AssignmentGrade, AssignmentInfo, AssignmentRepositoryInfo, AssignmentStatus} from "../../../../../common/types/CS340Types";
+import {
+    AssignmentGrade,
+    AssignmentGradingRubric,
+    AssignmentInfo,
+    AssignmentRepositoryInfo,
+    AssignmentStatus, QuestionGrade, QuestionGradingRubric, SubQuestionGrade, SubQuestionGradingRubric
+} from "../../../../../common/types/CS340Types";
 import {RepositoryController} from "../RepositoryController";
 import {TeamController} from "../TeamController";
 import {DeliverablesController} from "../DeliverablesController";
@@ -599,5 +605,114 @@ export class AssignmentController {
         //     Log.info("AssignmentController::getAssignmentRepo(...) - end");
         //     return result[0];
         // }
+    }
+
+    /**
+     *
+     * @param {string} studentGradeRepoName - Repository name for the student
+     * @param {string} fileName - name of the file to create
+     * @param {string} studentId - Student
+     * @param {string} delivId - deliverable the grade is for
+     * @returns {Promise<boolean>}
+     */
+
+    public async publishGrade(studentGradeRepoName: string, fileName: string, studentId: string, delivId: string): Promise<boolean> {
+        Log.info("AssignmentController::publishGrade( ..., " + studentId + ", " + delivId + " ) - start");
+        // Log.error("AssignmentController::publishGrade(..) - ");
+
+        // get student grade
+        let gradeRecord: Grade = await this.gc.getGrade(studentId, delivId);
+        if(gradeRecord === null) {
+            Log.error("AssignmentController::publishGrade(..) - Unable to find grade for student: " + studentId + "" +
+                " and delivId: " + delivId);
+            return false;
+        }
+
+        // get the student's assignment breakdown
+        let assignmentGrade: AssignmentGrade = gradeRecord.custom;
+        if (assignmentGrade === null || typeof assignmentGrade.questions === 'undefined') {
+            Log.error("AssignmentController::publishGrade(..) - Student does not have an assignmentGrade: " + studentId);
+            return false;
+        }
+
+        let studentRecord = await this.pc.getPerson(studentId);
+        if(studentRecord === null) {
+            Log.error("AssignmentController::publishGrade(..) - Invalid studentId: " + studentId + " unable to continue");
+            return false;
+        }
+
+        // get the grading rubric
+
+        let deliverableRecord: Deliverable = await this.db.getDeliverable(delivId);
+        if (deliverableRecord === null) {
+            // deliverable doesn't exist! Error
+            Log.error("AssignmentController::publishGrade(..) - Deliverable does not exist: " + delivId);
+            return false;
+        }
+
+        // check if the deliverable is an assignment
+        let assignmentInfo: AssignmentInfo = deliverableRecord.custom;
+        if (assignmentInfo === null || typeof assignmentInfo.rubric === "undefined") {
+            // this is not an assignment, currently does not support deliverable grade writing
+            Log.error("AssignmentController::publishGrade(..) - Deliverable: " + delivId + " is not an assignment");
+            return false;
+        }
+
+
+        // get the rubric (so we can get the max grade)
+        let assignmentRubric: AssignmentGradingRubric = assignmentInfo.rubric;
+
+        // add a file in the repo and then push
+        // check if the studentRepo exists
+        let repoExists = await this.gha.repoExists(studentGradeRepoName);
+
+        if(!repoExists) {
+            // Create the repo, it doesn't exist yet
+
+            // first, need to check if a student Repo object has been created
+            let studentRepoRecord: Repository = await this.rc.getRepository(studentGradeRepoName);
+            if (studentRepoRecord === null) {
+                Log.info("AssignmentController::publishGrade(..) - No student Repo found, creating repo");
+
+                // create the record
+                studentRepoRecord = await this.rc.createRepository(studentGradeRepoName, [], null);
+                if(studentRepoRecord === null) {
+                    // we tried multiple times, unable to continue (something is wrong)
+                    Log.error("AssignmentController::publishGrade(..) - Error; unable to create student grade repository.");
+                    return false;
+                }
+            }
+
+            let repoURL: string = await this.gha.createRepo(studentGradeRepoName);
+        }
+
+        // now assume we have the all the needed pieces
+        let tableInfo: string[][] = [];
+        let tableHeader: string[] = ["Exercise Name", "Grade", "Out of", "Feedback"];
+        tableInfo.push(tableHeader);
+
+        // get the rest of the information
+        for(let i = 0; i < assignmentRubric.questions.length; i++) {
+            let assignmentQuestion: QuestionGradingRubric = assignmentRubric.questions[i];
+            let studentGrade: QuestionGrade = assignmentGrade.questions[i];
+            //get their subQuestions
+            for(let j = 0; j < assignmentQuestion.subQuestions.length; j++) {
+                let assignmentSubQuestion: SubQuestionGradingRubric = assignmentQuestion.subQuestions[j];
+                let gradeSubQuestion: SubQuestionGrade = studentGrade.subQuestion[j];
+                let rowName = assignmentQuestion.name + " - " + assignmentSubQuestion.name;
+                let newRow = [rowName, String(gradeSubQuestion.grade), String(assignmentSubQuestion.outOf), gradeSubQuestion.feedback];
+                tableInfo.push(newRow);
+            }
+        }
+
+        // construct the md file
+        Log.info("AssignmentController::publishGrade(..) - generating tableInfo complete; " + tableInfo);
+
+        let table = require('markdown-table');
+        let payload = table(tableInfo);
+
+        // add extra line warning that grades are potentially rounded
+
+        return true;
     }
 }

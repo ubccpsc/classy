@@ -4,6 +4,7 @@ import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {DatabaseController} from "./DatabaseController";
 import {GitTeamTuple} from "./GitHubController";
+import {exec} from "child_process";
 
 const tmp = require('tmp-promise');
 
@@ -704,37 +705,6 @@ export class GitHubActions {
         const authedStudentRepo = addGithubAuthToken(studentRepo);
         const authedImportRepo = addGithubAuthToken(importRepo);
 
-        // let actionChain = () => {
-        //     return enterRepoPath()
-        //         .then(() => {
-        //             return removeGitDir();
-        //         }).then(() => {
-        //             return initGitDir();
-        //         }).then(() => {
-        //             return changeGitRemote();
-        //         }).then(() => {
-        //             return addFilesToRepo();
-        //         }).then(() => {
-        //             return pushToNewRepo();
-        //         }).then(() => {
-        //             return Promise.resolve(true); // made it cleanly
-        //         }).catch((err: any) => {
-        //             Log.error('GitHubAction::cloneRepo() - ERROR: ' + err);
-        //             return Promise.reject(err);
-        //         });
-        // };
-        //
-        // if(seedFilePath) {
-        //     const tempDir2 = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
-        //     const tempPath2 = tempDir2.path;
-        //
-        //     return cloneRepo(tempPath2).then(() => {
-        //         moveFiles(tempPath2, seedFilePath, tempPath).then(actionChain());
-        //     });
-        // } else {
-        //     return cloneRepo(tempPath).then(actionChain);
-        // }
-
         if (seedFilePath) {
             const tempDir2 = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
             const tempPath2 = tempDir2.path;
@@ -893,6 +863,132 @@ export class GitHubActions {
             Log.info("GitHubAction::delay( " + ms + " ms ) - waiting; will trigger at " + fire.toLocaleTimeString());
             setTimeout(resolve, ms);
         });
+    }
+
+    /**
+     * Adds a file with the data given, to the specified repository.
+     * If force is set to true, will overwrite old files
+     * @param {string} repoURL - name of repository
+     * @param {string} fileName - name of file to write
+     * @param {string} fileContent - the content of the file to write to repo
+     * @param {boolean} force - allow for overwriting of old files
+     * @returns {Promise<boolean>} - true if write was successful
+     */
+    public async writeFileToRepo(repoURL: string, fileName: string, fileContent: string, force: boolean = false): Promise<boolean>{
+        let ctx = this;
+        Log.info("GithubAction::writeFileToRepo( "+repoURL+" , "+fileName+"" +
+            " , "+fileContent+" , "+force+" ) - start");
+        const that = this;
+
+        // TAKEN FROM importFS ----
+        function addGithubAuthToken(url: string) {
+            let start_append = url.indexOf('//') + 2;
+            let token = that.gitHubAuthToken;
+            let authKey = token.substr(token.indexOf('token ') + 6) + '@';
+            // creates "longokenstring@githuburi"
+            return url.slice(0, start_append) + authKey + url.slice(start_append);
+        }
+
+        // generate temp path
+        const exec = require('child-process-promise').exec;
+        const tempDir = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
+        const tempPath = tempDir.path;
+        const authedRepo = addGithubAuthToken(repoURL);
+
+
+        // clone repository
+        try {
+            await cloneRepo(tempDir);
+            await enterRepoPath();
+            if(force) {
+                await createNewFileForce();
+            } else {
+                await createNewFile();
+            }
+            await addFilesToRepo();
+            await pushToRepo();
+        } catch(err) {
+            Log.error("GithubActions::writeFileToRepo(..) - Error: " + err);
+            return false;
+        }
+
+
+        return true;
+
+        function cloneRepo(repoPath: string) {
+            Log.info('GithubManager::writeFileToRepo(..)::cloneRepo() - cloning: ' + repoURL);
+            return exec(`git clone ${authedRepo} ${repoPath}`)
+                .then(function(result: any) {
+                    Log.info('GithubManager::writeFileToRepo(..)::cloneRepo() - done:');
+                    Log.trace('GithubManager::writeFileToRepo(..)::cloneRepo() - stdout: ' + result.stdout);
+                    if (result.stderr) {
+                        Log.warn('GithubManager::writeFileToRepo(..)::cloneRepo() - stderr: ' + result.stderr);
+                    }
+                });
+        }
+
+        function enterRepoPath() {
+            Log.info('GithubManager::writeFileToRepo(..)::enterRepoPath() - entering: ' + tempPath);
+            return exec(`cd ${tempPath}`)
+                .then(function(result: any) {
+                    Log.info('GithubManager::writeFileToRepo(..)::enterRepoPath() - done:');
+                    Log.trace('GithubManager::writeFileToRepo(..)::enterRepoPath() - stdout: ' + result.stdout);
+                    if (result.stderr) {
+                        Log.warn('GithubManager::writeFileToRepo(..)::enterRepoPath() - stderr: ' + result.stderr);
+                    }
+                });
+        }
+
+        function createNewFileForce() {
+            Log.info('GithubManager::writeFileToRepo(..)::createNewFileForce() - writing: ' + fileName);
+            return exec(`cd ${tempPath} && if [ -f ${fileName} ]; then rm ${fileName};fi; echo ${fileContent} >> ${fileName};`)
+                .then(function(result:any) {
+                    Log.info('GithubManager::writeFileToRepo(..)::createNewFileForce() - done:');
+                    Log.trace('GithubManager::writeFileToRepo(..)::createNewFileForce() - stdout: ' + result.stdout);
+                    if (result.stderr) {
+                        Log.warn('GithubManager::writeFileToRepo(..)::createNewFileForce() - stderr: ' + result.stderr);
+                    }
+                });
+        }
+
+        function createNewFile() {
+            Log.info('GithubManager::writeFileToRepo(..)::createNewFile() - writing: ' + fileName);
+            return exec(`cd ${tempPath} && if [! -f ${fileName} ]; then echo ${fileContent} >> ${fileName};fi`)
+                .then(function(result:any) {
+                    Log.info('GithubManager::writeFileToRepo(..)::createNewFile() - done:');
+                    Log.trace('GithubManager::writeFileToRepo(..)::createNewFile() - stdout: ' + result.stdout);
+                    if (result.stderr) {
+                        Log.warn('GithubManager::writeFileToRepo(..)::createNewFile() - stderr: ' + result.stderr);
+                    }
+                });
+        }
+
+        function addFilesToRepo() {
+            Log.info('GithubManager::writeFileToRepo(..)::addFilesToRepo() - start');
+            const command = `cd ${tempPath} && git add ${fileName} && git commit -m "Update ${fileName}"`;
+            return exec(command)
+                .then(function(result: any) {
+                    Log.info('GithubManager::writeFileToRepo(..)::addFilesToRepo() - done:');
+                    Log.trace('GithubManager::writeFileToRepo(..)::addFilesToRepo() - stdout: ' + result.stdout);
+                    if (result.stderr) {
+                        Log.warn('GithubManager::writeFileToRepo(..)::addFilesToRepo() - stderr: ' + result.stderr);
+                    }
+                });
+        }
+
+        function pushToRepo() {
+            Log.info('GithubManager::writeFileToRepo(..)::pushToNewRepo() - start');
+            let command = `cd ${tempPath} && git push`;
+            return exec(command)
+                .then(function(result: any) {
+                    Log.info('GithubManager::writeFileToRepo(..)::pushToNewRepo() - done: ');
+                    Log.trace('GithubManager::writeFileToRepo(..)::pushToNewRepo() - stdout: ' + result.stdout);
+                    if (result.stderr) {
+                        Log.warn('GithubManager::writeFileToRepo(..)::pushToNewRepo() - stderr: ' + result.stderr);
+                    }
+                });
+        }
+
     }
 
     /**
