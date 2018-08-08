@@ -251,7 +251,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      */
     private async requestFeedbackDelay(delivId: string, userName: string, reqTimestamp: number): Promise<string | null> {
         try {
-            Log.info("GitHubAutoTest::requestFeedbackDelay( " + delivId + ", " + userName + ", " + reqTimestamp + ". - start");
+            Log.info("GitHubAutoTest::requestFeedbackDelay( " + delivId + ", " + userName + ", " + reqTimestamp + " ) - start");
             // async operations up front
             const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(userName);
             const record: IFeedbackGiven = await this.dataStore.getLatestFeedbackGivenRecord(delivId, userName);
