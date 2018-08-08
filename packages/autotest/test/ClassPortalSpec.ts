@@ -115,24 +115,21 @@ describe("ClassPortal Service", () => {
     });
 
     it("Should return a default deliverable if the course has one.", async () => {
-        try {
-            // setup
-            const db = DatabaseController.getInstance();
-            const course: Course = {
-                id:                   Config.getInstance().getProp(ConfigKey.name),
-                defaultDeliverableId: 'd0',
-                custom:               {}
-            };
-            await db.writeCourseRecord(course);
+        // setup
+        const db = DatabaseController.getInstance();
+        const course: Course = {
+            id:                   Config.getInstance().getProp(ConfigKey.name),
+            defaultDeliverableId: 'd0',
+            custom:               {}
+        };
+        await db.writeCourseRecord(course);
 
-            // test
-            const actual = await cp.getDefaultDeliverableId();
-            Log.test("Actual: " + JSON.stringify(actual));
-            expect(actual.defaultDeliverable).to.equal('d0');
-        } catch (err) {
-            Log.error("ERROR: " + err);
-            expect.fail("Should not happen");
-        }
+        // test
+        const actual = await cp.getDefaultDeliverableId();
+        Log.test("Actual: " + JSON.stringify(actual));
+
+        expect(actual.defaultDeliverable).to.equal('d0');
+        // expect(actual.defaultDeliverable).to.be.null;
     });
 
 });

@@ -69,8 +69,7 @@ export class GitHubService implements IGitHubService {
                     // const url = host + '/' + path;
                     const url = message.url; // this url comes from postbackURL which uses the right API format
                     return rp(url, options).then(function (res) {
-                        Log.trace("GitHubService::postMarkdownToGithub(..) - responded: " + res);
-
+                        Log.trace("GitHubService::postMarkdownToGithub(..) - success"); // : " + res);
                         fulfill(true);
                     }).catch(function (err) {
                         Log.error("GitHubService::postMarkdownToGithub(..) - ERROR: " + err);

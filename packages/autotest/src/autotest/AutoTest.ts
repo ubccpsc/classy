@@ -257,7 +257,7 @@ export abstract class AutoTest implements IAutoTest {
                 return;
             }
 
-            Log.info("AutoTest::handleExecutionComplete(..) - start; commit: " + data.commitSHA);
+            Log.info("AutoTest::handleExecutionComplete(..) - start; delivId: " + data.delivId + "; repoId: " + data.repoId + "; commit: " + data.commitSHA);
 
             try {
                 let resultPayload = await this.classPortal.sendResult(data);
