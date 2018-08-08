@@ -258,5 +258,21 @@ describe("ClassPortal Service", () => {
         expect(actual.failure.message).to.be.an('string');
     });
 
+    it("Should be able to get a result.", async () => {
+        const actual = await cp.getResult('d0', 'repo0');
+        Log.test("Actual: " + JSON.stringify(actual));
+
+        expect(actual).to.not.be.null;
+        expect(actual.delivId).to.equal('d0');
+        expect(actual.repoId).to.equal('repo0');
+    });
+
+    it("Should not get a result that does not exist.", async () => {
+        const actual = await cp.getResult('d_' + Date.now(), 'repo0');
+        Log.test("Actual: " + JSON.stringify(actual));
+
+        expect(actual).to.be.null;
+    });
+
 
 });
