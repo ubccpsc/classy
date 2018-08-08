@@ -200,16 +200,22 @@ export class ClassPortal implements IClassPortal {
         const url = this.host + ":" + this.port + "/portal/at/grade/";
         try {
             const opts: rp.RequestPromiseOptions = {
-                rejectUnauthorized: false, method: 'post', headers: {
-                    token: Config.getInstance().getProp(ConfigKey.autotestSecret)
-                }
+                rejectUnauthorized: false,
+                method:             'POST',
+                headers:            {
+                    "Content-Type": "application/json",
+                    token:          Config.getInstance().getProp(ConfigKey.autotestSecret)
+                },
+                body:               grade,
+                json:               true
             };
+
             Log.info("ClassPortal::sendGrade(..) - Sending request to " + url);
             const res = await rp(url, opts); // .then(function(res) {
             Log.trace("ClassPortal::sendGrade() - sent; returned payload: " + res);
-            const json: Payload = JSON.parse(res);
+            const json = res;
             if (typeof json.success !== 'undefined') {
-                Log.error("ClassPortal::sendGrade(..) - successfully received");
+                Log.info("ClassPortal::sendGrade(..) - successfully received");
                 return json;
             } else {
                 Log.error("ClassPortal::sendGrade(..) - ERROR; not successfully received:  " + JSON.stringify(json));
@@ -226,19 +232,21 @@ export class ClassPortal implements IClassPortal {
         const url = this.host + ":" + this.port + "/portal/at/result/";
 
         try {
-            let payload: AutoTestResultTransport = result;
-
             const opts: rp.RequestPromiseOptions = {
                 rejectUnauthorized: false,
                 method:             'post',
-                body:               payload,
-                headers:            {token: Config.getInstance().getProp(ConfigKey.autotestSecret)}
+                headers:            {
+                    "Content-Type": "application/json",
+                    token:          Config.getInstance().getProp(ConfigKey.autotestSecret)
+                },
+                body:               result,
+                json:               true
             };
 
             Log.info("ClassPortal::sendResult(..) - Sending request to " + url + ' for repoId: ' + result.repoId + '; delivId: ' + result.delivId + '; SHA: ' + result.input.pushInfo.commitSHA);
             const res = await rp(url, opts);
             Log.trace("ClassPortal::sendResult() - sent; returned payload: " + res);
-            const json: Payload = JSON.parse(res);
+            const json = res;
             if (typeof json.success !== 'undefined') {
                 Log.error("ClassPortal::sendResult(..) - successfully received");
                 return json;
