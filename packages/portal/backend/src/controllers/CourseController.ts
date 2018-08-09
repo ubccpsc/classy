@@ -285,48 +285,59 @@ export class CourseController { // don't implement ICourseController yet
 
     /**
      * Gets the results associated with the course.
-     *
+     * @param {delivId: string} * for any
+     * @param {repoId: string} * for any
      * @returns {Promise<AutoTestGradeTransport[]>}
      */
-    public async getResults(): Promise<AutoTestResultSummaryTransport[]> {
+    public async getResults(reqDelivId: string, reqRepoId: string): Promise<AutoTestResultSummaryTransport[]> {
+
+        const NUM_RESULTS = 200;
 
         const allResults = await this.resC.getAllResults();
         const results: AutoTestResultSummaryTransport[] = [];
         for (const result of allResults) {
             // const repo = await rc.getRepository(result.repoId); // this happens a lot and ends up being too slow
+            const delivId = result.delivId;
             const repoId = result.input.pushInfo.repoId;
-            const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
-                Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
-            let scoreOverall = null;
-            let scoreCover = null;
-            let scoreTest = null;
 
-            if (typeof result.output !== 'undefined' && typeof result.output.report !== 'undefined') {
-                const report = result.output.report;
-                if (typeof report.scoreOverall !== 'undefined') {
-                    scoreOverall = report.scoreOverall;
+            if ((delivId === '*' || delivId === reqDelivId) &&
+                (repoId === '*' || repoId === reqRepoId) &&
+                results.length <= NUM_RESULTS) {
+                const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
+                    Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
+                let scoreOverall = null;
+                let scoreCover = null;
+                let scoreTest = null;
+
+                if (typeof result.output !== 'undefined' && typeof result.output.report !== 'undefined') {
+                    const report = result.output.report;
+                    if (typeof report.scoreOverall !== 'undefined') {
+                        scoreOverall = report.scoreOverall;
+                    }
+                    if (typeof report.scoreTest !== 'undefined') {
+                        scoreTest = report.scoreTest;
+                    }
+                    if (typeof report.scoreCover !== 'undefined') {
+                        scoreCover = report.scoreCover;
+                    }
                 }
-                if (typeof report.scoreTest !== 'undefined') {
-                    scoreTest = report.scoreTest;
-                }
-                if (typeof report.scoreCover !== 'undefined') {
-                    scoreCover = report.scoreCover;
-                }
+
+                const resultTrans: AutoTestResultSummaryTransport = {
+                    repoId:       repoId,
+                    repoURL:      repoURL,
+                    delivId:      result.delivId,
+                    state:        result.output.state,
+                    timestamp:    result.output.timestamp,
+                    commitSHA:    result.input.pushInfo.commitSHA,
+                    commitURL:    result.input.pushInfo.commitURL,
+                    scoreOverall: scoreOverall,
+                    scoreCover:   scoreCover,
+                    scoreTests:   scoreTest
+                };
+                results.push(resultTrans);
+            } else {
+                // result does not match filter
             }
-
-            const resultTrans: AutoTestResultSummaryTransport = {
-                repoId:       repoId,
-                repoURL:      repoURL,
-                delivId:      result.delivId,
-                state:        result.output.state,
-                timestamp:    result.output.timestamp,
-                commitSHA:    result.input.pushInfo.commitSHA,
-                commitURL:    result.input.pushInfo.commitURL,
-                scoreOverall: scoreOverall,
-                scoreCover:   scoreCover,
-                scoreTests:   scoreTest
-            };
-            results.push(resultTrans);
         }
         return results;
     }
