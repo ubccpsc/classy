@@ -898,7 +898,7 @@ export class GitHubActions {
 
         // clone repository
         try {
-            await cloneRepo(tempDir);
+            await cloneRepo(tempPath);
             await enterRepoPath();
             if(force) {
                 await createNewFileForce();
@@ -941,7 +941,7 @@ export class GitHubActions {
 
         function createNewFileForce() {
             Log.info('GithubManager::writeFileToRepo(..)::createNewFileForce() - writing: ' + fileName);
-            return exec(`cd ${tempPath} && if [ -f ${fileName} ]; then rm ${fileName};fi; echo ${fileContent} >> ${fileName};`)
+            return exec(`cd ${tempPath} && if [ -f ${fileName} ]; then rm ${fileName};fi; echo \"${fileContent}\" >> ${fileName};`)
                 .then(function(result:any) {
                     Log.info('GithubManager::writeFileToRepo(..)::createNewFileForce() - done:');
                     Log.trace('GithubManager::writeFileToRepo(..)::createNewFileForce() - stdout: ' + result.stdout);
@@ -953,7 +953,7 @@ export class GitHubActions {
 
         function createNewFile() {
             Log.info('GithubManager::writeFileToRepo(..)::createNewFile() - writing: ' + fileName);
-            return exec(`cd ${tempPath} && if [! -f ${fileName} ]; then echo ${fileContent} >> ${fileName};fi`)
+            return exec(`cd ${tempPath} && if [! -f ${fileName} ]; then echo \"${fileContent}\" >> ${fileName};fi`)
                 .then(function(result:any) {
                     Log.info('GithubManager::writeFileToRepo(..)::createNewFile() - done:');
                     Log.trace('GithubManager::writeFileToRepo(..)::createNewFile() - stdout: ' + result.stdout);

@@ -665,12 +665,12 @@ export class AssignmentController {
         // add a file in the repo and then push
         // check if the studentRepo exists
         let repoExists = await this.gha.repoExists(studentGradeRepoName);
+        let studentRepoRecord: Repository = await this.rc.getRepository(studentGradeRepoName);
 
         if(!repoExists) {
             // Create the repo, it doesn't exist yet
 
             // first, need to check if a student Repo object has been created
-            let studentRepoRecord: Repository = await this.rc.getRepository(studentGradeRepoName);
             if (studentRepoRecord === null) {
                 Log.info("AssignmentController::publishGrade(..) - No student Repo found, creating repo");
 
@@ -686,6 +686,7 @@ export class AssignmentController {
             let repoURL: string = await this.gha.createRepo(studentGradeRepoName);
         }
 
+
         // now assume we have the all the needed pieces
         let tableInfo: string[][] = [];
         let tableHeader: string[] = ["Exercise Name", "Grade", "Out of", "Feedback"];
@@ -700,7 +701,8 @@ export class AssignmentController {
                 let assignmentSubQuestion: SubQuestionGradingRubric = assignmentQuestion.subQuestions[j];
                 let gradeSubQuestion: SubQuestionGrade = studentGrade.subQuestion[j];
                 let rowName = assignmentQuestion.name + " - " + assignmentSubQuestion.name;
-                let newRow = [rowName, String(gradeSubQuestion.grade), String(assignmentSubQuestion.outOf), gradeSubQuestion.feedback];
+                let newRow = [rowName, String(gradeSubQuestion.grade),
+                    String(assignmentSubQuestion.outOf), gradeSubQuestion.feedback];
                 tableInfo.push(newRow);
             }
         }
@@ -709,10 +711,23 @@ export class AssignmentController {
         Log.info("AssignmentController::publishGrade(..) - generating tableInfo complete; " + tableInfo);
 
         let table = require('markdown-table');
-        let payload = table(tableInfo);
+
+
+        let payload = "# " + deliverableRecord.id + "\n\n" + table(tableInfo);
 
         // add extra line warning that grades are potentially rounded
 
-        return true;
+
+        payload = payload + "\n\n Note: Grades might deviate slightly due to rounding";
+        let saveSuccess: boolean;
+        try {
+            saveSuccess = await this.gha.writeFileToRepo(studentRepoRecord.URL,
+                delivId + "_grades.md", payload, true);
+        } catch (err) {
+            Log.error("AssignmentController::publishGrade() - Error: " + err);
+            return false;
+        }
+
+        return saveSuccess;
     }
 }

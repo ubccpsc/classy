@@ -2,6 +2,7 @@
  * Custom type definitions, to be placed inside the custom field
  */
 
+// Placed in  Grade.custom
 // Represents an Assignment grade, comprised of an arbitrary amount of Questions
 export interface AssignmentGrade {
     assignmentID: string;               // Unique Assignment ID per course
