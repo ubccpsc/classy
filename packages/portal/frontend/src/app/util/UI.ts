@@ -126,6 +126,50 @@ export class UI {
         }
     }
 
+    public static getDropdownValue(elementName: string): string {
+        const field = document.querySelector('#' + elementName) as HTMLSelectElement;
+        if (field !== null) {
+            return field.options[field.selectedIndex].value;
+        } else {
+            Log.error('UI::getDropdownValue( ' + elementName + ' ) - element does not exist')
+        }
+    }
+
+    public static setDropdownSelected(elementName: string, value: string | number, editable: boolean) {
+        const field = document.querySelector('#' + elementName) as HTMLSelectElement;
+        if (field !== null) {
+            for (let i = 0; i < field.length; i++) {
+                const opt = field.options[i];
+                if (opt.value == value) { // use == so string and number values match
+                    field.selectedIndex = i;
+                }
+            }
+
+            if (editable === false) {
+                field.setAttribute('readonly', '');
+            }
+        } else {
+            Log.error('UI::setDropdownSelected( ' + elementName + ', ... ) - element does not exist')
+        }
+    }
+
+    public static setDropdownOptions(elementName: string, options: string[], selectedVal?: string | number | null) {
+        let selector = document.querySelector('#' + elementName) as HTMLSelectElement;
+        if (selector !== null) {
+            selector.innerHTML = '';
+            for (const opt of options) {
+                let selected = false;
+                if (typeof selectedVal !== 'undefined' && selectedVal === opt) {
+                    selected = true;
+                }
+                const o: HTMLOptionElement = new Option(opt, opt, false, selected);
+                selector.add(o);
+            }
+        } else {
+            Log.error("UI::setDropdownOptions( " + elementName + ", ... ) - element does not exist");
+        }
+    }
+
     public static createTextInputField(key: string, value: string, type: string) {
         const inputField = ons.createElement(
             '<input type="text" style="margin: 0 0 0 15px" class="text-input text-input--underbar" value="">' +

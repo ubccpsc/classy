@@ -6,6 +6,7 @@ import {
     CourseTransport,
     DeliverableTransport,
     GradeTransport,
+    RepositoryTransport,
     StudentTransport,
     TeamTransport
 } from '../../../../common/types/PortalTypes';
@@ -256,6 +257,24 @@ export class CourseController { // don't implement ICourseController yet
 
         }
         return teams;
+    }
+
+    /**
+     * Gets the repos associated with the course.
+     *
+     * @returns {Promise<RepositoryTransport[]>}
+     */
+    public async getRepositories(): Promise<RepositoryTransport[]> {
+        const allRepos = await this.rc.getAllRepos();
+        const repos: RepositoryTransport[] = [];
+        for (const repo of allRepos) {
+            const repoTransport: RepositoryTransport = {
+                id:  repo.id,
+                URL: repo.URL
+            };
+            repos.push(repoTransport);
+        }
+        return repos;
     }
 
     /**

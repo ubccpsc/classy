@@ -1,11 +1,11 @@
+import {OnsFabElement} from "onsenui";
 import Log from "../../../../../common/Log";
-
-import {UI} from "../util/UI"
+import {AutoTestConfig} from "../../../../../common/types/AutoTestTypes";
 
 import {DeliverableTransport, DeliverableTransportPayload} from "../../../../../common/types/PortalTypes";
+
+import {UI} from "../util/UI"
 import {AdminView} from "./AdminView";
-import {OnsFabElement} from "onsenui";
-import {AutoTestConfig} from "../../../../../common/types/AutoTestTypes";
 
 // import flatpickr from "flatpickr";
 declare var flatpickr: any;
@@ -35,7 +35,7 @@ export class AdminDeliverablesTab {
         if (this.isAdmin === false) {
             fab.style.display = 'none';
         } else {
-            fab.onclick = function (evt: any) {
+            fab.onclick = function(evt: any) {
                 Log.info('AdminDeliverablesTab::init(..)::addDeliverable::onClick');
                 UI.pushPage('editDeliverable.html', {delivId: null});
             };
@@ -68,7 +68,7 @@ export class AdminDeliverablesTab {
 
             const elem = UI.createListItem(main, sub, editable);
             elem.setAttribute('delivId', deliv.id);
-            elem.onclick = function (evt: any) {
+            elem.onclick = function(evt: any) {
                 const delivId = evt.currentTarget.getAttribute('delivId');
                 UI.pushPage('editDeliverable.html', {delivId: delivId});
             };
@@ -109,7 +109,7 @@ export class AdminDeliverablesTab {
         if (this.isAdmin === false) {
             fab.style.display = 'none';
         } else {
-            fab.onclick = function (evt) {
+            fab.onclick = function(evt) {
                 Log.info('AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::onClick');
                 that.save();
             };
@@ -132,8 +132,8 @@ export class AdminDeliverablesTab {
             flatpickrOptions.defaultDate = new Date();
             this.closePicker = flatpickr("#adminEditDeliverablePage-close", flatpickrOptions);
 
-            this.setDropdown('adminEditDeliverablePage-minTeamSize', 1, this.isAdmin);
-            this.setDropdown('adminEditDeliverablePage-maxTeamSize', 1, this.isAdmin);
+            UI.setDropdownSelected('adminEditDeliverablePage-minTeamSize', 1, this.isAdmin);
+            UI.setDropdownSelected('adminEditDeliverablePage-maxTeamSize', 1, this.isAdmin);
             this.setToggle('adminEditDeliverablePage-inSameLab', true, this.isAdmin);
             this.setToggle('adminEditDeliverablePage-studentsMakeTeams', false, this.isAdmin);
 
@@ -155,8 +155,8 @@ export class AdminDeliverablesTab {
             flatpickrOptions.defaultDate = new Date(deliv.closeTimestamp);
             this.closePicker = flatpickr("#adminEditDeliverablePage-close", flatpickrOptions);
 
-            this.setDropdown('adminEditDeliverablePage-minTeamSize', deliv.minTeamSize, this.isAdmin);
-            this.setDropdown('adminEditDeliverablePage-maxTeamSize', deliv.maxTeamSize, this.isAdmin);
+            UI.setDropdownSelected('adminEditDeliverablePage-minTeamSize', deliv.minTeamSize, this.isAdmin);
+            UI.setDropdownSelected('adminEditDeliverablePage-maxTeamSize', deliv.maxTeamSize, this.isAdmin);
             this.setToggle('adminEditDeliverablePage-inSameLab', deliv.teamsSameLab, this.isAdmin);
             this.setToggle('adminEditDeliverablePage-studentsMakeTeams', deliv.studentsFormTeams, this.isAdmin);
 
@@ -169,24 +169,6 @@ export class AdminDeliverablesTab {
             this.setTextField('adminEditDeliverablePage-atCustom', JSON.stringify(deliv.autoTest.custom), this.isAdmin);
 
             this.setTextField('adminEditDeliverablePage-custom', JSON.stringify(deliv.custom), this.isAdmin);
-        }
-    }
-
-    private setDropdown(fieldName: string, value: string | number, editable: boolean) {
-        const field = document.querySelector('#' + fieldName) as HTMLSelectElement;
-        if (field !== null) {
-            for (let i = 0; i < field.length; i++) {
-                const opt = field.options[i];
-                if (opt.value == value) { // use == so string and number values match
-                    field.selectedIndex = i;
-                }
-            }
-
-            if (editable === false) {
-                field.setAttribute('readonly', '');
-            }
-        } else {
-            Log.error('AdminDeliverablesTab::setDropdown( ' + fieldName + ', ... ) - element does not exist')
         }
     }
 
@@ -223,8 +205,8 @@ export class AdminDeliverablesTab {
         const openTimestamp = this.openPicker.latestSelectedDateObj.getTime();
         const closeTimestamp = this.closePicker.latestSelectedDateObj.getTime();
 
-        const minTeamSize = Number(this.getDropdown('adminEditDeliverablePage-minTeamSize'));
-        const maxTeamSize = Number(this.getDropdown('adminEditDeliverablePage-maxTeamSize'));
+        const minTeamSize = Number(UI.getDropdownValue('adminEditDeliverablePage-minTeamSize'));
+        const maxTeamSize = Number(UI.getDropdownValue('adminEditDeliverablePage-maxTeamSize'));
         const teamsSameLab = this.getToggle('adminEditDeliverablePage-inSameLab');
         const studentsFormTeams = this.getToggle('adminEditDeliverablePage-studentsMakeTeams');
 
@@ -310,15 +292,6 @@ export class AdminDeliverablesTab {
             return field.value;
         } else {
             Log.error('AdminDeliverablesTab::getTextField( ' + fieldName + ' ) - element does not exist')
-        }
-    }
-
-    private getDropdown(fieldName: string): string {
-        const field = document.querySelector('#' + fieldName) as HTMLSelectElement;
-        if (field !== null) {
-            return field.options[field.selectedIndex].value;
-        } else {
-            Log.error('AdminDeliverablesTab::getDropdown( ' + fieldName + ' ) - element does not exist')
         }
     }
 

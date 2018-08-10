@@ -208,6 +208,16 @@ export interface AutoTestPersonIdTransport {
     personId: string | null;
 }
 
+export interface RepositoryPayload {
+    success?: RepositoryTransport[]; // only set if defined
+    failure?: FailurePayload; // only set if defined
+}
+
+export interface RepositoryTransport {
+    id: string;
+    URL: string;
+}
+
 export interface AutoTestResultPayload {
     success?: AutoTestResultTransport[]; // only set if defined
     failure?: FailurePayload; // only set if defined

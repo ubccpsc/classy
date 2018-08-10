@@ -10,6 +10,7 @@ import {
     DeliverableTransportPayload,
     GradeTransportPayload,
     Payload,
+    RepositoryPayload,
     StudentTransportPayload,
     TeamTransportPayload
 } from '../../../../../common/types/PortalTypes';
@@ -35,6 +36,7 @@ export default class AdminRoutes implements IREST {
         server.get('/portal/admin/deliverables', AdminRoutes.isPrivileged, AdminRoutes.getDeliverables);
         server.get('/portal/admin/students', AdminRoutes.isPrivileged, AdminRoutes.getStudents);
         server.get('/portal/admin/teams', AdminRoutes.isPrivileged, AdminRoutes.getTeams);
+        server.get('/portal/admin/repositories', AdminRoutes.isPrivileged, AdminRoutes.getRepositories);
         server.get('/portal/admin/grades', AdminRoutes.isPrivileged, AdminRoutes.getGrades);
         server.get('/portal/admin/results/:delivId/:repoId', AdminRoutes.isPrivileged, AdminRoutes.getResults); // result summaries
         // server.get('/portal/admin/dashboard', AdminRoutes.isPrivileged, AdminRoutes.getDashboard); // detailed results
@@ -209,6 +211,28 @@ export default class AdminRoutes implements IREST {
         }).catch(function(err) {
             Log.error('AdminRoutes::getTeams(..) - ERROR: ' + err.message);
             return handleError(400, 'Unable to retrieve team list.');
+        });
+    }
+
+    private static getRepositories(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::getRepositories(..) - start');
+
+        const handleError = function(code: number, msg: string) {
+            const payload: Payload = {failure: {message: msg, shouldLogout: false}};
+            res.send(code, payload);
+            return next(false);
+        };
+
+        const cc = new CourseController(new GitHubController());
+        // handled by preceeding action in chain above (see registerRoutes)
+        cc.getRepositories().then(function(repos) {
+            Log.trace('AdminRoutes::getRepositories(..) - in then; # repos: ' + repos.length);
+            const payload: RepositoryPayload = {success: repos};
+            res.send(payload);
+            return next();
+        }).catch(function(err) {
+            Log.error('AdminRoutes::getRepositories(..) - ERROR: ' + err.message);
+            return handleError(400, 'Unable to retrieve repository list.');
         });
     }
 
