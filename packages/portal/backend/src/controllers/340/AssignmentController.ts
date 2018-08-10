@@ -760,7 +760,9 @@ export class AssignmentController {
 
         // add extra line warning that grades are potentially rounded
 
-        payload = payload + "\n\n Note: Grades might deviate slightly due to rounding";
+        payload = payload + "\n\n Note: The weighed average of the above grades may deviate by 1 percent from the " +
+            "overall grade due to rounding. However the overall grade shown is the correct one.";
+
 
         // get the repo again (in case of database changes)
         Log.info("AssignmentController::publishGrade( .. ) - retrieving repositoryRecord again");

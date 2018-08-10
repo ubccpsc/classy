@@ -906,6 +906,7 @@ export class GitHubActions {
                 await createNewFile();
             }
             await addFilesToRepo();
+            await commitFilesToRepo();
             await pushToRepo();
         } catch(err) {
             Log.error("GithubActions::writeFileToRepo(..) - Error: " + err);
@@ -941,7 +942,7 @@ export class GitHubActions {
 
         function createNewFileForce() {
             Log.info('GithubManager::writeFileToRepo(..)::createNewFileForce() - writing: ' + fileName);
-            return exec(`cd ${tempPath} && if [ -f ${fileName} ]; then rm ${fileName};fi; echo \"${fileContent}\" >> ${fileName};`)
+            return exec(`cd ${tempPath} && if [ -f ${fileName} ]; then rm ${fileName};  fi; echo '${fileContent}' >> ${fileName};`)
                 .then(function(result:any) {
                     Log.info('GithubManager::writeFileToRepo(..)::createNewFileForce() - done:');
                     Log.trace('GithubManager::writeFileToRepo(..)::createNewFileForce() - stdout: ' + result.stdout);
@@ -953,7 +954,7 @@ export class GitHubActions {
 
         function createNewFile() {
             Log.info('GithubManager::writeFileToRepo(..)::createNewFile() - writing: ' + fileName);
-            return exec(`cd ${tempPath} && if [! -f ${fileName} ]; then echo \"${fileContent}\" >> ${fileName};fi`)
+            return exec(`cd ${tempPath} && if [ ! -f ${fileName} ]; then echo \"${fileContent}\" >> ${fileName};fi`)
                 .then(function(result:any) {
                     Log.info('GithubManager::writeFileToRepo(..)::createNewFile() - done:');
                     Log.trace('GithubManager::writeFileToRepo(..)::createNewFile() - stdout: ' + result.stdout);
@@ -965,13 +966,26 @@ export class GitHubActions {
 
         function addFilesToRepo() {
             Log.info('GithubManager::writeFileToRepo(..)::addFilesToRepo() - start');
-            const command = `cd ${tempPath} && git add ${fileName} && git commit -m "Update ${fileName}"`;
+            const command = `cd ${tempPath} && git add ${fileName}`;
             return exec(command)
                 .then(function(result: any) {
                     Log.info('GithubManager::writeFileToRepo(..)::addFilesToRepo() - done:');
                     Log.trace('GithubManager::writeFileToRepo(..)::addFilesToRepo() - stdout: ' + result.stdout);
                     if (result.stderr) {
                         Log.warn('GithubManager::writeFileToRepo(..)::addFilesToRepo() - stderr: ' + result.stderr);
+                    }
+                });
+        }
+
+        function commitFilesToRepo() {
+            Log.info('GithubManager::writeFileToRepo(..)::commitFilesToRepo() - start');
+            const command = `cd ${tempPath} && git commit -m "Update ${fileName}"`;
+            return exec(command)
+                .then(function(result: any) {
+                    Log.info('GithubManager::writeFileToRepo(..)::commitFilesToRepo() - done:');
+                    Log.trace('GithubManager::writeFileToRepo(..)::commitFilesToRepo() - stdout: ' + result.stdout);
+                    if (result.stderr) {
+                        Log.warn('GithubManager::writeFileToRepo(..)::commitFilesToRepo() - stderr: ' + result.stderr);
                     }
                 });
         }

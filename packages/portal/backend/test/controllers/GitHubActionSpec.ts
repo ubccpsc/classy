@@ -321,7 +321,7 @@ describe("GitHubActions", () => {
         const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
 
-        let success = await gh.writeFileToRepo(targetUrl, "test_file.txt", "hello world2!");
+        let success = await gh.writeFileToRepo(targetUrl, "test_file.txt", "hello world2!", true);
         expect(success).to.be.true;
     }).timeout(2 * TIMEOUT);
 
@@ -329,7 +329,7 @@ describe("GitHubActions", () => {
         const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
 
-        let success = await gh.writeFileToRepo(targetUrl, "test_file2.txt", "hello world!");
+        let success = await gh.writeFileToRepo(targetUrl, "test_file2.txt", "hello world!", true);
         expect(success).to.be.true;
     }).timeout(2 * TIMEOUT);
 
