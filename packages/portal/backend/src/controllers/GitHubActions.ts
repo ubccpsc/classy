@@ -977,7 +977,7 @@ export class GitHubActions {
         }
 
         function pushToRepo() {
-            Log.info('GithubManager::writeFileToRepo(..)::pushToNewRepo() - start');
+            Log.info('GithubManager::writeFileToRepo(..)::pushToRepo() - start');
             let command = `cd ${tempPath} && git push`;
             return exec(command)
                 .then(function(result: any) {

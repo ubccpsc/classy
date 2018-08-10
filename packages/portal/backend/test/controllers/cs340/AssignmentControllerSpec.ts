@@ -168,9 +168,10 @@ describe("CS340: AssignmentController", () => {
         let assignmentGrade = await ac.getAssignmentGrade(TEST_STUDENT_ID_0, "a2");
         expect(assignmentGrade).equals(null);
 
-        let aPayload = {
+        let aPayload: AssignmentGrade = {
             assignmentID: "a2",
             studentID:    TEST_STUDENT_ID_0,
+            released: false,
             questions:    [
                 {
                     questionName: "Question 1",
@@ -226,9 +227,10 @@ describe("CS340: AssignmentController", () => {
 
         let previousGradeRecords = await gc.getAllGrades(); // Pre command count
 
-        let aPayload = {
+        let aPayload: AssignmentGrade = {
             assignmentID: "a2",
             studentID:    TEST_STUDENT_ID_0,
+            released: false,
             questions:    [
                 {
                     questionName: "Question 1",
@@ -267,9 +269,10 @@ describe("CS340: AssignmentController", () => {
     });
 
     it("Should be able to handle arbitrary subquestion sizes.", async () => {
-        let aPayload = {
+        let aPayload: AssignmentGrade = {
             assignmentID: "a2",
             studentID:    TEST_STUDENT_ID_0,
+            released: false,
             questions:    [
                 {
                     questionName: "Question 1",

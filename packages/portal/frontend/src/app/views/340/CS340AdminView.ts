@@ -522,7 +522,7 @@ export class CS340AdminView extends AdminView {
                 if(foundGrade) {
                     let newEntry = {
                         value: gradeMapping[student.userName][delivCol.id].score,
-                        html: "<a onclick='window.classportal.view.transitionGradingPage(\""+
+                        html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
                         student.userName + "\", \"" + delivCol.id + "\")' href='#'>" +
                         gradeMapping[student.userName][delivCol.id].score.toString() +
                         "/" + maxGradeMap[delivCol.id] + "</a>"
@@ -532,7 +532,7 @@ export class CS340AdminView extends AdminView {
                 } else {
                     let newEntry = {
                         value: "---",
-                        html: "<a onclick='window.classportal.view.transitionGradingPage(\""+
+                        html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
                         student.userName + "\", \"" + delivCol.id + "\")' href='#'> ---" + "</a>",
                     };
                     newRow.push(newEntry);
@@ -645,7 +645,7 @@ export class CS340AdminView extends AdminView {
                 gradeInputElement.setAttribute("modifier", "underbar");
                 gradeInputElement.setAttribute("class", "subQuestionGradeInput");
                 gradeInputElement.setAttribute("onchange",
-                    "window.classportal.view.checkIfWarning(this)");
+                    "window.myApp.view.checkIfWarning(this)");
                 gradeInputElement.setAttribute("data-outOf", "" + subQuestion.outOf);
                 gradeInputElement.innerHTML = subQuestion.name + " [out of " + subQuestion.outOf + "]";
 
@@ -685,7 +685,7 @@ export class CS340AdminView extends AdminView {
         // Create a submission button
         let submitButton = document.createElement("ons-button");
         // TODO: Link this better
-        submitButton.setAttribute("onclick", "window.classportal.view.submitGrade()");
+        submitButton.setAttribute("onclick", "window.myApp.view.submitGrade()");
         submitButton.innerHTML = "Submit";
 
         gradingSectionElement!.appendChild(submitButton);
@@ -803,6 +803,7 @@ export class CS340AdminView extends AdminView {
         let newAssignmentGrade : AssignmentGrade = {
             assignmentID: aid,
             studentID: sid,
+            released: false,
             questions: questionArray
         };
 
