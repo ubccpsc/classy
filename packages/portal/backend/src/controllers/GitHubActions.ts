@@ -375,7 +375,7 @@ export class GitHubActions {
 
         let teams: {id: number, name: string}[] = [];
         for (const team of teamsRaw) {
-            if(team === null) Log.warn("listTeams:: null value with raw:" + raw); // DEBUG
+            if(team === null) Log.warn("listTeams:: null value with raw:" + teamsRaw); // DEBUG
 
             const id = team.id;
             const name = team.name;
@@ -598,7 +598,7 @@ export class GitHubActions {
             ctx.listTeams().then(function(teamList: any) {
                 for (const team of teamList) {
                     if (team.name === teamName) {
-                        if(entry === null) Log.warn("createTeam:: null value with teamName:" + teamName); // DEBUG
+                        if(team === null) Log.warn("createTeam:: null value with teamName:" + teamName); // DEBUG
                         teamId = team.id;
                         Log.info("GitHubAction::getTeamNumber(..) - matched team: " + teamName + "; id: " + teamId);
                     }

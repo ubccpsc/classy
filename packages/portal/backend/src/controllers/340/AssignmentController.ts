@@ -734,7 +734,7 @@ export class AssignmentController {
             }
         }
 
-        let percentageReceived: number = totalRecieved / totalPossible;
+        let percentageReceived: number = totalReceived / totalPossible;
         let newRow = ["**Total**", String(totalReceived), String(totalPossible),
             "Final Grade: " + String(percentageReceived) + "%"];
         tableInfo.push(newRow);
