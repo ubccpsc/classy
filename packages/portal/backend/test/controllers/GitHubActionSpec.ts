@@ -309,6 +309,35 @@ describe("GitHubActions", () => {
         Log.test('Partial clone took: ' + Util.took(start));
     }).timeout(120 * 1000);
 
+    it("Should be able to soft-write a file to a repo that doesn't exist.", async function() {
+        const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
+            Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
+
+        let success = await gh.writeFileToRepo(targetUrl, "test_file.txt", "hello world!");
+        expect(success).to.be.true;
+    }).timeout(2 * TIMEOUT);
+
+    it("Should be able to hard-write a file to a repo that does exist.", async function() {
+        const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
+            Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
+
+        let success = await gh.writeFileToRepo(targetUrl, "test_file.txt", "hello world2!");
+        expect(success).to.be.true;
+    }).timeout(2 * TIMEOUT);
+
+    it("Should be able to hard-write a file to a repo that doesn't exist.", async function() {
+        const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
+            Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
+
+        let success = await gh.writeFileToRepo(targetUrl, "test_file2.txt", "hello world!");
+        expect(success).to.be.true;
+    }).timeout(2 * TIMEOUT);
+
+    it("Should not be able to write a file to a repo that doesn't exist.", async function() {
+        let success = await gh.writeFileToRepo("invalidurl.com", "test_file2.txt", "hello world!");
+        expect(success).to.be.false;
+    }).timeout(2 * TIMEOUT);
+
     /**
      * This test is terrible, but gets the coverage tools to stop complaining.
      */
