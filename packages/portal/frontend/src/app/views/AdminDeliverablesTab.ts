@@ -123,7 +123,6 @@ export class AdminDeliverablesTab {
             defaultDate: new Date()
         };
 
-
         if (deliv === null) {
             // new deliverable, set defaults
 
@@ -256,7 +255,7 @@ export class AdminDeliverablesTab {
             URL,
             openTimestamp,
             closeTimestamp,
-            onOpenAction:  '',// TODO: add this
+            onOpenAction:  '', // TODO: add this
             onCloseAction: '', // TODO: add this
             minTeamSize,
             maxTeamSize,

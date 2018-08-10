@@ -1,12 +1,12 @@
 import Log from "../../../../../common/Log";
 
-import {UI} from "../util/UI"
-
 import {DeliverableTransport, GradeTransport, GradeTransportPayload, StudentTransport} from "../../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
-import {AdminView} from "./AdminView";
+
+import {UI} from "../util/UI"
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminStudentsTab} from "./AdminStudentsTab";
+import {AdminView} from "./AdminView";
 
 
 export class AdminGradesTab {
@@ -23,7 +23,6 @@ export class AdminGradesTab {
         // NOTE: this could consider if studentListTable has children, and if they do, don't refresh
         document.getElementById('gradesListTable').innerHTML = ''; // clear target
 
-
         UI.showModal('Retrieving grades.');
         const delivs = await AdminDeliverablesTab.getDeliverables(this.remote);
         const students = await AdminStudentsTab.getStudents(this.remote);
@@ -32,7 +31,6 @@ export class AdminGradesTab {
 
         this.render(grades, delivs, students);
     }
-
 
     private render(grades: GradeTransport[], delivs: DeliverableTransport[], students: StudentTransport[]): void {
         Log.trace("AdminGradesTab::render(..) - start");
@@ -155,8 +153,8 @@ export class AdminGradesTab {
         const start = Date.now();
         const url = remote + '/portal/admin/grades';
         const options = AdminView.getOptions();
-        const response = await fetch(url, options);
 
+        const response = await fetch(url, options);
         if (response.status === 200) {
             Log.trace('AdminGradesTab::getGrades(..) - 200 received');
             const json: GradeTransportPayload = await response.json();

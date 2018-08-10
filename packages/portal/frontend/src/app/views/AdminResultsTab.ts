@@ -28,7 +28,6 @@ export class AdminResultsTab {
         // NOTE: this could consider if studentListTable has children, and if they do, don't refresh
         document.getElementById('resultsListTable').innerHTML = ''; // clear target
 
-
         UI.showModal('Retrieving results.');
         const delivs = await AdminDeliverablesTab.getDeliverables(this.remote); // for select
         const repos = await AdminResultsTab.getRepositories(this.remote); // for select

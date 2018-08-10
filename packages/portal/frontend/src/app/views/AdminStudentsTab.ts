@@ -1,9 +1,9 @@
 import Log from "../../../../../common/Log";
 
-import {UI} from "../util/UI"
-
 import {StudentTransport, StudentTransportPayload} from "../../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
+
+import {UI} from "../util/UI"
 import {AdminView} from "./AdminView";
 
 
@@ -97,19 +97,21 @@ export class AdminStudentsTab {
         st.generate();
 
         labSectionsOptions = labSectionsOptions.sort();
-        let labSelector = document.querySelector('#studentsListSelect') as HTMLSelectElement;
-        labSelector.innerHTML = '';
-        for (const labId of labSectionsOptions) {
-            let selected = false;
-            if (labId === labSection) {
-                selected = true;
-            }
-            const o: HTMLOptionElement = new Option(labId, labId, false, selected);
-            labSelector.add(o);
-        }
+        UI.setDropdownOptions('studentsListSelect', labSectionsOptions, labSection);
+
+        const labSelector = document.querySelector('#studentsListSelect') as HTMLSelectElement;
+        // labSelector.innerHTML = '';
+        // for (const labId of labSectionsOptions) {
+        //     let selected = false;
+        //     if (labId === labSection) {
+        //         selected = true;
+        //     }
+        //     const o: HTMLOptionElement = new Option(labId, labId, false, selected);
+        //     labSelector.add(o);
+        // }
 
         const that = this;
-        labSelector.onchange = function (evt) {
+        labSelector.onchange = function(evt) {
             Log.info('AdminStudentsTab::render(..) - upload pressed');
             evt.stopPropagation(); // prevents list item expansion
 
