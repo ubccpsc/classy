@@ -232,6 +232,7 @@ export class GitHubActions {
 
         let rows: {id: number, name: string, url: string}[] = [];
         for (const entry of raw) {
+            if(entry === null) Log.warn("ListRepos:: null value with raw:" + raw); // DEBUG
             const id = entry.id;
             const name = entry.name;
             const url = entry.url;
@@ -271,6 +272,8 @@ export class GitHubActions {
 
         let rows: {id: number, type: string, url: string, name: string}[] = [];
         for (const entry of raw) {
+            if(entry === null) Log.warn("ListPeople:: null value with raw:" + raw); // DEBUG
+
             const id = entry.id;
             const type = entry.type;
             const url = entry.url;
@@ -372,6 +375,8 @@ export class GitHubActions {
 
         let teams: {id: number, name: string}[] = [];
         for (const team of teamsRaw) {
+            if(team === null) Log.warn("listTeams:: null value with raw:" + raw); // DEBUG
+
             const id = team.id;
             const name = team.name;
             teams.push({id: id, name: name});
@@ -483,6 +488,8 @@ export class GitHubActions {
                     json:    true
                 };
                 const body = await rp(options);
+                if(body === null) Log.warn("createTeam:: null value with teamName:" + teamName + " permission:" + permission); // DEBUG
+
                 let id = body.id;
                 Log.info("GitHubAction::createTeam(..) - success; new: " + id);
                 return {teamName: teamName, githubTeamNumber: id};
@@ -591,6 +598,7 @@ export class GitHubActions {
             ctx.listTeams().then(function(teamList: any) {
                 for (const team of teamList) {
                     if (team.name === teamName) {
+                        if(entry === null) Log.warn("createTeam:: null value with teamName:" + teamName); // DEBUG
                         teamId = team.id;
                         Log.info("GitHubAction::getTeamNumber(..) - matched team: " + teamName + "; id: " + teamId);
                     }
@@ -623,7 +631,7 @@ export class GitHubActions {
         let ctx = this;
 
         Log.info("GitHubAction::getTeamMembers( " + teamNumber + " ) - start");
-        return new Promise(function(fulfill) {
+        return new Promise(function(fulfill) 
 
             const uri = ctx.apiPath + '/teams/' + teamNumber + '/members';
             const options = {
