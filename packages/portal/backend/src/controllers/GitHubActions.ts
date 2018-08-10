@@ -631,7 +631,7 @@ export class GitHubActions {
         let ctx = this;
 
         Log.info("GitHubAction::getTeamMembers( " + teamNumber + " ) - start");
-        return new Promise(function(fulfill) 
+        return new Promise(function(fulfill) {
 
             const uri = ctx.apiPath + '/teams/' + teamNumber + '/members';
             const options = {
