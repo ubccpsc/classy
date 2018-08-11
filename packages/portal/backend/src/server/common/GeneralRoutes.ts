@@ -144,7 +144,7 @@ export default class GeneralRoutes implements IREST {
             const grades = await gc.getReleasedGradesForPerson(user);
             const gradeTrans: GradeTransport[] = [];
             for (const grade of grades) {
-                gradeTrans.push(gc.translateGrade(grade));
+                gradeTrans.push(gc.gradeToTransport(grade));
             }
             return gradeTrans;
         }
@@ -168,7 +168,7 @@ export default class GeneralRoutes implements IREST {
                 Log.trace('GeneralRoutes::performGetTeams(..) - in teams: ' + teams);
                 const teamTrans: TeamTransport[] = [];
                 for (const team of teams) {
-                    teamTrans.push(tc.translateTeam(team));
+                    teamTrans.push(tc.teamToTransport(team));
                 }
                 return teamTrans;
             }

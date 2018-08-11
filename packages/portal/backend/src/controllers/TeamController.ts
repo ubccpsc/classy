@@ -83,6 +83,7 @@ export class TeamController {
             }
         }
 
+        // ensure members are all in the same lab section (if required)
         if (deliv.teamSameLab === true) {
             let labName = null;
             for (const p of people) {
@@ -90,7 +91,20 @@ export class TeamController {
                     labName = p.labId;
                 }
                 if (labName !== p.labId) {
+                    Log.error("TeamController::formTeam( ... ) - members not all in same lab ( " + labName + ", " + p.labId + " )");
                     throw new Error("Team not created; all members are not in the same lab.");
+                }
+            }
+        }
+
+        // ensure members are not already on a team for that deliverable
+        for (const p of people) {
+            const teamsForPerson = await this.getTeamsForPerson(p);
+            for (const personTeam of teamsForPerson) {
+                if (personTeam.delivId === delivId) {
+                    Log.error("TeamController::formTeam( ... ) - member already on team: " +
+                        personTeam.id + " for deliverable: " + delivId);
+                    throw new Error("Team not created; some members are already on existing teams for this deliverable.");
                 }
             }
         }
@@ -125,7 +139,7 @@ export class TeamController {
         }
     }
 
-    public translateTeam(team: Team): TeamTransport {
+    public teamToTransport(team: Team): TeamTransport {
         const t: TeamTransport = {
             id:      team.id,
             delivId: team.delivId,

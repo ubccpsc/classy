@@ -452,7 +452,7 @@ export default class AdminRoutes implements IREST {
         const dc = new DeliverablesController();
         const result = dc.validateDeliverableTransport(delivTrans);
         if (result === null) {
-            const deliv = dc.translateTransport(delivTrans);
+            const deliv = dc.transportToDeliverable(delivTrans);
             const saveSucceeded = await dc.saveDeliverable(deliv);
             if (saveSucceeded !== null) {
                 // worked (would have returned a Deliverable)

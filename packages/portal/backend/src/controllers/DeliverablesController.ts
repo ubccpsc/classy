@@ -58,7 +58,7 @@ export class DeliverablesController {
         return null;
     }
 
-    public translateTransport(trans: DeliverableTransport): Deliverable | null {
+    public transportToDeliverable(trans: DeliverableTransport): Deliverable | null {
 
         const deliv: Deliverable = {
             id:         trans.id,
