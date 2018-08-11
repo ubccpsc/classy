@@ -105,6 +105,11 @@ export interface TeamTransport {
     URL: string | null;
 }
 
+export interface TeamFormationTransport {
+    delivId: string;
+    githubIds: string[];
+}
+
 export interface GradeTransportPayload {
     success?: GradeTransport[]; // only set if defined
     failure?: FailurePayload; // only set if defined

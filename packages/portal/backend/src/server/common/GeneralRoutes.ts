@@ -2,12 +2,12 @@ import * as restify from "restify";
 
 import Config, {ConfigKey} from '../../../../../common/Config';
 import Log from "../../../../../common/Log";
-
 import {
     ConfigTransportPayload,
     GradeTransport,
     GradeTransportPayload,
     Payload,
+    TeamFormationTransport,
     TeamTransport,
     TeamTransportPayload
 } from "../../../../../common/types/PortalTypes";
@@ -33,6 +33,8 @@ export default class GeneralRoutes implements IREST {
 
         // used by students to get their teams
         server.get('/portal/teams', GeneralRoutes.getTeams);
+
+        server.post('/portal/team', GeneralRoutes.postTeam);
     }
 
     public static getConfig(req: any, res: any, next: any) {
@@ -88,6 +90,47 @@ export default class GeneralRoutes implements IREST {
             res.send(400, payload);
             return next(false);
         });
+    }
+
+    public static postTeam(req: any, res: any, next: any) {
+        Log.info('GeneralRoutes::postTeam(..) - start');
+
+        const user = req.headers.user;
+        const token = req.headers.token;
+
+        const teamTrans: TeamFormationTransport = req.params;
+        GeneralRoutes.performPostTeam(user, token, teamTrans).then(function(team) {
+            const payload: TeamTransportPayload = {success: [team]}; // really shouldn't be an array, but it beats having another type
+            res.send(200, payload);
+            return next(false);
+        }).catch(function(err) {
+            Log.info('GeneralRoutes::postTeam(..) - ERROR: ' + err.message); // intentionally info
+            const payload: Payload = {failure: {message: err.message, shouldLogout: false}};
+            res.send(400, payload);
+            return next(false);
+        });
+    }
+
+    private static async performPostTeam(user: string, token: string, requestedTeam: TeamFormationTransport): Promise<TeamTransport> {
+        const ac = new AuthController();
+        const isValid = await ac.isValid(user, token);
+        if (isValid === false) {
+            Log.trace('GeneralRoutes::performPostTeam(..) - in isValid: ' + isValid);
+            throw new Error('Invalid credentials');
+        } else {
+            const tc = new TeamController();
+            const team = await tc.formTeam(requestedTeam.delivId, requestedTeam.githubIds, false);
+
+            const teamTrans: TeamTransport = {
+                id:      team.id,
+                delivId: team.delivId,
+                people:  team.personIds,
+                URL:     team.URL
+            };
+
+            Log.info('GeneralRoutes::performPostTeam(..) - team created: ' + team.id);
+            return teamTrans;
+        }
     }
 
     private static async performGetGrades(user: string, token: string): Promise<GradeTransport[]> {
