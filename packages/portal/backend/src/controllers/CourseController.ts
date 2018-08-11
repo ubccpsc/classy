@@ -304,8 +304,8 @@ export class CourseController { // don't implement ICourseController yet
 
     /**
      * Gets the results associated with the course.
-     * @param {delivId: string} * for any
-     * @param {repoId: string} * for any
+     * @param {reqDelivId: string} * for any
+     * @param {reqRepoId: string} * for any
      * @returns {Promise<AutoTestGradeTransport[]>}
      */
     public async getResults(reqDelivId: string, reqRepoId: string): Promise<AutoTestResultSummaryTransport[]> {
@@ -412,18 +412,21 @@ export class CourseController { // don't implement ICourseController yet
             throw new Error(msg);
         }
 
+        // noinspection SuspiciousTypeOfGuard
         if (typeof courseTrans.id !== 'string') {
             const msg = 'Course.id not specified';
             Log.error('CourseController::validateCourseTransport(..) - ERROR: ' + msg);
             throw new Error(msg);
         }
 
+        // noinspection SuspiciousTypeOfGuard
         if (typeof courseTrans.defaultDeliverableId !== 'string') {
             const msg = 'defaultDeliverableId not specified';
             Log.error('CourseController::validateCourseTransport(..) - ERROR: ' + msg);
             return msg;
         }
 
+        // noinspection SuspiciousTypeOfGuard
         if (typeof courseTrans.custom !== 'object') {
             const msg = 'custom not specified';
             Log.error('CourseController::validateCourseTransport(..) - ERROR: ' + msg);

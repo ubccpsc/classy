@@ -13,9 +13,8 @@ import {TeamController} from "../../src/controllers/TeamController";
 import {Test} from "../GlobalSpec";
 
 import '../GlobalSpec'; // load first
-import './GradeControllerSpec'; // load first
-
 import '../xRunLast/TestDatasetGeneratorSpec'; // load first
+import './GradeControllerSpec'; // load first
 
 export class TestData {
 }
@@ -109,7 +108,7 @@ describe("CourseController", () => {
     });
 
     it("Should be able to get a list of results.", async () => {
-        const res = await cc.getResults();
+        const res = await cc.getResults('*', '*');
         expect(res).to.be.an('array');
         // expect(res.length).to.be.greaterThan(0);
         expect(res.length).to.equal(0); // TODO: insert some results!!!
