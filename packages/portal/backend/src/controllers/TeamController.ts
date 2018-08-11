@@ -1,6 +1,8 @@
 import Log from "../../../../common/Log";
+
 import {TeamTransport} from "../../../../common/types/PortalTypes";
 import {Deliverable, Person, Team} from "../Types";
+
 import {DatabaseController} from "./DatabaseController";
 import {DeliverablesController} from "./DeliverablesController";
 import {PersonController} from "./PersonController";

@@ -1,4 +1,5 @@
-import restify = require('restify');
+import * as restify from "restify";
+
 import Log from "../../../../../common/Log";
 
 import IREST from "../IREST";
@@ -9,10 +10,6 @@ import IREST from "../IREST";
  * Nothing should be added to this class.
  */
 export default class NoCustomRoutes implements IREST {
-
-    public constructor() {
-    }
-
     public registerRoutes(server: restify.Server) {
         Log.trace('NoCustomRoutes::registerRoutes(); nothing to register');
     }

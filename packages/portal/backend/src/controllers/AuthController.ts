@@ -1,7 +1,7 @@
 import Log from "../../../../common/Log";
+
 import {DatabaseController} from "./DatabaseController";
 import {GitHubActions} from "./GitHubActions";
-
 import {PersonController} from "./PersonController";
 
 /**

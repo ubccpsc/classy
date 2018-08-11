@@ -1,6 +1,7 @@
 import * as parse from 'csv-parse';
 import * as fs from 'fs';
-import * as restify from 'restify'; // = require('restify');
+import * as restify from 'restify';
+
 import Log from "../../../../../common/Log";
 import {
     AutoTestResultSummaryPayload,
@@ -14,11 +15,13 @@ import {
     StudentTransportPayload,
     TeamTransportPayload
 } from '../../../../../common/types/PortalTypes';
+
 import {AuthController} from "../../controllers/AuthController";
 import {CourseController} from "../../controllers/CourseController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GitHubController} from "../../controllers/GitHubController";
 import {PersonController} from "../../controllers/PersonController";
+
 import {Person} from "../../Types";
 
 import IREST from "../IREST";

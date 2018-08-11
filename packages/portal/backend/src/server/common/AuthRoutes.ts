@@ -4,6 +4,7 @@ import * as restify from "restify";
 
 import Config, {ConfigKey} from "../../../../../common/Config";
 import Log from "../../../../../common/Log";
+
 import {AuthTransportPayload, Payload} from "../../../../../common/types/PortalTypes";
 
 import {AuthController} from "../../controllers/AuthController";

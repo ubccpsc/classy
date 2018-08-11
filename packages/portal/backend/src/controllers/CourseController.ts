@@ -11,11 +11,11 @@ import {
     TeamTransport
 } from '../../../../common/types/PortalTypes';
 import {Course, Deliverable, Grade, Person} from "../Types";
+
 import {DatabaseController} from "./DatabaseController";
 import {IGitHubController} from "./GitHubController";
 import {GradesController} from "./GradesController";
 import {PersonController} from "./PersonController";
-
 import {RepositoryController} from "./RepositoryController";
 import {ResultsController} from "./ResultsController";
 import {TeamController} from "./TeamController";
