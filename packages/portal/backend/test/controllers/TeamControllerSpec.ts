@@ -4,10 +4,11 @@ import "mocha";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {TeamController} from "../../src/controllers/TeamController";
-
 import {Test} from "../GlobalSpec";
-import '../GlobalSpec';
+// import '../GlobalSpec';
 import './PersonControllerSpec';
+
+const loadFirst = require("../GlobalSpec");
 
 describe("TeamController", () => {
 
@@ -56,8 +57,15 @@ describe("TeamController", () => {
         expect(p2).to.not.be.null;
 
         const deliv = await dc.getDeliverable(Test.DELIVID0);
-        const team = await tc.createTeam(Test.TEAMNAME1, deliv, [p1, p2], {});
-        expect(team).to.not.be.null;
+        let team = null;
+        let exc = null;
+        try {
+            team = await tc.createTeam(Test.TEAMNAME1, deliv, [p1, p2], {});
+        } catch (err) {
+            exc = err;
+        }
+        expect(team).to.be.null;
+        expect(exc).to.not.be.null;
 
         teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(1);

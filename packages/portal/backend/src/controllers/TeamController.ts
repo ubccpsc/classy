@@ -137,7 +137,7 @@ export class TeamController {
         } else {
             // Log.info("TeamController::createTeam( " + name + ",.. ) - team exists: " + JSON.stringify(existingTeam));
             // return await this.db.getTeam(name);
-            throw new Error("Duplicate team name");
+            throw new Error("Duplicate team name: " + name);
         }
     }
 

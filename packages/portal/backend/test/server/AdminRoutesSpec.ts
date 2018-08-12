@@ -25,21 +25,21 @@ const loadFirst = require("./AuthRoutesSpec");
 
 describe('Admin Routes', function() {
 
-    const TIMEOUT = 5000;
+    // const TIMEOUT = 5000;
 
-    var app: restify.Server = null;
+    let app: restify.Server = null;
+    let server: BackendServer = null;
 
-    var server: BackendServer = null;
+    const userName = Test.USERNAMEADMIN;
+    let userToken: string;
 
-    var userName = Test.USERNAMEADMIN;
-    var userToken: string;
     before(async () => {
         Log.test('AdminRoutes::before - start');
 
         // Config.getInstance().setProp(ConfigKey.name, ConfigCourses.classytest);
         // Test.ORGNAME = Config.getInstance().getProp(ConfigKey.testorg);
 
-        let db = DatabaseController.getInstance();
+        const db = DatabaseController.getInstance();
         // await db.clearData(); // nuke everything
 
         // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
@@ -137,7 +137,6 @@ describe('Admin Routes', function() {
         expect(body.failure).to.not.be.undefined;
     });
 
-
     it('Should be able to get a list of students', async function() {
 
         let response = null;
@@ -157,7 +156,6 @@ describe('Admin Routes', function() {
 
         // should confirm body.success objects (at least one)
     });
-
 
     it('Should not be able to get a list of grades if the requestor is not privileged', async function() {
 
@@ -180,7 +178,7 @@ describe('Admin Routes', function() {
 
         let response = null;
         let body: AutoTestResultPayload;
-        const url = '/portal/admin/results';
+        const url = '/portal/admin/results/any/any';
         try {
             response = await request(app).get(url).set({user: userName, token: userToken});
             body = response.body;
@@ -200,7 +198,7 @@ describe('Admin Routes', function() {
 
         let response = null;
         let body: AutoTestResultPayload;
-        const url = '/portal/admin/results';
+        const url = '/portal/admin/results/any/any';
         try {
             response = await request(app).get(url).set({user: Test.USERNAME1, token: userToken});
             body = response.body;
@@ -371,7 +369,7 @@ describe('Admin Routes', function() {
         const dc = new DeliverablesController();
         const url = '/portal/admin/deliverable';
         try {
-            let originalDelivs = await dc.getAllDeliverables();
+            const originalDelivs = await dc.getAllDeliverables();
             const d0 = originalDelivs[0];
 
             const deliv: DeliverableTransport = {
@@ -414,8 +412,8 @@ describe('Admin Routes', function() {
         Log.test('update did not fail');
 
         // check that the newtime was updated
-        let originalDelivs = await dc.getAllDeliverables();
-        const d0updated = originalDelivs[0];
+        const allDelivs = await dc.getAllDeliverables();
+        const d0updated = allDelivs[0];
         expect(d0updated.openTimestamp).to.equal(newTime);
         expect(d0updated.closeTimestamp).to.equal(newTime);
         Log.test('update did update the value');
@@ -441,7 +439,6 @@ describe('Admin Routes', function() {
         expect(body.success).to.not.be.undefined;
         expect(body.success.message).to.be.an('string');
     });
-
 
     it('Should fail to upload bad classlists', async function() {
 
@@ -508,7 +505,6 @@ describe('Admin Routes', function() {
         expect(person.studentNumber).to.equal(newPerson.studentNumber); // should be the same
 
     });
-
 
     it('Should be able to get the course object', async function() {
 

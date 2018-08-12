@@ -11,7 +11,6 @@ import {TeamController} from "../../src/controllers/TeamController";
 import {Auth, Course, Deliverable, Person} from "../../src/Types";
 
 import {Test} from "../GlobalSpec";
-
 // const loadFirst = require('../GlobalSpec');
 
 describe('TestDatasetGenerator', function() {
@@ -103,32 +102,6 @@ describe('TestDatasetGenerator', function() {
         await dc.writeAuth(a);
     });
 
-    it('Can generate some teams', async function() {
-        const tc: TeamController = new TeamController();
-        const pc: PersonController = new PersonController();
-        const dc = DatabaseController.getInstance();
-
-        let pA = await pc.getPerson('p1');
-        let pB = await pc.getPerson('p2');
-        const deliv = await dc.getDeliverable('d0');
-        await tc.createTeam(Test.TEAMNAME1, deliv, [pA, pB], {});
-
-        pA = await pc.getPerson('p3');
-        pB = await pc.getPerson('p4');
-        const pC = await pc.getPerson('p5');
-        await tc.createTeam(Test.TEAMNAME2, deliv, [pA, pB, pC], {});
-    });
-
-    it('Can generate some repos', async function() {
-        const tc: TeamController = new TeamController();
-
-        const teams = await tc.getAllTeams();
-        const rc: RepositoryController = new RepositoryController();
-
-        await rc.createRepository(Test.REPONAME1, [teams[0]], {});
-        await rc.createRepository(Test.REPONAME2, [teams[1]], {});
-    });
-
     it('Can generate some deliverables', async function() {
         const dc: DeliverablesController = new DeliverablesController();
 
@@ -169,6 +142,32 @@ describe('TestDatasetGenerator', function() {
 
             await dc.saveDeliverable(deliv);
         }
+    });
+
+    it('Can generate some teams', async function() {
+        const tc: TeamController = new TeamController();
+        const pc: PersonController = new PersonController();
+        const dc = DatabaseController.getInstance();
+
+        let pA = await pc.getPerson('p1');
+        let pB = await pc.getPerson('p2');
+        const deliv = await dc.getDeliverable('d0');
+        await tc.createTeam(Test.TEAMNAME3, deliv, [pA, pB], {});
+
+        pA = await pc.getPerson('p3');
+        pB = await pc.getPerson('p4');
+        const pC = await pc.getPerson('p5');
+        await tc.createTeam(Test.TEAMNAME4, deliv, [pA, pB, pC], {});
+    });
+
+    it('Can generate some repos', async function() {
+        const tc: TeamController = new TeamController();
+
+        const teams = await tc.getAllTeams();
+        const rc: RepositoryController = new RepositoryController();
+
+        await rc.createRepository(Test.REPONAME1, [teams[0]], {});
+        await rc.createRepository(Test.REPONAME2, [teams[1]], {});
     });
 
 });
