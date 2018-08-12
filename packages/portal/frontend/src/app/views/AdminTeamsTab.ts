@@ -185,9 +185,9 @@ export class AdminTeamsTab {
 
         let listContainsStudents = false;
         for (const student of students) {
-            if (studentsOnTeams.indexOf(student.userName) < 0) {
+            if (studentsOnTeams.indexOf(student.id) < 0) {
                 let row: TableCell[] = [
-                    {value: student.userName, html: '<a href="' + student.userUrl + '">' + student.userName + '</a>'}
+                    {value: student.id, html: '<a href="' + student.userUrl + '">' + student.id+ '</a>'}
                 ];
                 if (delivId !== '-None-') {
                     st.addRow(row);

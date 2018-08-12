@@ -43,7 +43,6 @@ export interface CourseTransport {
     custom: object;
 }
 
-
 export interface AuthTransportPayload {
     success?: AuthTransport; // only set if defined
     failure?: FailurePayload; // only set if defined
@@ -62,9 +61,10 @@ export interface StudentTransportPayload {
 }
 
 export interface StudentTransport {
+    id: string;
     firstName: string;
     lastName: string;
-    userName: string;
+    githubId: string;
     userUrl: string;
     studentNum: number;
     labId: string;

@@ -5,190 +5,123 @@
  * student views, as they need for their own courses.
  */
 
-import {OnsModalElement} from "onsenui";
-
+import {OnsButtonElement} from "onsenui";
 import Log from "../../../../../../common/Log";
+import {Payload, TeamFormationTransport, TeamTransport} from "../../../../../../common/types/PortalTypes";
 
 import {UI} from "../../util/UI";
-import {IView} from "../IView";
-import {GradeTransport} from "../../../../../../common/types/PortalTypes";
-import {SortableTable, TableCell, TableHeader} from "../../util/SortableTable";
+import {StudentView} from "../StudentView";
 
-export class CS310View implements IView {
+export class CS310View extends StudentView {
 
-    private remote: string = null;
+    private teams: TeamTransport[];
 
     constructor(remoteUrl: string) {
+        super();
         Log.info("CS310View::<init>");
         this.remote = remoteUrl;
     }
 
-    private longAction(duration: number, msg?: string) {
-        const that = this;
-        if (typeof msg !== 'undefined') {
-            that.showModal(msg);
-        } else {
-            that.showModal();
-        }
-
-        setTimeout(function () {
-            that.hideModal();
-        }, duration);
-
-        setTimeout(function () {
-            let sel = <any>document.getElementById('sdmmSelect');
-            if (sel !== null) {
-                sel.selectedIndex = sel.selectedIndex + 1;
-            }
-            that.checkStatus();
-        }, (duration - 500));
-
-    }
-
-    public checkStatus() {
-        Log.warn("CS310view::checkStatus() - NOT IMPLEMENTED");
-        // const msg = "Updating status";
-        // UI.showModal(msg);
-
-        // const url = this.remote + '/portal/currentStatus';
-        // this.fetchStatus(url);
-    }
-
     public renderPage(opts: {}) {
         Log.info('CS310View::renderPage() - start; options: ' + opts);
+        const that = this;
+        const start = Date.now();
 
-        // this.checkStatus();
-
-        this.initGrades();
+        UI.showModal("Fetching data.");
+        super.render().then(function() {
+            // super render complete; do custom work
+            return that.fetchData();
+        }).then(function() {
+            that.renderTeams(that.teams);
+            UI.hideModal();
+            Log.info('CS310View::renderPage(..) - prep & render took: ' + UI.took(start));
+        }).catch(function(err) {
+            Log.error('CS310View::renderPage() - ERROR: ' + err);
+            UI.hideModal();
+        });
     }
 
-    private async initGrades(): Promise<void> {
-        // studentGradeDiv
-        UI.showModal('Fetching Grades');
-        let options = this.getOptions();
-        const url = this.remote + '/portal/grades';
-        let response = await fetch(url, options);
-        UI.hideModal();
+    private async fetchData(): Promise<void> {
+        UI.showModal('Fetching Data');
+        this.teams = null;
+
+        const url = this.remote + '/portal/teams';
+        const response = await fetch(url, super.getOptions());
         if (response.status === 200) {
-            Log.trace('CS310View::initGrades(..) - 200 received');
+            Log.trace('CS310View::fetchData(..) - teams 200 received');
             let json = await response.json();
-            Log.trace('CS310View::initGrades(..) - payload: ' + JSON.stringify(json));
-
+            Log.trace('CS310View::fetchData(..) - teams payload: ' + JSON.stringify(json));
             if (typeof json.success !== 'undefined') {
-                Log.trace('CS310View::initGrades(..) - success: ' + json.success);
-                this.renderGrades(<GradeTransport[]>json.success);
+                Log.trace('CS310View::fetchData(..) - teams success: ' + json.success);
+                this.teams = json.success as TeamTransport[];
             } else {
-                Log.trace('CS310View::initGrades(..) - ERROR: ' + json.failure.message);
-                this.showError(json.failure);
+                Log.trace('CS310View::fetchData(..) - teams ERROR: ' + json.failure.message);
+                UI.showError(json.failure);
             }
-
         } else {
-            Log.trace('CS310View::initGrades(..) - !200 received');
+            Log.trace('CS310View::fetchData(..) - teams !200 received');
+        }
+
+        UI.hideModal();
+        return;
+    }
+
+    private async renderTeams(teams: TeamTransport[]): Promise<void> {
+        Log.trace('CS310View::renderTeams(..) - start');
+        const that = this;
+
+        // make sure these are hidden
+        UI.hideSection('studentSelectPartnerDiv');
+        UI.hideSection('studentPartnerDiv');
+
+        // 310 only has one team so we don't need to check to see if it's the right one
+        if (teams.length < 1) {
+            // no team yet
+            const button = document.querySelector('#studentSelectPartnerButton') as OnsButtonElement;
+            button.onclick = function(evt: any) {
+                Log.info('CS310View::renderTeams(..)::createTeam::onClick');
+                that.formTeam().then(function(team) {
+                    Log.info('CS310View::renderTeams(..)::createTeam::onClick::then - team created');
+                    if (team !== null) {
+                        that.renderPage({}); // simulating refresh
+                    }
+                }).catch(function(err) {
+                    Log.info('CS310View::renderTeams(..)::createTeam::onClick::catch - ERROR: ' + err);
+                });
+            };
+
+            UI.showSection('studentSelectPartnerDiv');
+        } else {
+            // already on team
+            UI.showSection('studentPartnerDiv');
         }
     }
 
-    public showModal(text?: string) {
-        // https://onsen.io/v2/api/js/ons-modal.html
+    private async formTeam(): Promise<TeamTransport> {
 
-        if (typeof text === 'undefined') {
-            text = null;
-        }
-
-        const modal = document.querySelector('ons-modal') as OnsModalElement;
-        if (modal !== null) {
-            modal.style.backgroundColor = '#444444'; // modal opaque
-            if (text != null) {
-                document.getElementById('modalText').innerHTML = text;
-            }
-            modal.show({animation: 'fade'});
-        } else {
-            Log.warn('CS310View::showModal(..) - Modal is null');
-        }
-    }
-
-    public hideModal() {
-        const modal = document.querySelector('ons-modal') as OnsModalElement;
-        if (modal !== null) {
-            modal.hide({animation: 'fade'});
-        } else {
-            Log.warn('CS310View::hideModal(..) - Modal is null');
-        }
-    }
-
-    public showError(failure: any) { // FailurePayload
-        Log.error("CS310View::showError(..) - failure: " + JSON.stringify(failure));
-        if (typeof failure === 'string') {
-            UI.showAlert(failure);
-        } else if (typeof failure.failure !== 'undefined') {
-            UI.showAlert(failure.failure.message);
-        } else {
-            Log.error("Unknown message: " + JSON.stringify(failure));
-            UI.showAlert("Action unsuccessful.");
-        }
-    }
-
-    private getOptions() {
-        const options = {
-            headers: {
-                'Content-Type': 'application/json',
-                'user':         localStorage.user,
-                'token':        localStorage.token,
-                'org':          localStorage.org
-            }
+        const otherId = UI.getTextFieldValue('studentSelectPartnerText');
+        const payload: TeamFormationTransport = {
+            delivId:   'proj', // only one team in cs310 (and it is always called project)
+            githubIds: [this.getStudent().githubId, otherId]
         };
-        return options;
-    }
+        const url = this.remote + '/portal/team';
+        let options: any = this.getOptions();
+        options.method = 'post';
+        options.body = JSON.stringify(payload);
 
-    private renderGrades(grades: GradeTransport[]) {
-        Log.trace("CS310View::renderGrades() - start");
+        let response = await fetch(url, options);
+        let body = await response.json() as Payload;
 
-        const headers: TableHeader[] = [
-            {
-                id:          'id',
-                text:        'Deliv Id',
-                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
-                defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
-                sortDown:    false, // Whether the column should initially sort descending or ascending.
-                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
-            },
-            {
-                id:          'grade',
-                text:        'Grade',
-                sortable:    true,
-                defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
-            },
-            {
-                id:          'comment',
-                text:        'Comment',
-                sortable:    false,
-                defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em; text-align: left;'
-            }
-        ];
-
-        const st = new SortableTable(headers, '#studentGradeTable');
-        for (const grade of grades) {
-
-            let score: number | string = grade.score;
-            if (score === null) {
-                score = 'Not Set';
-            }
-            let comment = grade.comment;
-            if (comment === null) {
-                comment = '';
-            }
-            let row: TableCell[] = [
-                {value: grade.delivId, html: grade.delivId},
-                {value: score, html: '<a href="' + grade.URL + '">' + score + '</a>'},
-                {value: comment, html: comment}
-            ];
-            st.addRow(row);
+        if (typeof body.success !== 'undefined') {
+            // worked
+            return body.success as TeamTransport;
+        } else if (typeof body.failure !== 'undefined') {
+            // failed
+            UI.showError(body);
+            return null;
+        } else {
+            Log.error("CS310View::formTeam() - else ERROR: " + JSON.stringify(body));
         }
-
-        st.generate();
-
     }
+
 }

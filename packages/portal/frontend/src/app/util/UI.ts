@@ -126,6 +126,36 @@ export class UI {
         }
     }
 
+    public static showError(failure: any) { // FailurePayload
+        Log.error("UI::showError(..) - failure: " + JSON.stringify(failure));
+        if (typeof failure === 'string') {
+            UI.showAlert(failure);
+        } else if (typeof failure.failure !== 'undefined') {
+            UI.showAlert(failure.failure.message);
+        } else {
+            Log.error("Unknown message: " + JSON.stringify(failure));
+            UI.showAlert("Action unsuccessful.");
+        }
+    }
+
+    public static getTextFieldValue(fieldName: string): string {
+        const field = document.querySelector('#' + fieldName) as HTMLTextAreaElement;
+        if (field !== null) {
+            return field.value;
+        } else {
+            Log.error('UI::getTextFieldValue( ' + fieldName + ' ) - element does not exist')
+        }
+    }
+
+    public static getToggleValue(fieldName: string): boolean {
+        const field = document.querySelector('#' + fieldName) as HTMLInputElement;
+        if (field !== null) {
+            return field.checked;
+        } else {
+            Log.error('UI::getToggleValue( ' + fieldName + ' ) - element does not exist')
+        }
+    }
+
     public static getDropdownValue(elementName: string): string {
         const field = document.querySelector('#' + elementName) as HTMLSelectElement;
         if (field !== null) {

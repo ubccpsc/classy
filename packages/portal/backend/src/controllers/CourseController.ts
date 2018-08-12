@@ -225,9 +225,10 @@ export class CourseController { // don't implement ICourseController yet
         for (const person of people) {
             if (person.kind === 'student') {
                 const studentTransport = {
+                    id:         person.id,
                     firstName:  person.fName,
                     lastName:   person.lName,
-                    userName:   person.githubId,
+                    githubId:   person.githubId,
                     userUrl:    Config.getInstance().getProp(ConfigKey.githubHost) + '/' + person.githubId,
                     studentNum: person.studentNumber,
                     labId:      person.labId

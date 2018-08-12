@@ -105,7 +105,7 @@ export class AdminGradesTab {
             //     lab = student.labId;
             // }
             let row: TableCell[] = [
-                {value: student.userName, html: '<a href="' + student.userUrl + '">' + student.userName + '</a>'},
+                {value: student.id, html: '<a href="' + student.userUrl + '">' + student.id + '</a>'},
                 {value: student.studentNum, html: student.studentNum + ''},
                 {value: student.firstName, html: student.firstName},
                 {value: student.lastName, html: student.lastName},
@@ -114,7 +114,7 @@ export class AdminGradesTab {
             for (const deliv of delivs) {
                 let tableCell: TableCell = null;
                 for (const grade of grades) {
-                    if (grade.personId === student.userName) {
+                    if (grade.personId === student.id) {
                         if (grade.delivId === deliv.id) {
                             let score = '';
                             if (grade.score !== null && grade.score > 0) {

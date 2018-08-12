@@ -198,24 +198,24 @@ export class AdminDeliverablesTab {
     private async save(): Promise<void> {
         Log.info("AdminDeliverablesTab::save() - start");
 
-        const id = this.getTextField('adminEditDeliverablePage-name');
-        const URL = this.getTextField('adminEditDeliverablePage-url');
+        const id = UI.getTextFieldValue('adminEditDeliverablePage-name');
+        const URL = UI.getTextFieldValue('adminEditDeliverablePage-url');
 
         const openTimestamp = this.openPicker.latestSelectedDateObj.getTime();
         const closeTimestamp = this.closePicker.latestSelectedDateObj.getTime();
 
         const minTeamSize = Number(UI.getDropdownValue('adminEditDeliverablePage-minTeamSize'));
         const maxTeamSize = Number(UI.getDropdownValue('adminEditDeliverablePage-maxTeamSize'));
-        const teamsSameLab = this.getToggle('adminEditDeliverablePage-inSameLab');
-        const studentsFormTeams = this.getToggle('adminEditDeliverablePage-studentsMakeTeams');
+        const teamsSameLab = UI.getToggleValue('adminEditDeliverablePage-inSameLab');
+        const studentsFormTeams = UI.getToggleValue('adminEditDeliverablePage-studentsMakeTeams');
 
-        const gradesReleased = this.getToggle('adminEditDeliverablePage-gradesReleased');
+        const gradesReleased = UI.getToggleValue('adminEditDeliverablePage-gradesReleased');
 
-        const dockerImage = this.getTextField('adminEditDeliverablePage-atDockerName');
-        const maxExecTime = Number(this.getTextField('adminEditDeliverablePage-atContainerTimeout'));
-        const studentDelay = Number(this.getTextField('adminEditDeliverablePage-atStudentDelay'));
+        const dockerImage = UI.getTextFieldValue('adminEditDeliverablePage-atDockerName');
+        const maxExecTime = Number(UI.getTextFieldValue('adminEditDeliverablePage-atContainerTimeout'));
+        const studentDelay = Number(UI.getTextFieldValue('adminEditDeliverablePage-atStudentDelay'));
 
-        const atRegression = this.getTextField('adminEditDeliverablePage-atRegressionIds');
+        const atRegression = UI.getTextFieldValue('adminEditDeliverablePage-atRegressionIds');
         const regressionDelivIds: string[] = [];
         if (atRegression.length > 0) {
             const parts = atRegression.split(',');
@@ -224,7 +224,7 @@ export class AdminDeliverablesTab {
             }
         }
 
-        let atCustomRaw = this.getTextField('adminEditDeliverablePage-atCustom');
+        let atCustomRaw = UI.getTextFieldValue('adminEditDeliverablePage-atCustom');
         let atCustom: any = {};
         if (atCustomRaw.length > 0) {
             Log.trace("AdminDeliverablesTab::save() - atCustomRaw: " + atCustomRaw);
@@ -233,7 +233,7 @@ export class AdminDeliverablesTab {
             atCustom = JSON.parse(atCustomRaw);
         }
 
-        let customRaw = this.getTextField('adminEditDeliverablePage-custom');
+        let customRaw = UI.getTextFieldValue('adminEditDeliverablePage-custom');
         let custom: any = {};
         if (customRaw.length > 0) {
             Log.trace("AdminDeliverablesTab::save() - customRaw: " + customRaw);
@@ -282,24 +282,6 @@ export class AdminDeliverablesTab {
             UI.popPage();
         } else {
             UI.showAlert(body.failure.message);
-        }
-    }
-
-    private getTextField(fieldName: string): string {
-        const field = document.querySelector('#' + fieldName) as HTMLTextAreaElement;
-        if (field !== null) {
-            return field.value;
-        } else {
-            Log.error('AdminDeliverablesTab::getTextField( ' + fieldName + ' ) - element does not exist')
-        }
-    }
-
-    private getToggle(fieldName: string): boolean {
-        const field = document.querySelector('#' + fieldName) as HTMLInputElement;
-        if (field !== null) {
-            return field.checked;
-        } else {
-            Log.error('AdminDeliverablesTab::getToggle( ' + fieldName + ' ) - element does not exist')
         }
     }
 

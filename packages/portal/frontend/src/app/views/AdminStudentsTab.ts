@@ -80,7 +80,7 @@ export class AdminStudentsTab {
                 labId = student.labId;
             }
             let row: TableCell[] = [
-                {value: student.userName, html: '<a href="' + student.userUrl + '">' + student.userName + '</a>'},
+                {value: student.id, html: '<a href="' + student.userUrl + '">' + student.id + '</a>'},
                 {value: student.firstName, html: student.firstName},
                 {value: student.lastName, html: student.lastName},
                 {value: labId, html: labId}
