@@ -525,10 +525,10 @@ export class CS340AdminView extends AdminView {
                 if(foundGrade) {
                     let newEntry = {
 
-                        value: gradeMapping[student.userName][delivCol.id].score,
+                        value: gradeMapping[student.githubId][delivCol.id].score,
                         html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
-                        student.userName + "\", \"" + delivCol.id + "\")' href='#'>" +
-                        gradeMapping[student.userName][delivCol.id].score.toString() +
+                        student.githubId + "\", \"" + delivCol.id + "\")' href='#'>" +
+                        gradeMapping[student.githubId][delivCol.id].score.toString() +
 
                         "/" + maxGradeMap[delivCol.id] + "</a>"
                     };
@@ -539,7 +539,7 @@ export class CS340AdminView extends AdminView {
                         value: "---",
 
                         html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
-                        student.userName + "\", \"" + delivCol.id + "\")' href='#'> ---" + "</a>",
+                        student.githubId + "\", \"" + delivCol.id + "\")' href='#'> ---" + "</a>",
 
                     };
                     newRow.push(newEntry);

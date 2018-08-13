@@ -198,8 +198,13 @@ export class AssignmentController {
 
             // for each student, create a team
             let teamName = deliv.teamPrefix + student.githubId;
-            let newTeam: Team = await this.tc.createTeam(teamName, deliv, [student], null);
-            if (newTeam === null) {
+            // verify if the team exists or not
+            let studentTeam: Team = await this.tc.getTeam(teamName);
+            if (teamExists === null) {
+                // The team doesn't exist, so initialize it
+                studentTeam = await this.tc.createTeam(teamName, deliv, [student], null);
+            }
+            if (studentTeam === null) {
                 Log.error("AssignmentController::initializeAllRepositories(..) - error creating team " +
                     teamName + " for student " + student.githubId);
             }
@@ -210,7 +215,7 @@ export class AssignmentController {
             // attempt to provision the repository,
             // if success, add it to the AssignmentInfo
             let repoName: string = deliv.repoPrefix + student.githubId;
-            let provisionedRepo = await this.createAssignmentRepo(repoName, delivId, [newTeam]);
+            let provisionedRepo = await this.createAssignmentRepo(repoName, delivId, [studentTeam]);
 
 
             if (provisionedRepo !== null) {
