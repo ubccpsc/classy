@@ -43,7 +43,6 @@ export interface CourseTransport {
     custom: object;
 }
 
-
 export interface AuthTransportPayload {
     success?: AuthTransport; // only set if defined
     failure?: FailurePayload; // only set if defined
@@ -62,9 +61,10 @@ export interface StudentTransportPayload {
 }
 
 export interface StudentTransport {
+    id: string;
     firstName: string;
     lastName: string;
-    userName: string;
+    githubId: string;
     userUrl: string;
     studentNum: number;
     labId: string;
@@ -103,6 +103,11 @@ export interface TeamTransport {
     delivId: string;
     people: string[];
     URL: string | null;
+}
+
+export interface TeamFormationTransport {
+    delivId: string;
+    githubIds: string[];
 }
 
 export interface GradeTransportPayload {
@@ -206,6 +211,16 @@ export interface AutoTestDefaultDeliverableTransport {
 
 export interface AutoTestPersonIdTransport {
     personId: string | null;
+}
+
+export interface RepositoryPayload {
+    success?: RepositoryTransport[]; // only set if defined
+    failure?: FailurePayload; // only set if defined
+}
+
+export interface RepositoryTransport {
+    id: string;
+    URL: string;
 }
 
 export interface AutoTestResultPayload {

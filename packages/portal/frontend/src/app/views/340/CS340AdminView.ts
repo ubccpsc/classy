@@ -1,17 +1,20 @@
-import {AdminView} from "../AdminView";
+import {OnsButtonElement, OnsInputElement} from "onsenui";
 import Log from "../../../../../../common/Log";
 import {
     AssignmentGrade,
-    AssignmentGradingRubric, AssignmentInfo, AssignmentStatus, QuestionGrade, SubQuestionGrade,
+    AssignmentGradingRubric,
+    AssignmentInfo,
+    AssignmentStatus,
+    QuestionGrade,
+    SubQuestionGrade,
     SubQuestionGradingRubric
 } from "../../../../../../common/types/CS340Types";
-import {UI} from "../../util/UI";
-import {Factory} from "../../Factory";
 import {StudentTransport, StudentTransportPayload} from "../../../../../../common/types/PortalTypes";
 import {Deliverable, Grade} from "../../../../../backend/src/Types";
+import {Factory} from "../../Factory";
 import {SortableTable, TableCell, TableHeader} from "../../util/SortableTable";
-import {OnsButtonElement, OnsInputElement} from "onsenui";
-import {AdminDeliverablesTab} from "../AdminDeliverablesTab";
+import {UI} from "../../util/UI";
+import {AdminView} from "../AdminView";
 
 const ERROR_POTENTIAL_INCORRECT_INPUT: string = "input triggered warning";
 const ERROR_INVALID_INPUT: string = "invalid input";
@@ -511,20 +514,22 @@ export class CS340AdminView extends AdminView {
         for(const student of students) {
             // TODO [Jonathan]: Add SID and hideable student names
             let newRow: TableCell[] = [
-                {value: student.userName, html: '<a href="' + student.userUrl + '">' + student.userName + '</a>'},
+                {value: student.id, html: '<a href="' + student.userUrl + '">' + student.id + '</a>'},
                 {value: student.firstName, html: student.firstName},
                 {value: student.lastName, html: student.lastName},
             ];
             for(const delivCol of filteredDelivArray) {
                 let foundGrade = false;
-                if(typeof gradeMapping[student.userName] === "undefined") gradeMapping[student.userName] = {};
-                if(typeof gradeMapping[student.userName][delivCol.id] !== "undefined") foundGrade = true;
+                if(typeof gradeMapping[student.id] === "undefined") gradeMapping[student.id] = {};
+                if(typeof gradeMapping[student.id][delivCol.id] !== "undefined") foundGrade = true;
                 if(foundGrade) {
                     let newEntry = {
+
                         value: gradeMapping[student.userName][delivCol.id].score,
                         html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
                         student.userName + "\", \"" + delivCol.id + "\")' href='#'>" +
                         gradeMapping[student.userName][delivCol.id].score.toString() +
+
                         "/" + maxGradeMap[delivCol.id] + "</a>"
                     };
                     newRow.push(newEntry);
@@ -532,8 +537,10 @@ export class CS340AdminView extends AdminView {
                 } else {
                     let newEntry = {
                         value: "---",
+
                         html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
                         student.userName + "\", \"" + delivCol.id + "\")' href='#'> ---" + "</a>",
+
                     };
                     newRow.push(newEntry);
 

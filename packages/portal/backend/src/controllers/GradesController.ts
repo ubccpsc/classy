@@ -1,5 +1,6 @@
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
+
 import {AutoTestGradeTransport, GradeTransport} from "../../../../common/types/PortalTypes";
 import {GradePayload} from "../../../../common/types/SDMMTypes";
 import {Grade} from "../Types";
@@ -197,7 +198,7 @@ export class GradesController {
         return null;
     }
 
-    public translateGrade(grade: Grade): GradeTransport {
+    public gradeToTransport(grade: Grade): GradeTransport {
         const config = Config.getInstance();
 
         const g: GradeTransport = {

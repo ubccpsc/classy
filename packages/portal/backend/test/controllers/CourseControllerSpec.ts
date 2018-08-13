@@ -2,7 +2,7 @@ import {expect} from "chai";
 import "mocha";
 import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
-import {AutoTestGradeTransport, GradeTransport, TeamTransport} from "../../../../common/types/PortalTypes";
+import {AutoTestGradeTransport, GradeTransport, StudentTransport, TeamTransport} from "../../../../common/types/PortalTypes";
 
 import {CourseController} from "../../src/controllers/CourseController";
 import {TestGitHubController} from "../../src/controllers/GitHubController";
@@ -13,9 +13,8 @@ import {TeamController} from "../../src/controllers/TeamController";
 import {Test} from "../GlobalSpec";
 
 import '../GlobalSpec'; // load first
+// import '../xRunLast/TestDatasetGeneratorSpec'; // load first
 import './GradeControllerSpec'; // load first
-
-import '../xRunLast/TestDatasetGeneratorSpec'; // load first
 
 export class TestData {
 }
@@ -61,13 +60,14 @@ describe("CourseController", () => {
         expect(res).to.be.an('array');
         expect(res.length).to.be.greaterThan(0);
 
-        const s = {
-            firstName:  'p1first',
-            lastName:   'p1last',
-            userName:   'p1',
-            userUrl:    Config.getInstance().getProp(ConfigKey.githubHost) + '/p1',
-            studentNum: 1,
-            labId:      'l1a'
+        const s: StudentTransport = {
+            firstName:  '',
+            lastName:   '',
+            id:         Test.USERNAME2,
+            githubId:   Test.USERNAME2,
+            userUrl:    Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Test.USERNAME2,
+            studentNum: null,
+            labId:      'UNKNOWN'
         };
 
         expect(res).to.deep.include(s); // make sure at least one student with the right format is in there
@@ -109,7 +109,7 @@ describe("CourseController", () => {
     });
 
     it("Should be able to get a list of results.", async () => {
-        const res = await cc.getResults();
+        const res = await cc.getResults('*', '*');
         expect(res).to.be.an('array');
         // expect(res.length).to.be.greaterThan(0);
         expect(res.length).to.equal(0); // TODO: insert some results!!!

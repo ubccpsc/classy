@@ -11,6 +11,8 @@ import restify = require('restify');
 
 const request = require('supertest');
 
+const loadFirst = require("../xRunLast/TestDatasetGeneratorSpec");
+
 describe('Auth Routes', function () {
 
     const TIMEOUT = 1000 * 10;
@@ -103,8 +105,7 @@ describe('Auth Routes', function () {
     it('Should fail to get credentials if the token is bad.', async function () {
 
         const dc: DatabaseController = DatabaseController.getInstance();
-
-        let auth = await dc.getAuth(Test.USERNAMEADMIN);
+        const auth = await dc.getAuth(Test.USERNAMEADMIN);
         expect(auth).to.not.be.null;
 
         let response = null;

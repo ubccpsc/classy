@@ -1,6 +1,7 @@
 import * as parse from 'csv-parse';
 import * as fs from 'fs';
-import * as restify from 'restify'; // = require('restify');
+import * as restify from 'restify';
+
 import Log from "../../../../../common/Log";
 import {
     AutoTestResultSummaryPayload,
@@ -10,14 +11,17 @@ import {
     DeliverableTransportPayload,
     GradeTransportPayload,
     Payload,
+    RepositoryPayload,
     StudentTransportPayload,
     TeamTransportPayload
 } from '../../../../../common/types/PortalTypes';
+
 import {AuthController} from "../../controllers/AuthController";
 import {CourseController} from "../../controllers/CourseController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GitHubController} from "../../controllers/GitHubController";
 import {PersonController} from "../../controllers/PersonController";
+
 import {Person} from "../../Types";
 
 import IREST from "../IREST";
@@ -35,8 +39,9 @@ export default class AdminRoutes implements IREST {
         server.get('/portal/admin/deliverables', AdminRoutes.isPrivileged, AdminRoutes.getDeliverables);
         server.get('/portal/admin/students', AdminRoutes.isPrivileged, AdminRoutes.getStudents);
         server.get('/portal/admin/teams', AdminRoutes.isPrivileged, AdminRoutes.getTeams);
+        server.get('/portal/admin/repositories', AdminRoutes.isPrivileged, AdminRoutes.getRepositories);
         server.get('/portal/admin/grades', AdminRoutes.isPrivileged, AdminRoutes.getGrades);
-        server.get('/portal/admin/results', AdminRoutes.isPrivileged, AdminRoutes.getResults); // result summaries
+        server.get('/portal/admin/results/:delivId/:repoId', AdminRoutes.isPrivileged, AdminRoutes.getResults); // result summaries
         // server.get('/portal/admin/dashboard', AdminRoutes.isPrivileged, AdminRoutes.getDashboard); // detailed results
 
         // admin-only functions
@@ -212,15 +217,8 @@ export default class AdminRoutes implements IREST {
         });
     }
 
-    /**
-     * Returns a AutoTestResultPayload.
-     *
-     * @param req
-     * @param res
-     * @param next
-     */
-    private static getResults(req: any, res: any, next: any) {
-        Log.info('AdminRoutes::getResults(..) - start');
+    private static getRepositories(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::getRepositories(..) - start');
 
         const handleError = function(code: number, msg: string) {
             const payload: Payload = {failure: {message: msg, shouldLogout: false}};
@@ -230,7 +228,52 @@ export default class AdminRoutes implements IREST {
 
         const cc = new CourseController(new GitHubController());
         // handled by preceeding action in chain above (see registerRoutes)
-        cc.getResults().then(function(results) {
+        cc.getRepositories().then(function(repos) {
+            Log.trace('AdminRoutes::getRepositories(..) - in then; # repos: ' + repos.length);
+            const payload: RepositoryPayload = {success: repos};
+            res.send(payload);
+            return next();
+        }).catch(function(err) {
+            Log.error('AdminRoutes::getRepositories(..) - ERROR: ' + err.message);
+            return handleError(400, 'Unable to retrieve repository list.');
+        });
+    }
+
+    /**
+     * Returns a AutoTestResultPayload.
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
+    private static getResults(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::getResults(..) - start');
+        const cc = new CourseController(new GitHubController());
+
+        const handleError = function(code: number, msg: string) {
+            const payload: Payload = {failure: {message: msg, shouldLogout: false}};
+            res.send(code, payload);
+            return next(false);
+        };
+
+        let delivId = null;
+        if (typeof req.params.delivId !== 'undefined') {
+            delivId = req.params.delivId;
+            if (delivId === 'any') {
+                delivId = '*';
+            }
+        }
+
+        let repoId = null;
+        if (typeof req.params.repoId !== 'undefined') {
+            repoId = req.params.repoId;
+            if (repoId === 'any') {
+                repoId = '*';
+            }
+        }
+
+        // handled by preceeding action in chain above (see registerRoutes)
+        cc.getResults(delivId, repoId).then(function(results) {
             Log.trace('AdminRoutes::getResults(..) - in then; # results: ' + results.length);
             const payload: AutoTestResultSummaryPayload = {success: results};
             res.send(payload);
@@ -412,7 +455,7 @@ export default class AdminRoutes implements IREST {
         const dc = new DeliverablesController();
         const result = dc.validateDeliverableTransport(delivTrans);
         if (result === null) {
-            const deliv = dc.translateTransport(delivTrans);
+            const deliv = dc.transportToDeliverable(delivTrans);
             const saveSucceeded = await dc.saveDeliverable(deliv);
             if (saveSucceeded !== null) {
                 // worked (would have returned a Deliverable)

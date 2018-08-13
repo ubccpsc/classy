@@ -1,11 +1,12 @@
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
+
 import {CourseController} from "./controllers/CourseController";
 import {GitHubController, IGitHubController} from "./controllers/GitHubController";
 import {SDMMController} from "./controllers/SDMM/SDMMController";
 import CS340REST from "./server/340/CS340REST";
-import NoCustomRoutes from "./server/common/NoCustomRoutes";
 
+import NoCustomRoutes from "./server/common/NoCustomRoutes";
 import IREST from "./server/IREST";
 import SDMMREST from "./server/SDMM/SDMMREST";
 

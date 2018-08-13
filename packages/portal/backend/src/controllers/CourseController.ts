@@ -6,15 +6,16 @@ import {
     CourseTransport,
     DeliverableTransport,
     GradeTransport,
+    RepositoryTransport,
     StudentTransport,
     TeamTransport
 } from '../../../../common/types/PortalTypes';
 import {Course, Deliverable, Grade, Person} from "../Types";
+
 import {DatabaseController} from "./DatabaseController";
 import {IGitHubController} from "./GitHubController";
 import {GradesController} from "./GradesController";
 import {PersonController} from "./PersonController";
-
 import {RepositoryController} from "./RepositoryController";
 import {ResultsController} from "./ResultsController";
 import {TeamController} from "./TeamController";
@@ -224,9 +225,10 @@ export class CourseController { // don't implement ICourseController yet
         for (const person of people) {
             if (person.kind === 'student') {
                 const studentTransport = {
+                    id:         person.id,
                     firstName:  person.fName,
                     lastName:   person.lName,
-                    userName:   person.githubId,
+                    githubId:   person.githubId,
                     userUrl:    Config.getInstance().getProp(ConfigKey.githubHost) + '/' + person.githubId,
                     studentNum: person.studentNumber,
                     labId:      person.labId
@@ -259,6 +261,24 @@ export class CourseController { // don't implement ICourseController yet
     }
 
     /**
+     * Gets the repos associated with the course.
+     *
+     * @returns {Promise<RepositoryTransport[]>}
+     */
+    public async getRepositories(): Promise<RepositoryTransport[]> {
+        const allRepos = await this.rc.getAllRepos();
+        const repos: RepositoryTransport[] = [];
+        for (const repo of allRepos) {
+            const repoTransport: RepositoryTransport = {
+                id:  repo.id,
+                URL: repo.URL
+            };
+            repos.push(repoTransport);
+        }
+        return repos;
+    }
+
+    /**
      * Gets the grades associated with the course.
      *
      * @returns {Promise<GradeTransport[]>}
@@ -285,48 +305,59 @@ export class CourseController { // don't implement ICourseController yet
 
     /**
      * Gets the results associated with the course.
-     *
+     * @param {reqDelivId: string} * for any
+     * @param {reqRepoId: string} * for any
      * @returns {Promise<AutoTestGradeTransport[]>}
      */
-    public async getResults(): Promise<AutoTestResultSummaryTransport[]> {
+    public async getResults(reqDelivId: string, reqRepoId: string): Promise<AutoTestResultSummaryTransport[]> {
+
+        const NUM_RESULTS = 200;
 
         const allResults = await this.resC.getAllResults();
         const results: AutoTestResultSummaryTransport[] = [];
         for (const result of allResults) {
             // const repo = await rc.getRepository(result.repoId); // this happens a lot and ends up being too slow
+            const delivId = result.delivId;
             const repoId = result.input.pushInfo.repoId;
-            const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
-                Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
-            let scoreOverall = null;
-            let scoreCover = null;
-            let scoreTest = null;
 
-            if (typeof result.output !== 'undefined' && typeof result.output.report !== 'undefined') {
-                const report = result.output.report;
-                if (typeof report.scoreOverall !== 'undefined') {
-                    scoreOverall = report.scoreOverall;
+            if ((delivId === '*' || delivId === reqDelivId) &&
+                (repoId === '*' || repoId === reqRepoId) &&
+                results.length <= NUM_RESULTS) {
+                const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
+                    Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
+                let scoreOverall = null;
+                let scoreCover = null;
+                let scoreTest = null;
+
+                if (typeof result.output !== 'undefined' && typeof result.output.report !== 'undefined') {
+                    const report = result.output.report;
+                    if (typeof report.scoreOverall !== 'undefined') {
+                        scoreOverall = report.scoreOverall;
+                    }
+                    if (typeof report.scoreTest !== 'undefined') {
+                        scoreTest = report.scoreTest;
+                    }
+                    if (typeof report.scoreCover !== 'undefined') {
+                        scoreCover = report.scoreCover;
+                    }
                 }
-                if (typeof report.scoreTest !== 'undefined') {
-                    scoreTest = report.scoreTest;
-                }
-                if (typeof report.scoreCover !== 'undefined') {
-                    scoreCover = report.scoreCover;
-                }
+
+                const resultTrans: AutoTestResultSummaryTransport = {
+                    repoId:       repoId,
+                    repoURL:      repoURL,
+                    delivId:      result.delivId,
+                    state:        result.output.state,
+                    timestamp:    result.output.timestamp,
+                    commitSHA:    result.input.pushInfo.commitSHA,
+                    commitURL:    result.input.pushInfo.commitURL,
+                    scoreOverall: scoreOverall,
+                    scoreCover:   scoreCover,
+                    scoreTests:   scoreTest
+                };
+                results.push(resultTrans);
+            } else {
+                // result does not match filter
             }
-
-            const resultTrans: AutoTestResultSummaryTransport = {
-                repoId:       repoId,
-                repoURL:      repoURL,
-                delivId:      result.delivId,
-                state:        result.output.state,
-                timestamp:    result.output.timestamp,
-                commitSHA:    result.input.pushInfo.commitSHA,
-                commitURL:    result.input.pushInfo.commitURL,
-                scoreOverall: scoreOverall,
-                scoreCover:   scoreCover,
-                scoreTests:   scoreTest
-            };
-            results.push(resultTrans);
         }
         return results;
     }
@@ -382,18 +413,21 @@ export class CourseController { // don't implement ICourseController yet
             throw new Error(msg);
         }
 
+        // noinspection SuspiciousTypeOfGuard
         if (typeof courseTrans.id !== 'string') {
             const msg = 'Course.id not specified';
             Log.error('CourseController::validateCourseTransport(..) - ERROR: ' + msg);
             throw new Error(msg);
         }
 
+        // noinspection SuspiciousTypeOfGuard
         if (typeof courseTrans.defaultDeliverableId !== 'string') {
             const msg = 'defaultDeliverableId not specified';
             Log.error('CourseController::validateCourseTransport(..) - ERROR: ' + msg);
             return msg;
         }
 
+        // noinspection SuspiciousTypeOfGuard
         if (typeof courseTrans.custom !== 'object') {
             const msg = 'custom not specified';
             Log.error('CourseController::validateCourseTransport(..) - ERROR: ' + msg);

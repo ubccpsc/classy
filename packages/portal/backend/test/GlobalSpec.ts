@@ -57,6 +57,7 @@ export class Test {
     public static readonly TEAMNAME1 = 'TESTteam1';
     public static readonly TEAMNAME2 = 'TESTteam2';
     public static readonly TEAMNAME3 = 'TESTteam3';
+    public static readonly TEAMNAME4 = 'TESTteam4';
 
     public static readonly USERNAMEADMIN = 'ubcbot'; // should be admin on any test org
     public static readonly USERNAME1 = 'rthse2'; // real account for testing users

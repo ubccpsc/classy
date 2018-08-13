@@ -1,11 +1,11 @@
 import Log from "../../../../../common/Log";
 
-import {UI} from "../util/UI"
-
 import {StudentTransport, TeamTransport, TeamTransportPayload} from "../../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
-import {AdminView} from "./AdminView";
+
+import {UI} from "../util/UI"
 import {AdminStudentsTab} from "./AdminStudentsTab";
+import {AdminView} from "./AdminView";
 
 
 export class AdminTeamsTab {
@@ -121,19 +121,21 @@ export class AdminTeamsTab {
         st.generate();
 
         delivOptions = delivOptions.sort();
-        let delivSelector = document.querySelector('#teamsListSelect') as HTMLSelectElement;
-        delivSelector.innerHTML = '';
-        for (const deliv of delivOptions) {
-            let selected = false;
-            if (deliv === delivId) {
-                selected = true;
-            }
-            const o: HTMLOptionElement = new Option(deliv, deliv, false, selected);
-            delivSelector.add(o);
-        }
+        UI.setDropdownOptions('teamsListSelect', delivOptions, delivId);
+
+        const delivSelector = document.querySelector('#teamsListSelect') as HTMLSelectElement;
+        // delivSelector.innerHTML = '';
+        // for (const deliv of delivOptions) {
+        //     let selected = false;
+        //     if (deliv === delivId) {
+        //         selected = true;
+        //     }
+        //     const o: HTMLOptionElement = new Option(deliv, deliv, false, selected);
+        //     delivSelector.add(o);
+        // }
 
         const that = this;
-        delivSelector.onchange = function (evt) {
+        delivSelector.onchange = function(evt) {
             Log.info('AdminTeamsTab::renderTeams(..) - upload pressed');
             evt.stopPropagation(); // prevents list item expansion
 
@@ -183,9 +185,9 @@ export class AdminTeamsTab {
 
         let listContainsStudents = false;
         for (const student of students) {
-            if (studentsOnTeams.indexOf(student.userName) < 0) {
+            if (studentsOnTeams.indexOf(student.id) < 0) {
                 let row: TableCell[] = [
-                    {value: student.userName, html: '<a href="' + student.userUrl + '">' + student.userName + '</a>'}
+                    {value: student.id, html: '<a href="' + student.userUrl + '">' + student.id+ '</a>'}
                 ];
                 if (delivId !== '-None-') {
                     st.addRow(row);

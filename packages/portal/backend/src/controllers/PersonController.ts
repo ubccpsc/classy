@@ -1,4 +1,5 @@
 import Log from "../../../../common/Log";
+import {StudentTransport} from "../../../../common/types/PortalTypes";
 import Util from "../../../../common/Util";
 import {Person, Repository} from "../Types";
 
@@ -129,6 +130,23 @@ export class PersonController {
         const repos = await this.db.getRepositoriesForPerson(personId);
         Log.trace('PersonController::getRepos( ' + personId + ' ) - # repos: ' + repos.length + '; took: ' + Util.took(start));
         return repos;
+    }
+
+    public static personToTransport(person: Person): StudentTransport {
+        if (typeof person === 'undefined' || person === null) {
+            return null;
+        }
+
+        const student: StudentTransport = {
+            id:         person.id,
+            firstName:  person.fName,
+            lastName:   person.lName,
+            githubId:   person.githubId,
+            userUrl:    person.URL,
+            studentNum: person.studentNumber,
+            labId:      person.labId
+        };
+        return student;
     }
 
     // /**
