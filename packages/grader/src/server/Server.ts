@@ -64,7 +64,11 @@ export default class Server {
                     reject(err);
                 });
 
-                // TODO add endpoint for serving static files
+                // serve stored grade reports
+                this.rest.get('/\/.*/', restify.plugins.serveStatic({
+                    directory: process.env.GRADER_PERSIST_DIR,  // this is bound to process.env.GRADER_HOST_DIR on the host
+                    default:   'index.html'
+                }));
 
                 this.rest.put("/task/grade/:id", restify.plugins.bodyParser(),
                     async (req: restify.Request, res: restify.Response, next: restify.Next) => {
@@ -103,7 +107,6 @@ export default class Server {
 
                     next();
                 });
-
 
             } catch (err) {
                 Log.error("Server::start() - ERROR: " + err);
