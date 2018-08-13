@@ -162,6 +162,7 @@ export class AdminConfigTab {
         const options = AdminView.getOptions();
         let url = remote + '/portal/admin/course';
         let response = await fetch(url, options);
+        UI.hideModal();
 
         let courseOptions: CourseTransport = null;
         let start = Date.now();

@@ -2,10 +2,14 @@
  * Custom type definitions, to be placed inside the custom field
  */
 
+// Placed in  Grade.custom
 // Represents an Assignment grade, comprised of an arbitrary amount of Questions
+// TODO [WISHLIST]: Remove AssignmentGrade from having studentID and assignmentID (redundant, grade already tracks this)
+
 export interface AssignmentGrade {
     assignmentID: string;               // Unique Assignment ID per course
     studentID: string;                  // Unique Student ID per course
+    released: boolean;                  // status if assignment grade has been released or not
     questions: QuestionGrade[];         // SubQuestions
 }
 

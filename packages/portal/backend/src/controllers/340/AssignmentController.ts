@@ -4,7 +4,13 @@ import {Deliverable, Grade, Person, Repository, Team} from "../../Types";
 // import {GradePayload} from "../GradesController";
 import Log from "../../../../../common/Log";
 import {GradePayload} from "../../../../../common/types/SDMMTypes";
-import {AssignmentGrade, AssignmentInfo, AssignmentRepositoryInfo, AssignmentStatus} from "../../../../../common/types/CS340Types";
+import {
+    AssignmentGrade,
+    AssignmentGradingRubric,
+    AssignmentInfo,
+    AssignmentRepositoryInfo,
+    AssignmentStatus, QuestionGrade, QuestionGradingRubric, SubQuestionGrade, SubQuestionGradingRubric
+} from "../../../../../common/types/CS340Types";
 import {RepositoryController} from "../RepositoryController";
 import {TeamController} from "../TeamController";
 import {DeliverablesController} from "../DeliverablesController";
@@ -192,8 +198,13 @@ export class AssignmentController {
 
             // for each student, create a team
             let teamName = deliv.teamPrefix + student.githubId;
-            let newTeam: Team = await this.tc.createTeam(teamName, deliv, [student], null);
-            if (newTeam === null) {
+            // verify if the team exists or not
+            let studentTeam: Team = await this.tc.getTeam(teamName);
+            if (studentTeam === null) {
+                // The team doesn't exist, so initialize it
+                studentTeam = await this.tc.createTeam(teamName, deliv, [student], null);
+            }
+            if (studentTeam === null) {
                 Log.error("AssignmentController::initializeAllRepositories(..) - error creating team " +
                     teamName + " for student " + student.githubId);
             }
@@ -204,7 +215,7 @@ export class AssignmentController {
             // attempt to provision the repository,
             // if success, add it to the AssignmentInfo
             let repoName: string = deliv.repoPrefix + student.githubId;
-            let provisionedRepo = await this.createAssignmentRepo(repoName, delivId, [newTeam]);
+            let provisionedRepo = await this.createAssignmentRepo(repoName, delivId, [studentTeam]);
 
 
             if (provisionedRepo !== null) {
@@ -600,4 +611,288 @@ export class AssignmentController {
         //     return result[0];
         // }
     }
+
+    /**
+     * Publishes an assignment grade to the given student repository
+     * @param {string} studentGradeRepoName - Repository name for the student
+     * @param {string} fileName - name of the file to create
+     * @param {string} studentId - Student
+     * @param {string} delivId - deliverable the grade is for
+     * @param {string} header (optional)- Extra string to add at the top of the md file
+     * @param {string} footer (optional)- Extra string to add at the bottom of the md file
+     * @returns {Promise<boolean>}
+     */
+
+    public async publishGrade(studentGradeRepoName: string, fileName: string, studentId: string,
+                              delivId: string,header?: string, footer?: string): Promise<boolean> {
+        Log.info("AssignmentController::publishGrade( ..., " + studentId + ", " + delivId + " ) - start");
+        // Log.error("AssignmentController::publishGrade(..) - ");
+
+        let studentRecord = await this.pc.getPerson(studentId);
+        if(studentRecord === null) {
+            Log.error("AssignmentController::publishGrade(..) - Invalid studentId: " + studentId + " unable to continue");
+            return false;
+        }
+
+        // get the grading rubric
+        let deliverableRecord: Deliverable = await this.db.getDeliverable(delivId);
+        if (deliverableRecord === null) {
+            // deliverable doesn't exist! Error
+            Log.error("AssignmentController::publishGrade(..) - Deliverable does not exist: " + delivId);
+            return false;
+        }
+
+        // check if the deliverable is an assignment
+        let assignmentInfo: AssignmentInfo = deliverableRecord.custom;
+        if (assignmentInfo === null || typeof assignmentInfo.rubric === "undefined") {
+            // this is not an assignment, currently does not support deliverable grade writing
+            Log.error("AssignmentController::publishGrade(..) - Deliverable: " + delivId + " is not an assignment");
+            return false;
+        }
+
+        // get the rubric (so we can get the max grade)
+        let assignmentRubric: AssignmentGradingRubric = assignmentInfo.rubric;
+
+        // get student grade
+        let gradeRecord: Grade = await this.gc.getGrade(studentId, delivId);
+        let assignmentGrade: AssignmentGrade;
+        let validGrade: boolean = false;
+        if(gradeRecord === null || gradeRecord.custom === null ||
+            typeof gradeRecord.custom.questions === 'undefined') {
+            // Log.error("AssignmentController::publishGrade(..) - Unable to find grade for student: " + studentId + "" +
+            //     " and delivId: " + delivId);
+            // return false;
+            Log.info("AssignmentController::publishGrade(..) - Unable to find student grade");
+            assignmentGrade = this.generateEmptyGrade(assignmentRubric);
+        } else if (gradeRecord.custom === null || typeof gradeRecord.custom.questions === 'undefined') {
+            Log.info("AssignmentController::publishGrade(..) - Student does not have an assignmentGrade");
+            assignmentGrade = this.generateEmptyGrade(assignmentRubric);
+        } else {
+            assignmentGrade = gradeRecord.custom;
+            validGrade = true;
+        }
+
+        // check if the grade has been released before:
+        if (assignmentGrade.released) {
+            Log.info("AssignmentController::publishGrade(..) - Grade for student: " + studentId + " has " +
+                "already been released, skipping");
+            return true;
+        }
+
+        // // get the student's assignment breakdown
+        // assignmentGrade = gradeRecord.custom;
+        // if (assignmentGrade === null || typeof assignmentGrade.questions === 'undefined') {
+        //     Log.error("AssignmentController::publishGrade(..) - Student does not have an assignmentGrade: " + studentId);
+        //     return false;
+        // }
+
+        // add a file in the repo and then push
+        // check if the studentRepo exists
+        let repoExists = await this.gha.repoExists(studentGradeRepoName);
+        let studentRepoRecord: Repository = await this.rc.getRepository(studentGradeRepoName);
+
+        if(!repoExists) {
+            // Create the repo, it doesn't exist yet
+
+            // first, need to check if a student Repo object has been created
+            if (studentRepoRecord === null) {
+                Log.info("AssignmentController::publishGrade(..) - No student Repo found, creating repo");
+
+                // create the record
+                studentRepoRecord = await this.rc.createRepository(studentGradeRepoName, [], null);
+                if(studentRepoRecord === null) {
+                    // we tried multiple times, unable to continue (something is wrong)
+                    Log.error("AssignmentController::publishGrade(..) - Error; unable to create student grade repository.");
+                    return false;
+                }
+            }
+
+            // create the repo
+            let repoURL: string = await this.gha.createRepo(studentGradeRepoName);
+        }
+
+
+        // now assume we have the all the needed pieces
+        let tableInfo: string[][] = [];
+        let tableHeader: string[] = ["Exercise Name", "Grade", "Out of", "Feedback"];
+        tableInfo.push(tableHeader);
+
+        // get the rest of the information
+
+        Log.info("AssignmentController::publishGrade( .. ) - generating rows");
+
+        let totalReceived: number = 0;
+        let totalPossible: number = 0;
+        for(let i = 0; i < assignmentRubric.questions.length; i++) {
+            let assignmentQuestion: QuestionGradingRubric = assignmentRubric.questions[i];
+            let studentGrade: QuestionGrade = assignmentGrade.questions[i];
+            //get their subQuestions
+            for(let j = 0; j < assignmentQuestion.subQuestions.length; j++) {
+                let assignmentSubQuestion: SubQuestionGradingRubric = assignmentQuestion.subQuestions[j];
+                let gradeSubQuestion: SubQuestionGrade = studentGrade.subQuestion[j];
+                let rowName = assignmentQuestion.name + " - " + assignmentSubQuestion.name;
+                let newRow = [rowName, String(gradeSubQuestion.grade),
+                    String(assignmentSubQuestion.outOf), gradeSubQuestion.feedback];
+                tableInfo.push(newRow);
+                totalReceived += gradeSubQuestion.grade * assignmentSubQuestion.weight;
+                totalPossible += assignmentSubQuestion.outOf * assignmentSubQuestion.weight;
+            }
+        }
+
+        let percentageReceived: number = totalReceived / totalPossible;
+        let newRow = ["**Total**", String(totalReceived), String(totalPossible),
+            "Final Grade: " + String(percentageReceived) + "%"];
+        tableInfo.push(newRow);
+
+        // construct the md file
+        Log.info("AssignmentController::publishGrade(..) - generating tableInfo complete; " + tableInfo);
+
+        let table = require('markdown-table');
+
+
+
+        let payload = "# " + deliverableRecord.id;
+
+        if (header) {
+            payload += "\n\n" + header;
+        }
+
+        payload += "\n\n" + table(tableInfo);
+
+        if (footer) {
+            payload += "\n\n" + footer;
+        }
+
+        // add extra line warning that grades are potentially rounded
+
+        payload = payload + "\n\n Note: The weighed average of the above grades may deviate by 1 percent from the " +
+            "overall grade due to rounding. However the overall grade shown is the correct one.";
+
+
+        // get the repo again (in case of database changes)
+        Log.info("AssignmentController::publishGrade( .. ) - retrieving repositoryRecord again");
+
+        studentRepoRecord = await this.rc.getRepository(studentGradeRepoName);
+
+        let gitSuccess: boolean;
+        try {
+            Log.info("AssignmentController::publishGrade( .. ) - writing grade");
+            gitSuccess = await this.gha.writeFileToRepo(studentRepoRecord.URL,
+                delivId + "_grades.md", payload, true);
+        } catch (err) {
+            Log.error("AssignmentController::publishGrade() - Error: " + err);
+            return false;
+        }
+
+        let databaseSuccess: boolean = true;
+        // if it was successful, and the grade is a valid one (non-null)
+        if(gitSuccess && validGrade) {
+            // record to the database that grade has been released
+            (gradeRecord.custom as AssignmentGrade).released = true;
+            databaseSuccess = await this.db.writeGrade(gradeRecord);
+        }
+
+        return gitSuccess && databaseSuccess;
+    }
+
+    public async publishAllGrades(delivId: string): Promise<boolean> {
+        Log.info("AssignmentController::publishAllGrades( " + delivId + " ) - start");
+        // Log.info("AssignmentController::publishAllGrades( .. ) - ");
+        // Log.error("AssignmentController::publishAllGrades( .. ) - ");
+
+        // get deliverable
+        let deliverableRecord: Deliverable = await this.db.getDeliverable(delivId);
+        if(deliverableRecord === null) {
+            Log.error("AssignmentController::publishAllGrades( .. ) - Error: Deliverable does not exist");
+            return false;
+        }
+        // verify it is an assignment
+        let assignmentInfo: AssignmentInfo = deliverableRecord.custom;
+        if (assignmentInfo === null || typeof assignmentInfo.rubric === "undefined") {
+            // this is not an assignment, currently does not support deliverable grade writing
+            Log.error("AssignmentController::publishAllGrades(..) - Deliverable: " + delivId + " is not an assignment");
+            return false;
+        }
+
+        // get all students
+        let allPeople: Person[] = await this.pc.getAllPeople();
+        let allStudents: Person[] = [];
+        for (const person of allPeople) {
+            if (person.kind === 'student') {
+                allStudents.push(person);
+            }
+        }
+
+        // for every student, publish their grade
+        let totalSuccess = true;
+        Log.info("AssignmentController::publishAllGrades( .. ) - Publishing grades for " + allStudents.length + " students");
+        for (const student of allStudents) {
+            if(!await this.publishGrade(student.githubId + "_grades", delivId + "_grades.md", student.id, delivId)) {
+                Log.warn("AssignmentController::publishAllGrades( .. ) - Had an issue " +
+                    "publishing student: <" + student.id + "> grade");
+
+                totalSuccess = false;
+            }
+        }
+
+        if(totalSuccess) {
+            Log.info("AssignmentController::publishAllGrades( .. ) - Published all grades");
+        } else {
+            Log.warn("AssignmentController::publishAllGrades( .. ) - Encountered an error while " +
+                "publishing all grades");
+        }
+
+        return totalSuccess;
+    }
+
+    public async publishFinalGrade(studentGradeRepoName: string, fileName: string, studentId: string) : Promise<boolean> {
+        Log.info("AssignmentController::publishFinalGrade( ... ,  " + studentId +  ") - start");
+
+        // get all the student's grades
+        let studentGrades = await this.gc.getReleasedGradesForPerson(studentId);
+        return false;
+    }
+
+
+    private generateEmptyGrade(assignmentRubric: AssignmentGradingRubric): AssignmentGrade {
+        if(assignmentRubric === null) {
+            Log.error("AssignmentController::generateEmptyGrade(..) - Error: Received null rubric");
+            return null;
+        }
+        Log.info("AssignmentController::generateEmptyGrade( " + assignmentRubric.name + " ) - start");
+
+        let questions: QuestionGrade[] = [];
+        for (const rubricQuestion of assignmentRubric.questions) {
+            // make a new record
+            let subQuestions: SubQuestionGrade[] = [];
+            for (const rubricSubQuestion of rubricQuestion.subQuestions) {
+                let newSubQuestion: SubQuestionGrade = {
+                  sectionName: rubricSubQuestion.name,
+                    grade:0,
+                    feedback: ""
+                };
+
+                subQuestions.push(newSubQuestion);
+            }
+
+            let newQuestion: QuestionGrade = {
+                questionName: rubricQuestion.name,
+                commentName: rubricQuestion.comment,
+                subQuestion: subQuestions
+            };
+
+            questions.push(newQuestion);
+        }
+
+        let newAssignmentGrade: AssignmentGrade = {
+            assignmentID: assignmentRubric.name,
+            studentID: "---N/A---",
+            released: false,
+            questions: questions
+        };
+
+
+        return newAssignmentGrade;
+    }
+
 }
