@@ -81,6 +81,7 @@ describe("GitHubActions", () => {
         "TESTteam1",
         "TESTteam2",
         "TESTteam3",
+        "TESTteam4",
         TEAMNAME
     ];
 
