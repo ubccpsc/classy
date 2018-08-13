@@ -200,7 +200,7 @@ export class AssignmentController {
             let teamName = deliv.teamPrefix + student.githubId;
             // verify if the team exists or not
             let studentTeam: Team = await this.tc.getTeam(teamName);
-            if (teamExists === null) {
+            if (studentTeam === null) {
                 // The team doesn't exist, so initialize it
                 studentTeam = await this.tc.createTeam(teamName, deliv, [student], null);
             }
