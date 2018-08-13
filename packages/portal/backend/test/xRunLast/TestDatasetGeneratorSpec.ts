@@ -47,7 +47,12 @@ describe('TestDatasetGenerator', function() {
 
             custom: {}
         };
-        await pc.createPerson(p);
+
+        try {
+            await pc.createPerson(p);
+        } catch (e) {
+            // Person already exists, should fine fine
+        }
 
         // create a student
         p = {
@@ -65,7 +70,12 @@ describe('TestDatasetGenerator', function() {
 
             custom: {}
         };
-        await pc.createPerson(p);
+
+        try {
+            await pc.createPerson(p);
+        } catch (e) {
+            // Person already exists, should fine fine
+        }
 
         for (let i = 0; i < 40; i++) {
             const pid = 'p' + i;
@@ -86,7 +96,11 @@ describe('TestDatasetGenerator', function() {
                 custom: {}
             };
 
-            await pc.createPerson(p);
+            try {
+                await pc.createPerson(p);
+            } catch (e) {
+                // Person already exists, should fine fine
+            }
         }
     });
 
@@ -139,8 +153,11 @@ describe('TestDatasetGenerator', function() {
             deliv.repoPrefix = 'd' + i + '_';
             deliv.openTimestamp = new Date().getTime();
             deliv.closeTimestamp = new Date().getTime();
-
-            await dc.saveDeliverable(deliv);
+            try {
+                await dc.saveDeliverable(deliv);
+            } catch (e) {
+                // Fail silently, it's fine, the deliverable already exists
+            }
         }
     });
 
@@ -152,12 +169,20 @@ describe('TestDatasetGenerator', function() {
         let pA = await pc.getPerson('p1');
         let pB = await pc.getPerson('p2');
         const deliv = await dc.getDeliverable('d0');
-        await tc.createTeam(Test.TEAMNAME3, deliv, [pA, pB], {});
+        try {
+            await tc.createTeam(Test.TEAMNAME3, deliv, [pA, pB], {});
+        } catch (e) {
+            // Fail silently, it's fine, the team already exists
+        }
 
         pA = await pc.getPerson('p3');
         pB = await pc.getPerson('p4');
         const pC = await pc.getPerson('p5');
-        await tc.createTeam(Test.TEAMNAME4, deliv, [pA, pB, pC], {});
+        try {
+            await tc.createTeam(Test.TEAMNAME4, deliv, [pA, pB, pC], {});
+        } catch (e) {
+            // Fail silently, it's fine, the team already exists
+        }
     });
 
     it('Can generate some repos', async function() {
@@ -166,8 +191,17 @@ describe('TestDatasetGenerator', function() {
         const teams = await tc.getAllTeams();
         const rc: RepositoryController = new RepositoryController();
 
-        await rc.createRepository(Test.REPONAME1, [teams[0]], {});
-        await rc.createRepository(Test.REPONAME2, [teams[1]], {});
+        try {
+            await rc.createRepository(Test.REPONAME1, [teams[0]], {});
+        } catch (e) {
+
+        }
+
+        try {
+            await rc.createRepository(Test.REPONAME2, [teams[1]], {});
+        } catch (e) {
+
+        }
     });
 
 });
