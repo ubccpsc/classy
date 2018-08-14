@@ -99,11 +99,28 @@ describe("SDDM: SDMMController", () => {
     let OLD_ORG: string | null = null;
 
     before(async () => {
-        Log.test("SDMMControllerSpec::before()");
-        // Force SDMM tests to run in an SDMM org
+        Test.suiteBefore('SDMMController');
+
         Config.getInstance();
         OLD_ORG = Config.getInstance().getProp(ConfigKey.org);
         Config.getInstance().setProp(ConfigKey.org, 'secapstonetest');
+
+        // clear stale data
+        dc = DatabaseController.getInstance();
+        await dc.clearData();
+
+        // only bootstrap the database with deliverables
+        await Test.prepareDeliverables();
+
+        rc = new RepositoryController();
+    });
+
+    after(async () => {
+        Test.suiteAfter('SDMMController');
+        // Force SDMM tests to run in an SDMM org
+        Log.test("SDMMControllerSpec::after()");
+        Config.getInstance();
+        Config.getInstance().setProp(ConfigKey.org, OLD_ORG);
     });
 
     beforeEach(() => {
@@ -116,13 +133,6 @@ describe("SDDM: SDMMController", () => {
         tc = new TeamController();
         pc = new PersonController();
         dc = DatabaseController.getInstance();
-    });
-
-    after(async () => {
-        // Force SDMM tests to run in an SDMM org
-        Log.test("SDMMControllerSpec::after()");
-        Config.getInstance();
-        Config.getInstance().setProp(ConfigKey.org, OLD_ORG);
     });
 
     it("Should not be able to get a status for an invalid user.", async () => {

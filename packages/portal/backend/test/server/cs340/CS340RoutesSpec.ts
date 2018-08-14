@@ -1,17 +1,16 @@
+import {fail} from "assert";
 import {expect} from "chai";
 import "mocha";
-import BackendServer from "../../../src/server/BackendServer";
-import {ConfigKey} from "../../../../../common/Config";
-import Config from "../../../../../common/Config";
+import Config, {ConfigKey} from "../../../../../common/Config";
 import Log from "../../../../../common/Log";
-import {fail} from "assert";
+import {DatabaseController} from "../../../src/controllers/DatabaseController";
+import {GitHubActions} from "../../../src/controllers/GitHubActions";
+import {PersonController} from "../../../src/controllers/PersonController";
+import BackendServer from "../../../src/server/BackendServer";
+import {Test} from "../../GlobalSpec";
 // import request = require("request");
 const request = require('supertest');
-import {Test} from "../../GlobalSpec";
 import restify = require('restify');
-import {QuestionGrade} from "../../../../../common/types/CS340Types";
-import {PersonController} from "../../../src/controllers/PersonController";
-import {GitHubActions} from "../../../src/controllers/GitHubActions";
 
 const loadFirst = require('../../GlobalSpec');
 const https = require('https');
@@ -55,6 +54,16 @@ describe("CS340: Routes", () => {
 
     before(async () => {
         Log.test("CS340Routes::before - start");
+
+        await Test.suiteBefore('CS340Routes');
+
+        // clear stale data
+        const db = DatabaseController.getInstance();
+        await db.clearData();
+
+        // get data ready
+        await Test.prepareAll();
+
         Config.getInstance().setProp(ConfigKey.name, 'cs340');
         Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
 
@@ -65,28 +74,27 @@ describe("CS340: Routes", () => {
         let peopleList = await pc.getAllPeople();
         numberOfStudents = peopleList.length;
 
-
         name = Config.getInstance().getProp(ConfigKey.name);
 
-        return server.start().then(function () {
+        return server.start().then(function() {
             Log.test('CS340Routes::before - server started');
             // Log.test('orgName: ' + Test.ORGNAME);
             app = server.getServer();
-        }).catch(function (err) {
+        }).catch(function(err) {
             // probably ok; ust means server is already started
             Log.test('CS340Routes::before - server might already be started: ' + err);
         });
 
     });
 
-
-    after(async function () {
+    after(async function() {
         Log.test('CS340Routes::after - start');
 
         Config.getInstance().setProp(ConfigKey.name, OLDNAME);
         Config.getInstance().setProp(ConfigKey.org, OLDORG);
 
-        return server.stop();
+        await server.stop();
+        await Test.suiteAfter('CS340Routes');
     });
 
     it("Clean up stale repos", async function() {
@@ -94,7 +102,7 @@ describe("CS340: Routes", () => {
         await deleteStale();
     }).timeout(2 * TIMEOUT);
 
-    it("Should be able to get all deliverables.", async function () {
+    it("Should be able to get all deliverables.", async function() {
         let response = null;
         const url = '/portal/cs340/getAllDeliverables';
 
@@ -118,7 +126,7 @@ describe("CS340: Routes", () => {
         let aid = "test_assignDeliv3";
         let response = null;
         const url = '/portal/cs340/getAssignmentRubric/' + aid;
-        try{
+        try {
             response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -133,7 +141,7 @@ describe("CS340: Routes", () => {
     it("Should be able to get all assignment rubrics", async function() {
         let response = null;
         const url = '/portal/cs340/getAllAssignmentRubrics/';
-        try{
+        try {
             response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -191,7 +199,7 @@ describe("CS340: Routes", () => {
 
         // TODO: Verify this
 
-        try{
+        try {
             response = await request(app).put(url).send(aPayload).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -207,7 +215,7 @@ describe("CS340: Routes", () => {
     it("Should be able to get all grades", async function() {
         let response = null;
         const url = '/portal/cs340/getAllGrades';
-        try{
+        try {
             response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -224,7 +232,7 @@ describe("CS340: Routes", () => {
 
         let response = null;
         const url = '/portal/cs340/getAllSubmissionsByDelivID/' + aid;
-        try{
+        try {
             response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -245,7 +253,7 @@ describe("CS340: Routes", () => {
 
         let response = null;
         const url = '/portal/cs340/getPersonByID/' + sid;
-        try{
+        try {
             response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -259,8 +267,8 @@ describe("CS340: Routes", () => {
 
     it("Should be able to get all persons", async function() {
         let response = null;
-        const url = '/portal/cs340/getAllPersons' ;
-        try{
+        const url = '/portal/cs340/getAllPersons';
+        try {
             response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -277,7 +285,7 @@ describe("CS340: Routes", () => {
         let aid = "test_assignDeliv3";
 
         const url = '/portal/cs340/updateAssignmentStatus/' + aid;
-        try{
+        try {
             response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -295,7 +303,7 @@ describe("CS340: Routes", () => {
         let aid = "test_assignDeliv3";
 
         const url = '/portal/cs340/getAssignmentStatus/' + aid;
-        try{
+        try {
             response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -313,7 +321,7 @@ describe("CS340: Routes", () => {
         let aid = "test_assignDeliv3";
 
         const url = '/portal/cs340/initializeAllRepositories/' + aid;
-        try{
+        try {
             response = await request(app).post(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -331,9 +339,8 @@ describe("CS340: Routes", () => {
         let aid = "test_assignDeliv3";
 
 
-
         const url = '/portal/cs340/publishAllRepositories/' + aid;
-        try{
+        try {
             response = await request(app).post(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -356,15 +363,15 @@ describe("CS340: Routes", () => {
 
         // find rthse2
         let index = -1;
-        for(let i = 0; i < allPeople.length; i++) {
-            if(allPeople[i].githubId === 'rthse2') {
+        for (let i = 0; i < allPeople.length; i++) {
+            if (allPeople[i].githubId === 'rthse2') {
 
                 index = i;
                 break;
             }
         }
 
-        if(index === -1) {
+        if (index === -1) {
             fail("Unable to find rthse2 in records, something is wrong with the database...");
         }
 
@@ -407,7 +414,7 @@ describe("CS340: Routes", () => {
 
         // TODO: Verify this
 
-        try{
+        try {
             response = await request(app).put(url).send(aPayload).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -431,14 +438,14 @@ describe("CS340: Routes", () => {
 
         // find rthse2
         let index = -1;
-        for(let i = 0; i < allPeople.length; i++) {
-            if(allPeople[i].githubId === 'rthse2') {
+        for (let i = 0; i < allPeople.length; i++) {
+            if (allPeople[i].githubId === 'rthse2') {
                 index = i;
                 break;
             }
         }
 
-        if(index === -1) {
+        if (index === -1) {
             fail("Unable to find rthse2 in records, something is wrong with the database...");
         }
 
@@ -446,7 +453,7 @@ describe("CS340: Routes", () => {
 
         let response = null;
         const url = '/portal/cs340/getAssignmentGrade/' + sid + '/' + aid;
-        try{
+        try {
             response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -457,7 +464,6 @@ describe("CS340: Routes", () => {
         expect(response.status).to.be.equal(200);
         expect(response.body.response).to.not.be.null;
     }).timeout(2 * TIMEOUT);
-
 
 
     it("Should be able to delete a specific repository", async function() {
@@ -471,14 +477,14 @@ describe("CS340: Routes", () => {
 
         // find rthse2
         let index = -1;
-        for(let i = 0; i < allPeople.length; i++) {
-            if(allPeople[i].githubId === 'rthse2') {
+        for (let i = 0; i < allPeople.length; i++) {
+            if (allPeople[i].githubId === 'rthse2') {
                 index = i;
                 break;
             }
         }
 
-        if(index === -1) {
+        if (index === -1) {
             fail("Unable to find rthse2 in records, something is wrong with the database...");
         }
 
@@ -486,7 +492,7 @@ describe("CS340: Routes", () => {
 
 
         const url = '/portal/cs340/deleteRepository/' + aid + '/' + aid + '_' + sid;
-        try{
+        try {
             response = await request(app).post(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -504,7 +510,7 @@ describe("CS340: Routes", () => {
         let aid = "test_assignDeliv3";
 
         const url = '/portal/cs340/deleteAllRepositories/' + aid;
-        try{
+        try {
             response = await request(app).post(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -520,7 +526,6 @@ describe("CS340: Routes", () => {
         Log.test("Cleaning up stale repositories...");
         await deleteStale();
     }).timeout(numberOfStudents * TIMEOUT);
-
 
 
     // it("Should be able to ", async function() {
@@ -631,7 +636,7 @@ let TESTREPONAMES = [
     "secap_testtest__repo1",
     "TESTrepo1",
     "TESTrepo2",
-    "TESTrepo3",
+    "TESTrepo3"
 ];
 
 let TESTTEAMNAMES = [
@@ -642,7 +647,7 @@ let TESTTEAMNAMES = [
     "TEST__X__t_TESTteam1",
     "TESTteam1",
     "TESTteam2",
-    "TESTteam3",
+    "TESTteam3"
 ];
 
 function getProjectPrefix(): string {

@@ -2,7 +2,11 @@ import {expect} from "chai";
 import "mocha";
 
 import {AutoTestResultTransport} from "../../../../common/types/PortalTypes";
+import {DatabaseController} from "../../src/controllers/DatabaseController";
+import {PersonController} from "../../src/controllers/PersonController";
+import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {ResultsController} from "../../src/controllers/ResultsController";
+import {TeamController} from "../../src/controllers/TeamController";
 
 import {Test} from "../GlobalSpec";
 
@@ -13,8 +17,25 @@ describe("ResultController", () => {
 
     let rc: ResultsController;
 
-    beforeEach(() => {
+    before(async () => {
+        Test.suiteBefore('ResultController');
+
+        // clear stale data
+        const dc = DatabaseController.getInstance();
+        await dc.clearData();
+
+        // get data ready
+        await Test.prepareDeliverables();
+        await Test.preparePeople();
+        await Test.prepareAuth();
+        await Test.prepareRepositories();
+        await Test.prepareTeams();
+
         rc = new ResultsController();
+    });
+
+    after(async () => {
+        Test.suiteAfter('ResultController');
     });
 
     it("Should be able to get all results, even if there are none.", async () => {

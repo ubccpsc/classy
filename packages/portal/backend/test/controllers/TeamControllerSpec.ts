@@ -24,9 +24,9 @@ describe("TeamController", () => {
         await dc.clearData();
 
         // get data ready
-        Test.prepareDeliverables();
-        Test.preparePeople();
-        Test.prepareAuth();
+        await Test.prepareDeliverables();
+        await Test.preparePeople();
+        await Test.prepareAuth();
 
         tc = new TeamController();
         pc = new PersonController();

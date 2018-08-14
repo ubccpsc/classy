@@ -37,6 +37,8 @@ if (typeof it === 'function') {
 
 export class Test {
 
+    public static readonly TIMEOUT = 10000;
+
     public static async suiteBefore(suiteName: string) {
         Log.test("Test::suiteBefore( ... ) - suite: " + suiteName);
 
@@ -55,6 +57,7 @@ export class Test {
         await Test.prepareTeams();
         await Test.prepareRepositories();
         await Test.prepareGrades();
+        await Test.prepareResults();
     }
 
     public static async prepareDeliverables(): Promise<void> {
@@ -131,6 +134,9 @@ export class Test {
     }
 
     public static async prepareGrades(): Promise<void> {
+
+        // NOTE: see FrontendDatasetGenerator for ideas
+
         const grade: GradePayload = {
             score:     100,
             comment:   'comment',
@@ -142,6 +148,12 @@ export class Test {
 
         const gc = new GradesController();
         const valid = await gc.createGrade(Test.REPONAME1, Test.DELIVID1, grade);
+    }
+
+    public static async prepareResults(): Promise<void> {
+        // NOTE: see FrontendDatasetGenerator for ideas
+        // TODO
+        return;
     }
 
     public static async prepareAuth(): Promise<void> {

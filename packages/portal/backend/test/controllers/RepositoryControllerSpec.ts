@@ -2,6 +2,7 @@ import {expect} from "chai";
 import "mocha";
 
 import Log from "../../../../common/Log";
+import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
@@ -17,10 +18,26 @@ describe("RepositoryController", () => {
     let tc: TeamController;
     let pc: PersonController;
 
-    beforeEach(() => {
+    before(async () => {
+        Test.suiteBefore('RepositoryController');
+
+        // clear stale data
+        const dc = DatabaseController.getInstance();
+        await dc.clearData();
+
+        // get data ready
+        await Test.prepareDeliverables();
+        await Test.preparePeople();
+        await Test.prepareAuth();
+        await Test.prepareTeams();
+
         tc = new TeamController();
         rc = new RepositoryController();
         pc = new PersonController();
+    });
+
+    after(async () => {
+        Test.suiteAfter('RepositoryController');
     });
 
     it("Should be able to get all repositories, even if there are none.", async () => {

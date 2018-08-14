@@ -13,7 +13,7 @@ import {Auth, Course, Deliverable, Person} from "../../src/Types";
 import {Test} from "../GlobalSpec";
 // const loadFirst = require('../GlobalSpec');
 
-describe('TestDatasetGenerator', function() {
+describe.skip('TestDatasetGenerator', function() {
 
     it('Can generate the course object', async function() {
         const dc: DatabaseController = DatabaseController.getInstance();

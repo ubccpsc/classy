@@ -2,10 +2,10 @@ import {expect} from "chai";
 import "mocha";
 
 import Log from "../../../../common/Log";
+import {AuthTransportPayload} from "../../../../common/types/PortalTypes";
+import {DatabaseController} from "../../src/controllers/DatabaseController";
 
 import BackendServer from "../../src/server/BackendServer";
-import {DatabaseController} from "../../src/controllers/DatabaseController";
-import {AuthTransportPayload} from "../../../../common/types/PortalTypes";
 import {Test} from "../GlobalSpec";
 import restify = require('restify');
 
@@ -13,7 +13,7 @@ const request = require('supertest');
 
 const loadFirst = require("../xRunLast/TestDatasetGeneratorSpec");
 
-describe('Auth Routes', function () {
+describe('Auth Routes', function() {
 
     const TIMEOUT = 1000 * 10;
 
@@ -28,31 +28,40 @@ describe('Auth Routes', function () {
         // oldOrg = Config.getInstance().getProp(ConfigKey.org);
         // Config.getInstance().setProp(ConfigKey.name, ConfigCourses.classytest); // force testing environment
 
-
         let db = DatabaseController.getInstance();
         // await db.clearData(); // nuke everything
+
+        await Test.suiteBefore('Auth Routes');
+
+        // clear stale data
+        db = DatabaseController.getInstance();
+        await db.clearData();
+
+        // get data ready
+        await Test.prepareAll();
 
         // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
         server = new BackendServer(false);
 
-        return server.start().then(function () {
+        return server.start().then(function() {
             Log.test('AuthRoutes::before - server started');
             app = server.getServer();
-        }).catch(function (err) {
+        }).catch(function(err) {
             Log.test('AuthRoutes::before - server might already be started: ' + err);
         });
     });
 
-    after(function () {
+    after(async function() {
         Log.test('AuthRoutes::after - start');
-        return server.stop();
+        await server.stop();
+        await Test.suiteAfter('Auth Routes');
     });
 
-    it('Should be able to get some credentials for an admin.', async function () {
+    it('Should be able to get some credentials for an admin.', async function() {
 
         const dc: DatabaseController = DatabaseController.getInstance();
 
-        let auth = await dc.getAuth(Test.ADMIN1.id);
+        const auth = await dc.getAuth(Test.ADMIN1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -75,11 +84,11 @@ describe('Auth Routes', function () {
         expect(body.success.token).to.equal(auth.token);
     }).timeout(TIMEOUT);
 
-    it('Should be able to get some credentials for a student.', async function () {
+    it('Should be able to get some credentials for a student.', async function() {
 
         const dc: DatabaseController = DatabaseController.getInstance();
 
-        let auth = await dc.getAuth(Test.USER1.id);
+        const auth = await dc.getAuth(Test.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -102,7 +111,7 @@ describe('Auth Routes', function () {
         expect(body.success.token).to.equal(auth.token);
     }).timeout(TIMEOUT);
 
-    it('Should fail to get credentials if the token is bad.', async function () {
+    it('Should fail to get credentials if the token is bad.', async function() {
 
         const dc: DatabaseController = DatabaseController.getInstance();
         const auth = await dc.getAuth(Test.ADMIN1.id);
@@ -122,11 +131,11 @@ describe('Auth Routes', function () {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should be able to logout a student.', async function () {
+    it('Should be able to logout a student.', async function() {
 
         const dc: DatabaseController = DatabaseController.getInstance();
 
-        let auth = await dc.getAuth(Test.USER1.id);
+        const auth = await dc.getAuth(Test.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -154,14 +163,14 @@ describe('Auth Routes', function () {
      * don't get into states where people can't logout on their own. Better safe
      * than sorry in this dimension.
      */
-    it('Should be able to logout even if token is bad.', async function () {
+    it('Should be able to logout even if token is bad.', async function() {
 
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // make sure there is a token to logout
         await dc.writeAuth({personId: Test.USER1.id, token: 'testtoken'});
 
-        let auth = await dc.getAuth(Test.USER1.id);
+        const auth = await dc.getAuth(Test.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -206,14 +215,14 @@ describe('Auth Routes', function () {
      * don't get into states where people can't logout on their own. Better safe
      * than sorry in this dimension.
      */
-    it('Should fail to logout if user is bad.', async function () {
+    it('Should fail to logout if user is bad.', async function() {
 
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // make sure there is a token to logout
         await dc.writeAuth({personId: Test.USER1.id, token: 'testtoken'});
 
-        let auth = await dc.getAuth(Test.USER1.id);
+        const auth = await dc.getAuth(Test.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -251,6 +260,4 @@ describe('Auth Routes', function () {
 
     }).timeout(TIMEOUT);
 
-
 });
-

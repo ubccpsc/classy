@@ -39,8 +39,14 @@ describe('Admin Routes', function() {
         // Config.getInstance().setProp(ConfigKey.name, ConfigCourses.classytest);
         // Test.ORGNAME = Config.getInstance().getProp(ConfigKey.testorg);
 
+        await Test.suiteBefore('Admin Routes');
+
+        // clear stale data
         const db = DatabaseController.getInstance();
-        // await db.clearData(); // nuke everything
+        await db.clearData();
+
+        // get data ready
+        await Test.prepareAll();
 
         // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
         server = new BackendServer(false);
@@ -61,7 +67,8 @@ describe('Admin Routes', function() {
 
     after(async () => {
         Log.test('AdminRoutes::after - start');
-        return server.stop();
+        await server.stop();
+        await Test.suiteAfter('Admin Routes');
     });
 
     it('Should be able to get a list of students', async function() {
@@ -82,7 +89,7 @@ describe('Admin Routes', function() {
         // expect(body.success).to.have.lengthOf(101);
 
         // should confirm body.success objects (at least one)
-    });
+    }).timeout(Test.TIMEOUT);
 
     it('Should not be able to get a list of students if the requestor is not privileged', async function() {
 
@@ -155,7 +162,7 @@ describe('Admin Routes', function() {
         // expect(body.success).to.have.lengthOf(101);
 
         // should confirm body.success objects (at least one)
-    });
+    }).timeout(Test.TIMEOUT);
 
     it('Should not be able to get a list of grades if the requestor is not privileged', async function() {
 
@@ -226,7 +233,7 @@ describe('Admin Routes', function() {
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
         expect(body.success).to.be.an('array');
-        expect(body.success).to.have.lengthOf(7);
+        expect(body.success).to.have.lengthOf(5);
 
         const dc = new DeliverablesController();
         const actual = dc.validateDeliverableTransport(body.success[0]);
