@@ -277,8 +277,8 @@ describe("GitHubActions", () => {
         const pc: PersonController = new PersonController();
 
         // get some persons
-        const p1 = await pc.getPerson(Test.USERNAME1);
-        const p2 = await pc.getPerson(Test.USERNAME2);
+        const p1 = await pc.getPerson(Test.USER1.id);
+        const p2 = await pc.getPerson(Test.USER2.id);
         expect(p1).to.not.be.null;
         expect(p2).to.not.be.null;
 

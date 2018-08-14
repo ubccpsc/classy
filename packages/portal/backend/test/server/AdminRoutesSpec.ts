@@ -30,7 +30,7 @@ describe('Admin Routes', function() {
     let app: restify.Server = null;
     let server: BackendServer = null;
 
-    const userName = Test.USERNAMEADMIN;
+    const userName = Test.ADMIN1.id;
     let userToken: string;
 
     before(async () => {
@@ -90,7 +90,7 @@ describe('Admin Routes', function() {
         let body: StudentTransportPayload;
         const url = '/portal/admin/students';
         try {
-            response = await request(app).get(url).set({user: Test.USERNAME1, token: userToken});
+            response = await request(app).get(url).set({user: Test.USER1.id, token: userToken});
             body = response.body;
         } catch (err) {
             Log.test('ERROR: ' + err);
@@ -126,7 +126,7 @@ describe('Admin Routes', function() {
         let body: StudentTransportPayload;
         const url = '/portal/admin/teams';
         try {
-            response = await request(app).get(url).set({user: Test.USERNAME1, token: userToken});
+            response = await request(app).get(url).set({user: Test.USER1.id, token: userToken});
             body = response.body;
         } catch (err) {
             Log.test('ERROR: ' + err);
@@ -163,7 +163,7 @@ describe('Admin Routes', function() {
         let body: StudentTransportPayload;
         const url = '/portal/admin/grades';
         try {
-            response = await request(app).get(url).set({user: Test.USERNAME1, token: userToken});
+            response = await request(app).get(url).set({user: Test.USER1.id, token: userToken});
             body = response.body;
         } catch (err) {
             Log.test('ERROR: ' + err);
@@ -200,7 +200,7 @@ describe('Admin Routes', function() {
         let body: AutoTestResultPayload;
         const url = '/portal/admin/results/any/any';
         try {
-            response = await request(app).get(url).set({user: Test.USERNAME1, token: userToken});
+            response = await request(app).get(url).set({user: Test.USER1.id, token: userToken});
             body = response.body;
         } catch (err) {
             Log.test('ERROR: ' + err);
@@ -226,7 +226,7 @@ describe('Admin Routes', function() {
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
         expect(body.success).to.be.an('array');
-        expect(body.success).to.have.lengthOf(6);
+        expect(body.success).to.have.lengthOf(7);
 
         const dc = new DeliverablesController();
         const actual = dc.validateDeliverableTransport(body.success[0]);
@@ -320,8 +320,8 @@ describe('Admin Routes', function() {
         // and we _still_ want it all to fail
 
         const dc: DatabaseController = DatabaseController.getInstance();
-        await dc.writeAuth({personId: Test.USERNAME1, token: 'testtoken'}); // create an auth record
-        const auth = await dc.getAuth(Test.USERNAME1);
+        await dc.writeAuth({personId: Test.USER1.id, token: 'testtoken'}); // create an auth record
+        const auth = await dc.getAuth(Test.USER1.id);
         const token = auth.token;
 
         let response = null;
@@ -350,7 +350,7 @@ describe('Admin Routes', function() {
                 },
                 custom:   {}
             };
-            response = await request(app).post(url).send(deliv).set({user: Test.USERNAME1, token: token});
+            response = await request(app).post(url).send(deliv).set({user: Test.USER1.id, token: token});
             body = response.body;
         } catch (err) {
             Log.test('ERROR: ' + err);

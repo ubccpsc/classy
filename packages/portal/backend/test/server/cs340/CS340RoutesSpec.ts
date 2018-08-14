@@ -100,8 +100,8 @@ describe("CS340: Routes", () => {
 
         try {
             const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).get(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
-            // response = await request(app).get(url).send({}).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+            // response = await request(app).get(url).send({}).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
             // fail(err);
@@ -119,7 +119,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/getAssignmentRubric/' + aid;
         try{
-            response = await request(app).get(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -134,7 +134,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/getAllAssignmentRubrics/';
         try{
-            response = await request(app).get(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -192,7 +192,7 @@ describe("CS340: Routes", () => {
         // TODO: Verify this
 
         try{
-            response = await request(app).put(url).send(aPayload).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).put(url).send(aPayload).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -208,7 +208,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/getAllGrades';
         try{
-            response = await request(app).get(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -225,7 +225,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/getAllSubmissionsByDelivID/' + aid;
         try{
-            response = await request(app).get(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -246,7 +246,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/getPersonByID/' + sid;
         try{
-            response = await request(app).get(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -261,7 +261,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/getAllPersons' ;
         try{
-            response = await request(app).get(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -278,7 +278,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/updateAssignmentStatus/' + aid;
         try{
-            response = await request(app).get(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -296,7 +296,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/getAssignmentStatus/' + aid;
         try{
-            response = await request(app).get(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -314,7 +314,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/initializeAllRepositories/' + aid;
         try{
-            response = await request(app).post(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).post(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -334,7 +334,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/publishAllRepositories/' + aid;
         try{
-            response = await request(app).post(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).post(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -408,7 +408,7 @@ describe("CS340: Routes", () => {
         // TODO: Verify this
 
         try{
-            response = await request(app).put(url).send(aPayload).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).put(url).send(aPayload).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -447,7 +447,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/getAssignmentGrade/' + sid + '/' + aid;
         try{
-            response = await request(app).get(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -487,7 +487,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/deleteRepository/' + aid + '/' + aid + '_' + sid;
         try{
-            response = await request(app).post(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).post(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -505,7 +505,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/deleteAllRepositories/' + aid;
         try{
-            response = await request(app).post(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).post(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);

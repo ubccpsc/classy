@@ -208,8 +208,8 @@ describe("CS340: AssignmentController", () => {
 
         await ac.setAssignmentGrade(Test.REPONAME3, TEST_ASSIGN_NAME, aPayload);
 
-        let aGrade: AssignmentGrade = await ac.getAssignmentGrade(Test.USERNAME1, TEST_ASSIGN_NAME);
-        let grade: Grade = await gc.getGrade(Test.USERNAME1, TEST_ASSIGN_NAME);
+        let aGrade: AssignmentGrade = await ac.getAssignmentGrade(Test.USER1.id, TEST_ASSIGN_NAME);
+        let grade: Grade = await gc.getGrade(Test.USER1.id, TEST_ASSIGN_NAME);
         // Check if the assignment information is set properly
         expect(aGrade).to.not.be.null;
         expect(aGrade.assignmentID).equals("a2");
@@ -263,7 +263,7 @@ describe("CS340: AssignmentController", () => {
 
         expect(previousGradeRecords.length - afterGradeRecords.length).to.equal(0);
 
-        let grade: Grade = await gc.getGrade(Test.USERNAME1, TEST_ASSIGN_NAME);
+        let grade: Grade = await gc.getGrade(Test.USER1.id, TEST_ASSIGN_NAME);
         expect(grade).to.not.be.null;
         expect(grade.score).to.equal(8);
     });
@@ -322,11 +322,11 @@ describe("CS340: AssignmentController", () => {
         let success = await ac.setAssignmentGrade(Test.REPONAME3, TEST_ASSIGN_NAME, aPayload);
         expect(success).to.be.true;
 
-        let newGrade = await gc.getGrade(Test.USERNAME1, TEST_ASSIGN_NAME);
+        let newGrade = await gc.getGrade(Test.USER1.id, TEST_ASSIGN_NAME);
         expect(newGrade).to.not.be.null;
         expect(newGrade.score).to.be.equal(31);
 
-        let aGrade = await ac.getAssignmentGrade(Test.USERNAME1, TEST_ASSIGN_NAME);
+        let aGrade = await ac.getAssignmentGrade(Test.USER1.id, TEST_ASSIGN_NAME);
 
         expect(aGrade.studentID).to.be.equal(aPayload.studentID);
         expect(aGrade.assignmentID).to.be.equal(aPayload.assignmentID);

@@ -23,7 +23,7 @@ describe("GradeController", () => {
     });
 
     it("Should be able to get all grades, even if there are none.", async () => {
-        let grades = await gc.getAllGrades();
+        const grades = await gc.getAllGrades();
         expect(grades).to.have.lengthOf(0);
     });
 
@@ -31,7 +31,7 @@ describe("GradeController", () => {
         let grades = await gc.getAllGrades();
         expect(grades).to.have.lengthOf(0);
 
-        let grade: GradePayload = {
+        const grade: GradePayload = {
             score:     100,
             comment:   'comment',
             urlName:   'urlName',
@@ -40,7 +40,7 @@ describe("GradeController", () => {
             custom:    {}
         };
 
-        let valid = await gc.createGrade(Test.REPONAME1, Test.DELIVID1, grade);
+        const valid = await gc.createGrade(Test.REPONAME1, Test.DELIVID1, grade);
         expect(valid).to.be.true;
         grades = await gc.getAllGrades();
         expect(grades).to.have.lengthOf(2);
@@ -51,7 +51,7 @@ describe("GradeController", () => {
         let grades = await gc.getAllGrades();
         expect(grades).to.have.lengthOf(2); // from previous
 
-        let grade: GradePayload = {
+        const grade: GradePayload = {
             score:     50,
             comment:   'commentup',
             urlName:   'urlName',
@@ -60,7 +60,7 @@ describe("GradeController", () => {
             custom:    {}
         };
 
-        let valid = await gc.createGrade(Test.REPONAME1, Test.DELIVID1, grade);
+        const  valid = await gc.createGrade(Test.REPONAME1, Test.DELIVID1, grade);
         expect(valid).to.be.true;
         grades = await gc.getAllGrades();
         expect(grades).to.have.lengthOf(2); // still two (one for each teammember)
@@ -70,10 +70,10 @@ describe("GradeController", () => {
     });
 
     it("Should be able to get a grade for a user and deliverable.", async () => {
-        let grades = await gc.getAllGrades();
+        const grades = await gc.getAllGrades();
         expect(grades).to.have.lengthOf(2); // from previous
 
-        let grade = await gc.getGrade(Test.USERNAME1, Test.DELIVID1);
+        const grade = await gc.getGrade(Test.USER1.id, Test.DELIVID1);
         expect(grade).to.not.be.null;
         expect(grade.score).to.equal(50);
     });
@@ -88,14 +88,14 @@ describe("GradeController", () => {
         deliv.gradesReleased = false;
         await dc.saveDeliverable(deliv);
 
-        grades = await gc.getReleasedGradesForPerson(Test.USERNAME1);
+        grades = await gc.getReleasedGradesForPerson(Test.USER1.id);
         expect(grades.length).to.equal(0); // no deliverables have grades released
 
         deliv = await dc.getDeliverable(Test.DELIVID1);
         deliv.gradesReleased = true;
         await dc.saveDeliverable(deliv);
 
-        grades = await gc.getReleasedGradesForPerson(Test.USERNAME1);
+        grades = await gc.getReleasedGradesForPerson(Test.USER1.id);
         expect(grades.length).to.equal(1); // no deliverables have grades released
         expect(grades[0].score).to.equal(50);
 
@@ -103,14 +103,13 @@ describe("GradeController", () => {
         deliv = Test.getDeliverable(Test.DELIVID2);
         deliv.gradesReleased = true;
         await dc.saveDeliverable(deliv);
-        grades = await gc.getReleasedGradesForPerson(Test.USERNAME1);
+        grades = await gc.getReleasedGradesForPerson(Test.USER1.id);
         expect(grades.length).to.equal(2); // no deliverables have grades released
         expect(grades[0].delivId).to.equal(Test.DELIVID1);
         expect(grades[0].score).to.equal(50);
         expect(grades[1].delivId).to.equal(Test.DELIVID2);
         expect(grades[1].score).to.equal(null);
     });
-
 
     it("Should be able to invalidate bad grades.", async () => {
         let deliv = await gc.validateAutoTestGrade(undefined);

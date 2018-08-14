@@ -60,7 +60,7 @@ describe('General Routes', function() {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USERNAME1);
+        const auth = await dc.getAuth(Test.USER1.id);
         expect(auth).to.not.be.null;
 
         // prepare deliverables
@@ -97,7 +97,7 @@ describe('General Routes', function() {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USERNAME1);
+        const auth = await dc.getAuth(Test.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -123,8 +123,8 @@ describe('General Routes', function() {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        await dc.writeAuth({personId: Test.USERNAME3, token: Date.now() + '_token'});
-        const auth = await dc.getAuth(Test.USERNAME3);
+        await dc.writeAuth({personId: Test.USER3.id, token: Date.now() + '_token'});
+        const auth = await dc.getAuth(Test.USER3.id);
         expect(auth).to.not.be.null;
 
         // const team = Test.getTeam(Test.TEAMNAME3, Test.DELIVID0, [Test.USERNAME3]);
@@ -162,7 +162,7 @@ describe('General Routes', function() {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USERNAME1);
+        const auth = await dc.getAuth(Test.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;

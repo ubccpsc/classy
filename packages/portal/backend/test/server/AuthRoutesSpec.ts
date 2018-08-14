@@ -52,7 +52,7 @@ describe('Auth Routes', function () {
 
         const dc: DatabaseController = DatabaseController.getInstance();
 
-        let auth = await dc.getAuth(Test.USERNAMEADMIN);
+        let auth = await dc.getAuth(Test.ADMIN1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -79,7 +79,7 @@ describe('Auth Routes', function () {
 
         const dc: DatabaseController = DatabaseController.getInstance();
 
-        let auth = await dc.getAuth(Test.USERNAME1);
+        let auth = await dc.getAuth(Test.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -105,7 +105,7 @@ describe('Auth Routes', function () {
     it('Should fail to get credentials if the token is bad.', async function () {
 
         const dc: DatabaseController = DatabaseController.getInstance();
-        const auth = await dc.getAuth(Test.USERNAMEADMIN);
+        const auth = await dc.getAuth(Test.ADMIN1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -126,7 +126,7 @@ describe('Auth Routes', function () {
 
         const dc: DatabaseController = DatabaseController.getInstance();
 
-        let auth = await dc.getAuth(Test.USERNAME1);
+        let auth = await dc.getAuth(Test.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -159,9 +159,9 @@ describe('Auth Routes', function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // make sure there is a token to logout
-        await dc.writeAuth({personId: Test.USERNAME1, token: 'testtoken'});
+        await dc.writeAuth({personId: Test.USER1.id, token: 'testtoken'});
 
-        let auth = await dc.getAuth(Test.USERNAME1);
+        let auth = await dc.getAuth(Test.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -211,9 +211,9 @@ describe('Auth Routes', function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // make sure there is a token to logout
-        await dc.writeAuth({personId: Test.USERNAME1, token: 'testtoken'});
+        await dc.writeAuth({personId: Test.USER1.id, token: 'testtoken'});
 
-        let auth = await dc.getAuth(Test.USERNAME1);
+        let auth = await dc.getAuth(Test.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;

@@ -33,9 +33,9 @@ describe('TestDatasetGenerator', function() {
 
         // create an admin
         let p: Person = {
-            id:            Test.USERNAMEADMIN,
-            csId:          Test.USERNAMEADMIN,
-            githubId:      Test.USERNAMEADMIN,
+            id:            Test.ADMIN1.id,
+            csId:          Test.ADMIN1.csId,
+            githubId:      Test.ADMIN1.github,
             studentNumber: -1,
 
             fName: 'adminFirst',
@@ -56,9 +56,9 @@ describe('TestDatasetGenerator', function() {
 
         // create a student
         p = {
-            id:            Test.USERNAME1,
-            csId:          Test.USERNAME1,
-            githubId:      Test.USERNAME1,
+            id:            Test.USER1.id,
+            csId:          Test.USER1.csId,
+            githubId:      Test.USER1.github,
             studentNumber: -1,
 
             fName: 'adminFirst',
@@ -108,11 +108,11 @@ describe('TestDatasetGenerator', function() {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // create for an admin
-        let a: Auth = {personId: Test.USERNAMEADMIN, token: 'TEST_TOKENADMIN'};
+        let a: Auth = {personId: Test.ADMIN1.id, token: 'TEST_TOKENADMIN'};
         await dc.writeAuth(a);
 
         // create for a student
-        a = {personId: Test.USERNAME1, token: 'TEST_TOKENSTUDENT'};
+        a = {personId: Test.USER1.id, token: 'TEST_TOKENSTUDENT'};
         await dc.writeAuth(a);
     });
 
@@ -155,7 +155,7 @@ describe('TestDatasetGenerator', function() {
             deliv.closeTimestamp = new Date().getTime();
             try {
                 await dc.saveDeliverable(deliv);
-            } catch (e) {
+            } catch (err) {
                 // Fail silently, it's fine, the deliverable already exists
             }
         }
@@ -171,7 +171,7 @@ describe('TestDatasetGenerator', function() {
         const deliv = await dc.getDeliverable('d0');
         try {
             await tc.createTeam(Test.TEAMNAME3, deliv, [pA, pB], {});
-        } catch (e) {
+        } catch (err) {
             // Fail silently, it's fine, the team already exists
         }
 
@@ -180,7 +180,7 @@ describe('TestDatasetGenerator', function() {
         const pC = await pc.getPerson('p5');
         try {
             await tc.createTeam(Test.TEAMNAME4, deliv, [pA, pB, pC], {});
-        } catch (e) {
+        } catch (err) {
             // Fail silently, it's fine, the team already exists
         }
     });
@@ -193,14 +193,14 @@ describe('TestDatasetGenerator', function() {
 
         try {
             await rc.createRepository(Test.REPONAME1, [teams[0]], {});
-        } catch (e) {
-
+        } catch (err) {
+            // Fail silently, it's fine, the team already exists
         }
 
         try {
             await rc.createRepository(Test.REPONAME2, [teams[1]], {});
-        } catch (e) {
-
+        } catch (err) {
+            // Fail silently, it's fine, the team already exists
         }
     });
 

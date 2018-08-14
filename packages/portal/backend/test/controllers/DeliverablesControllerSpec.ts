@@ -16,34 +16,16 @@ describe("DeliverablesController", () => {
     let DELIV1: Deliverable = null; // delivs are complex so just use one for the whole suite
 
     before(async () => {
-        DELIV1 = {
-            id: Test.DELIVID1,
-
-            URL:              'https://NOTSET',
-            openTimestamp:    -1,
-            closeTimestamp:   -1,
-            gradesReleased:   false,
-            // delay:            -1,
-            teamMinSize:      1,
-            teamMaxSize:      1,
-            teamSameLab:      false,
-            teamStudentsForm: false,
-            teamPrefix:       'team_',
-            repoPrefix:       'd1_',
-            // bootstrapUrl:     '',
-            autotest:         {
-                dockerImage:        'testImage',
-                studentDelay:       60 * 60 * 12, // 12h
-                maxExecTime:        300,
-                regressionDelivIds: [],
-                custom:             {}
-            },
-            custom:           {}
-        };
+        await Test.suiteBefore("DeliverablesController");
+        DELIV1 = Test.createDeliverable(Test.DELIVID1);
     });
 
     beforeEach(() => {
         dc = new DeliverablesController();
+    });
+
+    after(() => {
+        Test.suiteAfter("DeliverablesController");
     });
 
     it("Should be able to get all deliverables, even if there are none.", async () => {

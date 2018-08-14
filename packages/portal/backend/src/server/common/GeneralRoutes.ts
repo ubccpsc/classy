@@ -185,7 +185,8 @@ export default class GeneralRoutes implements IREST {
             const grades = await gc.getReleasedGradesForPerson(user);
             const gradeTrans: GradeTransport[] = [];
             for (const grade of grades) {
-                gradeTrans.push(gc.gradeToTransport(grade));
+                const trans = await gc.gradeToTransport(grade);
+                gradeTrans.push(trans);
             }
             return gradeTrans;
         }

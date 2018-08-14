@@ -30,7 +30,7 @@ describe("ResultController", () => {
         // let data = fs.readJSONSync(fullPath);
         // let output = await rc.createResult(data[0]);
         // public static getResult(delivId: string, repoId: string, people: string[], score: number): Result {
-        const result = Test.getResult(Test.DELIVID0, Test.REPONAME1, [Test.USERNAME1], 50);
+        const result = Test.getResult(Test.DELIVID0, Test.REPONAME1, [Test.USER1.id], 50);
         const output = await rc.createResult(result);
         expect(output).to.be.true;
 

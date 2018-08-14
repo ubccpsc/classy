@@ -4,19 +4,29 @@ import "mocha";
 import {AuthController} from "../../src/controllers/AuthController";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {PersonController} from "../../src/controllers/PersonController";
-import {Auth, Person} from "../../src/Types";
+import {Auth} from "../../src/Types";
 
 import '../GlobalSpec';
+import {Test} from "../GlobalSpec";
 import './PersonControllerSpec';
 
 describe("AuthController", () => {
 
-    const TIMEOUT = 5000;
+    const TIMEOUT = 10000;
 
     let ac: AuthController;
 
+    before(async () => {
+        await Test.suiteBefore('AuthController');
+        await Test.preparePeople();
+    });
+
     beforeEach(() => {
         ac = new AuthController();
+    });
+
+    after(async () => {
+        Test.suiteAfter('AuthController');
     });
 
     it("Should not validate a user who does not exist.", async () => {
@@ -31,94 +41,92 @@ describe("AuthController", () => {
     });
 
     it("Should identify a staff correctly.", async function() {
-        const pc = new PersonController();
-        const p: Person = {
-            id:            'rtholmes',
-            csId:          'r2d2',
-            githubId:      'rtholmes',
-            studentNumber: null,
-
-            fName: '',
-            lName: '',
-            kind:  '',
-            URL:   null,
-
-            labId: null,
-
-            custom: {}
-        };
-        const newPerson = await pc.createPerson(p);
-        expect(newPerson).to.not.be.null;
-
-        let isValid = await ac.isValid('rtholmes', 'faketoken');
+        let isValid = await ac.isValid(Test.STAFF1.id, Test.FAKETOKEN);
         expect(isValid).to.be.false;
 
         const auth: Auth = {
-            personId: 'rtholmes',
-            token:    'realtoken'
+            personId: Test.STAFF1.id,
+            token:    Test.REALTOKEN
         };
         await DatabaseController.getInstance().writeAuth(auth);
-        isValid = await ac.isValid('rtholmes', 'realtoken');
+        isValid = await ac.isValid(Test.STAFF1.id, Test.REALTOKEN);
         expect(isValid).to.be.true;
 
-        const isPriv = await ac.isPrivileged('rtholmes', 'realtoken');
+        const isPriv = await ac.isPrivileged(Test.STAFF1.id, Test.REALTOKEN);
+        expect(isPriv.isAdmin).to.be.false;
+        expect(isPriv.isStaff).to.be.true;
+    }).timeout(TIMEOUT);
+
+    it("Should identify an admin correctly.", async function() {
+        let isValid = await ac.isValid(Test.ADMIN1.id, Test.FAKETOKEN);
+        expect(isValid).to.be.false;
+
+        const auth: Auth = {
+            personId: Test.ADMIN1.id,
+            token:    Test.REALTOKEN
+        };
+        await DatabaseController.getInstance().writeAuth(auth);
+        isValid = await ac.isValid(Test.ADMIN1.id, Test.REALTOKEN);
+        expect(isValid).to.be.true;
+
+        const isPriv = await ac.isPrivileged(Test.ADMIN1.id, Test.REALTOKEN);
         expect(isPriv.isAdmin).to.be.true;
         expect(isPriv.isStaff).to.be.true;
     }).timeout(TIMEOUT);
 
     it("Should identify a non-admin correctly.", async function() {
-        const pc = new PersonController();
-        const p: Person = {
-            id:            'user',
-            csId:          'r2d2',
-            githubId:      'user',
-            studentNumber: null,
-
-            fName: '',
-            lName: '',
-            kind:  '',
-            URL:   null,
-
-            labId: null,
-
-            custom: {}
-        };
-        const newPerson = await pc.createPerson(p);
-        expect(newPerson).to.not.be.null;
-
-        let isValid = await ac.isValid('user', 'faketoken');
+        let isValid = await ac.isValid(Test.USER1.id, Test.FAKETOKEN);
         expect(isValid).to.be.false;
 
         const auth: Auth = {
-            personId: 'user',
-            token:    'realtoken'
+            personId: Test.USER1.id,
+            token:    Test.REALTOKEN
         };
         await DatabaseController.getInstance().writeAuth(auth);
-        isValid = await ac.isValid('user', 'realtoken');
+        isValid = await ac.isValid(Test.USER1.id, Test.REALTOKEN);
         expect(isValid).to.be.true;
 
-        const isPriv = await ac.isPrivileged('user', 'realtoken');
+        const isPriv = await ac.isPrivileged(Test.USER1.id, Test.REALTOKEN);
         expect(isPriv.isAdmin).to.be.false;
         expect(isPriv.isStaff).to.be.false;
     }).timeout(TIMEOUT);
 
-    it("Should be able to logout a real user.", async () => {
-        const personId = 'rtholmes';
+    it("Should be able to logout an admin user.", async () => {
+        // const personId = 'rtholmes';
         const dc = DatabaseController.getInstance();
         const pc = new PersonController();
 
-        await dc.getAuth(personId);
-        let person = await pc.getPerson(personId);
+        // await dc.getAuth(personId);
+        let person = await pc.getPerson(Test.ADMIN1.id);
         expect(person.kind).to.not.be.null;
 
-        const workedEnough = await ac.removeAuthentication(personId);
+        const workedEnough = await ac.removeAuthentication(Test.ADMIN1.id);
         expect(workedEnough).to.be.true;
 
-        const auth = await dc.getAuth('rtholmes');
+        const auth = await dc.getAuth(Test.ADMIN1.id);
         expect(auth).to.be.null; // shouldn't exist for a logged out person
 
-        person = await pc.getPerson(personId);
+        person = await pc.getPerson(Test.ADMIN1.id);
         expect(person.kind).to.be.null; // should be null after being logged out
+    });
+
+    it("Should be able to logout a student user.", async () => {
+        // const personId = 'rtholmes';
+        const dc = DatabaseController.getInstance();
+        const pc = new PersonController();
+
+        // await dc.getAuth(personId);
+        let person = await pc.getPerson(Test.USER1.id);
+        expect(person.kind).to.not.be.null;
+
+        const workedEnough = await ac.removeAuthentication(Test.USER1.id);
+        expect(workedEnough).to.be.true;
+
+        const auth = await dc.getAuth(Test.USER1.id);
+        expect(auth).to.be.null; // shouldn't exist for a logged out person
+
+        person = await pc.getPerson(Test.USER1.id);
+        expect(person.kind).to.equal('student'); // students should stay students after logging out
     });
 
     it("Should be able to handle trying to logout users who do not exist.", async () => {

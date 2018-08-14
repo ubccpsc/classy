@@ -17,12 +17,26 @@ describe("TeamController", () => {
     let dc: DatabaseController;
 
     before(async () => {
+        Test.suiteBefore('TeamController');
+
+        // clear stale data
+        dc = DatabaseController.getInstance();
+        await dc.clearData();
+
+        // get data ready
+        Test.prepareDeliverables();
+        Test.preparePeople();
+        Test.prepareAuth();
+
         tc = new TeamController();
         pc = new PersonController();
-        dc = DatabaseController.getInstance();
 
-        const deliv = Test.getDeliverable(Test.DELIVID0);
-        await dc.writeDeliverable(deliv);
+        // const deliv = Test.getDeliverable(Test.DELIVID0);
+        // await dc.writeDeliverable(deliv);
+    });
+
+    after(async () => {
+        Test.suiteAfter('TeamController');
     });
 
     it("Should be able to get all teams, even if there are none.", async () => {
@@ -34,8 +48,8 @@ describe("TeamController", () => {
         let teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(0);
 
-        const p1 = await pc.getPerson(Test.USERNAME1);
-        const p2 = await pc.getPerson(Test.USERNAME2);
+        const p1 = await pc.getPerson(Test.USER1.id);
+        const p2 = await pc.getPerson(Test.USER2.id);
         expect(p1).to.not.be.null;
         expect(p2).to.not.be.null;
 
@@ -51,8 +65,8 @@ describe("TeamController", () => {
         let teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(1);
 
-        const p1 = await pc.getPerson(Test.USERNAME1);
-        const p2 = await pc.getPerson(Test.USERNAME2);
+        const p1 = await pc.getPerson(Test.USER1.id);
+        const p2 = await pc.getPerson(Test.USER2.id);
         expect(p1).to.not.be.null;
         expect(p2).to.not.be.null;
 
@@ -75,7 +89,7 @@ describe("TeamController", () => {
         let teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(1);
 
-        const person = await pc.getPerson(Test.USERNAME3);
+        const person = await pc.getPerson(Test.USER3.id);
         expect(person).to.not.be.null;
 
         const deliv = await dc.getDeliverable(Test.DELIVID0);

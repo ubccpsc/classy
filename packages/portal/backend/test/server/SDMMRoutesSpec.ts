@@ -78,19 +78,19 @@ describe('SDMM Routes', function () {
 
         // make sure some valid tokens exist
         const dc: DatabaseController = DatabaseController.getInstance();
-        await dc.writeAuth({personId: Test.USERNAME1, token: 'testtoken'}); // create an auth record
-        await dc.writeAuth({personId: Test.USERNAME2, token: 'testtoken'}); // create an auth record
+        await dc.writeAuth({personId: Test.USER1.id, token: 'testtoken'}); // create an auth record
+        await dc.writeAuth({personId: Test.USER2.id, token: 'testtoken'}); // create an auth record
 
         const PERSON1: Person = {
-            id:            Test.USERNAME1,
-            csId:          Test.USERNAME1, // sdmm doesn't have these
-            githubId:      Test.USERNAME1,
+            id:            Test.USER1.github,
+            csId:          Test.USER1.github, // sdmm doesn't have these
+            githubId:      Test.USER1.github,
             studentNumber: null,
 
             fName:  '',
             lName:  '',
             kind:   'student',
-            URL:    'https://github.com/' + Test.USERNAME1,
+            URL:    'https://github.com/' + Test.USER1.id,
             labId:  'UNKNOWN',
             custom: {}
         };
@@ -102,7 +102,7 @@ describe('SDMM Routes', function () {
         const url = '/portal/sdmm/currentStatus/';
         try {
             const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).get(url).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
@@ -124,7 +124,7 @@ describe('SDMM Routes', function () {
         const url = '/portal/sdmm/performAction/doRandomInvalidThing';
         try {
             const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).post(url).send({}).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
@@ -141,7 +141,7 @@ describe('SDMM Routes', function () {
         const url = '/portal/sdmm/performAction/provisionD0';
         try {
             const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAME1, token: 'SUPERinvalidTOKEN'});
+            response = await request(app).post(url).send({}).set({name: name, user: Test.USER1.id, token: 'SUPERinvalidTOKEN'});
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
@@ -160,22 +160,22 @@ describe('SDMM Routes', function () {
         const rc = new RepositoryController();
         let repo = null;
         try {
-            repo = await rc.createRepository('secap_'+Test.USERNAME1, [], {});
+            repo = await rc.createRepository('secap_'+Test.USER1.id, [], {});
             const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).post(url).send({}).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
         const dc = DatabaseController.getInstance();
         await dc.deleteRepository(repo); // cleanup repo
-        await dc.deleteTeam(await dc.getTeam(Test.USERNAME1)); // cleanup team
+        await dc.deleteTeam(await dc.getTeam(Test.USER1.id)); // cleanup team
 
         // works on its own but not with others
         Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(400);
 
         expect(response.body.failure).to.not.be.undefined;
-        expect(response.body.failure.message).to.equal('Failed to provision d0 repo; already exists: secap_'+Test.USERNAME1);
+        expect(response.body.failure.message).to.equal('Failed to provision d0 repo; already exists: secap_'+Test.USER1.id);
 
     }).timeout(1000 * 30);
 
@@ -184,10 +184,10 @@ describe('SDMM Routes', function () {
         const url = '/portal/sdmm/performAction/provisionD0';
         try {
             const gha = new GitHubActions();
-            const deleted = await gha.deleteRepo('secap_'+Test.USERNAME1); // make sure the repo doesn't exist
+            const deleted = await gha.deleteRepo('secap_'+Test.USER1.id); // make sure the repo doesn't exist
 
             const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).post(url).send({}).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
@@ -206,7 +206,7 @@ describe('SDMM Routes', function () {
         const url = '/portal/sdmm/performAction/provisionD1individual';
         try {
             const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).post(url).send({}).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
@@ -225,7 +225,7 @@ describe('SDMM Routes', function () {
         try {
             const dc = DatabaseController.getInstance();
             const g: Grade = {
-                personId:  Test.USERNAME1,
+                personId:  Test.USER1.id,
                 delivId:   Test.DELIVID0,
                 score:     60,
                 comment:   'comment',
@@ -239,7 +239,7 @@ describe('SDMM Routes', function () {
             await dc.writeGrade(g);
 
             const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).post(url).send({}).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
@@ -257,10 +257,10 @@ describe('SDMM Routes', function () {
         const url = '/portal/sdmm/performAction/provisionD1team/somerandmomusernamethatdoesnotexist';
         try {
             const gha = new GitHubActions();
-            const deleted = await gha.deleteRepo('secap_'+Test.USERNAME1); // make sure the repo doesn't exist
+            const deleted = await gha.deleteRepo('secap_'+Test.USER1.id); // make sure the repo doesn't exist
 
             const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+            response = await request(app).post(url).send({}).set({name: name, user: Test.USER1.id, token: 'testtoken'});
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
@@ -298,7 +298,7 @@ describe('SDMM Routes', function () {
     //         const deleted = await gha.deleteRepo('secap_user1'); // make sure the repo doesn't exist
     //
     //         const name = Config.getInstance().getProp(ConfigKey.name);
-    //         response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+    //         response = await request(app).post(url).send({}).set({name: name, user: Test.USER1.id, token: 'testtoken'});
     //     } catch (err) {
     //         Log.test('ERROR: ' + err);
     //     }
@@ -389,7 +389,7 @@ describe('SDMM Routes', function () {
     //     const url = '/sdmm/performAction/provisionD0';
     //     try {
     //         const name = Config.getInstance().getProp(ConfigKey.name);
-    //         response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAME1, token: 'testtoken'});
+    //         response = await request(app).post(url).send({}).set({name: name, user: Test.USER1.id, token: 'testtoken'});
     //     } catch (err) {
     //         Log.test('ERROR: ' + err);
     //     }

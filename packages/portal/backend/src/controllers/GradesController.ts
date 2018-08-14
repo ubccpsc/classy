@@ -7,6 +7,7 @@ import {Grade} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
 import {DeliverablesController} from "./DeliverablesController";
+import {PersonController} from "./PersonController";
 
 export class GradesController {
 
@@ -198,12 +199,15 @@ export class GradesController {
         return null;
     }
 
-    public gradeToTransport(grade: Grade): GradeTransport {
+    public async gradeToTransport(grade: Grade): Promise<GradeTransport> {
         const config = Config.getInstance();
+
+        const pc = new PersonController(); // this is a lot of slow work to go from personId -> githubId
+        const p = await pc.getPerson(grade.personId);
 
         const g: GradeTransport = {
             personId:  grade.personId,
-            personURL: config.getProp(ConfigKey.githubHost) + '/' + grade.personId,
+            personURL: config.getProp(ConfigKey.githubHost) + '/' + p.githubId, // grade.personId,
 
             delivId: grade.delivId,
 

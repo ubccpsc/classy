@@ -29,6 +29,16 @@ describe("CourseController", () => {
 
     let data: TestData;
 
+    before(async () => {
+        await Test.suiteBefore('CourseController');
+        await Test.preparePeople();
+        await Test.prepareAuth();
+        await Test.prepareDeliverables();
+        await Test.prepareTeams();
+        await Test.prepareRepositories();
+        await Test.prepareGrades();
+    });
+
     beforeEach(() => {
         data = new TestData();
 
@@ -38,6 +48,10 @@ describe("CourseController", () => {
         gc = new GradesController();
         tc = new TeamController();
         pc = new PersonController();
+    });
+
+    after(async () => {
+        Test.suiteAfter('CourseController');
     });
 
     it("Should be able to get the config name.", async () => {
@@ -61,13 +75,13 @@ describe("CourseController", () => {
         expect(res.length).to.be.greaterThan(0);
 
         const s: StudentTransport = {
-            firstName:  '',
-            lastName:   '',
-            id:         Test.USERNAME2,
-            githubId:   Test.USERNAME2,
-            userUrl:    Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Test.USERNAME2,
+            firstName:  'first_' + Test.USER1.id,
+            lastName:   'last_' + Test.USER1.id,
+            id:         Test.USER1.id,
+            githubId:   Test.USER1.github,
+            userUrl:    Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Test.USER1.github,
             studentNum: null,
-            labId:      'UNKNOWN'
+            labId:      null
         };
 
         expect(res).to.deep.include(s); // make sure at least one student with the right format is in there
@@ -82,7 +96,7 @@ describe("CourseController", () => {
         const t: TeamTransport = {
             id:      "TESTteam1",
             delivId: "d0",
-            people:  ["rthse2", "user2"],
+            people:  [Test.USER1.id, Test.USER2.id],
             URL:     null
         };
         expect(res).to.deep.include(t); // make sure at least one student with the right format is in there
@@ -94,14 +108,17 @@ describe("CourseController", () => {
         expect(res.length).to.be.greaterThan(0);
 
         Log.test('grades: ' + JSON.stringify(res));
+        // const o = {"personId":"user2id","personURL":"https://github.com/user2id","delivId":"d1","score":50,"comment":"commentup","urlName":"urlName","URL":"URLup","timestamp":1517446860000,"custom":{}};
+        const url = Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Test.USER2.github;
+        const id = Test.USER2.id;
         const t: GradeTransport = {
-            personId:  "rthse2",
-            personURL: "https://github.com/rthse2",
+            personId:  id,
+            personURL: url,
             delivId:   "d1",
-            score:     50,
-            comment:   "commentup",
+            score:     100,
+            comment:   "comment",
             urlName:   "urlName",
-            URL:       "URLup",
+            URL:       "URL",
             timestamp: 1517446860000,
             custom:    {}
         };
