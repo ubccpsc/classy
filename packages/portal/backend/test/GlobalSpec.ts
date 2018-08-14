@@ -48,6 +48,15 @@ export class Test {
         Log.test("Test::suiteAfter( ... ) - suite: " + suiteName);
     }
 
+    public static async prepareAll() {
+        await Test.preparePeople();
+        await Test.prepareAuth();
+        await Test.prepareDeliverables();
+        await Test.prepareTeams();
+        await Test.prepareRepositories();
+        await Test.prepareGrades();
+    }
+
     public static async prepareDeliverables(): Promise<void> {
         const dc = DatabaseController.getInstance();
 
