@@ -70,8 +70,8 @@ export enum AssignmentStatus {
                             // Repositories Status:
                             // Created | Pull | Push  |
     INACTIVE    = 1,        //         |      |       | Repositories not created or viewable
-    INITIALIZED = 2,        //    X    |      |       | Repositories are created, not viewable
-    PUBLISHED   = 3,        //    X    |  X   |   X   | Created and viewable, with push access
+    CREATED     = 2,        //    X    |      |       | Repositories are created, not viewable
+    RELEASED    = 3,        //    X    |  X   |   X   | Created and viewable, with push access
     CLOSED      = 4,        //    X    |  X   |       | Created, viewable, no push access
 }
 

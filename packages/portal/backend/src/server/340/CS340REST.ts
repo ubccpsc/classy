@@ -35,6 +35,29 @@ export default class CS340REST implements IREST {
         server.post('/portal/cs340/deleteRepository/:delivid/:reponame', CS340REST.deleteRepository);
         server.post('/portal/cs340/deleteAllRepositories/:delivid', CS340REST.deleteAllRepositories);
         // server.get('/testPublishRepository/:repoId', CS340REST.testPublishRepository);
+        server.get('/portal/cs340/testPublishGrade', CS340REST.testPublishGrade);
+        server.get('/portal/cs340/testPublishAllGrades', CS340REST.testPublishAllGrades);
+
+    }
+
+    public static async testPublishGrade(req: any, res: any, next: any) {
+        let ac: AssignmentController = new AssignmentController();
+        let success = await ac.publishGrade("jopika_grades", "a2_grades", "jopika", "a2");
+        if(success) {
+            res.send(200, "Complete!");
+        } else {
+            res.send(400, "Failed :(");
+        }
+    }
+
+    public static async testPublishAllGrades(req: any, res: any, next: any) {
+        let ac: AssignmentController = new AssignmentController();
+        let success = await ac.publishAllGrades("a2");
+        if(success) {
+            res.send(200, "Complete!");
+        } else {
+            res.send(400, "Failed :(");
+        }
     }
 
     public static getAssignmentGrade(req: any, res: any, next: any) {

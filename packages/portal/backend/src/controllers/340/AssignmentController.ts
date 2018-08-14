@@ -107,7 +107,7 @@ export class AssignmentController {
         // save repository information to database
         let assignRepoInfo: AssignmentRepositoryInfo = {
             assignmentId:  [delivId],
-            status:        AssignmentStatus.INITIALIZED,
+            status:        AssignmentStatus.CREATED,
             assignedTeams: []
         };
 
@@ -232,7 +232,7 @@ export class AssignmentController {
 
         // once you are done, update the assignment information
         if (!anyError) {
-            assignInfo.status = AssignmentStatus.INITIALIZED;
+            assignInfo.status = AssignmentStatus.CREATED;
         }
 
         await this.dc.saveDeliverable(deliv);
@@ -252,7 +252,7 @@ export class AssignmentController {
 
         // check if assignment is ready to be published
         let repoInfo: AssignmentRepositoryInfo = repo.custom;
-        if (repoInfo.status !== AssignmentStatus.INITIALIZED) {
+        if (repoInfo.status !== AssignmentStatus.CREATED) {
             Log.error("AssignmentController::publishAssignmentRepo(..) - error: repository " + repoId +
                 " is not initialized");
             switch (repoInfo.status) {
@@ -260,8 +260,8 @@ export class AssignmentController {
                     Log.error("AssignmentController::publishAssignmentRepo(..) - status: INACTIVE");
                     break;
                 }
-                case AssignmentStatus.PUBLISHED: {
-                    Log.error("AssignmentController::publishAssignmentRepo(..) - status: PUBLISHED");
+                case AssignmentStatus.RELEASED: {
+                    Log.error("AssignmentController::publishAssignmentRepo(..) - status: RELEASED");
                     break;
                 }
                 case AssignmentStatus.CLOSED: {
@@ -293,7 +293,7 @@ export class AssignmentController {
         let success: boolean = await this.ghc.releaseRepository(repo, teamList, false);
 
         if (success) {
-            repoInfo.status = AssignmentStatus.PUBLISHED;
+            repoInfo.status = AssignmentStatus.RELEASED;
             await this.db.writeRepository(repo);
         } else {
             Log.error("AssignmentController::publishAssignmentRepo(..) - unable to release repo");
@@ -332,10 +332,74 @@ export class AssignmentController {
             return false;
         }
 
-        assignInfo.status = AssignmentStatus.PUBLISHED;
+        assignInfo.status = AssignmentStatus.RELEASED;
         await this.dc.saveDeliverable(deliv);
         Log.info("AssignmentController::publishAllRepositories(..) - finish");
         return true;
+    }
+
+    public async closeAssignmentRepository(repoId: string) : Promise<boolean> {
+        Log.info("AssignmentController::closeRepository( " + repoId + " ) - start");
+        let repoRecord: Repository = await this.rc.getRepository(repoId);
+        if(repoRecord === null) {
+            Log.error("AssignmentController::closeRepository(..) - Error: Repository not found; repoId: " + repoId);
+            // Log.error("AssignmentController::closeRepository(..) - Error: ");
+            return false;
+        }
+
+        if (repoRecord.custom === null || typeof repoRecord.custom.status === 'undefined') {
+            Log.error("AssignmentController::closeRepository(..) - Error: RepoId: " + repoId +" is " +
+                "not an assignment Repo");
+            return false;
+        }
+
+        let success = await this.gha.setRepoPermission(repoRecord.id, "pull");
+        if (!success) {
+            Log.error("AssignmentController::closeRepository(..) - Error: Was not successful in changing permissions for repo");
+            return false;
+        }
+
+        (repoRecord.custom as AssignmentRepositoryInfo).status = AssignmentStatus.CLOSED;
+
+        await this.db.writeRepository(repoRecord);
+        return true;
+    }
+
+    public async closeAllRepositories(delivId: string): Promise<boolean> {
+        Log.info("AssignmentController::closeAllRepositories( " + delivId + " ) - start");
+        // Log.error("AssignmentController::closeAllRepositories(..) - Error: ");
+
+        let deliverableRecord: Deliverable = await this.db.getDeliverable(delivId);
+        if(deliverableRecord === null) {
+            Log.error("AssignmentController::closeAllRepositories(..) - Error: Invalid delivId: " + delivId);
+            return false;
+        }
+
+        // verify deliverable is an assignment
+        if(deliverableRecord.custom === null || typeof (deliverableRecord.custom as AssignmentInfo).repositories = 'undefined') {
+            Log.error("AssignmentController::closeAllRepositories(..) - Error: Deliverable: " + delivId +" is not an assignment");
+            return false;
+        }
+
+        let assignmentRepos: Repository[] = (deliverableRecord.custom as AssignmentInfo).repositories;
+
+        let overallSuccess = true;
+        for(const repo of assignmentRepos) {
+            let success: boolean = await this.closeAssignmentRepository(repo.id);
+            if (!success) {
+                Log.warn("AssignmentController::closeAllRepositories(..) - Error: unable to close repository: " + repo.id);
+                overallSuccess = false;
+            }
+        }
+
+        if(overallSuccess) {
+            (deliverableRecord.custom as AssignmentInfo).status = AssignmentStatus.CLOSED;
+            await this.db.writeDeliverable(deliverableRecord);
+        } else {
+            Log.warn("AssignmentController::closeAllRepositories(..) - Error: unable to close a repo in the assignment");
+        }
+
+        return overallSuccess;
     }
 
     /**
@@ -521,13 +585,13 @@ export class AssignmentController {
                     }
                     let repoInfo: AssignmentRepositoryInfo = repo.custom;
 
-                    // if(repoInfo.status === AssignmentStatus.INITIALIZED) {
+                    // if(repoInfo.status === AssignmentStatus.CREATED) {
                     //     currentStatus = repoInfo.status;
-                    // } else if (currentStatus !== AssignmentStatus.INITIALIZED &&
-                    //         repoInfo.status === AssignmentStatus.PUBLISHED) {
+                    // } else if (currentStatus !== AssignmentStatus.CREATED &&
+                    //         repoInfo.status === AssignmentStatus.RELEASED) {
                     //     currentStatus = repoInfo.status;
-                    // } else if (currentStatus !== AssignmentStatus.PUBLISHED &&
-                    //         currentStatus !== AssignmentStatus.INITIALIZED &&
+                    // } else if (currentStatus !== AssignmentStatus.RELEASED &&
+                    //         currentStatus !== AssignmentStatus.CREATED &&
                     //         repoInfo.status === AssignmentStatus.CLOSED) {
                     //     currentStatus = repoInfo.status;
                     // }

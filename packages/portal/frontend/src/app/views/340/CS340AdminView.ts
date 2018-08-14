@@ -189,12 +189,12 @@ export class CS340AdminView extends AdminView {
                     statusBox.innerHTML = ": INACTIVE";
                     break;
                 }
-                case AssignmentStatus.INITIALIZED: {
-                    statusBox.innerHTML = ": INITIALIZED";
+                case AssignmentStatus.CREATED: {
+                    statusBox.innerHTML = ": CREATED";
                     break;
                 }
-                case AssignmentStatus.PUBLISHED: {
-                    statusBox.innerHTML = ": PUBLISHED";
+                case AssignmentStatus.RELEASED: {
+                    statusBox.innerHTML = ": RELEASED";
                     break;
                 }
                 case AssignmentStatus.CLOSED: {
