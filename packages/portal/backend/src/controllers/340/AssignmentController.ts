@@ -376,18 +376,18 @@ export class AssignmentController {
         }
 
         // verify deliverable is an assignment
-        if(deliverableRecord.custom === null || typeof (deliverableRecord.custom as AssignmentInfo).repositories = 'undefined') {
+        if(deliverableRecord.custom === null || typeof (deliverableRecord.custom as AssignmentInfo).repositories === 'undefined') {
             Log.error("AssignmentController::closeAllRepositories(..) - Error: Deliverable: " + delivId +" is not an assignment");
             return false;
         }
 
-        let assignmentRepos: Repository[] = (deliverableRecord.custom as AssignmentInfo).repositories;
+        let assignmentRepos: string[] = (deliverableRecord.custom as AssignmentInfo).repositories;
 
         let overallSuccess = true;
-        for(const repo of assignmentRepos) {
-            let success: boolean = await this.closeAssignmentRepository(repo.id);
+        for(const repoId of assignmentRepos) {
+            let success: boolean = await this.closeAssignmentRepository(repoId);
             if (!success) {
-                Log.warn("AssignmentController::closeAllRepositories(..) - Error: unable to close repository: " + repo.id);
+                Log.warn("AssignmentController::closeAllRepositories(..) - Error: unable to close repository: " + repoId);
                 overallSuccess = false;
             }
         }
