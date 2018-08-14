@@ -82,7 +82,7 @@ describe("GitHub Event Parser", () => {
             "timestamp":   1516324553000
         };
 
-        expect(actual).to.deep.equal(expected);
+        expect(expected).to.deep.equal(actual);
     });
 
     it("Should be able to parse a push that created a new branch.", async () => {
@@ -103,7 +103,7 @@ describe("GitHub Event Parser", () => {
             "timestamp":   1516322017000
         };
 
-        expect(actual).to.deep.equal(expected);
+        expect(expected).to.deep.equal(actual);
     });
 
     it("Should be able to parse a push that deleted an existing branch.", async () => {
@@ -132,7 +132,7 @@ describe("GitHub Event Parser", () => {
             "timestamp":   1516324487000
         };
 
-        expect(actual).to.deep.equal(expected);
+        expect(expected).to.deep.equal(actual);
     });
 
     it("Should be able to parse a comment on a master commit with one deliverable and a mention.", async () => {
@@ -154,7 +154,7 @@ describe("GitHub Event Parser", () => {
             "personId":     GITHUBID
         };
 
-        expect(actual).to.deep.equal(expected);
+        expect(expected).to.deep.equal(actual);
     }).timeout(TIMEOUT * 10);
 
     it("Should be able to parse a comment on a master commit with multiple deliverables and a mention.", async () => {
@@ -176,7 +176,7 @@ describe("GitHub Event Parser", () => {
             "timestamp":    1516324833000
         };
 
-        expect(actual).to.deep.equal(expected);
+        expect(expected).to.deep.equal(actual);
     }).timeout(TIMEOUT * 10);
 
     it("Should be able to parse a comment on a master commit with no deliverables and no mention.", async () => {
@@ -198,7 +198,7 @@ describe("GitHub Event Parser", () => {
             "timestamp":    1516320674000
         };
         // const expected: any = null;
-        expect(actual).to.deep.equal(expected);
+        expect(expected).to.deep.equal(actual);
     }).timeout(TIMEOUT * 10);
 
     it("Should be able to parse a comment on another branch with one deliverable and a mention.", async () => {
@@ -220,7 +220,7 @@ describe("GitHub Event Parser", () => {
             "timestamp":    1516324931000
         };
 
-        expect(actual).to.deep.equal(expected);
+        expect(expected).to.deep.equal(actual);
     }).timeout(TIMEOUT * 10);
 
     function readFile(fName: string): string {
