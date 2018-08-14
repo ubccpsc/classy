@@ -155,7 +155,7 @@ describe('General Routes', function() {
         expect(body.success).to.not.be.undefined;
         expect(body.success.length).to.equal(1);
         expect(body.success[0].delivId).to.equal(Test.DELIVID0);
-        expect(body.success[0].id).to.equal(Test.TEAMNAME2);
+        expect(body.success[0].id).to.equal(Test.TEAMNAME1);
     });
 
     it('Should not be able to get get teams without a valid token.', async function() {
