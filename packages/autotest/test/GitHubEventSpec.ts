@@ -144,11 +144,8 @@ describe("GitHub Event Parser", () => {
             "botMentioned": true,
             "commitSHA":    "bbe3980fff47b7d6a921e9f89c6727bea639589c",
             "commitURL":    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/bbe3980fff47b7d6a921e9f89c6727bea639589c",
-            // "org":          null,
             "delivId":      "d7",
             "repoId":       "d1_project9999",
-            // "projectURL":   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999",
-            // "repoId":         "d1_project9999",
             "postbackURL":  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments",
             "timestamp":    1516324753000,
             "personId":     GITHUBID
