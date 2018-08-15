@@ -66,6 +66,18 @@ describe('SDMM Routes', function() {
         await Test.suiteAfter('SDMM Routes');
     });
 
+    async function clearGithub() {
+        Log.test('SDMMRoutesSpec::clearGithub() - start');
+        const gha = new GitHubActions();
+        await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB1);
+        await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB2);
+        Log.test('SDMMRoutesSpec::clearGithub() - done');
+    }
+
+    it('Should be possible to clear stale state.', async function() {
+        await clearGithub();
+    }).timeout(Test.TIMEOUT * 5);
+
     it('Should not be able to get status without a token.', async function() {
         // NOTE: this subsumed valid uers checks since only valid users can have valid auth tokens
 
@@ -93,17 +105,17 @@ describe('SDMM Routes', function() {
         const ghInstance = new TestGitHubController();
         const sc = new SDMMController(ghInstance);
 
-        let p = await sc.handleUnknownUser(Test.USER1.github);
+        let p = await sc.handleUnknownUser(Test.USERNAMEGITHUB1);
         await dc.writePerson(p);
 
-        p = await sc.handleUnknownUser(Test.USER2.github);
+        p = await sc.handleUnknownUser(Test.USERNAMEGITHUB2);
         await dc.writePerson(p);
 
         // p = Test.createPerson(Test.USER2.github, Test.USER2.github, Test.USER2.github, 'student');
         // await dc.writePerson(p);
 
-        await dc.writeAuth({personId: Test.USER1.github, token: Test.REALTOKEN}); // create an auth record
-        await dc.writeAuth({personId: Test.USER2.github, token: Test.REALTOKEN}); // create an auth record
+        await dc.writeAuth({personId: Test.USERNAMEGITHUB1, token: Test.REALTOKEN}); // create an auth record
+        await dc.writeAuth({personId: Test.USERNAMEGITHUB2, token: Test.REALTOKEN}); // create an auth record
 
         // const PERSON1: Person = {
         //     id:            Test.USER1.github,
@@ -126,7 +138,7 @@ describe('SDMM Routes', function() {
         const url = '/portal/sdmm/currentStatus/';
         try {
             const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).get(url).set({name: name, user: Test.USER1.github, token: Test.REALTOKEN});
+            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
@@ -150,7 +162,7 @@ describe('SDMM Routes', function() {
         const url = '/portal/sdmm/performAction/doRandomInvalidThing';
         try {
             const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).post(url).send({}).set({name: name, user: Test.USER1.github, token: Test.REALTOKEN});
+            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
@@ -167,7 +179,7 @@ describe('SDMM Routes', function() {
         const url = '/portal/sdmm/performAction/provisionD0';
         try {
             const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).post(url).send({}).set({name: name, user: Test.USER1.github, token: Test.FAKETOKEN});
+            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.FAKETOKEN});
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
@@ -186,22 +198,22 @@ describe('SDMM Routes', function() {
         const rc = new RepositoryController();
         let repo = null;
         try {
-            repo = await rc.createRepository('secap_' + Test.USER1.id, [], {});
+            repo = await rc.createRepository('secap_' + Test.USERNAMEGITHUB1, [], {});
             const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).post(url).send({}).set({name: name, user: Test.USER1.github, token: Test.REALTOKEN});
+            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
         const dc = DatabaseController.getInstance();
         await dc.deleteRepository(repo); // cleanup repo
-        await dc.deleteTeam(await dc.getTeam(Test.USER1.id)); // cleanup team
+        await dc.deleteTeam(await dc.getTeam(Test.USERNAMEGITHUB1)); // cleanup team
 
         // works on its own but not with others
         Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(400);
 
         expect(response.body.failure).to.not.be.undefined;
-        expect(response.body.failure.message).to.equal('Failed to provision d0 repo; already exists: secap_' + Test.USER1.id);
+        expect(response.body.failure.message).to.equal('Failed to provision d0 repo; already exists: secap_' + Test.USERNAMEGITHUB1);
 
     }).timeout(1000 * 30);
 
@@ -210,10 +222,10 @@ describe('SDMM Routes', function() {
         const url = '/portal/sdmm/performAction/provisionD0';
         try {
             const gha = new GitHubActions();
-            const deleted = await gha.deleteRepo('secap_' + Test.USER1.id); // make sure the repo doesn't exist
+            const deleted = await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB1); // make sure the repo doesn't exist
 
             const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).post(url).send({}).set({name: name, user: Test.USER1.github, token: Test.REALTOKEN});
+            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
@@ -232,7 +244,7 @@ describe('SDMM Routes', function() {
         const url = '/portal/sdmm/performAction/provisionD1individual';
         try {
             const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).post(url).send({}).set({name: name, user: Test.USER1.github, token: Test.REALTOKEN});
+            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
@@ -251,7 +263,7 @@ describe('SDMM Routes', function() {
         try {
             const dc = DatabaseController.getInstance();
             const g: Grade = {
-                personId:  Test.USER1.id,
+                personId:  Test.USERNAMEGITHUB1,
                 delivId:   Test.DELIVID0,
                 score:     60,
                 comment:   'comment',
@@ -265,7 +277,7 @@ describe('SDMM Routes', function() {
             await dc.writeGrade(g);
 
             const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).post(url).send({}).set({name: name, user: Test.USER1.github, token: Test.REALTOKEN});
+            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
@@ -283,10 +295,10 @@ describe('SDMM Routes', function() {
         const url = '/portal/sdmm/performAction/provisionD1team/somerandmomusernamethatdoesnotexist';
         try {
             const gha = new GitHubActions();
-            const deleted = await gha.deleteRepo('secap_' + Test.USER1.id); // make sure the repo doesn't exist
+            const deleted = await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB1); // make sure the repo doesn't exist
 
             const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).post(url).send({}).set({name: name, user: Test.USER1.github, token: Test.REALTOKEN});
+            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test('ERROR: ' + err);
         }

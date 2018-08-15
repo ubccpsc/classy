@@ -112,7 +112,15 @@ describe("SDDM: SDMMController", () => {
         // only bootstrap the database with deliverables
         await Test.prepareDeliverables();
 
+        data = new TestData();
+
         rc = new RepositoryController();
+
+        const ghInstance = new TestGitHubController();
+        sc = new SDMMController(ghInstance);
+        await sc.handleUnknownUser(data.u1); // provision user
+        await sc.handleUnknownUser(data.u2); // provision user
+        await sc.handleUnknownUser(data.u3); // provision user
     });
 
     after(async () => {
