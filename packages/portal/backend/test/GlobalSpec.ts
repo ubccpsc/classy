@@ -37,7 +37,8 @@ if (typeof it === 'function') {
 
 export class Test {
 
-    public static readonly TIMEOUT = 10000;
+    public static readonly TIMEOUT = 1000 * 10;
+    public static readonly TIMEOUTLONG = 1000 * 60;
 
     public static async suiteBefore(suiteName: string) {
         Log.test("Test::suiteBefore( ... ) - suite: " + suiteName);
@@ -105,18 +106,38 @@ export class Test {
     public static async prepareTeams(): Promise<void> {
         Log.test("Test::prepareTeams() - start");
         try {
-            const pc = new PersonController();
-            const p1 = await pc.getPerson(Test.USER1.id);
-            const p2 = await pc.getPerson(Test.USER2.id);
+            // const pc = new PersonController();
+            // const p1 = await pc.getPerson(Test.USER1.id);
+            // const p2 = await pc.getPerson(Test.USER2.id);
+            //
+            // const dc = new DeliverablesController();
+            // const deliv = await dc.getDeliverable(Test.DELIVID0);
+            // const tc = new TeamController();
+            // const team = await tc.createTeam(Test.TEAMNAME1, deliv, [p1, p2], {});
 
-            const dc = new DeliverablesController();
-            const deliv = await dc.getDeliverable(Test.DELIVID0);
-            const tc = new TeamController();
-            const team = await tc.createTeam(Test.TEAMNAME1, deliv, [p1, p2], {});
+            const team = await Test.createTeam(Test.TEAMNAME1, Test.DELIVID0, [Test.USER1.id, Test.USER2.id]);
+            const db = DatabaseController.getInstance();
+            await db.writeTeam(team);
+
         } catch (err) {
             Log.error("Test::prepareTeams() - ERROR: " + err);
         }
         Log.test("Test::prepareTeams() - end");
+    }
+
+    public static async createTeam(teamId: string, delivId: string, personIds: string[]): Promise<Team> {
+        const pc = new PersonController();
+        const people: Person[] = [];
+
+        for (const pid of personIds) {
+            const p = await pc.getPerson(pid);
+            people.push(p);
+        }
+        const dc = new DeliverablesController();
+        const deliv = await dc.getDeliverable(delivId);
+        const tc = new TeamController();
+        const team = await tc.createTeam(teamId, deliv, people, {});
+        return team;
     }
 
     public static async prepareRepositories(): Promise<void> {
@@ -127,6 +148,9 @@ export class Test {
 
             const rc = new RepositoryController();
             const repo = await rc.createRepository(Test.REPONAME1, [team], {});
+
+            const db = DatabaseController.getInstance();
+            await db.writeRepository(repo);
         } catch (err) {
             Log.error("Test::prepareRepositories() - ERROR: " + err);
         }
