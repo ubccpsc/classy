@@ -14,6 +14,7 @@ import {PersonController} from "../src/controllers/PersonController";
 import {RepositoryController} from "../src/controllers/RepositoryController";
 import {TeamController} from "../src/controllers/TeamController";
 import {Auth, Deliverable, Grade, Person, Repository, Result, Team} from "../src/Types";
+import {AssignmentGradingRubric, AssignmentInfo, AssignmentStatus} from "../../../common/types/CS340Types";
 
 if (typeof it === 'function') {
     // only if we're running in mocha
@@ -247,6 +248,79 @@ export class Test {
         return p;
     }
 
+    public static async prepareAssignment() {
+        let dc: DatabaseController = DatabaseController.getInstance();
+
+        let newAssignmentStatus: AssignmentStatus = AssignmentStatus.INACTIVE;
+
+        let newAssignmentGradingRubric: AssignmentGradingRubric = {
+            name:      ASSIGNID0,
+            comment:   "test assignment",
+            questions: [
+                {
+                    name:         "question 1",
+                    comment:      "",
+                    subQuestions: [
+                        {
+                            name:      "rubric",
+                            comment:   "rubric question",
+                            outOf:     5,
+                            weight:    0.25,
+                            modifiers: null
+                        }
+                    ]
+                },
+                {
+                    name:         "question 2",
+                    comment:      "",
+                    subQuestions: [
+                        {
+                            name:      "code quality",
+                            comment:   "",
+                            outOf:     6,
+                            weight:    0.5,
+                            modifiers: null
+                        }
+                    ]
+                }
+            ]
+        };
+
+
+        let newAssignmentInfo: AssignmentInfo = {
+            seedRepoURL:  "https://github.com/SECapstone/capstone",
+            seedRepoPath: "",
+            status:       newAssignmentStatus,
+            rubric:       newAssignmentGradingRubric,
+            repositories: []
+        };
+
+        let newDeliv: Deliverable = {
+            id:               ASSIGNID0,
+            URL:              "",
+            repoPrefix:       ASSIGNID0 + "_",
+            openTimestamp:    -1,
+            closeTimestamp:   -2,
+            gradesReleased:   false,
+            teamMinSize:      1,
+            teamMaxSize:      1,
+            teamSameLab:      false,
+            teamStudentsForm: false,
+            teamPrefix:       ASSIGNID0 + "_",
+            autotest:         {
+                dockerImage:        'testImage',
+                studentDelay:       60 * 60 * 12, // 12h
+                maxExecTime:        300,
+                regressionDelivIds: [],
+                custom:             {}
+            },
+            custom:           newAssignmentInfo
+        };
+
+
+        let newDelivSuccess = await dc.saveDeliverable(newDeliv);
+    }
+
     // public static testBefore() {
     //     // Log.test('Test::testBefore( ... ) - test: ' + testObj.currentTest.title);
     // }
@@ -302,6 +376,7 @@ export class Test {
     public static readonly DELIVID1 = 'd1';
     public static readonly DELIVID2 = 'd2';
     public static readonly DELIVID3 = 'd3';
+    public static readonly ASSIGNID0 = 'a0';
 
     public static readonly REPONAME1 = 'TESTrepo1';
     public static readonly REPONAME2 = 'TESTrepo2';
