@@ -171,12 +171,14 @@ export class GitHubController implements IGitHubController {
 
                     teamNum = newTeam.githubTeamNumber;
                     // add the students to the team
-                    const teamTuple: GitTeamTuple = await gh.addMembersToTeam(team.id, teamNum, team.personIds);
+                    // const teamTuple: GitTeamTuple =
+                    await gh.addMembersToTeam(team.id, teamNum, team.personIds);
                     Log.info("GitHubController::releaseRepository(..) - added members to team");
 
                 }
                 // now, add the team to the repository
-                const teamAdd = await gh.addTeamToRepo(teamNum, repo.id, "push");
+                // const teamAdd =
+                await gh.addTeamToRepo(teamNum, repo.id, "push");
                 Log.info("GitHubController::releaseRepository(..) - added team (" + team.id + "" +
                     ") with push permissions to repository (" + repo.id + ")");
             }
@@ -280,29 +282,29 @@ export class GitHubController implements IGitHubController {
     }
 }
 
-export class TestGitHubController implements IGitHubController {
-
-    public async getRepositoryUrl(repo: Repository): Promise<string> {
-        Log.error("TestGitHubController::getRepositoryUrl(..) - NOT IMPLEMENTED");
-        return "TODO";
-    }
-
-    public async getTeamUrl(team: Team): Promise<string> {
-        Log.error("TestGitHubController::getTeamUrl(..) - NOT IMPLEMENTED");
-        // const URL = this.gha.getTeamNumber()
-        return "TODO";
-    }
-
-    public async provisionRepository(repoName: string,
-                                     teams: Team[],
-                                     sourceRepo: string,
-                                     webhookAddress: string): Promise<boolean> {
-        Log.error("TestGitHubController::provisionRepository(..) - NOT IMPLEMENTED");
-        return true;
-    }
-
-    public async createPullRequest(repoName: string, prName: string): Promise<boolean> {
-        Log.error("TestGitHubController::createPullRequest(..) - NOT IMPLEMENTED");
-        return true;
-    }
-}
+// export class TestGitHubController implements IGitHubController {
+//
+//     public async getRepositoryUrl(repo: Repository): Promise<string> {
+//         Log.error("TestGitHubController::getRepositoryUrl(..) - NOT IMPLEMENTED");
+//         return "TODO";
+//     }
+//
+//     public async getTeamUrl(team: Team): Promise<string> {
+//         Log.error("TestGitHubController::getTeamUrl(..) - NOT IMPLEMENTED");
+//         // const URL = this.gha.getTeamNumber()
+//         return "TODO";
+//     }
+//
+//     public async provisionRepository(repoName: string,
+//                                      teams: Team[],
+//                                      sourceRepo: string,
+//                                      webhookAddress: string): Promise<boolean> {
+//         Log.error("TestGitHubController::provisionRepository(..) - NOT IMPLEMENTED");
+//         return true;
+//     }
+//
+//     public async createPullRequest(repoName: string, prName: string): Promise<boolean> {
+//         Log.error("TestGitHubController::createPullRequest(..) - NOT IMPLEMENTED");
+//         return true;
+//     }
+// }

@@ -4,6 +4,7 @@ import "mocha";
 import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {IContainerInput, IContainerOutput} from "../../../common/types/AutoTestTypes";
+import {AssignmentGradingRubric, AssignmentInfo, AssignmentStatus} from "../../../common/types/CS340Types";
 import {GradePayload} from "../../../common/types/SDMMTypes";
 import Util from "../../../common/Util";
 
@@ -14,7 +15,6 @@ import {PersonController} from "../src/controllers/PersonController";
 import {RepositoryController} from "../src/controllers/RepositoryController";
 import {TeamController} from "../src/controllers/TeamController";
 import {Auth, Deliverable, Grade, Person, Repository, Result, Team} from "../src/Types";
-import {AssignmentGradingRubric, AssignmentInfo, AssignmentStatus} from "../../../common/types/CS340Types";
 
 if (typeof it === 'function') {
     // only if we're running in mocha
@@ -175,12 +175,13 @@ export class Test {
         };
 
         const gc = new GradesController();
-        const valid = await gc.createGrade(Test.REPONAME1, Test.DELIVID1, grade);
+        // const valid =
+        await gc.createGrade(Test.REPONAME1, Test.DELIVID1, grade);
     }
 
     public static async prepareResults(): Promise<void> {
         // NOTE: see FrontendDatasetGenerator for ideas
-        // TODO
+        // TODO: add this (if needed)
         return;
     }
 
@@ -252,11 +253,11 @@ export class Test {
     }
 
     public static async prepareAssignment() {
-        let dc: DeliverablesController = new DeliverablesController();
+        const dc: DeliverablesController = new DeliverablesController();
 
-        let newAssignmentStatus: AssignmentStatus = AssignmentStatus.INACTIVE;
+        const newAssignmentStatus: AssignmentStatus = AssignmentStatus.INACTIVE;
 
-        let newAssignmentGradingRubric: AssignmentGradingRubric = {
+        const newAssignmentGradingRubric: AssignmentGradingRubric = {
             name:      Test.ASSIGNID0,
             comment:   "test assignment",
             questions: [
@@ -289,8 +290,7 @@ export class Test {
             ]
         };
 
-
-        let newAssignmentInfo: AssignmentInfo = {
+        const newAssignmentInfo: AssignmentInfo = {
             seedRepoURL:  "https://github.com/SECapstone/capstone",
             seedRepoPath: "",
             status:       newAssignmentStatus,
@@ -298,7 +298,7 @@ export class Test {
             repositories: []
         };
 
-        let newDeliv: Deliverable = {
+        const newDeliv: Deliverable = {
             id:               Test.ASSIGNID0,
             URL:              "",
             repoPrefix:       Test.ASSIGNID0 + "_",
@@ -320,8 +320,8 @@ export class Test {
             custom:           newAssignmentInfo
         };
 
-
-        let newDelivSuccess = await dc.saveDeliverable(newDeliv);
+        // const newDelivSuccess =
+        await dc.saveDeliverable(newDeliv);
     }
 
     // public static testBefore() {
@@ -364,8 +364,8 @@ export class Test {
     public static readonly ADMIN1 = {id: 'classyadmin', csId: 'classyadmin', github: 'classyadmin'};
     public static readonly STAFF1 = {id: 'classystaff', csId: 'classystaff', github: 'classystaff'};
 
-    public static readonly USERNAMEADMIN = 'ubcbot'; // should be admin on any test org
-    public static readonly USERNAMESTAFF = 'ubcbot'; // should be admin on any test org
+    // public static readonly USERNAMEADMIN = 'ubcbot'; // should be admin on any test org
+    // public static readonly USERNAMESTAFF = 'ubcbot'; // should be admin on any test org
     // public static readonly USERNAME1 = 'rthse2'; // real account for testing users
     public static readonly REALUSER1 = {id: 'rthse2', csId: 'rthse2', github: 'rthse2'}; // real account for testing users
     // public static readonly USERNAME2 = 'user2';

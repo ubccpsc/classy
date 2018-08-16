@@ -522,19 +522,6 @@ export class DatabaseValidator {
             Log.trace("DatabaseValidator::validateRepositories() - checking result: " + result);
             let isValid: boolean = true;
 
-            // delivId: string; // foreign key into Deliverables (so we know what this run is scoring) (intentional duplication with input.delivId)
-            // repoId: string;  // foreign key into Repositories (so we know what repository (and people) this run is for) (intentional duplication with input.pushInfo.repoId)
-            //
-            // // input.pushInfo.timestamp // timestamp of push
-            // // output.timestamp // timestamp of grading completion
-            //
-            // commitURL: string;
-            // commitSHA: string; // can be used to index into the AutoTest collections (pushes, comments, & feedback)
-            //
-            // input: IContainerInput; // Prepared by AutoTest service
-            // output: IContainerOutput; // Returned by the Grader service
-            //
-
             if (typeof result.delivId === 'undefined') {
                 isValid = false;
                 throw new Error("Unsolveable problem: Result.id missing.");
@@ -584,7 +571,7 @@ export class DatabaseValidator {
 
 const dv = new DatabaseValidator();
 const start = Date.now();
-dv.validate().then(function(out) {
+dv.validate().then(function() {
     Log.info("DatabaseValidator::validate() - complete; took: " + Util.took(start));
 }).catch(function(err) {
     Log.error("DatabaseValidator::validate() - ERROR: " + err.message);

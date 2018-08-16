@@ -5,7 +5,8 @@ import Log from "../../../../common/Log";
 import {AutoTestGradeTransport, GradeTransport, StudentTransport, TeamTransport} from "../../../../common/types/PortalTypes";
 
 import {CourseController} from "../../src/controllers/CourseController";
-import {TestGitHubController} from "../../src/controllers/GitHubController";
+import {GitHubController} from "../../src/controllers/GitHubController";
+// import {TestGitHubController} from "../../src/controllers/GitHubController";
 import {GradesController} from "../../src/controllers/GradesController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
@@ -42,7 +43,7 @@ describe("CourseController", () => {
     beforeEach(() => {
         data = new TestData();
 
-        const ghInstance = new TestGitHubController();
+        const ghInstance = new GitHubController();
         cc = new CourseController(ghInstance);
         rc = new RepositoryController();
         gc = new GradesController();

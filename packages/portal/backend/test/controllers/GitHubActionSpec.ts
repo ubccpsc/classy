@@ -15,7 +15,7 @@ import {Test} from "../GlobalSpec";
 import '../GlobalSpec';
 // const loadFirst = require('../GlobalSpec');
 
-describe.only("GitHubActions", () => {
+describe("GitHubActions", () => {
 
     // TODO: investigate skipping this way: https://stackoverflow.com/a/41908943 (and turning them on/off with an env flag)
 
@@ -44,8 +44,8 @@ describe.only("GitHubActions", () => {
     beforeEach(function() {
         Log.test('GitHubActionSpec::BeforeEach - "' + (this as any).currentTest.title + '"');
 
-        let exec = Test.runSlowTest();
-        exec = true;
+        const exec = Test.runSlowTest();
+        // exec = true;
         if (exec === true) {
             Log.test("GitHubActionSpec::beforeEach() - running in CI; not skipping");
             gh = new GitHubActions();

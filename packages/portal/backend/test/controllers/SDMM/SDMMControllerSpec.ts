@@ -6,7 +6,8 @@ import Log from "../../../../../common/Log";
 import {ActionPayload, GradePayload, SDMMStatus} from "../../../../../common/types/SDMMTypes";
 
 import {DatabaseController} from "../../../src/controllers/DatabaseController";
-import {TestGitHubController} from "../../../src/controllers/GitHubController";
+import {GitHubController} from "../../../src/controllers/GitHubController";
+// import {TestGitHubController} from "../../../src/controllers/GitHubController";
 import {GradesController} from "../../../src/controllers/GradesController";
 import {PersonController} from "../../../src/controllers/PersonController";
 import {RepositoryController} from "../../../src/controllers/RepositoryController";
@@ -120,7 +121,7 @@ describe("SDDM: SDMMController", () => {
 
         rc = new RepositoryController();
 
-        const ghInstance = new TestGitHubController();
+        const ghInstance = new GitHubController();
         sc = new SDMMController(ghInstance);
         await sc.handleUnknownUser(data.u1); // provision user
         await sc.handleUnknownUser(data.u2); // provision user
@@ -138,7 +139,7 @@ describe("SDDM: SDMMController", () => {
     beforeEach(() => {
         data = new TestData();
 
-        const ghInstance = new TestGitHubController();
+        const ghInstance = new GitHubController();
         sc = new SDMMController(ghInstance);
         rc = new RepositoryController();
         gc = new GradesController();

@@ -5,7 +5,8 @@ import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {GitHubActions} from "../../src/controllers/GitHubActions";
-import {TestGitHubController} from "../../src/controllers/GitHubController";
+import {GitHubController} from "../../src/controllers/GitHubController";
+// import {TestGitHubController} from "../../src/controllers/GitHubController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {SDMMController} from "../../src/controllers/SDMM/SDMMController";
 
@@ -102,7 +103,7 @@ describe('SDMM Routes', function() {
         // make sure some valid tokens exist
         const dc: DatabaseController = DatabaseController.getInstance();
         // let p = Test.createPerson(Test.USER1.github, Test.USER1.github, Test.USER1.github, 'student');
-        const ghInstance = new TestGitHubController();
+        const ghInstance = new GitHubController();
         const sc = new SDMMController(ghInstance);
 
         let p = await sc.handleUnknownUser(Test.USERNAMEGITHUB1);
@@ -219,6 +220,13 @@ describe('SDMM Routes', function() {
 
     it('Should provision a d0 repo.', async function() {
         let response = null;
+
+        // this test is slow, so skip it if we aren't on CI
+        const shouldRun = Test.runSlowTest();
+        if (shouldRun === false) {
+            this.skip();
+        }
+
         const url = '/portal/sdmm/performAction/provisionD0';
         try {
             const gha = new GitHubActions();
