@@ -483,6 +483,7 @@ export class GitHubActions {
                     json:    true
                 };
                 const body = await rp(options);
+                if(body === null) Log.info("GitHubActions::Error!!!!!!!"); // DEBUG
                 let id = body.id;
                 Log.info("GitHubAction::createTeam(..) - success; new: " + id);
                 return {teamName: teamName, githubTeamNumber: id};
