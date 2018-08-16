@@ -110,15 +110,6 @@ export class Test {
     public static async prepareTeams(): Promise<void> {
         Log.test("Test::prepareTeams() - start");
         try {
-            // const pc = new PersonController();
-            // const p1 = await pc.getPerson(Test.USER1.id);
-            // const p2 = await pc.getPerson(Test.USER2.id);
-            //
-            // const dc = new DeliverablesController();
-            // const deliv = await dc.getDeliverable(Test.DELIVID0);
-            // const tc = new TeamController();
-            // const team = await tc.createTeam(Test.TEAMNAME1, deliv, [p1, p2], {});
-
             const team = await Test.createTeam(Test.TEAMNAME1, Test.DELIVID0, [Test.USER1.id, Test.USER2.id]);
             const db = DatabaseController.getInstance();
             await db.writeTeam(team);
@@ -164,7 +155,6 @@ export class Test {
     public static async prepareGrades(): Promise<void> {
 
         // NOTE: see FrontendDatasetGenerator for ideas
-
         const grade: GradePayload = {
             score:     100,
             comment:   'comment',
@@ -338,8 +328,8 @@ export class Test {
      */
     public static runSlowTest() {
         // set to true if you want to run these slow tests locally (they will always run on CI)
-        const override = false; // NOTE: should NOT be commented out when committing
-        // const override = true; // NOTE: should be commented out when committing
+        // const override = false; // NOTE: should NOT be commented out when committing
+        const override = true; // NOTE: should be commented out when committing
 
         const ci = process.env.CI;
         if (override || typeof ci !== 'undefined' && Boolean(ci) === true) {

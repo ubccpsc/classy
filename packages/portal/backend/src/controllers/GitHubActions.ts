@@ -86,48 +86,51 @@ export class GitHubActions {
      * @param repoName
      * @returns {Promise<boolean>}
      */
-    public deleteRepo(repoName: string): Promise<boolean> {
-        const ctx = this;
-        Log.info("GitHubAction::deleteRepo( " + ctx.org + ", " + repoName + " ) - start");
+    public async deleteRepo(repoName: string): Promise<boolean> {
+        // const ctx = this;
+        Log.info("GitHubAction::deleteRepo( " + this.org + ", " + repoName + " ) - start");
 
         // first make sure the repo exists
 
-        return new Promise(function(fulfill, reject) {
+        // return new Promise(function(fulfill, reject) {
+        try {
+            const repoExists = await this.repoExists(repoName); // .then(function(repoExists: boolean) {
 
-            ctx.repoExists(repoName).then(function(repoExists: boolean) {
+            if (repoExists === true) {
+                Log.info("GitHubAction::deleteRepo(..) - repo exists; deleting");
 
-                if (repoExists === true) {
-                    Log.info("GitHubAction::deleteRepo(..) - repo exists; deleting");
+                const uri = this.apiPath + '/repos/' + this.org + '/' + repoName;
+                Log.trace("GitHubAction::deleteRepo(..) - URI: " + uri);
+                const options = {
+                    method:  'DELETE',
+                    uri:     uri,
+                    headers: {
+                        'Authorization': this.gitHubAuthToken,
+                        'User-Agent':    this.gitHubUserName,
+                        'Accept':        'application/json'
+                    }
+                };
 
-                    const uri = ctx.apiPath + '/repos/' + ctx.org + '/' + repoName;
-                    Log.trace("GitHubAction::deleteRepo(..) - URI: " + uri);
-                    const options = {
-                        method:  'DELETE',
-                        uri:     uri,
-                        headers: {
-                            'Authorization': ctx.gitHubAuthToken,
-                            'User-Agent':    ctx.gitHubUserName,
-                            'Accept':        'application/json'
-                        }
-                    };
-
-                    rp(options).then(function() { // body: any
-                        Log.info("GitHubAction::deleteRepo(..) - success"); // body: " + body);
-                        fulfill(true);
-                    }).catch(function(err: any) {
-                        Log.error("GitHubAction::deleteRepo(..) - ERROR: " + JSON.stringify(err));
-                        reject(err);
-                    });
-                } else {
-                    Log.info("GitHubAction::deleteRepo(..) - repo does not exists; not deleting");
-                    fulfill(false);
-                }
-            }).catch(function(err) {
-                Log.error("GitHubAction::deleteRepo(..) - ERROR: " + JSON.stringify(err));
-                reject(err);
-            });
-
-        });
+                await rp(options); // .then(function() { // body: any
+                Log.info("GitHubAction::deleteRepo(..) - success"); // body: " + body);
+                // fulfill(true);
+                //     }).catch(function(err: any) {
+                //         Log.error("GitHubAction::deleteRepo(..) - ERROR: " + JSON.stringify(err));
+                //         reject(err);
+                //     });
+                // } else {
+                //     Log.info("GitHubAction::deleteRepo(..) - repo does not exists; not deleting");
+                //     fulfill(false);
+                // }
+                return true;
+            } else {
+                Log.info("GitHubAction::deleteRepo(..) - repo does not exists; not deleting");
+                return false;
+            }
+        } catch (err) {
+            Log.error("GitHubAction::deleteRepo(..) - ERROR: " + JSON.stringify(err));
+            return false;
+        }
     }
 
     /**

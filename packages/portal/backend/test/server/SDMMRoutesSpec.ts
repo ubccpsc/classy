@@ -1,5 +1,9 @@
 import {expect} from "chai";
 import "mocha";
+// import restify = require('restify');
+import * as restify from 'restify';
+// const request = require('supertest');
+import * as request from 'supertest';
 import Config, {ConfigKey} from "../../../../common/Config";
 
 import Log from "../../../../common/Log";
@@ -13,13 +17,9 @@ import {SDMMController} from "../../src/controllers/SDMM/SDMMController";
 import BackendServer from "../../src/server/BackendServer";
 import {Grade} from "../../src/Types";
 import {Test} from "../GlobalSpec";
-
-const loadFirst = require('../GlobalSpec');
-
-import restify = require('restify');
-
-const request = require('supertest');
-const https = require('https');
+// const loadFirst = require('../GlobalSpec');
+import '../GlobalSpec';
+// const https = require('https');
 
 // NOTE: skipped for now because the infrastructure spins up classytest
 // which means the right routes aren't being started in the backend
@@ -34,12 +34,7 @@ describe('SDMM Routes', function() {
 
     before(async function() {
         Log.test('SDMMRoutes::before - start');
-
         await Test.suiteBefore('SDMM Routes');
-
-        // clear stale data
-        const db = DatabaseController.getInstance();
-        await db.clearData();
 
         // get data ready
         await Test.prepareDeliverables();
@@ -214,9 +209,9 @@ describe('SDMM Routes', function() {
         expect(response.status).to.equal(400);
 
         expect(response.body.failure).to.not.be.undefined;
-        expect(response.body.failure.message).to.equal('Failed to provision d0 repo; already exists: secap_' + Test.USERNAMEGITHUB1);
-
-    }).timeout(1000 * 30);
+        expect(response.body.failure.message).to.equal('Failed to provision d0 repo; ' +
+            'repository already exists in datastore: secap_' + Test.USERNAMEGITHUB1);
+    }).timeout(Test.TIMEOUTLONG);
 
     it('Should provision a d0 repo.', async function() {
         let response = null;
@@ -243,7 +238,7 @@ describe('SDMM Routes', function() {
 
         expect(response.body.success).to.not.be.undefined;
         expect(response.body.success.message).to.equal('Repository successfully created.');
-    }).timeout(1000 * 60);
+    }).timeout(Test.TIMEOUTLONG * 2);
 
     it('Should not be able provision a d1 repo if their d0 grade is too low.', async function() {
 
@@ -261,7 +256,7 @@ describe('SDMM Routes', function() {
 
         expect(response.body.failure).to.not.be.undefined;
         expect(response.body.failure.message).to.equal('Current d0 grade is not sufficient to move on to d1.');
-    }).timeout(1000 * 10);
+    }).timeout(Test.TIMEOUTLONG);
 
     it('Should be able provision a d1 individual repo.', async function() {
 
@@ -294,7 +289,7 @@ describe('SDMM Routes', function() {
 
         expect(response.body.success).to.not.be.undefined;
         expect(response.body.success.message).to.equal('D0 repo successfully updated to D1.');
-    }).timeout(1000 * 30);
+    }).timeout(Test.TIMEOUTLONG);
 
     it('Should fail to provision a d1 team repo if both users are not known.', async function() {
 
@@ -317,7 +312,7 @@ describe('SDMM Routes', function() {
         expect(response.body.failure.message).to.equal(
             'Unknown person somerandmomusernamethatdoesnotexist requested to be on team; ' +
             'please make sure they are registered with the course.');
-    }).timeout(1000 * 30);
+    }).timeout(Test.TIMEOUTLONG);
 
     // it('Should fail to provision a d1 team repo if both users do not have sufficient d0 grades.', async function () {
     //

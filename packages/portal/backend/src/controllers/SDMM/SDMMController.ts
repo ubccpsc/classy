@@ -522,7 +522,7 @@ export class SDMMController extends CourseController {
             const existingRepo = await this.rc.getRepository(repoName);
             if (existingRepo !== null) {
                 // repo already exists; warn and fail
-                throw new Error("Failed to provision d0 repo; already exists: " + repoName);
+                throw new Error("Failed to provision d0 repo; repository already exists in datastore: " + repoName);
             }
             const repoCustom = {d0enabled: true, d1enabled: false, d2enabled: false, d3enabled: false, sddmD3pr: false}; // d0 repo for now
             const repo = await this.rc.createRepository(repoName, [team], repoCustom);
@@ -534,7 +534,7 @@ export class SDMMController extends CourseController {
             const provisionResult = await this.gh.provisionRepository(repoName, [team], INPUTREPO, WEBHOOKADDR);
 
             if (provisionResult === true) {
-                Log.info("SDMMController::provisionD0Repo(..) - d0 github provisioning successful");
+                Log.info("SDMMController::provisionD0Repo(..) - d0 GitHub provisioning successful");
 
                 // update local team and repo with github values
                 repo.URL = await this.gh.getRepositoryUrl(repo);
