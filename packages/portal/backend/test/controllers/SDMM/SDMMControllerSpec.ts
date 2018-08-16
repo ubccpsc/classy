@@ -99,7 +99,11 @@ describe("SDDM: SDMMController", () => {
     let OLD_ORG: string | null = null;
 
     before(async () => {
-        Test.suiteBefore('SDMMController');
+        try {
+            await Test.suiteBefore('SDMMController');
+        } catch (err) {
+            Log.test("SDMMControllerSpec::before - err: " + err);
+        }
 
         Config.getInstance();
         OLD_ORG = Config.getInstance().getProp(ConfigKey.org);
