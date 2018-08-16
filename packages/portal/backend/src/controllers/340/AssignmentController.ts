@@ -18,6 +18,7 @@ import {GitHubController} from "../GitHubController";
 import Config, {ConfigKey} from "../../../../../common/Config";
 import {PersonController} from "../PersonController";
 import {GitHubActions} from "../GitHubActions";
+import {ScheduleController} from "../ScheduleController";
 
 /*
  * Definition of controller object
@@ -214,7 +215,13 @@ export class AssignmentController {
 
             // attempt to provision the repository,
             // if success, add it to the AssignmentInfo
-            let repoName: string = deliv.repoPrefix + student.githubId;
+            let repoName: string;
+            if(deliv.repoPrefix === null || deliv.repoPrefix === "") {
+                repoName = deliv.id + "_";
+            } else {
+                repoName = deliv.repoPrefix;
+            }
+            repoName += student.githubId;
             let provisionedRepo = await this.createAssignmentRepo(repoName, delivId, [studentTeam]);
 
 
@@ -957,6 +964,93 @@ export class AssignmentController {
 
 
         return newAssignmentGrade;
+    }
+
+
+    /**
+     * Handler for checking deliverables to tasks
+     * @param {string?} assignId [optional] - the assignment ID to verify,
+     * @returns {Promise<number>}
+     */
+
+    public async verifyScheduledJobs(assignId?: string): Promise<number> {
+        Log.info("CS340AdminView::verifyScheduledJobs( " + assignId + " ) - start");
+        let count = 0;
+
+        if (!assignId) {
+            // check all deliverables
+            Log.info("CS340AdminView::verifyScheduledJobs(..) - no assignment ID given, checking all of them");
+            let result: Deliverable[] = await this.db.getDeliverables();
+            for(const deliv of result) {
+                if(await this.createAssignmentTasks(deliv.id)) {
+                    count++;
+                }
+            }
+        } else {
+            let deliv = await this.db.getDeliverable(assignId);
+            if(deliv === null) {
+                Log.error("CS340AdminView::verifyScheduledJobs(..) - no deliverable with such ID: " + assignId);
+                return -1;
+            }
+            if(await this.createAssignmentTasks(deliv.id)) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    /**
+     * Creates the scheduled tasks for the given assignment
+     * @param {string} assignId
+     * @returns {Promise<boolean>}
+     */
+
+    public async createAssignmentTasks(assignId: string): Promise<boolean> {
+        Log.info("AssignmentController::createAssignmentTasks( " + assignId + " ) - start");
+
+        const CREATE_OFFSET_HOURS = 2;
+
+        let deliv: Deliverable = await this.db.getDeliverable(assignId);
+        if(deliv === null) {
+            Log.error("AssignmentController::createAssignmentTasks(..) - Error: no deliverable found with id: " + assignId);
+            return false;
+        }
+
+        if(deliv.custom === null || typeof deliv.custom === 'undefined' || typeof deliv.custom.seedRepoURL === 'undefined') {
+            Log.error("AssignmentController::createAssignmentTasks(..) - Error: deliv: " + assignId + " is not an assignment");
+            return false;
+        }
+
+        let sc: ScheduleController = ScheduleController.getInstance();
+
+        let openDate: Date = new Date(deliv.openTimestamp);
+        let closeDate: Date = new Date(deliv.closeTimestamp);
+        let createDate: Date = new Date(deliv.openTimestamp);
+        createDate.setHours(createDate.getHours() - CREATE_OFFSET_HOURS);
+
+        let currentDate: Date = new Date();
+        if(createDate < currentDate) {
+            Log.info("AssignmentController::createAssignmentTasks(..) - Making create repo task");
+            await sc.scheduleAssignmentCreation(createDate, assignId);
+            Log.info("AssignmentController::createAssignmentTasks(..) - Task will execute at: " + createDate.toISOString());
+        }
+
+        if(createDate < currentDate) {
+            Log.info("AssignmentController::createAssignmentTasks(..) - Making publish repo task");
+            await sc.scheduleAssignmentPublish(openDate, assignId);
+            Log.info("AssignmentController::createAssignmentTasks(..) - Task will execute at: " + openDate.toISOString());
+        }
+
+        if(createDate < currentDate) {
+            Log.info("AssignmentController::createAssignmentTasks(..) - Making close repo task");
+            await sc.scheduleAssignmentClosure(closeDate, assignId);
+            Log.info("AssignmentController::createAssignmentTasks(..) - Task will execute at: " +  closeDate.toISOString());
+        }
+
+        Log.info("AssignmentController::createAssignmentTasks(..) - Current date is: " + currentDate.toISOString());
+
+        return true;
     }
 
 }
