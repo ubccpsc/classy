@@ -4,11 +4,12 @@ import "mocha";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {TeamController} from "../../src/controllers/TeamController";
+
 import {Test} from "../GlobalSpec";
+import '../GlobalSpec';
 // import '../GlobalSpec';
 import './PersonControllerSpec';
-
-const loadFirst = require("../GlobalSpec");
+// const loadFirst = require("../GlobalSpec");
 
 describe("TeamController", () => {
 
@@ -17,22 +18,19 @@ describe("TeamController", () => {
     let dc: DatabaseController;
 
     before(async () => {
-        Test.suiteBefore('TeamController');
+        await Test.suiteBefore('TeamController');
 
-        // clear stale data
-        dc = DatabaseController.getInstance();
-        await dc.clearData();
+        // clear stale data (removed; happens in suitebefore)
+        // await dc.clearData();
 
         // get data ready
         await Test.prepareDeliverables();
         await Test.preparePeople();
         await Test.prepareAuth();
 
+        dc = DatabaseController.getInstance();
         tc = new TeamController();
         pc = new PersonController();
-
-        // const deliv = Test.getDeliverable(Test.DELIVID0);
-        // await dc.writeDeliverable(deliv);
     });
 
     after(async () => {

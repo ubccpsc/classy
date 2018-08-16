@@ -107,8 +107,7 @@ describe("CourseController", () => {
         expect(res).to.be.an('array');
         expect(res.length).to.be.greaterThan(0);
 
-        Log.test('grades: ' + JSON.stringify(res));
-        // const o = {"personId":"user2id","personURL":"https://github.com/user2id","delivId":"d1","score":50,"comment":"commentup","urlName":"urlName","URL":"URLup","timestamp":1517446860000,"custom":{}};
+        // Log.test('grades: ' + JSON.stringify(res));
         const url = Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Test.USER2.github;
         const id = Test.USER2.id;
         const t: GradeTransport = {

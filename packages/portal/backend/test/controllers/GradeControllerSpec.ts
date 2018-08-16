@@ -8,9 +8,10 @@ import {DeliverablesController} from "../../src/controllers/DeliverablesControll
 import {GradesController} from "../../src/controllers/GradesController";
 
 import {Test} from "../GlobalSpec";
-
-const loadFirst = require('../GlobalSpec');
-const rFirst = require('./RepositoryControllerSpec');
+import '../GlobalSpec';
+import './RepositoryControllerSpec';
+// const loadFirst = require('../GlobalSpec');
+// const rFirst = require('./RepositoryControllerSpec');
 
 describe("GradeController", () => {
 

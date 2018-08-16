@@ -1,17 +1,19 @@
 import {expect} from "chai";
 import "mocha";
+
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
-import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 
+import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {GitHubActions} from "../../src/controllers/GitHubActions";
 import {PersonController} from "../../src/controllers/PersonController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
-import {Test} from "../GlobalSpec";
 
-const loadFirst = require('../GlobalSpec');
+import {Test} from "../GlobalSpec";
+import '../GlobalSpec';
+// const loadFirst = require('../GlobalSpec');
 
 describe("GitHubActions", () => {
 
@@ -19,10 +21,10 @@ describe("GitHubActions", () => {
 
     let gh: GitHubActions;
 
-    let TIMEOUT = 20000; // was 5000
+    const TIMEOUT = Test.TIMEOUTLONG; // was 20000; // was 5000
 
-    let DELAY_SEC = 1000;
-    let DELAY_SHORT = 200;
+    // let DELAY_SEC = 1000;
+    const DELAY_SHORT = 200;
 
     const REPONAME = getProjectPrefix() + Test.REPONAME1;
     const REPONAME3 = getProjectPrefix() + Test.REPONAME3;
@@ -34,12 +36,14 @@ describe("GitHubActions", () => {
         Log.test("GitHubActionSpec::before() - start; forcing testorg");
         // test github actions on a test github instance (for safety)
         Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
+
+        // TODO: Test.suiteBefore missing
     });
 
     beforeEach(function() {
-        Log.test('GitHubActionSpec::BeforeEach - "' + (<any>this).currentTest.title + '"');
+        Log.test('GitHubActionSpec::BeforeEach - "' + (this as any).currentTest.title + '"');
 
-        let exec = Test.runSlowTest();
+        const exec = Test.runSlowTest();
         // exec = true;
         if (exec === true) {
             Log.test("GitHubActionSpec::beforeEach() - running in CI; not skipping");
@@ -51,7 +55,7 @@ describe("GitHubActions", () => {
     });
 
     afterEach(function() {
-        Log.test('AfterTest: "' + (<any>this).currentTest.title + '"');
+        Log.test('AfterTest: "' + (this as any).currentTest.title + '"');
     });
 
     after(async () => {
@@ -314,7 +318,7 @@ describe("GitHubActions", () => {
         const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
 
-        let success = await gh.writeFileToRepo(targetUrl, "test_file.txt", "hello world!");
+        const success = await gh.writeFileToRepo(targetUrl, "test_file.txt", "hello world!");
         expect(success).to.be.true;
     }).timeout(2 * TIMEOUT);
 
@@ -322,7 +326,7 @@ describe("GitHubActions", () => {
         const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
 
-        let success = await gh.writeFileToRepo(targetUrl, "test_file2.txt", "hello world!", true);
+        const success = await gh.writeFileToRepo(targetUrl, "test_file2.txt", "hello world!", true);
         expect(success).to.be.true;
     }).timeout(2 * TIMEOUT);
 
@@ -330,17 +334,17 @@ describe("GitHubActions", () => {
         const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
 
-        let success = await gh.writeFileToRepo(targetUrl, "test_file.txt", "hello world2!", true);
+        const success = await gh.writeFileToRepo(targetUrl, "test_file.txt", "hello world2!", true);
         expect(success).to.be.true;
     }).timeout(2 * TIMEOUT);
 
     it("Should not be able to soft-write a file to a repo that doesn't exist.", async function() {
-        let success = await gh.writeFileToRepo("invalidurl.com", "test_file2.txt", "hello world!");
+        const success = await gh.writeFileToRepo("invalidurl.com", "test_file2.txt", "hello world!");
         expect(success).to.be.false;
     }).timeout(2 * TIMEOUT);
 
     it("Should not be able to hard-write a file to a repo that doesn't exist.", async function() {
-        let success = await gh.writeFileToRepo("invalidurl.com", "test_file2.txt", "hello world!", true);
+        const success = await gh.writeFileToRepo("invalidurl.com", "test_file2.txt", "hello world!", true);
         expect(success).to.be.false;
     }).timeout(2 * TIMEOUT);
 
@@ -348,7 +352,10 @@ describe("GitHubActions", () => {
      * This test is terrible, but gets the coverage tools to stop complaining.
      */
     it("Should make sure that actions can actually fail.", async function() {
-        if (1 > 0) return; // terrible skip
+        if (1 > 0) {
+            // terrible skip
+            return;
+        }
         const old = (gh as any).gitHubAuthToken;
         (gh as any).gitHubAuthToken = "FOOFOOFOO";
 
@@ -437,11 +444,15 @@ describe("GitHubActions", () => {
         expect(githubTeam.githubTeamNumber > 0).to.be.true;
 
         // Expects adding members to work
-        const addMembers = await gh.addMembersToTeam(githubTeam.teamName, githubTeam.githubTeamNumber, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+        const addMembers = await gh.addMembersToTeam(githubTeam.teamName, githubTeam.githubTeamNumber,
+            [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+        expect(addMembers).to.not.be.null;
         const teamAdd = await gh.addTeamToRepo(githubTeam.githubTeamNumber, REPONAME, 'push');
+        expect(teamAdd).to.not.be.null;
 
         const staffTeamNumber = await gh.getTeamNumber('staff');
         const staffAdd = await gh.addTeamToRepo(staffTeamNumber, REPONAME, 'admin');
+        expect(staffAdd).to.not.be.null;
         const permissionEdit = await gh.setRepoPermission(REPONAME, "pull");
         expect(permissionEdit).to.be.true;
 
@@ -454,16 +465,22 @@ describe("GitHubActions", () => {
         expect(githubTeam.githubTeamNumber > 0).to.be.true;
 
         // Expects adding members to work
-        const addMembers = await gh.addMembersToTeam(githubTeam.teamName, githubTeam.githubTeamNumber, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+        const addMembers = await gh.addMembersToTeam(githubTeam.teamName, githubTeam.githubTeamNumber,
+            [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+        expect(addMembers).to.not.be.null;
         const teamAdd = await gh.addTeamToRepo(githubTeam.githubTeamNumber, REPONAME, 'push');
+        expect(teamAdd).to.not.be.null;
 
         const staffTeamNumber = await gh.getTeamNumber('staff');
         const staffAdd = await gh.addTeamToRepo(staffTeamNumber, REPONAME, 'admin');
-        return gh.setRepoPermission(REPONAME, "admin").then(function fulfilled(result) {
-            throw new Error("Promise was unexpectedly fulfilled. Result: " + result);
-        }, function rejected() {
-
-        });
+        expect(staffAdd).to.not.be.null;
+        let fail = null; // only gets a value if the function returned (when it should be failing)
+        try {
+            fail = await gh.setRepoPermission(REPONAME, "admin");
+        } catch (err) {
+            // this is what should happen
+        }
+        expect(fail).to.be.null;
 
     }).timeout(TIMEOUT);
 
@@ -492,7 +509,7 @@ describe("GitHubActions", () => {
             for (const r of TESTREPONAMES) {
                 if (repo.name === r) {
                     Log.info('Removing stale repo: ' + repo.name);
-                    const val = await gh.deleteRepo(r);
+                    await gh.deleteRepo(r);
                     await gh.delay(DELAY_SHORT);
                     // expect(val).to.be.true;
                 }

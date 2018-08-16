@@ -2,7 +2,6 @@ import {expect} from "chai";
 import "mocha";
 
 import Log from "../../../../common/Log";
-import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
@@ -19,11 +18,11 @@ describe("RepositoryController", () => {
     let pc: PersonController;
 
     before(async () => {
-        Test.suiteBefore('RepositoryController');
+        await Test.suiteBefore('RepositoryController');
 
-        // clear stale data
-        const dc = DatabaseController.getInstance();
-        await dc.clearData();
+        // clear stale data (removed; happens in suitebefore)
+        // const dc = DatabaseController.getInstance();
+        // await dc.clearData();
 
         // get data ready
         await Test.prepareDeliverables();
