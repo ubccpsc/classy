@@ -7,7 +7,6 @@ import {ActionPayload, GradePayload, SDMMStatus} from "../../../../../common/typ
 
 import {DatabaseController} from "../../../src/controllers/DatabaseController";
 import {GitHubController} from "../../../src/controllers/GitHubController";
-// import {TestGitHubController} from "../../../src/controllers/GitHubController";
 import {GradesController} from "../../../src/controllers/GradesController";
 import {PersonController} from "../../../src/controllers/PersonController";
 import {RepositoryController} from "../../../src/controllers/RepositoryController";

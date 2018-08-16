@@ -26,11 +26,11 @@ const https = require('https');
 // need to change how this loads to enable the right routes to be started
 describe('SDMM Routes', function() {
 
-    var app: restify.Server = null;
-    var server: BackendServer = null;
+    let app: restify.Server = null;
+    let server: BackendServer = null;
 
-    var OLDNAME = Config.getInstance().getProp(ConfigKey.name);
-    var OLDORG = Config.getInstance().getProp(ConfigKey.org);
+    const OLDNAME = Config.getInstance().getProp(ConfigKey.name);
+    const OLDORG = Config.getInstance().getProp(ConfigKey.org);
 
     before(async function() {
         Log.test('SDMMRoutes::before - start');
@@ -245,7 +245,6 @@ describe('SDMM Routes', function() {
         expect(response.body.success.message).to.equal('Repository successfully created.');
     }).timeout(1000 * 60);
 
-
     it('Should not be able provision a d1 repo if their d0 grade is too low.', async function() {
 
         let response = null;
@@ -315,7 +314,9 @@ describe('SDMM Routes', function() {
         expect(response.status).to.equal(400);
 
         expect(response.body.failure).to.not.be.undefined;
-        expect(response.body.failure.message).to.equal('Unknown person somerandmomusernamethatdoesnotexist requested to be on team; please make sure they are registered with the course.');
+        expect(response.body.failure.message).to.equal(
+            'Unknown person somerandmomusernamethatdoesnotexist requested to be on team; ' +
+            'please make sure they are registered with the course.');
     }).timeout(1000 * 30);
 
     // it('Should fail to provision a d1 team repo if both users do not have sufficient d0 grades.', async function () {

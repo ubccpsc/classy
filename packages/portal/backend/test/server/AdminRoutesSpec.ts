@@ -1,7 +1,11 @@
 import {expect} from "chai";
 import "mocha";
+import * as restify from 'restify';
+import * as request from 'supertest';
+
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
+
 import {
     AutoTestResultPayload,
     CourseTransport,
@@ -16,12 +20,12 @@ import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 
 import BackendServer from "../../src/server/BackendServer";
+
 import {Test} from "../GlobalSpec";
-import restify = require('restify');
-
-const request = require('supertest');
-
-const loadFirst = require("./AuthRoutesSpec");
+import './AuthRoutesSpec';
+// import restify = require('restify');
+// const request = require('supertest');
+// const loadFirst = require("./AuthRoutesSpec");
 
 describe('Admin Routes', function() {
 
