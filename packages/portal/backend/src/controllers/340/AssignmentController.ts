@@ -9,13 +9,16 @@ import {
     AssignmentGradingRubric,
     AssignmentInfo,
     AssignmentRepositoryInfo,
-    AssignmentStatus, QuestionGrade, QuestionGradingRubric, SubQuestionGrade, SubQuestionGradingRubric
+    AssignmentStatus,
+    QuestionGrade,
+    QuestionGradingRubric,
+    SubQuestionGrade,
+    SubQuestionGradingRubric
 } from "../../../../../common/types/CS340Types";
 import {RepositoryController} from "../RepositoryController";
 import {TeamController} from "../TeamController";
 import {DeliverablesController} from "../DeliverablesController";
 import {GitHubController} from "../GitHubController";
-import Config, {ConfigKey} from "../../../../../common/Config";
 import {PersonController} from "../PersonController";
 import {GitHubActions} from "../GitHubActions";
 import {ScheduleController} from "../ScheduleController";
@@ -199,7 +202,13 @@ export class AssignmentController {
             }
 
             // for each student, create a team
-            let teamName = deliv.teamPrefix + student.githubId;
+            let teamName: string;
+            if(deliv.teamPrefix === null || deliv.teamPrefix === "") {
+                teamName = deliv.id + "_";
+            } else {
+                teamName = deliv.teamPrefix;
+            }
+            teamName += student.githubId;
             // verify if the team exists or not
             let studentTeam: Team = await this.tc.getTeam(teamName);
             if (studentTeam === null) {
@@ -323,6 +332,13 @@ export class AssignmentController {
         }
 
         let assignInfo: AssignmentInfo = deliv.custom;
+
+        // check if the repositories have been created
+        if(assignInfo.status === AssignmentStatus.INACTIVE) {
+            await this.initializeAllRepositories(delivId);
+        }
+
+        assignInfo = (await this.dc.getDeliverable(delivId) as Deliverable).custom;
 
         let anyError: boolean = false;
         for (const repoId of assignInfo.repositories) {
@@ -535,7 +551,7 @@ export class AssignmentController {
     // Updates the status of a given assignment
     // iterates over checking each status of the assigned repository
     public async updateAssignmentStatus(delivId: string): Promise<AssignmentStatus | null> {
-        Log.info("AssignmentController::updateAssignmentStatus( " + delivId + ") - start");
+        Log.info("AssignmentController::updateAssignmentStatus( " + delivId + " ) - start");
         let deliv = await this.dc.getDeliverable(delivId);
         if (deliv === null) {
             Log.error("AssignmentController::updateAssignmentStatus(..) - error: nothing found");
@@ -560,10 +576,23 @@ export class AssignmentController {
         let assignInfo: AssignmentInfo = deliv.custom;
         let repoList: string[] = assignInfo.repositories;
         for (const repoId of repoList) {
-            let repo: Repository = await this.rc.getRepository(repoId);
+            let repo: Repository;
+            Log.info("AssignmentController::updateAssignmentStatus(..) - verifying repo: " + repoId);
+            try {
+                repo = await this.rc.getRepository(repoId);
+            } catch ( err) {
+                Log.error("AssignmentController::updateAssignmentStatus(..) - Error: " + err);
+            }
             // retrieve all the students associated with the repository, and then record it
             for (const teamId of repo.teamIds) {
-                let team: Team = await this.tc.getTeam(teamId);
+                let team: Team;
+                Log.info("AssignmentController::updateAssignmentStatus(..) - verifying team: " + teamId);
+                try {
+                    team = await this.tc.getTeam(teamId);
+
+                } catch ( err) {
+                    Log.error("AssignmentController::updateAssignmentStatus(..) - Error: " + err);
+                }
                 for (const personId of team.personIds) {
                     if (typeof studentRepoMapping[personId] === 'undefined') {
                         studentRepoMapping[personId] = [];
@@ -578,6 +607,8 @@ export class AssignmentController {
         for (const student of allStudents) {
             if (typeof studentRepoMapping[student.id] === 'undefined') {
                 // this means a repository is missing,
+                Log.info("AssignmentController::updateAssignmentStatus(..) - student: " + student.id + " " +
+                    "is missing a repository");
                 (deliv.custom as AssignmentInfo).status = AssignmentStatus.INACTIVE;
                 await this.dc.saveDeliverable(deliv);
                 return AssignmentStatus.INACTIVE;
@@ -985,6 +1016,7 @@ export class AssignmentController {
             let result: Deliverable[] = await this.db.getDeliverables();
             for(const deliv of result) {
                 if(await this.sc.createAssignmentTasks(deliv.id)) {
+                    Log.info("AssignmentController::verifyScheduledJobs(..) - created tasks for " + deliv.id);
                     count++;
                 }
             }
@@ -995,6 +1027,7 @@ export class AssignmentController {
                 return -1;
             }
             if(await this.sc.createAssignmentTasks(deliv.id)) {
+                Log.info("AssignmentController::verifyScheduledJobs(..) - created tasks for " + deliv.id);
                 count++;
             }
         }
