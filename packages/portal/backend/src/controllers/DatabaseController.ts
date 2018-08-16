@@ -143,7 +143,7 @@ export class DatabaseController {
 
     public async getGrade(personId: string, delivId: string): Promise<Grade | null> {
         Log.info("DatabaseController::getGrade( " + personId + ", " + delivId + " ) - start");
-        return <Grade> await this.readSingleRecord(this.GRADECOLL, {"personId": personId, "delivId": delivId});
+        return await this.readSingleRecord(this.GRADECOLL, {personId: personId, delivId: delivId}) as Grade;
     }
 
     public async writePerson(record: Person): Promise<boolean> {
@@ -270,7 +270,6 @@ export class DatabaseController {
         }
     }
 
-
     public async writeRecord(colName: string, record: {}): Promise<boolean> {
         Log.trace("DatabaseController::writeRecord( " + colName + ", ...) - start");
         Log.trace("DatabaseController::writeRecord(..) - col: " + colName + "; record: " + JSON.stringify(record));
@@ -321,14 +320,17 @@ export class DatabaseController {
 
         if (configName === ConfigCourses.classytest) {
             // NOTE: can only delete data if the current instance is the main test instance
+            // This prevents us from running the tests in production by accident and wiping the database
 
-            const cols = [this.PERSONCOLL, this.GRADECOLL, this.RESULTCOLL, this.TEAMCOLL, this.DELIVCOLL, this.REPOCOLL, this.AUTHCOLL, this.COURSECOLL];
+            const cols = [this.PERSONCOLL, this.GRADECOLL, this.RESULTCOLL, this.TEAMCOLL,
+                this.DELIVCOLL, this.REPOCOLL, this.AUTHCOLL, this.COURSECOLL];
+
             for (const col of cols) {
                 Log.info("DatabaseController::clearData() - removing data for collection: " + col);
                 const collection = await this.getCollection(col);
                 await collection.deleteMany({});
             }
-            Log.info("DatabaseController::clearData() - files removed");
+            Log.info("DatabaseController::clearData() - data removed");
         } else {
             throw new Error("DatabaseController::clearData() - can only be called on test configurations");
         }
@@ -347,7 +349,7 @@ export class DatabaseController {
             const start = Date.now();
             const col = await this.getCollection(column);
 
-            const records: any[] = await <any>col.find(query).toArray();
+            const records: any[] = await (col as any).find(query).toArray();
             if (records === null || records.length === 0) {
                 Log.trace("DatabaseController::readSingleRecord(..) - done; no records found; took: " + Util.took(start));
                 return null;
@@ -367,15 +369,15 @@ export class DatabaseController {
      *
      * @param {string} column
      * @param {{}} query send {} if all results for that column are wanted
-     * @returns {Promise<{}[]>}
+     * @returns {Promise<any[]>} An array of objects
      */
-    public async readRecords(column: string, query: {}): Promise<{}[]> {
+    public async readRecords(column: string, query: {}): Promise<any[]> {
         try {
             Log.trace("DatabaseController::readRecords( " + column + ", " + JSON.stringify(query) + " ) - start");
             const start = Date.now();
             const col = await this.getCollection(column);
 
-            const records: any[] = await <any>col.find(query).toArray();
+            const records: any[] = await (col as any).find(query).toArray();
             if (records === null || records.length === 0) {
                 Log.trace("DatabaseController::readRecords(..) - done; no records found for: " +
                     JSON.stringify(query) + " in: " + column + "; took: " + Util.took(start));
@@ -425,19 +427,20 @@ export class DatabaseController {
             return this.db;
         } catch (err) {
             Log.error("DatabaseController::open() - ERROR: " + err);
-            Log.error("DatabaseController::open() - ERROR: Host probably does not have a database configured and running (see README.md if this is a test instance).");
+            Log.error("DatabaseController::open() - ERROR: Host probably does not have a database configured " +
+                "and running (see README.md if this is a test instance).");
         }
     }
 
     public async getAuth(personId: string): Promise<Auth | null> {
         Log.trace("DatabaseController::getAuthToken( " + personId + " ) - start");
-        const auth = <Auth> await this.readSingleRecord(this.AUTHCOLL, {"personId": personId});
+        const auth = await this.readSingleRecord(this.AUTHCOLL, {personId: personId}) as Auth;
         return auth;
     }
 
     public async writeAuth(record: Auth): Promise<boolean> {
         Log.info("DatabaseController::writeAuth( " + record.personId + ", ... ) - start");
-        const auth = <Auth> await this.readSingleRecord(this.AUTHCOLL, {"personId": record.personId});
+        const auth = await this.readSingleRecord(this.AUTHCOLL, {personId: record.personId}) as Auth;
         if (auth === null) {
             return await this.writeRecord(this.AUTHCOLL, record);
         } else {
@@ -448,7 +451,6 @@ export class DatabaseController {
 
     public async getResult(delivId: string, repoId: string): Promise<Result> {
         Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + " ) - start");
-        return <Result> await this.readSingleRecord(this.RESULTCOLL, {"delivId": delivId, "repoId": repoId});
+        return await this.readSingleRecord(this.RESULTCOLL, {delivId: delivId, repoId: repoId}) as Result;
     }
 }
-

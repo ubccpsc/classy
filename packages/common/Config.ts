@@ -129,8 +129,8 @@ export default class Config {
                 // kind:               process.env.KIND, // REMOVE
                 // githubOrgToken:     process.env.GH_BOT_TOKEN,
                 // githubOracleToken:  process.env.GH_ORG_TOKEN,
-                graderUrl:          process.env.GRADER_URL,
-                graderPort:         process.env.GRADER_PORT,
+                graderUrl:  process.env.GRADER_URL,
+                graderPort: process.env.GRADER_PORT
             };
 
             // this is not a great place for this
@@ -163,6 +163,8 @@ export default class Config {
                 Log.error("Config::setProp( " + prop + ", " + val + " ) - should only be done by test suites, not production code");
             }
         }
+        // only test code should really be setting properties on the fly like this
+        Log.warn("Config::setProp( " + ConfigKey[prop] + ", " + val + " )");
         this.config[prop] = val;
     }
 }

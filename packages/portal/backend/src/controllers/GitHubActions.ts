@@ -4,7 +4,6 @@ import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {DatabaseController} from "./DatabaseController";
 import {GitTeamTuple} from "./GitHubController";
-import {exec} from "child_process";
 
 const tmp = require('tmp-promise');
 
@@ -88,7 +87,7 @@ export class GitHubActions {
      * @returns {Promise<boolean>}
      */
     public deleteRepo(repoName: string): Promise<boolean> {
-        let ctx = this;
+        const ctx = this;
         Log.info("GitHubAction::deleteRepo( " + ctx.org + ", " + repoName + " ) - start");
 
         // first make sure the repo exists
@@ -140,13 +139,13 @@ export class GitHubActions {
      * @returns {Promise<boolean>}
      */
     public repoExists(repoName: string): Promise<boolean> {
-        let ctx = this;
+        const ctx = this;
         Log.info("GitHubAction::repoExists( " + ctx.org + ", " + repoName + " ) - start");
 
         return new Promise(function(fulfill) {
 
             const uri = ctx.apiPath + '/repos/' + ctx.org + '/' + repoName;
-            Log.trace("GitHubAction::repoExists(..) - URI: " + uri);
+            // Log.trace("GitHubAction::repoExists(..) - URI: " + uri);
             const options = {
                 method:  'GET',
                 uri:     uri,
@@ -158,16 +157,15 @@ export class GitHubActions {
             };
 
             rp(options).then(function(body: any) {
-                Log.info("GitHubAction::repoExists(..) - true"); // body: " + body);
+                Log.trace("GitHubAction::repoExists(..) - true"); // body: " + body);
                 fulfill(true);
             }).catch(function() { // err: any
                 // Log.trace("GitHubAction::repoExists(..) - ERROR: " + JSON.stringify(err));
-                Log.info("GitHubAction::repoExists(..) - false");
+                Log.trace("GitHubAction::repoExists(..) - false");
                 fulfill(false);
             });
         });
     }
-
 
     /**
      * Deletes a team
@@ -175,20 +173,21 @@ export class GitHubActions {
      * @param teamId
      */
     public deleteTeam(teamId: number): Promise<boolean> {
-        let ctx = this;
+        const ctx = this;
 
         Log.info("GitHubAction::deleteTeam( " + ctx.org + ", " + teamId + " ) - start");
         return new Promise(function(fulfill) {
 
             const uri = ctx.apiPath + '/teams/' + teamId;
-            Log.trace("GitHubAction::deleteRepo(..) - URI: " + uri);
+            // Log.trace("GitHubAction::deleteRepo(..) - URI: " + uri);
             const options = {
                 method:  'DELETE',
                 uri:     uri,
                 headers: {
                     'Authorization': ctx.gitHubAuthToken,
                     'User-Agent':    ctx.gitHubUserName,
-                    'Accept':        'application/vnd.github.hellcat-preview+json' // 'application/json', // custom because this is a preview api
+                    // 'Accept': 'application/json', // custom because this is a preview api
+                    'Accept':        'application/vnd.github.hellcat-preview+json'
                 }
             };
 
@@ -210,12 +209,10 @@ export class GitHubActions {
      */
     public async listRepos(): Promise<{id: number, name: string, url: string}[]> {
         const ctx = this;
-
-
         Log.info("GitHubManager::listRepos(..) - start");
 
-        // GET /orgs/:org/repos
-        const uri = ctx.apiPath + '/orgs/' + ctx.org + '/repos?per_page=' + ctx.PAGE_SIZE; // per_page max is 100; 10 is useful for testing pagination though
+        // per_page max is 100; 10 is useful for testing pagination though
+        const uri = ctx.apiPath + '/orgs/' + ctx.org + '/repos?per_page=' + ctx.PAGE_SIZE;
         const options = {
             method:                  'GET',
             uri:                     uri,
@@ -230,7 +227,7 @@ export class GitHubActions {
 
         const raw: any = await ctx.handlePagination(options);
 
-        let rows: {id: number, name: string, url: string}[] = [];
+        const rows: {id: number, name: string, url: string}[] = [];
         for (const entry of raw) {
             const id = entry.id;
             const name = entry.name;
@@ -249,7 +246,6 @@ export class GitHubActions {
      */
     public async listPeople(): Promise<{id: number, type: string, url: string, name: string}[]> {
         const ctx = this;
-
 
         Log.info("GitHubManager::listRepos(..) - start");
 
@@ -874,10 +870,10 @@ export class GitHubActions {
      * @param {boolean} force - allow for overwriting of old files
      * @returns {Promise<boolean>} - true if write was successful
      */
-    public async writeFileToRepo(repoURL: string, fileName: string, fileContent: string, force: boolean = false): Promise<boolean>{
+    public async writeFileToRepo(repoURL: string, fileName: string, fileContent: string, force: boolean = false): Promise<boolean> {
         let ctx = this;
-        Log.info("GithubAction::writeFileToRepo( "+repoURL+" , "+fileName+"" +
-            " , "+fileContent+" , "+force+" ) - start");
+        Log.info("GithubAction::writeFileToRepo( " + repoURL + " , " + fileName + "" +
+            " , " + fileContent + " , " + force + " ) - start");
         const that = this;
 
         // TAKEN FROM importFS ----
@@ -900,7 +896,7 @@ export class GitHubActions {
         try {
             await cloneRepo(tempPath);
             await enterRepoPath();
-            if(force) {
+            if (force) {
                 await createNewFileForce();
             } else {
                 await createNewFile();
@@ -908,7 +904,7 @@ export class GitHubActions {
             await addFilesToRepo();
             await commitFilesToRepo();
             await pushToRepo();
-        } catch(err) {
+        } catch (err) {
             Log.error("GithubActions::writeFileToRepo(..) - Error: " + err);
             return false;
         }
@@ -943,7 +939,7 @@ export class GitHubActions {
         function createNewFileForce() {
             Log.info('GithubManager::writeFileToRepo(..)::createNewFileForce() - writing: ' + fileName);
             return exec(`cd ${tempPath} && if [ -f ${fileName} ]; then rm ${fileName};  fi; echo '${fileContent}' >> ${fileName};`)
-                .then(function(result:any) {
+                .then(function(result: any) {
                     Log.info('GithubManager::writeFileToRepo(..)::createNewFileForce() - done:');
                     Log.trace('GithubManager::writeFileToRepo(..)::createNewFileForce() - stdout: ' + result.stdout);
                     if (result.stderr) {
@@ -955,7 +951,7 @@ export class GitHubActions {
         function createNewFile() {
             Log.info('GithubManager::writeFileToRepo(..)::createNewFile() - writing: ' + fileName);
             return exec(`cd ${tempPath} && if [ ! -f ${fileName} ]; then echo \"${fileContent}\" >> ${fileName};fi`)
-                .then(function(result:any) {
+                .then(function(result: any) {
                     Log.info('GithubManager::writeFileToRepo(..)::createNewFile() - done:');
                     Log.trace('GithubManager::writeFileToRepo(..)::createNewFile() - stdout: ' + result.stdout);
                     if (result.stderr) {
