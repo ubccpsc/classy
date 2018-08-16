@@ -191,7 +191,7 @@ export class AssignmentController {
             if(typeof personVerification[person.name] === 'undefined') personVerification[person.name] = person;
         }
 
-
+        assignInfo = (await this.db.getDeliverable(delivId) as Deliverable).custom;
         for (const student of allStudents) {
             // verify student is a person in the org, if not, skip it (DATABASE INCONSISTENCY!?)
             if(typeof personVerification[student.githubId] === 'undefined') {
@@ -234,7 +234,6 @@ export class AssignmentController {
             repoName += student.githubId;
             let provisionedRepo = await this.createAssignmentRepo(repoName, delivId, [studentTeam]);
 
-
             if (provisionedRepo !== null) {
                 if (assignInfo.repositories === null || typeof assignInfo.repositories === 'undefined') assignInfo.repositories = [];
                 assignInfo.repositories.push(provisionedRepo.id);
@@ -251,7 +250,7 @@ export class AssignmentController {
         if (!anyError) {
             assignInfo.status = AssignmentStatus.CREATED;
         }
-
+        deliv.custom = assignInfo;
         await this.dc.saveDeliverable(deliv);
         Log.info("AssignmentController::initializeAllRepositories(..) - finish");
         return true;
@@ -322,7 +321,7 @@ export class AssignmentController {
     }
 
     public async publishAllRepositories(delivId: string): Promise<boolean> {
-        Log.info("AssignmentController::publishAllRepositories( " + delivId + ") - start");
+        Log.info("AssignmentController::publishAllRepositories( " + delivId + " ) - start");
         // Log.info("AssignmentController::publishAllRepositories(..)");
         let deliv = await this.dc.getDeliverable(delivId);
         if (deliv.custom === null) {
@@ -357,6 +356,7 @@ export class AssignmentController {
         }
 
         assignInfo.status = AssignmentStatus.RELEASED;
+        deliv.custom = assignInfo;
         await this.dc.saveDeliverable(deliv);
         Log.info("AssignmentController::publishAllRepositories(..) - finish");
         return true;
