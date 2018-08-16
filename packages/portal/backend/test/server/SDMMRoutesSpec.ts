@@ -221,11 +221,11 @@ describe('SDMM Routes', function() {
     it('Should provision a d0 repo.', async function() {
         let response = null;
 
-        // this test is slow, so skip it if we aren't on CI
-        const shouldRun = Test.runSlowTest();
-        if (shouldRun === false) {
-            this.skip();
-        }
+        // // this test is slow, so skip it if we aren't on CI
+        // const shouldRun = Test.runSlowTest();
+        // if (shouldRun === false) {
+        //     this.skip();
+        // }
 
         const url = '/portal/sdmm/performAction/provisionD0';
         try {
