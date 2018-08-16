@@ -9,6 +9,9 @@ services:
             args:
                 - CONTAINER_NAME_UI
                 - UI_PORT
+                - CONTAINER_NAME_GRADER
+                - GRADER_PORT
+                - RAND_ENDPOINT
             dockerfile: 310.dockerfile
         depends_on:
             - reference_ui
