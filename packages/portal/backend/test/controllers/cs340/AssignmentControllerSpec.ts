@@ -34,8 +34,8 @@ const TEST_STUDENT_MAP = [
 ];
 
 
-const TEST_ASSIGN_NAME = "test_assignDeliv3";
-const TEST_REPO_PREFIX = "test_assignDeliv3_";
+public const TEST_ASSIGN_NAME = "test_assignDeliv3";
+public const TEST_REPO_PREFIX = "test_assignDeliv3_";
 const ORIGINAL_ORG = Config.getInstance().getProp(ConfigKey.org);
 
 
@@ -75,81 +75,11 @@ describe.skip("CS340: AssignmentController", () => {
         numberOfStudents = peopleList.length;
 
         gha = new GitHubActions();
+
         // create assignment Deliverables
-        let newAssignmentStatus: AssignmentStatus = AssignmentStatus.INACTIVE;
+        await Test.prepareAssignment();
 
-        let newAssignmentGradingRubric: AssignmentGradingRubric = {
-            name:      TEST_ASSIGN_NAME,
-            comment:   "test assignment",
-            questions: [
-                {
-                    name:         "question 1",
-                    comment:      "",
-                    subQuestions: [
-                        {
-                            name:      "rubric",
-                            comment:   "rubric question",
-                            outOf:     5,
-                            weight:    0.25,
-                            modifiers: null
-                        }
-                    ]
-                },
-                {
-                    name:         "question 2",
-                    comment:      "",
-                    subQuestions: [
-                        {
-                            name:      "code quality",
-                            comment:   "",
-                            outOf:     6,
-                            weight:    0.5,
-                            modifiers: null
-                        }
-                    ]
-                }
-            ]
-        };
-
-
-        let newAssignmentInfo: AssignmentInfo = {
-            seedRepoURL:  "https://github.com/SECapstone/capstone",
-            seedRepoPath: "",
-            status:       newAssignmentStatus,
-            rubric:       newAssignmentGradingRubric,
-            repositories: []
-        };
-
-        let newDeliv: Deliverable = {
-            id:               TEST_ASSIGN_NAME,
-            URL:              "",
-            repoPrefix:       TEST_REPO_PREFIX,
-            openTimestamp:    -1,
-            closeTimestamp:   -2,
-            gradesReleased:   false,
-            teamMinSize:      1,
-            teamMaxSize:      1,
-            teamSameLab:      false,
-            teamStudentsForm: false,
-            teamPrefix:       TEST_REPO_PREFIX,
-            autotest:         null,
-            custom:           newAssignmentInfo
-        };
-
-
-        let newDelivSuccess = await dc.saveDeliverable(newDeliv);
-
-        expect(newDelivSuccess).to.not.be.null;
-        Log.info("Successfully created new Assignment Deliverable for testing")
-
-        // this.ac
-        // this.gc
-        // this.tc
-        // this.rc
-        // this.dc
-        // this.pc
-        // this.gh
-        // this.gha
+        // Log.info("Successfully created new Assignment Deliverable for testing");
     });
 
     beforeEach(() => {

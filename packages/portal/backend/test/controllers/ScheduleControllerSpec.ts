@@ -9,6 +9,7 @@ import Config, {ConfigKey} from "../../../../common/Config";
 import {Test} from "../GlobalSpec";
 import {Repository, Team} from "../../src/Types";
 import {ScheduleController} from "../../src/controllers/ScheduleController";
+import {DatabaseController} from "../../src/controllers/DatabaseController";
 
 const loadFirst = require('../GlobalSpec');
 
@@ -17,21 +18,31 @@ describe("ScheduleController", () => {
 
     let sc: ScheduleController = ScheduleController.getInstance();
 
-    before(() => {
+    before(async () => {
         // do something before
         // TODO: prep the database
         Log.test("ScheduleController::before - start");
+
+        await Test.suiteBefore('ScheduleController');
+
+        const db: DatabaseController = DatabaseController.getInstance();
+        await db.clearData();
+
+        await Test.prepareAll();
     });
 
-    after(() => {
+    after(async () => {
+        // do something here
+        Log.test("ScheduleController::after - start");
+
+        await Test.suiteAfter('ScheduleController');
+    });
+
+    beforeEach(async () => {
         // do something here
     });
 
-    beforeEach(() => {
-        // do something here
-    });
-
-    afterEach(() => {
+    afterEach(async () => {
         // do something here
     });
 
