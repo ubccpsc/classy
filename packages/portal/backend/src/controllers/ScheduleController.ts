@@ -56,6 +56,8 @@ export class ScheduleController {
                     Log.warn("ScheduleController::scheduleAssignmentCreation - An error occurred when initializing repositories for deliverable: " + assignId);
                 }
                 delete this.taskList[taskName];
+            }).catch(function (err) {
+                Log.error("ScheduleController::scheduleAssignmentCreation - Error: " + err);
             });
         });
 
@@ -90,6 +92,8 @@ export class ScheduleController {
                     Log.warn("ScheduleController::scheduleAssignmentPublish - An error occurred when publishing repositories for deliverable: " + assignId);
                 }
                 delete this.taskList[taskName];
+            }).catch(function (err) {
+                Log.error("ScheduleController::scheduleAssignmentPublish - Error: " + err);
             });
         });
 
@@ -120,6 +124,8 @@ export class ScheduleController {
                     Log.warn("ScheduleController::scheduleAssignmentClosure - An error occurred when closing repositories for deliverable: " + assignId);
                 }
                 delete this.taskList[taskName];
+            }).catch(function (err) {
+                Log.error("ScheduleController::scheduleAssignmentClosure - Error: " + err);
             });
         });
 
