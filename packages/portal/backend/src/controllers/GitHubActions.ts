@@ -1,6 +1,7 @@
 import * as rp from "request-promise-native";
-// const tmp = require('tmp-promise');
-import * as tmp from 'tmp-promise';
+
+// tslint:disable-next-line
+const tmp = require('tmp-promise');
 
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
