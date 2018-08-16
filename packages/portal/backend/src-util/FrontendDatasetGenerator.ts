@@ -46,19 +46,19 @@ export class FrontendDatasetGenerator {
     private async createPeople(): Promise<void> {
         Log.info("FrontendDatasetGenerator::createPeople() - start");
 
-        let person = Test.getPerson(Test.USERNAMEADMIN);
+        let person = Test.getPerson(Test.ADMIN1.id);
         person.kind = null;
         await this.dc.writePerson(person);
 
-        person = Test.getPerson(Test.USERNAME1);
+        person = Test.getPerson(Test.USER1.id);
         person.kind = 'student';
         await this.dc.writePerson(person);
 
-        person = Test.getPerson(Test.USERNAME2);
+        person = Test.getPerson(Test.USER2.id);
         person.kind = 'student';
         await this.dc.writePerson(person);
 
-        person = Test.getPerson(Test.USERNAME3);
+        person = Test.getPerson(Test.USER3.id);
         person.kind = 'student';
         await this.dc.writePerson(person);
 
@@ -110,19 +110,19 @@ export class FrontendDatasetGenerator {
         Log.info("FrontendDatasetGenerator::createGrades() - start");
 
         // public static getGrade(delivId: string, personId: string, score: number): Grade {
-        let grade = Test.getGrade(Test.DELIVID0, Test.USERNAME1, 65);
+        let grade = Test.getGrade(Test.DELIVID0, Test.USER1.id, 65);
         await this.dc.writeGrade(grade);
 
-        grade = Test.getGrade(Test.DELIVID1, Test.USERNAME1, 78);
+        grade = Test.getGrade(Test.DELIVID1, Test.USER1.id, 78);
         await this.dc.writeGrade(grade);
 
-        grade = Test.getGrade(Test.DELIVID0, Test.USERNAME2, 80);
+        grade = Test.getGrade(Test.DELIVID0, Test.USER2.id, 80);
         await this.dc.writeGrade(grade);
 
-        grade = Test.getGrade(Test.DELIVID2, Test.USERNAME2, 80);
+        grade = Test.getGrade(Test.DELIVID2, Test.USER2.id, 80);
         await this.dc.writeGrade(grade);
 
-        grade = Test.getGrade(Test.DELIVID1, Test.USERNAME3, 99);
+        grade = Test.getGrade(Test.DELIVID1, Test.USER3.id, 99);
         await this.dc.writeGrade(grade);
 
         // 100 random scores

@@ -167,7 +167,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 }
             }
 
-            if (res !== null) {
+            if (res !== null && res.commitSHA === info.commitSHA) {
                 // execution has been completed so there is feedback ready to give
                 Log.trace("GitHubAutoTest::handleCommentEvent(..) - commit: " + info.commitSHA + "; execution complete");
                 // true if staff, requested before, or over feedback delay interval

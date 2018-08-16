@@ -105,9 +105,11 @@ You should now be able to open portal in your web browser by navigating to the h
     ```bash
     # These two rules will block all traffic coming FROM the subnet (i.e. grading container)
     # Block any traffic destined for the same host (any subnet) (i.e. don't allow requests to classy.cs.ubc.ca/reference_ui)
+    # NOTE: make sure this rule is inserted in the chain *before* a permissive accept.
     sudo iptables -I INPUT -s 172.28.0.0/16 -j DROP
     # Block any traffic destined for an external host (i.e. don't allow requests to a student-operated host or mirrored
     # reference UI instance)
+    # NOTE: make sure this rule is inserted in the chain *before* a permissive accept.
     sudo iptables -I FORWARD -s 172.28.0.0/16 -j DROP
  
     # Add exceptions here. Depending on where the services are hosted, use ONE of the two forms below.
@@ -140,11 +142,17 @@ You should now be able to open portal in your web browser by navigating to the h
    the subnet.
    
     ```bash
-    # Should fail because the container can't query DNS  to resolve google.ca
+    # Check that the container resolves hostnames even though port 53 (DNS) is blocked.
+    # The Docker daemon automatically resolves hostnames using the host
+    docker run --net grading_net alpine nslookup google.ca
+    # The container can resolve google.ca because the docker daemon will automatically forward the request but port 80
+    # is not open so the request is dropped.
     docker run --net grading_net alpine ping google.ca -c 5
  
+    # 
     # Should fail because an exception for 8.8.8.8 has not been added to iptables (but the host name does get
     # resolved).
+ docker run --rm=true --net grading_net alpine wget http://sdmm.cs.ubc.ca:11316 --timeout=10
     docker run --net protected-grading --add-host google.ca:8.8.8.8 alpine ping google.ca -c 5
 
     # Should fail because an exception for 8.8.8.8 has not been added to iptables

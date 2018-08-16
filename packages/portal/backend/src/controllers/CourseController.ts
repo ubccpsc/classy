@@ -286,10 +286,12 @@ export class CourseController { // don't implement ICourseController yet
     public async getGrades(): Promise<GradeTransport[]> {
         const allGrades = await this.gc.getAllGrades();
         const grades: GradeTransport[] = [];
+        const pc = new PersonController();
         for (const grade of allGrades) {
+            const p = await pc.getPerson(grade.personId); // TODO: slow action for just githubid
             const gradeTrans: GradeTransport = {
                 personId:  grade.personId,
-                personURL: Config.getInstance().getProp(ConfigKey.githubHost) + '/' + grade.personId,
+                personURL: Config.getInstance().getProp(ConfigKey.githubHost) + '/' + p.githubId,
                 delivId:   grade.delivId,
                 score:     grade.score,
                 comment:   grade.comment,

@@ -13,8 +13,25 @@ describe("ResultController", () => {
 
     let rc: ResultsController;
 
-    beforeEach(() => {
+    before(async () => {
+        await Test.suiteBefore('ResultController');
+
+        // clear stale data (removed; happens in suitebefore)
+        // const dc = DatabaseController.getInstance();
+        // sawait dc.clearData();
+
+        // get data ready
+        await Test.prepareDeliverables();
+        await Test.preparePeople();
+        await Test.prepareAuth();
+        await Test.prepareRepositories();
+        await Test.prepareTeams();
+
         rc = new ResultsController();
+    });
+
+    after(async () => {
+        Test.suiteAfter('ResultController');
     });
 
     it("Should be able to get all results, even if there are none.", async () => {
@@ -30,7 +47,7 @@ describe("ResultController", () => {
         // let data = fs.readJSONSync(fullPath);
         // let output = await rc.createResult(data[0]);
         // public static getResult(delivId: string, repoId: string, people: string[], score: number): Result {
-        const result = Test.getResult(Test.DELIVID0, Test.REPONAME1, [Test.USERNAME1], 50);
+        const result = Test.getResult(Test.DELIVID0, Test.REPONAME1, [Test.USER1.id], 50);
         const output = await rc.createResult(result);
         expect(output).to.be.true;
 

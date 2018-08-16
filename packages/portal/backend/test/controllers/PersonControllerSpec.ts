@@ -19,52 +19,18 @@ describe("PersonController", () => {
     const TIMEOUT = 1000;
 
     before(async () => {
-        PERSON1 = {
-            id:            Test.USERNAME1,
-            csId:          Test.USERNAME1, // sdmm doesn't have these
-            githubId:      Test.USERNAME1,
-            studentNumber: null,
-
-            fName:  '',
-            lName:  '',
-            kind:   'student',
-            URL:    'https://github.com/' + Test.USERNAME1,
-            labId:  'UNKNOWN',
-            custom: {}
-        };
-
-        PERSON2 = {
-            id:            Test.USERNAME2,
-            csId:          Test.USERNAME2, // sdmm doesn't have these
-            githubId:      Test.USERNAME2,
-            studentNumber: null,
-
-            fName:  '',
-            lName:  '',
-            kind:   'student',
-            URL:    'https://github.com/' + Test.USERNAME2,
-            labId:  'UNKNOWN',
-            custom: {}
-        };
-
-        PERSON3 = {
-            id:            Test.USERNAME3,
-            csId:          Test.USERNAME3, // sdmm doesn't have these
-            githubId:      Test.USERNAME3,
-            studentNumber: null,
-
-            fName:  '',
-            lName:  '',
-            kind:   'student',
-            URL:    'https://github.com/' + Test.USERNAME1,
-            labId:  'UNKNOWN',
-            custom: {}
-        };
+        await Test.suiteBefore('PersonController');
+        PERSON1 = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, 'student');
+        PERSON2 = Test.createPerson(Test.USER2.id, Test.USER2.csId, Test.USER2.github, 'student');
+        PERSON3 = Test.createPerson(Test.USER3.id, Test.USER3.csId, Test.USER3.github, 'student');
     });
 
     beforeEach(() => {
         pc = new PersonController();
+    });
 
+    after(async () => {
+        Test.suiteAfter('PersonController');
     });
 
     it("Should be able to be validate a new user.", async () => {
@@ -122,7 +88,7 @@ describe("PersonController", () => {
 
         person = await pc.getGitHubPerson(PERSON1.githubId);
         expect(person).to.not.be.null;
-        expect(person.id).to.equal(PERSON1.githubId);
+        expect(person.id).to.equal(PERSON1.id);
 
         person = await pc.getGitHubPerson('randomIDthatDoesNotexist23232333');
         expect(person).to.be.null;

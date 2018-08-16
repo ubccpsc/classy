@@ -17,10 +17,26 @@ describe("RepositoryController", () => {
     let tc: TeamController;
     let pc: PersonController;
 
-    beforeEach(() => {
+    before(async () => {
+        await Test.suiteBefore('RepositoryController');
+
+        // clear stale data (removed; happens in suitebefore)
+        // const dc = DatabaseController.getInstance();
+        // await dc.clearData();
+
+        // get data ready
+        await Test.prepareDeliverables();
+        await Test.preparePeople();
+        await Test.prepareAuth();
+        await Test.prepareTeams();
+
         tc = new TeamController();
         rc = new RepositoryController();
         pc = new PersonController();
+    });
+
+    after(async () => {
+        Test.suiteAfter('RepositoryController');
     });
 
     it("Should be able to get all repositories, even if there are none.", async () => {
@@ -60,7 +76,7 @@ describe("RepositoryController", () => {
         let repos = await rc.getAllRepos();
         expect(repos).to.have.lengthOf(1);
 
-        const person = await pc.getPerson(Test.USERNAME1);
+        const person = await pc.getPerson(Test.USER1.id);
         repos = await rc.getReposForPerson(person);
         expect(repos).to.have.lengthOf(1);
     });
@@ -72,13 +88,13 @@ describe("RepositoryController", () => {
         const people = await rc.getPeopleForRepo(repos[0].id);
         Log.test(JSON.stringify(people));
         expect(people).to.have.lengthOf(2);
-        expect(people).to.contain(Test.USERNAME1);
-        expect(people).to.contain(Test.USERNAME2);
+        expect(people).to.contain(Test.USER1.id);
+        expect(people).to.contain(Test.USER2.id);
     });
 
     it("Should be able to find repos for a person.", async () => {
         // test should be in PersonControllerSpec but the repos are made here...
-        const repos = await pc.getRepos(Test.USERNAME1);
+        const repos = await pc.getRepos(Test.USER1.id);
         expect(repos).to.have.lengthOf(1);
     });
 

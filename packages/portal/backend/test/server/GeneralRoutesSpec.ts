@@ -60,7 +60,7 @@ describe('General Routes', function() {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USERNAME1);
+        const auth = await dc.getAuth(Test.USER1.id);
         expect(auth).to.not.be.null;
 
         // prepare deliverables
@@ -88,7 +88,7 @@ describe('General Routes', function() {
         expect(body.success).to.not.be.undefined;
         expect(body.success.length).to.equal(2);
         expect(body.success[0].delivId).to.equal(Test.DELIVID1);
-        expect(body.success[0].score).to.equal(50);
+        expect(body.success[0].score).to.equal(100);
         expect(body.success[1].delivId).to.equal(Test.DELIVID2);
         expect(body.success[1].score).to.equal(null);
     });
@@ -97,7 +97,7 @@ describe('General Routes', function() {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USERNAME1);
+        const auth = await dc.getAuth(Test.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -123,8 +123,8 @@ describe('General Routes', function() {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        await dc.writeAuth({personId: Test.USERNAME3, token: Date.now() + '_token'});
-        const auth = await dc.getAuth(Test.USERNAME3);
+        // await dc.writeAuth({personId: Test.USER3.id, token: Date.now() + '_token'});
+        const auth = await dc.getAuth(Test.USER1.id);
         expect(auth).to.not.be.null;
 
         // const team = Test.getTeam(Test.TEAMNAME3, Test.DELIVID0, [Test.USERNAME3]);
@@ -155,14 +155,14 @@ describe('General Routes', function() {
         expect(body.success).to.not.be.undefined;
         expect(body.success.length).to.equal(1);
         expect(body.success[0].delivId).to.equal(Test.DELIVID0);
-        expect(body.success[0].id).to.equal(Test.TEAMNAME2);
+        expect(body.success[0].id).to.equal(Test.TEAMNAME1);
     });
 
     it('Should not be able to get get teams without a valid token.', async function() {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USERNAME1);
+        const auth = await dc.getAuth(Test.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;

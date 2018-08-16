@@ -117,7 +117,7 @@ describe('AutoTest Routes', function() {
         const url = '/portal/at/result/';
 
         // public static getResult(delivId: string, repoId: string, people: string[], score: number): Result {
-        const body = Test.getResult(Test.DELIVID0, Test.REPONAME1, [Test.USERNAME1], 50);
+        const body = Test.getResult(Test.DELIVID0, Test.REPONAME1, [Test.USER1.id], 50);
         // const body = { // : IAutoTestResult
         //     delivId:   Test.DELIVID0,
         //     repoId:    Test.REPONAME1,
@@ -284,7 +284,7 @@ describe('AutoTest Routes', function() {
 
         let response = null;
         let body: AutoTestAuthPayload;
-        const url = '/portal/at/personId/' + Test.USERNAME1;
+        const url = '/portal/at/personId/' + Test.USER1.github; // AutoTest only knows about githubId not personId
         try {
             response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
