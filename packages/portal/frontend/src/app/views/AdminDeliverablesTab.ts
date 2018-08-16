@@ -238,7 +238,7 @@ export class AdminDeliverablesTab {
         if (customRaw.length > 0) {
             Log.trace("AdminDeliverablesTab::save() - customRaw: " + customRaw);
             // https://stackoverflow.com/a/34763398 (handle unquoted props (e.g., {foo: false}))
-            customRaw = customRaw.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ');
+            // customRaw = customRaw.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ');
             custom = JSON.parse(customRaw);
         }
 

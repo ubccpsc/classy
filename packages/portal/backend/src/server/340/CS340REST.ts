@@ -156,7 +156,6 @@ export default class CS340REST implements IREST {
             if (deliv === null) {
                 // TODO [Jonathan]: send an appropriate failure
                 res.send(204, {error: "Deliverable not found, please create the deliverable first"});
-                return next();
             } else {
                 if (deliv.custom !== null && deliv.custom.rubric !== null) {
                     let assignInfo: AssignmentInfo = deliv.custom;

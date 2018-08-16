@@ -85,7 +85,10 @@ export class Test {
         Log.test("Test::preparePeople() - start");
         const dc = DatabaseController.getInstance();
 
-        let p = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, 'student');
+        let p = Test.createPerson(Test.REALUSER1.id, Test.REALUSER1.csId, Test.REALUSER1.github, 'student');
+        await dc.writePerson(p);
+
+        p = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, 'student');
         await dc.writePerson(p);
 
         p = Test.createPerson(Test.USER2.id, Test.USER2.csId, Test.USER2.github, 'student');
@@ -249,12 +252,12 @@ export class Test {
     }
 
     public static async prepareAssignment() {
-        let dc: DatabaseController = DatabaseController.getInstance();
+        let dc: DeliverablesController = new DeliverablesController();
 
         let newAssignmentStatus: AssignmentStatus = AssignmentStatus.INACTIVE;
 
         let newAssignmentGradingRubric: AssignmentGradingRubric = {
-            name:      ASSIGNID0,
+            name:      Test.ASSIGNID0,
             comment:   "test assignment",
             questions: [
                 {
@@ -296,9 +299,9 @@ export class Test {
         };
 
         let newDeliv: Deliverable = {
-            id:               ASSIGNID0,
+            id:               Test.ASSIGNID0,
             URL:              "",
-            repoPrefix:       ASSIGNID0 + "_",
+            repoPrefix:       Test.ASSIGNID0 + "_",
             openTimestamp:    -1,
             closeTimestamp:   -2,
             gradesReleased:   false,
@@ -306,7 +309,7 @@ export class Test {
             teamMaxSize:      1,
             teamSameLab:      false,
             teamStudentsForm: false,
-            teamPrefix:       ASSIGNID0 + "_",
+            teamPrefix:       Test.ASSIGNID0 + "_",
             autotest:         {
                 dockerImage:        'testImage',
                 studentDelay:       60 * 60 * 12, // 12h
@@ -361,9 +364,10 @@ export class Test {
     public static readonly ADMIN1 = {id: 'classyadmin', csId: 'classyadmin', github: 'classyadmin'};
     public static readonly STAFF1 = {id: 'classystaff', csId: 'classystaff', github: 'classystaff'};
 
-    // public static readonly USERNAMEADMIN = 'ubcbot'; // should be admin on any test org
-    // public static readonly USERNAMESTAFF = 'ubcbot'; // should be admin on any test org
+    public static readonly USERNAMEADMIN = 'ubcbot'; // should be admin on any test org
+    public static readonly USERNAMESTAFF = 'ubcbot'; // should be admin on any test org
     // public static readonly USERNAME1 = 'rthse2'; // real account for testing users
+    public static readonly REALUSER1 = {id: 'rthse2', csId: 'rthse2', github: 'rthse2'}; // real account for testing users
     // public static readonly USERNAME2 = 'user2';
     // public static readonly USERNAME3 = 'user3';
 
