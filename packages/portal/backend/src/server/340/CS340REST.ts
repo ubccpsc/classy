@@ -37,8 +37,58 @@ export default class CS340REST implements IREST {
         // server.get('/testPublishRepository/:repoId', CS340REST.testPublishRepository);
         server.get('/portal/cs340/testPublishGrade', CS340REST.testPublishGrade);
         server.get('/portal/cs340/testPublishAllGrades', CS340REST.testPublishAllGrades);
-
+        server.post('/portal/cs340/verifyScheduledJobs/:aid', CS340REST.verifyScheduledJobs);
+        server.post('/portal/cs340/verifyScheduledJobs/', CS340REST.verifyAllScheduledJobs);
     }
+
+    public static async verifyAllScheduledJobs(req: any, res: any, next: any) {
+        // TODO [Jonathan]: Admin authentication
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        Log.info("CS340REST::verifyAllScheduledJobs() - start");
+
+        let ac: AssignmentController = new AssignmentController();
+
+        try {
+            let numberScheduled = await ac.verifyScheduledJobs();
+            res.send(200, numberScheduled);
+            Log.info("CS340REST::verifyAllScheduledJobs(..) - completed verification; " +
+                "created " + numberScheduled + " new tasks");
+            return next();
+        } catch(err) {
+            Log.error("CS340REST::verifyAllScheduledJobs(..) - Error: " + err);
+        }
+
+        return next();
+    }
+
+    public static async verifyScheduledJobs(req: any, res: any, next: any) {
+        // TODO [Jonathan]: Admin authentication
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        const aid = req.params.aid;
+
+        Log.info("CS340REST::verifyScheduledJobs( " + aid + ") - start");
+
+        let ac: AssignmentController = new AssignmentController();
+
+        try {
+            let numberScheduled = await ac.verifyScheduledJobs(aid);
+            res.send(200, numberScheduled);
+            Log.info("CS340REST::verifyScheduledJobs(..) - completed verification; " +
+                "created " + numberScheduled + " new tasks");
+            return next();
+        } catch(err) {
+            Log.error("CS340REST::verifyScheduledJobs(..) - Error: " + err);
+        }
+
+        return next();
+    }
+
 
     public static async testPublishGrade(req: any, res: any, next: any) {
         let ac: AssignmentController = new AssignmentController();

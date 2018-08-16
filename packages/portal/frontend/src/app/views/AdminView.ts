@@ -36,15 +36,15 @@ export class AdminView implements IView {
     protected remote: string | null = null;
     private tabs: AdminTabs | null = null;
 
-    private isStaff = false;
-    private isAdmin = false;
+    protected isStaff = false;
+    protected isAdmin = false;
 
-    private deliverablesTab: AdminDeliverablesTab;
-    private studentsTab: AdminStudentsTab;
-    private teamsTab: AdminTeamsTab;
-    private gradesTab: AdminGradesTab;
-    private resultsTab: AdminResultsTab;
-    private configTab: AdminConfigTab;
+    protected deliverablesTab: AdminDeliverablesTab;
+    protected studentsTab: AdminStudentsTab;
+    protected teamsTab: AdminTeamsTab;
+    protected gradesTab: AdminGradesTab;
+    protected resultsTab: AdminResultsTab;
+    protected configTab: AdminConfigTab;
 
     constructor(remoteUrl: string, tabs: AdminTabs) {
         Log.info("AdminView::<init>");

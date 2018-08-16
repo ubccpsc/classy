@@ -6,6 +6,9 @@
 import {GitHubController} from "./GitHubController";
 import {AssignmentController} from "./340/AssignmentController";
 import Log from "../../../../common/Log";
+import {DeliverablesController} from "./DeliverablesController";
+import {DatabaseController} from "./DatabaseController";
+import {Deliverable} from "../Types";
 
 let schedule = require('node-schedule');
 
@@ -34,7 +37,7 @@ export class ScheduleController {
         this.taskList = {};
     }
 
-    public async scheduleAssignmentCreation(scheduledTime: string, assignId: string): Promise<boolean> {
+    public async scheduleAssignmentCreation(scheduledTime: Date, assignId: string): Promise<boolean> {
         let taskName: string = "CREATE_" + assignId;
 
         if (typeof this.taskList[taskName] !== 'undefined') {
@@ -48,9 +51,9 @@ export class ScheduleController {
             ac.initializeAllRepositories(assignId).then((result) => {
                 // remove from taskList
                 if (result) {
-                Log.info("Finished initializing repositories for deliverable: " + assignId);
+                Log.info("ScheduleController::scheduleAssignmentCreation - Finished initializing repositories for deliverable: " + assignId);
                 } else {
-                    Log.warn("Ane error occurred when initializing repositories for deliverable: " + assignId);
+                    Log.warn("ScheduleController::scheduleAssignmentCreation - An error occurred when initializing repositories for deliverable: " + assignId);
                 }
                 delete this.taskList[taskName];
             });
@@ -68,7 +71,7 @@ export class ScheduleController {
     //
     // }
 
-    public async scheduleAssignmentPublish(scheduledTime: string, assignId: string): Promise<boolean> {
+    public async scheduleAssignmentPublish(scheduledTime: Date, assignId: string): Promise<boolean> {
         let taskName: string = "PUBLISH_" + assignId;
 
         if (typeof this.taskList[taskName] !== 'undefined') {
@@ -82,9 +85,9 @@ export class ScheduleController {
             ac.publishAllRepositories(assignId).then((result) => {
                 // remove from taskList
                 if (result) {
-                Log.info("Finished publishing repositories for deliverable: " + assignId);
+                Log.info("ScheduleController::scheduleAssignmentPublish - Finished publishing repositories for deliverable: " + assignId);
                 } else {
-                    Log.warn("Ane error occurred when publishing repositories for deliverable: " + assignId);
+                    Log.warn("ScheduleController::scheduleAssignmentPublish - An error occurred when publishing repositories for deliverable: " + assignId);
                 }
                 delete this.taskList[taskName];
             });
@@ -98,7 +101,7 @@ export class ScheduleController {
         return true;
     }
 
-    public async scheduleAssignmentClosure(scheduledTime: string, assignId: string): Promise<boolean> {
+    public async scheduleAssignmentClosure(scheduledTime: Date, assignId: string): Promise<boolean> {
         let taskName: string = "CLOSE_" + assignId;
 
         if (typeof this.taskList[taskName] !== 'undefined') {
@@ -112,9 +115,9 @@ export class ScheduleController {
             ac.closeAllRepositories(assignId).then((result) => {
                 // remove from taskList
                 if (result) {
-                Log.info("Finished closing repositories for deliverable: " + assignId);
+                Log.info("ScheduleController::scheduleAssignmentClosure - Finished closing repositories for deliverable: " + assignId);
                 } else {
-                    Log.warn("Ane error occurred when closing repositories for deliverable: " + assignId);
+                    Log.warn("ScheduleController::scheduleAssignmentClosure - An error occurred when closing repositories for deliverable: " + assignId);
                 }
                 delete this.taskList[taskName];
             });
