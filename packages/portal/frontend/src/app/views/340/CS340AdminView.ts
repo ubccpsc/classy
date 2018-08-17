@@ -1,4 +1,4 @@
-import {OnsButtonElement, OnsFabElement, OnsInputElement} from "onsenui";
+import {OnsButtonElement, OnsFabElement, OnsInputElement, OnsSwitchElement} from "onsenui";
 import Log from "../../../../../../common/Log";
 import {
     AssignmentGrade,
@@ -15,7 +15,6 @@ import {Factory} from "../../Factory";
 import {SortableTable, TableCell, TableHeader} from "../../util/SortableTable";
 import {UI} from "../../util/UI";
 import {AdminView} from "../AdminView";
-import {delay} from "q";
 
 const ERROR_POTENTIAL_INCORRECT_INPUT: string = "input triggered warning";
 const ERROR_INVALID_INPUT: string = "invalid input";
@@ -117,19 +116,101 @@ export class CS340AdminView extends AdminView {
         await super.handleAdminEditDeliverable(opts);
         let that = this;
         // if the deliverable is an assignment, do something(?)
-        const fab = document.querySelector('#adminEditDeliverableSave') as OnsFabElement;
-        if (super.isAdmin === false) {
-            fab.style.display = 'none';
-        } else {
-            fab.onclick = function(evt) {
-                Log.info('CS340AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::customOnClick');
-                that.newSave();
-            };
+
+        // const fab = document.querySelector('#adminEditDeliverableSave') as OnsFabElement;
+        // if (super.isAdmin === false) {
+        //     fab.style.display = 'none';
+        // } else {
+        //     fab.onclick = function(evt) {
+        //         Log.info('CS340AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::customOnClick');
+        //         that.newSave();
+        //     };
+        // }
+
+        Log.info("CS340AdminView::renderEditDeliverablePage(..) - Fetching");
+        let deliverables: Deliverable[] = await this.getDeliverables();
+        for(const deliverableRecord of deliverables) {
+            if(deliverableRecord.id === opts.delivId) {
+                Log.info("CS340AdminView::renderEditDeliverablePage(..) - Checking AssignmentStatus");
+                if(typeof deliverableRecord.custom !== 'undefined' && typeof deliverableRecord.custom.status !== 'undefined') {
+                    let assignInfo: AssignmentInfo = (deliverableRecord.custom as AssignmentInfo);
+                    let assignStatus: AssignmentStatus = assignInfo.status;
+                    let createdSwitch = (document.querySelector('#adminEditDeliverablePage-createdSwitch') as OnsSwitchElement);
+                    let readSwitch = (document.querySelector('#adminEditDeliverablePage-readSwitch') as OnsSwitchElement);
+                    let pushSwitch = (document.querySelector('#adminEditDeliverablePage-pushSwitch') as OnsSwitchElement);
+                    switch (assignStatus) {
+                        case AssignmentStatus.INACTIVE: {
+                            createdSwitch.removeAttribute("checked");
+                            readSwitch.removeAttribute("checked");
+                            pushSwitch.removeAttribute("checked");
+                            break;
+                        }
+                        case AssignmentStatus.CREATED: {
+                            createdSwitch.setAttribute("checked", 'true');
+                            readSwitch.removeAttribute("checked");
+                            pushSwitch.removeAttribute("checked");
+                            break;
+                        }
+                        case AssignmentStatus.RELEASED: {
+                            createdSwitch.setAttribute("checked", 'true');
+                            readSwitch.setAttribute("checked", 'true');
+                            pushSwitch.setAttribute("checked", 'true');
+                            break;
+                        }
+                        case AssignmentStatus.CLOSED: {
+                            createdSwitch.setAttribute("checked", 'true');
+                            readSwitch.setAttribute("checked", 'true');
+                            pushSwitch.removeAttribute("checked");
+                            break;
+                        }
+                        default: {
+                            createdSwitch.removeAttribute("checked");
+                            readSwitch.removeAttribute("checked");
+                            pushSwitch.removeAttribute("checked");
+                            break;
+                        }
+                    }
+
+                } else {
+                    Log.info("CS340AdminView::renderEditDeliverablePage(..) - Not an assignment, hiding elements");
+                    let assignStatusHeader = (document.querySelector('#adminEditDeliverablePage-assignmentStatusHeader') as HTMLElement);
+                    let assignStatusBody = (document.querySelector('#adminEditDeliverablePage-assignmentStatus') as HTMLElement);
+
+                    assignStatusHeader.style.display = "none";
+                    assignStatusBody.style.display = "none";
+                }
+            }
         }
+
+        // Log.info("CS340AdminView::renderEditDeliverablePage(..) - Checking AssignmentStatus");
+        // // get the deliverable
+        // // let ac: AssignmentController = new AssignmentController();
+        // let delivRecord: Deliverable = await ac.getAssignmentRepo(opts.delivId);
+        //
+    // if(typeof delivRecord.id !== 'undefined') {
+        //     Log.info("CS340AdminView::renderEditDeliverablePage(..) - 1");
+        //     if(delivRecord.custom !== null) {
+        //         Log.info("CS340AdminView::renderEditDeliverablePage(..) - 2");
+        //         if(typeof (delivRecord.custom as AssignmentInfo).status !== 'undefined') {
+        //             Log.info("CS340AdminView::renderEditDeliverablePage(..) - 3");
+        //         }
+        //     }
+        // }
+        // if(typeof opts.id !== 'undefined' && opts.custom !== null &&
+        //         typeof (opts.custom as AssignmentInfo).status !== 'undefined') {
+        //     let deliverableRecord: Deliverable = opts;
+        //     Log.info("CS340AdminView::renderEditDeliverablePage(..) - Adjusting status switches");
+        //
+        //     // set the switches
+        //
+        // }
+
+
     }
 
     protected async newSave() {
         // await super.deliverablesTab.save();
+        super.deliverablesTab.save();
         let number = await this.verifyScheduledJobs(null);
         Log.info("CS340AdminView::newSave() - tasks generated: " + number);
     }
@@ -140,17 +221,23 @@ export class CS340AdminView extends AdminView {
         const selectDelivDropdown: HTMLSelectElement = document.querySelector('#adminActionDeliverableSelect') as HTMLSelectElement;
         await this.populateDeliverableDropdown(selectDelivDropdown);
 
-        (document.querySelector('#adminActionSelectDeliverable') as OnsButtonElement).onclick = function (evt) {
-            Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');
+        (document.querySelector('#adminActionDeliverableSelect') as HTMLSelectElement).onchange = function (evt) {
+            Log.warn("Changed the Deliverable Selection to " + (evt.target as HTMLSelectElement).value + " !");
 
             that.selectDeliverablePressed();
         };
 
-        (document.querySelector('#adminCheckStatus') as OnsButtonElement).onclick = function (evt) {
-            Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');
+        // (document.querySelector('#adminActionSelectDeliverable') as OnsButtonElement).onclick = function (evt) {
+        //     Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');
+        //
+        //     that.selectDeliverablePressed();
+        // };
 
-            that.checkStatusAndUpdate(true);
-        };
+        // (document.querySelector('#adminCheckStatus') as OnsButtonElement).onclick = function (evt) {
+        //     Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');
+        //
+        //     that.checkStatusAndUpdate(true);
+        // };
 
         (document.querySelector('#adminCreateRepositories') as OnsButtonElement).onclick = function (evt) {
             Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');
@@ -176,22 +263,22 @@ export class CS340AdminView extends AdminView {
     private async selectDeliverablePressed(): Promise<void> {
         Log.info('CS340AdminView::selectDeliverablePressed(..) - start');
         // Log.info('CS340AdminView::selectDeliverable(..) - ');
-        const delivId: string | null = await this.checkStatusAndUpdate();
+        const delivId: string | null = await this.checkStatusAndUpdate(true);
 
         // (un)lock other buttons
-        const checkStatusButton = document.querySelector('#adminCheckStatus') as OnsButtonElement;
+        // const checkStatusButton = document.querySelector('#adminCheckStatus') as OnsButtonElement;
         const createRepoButton  = document.querySelector('#adminCreateRepositories') as OnsButtonElement;
         const releaseRepoButton = document.querySelector('#adminReleaseRepositories') as OnsButtonElement;
         const deleteRepoButton  = document.querySelector('#adminDeleteRepositories') as OnsButtonElement; // DEBUG
 
         if(delivId === null) {
             Log.info('CS340AdminView::selectDeliverable(..) - did not select deliv, locking buttons');
-            checkStatusButton.disabled = true;
+            // checkStatusButton.disabled = true;
             createRepoButton.disabled = true;
             releaseRepoButton.disabled = true;
             deleteRepoButton.disabled = true; // DEBUG
         } else {
-            checkStatusButton.disabled = false;
+            // checkStatusButton.disabled = false;
             createRepoButton.disabled = false;
             releaseRepoButton.disabled = false;
             deleteRepoButton.disabled = false; // DEBUG
@@ -237,21 +324,25 @@ export class CS340AdminView extends AdminView {
         if(response.status === 200) {
             let responsejson = await response.json();
             // get the textbox
-            switch (responsejson.response) {
+            switch (responsejson.response.assignmentStatus) {
                 case AssignmentStatus.INACTIVE: {
-                    statusBox.innerHTML = ": INACTIVE";
+                    statusBox.innerHTML = ": NOT CREATED - " + " Repositories: " +
+                        responsejson.response.studentRepos + "/" + responsejson.response.totalStudents;
                     break;
                 }
                 case AssignmentStatus.CREATED: {
-                    statusBox.innerHTML = ": CREATED";
+                    statusBox.innerHTML = ": CREATED - " + " Repositories: " +
+                        responsejson.response.studentRepos + "/" + responsejson.response.totalStudents;
                     break;
                 }
                 case AssignmentStatus.RELEASED: {
-                    statusBox.innerHTML = ": RELEASED";
+                    statusBox.innerHTML = ": RELEASED - " + " Repositories: " +
+                        responsejson.response.studentRepos + "/" + responsejson.response.totalStudents;
                     break;
                 }
                 case AssignmentStatus.CLOSED: {
-                    statusBox.innerHTML = ": CLOSED";
+                    statusBox.innerHTML = ": CLOSED - " + " Repositories: " +
+                        responsejson.response.studentRepos + "/" + responsejson.response.totalStudents;
                     break;
                 }
                 default: {

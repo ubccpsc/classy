@@ -29,7 +29,7 @@ export class Factory {
         } else if (name === 'cs310' || name === 'classytest') {
             // no custom routes are required for 310
             return new NoCustomRoutes();
-        } else if (name === 'cs340' || name === 'cpsc340') {
+        } else if (name === 'cs340' || name === 'cpsc340' || name.toLowerCase().startsWith('cpsc340')) {
             return new CS340REST();
         } else {
             Log.error("Factory::getCustomRouteHandler() - unknown name: " + name);

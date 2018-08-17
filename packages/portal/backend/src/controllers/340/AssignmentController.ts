@@ -523,8 +523,12 @@ export class AssignmentController {
 
     // Retrieves the status of a given assignment
     // Warning: This might be stale
-    public async getAssignmentStatus(delivId: string): Promise<AssignmentStatus | null> {
+    public async getAssignmentStatus(delivId: string): Promise<{assignStatus: AssignmentStatus,
+                                                            totalStudents: number, studentRepos: number} | null> {
         Log.info("AssignmentController::getAssignmentStatus( " + delivId + ") - start");
+        Log.warn("AssignmentController::getAssignmentStatus(..) -- This method should not be used (deprecated); " +
+            "updateAssignmentStatus instead");
+
         let deliv = await this.dc.getDeliverable(delivId);
         if (deliv === null) {
             Log.error("AssignmentController::getAssignmentStatus(..) - error: nothing found");
@@ -545,12 +549,13 @@ export class AssignmentController {
 
 
         Log.info("AssignmentController::getAssignmentStatus(..) - finish");
-        return (deliv.custom as AssignmentInfo).status;
+        return {assignStatus: (deliv.custom as AssignmentInfo).status, totalStudents: -1, studentRepos: -1};
     }
 
     // Updates the status of a given assignment
     // iterates over checking each status of the assigned repository
-    public async updateAssignmentStatus(delivId: string): Promise<AssignmentStatus | null> {
+    public async updateAssignmentStatus(delivId: string): Promise<{assignmentStatus: AssignmentStatus,
+                                                                totalStudents: number, studentRepos: number}| null> {
         Log.info("AssignmentController::updateAssignmentStatus( " + delivId + " ) - start");
         let deliv = await this.dc.getDeliverable(delivId);
         if (deliv === null) {
@@ -604,6 +609,8 @@ export class AssignmentController {
 
         // verify all students have a repository
         let newStatus = AssignmentStatus.CLOSED;
+        let totalStudentCount = allStudents.length;
+        let studentRepoCount = 0;
         for (const student of allStudents) {
             if (typeof studentRepoMapping[student.id] === 'undefined') {
                 // this means a repository is missing,
@@ -611,7 +618,10 @@ export class AssignmentController {
                     "is missing a repository");
                 (deliv.custom as AssignmentInfo).status = AssignmentStatus.INACTIVE;
                 await this.dc.saveDeliverable(deliv);
-                return AssignmentStatus.INACTIVE;
+                if(AssignmentStatus.INACTIVE < newStatus) {
+                    newStatus = AssignmentStatus.INACTIVE;
+                }
+                continue;
             } else {
                 // if the student has repositories,
                 let studentRepos: Repository[] = studentRepoMapping[student.id];
@@ -620,20 +630,13 @@ export class AssignmentController {
                         // a repo is not classified properly
                         Log.error("AssignmentController::updateAssignmentStatus(..) - error: " +
                             "repository " + repo.id + " is not set up properly");
-                        return null;
+
+                        // return null;
                     }
                     let repoInfo: AssignmentRepositoryInfo = repo.custom;
 
-                    // if(repoInfo.status === AssignmentStatus.CREATED) {
-                    //     currentStatus = repoInfo.status;
-                    // } else if (currentStatus !== AssignmentStatus.CREATED &&
-                    //         repoInfo.status === AssignmentStatus.RELEASED) {
-                    //     currentStatus = repoInfo.status;
-                    // } else if (currentStatus !== AssignmentStatus.RELEASED &&
-                    //         currentStatus !== AssignmentStatus.CREATED &&
-                    //         repoInfo.status === AssignmentStatus.CLOSED) {
-                    //     currentStatus = repoInfo.status;
-                    // }
+                    studentRepoCount += 1;
+
                     if (repoInfo.status < newStatus) {
                         newStatus = repoInfo.status;
                     }
@@ -646,7 +649,7 @@ export class AssignmentController {
 
 
         Log.info("AssignmentController::updateAssignmentStatus(..) - finish");
-        return newStatus;
+        return {assignmentStatus: newStatus, totalStudents: totalStudentCount, studentRepos: studentRepoCount};
     }
 
 

@@ -179,12 +179,12 @@
                     <div class="center">
                         Selected Deliverable:
                         <select id="adminActionDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
-                        <ons-button id="adminActionSelectDeliverable" modifier="medium">Select Deliverable</ons-button>
+                        <!--<ons-button id="adminActionSelectDeliverable" modifier="medium">Select Deliverable</ons-button>-->
                         <p id="adminActionDeliverableID" style="margin-left: 1em; font-weight: bold;"></p>
-                        <p id="adminActionStatusText" style="margin-right: 1em;width: 6.5em;"></p>
-                        <ons-button id="adminCheckStatus" style="margin-left: 1em; margin-right: 1em;" disabled="true">
-                            Recalculate Status
-                        </ons-button>
+                        <p id="adminActionStatusText" style="margin-right: 1em/*;width: 6.5em*/;"></p>
+                        <!--<ons-button id="adminCheckStatus" style="margin-left: 1em; margin-right: 1em;" disabled="true">-->
+                            <!--Recalculate Status-->
+                        <!--</ons-button>-->
                         <ons-button id="adminCreateRepositories" disabled="true">Create Repositories</ons-button>
                         <ons-button id="adminReleaseRepositories" style="margin-left: 1em" disabled="true">Release
                             Repositories
@@ -415,7 +415,7 @@
                         </div>
                         <div class="center settingLabel">
                             <span
-                                title="Enable if Students are allowed to creat their own team.">Students Make Teams</span>
+                                title="Enable if Students are allowed to create their own team.">Students Make Teams</span>
                         </div>
                         <div class="right settingRight">
                             <ons-switch id="adminEditDeliverablePage-studentsMakeTeams" modifier="list-item"
@@ -437,6 +437,36 @@
                                         onclick=""></ons-switch>
                         </div>
                     </ons-list-item>
+
+                    <ons-list-header id="adminEditDeliverablePage-assignmentStatusHeader" hidden>
+                        Assignment Status
+                    </ons-list-header>
+
+                    <div id="adminEditDeliverablePage-assignmentStatus">
+                    <ons-list-item style="display: flex;">
+                        <div class="center settingLabel"><span>Repositories Created:</span></div>
+                        <div class="right settingRight">
+                            <ons-switch disabled id="adminEditDeliverablePage-createdSwitch" modifier="list-item"
+                                        onclick=""></ons-switch>
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item style="display: flex;">
+                        <div class="center settingLabel"><span>Repository Read Access:</span></div>
+                        <div class="right settingRight">
+                            <ons-switch disabled id="adminEditDeliverablePage-readSwitch" modifier="list-item"
+                                        onclick=""></ons-switch>
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item style="display: flex;">
+                        <div class="center settingLabel"><span>Repository Push Access:</span></div>
+                        <div class="right settingRight">
+                            <ons-switch disabled id="adminEditDeliverablePage-pushSwitch" modifier="list-item"
+                                        onclick=""></ons-switch>
+                        </div>
+                    </ons-list-item>
+                    </div>
 
 
                     <ons-list-header>AutoTest Options</ons-list-header>

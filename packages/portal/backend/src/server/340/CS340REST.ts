@@ -426,7 +426,7 @@ export default class CS340REST implements IREST {
         let delivid: string = req.params.delivid;
 
         let assignController: AssignmentController = new AssignmentController();
-        let newResult = await assignController.getAssignmentStatus(delivid);
+        let newResult = await assignController.updateAssignmentStatus(delivid);
         if (newResult === null) {
             res.send(400, {error: "Assignment not initialized properly"});
         } else {
