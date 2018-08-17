@@ -13,6 +13,7 @@ import {
     DeliverableTransport,
     DeliverableTransportPayload,
     Payload,
+    RepositoryPayload,
     StudentTransportPayload,
     TeamTransportPayload
 } from "../../../../common/types/PortalTypes";
@@ -27,7 +28,7 @@ import './AuthRoutesSpec';
 // const request = require('supertest');
 // const loadFirst = require("./AuthRoutesSpec");
 
-describe('Admin Routes', function() {
+describe.only('Admin Routes', function() {
 
     // const TIMEOUT = 5000;
 
@@ -40,33 +41,27 @@ describe('Admin Routes', function() {
     before(async () => {
         Log.test('AdminRoutes::before - start');
 
-        // Config.getInstance().setProp(ConfigKey.name, ConfigCourses.classytest);
-        // Test.ORGNAME = Config.getInstance().getProp(ConfigKey.testorg);
-
         await Test.suiteBefore('Admin Routes');
-
-        // clear stale data
-        const db = DatabaseController.getInstance();
-        await db.clearData();
 
         // get data ready
         await Test.prepareAll();
 
-        // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
-        server = new BackendServer(false);
+        try {
+            // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
+            server = new BackendServer(false);
 
-        return server.start().then(function() {
+            await server.start();
             Log.test('AdminRoutes::before - server started');
             app = server.getServer();
 
             const dc: DatabaseController = DatabaseController.getInstance();
-            return dc.getAuth(userName);
-        }).then(function(auth) {
+            const auth = await dc.getAuth(userName);
+
             Log.test('AdminRoutes::before - token set');
             userToken = auth.token;
-        }).catch(function(err) {
+        } catch (err) {
             Log.test('AdminRoutes::before - server might already be started: ' + err);
-        });
+        }
     });
 
     after(async () => {
@@ -220,6 +215,29 @@ describe('Admin Routes', function() {
         expect(response.status).to.equal(401);
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
+    });
+
+    it('Should be able to get a list of repositories', async function() {
+
+        let response = null;
+        let body: RepositoryPayload;
+        const url = '/portal/admin/repositories';
+        try {
+            response = await request(app).get(url).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success).to.be.an('array');
+        expect(body.success).to.have.lengthOf(1);
+
+        // check one entry
+        const entry = body.success[0];
+        expect(entry.id).to.not.be.undefined;
+        expect(entry.URL).to.not.be.undefined;
     });
 
     it('Should be able to get a list of deliverables', async function() {
