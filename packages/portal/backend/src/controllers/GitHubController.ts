@@ -281,29 +281,30 @@ export class GitHubController implements IGitHubController {
     }
 }
 
-// export class TestGitHubController implements IGitHubController {
-//
-//     public async getRepositoryUrl(repo: Repository): Promise<string> {
-//         Log.error("TestGitHubController::getRepositoryUrl(..) - NOT IMPLEMENTED");
-//         return "TODO";
-//     }
-//
-//     public async getTeamUrl(team: Team): Promise<string> {
-//         Log.error("TestGitHubController::getTeamUrl(..) - NOT IMPLEMENTED");
-//         // const URL = this.gha.getTeamNumber()
-//         return "TODO";
-//     }
-//
-//     public async provisionRepository(repoName: string,
-//                                      teams: Team[],
-//                                      sourceRepo: string,
-//                                      webhookAddress: string): Promise<boolean> {
-//         Log.error("TestGitHubController::provisionRepository(..) - NOT IMPLEMENTED");
-//         return true;
-//     }
-//
-//     public async createPullRequest(repoName: string, prName: string): Promise<boolean> {
-//         Log.error("TestGitHubController::createPullRequest(..) - NOT IMPLEMENTED");
-//         return true;
-//     }
-// }
+// noinspection TsLint
+export class TestGitHubController implements IGitHubController {
+
+    public async getRepositoryUrl(repo: Repository): Promise<string> {
+        Log.warn("TestGitHubController::getRepositoryUrl(..) - TEST");
+        return "TestGithubController_URL";
+    }
+
+    public async getTeamUrl(team: Team): Promise<string> {
+        Log.warn("TestGitHubController::getTeamUrl(..) - TEST");
+        // const URL = this.gha.getTeamNumber()
+        return "TestGithubController_TeamName";
+    }
+
+    public async provisionRepository(repoName: string,
+                                     teams: Team[],
+                                     sourceRepo: string,
+                                     webhookAddress: string): Promise<boolean> {
+        Log.warn("TestGitHubController::provisionRepository(..) - TEST");
+        return true;
+    }
+
+    public async createPullRequest(repoName: string, prName: string): Promise<boolean> {
+        Log.warn("TestGitHubController::createPullRequest(..) - TEST");
+        return true;
+    }
+}

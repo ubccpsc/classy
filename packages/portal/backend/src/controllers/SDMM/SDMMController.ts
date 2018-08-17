@@ -274,7 +274,7 @@ export class SDMMController extends CourseController {
                 throw new Error('Unknown person: ' + personId);
             }
 
-            // const reportedStatus = person.custom.sddmStatus;
+            // const reportedStatus = person.custom.sdmmStatus;
             // most of the time the status doesn't change, so let's just check that first:
             // const statusCorrect = await this.checkStatus(personId);
             // if (statusCorrect === true) {
@@ -427,11 +427,13 @@ export class SDMMController extends CourseController {
                 Log.info("SDMMController::computeStatusString(..) - NOT elevating from D3");
             }
 
-            // let currentStatus = person.custom.sddmStatus;
-            person.custom.sddmStatus = currentStatus;
+            // let currentStatus = person.custom.sdmmStatus;
+            person.custom.sdmmStatus = currentStatus;
             await this.dc.writePerson(person);
 
-            Log.info("SDMMController::computeStatusString( " + personId + ' ) - done; took: ' + Util.took(start));
+            Log.info("SDMMController::computeStatusString( " + personId + ' ) - done: ' +
+                currentStatus + '; took: ' + Util.took(start));
+
             return currentStatus;
         } catch (err) {
             Log.error("SDMMController::computeStatusString( " + personId + ' ) - ERROR: ' + err);
@@ -441,7 +443,7 @@ export class SDMMController extends CourseController {
 
     /**
      *
-     * This confirms the custom.sddmStatus is correct.
+     * This confirms the custom.sdmmStatus is correct.
      *
      * It will try to use checkStatus first to speed itself up.
      * Status chain:
@@ -470,7 +472,7 @@ export class SDMMController extends CourseController {
                 return null;
             }
 
-            const reportedStatus = person.custom.sddmStatus;
+            const reportedStatus = person.custom.sdmmStatus;
             if (reportedStatus === SDMMStatus[SDMMStatus.D0PRE]) {
                 // don't bother, let checkStatus do it right
                 return false;
