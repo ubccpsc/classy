@@ -1,11 +1,12 @@
 import {expect} from "chai";
 import "mocha";
 
-import Config, {ConfigKey} from "../../../../../common/Config";
+import Config from "../../../../../common/Config";
 import Log from "../../../../../common/Log";
 import {ActionPayload, GradePayload, SDMMStatus} from "../../../../../common/types/SDMMTypes";
 
 import {DatabaseController} from "../../../src/controllers/DatabaseController";
+import {GitHubActions} from "../../../src/controllers/GitHubActions";
 import {GitHubController} from "../../../src/controllers/GitHubController";
 import {GradesController} from "../../../src/controllers/GradesController";
 import {PersonController} from "../../../src/controllers/PersonController";
@@ -28,64 +29,69 @@ export class TestData {
     public REPOD0 = "sddmd0repotest";
     public REPOD1 = "sddmd1repotest";
 
-    public USER = "sddmdusertest";
+    public USER = Test.USERNAMEGITHUB1; // "sddmdusertest";
 
     public PRNAME = "prd3id";
 
-    public u1 = "sddmU1";
-    public u2 = "sddmU2";
-    public u3 = "sddmU3";
+    // public u1 = "sddmU1";
+    // public u2 = "sddmU2";
+    // public u3 = "sddmU3";
 
     public PERSON1: Person = null;
     public PERSON2: Person = null;
     public PERSON3: Person = null;
 
     constructor() {
-        this.PERSON1 = {
-            id:            this.u1,
-            csId:          this.u1, // sdmm doesn't have these
-            githubId:      this.u1,
-            studentNumber: null,
 
-            fName:  '',
-            lName:  '',
-            kind:   'student',
-            URL:    'https://github.com/' + this.u1,
-            labId:  'UNKNOWN',
-            custom: {}
-        };
+        this.PERSON1 = Test.createPerson(Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, 'student');
+        this.PERSON2 = Test.createPerson(Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, 'student');
+        this.PERSON3 = Test.createPerson(Test.USERNAMEGITHUB3, Test.USERNAMEGITHUB3, Test.USERNAMEGITHUB3, 'student');
 
-        this.PERSON2 = {
-            id:            this.u2,
-            csId:          this.u2, // sdmm doesn't have these
-            githubId:      this.u2,
-            studentNumber: null,
-
-            fName:  '',
-            lName:  '',
-            kind:   'student',
-            URL:    'https://github.com/' + this.u2,
-            labId:  'UNKNOWN',
-            custom: {}
-        };
-
-        this.PERSON3 = {
-            id:            this.u3,
-            csId:          this.u3, // sdmm doesn't have these
-            githubId:      this.u3,
-            studentNumber: null,
-
-            fName:  '',
-            lName:  '',
-            kind:   'student',
-            URL:    'https://github.com/' + this.u3,
-            labId:  'UNKNOWN',
-            custom: {}
-        };
+        // this.PERSON1 = {
+        //     id:            this.u1,
+        //     csId:          this.u1, // sdmm doesn't have these
+        //     githubId:      this.u1,
+        //     studentNumber: null,
+        //
+        //     fName:  '',
+        //     lName:  '',
+        //     kind:   'student',
+        //     URL:    'https://github.com/' + this.u1,
+        //     labId:  'UNKNOWN',
+        //     custom: {}
+        // };
+        //
+        // this.PERSON2 = {
+        //     id:            this.u2,
+        //     csId:          this.u2, // sdmm doesn't have these
+        //     githubId:      this.u2,
+        //     studentNumber: null,
+        //
+        //     fName:  '',
+        //     lName:  '',
+        //     kind:   'student',
+        //     URL:    'https://github.com/' + this.u2,
+        //     labId:  'UNKNOWN',
+        //     custom: {}
+        // };
+        //
+        // this.PERSON3 = {
+        //     id:            this.u3,
+        //     csId:          this.u3, // sdmm doesn't have these
+        //     githubId:      this.u3,
+        //     studentNumber: null,
+        //
+        //     fName:  '',
+        //     lName:  '',
+        //     kind:   'student',
+        //     URL:    'https://github.com/' + this.u3,
+        //     labId:  'UNKNOWN',
+        //     custom: {}
+        // };
     }
 }
 
-describe("SDDM: SDMMController", () => {
+describe.only("SDMM: SDMMController", () => {
 
     let sc: SDMMController;
     let gc: GradesController;
@@ -96,22 +102,18 @@ describe("SDDM: SDMMController", () => {
 
     let data: TestData;
 
-    let OLD_ORG: string | null = null;
+    // let OLD_ORG: string | null = null;
 
     before(async () => {
-        try {
-            await Test.suiteBefore('SDMMController');
-        } catch (err) {
-            Log.test("SDMMControllerSpec::before - err: " + err);
-        }
+        await Test.suiteBefore('SDMMController');
 
         Config.getInstance();
-        OLD_ORG = Config.getInstance().getProp(ConfigKey.org);
-        Config.getInstance().setProp(ConfigKey.org, 'secapstonetest');
+        // OLD_ORG = Config.getInstance().getProp(ConfigKey.org);
+        // Config.getInstance().setProp(ConfigKey.org, 'secapstonetest');
 
         // clear stale data
-        dc = DatabaseController.getInstance();
-        await dc.clearData();
+        // dc = DatabaseController.getInstance();
+        // await dc.clearData();
 
         // only bootstrap the database with deliverables
         await Test.prepareDeliverables();
@@ -122,17 +124,16 @@ describe("SDDM: SDMMController", () => {
 
         const ghInstance = new GitHubController();
         sc = new SDMMController(ghInstance);
-        await sc.handleUnknownUser(data.u1); // provision user
-        await sc.handleUnknownUser(data.u2); // provision user
-        await sc.handleUnknownUser(data.u3); // provision user
+        await sc.handleUnknownUser(data.PERSON1.githubId); // provision user
+        await sc.handleUnknownUser(data.PERSON2.githubId); // provision user
+        await sc.handleUnknownUser(data.PERSON3.githubId); // provision user
     });
 
     after(async () => {
         Test.suiteAfter('SDMMController');
         // Force SDMM tests to run in an SDMM org
         Log.test("SDMMControllerSpec::after()");
-        Config.getInstance();
-        Config.getInstance().setProp(ConfigKey.org, OLD_ORG);
+        // Config.getInstance().setProp(ConfigKey.org, OLD_ORG);
     });
 
     beforeEach(() => {
@@ -146,6 +147,19 @@ describe("SDDM: SDMMController", () => {
         pc = new PersonController();
         dc = DatabaseController.getInstance();
     });
+
+    it("Should be able to clear stale state", async function() {
+        Log.test("Clearing state");
+        const gha = new GitHubActions();
+        await gha.deleteRepo('TEST__X__p_TEST__X__t_ubcbot');
+        await gha.deleteRepo('TEST__X__p_TEST__X__t_rthse2');
+
+        const teamNum = await gha.getTeamNumber('TEST__X__t_rthse2');
+        if (teamNum > 0) {
+            await gha.deleteTeam(teamNum);
+        }
+        Log.test("State cleared");
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Should not be able to get a status for an invalid user.", async () => {
         let status = null;
@@ -339,10 +353,10 @@ describe("SDDM: SDMMController", () => {
      */
 
     it("Should not allow multiple people to be added to a d0 repo.", async () => {
-        const person = await pc.createPerson(data.PERSON1);
+        const person = await pc.createPerson(data.PERSON2);
         expect(person).to.not.be.null;
 
-        const person2 = await pc.createPerson(data.PERSON2);
+        const person2 = await pc.createPerson(data.PERSON3);
         expect(person2).to.not.be.null;
 
         let allRepos = await rc.getReposForPerson(person);
@@ -367,7 +381,7 @@ describe("SDDM: SDMMController", () => {
         // don't create a d0 repo with multiple people
         val = null;
         try {
-            await sc.provision(Test.DELIVID0, [data.PERSON1.id, data.PERSON2.id]);
+            await sc.provision(Test.DELIVID0, [data.PERSON2.id, data.PERSON3.id]);
         } catch (err) {
             val = err;
         }
@@ -379,7 +393,7 @@ describe("SDDM: SDMMController", () => {
     });
 
     it("Should be able to provision a d0 repo for an individual.", async () => {
-        const person = await pc.getPerson(data.PERSON1.id);
+        const person = await pc.getPerson(data.PERSON3.id);
         expect(person).to.not.be.null;
 
         let allRepos = await rc.getReposForPerson(person);
@@ -388,7 +402,7 @@ describe("SDDM: SDMMController", () => {
         let allTeams = await tc.getTeamsForPerson(person);
         expect(allTeams).to.be.empty;
 
-        const payload = await sc.provision(Test.DELIVID0, [data.PERSON1.id]);
+        const payload = await sc.provision(Test.DELIVID0, [data.PERSON3.id]);
         expect(payload.success).to.not.be.undefined;
         expect(payload.failure).to.be.undefined;
         const status = (payload.success as ActionPayload).status;
@@ -401,15 +415,15 @@ describe("SDDM: SDMMController", () => {
         allTeams = await tc.getTeamsForPerson(person);
         expect(allTeams).to.have.lengthOf(1);
         expect(allTeams[0].custom.sdmmd0).to.be.true;
-    });
+    }).timeout(Test.TIMEOUTLONG * 10);
 
     it("Should not upgrade a d0 repo for an individual if the grade is too low.", async () => {
-        const person = await pc.getPerson(data.PERSON1.id);
+        const person = await pc.getPerson(data.PERSON3.id);
         expect(person).to.not.be.null;
 
         let val = null;
         try {
-            await sc.provision(Test.DELIVID1, [data.PERSON1.id]);
+            await sc.provision(Test.DELIVID1, [data.PERSON3.id]);
         } catch (err) {
             val = err;
         }
@@ -429,7 +443,7 @@ describe("SDDM: SDMMController", () => {
 
     it("Should be able to upgrade a d0 repo for an individual.", async () => {
         Log.test("getting person");
-        const person = await pc.getPerson(data.PERSON1.id);
+        const person = await pc.getPerson(data.PERSON3.id);
         expect(person).to.not.be.null;
 
         Log.test("getting repo");
@@ -456,7 +470,7 @@ describe("SDDM: SDMMController", () => {
         expect(allRepos[0].custom.d1enabled).to.be.false;
 
         Log.test('provisioning d1 repo');
-        const payload = await sc.provision(Test.DELIVID1, [data.PERSON1.id]); // do it
+        const payload = await sc.provision(Test.DELIVID1, [data.PERSON3.id]); // do it
         Log.test('provisioning d1 repo complete');
         expect(payload.success).to.not.be.undefined;
         expect(payload.failure).to.be.undefined;
@@ -480,12 +494,12 @@ describe("SDDM: SDMMController", () => {
         let val = null;
         try {
             Log.test("ensuring we can't provision d1 again");
-            await sc.provision(Test.DELIVID1, [data.PERSON1.id]); // do it
+            await sc.provision(Test.DELIVID1, [data.PERSON3.id]); // do it
         } catch (err) {
             val = err;
         }
         expect(val).to.not.be.null;
-        expect(val.message).to.equal('D1 repo has already been assigned: TEST__X__p_TEST__X__t_sddmU1');
+        expect(val.message.indexOf('D1 repo has already been assigned: ')).to.not.be.lessThan(0);
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(1); // no new repo
@@ -575,7 +589,7 @@ describe("SDDM: SDMMController", () => {
         expect(grade).to.be.true;
 
         // prepare person3
-        const person3 = await pc.createPerson(data.PERSON3);
+        const person3 = await pc.getPerson(data.PERSON1.id); // pc.createPerson(data.PERSON1);
         expect(person3).to.not.be.null;
         // create d0 payload for person2
         payload = await sc.provision(Test.DELIVID0, [person3.id]);
@@ -615,7 +629,7 @@ describe("SDDM: SDMMController", () => {
         expect(allTeams).to.have.lengthOf(2);
         // expect(allTeams[0].custom.sdmmd0).to.be.true;
         // expect(allTeams[0].custom.sdmmd1).to.be.false;
-    });
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Should not be able to provision a d1 team with more than two people.", async () => {
         let payload = null;

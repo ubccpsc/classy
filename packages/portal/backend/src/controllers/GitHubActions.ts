@@ -1,12 +1,11 @@
 import * as rp from "request-promise-native";
-
-// tslint:disable-next-line
-const tmp = require('tmp-promise');
-
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {DatabaseController} from "./DatabaseController";
 import {GitTeamTuple} from "./GitHubController";
+
+// tslint:disable-next-line
+const tmp = require('tmp-promise');
 
 export class GitHubActions {
 
@@ -48,37 +47,42 @@ export class GitHubActions {
             throw new Error("GitHubAction::createRepo(..) - Repository not in datastore: " + repoId);
         }
 
-        const uri = ctx.apiPath + '/orgs/' + ctx.org + '/repos';
-        const options = {
-            method:  'POST',
-            uri:     uri,
-            headers: {
-                'Authorization': ctx.gitHubAuthToken,
-                'User-Agent':    ctx.gitHubUserName,
-                'Accept':        'application/json'
-            },
-            body:    {
-                name:          repoId,
-                // In Dev and Test, Github free Org Repos cannot be private.
-                private:       true,
-                has_issues:    true,
-                has_wiki:      false,
-                has_downloads: false,
-                auto_init:     false
-            },
-            json:    true
-        };
+        try {
+            const uri = ctx.apiPath + '/orgs/' + ctx.org + '/repos';
+            const options = {
+                method:  'POST',
+                uri:     uri,
+                headers: {
+                    'Authorization': ctx.gitHubAuthToken,
+                    'User-Agent':    ctx.gitHubUserName,
+                    'Accept':        'application/json'
+                },
+                body:    {
+                    name:          repoId,
+                    // In Dev and Test, Github free Org Repos cannot be private.
+                    private:       true,
+                    has_issues:    true,
+                    has_wiki:      false,
+                    has_downloads: false,
+                    auto_init:     false
+                },
+                json:    true
+            };
 
-        const body = await rp(options);
-        const url = body.html_url;
-        repo.URL = url; // only update this field in the existing Repository record
-        repo.cloneURL = body.clone_url; // only update this field in the existing Repository record
-        await this.dc.writeRepository(repo);
+            const body = await rp(options);
+            const url = body.html_url;
+            repo.URL = url; // only update this field in the existing Repository record
+            repo.cloneURL = body.clone_url; // only update this field in the existing Repository record
+            await this.dc.writeRepository(repo);
 
-        Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; delaying to prep repo.");
-        await ctx.delay(ctx.DELAY_SEC);
+            Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; delaying to prep repo.");
+            await ctx.delay(ctx.DELAY_SEC);
 
-        return url;
+            return url;
+        } catch (err) {
+            Log.error("GitHubAction::createRepo(..) - ERROR: " + err);
+            throw new Error("Repository not created");
+        }
     }
 
     /**
@@ -141,33 +145,39 @@ export class GitHubActions {
      * @param repoName
      * @returns {Promise<boolean>}
      */
-    public repoExists(repoName: string): Promise<boolean> {
+    public async repoExists(repoName: string): Promise<boolean> {
         const ctx = this;
         Log.info("GitHubAction::repoExists( " + ctx.org + ", " + repoName + " ) - start");
 
-        return new Promise(function(fulfill) {
+        // return new Promise(function(fulfill) {
 
-            const uri = ctx.apiPath + '/repos/' + ctx.org + '/' + repoName;
-            // Log.trace("GitHubAction::repoExists(..) - URI: " + uri);
-            const options = {
-                method:  'GET',
-                uri:     uri,
-                headers: {
-                    'Authorization': ctx.gitHubAuthToken,
-                    'User-Agent':    ctx.gitHubUserName,
-                    'Accept':        'application/json'
-                }
-            };
+        const uri = ctx.apiPath + '/repos/' + ctx.org + '/' + repoName;
+        // Log.trace("GitHubAction::repoExists(..) - URI: " + uri);
+        const options = {
+            method:  'GET',
+            uri:     uri,
+            headers: {
+                'Authorization': ctx.gitHubAuthToken,
+                'User-Agent':    ctx.gitHubUserName,
+                'Accept':        'application/json'
+            }
+        };
 
-            rp(options).then(function() { // body: any
-                Log.trace("GitHubAction::repoExists(..) - true"); // body: " + body);
-                fulfill(true);
-            }).catch(function() { // err: any
-                // Log.trace("GitHubAction::repoExists(..) - ERROR: " + JSON.stringify(err));
-                Log.trace("GitHubAction::repoExists(..) - false");
-                fulfill(false);
-            });
-        });
+        try {
+            await rp(options); // .then(function(); // body: any
+            Log.trace("GitHubAction::repoExists(..) - true"); // body: " + body);
+            // fulfill(true);
+            return true;
+        } catch (err) {
+            Log.trace("GitHubAction::repoExists(..) - false");
+            return false;
+        }
+        // }).catch(function() { // err: any
+        //     // Log.trace("GitHubAction::repoExists(..) - ERROR: " + JSON.stringify(err));
+        //     Log.trace("GitHubAction::repoExists(..) - false");
+        //     fulfill(false);
+        // });
+        // });
     }
 
     /**

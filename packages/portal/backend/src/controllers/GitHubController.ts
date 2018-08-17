@@ -91,12 +91,12 @@ export class GitHubController implements IGitHubController {
                 // create the repository
                 Log.trace("GitHubController::createRepository() - create GitHub repo");
                 const repoVal = await gh.createRepo(repoName);
-                Log.trace('GHA::createRepository(..) - success; repo: ' + repoVal);
+                Log.trace('GitHubController::createRepository(..) - success; repo: ' + repoVal);
             } catch (err) {
-                Log.error('GHA::createRepository(..) - create repo error: ' + err);
+                Log.error('GitHubController::createRepository(..) - create repo error: ' + err);
                 // repo creation failed; remove if needed (requires createRepo be permissive if already exists)
                 const res = await gh.deleteRepo(repoName);
-                Log.info('GHA::createRepository(..) - repo removed: ' + res);
+                Log.info('GitHubController::createRepository(..) - repo removed: ' + res);
 
                 return false;
             }
@@ -104,14 +104,14 @@ export class GitHubController implements IGitHubController {
             // still add staff team with push, just not students
             Log.trace("GitHubController::createRepository() - add staff team to repo");
             const staffTeamNumber = await gh.getTeamNumber('staff');
-            Log.trace('GHA::createRepository(..) - staffTeamNumber: ' + staffTeamNumber);
+            Log.trace('GitHubController::createRepository(..) - staffTeamNumber: ' + staffTeamNumber);
             const staffAdd = await gh.addTeamToRepo(staffTeamNumber, repoName, 'admin');
-            Log.trace('GHA::createRepository(..) - team name: ' + staffAdd.teamName);
+            Log.trace('GitHubController::createRepository(..) - team name: ' + staffAdd.teamName);
 
             // add webhooks
             Log.trace("GitHubController::createRepository() - add webhook");
             const createHook = await gh.addWebhook(repoName, WEBHOOKADDR);
-            Log.trace('GHA::createRepository(..) - webook successful: ' + createHook);
+            Log.trace('GitHubController::createRepository(..) - webook successful: ' + createHook);
 
             // perform import
             const c = Config.getInstance();
@@ -124,7 +124,7 @@ export class GitHubController implements IGitHubController {
             } else {
                 output = await gh.importRepoFS(importUrl, targetUrl);
             }
-            Log.trace('GHA::createRepository(..) - import complete; success: ' + output);
+            Log.trace('GitHubController::createRepository(..) - import complete; success: ' + output);
 
             Log.trace('GithubController::createRepository(..) - successfully completed for: ' +
                 repoName + '; took: ' + Util.took(startTime));
@@ -204,14 +204,14 @@ export class GitHubController implements IGitHubController {
             try {
                 Log.trace("GitHubController::provisionRepository() - see if repo already exists");
                 const repoVal = await gh.repoExists(repoName);
-                Log.trace('GHA::provisionRepository(..) - repo exists: ' + repoVal);
+                Log.trace('GitHubController::provisionRepository(..) - repo exists: ' + repoVal);
                 if (repoVal === true) {
                     // this is fatal, we can't provision a repo that already exists
-                    Log.error("GitHubController::provisionRepository() - repo already exists; provisioning failed");
+                    Log.error("GitHubController::provisionRepository() - repo already exists on GitHub; provisioning failed");
                     return false;
                 }
             } catch (err) {
-                Log.error("GitHubController::provisionRepository() - repo already exists; ERROR: " + err);
+                Log.error("GitHubController::provisionRepository() - repo already exists on GitHub; ERROR: " + err);
                 return false;
             }
 
@@ -219,13 +219,12 @@ export class GitHubController implements IGitHubController {
                 // create a repo
                 Log.trace("GitHubController::provisionRepository() - create GitHub repo");
                 const repoVal = await gh.createRepo(repoName);
-                Log.trace('GHA::provisionRepository(..) - repo: ' + repoVal);
-                // expect(repoVal).to.equal('https://github.com/SECapstone/' + Test.REPONAME1);
+                Log.trace('GitHubController::provisionRepository(..) - repo: ' + repoVal);
             } catch (err) {
-                Log.error('GHA::provisionRepository(..) - create repo error: ' + err);
+                Log.error('GitHubController::provisionRepository(..) - create repo error: ' + err);
                 // repo creation failed; remove if needed (requires createRepo be permissive if already exists)
                 const res = await gh.deleteRepo(repoName);
-                Log.info('GHA::provisionRepository(..) - repo removed: ' + res);
+                Log.info('GitHubController::provisionRepository(..) - repo removed: ' + res);
                 return false;
             }
 
@@ -234,15 +233,15 @@ export class GitHubController implements IGitHubController {
                 Log.trace("GitHubController::provisionRepository() - create GitHub team");
                 for (const team of teams) {
                     teamValue = await gh.createTeam(team.id, 'push');
-                    Log.trace('GHA::provisionRepository(..) createTeam: ' + teamValue.teamName);
+                    Log.trace('GitHubController::provisionRepository(..) createTeam: ' + teamValue.teamName);
 
                     Log.trace("GitHubController::provisionRepository() - add members to GitHub team");
                     const addMembers = await gh.addMembersToTeam(teamValue.teamName, teamValue.githubTeamNumber, team.personIds);
-                    Log.trace('GHA::provisionRepository(..) - addMembers: ' + addMembers.teamName);
+                    Log.trace('GitHubController::provisionRepository(..) - addMembers: ' + addMembers.teamName);
 
                     Log.trace("GitHubController::provisionRepository() - add team to repo");
                     const teamAdd = await gh.addTeamToRepo(teamValue.githubTeamNumber, repoName, 'push');
-                    Log.trace('GHA::provisionRepository(..) - team name: ' + teamAdd.teamName);
+                    Log.trace('GitHubController::provisionRepository(..) - team name: ' + teamAdd.teamName);
                 }
             } catch (err) {
                 Log.error("GitHubController::provisionRepository() - create team ERROR: " + err);
@@ -250,14 +249,14 @@ export class GitHubController implements IGitHubController {
 
             Log.trace("GitHubController::provisionRepository() - add staff team to repo");
             const staffTeamNumber = await gh.getTeamNumber('staff');
-            Log.trace('GHA::provisionRepository(..) - staffTeamNumber: ' + staffTeamNumber);
+            Log.trace('GitHubController::provisionRepository(..) - staffTeamNumber: ' + staffTeamNumber);
             const staffAdd = await gh.addTeamToRepo(staffTeamNumber, repoName, 'admin');
-            Log.trace('GHA::provisionRepository(..) - team name: ' + staffAdd.teamName);
+            Log.trace('GitHubController::provisionRepository(..) - team name: ' + staffAdd.teamName);
 
             // add webhooks
             Log.trace("GitHubController::provisionRepository() - add webhook");
             const createHook = await gh.addWebhook(repoName, webhookAddress);
-            Log.trace('GHA::provisionRepository(..) - webook successful: ' + createHook);
+            Log.trace('GitHubController::provisionRepository(..) - webook successful: ' + createHook);
 
             // perform import
             const c = Config.getInstance();
@@ -265,9 +264,9 @@ export class GitHubController implements IGitHubController {
 
             Log.trace("GitHubController::provisionRepository() - importing project (slow)");
             const output = await gh.importRepoFS(importUrl, targetUrl);
-            Log.trace('GHA::provisionRepository(..) - import complete; success: ' + output);
+            Log.trace('GitHubController::provisionRepository(..) - import complete; success: ' + output);
 
-            Log.trace('GHA::provisionRepository(..) - successfully completed for: ' +
+            Log.trace('GitHubController::provisionRepository(..) - successfully completed for: ' +
                 repoName + '; took: ' + Util.took(start));
             return true;
         } catch (err) {
