@@ -110,8 +110,13 @@ export class Test {
     public static async prepareTeams(): Promise<void> {
         Log.test("Test::prepareTeams() - start");
         try {
-            const team = await Test.createTeam(Test.TEAMNAME1, Test.DELIVID0, [Test.USER1.id, Test.USER2.id]);
             const db = DatabaseController.getInstance();
+
+            let team = await Test.createTeam(Test.TEAMNAME1, Test.DELIVID0, [Test.USER1.id, Test.USER2.id]);
+            await db.writeTeam(team);
+
+            // user 1 has a different partner for d1
+            team = await Test.createTeam(Test.TEAMNAME2, Test.DELIVID1, [Test.USER1.id, Test.USER3.id]);
             await db.writeTeam(team);
 
         } catch (err) {
@@ -138,14 +143,18 @@ export class Test {
     public static async prepareRepositories(): Promise<void> {
         Log.test("Test::prepareRepositories() - start");
         try {
-            const tc = new TeamController();
-            const team = await tc.getTeam(Test.TEAMNAME1);
-
-            const rc = new RepositoryController();
-            const repo = await rc.createRepository(Test.REPONAME1, [team], {});
-
             const db = DatabaseController.getInstance();
+            const tc = new TeamController();
+            const rc = new RepositoryController();
+
+            let team = await tc.getTeam(Test.TEAMNAME1);
+            let repo = await rc.createRepository(Test.REPONAME1, [team], {});
             await db.writeRepository(repo);
+
+            team = await tc.getTeam(Test.TEAMNAME2);
+            repo = await rc.createRepository(Test.REPONAME2, [team], {});
+            await db.writeRepository(repo);
+
         } catch (err) {
             Log.error("Test::prepareRepositories() - ERROR: " + err);
         }
@@ -171,8 +180,23 @@ export class Test {
 
     public static async prepareResults(): Promise<void> {
         // NOTE: see FrontendDatasetGenerator for ideas
-        // TODO: add this (if needed)
-        return;
+        const dc = DatabaseController.getInstance();
+
+        const tuples = [];
+        tuples.push({team: await dc.getTeam(Test.TEAMNAME1), repo: await dc.getRepository(Test.REPONAME1)});
+        tuples.push({team: await dc.getTeam(Test.TEAMNAME2), repo: await dc.getRepository(Test.REPONAME2)});
+        for (const tuple of tuples) {
+            for (let i = 0; i < 10; i++) {
+                const score = Test.getRandomInt(100);
+
+                const result = Test.createResult(tuple.team.delivId, tuple.repo.id, tuple.team.personIds, score);
+                await dc.writeResult(result);
+            }
+        }
+    }
+
+    private static getRandomInt(max: number) {
+        return Math.floor(Math.random() * Math.floor(max));
     }
 
     public static async prepareAuth(): Promise<void> {
@@ -467,7 +491,7 @@ export class Test {
         return Util.clone(repo) as Repository;
     }
 
-    public static getResult(delivId: string, repoId: string, people: string[], score: number): Result {
+    public static createResult(delivId: string, repoId: string, people: string[], score: number): Result {
 
         const ts = Date.now() - Math.random() * 1000 * 600;
         const projectURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +

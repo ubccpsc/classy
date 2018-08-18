@@ -32,12 +32,13 @@ describe("CourseController", () => {
 
     before(async () => {
         await Test.suiteBefore('CourseController');
-        await Test.preparePeople();
-        await Test.prepareAuth();
-        await Test.prepareDeliverables();
-        await Test.prepareTeams();
-        await Test.prepareRepositories();
-        await Test.prepareGrades();
+        // await Test.preparePeople();
+        // await Test.prepareAuth();
+        // await Test.prepareDeliverables();
+        // await Test.prepareTeams();
+        // await Test.prepareRepositories();
+        // await Test.prepareGrades();
+        await Test.prepareAll();
     });
 
     beforeEach(() => {
@@ -125,15 +126,33 @@ describe("CourseController", () => {
         expect(res).to.deep.include(t); // make sure at least one student with the right format is in there
     });
 
-    it("Should be able to get a list of results.", async () => {
+    it("Should be able to get a list of results with wildcards.", async () => {
         const res = await cc.getResults('*', '*');
         expect(res).to.be.an('array');
-        // expect(res.length).to.be.greaterThan(0);
-        expect(res.length).to.equal(0); // TODO: insert some results!!!
+        expect(res.length).to.equal(20);
+    });
 
-        // Log.test('results: ' + JSON.stringify(res));
-        // const t = res[0];
-        // expect(res).to.deep.include(t); // make sure at least one student with the right format is in there
+    it("Should be able to get a list of results without wildcards.", async () => {
+        const res = await cc.getResults(Test.DELIVID0, Test.REPONAME1);
+        expect(res).to.be.an('array');
+        expect(res.length).to.equal(10);
+    });
+
+    it("Should be able to get a list of results with partial wildcards.", async () => {
+        // doesn't really work with the result tuples we have...
+        const res = await cc.getResults('*', Test.REPONAME1);
+        expect(res).to.be.an('array');
+        expect(res.length).to.equal(10);
+    });
+
+    it("Should be able to get a list of repositories.", async () => {
+        const res = await cc.getRepositories();
+
+        // Log.test(JSON.stringify(res));
+        expect(res).to.be.an('array');
+        expect(res).to.have.lengthOf(2);
+        expect(res[0].id).to.be.an('string');
+        expect(res[0].URL).to.not.be.undefined;
     });
 
     it("Should be able to get a list of deliverables.", async () => {
