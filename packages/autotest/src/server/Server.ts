@@ -1,8 +1,7 @@
-import * as fs from "fs";
 import * as restify from "restify";
 
+import Config from "../../../common/Config";
 import Log from "../../../common/Log";
-import Config, {ConfigKey} from "../../../common/Config";
 
 import RouteHandler from "./RouteHandler";
 
@@ -26,8 +25,8 @@ export default class Server {
     public async stop(): Promise<boolean> {
         Log.info("Server::close()");
         const that = this;
-        return new Promise<boolean>(function (fulfill) {
-            that.rest.close(function () {
+        return new Promise<boolean>(function(fulfill) {
+            that.rest.close(function() {
                 fulfill(true);
             });
         });
@@ -51,12 +50,12 @@ export default class Server {
      */
     public start(): Promise<boolean> {
         const that = this;
-        return new Promise(function (fulfill, reject) {
+        return new Promise(function(fulfill, reject) {
             try {
                 Log.info("Server::start() - start");
 
                 that.rest = restify.createServer({
-                    name:        "AutoTest",
+                    name: "AutoTest"
                     // key:         fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslKeyPath)),
                     // certificate: fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslCertPath))
                 });
@@ -75,12 +74,12 @@ export default class Server {
                 // GitHub Webhook endpoint
                 that.rest.post("/githubWebhook", restify.plugins.bodyParser(), RouteHandler.postGithubHook);
 
-                that.rest.listen(that.port, function () {
+                that.rest.listen(that.port, function() {
                     Log.info("Server::start() - restify listening: " + that.rest.url);
                     fulfill(true);
                 });
 
-                that.rest.on("error", function (err: string) {
+                that.rest.on("error", function(err: string) {
                     // catches errors in restify start; unusual syntax due to internal node not using normal exceptions here
                     Log.info("Server::start() - restify ERROR: " + err);
                     reject(err);

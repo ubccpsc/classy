@@ -56,7 +56,7 @@
     "scripts": {
         "build": "tsc",
         "build:prod": "tsc --outDir bin --sourceMap false",
-        "lint": "tslint -c tslint.json 'src/**/*.ts' 'test/**/*.ts'",
+        "lint": "tslint -c tslint.json 'packages/portal/backend/src/**/*.ts' 'packages/portal/backend/test/**/*.ts' 'packages/portal/frontend/src/**/*.ts' 'packages/portal/frontend/test/**/*.ts' 'packages/autotest/src/**/*.ts' 'packages/autotest/test/**/*.ts'",
         "test": "mocha --require=dotenv/config --require ts-node/register --timeout 10000",
         "cover": "nyc --reporter text --reporter html yarn run test",
         "run:dev": "nohup node ./src/AutoTestDaemon.js 310 &> nohup.out &",

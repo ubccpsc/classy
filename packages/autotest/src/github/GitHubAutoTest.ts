@@ -29,7 +29,6 @@ export interface IGitHubTestManager {
     handleCommentEvent(comment: ICommentEvent): void;
 }
 
-
 export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
     private github: IGitHubService = null;
@@ -125,7 +124,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             }
 
             // update info record
-            let delivId = info.delivId;
+            const delivId = info.delivId;
 
             if (delivId === null) {
                 // no deliverable, give warning and abort
@@ -136,12 +135,14 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
             // front load the async operations, even if it means we do some operations unnecessarily; thse could be done in parallel
             const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(info.personId); // async
-            const requestFeedbackDelay: string | null = await this.requestFeedbackDelay(delivId, info.personId, info.timestamp); // ts of comment, not push
-            const hasBeenRequestedBefore: IFeedbackGiven = await this.dataStore.getFeedbackGivenRecordForCommit(info.commitURL, info.personId); // students often request grades they have previously 'paid' for
-            // const res: IAutoTestResult = await this.getOutputRecord(info.commitURL, delivId); // for any user
+            const requestFeedbackDelay: string | null = await this.requestFeedbackDelay(delivId, info.personId, info.timestamp);
+            // students often request grades they have previously 'paid' for
+            const hasBeenRequestedBefore: IFeedbackGiven =
+                await this.dataStore.getFeedbackGivenRecordForCommit(info.commitURL, info.personId);
             const res: AutoTestResultTransport = await this.classPortal.getResult(delivId, info.repoId);
             const isCurrentlyRunning: boolean = this.isCommitExecuting(info.commitURL, delivId);
-            Log.trace("GitHubAutoTest::handleCommentEvent(..) - isStaff: " + isStaff + "; delay: " + requestFeedbackDelay + "; res: " + res + "; running?: " + isCurrentlyRunning);
+            Log.trace("GitHubAutoTest::handleCommentEvent(..) - isStaff: " + isStaff + "; delay: " +
+                requestFeedbackDelay + "; res: " + res + "; running?: " + isCurrentlyRunning);
 
             let shouldPost = false; // should the result be given
             if (isStaff !== null && (isStaff.isAdmin === true || isStaff.isStaff === true)) {
@@ -187,10 +188,12 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     if (onQueue === false) {
                         const pe = await this.dataStore.getPushRecord(info.commitURL);
                         if (pe !== null) {
-                            Log.info("GitHubAutoTest::handleCommentEvent(..) - commit: " + info.commitSHA + "; - element not on queue; adding.");
+                            Log.info("GitHubAutoTest::handleCommentEvent(..) - commit: " + info.commitSHA +
+                                "; - element not on queue; adding.");
                             await this.handlePushEvent(pe, info.delivId);
                         } else {
-                            Log.warn("GitHubAutoTest::handleCommentEvent(..) - commit: " + info.commitSHA + "; - element not on queue; cannot find push event.");
+                            Log.warn("GitHubAutoTest::handleCommentEvent(..) - commit: " + info.commitSHA +
+                                "; - element not on queue; cannot find push event.");
                             msg = "This commit is has not been queued; please make and push a new commit.";
                         }
                     }
@@ -291,7 +294,6 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         }
     }
 
-
     /**
      * Saves pushInfo in its own table in the database, in case we need to refer to it later
      *
@@ -326,7 +328,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     private async getDelivId(): Promise<string | null> {
         Log.trace("GitHubAutoTest::getDelivId() - start");
         try {
-            let str = await this.classPortal.getDefaultDeliverableId();
+            const str = await this.classPortal.getDefaultDeliverableId();
             Log.trace("GitHubAutoTest::getDelivId() - RESPONSE: " + str);
             if (str !== null && typeof str.defaultDeliverable !== "undefined") {
                 return str.defaultDeliverable;
@@ -343,14 +345,13 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     private async getContainerConfig(delivId: string): Promise<AutoTestConfigTransport | null> {
         Log.trace("GitHubAutoTest::getContainerConfig() - start");
         try {
-            let details = await this.classPortal.getContainerDetails(delivId);
+            const details = await this.classPortal.getContainerDetails(delivId);
             Log.trace("GitHubAutoTest::getContainerConfig() - RESPONSE: " + details);
             return details;
         } catch (err) {
             Log.error("GitHubAutoTest::getContainerConfig() - ERROR: " + err);
         }
     }
-
 
     /**
      * Tracks that feedback was given for the specified user at the specified time.

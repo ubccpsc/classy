@@ -1,12 +1,11 @@
-const loadFirst = require('./GlobalSpec');
-
 import {expect} from "chai";
 import "mocha";
 
 import Config from "../../common/Config";
 import Log from "../../common/Log";
-
 import {GitHubUtil} from "../src/github/GitHubUtil";
+// const loadFirst = require('./GlobalSpec');
+import "./GlobalSpec";
 
 describe("GitHubUtil", () => {
     Config.getInstance();
@@ -36,7 +35,7 @@ describe("GitHubUtil", () => {
     });
 
     it("Should be able to correctly parse #silent from a commit comment.", () => {
-        let actual = false;
+        let actual;
 
         actual = GitHubUtil.parseSilentFromComment("@ubcbot #d1");
         expect(actual).to.be.false;
@@ -52,7 +51,7 @@ describe("GitHubUtil", () => {
     });
 
     it("Should be able to correctly parse #force from a commit comment.", () => {
-        let actual = false;
+        let actual;
 
         actual = GitHubUtil.parseForceFromComment("@ubcbot #d1");
         expect(actual).to.be.false;
@@ -66,6 +65,5 @@ describe("GitHubUtil", () => {
         actual = GitHubUtil.parseForceFromComment("@ubcbot #force.");
         expect(actual).to.be.true;
     });
-
 
 });
