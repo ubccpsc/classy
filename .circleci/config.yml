@@ -75,20 +75,20 @@ jobs:
             when: always
 
       # statically validate the frontend (this is the best we can do as there are no automated UI tests yet)
-      - run:
-            command: cd packages/portal/frontend && ../../../node_modules/typescript/bin/tsc && ../../../node_modules/webpack/bin/webpack.js
-            name: Building frontend
-            when: never
+#      - run:
+#            command: cd packages/portal/frontend && ../../../node_modules/typescript/bin/tsc && ../../../node_modules/webpack/bin/webpack.js
+#            name: Building frontend
+#            when: always
 
       - run:
             command: cd packages/autotest && ../../node_modules/typescript/bin/tsc
             name: Building autotest
             when: always
 
-      - run:
-            command: yarn run lint
-            name: Linting project
-            when: never
+#      - run:
+#            command: yarn run lint
+#            name: Linting project
+#            when: always
 
       - run:
             command: git config --global user.email "CI@test.com" && git config --global user.name "CI Test Name"
