@@ -5,7 +5,7 @@ import * as request from "supertest";
 
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
-import {ConfigTransportPayload, Payload} from "../../../../common/types/PortalTypes";
+import {ConfigTransportPayload, Payload, TeamFormationTransport} from "../../../../common/types/PortalTypes";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import BackendServer from "../../src/server/BackendServer";
 
@@ -19,21 +19,25 @@ describe('General Routes', function() {
 
     before(async () => {
         Log.test('GeneralRoutes::before - start');
+        await Test.suiteBefore('General Routes');
+        await Test.prepareAll();
 
         // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
         DatabaseController.getInstance(); // just get this done at the start
         server = new BackendServer(false);
 
-        return server.start().then(function() {
+        try {
+            await server.start(); // .then(function() {
             Log.test('GeneralRoutes::before - server started');
             app = server.getServer();
-        }).catch(function(err) {
+        } catch (err) {
             Log.test('GeneralRoutes::before - server might already be started: ' + err);
-        });
+        }
     });
 
     after(function() {
         Log.test('GeneralRoutes::after - start');
+        Test.suiteAfter('General Routes');
         return server.stop();
     });
 
@@ -56,7 +60,58 @@ describe('General Routes', function() {
         expect(body.success.name).to.equal(Config.getInstance().getProp(ConfigKey.name));
     });
 
-    it('Should be able to get get a released grade for a user.', async function() {
+    it('Should be able to get a person.', async function() {
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        // get user
+        const auth = await dc.getAuth(Test.USER1.id);
+        expect(auth).to.not.be.null;
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/person';
+        try {
+            Log.test('Making request');
+            response = await request(app).get(url).set('user', auth.personId).set('token', auth.token);
+            Log.test('Response received');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.id).to.equal(Test.USER1.id);
+        expect(body.success.githubId).to.equal(Test.USER1.github);
+    });
+
+    it('Should not be able to get a person without the right token.', async function() {
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        // get user
+        const auth = await dc.getAuth(Test.USER1.id);
+        expect(auth).to.not.be.null;
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/person';
+        try {
+            Log.test('Making request');
+            response = await request(app).get(url).set('user', auth.personId).set('token', Test.FAKETOKEN);
+            Log.test('Response received');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+    });
+
+    it('Should be able to get a released grade for a user.', async function() {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
@@ -123,20 +178,8 @@ describe('General Routes', function() {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        // await dc.writeAuth({personId: Test.USER3.id, token: Date.now() + '_token'});
         const auth = await dc.getAuth(Test.USER1.id);
         expect(auth).to.not.be.null;
-
-        // const team = Test.getTeam(Test.TEAMNAME3, Test.DELIVID0, [Test.USERNAME3]);
-        // await dc.writeTeam(team);
-
-        // prepare deliverables
-        // let deliv = Test.getDeliverable(Test.DELIVID1);
-        // deliv.gradesReleased = true;
-        // await dc.writeDeliverable(deliv);
-        // deliv = Test.getDeliverable(Test.DELIVID2);
-        // deliv.gradesReleased = true;
-        // await dc.writeDeliverable(deliv);
 
         let response = null;
         let body: Payload;
@@ -182,6 +225,102 @@ describe('General Routes', function() {
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
         expect(body.failure.message).to.equal('Invalid credentials');
+    });
+
+    // bad form (already on team)
+    it('Should not be able to form an invalid team.', async function() {
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        // get user
+        const auth = await dc.getAuth(Test.USER1.id);
+        expect(auth).to.not.be.null;
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/team';
+        try {
+            Log.test('Making request');
+            const teamReq: TeamFormationTransport = {
+                delivId:   Test.DELIVID0,
+                githubIds: [Test.USER1.github]
+            };
+            // this is invalid because the person is already on a d0 team
+            response = await request(app).post(url).send(teamReq).set('user', auth.personId).set('token', auth.token);
+            Log.test('Response received');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+        expect(body.failure.message).to.equal('Team not created; some members are already on existing teams for this deliverable.');
+    });
+
+    // bad form (forming for someone else)
+    it('Should not be able to form a team they are not going to be a member of.', async function() {
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        // get user
+        const auth = await dc.getAuth(Test.USER1.id);
+        expect(auth).to.not.be.null;
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/team';
+        try {
+            Log.test('Making request');
+            const teamReq: TeamFormationTransport = {
+                delivId:   Test.DELIVID0,
+                githubIds: [Test.USER2.github]
+            };
+            // this is invalid because the person is not going to be on the resulting team
+            response = await request(app).post(url).send(teamReq).set('user', auth.personId).set('token', auth.token);
+            Log.test('Response received');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+        expect(body.failure.message).to.equal('Users cannot form teams they are not going to join.');
+    });
+
+    // good form
+    it('Should not be able to form a valid team.', async function() {
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        // get user
+        const auth = await dc.getAuth(Test.USER1.id);
+        expect(auth).to.not.be.null;
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/team';
+        try {
+            Log.test('Making request');
+            const teamReq: TeamFormationTransport = {
+                delivId:   Test.DELIVIDPROJ,
+                githubIds: [Test.USER1.github, Test.USER1.github]
+            };
+            // this is invalid because the person is already on a d0 team
+            response = await request(app).post(url).send(teamReq).set('user', auth.personId).set('token', auth.token);
+            Log.test('Response received');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.failure).to.be.undefined;
+        expect(body.success).to.not.be.undefined;
+        expect(body.success[0].id).to.be.an("string");
     });
 
 });
