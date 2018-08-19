@@ -293,6 +293,7 @@ export class Test {
         let newAssignmentInfo: AssignmentInfo = {
             seedRepoURL:  "https://github.com/SECapstone/capstone",
             seedRepoPath: "",
+            mainFilePath: "",
             status:       newAssignmentStatus,
             rubric:       newAssignmentGradingRubric,
             repositories: []
