@@ -9,15 +9,15 @@ import {DatabaseController} from "../../portal/backend/src/controllers/DatabaseC
 import BackendServer from "../../portal/backend/src/server/BackendServer";
 import {Course} from "../../portal/backend/src/Types";
 import {ClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
-
-const loadFirst = require('./GlobalSpec');
+// const loadFirst = require('./GlobalSpec');
+import "./GlobalSpec";
 
 describe("ClassPortal Service", () => {
     Config.getInstance();
 
     let cp: IClassPortal;
-    const classId = "secapstone";
-    const CURRENT_DEFAULT_DELIV = "d2";
+    // const classId = "secapstone";
+    // const CURRENT_DEFAULT_DELIV = "d2";
 
     let backend: BackendServer = null;
     before(async function() {
@@ -96,7 +96,6 @@ describe("ClassPortal Service", () => {
         }
     });
 
-
     it("Should return a container id for an existing course.", async () => {
         try {
             const res = await cp.getContainerDetails("d0");
@@ -171,7 +170,6 @@ describe("ClassPortal Service", () => {
         expect(actual.failure).to.not.be.undefined;
         expect(actual.failure.message).to.be.an('string');
     });
-
 
     function getResult(delivId: string, repoId: string, score: number) {
         const ts = Date.now() - Math.random() * 1000 * 600;
@@ -273,6 +271,5 @@ describe("ClassPortal Service", () => {
 
         expect(actual).to.be.null;
     });
-
 
 });

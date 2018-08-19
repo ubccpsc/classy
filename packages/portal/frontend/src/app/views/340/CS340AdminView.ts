@@ -1,4 +1,4 @@
-import {OnsButtonElement, OnsInputElement} from "onsenui";
+import {OnsButtonElement, OnsFabElement, OnsInputElement} from "onsenui";
 import Log from "../../../../../../common/Log";
 import {
     AssignmentGrade,
@@ -15,6 +15,7 @@ import {Factory} from "../../Factory";
 import {SortableTable, TableCell, TableHeader} from "../../util/SortableTable";
 import {UI} from "../../util/UI";
 import {AdminView} from "../AdminView";
+import {delay} from "q";
 
 const ERROR_POTENTIAL_INCORRECT_INPUT: string = "input triggered warning";
 const ERROR_INVALID_INPUT: string = "invalid input";
@@ -55,6 +56,15 @@ export class CS340AdminView extends AdminView {
             }
         }
 
+        if(optsObject !== null && typeof optsObject.page !== 'undefined' && optsObject.page === "cs340/admin.html") {
+            Log.info("CS340AdminView::renderPage(..) - initial load; checking scheduler");
+            this.verifyScheduledJobs(null).then(function (result) {
+                if(result > 0) {
+                    UI.notification("Verified scheduled tasks; updated " + result + " tasks for related deliverable(s)");
+                }
+            });
+        }
+
         if(name === 'AdminEditDeliverable') {
             Log.info("CS340AdminView::renderPage() - Deliverable editing page triggered");
 
@@ -75,10 +85,53 @@ export class CS340AdminView extends AdminView {
         // }
     }
 
+    private async verifyScheduledJobs(deliv: Deliverable): Promise<number> {
+        Log.info("CS340AdminView::verifyScheduledJobs( " + deliv + " ) - start");
+
+        let url: string;
+
+        if (deliv === null) {
+            url = this.remote + '/portal/cs340/verifyScheduledJobs';
+        } else {
+            url = this.remote + '/portal/cs340/verifyScheduledJobs/' + deliv.id;
+        }
+
+        let options: any = AdminView.getOptions();
+        options.method = 'post';
+        let response = await fetch(url, options);
+
+        if(response.status !== 200) {
+            Log.error("CS340AdminView::verifyScheduledJobs - error: got status code: " + response.status);
+            return -1;
+        } else {
+            let jsonResponse = await response.json();
+            return (jsonResponse as number);
+        }
+    }
+
+
+
     protected async handleAdminEditDeliverable(opts: any) {
         //options: {"animationOptions":{},"delivId":"a3","page":"editDeliverable.html"}
+        Log.info("CS340AdminView::renderEditDeliverablePage(..) - start");
         await super.handleAdminEditDeliverable(opts);
+        let that = this;
         // if the deliverable is an assignment, do something(?)
+        const fab = document.querySelector('#adminEditDeliverableSave') as OnsFabElement;
+        if (super.isAdmin === false) {
+            fab.style.display = 'none';
+        } else {
+            fab.onclick = function(evt) {
+                Log.info('CS340AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::customOnClick');
+                that.newSave();
+            };
+        }
+    }
+
+    protected async newSave() {
+        // await super.deliverablesTab.save();
+        let number = await this.verifyScheduledJobs(null);
+        Log.info("CS340AdminView::newSave() - tasks generated: " + number);
     }
 
     protected async handleAdminConfig(opts: any) {
@@ -189,12 +242,12 @@ export class CS340AdminView extends AdminView {
                     statusBox.innerHTML = ": INACTIVE";
                     break;
                 }
-                case AssignmentStatus.INITIALIZED: {
-                    statusBox.innerHTML = ": INITIALIZED";
+                case AssignmentStatus.CREATED: {
+                    statusBox.innerHTML = ": CREATED";
                     break;
                 }
-                case AssignmentStatus.PUBLISHED: {
-                    statusBox.innerHTML = ": PUBLISHED";
+                case AssignmentStatus.RELEASED: {
+                    statusBox.innerHTML = ": RELEASED";
                     break;
                 }
                 case AssignmentStatus.CLOSED: {
@@ -356,7 +409,7 @@ export class CS340AdminView extends AdminView {
         return;
     }
 
-    private async getDeliverables() {
+    private async getDeliverables(): Promise<Deliverable[]> {
         const delivOptions = AdminView.getOptions();
         const delivUrl: string = this.remote + '/portal/cs340/getAllDeliverables';
         const delivResponse = await fetch(delivUrl, delivOptions);

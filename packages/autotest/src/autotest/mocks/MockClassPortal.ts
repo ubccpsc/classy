@@ -77,14 +77,14 @@ export class MockClassPortal implements IClassPortal {
         }
     }
 
-    async getResult(delivId: string, repoId: string): Promise<AutoTestResultTransport | null> {
+    public async getResult(delivId: string, repoId: string): Promise<AutoTestResultTransport | null> {
         Log.info("MockClassPortal::getResult(..) - start");
 
         const ds = new MockDataStore();
         return await ds.getResult(delivId, repoId);
     }
 
-    getPersonId(userName: string): Promise<AutoTestPersonIdTransport | null> {
+    public async getPersonId(userName: string): Promise<AutoTestPersonIdTransport | null> {
         return Promise.resolve({personId: userName});
     }
 

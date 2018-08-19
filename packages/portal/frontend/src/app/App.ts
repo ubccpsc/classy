@@ -52,8 +52,7 @@ export class App {
         // before anything else happens, get the org associated with the backend
         await this.retrieveConfig();
 
-
-        let validated = await that.validateCredentials();
+        const validated = await that.validateCredentials();
         this.validated = validated;
         // Log.trace('App::init() - validated: ' + validated);
 
@@ -102,7 +101,7 @@ export class App {
                         Log.warn("App::init() - UNKNOWN page name: " + pageName);
                     }
 
-                    (<any>window).myApp.view = v; // convenience reference so UI elements can access view code
+                    (window as any).myApp.view = v; // convenience reference so UI elements can access view code
                     that.view = v;
                 }
 
@@ -135,7 +134,7 @@ export class App {
             document.addEventListener('show', function(event) {
                 const page = event.target as OnsPageElement;
                 const pageName = page.id;
-                let options = (<any>page).pushedOptions;
+                let options = (page as any).pushedOptions;
                 if (typeof options === 'undefined') {
                     options = {};
                 }
@@ -221,7 +220,8 @@ export class App {
                     Log.info("App::validateCredentials() - server validation failed");
                     this.clearCredentials();
                 } else {
-                    Log.info("App::validateCredentials() - validated with server; isAdmin: " + credentials.success.isAdmin + "; isStaff: " + credentials.success.isStaff);
+                    Log.info("App::validateCredentials() - validated with server; isAdmin: " +
+                        credentials.success.isAdmin + "; isStaff: " + credentials.success.isStaff);
                     localStorage.setItem('user', credentials.success.personId);
                     localStorage.setItem('token', credentials.success.token);
                     localStorage.setItem('isAdmin', credentials.success.isAdmin + '');
@@ -309,7 +309,7 @@ export class App {
             Log.error("App::getGithubCredentials(..) - ERROR: " + err);
             return null;
         });
-    };
+    }
 
     /**
      * Gets the user credentials from the server.
@@ -360,7 +360,7 @@ export class App {
             Log.error("App::getServerCredentials(..) - ERROR: " + err);
             return null;
         });
-    };
+    }
 
     private async retrieveConfig(): Promise<ConfigTransport> {
         const url = this.backendURL + '/portal/config';
@@ -373,7 +373,7 @@ export class App {
             }
         };
 
-        let response = await fetch(url, options);
+        const response = await fetch(url, options);
         if (response.status === 200) {
             Log.trace('App::retrieveConfig() - status: ' + response.status);
             const json: ConfigTransportPayload = await response.json();
@@ -429,11 +429,12 @@ export class App {
     private readCookie(name: string) {
         Log.trace("App::readCookie( " + name + " ) - start; cookie string: " + document.cookie);
         // this used to work but isn't now
-        let s: string[] = decodeURI(document.cookie).split(';');
+        const s: string[] = decodeURI(document.cookie).split(';');
+        // tslint:disable-next-line
         for (let i = 0; i < s.length; i++) {
-            let row = s[i].split('=', 2);
+            const row = s[i].split('=', 2);
             if (row.length === 2) {
-                let key = row[0].trim(); // firefox sometimes has an extraneous space before the key
+                const key = row[0].trim(); // firefox sometimes has an extraneous space before the key
                 if (key === name) {
                     Log.trace("App::readCookie( " + name + " ) - cookie found");
                     return row[1].trim();
@@ -495,14 +496,14 @@ export class App {
 Log.info('App.ts - preparing Classy client');
 if (typeof classportal === 'undefined') {
     Log.trace('App.ts - preparing App; defining globals');
-    (<any>window).classportal = {};
-    (<any>window).classportal.App = App;
-    (<any>window).classportal.UI = UI;
-    (<any>window).classportal.Network = Network;
+    (window as any).classportal = {};
+    (window as any).classportal.App = App;
+    (window as any).classportal.UI = UI;
+    (window as any).classportal.Network = Network;
 }
 
-(<any>window).myApp = new classportal.App();
-(<any>window).myApp.init().then(function(ret: any) {
+(window as any).myApp = new classportal.App();
+(window as any).myApp.init().then(function(ret: any) {
     Log.info("App.ts - Classy client prepared: " + JSON.stringify(ret));
 }).catch(function(err: any) {
     Log.error("App.ts - init ERROR: " + err);

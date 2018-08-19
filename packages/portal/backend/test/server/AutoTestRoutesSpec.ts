@@ -117,7 +117,7 @@ describe('AutoTest Routes', function() {
         const url = '/portal/at/result/';
 
         // public static getResult(delivId: string, repoId: string, people: string[], score: number): Result {
-        const body = Test.getResult(Test.DELIVID0, Test.REPONAME1, [Test.USER1.id], 50);
+        const body = Test.createResult(Test.DELIVID0, Test.REPONAME1, [Test.USER1.id], 50);
         // const body = { // : IAutoTestResult
         //     delivId:   Test.DELIVID0,
         //     repoId:    Test.REPONAME1,

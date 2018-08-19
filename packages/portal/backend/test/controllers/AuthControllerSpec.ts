@@ -55,7 +55,7 @@ describe("AuthController", () => {
         const isPriv = await ac.isPrivileged(Test.STAFF1.id, Test.REALTOKEN);
         expect(isPriv.isAdmin).to.be.false;
         expect(isPriv.isStaff).to.be.true;
-    }).timeout(TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Should identify an admin correctly.", async function() {
         let isValid = await ac.isValid(Test.ADMIN1.id, Test.FAKETOKEN);
@@ -72,7 +72,7 @@ describe("AuthController", () => {
         const isPriv = await ac.isPrivileged(Test.ADMIN1.id, Test.REALTOKEN);
         expect(isPriv.isAdmin).to.be.true;
         expect(isPriv.isStaff).to.be.true;
-    }).timeout(TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Should identify a non-admin correctly.", async function() {
         let isValid = await ac.isValid(Test.USER1.id, Test.FAKETOKEN);

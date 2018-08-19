@@ -160,7 +160,8 @@ export class FrontendDatasetGenerator {
             const team = teams[index];
 
             const score = this.getRandomInt(100);
-            const result = Test.getResult(team.delivId, team.id, team.personIds, score);
+            // NOTE: THIS IS NOT RIGHT; team.id should be repo.id
+            const result = Test.createResult(team.delivId, team.id, team.personIds, score);
             await this.dc.writeResult(result);
         }
     }

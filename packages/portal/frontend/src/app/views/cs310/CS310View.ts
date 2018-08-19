@@ -49,7 +49,7 @@ export class CS310View extends StudentView {
         const response = await fetch(url, super.getOptions());
         if (response.status === 200) {
             Log.trace('CS310View::fetchData(..) - teams 200 received');
-            let json = await response.json();
+            const json = await response.json();
             Log.trace('CS310View::fetchData(..) - teams payload: ' + JSON.stringify(json));
             if (typeof json.success !== 'undefined') {
                 Log.trace('CS310View::fetchData(..) - teams success: ' + json.success);
@@ -105,12 +105,12 @@ export class CS310View extends StudentView {
             githubIds: [this.getStudent().githubId, otherId]
         };
         const url = this.remote + '/portal/team';
-        let options: any = this.getOptions();
+        const options: any = this.getOptions();
         options.method = 'post';
         options.body = JSON.stringify(payload);
 
-        let response = await fetch(url, options);
-        let body = await response.json() as Payload;
+        const response = await fetch(url, options);
+        const body = await response.json() as Payload;
 
         if (typeof body.success !== 'undefined') {
             // worked

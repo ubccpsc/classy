@@ -33,7 +33,8 @@ export class GitHubService implements IGitHubService {
     public postMarkdownToGithub(message: IGitHubMessage): Promise<boolean> {
         return new Promise<boolean>((fulfill, reject) => {
             try {
-                Log.info("GitHubService::postMarkdownToGithub(..) - Posting markdown to url: " + message.url + "; message: " + message.message);
+                Log.info("GitHubService::postMarkdownToGithub(..) - Posting markdown to url: " +
+                    message.url + "; message: " + message.message);
 
                 if (typeof message.url === "undefined" || message.url === null) {
                     Log.error("GitHubService::postMarkdownToGithub(..)  - message.url is required");

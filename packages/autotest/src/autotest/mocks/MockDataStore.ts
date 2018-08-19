@@ -1,10 +1,10 @@
 import * as fs from "fs-extra";
 
 import Config, {ConfigKey} from "../../../../common/Config";
-import Util from "../../../../common/Util";
 import Log from "../../../../common/Log";
 
-import {IAutoTestResult, ICommentEvent, IContainerInput, IFeedbackGiven, IPushEvent} from "../../../../common/types/AutoTestTypes";
+import {IAutoTestResult, ICommentEvent, IFeedbackGiven, IPushEvent} from "../../../../common/types/AutoTestTypes";
+import Util from "../../../../common/Util";
 import {IDataStore} from "../DataStore";
 
 /**
@@ -117,7 +117,8 @@ export class MockDataStore implements IDataStore {
 
             // find and return
             for (const record of outRecords) {
-                if (record !== null && typeof record.commitURL !== "undefined" && record.commitURL === commitURL && record.delivId === delivId) {
+                if (record !== null && typeof record.commitURL !== "undefined" &&
+                    record.commitURL === commitURL && record.delivId === delivId) {
                     Log.info("MockDataStore::getCommentRecord(..) - found; took: " + Util.took(start));
                     return record;
                 }
@@ -205,7 +206,7 @@ export class MockDataStore implements IDataStore {
                 Log.info("MockDataStore::getLatestFeedbackGivenRecord(..) - not found; took: " + Util.took(start));
                 ret = null;
             } else {
-                Math.max.apply(Math, shortList.map(function (o: IFeedbackGiven) {
+                Math.max.apply(Math, shortList.map(function(o: IFeedbackGiven) {
                     Log.info("MockDataStore::getLatestFeedbackGivenRecord(..) - found; took: " + Util.took(start));
                     ret = o;
                 }));
@@ -241,7 +242,12 @@ export class MockDataStore implements IDataStore {
         return ret;
     }
 
-    public async getAllData(): Promise<{ records: IAutoTestResult[], comments: ICommentEvent[], pushes: IPushEvent[], feedback: IFeedbackGiven[] }> {
+    public async getAllData(): Promise<{
+        records: IAutoTestResult[],
+        comments: ICommentEvent[],
+        pushes: IPushEvent[],
+        feedback: IFeedbackGiven[]
+    }> {
         Log.info("MockDataStore::getAllData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
 
         const records: IAutoTestResult[] = await fs.readJSON(this.RECORD_PATH);

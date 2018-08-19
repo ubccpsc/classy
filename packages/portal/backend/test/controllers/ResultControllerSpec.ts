@@ -2,11 +2,7 @@ import {expect} from "chai";
 import "mocha";
 
 import {AutoTestResultTransport} from "../../../../common/types/PortalTypes";
-import {DatabaseController} from "../../src/controllers/DatabaseController";
-import {PersonController} from "../../src/controllers/PersonController";
-import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {ResultsController} from "../../src/controllers/ResultsController";
-import {TeamController} from "../../src/controllers/TeamController";
 
 import {Test} from "../GlobalSpec";
 
@@ -18,11 +14,11 @@ describe("ResultController", () => {
     let rc: ResultsController;
 
     before(async () => {
-        Test.suiteBefore('ResultController');
+        await Test.suiteBefore('ResultController');
 
-        // clear stale data
-        const dc = DatabaseController.getInstance();
-        await dc.clearData();
+        // clear stale data (removed; happens in suitebefore)
+        // const dc = DatabaseController.getInstance();
+        // sawait dc.clearData();
 
         // get data ready
         await Test.prepareDeliverables();
@@ -51,7 +47,7 @@ describe("ResultController", () => {
         // let data = fs.readJSONSync(fullPath);
         // let output = await rc.createResult(data[0]);
         // public static getResult(delivId: string, repoId: string, people: string[], score: number): Result {
-        const result = Test.getResult(Test.DELIVID0, Test.REPONAME1, [Test.USER1.id], 50);
+        const result = Test.createResult(Test.DELIVID0, Test.REPONAME1, [Test.USER1.id], 50);
         const output = await rc.createResult(result);
         expect(output).to.be.true;
 

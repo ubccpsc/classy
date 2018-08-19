@@ -19,7 +19,6 @@ import {
 
 export interface IClassPortal {
 
-
     /**
      * Returns the personId for a given githubId (since githubIds are not guaranteed to be stable).
      *
@@ -118,7 +117,6 @@ export class ClassPortal implements IClassPortal {
         }
     }
 
-
     public async getPersonId(githubId: string): Promise<AutoTestPersonIdTransport> {
         // const NO_ACCESS = {personId: userName, isStaff: false, isAdmin: false}; // if error, give no credentials
         const url = this.host + ":" + this.port + "/portal/at/personId/" + githubId;
@@ -131,7 +129,7 @@ export class ClassPortal implements IClassPortal {
                 }
             };
 
-            const res = await rp(url, opts); //.then(function(res) {
+            const res = await rp(url, opts);
             Log.trace("ClassPortal::personId( " + githubId + " ) - success; payload: " + res);
             const json: Payload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
@@ -145,7 +143,6 @@ export class ClassPortal implements IClassPortal {
             return null;
         }
     }
-
 
     public async getDefaultDeliverableId(): Promise<AutoTestDefaultDeliverableTransport | null> {
 
@@ -204,7 +201,7 @@ export class ClassPortal implements IClassPortal {
                 method:             'POST',
                 headers:            {
                     "Content-Type": "application/json",
-                    token:          Config.getInstance().getProp(ConfigKey.autotestSecret)
+                    "token":        Config.getInstance().getProp(ConfigKey.autotestSecret)
                 },
                 body:               grade,
                 json:               true
@@ -237,13 +234,14 @@ export class ClassPortal implements IClassPortal {
                 method:             'post',
                 headers:            {
                     "Content-Type": "application/json",
-                    token:          Config.getInstance().getProp(ConfigKey.autotestSecret)
+                    "token":        Config.getInstance().getProp(ConfigKey.autotestSecret)
                 },
                 body:               result,
                 json:               true
             };
 
-            Log.info("ClassPortal::sendResult(..) - Sending request to " + url + ' for repoId: ' + result.repoId + '; delivId: ' + result.delivId + '; SHA: ' + result.input.pushInfo.commitSHA);
+            Log.info("ClassPortal::sendResult(..) - Sending request to " + url + ' for repoId: ' +
+                result.repoId + '; delivId: ' + result.delivId + '; SHA: ' + result.input.pushInfo.commitSHA);
             const res = await rp(url, opts);
             Log.trace("ClassPortal::sendResult() - sent; returned payload: " + res);
             const json = res;
@@ -276,7 +274,7 @@ export class ClassPortal implements IClassPortal {
             const json: AutoTestResultPayload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
                 Log.error("ClassPortal::getResult(..) - successfully received");
-                const success = <AutoTestResultTransport[]>json.success;
+                const success = json.success as AutoTestResultTransport[];
                 if (success.length > 0) {
                     return success[0];
                 } else {

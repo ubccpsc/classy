@@ -1,25 +1,25 @@
-const loadFirst = require('./GlobalSpec');
-
 import {expect} from "chai";
 import "mocha";
 
 import Config, {ConfigKey} from "../../common/Config";
+import Log from "../../common/Log";
 
 import {IDataStore, MongoDataStore} from "../src/autotest/DataStore";
+// const loadFirst = require('./GlobalSpec');
+import "./GlobalSpec";
 import {TestData} from "./TestData";
-import Log from "../../common/Log";
 
 describe("MongoStore", () => {
 
     let ds: IDataStore;
-    const oldName = (<any>Config.getInstance()).getProp('name'); // .env value to restore after tests
+    const oldName = Config.getInstance().getProp(ConfigKey.name); // .env value to restore after tests
 
-    before(function () {
+    before(function() {
         Log.test("MongoStoreSpec::before");
         Config.getInstance().setProp(ConfigKey.name, Config.getInstance().getProp(ConfigKey.testname)); // force a test name
     });
 
-    after(function () {
+    after(function() {
         Log.test("MongoStoreSpec::after");
         Config.getInstance().setProp(ConfigKey.name, oldName); // restore name
     });
@@ -70,7 +70,6 @@ describe("MongoStore", () => {
         // VERIFY
         expect(actual).to.be.null;
     });
-
 
     it("Should be able to save a comment event.", async () => {
         // SETUP

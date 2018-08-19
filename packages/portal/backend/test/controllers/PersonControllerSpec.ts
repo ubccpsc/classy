@@ -92,6 +92,6 @@ describe("PersonController", () => {
 
         person = await pc.getGitHubPerson('randomIDthatDoesNotexist23232333');
         expect(person).to.be.null;
-    }).timeout(TIMEOUT * 30);
+    }).timeout(Test.TIMEOUTLONG);
 
 });

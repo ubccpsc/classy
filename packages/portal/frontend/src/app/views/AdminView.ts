@@ -11,40 +11,40 @@
 
 import Log from "../../../../../common/Log";
 
-import {UI} from "../util/UI"
+import {UI} from "../util/UI";
 
-import {IView} from "./IView";
-import {AdminStudentsTab} from "./AdminStudentsTab";
-import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminConfigTab} from "./AdminConfigTab";
-import {AdminTeamsTab} from "./AdminTeamsTab";
+import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminGradesTab} from "./AdminGradesTab";
 import {AdminResultsTab} from "./AdminResultsTab";
+import {AdminStudentsTab} from "./AdminStudentsTab";
+import {AdminTeamsTab} from "./AdminTeamsTab";
+import {IView} from "./IView";
 
 interface AdminTabs {
-    deliverables: boolean,
-    students: boolean,
-    teams: boolean,
-    results: boolean,
-    grades: boolean,
-    dashboard: boolean,
-    config: boolean
+    deliverables: boolean;
+    students: boolean;
+    teams: boolean;
+    results: boolean;
+    grades: boolean;
+    dashboard: boolean;
+    config: boolean;
 }
 
 export class AdminView implements IView {
 
-    protected remote: string | null = null;
+    protected readonly remote: string | null = null;
     private tabs: AdminTabs | null = null;
 
-    private isStaff = false;
-    private isAdmin = false;
+    protected isStaff = false;
+    protected isAdmin = false;
 
-    private deliverablesTab: AdminDeliverablesTab;
-    private studentsTab: AdminStudentsTab;
-    private teamsTab: AdminTeamsTab;
-    private gradesTab: AdminGradesTab;
-    private resultsTab: AdminResultsTab;
-    private configTab: AdminConfigTab;
+    protected deliverablesTab: AdminDeliverablesTab;
+    protected studentsTab: AdminStudentsTab;
+    protected teamsTab: AdminTeamsTab;
+    protected gradesTab: AdminGradesTab;
+    protected resultsTab: AdminResultsTab;
+    protected configTab: AdminConfigTab;
 
     constructor(remoteUrl: string, tabs: AdminTabs) {
         Log.info("AdminView::<init>");
@@ -94,10 +94,10 @@ export class AdminView implements IView {
         // this calls `handle<PageName>`, so to make it work your IView subtype must have a method
         // with that name (which you set in your ons-page id attribute in your html file)
         const functionName = 'handle' + name;
-        if (typeof (<any>this)[functionName] === 'function') {
+        if (typeof (this as any)[functionName] === 'function') {
             Log.info('AdminView::renderPage(..) - calling: ' + functionName);
             // NOTE: does not await; not sure if this is a problem
-            (<any>this)[functionName](opts);
+            (this as any)[functionName](opts);
         } else {
             Log.warn('AdminView::renderPage(..) - unknown page: ' + name + ' (function: ' + functionName + ' not defined on view).');
         }

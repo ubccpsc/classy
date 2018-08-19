@@ -312,8 +312,8 @@ export class CourseController { // don't implement ICourseController yet
      * @returns {Promise<AutoTestGradeTransport[]>}
      */
     public async getResults(reqDelivId: string, reqRepoId: string): Promise<AutoTestResultSummaryTransport[]> {
-
-        const NUM_RESULTS = 200;
+        Log.info("CourseController::getResults( " + reqDelivId + ", " + reqRepoId + " ) - start");
+        const NUM_RESULTS = 200; // max # of records
 
         const allResults = await this.resC.getAllResults();
         const results: AutoTestResultSummaryTransport[] = [];
@@ -322,8 +322,8 @@ export class CourseController { // don't implement ICourseController yet
             const delivId = result.delivId;
             const repoId = result.input.pushInfo.repoId;
 
-            if ((delivId === '*' || delivId === reqDelivId) &&
-                (repoId === '*' || repoId === reqRepoId) &&
+            if ((reqDelivId === '*' || delivId === reqDelivId) &&
+                (reqRepoId === '*' || repoId === reqRepoId) &&
                 results.length <= NUM_RESULTS) {
                 const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
                     Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
@@ -361,6 +361,7 @@ export class CourseController { // don't implement ICourseController yet
                 // result does not match filter
             }
         }
+        Log.trace("CourseController::getResults(..) - # results: " + results.length);
         return results;
     }
 

@@ -1,7 +1,7 @@
 import {fail} from "assert";
 import {expect} from "chai";
 import "mocha";
-import Config, {ConfigKey} from "../../../../../common/Config";
+import Config, {ConfigCourses, ConfigKey} from "../../../../../common/Config";
 import Log from "../../../../../common/Log";
 import {DatabaseController} from "../../../src/controllers/DatabaseController";
 import {GitHubActions} from "../../../src/controllers/GitHubActions";
@@ -55,6 +55,9 @@ describe("CS340: Routes", () => {
     before(async () => {
         Log.test("CS340Routes::before - start");
 
+        // set testing env
+        Config.getInstance().setProp(ConfigKey.name, ConfigCourses.classytest); // force testing env
+
         await Test.suiteBefore('CS340Routes');
 
         // clear stale data
@@ -63,6 +66,7 @@ describe("CS340: Routes", () => {
 
         // get data ready
         await Test.prepareAll();
+        await Test.prepareAssignment();
 
         Config.getInstance().setProp(ConfigKey.name, 'cs340');
         Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
@@ -97,6 +101,10 @@ describe("CS340: Routes", () => {
         await Test.suiteAfter('CS340Routes');
     });
 
+    beforeEach(async function () {
+        Log.test("Start");
+    });
+
     it("Clean up stale repos", async function() {
         Log.test("Cleaning up stale repositories...");
         await deleteStale();
@@ -123,7 +131,7 @@ describe("CS340: Routes", () => {
 
 
     it("Should be able to get assignment rubric based on ID", async function() {
-        let aid = "test_assignDeliv3";
+        let aid = Test.ASSIGNID0;
         let response = null;
         const url = '/portal/cs340/getAssignmentRubric/' + aid;
         try {
@@ -154,7 +162,7 @@ describe("CS340: Routes", () => {
     });
 
     it("Should not be able to set a student's grade if there is no repo", async function() {
-        let aid = "test_assignDeliv3";
+        let aid = Test.ASSIGNID0;
         let pc: PersonController = new PersonController();
         let allPeople = await pc.getAllPeople();
 
@@ -228,7 +236,7 @@ describe("CS340: Routes", () => {
     });
 
     it("Should be able to get all Submissions using assignment ID.", async function() {
-        let aid = "test_assignDeliv3";
+        let aid = Test.ASSIGNID0;
 
         let response = null;
         const url = '/portal/cs340/getAllSubmissionsByDelivID/' + aid;
@@ -282,7 +290,7 @@ describe("CS340: Routes", () => {
 
     it("Should be able to update the assignment status", async function() {
         let response = null;
-        let aid = "test_assignDeliv3";
+        let aid = Test.ASSIGNID0;
 
         const url = '/portal/cs340/updateAssignmentStatus/' + aid;
         try {
@@ -300,7 +308,7 @@ describe("CS340: Routes", () => {
 
     it("Should be able to get the assignment status", async function() {
         let response = null;
-        let aid = "test_assignDeliv3";
+        let aid = Test.ASSIGNID0;
 
         const url = '/portal/cs340/getAssignmentStatus/' + aid;
         try {
@@ -318,7 +326,7 @@ describe("CS340: Routes", () => {
 
     it("Should be able to initialize all repositories", async function() {
         let response = null;
-        let aid = "test_assignDeliv3";
+        let aid = Test.ASSIGNID0;
 
         const url = '/portal/cs340/initializeAllRepositories/' + aid;
         try {
@@ -336,7 +344,7 @@ describe("CS340: Routes", () => {
 
     it("Should be able to publish all repositories", async function() {
         let response = null;
-        let aid = "test_assignDeliv3";
+        let aid = Test.ASSIGNID0;
 
 
         const url = '/portal/cs340/publishAllRepositories/' + aid;
@@ -355,7 +363,7 @@ describe("CS340: Routes", () => {
     it("Should be able to set a student's grade", async function() {
         Log.test("CS340RoutesSpec:: should be able to set a student's grade");
 
-        let aid = "test_assignDeliv3";
+        let aid = Test.ASSIGNID0;
         let pc: PersonController = new PersonController();
         let allPeople = await pc.getAllPeople();
 
@@ -430,7 +438,7 @@ describe("CS340: Routes", () => {
 
         Log.test("CS340RoutesSpec:: get specific grade");
 
-        let aid = "test_assignDeliv3";
+        let aid = Test.ASSIGNID0;
         let pc: PersonController = new PersonController();
         let allPeople = await pc.getAllPeople();
 
@@ -468,7 +476,7 @@ describe("CS340: Routes", () => {
 
     it("Should be able to delete a specific repository", async function() {
         let response = null;
-        let aid = "test_assignDeliv3";
+        let aid = Test.ASSIGNID0;
         let pc: PersonController = new PersonController();
 
         let allPeople = await pc.getAllPeople();
@@ -507,7 +515,7 @@ describe("CS340: Routes", () => {
 
     it("Should be able to delete all repositories of a given assignment", async function() {
         let response = null;
-        let aid = "test_assignDeliv3";
+        let aid = Test.ASSIGNID0;
 
         const url = '/portal/cs340/deleteAllRepositories/' + aid;
         try {
@@ -602,7 +610,7 @@ describe("CS340: Routes", () => {
             let done = false;
             for (const t of TESTTEAMNAMES) {
                 if (team.name === t ||
-                    team.name.startsWith("test_assignDeliv3_")
+                    team.name.startsWith(Test.ASSIGNID0 + "_")
                 ) {
                     Log.test("Removing stale team: " + team.name);
                     let val = await gh.deleteTeam(team.id);
@@ -624,7 +632,7 @@ describe("CS340: Routes", () => {
 
 });
 
-const REPONAME = getProjectPrefix() + "test_assignDeliv3";
+const REPONAME = getProjectPrefix() + Test.ASSIGNID0;
 const REPONAME3 = getProjectPrefix() + Test.REPONAME3;
 const TEAMNAME = getTeamPrefix() + Test.TEAMNAME1;
 

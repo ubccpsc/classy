@@ -1,19 +1,21 @@
 import {expect} from "chai";
 import "mocha";
+
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {GitHubActions} from "../../src/controllers/GitHubActions";
-
 import {GitHubController} from "../../src/controllers/GitHubController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
 import {Repository, Team} from "../../src/Types";
-import {Test} from "../GlobalSpec";
 
-const loadFirst = require('../GlobalSpec');
-const rFirst = require('./TeamControllerSpec');
+import {Test} from "../GlobalSpec";
+import '../GlobalSpec';
+import './TeamControllerSpec';
+// const loadFirst = require('../GlobalSpec');
+// const rFirst = require('./TeamControllerSpec');
 
 describe("GitHubController", () => {
     // TODO: investigate skipping this way: https://stackoverflow.com/a/41908943 (and turning them on/off with an env flag)
@@ -27,11 +29,11 @@ describe("GitHubController", () => {
         // force testorg so real org does not get deleted or modified
         Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
 
-        Test.suiteBefore('GitHubController');
+        await Test.suiteBefore('GitHubController');
 
-        // clear stale data
+        // clear stale data (removed; happens in suitebefore)
         const dc = DatabaseController.getInstance();
-        await dc.clearData();
+        // await dc.clearData();
 
         // get data ready
         await Test.prepareDeliverables();
@@ -43,7 +45,7 @@ describe("GitHubController", () => {
         p = Test.createPerson(Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, 'student');
         await pc.writePerson(p);
 
-        const tc = new TeamController();
+        // const tc = new TeamController();
         const t1 = await Test.createTeam(Test.TEAMNAME1, Test.DELIVID0, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
         await dc.writeTeam(t1);
         const t2 = await Test.createTeam(Test.TEAMNAME2, Test.DELIVID1, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);

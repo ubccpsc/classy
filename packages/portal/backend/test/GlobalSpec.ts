@@ -4,6 +4,7 @@ import "mocha";
 import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {IContainerInput, IContainerOutput} from "../../../common/types/AutoTestTypes";
+import {AssignmentGradingRubric, AssignmentInfo, AssignmentStatus} from "../../../common/types/CS340Types";
 import {GradePayload} from "../../../common/types/SDMMTypes";
 import Util from "../../../common/Util";
 
@@ -84,7 +85,10 @@ export class Test {
         Log.test("Test::preparePeople() - start");
         const dc = DatabaseController.getInstance();
 
-        let p = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, 'student');
+        let p = Test.createPerson(Test.REALUSER1.id, Test.REALUSER1.csId, Test.REALUSER1.github, 'student');
+        await dc.writePerson(p);
+
+        p = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, 'student');
         await dc.writePerson(p);
 
         p = Test.createPerson(Test.USER2.id, Test.USER2.csId, Test.USER2.github, 'student');
@@ -106,17 +110,13 @@ export class Test {
     public static async prepareTeams(): Promise<void> {
         Log.test("Test::prepareTeams() - start");
         try {
-            // const pc = new PersonController();
-            // const p1 = await pc.getPerson(Test.USER1.id);
-            // const p2 = await pc.getPerson(Test.USER2.id);
-            //
-            // const dc = new DeliverablesController();
-            // const deliv = await dc.getDeliverable(Test.DELIVID0);
-            // const tc = new TeamController();
-            // const team = await tc.createTeam(Test.TEAMNAME1, deliv, [p1, p2], {});
-
-            const team = await Test.createTeam(Test.TEAMNAME1, Test.DELIVID0, [Test.USER1.id, Test.USER2.id]);
             const db = DatabaseController.getInstance();
+
+            let team = await Test.createTeam(Test.TEAMNAME1, Test.DELIVID0, [Test.USER1.id, Test.USER2.id]);
+            await db.writeTeam(team);
+
+            // user 1 has a different partner for d1
+            team = await Test.createTeam(Test.TEAMNAME2, Test.DELIVID1, [Test.USER1.id, Test.USER3.id]);
             await db.writeTeam(team);
 
         } catch (err) {
@@ -143,14 +143,18 @@ export class Test {
     public static async prepareRepositories(): Promise<void> {
         Log.test("Test::prepareRepositories() - start");
         try {
-            const tc = new TeamController();
-            const team = await tc.getTeam(Test.TEAMNAME1);
-
-            const rc = new RepositoryController();
-            const repo = await rc.createRepository(Test.REPONAME1, [team], {});
-
             const db = DatabaseController.getInstance();
+            const tc = new TeamController();
+            const rc = new RepositoryController();
+
+            let team = await tc.getTeam(Test.TEAMNAME1);
+            let repo = await rc.createRepository(Test.REPONAME1, [team], {});
             await db.writeRepository(repo);
+
+            team = await tc.getTeam(Test.TEAMNAME2);
+            repo = await rc.createRepository(Test.REPONAME2, [team], {});
+            await db.writeRepository(repo);
+
         } catch (err) {
             Log.error("Test::prepareRepositories() - ERROR: " + err);
         }
@@ -160,7 +164,6 @@ export class Test {
     public static async prepareGrades(): Promise<void> {
 
         // NOTE: see FrontendDatasetGenerator for ideas
-
         const grade: GradePayload = {
             score:     100,
             comment:   'comment',
@@ -171,13 +174,29 @@ export class Test {
         };
 
         const gc = new GradesController();
-        const valid = await gc.createGrade(Test.REPONAME1, Test.DELIVID1, grade);
+        // const valid =
+        await gc.createGrade(Test.REPONAME1, Test.DELIVID1, grade);
     }
 
     public static async prepareResults(): Promise<void> {
         // NOTE: see FrontendDatasetGenerator for ideas
-        // TODO
-        return;
+        const dc = DatabaseController.getInstance();
+
+        const tuples = [];
+        tuples.push({team: await dc.getTeam(Test.TEAMNAME1), repo: await dc.getRepository(Test.REPONAME1)});
+        tuples.push({team: await dc.getTeam(Test.TEAMNAME2), repo: await dc.getRepository(Test.REPONAME2)});
+        for (const tuple of tuples) {
+            for (let i = 0; i < 10; i++) {
+                const score = Test.getRandomInt(100);
+
+                const result = Test.createResult(tuple.team.delivId, tuple.repo.id, tuple.team.personIds, score);
+                await dc.writeResult(result);
+            }
+        }
+    }
+
+    private static getRandomInt(max: number) {
+        return Math.floor(Math.random() * Math.floor(max));
     }
 
     public static async prepareAuth(): Promise<void> {
@@ -247,6 +266,78 @@ export class Test {
         return p;
     }
 
+    public static async prepareAssignment() {
+        const dc: DeliverablesController = new DeliverablesController();
+
+        const newAssignmentStatus: AssignmentStatus = AssignmentStatus.INACTIVE;
+
+        const newAssignmentGradingRubric: AssignmentGradingRubric = {
+            name:      Test.ASSIGNID0,
+            comment:   "test assignment",
+            questions: [
+                {
+                    name:         "question 1",
+                    comment:      "",
+                    subQuestions: [
+                        {
+                            name:      "rubric",
+                            comment:   "rubric question",
+                            outOf:     5,
+                            weight:    0.25,
+                            modifiers: null
+                        }
+                    ]
+                },
+                {
+                    name:         "question 2",
+                    comment:      "",
+                    subQuestions: [
+                        {
+                            name:      "code quality",
+                            comment:   "",
+                            outOf:     6,
+                            weight:    0.5,
+                            modifiers: null
+                        }
+                    ]
+                }
+            ]
+        };
+
+        const newAssignmentInfo: AssignmentInfo = {
+            seedRepoURL:  "https://github.com/SECapstone/capstone",
+            seedRepoPath: "",
+            status:       newAssignmentStatus,
+            rubric:       newAssignmentGradingRubric,
+            repositories: []
+        };
+
+        const newDeliv: Deliverable = {
+            id:               Test.ASSIGNID0,
+            URL:              "",
+            repoPrefix:       Test.ASSIGNID0 + "_",
+            openTimestamp:    -1,
+            closeTimestamp:   -2,
+            gradesReleased:   false,
+            teamMinSize:      1,
+            teamMaxSize:      1,
+            teamSameLab:      false,
+            teamStudentsForm: false,
+            teamPrefix:       Test.ASSIGNID0 + "_",
+            autotest:         {
+                dockerImage:        'testImage',
+                studentDelay:       60 * 60 * 12, // 12h
+                maxExecTime:        300,
+                regressionDelivIds: [],
+                custom:             {}
+            },
+            custom:           newAssignmentInfo
+        };
+
+        // const newDelivSuccess =
+        await dc.saveDeliverable(newDeliv);
+    }
+
     // public static testBefore() {
     //     // Log.test('Test::testBefore( ... ) - test: ' + testObj.currentTest.title);
     // }
@@ -290,18 +381,21 @@ export class Test {
     // public static readonly USERNAMEADMIN = 'ubcbot'; // should be admin on any test org
     // public static readonly USERNAMESTAFF = 'ubcbot'; // should be admin on any test org
     // public static readonly USERNAME1 = 'rthse2'; // real account for testing users
+    public static readonly REALUSER1 = {id: 'rthse2', csId: 'rthse2', github: 'rthse2'}; // real account for testing users
     // public static readonly USERNAME2 = 'user2';
     // public static readonly USERNAME3 = 'user3';
 
     public static readonly USERNAMEGITHUB1 = "cpscbot";
     public static readonly USERNAMEGITHUB2 = "rthse2";
     public static readonly USERNAMEGITHUB3 = "ubcbot";
+    public static readonly USERNAMEGITHUB4 = "classystaff";
 
     public static readonly DELIVIDPROJ = 'project';
     public static readonly DELIVID0 = 'd0';
     public static readonly DELIVID1 = 'd1';
     public static readonly DELIVID2 = 'd2';
     public static readonly DELIVID3 = 'd3';
+    public static readonly ASSIGNID0 = 'a0';
 
     public static readonly REPONAME1 = 'TESTrepo1';
     public static readonly REPONAME2 = 'TESTrepo2';
@@ -397,7 +491,7 @@ export class Test {
         return Util.clone(repo) as Repository;
     }
 
-    public static getResult(delivId: string, repoId: string, people: string[], score: number): Result {
+    public static createResult(delivId: string, repoId: string, people: string[], score: number): Result {
 
         const ts = Date.now() - Math.random() * 1000 * 600;
         const projectURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +

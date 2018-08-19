@@ -35,6 +35,79 @@ export default class CS340REST implements IREST {
         server.post('/portal/cs340/deleteRepository/:delivid/:reponame', CS340REST.deleteRepository);
         server.post('/portal/cs340/deleteAllRepositories/:delivid', CS340REST.deleteAllRepositories);
         // server.get('/testPublishRepository/:repoId', CS340REST.testPublishRepository);
+        server.get('/portal/cs340/testPublishGrade', CS340REST.testPublishGrade);
+        server.get('/portal/cs340/testPublishAllGrades', CS340REST.testPublishAllGrades);
+        server.post('/portal/cs340/verifyScheduledJobs/:aid', CS340REST.verifyScheduledJobs);
+        server.post('/portal/cs340/verifyScheduledJobs/', CS340REST.verifyAllScheduledJobs);
+    }
+
+    public static async verifyAllScheduledJobs(req: any, res: any, next: any) {
+        // TODO [Jonathan]: Admin authentication
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        Log.info("CS340REST::verifyAllScheduledJobs() - start");
+
+        let ac: AssignmentController = new AssignmentController();
+
+        try {
+            let numberScheduled = await ac.verifyScheduledJobs();
+            res.send(200, numberScheduled);
+            Log.info("CS340REST::verifyAllScheduledJobs(..) - completed verification; " +
+                "created " + numberScheduled + " new tasks");
+            return next();
+        } catch(err) {
+            Log.error("CS340REST::verifyAllScheduledJobs(..) - Error: " + err);
+        }
+
+        return next();
+    }
+
+    public static async verifyScheduledJobs(req: any, res: any, next: any) {
+        // TODO [Jonathan]: Admin authentication
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        const aid = req.params.aid;
+
+        Log.info("CS340REST::verifyScheduledJobs( " + aid + ") - start");
+
+        let ac: AssignmentController = new AssignmentController();
+
+        try {
+            let numberScheduled = await ac.verifyScheduledJobs(aid);
+            res.send(200, numberScheduled);
+            Log.info("CS340REST::verifyScheduledJobs(..) - completed verification; " +
+                "created " + numberScheduled + " new tasks");
+            return next();
+        } catch(err) {
+            Log.error("CS340REST::verifyScheduledJobs(..) - Error: " + err);
+        }
+
+        return next();
+    }
+
+
+    public static async testPublishGrade(req: any, res: any, next: any) {
+        let ac: AssignmentController = new AssignmentController();
+        let success = await ac.publishGrade("jopika_grades", "a2_grades", "jopika", "a2");
+        if(success) {
+            res.send(200, "Complete!");
+        } else {
+            res.send(400, "Failed :(");
+        }
+    }
+
+    public static async testPublishAllGrades(req: any, res: any, next: any) {
+        let ac: AssignmentController = new AssignmentController();
+        let success = await ac.publishAllGrades("a2");
+        if(success) {
+            res.send(200, "Complete!");
+        } else {
+            res.send(400, "Failed :(");
+        }
     }
 
     public static getAssignmentGrade(req: any, res: any, next: any) {
@@ -83,7 +156,6 @@ export default class CS340REST implements IREST {
             if (deliv === null) {
                 // TODO [Jonathan]: send an appropriate failure
                 res.send(204, {error: "Deliverable not found, please create the deliverable first"});
-                return next();
             } else {
                 if (deliv.custom !== null && deliv.custom.rubric !== null) {
                     let assignInfo: AssignmentInfo = deliv.custom;
