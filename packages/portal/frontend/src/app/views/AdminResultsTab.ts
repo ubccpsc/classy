@@ -63,7 +63,7 @@ export class AdminResultsTab {
             delivNames.push(deliv.id);
         }
         delivNames = delivNames.sort();
-        delivNames.push('-Any-'); // TODO: insert at index 0
+        delivNames.unshift('-Any-');
         UI.setDropdownOptions('resultsDelivSelect', delivNames);
 
         let repoNames: string[] = [];
@@ -71,7 +71,7 @@ export class AdminResultsTab {
             repoNames.push(repo.id);
         }
         repoNames = repoNames.sort();
-        repoNames.push('-Any-'); // TODO: insert at index 0
+        repoNames.unshift('-Any-');
         UI.setDropdownOptions('resultsRepoSelect', repoNames);
 
         const headers: TableHeader[] = [
