@@ -373,7 +373,7 @@ export class CourseController { // don't implement ICourseController yet
     public async getDeliverables(): Promise<DeliverableTransport[]> {
         const deliverables = await this.dc.getDeliverables();
 
-        const delivs: DeliverableTransport[] = [];
+        let delivs: DeliverableTransport[] = [];
         for (const deliv of deliverables) {
 
             const delivTransport: DeliverableTransport = {
@@ -399,6 +399,10 @@ export class CourseController { // don't implement ICourseController yet
 
             delivs.push(delivTransport);
         }
+
+        delivs = delivs.sort(function(d1: DeliverableTransport, d2: DeliverableTransport) {
+            return d1.id.localeCompare(d2.id);
+        });
 
         return delivs;
     }

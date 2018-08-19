@@ -31,15 +31,15 @@ export class AdminDeliverablesTab {
     public async init(opts: any): Promise<void> {
         Log.info('AdminDeliverablesTab::init(..) - start');
 
-        const fab = document.querySelector('#adminAddDeliverable') as OnsFabElement;
-        if (this.isAdmin === false) {
-            fab.style.display = 'none';
-        } else {
-            fab.onclick = function(evt: any) {
-                Log.info('AdminDeliverablesTab::init(..)::addDeliverable::onClick');
-                UI.pushPage('editDeliverable.html', {delivId: null});
-            };
-        }
+        // const fab = document.querySelector('#adminAddDeliverable') as OnsFabElement;
+        // if (this.isAdmin === false) {
+        //     fab.style.display = 'none';
+        // } else {
+        //     fab.onclick = function(evt: any) {
+        //         Log.info('AdminDeliverablesTab::init(..)::addDeliverable::onClick');
+        //         UI.pushPage('editDeliverable.html', {delivId: null});
+        //     };
+        // }
 
         UI.showModal('Retrieving deliverables.');
         const delivs = await AdminDeliverablesTab.getDeliverables(this.remote);
@@ -79,6 +79,19 @@ export class AdminDeliverablesTab {
         if (deliverables.length === 0) {
             deliverableList.appendChild(UI.createListItem('Deliverables not yet specified.'));
         }
+
+        const createDeliverable = document.createElement('ons-button');
+        createDeliverable.setAttribute('modifier', 'large');
+        createDeliverable.innerText = 'Create New Deliverable';
+
+        createDeliverable.onclick = function() {
+            UI.pushPage('editDeliverable.html', {delivId: null});
+        };
+
+        const li = document.createElement('ons-list-item');
+        li.appendChild(createDeliverable);
+
+        deliverableList.appendChild(li);
     }
 
     public async initEditDeliverablePage(opts: any): Promise<void> {

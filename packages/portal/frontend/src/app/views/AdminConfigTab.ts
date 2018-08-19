@@ -11,11 +11,13 @@ export class AdminConfigTab {
     private readonly remote: string; // url to backend
     private isAdmin: boolean;
 
+    private deliverablesPage: AdminDeliverablesTab = null;
     private course: CourseTransport = null;
 
     constructor(remote: string, isAdmin: boolean) {
         this.remote = remote;
         this.isAdmin = isAdmin;
+        this.deliverablesPage = new AdminDeliverablesTab(remote, isAdmin);
     }
 
     public setAdmin(isAdmin: boolean) {
@@ -28,6 +30,8 @@ export class AdminConfigTab {
         Log.info('AdminDeliverablesTab::init(..) - start');
         const that = this;
         // Can init frame here if needed
+
+        this.deliverablesPage.init(opts);
 
         (document.querySelector('#adminSubmitClasslist') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminView::handleAdminConfig(..) - upload pressed');

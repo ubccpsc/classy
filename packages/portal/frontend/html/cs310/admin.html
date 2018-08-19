@@ -10,9 +10,10 @@
     </ons-toolbar>
 
     <ons-tabbar id='adminTabbar' swipeable position="top">
+        <!--
         <ons-tab id="AdminDeliverableTab" page="deliverables.html" label="Deliverables" icon="ion-home, material:md-home" active>
         </ons-tab>
-
+        -->
         <ons-tab id="AdminStudentTab" page="students.html" label="Students" icon="md-face" active-icon="md-face">
         </ons-tab>
 
@@ -110,10 +111,16 @@
         <ons-page id="AdminResults">
             <ons-list id="AdminResultsList">
                 <div style="text-align:center; padding: 1em;">
-                    Select Deliverable:
-                    <select id="resultsListSelect" style="margin-left: 1em;">
-                        <option value="''">-All-</option>
-                    </select></div>
+                    Deliverable:
+                    <select id="resultsDelivSelect" style="margin-left: 1em;">
+                        <option value="any">-All-</option>
+                    </select>
+                    Repo:
+                    <select id="resultsRepoSelect" style="margin-left: 1em;">
+                        <option value="any">-All-</option>
+                    </select>
+                    <button id="resultsUpdateButton">Update</button>
+                </div>
                 <ons-list-header>Results</ons-list-header>
                 <div id="resultsListTable" style="width:100%;"></div>
                 <div id="resultsListTableNone" class="noResultsRow">
@@ -142,6 +149,9 @@
 
     <template id="config.html">
         <ons-page id="AdminConfig">
+            <ons-list id="adminDeliverablesList">
+                <ons-list-header id="adminConfigDeliverablesHeader">Deliverables</ons-list-header>
+            </ons-list>
             <ons-list>
                 <ons-list-header>Upload Classlist</ons-list-header>
                 <ons-list-item expandable>
