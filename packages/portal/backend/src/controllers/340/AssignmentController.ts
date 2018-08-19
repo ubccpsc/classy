@@ -127,6 +127,7 @@ export class AssignmentController {
         // retrieve provisioning information
         let seedURL = assignInfo.seedRepoURL;
         let seedPath = assignInfo.seedRepoPath;
+        let mainFilePath = assignInfo.mainFilePath;
 
         // attempt to provision the repository
         let provisionAttempt: boolean;

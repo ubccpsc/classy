@@ -31,6 +31,7 @@ export interface SubQuestionGrade {
 export interface AssignmentInfo {
     seedRepoURL: string;
     seedRepoPath: string;
+    mainFilePath: string;
     status: AssignmentStatus;
     rubric: AssignmentGradingRubric;
     repositories: string[];             // Associated Repositories based on IDs
@@ -46,14 +47,14 @@ export interface AssignmentRepositoryInfo {
 // Represents a grading rubric
 export interface AssignmentGradingRubric {
     name: string;
-    comment: string;
+    comment: string; // placeholders for future use
     questions: QuestionGradingRubric[];
 }
 
 // Represents a question rubric
 export interface QuestionGradingRubric {
     name: string;
-    comment: string;
+    comment: string; // placeholders for future use
     subQuestions: SubQuestionGradingRubric[];
 }
 

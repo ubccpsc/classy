@@ -8,6 +8,7 @@ import {AssignmentController} from "../../controllers/340/AssignmentController";
 import {AssignmentGrade, AssignmentGradingRubric, AssignmentInfo, QuestionGrade} from "../../../../../common/types/CS340Types";
 import {GradesController} from "../../controllers/GradesController";
 import {PersonController} from "../../controllers/PersonController";
+import {RubricController} from "../../controllers/340/RubricController";
 
 export default class CS340REST implements IREST {
     public constructor() {
@@ -39,6 +40,34 @@ export default class CS340REST implements IREST {
         server.get('/portal/cs340/testPublishAllGrades', CS340REST.testPublishAllGrades);
         server.post('/portal/cs340/verifyScheduledJobs/:aid', CS340REST.verifyScheduledJobs);
         server.post('/portal/cs340/verifyScheduledJobs/', CS340REST.verifyAllScheduledJobs);
+        server.get('/portal/cs340/testRubricParser', CS340REST.testRubricParser);
+    }
+
+
+    public static async testPublishGrade(req: any, res: any, next: any) {
+        let ac: AssignmentController = new AssignmentController();
+        let success = await ac.publishGrade("jopika_grades", "a2_grades", "jopika", "a2");
+        if(success) {
+            res.send(200, "Complete!");
+        } else {
+            res.send(400, "Failed :(");
+        }
+    }
+
+    public static async testPublishAllGrades(req: any, res: any, next: any) {
+        let ac: AssignmentController = new AssignmentController();
+        let success = await ac.publishAllGrades("a2");
+        if(success) {
+            res.send(200, "Complete!");
+        } else {
+            res.send(400, "Failed :(");
+        }
+    }
+
+    public static async testRubricParser(req: any, res: any, next: any) {
+        let rc: RubricController = new RubricController();
+        await rc.updateRubric("a1");
+        res.send(200, "complete!");
     }
 
     public static async verifyAllScheduledJobs(req: any, res: any, next: any) {
@@ -89,26 +118,6 @@ export default class CS340REST implements IREST {
         return next();
     }
 
-
-    public static async testPublishGrade(req: any, res: any, next: any) {
-        let ac: AssignmentController = new AssignmentController();
-        let success = await ac.publishGrade("jopika_grades", "a2_grades", "jopika", "a2");
-        if(success) {
-            res.send(200, "Complete!");
-        } else {
-            res.send(400, "Failed :(");
-        }
-    }
-
-    public static async testPublishAllGrades(req: any, res: any, next: any) {
-        let ac: AssignmentController = new AssignmentController();
-        let success = await ac.publishAllGrades("a2");
-        if(success) {
-            res.send(200, "Complete!");
-        } else {
-            res.send(400, "Failed :(");
-        }
-    }
 
     public static getAssignmentGrade(req: any, res: any, next: any) {
         // TODO [Jonathan]: Get the grade of the student

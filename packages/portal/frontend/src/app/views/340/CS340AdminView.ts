@@ -204,13 +204,11 @@ export class CS340AdminView extends AdminView {
         //     // set the switches
         //
         // }
-
-
     }
 
     protected async newSave() {
         // await super.deliverablesTab.save();
-        super.deliverablesTab.save();
+        // super.deliverablesTab.save();
         let number = await this.verifyScheduledJobs(null);
         Log.info("CS340AdminView::newSave() - tasks generated: " + number);
     }
