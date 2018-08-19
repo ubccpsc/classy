@@ -222,7 +222,6 @@ export class Network {
     //     }
     // }
 
-
     // public static handleRemoteText(url: string, view: any, onError: any) {
     //     const USE_REAL = true;
     //     console.log('Network::handleRemoteText( ' + url + ' ) - start');

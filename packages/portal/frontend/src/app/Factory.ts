@@ -1,12 +1,12 @@
 // import {SDMMSummaryView} from "./views/sdmm/SDMMSummaryView";
 import Log from "../../../../common/Log";
-
-import {IView} from "./views/IView";
+import {CS340AdminView} from "./views/340/CS340AdminView";
+import {CS340View} from "./views/340/CS340View";
 import {AdminView} from "./views/AdminView";
 
 import {CS310View} from "./views/cs310/CS310View";
-import {CS340View} from "./views/340/CS340View";
-import {CS340AdminView} from "./views/340/CS340AdminView";
+
+import {IView} from "./views/IView";
 import {SDMMSummaryView} from "./views/sdmm/SDMMSummaryView";
 
 /**
@@ -69,7 +69,7 @@ export class Factory {
     public getAdminView(backendUrl: string): IView {
         if (this.adminView === null) {
             Log.trace("Factory::getAdminView() - instantating new view for: " + this.name);
-            let tabs = {
+            const tabs = {
                 deliverables: true,
                 students:     true,
                 teams:        true,

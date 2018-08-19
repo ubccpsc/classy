@@ -4,7 +4,7 @@ import {AutoTestConfig} from "../../../../../common/types/AutoTestTypes";
 
 import {DeliverableTransport, DeliverableTransportPayload} from "../../../../../common/types/PortalTypes";
 
-import {UI} from "../util/UI"
+import {UI} from "../util/UI";
 import {AdminView} from "./AdminView";
 
 // import flatpickr from "flatpickr";
@@ -12,7 +12,7 @@ declare var flatpickr: any;
 
 export class AdminDeliverablesTab {
 
-    private remote: string; // url to backend
+    private readonly remote: string; // url to backend
     private isAdmin: boolean;
     private openPicker: any; // flatpickr;
     private closePicker: any; // flatpickr;
@@ -59,7 +59,8 @@ export class AdminDeliverablesTab {
 
         for (const deliv of deliverables) {
             const main = 'Deliverable: ' + deliv.id;
-            const sub = 'Opens: ' + new Date(deliv.openTimestamp).toLocaleString() + '; Closes: ' + new Date(deliv.closeTimestamp).toLocaleString();
+            const sub = 'Opens: ' + new Date(deliv.openTimestamp).toLocaleString() +
+                '; Closes: ' + new Date(deliv.closeTimestamp).toLocaleString();
 
             let editable = false;
             if (this.isAdmin === true) {
@@ -179,7 +180,7 @@ export class AdminDeliverablesTab {
                 field.setAttribute('readonly', '');
             }
         } else {
-            Log.error('AdminDeliverablesTab::setTextField( ' + fieldName + ', ... ) - element does not exist')
+            Log.error('AdminDeliverablesTab::setTextField( ' + fieldName + ', ... ) - element does not exist');
         }
     }
 
@@ -191,7 +192,7 @@ export class AdminDeliverablesTab {
                 field.setAttribute('readonly', '');
             }
         } else {
-            Log.error('AdminDeliverablesTab::setToggle( ' + fieldName + ', ... ) - element does not exist')
+            Log.error('AdminDeliverablesTab::setToggle( ' + fieldName + ', ... ) - element does not exist');
         }
     }
 
@@ -233,7 +234,7 @@ export class AdminDeliverablesTab {
             atCustom = JSON.parse(atCustomRaw);
         }
 
-        let customRaw = UI.getTextFieldValue('adminEditDeliverablePage-custom');
+        const customRaw = UI.getTextFieldValue('adminEditDeliverablePage-custom');
         let custom: any = {};
         if (customRaw.length > 0) {
             Log.trace("AdminDeliverablesTab::save() - customRaw: " + customRaw);
@@ -242,7 +243,7 @@ export class AdminDeliverablesTab {
             custom = JSON.parse(customRaw);
         }
 
-        let at: AutoTestConfig = {
+        const at: AutoTestConfig = {
             dockerImage,
             maxExecTime,
             studentDelay,
@@ -250,7 +251,7 @@ export class AdminDeliverablesTab {
             custom: atCustom
         };
 
-        let deliv: DeliverableTransport = {
+        const deliv: DeliverableTransport = {
             id,
             URL,
             openTimestamp,
@@ -269,12 +270,12 @@ export class AdminDeliverablesTab {
         Log.trace("AdminDeliverablesTab::save() - result: " + JSON.stringify(deliv));
 
         const url = this.remote + '/portal/admin/deliverable';
-        let options: any = AdminView.getOptions();
+        const options: any = AdminView.getOptions();
         options.method = 'post';
         options.body = JSON.stringify(deliv);
 
-        let response = await fetch(url, options);
-        let body = await response.json();
+        const response = await fetch(url, options);
+        const body = await response.json();
 
         if (typeof body.success !== 'undefined') {
             // worked

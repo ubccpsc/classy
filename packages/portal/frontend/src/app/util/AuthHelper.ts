@@ -14,8 +14,8 @@ export class AuthHelper {
     }
 
     /**
-     * @param userrole that the current user should match
-     **/
+     * @param {string} userrole  that the current user should match
+     */
     public checkUserrole(userrole: string) {
         Log.trace('AuthHelper::checkUserRole() - start');
         this.getCurrentUser().then((data: any) => {
@@ -33,7 +33,7 @@ export class AuthHelper {
         this.isLoggedIn().then((data: any) => { // IsAuthenticatedResponse
             // console.log(data.response);
             Log.trace('AuthHelper::updateAuthStatus( ) - start');
-            let authStatus = localStorage.getItem('authStatus');
+            const authStatus = localStorage.getItem('authStatus');
             const UNAUTHENTICATED_STATUS = 'unauthenticated';
             if (data.response === false && authStatus !== UNAUTHENTICATED_STATUS) {
                 Log.trace('AuthHelper::updateAuthStatus( unauthenticated )');
@@ -48,8 +48,8 @@ export class AuthHelper {
     }
 
     private getCurrentUser(): Promise<object> {
-        let that = this;
-        let url = that.backendURL + '/portal/currentUser'; // TODO: what is this route???
+        const that = this;
+        const url = that.backendURL + '/portal/currentUser'; // TODO: what is this route???
         Log.trace('AuthHelper::getCurrentUser( ' + url + ' ) - start');
 
         return fetch(url, that.OPTIONS_HTTP_GET).then((data: any) => {
@@ -63,17 +63,16 @@ export class AuthHelper {
         });
     }
 
-
     private removeAuthStatus() {
         localStorage.removeItem('authStatus');
     }
 
     private isLoggedIn(): Promise<object> {
-        let that = this;
-        let url = that.backendURL + '/portal/isAuthenticated'; // TODO: what is this route???
+        const that = this;
+        const url = that.backendURL + '/portal/isAuthenticated'; // TODO: what is this route???
         Log.trace('AuthHelper::isLoggedIn( ' + url + ' ) - start');
         const AUTHORIZED_STATUS: string = 'authorized';
-        let authStatus = String(localStorage.getItem('authStatus'));
+        const authStatus = String(localStorage.getItem('authStatus'));
 
         return fetch(url, that.OPTIONS_HTTP_GET).then((data: any) => {
             if (data.status !== 200) {

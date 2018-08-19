@@ -3,15 +3,14 @@ import Log from "../../../../../common/Log";
 import {DeliverableTransport, GradeTransport, GradeTransportPayload, StudentTransport} from "../../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 
-import {UI} from "../util/UI"
+import {UI} from "../util/UI";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminStudentsTab} from "./AdminStudentsTab";
 import {AdminView} from "./AdminView";
 
-
 export class AdminGradesTab {
 
-    private remote: string; // url to backend
+    private readonly remote: string; // url to backend
     constructor(remote: string) {
         this.remote = remote;
     }
@@ -104,7 +103,7 @@ export class AdminGradesTab {
             // if (student.labId !== null && student.labId.length > 0) {
             //     lab = student.labId;
             // }
-            let row: TableCell[] = [
+            const row: TableCell[] = [
                 {value: student.id, html: '<a href="' + student.userUrl + '">' + student.id + '</a>'},
                 {value: student.studentNum, html: student.studentNum + ''},
                 {value: student.firstName, html: student.firstName},

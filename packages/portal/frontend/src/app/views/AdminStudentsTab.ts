@@ -3,13 +3,12 @@ import Log from "../../../../../common/Log";
 import {StudentTransport, StudentTransportPayload} from "../../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 
-import {UI} from "../util/UI"
+import {UI} from "../util/UI";
 import {AdminView} from "./AdminView";
-
 
 export class AdminStudentsTab {
 
-    private remote: string; // url to backend
+    private readonly remote: string; // url to backend
     constructor(remote: string) {
         this.remote = remote;
     }
@@ -31,7 +30,6 @@ export class AdminStudentsTab {
 
         this.render(students, opts.labSection);
     }
-
 
     private render(students: StudentTransport[], labSection: string): void {
         Log.trace("AdminStudentsTab::render(..) - start");
@@ -79,7 +77,7 @@ export class AdminStudentsTab {
             if (student.labId !== null && student.labId.length > 0) {
                 labId = student.labId;
             }
-            let row: TableCell[] = [
+            const row: TableCell[] = [
                 {value: student.id, html: '<a href="' + student.userUrl + '">' + student.id + '</a>'},
                 {value: student.firstName, html: student.firstName},
                 {value: student.lastName, html: student.lastName},
@@ -115,7 +113,7 @@ export class AdminStudentsTab {
             Log.info('AdminStudentsTab::render(..) - upload pressed');
             evt.stopPropagation(); // prevents list item expansion
 
-            let val = labSelector.value.valueOf();
+            const val = labSelector.value.valueOf();
 
             // that.renderPage('AdminStudents', {labSection: val}); // if we need to re-fetch
             that.render(students, val); // if cached data is ok

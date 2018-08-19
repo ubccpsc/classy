@@ -9,14 +9,13 @@ import {
 } from "../../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 
-import {UI} from "../util/UI"
+import {UI} from "../util/UI";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminView} from "./AdminView";
 
-
 export class AdminResultsTab {
 
-    private remote: string; // url to backend
+    private readonly remote: string; // url to backend
     constructor(remote: string) {
         this.remote = remote;
     }
@@ -137,7 +136,7 @@ export class AdminResultsTab {
             // const ts = result.input.pushInfo.timestamp;
             const ts = result.timestamp;
             const tsString = new Date(ts).toLocaleDateString() + ' @ ' + new Date(ts).toLocaleTimeString();
-            let row: TableCell[] = [
+            const row: TableCell[] = [
                 {value: result.repoId, html: '<a href="' + result.repoURL + '">' + result.repoId + '</a>'},
                 // {value: result.repoId, html: result.repoId},
                 {value: result.delivId, html: result.delivId},

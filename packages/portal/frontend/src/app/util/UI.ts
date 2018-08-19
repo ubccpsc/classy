@@ -25,7 +25,7 @@ export class UI {
         }
         Log.trace('UI::pushPage( ' + pageId + ', ' + JSON.stringify(options) + ' )');
 
-        const nav = document.querySelector('#myNavigator') as any;// as ons.OnsNavigatorElement;
+        const nav = document.querySelector('#myNavigator') as any; // as ons.OnsNavigatorElement;
         if (nav !== null) {
             return nav.pushPage(pageId, options);
         } else {
@@ -45,7 +45,7 @@ export class UI {
     }
 
     public static popPage() {
-        const nav = document.querySelector('#myNavigator') as any;// as ons.OnsNavigatorElement;
+        const nav = document.querySelector('#myNavigator') as any; // as ons.OnsNavigatorElement;
         if (nav !== null) {
             nav.popPage();
         } else {
@@ -57,7 +57,7 @@ export class UI {
         ons.notification.alert(note);
     }
 
-    public static notificationConfirm(note: string, callback: Function) {
+    public static notificationConfirm(note: string, callback: any) {
         ons.notification.confirm({message: note, callback});
     }
 
@@ -108,12 +108,12 @@ export class UI {
             text = null;
         }
 
-        const modals = document.querySelectorAll('ons-modal') as any; //c OnsModalElement[];
+        const modals = document.querySelectorAll('ons-modal') as any;
         for (const m of modals) {
             Log.trace("UI::showModal( " + text + " ) - start; modal: " + m);
             if (m !== null) {
                 if (text != null) {
-                    const textFields = document.querySelectorAll('#modalText') as any; //c OnsModalElement[];
+                    const textFields = document.querySelectorAll('#modalText') as any;
                     for (const t of textFields) {
                         // document.getElementById('modalText').innerHTML = text;
                         t.innerHTML = text;
@@ -143,7 +143,7 @@ export class UI {
         if (field !== null) {
             return field.value;
         } else {
-            Log.error('UI::getTextFieldValue( ' + fieldName + ' ) - element does not exist')
+            Log.error('UI::getTextFieldValue( ' + fieldName + ' ) - element does not exist');
         }
     }
 
@@ -152,7 +152,7 @@ export class UI {
         if (field !== null) {
             return field.checked;
         } else {
-            Log.error('UI::getToggleValue( ' + fieldName + ' ) - element does not exist')
+            Log.error('UI::getToggleValue( ' + fieldName + ' ) - element does not exist');
         }
     }
 
@@ -161,7 +161,7 @@ export class UI {
         if (field !== null) {
             return field.options[field.selectedIndex].value;
         } else {
-            Log.error('UI::getDropdownValue( ' + elementName + ' ) - element does not exist')
+            Log.error('UI::getDropdownValue( ' + elementName + ' ) - element does not exist');
         }
     }
 
@@ -170,6 +170,7 @@ export class UI {
         if (field !== null) {
             for (let i = 0; i < field.length; i++) {
                 const opt = field.options[i];
+                // tslint:disable-next-line
                 if (opt.value == value) { // use == so string and number values match
                     field.selectedIndex = i;
                 }
@@ -179,12 +180,12 @@ export class UI {
                 field.setAttribute('readonly', '');
             }
         } else {
-            Log.error('UI::setDropdownSelected( ' + elementName + ', ... ) - element does not exist')
+            Log.error('UI::setDropdownSelected( ' + elementName + ', ... ) - element does not exist');
         }
     }
 
     public static setDropdownOptions(elementName: string, options: string[], selectedVal?: string | number | null) {
-        let selector = document.querySelector('#' + elementName) as HTMLSelectElement;
+        const selector = document.querySelector('#' + elementName) as HTMLSelectElement;
         if (selector !== null) {
             selector.innerHTML = '';
             for (const opt of options) {
@@ -239,7 +240,7 @@ export class UI {
 // </ons-page>
 
     public static hideModal() {
-        const modals = document.querySelectorAll('ons-modal') as any; //c OnsModalElement[];
+        const modals = document.querySelectorAll('ons-modal') as any;
         for (const m of modals) {
             if (m !== null) {
                 m.hide({animation: 'fade'});
@@ -262,17 +263,17 @@ export class UI {
         if (dialog) {
             dialog.show();
         } else {
-            ons.createElement('d1team.html', {append: true}).then(function(dialog: any) {
-                dialog.show();
+            ons.createElement('d1team.html', {append: true}).then(function(diag: any) {
+                diag.show();
             });
         }
     }
 
     // SDMM: move
     public static hideD1TeamDialog() {
-        let elem: any = document.getElementById('d1teamDialog');
+        const elem: any = document.getElementById('d1teamDialog');
         elem.hide();
-    };
+    }
 
     public static took(start: number): string {
         return (Date.now() - start) + ' ms';
