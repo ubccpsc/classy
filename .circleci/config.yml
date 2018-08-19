@@ -86,6 +86,11 @@ jobs:
             when: always
 
       - run:
+            command: yarn run lint
+            name: Linting project
+            when: never
+
+      - run:
             command: git config --global user.email "CI@test.com" && git config --global user.name "CI Test Name"
             name: Configure local git
             when: always
