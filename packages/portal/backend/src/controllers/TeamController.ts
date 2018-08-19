@@ -45,7 +45,12 @@ export class TeamController {
         return myTeams;
     }
 
-    /*
+    /**
+     * Convenience method for creating team objects when only primitive types are known. This is
+     * especially useful for students specifying their own teams as it checks to ensure that team
+     * constraints (specified in the deliverable) are ahered to. Once all checks pass, the code
+     * passes through to TeamController::createTeam(..).
+     *
      * @param {string} delivId
      * @param {string[]} gitHubIds
      * @returns {Promise<Team | null>}
@@ -115,6 +120,15 @@ export class TeamController {
         return team;
     }
 
+    /**
+     * Creates a team object.
+     *
+     * @param {string} name
+     * @param {Deliverable} deliv
+     * @param {Person[]} people
+     * @param custom
+     * @returns {Promise<Team | null>}
+     */
     public async createTeam(name: string, deliv: Deliverable, people: Person[], custom: any): Promise<Team | null> {
         Log.info("TeamController::createTeam( " + name + ",.. ) - start");
 

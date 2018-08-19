@@ -48,6 +48,29 @@ describe.only("TeamController", () => {
         expect(teams).to.have.lengthOf(0);
     });
 
+    it("Should not able to create a team if a deliverable was not specified.", async () => {
+        let teams = await tc.getAllTeams();
+        expect(teams).to.have.lengthOf(0);
+
+        const p1 = await pc.getPerson(Test.USER1.id);
+        const p2 = await pc.getPerson(Test.USER2.id);
+        expect(p1).to.not.be.null;
+        expect(p2).to.not.be.null;
+
+        let ex = null;
+        let team = null;
+        try {
+            team = await tc.createTeam(Test.TEAMNAME1, null, [p1, p2], {});
+        } catch (err) {
+            ex = err;
+        }
+        expect(ex).to.not.be.null;
+        expect(team).to.be.null;
+
+        teams = await tc.getAllTeams();
+        expect(teams).to.have.lengthOf(0);
+    });
+
     it("Should be able to create a team.", async () => {
         let teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(0);
