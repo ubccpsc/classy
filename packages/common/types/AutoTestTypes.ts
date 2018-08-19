@@ -4,8 +4,10 @@ export interface CommitTarget {
      * have a default id and one is not specified (e.g., in a commit comment)
      * we cannot create a CommitTarget.
      */
-    delivId: string;
+    delivId: string; // TODO: remove this from here? it's already in IContainerInput
     repoId: string;
+
+    // TODO: add cloneURL
 
     commitSHA: string;
     commitURL: string;
@@ -61,6 +63,7 @@ export interface IAutoTestResult {
  */
 export interface IContainerInput {
     delivId: string; // Specifies what delivId the Grader should execute against.
+    // TODO: rename to target: ICommitTarget
     pushInfo: IPushEvent; // Details about the push event that led to this request.
     containerConfig: AutoTestConfig; // Container configuration details.
 }
