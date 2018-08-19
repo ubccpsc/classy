@@ -1,26 +1,27 @@
-import {SDMMController} from "../../../src/controllers/SDMM/SDMMController";
 import {expect} from "chai";
 import "mocha";
 
-import {Test} from "../../GlobalSpec";
-
-import Log from "../../../../../common/Log";
-import Util from "../../../../../common/Util";
-import {ActionPayload, GradePayload} from "../../../../../common/types/SDMMTypes";
-
-import {GitHubController} from "../../../src/controllers/GitHubController";
-import {GitHubActions} from "../../../src/controllers/GitHubActions";
-import {GradesController} from "../../../src/controllers/GradesController";
 import Config, {ConfigKey} from "../../../../../common/Config";
+import Log from "../../../../../common/Log";
+import {ActionPayload, GradePayload} from "../../../../../common/types/SDMMTypes";
+import Util from "../../../../../common/Util";
 
-const loadFirst = require('../../GlobalSpec');
-const rFirst = require('./SDMMControllerSpec'); // so we go last
+import {GitHubActions} from "../../../src/controllers/GitHubActions";
+import {GitHubController} from "../../../src/controllers/GitHubController";
+import {GradesController} from "../../../src/controllers/GradesController";
+import {SDMMController} from "../../../src/controllers/SDMM/SDMMController";
+
+import {Test} from "../../GlobalSpec";
+// const loadFirst = require('../../GlobalSpec');
+import "../../GlobalSpec";
+// const rFirst = require('./SDMMControllerSpec'); // so we go last
+import "./SDMMControllerSpec";
 
 describe.skip("SDMM:: SDMMGitHubActions", () => {
 
     let gh: GitHubActions;
 
-    let TIMEOUT = 5000;
+    const TIMEOUT = 5000;
 
     // let ORGNAME = 'secapstone';
     const REPONAME = getProjectPrefix() + Test.REPONAME1;
@@ -38,18 +39,18 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
         Config.getInstance().setProp(ConfigKey.org, oldOrg);
     });
 
-    beforeEach(function () {
+    beforeEach(function() {
         gh = new GitHubActions();
     });
 
-    let TESTREPONAMES = ["testtest__repo1",
+    const TESTREPONAMES = ["testtest__repo1",
         "secap_cpscbot",
         "secap_rthse2",
         "secap_ubcbot",
         "secap_testtest__repo1"
     ];
 
-    let TESTTEAMNAMES = [
+    const TESTTEAMNAMES = [
         "rtholmes",
         "ubcbot",
         "rthse2",
@@ -57,9 +58,8 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
         "TEST__X__t_TESTteam1"
     ];
 
-
-    it("Clear stale repos and teams.", async function () {
-        let del = await deleteStale();
+    it("Clear stale repos and teams.", async function() {
+        const del = await deleteStale();
         expect(del).to.be.true;
     }).timeout(TIMEOUT * 10);
 
@@ -242,12 +242,12 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
 
 */
 
-    it("Clear stale repos and teams.", async function () {
-        let del = await deleteStale();
+    it("Clear stale repos and teams.", async function() {
+        const del = await deleteStale();
         expect(del).to.be.true;
     }).timeout(TIMEOUT * 10);
 
-    it("Should be able to provision d0.", async function () {
+    it("Should be able to provision d0.", async function() {
         const start = Date.now();
 
         const sc = new SDMMController(new GitHubController());
@@ -264,17 +264,17 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
         let provision = await sc.provision('d0', [Test.USERNAMEGITHUB1]);
         expect(provision.success).to.not.be.undefined;
         expect(provision.failure).to.be.undefined;
-        expect((<ActionPayload>provision.success).status.status).to.equal("D0");
+        expect((provision.success as ActionPayload).status.status).to.equal("D0");
 
         provision = await sc.provision('d0', [Test.USERNAMEGITHUB2]);
         expect(provision.success).to.not.be.undefined;
         expect(provision.failure).to.be.undefined;
-        expect((<ActionPayload>provision.success).status.status).to.equal("D0");
+        expect((provision.success as ActionPayload).status.status).to.equal("D0");
 
         provision = await sc.provision('d0', [Test.USERNAMEGITHUB3]);
         expect(provision.success).to.not.be.undefined;
         expect(provision.failure).to.be.undefined;
-        expect((<ActionPayload>provision.success).status.status).to.equal("D0");
+        expect((provision.success as ActionPayload).status.status).to.equal("D0");
 
         Log.test('Adding some grades for the d0 repos');
         const gc = new GradesController();
@@ -311,7 +311,7 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
         Log.trace("Test took (3 users, 3 d0 repos): " + Util.took(start));
     }).timeout(300 * 1000); // 5 minutes
 
-    it("Should be able to provision an individual d1.", async function () {
+    it("Should be able to provision an individual d1.", async function() {
         const start = Date.now();
 
         const sc = new SDMMController(new GitHubController());
@@ -321,12 +321,12 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
         Log.test('Provision solo d1; payload: ' + JSON.stringify(provision));
         expect(provision.success).to.not.be.undefined;
         expect(provision.failure).to.be.undefined;
-        expect((<ActionPayload>provision.success).status.status).to.equal("D1");
+        expect((provision.success as ActionPayload).status.status).to.equal("D1");
 
         Log.trace("Test took (1 users, 1 upgrade): " + Util.took(start));
     }).timeout(300 * 1000); // 5 minutes
 
-    it("Should be able to provision a paired d1.", async function () {
+    it("Should be able to provision a paired d1.", async function() {
         const start = Date.now();
 
         const sc = new SDMMController(new GitHubController());
@@ -336,19 +336,17 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
         Log.test('Provision paired d1; payload: ' + JSON.stringify(provision));
         expect(provision.success).to.not.be.undefined;
         expect(provision.failure).to.be.undefined;
-        expect((<ActionPayload>provision.success).status.status).to.equal("D1");
+        expect((provision.success as ActionPayload).status.status).to.equal("D1");
 
         // NOTE: every time this is run it will create a team we can't programmatically delete
 
         Log.trace("Test took (2 users, 1 clones): " + Util.took(start));
     }).timeout(300 * 1000); // 5 minutes
 
-
-    it("Clear stale repos and teams.", async function () {
-        let del = await deleteStale();
+    it("Clear stale repos and teams.", async function() {
+        const del = await deleteStale();
         expect(del).to.be.true;
     }).timeout(TIMEOUT * 10);
-
 
     function getProjectPrefix(): string {
         return "TEST__X__secap_";
@@ -371,7 +369,7 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
             for (const r of TESTREPONAMES) {
                 if (repo.name === r) {
                     Log.info('Removing stale repo: ' + repo.name);
-                    let val = await gh.deleteRepo(r);
+                    const val = await gh.deleteRepo(r);
                     // expect(val).to.be.true;
                 }
             }
@@ -383,16 +381,16 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
             Log.info('Evaluating repo: ' + repo.name);
             if (repo.name.indexOf('TEST__X__') === 0) {
                 Log.info('Removing stale repo: ' + repo.name);
-                let val = await gh.deleteRepo(repo.name);
+                const val = await gh.deleteRepo(repo.name);
                 // expect(val).to.be.true;
-                let teamName = repo.name.substr(15);
+                const teamName = repo.name.substr(15);
                 Log.info('Adding stale team name: ' + repo.name);
                 TESTTEAMNAMES.push(teamName);
             }
         }
 
         // delete teams if needed
-        let teams = await gh.listTeams();
+        const teams = await gh.listTeams();
         expect(teams).to.be.an('array');
         expect(teams.length > 0).to.be.true;
         Log.test('All Teams: ' + JSON.stringify(teams));
@@ -402,7 +400,7 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
             for (const t of TESTTEAMNAMES) {
                 if (team.name === t) {
                     Log.test("Removing stale team: " + team.name);
-                    let val = await gh.deleteTeam(team.id);
+                    const val = await gh.deleteTeam(team.id);
                     // expect(val).to.be.true;
                 }
             }
@@ -410,6 +408,5 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
         Log.test('GitHubActionSpec::deleteStale() - done');
         return true;
     }
-
 
 });
