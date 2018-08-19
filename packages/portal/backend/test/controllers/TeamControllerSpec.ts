@@ -1,17 +1,18 @@
 import {expect} from "chai";
 import "mocha";
+import Log from "../../../../common/Log";
 
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {TeamController} from "../../src/controllers/TeamController";
+import '../GlobalSpec';
 
 import {Test} from "../GlobalSpec";
-import '../GlobalSpec';
 // import '../GlobalSpec';
 import './PersonControllerSpec';
 // const loadFirst = require("../GlobalSpec");
 
-describe.only("TeamController", () => {
+describe("TeamController", () => {
 
     let tc: TeamController;
     let pc: PersonController;
@@ -139,4 +140,130 @@ describe.only("TeamController", () => {
         const teams = await tc.getTeamsForPerson(person);
         expect(teams).to.have.lengthOf(2);
     });
+
+    it("Should fail to form a team if deliverable constraints are violated.", async () => {
+        let teams = await tc.getAllTeams();
+        expect(teams).to.have.lengthOf(3);
+
+        // invalid deliverable
+        let team = null;
+        let ex = null;
+        try {
+            team = await tc.formTeam('INVALIDDELIV', [Test.USERNAMEGITHUB1], false);
+        } catch (err) {
+            Log.test(err);
+            ex = err;
+        }
+        expect(ex).to.not.be.null;
+        expect(team).to.be.null;
+
+        // too few students
+        team = null;
+        ex = null;
+        try {
+            team = await tc.formTeam(Test.DELIVID0, [], false);
+        } catch (err) {
+            Log.test(err);
+            ex = err;
+        }
+        expect(ex).to.not.be.null;
+        expect(team).to.be.null;
+
+        // too many students
+        team = null;
+        ex = null;
+        try {
+            team = await tc.formTeam(Test.DELIVID0, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2], false);
+        } catch (err) {
+            Log.test(err);
+            ex = err;
+        }
+        expect(ex).to.not.be.null;
+        expect(team).to.be.null;
+
+        // student's can't form for this deliverable
+        team = null;
+        ex = null;
+        try {
+            team = await tc.formTeam(Test.DELIVID3, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2], false);
+        } catch (err) {
+            Log.test(err);
+            ex = err;
+        }
+        expect(ex).to.not.be.null;
+        expect(team).to.be.null;
+
+        // id not in course
+        team = null;
+        ex = null;
+        try {
+            team = await tc.formTeam(Test.DELIVIDPROJ, [Test.USER1.github, 'invalidGitHubid'], false);
+        } catch (err) {
+            Log.test(err);
+            ex = err;
+        }
+        expect(ex).to.not.be.null;
+        expect(team).to.be.null;
+
+        // students not in same lab section
+        team = null;
+        ex = null;
+        try {
+            team = await tc.formTeam(Test.DELIVIDPROJ, [Test.USER1.github, Test.USER4.github], false);
+        } catch (err) {
+            Log.test(err);
+            ex = err;
+        }
+        expect(ex).to.not.be.null;
+        expect(team).to.be.null;
+
+        // students already on teams
+        team = null;
+        ex = null;
+        try {
+            team = await tc.formTeam(Test.DELIVID1, [Test.USER1.github, Test.USER2.github], false);
+        } catch (err) {
+            Log.test(err);
+            ex = err;
+        }
+        expect(ex).to.not.be.null;
+        expect(team).to.be.null;
+
+        teams = await tc.getAllTeams();
+        expect(teams).to.have.lengthOf(3);
+    }).timeout(Test.TIMEOUT);
+
+    it("Should form a team if deliverable constraints are not violated.", async () => {
+        let teams = await tc.getAllTeams();
+        expect(teams).to.have.lengthOf(3);
+
+        // should work
+        let team = null;
+        let ex = null;
+        try {
+            team = await tc.formTeam(Test.DELIVIDPROJ, [Test.USER1.github, Test.USER2.github], false);
+        } catch (err) {
+            Log.test(err);
+            ex = err;
+        }
+        expect(ex).to.be.null;
+        expect(team).to.not.be.null;
+
+        teams = await tc.getAllTeams();
+        expect(teams).to.have.lengthOf(4);
+    }).timeout(Test.TIMEOUT);
+
+    it("Translation to transport type should work.", async () => {
+        const team = await tc.getTeam(Test.TEAMNAME1);
+        expect(team).to.not.be.null;
+
+        const trans = tc.teamToTransport(team);
+        expect(team.id).to.equal(trans.id);
+        expect(team.URL).to.equal(trans.URL);
+        expect(team.delivId).to.equal(trans.delivId);
+
+        for (const p of team.personIds) {
+            expect(trans.people).to.contain(p);
+        }
+    }).timeout(Test.TIMEOUT);
 });

@@ -66,6 +66,8 @@ export class Test {
         const dc = DatabaseController.getInstance();
 
         let d = Test.createDeliverable(Test.DELIVID0);
+        d.teamMinSize = 1;
+        d.teamMaxSize = 1;
         await dc.writeDeliverable(d);
 
         d = Test.createDeliverable(Test.DELIVID1);
@@ -75,6 +77,7 @@ export class Test {
         await dc.writeDeliverable(d);
 
         d = Test.createDeliverable(Test.DELIVID3);
+        d.teamStudentsForm = false;
         await dc.writeDeliverable(d);
 
         d = Test.createDeliverable(Test.DELIVIDPROJ);
@@ -89,12 +92,19 @@ export class Test {
         await dc.writePerson(p);
 
         p = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, 'student');
+        p.labId = 'l1a';
         await dc.writePerson(p);
 
         p = Test.createPerson(Test.USER2.id, Test.USER2.csId, Test.USER2.github, 'student');
+        p.labId = 'l1a';
         await dc.writePerson(p);
 
         p = Test.createPerson(Test.USER3.id, Test.USER3.csId, Test.USER3.github, 'student');
+        p.labId = 'l1a';
+        await dc.writePerson(p);
+
+        p = Test.createPerson(Test.USER4.id, Test.USER4.csId, Test.USER4.github, 'student');
+        p.labId = 'l2c';
         await dc.writePerson(p);
 
         // staff person (this username should be on the 'staff' team, but not the 'admin' team in the github org)
@@ -225,7 +235,7 @@ export class Test {
             gradesReleased: false,
             // delay:          300,
 
-            teamMinSize:      1,
+            teamMinSize:      2,
             teamMaxSize:      2,
             teamSameLab:      true,
             teamStudentsForm: true,
@@ -373,6 +383,7 @@ export class Test {
     public static readonly USER1 = {id: 'user1id', csId: 'user1id', github: 'user1gh'};
     public static readonly USER2 = {id: 'user2id', csId: 'user2id', github: 'user2gh'};
     public static readonly USER3 = {id: 'user3id', csId: 'user3id', github: 'user3gh'};
+    public static readonly USER4 = {id: 'user4id', csId: 'user4id', github: 'user4gh'};
 
     // public static readonly ADMIN1 = {id: 'ubcbot', csId: 'ubcbot', github: 'ubcbot'};
     public static readonly ADMIN1 = {id: 'classyadmin', csId: 'classyadmin', github: 'classyadmin'};
