@@ -18,10 +18,6 @@ export interface CommitTarget {
  * Pertinent properties from GitHub push webhook events.
  */
 export interface IPushEvent extends CommitTarget {
-    // Nothing in PushEvent that CommitTarget does not already know about
-
-    // branch: string; // really refs // TODO: needed?
-
     cloneURL: string; // used by the Grader service
 }
 

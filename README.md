@@ -12,7 +12,7 @@ Primary contributors:
 
 ## Configuration
 
-Full details about how classy should be configured can be found in [Config.md](Config.md).
+Full details about how classy should be configured can be found in [docs/config.md](docs/config.md).
 
 ## Dev overview
 
