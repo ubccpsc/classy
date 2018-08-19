@@ -16,6 +16,9 @@ import {AdminView} from "./AdminView";
 export class AdminResultsTab {
 
     private readonly remote: string; // url to backend
+    private delivValue: string | null = null;
+    private repoValue: string | null = null;
+
     constructor(remote: string) {
         this.remote = remote;
     }
@@ -36,7 +39,12 @@ export class AdminResultsTab {
         const fab = document.querySelector('#resultsUpdateButton') as OnsButtonElement;
         fab.onclick = function(evt: any) {
             Log.info('AdminResultsTab::init(..)::updateButton::onClick');
-            that.performQueries();
+            that.performQueries().then(function(newResults) {
+                // TODO: need to track and update the current value of deliv and repo
+                that.render(delivs, repos, newResults);
+            }).catch(function(err) {
+                UI.showError(err);
+            });
         };
 
         this.render(delivs, repos, results);
@@ -52,6 +60,8 @@ export class AdminResultsTab {
         if (repo === '-Any-') {
             repo = 'any';
         }
+        this.delivValue = deliv;
+        this.repoValue = repo;
         return await AdminResultsTab.getResults(this.remote, deliv, repo);
     }
 
@@ -64,7 +74,7 @@ export class AdminResultsTab {
         }
         delivNames = delivNames.sort();
         delivNames.unshift('-Any-');
-        UI.setDropdownOptions('resultsDelivSelect', delivNames);
+        UI.setDropdownOptions('resultsDelivSelect', delivNames, this.delivValue);
 
         let repoNames: string[] = [];
         for (const repo of repos) {
@@ -72,7 +82,7 @@ export class AdminResultsTab {
         }
         repoNames = repoNames.sort();
         repoNames.unshift('-Any-');
-        UI.setDropdownOptions('resultsRepoSelect', repoNames);
+        UI.setDropdownOptions('resultsRepoSelect', repoNames, this.repoValue);
 
         const headers: TableHeader[] = [
             {
@@ -172,7 +182,7 @@ export class AdminResultsTab {
             const json: AutoTestResultSummaryPayload = await response.json();
             // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
             if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                Log.trace('AdminResultsTab::getResults(..)  - worked; took: ' + UI.took(start));
+                Log.trace('AdminResultsTab::getResults(..)  - worked; # rows: ' + json.success.length + '; took: ' + UI.took(start));
                 return json.success;
             } else {
                 Log.trace('AdminResultsTab::getResults(..)  - ERROR: ' + json.failure.message);

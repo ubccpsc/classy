@@ -10,6 +10,13 @@ import {AdminView} from "./AdminView";
 // import flatpickr from "flatpickr";
 declare var flatpickr: any;
 
+/**
+ *
+ * This isn't a tab on its own anymore. It has been absorbed within AdminConfigTab
+ * but the code here is more clearly organized so we've left it here for the time
+ * being until more explicit tab sub-helpers are actually a thing.
+ *
+ */
 export class AdminDeliverablesTab {
 
     private readonly remote: string; // url to backend
