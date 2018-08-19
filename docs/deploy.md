@@ -176,3 +176,15 @@ You can
 - restart a particular service by specifying the service name in the up command: `docker-compose ... up --detached SERVICE`
 - stop a particular service by specifying the service name in the down command: `docker-compose ... down SERVICE`
 
+## Deploying Updates
+
+To update the (SDMM) system:
+
+```bash
+cd /opt/classy
+git pull
+docker-compose -f docker-compose.yml -f docker-compose.310.yml up -d --build
+```
+
+which will rebuild any services that have changed and restart them.
+To update only a particular service, simple specify the service name after the `--build` flag.
