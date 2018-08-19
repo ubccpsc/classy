@@ -1,5 +1,9 @@
 import {expect} from "chai";
 import "mocha";
+// import restify = require('restify');
+import * as restify from "restify";
+// const request = require('supertest');
+import * as request from "supertest";
 
 import Log from "../../../../common/Log";
 import {AuthTransportPayload} from "../../../../common/types/PortalTypes";
@@ -7,19 +11,16 @@ import {DatabaseController} from "../../src/controllers/DatabaseController";
 
 import BackendServer from "../../src/server/BackendServer";
 import {Test} from "../GlobalSpec";
-import restify = require('restify');
 
-const request = require('supertest');
-
-const loadFirst = require("../xRunLast/TestDatasetGeneratorSpec");
+// const loadFirst = require("../xRunLast/TestDatasetGeneratorSpec");
 
 describe('Auth Routes', function() {
 
-    const TIMEOUT = 1000 * 10;
+    // const TIMEOUT = 1000 * 10;
 
-    var app: restify.Server = null;
+    let app: restify.Server = null;
 
-    var server: BackendServer = null;
+    let server: BackendServer = null;
 
     // let oldOrg: string | null = null;
     before(async () => {
@@ -28,14 +29,7 @@ describe('Auth Routes', function() {
         // oldOrg = Config.getInstance().getProp(ConfigKey.org);
         // Config.getInstance().setProp(ConfigKey.name, ConfigCourses.classytest); // force testing environment
 
-        let db = DatabaseController.getInstance();
-        // await db.clearData(); // nuke everything
-
         await Test.suiteBefore('Auth Routes');
-
-        // clear stale data
-        db = DatabaseController.getInstance();
-        await db.clearData();
 
         // get data ready
         await Test.prepareAll();
@@ -82,7 +76,7 @@ describe('Auth Routes', function() {
         expect(body.success).to.not.be.undefined;
         expect(body.success.personId).to.equal(auth.personId);
         expect(body.success.token).to.equal(auth.token);
-    }).timeout(TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     it('Should be able to get some credentials for a student.', async function() {
 
@@ -109,7 +103,7 @@ describe('Auth Routes', function() {
         expect(body.success).to.not.be.undefined;
         expect(body.success.personId).to.equal(auth.personId);
         expect(body.success.token).to.equal(auth.token);
-    }).timeout(TIMEOUT);
+    }).timeout(Test.TIMEOUT);
 
     it('Should fail to get credentials if the token is bad.', async function() {
 
@@ -154,7 +148,7 @@ describe('Auth Routes', function() {
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-    }).timeout(TIMEOUT);
+    }).timeout(Test.TIMEOUT);
 
     /**
      * This one is a bit controversial:
@@ -206,7 +200,7 @@ describe('Auth Routes', function() {
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
 
-    }).timeout(TIMEOUT);
+    }).timeout(Test.TIMEOUT);
 
     /**
      * This one is a bit controversial:
@@ -258,6 +252,6 @@ describe('Auth Routes', function() {
         expect(response.status).to.equal(400);
         expect(body.failure).to.not.be.undefined;
 
-    }).timeout(TIMEOUT);
+    }).timeout(Test.TIMEOUT);
 
 });

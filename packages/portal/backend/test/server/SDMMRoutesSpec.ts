@@ -31,7 +31,7 @@ describe('SDMM Routes', function() {
 
     const OLDNAME = Config.getInstance().getProp(ConfigKey.name);
     const OLDORG = Config.getInstance().getProp(ConfigKey.org);
-    const user1id = Test.REALUSER1.github; // sdmm only uses github
+    // const user1id = Test.REALUSER1.github; // sdmm only uses github
 
     before(async function() {
         Log.test('SDMMRoutes::before - start');
@@ -40,29 +40,18 @@ describe('SDMM Routes', function() {
         // get data ready
         await Test.prepareDeliverables();
 
-        // const dc = DatabaseController.getInstance();
-        // const p = Test.createPerson(user1id, user1id, user1id, 'student');
-        // await dc.writePerson(p);
-        //
-        // const auth: Auth = {
-        //     personId: user1id,
-        //     token:    Test.REALTOKEN
-        // };
-        // await dc.writeAuth(auth);
-
         Config.getInstance().setProp(ConfigKey.name, 'sdmm');
 
         // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
         server = new BackendServer(false);
 
-        return server.start().then(function() {
+        try {
+            await server.start();
             Log.test('SDMMRoutesSpec::before - server started');
-            // Log.test('orgName: ' + Test.ORGNAME);
             app = server.getServer();
-        }).catch(function(err) {
-            // probably ok; ust means server is already started
+        } catch (err) {
             Log.test('SDMMRoutesSpec::before - server might already be started: ' + err);
-        });
+        }
     });
 
     after(async function() {
@@ -81,23 +70,12 @@ describe('SDMM Routes', function() {
         await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB1);
         await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB2);
 
-        // clear repos from datastore (should already happen from Test.suiteBefore)
-        // const dc = DatabaseController.getInstance();
-        // let repo = await dc.getRepository('secap_' + Test.USERNAMEGITHUB1);
-        // if (repo !== null) {
-        //     await dc.deleteRepository(repo);
-        // }
-        // repo = await dc.getRepository('secap_' + Test.USERNAMEGITHUB2);
-        // if (repo !== null) {
-        //     await dc.deleteRepository(repo);
-        // }
-
         Log.test('SDMMRoutesSpec::clearGithub() - done');
     }
 
     it('Should be possible to clear stale state.', async function() {
         await clearGithub();
-    }).timeout(Test.TIMEOUT * 5);
+    }).timeout(Test.TIMEOUTLONG);
 
     it('Should not be able to get status without a token.', async function() {
         // NOTE: this subsumed valid uers checks since only valid users can have valid auth tokens
@@ -119,41 +97,20 @@ describe('SDMM Routes', function() {
     });
 
     it('Should respond to a valid status request.', async function() {
-
-        // make sure some valid tokens exist
         const dc: DatabaseController = DatabaseController.getInstance();
-        // let p = Test.createPerson(Test.USER1.github, Test.USER1.github, Test.USER1.github, 'student');
+
         const ghInstance = new GitHubController();
         const sc = new SDMMController(ghInstance);
 
+        // create some users
         let p = await sc.handleUnknownUser(Test.USERNAMEGITHUB1);
         await dc.writePerson(p);
-
         p = await sc.handleUnknownUser(Test.USERNAMEGITHUB2);
         await dc.writePerson(p);
 
-        // p = Test.createPerson(Test.USER2.github, Test.USER2.github, Test.USER2.github, 'student');
-        // await dc.writePerson(p);
-
+        // make sure some valid tokens exist
         await dc.writeAuth({personId: Test.USERNAMEGITHUB1, token: Test.REALTOKEN}); // create an auth record
         await dc.writeAuth({personId: Test.USERNAMEGITHUB2, token: Test.REALTOKEN}); // create an auth record
-
-        // const PERSON1: Person = {
-        //     id:            Test.USER1.github,
-        //     csId:          Test.USER1.github, // sdmm doesn't have these
-        //     githubId:      Test.USER1.github,
-        //     studentNumber: null,
-        //
-        //     fName:  '',
-        //     lName:  '',
-        //     kind:   'student',
-        //     URL:    'https://github.com/' + Test.USER1.id,
-        //     labId:  'UNKNOWN',
-        //     custom: {}
-        // };
-        //
-        // const pc = new PersonController();
-        // await pc.createPerson(PERSON1);
 
         let response = null;
         const url = '/portal/sdmm/currentStatus/';
@@ -242,17 +199,13 @@ describe('SDMM Routes', function() {
         let response = null;
         const url = '/portal/sdmm/performAction/provisionD0';
         const rc = new RepositoryController();
-        let repo = null;
         try {
-            repo = await rc.createRepository('secap_' + Test.USERNAMEGITHUB1, [], {});
+            await rc.createRepository('secap_' + Test.USERNAMEGITHUB1, [], {}); // make sure the repo exists already
             const name = Config.getInstance().getProp(ConfigKey.name);
             response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
-        // const dc = DatabaseController.getInstance();
-        // await dc.deleteRepository(repo); // cleanup repo
-        // await dc.deleteTeam(await dc.getTeam(Test.USERNAMEGITHUB1)); // cleanup team
 
         // works on its own but not with others
         Log.test(response.status + " -> " + JSON.stringify(response.body));
@@ -301,9 +254,6 @@ describe('SDMM Routes', function() {
             };
             await dc.writeGrade(g);
 
-            // const t = await Test.createTeam(Test.USERNAMEGITHUB1, 'd1', [Test.USERNAMEGITHUB1]);
-            // await dc.writeTeam(t);
-
             const name = Config.getInstance().getProp(ConfigKey.name);
             response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
@@ -323,7 +273,7 @@ describe('SDMM Routes', function() {
         const url = '/portal/sdmm/performAction/provisionD1team/somerandmomusernamethatdoesnotexist';
         try {
             const gha = new GitHubActions();
-            const deleted = await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB1); // make sure the repo doesn't exist
+            await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB1); // make sure the repo doesn't exist
 
             const name = Config.getInstance().getProp(ConfigKey.name);
             response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});

@@ -312,8 +312,8 @@ export class CourseController { // don't implement ICourseController yet
      * @returns {Promise<AutoTestGradeTransport[]>}
      */
     public async getResults(reqDelivId: string, reqRepoId: string): Promise<AutoTestResultSummaryTransport[]> {
-
-        const NUM_RESULTS = 200;
+        Log.info("CourseController::getResults( " + reqDelivId + ", " + reqRepoId + " ) - start");
+        const NUM_RESULTS = 200; // max # of records
 
         const allResults = await this.resC.getAllResults();
         const results: AutoTestResultSummaryTransport[] = [];
@@ -361,6 +361,7 @@ export class CourseController { // don't implement ICourseController yet
                 // result does not match filter
             }
         }
+        Log.trace("CourseController::getResults(..) - # results: " + results.length);
         return results;
     }
 
