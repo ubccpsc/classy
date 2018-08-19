@@ -153,7 +153,7 @@ describe('General Routes', function() {
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success.length).to.equal(1);
+        expect(body.success.length).to.equal(2);
         expect(body.success[0].delivId).to.equal(Test.DELIVID0);
         expect(body.success[0].id).to.equal(Test.TEAMNAME1);
     });

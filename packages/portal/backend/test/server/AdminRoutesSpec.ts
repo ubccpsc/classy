@@ -232,7 +232,7 @@ describe('Admin Routes', function() {
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
         expect(body.success).to.be.an('array');
-        expect(body.success).to.have.lengthOf(1);
+        expect(body.success).to.have.lengthOf(2);
 
         // check one entry
         const entry = body.success[0];
