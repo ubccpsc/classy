@@ -83,7 +83,7 @@ describe("CourseController", () => {
             githubId:   Test.USER1.github,
             userUrl:    Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Test.USER1.github,
             studentNum: null,
-            labId:      null
+            labId:      'l1a'
         };
 
         expect(res).to.deep.include(s); // make sure at least one student with the right format is in there
