@@ -11,7 +11,7 @@ import '../GlobalSpec';
 import './PersonControllerSpec';
 // const loadFirst = require("../GlobalSpec");
 
-describe("TeamController", () => {
+describe.only("TeamController", () => {
 
     let tc: TeamController;
     let pc: PersonController;
@@ -42,6 +42,12 @@ describe("TeamController", () => {
         expect(teams).to.have.lengthOf(0);
     });
 
+    it("Should be able to get the teams for a person even if there are none.", async () => {
+        const person = await pc.getPerson(Test.USER1.id);
+        const teams = await tc.getTeamsForPerson(person);
+        expect(teams).to.have.lengthOf(0);
+    });
+
     it("Should be able to create a team.", async () => {
         let teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(0);
@@ -51,17 +57,24 @@ describe("TeamController", () => {
         expect(p1).to.not.be.null;
         expect(p2).to.not.be.null;
 
-        const deliv = await dc.getDeliverable(Test.DELIVID0);
-        const team = await tc.createTeam(Test.TEAMNAME1, deliv, [p1, p2], {});
+        let deliv = await dc.getDeliverable(Test.DELIVID0);
+        let team = await tc.createTeam(Test.TEAMNAME1, deliv, [p1, p2], {});
         expect(team).to.not.be.null;
 
         teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(1);
+
+        deliv = await dc.getDeliverable(Test.DELIVID1);
+        team = await tc.createTeam(Test.TEAMNAME3, deliv, [p1, p2], {});
+        expect(team).to.not.be.null;
+
+        teams = await tc.getAllTeams();
+        expect(teams).to.have.lengthOf(2);
     });
 
     it("Should not add a team a second time.", async () => {
         let teams = await tc.getAllTeams();
-        expect(teams).to.have.lengthOf(1);
+        expect(teams).to.have.lengthOf(2);
 
         const p1 = await pc.getPerson(Test.USER1.id);
         const p2 = await pc.getPerson(Test.USER2.id);
@@ -80,12 +93,12 @@ describe("TeamController", () => {
         expect(exc).to.not.be.null;
 
         teams = await tc.getAllTeams();
-        expect(teams).to.have.lengthOf(1);
+        expect(teams).to.have.lengthOf(2);
     });
 
     it("Should be able to create an individual team.", async () => {
         let teams = await tc.getAllTeams();
-        expect(teams).to.have.lengthOf(1);
+        expect(teams).to.have.lengthOf(2);
 
         const person = await pc.getPerson(Test.USER3.id);
         expect(person).to.not.be.null;
@@ -95,7 +108,12 @@ describe("TeamController", () => {
         expect(team).to.not.be.null;
 
         teams = await tc.getAllTeams();
-        expect(teams).to.have.lengthOf(2);
+        expect(teams).to.have.lengthOf(3);
     });
 
+    it("Should be able to get the teams for a person.", async () => {
+        const person = await pc.getPerson(Test.USER1.id);
+        const teams = await tc.getTeamsForPerson(person);
+        expect(teams).to.have.lengthOf(2);
+    });
 });
