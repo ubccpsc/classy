@@ -34,7 +34,7 @@ export class GradesController {
         const delivs = await delivc.getAllDeliverables();
         let grades = [];
         for (const deliv of delivs) {
-            if (deliv.gradesReleased === true) {
+            if (deliv.gradesReleased === true && deliv.visibleToStudents === true) {
                 Log.trace("GradesController::getReleasedGradesForPerson( " + personId + " ) - open deliv: " + deliv.id);
                 let grade = await this.getGrade(personId, deliv.id);
                 if (grade === null) {

@@ -78,7 +78,7 @@ export class DeliverablesController {
             onCloseAction: '',
 
             gradesReleased:    deliv.gradesReleased,
-            visibleToStudents: deliv.gradesReleased,
+            visibleToStudents: deliv.visibleToStudents,
 
             autoTest: deliv.autotest,
             rubric:   deliv.rubric,
