@@ -83,6 +83,7 @@ export class CS310View extends StudentView {
                 Log.info('CS310View::renderTeams(..)::createTeam::onClick');
                 that.formTeam().then(function(team) {
                     Log.info('CS310View::renderTeams(..)::createTeam::onClick::then - team created');
+                    that.teams.push(team);
                     if (team !== null) {
                         that.renderPage({}); // simulating refresh
                     }
@@ -95,6 +96,17 @@ export class CS310View extends StudentView {
         } else {
             // already on team
             UI.showSection('studentPartnerDiv');
+
+            const tName = document.getElementById('studentPartnerTeamName');
+            const pName = document.getElementById('studentPartnerTeammates');
+            const team = this.teams[0];
+
+            if (team.URL !== null) {
+                tName.innerHTML = '<a href="' + team.URL + '">' + team.id + '</a>';
+            } else {
+                tName.innerHTML = team.id;
+            }
+            pName.innerHTML = JSON.stringify(team.people);
         }
     }
 
@@ -113,7 +125,12 @@ export class CS310View extends StudentView {
 
         Log.info("CS310View::formTeam() - URL: " + url + "; payload: " + JSON.stringify(payload));
         const response = await fetch(url, options);
+
+        Log.info("CS310View::formTeam() - responded");
+
         const body = await response.json() as Payload;
+
+        Log.info("CS310View::formTeam() - response: " + JSON.stringify(body));
 
         if (typeof body.success !== 'undefined') {
             // worked

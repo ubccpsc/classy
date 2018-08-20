@@ -141,9 +141,10 @@ export default class GeneralRoutes implements IREST {
 
         const teamTrans: TeamFormationTransport = req.params;
         GeneralRoutes.performPostTeam(user, token, teamTrans).then(function(team) {
+            Log.info('GeneralRoutes::postTeam(..) - done; team: ' + JSON.stringify(team));
             const payload: TeamTransportPayload = {success: [team]}; // really shouldn't be an array, but it beats having another type
             res.send(200, payload);
-            return next(false);
+            return next(true);
         }).catch(function(err) {
             Log.info('GeneralRoutes::postTeam(..) - ERROR: ' + err.message); // intentionally info
             const payload: Payload = {failure: {message: err.message, shouldLogout: false}};
