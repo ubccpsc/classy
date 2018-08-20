@@ -239,7 +239,7 @@ export class AssignmentController {
 
             if (provisionedRepo !== null) {
                 if (assignInfo.repositories === null || typeof assignInfo.repositories === 'undefined') assignInfo.repositories = [];
-                assignInfo.repositories.push(provisionedRepo.id);
+                if(!assignInfo.repositories.includes(provisionedRepo.id)) assignInfo.repositories.push(provisionedRepo.id);
                 Log.info("AssignmentController::initializeAllRepositories(..) - added repo " +
                     repoName + "to assignment");
             } else {
@@ -568,9 +568,10 @@ export class AssignmentController {
             return null;
         }
 
+        // if (deliv.custom === null || typeof (deliv.custom as AssignmentInfo).status === 'undefined') {
         if (deliv.custom === null) {
             Log.error("AssignmentController::updateAssignmentStatus(..) - error: " +
-                delivId + " has no assignment status");
+                delivId + " is not an assignment");
             return null;
         }
         // get all students, check if all repositories are created yet
@@ -599,6 +600,9 @@ export class AssignmentController {
                 Log.info("AssignmentController::updateAssignmentStatus(..) - verifying team: " + teamId);
                 try {
                     team = await this.tc.getTeam(teamId);
+                    if(team === null) {
+                        continue;
+                    }
 
                 } catch ( err) {
                     Log.error("AssignmentController::updateAssignmentStatus(..) - Error: " + err);
