@@ -208,28 +208,30 @@ export class AdminTeamsTab {
 
     public static async getTeams(remote: string): Promise<TeamTransport[]> {
         Log.info("AdminTeamsTab::getTeams( .. ) - start");
+        try {
+            const start = Date.now();
+            const options = AdminView.getOptions();
+            const url = remote + '/portal/admin/teams';
+            const response = await fetch(url, options);
 
-        const start = Date.now();
-        const options = AdminView.getOptions();
-        const url = remote + '/portal/admin/teams';
-        const response = await fetch(url, options);
-
-        if (response.status === 200) {
-            Log.trace('AdminTeamsTab::getTeams(..) - 200 received');
-            const json: TeamTransportPayload = await response.json();
-            if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                Log.trace('AdminTeamsTab::getTeams(..)  - worked; took: ' + UI.took(start));
-                return json.success;
+            if (response.status === 200) {
+                Log.trace('AdminTeamsTab::getTeams(..) - 200 received');
+                const json: TeamTransportPayload = await response.json();
+                if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
+                    Log.trace('AdminTeamsTab::getTeams(..)  - worked; took: ' + UI.took(start));
+                    return json.success;
+                } else {
+                    Log.trace('AdminTeamsTab::getTeams(..)  - ERROR: ' + json.failure.message);
+                    AdminView.showError(json.failure); // FailurePayload
+                }
             } else {
-                Log.trace('AdminTeamsTab::getTeams(..)  - ERROR: ' + json.failure.message);
-                AdminView.showError(json.failure); // FailurePayload
+                Log.trace('AdminTeamsTab::getTeams(..)  - !200 received: ' + response.status);
+                const text = await response.text();
+                AdminView.showError(text);
             }
-        } else {
-            Log.trace('AdminTeamsTab::getTeams(..)  - !200 received: ' + response.status);
-            const text = await response.text();
-            AdminView.showError(text);
+        } catch (err) {
+            AdminView.showError("Getting teams failed: " + err.message);
         }
-
         return [];
     }
 }

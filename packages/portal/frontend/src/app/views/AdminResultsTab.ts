@@ -200,28 +200,31 @@ export class AdminResultsTab {
     public static async getRepositories(remote: string): Promise<RepositoryTransport[]> {
         Log.info("AdminResultsTab::getRepositories( .. ) - start");
 
-        const start = Date.now();
-        const url = remote + '/portal/admin/repositories';
-        const options = AdminView.getOptions();
-        const response = await fetch(url, options);
+        try {
+            const start = Date.now();
+            const url = remote + '/portal/admin/repositories';
+            const options = AdminView.getOptions();
+            const response = await fetch(url, options);
 
-        if (response.status === 200) {
-            Log.trace('AdminResultsTab::getRepositories(..) - 200 received');
-            const json: RepositoryPayload = await response.json();
-            // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
-            if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                Log.trace('AdminResultsTab::getRepositories(..)  - worked; took: ' + UI.took(start));
-                return json.success;
+            if (response.status === 200) {
+                Log.trace('AdminResultsTab::getRepositories(..) - 200 received');
+                const json: RepositoryPayload = await response.json();
+                // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
+                if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
+                    Log.trace('AdminResultsTab::getRepositories(..)  - worked; took: ' + UI.took(start));
+                    return json.success;
+                } else {
+                    Log.trace('AdminResultsTab::getRepositories(..)  - ERROR: ' + json.failure.message);
+                    AdminView.showError(json.failure); // FailurePayload
+                }
             } else {
-                Log.trace('AdminResultsTab::getRepositories(..)  - ERROR: ' + json.failure.message);
-                AdminView.showError(json.failure); // FailurePayload
+                Log.trace('AdminResultsTab::getRepositories(..)  - !200 received: ' + response.status);
+                const text = await response.text();
+                AdminView.showError(text);
             }
-        } else {
-            Log.trace('AdminResultsTab::getRepositories(..)  - !200 received: ' + response.status);
-            const text = await response.text();
-            AdminView.showError(text);
+        } catch (err) {
+            AdminView.showError("Getting results failed: " + err.message);
         }
-
         return [];
     }
 }

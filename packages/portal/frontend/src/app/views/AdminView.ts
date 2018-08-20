@@ -117,6 +117,7 @@ export class AdminView implements IView {
     public static showError(failure: any) { // FailurePayload
         Log.error("AdminView::showError(..) - start");
         try {
+            UI.hideModal(); // if one is visible, get rid of it
             // check to see if response is json
             const f = JSON.parse(failure);
             if (f !== null) {

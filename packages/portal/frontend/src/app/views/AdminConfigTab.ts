@@ -160,31 +160,35 @@ export class AdminConfigTab {
     }
 
     public static async getCourse(remote: string): Promise<CourseTransport> {
-        UI.showModal('Retrieving config.');
+        try {
+            UI.showModal('Retrieving config.');
 
-        // get class options
-        const options = AdminView.getOptions();
-        const url = remote + '/portal/admin/course';
-        const response = await fetch(url, options);
-        UI.hideModal();
+            // get class options
+            const options = AdminView.getOptions();
+            const url = remote + '/portal/admin/course';
+            const response = await fetch(url, options);
+            UI.hideModal();
 
-        const courseOptions: CourseTransport = null;
-        const start = Date.now();
-        if (response.status === 200) {
-            Log.trace('AdminCourseTab::getCourse(..) - 200 received for course options');
-            const json: CourseTransportPayload = await response.json();
-            // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
-            if (typeof json.success !== 'undefined') {
-                Log.trace('AdminCourseTab::getCourse(..)  - worked; took: ' + UI.took(start));
-                return json.success;
+            const courseOptions: CourseTransport = null;
+            const start = Date.now();
+            if (response.status === 200) {
+                Log.trace('AdminCourseTab::getCourse(..) - 200 received for course options');
+                const json: CourseTransportPayload = await response.json();
+                // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
+                if (typeof json.success !== 'undefined') {
+                    Log.trace('AdminCourseTab::getCourse(..)  - worked; took: ' + UI.took(start));
+                    return json.success;
+                } else {
+                    Log.trace('AdminCourseTab::getCourse(..)  - ERROR: ' + json.failure.message);
+                    AdminView.showError(json.failure); // FailurePayload
+                }
             } else {
-                Log.trace('AdminCourseTab::getCourse(..)  - ERROR: ' + json.failure.message);
-                AdminView.showError(json.failure); // FailurePayload
+                Log.trace('AdminCourseTab::getCourse(..)  - !200 received: ' + response.status);
+                const text = await response.text();
+                AdminView.showError(text);
             }
-        } else {
-            Log.trace('AdminCourseTab::getCourse(..)  - !200 received: ' + response.status);
-            const text = await response.text();
-            AdminView.showError(text);
+        } catch (err) {
+            AdminView.showError("Getting config failed: " + err.message);
         }
         return null;
     }

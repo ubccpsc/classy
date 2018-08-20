@@ -131,28 +131,31 @@ export class AdminStudentsTab {
     public static async getStudents(remote: string): Promise<StudentTransport[]> {
         Log.info("AdminStudentsTab::getStudents( .. ) - start");
 
-        const start = Date.now();
-        const url = remote + '/portal/admin/students';
-        const options = AdminView.getOptions();
-        const response = await fetch(url, options);
+        try {
+            const start = Date.now();
+            const url = remote + '/portal/admin/students';
+            const options = AdminView.getOptions();
+            const response = await fetch(url, options);
 
-        if (response.status === 200) {
-            Log.trace('AdminStudentsTab::getStudents(..) - 200 received');
-            const json: StudentTransportPayload = await response.json();
-            // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
-            if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                Log.trace('AdminStudentsTab::getStudents(..)  - worked; took: ' + UI.took(start));
-                return json.success;
+            if (response.status === 200) {
+                Log.trace('AdminStudentsTab::getStudents(..) - 200 received');
+                const json: StudentTransportPayload = await response.json();
+                // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
+                if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
+                    Log.trace('AdminStudentsTab::getStudents(..)  - worked; took: ' + UI.took(start));
+                    return json.success;
+                } else {
+                    Log.trace('AdminStudentsTab::getStudents(..)  - ERROR: ' + json.failure.message);
+                    AdminView.showError(json.failure); // FailurePayload
+                }
             } else {
-                Log.trace('AdminStudentsTab::getStudents(..)  - ERROR: ' + json.failure.message);
-                AdminView.showError(json.failure); // FailurePayload
+                Log.trace('AdminView::getStudents(..)  - !200 received: ' + response.status);
+                const text = await response.text();
+                AdminView.showError(text);
             }
-        } else {
-            Log.trace('AdminView::getStudents(..)  - !200 received: ' + response.status);
-            const text = await response.text();
-            AdminView.showError(text);
+        } catch (err) {
+            AdminView.showError("Getting students failed: " + err.message);
         }
-
         return [];
     }
 }
