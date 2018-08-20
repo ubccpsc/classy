@@ -25,15 +25,15 @@ const tmp = require('tmp-promise');
 
 export class RubricController {
     private db: DatabaseController = DatabaseController.getInstance();
-    private gc: GradesController = new GradesController();
-    private rc: RepositoryController = new RepositoryController();
-    private tc: TeamController = new TeamController();
-    private dc: DeliverablesController = new DeliverablesController();
-    private ghc: GitHubController = new GitHubController();
-    private pc: PersonController = new PersonController();
+    // private gc: GradesController = new GradesController();
+    // private rc: RepositoryController = new RepositoryController();
+    // private tc: TeamController = new TeamController();
+    // private dc: DeliverablesController = new DeliverablesController();
+    // private ghc: GitHubController = new GitHubController();
+    // private pc: PersonController = new PersonController();
     private gha: GitHubActions = new GitHubActions();
-    private sc: ScheduleController = ScheduleController.getInstance();
-    private ac: AssignmentController = new AssignmentController();
+    // private sc: ScheduleController = ScheduleController.getInstance();
+    // private ac: AssignmentController = new AssignmentController();
 
 
     public async parseFile(inputFilePath: string): Promise<AssignmentGradingRubric> {
@@ -96,10 +96,10 @@ export class RubricController {
                             if(latexFileExp.test(assignInfo.mainFilePath)) {
                                 // if this is a latex file, use a different exp
                                 headerExp = /(?:sub?:)*section(?:\*?:)?.*/;
-                                headerCleaner = /[{}]/g;
+                                headerCleaner = /[{}\n]/g;
                             } else {
                                 headerExp = /#\s+.*/;
-                                headerCleaner = /(#+\s+)/;
+                                headerCleaner = /((#+\s+)|\\n)/g;
                             }
                             let rubricString = arrayData[i];
                             headerString = this.reverseBack(arrayData, i, headerExp);

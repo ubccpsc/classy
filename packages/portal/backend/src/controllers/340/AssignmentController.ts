@@ -22,6 +22,7 @@ import {GitHubController} from "../GitHubController";
 import {PersonController} from "../PersonController";
 import {GitHubActions} from "../GitHubActions";
 import {ScheduleController} from "../ScheduleController";
+import {RubricController} from "./RubricController";
 
 /*
  * Definition of controller object
@@ -37,6 +38,7 @@ export class AssignmentController {
     private pc: PersonController = new PersonController();
     private gha: GitHubActions = new GitHubActions();
     private sc: ScheduleController = ScheduleController.getInstance();
+    private rbc: RubricController = new RubricController();
 
     public async getAssignmentGrade(personId: string, assignId: string): Promise<AssignmentGrade | null> {
         // let returningPromise = new Promise((resolve, reject) => {
@@ -424,7 +426,9 @@ export class AssignmentController {
             Log.warn("AssignmentController::closeAllRepositories(..) - Error: unable to close a repo in the assignment");
         }
 
-        return overallSuccess;
+        let rubricSuccess = await this.rbc.updateRubric(deliverableRecord.id);
+
+        return overallSuccess && rubricSuccess;
     }
 
     /**

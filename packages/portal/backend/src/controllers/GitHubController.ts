@@ -79,8 +79,8 @@ export class GitHubController implements IGitHubController {
                 if (repoVal === true) {
                     // unable to create a repository if it already exists!
                     Log.error("GitHubController::createRepository(..) - Error: Repository already exists;" +
-                        " failed to create a new repository");
-                    return false;
+                        " unable to create a new repository");
+                    return true;
                 }
             } catch (err) {
                 Log.error("GitHubController::createRepository(..) - Error: " + err);
