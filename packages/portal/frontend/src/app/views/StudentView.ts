@@ -22,7 +22,7 @@ export abstract class StudentView implements IView {
     }
 
     protected getStudent(): StudentTransport {
-        return this.getStudent();
+        return this.person;
     }
 
     private async prepareData(): Promise<void> {

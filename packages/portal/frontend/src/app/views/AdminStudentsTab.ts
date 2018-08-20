@@ -78,7 +78,7 @@ export class AdminStudentsTab {
                 labId = student.labId;
             }
             const row: TableCell[] = [
-                {value: student.id, html: '<a href="' + student.userUrl + '">' + student.id + '</a>'},
+                {value: student.githubId, html: '<a href="' + student.userUrl + '">' + student.id + '</a>'}, // SHOULD BE ID?
                 {value: student.firstName, html: student.firstName},
                 {value: student.lastName, html: student.lastName},
                 {value: labId, html: labId}

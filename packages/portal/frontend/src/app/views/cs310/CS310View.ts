@@ -77,6 +77,7 @@ export class CS310View extends StudentView {
         // 310 only has one team so we don't need to check to see if it's the right one
         if (teams.length < 1) {
             // no team yet
+
             const button = document.querySelector('#studentSelectPartnerButton') as OnsButtonElement;
             button.onclick = function(evt: any) {
                 Log.info('CS310View::renderTeams(..)::createTeam::onClick');
@@ -98,17 +99,19 @@ export class CS310View extends StudentView {
     }
 
     private async formTeam(): Promise<TeamTransport> {
-
+        Log.info("CS310View::formTeam() - start");
         const otherId = UI.getTextFieldValue('studentSelectPartnerText');
+        const myGithubId = this.getStudent().githubId;
         const payload: TeamFormationTransport = {
             delivId:   'proj', // only one team in cs310 (and it is always called project)
-            githubIds: [this.getStudent().githubId, otherId]
+            githubIds: [myGithubId, otherId]
         };
         const url = this.remote + '/portal/team';
         const options: any = this.getOptions();
         options.method = 'post';
         options.body = JSON.stringify(payload);
 
+        Log.info("CS310View::formTeam() - URL: " + url + "; payload: " + JSON.stringify(payload));
         const response = await fetch(url, options);
         const body = await response.json() as Payload;
 
