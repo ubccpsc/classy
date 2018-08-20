@@ -624,9 +624,9 @@ export class CS340AdminView extends AdminView {
                 // process max grade
                 let maxGrade:number = 0;
                 let assignInfo: AssignmentInfo | null = deliv.custom;
-                if(assignInfo === null || typeof assignInfo === 'undefined') continue;
+                if(assignInfo === null || typeof assignInfo.rubric === 'undefined') continue;
                 let assignRubric: AssignmentGradingRubric = assignInfo.rubric;
-                if(assignRubric === null || typeof assignRubric === 'undefined') continue;
+                if(assignRubric === null || typeof assignRubric.questions === 'undefined') continue;
 
                 for(const questionRubric of assignRubric.questions) {
                     for(const subQuestionRubric of questionRubric.subQuestions) {
