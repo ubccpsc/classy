@@ -92,19 +92,28 @@ export class RubricController {
                             let latexFileExp: RegExp = /[^.]*\.tex/;
                             let headerString: string;
                             let headerExp: RegExp;
+                            let headerCleaner: RegExp;
                             if(latexFileExp.test(assignInfo.mainFilePath)) {
                                 // if this is a latex file, use a different exp
                                 headerExp = /(?:sub?:)*section(?:\*?:)?.*/;
+                                headerCleaner = /[{}]/g;
                             } else {
                                 headerExp = /#\s+.*/;
+                                headerCleaner = /(#+\s+)/;
                             }
                             let rubricString = arrayData[i];
                             headerString = this.reverseBack(arrayData, i, headerExp);
                             Log.info("RubricController::updateRubric(..) - header found: " + headerString);
 
+                            // clean up the header;
+                            let cleanedHeader: string;
+                            cleanedHeader = headerString.replace(headerCleaner, "");
+
+                            Log.info("RubricController::updateRubric(..) - cleaned header: " +
+                                cleanedHeader);
+
                             // clean the data
                             // get only the inside of the rubric
-
                             let rubricArray: string[] = rubricString.match(/{.*}/);
                             let subQuestionArray: SubQuestionGradingRubric[] = [];
                             // check if we actually found a match
@@ -126,7 +135,12 @@ export class RubricController {
                                     let rawValue = subQuestionObj[key];
                                     let value: number;
                                     if (typeof rawValue === 'string') {
-                                        value = Number(rawValue);
+                                        try {
+                                            value = Number(rawValue);
+                                        } catch (err) {
+                                            Log.error("RubricController::updateRubric(..)::readFile(..) - error " +
+                                                "casting " + rawValue + " to a number; error: " + err);
+                                        }
                                     } else {
                                         value = rawValue;
                                     }
@@ -144,7 +158,7 @@ export class RubricController {
 
                                 // once you get the information
                                 let newQuestion: QuestionGradingRubric = {
-                                    name: headerString,
+                                    name: cleanedHeader,
                                     comment: "",
                                     subQuestions: subQuestionArray
                                 };
