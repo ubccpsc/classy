@@ -10,9 +10,10 @@
     </ons-toolbar>
 
     <ons-tabbar id='adminTabbar' position="top">
+        <!--
         <ons-tab id="AdminDeliverableTab" page="deliverables.html" label="Deliverables" icon="ion-home, material:md-home" active>
         </ons-tab>
-
+        -->
         <ons-tab id="AdminStudentTab" page="students.html" label="Students" icon="md-face" active-icon="md-face">
         </ons-tab>
 
@@ -148,6 +149,9 @@
 
     <template id="config.html">
         <ons-page id="AdminConfig">
+            <ons-list id="adminDeliverablesList">
+                <ons-list-header id="adminConfigDeliverablesHeader">Deliverables</ons-list-header>
+            </ons-list>
             <ons-list>
                 <ons-list-header>Upload Classlist</ons-list-header>
                 <ons-list-item expandable>
