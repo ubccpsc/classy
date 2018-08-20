@@ -264,7 +264,13 @@ export class AdminDeliverablesTab {
             Log.trace("AdminDeliverablesTab::save() - atCustomRaw: " + atCustomRaw);
             // https://stackoverflow.com/a/34763398 (handle unquoted props (e.g., {foo: false}))
             atCustomRaw = atCustomRaw.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ');
-            atCustom = JSON.parse(atCustomRaw);
+            try {
+                atCustom = JSON.parse(atCustomRaw);
+            } catch (err) {
+                UI.showError("AutoTest Custom field is not valid JSON: " + err.message);
+                throw new Error("Cancel back"); // hack: prevents page transition from proceeding
+            }
+
         }
 
         const customRaw = UI.getTextFieldValue('adminEditDeliverablePage-custom');
@@ -273,7 +279,12 @@ export class AdminDeliverablesTab {
             Log.trace("AdminDeliverablesTab::save() - customRaw: " + customRaw);
             // https://stackoverflow.com/a/34763398 (handle unquoted props (e.g., {foo: false}))
             // customRaw = customRaw.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ');
-            custom = JSON.parse(customRaw);
+            try {
+                custom = JSON.parse(customRaw);
+            } catch (err) {
+                UI.showError("Custom field is not valid JSON: " + err.message);
+                throw new Error("Cancel back"); // hack: prevents page transition from proceeding
+            }
         }
 
         const rubricRaw = UI.getTextFieldValue('adminEditDeliverablePage-rubric');
@@ -282,7 +293,12 @@ export class AdminDeliverablesTab {
             Log.trace("AdminDeliverablesTab::save() - customRaw: " + customRaw);
             // https://stackoverflow.com/a/34763398 (handle unquoted props (e.g., {foo: false}))
             // customRaw = customRaw.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ');
-            rubric = JSON.parse(rubricRaw);
+            try {
+                rubric = JSON.parse(rubricRaw);
+            } catch (err) {
+                UI.showError("Rubric field is not valid JSON: " + err.message);
+                throw new Error("Cancel back"); // hack: prevents page transition from proceeding
+            }
         }
 
         const at: AutoTestConfig = {
