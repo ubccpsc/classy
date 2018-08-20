@@ -167,8 +167,8 @@ export class ResultsController {
             return msg;
         }
         const report = record.output.report;
-
-        const reportMsg = ResultsController.validateGradeReport(report);
+        const rc = new ResultsController();
+        const reportMsg = rc.validateGradeReport(report);
 
         if (reportMsg !== null) {
             return reportMsg;
@@ -178,8 +178,20 @@ export class ResultsController {
         return null;
     }
 
-    public static validateGradeReport(report: IGradeReport): string | null {
+    public validateGradeReport(report: IGradeReport): string | null {
         Log.trace('ResultsController::validateGradeReport(..) - input: ' + JSON.stringify(report));
+
+        if (typeof report === 'undefined') {
+            const msg = 'object undefined';
+            Log.error('ResultsController::validateGradeReport(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        if (report === null) {
+            const msg = 'object null';
+            Log.error('ResultsController::validateGradeReport(..) - ERROR: ' + msg);
+            return msg;
+        }
 
         if (typeof report.scoreOverall === 'undefined' || typeof report.scoreOverall !== 'number') {
             const msg = 'output.report.scoreOverall missing or not a number';

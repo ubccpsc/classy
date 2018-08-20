@@ -3,15 +3,14 @@ import Log from "../../../../../common/Log";
 import {DeliverableTransport, GradeTransport, GradeTransportPayload, StudentTransport} from "../../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 
-import {UI} from "../util/UI"
+import {UI} from "../util/UI";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminStudentsTab} from "./AdminStudentsTab";
 import {AdminView} from "./AdminView";
 
-
 export class AdminGradesTab {
 
-    private remote: string; // url to backend
+    private readonly remote: string; // url to backend
     constructor(remote: string) {
         this.remote = remote;
     }
@@ -104,7 +103,7 @@ export class AdminGradesTab {
             // if (student.labId !== null && student.labId.length > 0) {
             //     lab = student.labId;
             // }
-            let row: TableCell[] = [
+            const row: TableCell[] = [
                 {value: student.id, html: '<a href="' + student.userUrl + '">' + student.id + '</a>'},
                 {value: student.studentNum, html: student.studentNum + ''},
                 {value: student.firstName, html: student.firstName},
@@ -149,29 +148,31 @@ export class AdminGradesTab {
 
     public static async getGrades(remote: string): Promise<GradeTransport[]> {
         Log.info("AdminGradesTab::getGrades( .. ) - start");
+        try {
+            const start = Date.now();
+            const url = remote + '/portal/admin/grades';
+            const options = AdminView.getOptions();
 
-        const start = Date.now();
-        const url = remote + '/portal/admin/grades';
-        const options = AdminView.getOptions();
-
-        const response = await fetch(url, options);
-        if (response.status === 200) {
-            Log.trace('AdminGradesTab::getGrades(..) - 200 received');
-            const json: GradeTransportPayload = await response.json();
-            // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
-            if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                Log.trace('AdminGradesTab::getGrades(..)  - worked; took: ' + UI.took(start));
-                return json.success;
+            const response = await fetch(url, options);
+            if (response.status === 200) {
+                Log.trace('AdminGradesTab::getGrades(..) - 200 received');
+                const json: GradeTransportPayload = await response.json();
+                // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
+                if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
+                    Log.trace('AdminGradesTab::getGrades(..)  - worked; took: ' + UI.took(start));
+                    return json.success;
+                } else {
+                    Log.trace('AdminGradesTab::getGrades(..)  - ERROR: ' + json.failure.message);
+                    AdminView.showError(json.failure); // FailurePayload
+                }
             } else {
-                Log.trace('AdminGradesTab::getGrades(..)  - ERROR: ' + json.failure.message);
-                AdminView.showError(json.failure); // FailurePayload
+                Log.trace('AdminGradesTab::getGrades(..)  - !200 received: ' + response.status);
+                const text = await response.text();
+                AdminView.showError(text);
             }
-        } else {
-            Log.trace('AdminGradesTab::getGrades(..)  - !200 received: ' + response.status);
-            const text = await response.text();
-            AdminView.showError(text);
+        } catch (err) {
+            AdminView.showError("Getting grades failed: " + err.message);
         }
-
         return [];
     }
 }

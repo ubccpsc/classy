@@ -17,6 +17,7 @@ import {GitHubService} from "../src/github/GitHubService";
 import "./GlobalSpec"; // load first
 import {TestData} from "./TestData";
 
+/* tslint:disable:max-line-length */
 describe("GitHubAutoTest", () => {
 
     Config.getInstance();
@@ -95,7 +96,7 @@ describe("GitHubAutoTest", () => {
         try {
             expect(at).not.to.equal(null);
 
-            const pe: IPushEvent = pushes[0];
+            // const pe: IPushEvent = pushes[0];
             const arr = [];
             arr.push(at.handlePushEvent(pushes[0]));
             arr.push(at.handlePushEvent(pushes[1]));
@@ -130,15 +131,15 @@ describe("GitHubAutoTest", () => {
 
         const pe: IPushEvent = pushes[0];
         const ce: ICommentEvent = {
-            botMentioned:  false,
-            commitSHA:     pe.commitSHA,
-            commitURL:     pe.commitURL,
-            personId:      "myUser",
-            repoId:        "d1_project9999",
+            botMentioned: false,
+            commitSHA:    pe.commitSHA,
+            commitURL:    pe.commitURL,
+            personId:     "myUser",
+            repoId:       "d1_project9999",
             // org:           "310",
-            delivId:       "d0",
-            "postbackURL": "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
-            timestamp:     1234567891
+            delivId:      "d0",
+            postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
+            timestamp:    1234567891
         };
 
         let allData = await data.getAllData();
@@ -161,14 +162,14 @@ describe("GitHubAutoTest", () => {
         await at.handlePushEvent(pushes[2]);
 
         const ce: ICommentEvent = {
-            botMentioned:  true,
-            commitSHA:     pushes[2].commitSHA,
-            commitURL:     pushes[2].commitURL,
-            personId:      "myUser",
-            delivId:       "d0",
-            repoId:        "d1_project9999",
-            "postbackURL": "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/cbe1b0918b872997de4c4d2baf4c263f8d4c6dc2/comments",
-            timestamp:     1234567891
+            botMentioned: true,
+            commitSHA:    pushes[2].commitSHA,
+            commitURL:    pushes[2].commitURL,
+            personId:     "myUser",
+            delivId:      "d0",
+            repoId:       "d1_project9999",
+            postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/cbe1b0918b872997de4c4d2baf4c263f8d4c6dc2/comments",
+            timestamp:    1234567891
         };
 
         expect(allData.comments.length).to.equal(0);
@@ -179,7 +180,6 @@ describe("GitHubAutoTest", () => {
         // await Util.timeout(1 * 1000); // let test finish so it doesn't ruin subsequent executions
 
     });
-
 
     it("Should give a user a warning message on a commit that has not been queued.", async () => {
         // This case happens when a comment is made on a commit that AutoTest did not see the push for
@@ -371,10 +371,10 @@ describe("GitHubAutoTest", () => {
 
         // SETUP: add a push with no output records
         const fg: IFeedbackGiven = {
-            "commitURL": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263fSOMEOTHER", // different commit
-            "delivId":   "d1", // same deliverable
-            "timestamp": TestData.commentRecordUserA.timestamp, // 1516451273288,
-            "personId":  "cs310test"
+            commitURL: "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263fSOMEOTHER", // different commit
+            delivId:   "d1", // same deliverable
+            timestamp: TestData.commentRecordUserA.timestamp, // 1516451273288,
+            personId:  "cs310test"
         };
 
         data.savePush(TestData.inputRecordA.pushInfo);
@@ -433,6 +433,5 @@ describe("GitHubAutoTest", () => {
     it.skip("Should ignore comments that don't mention @autobot.", async () => {
         return;
     });
-
 
 });

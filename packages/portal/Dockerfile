@@ -8,10 +8,9 @@ ENV BACKEND_PORT $PORT
 
 EXPOSE $PORT
 
-RUN apk add --no-cache git && \
-  git config --global user.email "${GH_BOT_USERNAME}" && \
-  git config --global user.name "${GH_BOT_EMAIL}"
-
+RUN apk add --no-cache git
+RUN git config --global user.email "classy@cs.ubc.ca"
+RUN git config --global user.name "classy"
 
 WORKDIR /app/packages/portal
 

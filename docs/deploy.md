@@ -85,6 +85,16 @@ permission with the host (this is done in the docker-compose.yml file).
 You should now be able to open portal in your web browser by navigating to the host you've installed classy on (e.g. 
 <https://classy.cs.ubc.ca>).
 
+## Updating Classy on SDMM
+
+```
+sudo su w-sdmm
+cd /opt/classy
+git pull
+docker build -t classy:base .
+docker-compose -f docker-compose.yml -f docker-compose.310.yml up -d --build
+```
+
 ## Deploying AutoTest Extensions (for CS310 and SDMM)
 
 1. Build the grading docker image(s). This is the image that will be used by the grader service when creating a specific
@@ -176,3 +186,15 @@ You can
 - restart a particular service by specifying the service name in the up command: `docker-compose ... up --detached SERVICE`
 - stop a particular service by specifying the service name in the down command: `docker-compose ... down SERVICE`
 
+## Deploying Updates
+
+To update the (SDMM) system:
+
+```bash
+cd /opt/classy
+git pull
+docker-compose -f docker-compose.yml -f docker-compose.310.yml up -d --build
+```
+
+which will rebuild any services that have changed and restart them.
+To update only a particular service, simple specify the service name after the `--build` flag.

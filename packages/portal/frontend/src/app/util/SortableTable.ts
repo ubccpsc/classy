@@ -1,3 +1,5 @@
+import Log from "../../../../../common/Log";
+
 /**
  * These correspond to the columns in the table.
  */
@@ -36,7 +38,7 @@ export class SortableTable {
         this.headers = headers;
         this.divName = divName;
 
-        for (let col of headers) {
+        for (const col of headers) {
             if (col.defaultSort) {
                 this.sortHeader = col;
                 // the first encountered default sort will be used
@@ -84,7 +86,7 @@ export class SortableTable {
      */
     public sort(colId: string) {
 
-        for (let c of this.headers) {
+        for (const c of this.headers) {
             if (c.id === colId) {
                 if (c.sortable === true) {
                     this.sortHeader = c;
@@ -98,7 +100,7 @@ export class SortableTable {
     }
 
     public generate() {
-        console.log('SortableTable::generate() - start');
+        Log.trace('SortableTable::generate() - start');
 
         const that = this;
         this.performSort();
@@ -106,7 +108,7 @@ export class SortableTable {
         let table = '';
         table += this.startTable();
         let isOdd = false;
-        for (let row of this.rows) {
+        for (const row of this.rows) {
             table += this.generateRow(row, isOdd);
             isOdd = !isOdd;
         }
@@ -118,14 +120,14 @@ export class SortableTable {
             div.innerHTML = table;
             const ths = div.getElementsByTagName('th');
             const thsArray = Array.prototype.slice.call(ths, 0);
-            for (let th of thsArray) {
-                th.onclick = function () {
+            for (const th of thsArray) {
+                th.onclick = function() {
                     const colName = this.getAttribute('col');
                     that.sort(colName);
                 };
             }
         } else {
-            console.log('SortableTable::generate() - ' + this.divName + ' is null');
+            Log.error('SortableTable::generate() - ' + this.divName + ' is null');
         }
 
         this.attachDownload();
@@ -143,12 +145,15 @@ export class SortableTable {
             // decorate this.sorCol appropriately
             if (this.sortHeader !== null && header.id === this.sortHeader.id) {
                 if (this.sortHeader.sortDown) {
-                    tablePrefix += '<th class="sortableHeader" style="' + header.style + '" col="' + header.id + '"><b>' + header.text + ' ▲</b></th>';
+                    tablePrefix += '<th class="sortableHeader" style="' + header.style +
+                        '" col="' + header.id + '"><b>' + header.text + ' ▲</b></th>';
                 } else {
-                    tablePrefix += '<th class="sortableHeader"  style="' + header.style + '" col="' + header.id + '"><b>' + header.text + ' ▼</b></th>';
+                    tablePrefix += '<th class="sortableHeader"  style="' + header.style +
+                        '" col="' + header.id + '"><b>' + header.text + ' ▼</b></th>';
                 }
             } else {
-                tablePrefix += '<th class="sortableHeader" style="' + header.style + '" col="' + header.id + '">' + header.text + '</th>';
+                tablePrefix += '<th class="sortableHeader" style="' + header.style +
+                    '" col="' + header.id + '">' + header.text + '</th>';
             }
         }
         tablePrefix += '</tr>';
@@ -157,10 +162,9 @@ export class SortableTable {
     }
 
     private endTable() {
-        let tableSuffix = '</table>';
+        const tableSuffix = '</table>';
         return tableSuffix;
     }
-
 
     private generateRow(cols: any[], isOdd: boolean) {
         let row = '';
@@ -172,8 +176,8 @@ export class SortableTable {
         }
 
         let i = 0;
-        for (let col of cols) {
-            row += '<td class="sortableCell" style="color: black; ' + this.headers[i].style + '">' + (<any>col).html + '</td>';
+        for (const col of cols) {
+            row += '<td class="sortableCell" style="color: black; ' + this.headers[i].style + '">' + (col as any).html + '</td>';
             i++;
         }
         row += '</tr>';
@@ -188,10 +192,10 @@ export class SortableTable {
             // do nothing (happens when there is no default sort or an unsortable column has been selected)
             return;
         }
-        for (let head of this.headers) {
+        for (const head of this.headers) {
             if (head.id === this.sortHeader.id) {
                 if (head.sortable === false) {
-                    console.log('SortableTable::sort() - no sort required; unsortable column: ' + head.id);
+                    // Log.trace('SortableTable::sort() - no sort required; unsortable column: ' + head.id);
                     return;
                 } else {
                     sortHead = head;
@@ -208,12 +212,13 @@ export class SortableTable {
         if (sortHead.sortDown) {
             mult = 1;
         }
-        console.log('SortableTable::sort() - col: ' + sortHead.id + '; down: ' + sortHead.sortDown + '; mult: ' + mult + '; index: ' + sortIndex);
+        Log.trace('SortableTable::sort() - col: ' + sortHead.id + '; down: ' + sortHead.sortDown +
+            '; mult: ' + mult + '; index: ' + sortIndex);
 
-        this.rows = this.rows.sort(function (a, b) {
+        this.rows = this.rows.sort(function(a, b) {
 
-            let aVal = a[sortIndex].value;
-            let bVal = b[sortIndex].value;
+            const aVal = a[sortIndex].value;
+            const bVal = b[sortIndex].value;
 
             // handle mismatches
             // mainly happens when one cell is empty
@@ -248,8 +253,8 @@ export class SortableTable {
     // not used yet
     // code from: https://www.codexworld.com/export-html-table-data-to-csv-using-javascript/
     private downloadCSV(csv: string, fileName: string) {
-        var csvFile;
-        var downloadLink;
+        let csvFile;
+        let downloadLink;
 
         // CSV file
         csvFile = new Blob([csv], {type: 'text/csv'});
@@ -258,7 +263,7 @@ export class SortableTable {
         downloadLink = document.createElement('a');
         downloadLink.innerHTML = 'Download Table as CSV';
 
-        let table = document.querySelector(this.divName);
+        const table = document.querySelector(this.divName);
         table.appendChild(downloadLink);
 
         // File name
@@ -279,22 +284,23 @@ export class SortableTable {
     }
 
     private exportTableToCSV(fileName: string) {
-        let csv = [];
+        const csv = [];
         const root = document.querySelector(this.divName);
-        //var rows = document.querySelectorAll("table tr");
         const rows = root.querySelectorAll('table tr');
 
         for (let i = 0; i < rows.length; i++) {
-            const row = [], cols = rows[i].querySelectorAll('td, th');
+            const row = [];
+            const cols = rows[i].querySelectorAll('td, th');
 
+            // tslint:disable-next-line
             for (let j = 0; j < cols.length; j++) {
                 if (i === 0) {
-                    let text = (<HTMLTableCellElement>cols[j]).innerText;
+                    let text = (cols[j] as HTMLTableCellElement).innerText;
                     text = text.replace(' ▼', '');
                     text = text.replace(' ▲', '');
                     row.push(text);
                 } else {
-                    row.push((<HTMLTableCellElement>cols[j]).innerText);
+                    row.push((cols[j] as HTMLTableCellElement).innerText);
                 }
             }
 

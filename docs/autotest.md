@@ -2,14 +2,25 @@
 
 AutoTest is a service that listens for push and comment events from configured repos on GitHub.
 When a push event is received, AutoTest executes grading scripts against each commit and stores the results.
-Then, when a student requests feedback by mentioning @autobot in a commit comment, AutoTest responds with the previously computed grade and feedback.
+Then, when a student requests feedback by mentioning `@autobot` (or whatever account name is registered with the system for the bot) in a commit comment, AutoTest responds with the previously computed grade and feedback.
 
-AutoTest is currently being used in two undergraduate computer science courses at The University of British Columbia to automatically grade the work of over 400 students. It has been in use since September 2017.
+AutoTest is currently being used in two undergraduate computer science courses at The University of British Columbia and has automatically graded the work of over 2,000 students since September 2017.
+
+## Authors
+
+* Reid Holmes
+* Nick Bradley
+
+## License
+
+[MIT](LICENSE)
+
+# The rest of this document is deprecated and will soon be removed:
 
 ### Prerequisites
 
-* MongoDB needs to be installed and running. Only tested with v3.6.2.
-* Docker needs to be installed and running. Only tested with v17.12.
+* MongoDB needs to be installed and running. Only tested with `v3.6.2`.
+* Docker needs to be installed and running. Only tested with `v17.12`.
 
 ### Installing
 
@@ -18,14 +29,6 @@ AutoTest is currently being used in two undergraduate computer science courses a
 3) `yarn run build`
 4) `yarn run test`
 
-## Authors
-
-Reid Holmes
-Nick Bradley
-
-## License
-
-[MIT](LICENSE)
 
 # Configuration Variables
 

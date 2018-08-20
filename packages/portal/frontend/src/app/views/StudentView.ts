@@ -12,7 +12,7 @@ export abstract class StudentView implements IView {
     private grades: GradeTransport[] = [];
     private person: StudentTransport = null;
 
-    abstract renderPage(pageName: string, opts: {}): void;
+    public abstract renderPage(pageName: string, opts: {}): void;
 
     // do general student actions
     protected async render(): Promise<void> {
@@ -22,7 +22,7 @@ export abstract class StudentView implements IView {
     }
 
     protected getStudent(): StudentTransport {
-        return this.getStudent();
+        return this.person;
     }
 
     private async prepareData(): Promise<void> {
@@ -34,7 +34,7 @@ export abstract class StudentView implements IView {
         let response = await fetch(url, this.getOptions());
         if (response.status === 200) {
             Log.trace('StudentView::prepareData(..) - person 200 received');
-            let json = await response.json();
+            const json = await response.json();
             Log.trace('StudentView::prepareData(..) - person payload: ' + JSON.stringify(json));
             if (typeof json.success !== 'undefined') {
                 Log.trace('StudentView::prepareData(..) - person success: ' + json.success);
@@ -51,7 +51,7 @@ export abstract class StudentView implements IView {
         response = await fetch(url, this.getOptions());
         if (response.status === 200) {
             Log.trace('StudentView::prepareData(..) - grades 200 received');
-            let json = await response.json();
+            const json = await response.json();
             Log.trace('StudentView::prepareData(..) - grades payload: ' + JSON.stringify(json));
             if (typeof json.success !== 'undefined') {
                 Log.trace('StudentView::prepareData(..) - grades success: ' + json.success);
@@ -108,7 +108,7 @@ export abstract class StudentView implements IView {
             if (comment === null) {
                 comment = '';
             }
-            let row: TableCell[] = [
+            const row: TableCell[] = [
                 {value: grade.delivId, html: grade.delivId},
                 {value: score, html: '<a href="' + grade.URL + '">' + score + '</a>'},
                 {value: comment, html: comment}

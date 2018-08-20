@@ -23,6 +23,7 @@
         "dotenv": "5.0.1",
         "flatpickr": "^4.5.1",
         "fs-extra": "^5.0.0",
+        "moment": "^2.22.2",
         "onsenui": "^2.9.2",
         "request": "2.83.0",
         "request-promise-native": "^1.0.5",

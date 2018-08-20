@@ -37,7 +37,8 @@ describe("GitHubActions", () => {
         // test github actions on a test github instance (for safety)
         Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
 
-        // TODO: Test.suiteBefore missing
+        await Test.suiteBefore("GitHubActionSpec");
+        await Test.prepareAll();
     });
 
     beforeEach(function() {
@@ -62,6 +63,7 @@ describe("GitHubActions", () => {
         Log.test("GitHubActionSpec::after() - start; replacing original org");
         // return to original org
         Config.getInstance().setProp(ConfigKey.org, OLDORG);
+        Test.suiteAfter("GitHubActionSpec");
     });
 
     const TESTREPONAMES = ["testtest__repo1",
@@ -90,6 +92,7 @@ describe("GitHubActions", () => {
     ];
 
     it("Clear stale repos and teams.", async function() {
+        // this shouldn't be a test, but the before times out if we don't do it here
         const del = await deleteStale();
         expect(del).to.be.true;
     }).timeout(TIMEOUT * 100);

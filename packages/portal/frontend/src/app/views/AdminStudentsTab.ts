@@ -3,13 +3,12 @@ import Log from "../../../../../common/Log";
 import {StudentTransport, StudentTransportPayload} from "../../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 
-import {UI} from "../util/UI"
+import {UI} from "../util/UI";
 import {AdminView} from "./AdminView";
-
 
 export class AdminStudentsTab {
 
-    private remote: string; // url to backend
+    private readonly remote: string; // url to backend
     constructor(remote: string) {
         this.remote = remote;
     }
@@ -31,7 +30,6 @@ export class AdminStudentsTab {
 
         this.render(students, opts.labSection);
     }
-
 
     private render(students: StudentTransport[], labSection: string): void {
         Log.trace("AdminStudentsTab::render(..) - start");
@@ -79,8 +77,8 @@ export class AdminStudentsTab {
             if (student.labId !== null && student.labId.length > 0) {
                 labId = student.labId;
             }
-            let row: TableCell[] = [
-                {value: student.id, html: '<a href="' + student.userUrl + '">' + student.id + '</a>'},
+            const row: TableCell[] = [
+                {value: student.githubId, html: '<a href="' + student.userUrl + '">' + student.id + '</a>'}, // SHOULD BE ID?
                 {value: student.firstName, html: student.firstName},
                 {value: student.lastName, html: student.lastName},
                 {value: labId, html: labId}
@@ -115,7 +113,7 @@ export class AdminStudentsTab {
             Log.info('AdminStudentsTab::render(..) - upload pressed');
             evt.stopPropagation(); // prevents list item expansion
 
-            let val = labSelector.value.valueOf();
+            const val = labSelector.value.valueOf();
 
             // that.renderPage('AdminStudents', {labSection: val}); // if we need to re-fetch
             that.render(students, val); // if cached data is ok
@@ -133,28 +131,31 @@ export class AdminStudentsTab {
     public static async getStudents(remote: string): Promise<StudentTransport[]> {
         Log.info("AdminStudentsTab::getStudents( .. ) - start");
 
-        const start = Date.now();
-        const url = remote + '/portal/admin/students';
-        const options = AdminView.getOptions();
-        const response = await fetch(url, options);
+        try {
+            const start = Date.now();
+            const url = remote + '/portal/admin/students';
+            const options = AdminView.getOptions();
+            const response = await fetch(url, options);
 
-        if (response.status === 200) {
-            Log.trace('AdminStudentsTab::getStudents(..) - 200 received');
-            const json: StudentTransportPayload = await response.json();
-            // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
-            if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                Log.trace('AdminStudentsTab::getStudents(..)  - worked; took: ' + UI.took(start));
-                return json.success;
+            if (response.status === 200) {
+                Log.trace('AdminStudentsTab::getStudents(..) - 200 received');
+                const json: StudentTransportPayload = await response.json();
+                // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
+                if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
+                    Log.trace('AdminStudentsTab::getStudents(..)  - worked; took: ' + UI.took(start));
+                    return json.success;
+                } else {
+                    Log.trace('AdminStudentsTab::getStudents(..)  - ERROR: ' + json.failure.message);
+                    AdminView.showError(json.failure); // FailurePayload
+                }
             } else {
-                Log.trace('AdminStudentsTab::getStudents(..)  - ERROR: ' + json.failure.message);
-                AdminView.showError(json.failure); // FailurePayload
+                Log.trace('AdminView::getStudents(..)  - !200 received: ' + response.status);
+                const text = await response.text();
+                AdminView.showError(text);
             }
-        } else {
-            Log.trace('AdminView::getStudents(..)  - !200 received: ' + response.status);
-            const text = await response.text();
-            AdminView.showError(text);
+        } catch (err) {
+            AdminView.showError("Getting students failed: " + err.message);
         }
-
         return [];
     }
 }

@@ -1,44 +1,41 @@
 import {expect} from "chai";
 import "mocha";
+// import restify = require('restify');
+import * as restify from 'restify';
+// const request = require('supertest');
+import * as request from 'supertest';
 import Config, {ConfigKey} from "../../../../common/Config";
 
 import Log from "../../../../common/Log";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {GitHubActions} from "../../src/controllers/GitHubActions";
-import {TestGitHubController} from "../../src/controllers/GitHubController";
+import {GitHubController} from "../../src/controllers/GitHubController";
+// import {TestGitHubController} from "../../src/controllers/GitHubController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {SDMMController} from "../../src/controllers/SDMM/SDMMController";
 
 import BackendServer from "../../src/server/BackendServer";
 import {Grade} from "../../src/Types";
 import {Test} from "../GlobalSpec";
-
-const loadFirst = require('../GlobalSpec');
-
-import restify = require('restify');
-
-const request = require('supertest');
-const https = require('https');
+// const loadFirst = require('../GlobalSpec');
+import '../GlobalSpec';
+// const https = require('https');
 
 // NOTE: skipped for now because the infrastructure spins up classytest
 // which means the right routes aren't being started in the backend
 // need to change how this loads to enable the right routes to be started
 describe('SDMM Routes', function() {
 
-    var app: restify.Server = null;
-    var server: BackendServer = null;
+    let app: restify.Server = null;
+    let server: BackendServer = null;
 
-    var OLDNAME = Config.getInstance().getProp(ConfigKey.name);
-    var OLDORG = Config.getInstance().getProp(ConfigKey.org);
+    const OLDNAME = Config.getInstance().getProp(ConfigKey.name);
+    const OLDORG = Config.getInstance().getProp(ConfigKey.org);
+    // const user1id = Test.REALUSER1.github; // sdmm only uses github
 
     before(async function() {
         Log.test('SDMMRoutes::before - start');
-
         await Test.suiteBefore('SDMM Routes');
-
-        // clear stale data
-        const db = DatabaseController.getInstance();
-        await db.clearData();
 
         // get data ready
         await Test.prepareDeliverables();
@@ -48,18 +45,17 @@ describe('SDMM Routes', function() {
         // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
         server = new BackendServer(false);
 
-        return server.start().then(function() {
-            Log.test('SDMMFrontendRoutes::before - server started');
-            // Log.test('orgName: ' + Test.ORGNAME);
+        try {
+            await server.start();
+            Log.test('SDMMRoutesSpec::before - server started');
             app = server.getServer();
-        }).catch(function(err) {
-            // probably ok; ust means server is already started
-            Log.test('SDMMFrontendRoutes::before - server might already be started: ' + err);
-        });
+        } catch (err) {
+            Log.test('SDMMRoutesSpec::before - server might already be started: ' + err);
+        }
     });
 
     after(async function() {
-        Log.test('SDMMFrontendRoutes::after - start');
+        Log.test('SDMMRoutesSpec::after - start');
         Config.getInstance().setProp(ConfigKey.name, OLDNAME);
         Config.getInstance().setProp(ConfigKey.org, OLDORG);
         await server.stop();
@@ -68,15 +64,18 @@ describe('SDMM Routes', function() {
 
     async function clearGithub() {
         Log.test('SDMMRoutesSpec::clearGithub() - start');
+
+        // clear repos from github
         const gha = new GitHubActions();
         await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB1);
         await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB2);
+
         Log.test('SDMMRoutesSpec::clearGithub() - done');
     }
 
     it('Should be possible to clear stale state.', async function() {
         await clearGithub();
-    }).timeout(Test.TIMEOUT * 5);
+    }).timeout(Test.TIMEOUTLONG);
 
     it('Should not be able to get status without a token.', async function() {
         // NOTE: this subsumed valid uers checks since only valid users can have valid auth tokens
@@ -98,41 +97,20 @@ describe('SDMM Routes', function() {
     });
 
     it('Should respond to a valid status request.', async function() {
-
-        // make sure some valid tokens exist
         const dc: DatabaseController = DatabaseController.getInstance();
-        // let p = Test.createPerson(Test.USER1.github, Test.USER1.github, Test.USER1.github, 'student');
-        const ghInstance = new TestGitHubController();
+
+        const ghInstance = new GitHubController();
         const sc = new SDMMController(ghInstance);
 
+        // create some users
         let p = await sc.handleUnknownUser(Test.USERNAMEGITHUB1);
         await dc.writePerson(p);
-
         p = await sc.handleUnknownUser(Test.USERNAMEGITHUB2);
         await dc.writePerson(p);
 
-        // p = Test.createPerson(Test.USER2.github, Test.USER2.github, Test.USER2.github, 'student');
-        // await dc.writePerson(p);
-
+        // make sure some valid tokens exist
         await dc.writeAuth({personId: Test.USERNAMEGITHUB1, token: Test.REALTOKEN}); // create an auth record
         await dc.writeAuth({personId: Test.USERNAMEGITHUB2, token: Test.REALTOKEN}); // create an auth record
-
-        // const PERSON1: Person = {
-        //     id:            Test.USER1.github,
-        //     csId:          Test.USER1.github, // sdmm doesn't have these
-        //     githubId:      Test.USER1.github,
-        //     studentNumber: null,
-        //
-        //     fName:  '',
-        //     lName:  '',
-        //     kind:   'student',
-        //     URL:    'https://github.com/' + Test.USER1.id,
-        //     labId:  'UNKNOWN',
-        //     custom: {}
-        // };
-        //
-        // const pc = new PersonController();
-        // await pc.createPerson(PERSON1);
 
         let response = null;
         const url = '/portal/sdmm/currentStatus/';
@@ -191,39 +169,18 @@ describe('SDMM Routes', function() {
         expect(response.body.failure.message).to.equal('Invalid login token. Please logout and try again.');
     });
 
-    it('Should fail to provision a d0 repo if one already exists.', async function() {
-
-        let response = null;
-        const url = '/portal/sdmm/performAction/provisionD0';
-        const rc = new RepositoryController();
-        let repo = null;
-        try {
-            repo = await rc.createRepository('secap_' + Test.USERNAMEGITHUB1, [], {});
-            const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-        }
-        const dc = DatabaseController.getInstance();
-        await dc.deleteRepository(repo); // cleanup repo
-        await dc.deleteTeam(await dc.getTeam(Test.USERNAMEGITHUB1)); // cleanup team
-
-        // works on its own but not with others
-        Log.test(response.status + " -> " + JSON.stringify(response.body));
-        expect(response.status).to.equal(400);
-
-        expect(response.body.failure).to.not.be.undefined;
-        expect(response.body.failure.message).to.equal('Failed to provision d0 repo; already exists: secap_' + Test.USERNAMEGITHUB1);
-
-    }).timeout(1000 * 30);
-
     it('Should provision a d0 repo.', async function() {
         let response = null;
-        const url = '/portal/sdmm/performAction/provisionD0';
-        try {
-            const gha = new GitHubActions();
-            const deleted = await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB1); // make sure the repo doesn't exist
 
+        // // this test is slow, so skip it if we aren't on CI
+        // const shouldRun = Test.runSlowTest();
+        // if (shouldRun === false) {
+        //     this.skip();
+        // }
+        try {
+            // const gha = new GitHubActions();
+            // const deleted = await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB1); // make sure the repo doesn't exist
+            const url = '/portal/sdmm/performAction/provisionD0';
             const name = Config.getInstance().getProp(ConfigKey.name);
             response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
@@ -235,8 +192,29 @@ describe('SDMM Routes', function() {
 
         expect(response.body.success).to.not.be.undefined;
         expect(response.body.success.message).to.equal('Repository successfully created.');
-    }).timeout(1000 * 60);
+    }).timeout(Test.TIMEOUTLONG * 2);
 
+    it('Should fail to provision a d0 repo if one already exists.', async function() {
+
+        let response = null;
+        const url = '/portal/sdmm/performAction/provisionD0';
+        const rc = new RepositoryController();
+        try {
+            await rc.createRepository('secap_' + Test.USERNAMEGITHUB1, [], {}); // make sure the repo exists already
+            const name = Config.getInstance().getProp(ConfigKey.name);
+            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        // works on its own but not with others
+        Log.test(response.status + " -> " + JSON.stringify(response.body));
+        expect(response.status).to.equal(400);
+
+        expect(response.body.failure).to.not.be.undefined;
+        // expect(response.body.failure.message).to.equal('Failed to provision d0 repo; ' +
+        //     'repository already exists in datastore: secap_' + Test.USERNAMEGITHUB1);
+    }).timeout(Test.TIMEOUTLONG);
 
     it('Should not be able provision a d1 repo if their d0 grade is too low.', async function() {
 
@@ -254,7 +232,7 @@ describe('SDMM Routes', function() {
 
         expect(response.body.failure).to.not.be.undefined;
         expect(response.body.failure.message).to.equal('Current d0 grade is not sufficient to move on to d1.');
-    }).timeout(1000 * 10);
+    }).timeout(Test.TIMEOUTLONG);
 
     it('Should be able provision a d1 individual repo.', async function() {
 
@@ -287,7 +265,7 @@ describe('SDMM Routes', function() {
 
         expect(response.body.success).to.not.be.undefined;
         expect(response.body.success.message).to.equal('D0 repo successfully updated to D1.');
-    }).timeout(1000 * 30);
+    }).timeout(Test.TIMEOUTLONG);
 
     it('Should fail to provision a d1 team repo if both users are not known.', async function() {
 
@@ -295,7 +273,7 @@ describe('SDMM Routes', function() {
         const url = '/portal/sdmm/performAction/provisionD1team/somerandmomusernamethatdoesnotexist';
         try {
             const gha = new GitHubActions();
-            const deleted = await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB1); // make sure the repo doesn't exist
+            await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB1); // make sure the repo doesn't exist
 
             const name = Config.getInstance().getProp(ConfigKey.name);
             response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
@@ -307,8 +285,10 @@ describe('SDMM Routes', function() {
         expect(response.status).to.equal(400);
 
         expect(response.body.failure).to.not.be.undefined;
-        expect(response.body.failure.message).to.equal('Unknown person somerandmomusernamethatdoesnotexist requested to be on team; please make sure they are registered with the course.');
-    }).timeout(1000 * 30);
+        expect(response.body.failure.message).to.equal(
+            'Unknown person somerandmomusernamethatdoesnotexist requested to be on team; ' +
+            'please make sure they are registered with the course.');
+    }).timeout(Test.TIMEOUTLONG);
 
     // it('Should fail to provision a d1 team repo if both users do not have sufficient d0 grades.', async function () {
     //

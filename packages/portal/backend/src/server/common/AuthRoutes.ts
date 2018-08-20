@@ -286,20 +286,10 @@ export class AuthRoutes implements IREST {
         }
 
         // now we either have the person in the course or there will never be one
-
-        if (person === null) {
-            Log.error("AuthRoutes::authCaperformAuthCallbackllback(..) - /portal/authCallback - not registering auth; DOES THIS HAPPEN?");
-            throw new Error("Unknown person: " + username);
-        }
-
-        Log.info("AuthRoutes::performAuthCallback(..) - /portal/authCallback - registering auth for person: " + person.githubId);
-        const auth: Auth = {
-            personId: person.id, // use person.id, not username (aka githubId)
-            token:    token
-        };
-
-        await DatabaseController.getInstance().writeAuth(auth);
-        Log.info("AuthRoutes::performAuthCallback(..) - preparing redirect for: " + JSON.stringify(person));
+        // if (person === null) {
+        //     Log.error("AuthRoutes::performAuthCallback(..) - /portal/authCallback - not registering auth; DOES THIS HAPPEN?");
+        //     throw new Error("Person: " + username + " not registered in course.");
+        // }
 
         let feUrl = host; // req.headers.host;
         if (feUrl.indexOf('//') > 0) {
@@ -311,9 +301,28 @@ export class AuthRoutes implements IREST {
             feUrl = feUrl.substr(0, feUrl.indexOf(':'));
         }
 
-        Log.trace("AuthRoutes::performAuthCallback(..) - /authCallback - redirect hostname: " + feUrl + "; fePort: " + fePort);
+        if (person === null) {
+            Log.info("AuthRoutes::performAuthCallback(..) - /authCallback - person (GitHub id: " + username +
+                " ) not registered for course; redirecting to invalid user screen.");
+            return {
+                cookie:   null,
+                hostname: feUrl,
+                pathname: 'invalid.html',
+                port:     fePort
+            };
+        } else {
 
-        if (person !== null) {
+            Log.info("AuthRoutes::performAuthCallback(..) - /portal/authCallback - registering auth for person: " + person.githubId);
+            const auth: Auth = {
+                personId: person.id, // use person.id, not username (aka githubId)
+                token:    token
+            };
+
+            await DatabaseController.getInstance().writeAuth(auth);
+            Log.info("AuthRoutes::performAuthCallback(..) - preparing redirect for: " + JSON.stringify(person));
+
+            Log.trace("AuthRoutes::performAuthCallback(..) - /authCallback - redirect hostname: " + feUrl + "; fePort: " + fePort);
+
             // this is tricky; need to redirect to the client with a cookie being set on the connection
             // only header method that worked for me
             const cookie = "token=" + token + '__' + person.id; // Firefox doesn't like multiple tokens (line above)
@@ -322,15 +331,6 @@ export class AuthRoutes implements IREST {
                 cookie:   cookie,
                 hostname: feUrl,
                 pathname: 'index.html',
-                port:     fePort
-            };
-        } else {
-            Log.info("AuthRoutes::performAuthCallback(..) - /authCallback - person (GitHub id: " + username +
-                " ) not registered for course; redirecting to invalid user screen.");
-            return {
-                cookie:   null,
-                hostname: feUrl,
-                pathname: 'invalid.html',
                 port:     fePort
             };
         }

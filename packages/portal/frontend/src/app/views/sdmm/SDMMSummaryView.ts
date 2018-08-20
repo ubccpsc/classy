@@ -34,7 +34,7 @@ export class SDMMSummaryView implements IView {
         }, duration);
 
         setTimeout(function() {
-            let sel = <any>document.getElementById('sdmmSelect');
+            const sel = document.getElementById('sdmmSelect') as any;
             if (sel !== null) {
                 sel.selectedIndex = sel.selectedIndex + 1;
             }
@@ -53,25 +53,26 @@ export class SDMMSummaryView implements IView {
 
     public async createD0Repository(): Promise<void> {
 
-        UI.showModal("Provisioning D0 Repository.<br/>This can take up to 5 minutes.<br/>This dialog will clear as soon as the operation is complete.");
+        UI.showModal("Provisioning D0 Repository.<br/>This can take up to 5 minutes.<br/>" +
+            "This dialog will clear as soon as the operation is complete.");
 
         const url = this.remote + '/portal/sdmm/performAction/provisionD0';
         Log.info('SDDM::createD0Repository( ' + url + ' ) - start');
 
-        let options: any = this.getOptions();
+        const options: any = this.getOptions();
         options.method = 'post';
-        let response = await fetch(url, options);
+        const response = await fetch(url, options);
         UI.hideModal();
         if (response.status === 200) {
             Log.trace('SDDM::createD0Repository(..) - 200 received');
-            let json = await response.json();
+            const json = await response.json();
 
             this.longAction(2000, "D0 Repository created");
 
             this.checkStatus();
         } else {
             Log.trace('SDDM::createD0Repository(..) - !200 received; status: ' + response.status);
-            let json = await response.json();
+            const json = await response.json();
             this.showError(json);
         }
         return;
@@ -88,15 +89,16 @@ export class SDMMSummaryView implements IView {
         const url = this.remote + '/portal/sdmm/performAction/provisionD1individual';
         Log.info('SDDM::createD1Individual( ' + url + ' ) - start');
 
-        UI.showModal("Provisioning D1 Repository.<br/>This can take up to 5 minutes.<br/>This dialog will clear as soon as the operation is complete.");
+        UI.showModal("Provisioning D1 Repository.<br/>This can take up to 5 minutes.<br/>" +
+            "This dialog will clear as soon as the operation is complete.");
 
-        let options: any = this.getOptions();
+        const options: any = this.getOptions();
         options.method = 'post';
-        let response = await fetch(url, options);
+        const response = await fetch(url, options);
         UI.hideModal();
         if (response.status === 200) {
             Log.trace('SDDM::createD1Individual(..) - 200 received');
-            let json = await response.json();
+            const json = await response.json();
 
             this.longAction(2000, "D1 Repository created");
             UI.hideModal();
@@ -104,7 +106,7 @@ export class SDMMSummaryView implements IView {
             this.checkStatus();
         } else {
             Log.trace('SDDM::createD1Individual(..) - !200 received; status: ' + response.status);
-            let json = await response.json();
+            const json = await response.json();
             this.showError(json);
         }
         return;
@@ -115,26 +117,27 @@ export class SDMMSummaryView implements IView {
         Log.info("SDMMSummaryView::createD1Team() - start");
         // this.longAction(5000, 'Configuring D1 Team<br/>Will take < 10 seconds');
 
-        UI.showModal("Provisioning D1 Repository.<br/>This can take up to 5 minutes.<br/>This dialog will clear as soon as the operation is complete.");
+        UI.showModal("Provisioning D1 Repository.<br/>This can take up to 5 minutes.<br/>" +
+            "This dialog will clear as soon as the operation is complete.");
 
         const url = this.remote + '/portal/sdmm/performAction/provisionD1team/' + partnerName;
         // TODO: actually provide team members!!!
         Log.info('SDDM::createD1Team( ' + url + ' ) - start');
 
-        let options: any = this.getOptions();
+        const options: any = this.getOptions();
         options.method = 'post';
-        let response = await fetch(url, options);
+        const response = await fetch(url, options);
         UI.hideModal();
         if (response.status === 200) {
             Log.trace('SDDM::createD1Team(..) - 200 received');
-            let json = await response.json();
+            const json = await response.json();
 
             this.longAction(2000, "D1 Repository created");
 
             this.checkStatus();
         } else {
             Log.trace('SDDM::createD1Team(..) - !200 received; status: ' + response.status);
-            let json = await response.json();
+            const json = await response.json();
             this.showError(json);
         }
         return;
@@ -146,7 +149,7 @@ export class SDMMSummaryView implements IView {
     }
 
     private updateState(status?: any) { // status is SuccessPayload
-        const elem = <HTMLSelectElement>document.getElementById('sdmmSelect');
+        const elem = document.getElementById('sdmmSelect') as HTMLSelectElement;
 
         let value = null;
         if (typeof status === 'undefined') {
@@ -159,10 +162,9 @@ export class SDMMSummaryView implements IView {
             }
         }
 
-
         // TODO: value should come from remote
 
-        let states = [
+        const states = [
             'sdmmd0provision',
             'sdmmd0status',
             'sdmmd1locked',
@@ -236,7 +238,7 @@ export class SDMMSummaryView implements IView {
 
     private show(ids: string[]) {
         for (const s of ids) {
-            let elem = document.getElementById(s);
+            const elem = document.getElementById(s);
             if (elem !== null) {
                 elem.style.display = 'flex';
             } else {
@@ -276,18 +278,18 @@ export class SDMMSummaryView implements IView {
     public async fetchStatus(url: string): Promise<void> {
         Log.info('SDDM::fetchStatus( ' + url + ' ) - start');
 
-        let options = this.getOptions();
-        let response = await fetch(url, options);
+        const options = this.getOptions();
+        const response = await fetch(url, options);
         UI.hideModal();
         if (response.status === 200) {
             Log.trace('SDDM::fetchStatus(..) - 200 received');
-            let json = await response.json();
+            const json = await response.json();
             // Log.trace('SDDM::fetchStatus(..) - payload: ' + JSON.stringify(json));
             Log.trace('SDDM::fetchStatus(..) - status: ' + json.success.status);
             this.updateState(json.success); // StatusPayload
         } else {
             Log.trace('SDDM::fetchStatus(..) - !200 received: ' + response.status);
-            let json = await response.json();
+            const json = await response.json();
             Log.trace('SDDM::fetchStatus(..) - ERROR: ' + json.failure.message);
             this.showError(json.failure); // FailurePayload
 
@@ -350,10 +352,9 @@ export class SDMMSummaryView implements IView {
             ]);
 
             if (status.d0 !== null) {
-                let row = document.getElementById('sdmmd0status');
+                const row = document.getElementById('sdmmd0status');
                 this.updateDeliverableRow(row, status.d0);
             }
-
 
         } catch (err) {
             Log.trace('SDDMSV::showStatusD0(..) - ERROR: ' + err);
@@ -366,7 +367,7 @@ export class SDMMSummaryView implements IView {
             return;
         }
 
-        let icon = row.children[0].children[0];
+        const icon = row.children[0].children[0];
         if (grade.score >= 60) {
             icon.setAttribute('icon', 'fa-check-circle');
         } else {
@@ -376,10 +377,12 @@ export class SDMMSummaryView implements IView {
         // set title:
         if (grade.score > 0) {
             row.children[1].children[0].innerHTML = 'Grade: ' + grade.score.toFixed(1) + ' %';
-            row.children[1].children[1].innerHTML = '<a href="' + grade.URL + '">Source Commit</a>&nbsp;&nbsp;Timestamp: ' + new Date(grade.timestamp).toLocaleTimeString();
+            row.children[1].children[1].innerHTML = '<a href="' + grade.URL + '">Source Commit</a>&nbsp;&nbsp;' +
+                'Timestamp: ' + new Date(grade.timestamp).toLocaleTimeString();
         } else {
             row.children[1].children[0].innerHTML = 'Grade: N/A';
-            row.children[1].children[1].innerHTML = '<a href="' + grade.URL + '">Source Repository</a>&nbsp;&nbsp;Timestamp: ' + new Date(grade.timestamp).toLocaleTimeString();
+            row.children[1].children[1].innerHTML = '<a href="' + grade.URL + '">Source Repository</a>&nbsp;&nbsp;' +
+                'Timestamp: ' + new Date(grade.timestamp).toLocaleTimeString();
         }
 
         // set subrow
@@ -452,7 +455,6 @@ export class SDMMSummaryView implements IView {
         }
     }
 
-
     private showStatusD3(status: any | undefined) {
         Log.trace("SDDM::showStatusD3(..) - start: " + JSON.stringify(status));
         try {
@@ -509,7 +511,7 @@ export class SDMMSummaryView implements IView {
 
     public d1TeamForm() {
         Log.info("SDDM::d1TeamForm()");
-        let partnerInput: any = document.getElementById('d1partnerInput');
+        const partnerInput: any = document.getElementById('d1partnerInput');
         let partnerUser = partnerInput.value;
         partnerUser = partnerUser.trim();
         Log.info("SDDM::d1TeamForm() - partner name: " + partnerUser);

@@ -61,14 +61,16 @@ export abstract class AutoTest implements IAutoTest {
 
     public tick() {
         try {
-            Log.info("AutoTest::tick(..) - start; queues - #std: " + this.standardQueue.length() + "; #exp: " + this.expressQueue.length() + "; #reg: " + this.regressionQueue.length());
+            Log.info("AutoTest::tick(..) - start; queues - #std: " + this.standardQueue.length() +
+                "; #exp: " + this.expressQueue.length() + "; #reg: " + this.regressionQueue.length());
 
             let updated = false;
             if (this.standardExecution === null && this.standardQueue.length() > 0) {
                 const info = this.standardQueue.pop();
                 if (info !== null) {
                     updated = true;
-                    Log.info("AutoTest::tick(..) - standard queue clear; launching new job - commit: " + info.pushInfo.commitSHA);
+                    Log.info("AutoTest::tick(..) - standard queue clear; launching new job - commit: " +
+                        info.pushInfo.commitSHA);
                     this.standardExecution = info;
                     // noinspection JSIgnoredPromiseFromCall
                     this.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
@@ -257,12 +259,14 @@ export abstract class AutoTest implements IAutoTest {
                 return;
             }
 
-            Log.info("AutoTest::handleExecutionComplete(..) - start; delivId: " + data.delivId + "; repoId: " + data.repoId + "; commit: " + data.commitSHA);
+            Log.info("AutoTest::handleExecutionComplete(..) - start; delivId: " + data.delivId +
+                "; repoId: " + data.repoId + "; commit: " + data.commitSHA);
 
             try {
-                let resultPayload = await this.classPortal.sendResult(data);
+                const resultPayload = await this.classPortal.sendResult(data);
                 if (typeof resultPayload.failure !== 'undefined') {
-                    Log.error("AutoTest::handleExecutionComplete(..) - ERROR; Classy rejected result record: " + JSON.stringify(resultPayload));
+                    Log.error("AutoTest::handleExecutionComplete(..) - ERROR; Classy rejected result record: " +
+                        JSON.stringify(resultPayload));
                 } else {
                     await this.processExecution(data);
                 }
@@ -353,7 +357,8 @@ export abstract class AutoTest implements IAutoTest {
                 try {
                     output = await rp(gradeServiceOpts);
                 } catch (err) {
-                    Log.warn("AutoTest::invokeContainer(..) - ERROR for commit: " + input.pushInfo.commitSHA + "; ERROR with grading service: " + err);
+                    Log.warn("AutoTest::invokeContainer(..) - ERROR for commit: " +
+                        input.pushInfo.commitSHA + "; ERROR with grading service: " + err);
                 }
 
                 Log.trace("AutoTest::invokeContainer(..) - output: " + JSON.stringify(output, null, 2));
@@ -393,7 +398,8 @@ export abstract class AutoTest implements IAutoTest {
 
                     await this.classPortal.sendGrade(gradePayload); // this is just the Grade record, not the Report record
                 } catch (err) {
-                    Log.warn("AutoTest::invokeContainer(..) - ERROR for commit: " + input.pushInfo.commitSHA + "; ERROR sending grade: " + err);
+                    Log.warn("AutoTest::invokeContainer(..) - ERROR for commit: " + input.pushInfo.commitSHA +
+                        "; ERROR sending grade: " + err);
                 }
             } else {
                 Log.info("AutoTest::invokeContainer(..) - TEST CONFIG: Running MockGrader");
@@ -401,7 +407,8 @@ export abstract class AutoTest implements IAutoTest {
                 record = await grader.execute();
             }
 
-            Log.info("AutoTest::invokeContainer(..) - complete; delivId: " + input.delivId + "; commit: " + input.pushInfo.commitSHA + "; took: " + Util.took(start));
+            Log.info("AutoTest::invokeContainer(..) - complete; delivId: " + input.delivId +
+                "; commit: " + input.pushInfo.commitSHA + "; took: " + Util.took(start));
             await this.handleExecutionComplete(record);
             // Log.info("AutoTest::invokeContainer(..) - done; commit: " + input.pushInfo.commitSHA + "; took: " + Util.took(start));
         } catch (err) {

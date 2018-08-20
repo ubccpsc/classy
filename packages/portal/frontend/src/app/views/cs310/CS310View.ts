@@ -49,7 +49,7 @@ export class CS310View extends StudentView {
         const response = await fetch(url, super.getOptions());
         if (response.status === 200) {
             Log.trace('CS310View::fetchData(..) - teams 200 received');
-            let json = await response.json();
+            const json = await response.json();
             Log.trace('CS310View::fetchData(..) - teams payload: ' + JSON.stringify(json));
             if (typeof json.success !== 'undefined') {
                 Log.trace('CS310View::fetchData(..) - teams success: ' + json.success);
@@ -77,11 +77,13 @@ export class CS310View extends StudentView {
         // 310 only has one team so we don't need to check to see if it's the right one
         if (teams.length < 1) {
             // no team yet
+
             const button = document.querySelector('#studentSelectPartnerButton') as OnsButtonElement;
             button.onclick = function(evt: any) {
                 Log.info('CS310View::renderTeams(..)::createTeam::onClick');
                 that.formTeam().then(function(team) {
                     Log.info('CS310View::renderTeams(..)::createTeam::onClick::then - team created');
+                    that.teams.push(team);
                     if (team !== null) {
                         that.renderPage({}); // simulating refresh
                     }
@@ -94,23 +96,41 @@ export class CS310View extends StudentView {
         } else {
             // already on team
             UI.showSection('studentPartnerDiv');
+
+            const tName = document.getElementById('studentPartnerTeamName');
+            const pName = document.getElementById('studentPartnerTeammates');
+            const team = this.teams[0];
+
+            if (team.URL !== null) {
+                tName.innerHTML = '<a href="' + team.URL + '">' + team.id + '</a>';
+            } else {
+                tName.innerHTML = team.id;
+            }
+            pName.innerHTML = JSON.stringify(team.people);
         }
     }
 
     private async formTeam(): Promise<TeamTransport> {
-
+        Log.info("CS310View::formTeam() - start");
         const otherId = UI.getTextFieldValue('studentSelectPartnerText');
+        const myGithubId = this.getStudent().githubId;
         const payload: TeamFormationTransport = {
             delivId:   'proj', // only one team in cs310 (and it is always called project)
-            githubIds: [this.getStudent().githubId, otherId]
+            githubIds: [myGithubId, otherId]
         };
         const url = this.remote + '/portal/team';
-        let options: any = this.getOptions();
+        const options: any = this.getOptions();
         options.method = 'post';
         options.body = JSON.stringify(payload);
 
-        let response = await fetch(url, options);
-        let body = await response.json() as Payload;
+        Log.info("CS310View::formTeam() - URL: " + url + "; payload: " + JSON.stringify(payload));
+        const response = await fetch(url, options);
+
+        Log.info("CS310View::formTeam() - responded");
+
+        const body = await response.json() as Payload;
+
+        Log.info("CS310View::formTeam() - response: " + JSON.stringify(body));
 
         if (typeof body.success !== 'undefined') {
             // worked

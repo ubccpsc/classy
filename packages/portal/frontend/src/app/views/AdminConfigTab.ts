@@ -1,23 +1,23 @@
-import Log from "../../../../../common/Log";
-
-import {UI} from "../util/UI"
-import {AdminView} from "./AdminView";
 import {OnsButtonElement} from "onsenui";
-import {Network} from "../util/Network";
+import Log from "../../../../../common/Log";
 import {CourseTransport, CourseTransportPayload} from "../../../../../common/types/PortalTypes";
+import {Network} from "../util/Network";
+import {UI} from "../util/UI";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
-
+import {AdminView} from "./AdminView";
 
 export class AdminConfigTab {
 
-    private remote: string; // url to backend
+    private readonly remote: string; // url to backend
     private isAdmin: boolean;
 
+    private deliverablesPage: AdminDeliverablesTab = null;
     private course: CourseTransport = null;
 
     constructor(remote: string, isAdmin: boolean) {
         this.remote = remote;
         this.isAdmin = isAdmin;
+        this.deliverablesPage = new AdminDeliverablesTab(remote, isAdmin);
     }
 
     public setAdmin(isAdmin: boolean) {
@@ -31,7 +31,9 @@ export class AdminConfigTab {
         const that = this;
         // Can init frame here if needed
 
-        (document.querySelector('#adminSubmitClasslist') as OnsButtonElement).onclick = function (evt) {
+        this.deliverablesPage.init(opts);
+
+        (document.querySelector('#adminSubmitClasslist') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminView::handleAdminConfig(..) - upload pressed');
             evt.stopPropagation(); // prevents list item expansion
 
@@ -42,7 +44,7 @@ export class AdminConfigTab {
             }
         };
 
-        (document.querySelector('#adminSubmitDefaultDeliverable') as OnsButtonElement).onclick = function (evt) {
+        (document.querySelector('#adminSubmitDefaultDeliverable') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminView::handleAdminConfig(..) - default deliverable pressed');
 
             that.defaultDeliverablePressed();
@@ -100,8 +102,8 @@ export class AdminConfigTab {
             const opts = {
                 headers: {
                     // 'Content-Type': 'application/json', // violates CORS; leave commented out
-                    'user':  localStorage.user,
-                    'token': localStorage.token
+                    user:  localStorage.user,
+                    token: localStorage.token
                 }
             };
             const response: Response = await Network.httpPostFile(url, opts, formData);
@@ -114,9 +116,11 @@ export class AdminConfigTab {
                 const reason = await response.json();
                 UI.hideModal();
                 if (typeof reason.failure && typeof reason.failure.message) {
-                    UI.notification('There was an issue uploading your class list. Please ensure the CSV file includes all required columns. <br/>Details: ' + reason.failure.message);
+                    UI.notification('There was an issue uploading your class list. ' +
+                        'Please ensure the CSV file includes all required columns. <br/>Details: ' + reason.failure.message);
                 } else {
-                    UI.notification('There was an issue uploading your class list. Please ensure the CSV file includes all required columns.');
+                    UI.notification('There was an issue uploading your class list. ' +
+                        'Please ensure the CSV file includes all required columns.');
                 }
             }
         } catch (err) {
@@ -138,12 +142,12 @@ export class AdminConfigTab {
         Log.trace('AdminView::defaultDeliverablePressed(..) - value: ' + value);
 
         const url = this.remote + '/portal/admin/course';
-        let options: any = AdminView.getOptions();
+        const options: any = AdminView.getOptions();
         options.method = 'post';
         options.body = JSON.stringify(this.course);
 
-        let response = await fetch(url, options);
-        let body = await response.json();
+        const response = await fetch(url, options);
+        const body = await response.json();
 
         if (typeof body.success !== 'undefined') {
             // worked
@@ -156,31 +160,35 @@ export class AdminConfigTab {
     }
 
     public static async getCourse(remote: string): Promise<CourseTransport> {
-        UI.showModal('Retrieving config.');
+        try {
+            UI.showModal('Retrieving config.');
 
-        // get class options
-        const options = AdminView.getOptions();
-        let url = remote + '/portal/admin/course';
-        let response = await fetch(url, options);
-        UI.hideModal();
+            // get class options
+            const options = AdminView.getOptions();
+            const url = remote + '/portal/admin/course';
+            const response = await fetch(url, options);
+            UI.hideModal();
 
-        let courseOptions: CourseTransport = null;
-        let start = Date.now();
-        if (response.status === 200) {
-            Log.trace('AdminCourseTab::getCourse(..) - 200 received for course options');
-            const json: CourseTransportPayload = await response.json();
-            // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
-            if (typeof json.success !== 'undefined') {
-                Log.trace('AdminCourseTab::getCourse(..)  - worked; took: ' + UI.took(start));
-                return json.success;
+            const courseOptions: CourseTransport = null;
+            const start = Date.now();
+            if (response.status === 200) {
+                Log.trace('AdminCourseTab::getCourse(..) - 200 received for course options');
+                const json: CourseTransportPayload = await response.json();
+                // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
+                if (typeof json.success !== 'undefined') {
+                    Log.trace('AdminCourseTab::getCourse(..)  - worked; took: ' + UI.took(start));
+                    return json.success;
+                } else {
+                    Log.trace('AdminCourseTab::getCourse(..)  - ERROR: ' + json.failure.message);
+                    AdminView.showError(json.failure); // FailurePayload
+                }
             } else {
-                Log.trace('AdminCourseTab::getCourse(..)  - ERROR: ' + json.failure.message);
-                AdminView.showError(json.failure); // FailurePayload
+                Log.trace('AdminCourseTab::getCourse(..)  - !200 received: ' + response.status);
+                const text = await response.text();
+                AdminView.showError(text);
             }
-        } else {
-            Log.trace('AdminCourseTab::getCourse(..)  - !200 received: ' + response.status);
-            const text = await response.text();
-            AdminView.showError(text);
+        } catch (err) {
+            AdminView.showError("Getting config failed: " + err.message);
         }
         return null;
     }

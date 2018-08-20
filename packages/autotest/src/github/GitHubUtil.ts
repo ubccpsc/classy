@@ -76,7 +76,8 @@ export class GitHubUtil {
             const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can't add requests to a past comment
 
             const cp = new ClassPortal();
-            const personResponse = await cp.getPersonId(requestor); // need to get this from portal backend (this is a gitHubId, not a personId)
+            // need to get this from portal backend (this is a gitHubId, not a personId)
+            const personResponse = await cp.getPersonId(requestor);
 
             // this is ok: if delivId is null, just pass it along
             // if (delivId === null) {
@@ -125,7 +126,10 @@ export class GitHubUtil {
             }
 
             // head commit is sometimes null on new branches
-            const headCommitURL = payload.head_commit === null ? payload.repository.html_url + "/tree/" + String(payload.ref).replace("refs/heads/", "") : payload.head_commit.url;
+            const headCommitURL = payload.head_commit === null ?
+                payload.repository.html_url + "/tree/" + String(payload.ref).replace("refs/heads/", "") :
+                payload.head_commit.url;
+
             const commitURL = headCommitURL;
 
             const branch = payload.ref;

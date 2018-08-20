@@ -3,14 +3,13 @@ import Log from "../../../../../common/Log";
 import {StudentTransport, TeamTransport, TeamTransportPayload} from "../../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 
-import {UI} from "../util/UI"
+import {UI} from "../util/UI";
 import {AdminStudentsTab} from "./AdminStudentsTab";
 import {AdminView} from "./AdminView";
 
-
 export class AdminTeamsTab {
 
-    private remote: string; // url to backend
+    private readonly remote: string; // url to backend
     private teams: TeamTransport[];
     private students: StudentTransport[];
 
@@ -103,7 +102,7 @@ export class AdminTeamsTab {
                 p2 = team.people[1];
                 p3 = team.people[2];
             }
-            let row: TableCell[] = [
+            const row: TableCell[] = [
                 {value: team.id, html: '<a href="' + team.URL + '">' + team.id + '</a>'},
                 {value: p1, html: p1},
                 {value: p2, html: p2},
@@ -139,7 +138,7 @@ export class AdminTeamsTab {
             Log.info('AdminTeamsTab::renderTeams(..) - upload pressed');
             evt.stopPropagation(); // prevents list item expansion
 
-            let val = delivSelector.value.valueOf();
+            const val = delivSelector.value.valueOf();
 
             // that.renderPage('AdminTeams', {labSection: val}); // if we need to re-fetch
             that.renderTeams(that.teams, val); // if cached data is ok
@@ -155,7 +154,6 @@ export class AdminTeamsTab {
         }
 
     }
-
 
     private renderIndividuals(teams: TeamTransport[], students: StudentTransport[], delivId: string): void {
         Log.trace("AdminTeamsTab::renderTeams(..) - start");
@@ -186,8 +184,8 @@ export class AdminTeamsTab {
         let listContainsStudents = false;
         for (const student of students) {
             if (studentsOnTeams.indexOf(student.id) < 0) {
-                let row: TableCell[] = [
-                    {value: student.id, html: '<a href="' + student.userUrl + '">' + student.id+ '</a>'}
+                const row: TableCell[] = [
+                    {value: student.id, html: '<a href="' + student.userUrl + '">' + student.id + '</a>'}
                 ];
                 if (delivId !== '-None-') {
                     st.addRow(row);
@@ -210,28 +208,30 @@ export class AdminTeamsTab {
 
     public static async getTeams(remote: string): Promise<TeamTransport[]> {
         Log.info("AdminTeamsTab::getTeams( .. ) - start");
+        try {
+            const start = Date.now();
+            const options = AdminView.getOptions();
+            const url = remote + '/portal/admin/teams';
+            const response = await fetch(url, options);
 
-        const start = Date.now();
-        const options = AdminView.getOptions();
-        const url = remote + '/portal/admin/teams';
-        const response = await fetch(url, options);
-
-        if (response.status === 200) {
-            Log.trace('AdminTeamsTab::getTeams(..) - 200 received');
-            const json: TeamTransportPayload = await response.json();
-            if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                Log.trace('AdminTeamsTab::getTeams(..)  - worked; took: ' + UI.took(start));
-                return json.success;
+            if (response.status === 200) {
+                Log.trace('AdminTeamsTab::getTeams(..) - 200 received');
+                const json: TeamTransportPayload = await response.json();
+                if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
+                    Log.trace('AdminTeamsTab::getTeams(..)  - worked; took: ' + UI.took(start));
+                    return json.success;
+                } else {
+                    Log.trace('AdminTeamsTab::getTeams(..)  - ERROR: ' + json.failure.message);
+                    AdminView.showError(json.failure); // FailurePayload
+                }
             } else {
-                Log.trace('AdminTeamsTab::getTeams(..)  - ERROR: ' + json.failure.message);
-                AdminView.showError(json.failure); // FailurePayload
+                Log.trace('AdminTeamsTab::getTeams(..)  - !200 received: ' + response.status);
+                const text = await response.text();
+                AdminView.showError(text);
             }
-        } else {
-            Log.trace('AdminTeamsTab::getTeams(..)  - !200 received: ' + response.status);
-            const text = await response.text();
-            AdminView.showError(text);
+        } catch (err) {
+            AdminView.showError("Getting teams failed: " + err.message);
         }
-
         return [];
     }
 }

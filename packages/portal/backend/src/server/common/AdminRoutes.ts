@@ -48,6 +48,9 @@ export default class AdminRoutes implements IREST {
         server.post('/portal/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
         server.post('/portal/admin/deliverable', AdminRoutes.isAdmin, AdminRoutes.postDeliverable);
         server.post('/portal/admin/course', AdminRoutes.isAdmin, AdminRoutes.postCourse);
+
+        // staff-only functions
+        // NOTHING
     }
 
     /**
@@ -82,48 +85,6 @@ export default class AdminRoutes implements IREST {
             return handleError('Authorization error; user not priviliged');
         });
     }
-
-    // NOTE: This might not actually be used by anything
-    //
-    // /**
-    //  * Handler that succeeds if the user is staff.
-    //  *
-    //  * @param req
-    //  * @param res
-    //  * @param next
-    //  */
-    // private static isStaff(req: any, res: any, next: any) {
-    //     Log.info('AdminRoutes::isStaff(..) - start');
-    //
-    //     const user = req.headers.user;
-    //     const token = req.headers.token;
-    //
-    //     const ac = new AuthController();
-    //     ac.isPrivileged(user, token).then(function (priv) {
-    //             Log.trace('AdminRoutes::isPrivileged(..) - in isStaff: ' + JSON.stringify(priv));
-    //             if (priv.isStaff === true) {
-    //                 return next();
-    //             } else {
-    //                 res.send(401, {
-    //                     failure: {
-    //                         message:      'Authorization error; user not staff.',
-    //                         shouldLogout: false
-    //                     }
-    //                 });
-    //                 return next(false);
-    //             }
-    //         }
-    //     ).catch(function (err) {
-    //         Log.error('AdminRoutes::isStaff(..) - ERROR: ' + err.message);
-    //         res.send(401, {
-    //             failure: {
-    //                 message:      'Authorization error; user not staff.',
-    //                 shouldLogout: false
-    //             }
-    //         });
-    //         return next(false);
-    //     });
-    // }
 
     /**
      * Handler that succeeds if the user is admin.
@@ -332,12 +293,7 @@ export default class AdminRoutes implements IREST {
             return next();
         }).catch(function(err) {
             Log.error('AdminRoutes::getDeliverables(..) - ERROR: ' + err.message);
-            const payload: Payload = {
-                failure: {
-                    message:      'Unable to deliverable list; ERROR: ' + err.message,
-                    shouldLogout: false
-                }
-            };
+            const payload: Payload = {failure: {message: 'Unable to deliverable list; ERROR: ' + err.message, shouldLogout: false}};
             res.send(400, payload);
             return next(false);
         });
@@ -456,16 +412,20 @@ export default class AdminRoutes implements IREST {
         const result = dc.validateDeliverableTransport(delivTrans);
         if (result === null) {
             const deliv = dc.transportToDeliverable(delivTrans);
+            if (deliv.teamPrefix === '') {
+                deliv.teamPrefix = 't_' + deliv.id;
+            }
+            if (deliv.repoPrefix === '') {
+                deliv.repoPrefix = deliv.id;
+            }
             const saveSucceeded = await dc.saveDeliverable(deliv);
             if (saveSucceeded !== null) {
                 // worked (would have returned a Deliverable)
                 return true;
-            } else {
-                throw new Error("Deliverable not saved.");
             }
-        } else {
-            throw new Error("Deliverable not saved: " + result);
         }
+        // should never get here unless something went wrong
+        throw new Error("Deliverable not saved.");
     }
 
     /**
@@ -487,31 +447,10 @@ export default class AdminRoutes implements IREST {
             return next();
         }).catch(function(err) {
             Log.error('AdminRoutes::getCourse(..) - ERROR: ' + err.message);
-            const payload: Payload = {
-                failure: {
-                    message:      'Unable to retrieve course object; ERROR: ' + err.message,
-                    shouldLogout: false
-                }
-            };
+            const payload: Payload = {failure: {message: 'Unable to retrieve course object; ERROR: ' + err.message, shouldLogout: false}};
             res.send(400, payload);
             return next(false);
         });
-    }
-
-    private static async handlePostCourse(courseTrans: CourseTransport): Promise<boolean> {
-        const cc = new CourseController(new GitHubController());
-        const result = CourseController.validateCourseTransport(courseTrans);
-        if (result === null) {
-            const saveSucceeded = await cc.saveCourse(courseTrans);
-            if (saveSucceeded !== null) {
-                Log.info('AdminRoutes::handlePostCourse() - done');
-                return true;
-            } else {
-                throw new Error("Course object not saved.");
-            }
-        } else {
-            throw new Error("Course object not saved: " + result);
-        }
     }
 
     private static postCourse(req: any, res: any, next: any) {
@@ -536,4 +475,17 @@ export default class AdminRoutes implements IREST {
         });
     }
 
+    private static async handlePostCourse(courseTrans: CourseTransport): Promise<boolean> {
+        const cc = new CourseController(new GitHubController());
+        const result = CourseController.validateCourseTransport(courseTrans);
+        if (result === null) {
+            const saveSucceeded = await cc.saveCourse(courseTrans);
+            if (saveSucceeded !== null) {
+                Log.info('AdminRoutes::handlePostCourse() - done');
+                return true;
+            }
+        }
+        // should never get here unless something goes wrong
+        throw new Error("Course object not saved.");
+    }
 }

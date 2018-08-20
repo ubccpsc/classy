@@ -73,9 +73,9 @@ export class FrontendDatasetGenerator {
         Log.info("FrontendDatasetGenerator::createTeams() - start");
 
         const tc = new TeamController();
-        const deliv = await this.dc.getDeliverable(Test.DELIVIDPROJ);
+        const delivs = await this.dc.getDeliverables();
 
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < 200; i++) {
             // try i times to make a team
             const p1 = Test.getPerson('student_' + this.getRandomInt(50));
             const p2 = Test.getPerson('student_' + this.getRandomInt(50));
@@ -85,6 +85,9 @@ export class FrontendDatasetGenerator {
                 const p2Teams = await tc.getTeamsForPerson(p2);
                 let p1Team = null;
                 let p2Team = null;
+
+                const deliv = delivs[this.getRandomInt(delivs.length)];
+
                 for (const t of p1Teams) {
                     if (t.delivId === deliv.id) {
                         p1Team = t;
@@ -160,7 +163,8 @@ export class FrontendDatasetGenerator {
             const team = teams[index];
 
             const score = this.getRandomInt(100);
-            const result = Test.getResult(team.delivId, team.id, team.personIds, score);
+            // NOTE: THIS IS NOT RIGHT; team.id should be repo.id
+            const result = Test.createResult(team.delivId, team.id, team.personIds, score);
             await this.dc.writeResult(result);
         }
     }

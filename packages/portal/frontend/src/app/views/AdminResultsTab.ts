@@ -1,4 +1,6 @@
+import * as moment from "moment";
 import {OnsButtonElement} from "onsenui";
+
 import Log from "../../../../../common/Log";
 import {
     AutoTestResultSummaryPayload,
@@ -9,14 +11,16 @@ import {
 } from "../../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 
-import {UI} from "../util/UI"
+import {UI} from "../util/UI";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminView} from "./AdminView";
 
-
 export class AdminResultsTab {
 
-    private remote: string; // url to backend
+    private readonly remote: string; // url to backend
+    private delivValue: string | null = null;
+    private repoValue: string | null = null;
+
     constructor(remote: string) {
         this.remote = remote;
     }
@@ -37,7 +41,12 @@ export class AdminResultsTab {
         const fab = document.querySelector('#resultsUpdateButton') as OnsButtonElement;
         fab.onclick = function(evt: any) {
             Log.info('AdminResultsTab::init(..)::updateButton::onClick');
-            that.performQueries();
+            that.performQueries().then(function(newResults) {
+                // TODO: need to track and update the current value of deliv and repo
+                that.render(delivs, repos, newResults);
+            }).catch(function(err) {
+                UI.showError(err);
+            });
         };
 
         this.render(delivs, repos, results);
@@ -53,6 +62,8 @@ export class AdminResultsTab {
         if (repo === '-Any-') {
             repo = 'any';
         }
+        this.delivValue = deliv;
+        this.repoValue = repo;
         return await AdminResultsTab.getResults(this.remote, deliv, repo);
     }
 
@@ -64,16 +75,16 @@ export class AdminResultsTab {
             delivNames.push(deliv.id);
         }
         delivNames = delivNames.sort();
-        delivNames.push('-Any-'); // TODO: insert at index 0
-        UI.setDropdownOptions('resultsDelivSelect', delivNames);
+        delivNames.unshift('-Any-');
+        UI.setDropdownOptions('resultsDelivSelect', delivNames, this.delivValue);
 
         let repoNames: string[] = [];
         for (const repo of repos) {
             repoNames.push(repo.id);
         }
         repoNames = repoNames.sort();
-        repoNames.push('-Any-'); // TODO: insert at index 0
-        UI.setDropdownOptions('resultsRepoSelect', repoNames);
+        repoNames.unshift('-Any-');
+        UI.setDropdownOptions('resultsRepoSelect', repoNames, this.repoValue);
 
         const headers: TableHeader[] = [
             {
@@ -86,17 +97,17 @@ export class AdminResultsTab {
             },
             {
                 id:          'delivId',
-                text:        'Deliverable',
+                text:        'Deliv',
                 sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown:    false, // Whether the column should initially sort descending or ascending.
                 style:       'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'timstamp',
-                text:        'Timestamp',
+                id:          'score',
+                text:        'Score',
                 sortable:    true,
-                defaultSort: true,
+                defaultSort: false,
                 sortDown:    true,
                 style:       'padding-left: 1em; padding-right: 1em;'
             },
@@ -109,10 +120,10 @@ export class AdminResultsTab {
                 style:       'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'score',
-                text:        'Score',
+                id:          'timstamp',
+                text:        'Timestamp',
                 sortable:    true,
-                defaultSort: false,
+                defaultSort: true,
                 sortDown:    true,
                 style:       'padding-left: 1em; padding-right: 1em;'
             }
@@ -136,14 +147,18 @@ export class AdminResultsTab {
 
             // const ts = result.input.pushInfo.timestamp;
             const ts = result.timestamp;
-            const tsString = new Date(ts).toLocaleDateString() + ' @ ' + new Date(ts).toLocaleTimeString();
-            let row: TableCell[] = [
+            const date = new Date(ts);
+            const mom = moment(date);
+            const tsString = mom.format("MM/DD[@]HH:mm");
+            // const tsString = new Date(ts).toLocaleDateString() + ' @ ' + new Date(ts).toLocaleTimeString();
+
+            const row: TableCell[] = [
                 {value: result.repoId, html: '<a href="' + result.repoURL + '">' + result.repoId + '</a>'},
                 // {value: result.repoId, html: result.repoId},
                 {value: result.delivId, html: result.delivId},
-                {value: ts, html: '<a href="' + result.commitURL + '">' + tsString + '</a>'},
+                {value: result.scoreOverall, html: result.scoreOverall + ''},
                 {value: result.state, html: result.state},
-                {value: result.scoreOverall, html: result.scoreOverall + ''}
+                {value: ts, html: '<a href="' + result.commitURL + '">' + tsString + '</a>'}
             ];
 
             st.addRow(row);
@@ -173,7 +188,7 @@ export class AdminResultsTab {
             const json: AutoTestResultSummaryPayload = await response.json();
             // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
             if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                Log.trace('AdminResultsTab::getResults(..)  - worked; took: ' + UI.took(start));
+                Log.trace('AdminResultsTab::getResults(..)  - worked; # rows: ' + json.success.length + '; took: ' + UI.took(start));
                 return json.success;
             } else {
                 Log.trace('AdminResultsTab::getResults(..)  - ERROR: ' + json.failure.message);
@@ -191,28 +206,31 @@ export class AdminResultsTab {
     public static async getRepositories(remote: string): Promise<RepositoryTransport[]> {
         Log.info("AdminResultsTab::getRepositories( .. ) - start");
 
-        const start = Date.now();
-        const url = remote + '/portal/admin/repositories';
-        const options = AdminView.getOptions();
-        const response = await fetch(url, options);
+        try {
+            const start = Date.now();
+            const url = remote + '/portal/admin/repositories';
+            const options = AdminView.getOptions();
+            const response = await fetch(url, options);
 
-        if (response.status === 200) {
-            Log.trace('AdminResultsTab::getRepositories(..) - 200 received');
-            const json: RepositoryPayload = await response.json();
-            // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
-            if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                Log.trace('AdminResultsTab::getRepositories(..)  - worked; took: ' + UI.took(start));
-                return json.success;
+            if (response.status === 200) {
+                Log.trace('AdminResultsTab::getRepositories(..) - 200 received');
+                const json: RepositoryPayload = await response.json();
+                // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
+                if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
+                    Log.trace('AdminResultsTab::getRepositories(..)  - worked; took: ' + UI.took(start));
+                    return json.success;
+                } else {
+                    Log.trace('AdminResultsTab::getRepositories(..)  - ERROR: ' + json.failure.message);
+                    AdminView.showError(json.failure); // FailurePayload
+                }
             } else {
-                Log.trace('AdminResultsTab::getRepositories(..)  - ERROR: ' + json.failure.message);
-                AdminView.showError(json.failure); // FailurePayload
+                Log.trace('AdminResultsTab::getRepositories(..)  - !200 received: ' + response.status);
+                const text = await response.text();
+                AdminView.showError(text);
             }
-        } else {
-            Log.trace('AdminResultsTab::getRepositories(..)  - !200 received: ' + response.status);
-            const text = await response.text();
-            AdminView.showError(text);
+        } catch (err) {
+            AdminView.showError("Getting results failed: " + err.message);
         }
-
         return [];
     }
 }

@@ -4,15 +4,22 @@ import {AutoTestConfig} from "../../../../../common/types/AutoTestTypes";
 
 import {DeliverableTransport, DeliverableTransportPayload} from "../../../../../common/types/PortalTypes";
 
-import {UI} from "../util/UI"
+import {UI} from "../util/UI";
 import {AdminView} from "./AdminView";
 
 // import flatpickr from "flatpickr";
 declare var flatpickr: any;
 
+/**
+ *
+ * This isn't a tab on its own anymore. It has been absorbed within AdminConfigTab
+ * but the code here is more clearly organized so we've left it here for the time
+ * being until more explicit tab sub-helpers are actually a thing.
+ *
+ */
 export class AdminDeliverablesTab {
 
-    private remote: string; // url to backend
+    private readonly remote: string; // url to backend
     private isAdmin: boolean;
     private openPicker: any; // flatpickr;
     private closePicker: any; // flatpickr;
@@ -31,15 +38,15 @@ export class AdminDeliverablesTab {
     public async init(opts: any): Promise<void> {
         Log.info('AdminDeliverablesTab::init(..) - start');
 
-        const fab = document.querySelector('#adminAddDeliverable') as OnsFabElement;
-        if (this.isAdmin === false) {
-            fab.style.display = 'none';
-        } else {
-            fab.onclick = function(evt: any) {
-                Log.info('AdminDeliverablesTab::init(..)::addDeliverable::onClick');
-                UI.pushPage('editDeliverable.html', {delivId: null});
-            };
-        }
+        // const fab = document.querySelector('#adminAddDeliverable') as OnsFabElement;
+        // if (this.isAdmin === false) {
+        //     fab.style.display = 'none';
+        // } else {
+        //     fab.onclick = function(evt: any) {
+        //         Log.info('AdminDeliverablesTab::init(..)::addDeliverable::onClick');
+        //         UI.pushPage('editDeliverable.html', {delivId: null});
+        //     };
+        // }
 
         UI.showModal('Retrieving deliverables.');
         const delivs = await AdminDeliverablesTab.getDeliverables(this.remote);
@@ -59,7 +66,8 @@ export class AdminDeliverablesTab {
 
         for (const deliv of deliverables) {
             const main = 'Deliverable: ' + deliv.id;
-            const sub = 'Opens: ' + new Date(deliv.openTimestamp).toLocaleString() + '; Closes: ' + new Date(deliv.closeTimestamp).toLocaleString();
+            const sub = 'Opens: ' + new Date(deliv.openTimestamp).toLocaleString() +
+                '; Closes: ' + new Date(deliv.closeTimestamp).toLocaleString();
 
             let editable = false;
             if (this.isAdmin === true) {
@@ -78,6 +86,19 @@ export class AdminDeliverablesTab {
         if (deliverables.length === 0) {
             deliverableList.appendChild(UI.createListItem('Deliverables not yet specified.'));
         }
+
+        const createDeliverable = document.createElement('ons-button');
+        createDeliverable.setAttribute('modifier', 'large');
+        createDeliverable.innerText = 'Create New Deliverable';
+
+        createDeliverable.onclick = function() {
+            UI.pushPage('editDeliverable.html', {delivId: null});
+        };
+
+        const li = document.createElement('ons-list-item');
+        li.appendChild(createDeliverable);
+
+        deliverableList.appendChild(li);
     }
 
     public async initEditDeliverablePage(opts: any): Promise<void> {
@@ -179,7 +200,7 @@ export class AdminDeliverablesTab {
                 field.setAttribute('readonly', '');
             }
         } else {
-            Log.error('AdminDeliverablesTab::setTextField( ' + fieldName + ', ... ) - element does not exist')
+            Log.error('AdminDeliverablesTab::setTextField( ' + fieldName + ', ... ) - element does not exist');
         }
     }
 
@@ -191,7 +212,7 @@ export class AdminDeliverablesTab {
                 field.setAttribute('readonly', '');
             }
         } else {
-            Log.error('AdminDeliverablesTab::setToggle( ' + fieldName + ', ... ) - element does not exist')
+            Log.error('AdminDeliverablesTab::setToggle( ' + fieldName + ', ... ) - element does not exist');
         }
     }
 
@@ -233,7 +254,7 @@ export class AdminDeliverablesTab {
             atCustom = JSON.parse(atCustomRaw);
         }
 
-        let customRaw = UI.getTextFieldValue('adminEditDeliverablePage-custom');
+        const customRaw = UI.getTextFieldValue('adminEditDeliverablePage-custom');
         let custom: any = {};
         if (customRaw.length > 0) {
             Log.trace("AdminDeliverablesTab::save() - customRaw: " + customRaw);
@@ -242,7 +263,7 @@ export class AdminDeliverablesTab {
             custom = JSON.parse(customRaw);
         }
 
-        let at: AutoTestConfig = {
+        const at: AutoTestConfig = {
             dockerImage,
             maxExecTime,
             studentDelay,
@@ -250,7 +271,7 @@ export class AdminDeliverablesTab {
             custom: atCustom
         };
 
-        let deliv: DeliverableTransport = {
+        const deliv: DeliverableTransport = {
             id,
             URL,
             openTimestamp,
@@ -269,12 +290,12 @@ export class AdminDeliverablesTab {
         Log.trace("AdminDeliverablesTab::save() - result: " + JSON.stringify(deliv));
 
         const url = this.remote + '/portal/admin/deliverable';
-        let options: any = AdminView.getOptions();
+        const options: any = AdminView.getOptions();
         options.method = 'post';
         options.body = JSON.stringify(deliv);
 
-        let response = await fetch(url, options);
-        let body = await response.json();
+        const response = await fetch(url, options);
+        const body = await response.json();
 
         if (typeof body.success !== 'undefined') {
             // worked
@@ -286,30 +307,33 @@ export class AdminDeliverablesTab {
     }
 
     public static async getDeliverables(remote: string): Promise<DeliverableTransport[]> {
-        Log.info("AdminDeliverablesTab::getDeliverables( .. ) - start");
-        const start = Date.now();
+        try {
+            Log.info("AdminDeliverablesTab::getDeliverables( .. ) - start");
+            const start = Date.now();
 
-        const options = AdminView.getOptions();
-        const url = remote + '/portal/admin/deliverables';
-        const response = await fetch(url, options);
+            const options = AdminView.getOptions();
+            const url = remote + '/portal/admin/deliverables';
+            const response = await fetch(url, options);
 
-        if (response.status === 200) {
-            Log.trace('AdminDeliverablesTab::getDeliverables(..) - 200 received');
-            const json: DeliverableTransportPayload = await response.json();
-            // Log.trace('AdminView::getDeliverables(..)  - payload: ' + JSON.stringify(json));
-            if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                Log.trace('AdminDeliverablesTab::getDeliverables(..)  - worked; took: ' + UI.took(start));
-                return (json.success);
+            if (response.status === 200) {
+                Log.trace('AdminDeliverablesTab::getDeliverables(..) - 200 received');
+                const json: DeliverableTransportPayload = await response.json();
+                // Log.trace('AdminView::getDeliverables(..)  - payload: ' + JSON.stringify(json));
+                if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
+                    Log.trace('AdminDeliverablesTab::getDeliverables(..)  - worked; took: ' + UI.took(start));
+                    return (json.success);
+                } else {
+                    Log.trace('AdminDeliverablesTab::getDeliverables(..)  - ERROR: ' + json.failure.message);
+                    AdminView.showError(json.failure); // FailurePayload
+                }
             } else {
-                Log.trace('AdminDeliverablesTab::getDeliverables(..)  - ERROR: ' + json.failure.message);
-                AdminView.showError(json.failure); // FailurePayload
+                Log.trace('AdminDeliverablesTab::getDeliverables(..)  - !200 received: ' + response.status);
+                const text = await response.text();
+                AdminView.showError(text);
             }
-        } else {
-            Log.trace('AdminDeliverablesTab::getDeliverables(..)  - !200 received: ' + response.status);
-            const text = await response.text();
-            AdminView.showError(text);
+        } catch (err) {
+            AdminView.showError("Getting deliverables failed: " + err.message);
         }
-
         return [];
     }
 }

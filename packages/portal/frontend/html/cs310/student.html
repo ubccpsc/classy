@@ -18,12 +18,10 @@
             <ons-list-header>Select Project Partner</ons-list-header>
             <ons-list-item expandable>
                 <div class="left settingIcon">
-                    <ons-icon icon="fa-cogs"></ons-icon>
+                    <ons-icon style="padding-right: 1em;" icon="fa-cogs"></ons-icon>
+                    Specify project partner CWL:
                 </div>
-                <div class="center settingLabel">
-                    Specify project partner.
-                </div>
-                <div class="right settingRight">
+                <div>
                     <ons-input class="settingTextInput" id="studentSelectPartnerText"></ons-input>
                     <ons-button id="studentSelectPartnerButton">Create Team</ons-button>
                 </div>
@@ -35,9 +33,9 @@
             </ons-list-item>
         </div>
         <div id="studentPartnerDiv" style="display: none;">
-            <ons-list-header>Select Project Partner</ons-list-header>
+            <ons-list-header>Project Partner</ons-list-header>
             <ons-list-item>
-                Your team is <span id="studentPartnerTeamName"></span>; your teammates are <span id="studentPartnerTeammates"></span>.
+                Your team is&nbsp;<span id="studentPartnerTeamName"></span>; your teammates are&nbsp;<span id="studentPartnerTeammates"></span>.
             </ons-list-item>
         </div>
     </ons-list>

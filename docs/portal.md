@@ -1,4 +1,5 @@
-# SDMM Portal
+
+# NOTE: This is for an older version of Classy and will soon be removed.
 
 
 
@@ -42,7 +43,6 @@ The frontend requires the backend `sdmm-portal-backend` service be running.
     * Choose option 2 (`temporary webserver`)
 
 
-<<<<<<< HEAD
 ## External Steps
 
 0. Get a GitHub organization for your course and configure it. You probably want to:
@@ -56,7 +56,7 @@ The frontend requires the backend `sdmm-portal-backend` service be running.
         * GH_TOKEN_USER=<github account you created>
         * GH_API_TOKEN="token <the github token; leave token and one space to the left of this>"
     * Register this GitHub user as an owner in your organization.
-=======
+
 
 ## Deploy on sdmm
 
@@ -79,4 +79,4 @@ cp $(readlink -f /etc/letsencrypt/live/sdmm.cs.ubc.ca/fullchain.pem) /home/w-sdm
 cp $(readlink -f /etc/letsencrypt/live/sdmm.cs.ubc.ca/privkey.pem) /home/w-sdmm/autotest/ssl/privkey.pem
 chown -R w-sdmm:w-sdmm /home/w-sdmm/autotest/ssl
 ```
->>>>>>> old_sdmm-portal/master
+

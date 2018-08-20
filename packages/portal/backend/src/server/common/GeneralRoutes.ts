@@ -79,6 +79,24 @@ export default class GeneralRoutes implements IREST {
         });
     }
 
+    private static async performGetPerson(user: string, token: string): Promise<StudentTransport> {
+        const ac = new AuthController();
+        const isValid = await ac.isValid(user, token);
+        if (isValid === false) {
+            Log.trace('GeneralRoutes::performGetGrades(..) - in isValid: ' + isValid);
+            throw new Error('Invalid credentials');
+        } else {
+            const pc = new PersonController();
+            const person = await pc.getPerson(user);
+            if (person === null) {
+                return null;
+            }
+
+            const personTrans: StudentTransport = PersonController.personToTransport(person);
+            return personTrans;
+        }
+    }
+
     public static getGrades(req: any, res: any, next: any) {
         Log.info('GeneralRoutes::getGrades(..) - start');
 
@@ -123,9 +141,10 @@ export default class GeneralRoutes implements IREST {
 
         const teamTrans: TeamFormationTransport = req.params;
         GeneralRoutes.performPostTeam(user, token, teamTrans).then(function(team) {
+            Log.info('GeneralRoutes::postTeam(..) - done; team: ' + JSON.stringify(team));
             const payload: TeamTransportPayload = {success: [team]}; // really shouldn't be an array, but it beats having another type
             res.send(200, payload);
-            return next(false);
+            return next(true);
         }).catch(function(err) {
             Log.info('GeneralRoutes::postTeam(..) - ERROR: ' + err.message); // intentionally info
             const payload: Payload = {failure: {message: err.message, shouldLogout: false}};
@@ -142,6 +161,14 @@ export default class GeneralRoutes implements IREST {
             throw new Error('Invalid credentials');
         } else {
             const tc = new TeamController();
+
+            // make sure the requestor is one of the teammates!
+            const pc = new PersonController();
+            const person = await pc.getPerson(user);
+            if (requestedTeam.githubIds.indexOf(person.githubId) < 0) {
+                throw new Error('Users cannot form teams they are not going to join.');
+            }
+
             const team = await tc.formTeam(requestedTeam.delivId, requestedTeam.githubIds, false);
 
             const teamTrans: TeamTransport = {
@@ -153,24 +180,6 @@ export default class GeneralRoutes implements IREST {
 
             Log.info('GeneralRoutes::performPostTeam(..) - team created: ' + team.id);
             return teamTrans;
-        }
-    }
-
-    private static async performGetPerson(user: string, token: string): Promise<StudentTransport> {
-        const ac = new AuthController();
-        const isValid = await ac.isValid(user, token);
-        if (isValid === false) {
-            Log.trace('GeneralRoutes::performGetGrades(..) - in isValid: ' + isValid);
-            throw new Error('Invalid credentials');
-        } else {
-            const pc = new PersonController();
-            const person = await pc.getPerson(user);
-            if (person === null) {
-                return null;
-            }
-
-            const personTrans: StudentTransport = PersonController.personToTransport(person);
-            return personTrans;
         }
     }
 
