@@ -313,7 +313,7 @@ export class CourseController { // don't implement ICourseController yet
      */
     public async getResults(reqDelivId: string, reqRepoId: string): Promise<AutoTestResultSummaryTransport[]> {
         Log.info("CourseController::getResults( " + reqDelivId + ", " + reqRepoId + " ) - start");
-        const NUM_RESULTS = 200; // max # of records
+        const NUM_RESULTS = 1000; // max # of records
 
         const allResults = await this.resC.getAllResults();
         const results: AutoTestResultSummaryTransport[] = [];
