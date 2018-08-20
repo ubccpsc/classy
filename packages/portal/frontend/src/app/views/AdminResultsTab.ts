@@ -1,4 +1,6 @@
+import * as moment from "moment";
 import {OnsButtonElement} from "onsenui";
+
 import Log from "../../../../../common/Log";
 import {
     AutoTestResultSummaryPayload,
@@ -95,17 +97,17 @@ export class AdminResultsTab {
             },
             {
                 id:          'delivId',
-                text:        'Deliverable',
+                text:        'Deliv',
                 sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown:    false, // Whether the column should initially sort descending or ascending.
                 style:       'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'timstamp',
-                text:        'Timestamp',
+                id:          'score',
+                text:        'Score',
                 sortable:    true,
-                defaultSort: true,
+                defaultSort: false,
                 sortDown:    true,
                 style:       'padding-left: 1em; padding-right: 1em;'
             },
@@ -118,10 +120,10 @@ export class AdminResultsTab {
                 style:       'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'score',
-                text:        'Score',
+                id:          'timstamp',
+                text:        'Timestamp',
                 sortable:    true,
-                defaultSort: false,
+                defaultSort: true,
                 sortDown:    true,
                 style:       'padding-left: 1em; padding-right: 1em;'
             }
@@ -145,14 +147,18 @@ export class AdminResultsTab {
 
             // const ts = result.input.pushInfo.timestamp;
             const ts = result.timestamp;
-            const tsString = new Date(ts).toLocaleDateString() + ' @ ' + new Date(ts).toLocaleTimeString();
+            const date = new Date(ts);
+            const mom = moment(date);
+            const tsString = mom.format("MM/DD[@]HH:mm");
+            // const tsString = new Date(ts).toLocaleDateString() + ' @ ' + new Date(ts).toLocaleTimeString();
+
             const row: TableCell[] = [
                 {value: result.repoId, html: '<a href="' + result.repoURL + '">' + result.repoId + '</a>'},
                 // {value: result.repoId, html: result.repoId},
                 {value: result.delivId, html: result.delivId},
-                {value: ts, html: '<a href="' + result.commitURL + '">' + tsString + '</a>'},
+                {value: result.scoreOverall, html: result.scoreOverall + ''},
                 {value: result.state, html: result.state},
-                {value: result.scoreOverall, html: result.scoreOverall + ''}
+                {value: ts, html: '<a href="' + result.commitURL + '">' + tsString + '</a>'}
             ];
 
             st.addRow(row);
