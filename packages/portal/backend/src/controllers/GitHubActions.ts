@@ -837,7 +837,8 @@ export class GitHubActions {
 
         function addFilesToRepo() {
             Log.info('GithubManager::importRepoFS(..)::addFilesToRepo() - start');
-            const command = `cd ${tempPath} && git add . && git commit -m "Starter files"`;
+            // tslint:disable-next-line
+            const command = `cd ${tempPath} && git config --global user.email "classy@cs.ubc.ca" && git config --global user.name "classy" && git add . && git commit -m "Starter files"`;
             return exec(command)
                 .then(function(result: any) {
                     Log.info('GithubManager::importRepoFS(..)::addFilesToRepo() - done:');
