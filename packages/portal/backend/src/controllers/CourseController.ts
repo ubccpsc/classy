@@ -162,6 +162,7 @@ export class CourseController { // don't implement ICourseController yet
         Log.info("CourseController::handleNewGrade( .. ) - start");
 
         try {
+            Log.info("CourseController::handleNewGrade( .. ) - payload: " + JSON.stringify(grade));
             const repo = await this.rc.getRepository(grade.repoId); // sanity check
             if (repo === null) {
                 Log.error("CourseController::handleNewGrade( .. ) - invalid repo name: " + grade.repoId);
