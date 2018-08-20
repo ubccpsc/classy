@@ -444,7 +444,7 @@ export class Test {
                 regressionDelivIds: [],
                 custom:             {}
             },
-            visibleToStudents: false,
+            visibleToStudents: true,
             rubric:            {},
             custom:            {}
         };
