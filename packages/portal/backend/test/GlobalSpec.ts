@@ -239,9 +239,11 @@ export class Test {
             teamMaxSize:      2,
             teamSameLab:      true,
             teamStudentsForm: true,
-            teamPrefix:       'team_',
-            repoPrefix:       '',
+            teamPrefix:       't_' + delivId + '_',
+            repoPrefix:       delivId + '_',
             // bootstrapUrl:     '',
+
+            visibleToStudents: true,
 
             autotest: {
                 dockerImage:        'testImage',
@@ -251,6 +253,7 @@ export class Test {
                 custom:             {}
             },
 
+            rubric: {},
             custom: {}
         };
 
@@ -323,25 +326,28 @@ export class Test {
         };
 
         const newDeliv: Deliverable = {
-            id:               Test.ASSIGNID0,
-            URL:              "",
-            repoPrefix:       Test.ASSIGNID0 + "_",
-            openTimestamp:    -1,
-            closeTimestamp:   -2,
-            gradesReleased:   false,
-            teamMinSize:      1,
-            teamMaxSize:      1,
-            teamSameLab:      false,
-            teamStudentsForm: false,
-            teamPrefix:       Test.ASSIGNID0 + "_",
-            autotest:         {
+            id:                Test.ASSIGNID0,
+            URL:               "",
+            repoPrefix:        Test.ASSIGNID0 + "_",
+            openTimestamp:     -1,
+            closeTimestamp:    -2,
+            gradesReleased:    false,
+            teamMinSize:       1,
+            teamMaxSize:       1,
+            teamSameLab:       false,
+            teamStudentsForm:  false,
+            teamPrefix:        Test.ASSIGNID0 + "_",
+            autotest:          {
                 dockerImage:        'testImage',
                 studentDelay:       60 * 60 * 12, // 12h
                 maxExecTime:        300,
                 regressionDelivIds: [],
                 custom:             {}
             },
-            custom:           newAssignmentInfo
+            visibleToStudents: true,
+
+            rubric: {}, // TODO: should be newAssignmentInfo
+            custom: newAssignmentInfo
         };
 
         // const newDelivSuccess =
@@ -419,26 +425,28 @@ export class Test {
         const deliv: Deliverable = {
             id: delivId,
 
-            URL:              'https://NOTSET',
-            openTimestamp:    -1,
-            closeTimestamp:   -1,
-            gradesReleased:   false,
+            URL:               'https://NOTSET',
+            openTimestamp:     -1,
+            closeTimestamp:    -1,
+            gradesReleased:    false,
             // delay:            -1,
-            teamMinSize:      1,
-            teamMaxSize:      1,
-            teamSameLab:      false,
-            teamStudentsForm: false,
-            teamPrefix:       'team_',
-            repoPrefix:       '',
+            teamMinSize:       1,
+            teamMaxSize:       1,
+            teamSameLab:       false,
+            teamStudentsForm:  false,
+            teamPrefix:        'team_',
+            repoPrefix:        '',
             // bootstrapUrl:     '',
-            autotest:         {
+            autotest:          {
                 dockerImage:        'testImage',
                 studentDelay:       60 * 60 * 12, // 12h
                 maxExecTime:        300,
                 regressionDelivIds: [],
                 custom:             {}
             },
-            custom:           {}
+            visibleToStudents: false,
+            rubric:            {},
+            custom:            {}
         };
         return Util.clone(deliv) as Deliverable;
     }

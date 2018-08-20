@@ -58,12 +58,40 @@ export class DeliverablesController {
         return null;
     }
 
-    public transportToDeliverable(trans: DeliverableTransport): Deliverable | null {
+    public static deliverableToTransport(deliv: Deliverable): DeliverableTransport {
+        const trans: DeliverableTransport = {
+            id:  deliv.id,
+            URL: deliv.URL,
+
+            repoPrefix: deliv.repoPrefix,
+            teamPrefix: deliv.teamPrefix,
+
+            openTimestamp:  deliv.openTimestamp,
+            closeTimestamp: deliv.closeTimestamp,
+
+            minTeamSize:       deliv.teamMinSize,
+            maxTeamSize:       deliv.teamMaxSize,
+            teamsSameLab:      deliv.teamSameLab,
+            studentsFormTeams: deliv.teamStudentsForm,
+
+            onOpenAction:  '',
+            onCloseAction: '',
+
+            gradesReleased:    deliv.gradesReleased,
+            visibleToStudents: deliv.gradesReleased,
+
+            autoTest: deliv.autotest,
+            rubric:   deliv.rubric,
+            custom:   deliv.custom
+        };
+        return trans;
+    }
+
+    public static transportToDeliverable(trans: DeliverableTransport): Deliverable {
 
         const deliv: Deliverable = {
-            id:         trans.id,
-            URL:        trans.URL,
-            repoPrefix: '', // TODO: remove
+            id:  trans.id,
+            URL: trans.URL,
 
             openTimestamp:  trans.openTimestamp,
             closeTimestamp: trans.closeTimestamp,
@@ -73,10 +101,14 @@ export class DeliverablesController {
             teamMaxSize:      trans.maxTeamSize,
             teamSameLab:      trans.teamsSameLab,
             teamStudentsForm: trans.studentsFormTeams,
-            teamPrefix:       '', // TODO: remove
 
-            autotest: trans.autoTest,
+            repoPrefix: trans.repoPrefix,
+            teamPrefix: trans.teamPrefix,
 
+            visibleToStudents: trans.visibleToStudents,
+            autotest:          trans.autoTest,
+
+            rubric: trans.rubric,
             custom: trans.custom
         };
 

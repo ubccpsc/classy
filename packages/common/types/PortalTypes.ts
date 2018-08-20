@@ -90,6 +90,11 @@ export interface DeliverableTransport {
 
     autoTest: AutoTestConfigTransport; // autoTest options
 
+    repoPrefix: string;
+    teamPrefix: string;
+
+    visibleToStudents: boolean;
+    rubric: object;
     custom: object; // for schemas, etc.
 }
 

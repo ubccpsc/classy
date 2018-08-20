@@ -411,7 +411,7 @@ export default class AdminRoutes implements IREST {
         const dc = new DeliverablesController();
         const result = dc.validateDeliverableTransport(delivTrans);
         if (result === null) {
-            const deliv = dc.transportToDeliverable(delivTrans);
+            const deliv = DeliverablesController.transportToDeliverable(delivTrans);
             if (deliv.teamPrefix === '') {
                 deliv.teamPrefix = 't_' + deliv.id;
             }

@@ -13,6 +13,7 @@ import {
 import {Course, Deliverable, Grade, Person} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
+import {DeliverablesController} from "./DeliverablesController";
 import {IGitHubController} from "./GitHubController";
 import {GradesController} from "./GradesController";
 import {PersonController} from "./PersonController";
@@ -376,26 +377,7 @@ export class CourseController { // don't implement ICourseController yet
         let delivs: DeliverableTransport[] = [];
         for (const deliv of deliverables) {
 
-            const delivTransport: DeliverableTransport = {
-                id:  deliv.id,
-                URL: deliv.URL,
-
-                openTimestamp:  deliv.openTimestamp,
-                closeTimestamp: deliv.closeTimestamp,
-
-                minTeamSize:       deliv.teamMinSize,
-                maxTeamSize:       deliv.teamMaxSize,
-                teamsSameLab:      deliv.teamSameLab,
-                studentsFormTeams: deliv.teamStudentsForm,
-
-                onOpenAction:  '',
-                onCloseAction: '',
-
-                gradesReleased: deliv.gradesReleased,
-
-                autoTest: deliv.autotest,
-                custom:   deliv.custom
-            };
+            const delivTransport = DeliverablesController.deliverableToTransport(deliv);
 
             delivs.push(delivTransport);
         }
