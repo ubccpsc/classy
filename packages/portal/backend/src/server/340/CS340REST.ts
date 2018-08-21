@@ -3,12 +3,15 @@ import Log from "../../../../../common/Log";
 
 import IREST from "../IREST";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
-import {Deliverable, Grade, Person, Repository} from "../../Types";
+import {Deliverable, Grade, Person, Repository, Team} from "../../Types";
 import {AssignmentController} from "../../controllers/340/AssignmentController";
 import {AssignmentGrade, AssignmentGradingRubric, AssignmentInfo, QuestionGrade} from "../../../../../common/types/CS340Types";
 import {GradesController} from "../../controllers/GradesController";
 import {PersonController} from "../../controllers/PersonController";
 import {RubricController} from "../../controllers/340/RubricController";
+import {TeamController} from "../../controllers/TeamController";
+import {DatabaseController} from "../../controllers/DatabaseController";
+import {TeamTransport} from "../../../../../common/types/PortalTypes";
 
 export default class CS340REST implements IREST {
     public constructor() {
@@ -31,15 +34,18 @@ export default class CS340REST implements IREST {
         server.get('/portal/cs340/getAllPersons', CS340REST.getAllPersons);
         server.get('/portal/cs340/updateAssignmentStatus/:delivid', CS340REST.updateAssignmentStatus);
         server.get('/portal/cs340/getAssignmentStatus/:delivid', CS340REST.getAssignmentStatus);
+        server.get('/portal/cs340/getStudentTeamByDeliv/:sid/:delivid', CS340REST.getStudentTeamByDeliv); // TODO
         server.post('/portal/cs340/initializeAllRepositories/:delivid', CS340REST.initializeAllRepositories);
         server.post('/portal/cs340/publishAllRepositories/:delivid', CS340REST.publishAllRepositories);
         server.post('/portal/cs340/deleteRepository/:delivid/:reponame', CS340REST.deleteRepository);
         server.post('/portal/cs340/deleteAllRepositories/:delivid', CS340REST.deleteAllRepositories);
+        server.post('/portal/cs340/verifyScheduledJobs/:aid', CS340REST.verifyScheduledJobs);
+        server.post('/portal/cs340/verifyScheduledJobs/', CS340REST.verifyAllScheduledJobs);
+
+
         // server.get('/testPublishRepository/:repoId', CS340REST.testPublishRepository);
         server.get('/portal/cs340/testPublishGrade', CS340REST.testPublishGrade);
         server.get('/portal/cs340/testPublishAllGrades', CS340REST.testPublishAllGrades);
-        server.post('/portal/cs340/verifyScheduledJobs/:aid', CS340REST.verifyScheduledJobs);
-        server.post('/portal/cs340/verifyScheduledJobs/', CS340REST.verifyAllScheduledJobs);
         server.get('/portal/cs340/testRubricParser', CS340REST.testRubricParser);
     }
 
@@ -118,9 +124,36 @@ export default class CS340REST implements IREST {
         return next();
     }
 
+    public static async getStudentTeamByDeliv(req: any, res: any, next: any) {
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+        // TODO [Jonathan]: Authenticate token
+
+        const sid: string = req.params.sid;
+        const delivid: string = req.params.delivid;
+
+        let db: DatabaseController = DatabaseController.getInstance();
+
+        let teams: Team[] = await db.getTeamsForPerson(sid);
+        for(const team of teams) {
+            if(team.delivId === deliv && team.personIds.includes(sid)) {
+                let response: TeamTransport = {
+                    id: team.id,
+                    delivId: team.delivId,
+                    people: team.personIds,
+                    URL: team.URL,
+                };
+                res.send(200, {result: response});
+                return next();
+            }
+        }
+
+        res.send(404, {error: "No team for student: " + sid + " and deliverable: " + delivid});
+        return next();
+    }
 
     public static getAssignmentGrade(req: any, res: any, next: any) {
-        // TODO [Jonathan]: Get the grade of the student
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;

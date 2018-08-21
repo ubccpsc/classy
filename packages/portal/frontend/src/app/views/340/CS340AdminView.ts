@@ -20,6 +20,7 @@ import {Factory} from "../../Factory";
 import {SortableTable, TableCell, TableHeader} from "../../util/SortableTable";
 import {UI} from "../../util/UI";
 import {AdminView} from "../AdminView";
+import {response} from "spdy";
 
 const ERROR_POTENTIAL_INCORRECT_INPUT: string = "input triggered warning";
 const ERROR_INVALID_INPUT: string = "invalid input";
@@ -50,9 +51,10 @@ export class CS340AdminView extends AdminView {
 
         // Normal structure
         if(name === 'GradingView') {
-            if(typeof optsObject.aid !== "undefined" || typeof optsObject.sid !== "undefined") {
+            if(typeof optsObject.aid !== "undefined" && typeof optsObject.sid !== "undefined" &&
+                typeof optsObject.isTeam !== "undefined") {
                 // Check if the correct parameters exist
-                this.populateGradingPage(optsObject.aid, optsObject.sid).then(()=> {
+                this.populateGradingPage(optsObject.aid, optsObject.sid, optsObject.isTeam).then(()=> {
                     Log.info("CS340AdminView::renderPage() - finished populating page");
                     return;
                 });
@@ -573,8 +575,26 @@ export class CS340AdminView extends AdminView {
         }
     }
 
+    private async calculateMaxGrade(deliverableRecord: Deliverable): number {
+        Log.info("CS340AdminView::calculateMaxGrade( " + deliverableRecord.id + " ) - start");
+        let maxGrade:number = 0;
+        let assignInfo: AssignmentInfo | null = deliverableRecord.custom;
+        if(assignInfo === null || typeof assignInfo.rubric === 'undefined') continue;
+        let assignRubric: AssignmentGradingRubric = assignInfo.rubric;
+        if(assignRubric === null || typeof assignRubric.questions === 'undefined') continue;
 
-    public async renderStudentGradesDeliverable(delivId: string) {
+        for(const questionRubric of assignRubric.questions) {
+            for(const subQuestionRubric of questionRubric.subQuestions) {
+                // TODO: Take into account weight
+                maxGrade += subQuestionRubric.outOf;
+            }
+        }
+
+        return maxGrade;
+    }
+
+
+    public async renderStudentGradesDeliverable(delivId: string, hiddenNames: boolean = false) {
         Log.info("CS340AdminView::renderStudentGradeDeliverable( " + delivId + " ) - start");
 
         const start = Date.now();
@@ -588,7 +608,12 @@ export class CS340AdminView extends AdminView {
         const studentUrl = this.remote + '/portal/admin/students';
         const studentResponse = await fetch(studentUrl, studentOptions);
 
+        const gradesOptions = AdminView.getOptions();
+        const gradesUrl: string = this.remote + '/portal/cs340/getAllGrades';
+        const gradesResponse = await fetch(gradesUrl, gradesOptions);
+
         let requestStatus: boolean = true;
+
         if(teamsResponse.status !== 200) {
             Log.error("CS340AdminView::renderStudentGradeDeliverable(..) - !200 received when fetching " +
                 "teams; code: " + teamsResponse.status);
@@ -597,12 +622,21 @@ export class CS340AdminView extends AdminView {
             Log.info("CS340AdminView::renderStudentGradeDeliverable(..) - received all teams");
         }
 
+
+
         if(studentResponse.status !== 200) {
             Log.error("CS340AdminView::renderStudentGradeDeliverable(..) - !200 received when fetching " +
                 "students; code: " + studentResponse.status);
             requestStatus = false;
         } else {
+            Log.info("CS340AdminView::renderStudentGradeDeliverable(..) - received all students");
+        }
 
+        if(gradesResponse.status !== 200) {
+            Log.error("CS340AdminView::renderStudentGradeDeliverable(..) - !200 received when fetching " +
+                "students; code: " + gradesResponse.status);
+            requestStatus = false;
+        } else {
             Log.info("CS340AdminView::renderStudentGradeDeliverable(..) - received all students");
         }
 
@@ -611,23 +645,130 @@ export class CS340AdminView extends AdminView {
             return;
         }
 
-        let teamsTransport: TeamTransport[];
-        let studentsTransport: StudentTransport[];
-        const teamsJson: TeamTransportPayload = await teamResponse.json();
+        const teamsJson: TeamTransportPayload = await teamsResponse.json();
         const studentJson: StudentTransportPayload = await studentResponse.json();
+        const gradesJson = await gradesResponse.json(); // TODO: Verify if this should not use the grade struct
+        let teamsTransport: TeamTransport[] = teamsJson.success;
+        let studentsTransport: StudentTransport[] = studentJson.success;
+        let grades: Grade[] = gradesJson.response;
 
-        if(typeof teamsJson.success !== "undefined" && Array.isArray(teamsJson.success)) {
-            teamTransport = teamsJson.success
-        }
-
-        if(typeof studentJson.success !== 'undefined' && Array.isArray(studentJson.success)) {
-            studentsTransport = studentJson.success;
-        }
-
+        let filteredTeams: TeamTransport[] = [];
+        let maxSize = 1;
         for(const teamTransport of teamsTransport) {
-
+            if(teamTransport.delivId === delivId) {
+                filteredTeams.push(teamTransport);
+                if(maxSize < teamTransport.people.length) {
+                    maxSize = teamTransport.people.length;
+                }
+            }
         }
 
+        // create a grade mapping
+        let gradeMapping: {[studentId: string]: Grade} = {};
+        for(const grade of grades) {
+            // if(typeof gradeMapping[grade.personId] === 'undefined') gradeMapping[grade.personId] = {};
+            // if the grade is an assignmentGrade; place it in the mapping
+            if(grade.custom !== null && typeof grade.custom.assignmentId !== "undefined") {
+                if(grade.custom.assignmentId === delivId) {
+                    gradeMapping[grade.personId] = grade;
+                }
+            }
+        }
+
+        // create a studentMapping
+        let studentMapping: {[studentId: string]: StudentTransport} = {};
+        for(const studentTransport of studentsTransport) {
+            if(typeof studentMapping[studentTransport.id] === "undefined") {
+                studentMapping[studentTransport.id] = studentTransport;
+            }
+        }
+
+        const delivArray: Deliverable[] = await this.getDeliverables();
+        let maxGrade: number = -1;
+        for (const deliverableRecord of delivArray) {
+            if(deliverableRecord.id === delivId) maxGrade = this.calculateMaxGrade(deliverableRecord);
+        }
+
+        let tableHeaders: TableHeader[] = [];
+        if(!hiddenNames) {
+            let firstHeader = true; // only the first header is sorted by default
+            for(let i = 0; i < maxSize; i++) {
+                let newHeader: TableHeader = {
+                    id:             'uid' + i,
+                    text:           'id' + i,
+                    sortable:       true,
+                    defaultSort:    firstHeader,
+                    sortDown:       false,
+                    style:          'padding-left: 1em; padding-right: 1em;'
+                };
+                firstHeader = false; // don't want any other headers to be 'default sorted'!
+                tableHeaders.push(newHeader);
+            }
+        } else {
+            // names are hidden
+            // TODO: Implement hidden names (render one column for each team, with a number)
+        }
+
+        tableHeaders.push({
+            id:             "repo",
+            text:           "Repository",
+            sortable:       true,
+            defaultSort:    false,
+            sortDown:       false,
+            style:          'padding-left: 1em; padding-right: 1em;'
+        });
+
+        tableHeaders.push({
+            id:             "grade",
+            text:           "Grade",
+            sortable:       true,
+            defaultSort:    false,
+            sortDown:       false,
+            style:          'padding-left: 1em; padding-right: 1em;'
+        });
+
+        const st = new SortableTable(tableHeaders, "#studentGradeTable");
+
+        // for every team, create a new row
+        for(const teamTransport of teamsTransport) {
+            let newRow: TableCell[] = [];
+            for(const personId of teamTransport.people) {
+                newRow.push({value: personId, html: personId});
+            }
+
+            // handle uneven team sizes
+            for(let i = teamTransport.people.length; i < maxSize; i++) {
+                newRow.push({value: "", html: ""}); // blank, just so table sizes are consistent
+            }
+
+            // ASSUMPTION: If students are on a team for a deliverable, they should all have the same grade
+            let foundGrade = false;
+            let studentId: string = teamTransport.people[0];
+            let newEntry: TableCell;
+
+            // TODO: Add the repo link (submission link)
+
+
+            if(typeof gradeMapping[studentId] !== 'undefined') {
+                // we have a grade for this team
+                newEntry = {
+                    value: gradeMapping[studentId].score,
+                    html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
+                        studentMapping[studentId].id + "\", \"" + delivId + "\", true)' href='#'>" +
+                        gradeMapping[studentId].score.toString() + "/" +
+                        maxGradeMap + "</a>"
+                };
+            } else {
+                // we do not have a grade for this team
+                newEntry = {
+                  value: "---",
+                  html: ""
+                };
+            }
+
+            newRow.push(newEntry);
+            // TODO: Finish this up by rendering the rest of the page
+        }
     }
 
     private async renderStudentGrades(students: StudentTransport[], grades: Grade[], selectedAssign: string) {
@@ -691,18 +832,7 @@ export class CS340AdminView extends AdminView {
                 tableHeaders.push(newHeader);
 
                 // process max grade
-                let maxGrade:number = 0;
-                let assignInfo: AssignmentInfo | null = deliv.custom;
-                if(assignInfo === null || typeof assignInfo.rubric === 'undefined') continue;
-                let assignRubric: AssignmentGradingRubric = assignInfo.rubric;
-                if(assignRubric === null || typeof assignRubric.questions === 'undefined') continue;
-
-                for(const questionRubric of assignRubric.questions) {
-                    for(const subQuestionRubric of questionRubric.subQuestions) {
-                        // TODO: Take into account weight
-                        maxGrade += subQuestionRubric.outOf;
-                    }
-                }
+                let maxGrade:number = this.calculateMaxGrade(deliv);
                 maxGradeMap[deliv.id] = maxGrade;
             }
         }
@@ -740,7 +870,6 @@ export class CS340AdminView extends AdminView {
                         html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
                         student.githubId + "\", \"" + delivCol.id + "\")' href='#'>" +
                         gradeMapping[student.githubId][delivCol.id].score.toString() +
-
                         "/" + maxGradeMap[delivCol.id] + "</a>"
                     };
                     newRow.push(newEntry);
@@ -771,7 +900,7 @@ export class CS340AdminView extends AdminView {
      * @param {string} sid
      * @returns {Promise<void>}
      */
-    public async populateGradingPage(delivId: string, sid : string) {
+    public async populateGradingPage(delivId: string, sid : string, isTeam: boolean) {
         Log.info("CS340View::populateGradingPage() - start");
 
         UI.showModal("Populating grading view, please wait...");
@@ -791,6 +920,13 @@ export class CS340AdminView extends AdminView {
         let assignmentInfoList  = document.createElement("div");
         let assignmentIDBox     = document.getElementById("aidBox");
         let studentIDBox        = document.getElementById("sidBox");
+
+        if(isTeam) {
+            let teamIndicator: HTMLParagraphElement = document.createElement("p");
+            teamIndicator.innerHTML = "Editing team grade of: " + sid;
+            teamIndicator.id = "teamIndicator";
+            assignmentInfoList.appendChild(teamIndicator);
+        }
 
         let assignmentInfoAssignmentID = document.createElement("p");
         assignmentInfoAssignmentID.innerHTML = delivId;
@@ -1018,38 +1154,69 @@ export class CS340AdminView extends AdminView {
         let sid = aInfoSIDElements[0].innerHTML;
         let aid = aInfoIDElements[0].innerHTML;
 
-        let newAssignmentGrade : AssignmentGrade = {
-            assignmentID: aid,
-            studentID: sid,
-            released: false,
-            questions: questionArray
-        };
+        // check some condition
+        let teamIndicator: HTMLParagraphElement | null = document.getElementById("teamIndicator");
+        let targetStudentIds: string[] = [];
+        if(teamIndicator !== null) {
+            // this is kind of tricky, pull the team information out and get all the student IDs
+            let teamOptions: any = AdminView.getOptions();
+            let teamURL = this.remote + '/portal/cs340/getStudentTeamByDeliv/' + sid + "/" + aid;
+            let teamResponse = await fetch(teamURL, teamOptions);
+            if(teamResponse.status !== 200) {
+                let errJson = await teamResponse.json();
+                Log.error("CS340AdminView::submitGrade(..) - Error: " + errJson.error);
+                UI.notification("Unable to save grade to team; unable to find correct team");
+                return null;
+            } else {
+                let teamJson = await teamResponse.json();
+                let team: TeamTransport = teamJson.result;
+                for(const personId of team.people) {
+                    targetStudentIds.push(personId);
+                }
+            }
+        } else {
+            targetStudentIds.push(sid);
+        }
 
-        const url = this.remote + '/portal/cs340/setAssignmentGrade';
-        Log.info("CS340View::submitGrade() - uri: " + url);
 
         UI.showModal("Submitting grade, please wait...");
-        // Call the function
-        let options: any = AdminView.getOptions();
 
-        options.method = 'put';
-        options.headers.Accept = 'application/json';
-        options.json = true;
-        options.body = JSON.stringify(newAssignmentGrade);
+        for(const personId of targetStudentIds) {
+            // create a new grade
+            let newAssignmentGrade : AssignmentGrade = {
+                assignmentID: aid,
+                studentID: personId,
+                released: false,
+                questions: questionArray
+            };
 
-        Log.info("CS340View::submitGrade() - request body: " + options.body);
+            const url = this.remote + '/portal/cs340/setAssignmentGrade';
+            Log.info("CS340View::submitGrade() - uri: " + url);
 
-        let response = await fetch(url, options);
+            // Call the function
+            let options: any = AdminView.getOptions();
 
-        UI.hideModal();
-        Log.info("CS340View::submitGrade() - response from api " + response);
-        if(response.status !== 200) {
-            const errResponse = await response.json();
-            Log.info("CS340AdminView::submitGrade() - error submitting grades, code: " + response.status +
-            " error: " + response.statusText);
-            alert(errResponse.error);
-            return null;
+            options.method = 'put';
+            options.headers.Accept = 'application/json';
+            options.json = true;
+            options.body = JSON.stringify(newAssignmentGrade);
+
+            Log.info("CS340View::submitGrade() - request body: " + options.body);
+
+            let response = await fetch(url, options);
+
+            Log.info("CS340View::submitGrade() - response from api " + response);
+            if(response.status !== 200) {
+                const errResponse = await response.json();
+                Log.info("CS340AdminView::submitGrade() - error submitting grades, code: " +
+                    response.status + " error: " + response.statusText);
+                // alert(errResponse.error);
+                UI.showAlert(errResponse.error);
+                UI.hideModal();
+                return null;
+            }
         }
+        UI.hideModal();
         UI.popPage();
         return newAssignmentGrade;
     }
@@ -1164,11 +1331,12 @@ export class CS340AdminView extends AdminView {
         });
     }
 
-    public transitionGradingPage(sid:string, aid:string) {
+    public transitionGradingPage(sid:string, aid:string, isTeam:boolean=false) {
         // Move to grading
         UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/GradingView.html', {
             sid:sid,
-            aid:aid
+            aid:aid,
+            isTeam:isTeam
         });
     }
 }
