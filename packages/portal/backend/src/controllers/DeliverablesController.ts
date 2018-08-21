@@ -24,6 +24,15 @@ export class DeliverablesController {
 
     public async saveDeliverable(deliv: Deliverable): Promise<Deliverable | null> {
         Log.info("DeliverableController::saveDeliverable( " + JSON.stringify(deliv) + " ) - start");
+
+        // enforce deliverable prefix constraints
+        if (deliv.teamPrefix === '') {
+            deliv.teamPrefix = 't_' + deliv.id;
+        }
+        if (deliv.repoPrefix === '') {
+            deliv.repoPrefix = deliv.id;
+        }
+
         await this.db.writeDeliverable(deliv); // let this handle the update
         return deliv;
     }

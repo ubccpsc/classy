@@ -28,7 +28,7 @@ import './AuthRoutesSpec';
 // const request = require('supertest');
 // const loadFirst = require("./AuthRoutesSpec");
 
-describe('Admin Routes', function() {
+describe.only('Admin Routes', function() {
 
     // const TIMEOUT = 5000;
 
