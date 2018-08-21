@@ -145,7 +145,11 @@ export class DatabaseController {
 
     public async getGrade(personId: string, delivId: string): Promise<Grade | null> {
         Log.info("DatabaseController::getGrade( " + personId + ", " + delivId + " ) - start");
-        return await this.readSingleRecord(this.GRADECOLL, {personId: personId, delivId: delivId}) as Grade;
+        const grade = await this.readSingleRecord(this.GRADECOLL, {personId: personId, delivId: delivId}) as Grade;
+        if (grade !== null) {
+            Log.info("DatabaseController::getGrade( " + personId + ", " + delivId + " ) - grade: " + grade.score);
+        }
+        return grade;
     }
 
     public async writePerson(record: Person): Promise<boolean> {

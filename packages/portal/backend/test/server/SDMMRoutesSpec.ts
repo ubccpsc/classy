@@ -13,6 +13,7 @@ import {GitHubController} from "../../src/controllers/GitHubController";
 // import {TestGitHubController} from "../../src/controllers/GitHubController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {SDMMController} from "../../src/controllers/SDMM/SDMMController";
+import {TeamController} from "../../src/controllers/TeamController";
 
 import BackendServer from "../../src/server/BackendServer";
 import {Grade} from "../../src/Types";
@@ -24,7 +25,7 @@ import '../GlobalSpec';
 // NOTE: skipped for now because the infrastructure spins up classytest
 // which means the right routes aren't being started in the backend
 // need to change how this loads to enable the right routes to be started
-describe('SDMM Routes', function() {
+describe.only('SDMM Routes', function() {
 
     let app: restify.Server = null;
     let server: BackendServer = null;
@@ -91,7 +92,7 @@ describe('SDMM Routes', function() {
         // works on its own but not with others
         Log.test(response.status + " -> " + JSON.stringify(response.body));
 
-        expect(response.status).to.equal(403);
+        expect(response.status).to.equal(401);
         expect(response.body.failure).to.not.be.undefined;
         expect(response.body.failure.message).to.equal('Invalid login token. Please logout and try again.');
     });
@@ -107,10 +108,13 @@ describe('SDMM Routes', function() {
         await dc.writePerson(p);
         p = await sc.handleUnknownUser(Test.USERNAMEGITHUB2);
         await dc.writePerson(p);
+        p = await sc.handleUnknownUser(Test.USERNAMEGITHUB3);
+        await dc.writePerson(p);
 
         // make sure some valid tokens exist
         await dc.writeAuth({personId: Test.USERNAMEGITHUB1, token: Test.REALTOKEN}); // create an auth record
         await dc.writeAuth({personId: Test.USERNAMEGITHUB2, token: Test.REALTOKEN}); // create an auth record
+        await dc.writeAuth({personId: Test.USERNAMEGITHUB3, token: Test.REALTOKEN}); // create an auth record
 
         let response = null;
         const url = '/portal/sdmm/currentStatus/';
@@ -149,7 +153,7 @@ describe('SDMM Routes', function() {
         expect(response.status).to.equal(400);
 
         expect(response.body.failure).to.not.be.undefined;
-        expect(response.body.failure.message).to.equal('Unable to perform action.');
+        expect(response.body.failure.message).to.contain('unknown action');
     });
 
     it('Should fail to perform an action if the token is invalid.', async function() {
@@ -163,7 +167,7 @@ describe('SDMM Routes', function() {
         }
         // works on its own but not with others
         Log.test(response.status + " -> " + JSON.stringify(response.body));
-        expect(response.status).to.equal(403);
+        expect(response.status).to.equal(401);
 
         expect(response.body.failure).to.not.be.undefined;
         expect(response.body.failure.message).to.equal('Invalid login token. Please logout and try again.');
@@ -290,6 +294,64 @@ describe('SDMM Routes', function() {
             'please make sure they are registered with the course.');
     }).timeout(Test.TIMEOUTLONG);
 
+    it('Should be able provision a d1 team repo.', async function() {
+
+        let response = null;
+        const url = '/portal/sdmm/performAction/provisionD1team/' + Test.USERNAMEGITHUB3;
+        try {
+            const dc = DatabaseController.getInstance();
+
+            const tc = new TeamController();
+            // public async createTeam(name: string, deliv: Deliverable, people: Person[], custom: any): Promise<Team | null> {
+            const deliv = await dc.getDeliverable(Test.DELIVID0);
+            const p2 = await dc.getPerson(Test.USERNAMEGITHUB2);
+            const t2 = await tc.createTeam('secap_' + Test.TEAMNAME2, deliv, [p2], {});
+            const p3 = await dc.getPerson(Test.USERNAMEGITHUB3);
+            const t3 = await tc.createTeam('secap_' + Test.TEAMNAME3, deliv, [p3], {});
+            const rc = new RepositoryController();
+            await rc.createRepository('secap_' + Test.USERNAMEGITHUB2, [t2], {d0enabled: true}); // make sure the repo exists already
+            await rc.createRepository('secap_' + Test.USERNAMEGITHUB3, [t3], {d0enabled: true}); // make sure the repo exists already
+
+            let g: Grade = {
+                personId:  Test.USERNAMEGITHUB2, // rthse2
+                delivId:   Test.DELIVID0,
+                score:     60,
+                comment:   'comment',
+                timestamp: Date.now(),
+
+                urlName: 'urlName',
+                URL:     'url',
+
+                custom: {}
+            };
+            await dc.writeGrade(g);
+
+            g = {
+                personId:  Test.USERNAMEGITHUB3, // ubccpscbot
+                delivId:   Test.DELIVID0,
+                score:     60,
+                comment:   'comment',
+                timestamp: Date.now(),
+
+                urlName: 'urlName',
+                URL:     'url',
+
+                custom: {}
+            };
+            await dc.writeGrade(g);
+
+            const name = Config.getInstance().getProp(ConfigKey.name);
+            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB2, token: Test.REALTOKEN});
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        // works on its own but not with others
+        Log.test(response.status + " -> " + JSON.stringify(response.body));
+        expect(response.status).to.equal(200);
+
+        expect(response.body.success).to.not.be.undefined;
+        expect(response.body.success.message).to.equal('D1 repository successfully provisioned.');
+    }).timeout(Test.TIMEOUTLONG);
     // it('Should fail to provision a d1 team repo if both users do not have sufficient d0 grades.', async function () {
     //
     //     const PERSON2: Person = {
