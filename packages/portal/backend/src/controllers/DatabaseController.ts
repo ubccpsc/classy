@@ -217,6 +217,13 @@ export class DatabaseController {
         }
     }
 
+    public async deletePerson(record: Person): Promise<boolean> {
+        if (record !== null) {
+            Log.info("DatabaseController::deletePerson( " + record.id + " ) - start");
+            return await this.deleteRecord(this.PERSONCOLL, {id: record.id});
+        }
+    }
+
     public async deleteTeam(record: Team): Promise<boolean> {
         if (record !== null) {
             Log.info("DatabaseController::deleteTeam( " + record.id + " ) - start");

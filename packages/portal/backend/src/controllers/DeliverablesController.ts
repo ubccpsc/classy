@@ -33,6 +33,20 @@ export class DeliverablesController {
             deliv.repoPrefix = deliv.id;
         }
 
+        // enforce minimum time constraints; the AutoTest infrastructure is resource constrained
+        // this prevents students from hammering against the service and causing it to become overloaded
+        const allStudents = await this.db.getPeople();
+        let numStudents = allStudents.length;
+        if (numStudents < 60) {
+            numStudents = 60; // enforce a 60 student minumum in case the class list hasn't been uploaded yet
+        }
+
+        const MIN_DELAY_MULTIPLIER = 2; // number of minutes-per-student the platform can withstand (2-10 are reasonable values)
+        const minDelay = (numStudents * MIN_DELAY_MULTIPLIER) * 60; // minimum delay in seconds
+        if (deliv.autotest.studentDelay < minDelay) {
+            deliv.autotest.studentDelay = minDelay;
+        }
+
         await this.db.writeDeliverable(deliv); // let this handle the update
         return deliv;
     }
