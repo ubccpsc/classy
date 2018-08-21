@@ -10,7 +10,7 @@ import '../GlobalSpec';
 import {Test} from "../GlobalSpec";
 import './PersonControllerSpec';
 
-describe.only("AuthController", () => {
+describe("AuthController", () => {
 
     const TIMEOUT = 10000;
 

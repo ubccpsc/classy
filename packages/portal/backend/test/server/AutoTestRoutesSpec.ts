@@ -32,7 +32,10 @@ describe('AutoTest Routes', function() {
 
     let server: BackendServer = null;
     before(async () => {
-        Log.test('RestifyAutoTestRoutes::before - start');
+        Log.test('AutoTestRoutes::before - start');
+
+        await Test.suiteBefore('AutoTestRoutes');
+        await Test.prepareAll();
 
         Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
         Config.getInstance().setProp(ConfigKey.name, Config.getInstance().getProp(ConfigKey.testname));
@@ -44,17 +47,18 @@ describe('AutoTest Routes', function() {
         server = new BackendServer(false);
 
         return server.start().then(function() {
-            Log.test('RestifyAutoTestRoutes::before - server started');
+            Log.test('AutoTestRoutes::before - server started');
             // Log.test('orgName: ' + Test.ORGNAME);
             app = server.getServer();
         }).catch(function(err) {
-            Log.test('RestifyAutoTestRoutes::before - server might already be started: ' + err);
+            Log.test('AutoTestRoutes::before - server might already be started: ' + err);
         });
     });
 
     after(async function() {
-        Log.test('RestifyAutoTestRoutes::after - start');
-        return server.stop();
+        Log.test('AutoTestRoutes::after - start');
+        Test.suiteAfter('AutoTestRoutes');
+        await server.stop();
     });
 
     it('Should reject an unauthorized defaultDeliverable request', async function() {
@@ -72,7 +76,6 @@ describe('AutoTest Routes', function() {
         expect(response.status).to.equal(400);
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
-        expect(body.failure.shouldLogout).to.be.true;
     });
 
     it('Should respond to a valid defaultDeliverable request', async function() {
@@ -89,7 +92,23 @@ describe('AutoTest Routes', function() {
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success.defaultDeliverable).to.not.be.undefined;
-        expect(body.success.defaultDeliverable).to.equal('d0');
+        expect(body.success.defaultDeliverable).to.equal(null);
+
+        const dc = DatabaseController.getInstance();
+        const cr = await dc.getCourseRecord();
+        cr.defaultDeliverableId = Test.DELIVID0;
+        await dc.writeCourseRecord(cr);
+
+        try {
+            response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success.defaultDeliverable).to.not.be.undefined;
+        expect(body.success.defaultDeliverable).to.equal(Test.DELIVID0);
     }).timeout(TIMEOUT);
 
     it('Should reject an authorized result', async function() {
@@ -108,7 +127,6 @@ describe('AutoTest Routes', function() {
         expect(response.status).to.equal(400);
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
-        expect(body.failure.shouldLogout).to.be.true;
     });
 
     it('Should accept a valid result payload', async function() {
@@ -202,7 +220,6 @@ describe('AutoTest Routes', function() {
         expect(response.status).to.equal(400);
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
-        expect(body.failure.shouldLogout).to.be.true;
     });
 
     it('Should reject an unauthorized isStaff request', async function() {
@@ -220,7 +237,6 @@ describe('AutoTest Routes', function() {
         expect(response.status).to.equal(400);
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
-        expect(body.failure.shouldLogout).to.be.true;
     });
 
     it('Should respond to a valid isStaff request for staff', async function() {
@@ -277,7 +293,6 @@ describe('AutoTest Routes', function() {
         expect(response.status).to.equal(400);
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
-        expect(body.failure.shouldLogout).to.be.true;
     });
 
     it('Should respond to a valid personId request', async function() {
@@ -313,7 +328,6 @@ describe('AutoTest Routes', function() {
         expect(response.status).to.equal(400);
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
-        expect(body.failure.shouldLogout).to.be.true;
     });
 
     it('Should respond to a valid container request for a deliverable', async function() {
@@ -370,7 +384,6 @@ describe('AutoTest Routes', function() {
         expect(response.status).to.equal(400);
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
-        expect(body.failure.shouldLogout).to.be.true;
     });
 
     it('Should be able to receive a grade event', async function() {
@@ -439,9 +452,9 @@ describe('AutoTest Routes', function() {
         expect(response.body.failure.message).to.be.a('string');
     });
 
-    it('Should be able to receive a Webhook event from GitHub', async function() {
+    it('Should be able to receive a Webhook event from GitHub.', async function() {
+        // NOTE: this is a terrible tests; without the service running we get nothing
         let response = null;
-
         const body = fs.readJSONSync(__dirname + "/../../../../autotest/test/githubEvents/push_master-branch.json"); // __dirname
 
         const url = '/portal/githubWebhook';
@@ -453,7 +466,7 @@ describe('AutoTest Routes', function() {
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
-        // Log.test(response.status + " -> " + JSON.stringify(response.body));
+        Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(400); // really should be 200, but AutoTest isn't running so it will return this error
         const text = response.text;
         expect(text.indexOf('ECONNREFUSED')).to.be.greaterThan(0); // at least make sure it fails for the right reason

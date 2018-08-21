@@ -100,7 +100,7 @@ describe("ClassPortal Service", () => {
         try {
             const res = await cp.getContainerDetails("d0");
             const actual = res.dockerImage;
-            expect(actual).to.equal("secapstone-grader");
+            expect(actual).to.equal("testImage");
         } catch (err) {
             expect.fail("Should not happen");
         }
