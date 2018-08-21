@@ -9,7 +9,12 @@ import {
     SubQuestionGrade,
     SubQuestionGradingRubric
 } from "../../../../../../common/types/CS340Types";
-import {StudentTransport, StudentTransportPayload} from "../../../../../../common/types/PortalTypes";
+import {
+    StudentTransport,
+    StudentTransportPayload,
+    TeamTransport,
+    TeamTransportPayload
+} from "../../../../../../common/types/PortalTypes";
 import {Deliverable, Grade} from "../../../../../backend/src/Types";
 import {Factory} from "../../Factory";
 import {SortableTable, TableCell, TableHeader} from "../../util/SortableTable";
@@ -514,6 +519,13 @@ export class CS340AdminView extends AdminView {
         return delivArray;
     }
 
+    public async handleAdminGrades(opts: any) {
+        Log.info("CS340AdminView::handleAdminGrades( " + JSON.stringify(opts) + " ) - start");
+        // await super.handleAdminGrades(opts);
+
+
+    }
+
     public async handleAdminCustomGrades(opts: any) {
         Log.info("CS340AdminView::handleCustomGrades( " + JSON.stringify(opts) + " ) - start");
         // if(opts.delivid === null || opts.sid === null) {
@@ -559,6 +571,63 @@ export class CS340AdminView extends AdminView {
             const text = await studentResponse.text();
             AdminView.showError(text);
         }
+    }
+
+
+    public async renderStudentGradesDeliverable(delivId: string) {
+        Log.info("CS340AdminView::renderStudentGradeDeliverable( " + delivId + " ) - start");
+
+        const start = Date.now();
+        UI.showModal("Rendering page");
+
+        const teamsOptions = AdminView.getOptions();
+        const teamsURL = this.remote + '/portal/admin/teams';
+        const teamsResponse = await fetch(teamsURL,teamsOptions);
+
+        const studentOptions = AdminView.getOptions();
+        const studentUrl = this.remote + '/portal/admin/students';
+        const studentResponse = await fetch(studentUrl, studentOptions);
+
+        let requestStatus: boolean = true;
+        if(teamsResponse.status !== 200) {
+            Log.error("CS340AdminView::renderStudentGradeDeliverable(..) - !200 received when fetching " +
+                "teams; code: " + teamsResponse.status);
+            requestStatus = false;
+        } else {
+            Log.info("CS340AdminView::renderStudentGradeDeliverable(..) - received all teams");
+        }
+
+        if(studentResponse.status !== 200) {
+            Log.error("CS340AdminView::renderStudentGradeDeliverable(..) - !200 received when fetching " +
+                "students; code: " + studentResponse.status);
+            requestStatus = false;
+        } else {
+
+            Log.info("CS340AdminView::renderStudentGradeDeliverable(..) - received all students");
+        }
+
+        if(!requestStatus) {
+            Log.error("CS340AdminView::renderStudentGradeDeliverable(..) - failed to get all information, unable to continue");
+            return;
+        }
+
+        let teamsTransport: TeamTransport[];
+        let studentsTransport: StudentTransport[];
+        const teamsJson: TeamTransportPayload = await teamResponse.json();
+        const studentJson: StudentTransportPayload = await studentResponse.json();
+
+        if(typeof teamsJson.success !== "undefined" && Array.isArray(teamsJson.success)) {
+            teamTransport = teamsJson.success
+        }
+
+        if(typeof studentJson.success !== 'undefined' && Array.isArray(studentJson.success)) {
+            studentsTransport = studentJson.success;
+        }
+
+        for(const teamTransport of teamsTransport) {
+
+        }
+
     }
 
     private async renderStudentGrades(students: StudentTransport[], grades: Grade[], selectedAssign: string) {

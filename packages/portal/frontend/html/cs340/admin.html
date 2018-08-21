@@ -83,13 +83,26 @@
         </ons-page>
     </template>
 
+    <!--<template id="grades.html">-->
+        <!--<ons-page id="AdminGrades">-->
+            <!--<p style="text-align: center;">-->
+                <!--Grades Page-->
+            <!--</p>-->
+        <!--</ons-page>-->
+    <!--</template>-->
+
     <template id="grades.html">
         <ons-page id="AdminGrades">
-            <p style="text-align: center;">
-                Grades Page
-            </p>
+            <ons-list id="AdminGradesList">
+                <ons-list-header>Grade Overview</ons-list-header>
+                <div id="gradesListTable" style="width:100%;"></div>
+                <div id="gradesListTableNone" class="noResultsRow">
+                    No Results
+                </div>
+            </ons-list>
         </ons-page>
     </template>
+
 
     <template id="gradesCustom.html">
         <ons-page id="AdminCustomGrades">
