@@ -95,7 +95,7 @@ export class GitHubUtil {
                 personId: personResponse.personId,
                 timestamp
             };
-            Log.trace("GitHubUtil::processComment(..) - handling: " + commentEvent);
+            Log.trace("GitHubUtil::processComment(..) - handling: " + JSON.stringify(commentEvent));
             return commentEvent;
         } catch (err) {
             Log.info("GitHubUtil::processComment(..) - ERROR parsing: " + err);
