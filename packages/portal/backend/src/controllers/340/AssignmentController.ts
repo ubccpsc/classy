@@ -185,6 +185,7 @@ export class AssignmentController {
         }
 
         let anyError: boolean = false;
+
         // todo: teams?
         let peopleList = await this.gha.listPeople();
         let personVerification: { [githubID: string]: any } = {};

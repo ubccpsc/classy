@@ -10,6 +10,8 @@ import {
     SubQuestionGradingRubric
 } from "../../../../../../common/types/CS340Types";
 import {
+    RepositoryPayload,
+    RepositoryTransport,
     StudentTransport,
     StudentTransportPayload,
     TeamTransport,
@@ -525,6 +527,20 @@ export class CS340AdminView extends AdminView {
         Log.info("CS340AdminView::handleAdminGrades( " + JSON.stringify(opts) + " ) - start");
         // await super.handleAdminGrades(opts);
 
+        let that = this;
+
+        const delivSelector = document.querySelector('#adminGradesDeliverableSelect') as HTMLSelectElement;
+        await this.populateDeliverableDropdown(delivSelector);
+
+        Log.info("CS340AdminView::handleAdminGrades(..) - handling hook");
+
+
+        delivSelector.onchange = async function(evt) {
+            Log.info("CS340AdminView::handleAdminGrades(..)::delivSelector:onChange - event: " + evt);
+            await that.renderStudentGradesDeliverable((evt.target as HTMLSelectElement).value);
+        }
+
+        Log.info("CS340AdminView::handleAdminGrades(..) - finished handling hook");
 
     }
 
@@ -575,13 +591,19 @@ export class CS340AdminView extends AdminView {
         }
     }
 
-    private async calculateMaxGrade(deliverableRecord: Deliverable): number {
+    private calculateMaxGrade(deliverableRecord: Deliverable): number {
         Log.info("CS340AdminView::calculateMaxGrade( " + deliverableRecord.id + " ) - start");
         let maxGrade:number = 0;
         let assignInfo: AssignmentInfo | null = deliverableRecord.custom;
-        if(assignInfo === null || typeof assignInfo.rubric === 'undefined') continue;
+        if(assignInfo === null || typeof assignInfo.rubric === 'undefined') {
+            Log.error("CS340AdminView::calculateMaxGrade(..) - Error: Deliverable is not an assignment");
+            return -1;
+        }
         let assignRubric: AssignmentGradingRubric = assignInfo.rubric;
-        if(assignRubric === null || typeof assignRubric.questions === 'undefined') continue;
+        if(assignRubric === null || typeof assignRubric.questions === 'undefined') {
+            Log.error("CS340AdminView::calculateMaxGrade(..) - Error: Deliverable is not an assignment");
+            return -1;
+        }
 
         for(const questionRubric of assignRubric.questions) {
             for(const subQuestionRubric of questionRubric.subQuestions) {
@@ -623,7 +645,6 @@ export class CS340AdminView extends AdminView {
         }
 
 
-
         if(studentResponse.status !== 200) {
             Log.error("CS340AdminView::renderStudentGradeDeliverable(..) - !200 received when fetching " +
                 "students; code: " + studentResponse.status);
@@ -632,13 +653,15 @@ export class CS340AdminView extends AdminView {
             Log.info("CS340AdminView::renderStudentGradeDeliverable(..) - received all students");
         }
 
+
         if(gradesResponse.status !== 200) {
             Log.error("CS340AdminView::renderStudentGradeDeliverable(..) - !200 received when fetching " +
                 "students; code: " + gradesResponse.status);
             requestStatus = false;
         } else {
-            Log.info("CS340AdminView::renderStudentGradeDeliverable(..) - received all students");
+            Log.info("CS340AdminView::renderStudentGradeDeliverable(..) - received all grades");
         }
+
 
         if(!requestStatus) {
             Log.error("CS340AdminView::renderStudentGradeDeliverable(..) - failed to get all information, unable to continue");
@@ -684,6 +707,7 @@ export class CS340AdminView extends AdminView {
         }
 
         const delivArray: Deliverable[] = await this.getDeliverables();
+
         let maxGrade: number = -1;
         for (const deliverableRecord of delivArray) {
             if(deliverableRecord.id === delivId) maxGrade = this.calculateMaxGrade(deliverableRecord);
@@ -727,7 +751,7 @@ export class CS340AdminView extends AdminView {
             style:          'padding-left: 1em; padding-right: 1em;'
         });
 
-        const st = new SortableTable(tableHeaders, "#studentGradeTable");
+        const st = new SortableTable(tableHeaders, "#gradesListTable");
 
         // for every team, create a new row
         for(const teamTransport of teamsTransport) {
@@ -747,7 +771,24 @@ export class CS340AdminView extends AdminView {
             let newEntry: TableCell;
 
             // TODO: Add the repo link (submission link)
+            const repoOptions = AdminView.getOptions();
+            const repoUrl = this.remote + "/portal/cs340/getRepository/" + teamTransport.id;
+            const repoResponse = await fetch(repoUrl, repoOptions);
 
+            if(repoResponse.status !== 200) {
+                Log.error("CS340AdminView::renderStudentGradeDeliverable(..) - Error: unable to find a repo for the team")
+                continue;
+            }
+
+            let repoJson = await repoResponse.json();
+            let repoTransport: RepositoryTransport = repoJson.result;
+
+            let repoEntry: TableCell = {
+                value: repoTransport.URL,
+                html: "<a href='" + repoTransport.URL + "'> Link </a>"
+            };
+
+            newRow.push(repoEntry);
 
             if(typeof gradeMapping[studentId] !== 'undefined') {
                 // we have a grade for this team
@@ -756,19 +797,26 @@ export class CS340AdminView extends AdminView {
                     html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
                         studentMapping[studentId].id + "\", \"" + delivId + "\", true)' href='#'>" +
                         gradeMapping[studentId].score.toString() + "/" +
-                        maxGradeMap + "</a>"
+                        maxGrade + "</a>"
                 };
             } else {
                 // we do not have a grade for this team
                 newEntry = {
-                  value: "---",
-                  html: ""
+                    value: "---",
+                    html: "<a onclick='window.myApp.view.transitionGradingPage(\"" +
+                    studentMapping[studentId].id + "\", \"" + delivId + "\", true)' href='#'> ---" + "</a>",
                 };
             }
 
             newRow.push(newEntry);
             // TODO: Finish this up by rendering the rest of the page
+
+            st.addRow(newRow);
         }
+
+        st.generate();
+
+        UI.hideModal();
     }
 
     private async renderStudentGrades(students: StudentTransport[], grades: Grade[], selectedAssign: string) {
@@ -900,7 +948,7 @@ export class CS340AdminView extends AdminView {
      * @param {string} sid
      * @returns {Promise<void>}
      */
-    public async populateGradingPage(delivId: string, sid : string, isTeam: boolean) {
+    public async populateGradingPage(delivId: string, sid : string, isTeam: boolean=false) {
         Log.info("CS340View::populateGradingPage() - start");
 
         UI.showModal("Populating grading view, please wait...");
@@ -1155,7 +1203,7 @@ export class CS340AdminView extends AdminView {
         let aid = aInfoIDElements[0].innerHTML;
 
         // check some condition
-        let teamIndicator: HTMLParagraphElement | null = document.getElementById("teamIndicator");
+        let teamIndicator: HTMLParagraphElement | null = (document.getElementById("teamIndicator") as HTMLParagraphElement);
         let targetStudentIds: string[] = [];
         if(teamIndicator !== null) {
             // this is kind of tricky, pull the team information out and get all the student IDs
@@ -1181,9 +1229,10 @@ export class CS340AdminView extends AdminView {
 
         UI.showModal("Submitting grade, please wait...");
 
+        let newAssignmentGrade : AssignmentGrade;
         for(const personId of targetStudentIds) {
             // create a new grade
-            let newAssignmentGrade : AssignmentGrade = {
+            newAssignmentGrade = {
                 assignmentID: aid,
                 studentID: personId,
                 released: false,
@@ -1216,8 +1265,10 @@ export class CS340AdminView extends AdminView {
                 return null;
             }
         }
+
         UI.hideModal();
         UI.popPage();
+
         return newAssignmentGrade;
     }
 

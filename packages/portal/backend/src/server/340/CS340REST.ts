@@ -11,7 +11,8 @@ import {PersonController} from "../../controllers/PersonController";
 import {RubricController} from "../../controllers/340/RubricController";
 import {TeamController} from "../../controllers/TeamController";
 import {DatabaseController} from "../../controllers/DatabaseController";
-import {TeamTransport} from "../../../../../common/types/PortalTypes";
+import {RepositoryTransport, TeamTransport} from "../../../../../common/types/PortalTypes";
+import {RepositoryController} from "../../controllers/RepositoryController";
 
 export default class CS340REST implements IREST {
     public constructor() {
@@ -26,7 +27,6 @@ export default class CS340REST implements IREST {
         server.get('/portal/cs340/getAllDeliverables', CS340REST.getAllDeliverables);
         server.get('/portal/cs340/getAssignmentRubric/:aid', CS340REST.getAssignmentRubric);
         server.get('/portal/cs340/getAllAssignmentRubrics', CS340REST.getAllAssignmentRubrics);
-        server.put('/portal/cs340/setAssignmentGrade', CS340REST.setAssignmentGrade);
         server.get('/portal/cs340/getAllGrades', CS340REST.getAllGrades);
         server.get('/portal/cs340/getAssignmentGrade/:sid/:aid', CS340REST.getAssignmentGrade);
         server.get('/portal/cs340/getAllSubmissionsByDelivID/:id', CS340REST.getAllSubmissionsByDelivID);
@@ -35,13 +35,14 @@ export default class CS340REST implements IREST {
         server.get('/portal/cs340/updateAssignmentStatus/:delivid', CS340REST.updateAssignmentStatus);
         server.get('/portal/cs340/getAssignmentStatus/:delivid', CS340REST.getAssignmentStatus);
         server.get('/portal/cs340/getStudentTeamByDeliv/:sid/:delivid', CS340REST.getStudentTeamByDeliv); // TODO
+        server.get('/portal/cs340/getRepository/:teamid' , CS340REST.getRepositoryFromTeam);
+        server.put('/portal/cs340/setAssignmentGrade', CS340REST.setAssignmentGrade);
         server.post('/portal/cs340/initializeAllRepositories/:delivid', CS340REST.initializeAllRepositories);
         server.post('/portal/cs340/publishAllRepositories/:delivid', CS340REST.publishAllRepositories);
         server.post('/portal/cs340/deleteRepository/:delivid/:reponame', CS340REST.deleteRepository);
         server.post('/portal/cs340/deleteAllRepositories/:delivid', CS340REST.deleteAllRepositories);
         server.post('/portal/cs340/verifyScheduledJobs/:aid', CS340REST.verifyScheduledJobs);
         server.post('/portal/cs340/verifyScheduledJobs/', CS340REST.verifyAllScheduledJobs);
-
 
         // server.get('/testPublishRepository/:repoId', CS340REST.testPublishRepository);
         server.get('/portal/cs340/testPublishGrade', CS340REST.testPublishGrade);
@@ -124,6 +125,32 @@ export default class CS340REST implements IREST {
         return next();
     }
 
+    public static async getRepositoryFromTeam(req: any, res: any, next: any) {
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+        // TODO [Jonathan]: Authenticate token
+
+        const teamid: string = req.params.teamid;
+
+        let db: DatabaseController = DatabaseController.getInstance();
+
+        let repositories = await db.getRepositories();
+        for(const repo of repositories) {
+            if(repo.teamIds.includes(teamid)) {
+                let result: RepositoryTransport = {
+                    id: repo.id,
+                    URL: repo.URL
+                };
+                res.send(200, {result: result});
+                return next();
+            }
+        }
+
+        res.send(404, {error: "Unable to find a repository using teamId: " + teamid});
+        return next();
+    }
+
     public static async getStudentTeamByDeliv(req: any, res: any, next: any) {
         const user = req.headers.user;
         const token = req.headers.token;
@@ -137,10 +164,10 @@ export default class CS340REST implements IREST {
 
         let teams: Team[] = await db.getTeamsForPerson(sid);
         for(const team of teams) {
-            if(team.delivId === deliv && team.personIds.includes(sid)) {
+            if(team.delivId === delivid && team.personIds.includes(sid)) {
                 let response: TeamTransport = {
                     id: team.id,
-                    delivId: team.delivId,
+                    delivId: delivid,
                     people: team.personIds,
                     URL: team.URL,
                 };
