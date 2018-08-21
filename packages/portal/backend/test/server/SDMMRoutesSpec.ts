@@ -25,7 +25,7 @@ import '../GlobalSpec';
 // NOTE: skipped for now because the infrastructure spins up classytest
 // which means the right routes aren't being started in the backend
 // need to change how this loads to enable the right routes to be started
-describe.only('SDMM Routes', function() {
+describe('SDMM Routes', function() {
 
     let app: restify.Server = null;
     let server: BackendServer = null;
