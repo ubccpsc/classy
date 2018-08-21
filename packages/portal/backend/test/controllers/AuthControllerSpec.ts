@@ -10,7 +10,7 @@ import '../GlobalSpec';
 import {Test} from "../GlobalSpec";
 import './PersonControllerSpec';
 
-describe("AuthController", () => {
+describe.only("AuthController", () => {
 
     const TIMEOUT = 10000;
 
@@ -29,8 +29,23 @@ describe("AuthController", () => {
         Test.suiteAfter('AuthController');
     });
 
+    it("Should not validate a user who is null.", async () => {
+        const isValid = await ac.isValid(null, ''); // not registered
+        expect(isValid).to.be.false;
+    });
+
     it("Should not validate a user who does not exist.", async () => {
         const isValid = await ac.isValid('aUserwhoDoesNotExist_sadmewnmdsv', ''); // not registered
+        expect(isValid).to.be.false;
+    });
+
+    it("Should not validate a user who exists but does not have a valid token.", async () => {
+        const auth: Auth = {
+            personId: Test.USER1.id,
+            token:    Test.REALTOKEN
+        };
+        await DatabaseController.getInstance().writeAuth(auth);
+        const isValid = await ac.isValid(Test.USER1.id, Test.FAKETOKEN); // not valid
         expect(isValid).to.be.false;
     });
 
