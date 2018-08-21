@@ -59,12 +59,18 @@ export class DatabaseController {
         return await this.readSingleRecord(this.TEAMCOLL, {id: recordId}) as Team;
     }
 
+    public async getAuth(personId: string): Promise<Auth | null> {
+        Log.trace("DatabaseController::getAuthToken( " + personId + " ) - start");
+        const auth = await this.readSingleRecord(this.AUTHCOLL, {personId: personId}) as Auth;
+        return auth;
+    }
+
     public async getRepositories(): Promise<Repository[]> {
         Log.info("DatabaseController::getRepositories() - start");
         return await this.readRecords(this.REPOCOLL, {}) as Repository[];
     }
 
-    public async getCourseRecord(): Promise<Course> {
+    public async getCourseRecord(): Promise<Course | null> {
         Log.info("DatabaseController::getCourseRecord() - start");
         return await this.readSingleRecord(this.COURSECOLL, {id: Config.getInstance().getProp(ConfigKey.name)}) as Course;
     }
@@ -72,6 +78,11 @@ export class DatabaseController {
     public async getTeams(): Promise<Team[]> {
         Log.info("DatabaseController::getTeams() - start");
         return await this.readRecords(this.TEAMCOLL, {}) as Team[];
+    }
+
+    public async getResults(): Promise<Result[]> {
+        Log.info("DatabaseController::getResult() - start");
+        return await this.readRecords(this.RESULTCOLL, {}) as Result[];
     }
 
     public async getTeamsForPerson(personId: string): Promise<Team[]> {
@@ -84,11 +95,6 @@ export class DatabaseController {
             }
         }
         return myTeams;
-    }
-
-    public async getResults(): Promise<Result[]> {
-        Log.info("DatabaseController::getResult() - start");
-        return await this.readRecords(this.RESULTCOLL, {}) as Result[];
     }
 
     public async getRepositoriesForPerson(personId: string): Promise<Repository[]> {
@@ -208,6 +214,7 @@ export class DatabaseController {
             Log.info("DatabaseController::deleteAuth( " + record.personId + " ) - start");
             return await this.deleteRecord(this.AUTHCOLL, {personId: record.personId});
         }
+        return false;
     }
 
     public async deleteRepository(record: Repository): Promise<boolean> {
@@ -215,6 +222,7 @@ export class DatabaseController {
             Log.info("DatabaseController::deleteRepository( " + record.id + " ) - start");
             return await this.deleteRecord(this.REPOCOLL, {id: record.id});
         }
+        return false;
     }
 
     public async deletePerson(record: Person): Promise<boolean> {
@@ -222,6 +230,7 @@ export class DatabaseController {
             Log.info("DatabaseController::deletePerson( " + record.id + " ) - start");
             return await this.deleteRecord(this.PERSONCOLL, {id: record.id});
         }
+        return false;
     }
 
     public async deleteTeam(record: Team): Promise<boolean> {
@@ -229,6 +238,7 @@ export class DatabaseController {
             Log.info("DatabaseController::deleteTeam( " + record.id + " ) - start");
             return await this.deleteRecord(this.TEAMCOLL, {id: record.id});
         }
+        return false;
     }
 
     private async deleteRecord(colName: string, query: {}): Promise<boolean> {
@@ -443,12 +453,6 @@ export class DatabaseController {
             Log.error("DatabaseController::open() - ERROR: Host probably does not have a database configured " +
                 "and running (see README.md if this is a test instance).");
         }
-    }
-
-    public async getAuth(personId: string): Promise<Auth | null> {
-        Log.trace("DatabaseController::getAuthToken( " + personId + " ) - start");
-        const auth = await this.readSingleRecord(this.AUTHCOLL, {personId: personId}) as Auth;
-        return auth;
     }
 
     public async writeAuth(record: Auth): Promise<boolean> {

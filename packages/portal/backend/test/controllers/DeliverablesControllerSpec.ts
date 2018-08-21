@@ -8,7 +8,8 @@ import {Deliverable} from "../../src/Types";
 
 import {Test} from "../GlobalSpec";
 
-import '../GlobalSpec';
+import "../GlobalSpec";
+import "./DatabaseControllerSpec"; // run first
 
 describe("DeliverablesController", () => {
 
