@@ -123,7 +123,7 @@ export class AutoTestRoutes implements IREST {
                 Log.info('AutoTestRouteHandler::atGrade(..) - repoId: ' + gradeRecord.repoId +
                     '; delivId: ' + gradeRecord.delivId + '; body: ' + JSON.stringify(gradeRecord));
                 const sc = new CourseController(new GitHubController());
-                sc.handleNewAutoTestGrade(gradeRecord).then(function(success: any) {
+                sc.processNewAutoTestGrade(gradeRecord).then(function(success: any) {
                     payload = {success: {success: true}};
                     res.send(200, payload);
                     return next(true);
