@@ -691,8 +691,8 @@ export class CS340AdminView extends AdminView {
         for(const grade of grades) {
             // if(typeof gradeMapping[grade.personId] === 'undefined') gradeMapping[grade.personId] = {};
             // if the grade is an assignmentGrade; place it in the mapping
-            if(grade.custom !== null && typeof grade.custom.assignmentId !== "undefined") {
-                if(grade.custom.assignmentId === delivId) {
+            if(grade.custom !== null && typeof (grade.custom as AssignmentGrade).assignmentID !== "undefined") {
+                if((grade.custom as AssignmentGrade).assignmentID === delivId) {
                     gradeMapping[grade.personId] = grade;
                 }
             }
