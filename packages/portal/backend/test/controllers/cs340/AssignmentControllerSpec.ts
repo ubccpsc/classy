@@ -101,6 +101,24 @@ describe("CS340: AssignmentController", () => {
         expect(assignmentGrades).equals(null);
     });
 
+    it("Should not be able to publish grades for a non-assignment.", async () => {
+        let result = await ac.publishGrade(Test.REALUSER1.id + "_grades", "some String",
+            Test.REALUSER1.id, Test.DELIVID0);
+        expect(result).to.be.false;
+    });
+
+    it("Should not be able to publish grades for a deliverable that doesn't exist.", async () => {
+        let result = await ac.publishGrade(Test.REALUSER1.id + "_grades", "some String",
+            Test.REALUSER1.id, "fakeDeliv");
+        expect(result).to.be.false;
+    });
+
+    it("Should be able to publish all grades, even if students do not have submissions.", async () => {
+        let result = await ac.publishAllGrades(Test.ASSIGNID0);
+        expect(result).to.be.true;
+    }).timeout(numberOfStudents * TIMEOUT);
+
+
     it("Should be able to create an assignment grade.", async () => {
         // Check there is no grade associated with the assignment specified
         let assignmentGrade = await ac.getAssignmentGrade(TEST_STUDENT_ID_0, "a2");
@@ -210,6 +228,8 @@ describe("CS340: AssignmentController", () => {
         let aPayload: AssignmentGrade = {
             assignmentID: "a2",
             studentID:    TEST_STUDENT_ID_0,
+            // assignmentID: Test.ASSIGNID0,
+            // studentID:    Test.REALUSER1.id,
             released:     false,
             questions:    [
                 {
@@ -258,6 +278,8 @@ describe("CS340: AssignmentController", () => {
         };
 
         let success = await ac.setAssignmentGrade(Test.REPONAME3, Test.ASSIGNID0, aPayload);
+        // let success = await ac.setAssignmentGrade(Test.ASSIGNID0 + "_" + Test.REALUSER1.id, Test.ASSIGNID0, aPayload);
+
         expect(success).to.be.true;
 
         let newGrade = await gc.getGrade(Test.USER1.id, Test.ASSIGNID0);
@@ -269,6 +291,12 @@ describe("CS340: AssignmentController", () => {
         expect(aGrade.studentID).to.be.equal(aPayload.studentID);
         expect(aGrade.assignmentID).to.be.equal(aPayload.assignmentID);
     });
+
+    it("Should be able to publish all grades, after grades have been updated.", async () => {
+        let result = await ac.publishAllGrades(Test.ASSIGNID0);
+        expect(result).to.be.true;
+    });
+
 
     it("Clean stale repositories.", async function() {
         Log.info("Cleaning stale repositories");
@@ -314,8 +342,26 @@ describe("CS340: AssignmentController", () => {
         let allStudents = await pc.getAllPeople();
         expect(allStudents.length).to.be.greaterThan(0);
 
-        let success = await ac.publishAssignmentRepo(Test.ASSIGNID0 + "_" + allStudents[0].id);
+        let success = await ac.publishAssignmentRepo(Test.ASSIGNID0 + "_" + Test.REALUSER1.id);
         expect(success).to.be.true;
+    }).timeout(3 * TIMEOUT);
+
+
+    it("Should not be able to publish an assignment repository again.", async function() {
+        const exec = Test.runSlowTest();
+
+        if (exec) {
+            Log.test("AssignmentControllerSpec::slowTests - running; this may take a while...");
+        } else {
+            Log.test("AssignmentControllerSpec::slowTests - skipping (would take multiple minutes otherwise)");
+            this.skip();
+        }
+
+        let allStudents = await pc.getAllPeople();
+        expect(allStudents.length).to.be.greaterThan(0);
+
+        let success = await ac.publishAssignmentRepo(Test.ASSIGNID0 + "_" + Test.REALUSER1.id);
+        expect(success).to.be.false;
     }).timeout(3 * TIMEOUT);
 
     it("Should be able to delete Assignment Repo, along with it's records.", async function() {
@@ -331,7 +377,7 @@ describe("CS340: AssignmentController", () => {
         let allStudents = await pc.getAllPeople();
         expect(allStudents.length).to.be.greaterThan(0);
 
-        let repoName = Test.ASSIGNID0 + "_" + allStudents[0].id;
+        let repoName = Test.ASSIGNID0 + "_" + Test.REALUSER1.id;
 
         let success: boolean = await ac.deleteAssignmentRepository(repoName, Test.ASSIGNID0, true);
         expect(success).to.be.true;
@@ -397,7 +443,7 @@ describe("CS340: AssignmentController", () => {
             expect(newGithubRepoCount).to.be.at.least(oldGithubRepoCount);
         }).timeout(numberOfStudents * 2 * TIMEOUT);
 
-        it("Should be able to get assignment status with created", async function() {
+        it("Should be able to get the correct assignment status after creating repositories.", async function() {
 
             let assignStatus: {assignStatus: AssignmentStatus,
                 totalStudents: number, studentRepos: number} = await ac.getAssignmentStatus(Test.ASSIGNID0);
@@ -415,13 +461,25 @@ describe("CS340: AssignmentController", () => {
             expect(assignStatus.assignmentStatus).to.be.equal(AssignmentStatus.CREATED);
         });
 
-        it("Should be able to publish all Assignment Repositories at once.", async function() {
+        it("Should be able to release all Assignment Repositories at once.", async function() {
             let allStudents = await pc.getAllPeople();
             let studentCount = allStudents.length;
             expect(studentCount).to.be.greaterThan(0);
 
             let success = await ac.publishAllRepositories(Test.ASSIGNID0);
             expect(success).to.be.true;
+
+            // TODO: Verify
+        }).timeout(numberOfStudents * TIMEOUT);
+
+        it("Should not be able to release all Assignment " +
+            "Repositories after releasing once.", async function() {
+            let allStudents = await pc.getAllPeople();
+            let studentCount = allStudents.length;
+            expect(studentCount).to.be.greaterThan(0);
+
+            let success = await ac.publishAllRepositories(Test.ASSIGNID0);
+            expect(success).to.be.false;
 
             // TODO: Verify
         }).timeout(numberOfStudents * TIMEOUT);
@@ -468,10 +526,27 @@ describe("CS340: AssignmentController", () => {
             expect(success).to.be.true;
         });
 
+        it("Should be able to publish grades again after grade update.", async () => {
+            let result = await ac.publishAllGrades(Test.ASSIGNID0);
+            expect(result).to.be.true;
+        }).timeout(numberOfStudents * TIMEOUT);
+
+        it("Should not be able to release all Assignment " +
+            "Repositories after closing.", async function() {
+            let allStudents = await pc.getAllPeople();
+            let studentCount = allStudents.length;
+            expect(studentCount).to.be.greaterThan(0);
+
+            let success = await ac.publishAllRepositories(Test.ASSIGNID0);
+            expect(success).to.be.false;
+
+            // TODO: Verify
+        }).timeout(numberOfStudents * TIMEOUT);
+
         it("Should be able to publish all grades after release.", async function() {
             let success = await ac.publishAllGrades(Test.ASSIGNID0);
             expect(success).to.be.true;
-        });
+        }).timeout(numberOfStudents * TIMEOUT);
 
         it("Should be able to delete all Assignment Repositories, along with their records", async function() {
             let allStudents = await pc.getAllPeople();
@@ -491,12 +566,40 @@ describe("CS340: AssignmentController", () => {
         }).timeout(numberOfStudents * 2 * TIMEOUT);
 
 
+        // fail cases
+
+        it("Should not be able to initialize a deliverable that doesn't exist.", async function() {
+            let success = await ac.initializeAllRepositories("invaliddeliv");
+            expect(success).to.be.false;
+        });
+
+        it("Should not be able to release a deliverable that doesn't exists.", async function() {
+            let success = await ac.publishAllRepositories("invaliddeliv");
+            expect(success).to.be.false;
+        });
+
+        it("Should not be close to release a deliverable that doesn't exists.", async function() {
+            let success = await ac.closeAllRepositories("invaliddeliv");
+            expect(success).to.be.false;
+        });
+
+        it("Should not be able to get the status of an invalid deliverable.", async function() {
+            let result = await ac.getAssignmentStatus("invaliddelv");
+            expect(result).to.be.null;
+        });
+
+        it("Should not be able to get the status of an non-assignment.", async function() {
+            let result = await ac.getAssignmentStatus(Test.DELIVID0);
+            expect(result).to.be.null;
+        });
+
+        it("Should not be able to publish grades for a non-assignment.", async () => {
+            let result = await ac.publishAllGrades(Test.DELIVID0);
+            expect(result).to.be.false;
+        });
+
+
     });
-
-
-    /*
-     *
-     */
 
 
     /*

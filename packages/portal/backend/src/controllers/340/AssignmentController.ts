@@ -167,6 +167,11 @@ export class AssignmentController {
         Log.info("AssignmentController::initializeAllRepositories( " + delivId + ") - start");
         // Log.info("AssignmentController::initializeAllRepositories(..)");
         let deliv: Deliverable = await this.dc.getDeliverable(delivId);
+        if(deliv === null) {
+            Log.error("AssignmentController::initializeAllRepositories(..) - Invalid deliverable");
+            return false;
+        }
+
         // get assignment information
         if (deliv.custom === null) {
             Log.error("AssignmentController::initializeAllRepositories(..) - assignment not set up" +
@@ -327,10 +332,19 @@ export class AssignmentController {
     public async publishAllRepositories(delivId: string): Promise<boolean> {
         Log.info("AssignmentController::publishAllRepositories( " + delivId + " ) - start");
         // Log.info("AssignmentController::publishAllRepositories(..)");
+
+        // update assignment information first
+        Log.info("AssignmentController::publishAllRepositories(..) - updating assignment status");
+        let statusSuccess = await this.updateAssignmentStatus(delivId);
+        if(statusSuccess === null) {
+            Log.error("AssignmentController::publishAllRepositories(..) - Error: Deliverable is not correct");
+            return false;
+        }
+
         let deliv = await this.dc.getDeliverable(delivId);
-        if (deliv.custom === null) {
+        if (deliv === null || deliv.custom === null) {
             Log.error("AssignmentController::publishAllRepositories(..) - error: assignment not " +
-                "set up properly");
+                "set up properly or doesn't exist");
             return false;
         }
 
@@ -838,6 +852,12 @@ export class AssignmentController {
 
             // create the repo
             let repoURL: string = await this.gha.createRepo(studentGradeRepoName);
+        } else {
+            if(studentRepoRecord === null) {
+                studentRepoRecord = await this.rc.createRepository(studentGradeRepoName, [], null);
+                studentRepoRecord.URL = await this.ghc.getRepositoryUrl(studentRepoRecord);
+                await this.db.writeRepository(studentRepoRecord);
+            }
         }
 
 
