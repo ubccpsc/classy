@@ -412,6 +412,8 @@ export class Test {
             id:               Test.ASSIGNID1,
             URL:              "",
             repoPrefix:       Test.ASSIGNID1 + "_",
+            visibleToStudents:false,
+            rubric:           {},
             openTimestamp:    openNumber,
             closeTimestamp:   closeNumber,
             gradesReleased:   false,
