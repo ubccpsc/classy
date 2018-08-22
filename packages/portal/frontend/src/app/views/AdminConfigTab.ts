@@ -50,6 +50,8 @@ export class AdminConfigTab {
             that.defaultDeliverablePressed();
         };
 
+        UI.showModal("Retriving config / deliverable details.");
+
         this.course = await AdminConfigTab.getCourse(this.remote);
 
         const deliverables = await AdminDeliverablesTab.getDeliverables(this.remote);
@@ -77,6 +79,8 @@ export class AdminConfigTab {
             const o: HTMLOptionElement = new Option(delivId, value, false, selected);
             delivDropdown.add(o);
         }
+
+        UI.hideModal();
     }
 
     private validateClasslistSpecified(fileInput: HTMLInputElement) {
@@ -161,13 +165,13 @@ export class AdminConfigTab {
 
     public static async getCourse(remote: string): Promise<CourseTransport> {
         try {
-            UI.showModal('Retrieving config.');
+            // UI.showModal('Retrieving config.');
 
             // get class options
             const options = AdminView.getOptions();
             const url = remote + '/portal/admin/course';
             const response = await fetch(url, options);
-            UI.hideModal();
+            // UI.hideModal();
 
             const courseOptions: CourseTransport = null;
             const start = Date.now();

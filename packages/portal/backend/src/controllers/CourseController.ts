@@ -13,6 +13,7 @@ import {
 import {Course, Deliverable, Grade, Person} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
+import {DeliverablesController} from "./DeliverablesController";
 import {IGitHubController} from "./GitHubController";
 import {GradesController} from "./GradesController";
 import {PersonController} from "./PersonController";
@@ -21,101 +22,46 @@ import {ResultsController} from "./ResultsController";
 import {TeamController} from "./TeamController";
 
 /**
- * This is the high-level interfaces that provides intermediate access to the
- * low-level controllers for the REST interfaces. This interface ensures that
- * the REST subsystem never sends backend representations to the front-end.
+ * This interface defines the extension points that courses will want to
+ * customize based on their own preferences and needs. Courses should not
+ * implement this interface but should instead extend CourseController.
  *
- * This separation ensures that front-ends only work with primitive types encoded
- * in transport representations, rather than the database types. This gives us
- * much greater flexibility for upgrading the backend without changing any frontend
- * code.
- *
- * Implementations which violate this separation do so at their own peril.
- *
- * Custom CourseControllers should not implement this directly, they probably
- * want tot extend CourseController instead.
+ * Courses can also of course add their own methods to their custom subclass
+ * (e.g., see SDMMController), or can have minimial implementations (e.g.,
+ * see CS310Controller).
  */
 export interface ICourseController {
 
     /**
-     *
-     * TODO: Convert Person to PersonTransport
-     *
-     * Gets the person associated with the username.
+     * Given a GitHub username that is not already in the system, how should it be
+     * handled? There are two main options here: return null (aka only accept registered
+     * users) or create and save a new Person and return them.
      *
      * @param {string} githubUsername
-     * @returns {Promise<Person | null>} Returns null if the username is unknown in the course.
+     * @returns {Promise<Person | null>}
      */
-    getPerson(githubUsername: string): Promise<Person | null>;
+    handleUnknownUser(githubUsername: string): Promise<Person | null>;
 
     /**
+     * Given a new Grade and existing Grade for a deliverable, should the new grade be
+     * saved? The Deliverable is included in case due dates want to be considered. The
+     * Grade timestamp is the timestamp of the GitHub push event, not the commit event,
+     * as this is the only time we can guarantee was not tampered with on the client side.
+     * This will be called once-per-teammember if there are multiple people on the repo
+     * receiving the grade.
      *
-     * TODO: Convert Person to PersonTransport
+     * NOTE: This is a synchronous API!
      *
-     * Sets the people for the course. Usually populated with classlist (or some such).
-     *
-     * @param {Person[]} people
-     * @returns {Promise<boolean>}
+     * @param {Deliverable} deliv
+     * @param {Grade} newGrade
+     * * @param {Grade} existingGrade
+     * @returns {boolean} whether the grade should be saved.
      */
-    setPeople(people: Person[]): Promise<boolean>;
-
-    /**
-     * Gets the deliverables associated with the course.
-     *
-     * @returns {Promise<DeliverableTransport[]>}
-     */
-    getDeliverables(): Promise<DeliverableTransport[]>;
-
-    /**
-     *
-     * TODO: convert Deliverable to DeliverableTransport
-     *
-     * Sets the deliverables for the course. Will replace deliverables that have the same
-     * Deliverable.id, otherwise it will create new ones.
-     *
-     * Will _not_ delete any deliverables.
-     *
-     * @param {Deliverable[]} deliverables
-     * @returns {Promise<boolean>}
-     */
-    setDeliverables(deliverables: Deliverable[]): Promise<boolean>;
-
-    /**
-     *
-     * TODO: Convert Person to PersonTransport and Grade to GradeTransport
-     *
-     * If no Person is provided, gets all grades for a course.
-     * If a Person is provided, gets all grades for only that person.
-     *
-     * @param {Person} person
-     * @returns {Promise<Grade[]>}
-     */
-    getGrades(person?: Person): Promise<Grade[]>;
-
-    /**
-     *
-     * TODO: convert Grade to GradeTransport
-     *
-     * Sets the grades for a course. Any grade that already exists in the system with the
-     * same Grade.personId && Grade.delivId will be replaced; new records will be added.
-     *
-     * Will _not_ delete any existing grades.
-     *
-     * @param {Grade[]} grades
-     * @returns {Promise<boolean>}
-     */
-    setGrades(grades: Grade[]): Promise<boolean>;
-
-    /**
-     * Gets the students associated with the course.
-     *
-     * @returns {Promise<StudentTransport[]>}
-     */
-    getStudents(): Promise<StudentTransport[]>;
+    handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): boolean;
 
 }
 
-export class CourseController { // don't implement ICourseController yet
+export class CourseController implements ICourseController {
 
     public static getName(): string | null {
         try {
@@ -152,39 +98,59 @@ export class CourseController { // don't implement ICourseController yet
      * @returns {Promise<Person | null>}
      */
     public async handleUnknownUser(githubUsername: string): Promise<Person | null> {
-        Log.info("CourseController::handleUnknownUser( " + githubUsername + " ) - person unknown; returning null");
-
+        Log.warn("CourseController::handleUnknownUser( " + githubUsername + " ) - person unknown; returning null");
         return null;
     }
 
-    public async handleNewAutoTestGrade(grade: AutoTestGradeTransport): Promise<boolean> {
-        Log.info("CourseController::handleNewGrade( .. ) - start");
+    public handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): boolean {
+        Log.warn("CourseController::handleUnknownUser( ... ) - returning true;");
+        return true;
+    }
+
+    public async processNewAutoTestGrade(grade: AutoTestGradeTransport): Promise<boolean> {
+        Log.info("CourseController::processNewAutoTestGrade( .. ) - start");
 
         try {
-            const repo = await this.rc.getRepository(grade.repoId); // sanity check
+            Log.info("CourseController::processNewAutoTestGrade( .. ) - payload: " + JSON.stringify(grade));
+            const repo = await this.rc.getRepository(grade.repoId);
             if (repo === null) {
-                Log.error("CourseController::handleNewGrade( .. ) - invalid repo name: " + grade.repoId);
+                // sanity check
+                Log.error("CourseController::processNewAutoTestGrade( .. ) - invalid repo name: " + grade.repoId);
                 return false;
             }
 
-            const peopleIds = await this.rc.getPeopleForRepo(grade.repoId); // sanity check
+            const peopleIds = await this.rc.getPeopleForRepo(grade.repoId);
             if (peopleIds.length < 1) {
-                Log.error("CourseController::handleNewGrade( .. ) - no people to associate grade record with.");
+                // sanity check
+                Log.error("CourseController::processNewAutoTestGrade( .. ) - no people to associate grade record with.");
                 return false;
             }
+
+            const delivController = new DeliverablesController();
+            const deliv = await delivController.getDeliverable(grade.delivId);
 
             for (const personId of peopleIds) {
+                const newGrade: Grade = {
+                    personId:  personId,
+                    delivId:   grade.delivId,
+                    score:     grade.score,
+                    comment:   grade.comment,
+                    urlName:   grade.urlName,
+                    URL:       grade.URL,
+                    timestamp: grade.timestamp,
+                    custom:    grade.custom
+                };
+
                 const existingGrade = await this.gc.getGrade(personId, grade.delivId);
-                if (existingGrade === null || existingGrade.score < grade.score) {
-                    Log.info("CourseController::handleNewGrade( .. ) - grade is higher; updating");
-                    await this.gc.createGrade(grade.repoId, grade.delivId, grade);
-                } else {
-                    Log.info("CourseController::handleNewGrade( .. ) - grade is not higher");
+                const shouldSave = this.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
+
+                if (shouldSave === true) {
+                    await this.gc.saveGrade(newGrade);
                 }
             }
             return true;
         } catch (err) {
-            Log.error("CourseController::handleNewGrade( .. ) - ERROR: " + err);
+            Log.error("CourseController::processNewAutoTestGrade( .. ) - ERROR: " + err);
             return false;
         }
     }
@@ -376,26 +342,7 @@ export class CourseController { // don't implement ICourseController yet
         let delivs: DeliverableTransport[] = [];
         for (const deliv of deliverables) {
 
-            const delivTransport: DeliverableTransport = {
-                id:  deliv.id,
-                URL: deliv.URL,
-
-                openTimestamp:  deliv.openTimestamp,
-                closeTimestamp: deliv.closeTimestamp,
-
-                minTeamSize:       deliv.teamMinSize,
-                maxTeamSize:       deliv.teamMaxSize,
-                teamsSameLab:      deliv.teamSameLab,
-                studentsFormTeams: deliv.teamStudentsForm,
-
-                onOpenAction:  '',
-                onCloseAction: '',
-
-                gradesReleased: deliv.gradesReleased,
-
-                autoTest: deliv.autotest,
-                custom:   deliv.custom
-            };
+            const delivTransport = DeliverablesController.deliverableToTransport(deliv);
 
             delivs.push(delivTransport);
         }

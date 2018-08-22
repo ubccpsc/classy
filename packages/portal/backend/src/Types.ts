@@ -73,20 +73,25 @@ export interface Auth {
 export interface Deliverable {
     readonly id: string; // primary key; invariant. this is the shortname of the deliverable (e.g., d1)
     URL: string; // links to the public deliverable description
+
+    // if teams and repos will be built for a deliverable, what will they be called:
     repoPrefix: string | null; // prefix for repo names (e.g., project_ or d1_)
+    teamPrefix: string | null; // prefix for team names (e.g., pTeam_ or d1Team_)
 
     openTimestamp: number;
     closeTimestamp: number;
-    gradesReleased: boolean;
+    gradesReleased: boolean; // whether students can see their grades
 
     teamMinSize: number;
     teamMaxSize: number;
     teamSameLab: boolean;
     teamStudentsForm: boolean;
-    teamPrefix: string | null; // prefix for team names (e.g., pTeam_ or d1Team_)
+
+    visibleToStudents: boolean; // whether students even see the column
 
     autotest: AutoTestConfig;
 
+    rubric: any; // captures rubric-specific definitions
     custom: any; // {}; not used by the default implementation, but useful for extension (e.g., schemas)
 }
 

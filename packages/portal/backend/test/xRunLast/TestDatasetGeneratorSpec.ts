@@ -122,18 +122,19 @@ describe.skip('TestDatasetGenerator', function() {
         const d: Deliverable = {
             id: '',
 
-            URL:            'http://NOTSET',
-            openTimestamp:  -1,
-            closeTimestamp: -1,
-            gradesReleased: false,
-            // delay:          300,
+            URL:               'http://NOTSET',
+            openTimestamp:     -1,
+            closeTimestamp:    -1,
+            gradesReleased:    false,
+            visibleToStudents: true,
+
+            repoPrefix: 'r_',
+            teamPrefix: 't_',
 
             teamMinSize:      1,
             teamMaxSize:      2,
             teamSameLab:      true,
             teamStudentsForm: true,
-            teamPrefix:       'team_',
-            repoPrefix:       '',
             // bootstrapUrl:     '',
 
             autotest: {
@@ -144,6 +145,7 @@ describe.skip('TestDatasetGenerator', function() {
                 custom:             {}
             },
 
+            rubric: {},
             custom: {}
         };
 

@@ -124,9 +124,9 @@ export interface IAttachment {
  * These can be specified per-deliverable in the Portal UI.
  */
 export interface AutoTestConfig {
-    dockerImage: string;
-    studentDelay: number;
-    maxExecTime: number;
-    regressionDelivIds: string[];
-    custom: {};
+    dockerImage: string; // docker image that should be launchd
+    studentDelay: number; // minimum interval between student requests in seconds
+    maxExecTime: number; // maximum execution time for the container before it will be timed out in seconds
+    regressionDelivIds: string[]; // other deliverables that should be run alongside any request
+    custom: {}; // custom parameters
 }

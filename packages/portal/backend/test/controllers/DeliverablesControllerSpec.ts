@@ -1,13 +1,15 @@
 import {expect} from "chai";
 import "mocha";
 import {DeliverableTransport} from "../../../../common/types/PortalTypes";
+import {DatabaseController} from "../../src/controllers/DatabaseController";
 
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {Deliverable} from "../../src/Types";
 
 import {Test} from "../GlobalSpec";
 
-import '../GlobalSpec';
+import "../GlobalSpec";
+import "./DatabaseControllerSpec"; // run first
 
 describe("DeliverablesController", () => {
 
@@ -80,4 +82,29 @@ describe("DeliverablesController", () => {
         expect(deliv).to.be.an('string');
     });
 
+    // this test should be last
+    it("Should enforce constraints on deliverables when saving.", async () => {
+        const db = DatabaseController.getInstance();
+
+        const allPeople = await db.getPeople();
+        for (const p of allPeople) {
+            await db.deletePerson(p);
+        }
+
+        let deliv = await dc.getDeliverable(Test.DELIVID1);
+        expect(deliv).to.not.be.null;
+
+        deliv.repoPrefix = '';
+        deliv.teamPrefix = '';
+        deliv.autotest.studentDelay = 60; // 1 minute
+
+        const valid = await dc.saveDeliverable(deliv);
+        expect(valid).to.not.be.null;
+
+        deliv = await dc.getDeliverable(Test.DELIVID1);
+        expect(deliv).to.not.be.null;
+        expect(deliv.repoPrefix).to.equal(Test.DELIVID1);
+        expect(deliv.teamPrefix).to.equal('t_' + Test.DELIVID1);
+        expect(deliv.autotest.studentDelay).to.be.greaterThan(120);
+    });
 });

@@ -24,6 +24,29 @@ export class DeliverablesController {
 
     public async saveDeliverable(deliv: Deliverable): Promise<Deliverable | null> {
         Log.info("DeliverableController::saveDeliverable( " + JSON.stringify(deliv) + " ) - start");
+
+        // enforce deliverable prefix constraints
+        if (deliv.teamPrefix === '') {
+            deliv.teamPrefix = 't_' + deliv.id;
+        }
+        if (deliv.repoPrefix === '') {
+            deliv.repoPrefix = deliv.id;
+        }
+
+        // enforce minimum time constraints; the AutoTest infrastructure is resource constrained
+        // this prevents students from hammering against the service and causing it to become overloaded
+        const allStudents = await this.db.getPeople();
+        let numStudents = allStudents.length;
+        if (numStudents < 60) {
+            numStudents = 60; // enforce a 60 student minumum in case the class list hasn't been uploaded yet
+        }
+
+        const MIN_DELAY_MULTIPLIER = 2; // number of minutes-per-student the platform can withstand (2-10 are reasonable values)
+        const minDelay = (numStudents * MIN_DELAY_MULTIPLIER) * 60; // minimum delay in seconds
+        if (deliv.autotest.studentDelay < minDelay) {
+            deliv.autotest.studentDelay = minDelay;
+        }
+
         await this.db.writeDeliverable(deliv); // let this handle the update
         return deliv;
     }
@@ -58,12 +81,40 @@ export class DeliverablesController {
         return null;
     }
 
-    public transportToDeliverable(trans: DeliverableTransport): Deliverable | null {
+    public static deliverableToTransport(deliv: Deliverable): DeliverableTransport {
+        const trans: DeliverableTransport = {
+            id:  deliv.id,
+            URL: deliv.URL,
+
+            repoPrefix: deliv.repoPrefix,
+            teamPrefix: deliv.teamPrefix,
+
+            openTimestamp:  deliv.openTimestamp,
+            closeTimestamp: deliv.closeTimestamp,
+
+            minTeamSize:       deliv.teamMinSize,
+            maxTeamSize:       deliv.teamMaxSize,
+            teamsSameLab:      deliv.teamSameLab,
+            studentsFormTeams: deliv.teamStudentsForm,
+
+            onOpenAction:  '',
+            onCloseAction: '',
+
+            gradesReleased:    deliv.gradesReleased,
+            visibleToStudents: deliv.visibleToStudents,
+
+            autoTest: deliv.autotest,
+            rubric:   deliv.rubric,
+            custom:   deliv.custom
+        };
+        return trans;
+    }
+
+    public static transportToDeliverable(trans: DeliverableTransport): Deliverable {
 
         const deliv: Deliverable = {
-            id:         trans.id,
-            URL:        trans.URL,
-            repoPrefix: '', // TODO: remove
+            id:  trans.id,
+            URL: trans.URL,
 
             openTimestamp:  trans.openTimestamp,
             closeTimestamp: trans.closeTimestamp,
@@ -73,10 +124,14 @@ export class DeliverablesController {
             teamMaxSize:      trans.maxTeamSize,
             teamSameLab:      trans.teamsSameLab,
             teamStudentsForm: trans.studentsFormTeams,
-            teamPrefix:       '', // TODO: remove
 
-            autotest: trans.autoTest,
+            repoPrefix: trans.repoPrefix,
+            teamPrefix: trans.teamPrefix,
 
+            visibleToStudents: trans.visibleToStudents,
+            autotest:          trans.autoTest,
+
+            rubric: trans.rubric,
             custom: trans.custom
         };
 

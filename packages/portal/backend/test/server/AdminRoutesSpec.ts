@@ -268,28 +268,34 @@ describe('Admin Routes', function() {
         let body: Payload;
         const url = '/portal/admin/deliverable';
         try {
-            const deliv: DeliverableTransport = {
-                id:                'd' + new Date().getTime(),
-                openTimestamp:     new Date().getTime(),
-                closeTimestamp:    new Date().getTime(),
-                minTeamSize:       1,
-                maxTeamSize:       1,
-                teamsSameLab:      false,
-                studentsFormTeams: false,
-                onOpenAction:      '',
-                onCloseAction:     '',
-                URL:               'url',
-                gradesReleased:    false,
+            const deliv = DeliverablesController.deliverableToTransport(
+                Test.createDeliverable('d' + new Date().getTime()));
 
-                autoTest: {
-                    dockerImage:        '',
-                    maxExecTime:        300,
-                    studentDelay:       10000,
-                    regressionDelivIds: [],
-                    custom:             {}
-                },
-                custom:   {}
-            };
+            // const deliv: DeliverableTransport = {
+            //     id:                'd' + new Date().getTime(),
+            //     openTimestamp:     new Date().getTime(),
+            //     closeTimestamp:    new Date().getTime(),
+            //     minTeamSize:       1,
+            //     maxTeamSize:       1,
+            //     teamsSameLab:      false,
+            //     studentsFormTeams: false,
+            //     onOpenAction:      '',
+            //     onCloseAction:     '',
+            //     URL:               'url',
+            //     gradesReleased:    false,
+            //     repoPrefix:        'r_',
+            //     teamPrefix:        't_',
+            //     autoTest:          {
+            //         dockerImage:        '',
+            //         maxExecTime:        300,
+            //         studentDelay:       10000,
+            //         regressionDelivIds: [],
+            //         custom:             {}
+            //     },
+            //     visibleToStudents: true,
+            //     rubric:            {},
+            //     custom:            {}
+            // };
             response = await request(app).post(url).send(deliv).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
@@ -307,28 +313,36 @@ describe('Admin Routes', function() {
         let body: Payload;
         const url = '/portal/admin/deliverable';
         try {
-            const deliv: DeliverableTransport = {
-                id:                null,
-                openTimestamp:     new Date().getTime(),
-                closeTimestamp:    new Date().getTime(),
-                minTeamSize:       1,
-                maxTeamSize:       1,
-                teamsSameLab:      false,
-                studentsFormTeams: false,
-                onOpenAction:      '',
-                onCloseAction:     '',
-                URL:               'url',
-                gradesReleased:    false,
+            const deliv = DeliverablesController.deliverableToTransport(
+                Test.createDeliverable('d' + new Date().getTime()));
+            deliv.id = null; // make invalid
 
-                autoTest: {
-                    dockerImage:        '',
-                    maxExecTime:        300,
-                    studentDelay:       10000,
-                    regressionDelivIds: [],
-                    custom:             {}
-                },
-                custom:   {}
-            };
+            // const deliv: DeliverableTransport = {
+            //     id:                null,
+            //     openTimestamp:     new Date().getTime(),
+            //     closeTimestamp:    new Date().getTime(),
+            //     minTeamSize:       1,
+            //     maxTeamSize:       1,
+            //     teamsSameLab:      false,
+            //     studentsFormTeams: false,
+            //     onOpenAction:      '',
+            //     onCloseAction:     '',
+            //     URL:               'url',
+            //     gradesReleased:    false,
+            //     visibleToStudents: true,
+            //     repoPrefix:        'r_',
+            //     teamPrefix:        't_',
+            //
+            //     autoTest: {
+            //         dockerImage:        '',
+            //         maxExecTime:        300,
+            //         studentDelay:       10000,
+            //         regressionDelivIds: [],
+            //         custom:             {}
+            //     },
+            //     rubric:   {},
+            //     custom:   {}
+            // };
             response = await request(app).post(url).send(deliv).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
@@ -357,28 +371,32 @@ describe('Admin Routes', function() {
         let body: Payload;
         const url = '/portal/admin/deliverable';
         try {
-            const deliv: DeliverableTransport = {
-                id:                'd' + new Date().getTime(),
-                openTimestamp:     new Date().getTime(),
-                closeTimestamp:    new Date().getTime(),
-                minTeamSize:       1,
-                maxTeamSize:       1,
-                teamsSameLab:      false,
-                studentsFormTeams: false,
-                onOpenAction:      '',
-                onCloseAction:     '',
-                URL:               'url',
-                gradesReleased:    false,
 
-                autoTest: {
-                    dockerImage:        '',
-                    maxExecTime:        300,
-                    studentDelay:       10000,
-                    regressionDelivIds: [],
-                    custom:             {}
-                },
-                custom:   {}
-            };
+            const deliv = DeliverablesController.deliverableToTransport(
+                Test.createDeliverable('d' + new Date().getTime()));
+
+            // const deliv: DeliverableTransport = {
+            //     id:                'd' + new Date().getTime(),
+            //     openTimestamp:     new Date().getTime(),
+            //     closeTimestamp:    new Date().getTime(),
+            //     minTeamSize:       1,
+            //     maxTeamSize:       1,
+            //     teamsSameLab:      false,
+            //     studentsFormTeams: false,
+            //     onOpenAction:      '',
+            //     onCloseAction:     '',
+            //     URL:               'url',
+            //     gradesReleased:    false,
+            //     re
+            //     autoTest: {
+            //         dockerImage:        '',
+            //         maxExecTime:        300,
+            //         studentDelay:       10000,
+            //         regressionDelivIds: [],
+            //         custom:             {}
+            //     },
+            //     custom:   {}
+            // };
             response = await request(app).post(url).send(deliv).set({user: Test.USER1.id, token: token});
             body = response.body;
         } catch (err) {
@@ -411,9 +429,13 @@ describe('Admin Routes', function() {
                 studentsFormTeams: d0.teamStudentsForm,
                 onOpenAction:      '',
                 onCloseAction:     '',
+                repoPrefix:        d0.repoPrefix,
+                teamPrefix:        d0.teamPrefix,
+                visibleToStudents: d0.visibleToStudents,
                 URL:               d0.URL,
                 gradesReleased:    d0.gradesReleased,
                 autoTest:          d0.autotest,
+                rubric:            d0.rubric,
                 custom:            d0.custom
             };
 

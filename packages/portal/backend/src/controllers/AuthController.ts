@@ -66,11 +66,12 @@ export class AuthController {
                     } else if (isAdmin === true) {
                         person.kind = 'admin';
                         await dc.writePerson(person);
-                    } else {
-                        // shouldn't happen: students shouldn't have null kind
-                        person.kind = 'student';
-                        await dc.writePerson(person);
                     }
+                    // else {
+                    // shouldn't happen: students shouldn't have null kind
+                    // person.kind = 'student';
+                    // await dc.writePerson(person);
+                    // }
                 }
 
                 if (person.kind === 'student') {
@@ -82,7 +83,8 @@ export class AuthController {
                 } else if (person.kind === 'adminstaff') {
                     return {isAdmin: true, isStaff: true};
                 } else {
-                    Log.trace("AuthController::isPrivileged( " + personId + ", ... ) - unknown kind: " + person.kind);
+                    Log.error("AuthController::isPrivileged( " + personId + ", ... ) - unknown kind: " + person.kind);
+                    return {isAdmin: false, isStaff: false};
                 }
             }
         }

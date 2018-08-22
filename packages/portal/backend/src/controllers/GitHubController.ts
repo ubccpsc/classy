@@ -64,8 +64,8 @@ export class GitHubController implements IGitHubController {
     public async createRepository(repoName: string, importUrl: string, path?: string): Promise<boolean> {
         const config = Config.getInstance();
         const host = config.getProp(ConfigKey.backendUrl);
-        const port = config.getProp(ConfigKey.backendPort);
-        const WEBHOOKADDR = host + ':' + port + '/portal/githubWebhook';
+        // const port = config.getProp(ConfigKey.backendPort);
+        const WEBHOOKADDR = host + '/portal/githubWebhook';
 
         Log.info("GitHubController::createRepository( " + repoName + ", ...) - start");
         // Log.info("GitHubController::createRepository(..) - ");

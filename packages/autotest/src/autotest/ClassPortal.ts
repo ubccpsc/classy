@@ -208,6 +208,7 @@ export class ClassPortal implements IClassPortal {
             };
 
             Log.info("ClassPortal::sendGrade(..) - Sending request to " + url);
+            Log.info("ClassPortal::sendGrade(..) - payload: " + JSON.stringify(grade));
             const res = await rp(url, opts); // .then(function(res) {
             Log.trace("ClassPortal::sendGrade() - sent; returned payload: " + res);
             const json = res;

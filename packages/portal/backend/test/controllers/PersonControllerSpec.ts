@@ -94,4 +94,60 @@ describe("PersonController", () => {
         expect(person).to.be.null;
     }).timeout(Test.TIMEOUTLONG);
 
+    it("Should be able to write a person.", async () => {
+        let person = await pc.getPerson(PERSON1.id);
+        expect(person).to.not.be.null;
+        expect(person.id).to.equal(PERSON1.id);
+        expect(person.custom.myProp).to.be.undefined;
+
+        person.custom.myProp = true;
+        const success = await pc.writePerson(person);
+        expect(success).to.be.true;
+        person = await pc.getPerson(PERSON1.id);
+        expect(person.custom.myProp).to.be.true;
+    }).timeout(Test.TIMEOUTLONG);
+
+    it("Should be able to get a person who is not registered but is an admin.", async () => {
+        let person = await pc.getPerson(Test.ADMIN1.github);
+        expect(person).to.be.null;
+
+        person = await pc.getGitHubPerson(Test.ADMIN1.github);
+        expect(person).to.not.be.null;
+        expect(person.id).to.equal(Test.ADMIN1.github); // admin ids are their github id
+    });
+
+    it("Should be able to get the repos for a person.", async () => {
+
+        const repos = await pc.getRepos(PERSON1.id);
+        expect(repos).to.be.an('array');
+        expect(repos).to.be.empty;
+
+        // TODO: create a repo
+
+    }).timeout(Test.TIMEOUTLONG);
+
+    it("Should be able to translate a person.", async () => {
+        const person = await pc.getPerson(PERSON1.id);
+        expect(person).to.not.be.null;
+        expect(person.id).to.equal(PERSON1.id);
+
+        // not exhaustive
+        let trans = PersonController.personToTransport(person);
+        expect(trans.id).to.equal(person.id);
+        expect(trans.labId).to.equal(person.labId);
+        expect(trans.firstName).to.equal(person.fName);
+        expect(trans.lastName).to.equal(person.lName);
+
+        trans = null;
+        let ex = null;
+        try {
+            trans = PersonController.personToTransport(null);
+        } catch (err) {
+            ex = err;
+        }
+        expect(trans).to.be.null;
+        expect(ex).to.not.be.null;
+
+    }).timeout(Test.TIMEOUTLONG);
+
 });

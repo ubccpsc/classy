@@ -196,7 +196,7 @@ describe("CourseController", () => {
             repoURL: 'repoUrl'
         };
 
-        const res = await cc.handleNewAutoTestGrade(grade);
+        const res = await cc.processNewAutoTestGrade(grade);
         expect(res).to.be.an('boolean');
         expect(res).to.be.true;
     });
@@ -219,7 +219,7 @@ describe("CourseController", () => {
             repoURL: 'repoUrl'
         };
 
-        const res = await cc.handleNewAutoTestGrade(grade);
+        const res = await cc.processNewAutoTestGrade(grade);
         expect(res).to.be.an('boolean');
         expect(res).to.be.false;
     });

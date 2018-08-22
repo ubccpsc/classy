@@ -22,9 +22,9 @@ Any contributions must pass the following criteria:
 
 1. The Pull Request must pass all existing tests. New contributions should not require existing tests to be changed as other courses might depend on the modified behaviour; if you feel such a change is needed, please mention the rationale in the Pull Request comments.
 
-2. The test coverage of the system must be maintained. We require tests be provided for any new contributions as without these it is extremely challenging to ensure that future development will not break your new contribution.
+2. The test coverage of the system must be maintained; the expected coverage rate for any given file should be 90%+. We require tests be provided for any new contributions as without these it is extremely challenging to ensure that future development for other courses will not break your new contribution.
 
-3. Finally, any contributions must lint before they can be accepted. This can be run using `yarn run lint` in `classy/`.
+3. Finally, any contributions must lint before they can be accepted. This can be run using `yarn run lint` in `classy/`. The global rules in `/tslint.json` should not be changed.
 
 ### About dev packages
 

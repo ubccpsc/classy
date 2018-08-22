@@ -327,6 +327,8 @@ export abstract class AutoTest implements IAutoTest {
                 const delivId: string = input.delivId;
                 const repoId: string = input.pushInfo.repoId;
                 const id: string = `${commitSHA}-${delivId}`;
+                const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
+                    Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
 
                 const gradeServiceOpts: rp.OptionsWithUrl = {
                     method:  "PUT",
@@ -382,13 +384,11 @@ export abstract class AutoTest implements IAutoTest {
                     }
                     const gradePayload: AutoTestGradeTransport = {
                         delivId,
-                        repoId: record.delivId, // input.pushInfo.repoId,
-
+                        repoId,
+                        repoURL,
                         score,
 
-                        repoURL: record.repoId, // input.pushInfo.projectURL,
-
-                        urlName: record.repoId, // could be a short SHA, but this seems better
+                        urlName: repoId, // could be a short SHA, but this seems better
                         URL:     commitURL,
 
                         comment: output.report.feedback,

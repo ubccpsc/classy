@@ -4,7 +4,7 @@ import Config, {ConfigCourses, ConfigKey} from "../../../../../common/Config";
 import Log from "../../../../../common/Log";
 import {GradePayload, Payload, SDMMStatus, StatusPayload} from "../../../../../common/types/SDMMTypes";
 import Util from "../../../../../common/Util";
-import {Grade, Person, Team} from "../../Types";
+import {Deliverable, Grade, Person, Team} from "../../Types";
 
 import {CourseController} from "../CourseController";
 import {IGitHubController} from "../GitHubController";
@@ -215,7 +215,7 @@ export class SDMMController extends CourseController {
      * @returns {Promise<Person | null>}
      */
     public async handleUnknownUser(githubUsername: string): Promise<Person | null> {
-        Log.info("SDDMController::handleUnknownUser( " + githubUsername + " ) - start");
+        Log.info("SDMMController::handleUnknownUser( " + githubUsername + " ) - start");
 
         // in the secapstone we don't know who the students are in advance
         // in this case, we will create Person objects on demand
@@ -241,6 +241,30 @@ export class SDMMController extends CourseController {
         newPerson = await pc.createPerson(newPerson);
 
         return newPerson;
+    }
+
+    /**
+     * Students get their highest grade; no deadlines are enforced since SDMM is self-paced.
+     *
+     * If the newGrade.score > existingGrade.score, return true.
+     *
+     * @param {Deliverable} deliv
+     * @param {Grade} newGrade
+     * @param {Grade} existingGrade
+     * @returns {boolean}
+     */
+    public handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): boolean {
+        Log.info("SDMMController:handleNewAutoTestGrade( " + deliv.id + ", " +
+            newGrade.personId + ", " + newGrade.score + ", ... ) - start");
+        if ((existingGrade === null || newGrade.score > existingGrade.score)) {
+            Log.trace("SDMMController:handleNewAutoTestGrade( " + deliv.id + ", " +
+                newGrade.personId + ", " + newGrade.score + ", ... ) - returning true");
+            return true;
+        } else {
+            Log.trace("SDMMController:handleNewAutoTestGrade( " + deliv.id + ", " +
+                newGrade.personId + ", " + newGrade.score + ", ... ) - returning false");
+            return false;
+        }
     }
 
     /**

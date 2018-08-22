@@ -1,7 +1,7 @@
 import * as rp from "request-promise-native";
 import * as restify from 'restify';
 
-import Config, {ConfigCourses, ConfigKey} from "../../../../../common/Config";
+import Config, {ConfigKey} from "../../../../../common/Config";
 import Log from "../../../../../common/Log";
 
 import {
@@ -47,55 +47,37 @@ export class AutoTestRoutes implements IREST {
         server.post('/githubWebhook', AutoTestRoutes.githubWebhook); // forward GitHub Webhooks to AutoTest
     }
 
+    public static handleError(code: number, msg: string, res: any, next: any) {
+        Log.error('AutoTestRoutes::handleError(..) - ERROR: ' + msg);
+        res.send(code, {failure: {message: msg, shouldLogout: false}});
+        return next(false);
+    }
+
     public static atContainerDetails(req: any, res: any, next: any) {
         Log.info('AutoTestRouteHandler::atContainerDetails(..) - /at/container/:delivId - start GET');
 
         let payload: AutoTestConfigPayload;
         const providedSecret = req.headers.token;
         if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
-            Log.warn('AutoTestRouteHandler::atDefaultDeliverable(..) - Invalid Secret: ' + providedSecret);
-            payload = {failure: {message: 'Invalid AutoTest Secret: ' + providedSecret, shouldLogout: true}};
-            res.send(400, payload);
+            return AutoTestRoutes.handleError(400, 'Invalid AutoTest Secret: ' + providedSecret, res, next);
         } else {
             const delivId = req.params.delivId;
             const name = Config.getInstance().getProp(ConfigKey.name);
 
             Log.info('AutoTestRouteHandler::atContainerDetails(..) - name: ' + name + '; delivId: ' + delivId);
 
-            const handleError = function() {
-                payload = {failure: {message: 'Could not retrieve container details', shouldLogout: false}};
-                res.send(400, payload);
-                return next(false);
-            };
-
-            if (name === ConfigCourses.classytest && delivId !== 'd9997') {
-                // HACK: the && is terrible and is just for testing
-                payload = {
-                    success: {
-                        dockerImage:        'secapstone-grader',
-                        studentDelay:       60 * 60 * 12,
-                        maxExecTime:        300,
-                        regressionDelivIds: [],
-                        custom:             {}
-                    }
-                };
-                res.send(200, payload);
-                return next(true);
-            } else {
-
-                const dc = new DeliverablesController();
-                dc.getDeliverable(delivId).then(function(deliv) {
-                    if (deliv !== null) {
-                        payload = {success: deliv.autotest};
-                        res.send(200, payload);
-                        return next(true);
-                    } else {
-                        handleError();
-                    }
-                }).catch(function(err) {
-                    handleError();
-                });
-            }
+            const dc = new DeliverablesController();
+            dc.getDeliverable(delivId).then(function(deliv) {
+                if (deliv !== null) {
+                    payload = {success: deliv.autotest};
+                    res.send(200, payload);
+                    return next(true);
+                } else {
+                    return AutoTestRoutes.handleError(400, 'Could not retrieve container details.', res, next);
+                }
+            }).catch(function(err) {
+                return AutoTestRoutes.handleError(400, 'Could not retrieve container details.', res, next);
+            });
         }
     }
 
@@ -105,27 +87,19 @@ export class AutoTestRoutes implements IREST {
         let payload: AutoTestDefaultDeliverablePayload;
         const providedSecret = req.headers.token;
         if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
-            Log.warn('AutoTestRouteHandler::atDefaultDeliverable(..) - Invalid Secret: ' + providedSecret);
-            payload = {failure: {message: 'Invalid AutoTest Secret: ' + providedSecret, shouldLogout: true}};
-            res.send(400, payload);
+            return AutoTestRoutes.handleError(400, 'Invalid AutoTest Secret: ' + providedSecret, res, next);
         } else {
 
             const name = Config.getInstance().getProp(ConfigKey.name);
             Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - name: ' + name);
 
-            // if (name === ConfigCourses.classytest) { // for testing only
-            //     payload = {success: {defaultDeliverable: 'd0'}};
-            //     res.send(200, payload);
-            //     return;
-            // }
-
             const cc = new CourseController(new GitHubController());
             cc.getCourse().then(function(course) {
                 payload = {success: {defaultDeliverable: course.defaultDeliverableId}};
                 res.send(200, payload);
+                return next(true);
             }).catch(function(err) {
-                payload = {failure: {message: 'No default deliverable found.', shouldLogout: false}};
-                res.send(400, payload);
+                return AutoTestRoutes.handleError(400, 'No default deliverable found. ', res, next);
             });
         }
     }
@@ -137,29 +111,24 @@ export class AutoTestRoutes implements IREST {
 
         const providedSecret = req.headers.token;
         if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
-            Log.warn('AutoTestRouteHandler::atGrade(..) - Invalid Secret: ' + providedSecret);
-            payload = {failure: {message: 'Invalid AutoTest Secret: ' + providedSecret, shouldLogout: true}};
-            res.send(400, payload);
+            return AutoTestRoutes.handleError(400, 'Invalid AutoTest Secret: ' + providedSecret, res, next);
         } else {
             const gradeRecord: AutoTestGradeTransport = req.body; // turn into json?
 
             const gc: GradesController = new GradesController();
             const validGradeRecord = gc.validateAutoTestGrade(gradeRecord);
             if (validGradeRecord !== null) {
-                Log.error('AutoTestRouteHandler::atGrade(..) - valid body not provided: ' +
-                    validGradeRecord + '; body: ' + JSON.stringify(gradeRecord));
-                res.send(400, {failure: {message: 'Invalid Grade Record: ' + validGradeRecord, shouldLogout: false}});
+                return AutoTestRoutes.handleError(400, 'Invalid Grade Record: ' + validGradeRecord, res, next);
             } else {
                 Log.info('AutoTestRouteHandler::atGrade(..) - repoId: ' + gradeRecord.repoId +
                     '; delivId: ' + gradeRecord.delivId + '; body: ' + JSON.stringify(gradeRecord));
                 const sc = new CourseController(new GitHubController());
-                sc.handleNewAutoTestGrade(gradeRecord).then(function(success: any) {
+                sc.processNewAutoTestGrade(gradeRecord).then(function(success: any) {
                     payload = {success: {success: true}};
                     res.send(200, payload);
+                    return next(true);
                 }).catch(function(err) {
-                    payload = {failure: {message: 'Failed to receive grade: ' + err, shouldLogout: false}};
-                    res.send(400, payload);
-                    Log.error('AutoTestRouteHandler::atGrade(..) - ERROR: ' + err);
+                    return AutoTestRoutes.handleError(400, 'Failed to receive grade; ERROR: ' + err.message, res, next);
                 });
             }
         }
@@ -183,9 +152,7 @@ export class AutoTestRoutes implements IREST {
 
         const providedSecret = req.headers.token;
         if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
-            Log.warn('AutoTestRouteHandler::atPostResult(..) - Invalid Secret: ' + providedSecret);
-            payload = {failure: {message: 'Invalid AutoTest Secret: ' + providedSecret, shouldLogout: true}};
-            res.send(400, payload);
+            return AutoTestRoutes.handleError(400, 'Invalid AutoTest Secret: ' + providedSecret, res, next);
         } else {
             const resultRecord: AutoTestResultTransport = req.body;
             Log.trace('AutoTestRouteHandler::atPostResult(..) - body: ' + JSON.stringify(resultRecord));
@@ -193,18 +160,15 @@ export class AutoTestRoutes implements IREST {
             const rc = new ResultsController();
             const validResultRecord = rc.validateAutoTestResult(resultRecord);
             if (validResultRecord !== null) {
-                Log.error('AutoTestRouteHandler::atPostResult(..) - valid body not provided: ' +
-                    validResultRecord + '; body: ' + JSON.stringify(resultRecord));
-                res.send(400, {failure: {message: 'Invalid Result Record: ' + validResultRecord, shouldLogout: false}});
+                return AutoTestRoutes.handleError(400, 'Invalid Result Record: ' + validResultRecord, res, next);
             } else {
                 Log.warn('AutoTestRouteHandler::atPostResult(..) - valid result && valid secret');
                 rc.createResult(resultRecord).then(function(success) {
                     payload = {success: {message: 'Result received'}};
                     res.send(200, payload);
+                    return next(true);
                 }).catch(function(err) {
-                    payload = {failure: {message: 'Error processing result: ' + err, shouldLogout: false}};
-                    res.send(400, payload);
-                    Log.error('AutoTestRouteHandler::atPostResult(..) - ERROR: ' + err);
+                    return AutoTestRoutes.handleError(400, 'Error processing result: ' + err.message, res, next);
                 });
             }
         }
@@ -224,9 +188,7 @@ export class AutoTestRoutes implements IREST {
 
         const providedSecret = req.headers.token;
         if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
-            Log.warn('AutoTestRouteHandler::atIsStaff(..) - Invalid Secret: ' + providedSecret);
-            payload = {failure: {message: 'Invalid AutoTest Secret: ' + providedSecret, shouldLogout: true}};
-            res.send(400, payload);
+            return AutoTestRoutes.handleError(400, 'Invalid AutoTest Secret: ' + providedSecret, res, next);
         } else {
             const githubId = req.params.githubId;
 
@@ -236,9 +198,11 @@ export class AutoTestRoutes implements IREST {
             if (githubId === 'rtholmes' || githubId === 'nickbradley') {
                 payload = {success: {personId: githubId, isStaff: true, isAdmin: true}};
                 res.send(200, payload);
+                return next(true);
             } else {
                 payload = {success: {personId: githubId, isStaff: false, isAdmin: false}};
                 res.send(200, payload);
+                return next(true);
             }
         }
     }
@@ -250,9 +214,7 @@ export class AutoTestRoutes implements IREST {
 
         const providedSecret = req.headers.token;
         if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
-            Log.warn('AutoTestRouteHandler::atPersonId(..) - Invalid Secret: ' + providedSecret);
-            payload = {failure: {message: 'Invalid AutoTest Secret: ' + providedSecret, shouldLogout: true}};
-            res.send(400, payload);
+            return AutoTestRoutes.handleError(400, 'Invalid AutoTest Secret: ' + providedSecret, res, next);
         } else {
             const githubId = req.params.githubId;
 
@@ -263,15 +225,12 @@ export class AutoTestRoutes implements IREST {
                 if (person !== null) {
                     payload = {success: {personId: person.id}}; // PersonTransportPayload
                     res.send(200, payload);
-                    return next(false);
+                    return next(true);
                 } else {
-                    payload = {success: {personId: null}};
-                    res.send(200, payload);
+                    return AutoTestRoutes.handleError(404, 'Invalid person id: ' + githubId, res, next);
                 }
             }).catch(function(err) {
-                Log.error('AutoTestRouteHandler::atPersonId(..) - ERROR: ' + err);
-                payload = {success: {personId: null}};
-                res.send(200, payload);
+                return AutoTestRoutes.handleError(404, 'Invalid person id: ' + githubId, res, next);
             });
         }
     }
@@ -305,10 +264,7 @@ export class AutoTestRoutes implements IREST {
             res.send(200, succ); // send interpretation back to GitHub
             next();
         }).catch(function(err) {
-            Log.error('AutoTestRouteHandler::githubWebhook(..) - ERROR: ' + err);
-            Log.error('AutoTestRouteHandler::githubWebhook(..) - ERROR; webhook body: ' + JSON.stringify(webhookBody));
-            res.send(400, {error: err}); // respond no
-            next(false);
+            return AutoTestRoutes.handleError(400, 'Error processing webhook: ' + err.message, res, next);
         });
     }
 
@@ -319,9 +275,7 @@ export class AutoTestRoutes implements IREST {
 
         const providedSecret = req.headers.token;
         if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
-            Log.warn('AutoTestRouteHandler::atGetResult(..) - Invalid Secret: ' + providedSecret);
-            payload = {failure: {message: 'Invalid AutoTest Secret: ' + providedSecret, shouldLogout: true}};
-            res.send(400, payload);
+            return AutoTestRoutes.handleError(400, 'Invalid AutoTest Secret: ' + providedSecret, res, next);
         } else {
             const delivId = req.params.delivId;
             const repoId = req.params.repoId;
@@ -332,9 +286,9 @@ export class AutoTestRoutes implements IREST {
             rc.getResult(delivId, repoId).then(function(result) {
                 payload = {success: [result]};
                 res.send(200, payload);
+                return next(true);
             }).catch(function(err) {
-                payload = {failure: {message: err.message, shouldLogout: false}};
-                res.send(400, payload);
+                return AutoTestRoutes.handleError(400, 'Error retrieving result record: ' + err.message, res, next);
             });
         }
     }

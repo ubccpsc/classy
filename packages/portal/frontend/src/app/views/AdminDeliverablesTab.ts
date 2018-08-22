@@ -102,7 +102,7 @@ export class AdminDeliverablesTab {
     }
 
     public async initEditDeliverablePage(opts: any): Promise<void> {
-        Log.warn('AdminView::initEditDeliverablePage( ' + JSON.stringify(opts) + ' ) - start');
+        Log.info('AdminView::initEditDeliverablePage( ' + JSON.stringify(opts) + ' ) - start');
         const start = Date.now();
         const delivId = opts.delivId;
 
@@ -121,7 +121,7 @@ export class AdminDeliverablesTab {
     }
 
     public renderEditDeliverablePage(deliv: DeliverableTransport) {
-        Log.warn('AdminView::renderEditDeliverablePage( ' + JSON.stringify(deliv) + ' ) - start');
+        Log.info('AdminView::renderEditDeliverablePage( ' + JSON.stringify(deliv) + ' ) - start');
         const that = this;
 
         // TODO: handle when deliv is null (aka the deliverable is new)
@@ -158,17 +158,24 @@ export class AdminDeliverablesTab {
             this.setToggle('adminEditDeliverablePage-studentsMakeTeams', false, this.isAdmin);
 
             this.setToggle('adminEditDeliverablePage-gradesReleased', false, this.isAdmin);
+            this.setToggle('adminEditDeliverablePage-visible', false, this.isAdmin);
 
             this.setTextField('adminEditDeliverablePage-atContainerTimeout', '300', this.isAdmin);
             this.setTextField('adminEditDeliverablePage-atStudentDelay', (12 * 60 * 60) + '', this.isAdmin);
             this.setTextField('adminEditDeliverablePage-atCustom', '{}', this.isAdmin);
 
+            this.setTextField('adminEditDeliverablePage-repoPrefix', '', this.isAdmin);
+            this.setTextField('adminEditDeliverablePage-teamPrefix', '', this.isAdmin);
+
+            this.setTextField('adminEditDeliverablePage-rubric', '{}', this.isAdmin);
             this.setTextField('adminEditDeliverablePage-custom', '{}', this.isAdmin);
         } else {
             // edit existing deliverable
 
             this.setTextField('adminEditDeliverablePage-name', deliv.id, false);
             this.setTextField('adminEditDeliverablePage-url', deliv.URL, this.isAdmin);
+            this.setTextField('adminEditDeliverablePage-repoPrefix', deliv.repoPrefix, this.isAdmin);
+            this.setTextField('adminEditDeliverablePage-teamPrefix', deliv.teamPrefix, this.isAdmin);
 
             flatpickrOptions.defaultDate = new Date(deliv.openTimestamp);
             this.openPicker = flatpickr("#adminEditDeliverablePage-open", flatpickrOptions);
@@ -181,6 +188,7 @@ export class AdminDeliverablesTab {
             this.setToggle('adminEditDeliverablePage-studentsMakeTeams', deliv.studentsFormTeams, this.isAdmin);
 
             this.setToggle('adminEditDeliverablePage-gradesReleased', deliv.gradesReleased, this.isAdmin);
+            this.setToggle('adminEditDeliverablePage-visible', deliv.visibleToStudents, this.isAdmin);
 
             this.setTextField('adminEditDeliverablePage-atDockerName', deliv.autoTest.dockerImage, this.isAdmin);
             this.setTextField('adminEditDeliverablePage-atContainerTimeout', deliv.autoTest.maxExecTime + '', this.isAdmin);
@@ -188,6 +196,7 @@ export class AdminDeliverablesTab {
             this.setTextField('adminEditDeliverablePage-atRegressionIds', deliv.autoTest.regressionDelivIds.toString(), this.isAdmin);
             this.setTextField('adminEditDeliverablePage-atCustom', JSON.stringify(deliv.autoTest.custom), this.isAdmin);
 
+            this.setTextField('adminEditDeliverablePage-rubric', JSON.stringify(deliv.rubric), this.isAdmin);
             this.setTextField('adminEditDeliverablePage-custom', JSON.stringify(deliv.custom), this.isAdmin);
         }
     }
@@ -231,10 +240,14 @@ export class AdminDeliverablesTab {
         const studentsFormTeams = UI.getToggleValue('adminEditDeliverablePage-studentsMakeTeams');
 
         const gradesReleased = UI.getToggleValue('adminEditDeliverablePage-gradesReleased');
+        const visibleToStudents = UI.getToggleValue('adminEditDeliverablePage-visible');
 
         const dockerImage = UI.getTextFieldValue('adminEditDeliverablePage-atDockerName');
         const maxExecTime = Number(UI.getTextFieldValue('adminEditDeliverablePage-atContainerTimeout'));
         const studentDelay = Number(UI.getTextFieldValue('adminEditDeliverablePage-atStudentDelay'));
+
+        const repoPrefix = UI.getTextFieldValue('adminEditDeliverablePage-repoPrefix');
+        const teamPrefix = UI.getTextFieldValue('adminEditDeliverablePage-teamPrefix');
 
         const atRegression = UI.getTextFieldValue('adminEditDeliverablePage-atRegressionIds');
         const regressionDelivIds: string[] = [];
@@ -251,7 +264,13 @@ export class AdminDeliverablesTab {
             Log.trace("AdminDeliverablesTab::save() - atCustomRaw: " + atCustomRaw);
             // https://stackoverflow.com/a/34763398 (handle unquoted props (e.g., {foo: false}))
             atCustomRaw = atCustomRaw.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ');
-            atCustom = JSON.parse(atCustomRaw);
+            try {
+                atCustom = JSON.parse(atCustomRaw);
+            } catch (err) {
+                UI.showError("AutoTest Custom field is not valid JSON: " + err.message);
+                throw new Error("Cancel back"); // hack: prevents page transition from proceeding
+            }
+
         }
 
         const customRaw = UI.getTextFieldValue('adminEditDeliverablePage-custom');
@@ -260,7 +279,26 @@ export class AdminDeliverablesTab {
             Log.trace("AdminDeliverablesTab::save() - customRaw: " + customRaw);
             // https://stackoverflow.com/a/34763398 (handle unquoted props (e.g., {foo: false}))
             // customRaw = customRaw.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ');
-            custom = JSON.parse(customRaw);
+            try {
+                custom = JSON.parse(customRaw);
+            } catch (err) {
+                UI.showError("Custom field is not valid JSON: " + err.message);
+                throw new Error("Cancel back"); // hack: prevents page transition from proceeding
+            }
+        }
+
+        const rubricRaw = UI.getTextFieldValue('adminEditDeliverablePage-rubric');
+        let rubric: any = {};
+        if (rubricRaw.length > 0) {
+            Log.trace("AdminDeliverablesTab::save() - customRaw: " + customRaw);
+            // https://stackoverflow.com/a/34763398 (handle unquoted props (e.g., {foo: false}))
+            // customRaw = customRaw.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ');
+            try {
+                rubric = JSON.parse(rubricRaw);
+            } catch (err) {
+                UI.showError("Rubric field is not valid JSON: " + err.message);
+                throw new Error("Cancel back"); // hack: prevents page transition from proceeding
+            }
         }
 
         const at: AutoTestConfig = {
@@ -274,6 +312,7 @@ export class AdminDeliverablesTab {
         const deliv: DeliverableTransport = {
             id,
             URL,
+            visibleToStudents,
             openTimestamp,
             closeTimestamp,
             onOpenAction:  '', // TODO: add this
@@ -284,6 +323,9 @@ export class AdminDeliverablesTab {
             teamsSameLab,
             gradesReleased,
             autoTest:      at,
+            repoPrefix,
+            teamPrefix,
+            rubric,
             custom
         };
 

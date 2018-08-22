@@ -1,3 +1,4 @@
+import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {StudentTransport} from "../../../../common/types/PortalTypes";
 import Util from "../../../../common/Util";
@@ -112,8 +113,9 @@ export class PersonController {
 
         const person = await this.db.getPerson(personId);
         if (person === null) {
-            Log.trace("PersonController::getPerson( " + personId + " ) - unknown person for this org checking githubId");
-            Log.trace("PersonController::getPerson( " + personId + " ) - unknown person for this org.");
+            Log.trace("PersonController::getPerson( " + personId + " ) - unknown person for this org check githubId");
+            // Log.trace("PersonController::getPerson( " + personId + " ) - unknown person for this org: " +
+            //     Config.getInstance().getProp(ConfigKey.org));
             return null;
         }
         return person;
@@ -134,7 +136,7 @@ export class PersonController {
 
     public static personToTransport(person: Person): StudentTransport {
         if (typeof person === 'undefined' || person === null) {
-            return null;
+            throw new Error("PersonController::personToTransport( ... ) - ERROR: person not provided.");
         }
 
         const student: StudentTransport = {

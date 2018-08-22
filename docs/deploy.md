@@ -87,12 +87,21 @@ You should now be able to open portal in your web browser by navigating to the h
 
 ## Updating Classy on SDMM
 
+To deploy an update:
+
 ```
 sudo su w-sdmm
 cd /opt/classy
 git pull
 docker build -t classy:base .
 docker-compose -f docker-compose.yml -f docker-compose.310.yml up -d --build
+```
+
+To monitor the components:
+
+```
+sudo su w-sdmm
+docker logs -f < portal | autotest | grader | db | ref_ui | geo >
 ```
 
 ## Deploying AutoTest Extensions (for CS310 and SDMM)

@@ -29,6 +29,7 @@ export class RepositoryController {
         // db.getRepositoriesForPerson(myPerson.id)
 
         const myTeams = await new TeamController().getTeamsForPerson(myPerson);
+        Log.trace("RepositoryController::getReposForPerson( " + myPerson.id + " ) - # teams: " + myTeams.length);
 
         const myRepos: Repository[] = [];
         const allRepos = await this.db.getRepositories();

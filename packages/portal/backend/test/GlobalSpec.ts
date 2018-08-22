@@ -14,7 +14,7 @@ import {GradesController} from "../src/controllers/GradesController";
 import {PersonController} from "../src/controllers/PersonController";
 import {RepositoryController} from "../src/controllers/RepositoryController";
 import {TeamController} from "../src/controllers/TeamController";
-import {Auth, Deliverable, Grade, Person, Repository, Result, Team} from "../src/Types";
+import {Auth, Course, Deliverable, Grade, Person, Repository, Result, Team} from "../src/Types";
 
 if (typeof it === 'function') {
     // only if we're running in mocha
@@ -150,19 +150,31 @@ export class Test {
         return team;
     }
 
+    public static async createRepository(repoName: string, teamName: string): Promise<Repository> {
+        const tc = new TeamController();
+        const rc = new RepositoryController();
+
+        const team = await tc.getTeam(teamName);
+        const repo = await rc.createRepository(repoName, [team], {});
+
+        return repo;
+    }
+
     public static async prepareRepositories(): Promise<void> {
         Log.test("Test::prepareRepositories() - start");
         try {
             const db = DatabaseController.getInstance();
-            const tc = new TeamController();
-            const rc = new RepositoryController();
-
-            let team = await tc.getTeam(Test.TEAMNAME1);
-            let repo = await rc.createRepository(Test.REPONAME1, [team], {});
+            // const tc = new TeamController();
+            // const rc = new RepositoryController();
+            //
+            // let team = await tc.getTeam(Test.TEAMNAME1);
+            // let repo = await rc.createRepository(Test.REPONAME1, [team], {});
+            let repo = await Test.createRepository(Test.REPONAME1, Test.TEAMNAME1);
             await db.writeRepository(repo);
 
-            team = await tc.getTeam(Test.TEAMNAME2);
-            repo = await rc.createRepository(Test.REPONAME2, [team], {});
+            // team = await tc.getTeam(Test.TEAMNAME2);
+            // repo = await rc.createRepository(Test.REPONAME2, [team], {});
+            repo = await Test.createRepository(Test.REPONAME2, Test.TEAMNAME2);
             await db.writeRepository(repo);
 
         } catch (err) {
@@ -239,9 +251,11 @@ export class Test {
             teamMaxSize:      2,
             teamSameLab:      true,
             teamStudentsForm: true,
-            teamPrefix:       'team_',
-            repoPrefix:       '',
+            teamPrefix:       't_' + delivId + '_',
+            repoPrefix:       delivId + '_',
             // bootstrapUrl:     '',
+
+            visibleToStudents: true,
 
             autotest: {
                 dockerImage:        'testImage',
@@ -251,6 +265,7 @@ export class Test {
                 custom:             {}
             },
 
+            rubric: {},
             custom: {}
         };
 
@@ -351,7 +366,10 @@ export class Test {
                 regressionDelivIds: [],
                 custom:             {}
             },
-            custom:           newAssignmentInfo
+            visibleToStudents: true,
+
+            rubric: {}, // TODO: should be newAssignmentInfo
+            custom: newAssignmentInfo
         };
 
         // const newDelivSuccess =
@@ -456,6 +474,8 @@ export class Test {
     public static readonly USER3 = {id: 'user3id', csId: 'user3id', github: 'user3gh'};
     public static readonly USER4 = {id: 'user4id', csId: 'user4id', github: 'user4gh'};
 
+    public static readonly INVALIDUSER1 = {id: 'invalidUser1id', csId: 'invalidUser1id', github: 'invalidUser1gh'};
+
     // public static readonly ADMIN1 = {id: 'ubcbot', csId: 'ubcbot', github: 'ubcbot'};
     public static readonly ADMIN1 = {id: 'classyadmin', csId: 'classyadmin', github: 'classyadmin'};
     public static readonly STAFF1 = {id: 'classystaff', csId: 'classystaff', github: 'classystaff'};
@@ -494,26 +514,28 @@ export class Test {
         const deliv: Deliverable = {
             id: delivId,
 
-            URL:              'https://NOTSET',
-            openTimestamp:    -1,
-            closeTimestamp:   -1,
-            gradesReleased:   false,
+            URL:               'https://NOTSET',
+            openTimestamp:     -1,
+            closeTimestamp:    -1,
+            gradesReleased:    false,
             // delay:            -1,
-            teamMinSize:      1,
-            teamMaxSize:      1,
-            teamSameLab:      false,
-            teamStudentsForm: false,
-            teamPrefix:       'team_',
-            repoPrefix:       '',
+            teamMinSize:       1,
+            teamMaxSize:       1,
+            teamSameLab:       false,
+            teamStudentsForm:  false,
+            teamPrefix:        'team_',
+            repoPrefix:        '',
             // bootstrapUrl:     '',
-            autotest:         {
+            autotest:          {
                 dockerImage:        'testImage',
                 studentDelay:       60 * 60 * 12, // 12h
                 maxExecTime:        300,
                 regressionDelivIds: [],
                 custom:             {}
             },
-            custom:           {}
+            visibleToStudents: true,
+            rubric:            {},
+            custom:            {}
         };
         return Util.clone(deliv) as Deliverable;
     }
@@ -575,6 +597,16 @@ export class Test {
             custom:   {}
         };
         return Util.clone(repo) as Repository;
+    }
+
+    public static createCourseRecord(): Course {
+        const courseId = Config.getInstance().getProp(ConfigKey.name);
+        const out: Course = {
+            id:                   courseId,
+            defaultDeliverableId: null,
+            custom:               {}
+        };
+        return out;
     }
 
     public static createResult(delivId: string, repoId: string, people: string[], score: number): Result {

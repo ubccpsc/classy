@@ -34,7 +34,7 @@ export class GradesController {
         const delivs = await delivc.getAllDeliverables();
         let grades = [];
         for (const deliv of delivs) {
-            if (deliv.gradesReleased === true) {
+            if (deliv.gradesReleased === true && deliv.visibleToStudents === true) {
                 Log.trace("GradesController::getReleasedGradesForPerson( " + personId + " ) - open deliv: " + deliv.id);
                 let grade = await this.getGrade(personId, deliv.id);
                 if (grade === null) {
@@ -67,6 +67,15 @@ export class GradesController {
         return grades;
     }
 
+    /**
+     * This is a convenience function for creating and saving grades. It is also handled in
+     * CourseController.processAutoTestGrade (and that implementation seems a lot simpler).
+     *
+     * @param {string} repoId
+     * @param {string} delivId
+     * @param {GradePayload} grade
+     * @returns {Promise<boolean>}
+     */
     public async createGrade(repoId: string, delivId: string, grade: GradePayload): Promise<boolean> {
         Log.info("GradesController::createGrade( " + repoId + ", " + delivId + ", ... ) - start");
         Log.trace("GradesController::createGrade(..) - payload: " + JSON.stringify(grade));
@@ -125,6 +134,11 @@ export class GradesController {
         }
 
         return true; // if an exception hasn't been thrown we must be ok
+    }
+
+    public async saveGrade(grade: Grade): Promise<boolean> {
+        Log.info("GradesController::saveGrade( ... ) - start");
+        return await this.db.writeGrade(grade);
     }
 
     /**
