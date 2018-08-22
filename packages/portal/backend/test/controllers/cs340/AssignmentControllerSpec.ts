@@ -295,7 +295,7 @@ describe("CS340: AssignmentController", () => {
     it("Should be able to publish all grades, after grades have been updated.", async () => {
         let result = await ac.publishAllGrades(Test.ASSIGNID0);
         expect(result).to.be.true;
-    });
+    }).timeout(numberOfStudents * TIMEOUT);
 
 
     it("Clean stale repositories.", async function() {
@@ -564,6 +564,11 @@ describe("CS340: AssignmentController", () => {
 
             expect(newGithubRepoCount).to.be.at.most(oldGithubRepoCount);
         }).timeout(numberOfStudents * 2 * TIMEOUT);
+
+        it("Should be able to verify and schedule jobs for assignments", async () => {
+            let count = await ac.verifyScheduledJobs();
+            expect(count).to.be.greaterThan(0);
+        });
 
 
         // fail cases

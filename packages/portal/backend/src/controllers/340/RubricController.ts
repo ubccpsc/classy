@@ -36,18 +36,6 @@ export class RubricController {
     // private ac: AssignmentController = new AssignmentController();
 
 
-    public async parseFile(inputFilePath: string): Promise<AssignmentGradingRubric> {
-        Log.info("RubricController::parseFile() - " + __dirname);
-
-
-        // Log.info("RubricController::parseFile() - ");
-        // Log.info("RubricController::parseFile() - tempPath: " + tempPath);
-
-
-        return null;
-    }
-
-
     public async updateRubric(assignId: string): Promise<boolean> {
         Log.info("RubricController::updateRubric( "+ assignId + " ) - start");
 
@@ -82,114 +70,118 @@ export class RubricController {
         try {
             exists = fs.existsSync(path.join(tempPath, assignInfo.mainFilePath));
             if(exists) {
-                fs.readFile(path.join(tempPath, assignInfo.mainFilePath), async (err, data) => {
-                    // Log.info("RubricController::updateRubric(..) - data: " + data);
-                    let arrayData: string[] = data.toString().split('\n');
-                    // Log.info("RubricController::updateRubric(..) - ");
-                    // create a skeleton framework to fill in the blanks
-                    let newQuestions: QuestionGradingRubric[] = [];
-                    for(let i = 0; i < arrayData.length; i++) {
-                        let regexp: RegExp = /rub(r(ic)?)? *[=:]? *({.*})/;
-                        if(regexp.test(arrayData[i])) {
-                            Log.info("RubricController::updateRubric(..) - rubric found: " + arrayData[i]);
-                            // depends on what kind of file
-                            // check for LaTeX
-                            let latexFileExp: RegExp = /[^.]*\.tex/;
-                            let headerString: string;
-                            let headerExp: RegExp;
-                            let headerCleaner: RegExp;
-                            if(latexFileExp.test(assignInfo.mainFilePath)) {
-                                // if this is a latex file, use a different exp
-                                headerExp = /(?:sub?:)*section(?:\*?:)?.*/;
-                                headerCleaner = /[{}\n]/g;
-                            } else {
-                                headerExp = /#\s+.*/;
-                                headerCleaner = /((#+\s+)|\\n)/g;
-                            }
-                            let rubricString = arrayData[i];
-                            headerString = this.reverseBack(arrayData, i, headerExp);
-                            Log.info("RubricController::updateRubric(..) - header found: " + headerString);
+                return (new Promise((resolve, reject) => {
+                    fs.readFile(path.join(tempPath, assignInfo.mainFilePath), async (err, data) => {
+                        if(err) reject(false);
+                        // Log.info("RubricController::updateRubric(..) - data: " + data);
+                        let arrayData: string[] = data.toString().split('\n');
+                        // Log.info("RubricController::updateRubric(..) - ");
+                        // create a skeleton framework to fill in the blanks
+                        let newQuestions: QuestionGradingRubric[] = [];
+                        for(let i = 0; i < arrayData.length; i++) {
+                            let regexp: RegExp = /rub(r(ic)?)? *[=:]? *({.*})/;
+                            if(regexp.test(arrayData[i])) {
+                                Log.info("RubricController::updateRubric(..) - rubric found: " + arrayData[i]);
+                                // depends on what kind of file
+                                // check for LaTeX
+                                let latexFileExp: RegExp = /[^.]*\.tex/;
+                                let headerString: string;
+                                let headerExp: RegExp;
+                                let headerCleaner: RegExp;
+                                if(latexFileExp.test(assignInfo.mainFilePath)) {
+                                    // if this is a latex file, use a different exp
+                                    headerExp = /(?:sub?:)*section(?:\*?:)?.*/;
+                                    headerCleaner = /[{}\n]/g;
+                                } else {
+                                    headerExp = /#\s+.*/;
+                                    headerCleaner = /((#+\s+)|\\n)/g;
+                                }
+                                let rubricString = arrayData[i];
+                                headerString = this.reverseBack(arrayData, i, headerExp);
+                                Log.info("RubricController::updateRubric(..) - header found: " + headerString);
 
-                            // clean up the header;
-                            let cleanedHeader: string;
-                            cleanedHeader = headerString.replace(headerCleaner, "");
+                                // clean up the header;
+                                let cleanedHeader: string;
+                                cleanedHeader = headerString.replace(headerCleaner, "");
 
-                            Log.info("RubricController::updateRubric(..) - cleaned header: " +
-                                cleanedHeader);
+                                Log.info("RubricController::updateRubric(..) - cleaned header: " +
+                                    cleanedHeader);
 
-                            // clean the data
-                            // get only the inside of the rubric
-                            let rubricArray: string[] = rubricString.match(/{.*}/);
-                            let subQuestionArray: SubQuestionGradingRubric[] = [];
-                            // check if we actually found a match
-                            // WARN: We only are looking for the first one that matches this string, we
-                            // don't expect something to be the form of {something}{here}
-                            if(rubricArray.length > 0) {
-                                let dirtySubQuestionString: string = rubricArray[0];
-                                // convert to an object
-                                // using https://stackoverflow.com/a/34763398
-                                let cleanSubQuestionString: string = dirtySubQuestionString.replace(
-                                    /(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ');
-                                let subQuestionObj = JSON.parse(cleanSubQuestionString);
-                                // now we are able to get the mapping of values
-                                let keyArray: string[] = Object.keys(subQuestionObj);
-                                for(const key of keyArray) {
-                                    // TODO: Look up if this splits anymore
-                                    // the key is the rubric critera, and value is
-                                    // the score that it is out of
-                                    let rawValue = subQuestionObj[key];
-                                    let value: number;
-                                    if (typeof rawValue === 'string') {
-                                        try {
-                                            value = Number(rawValue);
-                                        } catch (err) {
-                                            Log.error("RubricController::updateRubric(..)::readFile(..) - error " +
-                                                "casting " + rawValue + " to a number; error: " + err);
+                                // clean the data
+                                // get only the inside of the rubric
+                                let rubricArray: string[] = rubricString.match(/{.*}/);
+                                let subQuestionArray: SubQuestionGradingRubric[] = [];
+                                // check if we actually found a match
+                                // WARN: We only are looking for the first one that matches this string, we
+                                // don't expect something to be the form of {something}{here}
+                                if(rubricArray.length > 0) {
+                                    let dirtySubQuestionString: string = rubricArray[0];
+                                    // convert to an object
+                                    // using https://stackoverflow.com/a/34763398
+                                    let cleanSubQuestionString: string = dirtySubQuestionString.replace(
+                                        /(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ');
+                                    let subQuestionObj = JSON.parse(cleanSubQuestionString);
+                                    // now we are able to get the mapping of values
+                                    let keyArray: string[] = Object.keys(subQuestionObj);
+                                    for(const key of keyArray) {
+                                        // TODO: Look up if this splits anymore
+                                        // the key is the rubric critera, and value is
+                                        // the score that it is out of
+                                        let rawValue = subQuestionObj[key];
+                                        let value: number;
+                                        if (typeof rawValue === 'string') {
+                                            try {
+                                                value = Number(rawValue);
+                                            } catch (err) {
+                                                Log.error("RubricController::updateRubric(..)::readFile(..) - error " +
+                                                    "casting " + rawValue + " to a number; error: " + err);
+                                            }
+                                        } else {
+                                            value = rawValue;
                                         }
-                                    } else {
-                                        value = rawValue;
+
+                                        let newSubquestion: SubQuestionGradingRubric = {
+                                            name: key,
+                                            comment: "",
+                                            outOf: value,
+                                            weight: 1,
+                                            modifiers: null
+                                        };
+
+                                        subQuestionArray.push(newSubquestion);
                                     }
 
-                                    let newSubquestion: SubQuestionGradingRubric = {
-                                        name: key,
+                                    // once you get the information
+                                    let newQuestion: QuestionGradingRubric = {
+                                        name: cleanedHeader,
                                         comment: "",
-                                        outOf: value,
-                                        weight: 1,
-                                        modifiers: null
+                                        subQuestions: subQuestionArray
                                     };
 
-                                    subQuestionArray.push(newSubquestion);
+                                    newQuestions.push(newQuestion);
                                 }
+                            } else {
+                                // Log.info("RubricController::updateRubric(..) - skipping lone");
 
-                                // once you get the information
-                                let newQuestion: QuestionGradingRubric = {
-                                    name: cleanedHeader,
-                                    comment: "",
-                                    subQuestions: subQuestionArray
-                                };
-
-                                newQuestions.push(newQuestion);
                             }
-                        } else {
-                            // Log.info("RubricController::updateRubric(..) - skipping lone");
-
                         }
-                    }
 
-                    let assignGradingRubric: AssignmentGradingRubric = {
-                        name: assignInfo.rubric.name,
-                        comment: assignInfo.rubric.comment,
-                        questions: newQuestions
-                    };
+                        let assignGradingRubric: AssignmentGradingRubric = {
+                            name: assignInfo.rubric.name,
+                            comment: assignInfo.rubric.comment,
+                            questions: newQuestions
+                        };
 
-                    assignInfo.rubric = assignGradingRubric;
+                        assignInfo.rubric = assignGradingRubric;
 
-                    deliverableRecord.custom = assignInfo;
+                        deliverableRecord.custom = assignInfo;
 
-                    await this.db.writeDeliverable(deliverableRecord);
+                        await this.db.writeDeliverable(deliverableRecord);
+                        resolve(true);
+                    });
+                }) as Promise<boolean>);
 
-                    return true;
-                });
+
                 // let lineReader = require('readline').createInterface({
                 //     input: fs.createReadStream(path.join(tempPath, assignInfo.mainFilePath))
                 // });
@@ -205,8 +197,8 @@ export class RubricController {
         }
 
         Log.info("RubricController::updateRubric() - result: " + exists);
-
-        return false;
+        // let success: boolean = await newPromise;
+        // return false;
     }
 
     /**
