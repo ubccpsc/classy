@@ -37,7 +37,7 @@ export default class CS340REST implements IREST {
         server.get('/portal/cs340/getStudentTeamByDeliv/:sid/:delivid', CS340REST.getStudentTeamByDeliv); // TODO
         server.get('/portal/cs340/getRepository/:teamid' , CS340REST.getRepositoryFromTeam);
         server.put('/portal/cs340/setAssignmentGrade', CS340REST.setAssignmentGrade);
-        server.post('portal/cs340/releaseGrades/:delivid', CS340REST.releaseGrades);
+        server.post('/portal/cs340/releaseGrades/:delivid', CS340REST.releaseGrades);
         server.post('/portal/cs340/initializeAllRepositories/:delivid', CS340REST.initializeAllRepositories);
         server.post('/portal/cs340/publishAllRepositories/:delivid', CS340REST.publishAllRepositories);
         server.post('/portal/cs340/deleteRepository/:delivid/:reponame', CS340REST.deleteRepository);
@@ -46,12 +46,12 @@ export default class CS340REST implements IREST {
         server.post('/portal/cs340/verifyScheduledJobs/', CS340REST.verifyAllScheduledJobs);
 
         // server.get('/testPublishRepository/:repoId', CS340REST.testPublishRepository);
-        server.get('/portal/cs340/testPublishGrade', CS340REST.testPublishGrade);
-        server.get('/portal/cs340/testPublishAllGrades', CS340REST.testPublishAllGrades);
-        server.get('/portal/cs340/testRubricParser', CS340REST.testRubricParser);
+        // server.get('/portal/cs340/testPublishGrade', CS340REST.testPublishGrade);
+        // server.get('/portal/cs340/testPublishAllGrades', CS340REST.testPublishAllGrades);
+        // server.get('/portal/cs340/testRubricParser', CS340REST.testRubricParser);
     }
 
-
+    /*
     public static async testPublishGrade(req: any, res: any, next: any) {
         let ac: AssignmentController = new AssignmentController();
         let success = await ac.publishGrade("jopika_grades", "a2_grades", "jopika", "a2");
@@ -77,6 +77,7 @@ export default class CS340REST implements IREST {
         await rc.updateRubric("a1");
         res.send(200, "complete!");
     }
+    */
 
     public static async verifyAllScheduledJobs(req: any, res: any, next: any) {
         // TODO [Jonathan]: Admin authentication
@@ -90,7 +91,7 @@ export default class CS340REST implements IREST {
 
         try {
             let numberScheduled = await ac.verifyScheduledJobs();
-            res.send(200, numberScheduled);
+            res.send(200, {response: numberScheduled});
             Log.info("CS340REST::verifyAllScheduledJobs(..) - completed verification; " +
                 "created " + numberScheduled + " new tasks");
             return next();
@@ -115,7 +116,7 @@ export default class CS340REST implements IREST {
 
         try {
             let numberScheduled = await ac.verifyScheduledJobs(aid);
-            res.send(200, numberScheduled);
+            res.send(200, {response: numberScheduled});
             Log.info("CS340REST::verifyScheduledJobs(..) - completed verification; " +
                 "created " + numberScheduled + " new tasks");
             return next();
@@ -482,6 +483,7 @@ export default class CS340REST implements IREST {
         return next();
     }
 
+    /*
     public static async provisionRepository(req: any, res: any, next: any) {
         // TODO [Jonathan]: Complete this
         const user = req.headers.user;
@@ -493,6 +495,7 @@ export default class CS340REST implements IREST {
 
         return next();
     }
+    */
 
     public static async getAssignmentStatus(req: any, res: any, next: any) {
         const user = req.headers.user;

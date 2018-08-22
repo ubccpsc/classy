@@ -118,7 +118,7 @@ export class CS340AdminView extends AdminView {
             return -1;
         } else {
             let jsonResponse = await response.json();
-            return (jsonResponse as number);
+            return (jsonResponse.response as number);
         }
     }
 

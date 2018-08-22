@@ -93,4 +93,15 @@ describe("CS340: RubricController", () => {
         expect(assignmentInfo.rubric.questions.length).to.be.greaterThan(0);
     });
 
+    it("Should not update if specified a non-assignment.", async () => {
+        let success = await rbc.updateRubric(Test.DELIVID0);
+        expect(success).to.be.false;
+    });
+
+    it("Should not update if specified a non-deliverable.", async () => {
+        let success = await rbc.updateRubric("INVALID_DELIVERABLE");
+        expect(success).to.be.false;
+    });
+
+
 });

@@ -67,6 +67,7 @@ describe("CS340: Routes", () => {
         // get data ready
         await Test.prepareAll();
         await Test.prepareAssignment();
+        await Test.prepareAssignment2();
 
         Config.getInstance().setProp(ConfigKey.name, 'cs340');
         Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
@@ -474,6 +475,22 @@ describe("CS340: Routes", () => {
     }).timeout(2 * TIMEOUT);
 
 
+    it("Should be able to retrieve a repository from specifying a team.", async function() {
+        let response = null;
+
+        const url = '/portal/cs340/getRepository/' + Test.ASSIGNID0 + "_" + Test.REALUSER1.id;
+        try {
+            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            fail(err);
+        }
+
+        expect(response).to.not.be.null;
+        expect(response.status).to.be.equal(200);
+        expect(response.body.response).not.be.null;
+    });
+
     it("Should be able to delete a specific repository", async function() {
         let response = null;
         let aid = Test.ASSIGNID0;
@@ -510,10 +527,10 @@ describe("CS340: Routes", () => {
         expect(response).to.not.be.null;
         expect(response.status).to.be.equal(200);
         expect(response.body.response).to.not.be.null;
-    });
+    }).timeout(2 * TIMEOUT);
 
 
-    it("Should be able to delete all repositories of a given assignment", async function() {
+    it("Should be able to delete all repositories of a given assignment.", async function() {
         let response = null;
         let aid = Test.ASSIGNID0;
 
@@ -528,7 +545,74 @@ describe("CS340: Routes", () => {
         expect(response).to.not.be.null;
         expect(response.status).to.be.equal(200);
         expect(response.body.response).to.not.be.null;
+    }).timeout(10 * TIMEOUT);
+
+
+    it("Should be able to verify all and create jobs for an assignment.", async function() {
+        let aid = Test.ASSIGNID0;
+        let response = null;
+        const url = '/portal/cs340/verifyScheduledJobs/' + aid;
+        try {
+            response = await request(app).post(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            fail(err);
+        }
+
+        expect(response).to.not.be.null;
+        expect(response.status).to.be.equal(200);
+        expect(response.body.response).to.be.greaterThan(0);
     });
+
+    it("Should be able to verify all and create jobs for all assignment.", async function() {
+        let response = null;
+        const url = '/portal/cs340/verifyScheduledJobs';
+        try {
+            response = await request(app).post(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            fail(err);
+        }
+
+        expect(response).to.not.be.null;
+        expect(response.status).to.be.equal(200);
+        expect(response.body.response).to.be.greaterThan(0);
+    });
+
+
+    it("Should be able to retrieve a team by giving a user ID and deliverable ID.", async function() {
+        let response = null;
+
+        const url = '/portal/cs340/getStudentTeamByDeliv/' + Test.REALUSER1.id + '/' + Test.ASSIGNID1;
+        try {
+            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            fail(err);
+        }
+
+        expect(response).to.not.be.null;
+        expect(response.status).to.be.equal(200);
+        expect(response.body.response).to.be.not.null;
+        expect(response.body.response.id).to.be.equal(Test.ASSIGNID1 + "_" + Test.REALUSER1.id);
+    });
+
+    it("Should be able release grades of an assignment.", async function() {
+        let response = null;
+
+        const url = '/portal/cs340/releaseGrades/' + Test.ASSIGNID1;
+        try {
+            response = await request(app).post(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            fail(err);
+        }
+
+        expect(response).to.not.be.null;
+        expect(response.status).to.be.equal(200);
+        expect(response.body.response).to.be.true;
+    }).timeout(numberOfStudents * TIMEOUT);
+
 
     it("Clean up stale repos", async function() {
         Log.test("Cleaning up stale repositories...");
