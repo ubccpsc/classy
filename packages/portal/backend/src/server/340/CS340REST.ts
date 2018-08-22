@@ -37,6 +37,7 @@ export default class CS340REST implements IREST {
         server.get('/portal/cs340/getStudentTeamByDeliv/:sid/:delivid', CS340REST.getStudentTeamByDeliv); // TODO
         server.get('/portal/cs340/getRepository/:teamid' , CS340REST.getRepositoryFromTeam);
         server.put('/portal/cs340/setAssignmentGrade', CS340REST.setAssignmentGrade);
+        server.post('portal/cs340/releaseGrades/:delivid', CS340REST.releaseGrades);
         server.post('/portal/cs340/initializeAllRepositories/:delivid', CS340REST.initializeAllRepositories);
         server.post('/portal/cs340/publishAllRepositories/:delivid', CS340REST.publishAllRepositories);
         server.post('/portal/cs340/deleteRepository/:delivid/:reponame', CS340REST.deleteRepository);
@@ -142,7 +143,7 @@ export default class CS340REST implements IREST {
                     id: repo.id,
                     URL: repo.URL
                 };
-                res.send(200, {result: result});
+                res.send(200, {response: result});
                 return next();
             }
         }
@@ -171,7 +172,7 @@ export default class CS340REST implements IREST {
                     people: team.personIds,
                     URL: team.URL,
                 };
-                res.send(200, {result: response});
+                res.send(200, {response: response});
                 return next();
             }
         }
@@ -193,13 +194,13 @@ export default class CS340REST implements IREST {
         let ac: AssignmentController = new AssignmentController();
         ac.getAssignmentGrade(sid, aid).then((result) => {
             if (result !== null) {
-                res.send(200, {result: result});
+                res.send(200, {response: result});
             } else {
-                res.send(404, {result: null, error: "Not found"}); // TODO [Jonathan]: Find proper HTML code for this
+                res.send(404, {response: null, error: "Not found"}); // TODO [Jonathan]: Find proper HTML code for this
             }
         }).catch((error) => {
             Log.error("CS340REST::getAssignmentGrade - Error: " + error);
-            res.send(500, error);
+            res.send(500, {error: error});
         });
 
         /*        res.send(404, {
@@ -239,7 +240,7 @@ export default class CS340REST implements IREST {
             }
         }).catch((error) => {
             Log.error("CS340REST::getAssignmentRubric - Error: " + error);
-            res.send(500, error);
+            res.send(500, {error: error});
         });
         return next();
     }
@@ -262,7 +263,7 @@ export default class CS340REST implements IREST {
             res.send(200, {response: assignRubrics});
         }).catch((error) => {
             Log.error("CS340REST::getAllAssignmentRubrics - Error: " + error);
-            res.send(500, error);
+            res.send(500, {error: error});
         });
         return next();
     }
@@ -282,10 +283,10 @@ export default class CS340REST implements IREST {
 
         let delivControl: DeliverablesController = new DeliverablesController();
         delivControl.saveDeliverable(newDeliv).then((result) => {
-            res.send(200, result);
+            res.send(200, {response: result});
         }).catch((error) => {
             Log.error("CS340REST::createAssignmentRubric - Error: " + error);
-            res.send(500, error);
+            res.send(500, {error: error});
         });
 
         return next();
@@ -305,16 +306,23 @@ export default class CS340REST implements IREST {
     }
 
     // Takes all the grades synced up in the database and pushes them to Github
-    // TODO [Jonathan]: Add to routeMap handler
-    public static releaseGrades(req: any, res: any, next: any) {
+    public static async releaseGrades(req: any, res: any, next: any) {
         // TODO [Jonathan]: Complete this
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
 
-        res.send(501, {
-            message: "Not implemented"
-        });
+        const delivid = req.params.delivid;
+
+        // res.send(501, {
+        //     message: "Not implemented"
+        // });
+
+        let ac: AssignmentController = new AssignmentController();
+
+        let success = await ac.publishAllGrades(delivid);
+
+        res.send(200, {response: success});
 
         return next();
     }

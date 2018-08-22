@@ -71,6 +71,11 @@ export class CS340AdminView extends AdminView {
                     UI.notification("Verified scheduled tasks; updated " + result + " tasks for related deliverable(s)");
                 }
             });
+
+            this.checkReleasedGrades().then(function (result) {
+                Log.info("CS340AdminView::renderPage(..)::checkReleasedGrades(..) - then: - start");
+                Log.info("CS340AdminView::renderPage(..)::checkReleasedGrades(..) - released: " + result);
+            });
         }
 
         if(name === 'AdminEditDeliverable') {
@@ -179,7 +184,12 @@ export class CS340AdminView extends AdminView {
                             break;
                         }
                     }
+                    let assignStatusHeader = (document.querySelector('#adminEditDeliverablePage-assignmentStatusHeader') as HTMLElement);
+                    let assignStatusBody = (document.querySelector('#adminEditDeliverablePage-assignmentStatus') as HTMLElement);
 
+                    // assignStatusHeader.style.display = "initial";
+                    assignStatusHeader.removeAttribute("style");
+                    assignStatusBody.style.display = "initial";
                 } else {
                     Log.info("CS340AdminView::renderEditDeliverablePage(..) - Not an assignment, hiding elements");
                     let assignStatusHeader = (document.querySelector('#adminEditDeliverablePage-assignmentStatusHeader') as HTMLElement);
@@ -781,7 +791,7 @@ export class CS340AdminView extends AdminView {
             }
 
             let repoJson = await repoResponse.json();
-            let repoTransport: RepositoryTransport = repoJson.result;
+            let repoTransport: RepositoryTransport = repoJson.response;
 
             let repoEntry: TableCell = {
                 value: repoTransport.URL,
@@ -940,6 +950,53 @@ export class CS340AdminView extends AdminView {
         st.generate();
 
         // TODO [Jonathan]: Add rest of code, regarding student table generation (hideable options)
+    }
+
+
+    /**
+     * Checks all deliverables and releases their grades, if needed
+     * @returns {Promise<number>} - Number of deliverables where grades were released
+     */
+    public async checkReleasedGrades(): Promise<number>{
+        Log.info("CS340AdminView::checkReleasedGrades() - start");
+        // check all deliverables if they need to have any grades released
+        let deliverables: Deliverable[] = await this.getDeliverables();
+        let promiseArray: Promise<boolean>[] = [];
+        for(const deliv of deliverables) {
+            if(deliv.gradesReleased) {
+                promiseArray.push(this.releaseGrades(deliv.id));
+            }
+        }
+        let count: number = 0;
+        // Promise.all(promiseArray).then(function(values) {
+        //     for(const value of values) {
+        //         if(value) count++;
+        //     }
+        //     Log.info("CS340AdminView::releaseGrades() - released grades for " + count + " deliverables");
+        // });
+        let result = await Promise.all(promiseArray);
+        for(const value of result) {
+            if(value) count++;
+        }
+
+        return count;
+    }
+
+    public async releaseGrades(delivId: string): Promise<boolean> {
+        Log.info("CS340AdminView::releaseGrades( " + delivId + " ) - start");
+
+        const releaseOptions: any = AdminView.getOptions();
+        releaseOptions.method = "post";
+        const releaseUrl = this.remote + "/portal/cs340/releaseGrades/" + delivId;
+        const releaseResponse = await fetch(releaseUrl, releaseOptions);
+        const releaseJson = await releaseResponse.json();
+
+        if(releaseResponse.status !== 200) {
+            Log.error("CS340AdminView::releaseGrades(..) - error: " + releaseJson.error);
+            return false;
+        }
+
+        return releaseJson.response;
     }
 
     /**
@@ -1217,7 +1274,7 @@ export class CS340AdminView extends AdminView {
                 return null;
             } else {
                 let teamJson = await teamResponse.json();
-                let team: TeamTransport = teamJson.result;
+                let team: TeamTransport = teamJson.response;
                 for(const personId of team.people) {
                     targetStudentIds.push(personId);
                 }
@@ -1286,7 +1343,7 @@ export class CS340AdminView extends AdminView {
         } else {
             Log.info("CS340View::getStudentGrade(..) - found grade record");
             let responseJson = await response.json();
-            reply = responseJson.result;
+            reply = responseJson.response;
         }
         Log.info("CS340View::getStudentGrade(..) - finish");
         return reply;

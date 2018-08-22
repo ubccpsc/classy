@@ -893,8 +893,9 @@ export class AssignmentController {
         let gitSuccess: boolean;
         try {
             Log.info("AssignmentController::publishGrade( .. ) - writing grade");
+
             gitSuccess = await this.gha.writeFileToRepo(studentRepoRecord.URL,
-                delivId + "_grades.md", payload, true);
+                delivId + "_grades.md", payload, validGrade);
         } catch (err) {
             Log.error("AssignmentController::publishGrade() - Error: " + err);
             return false;
@@ -911,6 +912,10 @@ export class AssignmentController {
         return gitSuccess && databaseSuccess;
     }
 
+    /**
+     *
+     * @param delivId
+     */
     public async publishAllGrades(delivId: string): Promise<boolean> {
         Log.info("AssignmentController::publishAllGrades( " + delivId + " ) - start");
         // Log.info("AssignmentController::publishAllGrades( .. ) - ");

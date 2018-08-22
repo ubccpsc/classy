@@ -914,7 +914,12 @@ export class GitHubActions {
                 await createNewFile();
             }
             await addFilesToRepo();
-            await commitFilesToRepo();
+            try {
+                await commitFilesToRepo();
+            } catch (err) {
+                Log.warn("GithubActions::writeFileToRepo(..) - Did not write file to repo");
+                return !force; // within specifications ONLY if we are not forcing a change
+            }
             await pushToRepo();
         } catch (err) {
             Log.error("GithubActions::writeFileToRepo(..) - Error: " + err);
