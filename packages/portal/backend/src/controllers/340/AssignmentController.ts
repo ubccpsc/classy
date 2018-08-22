@@ -533,7 +533,7 @@ export class AssignmentController {
                                                             totalStudents: number, studentRepos: number} | null> {
         Log.info("AssignmentController::getAssignmentStatus( " + delivId + ") - start");
         Log.warn("AssignmentController::getAssignmentStatus(..) -- This method should not be used (deprecated); " +
-            "updateAssignmentStatus instead");
+            "use updateAssignmentStatus instead");
 
         let deliv = await this.dc.getDeliverable(delivId);
         if (deliv === null) {
@@ -617,11 +617,24 @@ export class AssignmentController {
             }
         }
 
+        // database to github verification
+        let peopleList = await this.gha.listPeople();
+        let personVerification: { [githubID: string]: any } = {};
+
+        // create a map of personID to
+        for(const person of peopleList) {
+            if(typeof personVerification[person.name] === 'undefined') personVerification[person.name] = person;
+        }
+
         // verify all students have a repository
         let newStatus = AssignmentStatus.CLOSED;
         let totalStudentCount = allStudents.length;
         let studentRepoCount = 0;
         for (const student of allStudents) {
+            if (typeof personVerification[student.githubId] === 'undefined') {
+                Log.warn("Skipping student: " + student.id + " as they are missing from Github.");
+                continue;
+            }
             if (typeof studentRepoMapping[student.id] === 'undefined') {
                 // this means a repository is missing,
                 Log.info("AssignmentController::updateAssignmentStatus(..) - student: " + student.id + " " +
@@ -944,10 +957,21 @@ export class AssignmentController {
             }
         }
 
+        // verification
+        let peopleList = await this.gha.listPeople();
+        let personVerification: { [githubID: string]: any } = {};
+
+        // create a map of personID to
+        for(const person of peopleList) {
+            if(typeof personVerification[person.name] === 'undefined') personVerification[person.name] = person;
+        }
+
+
         // for every student, publish their grade
         let totalSuccess = true;
         Log.info("AssignmentController::publishAllGrades( .. ) - Publishing grades for " + allStudents.length + " students");
         for (const student of allStudents) {
+            if (typeof personVerification[student.id] === 'undefined') continue;
             if(!await this.publishGrade(student.githubId + "_grades", delivId + "_grades.md", student.id, delivId)) {
                 Log.warn("AssignmentController::publishAllGrades( .. ) - Had an issue " +
                     "publishing student: <" + student.id + "> grade");

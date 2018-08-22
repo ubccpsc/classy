@@ -2,7 +2,13 @@ import {expect} from "chai";
 import "mocha";
 import Config, {ConfigKey} from "../../../../../common/Config";
 import Log from "../../../../../common/Log";
-import {AssignmentGrade, AssignmentGradingRubric, AssignmentInfo, AssignmentStatus} from "../../../../../common/types/CS340Types";
+import {
+    AssignmentGrade,
+    AssignmentGradingRubric,
+    AssignmentInfo,
+    AssignmentStatus,
+    QuestionGrade, SubQuestionGrade
+} from "../../../../../common/types/CS340Types";
 import {AssignmentController} from "../../../src/controllers/340/AssignmentController";
 import {DatabaseController} from "../../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../../src/controllers/DeliverablesController";
@@ -95,7 +101,7 @@ describe("CS340: AssignmentController", () => {
         expect(assignmentGrades).equals(null);
     });
 
-    it("Should not be able to create an assignment grade with .", async () => {
+    it("Should be able to create an assignment grade.", async () => {
         // Check there is no grade associated with the assignment specified
         let assignmentGrade = await ac.getAssignmentGrade(TEST_STUDENT_ID_0, "a2");
         expect(assignmentGrade).equals(null);
@@ -283,12 +289,14 @@ describe("CS340: AssignmentController", () => {
         let allStudents = await pc.getAllPeople();
         expect(allStudents.length).to.be.greaterThan(0);
 
-        let allTeams = await tc.getAllTeams();
-        expect(allTeams.length).to.be.greaterThan(0);
+        // let allTeams = await tc.getAllTeams();
+        // expect(allTeams.length).to.be.greaterThan(0);
+        let assignTeam: Team = await tc.getTeam(Test.ASSIGNTEAMNAME1);
+        expect(assignTeam).to.not.be.null;
 
         let newAssignRepo: Repository = await ac.createAssignmentRepo(Test.ASSIGNID0 + "_" +
             allStudents[0].id,
-            Test.ASSIGNID0, [allTeams[0]]);
+            Test.ASSIGNID0, [assignTeam]);
 
         expect(newAssignRepo).to.not.be.null;
     }).timeout(3 * TIMEOUT);
@@ -389,6 +397,24 @@ describe("CS340: AssignmentController", () => {
             expect(newGithubRepoCount).to.be.at.least(oldGithubRepoCount);
         }).timeout(numberOfStudents * 2 * TIMEOUT);
 
+        it("Should be able to get assignment status with created", async function() {
+
+            let assignStatus: {assignStatus: AssignmentStatus,
+                totalStudents: number, studentRepos: number} = await ac.getAssignmentStatus(Test.ASSIGNID0);
+
+            expect(assignStatus).to.not.be.null;
+            expect(assignStatus.assignStatus).to.be.equal(AssignmentStatus.CREATED);
+        });
+
+        it("Should be able to update an assignment status that has been created", async function() {
+
+            let assignStatus: {assignmentStatus: AssignmentStatus,
+                totalStudents: number, studentRepos: number} = await ac.updateAssignmentStatus(Test.ASSIGNID0);
+
+            expect(assignStatus).to.not.be.null;
+            expect(assignStatus.assignmentStatus).to.be.equal(AssignmentStatus.CREATED);
+        });
+
         it("Should be able to publish all Assignment Repositories at once.", async function() {
             let allStudents = await pc.getAllPeople();
             let studentCount = allStudents.length;
@@ -399,6 +425,53 @@ describe("CS340: AssignmentController", () => {
 
             // TODO: Verify
         }).timeout(numberOfStudents * TIMEOUT);
+
+        it("Should be able to close all Assignment Repositories at once.", async function() {
+            let success = await ac.closeAllRepositories(Test.ASSIGNID0);
+            expect(success).to.be.true;
+        }).timeout(numberOfStudents * TIMEOUT);
+
+        it("Should be able to assign a grade to a student after repositories close.", async function() {
+            let newAssignmentGrade: AssignmentGrade = {
+                assignmentID: Test.ASSIGNID0,
+                studentID: Test.REALUSER1.id,
+                released: false,
+                questions: [
+                    {
+                        questionName: "question 1",
+                        commentName: "",
+                        subQuestion: [
+                            {
+                                sectionName: "rubric",
+                                grade: 3,
+                                feedback: "mistakes were made",
+                            }
+                        ]
+                    },
+                    {
+                        questionName: "question 2",
+                        commentName: "",
+                        subQuestion: [
+                            {
+                                sectionName: "code quality",
+                                grade: 6,
+                                feedback: "good job!",
+                            }
+                        ]
+                    }
+                ]
+            };
+
+            let success = await ac.setAssignmentGrade(Test.ASSIGNID0 + "_" + Test.REALUSER1.id,
+                Test.ASSIGNID0, newAssignmentGrade, "testBot");
+
+            expect(success).to.be.true;
+        });
+
+        it("Should be able to publish all grades after release.", async function() {
+            let success = await ac.publishAllGrades(Test.ASSIGNID0);
+            expect(success).to.be.true;
+        });
 
         it("Should be able to delete all Assignment Repositories, along with their records", async function() {
             let allStudents = await pc.getAllPeople();
@@ -512,7 +585,8 @@ let TESTREPONAMES = [
     "secap_testtest__repo1",
     "TESTrepo1",
     "TESTrepo2",
-    "TESTrepo3"
+    "TESTrepo3",
+    Test.REALUSER1.id + "_grades"
 ];
 
 let TESTTEAMNAMES = [

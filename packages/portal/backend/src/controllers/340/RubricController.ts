@@ -67,6 +67,11 @@ export class RubricController {
 
         let assignInfo: AssignmentInfo = deliverableRecord.custom;
 
+        if(assignInfo.mainFilePath === "" ) {
+            Log.info("RubricController::updateRubric(..) - No automatic rubric generation; skipping");
+            return true;
+        }
+
         const tempDir = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
         const tempPath = tempDir.path;
 

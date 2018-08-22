@@ -347,6 +347,9 @@ export class Test {
 
         // const newDelivSuccess =
         await dc.saveDeliverable(newDeliv);
+
+
+        await this.createTeam(this.ASSIGNTEAMNAME1, Test.ASSIGNID0, [Test.REALUSER1.id]);
     }
 
     // public static testBefore() {
@@ -380,6 +383,7 @@ export class Test {
     public static readonly TEAMNAME2 = 'TESTteam2';
     public static readonly TEAMNAME3 = 'TESTteam3';
     public static readonly TEAMNAME4 = 'TESTteam4';
+    public static readonly ASSIGNTEAMNAME1 = "AssignTESTteam1";
 
     public static readonly USER1 = {id: 'user1id', csId: 'user1id', github: 'user1gh'};
     public static readonly USER2 = {id: 'user2id', csId: 'user2id', github: 'user2gh'};

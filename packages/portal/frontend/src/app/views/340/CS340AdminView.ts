@@ -185,7 +185,7 @@ export class CS340AdminView extends AdminView {
                         }
                     }
                     let assignStatusHeader = (document.querySelector('#adminEditDeliverablePage-assignmentStatusHeader') as HTMLElement);
-                    let assignStatusBody = (document.querySelector('#adminEditDeliverablePage-assignmentStatus') as HTMLElement);
+                    let assignStatusBody = (document.querySelector('#adminEditDeliverablePage-assignStatus') as HTMLElement);
 
                     // assignStatusHeader.style.display = "initial";
                     assignStatusHeader.removeAttribute("style");
@@ -193,7 +193,7 @@ export class CS340AdminView extends AdminView {
                 } else {
                     Log.info("CS340AdminView::renderEditDeliverablePage(..) - Not an assignment, hiding elements");
                     let assignStatusHeader = (document.querySelector('#adminEditDeliverablePage-assignmentStatusHeader') as HTMLElement);
-                    let assignStatusBody = (document.querySelector('#adminEditDeliverablePage-assignmentStatus') as HTMLElement);
+                    let assignStatusBody = (document.querySelector('#adminEditDeliverablePage-assignStatus') as HTMLElement);
 
                     assignStatusHeader.style.display = "none";
                     assignStatusBody.style.display = "none";
@@ -341,7 +341,7 @@ export class CS340AdminView extends AdminView {
         if(response.status === 200) {
             let responsejson = await response.json();
             // get the textbox
-            switch (responsejson.response.assignmentStatus) {
+            switch (responsejson.response.assignStatus) {
                 case AssignmentStatus.INACTIVE: {
                     statusBox.innerHTML = ": NOT CREATED - " + " Repositories: " +
                         responsejson.response.studentRepos + "/" + responsejson.response.totalStudents;
