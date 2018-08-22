@@ -41,7 +41,7 @@ let DELAY_SEC = 1000;
 let DELAY_SHORT = 200;
 
 
-describe.skip("CS340: AssignmentController", () => {
+describe("CS340: AssignmentController", () => {
     let ac: AssignmentController = new AssignmentController();
     let gc: GradesController = new GradesController();
     let tc: TeamController = new TeamController();
@@ -95,7 +95,7 @@ describe.skip("CS340: AssignmentController", () => {
         expect(assignmentGrades).equals(null);
     });
 
-    it("Should be able to create an assignment grade.", async () => {
+    it("Should not be able to create an assignment grade with .", async () => {
         // Check there is no grade associated with the assignment specified
         let assignmentGrade = await ac.getAssignmentGrade(TEST_STUDENT_ID_0, "a2");
         expect(assignmentGrade).equals(null);
