@@ -319,7 +319,7 @@ describe("CS340: AssignmentController", () => {
 
         // let allTeams = await tc.getAllTeams();
         // expect(allTeams.length).to.be.greaterThan(0);
-        let assignTeam: Team = await tc.getTeam(Test.ASSIGNTEAMNAME1);
+        let assignTeam: Team = await tc.getTeam(Test.ASSIGNTEAMNAME0);
         expect(assignTeam).to.not.be.null;
 
         let newAssignRepo: Repository = await ac.createAssignmentRepo(Test.ASSIGNID0 + "_" +

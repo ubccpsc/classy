@@ -281,6 +281,37 @@
 
                     <ons-list-item expandable>
                         <div class="left settingIcon">
+                            <ons-icon icon="fa-graduation-cap"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="Visible to students.">Visible to students</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-switch id="adminEditDeliverablePage-visible" modifier="list-item" onclick=""></ons-switch>
+                        </div>
+                        <div class="expandable-content">
+                            Whether the deliverable is visible to students. For instance, if a deliverable is really just a grading column they do not need to see.
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-cogs"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            Rubric parameters
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-rubric"></ons-input>
+                        </div>
+                        <div class="expandable-content">
+                            This is a JSON object that captures extended rubric values.
+                            It must be valid JSON (or {} if you do not want to set additional rubric elements).
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
                             <ons-icon icon="fa-cogs"></ons-icon>
                         </div>
                         <div class="center settingLabel">
@@ -335,6 +366,36 @@
 
                     </ons-list-item>
                     -->
+
+                    <ons-list-header>Name prefixes</ons-list-header>
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-cloud"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            Repo Prefix
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-repoPrefix"></ons-input>
+                        </div>
+                        <div class="expandable-content">
+                            If any repositories are generated as a part of this deliverable, this prefix will be used when naming. Should not be empty; otherwise will revert to '&lt;delivId&gt;'.
+                        </div>
+                    </ons-list-item>
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-cloud"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            Team Prefix
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-teamPrefix"></ons-input>
+                        </div>
+                        <div class="expandable-content">
+                            If any teams are generated as a part of this deliverable, this prefix will be used when naming. Should not be empty; otherwise will revert to 't_&lt;delivId&gt;'.
+                        </div>
+                    </ons-list-item>
 
                     <ons-list-header>Deliverable Dates</ons-list-header>
                     <ons-list-item style="display: flex;">

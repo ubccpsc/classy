@@ -375,8 +375,7 @@ export class Test {
         // const newDelivSuccess =
         await dc.saveDeliverable(newDeliv);
 
-
-        await this.createTeam(this.ASSIGNTEAMNAME1, Test.ASSIGNID0, [Test.REALUSER1.id]);
+        await this.createTeam(this.ASSIGNTEAMNAME0, Test.ASSIGNID0, [Test.REALUSER1.id]);
     }
 
     public static async prepareAssignment2() {
@@ -435,8 +434,7 @@ export class Test {
         // const newDelivSuccess =
         await dc.saveDeliverable(newDeliv);
 
-
-        await this.createTeam(Test.ASSIGNID1 + "_" + Test.REALUSER1.id, Test.ASSIGNID1, [Test.REALUSER1.id]);
+        await this.createTeam(Test.ASSIGNTEAMNAME1, Test.ASSIGNID1, [Test.REALUSER1.id]);
     }
 
     // public static testBefore() {
@@ -509,8 +507,8 @@ export class Test {
     public static readonly REALTOKEN = 'realtoken';
     public static readonly FAKETOKEN = 'faketoken';
 
-    public static readonly ASSIGNTEAMNAME1 = Test.ASSIGNID0 + Test.REALUSER1.id;
-    public static readonly ASSIGNTEAMNAME2 = Test.ASSIGNID1 + Test.REALUSER1.id;
+    public static readonly ASSIGNTEAMNAME0 = Test.ASSIGNID0 + Test.REALUSER1.id;
+    public static readonly ASSIGNTEAMNAME1 = Test.ASSIGNID1 + Test.REALUSER1.id;
 
     public static getDeliverable(delivId: string): Deliverable {
         const deliv: Deliverable = {

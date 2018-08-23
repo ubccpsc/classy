@@ -71,16 +71,15 @@ export class CS340AdminView extends AdminView {
                     UI.notification("Verified scheduled tasks; updated " + result + " tasks for related deliverable(s)");
                 }
             });
-
-            this.checkReleasedGrades().then(function (result) {
-                Log.info("CS340AdminView::renderPage(..)::checkReleasedGrades(..) - then: - start");
-                Log.info("CS340AdminView::renderPage(..)::checkReleasedGrades(..) - released: " + result);
-            });
         }
 
         if(name === 'AdminEditDeliverable') {
-            Log.info("CS340AdminView::renderPage() - Deliverable editing page triggered");
-
+            Log.info("CS340AdminView::renderPage(..) - Deliverable editing page triggered");
+            if(typeof optsObject.delivId !== "undefined") {
+                if(optsObject.delivId === null) {
+                    Log.info("CS340AdminView::renderPage(..) - null delivId");
+                }
+            }
             return;
         }
         // if(opsObject.page !== null) {
@@ -131,15 +130,28 @@ export class CS340AdminView extends AdminView {
         let that = this;
         // if the deliverable is an assignment, do something(?)
 
-        // const fab = document.querySelector('#adminEditDeliverableSave') as OnsFabElement;
-        // if (super.isAdmin === false) {
-        //     fab.style.display = 'none';
-        // } else {
-        //     fab.onclick = function(evt) {
-        //         Log.info('CS340AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::customOnClick');
-        //         that.newSave();
-        //     };
-        // }
+        const fab = document.querySelector('#adminEditDeliverableSave') as OnsFabElement;
+        if (super.isAdmin === false) {
+            fab.style.display = 'none';
+        } else {
+            Log.info("CS340AdminView::renderEditDeliverablePage(..) - Adding onclick function");
+            fab.addEventListener("click", function(evt) {
+                const delivIdElement = document.querySelector('#adminEditDeliverablePage-name') as OnsInputElement;
+                if(delivIdElement === null) return;
+
+                Log.info('CS340AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::customOnClick');
+                // that.checkReleasedGrades().then(function (result) {
+                //     Log.info("CS340AdminView::renderEditDeliverablePage(..)::checkReleasedGrades(..) - then: - start");
+                //     Log.info("CS340AdminView::renderEditDeliverablePage(..)::checkReleasedGrades(..) - released: " + result);
+                // });
+                Log.info("CS340AdminView::renderEditDeliverablePage::adminEditDeliverableSave::customOnClick - " + delivIdElement.value);
+                that.releaseGrades(delivIdElement.value);
+            });
+            // fab.onclick = function(evt) {
+            //     Log.info('CS340AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::customOnClick');
+            //     // that.newSave();
+            // };
+        }
 
         Log.info("CS340AdminView::renderEditDeliverablePage(..) - Fetching");
         let deliverables: Deliverable[] = await this.getDeliverables();
@@ -185,18 +197,18 @@ export class CS340AdminView extends AdminView {
                         }
                     }
                     let assignStatusHeader = (document.querySelector('#adminEditDeliverablePage-assignmentStatusHeader') as HTMLElement);
-                    let assignStatusBody = (document.querySelector('#adminEditDeliverablePage-assignStatus') as HTMLElement);
+                    let assignStatusBody = (document.querySelector('#adminEditDeliverablePage-assignmentStatus') as HTMLElement);
 
                     // assignStatusHeader.style.display = "initial";
                     assignStatusHeader.removeAttribute("style");
-                    assignStatusBody.style.display = "initial";
+                    assignStatusBody.setAttribute("style", "display: initial");
                 } else {
                     Log.info("CS340AdminView::renderEditDeliverablePage(..) - Not an assignment, hiding elements");
                     let assignStatusHeader = (document.querySelector('#adminEditDeliverablePage-assignmentStatusHeader') as HTMLElement);
                     let assignStatusBody = (document.querySelector('#adminEditDeliverablePage-assignStatus') as HTMLElement);
 
-                    assignStatusHeader.style.display = "none";
-                    assignStatusBody.style.display = "none";
+                    assignStatusHeader.setAttribute("style" , "display: none");
+                    assignStatusBody.setAttribute("style" , "display: none");
                 }
             }
         }
@@ -536,22 +548,18 @@ export class CS340AdminView extends AdminView {
     public async handleAdminGrades(opts: any) {
         Log.info("CS340AdminView::handleAdminGrades( " + JSON.stringify(opts) + " ) - start");
         // await super.handleAdminGrades(opts);
-
         let that = this;
 
         const delivSelector = document.querySelector('#adminGradesDeliverableSelect') as HTMLSelectElement;
         await this.populateDeliverableDropdown(delivSelector);
 
         Log.info("CS340AdminView::handleAdminGrades(..) - handling hook");
-
-
         delivSelector.onchange = async function(evt) {
             Log.info("CS340AdminView::handleAdminGrades(..)::delivSelector:onChange - event: " + evt);
             await that.renderStudentGradesDeliverable((evt.target as HTMLSelectElement).value);
-        }
+        };
 
         Log.info("CS340AdminView::handleAdminGrades(..) - finished handling hook");
-
     }
 
     public async handleAdminCustomGrades(opts: any) {
@@ -629,7 +637,17 @@ export class CS340AdminView extends AdminView {
     public async renderStudentGradesDeliverable(delivId: string, hiddenNames: boolean = false) {
         Log.info("CS340AdminView::renderStudentGradeDeliverable( " + delivId + " ) - start");
 
-        const start = Date.now();
+        let emptyResultsElement = document.querySelector('#gradesListTableNone') as HTMLDivElement
+        let tabledResultsElement = document.querySelector("#gradesListTable") as HTMLDivElement;
+        if(delivId === null || delivId === "null") {
+            Log.info("CS340AdminView::renderStudentGradeDeliverable(..) - null value, hiding the table");
+            emptyResultsElement.removeAttribute("style");
+            tabledResultsElement.setAttribute("style", "display:none");
+        } else {
+            tabledResultsElement.removeAttribute("style");
+            emptyResultsElement.setAttribute("style", "display:none");
+        }
+
         UI.showModal("Rendering page");
 
         const teamsOptions = AdminView.getOptions();
@@ -890,8 +908,7 @@ export class CS340AdminView extends AdminView {
                 tableHeaders.push(newHeader);
 
                 // process max grade
-                let maxGrade:number = this.calculateMaxGrade(deliv);
-                maxGradeMap[deliv.id] = maxGrade;
+                maxGradeMap[deliv.id] = this.calculateMaxGrade(deliv);
             }
         }
 

@@ -91,6 +91,27 @@ export class AssignmentController {
         };
 
         let success = await this.gc.createGrade(repoID, assignId, newGradePayload);
+        let deliverableRecord: Deliverable = await this.db.getDeliverable(assignId);
+        if(deliverableRecord !== null && deliverableRecord.custom !== null) {
+            if(typeof (deliverableRecord.custom as AssignmentInfo).status !== "undefined") {
+                if(deliverableRecord.gradesReleased) {
+                    // for(const teamId of repo.teamIds) {
+                    //     let team: Team = this.tc.getTeam(teamId);
+                    //     for(const personId of team.personIds) {
+                    //         let success = await this.publishGrade(personId + "_grades",
+                    //             assignId + "_grades.md",
+                    //             assignId);
+                    //     }
+                    // }
+                    let personRecord: Person = await this.db.getPerson(assnPayload.studentID);
+                    if(personRecord === null) return success;
+                    await this.publishGrade(personRecord.githubId + "_grades",
+                        assignId + "_grades.md",personRecord.id, assignId);
+
+                }
+            }
+        }
+
         return success;
     }
 
@@ -890,7 +911,7 @@ export class AssignmentController {
 
         let percentageReceived: number = totalReceived / totalPossible;
         let newRow = ["**Total**", String(totalReceived), String(totalPossible),
-            "Final Grade: " + String(percentageReceived) + "%"];
+            "Final Grade: " + String(percentageReceived * 100) + "%"];
         tableInfo.push(newRow);
 
         // construct the md file
@@ -1015,6 +1036,8 @@ export class AssignmentController {
 
         // get all the student's grades
         let studentGrades = await this.gc.getReleasedGradesForPerson(studentId);
+
+
         return false;
     }
 
