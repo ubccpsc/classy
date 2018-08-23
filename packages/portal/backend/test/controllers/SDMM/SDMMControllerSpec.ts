@@ -4,6 +4,7 @@ import Log from "../../../../../common/Log";
 import {ActionPayload, GradePayload, SDMMStatus} from "../../../../../common/types/SDMMTypes";
 
 import {DatabaseController} from "../../../src/controllers/DatabaseController";
+import {DeliverablesController} from "../../../src/controllers/DeliverablesController";
 import {GitHubActions} from "../../../src/controllers/GitHubActions";
 import {GitHubController, IGitHubController, TestGitHubController} from "../../../src/controllers/GitHubController";
 import {GradesController} from "../../../src/controllers/GradesController";
@@ -50,6 +51,9 @@ export class TestData {
 
 describe("SDMM: SDMMController", () => {
 
+    const TESTPREFIX = 'TEST__X__t_';
+    const REPOPREFIX = 'TEST__X__p_';
+
     let sc: SDMMController;
     let gc: GradesController;
     let tc: TeamController;
@@ -67,6 +71,17 @@ describe("SDMM: SDMMController", () => {
 
         // only bootstrap the database with deliverables
         await Test.prepareDeliverables();
+
+        // fix deliverables so they have test prefixes
+        const delivC = new DeliverablesController();
+        const dataC = DatabaseController.getInstance();
+        const delivs = ["d0", "d1", "d2", "d3"];
+        for (const dId of delivs) {
+            const deliv = await delivC.getDeliverable(dId);
+            deliv.repoPrefix = "TEST__X__p_";
+            deliv.teamPrefix = "TEST__X__t_";
+            await dataC.writeDeliverable(deliv);
+        }
 
         data = new TestData();
 
@@ -485,7 +500,8 @@ describe("SDMM: SDMMController", () => {
             val = err;
         }
         expect(val).to.not.be.null;
-        expect(val.message).to.equal('All teammates must have achieved a score of 60% or more to join a team.');
+        expect(val.message).to.equal('Username not registered; contact course staff.');
+        // expect(val.message).to.equal('All teammates must have achieved a score of 60% or more to join a team.');
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(0);
@@ -716,5 +732,44 @@ describe("SDMM: SDMMController", () => {
         save = sc.handleNewAutoTestGrade(deliv, grade, existingGrade);
         expect(save).to.be.true;
     });
+
+    it("Should be able to clear state after suite is done.", async function() {
+        Log.test("Clearing state");
+        const gha = new GitHubActions();
+        const dataC = DatabaseController.getInstance();
+
+        const repos = await dataC.getRepositories();
+        for (const repo of repos) {
+            if (repo.id.startsWith('TEST__X__p_')) {
+                await gha.deleteRepo(repo.id);
+            }
+        }
+
+        const teams = await dataC.getTeams();
+        for (const team of teams) {
+            const teamNum = await gha.getTeamNumber(team.id);
+            if (teamNum > 0 && team.id.startsWith('TEST__X__t_')) {
+                await gha.deleteTeam(teamNum);
+            }
+        }
+
+        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB1);
+        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB2);
+        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB3);
+        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB4);
+
+        const teamNames = ['TEST__X__t_' + Test.USERNAMEGITHUB1,
+            'TEST__X__t_' + Test.USERNAMEGITHUB2,
+            'TEST__X__t_' + Test.USERNAMEGITHUB3,
+            'TEST__X__t_' + Test.USERNAMEGITHUB4];
+
+        for (const tName of teamNames) {
+            const teamNum = await gha.getTeamNumber(tName);
+            if (teamNum > 0) {
+                await gha.deleteTeam(teamNum);
+            }
+        }
+        Log.test("State cleared");
+    }).timeout(Test.TIMEOUTLONG);
 
 });

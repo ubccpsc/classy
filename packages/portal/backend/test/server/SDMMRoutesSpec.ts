@@ -8,6 +8,7 @@ import Config, {ConfigKey} from "../../../../common/Config";
 
 import Log from "../../../../common/Log";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
+import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {GitHubActions} from "../../src/controllers/GitHubActions";
 import {GitHubController} from "../../src/controllers/GitHubController";
 // import {TestGitHubController} from "../../src/controllers/GitHubController";
@@ -25,7 +26,7 @@ import '../GlobalSpec';
 // NOTE: skipped for now because the infrastructure spins up classytest
 // which means the right routes aren't being started in the backend
 // need to change how this loads to enable the right routes to be started
-describe('SDMM Routes', function() {
+describe.only('SDMM Routes', function() {
 
     let app: restify.Server = null;
     let server: BackendServer = null;
@@ -40,6 +41,17 @@ describe('SDMM Routes', function() {
 
         // get data ready
         await Test.prepareDeliverables();
+
+        // fix deliverables so they have test prefixes
+        const delivC = new DeliverablesController();
+        const dataC = DatabaseController.getInstance();
+        const delivs = ["d0", "d1", "d2", "d3"];
+        for (const dId of delivs) {
+            const deliv = await delivC.getDeliverable(dId);
+            deliv.repoPrefix = "TEST__X__p_";
+            deliv.teamPrefix = "TEST__X__t_";
+            await dataC.writeDeliverable(deliv);
+        }
 
         Config.getInstance().setProp(ConfigKey.name, 'sdmm');
 
@@ -70,6 +82,40 @@ describe('SDMM Routes', function() {
         const gha = new GitHubActions();
         await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB1);
         await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB2);
+        await gha.deleteRepo('TEST__X__p_cpscbot');
+
+        const dataC = DatabaseController.getInstance();
+        const repos = await dataC.getRepositories();
+        for (const repo of repos) {
+            if (repo.id.startsWith('TEST__X__p_')) {
+                await gha.deleteRepo(repo.id);
+            }
+        }
+
+        const teams = await dataC.getTeams();
+        for (const team of teams) {
+            const teamNum = await gha.getTeamNumber(team.id);
+            if (teamNum > 0 && team.id.startsWith('TEST__X__t_')) {
+                await gha.deleteTeam(teamNum);
+            }
+        }
+
+        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB1);
+        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB2);
+        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB3);
+        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB4);
+
+        const teamNames = ['TEST__X__t_' + Test.USERNAMEGITHUB1,
+            'TEST__X__t_' + Test.USERNAMEGITHUB2,
+            'TEST__X__t_' + Test.USERNAMEGITHUB3,
+            'TEST__X__t_' + Test.USERNAMEGITHUB4];
+
+        for (const tName of teamNames) {
+            const teamNum = await gha.getTeamNumber(tName);
+            if (teamNum > 0) {
+                await gha.deleteTeam(teamNum);
+            }
+        }
 
         Log.test('SDMMRoutesSpec::clearGithub() - done');
     }
@@ -290,8 +336,7 @@ describe('SDMM Routes', function() {
 
         expect(response.body.failure).to.not.be.undefined;
         expect(response.body.failure.message).to.equal(
-            'Unknown person somerandmomusernamethatdoesnotexist requested to be on team; ' +
-            'please make sure they are registered with the course.');
+            'Username ( somerandmomusernamethatdoesnotexist ) not registered; contact course staff.');
     }).timeout(Test.TIMEOUTLONG);
 
     it('Should be able provision a d1 team repo.', async function() {
@@ -480,5 +525,9 @@ describe('SDMM Routes', function() {
     //     expect(response.body.failure).to.not.be.undefined;
     //     // expect(response.body.failure.message).to.equal('Error provisioning d0 repo.');
     // }).timeout(1000 * 10);
+
+    it('Should be possible to clear stale state.', async function() {
+        await clearGithub();
+    }).timeout(Test.TIMEOUTLONG);
 
 });

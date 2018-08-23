@@ -1,5 +1,5 @@
 import * as crypto from 'crypto';
-import Config, {ConfigCourses, ConfigKey} from "../../../../../common/Config";
+import Config, {ConfigKey} from "../../../../../common/Config";
 
 import Log from "../../../../../common/Log";
 import {GradePayload, Payload, SDMMStatus, StatusPayload} from "../../../../../common/types/SDMMTypes";
@@ -21,49 +21,54 @@ import {PersonController} from "../PersonController";
  */
 export class SDMMController extends CourseController {
 
-    /**
-     * Public static so tests can use them too.
-     *
-     * @returns {string}
-     */
-    public static getProjectPrefix(): string {
-        const name = Config.getInstance().getProp(ConfigKey.name);
-        if (name === ConfigCourses.classytest) {
-            Log.info("SDMMController::getProjectPrefix(..) - returning test prefix");
-            return "TEST__X__p_";
-        } else if (name === 'sdmm') {
-            Log.trace("SDMMController::getProjectPrefix(..) - returning sdmm prefix");
-            return "secap_";
-        } else {
-            // NOTE: non-sdmm courses shouldn't use this...
-            Log.error("SDMMController::getProjectPrefix(..) - unhandled course: " + name);
-            return "project_";
-        }
-    }
+    // /**
+    //  * Public static so tests can use them too.
+    //  *
+    //  * @returns {string}
+    //  */
+    // public static getProjectPrefix(): string {
+    //     const name = Config.getInstance().getProp(ConfigKey.name);
+    //     if (name === ConfigCourses.classytest) {
+    //         Log.info("SDMMController::getProjectPrefix(..) - returning test prefix");
+    //         return "TEST__X__p_";
+    //     } else if (name === 'sdmm') {
+    //         Log.trace("SDMMController::getProjectPrefix(..) - returning sdmm prefix");
+    //         return "secap_";
+    //     } else {
+    //         // NOTE: non-sdmm courses shouldn't use this...
+    //         Log.error("SDMMController::getProjectPrefix(..) - unhandled course: " + name);
+    //         return "project_";
+    //     }
+    // }
 
-    /**
-     * Public static so tests can use them too.
-     *
-     * @returns {string}
-     */
-    public static getTeamPrefix() {
-        const name = Config.getInstance().getProp(ConfigKey.name);
-
-        if (name === ConfigCourses.classytest) {
-            Log.info("SDMMController::getTeamPrefix(..) - returning test prefix");
-            return "TEST__X__t_";
-        } else if (name === 'sdmm') {
-            Log.trace("SDMMController::getTeamPrefix(..) - returning sdmm prefix");
-            // NOTE: was supposed to be "t_" but we made a mistake in initial deployment so we're stuck with no prefix
-            return "";
-        } else {
-            // NOTE: non-sdmm courses shouldn't use this...
-            Log.error("SDMMController::getTeamPrefix(..) - unhandled course: " + name);
-            return "t_";
-        }
-    }
+    // /**
+    //  * Public static so tests can use them too.
+    //  *
+    //  * @returns {string}
+    //  */
+    // public static getTeamPrefix() {
+    //     const name = Config.getInstance().getProp(ConfigKey.name);
+    //
+    //     if (name === ConfigCourses.classytest) {
+    //         Log.info("SDMMController::getTeamPrefix(..) - returning test prefix");
+    //         return "TEST__X__t_";
+    //     } else if (name === 'sdmm') {
+    //         Log.trace("SDMMController::getTeamPrefix(..) - returning sdmm prefix");
+    //         // NOTE: was supposed to be "t_" but we made a mistake in initial deployment so we're stuck with no prefix
+    //         return "";
+    //     } else {
+    //         // NOTE: non-sdmm courses shouldn't use this...
+    //         Log.error("SDMMController::getTeamPrefix(..) - unhandled course: " + name);
+    //         return "t_";
+    //     }
+    // }
 
     private GRADE_TO_ADVANCE = 60;
+
+    public static readonly D0 = 'd0';
+    public static readonly D1 = 'd1';
+    public static readonly D2 = 'd2';
+    public static readonly D3 = 'd3';
 
     public constructor(ghController: IGitHubController) {
         super(ghController);
@@ -83,6 +88,14 @@ export class SDMMController extends CourseController {
             if (peopleIds.length < 1) {
                 Log.error("SDMMController::provision(..) - there needs to be at least one person on a repo");
                 throw new Error("Invalid # of people; contact course staff.");
+            }
+
+            // sanity check; people have to exist
+            for (const peopleId of peopleIds) {
+                const person = await this.pc.getGitHubPerson(peopleId);
+                if (person === null) {
+                    throw new Error("Username ( " + peopleId + " ) not registered; contact course staff.");
+                }
             }
 
             if (delivId === "d0") {
@@ -519,8 +532,11 @@ export class SDMMController extends CourseController {
         try {
             const name = personId;
             const person = await this.pc.getPerson(name);
-            const teamName = SDMMController.getTeamPrefix() + name;
-            const repoName = SDMMController.getProjectPrefix() + teamName;
+            // const dc = new DeliverablesController();
+            const deliv = await this.dc.getDeliverable('d0');
+            const r = await this.computeNames(deliv, [person]);
+            const teamName = r.teamName; // SDMMController.getTeamPrefix() + name;
+            const repoName = r.repoName; // SDMMController.getProjectPrefix() + teamName;
 
             if (person === null) {
                 throw new Error("Username not registered; contact course staff.");
@@ -541,7 +557,7 @@ export class SDMMController extends CourseController {
                 throw new Error("SDMMController::provisionD0Repo(..) - team already exists: " + teamName);
             }
             const teamCustom = {sdmmd0: true, sdmmd1: false, sdmmd2: false, sdmmd3: false}; // d0 team for now
-            const deliv = await this.dc.getDeliverable('d0');
+            // const deliv = await this.dc.getDeliverable('d0');
             const team = await this.tc.createTeam(teamName, deliv, [person], teamCustom);
 
             // create local repo
@@ -636,8 +652,10 @@ export class SDMMController extends CourseController {
                 Log.info("SDMMController::updateIndividualD0toD1( " + personId + " ) - correct status: " + personStatus);
             }
 
-            const teamName = SDMMController.getTeamPrefix() + personId;
-            const repoName = SDMMController.getProjectPrefix() + teamName;
+            const deliv = await this.dc.getDeliverable('d0'); // since we are upgrading the d0 repo, use this even though this is for d1
+            const names = await this.computeNames(deliv, [person]);
+            const teamName = names.teamName; // SDMMController.getTeamPrefix() + personId;
+            const repoName = names.repoName; // SDMMController.getProjectPrefix() + teamName;
 
             // find local team & repo
             const team = await this.tc.getTeam(teamName);
@@ -689,22 +707,6 @@ export class SDMMController extends CourseController {
         const start = Date.now();
 
         try {
-            // seems complicated, but we need team names that are unique
-            // but with lots of people signing up at once we can't rely on a counter
-            // especially since full provisioning will take a long time (e.g., 60+ seconds)
-            let teamName: string | null = null;
-            while (teamName === null) {
-                let str = crypto.randomBytes(256).toString('hex');
-                str = str.substr(0, 6);
-                const name = SDMMController.getTeamPrefix() + str; // teamname with prefix
-                // const name = str; // NOTE: 't_' missed in initial deployment so we'll leave it off
-                Log.trace("SDMMController::provisionD1Repo(..) - checking name: " + name);
-                const teamWithName = await this.tc.getTeam(name);
-                if (teamWithName === null) {
-                    teamName = name;
-                    Log.trace("SDMMController::provisionD1Repo(..) - name available; using: " + teamName);
-                }
-            }
 
             const people: Person[] = [];
             for (const pid of peopleIds) {
@@ -724,6 +726,28 @@ export class SDMMController extends CourseController {
                 }
             }
 
+            const deliv = await this.dc.getDeliverable('d1');
+            const names = await this.computeNames(deliv, people);
+            const teamName = names.teamName;
+            const repoName = names.repoName;
+
+            // // seems complicated, but we need team names that are unique
+            // // but with lots of people signing up at once we can't rely on a counter
+            // // especially since full provisioning will take a long time (e.g., 60+ seconds)
+            // let teamName: string | null = null;
+            // while (teamName === null) {
+            //     let str = crypto.randomBytes(256).toString('hex');
+            //     str = str.substr(0, 6);
+            //     const name = SDMMController.getTeamPrefix() + str; // teamname with prefix
+            //     // const name = str; // NOTE: 't_' missed in initial deployment so we'll leave it off
+            //     Log.trace("SDMMController::provisionD1Repo(..) - checking name: " + name);
+            //     const teamWithName = await this.tc.getTeam(name);
+            //     if (teamWithName === null) {
+            //         teamName = name;
+            //         Log.trace("SDMMController::provisionD1Repo(..) - name available; using: " + teamName);
+            //     }
+            // }
+
             for (const p of people) {
                 const personStatus = await this.computeStatusString(p.id);
                 if (personStatus !== SDMMStatus[SDMMStatus.D1UNLOCKED]) {
@@ -738,11 +762,11 @@ export class SDMMController extends CourseController {
 
             // create local team
             const teamCustom = {sdmmd0: false, sdmmd1: true, sdmmd2: true, sdmmd3: true}; // configure for project
-            const deliv = await this.dc.getDeliverable('d1');
+            // const deliv = await this.dc.getDeliverable('d1');
             const team = await this.tc.createTeam(teamName, deliv, people, teamCustom);
 
             // create local repo
-            const repoName = SDMMController.getProjectPrefix() + teamName;
+            // const repoName = SDMMController.getProjectPrefix() + teamName;
             const repoCustom = {d0enabled: false, d1enabled: true, d2enabled: true, d3enabled: true, sddmD3pr: false}; // d0 repo for now
             const repo = await this.rc.createRepository(repoName, [team], repoCustom);
 
@@ -785,6 +809,37 @@ export class SDMMController extends CourseController {
         } catch (err) {
             Log.error("SDMMController::provisionD1Repo(..) - ERROR: " + err);
             throw new Error(err.message);
+        }
+    }
+
+    public async computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}> {
+        Log.info("SDMMController::computeNames( " + deliv.id + ", ... ) - start");
+        const rPrefix = deliv.repoPrefix; // should be 'secap_' for d0 and d1
+        const tPrefix = deliv.teamPrefix; // should be '' for d0 and d1
+        if (deliv.id === 'd0' || people.length === 1) {
+            const tName = tPrefix + people[0].id;
+            const rName = rPrefix + people[0].id;
+            const res = {teamName: tName, repoName: rName};
+            Log.info("SDMMController::computeNames( ... ) - individual done; res: " + JSON.stringify(res));
+            return res;
+        } else {
+            let teamName: string | null = null;
+            while (teamName === null) {
+                let name = crypto.randomBytes(256).toString('hex');
+                name = name.substr(0, 6);
+                name = tPrefix + name;
+                Log.info("SDMMController::computeNames( ... ) - checking name: " + name);
+                const teamWithName = await this.tc.getTeam(name);
+                if (teamWithName === null) {
+                    teamName = name;
+                    Log.info("SDMMController::computeNames( ... ) - name available; using: " + teamName);
+                }
+            }
+
+            const rName = rPrefix + teamName;
+            const res = {teamName: teamName, repoName: rName};
+            Log.info("SDMMController::computeNames( ... ) - team done; res: " + JSON.stringify(res));
+            return res;
         }
     }
 }
