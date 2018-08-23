@@ -721,11 +721,11 @@ export class GitHubActions {
         const tempDir = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
         const tempPath = tempDir.path;
         const authedStudentRepo = addGithubAuthToken(studentRepo);
-        let authedImportRepo = addGithubAuthToken(importRepo);
-        if (importRepo === 'https://github.com/SECapstone/capstone' || importRepo === 'https://github.com/SECapstone/bootstrap') {
-            // these are both on public github, so if we're testing a private github instance appending the token will cause these to fail
-            authedImportRepo = importRepo; // HACK: for testing
-        }
+        const authedImportRepo = addGithubAuthToken(importRepo);
+        // this was just a github-dev testing issue; we might need to consider using per-org import test targets or something
+        // if (importRepo === 'https://github.com/SECapstone/capstone' || importRepo === 'https://github.com/SECapstone/bootstrap') {
+        //     authedImportRepo = importRepo; // HACK: for testing
+        // }
 
         if (seedFilePath) {
             const tempDir2 = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
