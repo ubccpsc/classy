@@ -1,8 +1,6 @@
 import {expect} from "chai";
 import "mocha";
-// import restify = require('restify');
 import * as restify from 'restify';
-// const request = require('supertest');
 import * as request from 'supertest';
 import Config, {ConfigKey} from "../../../../common/Config";
 
@@ -11,7 +9,6 @@ import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {GitHubActions} from "../../src/controllers/GitHubActions";
 import {GitHubController} from "../../src/controllers/GitHubController";
-// import {TestGitHubController} from "../../src/controllers/GitHubController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {SDMMController} from "../../src/controllers/SDMM/SDMMController";
 import {TeamController} from "../../src/controllers/TeamController";
@@ -19,9 +16,7 @@ import {TeamController} from "../../src/controllers/TeamController";
 import BackendServer from "../../src/server/BackendServer";
 import {Grade} from "../../src/Types";
 import {Test} from "../GlobalSpec";
-// const loadFirst = require('../GlobalSpec');
 import '../GlobalSpec';
-// const https = require('https');
 
 // NOTE: skipped for now because the infrastructure spins up classytest
 // which means the right routes aren't being started in the backend
@@ -293,7 +288,7 @@ describe('SDMM Routes', function() {
             const g: Grade = {
                 personId:  Test.USERNAMEGITHUB1,
                 delivId:   Test.DELIVID0,
-                score:     60,
+                score:     90,
                 comment:   'comment',
                 timestamp: Date.now(),
 
@@ -360,7 +355,7 @@ describe('SDMM Routes', function() {
             let g: Grade = {
                 personId:  Test.USERNAMEGITHUB2, // rthse2
                 delivId:   Test.DELIVID0,
-                score:     60,
+                score:     90,
                 comment:   'comment',
                 timestamp: Date.now(),
 
@@ -374,7 +369,7 @@ describe('SDMM Routes', function() {
             g = {
                 personId:  Test.USERNAMEGITHUB3, // ubccpscbot
                 delivId:   Test.DELIVID0,
-                score:     60,
+                score:     90,
                 comment:   'comment',
                 timestamp: Date.now(),
 

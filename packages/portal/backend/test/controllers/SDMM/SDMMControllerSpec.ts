@@ -1,5 +1,6 @@
 import {expect} from "chai";
 import "mocha";
+
 import Log from "../../../../../common/Log";
 import {ActionPayload, GradePayload, SDMMStatus} from "../../../../../common/types/SDMMTypes";
 
@@ -189,7 +190,7 @@ describe("SDMM: SDMMController", () => {
         expect(status.status).to.equal("D0");
 
         let grade: GradePayload = {
-            score:     59,
+            score:     89,
             comment:   '',
             urlName:   '',
             URL:       '',
@@ -201,7 +202,7 @@ describe("SDMM: SDMMController", () => {
         expect(status.status).to.equal("D0"); // 59 is too low
 
         grade = {
-            score:     61,
+            score:     91,
             comment:   '',
             urlName:   '',
             URL:       '',
@@ -243,7 +244,7 @@ describe("SDMM: SDMMController", () => {
         expect(status.status).to.equal("D1");
 
         let grade: GradePayload = {
-            score:     59,
+            score:     89,
             comment:   '',
             urlName:   '',
             URL:       '',
@@ -255,7 +256,7 @@ describe("SDMM: SDMMController", () => {
         expect(status.status).to.equal("D1"); // 59 is too low
 
         grade = {
-            score:     61,
+            score:     91,
             comment:   '',
             urlName:   '',
             URL:       '',
@@ -273,7 +274,7 @@ describe("SDMM: SDMMController", () => {
         expect(status.status).to.equal("D2");
 
         let grade: GradePayload = {
-            score:     59,
+            score:     89,
             comment:   '',
             urlName:   '',
             URL:       '',
@@ -285,7 +286,7 @@ describe("SDMM: SDMMController", () => {
         expect(status.status).to.equal("D2"); // 59 is too low
 
         grade = {
-            score:     61,
+            score:     91,
             comment:   '',
             urlName:   '',
             URL:       '',
@@ -431,7 +432,7 @@ describe("SDMM: SDMMController", () => {
         expect(allRepos).to.have.lengthOf(1);
 
         const gradeR: GradePayload = {
-            score:     65,
+            score:     95,
             comment:   'TESTCOMMENT',
             urlName:   'TESTURLNAME',
             URL:       'TESTURL',
@@ -501,7 +502,6 @@ describe("SDMM: SDMMController", () => {
         }
         expect(val).to.not.be.null;
         expect(val.message).to.equal('Username ( asdf32#@@#INVALIDPERSON ) not registered; contact course staff.');
-        // expect(val.message).to.equal('All teammates must have achieved a score of 60% or more to join a team.');
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(0);
@@ -517,7 +517,7 @@ describe("SDMM: SDMMController", () => {
             val = err;
         }
         expect(val).to.not.be.null;
-        expect(val.message).to.equal('All teammates must have achieved a score of 60% or more to join a team.');
+        expect(val.message).to.equal('All teammates must have achieved a score of 90% or more to join a team.');
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(0);
@@ -561,7 +561,7 @@ describe("SDMM: SDMMController", () => {
         let allRepos = await rc.getReposForPerson(pA);
         expect(allRepos).to.have.lengthOf(1);
         let gradeR: GradePayload = {
-            score:     65,
+            score:     95,
             comment:   'TESTCOMMENT',
             urlName:   'TESTURLNAME',
             URL:       'TESTURL',
@@ -583,7 +583,7 @@ describe("SDMM: SDMMController", () => {
         allRepos = await rc.getReposForPerson(pB);
         expect(allRepos).to.have.lengthOf(1);
         gradeR = {
-            score:     70,
+            score:     91,
             comment:   '',
             urlName:   '',
             URL:       '',

@@ -63,7 +63,7 @@ export class SDMMController extends CourseController {
     //     }
     // }
 
-    private GRADE_TO_ADVANCE = 60;
+    private GRADE_TO_ADVANCE = 90;
 
     public static readonly D0 = 'd0';
     public static readonly D1 = 'd1';
@@ -351,7 +351,7 @@ export class SDMMController extends CourseController {
 
             // D0
             if (currentStatus === SDMMStatus[SDMMStatus.D0]) {
-                // if their d0 score >= 60, make them D1UNLOCKED
+                // if their d0 score >= GRADE_TO_ADVANCE, make them D1UNLOCKED
                 const d0Grade = await this.dc.getGrade(personId, "d0");
                 if (d0Grade && d0Grade.score !== null && d0Grade.score >= this.GRADE_TO_ADVANCE) {
                     Log.info("SDMMController::computeStatusString(..) - elevating D0 to D1UNLOCKED");
@@ -401,7 +401,7 @@ export class SDMMController extends CourseController {
 
             // D1
             if (currentStatus === SDMMStatus[SDMMStatus.D1]) {
-                // if their d1 score > 60, make them D2
+                // if their d1 score > GRADE_TO_ADVANCE, make them D2
                 const d1Grade = await this.gc.getGrade(personId, "d1");
                 if (d1Grade && d1Grade.score !== null && d1Grade.score >= this.GRADE_TO_ADVANCE) {
                     Log.info("SDMMController::computeStatusString(..) - elevating D1 to D2");
@@ -421,7 +421,7 @@ export class SDMMController extends CourseController {
 
             // D2
             if (currentStatus === SDMMStatus[SDMMStatus.D2]) {
-                // if their d2 core > 60, make them D3PRE
+                // if their d2 core > GRADE_TO_ADVANCE, make them D3PRE
                 const d2Grade = await this.gc.getGrade(personId, "d2");
                 if (d2Grade && d2Grade.score !== null && d2Grade.score >= this.GRADE_TO_ADVANCE) {
                     Log.info("SDMMController::computeStatusString(..) - elevating D2 to D3PRE");
@@ -717,7 +717,8 @@ export class SDMMController extends CourseController {
                         people.push(person);
                     } else {
                         Log.error("SDMMController::provisionD1Repo(..) - user does not have sufficient grade: " + pid);
-                        throw new Error("All teammates must have achieved a score of 60% or more to join a team.");
+                        throw new Error("All teammates must have achieved a score of " +
+                            this.GRADE_TO_ADVANCE + "% or more to join a team.");
                     }
                 } else {
                     Log.error("SDMMController::provisionD1Repo(..) - unknown user: " + pid);
@@ -733,7 +734,7 @@ export class SDMMController extends CourseController {
 
             // // seems complicated, but we need team names that are unique
             // // but with lots of people signing up at once we can't rely on a counter
-            // // especially since full provisioning will take a long time (e.g., 60+ seconds)
+            // // especially since full provisioning will take a long time (e.g., GRADE_TO_ADVANCE+ seconds)
             // let teamName: string | null = null;
             // while (teamName === null) {
             //     let str = crypto.randomBytes(256).toString('hex');
