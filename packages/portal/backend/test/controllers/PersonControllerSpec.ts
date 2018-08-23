@@ -114,7 +114,7 @@ describe("PersonController", () => {
         person = await pc.getGitHubPerson(Test.ADMIN1.github);
         expect(person).to.not.be.null;
         expect(person.id).to.equal(Test.ADMIN1.github); // admin ids are their github id
-    });
+    }).timeout(Test.TIMEOUT);
 
     it("Should be able to get the repos for a person.", async () => {
 

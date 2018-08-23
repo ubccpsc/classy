@@ -368,7 +368,7 @@ describe("SDMM: SDMMController", () => {
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.be.empty;
-    });
+    }).timeout(Test.TIMEOUT);
 
     it("Should be able to provision a d0 repo for an individual.", async () => {
         const p = data.PERSON2;
@@ -419,7 +419,7 @@ describe("SDMM: SDMMController", () => {
         expect(allTeams).to.have.lengthOf(1);
         expect(allTeams[0].custom.sdmmd0).to.be.true;
         expect(allTeams[0].custom.sdmmd1).to.be.false; // should stay d0
-    });
+    }).timeout(Test.TIMEOUT);
 
     it("Should be able to upgrade a d0 repo for an individual.", async () => {
         Log.test("getting person");
@@ -484,7 +484,7 @@ describe("SDMM: SDMMController", () => {
 
         allRepos = await rc.getReposForPerson(person);
         expect(allRepos).to.have.lengthOf(1); // no new repo
-    });
+    }).timeout(Test.TIMEOUT);
 
     it("Should not be able to form a d1 team if a member does not exist or has insufficient d0 standing.", async () => {
         const person = await pc.getPerson(data.PERSON3.id); // person2; person1 has a d1 repo from previous upgrade
@@ -625,7 +625,7 @@ describe("SDMM: SDMMController", () => {
         expect(payload).to.be.null;
         expect(ex).to.not.be.null;
         expect(ex.message).to.equal('D1 can only be performed by single students or pairs of students.');
-    });
+    }).timeout(Test.TIMEOUT);
 
     it("Should not be able to provision a deliverable (d2) that does not need to be provisioned.", async () => {
         let payload = null;
@@ -638,7 +638,7 @@ describe("SDMM: SDMMController", () => {
         expect(payload).to.be.null;
         expect(ex).to.not.be.null;
         expect(ex.message).to.equal('Repo not needed; contact course staff.');
-    });
+    }).timeout(Test.TIMEOUT);
 
     it("Should create a new unknown person.", async () => {
         const db = DatabaseController.getInstance();
@@ -649,7 +649,7 @@ describe("SDMM: SDMMController", () => {
 
         const newPepople = await db.getPeople();
         expect(oldPeople.length + 1).to.equal(newPepople.length);
-    });
+    }).timeout(Test.TIMEOUT);
 
     // the sdmm code doesn't use computeName yet:
     //
@@ -731,7 +731,7 @@ describe("SDMM: SDMMController", () => {
         grade.timestamp = Date.now();
         save = sc.handleNewAutoTestGrade(deliv, grade, existingGrade);
         expect(save).to.be.true;
-    });
+    }).timeout(Test.TIMEOUT);
 
     it("Should be able to clear state after suite is done.", async function() {
         Log.test("Clearing state");
