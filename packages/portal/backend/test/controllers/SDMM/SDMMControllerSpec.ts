@@ -320,7 +320,7 @@ describe("SDMM: SDMMController", () => {
         }
         expect(val.message).to.not.be.undefined;
         expect(val.message).to.equal('Username ( this is a random name #@ ) not registered; contact course staff.');
-    });
+    }).timeout(Test.TIMEOUT);
 
     /**
      *

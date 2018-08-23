@@ -109,7 +109,9 @@ describe("GitHubController", () => {
         expect(teams.length).to.be.greaterThan(0);
 
         const teamUrl = await gc.getTeamUrl(teams[0]);
-        expect(teamUrl).to.equal('https://github.com/orgs/classytest/teams/TESTteam1');
+        const config = Config.getInstance();
+        const url = config.getProp(ConfigKey.githubHost) + '/orgs/' + config.getProp(ConfigKey.org) + '/teams/' + Test.TEAMNAME1;
+        expect(teamUrl).to.equal(url);
     });
 
     it("Should be able to get a repo url for a valid repo.", async () => {
@@ -117,7 +119,9 @@ describe("GitHubController", () => {
         expect(repos.length).to.be.greaterThan(0);
 
         const repoUrl = await gc.getRepositoryUrl(repos[0]);
-        expect(repoUrl).to.equal('https://github.com/classytest/TESTrepo1');
+        const config = Config.getInstance();
+        const url = config.getProp(ConfigKey.githubHost) + '/' + config.getProp(ConfigKey.org) + '/' + Test.REPONAME1;
+        expect(repoUrl).to.equal(url);
     });
 
     it("Should be able to provision a repo.", async function() {

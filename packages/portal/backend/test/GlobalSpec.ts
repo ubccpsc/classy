@@ -419,19 +419,17 @@ export class Test {
 
     public static readonly INVALIDUSER1 = {id: 'invalidUser1id', csId: 'invalidUser1id', github: 'invalidUser1gh'};
 
-    // public static readonly ADMIN1 = {id: 'ubcbot', csId: 'ubcbot', github: 'ubcbot'};
     public static readonly ADMIN1 = {id: 'classyadmin', csId: 'classyadmin', github: 'classyadmin'};
+    // public static readonly ADMIN1 = {id: 'atest-01', csId: 'atest-01', github: 'atest-01'}; // github-dev.ugrad
     public static readonly STAFF1 = {id: 'classystaff', csId: 'classystaff', github: 'classystaff'};
+    // public static readonly STAFF1 = {id: 'atest-02', csId: 'atest-02', github: 'atest-02'}; // github-dev.ugrad (not provisioned yet)
 
-    // public static readonly USERNAMEADMIN = 'ubcbot'; // should be admin on any test org
-    // public static readonly USERNAMESTAFF = 'ubcbot'; // should be admin on any test org
-    // public static readonly USERNAME1 = 'rthse2'; // real account for testing users
     public static readonly REALUSER1 = {id: 'rthse2', csId: 'rthse2', github: 'rthse2'}; // real account for testing users
-    // public static readonly USERNAME2 = 'user2';
-    // public static readonly USERNAME3 = 'user3';
 
     public static readonly USERNAMEGITHUB1 = "cpscbot";
     public static readonly USERNAMEGITHUB2 = "rthse2";
+    // public static readonly USERNAMEGITHUB1 = "atest-01"; // "cpscbot"; // github-dev.ugrad
+    // public static readonly USERNAMEGITHUB2 = "atest-02"; // "rthse2"; // github-dev.ugrad
     public static readonly USERNAMEGITHUB3 = "ubcbot";
     public static readonly USERNAMEGITHUB4 = "classystaff";
 

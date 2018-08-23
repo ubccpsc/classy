@@ -226,6 +226,7 @@ export class GitHubActions {
 
         // per_page max is 100; 10 is useful for testing pagination though
         const uri = ctx.apiPath + '/orgs/' + ctx.org + '/repos?per_page=' + ctx.PAGE_SIZE;
+        Log.trace("GitHubManager::listRepos(..) - URI: " + uri);
         const options = {
             method:                  'GET',
             uri:                     uri,
@@ -298,6 +299,8 @@ export class GitHubActions {
 
         const fullResponse = await rp(rpOptions as any); // rpOptions is the right type already
 
+        Log.trace("GitHubActions::handlePagination(..) - after initial request");
+
         let raw: any[] = [];
         const paginationPromises: any[] = [];
         if (typeof fullResponse.headers.link !== 'undefined') {
@@ -366,13 +369,15 @@ export class GitHubActions {
         const ctx = this;
         // per_page max is 100; 10 is useful for testing pagination though
         const uri = ctx.apiPath + '/orgs/' + ctx.org + '/teams?per_page=' + ctx.PAGE_SIZE;
+        Log.info("GitHubManager::listTeams(..) - uri: " + uri);
         const options = {
             method:                  'GET',
             uri:                     uri,
             headers:                 {
                 'Authorization': ctx.gitHubAuthToken,
                 'User-Agent':    ctx.gitHubUserName,
-                'Accept':        'application/json'
+                // 'Accept':        'application/json',
+                'Accept':        'application/vnd.github.hellcat-preview+json'
             },
             resolveWithFullResponse: true,
             json:                    true
@@ -511,7 +516,7 @@ export class GitHubActions {
      */
     public addMembersToTeam(teamName: string, githubTeamId: number, members: string[]): Promise<GitTeamTuple> {
         const ctx = this;
-        Log.info("GitHubAction::addMembersToTeam( " + teamName + ", ... ) - start; id: " +
+        Log.info("GitHubAction::addMembersToTeam( " + teamName + ", ..) - start; id: " +
             githubTeamId + "; members: " + JSON.stringify(members));
 
         return new Promise(function(fulfill, reject) {
@@ -521,6 +526,7 @@ export class GitHubActions {
 
                 // PUT /teams/:id/memberships/:username
                 const uri = ctx.apiPath + '/teams/' + githubTeamId + '/memberships/' + member;
+                Log.info("GitHubAction::addMembersToTeam(..) - uri: " + uri);
                 const opts = {
                     method:  'PUT',
                     uri:     uri,
@@ -558,6 +564,7 @@ export class GitHubActions {
         return new Promise(function(fulfill, reject) {
 
             const uri = ctx.apiPath + '/teams/' + teamId + '/repos/' + ctx.org + '/' + repoName;
+            Log.info("GitHubAction::addTeamToRepo(..) - URI: " + uri);
             const options = {
                 method:  'PUT',
                 uri:     uri,
@@ -565,6 +572,7 @@ export class GitHubActions {
                     'Authorization': ctx.gitHubAuthToken,
                     'User-Agent':    ctx.gitHubUserName,
                     'Accept':        'application/json'
+                    // 'Accept':        'application/vnd.github.hellcat-preview+json'
                 },
                 body:    {
                     permission: permission
@@ -613,8 +621,9 @@ export class GitHubActions {
                     fulfill(teamId);
                 }
             }).catch(function(err) {
-                Log.error("GitHubAction::getTeamNumber(..) - could not match team: " + teamName + "; ERROR: " + err);
-                reject(err);
+                Log.warn("GitHubAction::getTeamNumber(..) - could not match team: " + teamName + "; ERROR: " + err);
+                // reject(err);
+                fulfill(-1);
             });
         });
     }
@@ -712,7 +721,11 @@ export class GitHubActions {
         const tempDir = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
         const tempPath = tempDir.path;
         const authedStudentRepo = addGithubAuthToken(studentRepo);
-        const authedImportRepo = addGithubAuthToken(importRepo);
+        let authedImportRepo = addGithubAuthToken(importRepo);
+        if (importRepo === 'https://github.com/SECapstone/capstone' || importRepo === 'https://github.com/SECapstone/bootstrap') {
+            // these are both on public github, so if we're testing a private github instance appending the token will cause these to fail
+            authedImportRepo = importRepo; // HACK: for testing
+        }
 
         if (seedFilePath) {
             const tempDir2 = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
