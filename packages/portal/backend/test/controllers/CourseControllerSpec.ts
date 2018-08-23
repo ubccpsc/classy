@@ -122,7 +122,7 @@ describe("CourseController", () => {
     });
 
     it("Should be able to get a list of results with wildcards.", async () => {
-        const res = await cc.getResults('*', '*');
+        const res = await cc.getResults('any', 'any');
         expect(res).to.be.an('array');
         expect(res.length).to.equal(20);
     });
@@ -135,7 +135,7 @@ describe("CourseController", () => {
 
     it("Should be able to get a list of results with partial wildcards.", async () => {
         // doesn't really work with the result tuples we have...
-        const res = await cc.getResults('*', Test.REPONAME1);
+        const res = await cc.getResults('any', Test.REPONAME1);
         expect(res).to.be.an('array');
         expect(res.length).to.equal(10);
     });

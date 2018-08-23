@@ -299,8 +299,8 @@ export class CourseController implements ICourseController {
             const delivId = result.delivId;
             const repoId = result.input.pushInfo.repoId;
 
-            if ((reqDelivId === '*' || delivId === reqDelivId) &&
-                (reqRepoId === '*' || repoId === reqRepoId) &&
+            if ((reqDelivId === 'any' || delivId === reqDelivId) &&
+                (reqRepoId === 'any' || repoId === reqRepoId) &&
                 results.length <= NUM_RESULTS) {
                 const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
                     Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
