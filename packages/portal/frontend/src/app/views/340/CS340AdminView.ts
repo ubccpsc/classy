@@ -283,7 +283,33 @@ export class CS340AdminView extends AdminView {
         (document.querySelector('#adminDeleteRepositories') as OnsButtonElement).onclick = function (evt) {// DEBUG
             Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');// DEBUG
                                     // DEBUG
-            that.deleteRepoPressed();// DEBUG
+            // UI.notificationConfirm("WARNING: Data is non-recoverable, and will be deleted." + // DEBUG
+            //     " Are you sure you want to do this?", that.deleteRepoPressed); // DEBUG
+            // ons.notification.prompt({message: "WARNING: Data is non-recoverable, and will be deleted." +
+            //         " Are you sure you wish to proceed? Type \"delete\" to continue.", callback: async function(idx) {
+            //     switch(idx) {
+            //         case "delete":
+            //             Log.info("CS340AdminView::handleAdminConfig(..) - proceeded prompt");
+            //             await that.deleteRepoPressed();
+            //             break;
+            //         default:
+            //             Log.info("CS340AdminView::handleAdminConfig(..) - cancelled prompt");
+            //             break;
+            //     }
+            // }});
+
+            ons.notification.confirm({message: "WARNING: Data is non-recoverable, and will be deleted." +
+                    " Are you sure you wish to proceed?", callback: async function(idx) {
+                    switch(idx) {
+                        case 1:
+                            Log.info("CS340AdminView::handleAdminConfig(..) - proceeded prompt");
+                            await that.deleteRepoPressed();
+                            break;
+                        default:
+                            Log.info("CS340AdminView::handleAdminConfig(..) - cancelled prompt");
+                            break;
+                    }
+                }});
         };// DEBUG
 
 
@@ -353,7 +379,7 @@ export class CS340AdminView extends AdminView {
         if(response.status === 200) {
             let responsejson = await response.json();
             // get the textbox
-            switch (responsejson.response.assignStatus) {
+            switch (responsejson.response.assignmentStatus) {
                 case AssignmentStatus.INACTIVE: {
                     statusBox.innerHTML = ": NOT CREATED - " + " Repositories: " +
                         responsejson.response.studentRepos + "/" + responsejson.response.totalStudents;
@@ -378,7 +404,7 @@ export class CS340AdminView extends AdminView {
                     Log.trace('CS340AdminView::checkStatusAndUpdate(..) - error; ' +
                         'deliverable not set up properly');
 
-                    UI.notification("Broken Status; value: " + responsejson.response);
+                    UI.notification("Broken Status; value: " + responsejson.response.assignmentStatus);
                     return null;
                 }
             }
@@ -469,7 +495,6 @@ export class CS340AdminView extends AdminView {
     private async deleteRepoPressed(): Promise<void> {
         Log.warn('CS340AdminView::deleteRepoPressed(..) - start');
         // Log.warn('CS340AdminView::deleteRepoPressed(..) - start');
-
         const delivIDBox = document.querySelector('#adminActionDeliverableID') as HTMLParagraphElement;
         const delivID = delivIDBox.innerHTML;
 
