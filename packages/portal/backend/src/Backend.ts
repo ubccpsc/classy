@@ -21,7 +21,7 @@ export class Backend {
 
         // handle any config changes (specifically dev vs prod)
         if (this.server === null) {
-            this.server = new BackendServer();
+            this.server = new BackendServer(true); // RELEASE: param should be true
         }
 
         return this.server.start().then(function() {

@@ -242,8 +242,8 @@ export class Test {
             id: delivId,
 
             URL:            'http://NOTSET',
-            openTimestamp:  -1,
-            closeTimestamp: -1,
+            openTimestamp:  new Date(1400000000000).getTime(),
+            closeTimestamp: new Date(1500000000000).getTime(),
             gradesReleased: false,
             // delay:          300,
 
@@ -251,8 +251,8 @@ export class Test {
             teamMaxSize:      2,
             teamSameLab:      true,
             teamStudentsForm: true,
-            teamPrefix:       't_' + delivId + '_',
-            repoPrefix:       delivId + '_',
+            teamPrefix:       't_' + delivId, // + '_',
+            repoPrefix:       delivId, // + '_',
             // bootstrapUrl:     '',
 
             visibleToStudents: true,
@@ -270,6 +270,20 @@ export class Test {
         };
 
         return d;
+    }
+
+    public static createGrade(personId: string, delivId: string, score: number): Grade {
+        const grade: Grade = {
+            personId,
+            delivId,
+            score,
+            comment:   'comment',
+            timestamp: Date.now(),
+            urlName:   'name',
+            URL:       'URL',
+            custom:    {}
+        };
+        return grade;
     }
 
     public static createPerson(id: string, csId: string, githubId: string, kind: string | null): Person {

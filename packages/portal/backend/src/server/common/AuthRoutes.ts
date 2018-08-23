@@ -261,6 +261,8 @@ export class AuthRoutes implements IREST {
                 'User-Agent':    'Portal',
                 'Authorization': 'token ' + token
             }
+            // rejectUnauthorized: false,
+            // insecure:           true
         };
 
         // this extra check isn't strictly required, but means we can
