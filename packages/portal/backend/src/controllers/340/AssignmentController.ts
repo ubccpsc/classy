@@ -1055,8 +1055,9 @@ export class AssignmentController {
             let subQuestions: SubQuestionGrade[] = [];
             for (const rubricSubQuestion of rubricQuestion.subQuestions) {
                 let newSubQuestion: SubQuestionGrade = {
-                  sectionName: rubricSubQuestion.name,
+                    sectionName: rubricSubQuestion.name,
                     grade:0,
+                    graded: false,
                     feedback: ""
                 };
 

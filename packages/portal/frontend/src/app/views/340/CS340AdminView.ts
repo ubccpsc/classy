@@ -29,6 +29,7 @@ const ERROR_INVALID_INPUT: string = "invalid input";
 const ERROR_NON_NUMERICAL_GRADE: string = "non-numerical grade entered";
 const ERROR_NULL_RUBRIC: string = "null rubric-data";
 const ERROR_MALFORMED_PAGE: string = "malformed page with info elements";
+const WARN_EMPTY_FIELD: string = "empty field";
 
 export class CS340AdminView extends AdminView {
 
@@ -645,6 +646,28 @@ export class CS340AdminView extends AdminView {
         return maxGrade;
     }
 
+    private checkIfCompletelyGraded(gradeRecord: Grade): boolean {
+        if(gradeRecord === null) {
+            return false;
+        }
+
+        let assignRecord: AssignmentGrade = gradeRecord.custom;
+
+        if (assignRecord !== null) {
+            if(typeof assignRecord.questions !== 'undefined') {
+                for(const question of assignRecord.questions) {
+                    for(const subQuestion of question.subQuestion) {
+                        if(!subQuestion.graded) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     public async renderStudentGradesDeliverable(delivId: string, hiddenNames: boolean = false) {
         Log.info("CS340AdminView::renderStudentGradeDeliverable( " + delivId + " ) - start");
@@ -830,7 +853,14 @@ export class CS340AdminView extends AdminView {
 
             newRow.push(repoEntry);
 
-            if(typeof gradeMapping[studentId] !== 'undefined') {
+            let completelyGraded: boolean;
+            if(typeof gradeMapping[studentId] === 'undefined') {
+                completelyGraded = false;
+            } else {
+                completelyGraded = this.checkIfCompletelyGraded(gradeMapping[studentId]);
+            }
+
+            if(typeof gradeMapping[studentId] !== 'undefined' && completelyGraded) {
                 // we have a grade for this team
                 newEntry = {
                     value: gradeMapping[studentId].score,
@@ -950,7 +980,21 @@ export class CS340AdminView extends AdminView {
                 let foundGrade = false;
                 if(typeof gradeMapping[student.id] === "undefined") gradeMapping[student.id] = {};
                 if(typeof gradeMapping[student.id][delivCol.id] !== "undefined") foundGrade = true;
-                if(foundGrade) {
+
+
+                // let completelyGraded:boolean = this.checkIfCompletelyGraded(gradeMapping[student.id][delivCol.id]);
+
+                let completelyGraded: boolean;
+                if(typeof gradeMapping[student.id] === 'undefined' ||
+                    typeof gradeMapping[student.id][delivCol.id] === 'undefined' ) {
+                    completelyGraded = false;
+                } else {
+                    completelyGraded = this.checkIfCompletelyGraded(gradeMapping[student.id][delivCol.id]);
+                }
+
+
+
+                if(foundGrade && completelyGraded) {
                     let newEntry = {
 
                         value: gradeMapping[student.githubId][delivCol.id].score,
@@ -1123,7 +1167,7 @@ export class CS340AdminView extends AdminView {
                 // Create the grade input element
                 let gradeInputElement = document.createElement("ons-input");
                 gradeInputElement.setAttribute("type", "number");
-                if(previousSubmission === null) {
+                if(previousSubmission === null || !previousSubmission.questions[i].subQuestion[j].graded) {
                     gradeInputElement.setAttribute("placeHolder", subQuestion.name);
                 } else {
                     gradeInputElement.setAttribute("placeHolder",
@@ -1183,7 +1227,8 @@ export class CS340AdminView extends AdminView {
     public async submitGrade(): Promise<AssignmentGrade|null> {
         let errorStatus = false;
         let warnStatus = false;
-        let errorComment: String = "";
+        let warnComment: string = "";
+        let errorComment: string = "";
         let questionArray : QuestionGrade[] = [];
         let questionBoxes = document.getElementsByClassName("questionBox");
 
@@ -1225,6 +1270,7 @@ export class CS340AdminView extends AdminView {
 
                 // Retrieve the value inputted into the form field
                 let gradeValue = parseFloat(gradeInputElement.value);
+                let graded = true;
 
                 // If the value is not found, set it to a default empty string
                 if (rubricType === null) {
@@ -1234,8 +1280,16 @@ export class CS340AdminView extends AdminView {
                     continue;
                 }
 
+                if (gradeInputElement.value === "") {
+                    gradeValue = 0;
+                    if(!warnStatus) warnComment = WARN_EMPTY_FIELD;
+                    warnStatus = true;
+                    graded = false;
+                    errorElement.innerHTML = "Warning: Input field is empty";
+                }
+
                 // If the grade value retrieved is not a number, default the value to 0
-                if (isNaN(gradeValue)) {
+                if (gradeInputElement.value !== "" && isNaN(gradeValue)) {
                     gradeValue = 0;
                     if(!errorStatus) errorComment = ERROR_NON_NUMERICAL_GRADE;
                     errorStatus = true;
@@ -1253,6 +1307,7 @@ export class CS340AdminView extends AdminView {
                 let newSubGrade : SubQuestionGrade = {
                     sectionName: rubricType,
                     grade: gradeValue,
+                    graded: graded,
                     feedback: responseBoxElement.value
                 };
 
@@ -1314,13 +1369,81 @@ export class CS340AdminView extends AdminView {
             targetStudentIds.push(sid);
         }
 
+        // let quit = false;
+        // if(warnStatus) {
+        //     if(warnComment === WARN_EMPTY_FIELD && !confirm("Warning: Some fields are blank. Do you wish to continue" +
+        //         " and submit the grade as is?")) {
+        //         Log.warn("CS340View::submitGrade() - Missing fields; user cancelled save");
+        //         quit = true;
+        //         // return null;
+        //     }
+        // }
 
-        UI.showModal("Submitting grade, please wait...");
+        // if(quit) return ({
+        //     assignmentID: aid,
+        //     studentID: targetStudentIds[0],
+        //     released: false,
+        //     questions: questionArray
+        // } as AssignmentGrade);
 
-        let newAssignmentGrade : AssignmentGrade;
-        for(const personId of targetStudentIds) {
+        // UI.showModal("Submitting grade, please wait...");
+        //
+        // let newAssignmentGrade : AssignmentGrade;
+        // for(const personId of targetStudentIds) {
+        //     // create a new grade
+        //     newAssignmentGrade = {
+        //         assignmentID: aid,
+        //         studentID: personId,
+        //         released: false,
+        //         questions: questionArray
+        //     };
+        //
+        //     const url = this.remote + '/portal/cs340/setAssignmentGrade';
+        //     Log.info("CS340View::submitGrade() - uri: " + url);
+        //
+        //     // Call the function
+        //     let options: any = AdminView.getOptions();
+        //
+        //     options.method = 'put';
+        //     options.headers.Accept = 'application/json';
+        //     options.json = true;
+        //     options.body = JSON.stringify(newAssignmentGrade);
+        //
+        //     Log.info("CS340View::submitGrade() - request body: " + options.body);
+        //
+        //     let response = await fetch(url, options);
+        //
+        //     Log.info("CS340View::submitGrade() - response from api " + response);
+        //     if(response.status !== 200) {
+        //         const errResponse = await response.json();
+        //         Log.info("CS340AdminView::submitGrade() - error submitting grades, code: " +
+        //             response.status + " error: " + response.statusText);
+        //         // alert(errResponse.error);
+        //         UI.showAlert(errResponse.error);
+        //         UI.hideModal();
+        //         return null;
+        //     }
+        // }
+        //
+        // UI.hideModal();
+
+        let savingSuccess = await this.submitGradeRecord(aid, targetStudentIds, questionArray);
+        if(savingSuccess) {
+            UI.popPage();
+            return null;
+        } else {
+            return null;
+        }
+    }
+
+    public async submitGradeRecord(aid: string, personIds: string[], questionArray: QuestionGrade[]): Promise<boolean> {
+        Log.info("CS340AdminView::submitGradeRecord(..) - start");
+        let allPromises: Promise<any>[] = [];
+        UI.showModal("Submitting grade(s), please wait...");
+
+        for(const personId of personIds) {
             // create a new grade
-            newAssignmentGrade = {
+            let newAssignmentGrade: AssignmentGrade = {
                 assignmentID: aid,
                 studentID: personId,
                 released: false,
@@ -1340,8 +1463,12 @@ export class CS340AdminView extends AdminView {
 
             Log.info("CS340View::submitGrade() - request body: " + options.body);
 
-            let response = await fetch(url, options);
+            allPromises.push(fetch(url, options));
+        }
 
+        let resultArray = await Promise.all(allPromises);
+
+        for(const response of resultArray) {
             Log.info("CS340View::submitGrade() - response from api " + response);
             if(response.status !== 200) {
                 const errResponse = await response.json();
@@ -1350,14 +1477,13 @@ export class CS340AdminView extends AdminView {
                 // alert(errResponse.error);
                 UI.showAlert(errResponse.error);
                 UI.hideModal();
-                return null;
+                return false;
             }
         }
-
         UI.hideModal();
-        UI.popPage();
+        Log.info("CS340AdminView::submitGradeRecord(..) - end");
 
-        return newAssignmentGrade;
+        return true;
     }
 
     public async getStudentGrade(sid: string, aid: string): Promise<AssignmentGrade | null> {

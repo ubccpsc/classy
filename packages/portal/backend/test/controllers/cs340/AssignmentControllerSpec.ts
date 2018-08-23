@@ -136,11 +136,13 @@ describe("CS340: AssignmentController", () => {
                         {
                             sectionName: "code",
                             grade:       4,
+                            graded:      true,
                             feedback:    "Good job!"
                         },
                         {
                             sectionName: "reasoning",
                             grade:       5,
+                            graded:      true,
                             feedback:    ""
                         }
                     ]
@@ -152,6 +154,7 @@ describe("CS340: AssignmentController", () => {
                         {
                             sectionName: "code",
                             grade:       2,
+                            graded:      true,
                             feedback:    "Improper implementation"
                         }
                     ]
@@ -195,6 +198,7 @@ describe("CS340: AssignmentController", () => {
                         {
                             sectionName: "code",
                             grade:       3,
+                            graded:      true,
                             feedback:    ""
                         }
                     ]
@@ -206,6 +210,7 @@ describe("CS340: AssignmentController", () => {
                         {
                             sectionName: "code",
                             grade:       5,
+                            graded:      true,
                             feedback:    "Nice job"
                         }
                     ]
@@ -239,26 +244,31 @@ describe("CS340: AssignmentController", () => {
                         {
                             sectionName: "code",
                             grade:       3,
+                            graded:      true,
                             feedback:    ""
                         },
                         {
                             sectionName: "writing",
                             grade:       1,
+                            graded:      true,
                             feedback:    ""
                         },
                         {
                             sectionName: "logic",
                             grade:       10,
+                            graded:      true,
                             feedback:    ""
                         },
                         {
                             sectionName: "quality",
                             grade:       6,
+                            graded:      true,
                             feedback:    ""
                         },
                         {
                             sectionName: "grammar",
                             grade:       6,
+                            graded:      true,
                             feedback:    ""
                         }
                     ]
@@ -270,6 +280,7 @@ describe("CS340: AssignmentController", () => {
                         {
                             sectionName: "code",
                             grade:       5,
+                            graded:      true,
                             feedback:    "Nice job"
                         }
                     ]
@@ -502,6 +513,7 @@ describe("CS340: AssignmentController", () => {
                             {
                                 sectionName: "rubric",
                                 grade: 3,
+                                graded: true,
                                 feedback: "mistakes were made",
                             }
                         ]
@@ -513,6 +525,7 @@ describe("CS340: AssignmentController", () => {
                             {
                                 sectionName: "code quality",
                                 grade: 6,
+                                graded: true,
                                 feedback: "good job!",
                             }
                         ]

@@ -24,6 +24,7 @@ export interface QuestionGrade {
 export interface SubQuestionGrade {
     sectionName: string;
     grade: number;
+    graded: boolean;
     feedback: string;
 }
 
