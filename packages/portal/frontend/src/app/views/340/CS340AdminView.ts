@@ -283,33 +283,20 @@ export class CS340AdminView extends AdminView {
         (document.querySelector('#adminDeleteRepositories') as OnsButtonElement).onclick = function (evt) {// DEBUG
             Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');// DEBUG
                                     // DEBUG
-            // UI.notificationConfirm("WARNING: Data is non-recoverable, and will be deleted." + // DEBUG
-            //     " Are you sure you want to do this?", that.deleteRepoPressed); // DEBUG
-            // ons.notification.prompt({message: "WARNING: Data is non-recoverable, and will be deleted." +
-            //         " Are you sure you wish to proceed? Type \"delete\" to continue.", callback: async function(idx) {
-            //     switch(idx) {
-            //         case "delete":
-            //             Log.info("CS340AdminView::handleAdminConfig(..) - proceeded prompt");
-            //             await that.deleteRepoPressed();
-            //             break;
-            //         default:
-            //             Log.info("CS340AdminView::handleAdminConfig(..) - cancelled prompt");
-            //             break;
-            //     }
-            // }});
 
-            ons.notification.confirm({message: "WARNING: Data is non-recoverable, and will be deleted." +
-                    " Are you sure you wish to proceed?", callback: async function(idx) {
-                    switch(idx) {
-                        case 1:
-                            Log.info("CS340AdminView::handleAdminConfig(..) - proceeded prompt");
-                            await that.deleteRepoPressed();
-                            break;
-                        default:
-                            Log.info("CS340AdminView::handleAdminConfig(..) - cancelled prompt");
-                            break;
-                    }
-                }});
+            UI.notificationConfirm("WARNING: Data will be deleted, and is non-recoverable." +
+                " Are you sure you wish to proceed?", async function(idx: number) {
+                switch(idx) {
+                    case 1:
+                        Log.info("CS340AdminView::handleAdminConfig(..) - proceeded prompt");
+                        await that.deleteRepoPressed();
+                        break;
+                    default:
+                        Log.info("CS340AdminView::handleAdminConfig(..) - cancelled prompt");
+                        break;
+                }
+            });
+
         };// DEBUG
 
 
@@ -807,7 +794,7 @@ export class CS340AdminView extends AdminView {
         const st = new SortableTable(tableHeaders, "#gradesListTable");
 
         // for every team, create a new row
-        for(const teamTransport of teamsTransport) {
+        for(const teamTransport of filteredTeams) {
             let newRow: TableCell[] = [];
             for(const personId of teamTransport.people) {
                 newRow.push({value: personId, html: personId});
@@ -1061,12 +1048,12 @@ export class CS340AdminView extends AdminView {
 
         let previousSubmission = await this.getStudentGrade(sid, delivId);
 
-        let assignmentInfoElement = document.getElementById('assignmentInfoSection');
-        let gradingSectionElement = document.getElementById('gradingSection');
+        let assignmentInfoElement   = document.getElementById('assignmentInfoSection');
+        let gradingSectionElement   = document.getElementById('gradingSection');
 
-        let assignmentInfoList  = document.createElement("div");
-        let assignmentIDBox     = document.getElementById("aidBox");
-        let studentIDBox        = document.getElementById("sidBox");
+        let assignmentInfoList      = document.createElement("div");
+        let assignmentIDBox         = document.getElementById("aidBox");
+        let studentIDBox            = document.getElementById("sidBox");
 
         if(isTeam) {
             let teamIndicator: HTMLParagraphElement = document.createElement("p");
@@ -1141,6 +1128,7 @@ export class CS340AdminView extends AdminView {
                 } else {
                     gradeInputElement.setAttribute("placeHolder",
                         previousSubmission.questions[i].subQuestion[j].grade.toString());
+                    (gradeInputElement as OnsInputElement).value = previousSubmission.questions[i].subQuestion[j].grade.toString();
                 }
                 gradeInputElement.setAttribute("data-type", subQuestion.name);
                 gradeInputElement.setAttribute("modifier", "underbar");
@@ -1194,6 +1182,7 @@ export class CS340AdminView extends AdminView {
 
     public async submitGrade(): Promise<AssignmentGrade|null> {
         let errorStatus = false;
+        let warnStatus = false;
         let errorComment: String = "";
         let questionArray : QuestionGrade[] = [];
         let questionBoxes = document.getElementsByClassName("questionBox");
