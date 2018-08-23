@@ -507,8 +507,8 @@ export class Test {
     public static readonly REALTOKEN = 'realtoken';
     public static readonly FAKETOKEN = 'faketoken';
 
-    public static readonly ASSIGNTEAMNAME0 = Test.ASSIGNID0 + Test.REALUSER1.id;
-    public static readonly ASSIGNTEAMNAME1 = Test.ASSIGNID1 + Test.REALUSER1.id;
+    public static readonly ASSIGNTEAMNAME0 = Test.ASSIGNID0 + "_" + Test.REALUSER1.id;
+    public static readonly ASSIGNTEAMNAME1 = Test.ASSIGNID1 + "_" + Test.REALUSER1.id;
 
     public static getDeliverable(delivId: string): Deliverable {
         const deliv: Deliverable = {
