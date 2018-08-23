@@ -5,6 +5,7 @@ import Log from "../../../../common/Log";
 import {AutoTestGradeTransport, GradeTransport, StudentTransport, TeamTransport} from "../../../../common/types/PortalTypes";
 
 import {CourseController} from "../../src/controllers/CourseController";
+import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {GitHubController} from "../../src/controllers/GitHubController";
 // import {TestGitHubController} from "../../src/controllers/GitHubController";
 import {GradesController} from "../../src/controllers/GradesController";
@@ -32,12 +33,6 @@ describe("CourseController", () => {
 
     before(async () => {
         await Test.suiteBefore('CourseController');
-        // await Test.preparePeople();
-        // await Test.prepareAuth();
-        // await Test.prepareDeliverables();
-        // await Test.prepareTeams();
-        // await Test.prepareRepositories();
-        // await Test.prepareGrades();
         await Test.prepareAll();
     });
 
@@ -127,7 +122,7 @@ describe("CourseController", () => {
     });
 
     it("Should be able to get a list of results with wildcards.", async () => {
-        const res = await cc.getResults('*', '*');
+        const res = await cc.getResults('any', 'any');
         expect(res).to.be.an('array');
         expect(res.length).to.equal(20);
     });
@@ -140,7 +135,7 @@ describe("CourseController", () => {
 
     it("Should be able to get a list of results with partial wildcards.", async () => {
         // doesn't really work with the result tuples we have...
-        const res = await cc.getResults('*', Test.REPONAME1);
+        const res = await cc.getResults('any', Test.REPONAME1);
         expect(res).to.be.an('array');
         expect(res.length).to.equal(10);
     });
@@ -271,6 +266,30 @@ describe("CourseController", () => {
         res = CourseController.validateCourseTransport(course);
         expect(res).to.not.be.null;
         expect(res).to.be.an('string');
+    });
+
+    it("Should be able to compute a team and repo name.", async () => {
+        const db = DatabaseController.getInstance();
+
+        const deliv = await db.getDeliverable(Test.DELIVID0);
+        const p1 = await db.getPerson(Test.USER1.id);
+        const p2 = await db.getPerson(Test.USER2.id);
+
+        let res = await cc.computeNames(deliv, [p1, p2]);
+
+        expect(res.teamName).to.equal('t_d0_0');
+        expect(res.repoName).to.equal('d0_0');
+
+        // make those teams
+        const t = await Test.createTeam(res.teamName, deliv.id, []);
+        db.writeTeam(t);
+        const r = await Test.createRepository(res.repoName, res.teamName);
+        db.writeRepository(r);
+
+        // make sure the bar has been raised
+        res = await cc.computeNames(deliv, [p1, p2]);
+        expect(res.teamName).to.equal('t_d0_1');
+        expect(res.repoName).to.equal('d0_1');
     });
 
 });

@@ -123,7 +123,10 @@ export class UI {
                         t.innerHTML = text;
                     }
                 }
-                m.show({animation: 'fade'});
+                if (m.visible === false) {
+                    // don't show a modal if it is already visible (causes flicker from the animation)
+                    m.show({animation: 'fade'});
+                }
             } else {
                 Log.error('UI::showModal(..) - Modal is null');
             }

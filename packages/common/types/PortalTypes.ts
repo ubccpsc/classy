@@ -30,6 +30,7 @@ export interface ConfigTransportPayload {
 export interface ConfigTransport {
     org: string;
     name: string;
+    githubAPI: string;
 }
 
 export interface CourseTransportPayload {

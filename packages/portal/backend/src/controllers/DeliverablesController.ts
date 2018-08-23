@@ -26,12 +26,12 @@ export class DeliverablesController {
         Log.info("DeliverableController::saveDeliverable( " + JSON.stringify(deliv) + " ) - start");
 
         // enforce deliverable prefix constraints
-        if (deliv.teamPrefix === '') {
-            deliv.teamPrefix = 't_' + deliv.id;
-        }
-        if (deliv.repoPrefix === '') {
-            deliv.repoPrefix = deliv.id;
-        }
+        // if (deliv.teamPrefix === '') {
+        //     deliv.teamPrefix = 't_' + deliv.id;
+        // }
+        // if (deliv.repoPrefix === '') {
+        //     deliv.repoPrefix = deliv.id;
+        // }
 
         // enforce minimum time constraints; the AutoTest infrastructure is resource constrained
         // this prevents students from hammering against the service and causing it to become overloaded

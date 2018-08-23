@@ -94,8 +94,8 @@ describe("DeliverablesController", () => {
         let deliv = await dc.getDeliverable(Test.DELIVID1);
         expect(deliv).to.not.be.null;
 
-        deliv.repoPrefix = '';
-        deliv.teamPrefix = '';
+        // deliv.repoPrefix = '';
+        // deliv.teamPrefix = '';
         deliv.autotest.studentDelay = 60; // 1 minute
 
         const valid = await dc.saveDeliverable(deliv);
@@ -103,8 +103,8 @@ describe("DeliverablesController", () => {
 
         deliv = await dc.getDeliverable(Test.DELIVID1);
         expect(deliv).to.not.be.null;
-        expect(deliv.repoPrefix).to.equal(Test.DELIVID1);
-        expect(deliv.teamPrefix).to.equal('t_' + Test.DELIVID1);
+        // expect(deliv.repoPrefix).to.equal(Test.DELIVID1);
+        // expect(deliv.teamPrefix).to.equal('t_' + Test.DELIVID1); // disable this prefix
         expect(deliv.autotest.studentDelay).to.be.greaterThan(120);
     });
 });

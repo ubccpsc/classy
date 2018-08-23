@@ -207,7 +207,8 @@ export class GitHubController implements IGitHubController {
                 Log.trace('GitHubController::provisionRepository(..) - repo exists: ' + repoVal);
                 if (repoVal === true) {
                     // this is fatal, we can't provision a repo that already exists
-                    Log.error("GitHubController::provisionRepository() - repo already exists on GitHub; provisioning failed");
+                    Log.error("GitHubController::provisionRepository() - repo already exists on GitHub ( " +
+                        repoName + " ); provisioning failed");
                     return false;
                 }
             } catch (err) {

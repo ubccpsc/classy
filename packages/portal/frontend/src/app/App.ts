@@ -20,6 +20,7 @@ export class App {
     private view: IView = null;
 
     private validated = false;
+    private config: ConfigTransport = null;
 
     constructor() {
         Log.trace('App::<init> - start');
@@ -50,7 +51,7 @@ export class App {
         const that = this;
 
         // before anything else happens, get the org associated with the backend
-        await this.retrieveConfig();
+        this.config = await this.retrieveConfig();
 
         const validated = await that.validateCredentials();
         this.validated = validated;
@@ -291,7 +292,8 @@ export class App {
      */
     private getGithubCredentials(token: string): Promise<string | null> {
         Log.trace("App::getGithubCredentials(..) - start");
-        return fetch('https://api.github.com/user', { // HARDCODE: API Server must not be here
+
+        return fetch(this.config.githubAPI + '/user', {
             headers: {
                 'Content-Type':  'application/json',
                 'Authorization': 'token ' + token
@@ -384,11 +386,11 @@ export class App {
                 return json.success;
             } else {
                 Log.error('App::retrieveConfig() - failed: ' + JSON.stringify(json) + ')');
-                return {org: 'ERROR', name: 'ERROR'};
+                return {org: 'ERROR', name: 'ERROR', githubAPI: null};
             }
         } else {
             Log.error('App::retrieveConfig() - ERROR');
-            return {org: 'ERROR', name: 'ERROR'};
+            return {org: 'ERROR', name: 'ERROR', githubAPI: null};
         }
     }
 

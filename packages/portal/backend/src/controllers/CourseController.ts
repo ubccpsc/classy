@@ -59,6 +59,17 @@ export interface ICourseController {
      */
     handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): boolean;
 
+    /**
+     * Determine how to name teams and repos for a deliverable. Should only be called
+     * before the team or repo is provisioned. Courses should be careful about how they
+     * call this. e.g., some courses use team_1, team_2 which will require the team to
+     * be created after a call and before computeNames is called again.
+     *
+     * @param {Deliverable} deliv
+     * @param {Person[]} people
+     * @returns {{teamName: string | null; repoName: string | null}}
+     */
+    computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}>;
 }
 
 export class CourseController implements ICourseController {
@@ -288,8 +299,8 @@ export class CourseController implements ICourseController {
             const delivId = result.delivId;
             const repoId = result.input.pushInfo.repoId;
 
-            if ((reqDelivId === '*' || delivId === reqDelivId) &&
-                (reqRepoId === '*' || repoId === reqRepoId) &&
+            if ((reqDelivId === 'any' || delivId === reqDelivId) &&
+                (reqRepoId === 'any' || repoId === reqRepoId) &&
                 results.length <= NUM_RESULTS) {
                 const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
                     Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
@@ -390,4 +401,36 @@ export class CourseController implements ICourseController {
 
         return null;
     }
+
+    public async computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}> {
+        Log.info("CourseController::computeNames(..) - start; # people: " + people.length);
+        const repos = await this.dc.getRepositories();
+
+        // the repo name and the team name should be the same, so just use the repo name
+        let repoCount = 0;
+        for (const repo of repos) {
+            if (repo.id.startsWith(deliv.repoPrefix)) {
+                repoCount++;
+            }
+        }
+        let repoName = '';
+        let teamName = '';
+
+        let ready = false;
+        while (!ready) {
+            repoName = deliv.repoPrefix + '_' + repoCount;
+            teamName = deliv.teamPrefix + '_' + repoCount;
+            const r = await this.dc.getRepository(repoName);
+            const t = await this.dc.getTeam(teamName);
+            if (r === null && t === null) {
+                ready = true;
+            } else {
+                Log.warn("CourseController::computeNames(..) - name not available; r: " + repoName + "; t: " + teamName);
+                repoCount++; // try the next one
+            }
+        }
+        Log.info("CourseController::computeNames(..) - done; r: " + repoName + "; t: " + teamName);
+        return {teamName: teamName, repoName: repoName};
+    }
+
 }

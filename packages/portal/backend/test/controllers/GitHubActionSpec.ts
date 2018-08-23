@@ -159,7 +159,7 @@ describe("GitHubActions", () => {
 
     it("Should be able to create a team, add users to it, and add it to the repo.", async function() {
         const val = await gh.createTeam(TEAMNAME, 'push');
-        Log.test("Team details: " + JSON.stringify(val));
+        Log.test("Team created; details: " + JSON.stringify(val));
         expect(val.teamName).to.equal(TEAMNAME);
         expect(val.githubTeamNumber).to.be.an('number');
         expect(val.githubTeamNumber > 0).to.be.true;
@@ -167,13 +167,17 @@ describe("GitHubActions", () => {
         const addMembers = await gh.addMembersToTeam(val.teamName, val.githubTeamNumber,
             [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
         expect(addMembers.teamName).to.equal(TEAMNAME); // not a strong test
+        Log.test("Members added");
 
         const teamAdd = await gh.addTeamToRepo(val.githubTeamNumber, REPONAME, 'push');
         expect(teamAdd.githubTeamNumber).to.equal(val.githubTeamNumber);
+        Log.test("Team added to repo");
 
         const staffTeamNumber = await gh.getTeamNumber('staff');
+        Log.test("Team staff number: " + staffTeamNumber);
         const staffAdd = await gh.addTeamToRepo(staffTeamNumber, REPONAME, 'admin');
         expect(staffAdd.githubTeamNumber).to.equal(staffTeamNumber);
+        Log.test("Team staff added to repo");
 
     }).timeout(TIMEOUT);
 
@@ -198,7 +202,7 @@ describe("GitHubActions", () => {
         const val = await gh.getTeamMembers(teamnum);
         Log.test('# Team members: ' + val.length);
         expect(val.length).to.be.greaterThan(0);
-        expect(val).to.contain('rtholmes');
+        expect(val).to.contain(Test.ADMIN1.github);
     }).timeout(TIMEOUT);
 
     it("Should be able to create many teams and get their numbers (tests team paging).", async function() {
