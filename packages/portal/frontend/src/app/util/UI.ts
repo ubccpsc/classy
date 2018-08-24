@@ -61,6 +61,10 @@ export class UI {
         ons.notification.confirm({message: note, callback});
     }
 
+    public static notificationToast(note: string, time: number=2000) {
+        ons.notification.toast({message: note, timeout: time});
+    }
+
     public static handleError(err: Error) {
         if (err instanceof Error) {
             ons.notification.alert(err.message);

@@ -346,24 +346,34 @@ export class Test {
         const newAssignmentInfo: AssignmentInfo = {
             seedRepoURL:  "https://github.com/SECapstone/capstone",
             seedRepoPath: "",
+            mainFilePath: "",
             status:       newAssignmentStatus,
             rubric:       newAssignmentGradingRubric,
             repositories: []
         };
 
+        let openDate: Date = new Date();
+        openDate.setHours(openDate.getHours() + 4);
+
+        let closeDate: Date = new Date();
+        closeDate.setDate(closeDate.getDate() + 4);
+
+        let openNumber  : number = Date.parse(openDate.toISOString());
+        let closeNumber : number = Date.parse(closeDate.toISOString());
+
         const newDeliv: Deliverable = {
-            id:                Test.ASSIGNID0,
-            URL:               "",
-            repoPrefix:        Test.ASSIGNID0 + "_",
-            openTimestamp:     -1,
-            closeTimestamp:    -2,
-            gradesReleased:    false,
-            teamMinSize:       1,
-            teamMaxSize:       1,
-            teamSameLab:       false,
-            teamStudentsForm:  false,
-            teamPrefix:        Test.ASSIGNID0 + "_",
-            autotest:          {
+            id:               Test.ASSIGNID0,
+            URL:              "",
+            repoPrefix:       Test.ASSIGNID0 + "_",
+            openTimestamp:    openNumber,
+            closeTimestamp:   closeNumber,
+            gradesReleased:   false,
+            teamMinSize:      1,
+            teamMaxSize:      1,
+            teamSameLab:      false,
+            teamStudentsForm: false,
+            teamPrefix:       Test.ASSIGNID0 + "_",
+            autotest:         {
                 dockerImage:        'testImage',
                 studentDelay:       60 * 60 * 12, // 12h
                 maxExecTime:        300,
@@ -378,6 +388,67 @@ export class Test {
 
         // const newDelivSuccess =
         await dc.saveDeliverable(newDeliv);
+
+        await this.createTeam(this.ASSIGNTEAMNAME0, Test.ASSIGNID0, [Test.REALUSER1.id]);
+    }
+
+    public static async prepareAssignment2() {
+        const dc: DeliverablesController = new DeliverablesController();
+
+        const newAssignmentStatus: AssignmentStatus = AssignmentStatus.INACTIVE;
+
+        const newAssignmentGradingRubric: AssignmentGradingRubric = {
+            name:      Test.ASSIGNID1,
+            comment:   "test assignment2",
+            questions: []
+        };
+
+        const newAssignmentInfo: AssignmentInfo = {
+            seedRepoURL:  "https://github.com/CPSC340/test_repository",
+            seedRepoPath: "labs/lab2/*",
+            mainFilePath: "labs/lab2/a2.tex",
+            status:       newAssignmentStatus,
+            rubric:       newAssignmentGradingRubric,
+            repositories: []
+        };
+
+        let openDate: Date = new Date();
+        openDate.setHours(openDate.getHours() + 4);
+
+        let closeDate: Date = new Date();
+        closeDate.setDate(closeDate.getDate() + 4);
+
+        let openNumber  : number = Date.parse(openDate.toISOString());
+        let closeNumber : number = Date.parse(closeDate.toISOString());
+
+        const newDeliv: Deliverable = {
+            id:               Test.ASSIGNID1,
+            URL:              "",
+            repoPrefix:       Test.ASSIGNID1 + "_",
+            visibleToStudents:false,
+            rubric:           {},
+            openTimestamp:    openNumber,
+            closeTimestamp:   closeNumber,
+            gradesReleased:   false,
+            teamMinSize:      1,
+            teamMaxSize:      1,
+            teamSameLab:      false,
+            teamStudentsForm: false,
+            teamPrefix:       Test.ASSIGNID1 + "_",
+            autotest:         {
+                dockerImage:        'testImage',
+                studentDelay:       60 * 60 * 12, // 12h
+                maxExecTime:        300,
+                regressionDelivIds: [],
+                custom:             {}
+            },
+            custom:           newAssignmentInfo
+        };
+
+        // const newDelivSuccess =
+        await dc.saveDeliverable(newDeliv);
+
+        await this.createTeam(Test.ASSIGNTEAMNAME1, Test.ASSIGNID1, [Test.REALUSER1.id]);
     }
 
     // public static testBefore() {
@@ -439,6 +510,7 @@ export class Test {
     public static readonly DELIVID2 = 'd2';
     public static readonly DELIVID3 = 'd3';
     public static readonly ASSIGNID0 = 'a0';
+    public static readonly ASSIGNID1 = 'a1';
 
     public static readonly REPONAME1 = 'TESTrepo1';
     public static readonly REPONAME2 = 'TESTrepo2';
@@ -446,6 +518,9 @@ export class Test {
 
     public static readonly REALTOKEN = 'realtoken';
     public static readonly FAKETOKEN = 'faketoken';
+
+    public static readonly ASSIGNTEAMNAME0 = Test.ASSIGNID0 + "_" + Test.REALUSER1.id;
+    public static readonly ASSIGNTEAMNAME1 = Test.ASSIGNID1 + "_" + Test.REALUSER1.id;
 
     public static getDeliverable(delivId: string): Deliverable {
         const deliv: Deliverable = {

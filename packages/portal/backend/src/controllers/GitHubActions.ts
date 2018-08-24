@@ -887,6 +887,14 @@ export class GitHubActions {
         });
     }
 
+    public addGithubAuthToken(url: string) {
+        let start_append = url.indexOf('//') + 2;
+        let token = this.gitHubAuthToken;
+        let authKey = token.substr(token.indexOf('token ') + 6) + '@';
+        // creates "longokenstring@githuburi"
+        return url.slice(0, start_append) + authKey + url.slice(start_append);
+    }
+
     /**
      * Adds a file with the data given, to the specified repository.
      * If force is set to true, will overwrite old files
@@ -901,20 +909,13 @@ export class GitHubActions {
             " , " + fileContent + " , " + force + " ) - start");
         const that = this;
 
-        // TAKEN FROM importFS ----
-        function addGithubAuthToken(url: string) {
-            const startAppend = url.indexOf('//') + 2;
-            const token = that.gitHubAuthToken;
-            const authKey = token.substr(token.indexOf('token ') + 6) + '@';
-            // creates "longokenstring@githuburi"
-            return url.slice(0, startAppend) + authKey + url.slice(startAppend);
-        }
+        // TAKEN FROM importFS
 
         // generate temp path
         const exec = require('child-process-promise').exec;
         const tempDir = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
         const tempPath = tempDir.path;
-        const authedRepo = addGithubAuthToken(repoURL);
+        const authedRepo = this.addGithubAuthToken(repoURL);
 
         // clone repository
         try {
@@ -926,7 +927,12 @@ export class GitHubActions {
                 await createNewFile();
             }
             await addFilesToRepo();
-            await commitFilesToRepo();
+            try {
+                await commitFilesToRepo();
+            } catch (err) {
+                Log.warn("GithubActions::writeFileToRepo(..) - Did not write file to repo");
+                return !force; // within specifications ONLY if we are not forcing a change
+            }
             await pushToRepo();
         } catch (err) {
             Log.error("GithubActions::writeFileToRepo(..) - Error: " + err);

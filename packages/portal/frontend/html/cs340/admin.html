@@ -83,13 +83,29 @@
         </ons-page>
     </template>
 
+    <!--<template id="grades.html">-->
+        <!--<ons-page id="AdminGrades">-->
+            <!--<p style="text-align: center;">-->
+                <!--Grades Page-->
+            <!--</p>-->
+        <!--</ons-page>-->
+    <!--</template>-->
+
     <template id="grades.html">
         <ons-page id="AdminGrades">
-            <p style="text-align: center;">
-                Grades Page
-            </p>
+            <ons-list id="AdminGradesList">
+                <ons-list-header>Deliverable</ons-list-header>
+                <select id="adminGradesDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+
+                <ons-list-header>Grade Overview</ons-list-header>
+                <div id="gradesListTable" style="width:100%;"></div>
+                <div id="gradesListTableNone" class="noResultsRow">
+                    No Results
+                </div>
+            </ons-list>
         </ons-page>
     </template>
+
 
     <template id="gradesCustom.html">
         <ons-page id="AdminCustomGrades">
@@ -179,12 +195,12 @@
                     <div class="center">
                         Selected Deliverable:
                         <select id="adminActionDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
-                        <ons-button id="adminActionSelectDeliverable" modifier="medium">Select Deliverable</ons-button>
+                        <!--<ons-button id="adminActionSelectDeliverable" modifier="medium">Select Deliverable</ons-button>-->
                         <p id="adminActionDeliverableID" style="margin-left: 1em; font-weight: bold;"></p>
-                        <p id="adminActionStatusText" style="margin-right: 1em;width: 6.5em;"></p>
-                        <ons-button id="adminCheckStatus" style="margin-left: 1em; margin-right: 1em;" disabled="true">
-                            Recalculate Status
-                        </ons-button>
+                        <p id="adminActionStatusText" style="margin-right: 1em/*;width: 6.5em*/;"></p>
+                        <!--<ons-button id="adminCheckStatus" style="margin-left: 1em; margin-right: 1em;" disabled="true">-->
+                            <!--Recalculate Status-->
+                        <!--</ons-button>-->
                         <ons-button id="adminCreateRepositories" disabled="true">Create Repositories</ons-button>
                         <ons-button id="adminReleaseRepositories" style="margin-left: 1em" disabled="true">Release
                             Repositories
@@ -265,6 +281,37 @@
 
                     <ons-list-item expandable>
                         <div class="left settingIcon">
+                            <ons-icon icon="fa-graduation-cap"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="Visible to students.">Visible to students</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-switch id="adminEditDeliverablePage-visible" modifier="list-item" onclick=""></ons-switch>
+                        </div>
+                        <div class="expandable-content">
+                            Whether the deliverable is visible to students. For instance, if a deliverable is really just a grading column they do not need to see.
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-cogs"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            Rubric parameters
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-rubric"></ons-input>
+                        </div>
+                        <div class="expandable-content">
+                            This is a JSON object that captures extended rubric values.
+                            It must be valid JSON (or {} if you do not want to set additional rubric elements).
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
                             <ons-icon icon="fa-cogs"></ons-icon>
                         </div>
                         <div class="center settingLabel">
@@ -319,6 +366,36 @@
 
                     </ons-list-item>
                     -->
+
+                    <ons-list-header>Name prefixes</ons-list-header>
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-cloud"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            Repo Prefix
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-repoPrefix"></ons-input>
+                        </div>
+                        <div class="expandable-content">
+                            If any repositories are generated as a part of this deliverable, this prefix will be used when naming. Should not be empty; otherwise will revert to '&lt;delivId&gt;'.
+                        </div>
+                    </ons-list-item>
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-cloud"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            Team Prefix
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-teamPrefix"></ons-input>
+                        </div>
+                        <div class="expandable-content">
+                            If any teams are generated as a part of this deliverable, this prefix will be used when naming. Should not be empty; otherwise will revert to 't_&lt;delivId&gt;'.
+                        </div>
+                    </ons-list-item>
 
                     <ons-list-header>Deliverable Dates</ons-list-header>
                     <ons-list-item style="display: flex;">
@@ -415,7 +492,7 @@
                         </div>
                         <div class="center settingLabel">
                             <span
-                                title="Enable if Students are allowed to creat their own team.">Students Make Teams</span>
+                                title="Enable if Students are allowed to create their own team.">Students Make Teams</span>
                         </div>
                         <div class="right settingRight">
                             <ons-switch id="adminEditDeliverablePage-studentsMakeTeams" modifier="list-item"
@@ -437,6 +514,44 @@
                                         onclick=""></ons-switch>
                         </div>
                     </ons-list-item>
+
+                    <ons-list-header id="adminEditDeliverablePage-assignmentStatusHeader" style="display: none">
+                        Assignment Status
+                    </ons-list-header>
+
+                    <div id="adminEditDeliverablePage-assignmentStatus" style="display: none">
+                    <ons-list-item style="display: flex;">
+                        <div class="center settingLabel"><span>Repositories Created:</span></div>
+                        <div class="right settingRight">
+                            <ons-switch disabled id="adminEditDeliverablePage-createdSwitch" modifier="list-item"
+                                        onclick=""></ons-switch>
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item style="display: flex;">
+                        <div class="center settingLabel"><span>Repository Read Access:</span></div>
+                        <div class="right settingRight">
+                            <ons-switch disabled id="adminEditDeliverablePage-readSwitch" modifier="list-item"
+                                        onclick=""></ons-switch>
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item style="display: flex;">
+                        <div class="center settingLabel"><span>Repository Push Access:</span></div>
+                        <div class="right settingRight">
+                            <ons-switch disabled id="adminEditDeliverablePage-pushSwitch" modifier="list-item"
+                                        onclick=""></ons-switch>
+                        </div>
+                    </ons-list-item>
+
+                    <!--<ons-list-item style="display: flex;">-->
+                        <!--<div class="center settingLabel"><span>Grades Released:</span></div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<ons-switch id="adminEditDeliverablePage-gradesReleasedSwitch" modifier="list-item"-->
+                                        <!--onclick="window.myApp.view.releaseGrades(evt)"></ons-switch>-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+                    </div>
 
 
                     <ons-list-header>AutoTest Options</ons-list-header>

@@ -1,4 +1,4 @@
-import {OnsButtonElement, OnsFabElement, OnsInputElement} from "onsenui";
+import {OnsButtonElement, OnsFabElement, OnsInputElement, OnsSwitchElement} from "onsenui";
 import Log from "../../../../../../common/Log";
 import {
     AssignmentGrade,
@@ -9,19 +9,27 @@ import {
     SubQuestionGrade,
     SubQuestionGradingRubric
 } from "../../../../../../common/types/CS340Types";
-import {StudentTransport, StudentTransportPayload} from "../../../../../../common/types/PortalTypes";
+import {
+    RepositoryPayload,
+    RepositoryTransport,
+    StudentTransport,
+    StudentTransportPayload,
+    TeamTransport,
+    TeamTransportPayload
+} from "../../../../../../common/types/PortalTypes";
 import {Deliverable, Grade} from "../../../../../backend/src/Types";
 import {Factory} from "../../Factory";
 import {SortableTable, TableCell, TableHeader} from "../../util/SortableTable";
 import {UI} from "../../util/UI";
 import {AdminView} from "../AdminView";
-import {delay} from "q";
+import {response} from "spdy";
 
 const ERROR_POTENTIAL_INCORRECT_INPUT: string = "input triggered warning";
 const ERROR_INVALID_INPUT: string = "invalid input";
 const ERROR_NON_NUMERICAL_GRADE: string = "non-numerical grade entered";
 const ERROR_NULL_RUBRIC: string = "null rubric-data";
 const ERROR_MALFORMED_PAGE: string = "malformed page with info elements";
+const WARN_EMPTY_FIELD: string = "empty field";
 
 export class CS340AdminView extends AdminView {
 
@@ -46,9 +54,10 @@ export class CS340AdminView extends AdminView {
 
         // Normal structure
         if(name === 'GradingView') {
-            if(typeof optsObject.aid !== "undefined" || typeof optsObject.sid !== "undefined") {
+            if(typeof optsObject.aid !== "undefined" && typeof optsObject.sid !== "undefined" &&
+                typeof optsObject.isTeam !== "undefined") {
                 // Check if the correct parameters exist
-                this.populateGradingPage(optsObject.aid, optsObject.sid).then(()=> {
+                this.populateGradingPage(optsObject.aid, optsObject.sid, optsObject.isTeam).then(()=> {
                     Log.info("CS340AdminView::renderPage() - finished populating page");
                     return;
                 });
@@ -66,8 +75,12 @@ export class CS340AdminView extends AdminView {
         }
 
         if(name === 'AdminEditDeliverable') {
-            Log.info("CS340AdminView::renderPage() - Deliverable editing page triggered");
-
+            Log.info("CS340AdminView::renderPage(..) - Deliverable editing page triggered");
+            if(typeof optsObject.delivId !== "undefined") {
+                if(optsObject.delivId === null) {
+                    Log.info("CS340AdminView::renderPage(..) - null delivId");
+                }
+            }
             return;
         }
         // if(opsObject.page !== null) {
@@ -105,7 +118,7 @@ export class CS340AdminView extends AdminView {
             return -1;
         } else {
             let jsonResponse = await response.json();
-            return (jsonResponse as number);
+            return (jsonResponse.response as number);
         }
     }
 
@@ -117,19 +130,117 @@ export class CS340AdminView extends AdminView {
         await super.handleAdminEditDeliverable(opts);
         let that = this;
         // if the deliverable is an assignment, do something(?)
+
         const fab = document.querySelector('#adminEditDeliverableSave') as OnsFabElement;
         if (super.isAdmin === false) {
             fab.style.display = 'none';
         } else {
-            fab.onclick = function(evt) {
+            Log.info("CS340AdminView::renderEditDeliverablePage(..) - Adding onclick function");
+            fab.addEventListener("click", function(evt) {
+                const delivIdElement = document.querySelector('#adminEditDeliverablePage-name') as OnsInputElement;
+                if(delivIdElement === null) return;
+
                 Log.info('CS340AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::customOnClick');
-                that.newSave();
-            };
+                // that.checkReleasedGrades().then(function (result) {
+                //     Log.info("CS340AdminView::renderEditDeliverablePage(..)::checkReleasedGrades(..) - then: - start");
+                //     Log.info("CS340AdminView::renderEditDeliverablePage(..)::checkReleasedGrades(..) - released: " + result);
+                // });
+                Log.info("CS340AdminView::renderEditDeliverablePage::adminEditDeliverableSave::customOnClick - " + delivIdElement.value);
+                that.releaseGrades(delivIdElement.value);
+            });
+            // fab.onclick = function(evt) {
+            //     Log.info('CS340AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::customOnClick');
+            //     // that.newSave();
+            // };
         }
+
+        Log.info("CS340AdminView::renderEditDeliverablePage(..) - Fetching");
+        let deliverables: Deliverable[] = await this.getDeliverables();
+        for(const deliverableRecord of deliverables) {
+            if(deliverableRecord.id === opts.delivId) {
+                Log.info("CS340AdminView::renderEditDeliverablePage(..) - Checking AssignmentStatus");
+                if(typeof deliverableRecord.custom !== 'undefined' && typeof deliverableRecord.custom.status !== 'undefined') {
+                    let assignInfo: AssignmentInfo = (deliverableRecord.custom as AssignmentInfo);
+                    let assignStatus: AssignmentStatus = assignInfo.status;
+                    let createdSwitch = (document.querySelector('#adminEditDeliverablePage-createdSwitch') as OnsSwitchElement);
+                    let readSwitch = (document.querySelector('#adminEditDeliverablePage-readSwitch') as OnsSwitchElement);
+                    let pushSwitch = (document.querySelector('#adminEditDeliverablePage-pushSwitch') as OnsSwitchElement);
+                    switch (assignStatus) {
+                        case AssignmentStatus.INACTIVE: {
+                            createdSwitch.removeAttribute("checked");
+                            readSwitch.removeAttribute("checked");
+                            pushSwitch.removeAttribute("checked");
+                            break;
+                        }
+                        case AssignmentStatus.CREATED: {
+                            createdSwitch.setAttribute("checked", 'true');
+                            readSwitch.removeAttribute("checked");
+                            pushSwitch.removeAttribute("checked");
+                            break;
+                        }
+                        case AssignmentStatus.RELEASED: {
+                            createdSwitch.setAttribute("checked", 'true');
+                            readSwitch.setAttribute("checked", 'true');
+                            pushSwitch.setAttribute("checked", 'true');
+                            break;
+                        }
+                        case AssignmentStatus.CLOSED: {
+                            createdSwitch.setAttribute("checked", 'true');
+                            readSwitch.setAttribute("checked", 'true');
+                            pushSwitch.removeAttribute("checked");
+                            break;
+                        }
+                        default: {
+                            createdSwitch.removeAttribute("checked");
+                            readSwitch.removeAttribute("checked");
+                            pushSwitch.removeAttribute("checked");
+                            break;
+                        }
+                    }
+                    let assignStatusHeader = (document.querySelector('#adminEditDeliverablePage-assignmentStatusHeader') as HTMLElement);
+                    let assignStatusBody = (document.querySelector('#adminEditDeliverablePage-assignmentStatus') as HTMLElement);
+
+                    // assignStatusHeader.style.display = "initial";
+                    assignStatusHeader.removeAttribute("style");
+                    assignStatusBody.setAttribute("style", "display: initial");
+                } else {
+                    Log.info("CS340AdminView::renderEditDeliverablePage(..) - Not an assignment, hiding elements");
+                    let assignStatusHeader = (document.querySelector('#adminEditDeliverablePage-assignmentStatusHeader') as HTMLElement);
+                    let assignStatusBody = (document.querySelector('#adminEditDeliverablePage-assignmentStatus') as HTMLElement);
+
+                    assignStatusHeader.setAttribute("style" , "display: none");
+                    assignStatusBody.setAttribute("style" , "display: none");
+                }
+            }
+        }
+
+        // Log.info("CS340AdminView::renderEditDeliverablePage(..) - Checking AssignmentStatus");
+        // // get the deliverable
+        // // let ac: AssignmentController = new AssignmentController();
+        // let delivRecord: Deliverable = await ac.getAssignmentRepo(opts.delivId);
+        //
+    // if(typeof delivRecord.id !== 'undefined') {
+        //     Log.info("CS340AdminView::renderEditDeliverablePage(..) - 1");
+        //     if(delivRecord.custom !== null) {
+        //         Log.info("CS340AdminView::renderEditDeliverablePage(..) - 2");
+        //         if(typeof (delivRecord.custom as AssignmentInfo).status !== 'undefined') {
+        //             Log.info("CS340AdminView::renderEditDeliverablePage(..) - 3");
+        //         }
+        //     }
+        // }
+        // if(typeof opts.id !== 'undefined' && opts.custom !== null &&
+        //         typeof (opts.custom as AssignmentInfo).status !== 'undefined') {
+        //     let deliverableRecord: Deliverable = opts;
+        //     Log.info("CS340AdminView::renderEditDeliverablePage(..) - Adjusting status switches");
+        //
+        //     // set the switches
+        //
+        // }
     }
 
     protected async newSave() {
         // await super.deliverablesTab.save();
+        // super.deliverablesTab.save();
         let number = await this.verifyScheduledJobs(null);
         Log.info("CS340AdminView::newSave() - tasks generated: " + number);
     }
@@ -140,17 +251,23 @@ export class CS340AdminView extends AdminView {
         const selectDelivDropdown: HTMLSelectElement = document.querySelector('#adminActionDeliverableSelect') as HTMLSelectElement;
         await this.populateDeliverableDropdown(selectDelivDropdown);
 
-        (document.querySelector('#adminActionSelectDeliverable') as OnsButtonElement).onclick = function (evt) {
-            Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');
+        (document.querySelector('#adminActionDeliverableSelect') as HTMLSelectElement).onchange = function (evt) {
+            Log.warn("Changed the Deliverable Selection to " + (evt.target as HTMLSelectElement).value + " !");
 
             that.selectDeliverablePressed();
         };
 
-        (document.querySelector('#adminCheckStatus') as OnsButtonElement).onclick = function (evt) {
-            Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');
+        // (document.querySelector('#adminActionSelectDeliverable') as OnsButtonElement).onclick = function (evt) {
+        //     Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');
+        //
+        //     that.selectDeliverablePressed();
+        // };
 
-            that.checkStatusAndUpdate(true);
-        };
+        // (document.querySelector('#adminCheckStatus') as OnsButtonElement).onclick = function (evt) {
+        //     Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');
+        //
+        //     that.checkStatusAndUpdate(true);
+        // };
 
         (document.querySelector('#adminCreateRepositories') as OnsButtonElement).onclick = function (evt) {
             Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');
@@ -164,11 +281,22 @@ export class CS340AdminView extends AdminView {
             that.releaseRepoPressed();
         };
 
-        (document.querySelector('#adminDeleteRepositories') as OnsButtonElement).onclick = function (evt) {// DEBUG
-            Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');// DEBUG
-                                    // DEBUG
-            that.deleteRepoPressed();// DEBUG
-        };// DEBUG
+        (document.querySelector('#adminDeleteRepositories') as OnsButtonElement).onclick = function (evt) {
+            Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');
+
+            UI.notificationConfirm("WARNING: Data will be deleted, and is non-recoverable." +
+                " Are you sure you wish to proceed?", async function(idx: number) {
+                switch(idx) {
+                    case 1:
+                        Log.info("CS340AdminView::handleAdminConfig(..) - proceeded prompt");
+                        await that.deleteRepoPressed();
+                        break;
+                    default:
+                        Log.info("CS340AdminView::handleAdminConfig(..) - cancelled prompt");
+                        break;
+                }
+            });
+        };
 
 
     }
@@ -176,22 +304,22 @@ export class CS340AdminView extends AdminView {
     private async selectDeliverablePressed(): Promise<void> {
         Log.info('CS340AdminView::selectDeliverablePressed(..) - start');
         // Log.info('CS340AdminView::selectDeliverable(..) - ');
-        const delivId: string | null = await this.checkStatusAndUpdate();
+        const delivId: string | null = await this.checkStatusAndUpdate(true);
 
         // (un)lock other buttons
-        const checkStatusButton = document.querySelector('#adminCheckStatus') as OnsButtonElement;
+        // const checkStatusButton = document.querySelector('#adminCheckStatus') as OnsButtonElement;
         const createRepoButton  = document.querySelector('#adminCreateRepositories') as OnsButtonElement;
         const releaseRepoButton = document.querySelector('#adminReleaseRepositories') as OnsButtonElement;
         const deleteRepoButton  = document.querySelector('#adminDeleteRepositories') as OnsButtonElement; // DEBUG
 
         if(delivId === null) {
             Log.info('CS340AdminView::selectDeliverable(..) - did not select deliv, locking buttons');
-            checkStatusButton.disabled = true;
+            // checkStatusButton.disabled = true;
             createRepoButton.disabled = true;
             releaseRepoButton.disabled = true;
             deleteRepoButton.disabled = true; // DEBUG
         } else {
-            checkStatusButton.disabled = false;
+            // checkStatusButton.disabled = false;
             createRepoButton.disabled = false;
             releaseRepoButton.disabled = false;
             deleteRepoButton.disabled = false; // DEBUG
@@ -235,30 +363,34 @@ export class CS340AdminView extends AdminView {
         if(update) UI.hideModal();
 
         if(response.status === 200) {
-            let responsejson = await response.json();
+            let responseJson = await response.json();
             // get the textbox
-            switch (responsejson.response) {
+            switch (responseJson.response.assignmentStatus) {
                 case AssignmentStatus.INACTIVE: {
-                    statusBox.innerHTML = ": INACTIVE";
+                    statusBox.innerHTML = ": NOT CREATED - " + " Repositories: " +
+                        responseJson.response.studentRepos + "/" + responseJson.response.totalStudents;
                     break;
                 }
                 case AssignmentStatus.CREATED: {
-                    statusBox.innerHTML = ": CREATED";
+                    statusBox.innerHTML = ": CREATED - " + " Repositories: " +
+                        responseJson.response.studentRepos + "/" + responseJson.response.totalStudents;
                     break;
                 }
                 case AssignmentStatus.RELEASED: {
-                    statusBox.innerHTML = ": RELEASED";
+                    statusBox.innerHTML = ": RELEASED - " + " Repositories: " +
+                        responseJson.response.studentRepos + "/" + responseJson.response.totalStudents;
                     break;
                 }
                 case AssignmentStatus.CLOSED: {
-                    statusBox.innerHTML = ": CLOSED";
+                    statusBox.innerHTML = ": CLOSED - " + " Repositories: " +
+                        responseJson.response.studentRepos + "/" + responseJson.response.totalStudents;
                     break;
                 }
                 default: {
                     Log.trace('CS340AdminView::checkStatusAndUpdate(..) - error; ' +
                         'deliverable not set up properly');
 
-                    UI.notification("Broken Status; value: " + responsejson.response);
+                    UI.notification("Broken Status; value: " + responseJson.response.assignmentStatus);
                     return null;
                 }
             }
@@ -349,7 +481,6 @@ export class CS340AdminView extends AdminView {
     private async deleteRepoPressed(): Promise<void> {
         Log.warn('CS340AdminView::deleteRepoPressed(..) - start');
         // Log.warn('CS340AdminView::deleteRepoPressed(..) - start');
-
         const delivIDBox = document.querySelector('#adminActionDeliverableID') as HTMLParagraphElement;
         const delivID = delivIDBox.innerHTML;
 
@@ -425,6 +556,23 @@ export class CS340AdminView extends AdminView {
         return delivArray;
     }
 
+    public async handleAdminGrades(opts: any) {
+        Log.info("CS340AdminView::handleAdminGrades( " + JSON.stringify(opts) + " ) - start");
+        // await super.handleAdminGrades(opts);
+        let that = this;
+
+        const delivSelector = document.querySelector('#adminGradesDeliverableSelect') as HTMLSelectElement;
+        await this.populateDeliverableDropdown(delivSelector);
+
+        Log.info("CS340AdminView::handleAdminGrades(..) - handling hook");
+        delivSelector.onchange = async function(evt) {
+            Log.info("CS340AdminView::handleAdminGrades(..)::delivSelector:onChange - event: " + evt);
+            await that.renderStudentGradesDeliverable((evt.target as HTMLSelectElement).value);
+        };
+
+        Log.info("CS340AdminView::handleAdminGrades(..) - finished handling hook");
+    }
+
     public async handleAdminCustomGrades(opts: any) {
         Log.info("CS340AdminView::handleCustomGrades( " + JSON.stringify(opts) + " ) - start");
         // if(opts.delivid === null || opts.sid === null) {
@@ -470,6 +618,273 @@ export class CS340AdminView extends AdminView {
             const text = await studentResponse.text();
             AdminView.showError(text);
         }
+    }
+
+    private calculateMaxGrade(deliverableRecord: Deliverable): number {
+        Log.info("CS340AdminView::calculateMaxGrade( " + deliverableRecord.id + " ) - start");
+        let maxGrade:number = 0;
+        let assignInfo: AssignmentInfo | null = deliverableRecord.custom;
+        if(assignInfo === null || typeof assignInfo.rubric === 'undefined') {
+            Log.error("CS340AdminView::calculateMaxGrade(..) - Error: Deliverable is not an assignment");
+            return -1;
+        }
+        let assignRubric: AssignmentGradingRubric = assignInfo.rubric;
+        if(assignRubric === null || typeof assignRubric.questions === 'undefined') {
+            Log.error("CS340AdminView::calculateMaxGrade(..) - Error: Deliverable is not an assignment");
+            return -1;
+        }
+
+        for(const questionRubric of assignRubric.questions) {
+            for(const subQuestionRubric of questionRubric.subQuestions) {
+                // TODO: Take into account weight
+                maxGrade += subQuestionRubric.outOf;
+            }
+        }
+
+        return maxGrade;
+    }
+
+    private checkIfCompletelyGraded(gradeRecord: Grade): boolean {
+        if(gradeRecord === null) {
+            return false;
+        }
+
+        let assignRecord: AssignmentGrade = gradeRecord.custom;
+
+        if (assignRecord !== null) {
+            if(typeof assignRecord.questions !== 'undefined') {
+                for(const question of assignRecord.questions) {
+                    for(const subQuestion of question.subQuestion) {
+                        if(!subQuestion.graded) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public async renderStudentGradesDeliverable(delivId: string, hiddenNames: boolean = false) {
+        Log.info("CS340AdminView::renderStudentGradeDeliverable( " + delivId + " ) - start");
+
+        let emptyResultsElement = document.querySelector('#gradesListTableNone') as HTMLDivElement
+        let tabledResultsElement = document.querySelector("#gradesListTable") as HTMLDivElement;
+        if(delivId === null || delivId === "null") {
+            Log.info("CS340AdminView::renderStudentGradeDeliverable(..) - null value, hiding the table");
+            emptyResultsElement.removeAttribute("style");
+            tabledResultsElement.setAttribute("style", "display:none");
+        } else {
+            tabledResultsElement.removeAttribute("style");
+            emptyResultsElement.setAttribute("style", "display:none");
+        }
+
+        UI.showModal("Rendering page");
+
+        const teamsOptions = AdminView.getOptions();
+        const teamsURL = this.remote + '/portal/admin/teams';
+        const teamsResponse = await fetch(teamsURL,teamsOptions);
+
+        const studentOptions = AdminView.getOptions();
+        const studentUrl = this.remote + '/portal/admin/students';
+        const studentResponse = await fetch(studentUrl, studentOptions);
+
+        const gradesOptions = AdminView.getOptions();
+        const gradesUrl: string = this.remote + '/portal/cs340/getAllGrades';
+        const gradesResponse = await fetch(gradesUrl, gradesOptions);
+
+        let requestStatus: boolean = true;
+
+        if(teamsResponse.status !== 200) {
+            Log.error("CS340AdminView::renderStudentGradeDeliverable(..) - !200 received when fetching " +
+                "teams; code: " + teamsResponse.status);
+            requestStatus = false;
+        } else {
+            Log.info("CS340AdminView::renderStudentGradeDeliverable(..) - received all teams");
+        }
+
+
+        if(studentResponse.status !== 200) {
+            Log.error("CS340AdminView::renderStudentGradeDeliverable(..) - !200 received when fetching " +
+                "students; code: " + studentResponse.status);
+            requestStatus = false;
+        } else {
+            Log.info("CS340AdminView::renderStudentGradeDeliverable(..) - received all students");
+        }
+
+
+        if(gradesResponse.status !== 200) {
+            Log.error("CS340AdminView::renderStudentGradeDeliverable(..) - !200 received when fetching " +
+                "students; code: " + gradesResponse.status);
+            requestStatus = false;
+        } else {
+            Log.info("CS340AdminView::renderStudentGradeDeliverable(..) - received all grades");
+        }
+
+
+        if(!requestStatus) {
+            Log.error("CS340AdminView::renderStudentGradeDeliverable(..) - failed to get all information, unable to continue");
+            return;
+        }
+
+        const teamsJson: TeamTransportPayload = await teamsResponse.json();
+        const studentJson: StudentTransportPayload = await studentResponse.json();
+        const gradesJson = await gradesResponse.json(); // TODO: Verify if this should not use the grade struct
+        let teamsTransport: TeamTransport[] = teamsJson.success;
+        let studentsTransport: StudentTransport[] = studentJson.success;
+        let grades: Grade[] = gradesJson.response;
+
+        let filteredTeams: TeamTransport[] = [];
+        let maxSize = 1;
+        for(const teamTransport of teamsTransport) {
+            if(teamTransport.delivId === delivId) {
+                filteredTeams.push(teamTransport);
+                if(maxSize < teamTransport.people.length) {
+                    maxSize = teamTransport.people.length;
+                }
+            }
+        }
+
+        // create a grade mapping
+        let gradeMapping: {[studentId: string]: Grade} = {};
+        for(const grade of grades) {
+            // if(typeof gradeMapping[grade.personId] === 'undefined') gradeMapping[grade.personId] = {};
+            // if the grade is an assignmentGrade; place it in the mapping
+            if(grade.custom !== null && typeof (grade.custom as AssignmentGrade).assignmentID !== "undefined") {
+                if((grade.custom as AssignmentGrade).assignmentID === delivId) {
+                    gradeMapping[grade.personId] = grade;
+                }
+            }
+        }
+
+        // create a studentMapping
+        let studentMapping: {[studentId: string]: StudentTransport} = {};
+        for(const studentTransport of studentsTransport) {
+            if(typeof studentMapping[studentTransport.id] === "undefined") {
+                studentMapping[studentTransport.id] = studentTransport;
+            }
+        }
+
+        const delivArray: Deliverable[] = await this.getDeliverables();
+
+        let maxGrade: number = -1;
+        for (const deliverableRecord of delivArray) {
+            if(deliverableRecord.id === delivId) maxGrade = this.calculateMaxGrade(deliverableRecord);
+        }
+
+        let tableHeaders: TableHeader[] = [];
+        if(!hiddenNames) {
+            let firstHeader = true; // only the first header is sorted by default
+            for(let i = 0; i < maxSize; i++) {
+                let newHeader: TableHeader = {
+                    id:             'uid' + i,
+                    text:           'id' + i,
+                    sortable:       true,
+                    defaultSort:    firstHeader,
+                    sortDown:       false,
+                    style:          'padding-left: 1em; padding-right: 1em;'
+                };
+                firstHeader = false; // don't want any other headers to be 'default sorted'!
+                tableHeaders.push(newHeader);
+            }
+        } else {
+            // names are hidden
+            // TODO: Implement hidden names (render one column for each team, with a number)
+        }
+
+        tableHeaders.push({
+            id:             "repo",
+            text:           "Repository",
+            sortable:       true,
+            defaultSort:    false,
+            sortDown:       false,
+            style:          'padding-left: 1em; padding-right: 1em;'
+        });
+
+        tableHeaders.push({
+            id:             "grade",
+            text:           "Grade",
+            sortable:       true,
+            defaultSort:    false,
+            sortDown:       false,
+            style:          'padding-left: 1em; padding-right: 1em;'
+        });
+
+        const st = new SortableTable(tableHeaders, "#gradesListTable");
+
+        // for every team, create a new row
+        for(const teamTransport of filteredTeams) {
+            let newRow: TableCell[] = [];
+            for(const personId of teamTransport.people) {
+                newRow.push({value: personId, html: personId});
+            }
+
+            // handle uneven team sizes
+            for(let i = teamTransport.people.length; i < maxSize; i++) {
+                newRow.push({value: "", html: ""}); // blank, just so table sizes are consistent
+            }
+
+            // ASSUMPTION: If students are on a team for a deliverable, they should all have the same grade
+            let foundGrade = false;
+            let studentId: string = teamTransport.people[0];
+            let newEntry: TableCell;
+
+            // TODO: Add the repo link (submission link)
+            const repoOptions = AdminView.getOptions();
+            const repoUrl = this.remote + "/portal/cs340/getRepository/" + teamTransport.id;
+            const repoResponse = await fetch(repoUrl, repoOptions);
+
+            if(repoResponse.status !== 200) {
+                Log.error("CS340AdminView::renderStudentGradeDeliverable(..) - Error: unable to find a repo for the team")
+                continue;
+            }
+
+            let repoJson = await repoResponse.json();
+            let repoTransport: RepositoryTransport = repoJson.response;
+
+            let repoEntry: TableCell = {
+                value: repoTransport.URL,
+                html: "<a href='" + repoTransport.URL + "'> Link </a>"
+            };
+
+            newRow.push(repoEntry);
+
+            let completelyGraded: boolean;
+            if(typeof gradeMapping[studentId] === 'undefined') {
+                completelyGraded = false;
+            } else {
+                completelyGraded = this.checkIfCompletelyGraded(gradeMapping[studentId]);
+            }
+
+            if(typeof gradeMapping[studentId] !== 'undefined' && completelyGraded) {
+                // we have a grade for this team
+                newEntry = {
+                    value: gradeMapping[studentId].score,
+                    html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
+                        studentMapping[studentId].id + "\", \"" + delivId + "\", true)' href='#'>" +
+                        gradeMapping[studentId].score.toString() + "/" +
+                        maxGrade + "</a>"
+                };
+            } else {
+                // we do not have a grade for this team
+                newEntry = {
+                    value: "---",
+                    html: "<a onclick='window.myApp.view.transitionGradingPage(\"" +
+                    studentMapping[studentId].id + "\", \"" + delivId + "\", true)' href='#'> ---" + "</a>",
+                };
+            }
+
+            newRow.push(newEntry);
+            // TODO: Finish this up by rendering the rest of the page
+
+            st.addRow(newRow);
+        }
+
+        st.generate();
+
+        UI.hideModal();
     }
 
     private async renderStudentGrades(students: StudentTransport[], grades: Grade[], selectedAssign: string) {
@@ -533,19 +948,7 @@ export class CS340AdminView extends AdminView {
                 tableHeaders.push(newHeader);
 
                 // process max grade
-                let maxGrade:number = 0;
-                let assignInfo: AssignmentInfo | null = deliv.custom;
-                if(assignInfo === null || typeof assignInfo === 'undefined') continue;
-                let assignRubric: AssignmentGradingRubric = assignInfo.rubric;
-                if(assignRubric === null || typeof assignRubric === 'undefined') continue;
-
-                for(const questionRubric of assignRubric.questions) {
-                    for(const subQuestionRubric of questionRubric.subQuestions) {
-                        // TODO: Take into account weight
-                        maxGrade += subQuestionRubric.outOf;
-                    }
-                }
-                maxGradeMap[deliv.id] = maxGrade;
+                maxGradeMap[deliv.id] = this.calculateMaxGrade(deliv);
             }
         }
 
@@ -575,14 +978,27 @@ export class CS340AdminView extends AdminView {
                 let foundGrade = false;
                 if(typeof gradeMapping[student.id] === "undefined") gradeMapping[student.id] = {};
                 if(typeof gradeMapping[student.id][delivCol.id] !== "undefined") foundGrade = true;
-                if(foundGrade) {
+
+
+                // let completelyGraded:boolean = this.checkIfCompletelyGraded(gradeMapping[student.id][delivCol.id]);
+
+                let completelyGraded: boolean;
+                if(typeof gradeMapping[student.id] === 'undefined' ||
+                    typeof gradeMapping[student.id][delivCol.id] === 'undefined' ) {
+                    completelyGraded = false;
+                } else {
+                    completelyGraded = this.checkIfCompletelyGraded(gradeMapping[student.id][delivCol.id]);
+                }
+
+
+
+                if(foundGrade && completelyGraded) {
                     let newEntry = {
 
                         value: gradeMapping[student.githubId][delivCol.id].score,
                         html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
                         student.githubId + "\", \"" + delivCol.id + "\")' href='#'>" +
                         gradeMapping[student.githubId][delivCol.id].score.toString() +
-
                         "/" + maxGradeMap[delivCol.id] + "</a>"
                     };
                     newRow.push(newEntry);
@@ -607,13 +1023,60 @@ export class CS340AdminView extends AdminView {
         // TODO [Jonathan]: Add rest of code, regarding student table generation (hideable options)
     }
 
+
+    /**
+     * Checks all deliverables and releases their grades, if needed
+     * @returns {Promise<number>} - Number of deliverables where grades were released
+     */
+    public async checkReleasedGrades(): Promise<number>{
+        Log.info("CS340AdminView::checkReleasedGrades() - start");
+        // check all deliverables if they need to have any grades released
+        let deliverables: Deliverable[] = await this.getDeliverables();
+        let promiseArray: Promise<boolean>[] = [];
+        for(const deliv of deliverables) {
+            if(deliv.gradesReleased) {
+                promiseArray.push(this.releaseGrades(deliv.id));
+            }
+        }
+        let count: number = 0;
+        // Promise.all(promiseArray).then(function(values) {
+        //     for(const value of values) {
+        //         if(value) count++;
+        //     }
+        //     Log.info("CS340AdminView::releaseGrades() - released grades for " + count + " deliverables");
+        // });
+        let result = await Promise.all(promiseArray);
+        for(const value of result) {
+            if(value) count++;
+        }
+
+        return count;
+    }
+
+    public async releaseGrades(delivId: string): Promise<boolean> {
+        Log.info("CS340AdminView::releaseGrades( " + delivId + " ) - start");
+
+        const releaseOptions: any = AdminView.getOptions();
+        releaseOptions.method = "post";
+        const releaseUrl = this.remote + "/portal/cs340/releaseGrades/" + delivId;
+        const releaseResponse = await fetch(releaseUrl, releaseOptions);
+        const releaseJson = await releaseResponse.json();
+
+        if(releaseResponse.status !== 200) {
+            Log.error("CS340AdminView::releaseGrades(..) - error: " + releaseJson.error);
+            return false;
+        }
+
+        return releaseJson.response;
+    }
+
     /**
      * Grabs the page and adds the grading view as specified in the deliverable
      * @param {string} delivId
      * @param {string} sid
      * @returns {Promise<void>}
      */
-    public async populateGradingPage(delivId: string, sid : string) {
+    public async populateGradingPage(delivId: string, sid : string, isTeam: boolean=false) {
         Log.info("CS340View::populateGradingPage() - start");
 
         UI.showModal("Populating grading view, please wait...");
@@ -627,12 +1090,19 @@ export class CS340AdminView extends AdminView {
 
         let previousSubmission = await this.getStudentGrade(sid, delivId);
 
-        let assignmentInfoElement = document.getElementById('assignmentInfoSection');
-        let gradingSectionElement = document.getElementById('gradingSection');
+        let assignmentInfoElement   = document.getElementById('assignmentInfoSection');
+        let gradingSectionElement   = document.getElementById('gradingSection');
 
-        let assignmentInfoList  = document.createElement("div");
-        let assignmentIDBox     = document.getElementById("aidBox");
-        let studentIDBox        = document.getElementById("sidBox");
+        let assignmentInfoList      = document.createElement("div");
+        let assignmentIDBox         = document.getElementById("aidBox");
+        let studentIDBox            = document.getElementById("sidBox");
+
+        if(isTeam) {
+            let teamIndicator: HTMLParagraphElement = document.createElement("p");
+            teamIndicator.innerHTML = "Editing team grade of: " + sid;
+            teamIndicator.id = "teamIndicator";
+            assignmentInfoList.appendChild(teamIndicator);
+        }
 
         let assignmentInfoAssignmentID = document.createElement("p");
         assignmentInfoAssignmentID.innerHTML = delivId;
@@ -695,11 +1165,12 @@ export class CS340AdminView extends AdminView {
                 // Create the grade input element
                 let gradeInputElement = document.createElement("ons-input");
                 gradeInputElement.setAttribute("type", "number");
-                if(previousSubmission === null) {
+                if(previousSubmission === null || !previousSubmission.questions[i].subQuestion[j].graded) {
                     gradeInputElement.setAttribute("placeHolder", subQuestion.name);
                 } else {
                     gradeInputElement.setAttribute("placeHolder",
                         previousSubmission.questions[i].subQuestion[j].grade.toString());
+                    (gradeInputElement as OnsInputElement).value = previousSubmission.questions[i].subQuestion[j].grade.toString();
                 }
                 gradeInputElement.setAttribute("data-type", subQuestion.name);
                 gradeInputElement.setAttribute("modifier", "underbar");
@@ -753,7 +1224,9 @@ export class CS340AdminView extends AdminView {
 
     public async submitGrade(): Promise<AssignmentGrade|null> {
         let errorStatus = false;
-        let errorComment: String = "";
+        let warnStatus = false;
+        let warnComment: string = "";
+        let errorComment: string = "";
         let questionArray : QuestionGrade[] = [];
         let questionBoxes = document.getElementsByClassName("questionBox");
 
@@ -795,6 +1268,7 @@ export class CS340AdminView extends AdminView {
 
                 // Retrieve the value inputted into the form field
                 let gradeValue = parseFloat(gradeInputElement.value);
+                let graded = true;
 
                 // If the value is not found, set it to a default empty string
                 if (rubricType === null) {
@@ -804,8 +1278,16 @@ export class CS340AdminView extends AdminView {
                     continue;
                 }
 
+                if (gradeInputElement.value === "") {
+                    gradeValue = 0;
+                    if(!warnStatus) warnComment = WARN_EMPTY_FIELD;
+                    warnStatus = true;
+                    graded = false;
+                    errorElement.innerHTML = "Warning: Input field is empty";
+                }
+
                 // If the grade value retrieved is not a number, default the value to 0
-                if (isNaN(gradeValue)) {
+                if (gradeInputElement.value !== "" && isNaN(gradeValue)) {
                     gradeValue = 0;
                     if(!errorStatus) errorComment = ERROR_NON_NUMERICAL_GRADE;
                     errorStatus = true;
@@ -823,6 +1305,7 @@ export class CS340AdminView extends AdminView {
                 let newSubGrade : SubQuestionGrade = {
                     sectionName: rubricType,
                     grade: gradeValue,
+                    graded: graded,
                     feedback: responseBoxElement.value
                 };
 
@@ -860,40 +1343,145 @@ export class CS340AdminView extends AdminView {
         let sid = aInfoSIDElements[0].innerHTML;
         let aid = aInfoIDElements[0].innerHTML;
 
-        let newAssignmentGrade : AssignmentGrade = {
-            assignmentID: aid,
-            studentID: sid,
-            released: false,
-            questions: questionArray
-        };
+        // check some condition
+        let teamIndicator: HTMLParagraphElement | null = (document.getElementById("teamIndicator") as HTMLParagraphElement);
+        let targetStudentIds: string[] = [];
+        if(teamIndicator !== null) {
+            // this is kind of tricky, pull the team information out and get all the student IDs
+            let teamOptions: any = AdminView.getOptions();
+            let teamURL = this.remote + '/portal/cs340/getStudentTeamByDeliv/' + sid + "/" + aid;
+            let teamResponse = await fetch(teamURL, teamOptions);
+            if(teamResponse.status !== 200) {
+                let errJson = await teamResponse.json();
+                Log.error("CS340AdminView::submitGrade(..) - Error: " + errJson.error);
+                UI.notification("Unable to save grade to team; unable to find correct team");
+                return null;
+            } else {
+                let teamJson = await teamResponse.json();
+                let team: TeamTransport = teamJson.response;
+                for(const personId of team.people) {
+                    targetStudentIds.push(personId);
+                }
+            }
+        } else {
+            targetStudentIds.push(sid);
+        }
 
-        const url = this.remote + '/portal/cs340/setAssignmentGrade';
-        Log.info("CS340View::submitGrade() - uri: " + url);
+        // let quit = false;
+        // if(warnStatus) {
+        //     if(warnComment === WARN_EMPTY_FIELD && !confirm("Warning: Some fields are blank. Do you wish to continue" +
+        //         " and submit the grade as is?")) {
+        //         Log.warn("CS340View::submitGrade() - Missing fields; user cancelled save");
+        //         quit = true;
+        //         // return null;
+        //     }
+        // }
 
-        UI.showModal("Submitting grade, please wait...");
-        // Call the function
-        let options: any = AdminView.getOptions();
+        // if(quit) return ({
+        //     assignmentID: aid,
+        //     studentID: targetStudentIds[0],
+        //     released: false,
+        //     questions: questionArray
+        // } as AssignmentGrade);
 
-        options.method = 'put';
-        options.headers.Accept = 'application/json';
-        options.json = true;
-        options.body = JSON.stringify(newAssignmentGrade);
+        // UI.showModal("Submitting grade, please wait...");
+        //
+        // let newAssignmentGrade : AssignmentGrade;
+        // for(const personId of targetStudentIds) {
+        //     // create a new grade
+        //     newAssignmentGrade = {
+        //         assignmentID: aid,
+        //         studentID: personId,
+        //         released: false,
+        //         questions: questionArray
+        //     };
+        //
+        //     const url = this.remote + '/portal/cs340/setAssignmentGrade';
+        //     Log.info("CS340View::submitGrade() - uri: " + url);
+        //
+        //     // Call the function
+        //     let options: any = AdminView.getOptions();
+        //
+        //     options.method = 'put';
+        //     options.headers.Accept = 'application/json';
+        //     options.json = true;
+        //     options.body = JSON.stringify(newAssignmentGrade);
+        //
+        //     Log.info("CS340View::submitGrade() - request body: " + options.body);
+        //
+        //     let response = await fetch(url, options);
+        //
+        //     Log.info("CS340View::submitGrade() - response from api " + response);
+        //     if(response.status !== 200) {
+        //         const errResponse = await response.json();
+        //         Log.info("CS340AdminView::submitGrade() - error submitting grades, code: " +
+        //             response.status + " error: " + response.statusText);
+        //         // alert(errResponse.error);
+        //         UI.showAlert(errResponse.error);
+        //         UI.hideModal();
+        //         return null;
+        //     }
+        // }
+        //
+        // UI.hideModal();
 
-        Log.info("CS340View::submitGrade() - request body: " + options.body);
-
-        let response = await fetch(url, options);
-
-        UI.hideModal();
-        Log.info("CS340View::submitGrade() - response from api " + response);
-        if(response.status !== 200) {
-            const errResponse = await response.json();
-            Log.info("CS340AdminView::submitGrade() - error submitting grades, code: " + response.status +
-            " error: " + response.statusText);
-            alert(errResponse.error);
+        let savingSuccess = await this.submitGradeRecord(aid, targetStudentIds, questionArray);
+        if(savingSuccess) {
+            UI.popPage();
+            return null;
+        } else {
             return null;
         }
-        UI.popPage();
-        return newAssignmentGrade;
+    }
+
+    public async submitGradeRecord(aid: string, personIds: string[], questionArray: QuestionGrade[]): Promise<boolean> {
+        Log.info("CS340AdminView::submitGradeRecord(..) - start");
+        let allPromises: Promise<any>[] = [];
+        UI.showModal("Submitting grade(s), please wait...");
+
+        for(const personId of personIds) {
+            // create a new grade
+            let newAssignmentGrade: AssignmentGrade = {
+                assignmentID: aid,
+                studentID: personId,
+                released: false,
+                questions: questionArray
+            };
+
+            const url = this.remote + '/portal/cs340/setAssignmentGrade';
+            Log.info("CS340View::submitGrade() - uri: " + url);
+
+            // Call the function
+            let options: any = AdminView.getOptions();
+
+            options.method = 'put';
+            options.headers.Accept = 'application/json';
+            options.json = true;
+            options.body = JSON.stringify(newAssignmentGrade);
+
+            Log.info("CS340View::submitGrade() - request body: " + options.body);
+
+            allPromises.push(fetch(url, options));
+        }
+
+        let resultArray = await Promise.all(allPromises);
+
+        for(const response of resultArray) {
+            Log.info("CS340View::submitGrade() - response from api " + response);
+            if(response.status !== 200) {
+                const errResponse = await response.json();
+                Log.info("CS340AdminView::submitGrade() - error submitting grades, code: " +
+                    response.status + " error: " + response.statusText);
+                // alert(errResponse.error);
+                UI.showAlert(errResponse.error);
+                UI.hideModal();
+                return false;
+            }
+        }
+        UI.hideModal();
+        Log.info("CS340AdminView::submitGradeRecord(..) - end");
+
+        return true;
     }
 
     public async getStudentGrade(sid: string, aid: string): Promise<AssignmentGrade | null> {
@@ -910,7 +1498,7 @@ export class CS340AdminView extends AdminView {
         } else {
             Log.info("CS340View::getStudentGrade(..) - found grade record");
             let responseJson = await response.json();
-            reply = responseJson.result;
+            reply = responseJson.response;
         }
         Log.info("CS340View::getStudentGrade(..) - finish");
         return reply;
@@ -1006,11 +1594,12 @@ export class CS340AdminView extends AdminView {
         });
     }
 
-    public transitionGradingPage(sid:string, aid:string) {
+    public transitionGradingPage(sid:string, aid:string, isTeam:boolean=false) {
         // Move to grading
         UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/GradingView.html', {
             sid:sid,
-            aid:aid
+            aid:aid,
+            isTeam:isTeam
         });
     }
 }

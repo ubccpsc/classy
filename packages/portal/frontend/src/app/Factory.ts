@@ -139,7 +139,7 @@ export class Factory {
             return 'sdmm';
         } else if (this.name === 'cs310') {
             return 'cs310';
-        } else if (this.name === 'cs340' || this.name === 'cpsc340') {
+        } else if (this.name === 'cs340' || this.name === 'cpsc340' || this.name.toLowerCase().startsWith('cpsc340')) {
             return 'cs340';
         } else {
             Log.error("Factory::getHTMLPrefix() - ERROR; unknown name: " + this.name);
