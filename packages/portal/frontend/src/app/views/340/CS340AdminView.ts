@@ -206,7 +206,7 @@ export class CS340AdminView extends AdminView {
                 } else {
                     Log.info("CS340AdminView::renderEditDeliverablePage(..) - Not an assignment, hiding elements");
                     let assignStatusHeader = (document.querySelector('#adminEditDeliverablePage-assignmentStatusHeader') as HTMLElement);
-                    let assignStatusBody = (document.querySelector('#adminEditDeliverablePage-assignStatus') as HTMLElement);
+                    let assignStatusBody = (document.querySelector('#adminEditDeliverablePage-assignmentStatus') as HTMLElement);
 
                     assignStatusHeader.setAttribute("style" , "display: none");
                     assignStatusBody.setAttribute("style" , "display: none");
@@ -281,9 +281,8 @@ export class CS340AdminView extends AdminView {
             that.releaseRepoPressed();
         };
 
-        (document.querySelector('#adminDeleteRepositories') as OnsButtonElement).onclick = function (evt) {// DEBUG
-            Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');// DEBUG
-                                    // DEBUG
+        (document.querySelector('#adminDeleteRepositories') as OnsButtonElement).onclick = function (evt) {
+            Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');
 
             UI.notificationConfirm("WARNING: Data will be deleted, and is non-recoverable." +
                 " Are you sure you wish to proceed?", async function(idx: number) {
@@ -297,8 +296,7 @@ export class CS340AdminView extends AdminView {
                         break;
                 }
             });
-
-        };// DEBUG
+        };
 
 
     }
@@ -365,34 +363,34 @@ export class CS340AdminView extends AdminView {
         if(update) UI.hideModal();
 
         if(response.status === 200) {
-            let responsejson = await response.json();
+            let responseJson = await response.json();
             // get the textbox
-            switch (responsejson.response.assignmentStatus) {
+            switch (responseJson.response.assignmentStatus) {
                 case AssignmentStatus.INACTIVE: {
                     statusBox.innerHTML = ": NOT CREATED - " + " Repositories: " +
-                        responsejson.response.studentRepos + "/" + responsejson.response.totalStudents;
+                        responseJson.response.studentRepos + "/" + responseJson.response.totalStudents;
                     break;
                 }
                 case AssignmentStatus.CREATED: {
                     statusBox.innerHTML = ": CREATED - " + " Repositories: " +
-                        responsejson.response.studentRepos + "/" + responsejson.response.totalStudents;
+                        responseJson.response.studentRepos + "/" + responseJson.response.totalStudents;
                     break;
                 }
                 case AssignmentStatus.RELEASED: {
                     statusBox.innerHTML = ": RELEASED - " + " Repositories: " +
-                        responsejson.response.studentRepos + "/" + responsejson.response.totalStudents;
+                        responseJson.response.studentRepos + "/" + responseJson.response.totalStudents;
                     break;
                 }
                 case AssignmentStatus.CLOSED: {
                     statusBox.innerHTML = ": CLOSED - " + " Repositories: " +
-                        responsejson.response.studentRepos + "/" + responsejson.response.totalStudents;
+                        responseJson.response.studentRepos + "/" + responseJson.response.totalStudents;
                     break;
                 }
                 default: {
                     Log.trace('CS340AdminView::checkStatusAndUpdate(..) - error; ' +
                         'deliverable not set up properly');
 
-                    UI.notification("Broken Status; value: " + responsejson.response.assignmentStatus);
+                    UI.notification("Broken Status; value: " + responseJson.response.assignmentStatus);
                     return null;
                 }
             }
