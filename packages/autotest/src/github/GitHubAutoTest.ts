@@ -264,6 +264,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 testDelay = details.studentDelay;
             }
 
+            Log.trace("GitHubAutoTest::requestFeedbackDelay(..) - testDelay: " + testDelay);
+
             if (isStaff !== null && (isStaff.isAdmin === true || isStaff.isStaff === true)) {
                 Log.info("GitHubAutoTest::requestFeedbackDelay(..) - staff; no delay");
                 return null; // staff can always request
@@ -273,7 +275,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     return null; // no prior requests
                 } else {
                     const nextTimeslot = record.timestamp + testDelay;
-                    Log.info("GitHubAutoTest::requestFeedbackDelay(..) - last: " +
+                    Log.info("GitHubAutoTest::requestFeedbackDelay(..) - delay: " + testDelay + "; last: " +
                         new Date(record.timestamp).toLocaleTimeString() + "; next: " + new Date(nextTimeslot).toLocaleTimeString());
                     if (reqTimestamp > nextTimeslot) {
                         Log.info("GitHubAutoTest::requestFeedbackDelay(..) - enough time passed; no delay");
