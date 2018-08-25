@@ -118,6 +118,18 @@ describe("GitHubActions", () => {
         expect(val).to.equal(name);
     }).timeout(TIMEOUT);
 
+    it("Should fail to create a repo if there is no corresponding Repository object.", async function() {
+        let res = null;
+        let ex = null;
+        try {
+            res = await gh.createRepo('INVALIDREPONAME');
+        } catch (err) {
+            ex = err;
+        }
+        expect(res).to.be.null;
+        expect(ex).to.not.be.null;
+    }).timeout(TIMEOUT);
+
     it("Should be possible to find a repo that does exist.", async function() {
         const val = await gh.repoExists(REPONAME);
         expect(val).to.be.true;
@@ -149,6 +161,59 @@ describe("GitHubActions", () => {
 
         hooks = await gh.listWebhooks(REPONAME);
         expect(hooks).to.have.lengthOf(1);
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to list the repos in an org.", async function() {
+        const res = await gh.listRepos();
+        Log.test('# repos ' + res.length);
+        expect(res).to.be.an('array');
+        expect(res.length).to.be.greaterThan(0);
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to list the teams in an org.", async function() {
+        const res = await gh.listTeams();
+        Log.test('# teams ' + res.length);
+        expect(res).to.be.an('array');
+        expect(res.length).to.be.greaterThan(0);
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to identify an admin from the admin team.", async function() {
+        let res = await gh.isOnAdminTeam(Test.ADMIN1.github);
+        Log.test('res: ' + res);
+        expect(res).to.be.an('boolean');
+        expect(res).to.be.true;
+
+        // student shouldn't be admin
+        res = await gh.isOnAdminTeam(Test.USER1.github);
+        Log.test('res: ' + res);
+        expect(res).to.be.an('boolean');
+        expect(res).to.be.false;
+
+        // random shouldn't be admin
+        res = await gh.isOnAdminTeam('unknown' + Date.now());
+        Log.test('res: ' + res);
+        expect(res).to.be.an('boolean');
+        expect(res).to.be.false;
+
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to identify a staff from the staff team.", async function() {
+        let res = await gh.isOnStaffTeam(Test.STAFF1.github);
+        Log.test('res: ' + res);
+        expect(res).to.be.an('boolean');
+        expect(res).to.be.true;
+
+        // student shouldn't be admin
+        res = await gh.isOnStaffTeam(Test.USER1.github);
+        Log.test('res: ' + res);
+        expect(res).to.be.an('boolean');
+        expect(res).to.be.false;
+
+        // random shouldn't be admin
+        res = await gh.isOnStaffTeam('unknown' + Date.now());
+        Log.test('res: ' + res);
+        expect(res).to.be.an('boolean');
+        expect(res).to.be.false;
     }).timeout(TIMEOUT);
 
     it("Should not be possible to get a team number for a team that does not exist.", async function() {
@@ -462,6 +527,12 @@ describe("GitHubActions", () => {
         expect(staffAdd).to.not.be.null;
         const permissionEdit = await gh.setRepoPermission(REPONAME, "pull");
         expect(permissionEdit).to.be.true;
+
+    }).timeout(TIMEOUT);
+
+    it("Should not be able to change permissions of a repo that does not exist.", async function() {
+        const permissionEdit = await gh.setRepoPermission("INVALIDREPONAME" + Date.now(), "pull");
+        expect(permissionEdit).to.be.false;
 
     }).timeout(TIMEOUT);
 

@@ -688,10 +688,11 @@ export class GitHubActions {
         const gh = this;
 
         const teamNumber = await gh.getTeamNumber(teamName);
-        if (teamNumber < 0) {
-            Log.warn('GitHubAction::isOnTeam(..) - team: ' + teamName + ' does not exist for org: ' + gh.org);
-            return false;
-        }
+        // code just returns false anyways because getTeamMembers will return [] and not match anything
+        // if (teamNumber < 0) {
+        //     Log.warn('GitHubAction::isOnTeam(..) - team: ' + teamName + ' does not exist for org: ' + gh.org);
+        //     return false;
+        // }
 
         const teamMembers = await gh.getTeamMembers(teamNumber);
         for (const member of teamMembers) {
@@ -783,9 +784,10 @@ export class GitHubActions {
                 .then(function(result: any) {
                     Log.info('GithubManager::importRepoFS(..)::moveFiles(..) - done');
                     Log.trace('GithubManager::importRepoFS(..)::moveFiles(..) - stdout: ' + result.stdout);
-                    if (result.stderr) {
-                        Log.warn('GithubManager::importRepoFS(..)::moveFiles(..) - stderr: ' + result.stderr);
-                    }
+                    // if (result.stderr) {
+                    //     Log.warn('GithubManager::importRepoFS(..)::moveFiles(..) - stderr: ' + result.stderr);
+                    // }
+                    that.reportStdErr(result.stderr, 'importRepoFS(..)::moveFiles(..)');
                 });
         }
 
@@ -795,9 +797,10 @@ export class GitHubActions {
                 .then(function(result: any) {
                     Log.info('GithubManager::importRepoFS(..)::cloneRepo() - done:');
                     Log.trace('GithubManager::importRepoFS(..)::cloneRepo() - stdout: ' + result.stdout);
-                    if (result.stderr) {
-                        Log.warn('GithubManager::importRepoFS(..)::cloneRepo() - stderr: ' + result.stderr);
-                    }
+                    that.reportStdErr(result.stderr, 'importRepoFS(..)::cloneRepo()');
+                    // if (result.stderr) {
+                    //     Log.warn('GithubManager::importRepoFS(..)::cloneRepo() - stderr: ' + result.stderr);
+                    // }
                 });
         }
 
@@ -807,9 +810,10 @@ export class GitHubActions {
                 .then(function(result: any) {
                     Log.info('GithubManager::importRepoFS(..)::enterRepoPath() - done:');
                     Log.trace('GithubManager::importRepoFS(..)::enterRepoPath() - stdout: ' + result.stdout);
-                    if (result.stderr) {
-                        Log.warn('GithubManager::importRepoFS(..)::enterRepoPath() - stderr: ' + result.stderr);
-                    }
+                    // if (result.stderr) {
+                    //     Log.warn('GithubManager::importRepoFS(..)::enterRepoPath() - stderr: ' + result.stderr);
+                    // }
+                    that.reportStdErr(result.stderr, 'importRepoFS(..)::enterRepoPath()');
                 });
         }
 
@@ -819,7 +823,8 @@ export class GitHubActions {
                 .then(function(result: any) {
                     Log.info('GithubManager::importRepoFS(..)::removeGitDir() - done:');
                     Log.trace('GithubManager::importRepoFS(..)::removeGitDir() - stdout: ' + result.stdout);
-                    Log.trace('GithubManager::importRepoFS(..)::removeGitDir() - stderr: ' + result.stderr);
+                    // Log.trace('GithubManager::importRepoFS(..)::removeGitDir() - stderr: ' + result.stderr);
+                    that.reportStdErr(result.stderr, 'importRepoFS(..)::removeGitDir()');
                 });
         }
 
@@ -829,9 +834,10 @@ export class GitHubActions {
                 .then(function(result: any) {
                     Log.info('GithubManager::importRepoFS(..)::initGitDir() - done:');
                     Log.trace('GithubManager::importRepoFS(..)::initGitDir() - stdout: ' + result.stdout);
-                    if (result.stderr) {
-                        Log.warn('GithubManager::importRepoFS(..)::initGitDir() - stderr: ' + result.stderr);
-                    }
+                    // if (result.stderr) {
+                    //     Log.warn('GithubManager::importRepoFS(..)::initGitDir() - stderr: ' + result.stderr);
+                    // }
+                    that.reportStdErr(result.stderr, 'importRepoFS(..)::initGitDir()');
                 });
         }
 
@@ -842,9 +848,10 @@ export class GitHubActions {
                 .then(function(result: any) {
                     Log.info('GithubManager::importRepoFS(..)::changeGitRemote() - done:');
                     Log.trace('GithubManager::importRepoFS(..)::changeGitRemote() - stdout: ' + result.stdout);
-                    if (result.stderr) {
-                        Log.warn('GithubManager::importRepoFS(..)::changeGitRemote() - stderr: ' + result.stderr);
-                    }
+                    // if (result.stderr) {
+                    //     Log.warn('GithubManager::importRepoFS(..)::changeGitRemote() - stderr: ' + result.stderr);
+                    // }
+                    that.reportStdErr(result.stderr, 'importRepoFS(..)::changeGitRemote()');
                 });
         }
 
@@ -856,9 +863,10 @@ export class GitHubActions {
                 .then(function(result: any) {
                     Log.info('GithubManager::importRepoFS(..)::addFilesToRepo() - done:');
                     Log.trace('GithubManager::importRepoFS(..)::addFilesToRepo() - stdout: ' + result.stdout);
-                    if (result.stderr) {
-                        Log.warn('GithubManager::importRepoFS(..)::addFilesToRepo() - stderr: ' + result.stderr);
-                    }
+                    // if (result.stderr) {
+                    //     Log.warn('GithubManager::importRepoFS(..)::addFilesToRepo() - stderr: ' + result.stderr);
+                    // }
+                    that.reportStdErr(result.stderr, 'importRepoFS(..)::addFilesToRepo()');
                 });
         }
 
@@ -869,9 +877,10 @@ export class GitHubActions {
                 .then(function(result: any) {
                     Log.info('GithubManager::importRepoFS(..)::pushToNewRepo() - done: ');
                     Log.trace('GithubManager::importRepoFS(..)::pushToNewRepo() - stdout: ' + result.stdout);
-                    if (result.stderr) {
-                        Log.warn('GithubManager::importRepoFS(..)::pushToNewRepo() - stderr: ' + result.stderr);
-                    }
+                    // if (result.stderr) {
+                    //     Log.warn('GithubManager::importRepoFS(..)::pushToNewRepo() - stderr: ' + result.stderr);
+                    // }
+                    that.reportStdErr(result.stderr, 'importRepoFS(..)::pushToNewRepo()');
                 });
         }
     }
@@ -888,11 +897,17 @@ export class GitHubActions {
     }
 
     public addGithubAuthToken(url: string) {
-        let start_append = url.indexOf('//') + 2;
-        let token = this.gitHubAuthToken;
-        let authKey = token.substr(token.indexOf('token ') + 6) + '@';
+        const startAppend = url.indexOf('//') + 2;
+        const token = this.gitHubAuthToken;
+        const authKey = token.substr(token.indexOf('token ') + 6) + '@';
         // creates "longokenstring@githuburi"
-        return url.slice(0, start_append) + authKey + url.slice(start_append);
+        return url.slice(0, startAppend) + authKey + url.slice(startAppend);
+    }
+
+    private async reportStdErr(stderr: any, prefix: string) {
+        if (stderr) {
+            Log.warn('GithubManager::reportStdErr - ' + prefix + ': ' + stderr);
+        }
     }
 
     /**
@@ -947,9 +962,10 @@ export class GitHubActions {
                 .then(function(result: any) {
                     Log.info('GithubManager::writeFileToRepo(..)::cloneRepo() - done:');
                     Log.trace('GithubManager::writeFileToRepo(..)::cloneRepo() - stdout: ' + result.stdout);
-                    if (result.stderr) {
-                        Log.warn('GithubManager::writeFileToRepo(..)::cloneRepo() - stderr: ' + result.stderr);
-                    }
+                    // if (result.stderr) {
+                    //     Log.warn('GithubManager::writeFileToRepo(..)::cloneRepo() - stderr: ' + result.stderr);
+                    // }
+                    that.reportStdErr(result.stderr, 'writeFileToRepo(..)::cloneRepo()');
                 });
         }
 
@@ -959,9 +975,10 @@ export class GitHubActions {
                 .then(function(result: any) {
                     Log.info('GithubManager::writeFileToRepo(..)::enterRepoPath() - done:');
                     Log.trace('GithubManager::writeFileToRepo(..)::enterRepoPath() - stdout: ' + result.stdout);
-                    if (result.stderr) {
-                        Log.warn('GithubManager::writeFileToRepo(..)::enterRepoPath() - stderr: ' + result.stderr);
-                    }
+                    // if (result.stderr) {
+                    //     Log.warn('GithubManager::writeFileToRepo(..)::enterRepoPath() - stderr: ' + result.stderr);
+                    // }
+                    that.reportStdErr(result.stderr, 'writeFileToRepo(..)::enterRepoPath()');
                 });
         }
 
@@ -971,9 +988,10 @@ export class GitHubActions {
                 .then(function(result: any) {
                     Log.info('GithubManager::writeFileToRepo(..)::createNewFileForce() - done:');
                     Log.trace('GithubManager::writeFileToRepo(..)::createNewFileForce() - stdout: ' + result.stdout);
-                    if (result.stderr) {
-                        Log.warn('GithubManager::writeFileToRepo(..)::createNewFileForce() - stderr: ' + result.stderr);
-                    }
+                    // if (result.stderr) {
+                    //     Log.warn('GithubManager::writeFileToRepo(..)::createNewFileForce() - stderr: ' + result.stderr);
+                    // }
+                    that.reportStdErr(result.stderr, 'writeFileToRepo(..)::createNewFileForce()');
                 });
         }
 
@@ -983,9 +1001,10 @@ export class GitHubActions {
                 .then(function(result: any) {
                     Log.info('GithubManager::writeFileToRepo(..)::createNewFile() - done:');
                     Log.trace('GithubManager::writeFileToRepo(..)::createNewFile() - stdout: ' + result.stdout);
-                    if (result.stderr) {
-                        Log.warn('GithubManager::writeFileToRepo(..)::createNewFile() - stderr: ' + result.stderr);
-                    }
+                    // if (result.stderr) {
+                    //     Log.warn('GithubManager::writeFileToRepo(..)::createNewFile() - stderr: ' + result.stderr);
+                    // }
+                    that.reportStdErr(result.stderr, 'writeFileToRepo(..)::createNewFile()');
                 });
         }
 
@@ -996,9 +1015,10 @@ export class GitHubActions {
                 .then(function(result: any) {
                     Log.info('GithubManager::writeFileToRepo(..)::addFilesToRepo() - done:');
                     Log.trace('GithubManager::writeFileToRepo(..)::addFilesToRepo() - stdout: ' + result.stdout);
-                    if (result.stderr) {
-                        Log.warn('GithubManager::writeFileToRepo(..)::addFilesToRepo() - stderr: ' + result.stderr);
-                    }
+                    // if (result.stderr) {
+                    //     Log.warn('GithubManager::writeFileToRepo(..)::addFilesToRepo() - stderr: ' + result.stderr);
+                    // }
+                    that.reportStdErr(result.stderr, 'writeFileToRepo(..)::addFilesToRepo()');
                 });
         }
 
@@ -1009,9 +1029,10 @@ export class GitHubActions {
                 .then(function(result: any) {
                     Log.info('GithubManager::writeFileToRepo(..)::commitFilesToRepo() - done:');
                     Log.trace('GithubManager::writeFileToRepo(..)::commitFilesToRepo() - stdout: ' + result.stdout);
-                    if (result.stderr) {
-                        Log.warn('GithubManager::writeFileToRepo(..)::commitFilesToRepo() - stderr: ' + result.stderr);
-                    }
+                    // if (result.stderr) {
+                    //     Log.warn('GithubManager::writeFileToRepo(..)::commitFilesToRepo() - stderr: ' + result.stderr);
+                    // }
+                    that.reportStdErr(result.stderr, 'writeFileToRepo(..)::commitFilesToRepo()');
                 });
         }
 
@@ -1022,9 +1043,10 @@ export class GitHubActions {
                 .then(function(result: any) {
                     Log.info('GithubManager::writeFileToRepo(..)::pushToNewRepo() - done: ');
                     Log.trace('GithubManager::writeFileToRepo(..)::pushToNewRepo() - stdout: ' + result.stdout);
-                    if (result.stderr) {
-                        Log.warn('GithubManager::writeFileToRepo(..)::pushToNewRepo() - stderr: ' + result.stderr);
-                    }
+                    // if (result.stderr) {
+                    //     Log.warn('GithubManager::writeFileToRepo(..)::pushToNewRepo() - stderr: ' + result.stderr);
+                    // }
+                    that.reportStdErr(result.stderr, 'writeFileToRepo(..)::pushToNewRepo()');
                 });
         }
 
