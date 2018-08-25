@@ -70,32 +70,32 @@ export class GitHubController implements IGitHubController {
         Log.info("GitHubController::createRepository( " + repoName + ", ...) - start");
         // Log.info("GitHubController::createRepository(..) - ");
         const startTime = Date.now();
+
+        const gh = new GitHubActions();
+
+        Log.trace("GitHubController::createRepository(..) - see if repo already exists");
+        const repoVal = await gh.repoExists(repoName);
+        if (repoVal === true) {
+            // unable to create a repository if it already exists!
+            Log.error("GitHubController::createRepository(..) - Error: Repository already exists;" +
+                " unable to create a new repository");
+            throw new Error("createRepository(..) failed; Repository " + repoName + " already exists.");
+        }
+
         try {
-            const gh = new GitHubActions();
+            // create the repository
+            Log.trace("GitHubController::createRepository() - create GitHub repo");
+            const repoCreateVal = await gh.createRepo(repoName);
+            Log.trace('GitHubController::createRepository(..) - success; repo: ' + repoCreateVal);
+        } catch (err) {
+            Log.error('GitHubController::createRepository(..) - create repo error: ' + err);
+            // repo creation failed; remove if needed (requires createRepo be permissive if already exists)
+            const res = await gh.deleteRepo(repoName);
+            Log.info('GitHubController::createRepository(..) - repo removed: ' + res);
+            throw new Error("createRepository(..) failed; Repository " + repoName + " creation failed; ERROR: " + err.message);
+        }
 
-            Log.trace("GitHubController::createRepository(..) - see if repo already exists");
-            const repoVal = await gh.repoExists(repoName);
-            if (repoVal === true) {
-                // unable to create a repository if it already exists!
-                Log.error("GitHubController::createRepository(..) - Error: Repository already exists;" +
-                    " unable to create a new repository");
-                return true;
-            }
-
-            try {
-                // create the repository
-                Log.trace("GitHubController::createRepository() - create GitHub repo");
-                const repoCreateVal = await gh.createRepo(repoName);
-                Log.trace('GitHubController::createRepository(..) - success; repo: ' + repoCreateVal);
-            } catch (err) {
-                Log.error('GitHubController::createRepository(..) - create repo error: ' + err);
-                // repo creation failed; remove if needed (requires createRepo be permissive if already exists)
-                const res = await gh.deleteRepo(repoName);
-                Log.info('GitHubController::createRepository(..) - repo removed: ' + res);
-
-                return false;
-            }
-
+        try {
             // still add staff team with push, just not students
             Log.trace("GitHubController::createRepository() - add staff team to repo");
             const staffTeamNumber = await gh.getTeamNumber('staff');
@@ -134,8 +134,8 @@ export class GitHubController implements IGitHubController {
     /**
      * Releases a repository to a team.
      *
-     * @param {Repository} repo: The repository to be released.
-     * @param {Team[]} teams: The teams to be added.
+     * @param {Repository} repo: The repository to be released. This must be in the datastore.
+     * @param {Team[]} teams: The teams to be added. These must be in the datastore.
      * @param {boolean} asCollaborators: Whether the team members should be added as a collaborators
      * or whether a GitHub team should be created for them.
      * @returns {Promise<Repository | null>}
@@ -172,7 +172,10 @@ export class GitHubController implements IGitHubController {
                     // const teamTuple: GitTeamTuple =
                     await gh.addMembersToTeam(team.id, teamNum, team.personIds);
                     Log.info("GitHubController::releaseRepository(..) - added members to team");
-
+                    // TODO: this is what should really be happening here:
+                    // const msg = "release failed; Team: \" + team.id + \" has not been created on GitHub";
+                    // Log.error("GitHubController::releaseRepository(..) - "+msg);
+                    // throw new Error("relaseRepository(..) failed; Team " + team.id + " should already exist on GitHub");
                 }
                 // now, add the team to the repository
                 // const teamAdd =
@@ -192,41 +195,37 @@ export class GitHubController implements IGitHubController {
                                      webhookAddress: string): Promise<boolean> {
         Log.info("GitHubController::provisionRepository( " + repoName + ", ...) - start");
         const start = Date.now();
+
+        if (teams.length < 1 || teams.length > 1) {
+            Log.warn("GitHubController::provisionRepository(..) - only the first team will be added to the repo");
+        }
+
+        Log.trace("GitHubController::provisionRepository() - see if repo already exists");
+        const gh = new GitHubActions();
+        const repoExists = await gh.repoExists(repoName);
+        Log.trace('GitHubController::provisionRepository(..) - repo exists: ' + repoExists);
+        if (repoExists === true) {
+            // this is fatal, we can't provision a repo that already exists
+            Log.error("GitHubController::provisionRepository() - repo already exists on GitHub ( " +
+                repoName + " ); provisioning failed");
+            throw new Error("provisionRepository(..) failed; Repository " + repoName + " already exists.");
+            // return false;
+        }
+
         try {
-            const gh = new GitHubActions();
+            // create a repo
+            Log.trace("GitHubController::provisionRepository() - create GitHub repo");
+            const repoVal = await gh.createRepo(repoName);
+            Log.trace('GitHubController::provisionRepository(..) - repo: ' + repoVal);
+        } catch (err) {
+            Log.error('GitHubController::provisionRepository(..) - create repo error: ' + err);
+            // repo creation failed; remove if needed (requires createRepo be permissive if already exists)
+            const res = await gh.deleteRepo(repoName);
+            Log.info('GitHubController::provisionRepository(..) - repo removed: ' + res);
+            throw new Error("provisionRepository(..) failed; failed to creat repo; ERROR: " + err.message);
+        }
 
-            if (teams.length < 1 || teams.length > 1) {
-                Log.warn("GitHubController::provisionRepository(..) - only the first team will be added to the repo");
-            }
-
-            try {
-                Log.trace("GitHubController::provisionRepository() - see if repo already exists");
-                const repoVal = await gh.repoExists(repoName);
-                Log.trace('GitHubController::provisionRepository(..) - repo exists: ' + repoVal);
-                if (repoVal === true) {
-                    // this is fatal, we can't provision a repo that already exists
-                    Log.error("GitHubController::provisionRepository() - repo already exists on GitHub ( " +
-                        repoName + " ); provisioning failed");
-                    return false;
-                }
-            } catch (err) {
-                Log.error("GitHubController::provisionRepository() - repo already exists on GitHub; ERROR: " + err);
-                return false;
-            }
-
-            try {
-                // create a repo
-                Log.trace("GitHubController::provisionRepository() - create GitHub repo");
-                const repoVal = await gh.createRepo(repoName);
-                Log.trace('GitHubController::provisionRepository(..) - repo: ' + repoVal);
-            } catch (err) {
-                Log.error('GitHubController::provisionRepository(..) - create repo error: ' + err);
-                // repo creation failed; remove if needed (requires createRepo be permissive if already exists)
-                const res = await gh.deleteRepo(repoName);
-                Log.info('GitHubController::provisionRepository(..) - repo removed: ' + res);
-                return false;
-            }
-
+        try {
             let teamValue = null;
             try {
                 Log.trace("GitHubController::provisionRepository() - create GitHub team");
@@ -243,7 +242,8 @@ export class GitHubController implements IGitHubController {
                     Log.trace('GitHubController::provisionRepository(..) - team name: ' + teamAdd.teamName);
                 }
             } catch (err) {
-                Log.error("GitHubController::provisionRepository() - create team ERROR: " + err);
+                Log.warn("GitHubController::provisionRepository() - create team ERROR: " + err);
+                // swallow these errors and keep going
             }
 
             Log.trace("GitHubController::provisionRepository() - add staff team to repo");
@@ -267,6 +267,7 @@ export class GitHubController implements IGitHubController {
 
             Log.trace('GitHubController::provisionRepository(..) - successfully completed for: ' +
                 repoName + '; took: ' + Util.took(start));
+
             return true;
         } catch (err) {
             Log.error('GitHubController::provisionRepository(..) - ERROR: ' + err);
