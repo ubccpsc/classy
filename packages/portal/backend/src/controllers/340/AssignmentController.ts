@@ -850,6 +850,7 @@ export class AssignmentController {
         //     return false;
         // }
 
+        /*
         // add a file in the repo and then push
         // check if the studentRepo exists
         let repoExists = await this.gha.repoExists(studentGradeRepoName);
@@ -880,6 +881,7 @@ export class AssignmentController {
                 await this.db.writeRepository(studentRepoRecord);
             }
         }
+        */
 
 
         // now assume we have the all the needed pieces
@@ -919,8 +921,6 @@ export class AssignmentController {
 
         let table = require('markdown-table');
 
-
-
         let payload = "# " + deliverableRecord.id;
 
         if (header) {
@@ -942,7 +942,7 @@ export class AssignmentController {
         // get the repo again (in case of database changes)
         Log.info("AssignmentController::publishGrade( .. ) - retrieving repositoryRecord again");
 
-        studentRepoRecord = await this.rc.getRepository(studentGradeRepoName);
+        let studentRepoRecord: Repository = await this.verifyRepoExists(studentGradeRepoName);
 
         let gitSuccess: boolean;
         try {
@@ -1010,10 +1010,12 @@ export class AssignmentController {
 
         // for every student, publish their grade
         let totalSuccess = true;
-        Log.info("AssignmentController::publishAllGrades( .. ) - Publishing grades for " + allStudents.length + " students");
+        Log.info("AssignmentController::publishAllGrades( .. ) - Publishing grades for " +
+                        allStudents.length + " students");
         for (const student of allStudents) {
             if (typeof personVerification[student.id] === 'undefined') continue;
-            if(!await this.publishGrade(student.githubId + "_grades", delivId + "_grades.md", student.id, delivId)) {
+            if(!await this.publishGrade(student.githubId + "_grades",
+                delivId + "_grades.md", student.id, delivId)) {
                 Log.warn("AssignmentController::publishAllGrades( .. ) - Had an issue " +
                     "publishing student: <" + student.id + "> grade");
 
@@ -1033,6 +1035,52 @@ export class AssignmentController {
 
 
     /**
+     * Verifies that a repository exists, if not, create it.
+     * @param repositoryName
+     * @returns Promise<Repository|null> - The repository object, or null if it fails.
+     */
+    public async verifyRepoExists(repositoryName: string): Promise<Repository | null> {
+        Log.info("AssignmentController::verifyRepoExists( "+repositoryName+" ) - start");
+
+        // check if the repository exists
+        let repoExists = await this.gha.repoExists(repositoryName);
+        let repositoryRecord: Repository = await this.rc.getRepository(repositoryName);
+
+        if(!repoExists) {
+            // Create the repo, it doesn't exist yet
+            // first, need to check if a Repo object has been created
+            if (repositoryRecord === null) {
+                // If no repo object exists
+                Log.info("AssignmentController::verifyRepoExists(..) - No student Repo found, creating repo");
+                // create the record
+                repositoryRecord = await this.rc.createRepository(repositoryName, [], null);
+                if(repositoryRecord === null) {
+                    // we tried multiple times, unable to continue (something is wrong)
+                    Log.error("AssignmentController::verifyRepoExists(..) - Error; unable to " +
+                                                        "create student grade repository.");
+                    return null;
+                }
+            }
+            // create the repo
+            repositoryRecord.URL = await this.gha.createRepo(repositoryName);
+            // write the repository to the database
+            await this.db.writeRepository(repositoryRecord);
+        } else {
+            // if the repo does exist
+            if(repositoryRecord === null) {
+                // but the record doesn't
+                // create the record, and set the URL to the record properly
+                repositoryRecord = await this.rc.createRepository(repositoryName, [], null);
+                repositoryRecord.URL = await this.ghc.getRepositoryUrl(repositoryRecord);
+                // write back to the database
+                await this.db.writeRepository(repositoryRecord);
+            }
+        }
+        // TODO: Return the Repository Object
+    }
+
+
+    /**
      * Generates the final grade of all student's assignments (not deliverables)
      * @param {string} studentGradeRepoName
      * @param {string} fileName
@@ -1041,6 +1089,8 @@ export class AssignmentController {
      */
     public async publishFinalGrade(studentGradeRepoName: string, fileName: string, studentId: string) : Promise<boolean> {
         Log.info("AssignmentController::publishFinalGrade( ... ,  " + studentId +  ") - start");
+
+        let studentRepoRecord: Repository = await this.verifyRepoExists(studentGradeRepoName);
 
         // get all the student's grades
         let studentGrades: Grade[] = await this.gc.getReleasedGradesForPerson(studentId);
@@ -1060,11 +1110,14 @@ export class AssignmentController {
 
         // TODO: Generate table headings
         let tableInfo: string[][] = [];
-        let tableHeader: string[] = ["Assignment Name", "Grade", "Out of",
-                                        "Assignment Weight", "Weighted Grade"];
+        let tableHeader: string[] = ["Assessment", "Grade", "Assessment Weight", "Weighted Grade"];
+
         tableInfo.push(tableHeader);
 
         // TODO: Generate table insides
+        let totalRaw: number    = 0;
+        let totalWeight: number = 0;
+        let totalScore: number  = 0;
         for (const deliv of deliverables) {
             if(deliv.custom === null || typeof (deliv.custom as AssignmentInfo).courseWeight === "undefined") {
                 Log.info("AssignmentController::publishFinalGrade(..) - deliv: " + deliv.id + " is " +
@@ -1073,14 +1126,56 @@ export class AssignmentController {
             }
 
             // attempt to get the student's grade
-            if(typeof studentGradeMapping[deliv.id] === "undefined" || studentGradeMapping[deliv.id] === null) {
-                let newHeader: string[] = [deliv.id, "0", this.]
-            } else {
+            let newRow: string[];
+            let weight = deliv.custom.courseWeight;
 
+            totalWeight += weight;
+
+            if(typeof studentGradeMapping[deliv.id] === "undefined" || studentGradeMapping[deliv.id] === null) {
+                // no grade
+                newRow = [deliv.id, "X", weight.toString(), "0"];
+            } else {
+                // double check this
+                let studentScore    = (studentGradeMapping[deliv.id].score / this.calculateMaxGrade(deliv.custom)) * 100;
+                let weightedScore   =  studentScore * weight;
+                totalRaw            += studentScore;
+                totalScore          += weightedScore;
+
+                newRow = [deliv.id, studentScore.toString(), weight.toString(),
+                    weightedScore.toString(), totalScore.toString()];
             }
+            tableInfo.push(newRow);
         }
 
         // TODO: Generate table footings
+
+        let newRow: string[] = ["**COURSE GRADE**", totalRaw.toString(),
+            totalWeight.toString(), totalScore.toString() + "%"];
+        tableInfo.push(newRow);
+
+        Log.info("AssignmentController::publishGrade(..) - generating tableInfo complete; " + tableInfo);
+
+
+        // generate payload
+        let table = require('markdown-table'); // use the markdown-table module
+
+        let payload: string = "# " + "Final Grade";
+
+        payload += "\n\n" + table(tableInfo);
+
+        payload += "\n\n Note: The weighed average of the above grades may deviate by 1 percent from the " +
+            "overall grade due to rounding. However the overall grade shown is the correct one.";
+
+        let gitSuccess: boolean;
+        try {
+            Log.info("AssignmentController::publishFinalGrade( .. ) - writing grade");
+
+            gitSuccess = await this.gha.writeFileToRepo(studentRepoRecord.URL,
+                "final_grade.md", payload, true);
+        } catch (err) {
+            Log.error("AssignmentController::publishFinalGrade() - Error: " + err);
+            return false;
+        }
 
         return false;
     }
@@ -1133,12 +1228,13 @@ export class AssignmentController {
             throw new Error("Unable to calculate max grade of a non-assignment");
         }
 
+        let maxGrade: number = 0;
         for(const question of assignmentRubric.questions) {
             for(const subQuestion of question.subQuestions) {
-
+                maxGrade += subQuestion.outOf * subQuestion.weight;
             }
         }
-
+        return maxGrade;
     }
 
 
