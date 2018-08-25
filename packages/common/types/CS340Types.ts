@@ -33,6 +33,7 @@ export interface AssignmentInfo {
     seedRepoURL: string;
     seedRepoPath: string;
     mainFilePath: string;
+    courseWeight: number;               // should be a value between 0-1, relative to the final grade
     status: AssignmentStatus;
     rubric: AssignmentGradingRubric;
     repositories: string[];             // Associated Repositories based on IDs
@@ -63,7 +64,7 @@ export interface SubQuestionGradingRubric {
     name: string;
     comment: string;
     outOf: number;
-    weight: number;
+    weight: number;                 // score multiplier for the total grade
     modifiers: any;                 // Custom modifiers - course dependant
 }
 

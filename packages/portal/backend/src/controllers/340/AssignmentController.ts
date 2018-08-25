@@ -1031,12 +1031,56 @@ export class AssignmentController {
         return totalSuccess;
     }
 
+
+    /**
+     * Generates the final grade of all student's assignments (not deliverables)
+     * @param {string} studentGradeRepoName
+     * @param {string} fileName
+     * @param {string} studentId
+     * @returns {Promise<boolean>}
+     */
     public async publishFinalGrade(studentGradeRepoName: string, fileName: string, studentId: string) : Promise<boolean> {
         Log.info("AssignmentController::publishFinalGrade( ... ,  " + studentId +  ") - start");
 
         // get all the student's grades
-        let studentGrades = await this.gc.getReleasedGradesForPerson(studentId);
+        let studentGrades: Grade[] = await this.gc.getReleasedGradesForPerson(studentId);
+        let deliverables: Deliverable[] = await this.dc.getAllDeliverables();
 
+        // for(const grade of studentGrades) {
+        //     if(grade.custom === null || typeof (grade.custom as AssignmentGrade).questions === 'undefined') {
+        //
+        //     }
+        // }
+
+        let studentGradeMapping: {[delivId: string]: Grade} = {};
+
+        for(const grade of studentGrades) {
+            studentGradeMapping[grade.delivId] = grade;
+        }
+
+        // TODO: Generate table headings
+        let tableInfo: string[][] = [];
+        let tableHeader: string[] = ["Assignment Name", "Grade", "Out of",
+                                        "Assignment Weight", "Weighted Grade"];
+        tableInfo.push(tableHeader);
+
+        // TODO: Generate table insides
+        for (const deliv of deliverables) {
+            if(deliv.custom === null || typeof (deliv.custom as AssignmentInfo).courseWeight === "undefined") {
+                Log.info("AssignmentController::publishFinalGrade(..) - deliv: " + deliv.id + " is " +
+                    "not an assignment, skipping...");
+                continue;
+            }
+
+            // attempt to get the student's grade
+            if(typeof studentGradeMapping[deliv.id] === "undefined" || studentGradeMapping[deliv.id] === null) {
+                let newHeader: string[] = [deliv.id, "0", this.]
+            } else {
+
+            }
+        }
+
+        // TODO: Generate table footings
 
         return false;
     }
@@ -1082,6 +1126,19 @@ export class AssignmentController {
 
 
         return newAssignmentGrade;
+    }
+
+    public calculateMaxGrade(assignmentRubric: AssignmentGradingRubric): number {
+        if(assignmentRubric === null || typeof assignmentRubric.questions === "undefined") {
+            throw new Error("Unable to calculate max grade of a non-assignment");
+        }
+
+        for(const question of assignmentRubric.questions) {
+            for(const subQuestion of question.subQuestions) {
+
+            }
+        }
+
     }
 
 

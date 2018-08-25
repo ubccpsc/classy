@@ -347,6 +347,7 @@ export class Test {
             seedRepoURL:  "https://github.com/SECapstone/capstone",
             seedRepoPath: "",
             mainFilePath: "",
+            courseWeight: 0.5,
             status:       newAssignmentStatus,
             rubric:       newAssignmentGradingRubric,
             repositories: []
@@ -407,6 +408,7 @@ export class Test {
             seedRepoURL:  "https://github.com/CPSC340/test_repository",
             seedRepoPath: "labs/lab2/*",
             mainFilePath: "labs/lab2/a2.tex",
+            courseWeight: 0.5,
             status:       newAssignmentStatus,
             rubric:       newAssignmentGradingRubric,
             repositories: []

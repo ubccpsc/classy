@@ -22,7 +22,6 @@ import {Factory} from "../../Factory";
 import {SortableTable, TableCell, TableHeader} from "../../util/SortableTable";
 import {UI} from "../../util/UI";
 import {AdminView} from "../AdminView";
-import {response} from "spdy";
 
 const ERROR_POTENTIAL_INCORRECT_INPUT: string = "input triggered warning";
 const ERROR_INVALID_INPUT: string = "invalid input";
@@ -83,6 +82,7 @@ export class CS340AdminView extends AdminView {
             }
             return;
         }
+
         // if(opsObject.page !== null) {
         //     console.log("got a non-null page value");
         //     if(opsObject.page === "cs340/GradingView.html") {
@@ -573,6 +573,12 @@ export class CS340AdminView extends AdminView {
         };
 
         Log.info("CS340AdminView::handleAdminGrades(..) - finished handling hook");
+
+        let emptyResultsElement = document.querySelector('#gradesListTableNone') as HTMLDivElement;
+        let tabledResultsElement = document.querySelector("#gradesListTable") as HTMLDivElement;
+        emptyResultsElement.removeAttribute("style");
+        tabledResultsElement.setAttribute("style", "display:none");
+
     }
 
     public async handleAdminCustomGrades(opts: any) {
@@ -672,7 +678,7 @@ export class CS340AdminView extends AdminView {
     public async renderStudentGradesDeliverable(delivId: string, hiddenNames: boolean = false) {
         Log.info("CS340AdminView::renderStudentGradeDeliverable( " + delivId + " ) - start");
 
-        let emptyResultsElement = document.querySelector('#gradesListTableNone') as HTMLDivElement
+        let emptyResultsElement = document.querySelector('#gradesListTableNone') as HTMLDivElement;
         let tabledResultsElement = document.querySelector("#gradesListTable") as HTMLDivElement;
         if(delivId === null || delivId === "null") {
             Log.info("CS340AdminView::renderStudentGradeDeliverable(..) - null value, hiding the table");

@@ -1,88 +1,177 @@
-<ons-page id="studentTabsPage">
+<!--&lt;!&ndash;-->
+<!--<ons-page id="studentTabsPage">-->
+    <!--<ons-toolbar>-->
+        <!--<div class="center" id="studentTabsHeader">CS 340</div>-->
+        <!--<div class="right">-->
+            <!--<ons-toolbar-button onclick="myApp.logout();">-->
+                <!--<ons-icon icon="fa-sign-out"></ons-icon>-->
+                <!--<span style="vertical-align: top; font-size: 80%;">Logout</span>-->
+            <!--</ons-toolbar-button>-->
+        <!--</div>-->
+    <!--</ons-toolbar>-->
+    <!--<div>-->
+<!--&lt;!&ndash;        <ons-select id="deliverableList" onchange="window.classportal.view.changeStudentList(event)">-->
+
+            <!--&lt;!&ndash;This is to be filled with some buttons with deliverable IDs attached to them&ndash;&gt;-->
+<!--&lt;!&ndash;            <option value="material">Hello</option>-->
+            <!--<option value="material">Hello1</option>-->
+            <!--<option value="material">Hello2</option>&ndash;&gt;-->
+        <!--</ons-select>&ndash;&gt;-->
+<!--&lt;!&ndash;        <ons-list-header>Select Deliverable:</ons-list-header>-->
+        <!--<ons-list id="deliverableList" expandable>-->
+
+        <!--</ons-list>&ndash;&gt;-->
+
+        <!--<ons-list>-->
+            <!--<ons-list-header>Select Deliverable:</ons-list-header>-->
+            <!--<ons-list-item style="text-align: center;">-->
+                <!--<ons-row>-->
+                    <!--<ons-col>-->
+                        <!--Deliverable:-->
+                        <!--<ons-select-->
+                                    <!--style="padding-left: 2em; padding-right: 1em; vertical-align: middle;">-->
+                            <!--<select id="select-deliverable-list" class="select-input">-->
+
+                            <!--</select>-->
+                        <!--</ons-select>-->
+                        <!--<p></p>-->
+                        <!--<ons-button id="select-deliverable-button">Update</ons-button>-->
+                    <!--</ons-col>-->
+                <!--</ons-row>-->
+            <!--</ons-list-item>-->
+
+            <!--<ons-list-header>Grades</ons-list-header>-->
+            <!--<ons-list-item>-->
+                <!--<div id="grades-table"></div>-->
+            <!--</ons-list-item>-->
+        <!--</ons-list>-->
+    <!--</div>-->
+    <!--<ons-modal id="studentModal">-->
+        <!--<div style="display:flex; flex-direction:column; align-items: center;">-->
+            <!--<div id="modalText" style="padding-top: 1em; padding-bottom: 1em;">Updating. Will take < 5 seconds.</div>-->
+            <!--<ons-progress-circular indeterminate></ons-progress-circular>-->
+        <!--</div>-->
+    <!--</ons-modal>-->
+    <!--<ons-button onclick="window.classportal.view.testfunction()">-->
+        <!--A button-->
+    <!--</ons-button>-->
+    <!--&lt;!&ndash;<ons-list>&ndash;&gt;-->
+        <!--&lt;!&ndash;<ons-list-item>Content here</ons-list-item>&ndash;&gt;-->
+    <!--&lt;!&ndash;</ons-list>&ndash;&gt;-->
+    <!--<script>-->
+        <!--document.addEventListener('init', function (event) {-->
+            <!--window.classportal.view.renderDeliverables();-->
+        <!--});-->
+    <!--</script>-->
+<!--</ons-page>-->
+
+<!--&lt;!&ndash;<script>-->
+    <!--document.addEventListener('init', function (event) {-->
+        <!--window.classportal.view.getAllDeliverables();-->
+    <!--});-->
+<!--</script>&ndash;&gt;-->
+
+<!--&lt;!&ndash;-->
+<!--<ons-page id="gradeSubmission">-->
+    <!--<ons-toolbar>-->
+        <!--<div class="center" id="topBarName">Grade Submission</div>-->
+    <!--</ons-toolbar>-->
+    <!--<p>This page will be populated by the autoscripts</p>-->
+    <!--<div class="mainBody">-->
+        <!--<div id="assignmentSection">-->
+            <!--&lt;!&ndash;This will be filled in dynamically&ndash;&gt;-->
+        <!--</div>-->
+        <!--<div id="gradingSection">-->
+            <!--&lt;!&ndash;This will be filled in dynamically&ndash;&gt;-->
+        <!--</div>-->
+    <!--</div>-->
+<!--</ons-page>-->
+<!--&ndash;&gt;-->
+<!--&ndash;&gt;-->
+<!--<ons-page id="StudentRoot">-->
+    <!--<ons-toolbar>-->
+        <!--<div class="center">CPSC 310 Student Portal</div>-->
+        <!--<div id='indexLogin' class="right">-->
+            <!--<ons-toolbar-button onclick="myApp.logout();">-->
+                <!--<ons-icon icon="fa-sign-out"></ons-icon>-->
+                <!--<span style="vertical-align: top; font-size: 80%;">Logout</span>-->
+            <!--</ons-toolbar-button>-->
+        <!--</div>-->
+    <!--</ons-toolbar>-->
+
+    <!--<ons-list>-->
+        <!--<ons-list-header>Grades</ons-list-header>-->
+        <!--<ons-list-item>-->
+            <!--<div id="studentGradeTable" style="width:100%;"></div>-->
+        <!--</ons-list-item>-->
+        <!--<div id="studentSelectPartnerDiv" style="display: none;">-->
+            <!--<ons-list-header>Select Project Partner</ons-list-header>-->
+            <!--<ons-list-item expandable>-->
+                <!--<div class="left settingIcon">-->
+                    <!--<ons-icon style="padding-right: 1em;" icon="fa-cogs"></ons-icon>-->
+                    <!--Specify project partner CWL:-->
+                <!--</div>-->
+                <!--<div>-->
+                    <!--<ons-input class="settingTextInput" id="studentSelectPartnerText"></ons-input>-->
+                    <!--<ons-button id="studentSelectPartnerButton">Create Team</ons-button>-->
+                <!--</div>-->
+                <!--<div class="expandable-content">-->
+                    <!--Specify your project partner here. They must be registered in your lab section and must not be on any other team. Please-->
+                    <!--note: this will be your partner for the duration of the term and cannot be changed so make your choice carefully. Only-->
+                    <!--one team member needs to do this.-->
+                <!--</div>-->
+            <!--</ons-list-item>-->
+        <!--</div>-->
+        <!--<div id="studentPartnerDiv" style="display: none;">-->
+            <!--<ons-list-header>Project Partner</ons-list-header>-->
+            <!--<ons-list-item>-->
+                <!--Your team is&nbsp;<span id="studentPartnerTeamName"></span>; your teammates are&nbsp;<span id="studentPartnerTeammates"></span>.-->
+            <!--</ons-list-item>-->
+        <!--</div>-->
+    <!--</ons-list>-->
+
+<!--</ons-page>-->
+
+<ons-page id="StudentRoot">
     <ons-toolbar>
-        <div class="center" id="studentTabsHeader">CS 340</div>
-        <div class="right">
+        <div class="center">CPSC 340 Student Portal</div>
+        <div id='indexLogin' class="right">
             <ons-toolbar-button onclick="myApp.logout();">
                 <ons-icon icon="fa-sign-out"></ons-icon>
                 <span style="vertical-align: top; font-size: 80%;">Logout</span>
             </ons-toolbar-button>
         </div>
     </ons-toolbar>
-    <div>
-<!--        <ons-select id="deliverableList" onchange="window.classportal.view.changeStudentList(event)">
 
-            &lt;!&ndash;This is to be filled with some buttons with deliverable IDs attached to them&ndash;&gt;
-&lt;!&ndash;            <option value="material">Hello</option>
-            <option value="material">Hello1</option>
-            <option value="material">Hello2</option>&ndash;&gt;
-        </ons-select>-->
-<!--        <ons-list-header>Select Deliverable:</ons-list-header>
-        <ons-list id="deliverableList" expandable>
-
-        </ons-list>-->
-
-        <ons-list>
-            <ons-list-header>Select Deliverable:</ons-list-header>
-            <ons-list-item style="text-align: center;">
-                <ons-row>
-                    <ons-col>
-                        Deliverable:
-                        <ons-select
-                                    style="padding-left: 2em; padding-right: 1em; vertical-align: middle;">
-                            <select id="select-deliverable-list" class="select-input">
-
-                            </select>
-                        </ons-select>
-                        <p></p>
-                        <ons-button id="select-deliverable-button">Update</ons-button>
-                    </ons-col>
-                </ons-row>
+    <ons-list>
+        <ons-list-header>Grades</ons-list-header>
+        <ons-list-item>
+            <div id="studentGradeTable" style="width:100%;"></div>
+        </ons-list-item>
+        <div id="studentSelectPartnerDiv" style="display: none;">
+            <ons-list-header>Select Project Partner</ons-list-header>
+            <ons-list-item expandable>
+                <div class="left settingIcon">
+                    <ons-icon style="padding-right: 1em;" icon="fa-cogs"></ons-icon>
+                    Specify project partner CWL:
+                </div>
+                <div>
+                    <ons-input class="settingTextInput" id="studentSelectPartnerText"></ons-input>
+                    <ons-button id="studentSelectPartnerButton">Create Team</ons-button>
+                </div>
+                <div class="expandable-content">
+                    Specify your project partner here. They must be registered in your lab section and must not be on any other team. Please
+                    note: this will be your partner for the duration of the term and cannot be changed so make your choice carefully. Only
+                    one team member needs to do this.
+                </div>
             </ons-list-item>
-
-            <ons-list-header>Grades</ons-list-header>
+        </div>
+        <div id="studentPartnerDiv" style="display: none;">
+            <ons-list-header>Project Partner</ons-list-header>
             <ons-list-item>
-                <div id="grades-table"></div>
+                Your team is&nbsp;<span id="studentPartnerTeamName"></span>; your teammates are&nbsp;<span id="studentPartnerTeammates"></span>.
             </ons-list-item>
-        </ons-list>
-    </div>
-    <ons-modal id="studentModal">
-        <div style="display:flex; flex-direction:column; align-items: center;">
-            <div id="modalText" style="padding-top: 1em; padding-bottom: 1em;">Updating. Will take < 5 seconds.</div>
-            <ons-progress-circular indeterminate></ons-progress-circular>
         </div>
-    </ons-modal>
-    <ons-button onclick="window.classportal.view.testfunction()">
-        A button
-    </ons-button>
-    <!--<ons-list>-->
-        <!--<ons-list-item>Content here</ons-list-item>-->
-    <!--</ons-list>-->
-    <script>
-        document.addEventListener('init', function (event) {
-            window.classportal.view.renderDeliverables();
-        });
-    </script>
-</ons-page>
+    </ons-list>
 
-<!--<script>
-    document.addEventListener('init', function (event) {
-        window.classportal.view.getAllDeliverables();
-    });
-</script>-->
-
-<!--
-<ons-page id="gradeSubmission">
-    <ons-toolbar>
-        <div class="center" id="topBarName">Grade Submission</div>
-    </ons-toolbar>
-    <p>This page will be populated by the autoscripts</p>
-    <div class="mainBody">
-        <div id="assignmentSection">
-            &lt;!&ndash;This will be filled in dynamically&ndash;&gt;
-        </div>
-        <div id="gradingSection">
-            &lt;!&ndash;This will be filled in dynamically&ndash;&gt;
-        </div>
-    </div>
 </ons-page>
--->

@@ -527,7 +527,7 @@ describe("GitHubActions", () => {
         // delete test repos if needed
         for (const repo of repos as any) {
             Log.info('Evaluating repo: ' + repo.name);
-            if (repo.name.indexOf('TEST__X__') === 0 || repo.name.startsWith(REPONAME)) {
+            if (repo.name.indexOf('TEST__X__') === 0 || repo.name.startsWith(REPONAME) || repo.name.endsWith("_grades")) {
                 Log.info('Removing stale repo: ' + repo.name);
                 await gh.deleteRepo(repo.name);
                 // expect(val).to.be.true;
