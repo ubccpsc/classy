@@ -168,9 +168,9 @@ export class AssignmentController {
         }
 
         // // record the url
-        // repository.URL = await this.ghc.getRepositoryUrl(repository);
-        //
-        // await this.db.writeRepository(repository);
+        repository.URL = await this.ghc.getRepositoryUrl(repository);
+
+        await this.db.writeRepository(repository);
 
         if (!assignInfo.repositories.includes(repository.id)) {
             Log.info("AssignmentController::createAssignmentRepo(..) - adding repository to list");
