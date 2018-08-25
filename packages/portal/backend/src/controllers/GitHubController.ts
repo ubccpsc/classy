@@ -73,25 +73,20 @@ export class GitHubController implements IGitHubController {
         try {
             const gh = new GitHubActions();
 
-            try {
-                Log.trace("GitHubController::createRepository(..) - see if repo already exists");
-                const repoVal = await gh.repoExists(repoName);
-                if (repoVal === true) {
-                    // unable to create a repository if it already exists!
-                    Log.error("GitHubController::createRepository(..) - Error: Repository already exists;" +
-                        " unable to create a new repository");
-                    return true;
-                }
-            } catch (err) {
-                Log.error("GitHubController::createRepository(..) - Error: " + err);
-                return false;
+            Log.trace("GitHubController::createRepository(..) - see if repo already exists");
+            const repoVal = await gh.repoExists(repoName);
+            if (repoVal === true) {
+                // unable to create a repository if it already exists!
+                Log.error("GitHubController::createRepository(..) - Error: Repository already exists;" +
+                    " unable to create a new repository");
+                return true;
             }
 
             try {
                 // create the repository
                 Log.trace("GitHubController::createRepository() - create GitHub repo");
-                const repoVal = await gh.createRepo(repoName);
-                Log.trace('GitHubController::createRepository(..) - success; repo: ' + repoVal);
+                const repoCreateVal = await gh.createRepo(repoName);
+                Log.trace('GitHubController::createRepository(..) - success; repo: ' + repoCreateVal);
             } catch (err) {
                 Log.error('GitHubController::createRepository(..) - create repo error: ' + err);
                 // repo creation failed; remove if needed (requires createRepo be permissive if already exists)
@@ -163,6 +158,9 @@ export class GitHubController implements IGitHubController {
                 // see if the team exists
                 let teamNum = await gh.getTeamNumber(team.id);
                 if (teamNum === -1) {
+                    // TODO: check to see if Team exists in database; if not, fail
+                    // (aka team objects must exist before they are provisioned)
+
                     // did not find a team, create one first
                     Log.info("GitHubController::releaseRepository(..) - did not find team, creating");
                     const newTeam = await gh.createTeam(team.id, "push");
@@ -278,9 +276,11 @@ export class GitHubController implements IGitHubController {
 
     public async createPullRequest(repoName: string, prName: string): Promise<boolean> {
         Log.error("GitHubController::createPullRequest(..) - NOT IMPLEMENTED");
-        return false;
+        throw new Error("NOT IMPLEMENTED");
     }
 }
+
+/* istanbul ignore next */
 
 // noinspection TsLint
 export class TestGitHubController implements IGitHubController {
