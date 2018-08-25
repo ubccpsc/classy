@@ -261,13 +261,14 @@ export class MongoDataStore implements IDataStore {
                 Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - record not found");
                 return null;
             } else {
-                Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - found; took: " + Util.took(start));
                 // pick the most recent
                 let ret: IFeedbackGiven | null = null;
                 Math.max.apply(Math, res.map(function(o: IFeedbackGiven) {
-                    Log.trace("MongoDataStore::getLatestFeedbackGivenRecord(..) - found; took: " + Util.took(start));
+                    // Log.trace("MongoDataStore::getLatestFeedbackGivenRecord(..) - found; took: " + Util.took(start));
                     ret = o;
                 }));
+                Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - found; date: " +
+                    new Date(ret.timestamp) + "; took: " + Util.took(start));
                 return ret;
             }
         } catch (err) {

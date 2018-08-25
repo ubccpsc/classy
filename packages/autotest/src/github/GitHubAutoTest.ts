@@ -265,13 +265,18 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             }
 
             if (isStaff !== null && (isStaff.isAdmin === true || isStaff.isStaff === true)) {
+                Log.info("GitHubAutoTest::requestFeedbackDelay(..) - staff; no delay");
                 return null; // staff can always request
             } else {
                 if (record === null) {
+                    Log.info("GitHubAutoTest::requestFeedbackDelay(..) - no prior request; no delay");
                     return null; // no prior requests
                 } else {
                     const nextTimeslot = record.timestamp + testDelay;
+                    Log.info("GitHubAutoTest::requestFeedbackDelay(..) - last: " +
+                        new Date(record.timestamp).toLocaleTimeString() + "; next: " + new Date(nextTimeslot).toLocaleTimeString());
                     if (reqTimestamp > nextTimeslot) {
+                        Log.info("GitHubAutoTest::requestFeedbackDelay(..) - enough time passed; no delay");
                         return null; // enough time has passed
                     } else {
                         const delta = nextTimeslot - reqTimestamp;
@@ -285,6 +290,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                         } else {
                             msg = delta + " seconds";
                         }
+
+                        Log.info("GitHubAutoTest::requestFeedbackDelay(..) - NOT enough time passed; delay: " + msg);
                         return msg;
                     }
                 }
