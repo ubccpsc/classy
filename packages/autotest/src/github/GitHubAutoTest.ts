@@ -274,14 +274,14 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     Log.info("GitHubAutoTest::requestFeedbackDelay(..) - no prior request; no delay");
                     return null; // no prior requests
                 } else {
-                    const nextTimeslot = record.timestamp + testDelay;
+                    const nextTimeslot = record.timestamp + (testDelay * 1000);
                     Log.info("GitHubAutoTest::requestFeedbackDelay(..) - delay: " + testDelay + "; last: " +
                         new Date(record.timestamp).toLocaleTimeString() + "; next: " + new Date(nextTimeslot).toLocaleTimeString());
                     if (reqTimestamp > nextTimeslot) {
                         Log.info("GitHubAutoTest::requestFeedbackDelay(..) - enough time passed; no delay");
                         return null; // enough time has passed
                     } else {
-                        const delta = nextTimeslot - reqTimestamp;
+                        const delta = Math.floor((nextTimeslot - reqTimestamp) / 1000); // convert to seconds
                         const hours = Math.floor(delta / 3600);
                         const minutes = Math.floor((delta - (hours * 3600)) / 60);
                         let msg = "";
@@ -355,7 +355,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         Log.trace("GitHubAutoTest::getContainerConfig() - start");
         try {
             const details = await this.classPortal.getContainerDetails(delivId);
-            Log.trace("GitHubAutoTest::getContainerConfig() - RESPONSE: " + details);
+            Log.trace("GitHubAutoTest::getContainerConfig() - RESPONSE: " + JSON.stringify(details));
             return details;
         } catch (err) {
             Log.error("GitHubAutoTest::getContainerConfig() - ERROR: " + err);
