@@ -1077,6 +1077,7 @@ export class AssignmentController {
             }
         }
         // TODO: Return the Repository Object
+        return repositoryRecord;
     }
 
 
