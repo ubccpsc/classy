@@ -1033,6 +1033,56 @@ export class AssignmentController {
         return totalSuccess;
     }
 
+    public async publishAllFinalGrades(): Promise<boolean> {
+        Log.info("AssignmentController::publishAllFinalGrades( .. ) - start");
+
+        // get all students
+        let allPeople: Person[] = await this.pc.getAllPeople();
+        let allStudents: Person[] = [];
+        for (const person of allPeople) {
+            if (person.kind === 'student') {
+                allStudents.push(person);
+            }
+        }
+
+        // verification
+        let peopleList = await this.gha.listPeople();
+        let personVerification: { [githubID: string]: any } = {};
+
+        // create a map of personID to
+        for(const person of peopleList) {
+            if(typeof personVerification[person.name] === 'undefined') personVerification[person.name] = person;
+        }
+
+        // for every student, publish their grade
+        let totalSuccess = true;
+        Log.info("AssignmentController::publishAllFinalGrades( .. ) - Publishing grades for " +
+            allStudents.length + " students");
+        let allPromises: Promise<boolean>[] = [];
+        for(const student of allStudents) {
+            if (typeof personVerification[student.id] === 'undefined') continue;
+            allPromises.push(this.publishFinalGrade(student.githubId + "_grades",
+                student.githubId + "_grades.md", student.id));
+        }
+
+        let result: boolean[] = await Promise.all(allPromises);
+        for(let i = 0; i < result.length; i++) {
+            if(!result[i]) {
+                Log.warn("AssignmentController::publishAllFinalGrades(..) - Had an issue publishing the final " +
+                    "grades for student: <" + allStudents[i].id + ">");
+                totalSuccess = false;
+            }
+        }
+
+        if(totalSuccess) {
+            Log.info("AssignmentController::publishAllFinalGrades( .. ) - Published all grades");
+        } else {
+            Log.warn("AssignmentController::publishAllFinalGrades( .. ) - Encountered an error while " +
+                "publishing all grades");
+        }
+
+        return totalSuccess;
+    }
 
     /**
      * Verifies that a repository exists, if not, create it.
@@ -1178,7 +1228,7 @@ export class AssignmentController {
             return false;
         }
 
-        return false;
+        return true;
     }
 
 
