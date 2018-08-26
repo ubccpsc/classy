@@ -363,7 +363,7 @@ export class AssignmentController {
         }
 
         let deliv = await this.dc.getDeliverable(delivId);
-        if (deliv === null || deliv.custom === null) {
+        if (deliv === null || typeof (deliv.custom as AssignmentInfo).mainFilePath === "undefined") {
             Log.error("AssignmentController::publishAllRepositories(..) - error: assignment not " +
                 "set up properly or doesn't exist");
             return false;
@@ -576,7 +576,7 @@ export class AssignmentController {
             return null;
         }
 
-        if (deliv.custom === null) {
+        if (typeof (deliv.custom as AssignmentInfo).mainFilePath === "undefined") {
             Log.error("AssignmentController::getAssignmentStatus(..) - error: " +
                 delivId + " has no assignment status");
             return null;
@@ -605,7 +605,7 @@ export class AssignmentController {
         }
 
         // if (deliv.custom === null || typeof (deliv.custom as AssignmentInfo).status === 'undefined') {
-        if (deliv.custom === null) {
+        if ((deliv.custom as AssignmentInfo) === "undefined") {
             Log.error("AssignmentController::updateAssignmentStatus(..) - error: " +
                 delivId + " is not an assignment");
             return null;
@@ -721,7 +721,7 @@ export class AssignmentController {
             return null;
         }
 
-        if (deliv.custom === null) {
+        if (typeof (deliv.custom as AssignmentInfo).mainFilePath === "undefined") {
             Log.error("AssignmentController::getAssignmentRepo(..) - error: deliverable not " +
                 "setup with rubric");
             return null;
