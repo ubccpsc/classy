@@ -220,14 +220,21 @@ export class SortableTable {
             const aVal = a[sortIndex].value;
             const bVal = b[sortIndex].value;
 
+            Log.trace('sorting; aVal: ' + aVal + " ( " + typeof aVal + " ); bVal: " + bVal + " ( " + typeof bVal + " )");
+
+            if (aVal === bVal) {
+                // get rid of equality from the start
+                return 0;
+            }
+
             // handle mismatches
             // mainly happens when one cell is empty
             if (typeof aVal !== typeof bVal) {
                 // console.log('comparing: ' + aVal + ' to: ' + bVal);
-                if (typeof aVal === 'undefined' || aVal === '' || aVal === null) {
+                if (aVal === '' || aVal === null) {
                     // console.log('bad aval');
                     return -1 * mult;
-                } else if (typeof bVal === 'undefined' || bVal === '' || bVal === null) {
+                } else if (bVal === '' || bVal === null) {
                     // console.log('bad bval');
                     return 1 * mult;
                 }
