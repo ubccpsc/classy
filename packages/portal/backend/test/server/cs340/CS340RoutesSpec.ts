@@ -325,7 +325,7 @@ describe("CS340: Routes", () => {
         expect(response).to.not.be.null;
         expect(response.status).to.be.equal(200);
         expect(response.body.response).to.not.be.null;
-    });
+    }).timeout(numberOfStudents * TIMEOUT);
 
 
     it("Should be able to initialize all repositories", async function() {

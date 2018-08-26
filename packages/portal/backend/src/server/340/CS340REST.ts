@@ -620,7 +620,7 @@ export default class CS340REST implements IREST {
             return next();
         }
 
-        if (typeof (deliv.custom as AssignmentInfo).mainFilePath === null) {
+        if (typeof (deliv.custom as AssignmentInfo).mainFilePath === "undefined") {
             res.send(400, {error: "Assignment not set up properly"});
             return next();
         }

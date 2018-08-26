@@ -605,7 +605,7 @@ export class AssignmentController {
         }
 
         // if (deliv.custom === null || typeof (deliv.custom as AssignmentInfo).status === 'undefined') {
-        if ((deliv.custom as AssignmentInfo) === "undefined") {
+        if (typeof (deliv.custom as AssignmentInfo).repositories === "undefined") {
             Log.error("AssignmentController::updateAssignmentStatus(..) - error: " +
                 delivId + " is not an assignment");
             return null;
