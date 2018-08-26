@@ -942,7 +942,7 @@ export class AssignmentController {
         // get the repo again (in case of database changes)
         Log.info("AssignmentController::publishGrade( .. ) - retrieving repositoryRecord again");
 
-        let studentRepoRecord: Repository = await this.verifyRepoExists(studentGradeRepoName);
+        let studentRepoRecord: Repository = await this.verifyAndCreateRepo(studentGradeRepoName);
 
         let gitSuccess: boolean;
         try {
@@ -1089,8 +1089,8 @@ export class AssignmentController {
      * @param repositoryName
      * @returns Promise<Repository|null> - The repository object, or null if it fails.
      */
-    public async verifyRepoExists(repositoryName: string): Promise<Repository | null> {
-        Log.info("AssignmentController::verifyRepoExists( "+repositoryName+" ) - start");
+    public async verifyAndCreateRepo(repositoryName: string): Promise<Repository | null> {
+        Log.info("AssignmentController::verifyAndCreateRepo( "+repositoryName+" ) - start");
 
         // check if the repository exists
         let repoExists = await this.gha.repoExists(repositoryName);
@@ -1101,12 +1101,12 @@ export class AssignmentController {
             // first, need to check if a Repo object has been created
             if (repositoryRecord === null) {
                 // If no repo object exists
-                Log.info("AssignmentController::verifyRepoExists(..) - No student Repo found, creating repo");
+                Log.info("AssignmentController::verifyAndCreateRepo(..) - No student Repo found, creating repo");
                 // create the record
                 repositoryRecord = await this.rc.createRepository(repositoryName, [], null);
                 if(repositoryRecord === null) {
                     // we tried multiple times, unable to continue (something is wrong)
-                    Log.error("AssignmentController::verifyRepoExists(..) - Error; unable to " +
+                    Log.error("AssignmentController::verifyAndCreateRepo(..) - Error; unable to " +
                                                         "create student grade repository.");
                     return null;
                 }
@@ -1141,7 +1141,7 @@ export class AssignmentController {
     public async publishFinalGrade(studentGradeRepoName: string, fileName: string, studentId: string) : Promise<boolean> {
         Log.info("AssignmentController::publishFinalGrade( ... ,  " + studentId +  ") - start");
 
-        let studentRepoRecord: Repository = await this.verifyRepoExists(studentGradeRepoName);
+        let studentRepoRecord: Repository = await this.verifyAndCreateRepo(studentGradeRepoName);
 
         // get all the student's grades
         let studentGrades: Grade[] = await this.gc.getReleasedGradesForPerson(studentId);
@@ -1228,7 +1228,7 @@ export class AssignmentController {
             return false;
         }
 
-        return true;
+        return gitSuccess;
     }
 
 

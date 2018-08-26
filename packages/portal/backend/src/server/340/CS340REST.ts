@@ -44,6 +44,7 @@ export default class CS340REST implements IREST {
         server.post('/portal/cs340/deleteAllRepositories/:delivid', CS340REST.deleteAllRepositories);
         server.post('/portal/cs340/verifyScheduledJobs/:aid', CS340REST.verifyScheduledJobs);
         server.post('/portal/cs340/verifyScheduledJobs/', CS340REST.verifyAllScheduledJobs);
+        server.post('/portal/cs340/publishAllFinalGrades', CS340REST.publishAllFinalGrades);
 
         // server.get('/testPublishRepository/:repoId', CS340REST.testPublishRepository);
         // server.get('/portal/cs340/testPublishGrade', CS340REST.testPublishGrade);
@@ -384,6 +385,24 @@ export default class CS340REST implements IREST {
             Log.error("CS340REST::setAssignmentGrade - Error: " + error);
             res.send(500, error);
         });
+        return next();
+    }
+
+    public static async publishAllFinalGrades(req: any, res: any, next: any) {
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        let ac: AssignmentController = new AssignmentController();
+
+        Log.info("CS340REST::publishAllFinalGrades() - start");
+        try {
+            let success: boolean = await ac.publishAllFinalGrades();
+            res.send(200, {response: success});
+        } catch (err) {
+            res.send(500, {error: "Issue publishing all final grades. " + err});
+        }
+
         return next();
     }
 

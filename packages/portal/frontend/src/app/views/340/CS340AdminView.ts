@@ -257,6 +257,21 @@ export class CS340AdminView extends AdminView {
             that.selectDeliverablePressed();
         };
 
+
+        let releaseFinalButton: any = (document.querySelector('#adminReleaseFinalGrades') as OnsButtonElement);
+        releaseFinalButton.addEventListener("click", function() {
+            Log.info("Pressed Final Grades release");
+
+            that.publishAllFinalGrades();
+        });
+
+        // fab.addEventListener("click", function(evt) {
+
+        // (document.querySelector('#adminReleaseFinalGrades') as OnsButtonElement).onpress = function (evt) {
+        // Log.info("Pressed Final Grades release");
+        //
+        // that.publishAllFinalGrades();
+        // };
         // (document.querySelector('#adminActionSelectDeliverable') as OnsButtonElement).onclick = function (evt) {
         //     Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');
         //
@@ -476,6 +491,33 @@ export class CS340AdminView extends AdminView {
         Log.info('CS340AdminView::releaseRepoPressed(..) - finish');
 
         return;
+    }
+
+    private async publishAllFinalGrades(): Promise<boolean> {
+        Log.info("CS340AdminView::publishAllFinalGrades(..) - start");
+
+        UI.notificationToast("Publishing all final grades.");
+
+        const publishUrl = this.remote + "/portal/cs340/publishAllFinalGrades";
+        const publishOptions: any = AdminView.getOptions();
+        publishOptions.method = 'post';
+
+        let publishResponse = await fetch(publishUrl, publishOptions);
+
+        const publishJson = await publishResponse.json();
+        if(publishResponse.status === 200) {
+            if(publishJson.response) {
+                UI.notificationToast("Finished publishing final grades");
+            } else {
+                UI.notificationToast("An error occurred when publishing final grades.");
+            }
+        } else {
+            UI.notification("Error: " + publishJson.error);
+        }
+
+        // UI.notificationToast("Completed publishing all final grades.");
+
+        return publishJson.status;
     }
 
     private async deleteRepoPressed(): Promise<void> {
