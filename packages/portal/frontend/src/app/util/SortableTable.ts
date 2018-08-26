@@ -224,10 +224,10 @@ export class SortableTable {
             // mainly happens when one cell is empty
             if (typeof aVal !== typeof bVal) {
                 // console.log('comparing: ' + aVal + ' to: ' + bVal);
-                if (aVal === '') {
+                if (typeof aVal === 'undefined' || aVal === '' || aVal === null) {
                     // console.log('bad aval');
                     return -1 * mult;
-                } else if (bVal === '') {
+                } else if (typeof bVal === 'undefined' || bVal === '' || bVal === null) {
                     // console.log('bad bval');
                     return 1 * mult;
                 }
@@ -250,7 +250,6 @@ export class SortableTable {
         });
     }
 
-    // not used yet
     // code from: https://www.codexworld.com/export-html-table-data-to-csv-using-javascript/
     private downloadCSV(csv: string, fileName: string) {
         let csvFile;
