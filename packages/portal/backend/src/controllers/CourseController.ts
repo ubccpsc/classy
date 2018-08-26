@@ -57,7 +57,7 @@ export interface ICourseController {
      * * @param {Grade} existingGrade
      * @returns {boolean} whether the grade should be saved.
      */
-    handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): boolean;
+    handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean>;
 
     /**
      * Determine how to name teams and repos for a deliverable. Should only be called
@@ -124,17 +124,17 @@ export class CourseController implements ICourseController {
      * @param {Grade} existingGrade
      * @returns {boolean}
      */
-    public handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): boolean {
+    public handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean> {
         Log.info("CourseController:handleNewAutoTestGrade( " + deliv.id + ", " +
             newGrade.personId + ", " + newGrade.score + ", ... ) - start");
         if ((existingGrade === null || newGrade.score > existingGrade.score) && newGrade.timestamp < deliv.closeTimestamp) {
             Log.trace("CourseController:handleNewAutoTestGrade( " + deliv.id + ", " +
                 newGrade.personId + ", " + newGrade.score + ", ... ) - returning true");
-            return true;
+            return Promise.resolve(true);
         } else {
             Log.trace("CourseController:handleNewAutoTestGrade( " + deliv.id + ", " +
                 newGrade.personId + ", " + newGrade.score + ", ... ) - returning false");
-            return false;
+            return Promise.resolve(false);
         }
     }
 
@@ -173,7 +173,7 @@ export class CourseController implements ICourseController {
                 };
 
                 const existingGrade = await this.gc.getGrade(personId, grade.delivId);
-                const shouldSave = this.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
+                const shouldSave = await this.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
 
                 if (shouldSave === true) {
                     await this.gc.saveGrade(newGrade);
