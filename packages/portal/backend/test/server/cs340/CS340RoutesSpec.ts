@@ -745,7 +745,7 @@ describe("CS340: Routes", () => {
             expect(response.status).to.be.equal(400);
             expect(response.body.response).to.not.exist;
             expect(response.body.error).to.not.be.null;
-        }).timeout(numberofStudents * TIMEOUT);
+        }).timeout(3 * TIMEOUT);
 
         it("Should not be able to initialize all repositories for a deliverable " +
             "that exists, but is not an assignment.", async function() {
@@ -763,7 +763,7 @@ describe("CS340: Routes", () => {
             expect(response.status).to.be.equal(400);
             expect(response.body.response).to.not.exist;
             expect(response.body.error).to.not.be.null;
-        }).timeout(numberofStudents * TIMEOUT);
+        }).timeout(3 * TIMEOUT);
 
         it("Should not be able to publish all repositories for a deliverable " +
             "that doesn't exist.", async function() {
@@ -781,7 +781,7 @@ describe("CS340: Routes", () => {
             expect(response.status).to.be.equal(400);
             expect(response.body.response).to.not.exist;
             expect(response.body.error).to.not.be.null;
-        }).timeout(numberofStudents * TIMEOUT);
+        }).timeout(3 * TIMEOUT);
 
         it("Should not be able to publish all repositories for a deliverable " +
             "that exists, but is not an assignment.", async function() {
@@ -799,7 +799,7 @@ describe("CS340: Routes", () => {
             expect(response.status).to.be.equal(400);
             expect(response.body.response).to.not.exist;
             expect(response.body.error).to.not.be.null;
-        }).timeout(numberofStudents * TIMEOUT);
+        }).timeout(3 * TIMEOUT);
 
         // it("Should be able to ", async function() {
         //
