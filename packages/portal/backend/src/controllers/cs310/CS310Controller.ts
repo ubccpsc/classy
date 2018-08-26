@@ -26,17 +26,8 @@ export class CS310Controller extends CourseController {
      * @returns {boolean}
      */
     public handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): boolean {
-        Log.info("CS310Controller:handleNewAutoTestGrade( " + deliv.id + ", " +
-            newGrade.personId + ", " + newGrade.score + ", ... ) - start");
-        if ((existingGrade === null || newGrade.score > existingGrade.score) && newGrade.timestamp < deliv.closeTimestamp) {
-            Log.trace("CS310Controller:handleNewAutoTestGrade( " + deliv.id + ", " +
-                newGrade.personId + ", " + newGrade.score + ", ... ) - returning true");
-            return true;
-        } else {
-            Log.trace("CS310Controller:handleNewAutoTestGrade( " + deliv.id + ", " +
-                newGrade.personId + ", " + newGrade.score + ", ... ) - returning false");
-            return false;
-        }
+        // just use the default implementation
+        return super.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
     }
 
     public async computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}> {

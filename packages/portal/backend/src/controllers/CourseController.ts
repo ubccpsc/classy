@@ -105,6 +105,9 @@ export class CourseController implements ICourseController {
     /**
      * This endpoint just lets subclasses change the behaviour for when users are unknown.
      *
+     * The default behaviour (returning null) effecively disallows any non-registered student,
+     * although any user registered on the GitHub admin or staff team will bypass this.
+     *
      * @param {string} githubUsername
      * @returns {Promise<Person | null>}
      */
@@ -113,9 +116,26 @@ export class CourseController implements ICourseController {
         return null;
     }
 
+    /**
+     * Default behaviour is that if the deadline has not passed, and the grade is higher, accept it.
+     *
+     * @param {Deliverable} deliv
+     * @param {Grade} newGrade
+     * @param {Grade} existingGrade
+     * @returns {boolean}
+     */
     public handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): boolean {
-        Log.warn("CourseController::handleUnknownUser( ... ) - returning true;");
-        return true;
+        Log.info("CourseController:handleNewAutoTestGrade( " + deliv.id + ", " +
+            newGrade.personId + ", " + newGrade.score + ", ... ) - start");
+        if ((existingGrade === null || newGrade.score > existingGrade.score) && newGrade.timestamp < deliv.closeTimestamp) {
+            Log.trace("CourseController:handleNewAutoTestGrade( " + deliv.id + ", " +
+                newGrade.personId + ", " + newGrade.score + ", ... ) - returning true");
+            return true;
+        } else {
+            Log.trace("CourseController:handleNewAutoTestGrade( " + deliv.id + ", " +
+                newGrade.personId + ", " + newGrade.score + ", ... ) - returning false");
+            return false;
+        }
     }
 
     public async processNewAutoTestGrade(grade: AutoTestGradeTransport): Promise<boolean> {
