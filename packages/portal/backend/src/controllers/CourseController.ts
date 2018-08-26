@@ -50,8 +50,6 @@ export interface ICourseController {
      * This will be called once-per-teammember if there are multiple people on the repo
      * receiving the grade.
      *
-     * NOTE: This is a synchronous API!
-     *
      * @param {Deliverable} deliv
      * @param {Grade} newGrade
      * * @param {Grade} existingGrade

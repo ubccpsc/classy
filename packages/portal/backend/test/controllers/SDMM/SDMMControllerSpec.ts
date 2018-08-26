@@ -710,26 +710,26 @@ describe("SDMM: SDMMController", () => {
 
         let existingGrade = await db.getGrade(Test.USER1.id, Test.DELIVID0);
         // higher than existingGrade will be null here
-        let save = sc.handleNewAutoTestGrade(deliv, grade, existingGrade);
+        let save = await sc.handleNewAutoTestGrade(deliv, grade, existingGrade);
         expect(save).to.be.true;
         await db.writeGrade(grade);
 
         // not higher
         existingGrade = await db.getGrade(Test.USER1.id, Test.DELIVID0);
-        save = sc.handleNewAutoTestGrade(deliv, grade, existingGrade);
+        save = await sc.handleNewAutoTestGrade(deliv, grade, existingGrade);
         expect(save).to.be.false;
 
         // but higher now
         grade.score = 60;
         existingGrade = await db.getGrade(Test.USER1.id, Test.DELIVID0);
-        save = sc.handleNewAutoTestGrade(deliv, grade, existingGrade);
+        save = await sc.handleNewAutoTestGrade(deliv, grade, existingGrade);
         expect(save).to.be.true;
 
         // and still now, even after 'the deadline' (which do not exist for SDMM)
         existingGrade = await db.getGrade(Test.USER1.id, Test.DELIVID0);
         grade.score = 70;
         grade.timestamp = Date.now();
-        save = sc.handleNewAutoTestGrade(deliv, grade, existingGrade);
+        save = await sc.handleNewAutoTestGrade(deliv, grade, existingGrade);
         expect(save).to.be.true;
     }).timeout(Test.TIMEOUT);
 

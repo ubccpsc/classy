@@ -96,26 +96,26 @@ describe("CS310: CS310Controller", () => {
 
         let existingGrade = await db.getGrade(Test.USER1.id, Test.DELIVID0);
         // higher than existingGrade will be null here
-        let save = cc.handleNewAutoTestGrade(deliv, grade, existingGrade);
+        let save = await cc.handleNewAutoTestGrade(deliv, grade, existingGrade);
         expect(save).to.be.true;
         await db.writeGrade(grade);
 
         // not higher
         existingGrade = await db.getGrade(Test.USER1.id, Test.DELIVID0);
-        save = cc.handleNewAutoTestGrade(deliv, grade, existingGrade);
+        save = await cc.handleNewAutoTestGrade(deliv, grade, existingGrade);
         expect(save).to.be.false;
 
         // but higher now
         grade.score = 60;
         existingGrade = await db.getGrade(Test.USER1.id, Test.DELIVID0);
-        save = cc.handleNewAutoTestGrade(deliv, grade, existingGrade);
+        save = await cc.handleNewAutoTestGrade(deliv, grade, existingGrade);
         expect(save).to.be.true;
 
         // but after the deadline
         existingGrade = await db.getGrade(Test.USER1.id, Test.DELIVID0);
         grade.timestamp = Date.now();
         grade.score = 70;
-        save = cc.handleNewAutoTestGrade(deliv, grade, existingGrade);
+        save = await cc.handleNewAutoTestGrade(deliv, grade, existingGrade);
         expect(save).to.be.false;
     });
 
