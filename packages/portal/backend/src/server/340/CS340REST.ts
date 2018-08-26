@@ -34,7 +34,7 @@ export default class CS340REST implements IREST {
         server.get('/portal/cs340/getAllPersons', CS340REST.getAllPersons);
         server.get('/portal/cs340/updateAssignmentStatus/:delivid', CS340REST.updateAssignmentStatus);
         server.get('/portal/cs340/getAssignmentStatus/:delivid', CS340REST.getAssignmentStatus);
-        server.get('/portal/cs340/getStudentTeamByDeliv/:sid/:delivid', CS340REST.getStudentTeamByDeliv); // TODO
+        server.get('/portal/cs340/getStudentTeamByDeliv/:sid/:delivid', CS340REST.getStudentTeamByDeliv);
         server.get('/portal/cs340/getRepository/:teamid' , CS340REST.getRepositoryFromTeam);
         server.put('/portal/cs340/setAssignmentGrade', CS340REST.setAssignmentGrade);
         server.post('/portal/cs340/releaseGrades/:delivid', CS340REST.releaseGrades);
@@ -98,6 +98,7 @@ export default class CS340REST implements IREST {
             return next();
         } catch(err) {
             Log.error("CS340REST::verifyAllScheduledJobs(..) - Error: " + err);
+            res.send(500, {error: err});
         }
 
         return next();
@@ -123,6 +124,7 @@ export default class CS340REST implements IREST {
             return next();
         } catch(err) {
             Log.error("CS340REST::verifyScheduledJobs(..) - Error: " + err);
+            res.send(500, {error: err});
         }
 
         return next();

@@ -11,6 +11,7 @@ import {Test} from "../../GlobalSpec";
 // import request = require("request");
 const request = require('supertest');
 import restify = require('restify');
+import {AssignmentController} from "../../../src/controllers/340/AssignmentController";
 
 const loadFirst = require('../../GlobalSpec');
 const https = require('https');
@@ -41,6 +42,8 @@ const TIMEOUT = 7500;
 let DELAY_SEC = 1000;
 let DELAY_SHORT = 200;
 
+
+const REPONAME = getProjectPrefix() + Test.ASSIGNID0;
 
 describe("CS340: Routes", () => {
     let app: restify.Server = null;
@@ -117,8 +120,8 @@ describe("CS340: Routes", () => {
 
         try {
             const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
-            // response = await request(app).get(url).send({}).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            // response = await request(app).get(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test("ERROR: " + err);
             // fail(err);
@@ -136,7 +139,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/getAssignmentRubric/' + aid;
         try {
-            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -151,7 +154,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/getAllAssignmentRubrics/';
         try {
-            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -209,7 +212,7 @@ describe("CS340: Routes", () => {
         // TODO: Verify this
 
         try {
-            response = await request(app).put(url).send(aPayload).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+            response = await request(app).put(url).send(aPayload).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -225,7 +228,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/getAllGrades';
         try {
-            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -242,7 +245,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/getAllSubmissionsByDelivID/' + aid;
         try {
-            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -263,7 +266,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/getPersonByID/' + sid;
         try {
-            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -278,7 +281,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/getAllPersons';
         try {
-            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -295,7 +298,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/updateAssignmentStatus/' + aid;
         try {
-            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -313,7 +316,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/getAssignmentStatus/' + aid;
         try {
-            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -331,7 +334,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/initializeAllRepositories/' + aid;
         try {
-            response = await request(app).post(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+            response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -350,7 +353,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/publishAllRepositories/' + aid;
         try {
-            response = await request(app).post(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+            response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -424,7 +427,7 @@ describe("CS340: Routes", () => {
         // TODO: Verify this
 
         try {
-            response = await request(app).put(url).send(aPayload).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+            response = await request(app).put(url).send(aPayload).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -463,7 +466,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/getAssignmentGrade/' + sid + '/' + aid;
         try {
-            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -480,7 +483,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/getRepository/' + Test.ASSIGNID0 + "_" + Test.REALUSER1.id;
         try {
-            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -518,7 +521,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/deleteRepository/' + aid + '/' + aid + '_' + sid;
         try {
-            response = await request(app).post(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+            response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -536,7 +539,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/deleteAllRepositories/' + aid;
         try {
-            response = await request(app).post(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+            response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -553,7 +556,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/verifyScheduledJobs/' + aid;
         try {
-            response = await request(app).post(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+            response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -568,7 +571,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/verifyScheduledJobs';
         try {
-            response = await request(app).post(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+            response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -585,7 +588,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/getStudentTeamByDeliv/' + Test.REALUSER1.id + '/' + Test.ASSIGNID1;
         try {
-            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -602,7 +605,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/releaseGrades/' + Test.ASSIGNID1;
         try {
-            response = await request(app).post(url).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+            response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -620,29 +623,91 @@ describe("CS340: Routes", () => {
     }).timeout(numberOfStudents * TIMEOUT);
 
 
-    // it("Should be able to ", async function() {
-    //
-    // });
-    //
-    //
-    // it("Should be able to ", async function() {
-    //
-    // });
-    //
-    //
-    // it("Should be able to ", async function() {
-    //
-    // });
-    //
-    //
-    // it("Should be able to ", async function() {
-    //
-    // });
-    //
-    //
-    // it("Should be able to ", async function() {
-    //
-    // });
+    it("Should be able to publish final grades of all students using the API.", async function() {
+        let response = null;
+        const url = '/portal/cs340/publishAllFinalGrades';
+
+        try {
+            response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            fail(err);
+        }
+
+        expect(response).to.not.be.null;
+        expect(response.status).to.be.equal(200);
+        expect(response.body.response).to.be.true;
+    }).timeout(numberOfStudents * TIMEOUT);
+
+    describe("Failing API tests", () => {
+        // before()
+        it("Should not be able to get an assignment grade that doesn't exist.", async function() {
+            let response = null;
+            const url = '/portal/cs340/getAssignmentGrade/'+ "invalidStudent" + "/" + "invalidAssignmentId";
+
+            try {
+                response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(404);
+            expect(response.body.response).to.be.null;
+            expect(response.body.error).to.not.be.null;
+        });
+
+
+        it("Should not be able to find a student team that doesn't exist.", async function() {
+            let response = null;
+            const url = '/portal/cs340/getStudentTeamByDeliv/'+ "invalidStudent" + "/" + "invalidAssignmentId";
+
+            try {
+                response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(404);
+            expect(response.body.response).to.not.exist;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able find a repository with and invalid team.", async function() {
+            let response = null;
+            const url = '/portal/cs340/getRepository/'+ "invalidTeamId";
+
+            try {
+                response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(404);
+            expect(response.body.response).to.not.exist;
+            expect(response.body.error).to.not.be.null;
+        });
+
+
+        // it("Should be able to ", async function() {
+        //
+        // });
+        //
+        //
+        // it("Should be able to ", async function() {
+        //
+        // });
+        //
+        //
+        // it("Should be able to ", async function() {
+        //
+        // });
+    });
 
     /*
         ========= IMPORTED CODE FROM GITHUBACTIONSPEC ===========
@@ -715,8 +780,6 @@ describe("CS340: Routes", () => {
     }
 
 });
-
-const REPONAME = getProjectPrefix() + Test.ASSIGNID0;
 const REPONAME3 = getProjectPrefix() + Test.REPONAME3;
 const TEAMNAME = getTeamPrefix() + Test.TEAMNAME1;
 
