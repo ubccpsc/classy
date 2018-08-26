@@ -231,7 +231,7 @@ export default class CS340REST implements IREST {
                 // TODO [Jonathan]: send an appropriate failure
                 res.send(204, {error: "Deliverable not found, please create the deliverable first"});
             } else {
-                if (deliv.custom !== null && deliv.custom.rubric !== null) {
+                if (deliv.custom !== null && typeof deliv.custom.rubric !== "undefined") {
                     let assignInfo: AssignmentInfo = deliv.custom;
                     let rubric: AssignmentGradingRubric = assignInfo.rubric;
                     res.send(200, {response: rubric});
@@ -272,6 +272,7 @@ export default class CS340REST implements IREST {
         return next();
     }
 
+    /*
     public static createAssignmentRubric(req: any, res: any, next: any) {
         // TODO [Jonathan]: Create a deliverable and then store it
         // TODO [Jonathan]: Respond with success or failure
@@ -308,6 +309,7 @@ export default class CS340REST implements IREST {
         //     custom: null
         // }
     }
+    */
 
     // Takes all the grades synced up in the database and pushes them to Github
     public static async releaseGrades(req: any, res: any, next: any) {
@@ -586,7 +588,7 @@ export default class CS340REST implements IREST {
             return next();
         }
 
-        if (deliv.custom === null) {
+        if (typeof (deliv.custom as AssignmentInfo).mainFilePath === "undefined") {
             res.send(400, {error: "Assignment not set up properly"});
             return next();
         }
@@ -618,7 +620,7 @@ export default class CS340REST implements IREST {
             return next();
         }
 
-        if (deliv.custom === null) {
+        if (typeof (deliv.custom as AssignmentInfo).mainFilePath === null) {
             res.send(400, {error: "Assignment not set up properly"});
             return next();
         }

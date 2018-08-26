@@ -693,6 +693,113 @@ describe("CS340: Routes", () => {
             expect(response.body.error).to.not.be.null;
         });
 
+        it("Should not be get an assignment rubric from a deliverable that " +
+            "doesn't exist.", async function() {
+            let response = null;
+            const url = '/portal/cs340/getAssignmentRubric/' + "invalidAssignmentID";
+
+            try {
+                response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(204);
+            expect(response.body.response).to.not.exist;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be get an assignment rubric from a deliverable that " +
+            "does exist, but it is not an assignment.", async function() {
+            let response = null;
+            const url = '/portal/cs340/getAssignmentRubric/' + Test.DELIVID0;
+
+            try {
+                response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(204);
+            expect(response.body.response).to.not.exist;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to initialize all repositories for a deliverable " +
+            "that doesn't exist.", async function() {
+            let response = null;
+            const url = '/portal/cs340/initializeAllRepositories/' + "invalidDeliverableID";
+
+            try {
+                response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(400);
+            expect(response.body.response).to.not.exist;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to initialize all repositories for a deliverable " +
+            "that exists, but is not an assignment.", async function() {
+            let response = null;
+            const url = '/portal/cs340/initializeAllRepositories/' + Test.DELIVID0;
+
+            try {
+                response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(400);
+            expect(response.body.response).to.not.exist;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to publish all repositories for a deliverable " +
+            "that doesn't exist.", async function() {
+            let response = null;
+            const url = '/portal/cs340/publishAllRepositories/' + "invalidDeliverableID";
+
+            try {
+                response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(400);
+            expect(response.body.response).to.not.exist;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to publish all repositories for a deliverable " +
+            "that exists, but is not an assignment.", async function() {
+            let response = null;
+            const url = '/portal/cs340/publishAllRepositories/' + Test.DELIVID0;
+
+            try {
+                response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(400);
+            expect(response.body.response).to.not.exist;
+            expect(response.body.error).to.not.be.null;
+        });
 
         // it("Should be able to ", async function() {
         //
