@@ -423,12 +423,12 @@ export default class CS340REST implements IREST {
                 res.send(500, {error: "Unable to write to database"});
             }
             Log.info("CS340REST::setAssignmentGrade() - end");
-
+            return next();
         }).catch((error) => {
             Log.error("CS340REST::setAssignmentGrade - Error: " + error);
             res.send(500, error);
+            return next();
         });
-        return next();
     }
 
     public static async publishAllFinalGrades(req: any, res: any, next: any) {

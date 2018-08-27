@@ -1270,7 +1270,7 @@ export class CS340AdminView extends AdminView {
         let dncButton = document.createElement("ons-button");
         dncButton.setAttribute("onclick", "window.myApp.view.submitGrade(false)");
         dncButton.setAttribute("style", "margin-left: 1em");
-        dncButton.innerHTML = "Student did not complete";
+        dncButton.innerHTML = "Not submitted";
 
 
         gradingSectionElement!.appendChild(submitButton);
