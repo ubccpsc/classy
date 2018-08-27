@@ -266,17 +266,17 @@ export class SDMMController extends CourseController {
      * @param {Grade} existingGrade
      * @returns {boolean}
      */
-    public handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): boolean {
+    public async handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean> {
         Log.info("SDMMController:handleNewAutoTestGrade( " + deliv.id + ", " +
             newGrade.personId + ", " + newGrade.score + ", ... ) - start");
         if ((existingGrade === null || newGrade.score > existingGrade.score)) {
             Log.trace("SDMMController:handleNewAutoTestGrade( " + deliv.id + ", " +
                 newGrade.personId + ", " + newGrade.score + ", ... ) - returning true");
-            return true;
+            return Promise.resolve(true);
         } else {
             Log.trace("SDMMController:handleNewAutoTestGrade( " + deliv.id + ", " +
                 newGrade.personId + ", " + newGrade.score + ", ... ) - returning false");
-            return false;
+            return Promise.resolve(false);
         }
     }
 

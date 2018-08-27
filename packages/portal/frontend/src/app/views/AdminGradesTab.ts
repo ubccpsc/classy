@@ -95,14 +95,6 @@ export class AdminGradesTab {
 
         // this loop couldn't possibly be less efficient
         for (const student of students) {
-            // let snum = 'N/A';
-            // if (student.studentNum !== null && student.studentNum >= 0) {
-            //     snum = student.studentNum + '';
-            // }
-            // let lab = 'N/A';
-            // if (student.labId !== null && student.labId.length > 0) {
-            //     lab = student.labId;
-            // }
             const row: TableCell[] = [
                 {value: student.id, html: '<a href="' + student.userUrl + '">' + student.id + '</a>'},
                 {value: student.studentNum, html: student.studentNum + ''},
@@ -128,7 +120,8 @@ export class AdminGradesTab {
                     }
                 }
                 if (tableCell === null) {
-                    tableCell = {value: 'N/A', html: 'N/A'};
+                    // tableCell = {value: 'N/A', html: 'N/A'}; // N/A for missing cells
+                    tableCell = {value: '', html: ''}; // blanks for missing cells
                 }
                 row.push(tableCell);
             }

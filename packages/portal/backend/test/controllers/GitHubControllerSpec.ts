@@ -50,13 +50,13 @@ describe("GitHubController", () => {
         await dc.writeTeam(t1);
         const t2 = await Test.createTeam(Test.TEAMNAME2, Test.DELIVID1, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
         await dc.writeTeam(t2);
-        const t3 = await Test.createTeam(Test.TEAMNAME3, Test.DELIVID2, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
-        await dc.writeTeam(t3);
+        // const t3 = await Test.createTeam(Test.TEAMNAME3, Test.DELIVID2, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+        // await dc.writeTeam(t3);
 
         const rc = new RepositoryController();
         await rc.createRepository(Test.REPONAME1, [t1], {});
         await rc.createRepository(Test.REPONAME2, [t2], {});
-        await rc.createRepository(Test.REPONAME3, [t3], {});
+        // await rc.createRepository(Test.REPONAME3, [t3], {});
     });
 
     after(() => {
@@ -137,29 +137,90 @@ describe("GitHubController", () => {
         expect(provisioned).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
 
+    it("Should fail to provision a repo that already exists.", async function() {
+        const repos = await new RepositoryController().getAllRepos();
+        expect(repos.length).to.be.greaterThan(0);
+
+        const teams = await new TeamController().getAllTeams();
+        expect(teams.length).to.be.greaterThan(0);
+
+        const webhook = 'https://devnull.cs.ubc.ca/classyWebhook';
+        const importUrl = 'https://github.com/SECapstone/bootstrap';
+        let res = null;
+        let ex = null;
+        try {
+            res = await gc.provisionRepository(repos[0].id, teams, importUrl, webhook);
+        } catch (err) {
+            ex = err;
+        }
+        expect(res).to.be.null;
+        expect(ex).to.not.be.null;
+
+        res = null;
+        ex = null;
+        try {
+            // no repository object for this repoName
+            res = await gc.provisionRepository('invalidRepo' + Date.now(), teams, importUrl, webhook);
+        } catch (err) {
+            ex = err;
+        }
+        expect(res).to.be.null;
+        expect(ex).to.not.be.null;
+
+    }).timeout(Test.TIMEOUTLONG);
+
     it("Should be able to create a repo.", async function() {
         // setup
         const rc: RepositoryController = new RepositoryController();
-        const allRepos: Repository[] = await rc.getAllRepos();
-        const repoCount: number = allRepos.length;
-
-        expect(repoCount).to.be.greaterThan(1);
+        const repo = await rc.getRepository(Test.REPONAME2);
+        expect(repo).to.not.be.null;
 
         const importURL = 'https://github.com/SECapstone/capstone';
-        const success = await gc.createRepository(allRepos[1].id, importURL);
+        const success = await gc.createRepository(repo.id, importURL);
         expect(success).to.be.true;
+    }).timeout(Test.TIMEOUTLONG);
+
+    it("Should not be able to create a repo when preconditions are not met.", async function() {
+        // setup
+        const rc: RepositoryController = new RepositoryController();
+        const repo = await rc.getRepository(Test.REPONAME2);
+        expect(repo).to.not.be.null;
+
+        const importURL = 'https://github.com/SECapstone/capstone';
+        let res = null;
+        let ex = null;
+        try {
+            // repo already exists
+            res = await gc.createRepository(repo.id, importURL);
+        } catch (err) {
+            ex = err;
+        }
+        expect(res).to.be.null;
+        expect(ex).to.not.be.null;
+
+        res = null;
+        ex = null;
+        try {
+            // should fail because Repository object does not exist for this repoName
+            res = await gc.createRepository('unknownId' + Date.now(), importURL);
+        } catch (err) {
+            ex = err;
+        }
+        expect(res).to.be.null;
+        expect(ex).to.not.be.null;
+
     }).timeout(Test.TIMEOUTLONG);
 
     it("Should be able to create a repo with a custom path.", async function() {
         // setup
         const rc: RepositoryController = new RepositoryController();
-        const allRepos: Repository[] = await rc.getAllRepos();
-        const repoCount: number = allRepos.length;
+        const repo = await rc.getRepository(Test.REPONAME2); // get repo object
 
-        expect(repoCount).to.be.greaterThan(2);
+        const gha = new GitHubActions();
+        await gha.deleteRepo(repo.id); // delete repo from github
 
         const importURL = 'https://github.com/SECapstone/capstone';
-        const success = await gc.createRepository(allRepos[2].id, importURL, "AutoTest.md");
+        const success = await gc.createRepository(repo.id, importURL, "AutoTest.md");
         expect(success).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
 
@@ -179,6 +240,50 @@ describe("GitHubController", () => {
 
         const success = await gc.releaseRepository(allRepos[1], [allTeams[1]], false);
         expect(success).to.be.true;
+    }).timeout(Test.TIMEOUT);
+
+    it("Should fail to release a repo if preconditions are not met.", async function() {
+        // setup
+        const rc: RepositoryController = new RepositoryController();
+        const allRepos: Repository[] = await rc.getAllRepos();
+        const repoCount: number = allRepos.length;
+
+        expect(repoCount).to.be.greaterThan(1);
+
+        const tc: TeamController = new TeamController();
+        const allTeams: Team[] = await tc.getAllTeams();
+        const teamCount: number = allTeams.length;
+        Log.info("GithubControllerSpec::ReleasingRepo - repoCount: " + repoCount + " teamcCount: " + teamCount);
+        expect(teamCount).to.be.greaterThan(1);
+        let res = null;
+        let ex = null;
+        try {
+            // try to release a repo with collaborators
+            res = await gc.releaseRepository(allRepos[1], [allTeams[1]], true);
+        } catch (err) {
+            ex = err;
+        }
+        expect(res).to.be.null;
+        expect(ex).to.not.be.null;
+
+        const team: any = {id: Test.TEAMNAME3, personIds: [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]};
+        // try to release a repo with a team that doesn't exist
+        res = await gc.releaseRepository(allRepos[1], [team], false);
+        expect(res).to.be.true;
+
+    }).timeout(Test.TIMEOUT);
+
+    it("Should fail to create a pull request.", async function() {
+        let res = null;
+        let ex = null;
+        try {
+            // not implemented yet, shoulf fail right away
+            res = await gc.createPullRequest('', '');
+        } catch (err) {
+            ex = err;
+        }
+        expect(res).to.be.null;
+        expect(ex).to.not.be.null;
     }).timeout(Test.TIMEOUT);
 
 });
