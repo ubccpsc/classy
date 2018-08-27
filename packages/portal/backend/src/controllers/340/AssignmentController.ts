@@ -1184,7 +1184,9 @@ export class AssignmentController {
         let studentRepoRecord: Repository = await this.verifyAndCreateRepo(studentGradeRepoName);
 
         // get all the student's grades
-        let studentGrades: Grade[] = await this.gc.getReleasedGradesForPerson(studentId);
+        // this.gc.getAllGrades();
+        let allGrades: Grade[] = await this.gc.getAllGrades();
+        // let studentGrades: Grade[] = await this.gc.getReleasedGradesForPerson(studentId);
         let deliverables: Deliverable[] = await this.dc.getAllDeliverables();
 
         // for(const grade of studentGrades) {
@@ -1195,8 +1197,10 @@ export class AssignmentController {
 
         let studentGradeMapping: {[delivId: string]: Grade} = {};
 
-        for(const grade of studentGrades) {
-            studentGradeMapping[grade.delivId] = grade;
+        for(const grade of allGrades) {
+            if(grade.personId === studentId) {
+                studentGradeMapping[grade.delivId] = grade;
+            }
         }
 
         // TODO: Generate table headings
@@ -1233,8 +1237,7 @@ export class AssignmentController {
                 totalRaw            += studentScore;
                 totalScore          += weightedScore;
 
-                newRow = [deliv.id, studentScore.toString(), weight.toString(),
-                    weightedScore.toString(), totalScore.toString()];
+                newRow = [deliv.id, studentScore.toString(), weight.toString(), weightedScore.toString()];
             }
             tableInfo.push(newRow);
         }

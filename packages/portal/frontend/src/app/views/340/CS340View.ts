@@ -51,7 +51,7 @@ export class CS340View extends StudentView {
             return that.fetchData();
         }).then(function() {
             that.renderTeams(that.teams);
-            that.renderDeliverables(that.deliverables);
+            that.renderDeliverables();
             UI.hideModal();
             Log.info('CS340View::renderPage(..) - prep & render took: ' + UI.took(start));
         }).catch(function(err) {
@@ -100,7 +100,7 @@ export class CS340View extends StudentView {
         return;
     }
 
-    private async renderDeliverables(deliverables: DeliverableInfo[]): Promise<void> {
+    private async renderDeliverables(): Promise<void> {
         Log.info("CS340View::renderDeliverables(..) - start");
 
         const that = this;
