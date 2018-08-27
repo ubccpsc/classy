@@ -239,6 +239,21 @@ describe("CS340: Routes", () => {
         expect(response.body.response).to.not.be.null;
     });
 
+    it("Should be able to get all information on deliverables", async function() {
+        let response = null;
+        const url = '/portal/cs340/getAllDelivInfo';
+        try {
+            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            fail(err);
+        }
+
+        expect(response).to.not.be.null;
+        expect(response.status).to.be.equal(200);
+        expect(response.body.response).to.not.be.null;
+    });
+
     it("Should be able to get all Submissions using assignment ID.", async function() {
         let aid = Test.ASSIGNID0;
 
