@@ -18,7 +18,7 @@ import {
 import {RepositoryController} from "../RepositoryController";
 import {TeamController} from "../TeamController";
 import {DeliverablesController} from "../DeliverablesController";
-import {GitHubController} from "../GitHubController";
+import {GitHubController, GitTeamTuple} from "../GitHubController";
 import {PersonController} from "../PersonController";
 import {GitHubActions} from "../GitHubActions";
 import {ScheduleController} from "../ScheduleController";
@@ -184,6 +184,11 @@ export class AssignmentController {
     }
 
 
+    /**
+     * Initializes all repositories, if a team exists with a student and the associated deliverable
+     * create the repository with that team.
+     * @param delivId
+     */
     public async initializeAllRepositories(delivId: string): Promise<boolean> {
         Log.info("AssignmentController::initializeAllRepositories( " + delivId + ") - start");
         // Log.info("AssignmentController::initializeAllRepositories(..)");
@@ -213,6 +218,17 @@ export class AssignmentController {
         let anyError: boolean = false;
 
         // todo: teams?
+        let allTeams: Team[] = await this.tc.getAllTeams();
+        // create a mapping between persons and teams
+        let personTeams: {[personId: string]: Team} = {};
+        for(const team of allTeams) {
+            if(team.delivId === delivId) {
+                for(const personId of team.personIds) {
+                    personTeams[personId] = team;
+                }
+            }
+        }
+
         let peopleList = await this.gha.listPeople();
         let personVerification: { [githubID: string]: any } = {};
 
@@ -231,37 +247,51 @@ export class AssignmentController {
                 continue;
             }
 
-            // for each student, create a team
-            let teamName: string;
-            if(deliv.teamPrefix === null || deliv.teamPrefix === "") {
-                teamName = deliv.id + "_";
+            let studentTeam: Team;
+            let newGithubTeam: {teamName: string, githubTeamNumber: number};
+            let githubTuple: GitTeamTuple;
+            let repoName: string;
+
+            if(typeof personTeams[student.id] === "undefined") {
+                // for each student, create a team
+                let teamName: string;
+                if(deliv.teamPrefix === null || deliv.teamPrefix === "") {
+                    teamName = deliv.id + "_";
+                } else {
+                    teamName = deliv.teamPrefix;
+                }
+                teamName += student.githubId;
+                // verify if the team exists or not
+                studentTeam = await this.tc.getTeam(teamName);
+                if (studentTeam === null) {
+                    // The team doesn't exist, so initialize it
+                    studentTeam = await this.tc.createTeam(teamName, deliv, [student], null);
+                }
+                if (studentTeam === null) {
+                    Log.error("AssignmentController::initializeAllRepositories(..) - error creating team " +
+                        teamName + " for student " + student.githubId);
+                }
+
+                newGithubTeam = await this.gha.createTeam(teamName, "push");
+                githubTuple = await this.gha.addMembersToTeam(newGithubTeam.teamName, newGithubTeam.githubTeamNumber, [student.githubId]);
             } else {
-                teamName = deliv.teamPrefix;
-            }
-            teamName += student.githubId;
-            // verify if the team exists or not
-            let studentTeam: Team = await this.tc.getTeam(teamName);
-            if (studentTeam === null) {
-                // The team doesn't exist, so initialize it
-                studentTeam = await this.tc.createTeam(teamName, deliv, [student], null);
-            }
-            if (studentTeam === null) {
-                Log.error("AssignmentController::initializeAllRepositories(..) - error creating team " +
-                    teamName + " for student " + student.githubId);
+                studentTeam = personTeams[student.id];
             }
 
-            let newGithubTeam = await this.gha.createTeam(teamName, "push");
-            let githubTuple = await this.gha.addMembersToTeam(newGithubTeam.teamName, newGithubTeam.githubTeamNumber, [student.githubId]);
 
             // attempt to provision the repository,
             // if success, add it to the AssignmentInfo
-            let repoName: string;
             if(deliv.repoPrefix === null || deliv.repoPrefix === "") {
                 repoName = deliv.id + "_";
             } else {
                 repoName = deliv.repoPrefix;
             }
-            repoName += student.githubId;
+            if(typeof personTeams[student.id] === "undefined") {
+                repoName += student.githubId;
+            } else {
+                repoName += studentTeam.id;
+            }
+
             let provisionedRepo = await this.createAssignmentRepo(repoName, delivId, [studentTeam]);
 
             if (provisionedRepo !== null) {
