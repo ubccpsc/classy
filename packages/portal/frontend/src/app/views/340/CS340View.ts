@@ -204,8 +204,8 @@ function addOption(event) {
 
             for(const delivInfo of this.deliverables) {
                 if(delivInfo.id === delivId) {
-                    minTeam.innerHTML = delivInfo.minStudents;
-                    maxTeam.innerHTML = delivInfo.maxStudents;
+                    minTeam.innerHTML = delivInfo.minStudents.toString();
+                    maxTeam.innerHTML = delivInfo.maxStudents.toString();
                 }
             }
 

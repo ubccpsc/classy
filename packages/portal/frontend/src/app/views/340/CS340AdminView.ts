@@ -1260,17 +1260,24 @@ export class CS340AdminView extends AdminView {
             gradingSectionElement!.appendChild(questionBox);
         }
 
-        // TODO: Work on this
         // Create a submission button
         let submitButton = document.createElement("ons-button");
-        // TODO: Link this better
         submitButton.setAttribute("onclick", "window.myApp.view.submitGrade()");
         submitButton.innerHTML = "Submit";
 
+
+        // Create a "DID NOT COMPLETE" button
+        let dncButton = document.createElement("ons-button");
+        dncButton.setAttribute("onclick", "window.myApp.view.submitGrade(false)");
+        dncButton.setAttribute("style", "margin-left: 1em");
+        dncButton.innerHTML = "Student did not complete";
+
+
         gradingSectionElement!.appendChild(submitButton);
+        gradingSectionElement!.appendChild(dncButton);
     }
 
-    public async submitGrade(): Promise<AssignmentGrade|null> {
+    public async submitGrade(completed: boolean = true): Promise<AssignmentGrade|null> {
         let errorStatus = false;
         let warnStatus = false;
         let warnComment: string = "";
@@ -1350,9 +1357,10 @@ export class CS340AdminView extends AdminView {
                     }
                 }
 
+                // create a new subgrade, but if assignment was NOT _completed_, give 0
                 let newSubGrade : SubQuestionGrade = {
                     sectionName: rubricType,
-                    grade: gradeValue,
+                    grade: completed? gradeValue: 0,
                     graded: graded,
                     feedback: responseBoxElement.value
                 };
