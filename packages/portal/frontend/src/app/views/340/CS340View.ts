@@ -44,13 +44,14 @@ export class CS340View extends StudentView {
         Log.info('CS340View::renderPage() - start; options: ' + opts);
         const that = this;
         const start = Date.now();
-
+        UI.hideSection('studentSelectPartnerDiv');
+        UI.hideSection('studentPartnerDiv');
         UI.showModal("Fetching data.");
         super.render().then(function() {
             // super render complete; do custom work
             return that.fetchData();
         }).then(function() {
-            that.renderTeams(that.teams);
+            // that.renderTeams(that.teams);
             that.renderDeliverables();
             UI.hideModal();
             Log.info('CS340View::renderPage(..) - prep & render took: ' + UI.took(start));
@@ -95,7 +96,7 @@ export class CS340View extends StudentView {
         } else {
             Log.trace('CS340View::fetchData(..) - deliverables !200 received');
         }
-        
+
         UI.hideModal();
         return;
     }
@@ -122,10 +123,13 @@ export class CS340View extends StudentView {
             delivSelectElement.appendChild(option);
         }
 
-        delivSelectElement.addEventListener("onchange", (evt) => {
+        Log.info('CS340View::renderDeliverables(..) - hooking event listener');
+
+        delivSelectElement.addEventListener("change", (evt) => {
             that.updateTeams();
         });
 
+        Log.info('CS340View::renderDeliverables(..) - finished hooking event listener');
 
         Log.info("CS340View::renderDeliverables(..) - finished rendering deliverable");
     }
@@ -147,6 +151,8 @@ function addOption(event) {
 * */
 
     private async updateTeams(): Promise<void> {
+        Log.info('CS340View::updateTeams(..) - start');
+
         let teams: TeamTransport[] = this.teams;
         const that = this;
         UI.hideSection('studentSelectPartnerDiv');
@@ -155,6 +161,9 @@ function addOption(event) {
         let delivSelectElement = document.querySelector('#studentDeliverableSelect') as HTMLSelectElement;
         // get the deliverable ID
         let delivId = delivSelectElement.value;
+        if(delivId === "--N/A--") return;
+        Log.info('CS340View::updateTeams(..) - selected ' + delivId);
+
         let found = false;
         let selectedTeam;
         for(const team of teams) {
@@ -167,72 +176,104 @@ function addOption(event) {
         if(found) {
             const tName = document.getElementById('studentPartnerTeamName');
             const pName = document.getElementById('studentPartnerTeammates');
-            const team = this.teams[0];
 
-            if (team.URL !== null) {
-                tName.innerHTML = '<a href="' + team.URL + '">' + team.id + '</a>';
+            if (selectedTeam.URL !== null) {
+                tName.innerHTML = '<a href="' + selectedTeam.URL + '">' + selectedTeam.id + '</a>';
             } else {
-                tName.innerHTML = team.id;
+                tName.innerHTML = selectedTeam.id;
             }
-            pName.innerHTML = JSON.stringify(team.people);
+            pName.innerHTML = JSON.stringify(selectedTeam.people);
+            UI.showSection("studentPartnerDiv");
         } else {
+            const button = document.querySelector('#studentSelectPartnerButton') as OnsButtonElement;
+
+            button.onclick = async function(evt: any) {
+                let selectedID = (document.querySelector('#studentDeliverableSelect') as HTMLSelectElement).value;
+
+                Log.info("CS340View::updateTeams(..)::createTeam::onClick - selectedDeliv: " + selectedID);
+                let teamCreation: TeamTransport = await that.formTeam(selectedID);
+                Log.info("CS340View::updateTeams(..)::createTeam::onClick::then - result: " + teamCreation.toString());
+                if(teamCreation === null) return;
+                that.teams.push(teamCreation);
+
+                that.renderPage({});
+            };
+
+            const minTeam = document.querySelector("#minimumNum");
+            const maxTeam = document.querySelector("#maximumNum");
+
+            for(const delivInfo of this.deliverables) {
+                if(delivInfo.id === delivId) {
+                    minTeam.innerHTML = delivInfo.minStudents;
+                    maxTeam.innerHTML = delivInfo.maxStudents;
+                }
+            }
+
             UI.showSection('studentSelectPartnerDiv');
-            // TODO: Finish rendering this part
             return;
         }
     }
 
-    private async renderTeams(teams: TeamTransport[]): Promise<void> {
-        Log.trace('CS340View::renderTeams(..) - start');
-        const that = this;
+    // private async renderTeams(teams: TeamTransport[]): Promise<void> {
+    //     Log.trace('CS340View::renderTeams(..) - start');
+    //     const that = this;
+    //
+    //     // make sure these are hidden
+    //     UI.hideSection('studentSelectPartnerDiv');
+    //     UI.hideSection('studentPartnerDiv');
+    //
+    //     // 310 only has one team so we don't need to check to see if it's the right one
+    //     if (teams.length < 1) {
+    //         // no team yet
+    //
+    //         const button = document.querySelector('#studentSelectPartnerButton') as OnsButtonElement;
+    //         button.onclick = function(evt: any) {
+    //             Log.info('CS340View::renderTeams(..)::createTeam::onClick');
+    //             that.formTeam().then(function(team) {
+    //                 Log.info('CS340View::renderTeams(..)::createTeam::onClick::then - team created');
+    //                 that.teams.push(team);
+    //                 if (team !== null) {
+    //                     that.renderPage({}); // simulating refresh
+    //                 }
+    //             }).catch(function(err) {
+    //                 Log.info('CS340View::renderTeams(..)::createTeam::onClick::catch - ERROR: ' + err);
+    //             });
+    //         };
+    //
+    //         UI.showSection('studentSelectPartnerDiv');
+    //     } else {
+    //         // already on team
+    //         UI.showSection('studentPartnerDiv');
+    //
+    //         const tName = document.getElementById('studentPartnerTeamName');
+    //         const pName = document.getElementById('studentPartnerTeammates');
+    //         const team = this.teams[0];
+    //
+    //         if (team.URL !== null) {
+    //             tName.innerHTML = '<a href="' + team.URL + '">' + team.id + '</a>';
+    //         } else {
+    //             tName.innerHTML = team.id;
+    //         }
+    //         pName.innerHTML = JSON.stringify(team.people);
+    //     }
+    // }
 
-        // make sure these are hidden
-        UI.hideSection('studentSelectPartnerDiv');
-        UI.hideSection('studentPartnerDiv');
-
-        // 310 only has one team so we don't need to check to see if it's the right one
-        if (teams.length < 1) {
-            // no team yet
-
-            const button = document.querySelector('#studentSelectPartnerButton') as OnsButtonElement;
-            button.onclick = function(evt: any) {
-                Log.info('CS340View::renderTeams(..)::createTeam::onClick');
-                that.formTeam().then(function(team) {
-                    Log.info('CS340View::renderTeams(..)::createTeam::onClick::then - team created');
-                    that.teams.push(team);
-                    if (team !== null) {
-                        that.renderPage({}); // simulating refresh
-                    }
-                }).catch(function(err) {
-                    Log.info('CS340View::renderTeams(..)::createTeam::onClick::catch - ERROR: ' + err);
-                });
-            };
-
-            UI.showSection('studentSelectPartnerDiv');
-        } else {
-            // already on team
-            UI.showSection('studentPartnerDiv');
-
-            const tName = document.getElementById('studentPartnerTeamName');
-            const pName = document.getElementById('studentPartnerTeammates');
-            const team = this.teams[0];
-
-            if (team.URL !== null) {
-                tName.innerHTML = '<a href="' + team.URL + '">' + team.id + '</a>';
-            } else {
-                tName.innerHTML = team.id;
-            }
-            pName.innerHTML = JSON.stringify(team.people);
-        }
-    }
-
-    private async formTeam(): Promise<TeamTransport> {
+    private async formTeam(selectedDeliv: string): Promise<TeamTransport> {
         Log.info("CS340View::formTeam() - start");
-        const otherId = UI.getTextFieldValue('studentSelectPartnerText');
+        const otherIds = UI.getTextFieldValue('studentSelectPartnerText');
+        // split the other IDs by semicolons
+        const idArray: string[] = otherIds.split(";");
         const myGithubId = this.getStudent().githubId;
+        let githubIds: string[] = [];
+        githubIds.push(myGithubId);
+        for(const id of idArray) {
+            githubIds.push(id.trim());
+        }
+
         const payload: TeamFormationTransport = {
-            delivId:   'a1', // only one team in cs310 (and it is always called project)
-            githubIds: [myGithubId, otherId]
+            // delivId:   selectedTeam,
+            delivId:   selectedDeliv,
+            githubIds: githubIds
         };
         const url = this.remote + '/portal/team';
         const options: any = this.getOptions();

@@ -21,7 +21,9 @@
                 Select Deliverable:
             </div>
             <div>
-                <select id="studentDeliverableSelect"></select>
+                <select id="studentDeliverableSelect">
+
+                </select>
             </div>
         </ons-list-item>
         <div id="studentSelectPartnerDiv" style="display: none;">
@@ -36,9 +38,19 @@
                     <ons-button id="studentSelectPartnerButton">Create Team</ons-button>
                 </div>
                 <div class="expandable-content">
-                    Specify your project partner here. They must be registered in your lab section and must not be on any other team. Please
-                    note: this will be your partner for the duration of the term and cannot be changed so make your choice carefully. Only
-                    one team member needs to do this.
+                    <span>Specify your partner for this deliverable.</span>
+                    <br>
+                    <span>Minimum team size: </span> <span id="minimumNum"></span>
+                    <br>
+                    <span>Maximum team size: </span> <span id="maximumNum"></span>
+                    <br>
+                    <span>Note: This will be your partner for the assignment, and can not be changed so make your choice carefully.</span>
+                    <br>
+                    <span>Only one team member needs to do this.</span>
+
+                    <!--Specify your project partner here. They must be registered in your lab section and must not be on any other team. Please-->
+                    <!--note: this will be your partner for the duration of the term and cannot be changed so make your choice carefully. Only-->
+                    <!--one team member needs to do this.-->
                 </div>
             </ons-list-item>
         </div>
