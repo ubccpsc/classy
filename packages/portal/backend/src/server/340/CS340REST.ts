@@ -5,7 +5,13 @@ import IREST from "../IREST";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {Deliverable, Grade, Person, Repository, Team} from "../../Types";
 import {AssignmentController} from "../../controllers/340/AssignmentController";
-import {AssignmentGrade, AssignmentGradingRubric, AssignmentInfo, QuestionGrade} from "../../../../../common/types/CS340Types";
+import {
+    AssignmentGrade,
+    AssignmentGradingRubric,
+    AssignmentInfo,
+    DeliverableInfo,
+    QuestionGrade
+} from "../../../../../common/types/CS340Types";
 import {GradesController} from "../../controllers/GradesController";
 import {PersonController} from "../../controllers/PersonController";
 import {RubricController} from "../../controllers/340/RubricController";
@@ -36,6 +42,7 @@ export default class CS340REST implements IREST {
         server.get('/portal/cs340/getAssignmentStatus/:delivid', CS340REST.getAssignmentStatus);
         server.get('/portal/cs340/getStudentTeamByDeliv/:sid/:delivid', CS340REST.getStudentTeamByDeliv);
         server.get('/portal/cs340/getRepository/:teamid' , CS340REST.getRepositoryFromTeam);
+        server.get('/portal/cs340/getAllDelivInfo' , CS340REST.getAllDelivInfo);
         server.put('/portal/cs340/setAssignmentGrade', CS340REST.setAssignmentGrade);
         server.post('/portal/cs340/releaseGrades/:delivid', CS340REST.releaseGrades);
         server.post('/portal/cs340/initializeAllRepositories/:delivid', CS340REST.initializeAllRepositories);
@@ -79,6 +86,38 @@ export default class CS340REST implements IREST {
         res.send(200, "complete!");
     }
     */
+
+    /**
+     * Gets all deliverable Ids
+     * Authorization: anyone
+     */
+    public static async getAllDelivInfo(req: any, res: any, next: any) {
+        // TODO [Jonathan]: Admin authentication
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        Log.info("CS340REST::getAllDelivInfo() - start");
+        let dc: DeliverablesController = new DeliverablesController();
+        try {
+            let deliverables: Deliverable[] = await dc.getAllDeliverables();
+            let delivObjs: DeliverableInfo[] = [];
+            for(const deliv of deliverables) {
+                let newObj: DeliverableInfo = {
+                    id: deliv.id,
+                    minStudents: deliv.teamMinSize,
+                    maxStudents: deliv.teamMaxSize
+                };
+                delivObjs.push(newObj);
+            }
+            Log.info("CS340REST::getAllDelivInfo() - received all responses");
+            res.send(200, {response: delivObjs});
+        } catch (err) {
+            Log.error("CS340REST::getAllDelivInfo() - Error: " + err);
+            res.send(500, {error: err});
+        }
+        return next();
+    }
 
     public static async verifyAllScheduledJobs(req: any, res: any, next: any) {
         // TODO [Jonathan]: Admin authentication

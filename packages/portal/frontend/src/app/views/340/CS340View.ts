@@ -10,22 +10,29 @@ import Log from "../../../../../../common/Log";
 import {UI} from "../../util/UI";
 import {
     AssignmentGrade,
-    AssignmentGradingRubric,
+    AssignmentGradingRubric, DeliverableInfo,
     QuestionGrade,
     SubQuestionGrade,
     SubQuestionGradingRubric
 } from "../../../../../../common/types/CS340Types";
 
 import {IView} from "../IView";
-import {Deliverable, Grade, Person} from "../../../../../backend/src/Types";
+import {Deliverable, Grade, Person, Team} from "../../../../../backend/src/Types";
 import {Factory} from "../../Factory";
 import {SortableTable, TableHeader} from "../../util/SortableTable";
-import {Payload, TeamFormationTransport, TeamTransport} from "../../../../../../common/types/PortalTypes";
+import {
+    DeliverableTransport,
+    Payload,
+    TeamFormationTransport,
+    TeamTransport
+} from "../../../../../../common/types/PortalTypes";
 import {StudentView} from "../StudentView";
+import {AdminView} from "../AdminView";
 
 
 export class CS340View extends StudentView {
     private teams: TeamTransport[];
+    private deliverables: DeliverableInfo[];
 
     constructor(remoteUrl: string) {
         super();
@@ -44,6 +51,7 @@ export class CS340View extends StudentView {
             return that.fetchData();
         }).then(function() {
             that.renderTeams(that.teams);
+            that.renderDeliverables(that.deliverables);
             UI.hideModal();
             Log.info('CS340View::renderPage(..) - prep & render took: ' + UI.took(start));
         }).catch(function(err) {
@@ -56,25 +64,122 @@ export class CS340View extends StudentView {
         UI.showModal('Fetching Data');
         this.teams = null;
 
-        const url = this.remote + '/portal/teams';
-        const response = await fetch(url, super.getOptions());
-        if (response.status === 200) {
+        const teamUrl = this.remote + '/portal/teams';
+        const teamResponse = await fetch(teamUrl, super.getOptions());
+        if (teamResponse.status === 200) {
             Log.trace('CS340View::fetchData(..) - teams 200 received');
-            const json = await response.json();
-            Log.trace('CS340View::fetchData(..) - teams payload: ' + JSON.stringify(json));
-            if (typeof json.success !== 'undefined') {
-                Log.trace('CS340View::fetchData(..) - teams success: ' + json.success);
-                this.teams = json.success as TeamTransport[];
+            const teamJson = await teamResponse.json();
+            Log.trace('CS340View::fetchData(..) - teams payload: ' + JSON.stringify(teamJson));
+            if (typeof teamJson.success !== 'undefined') {
+                Log.trace('CS340View::fetchData(..) - teams success: ' + teamJson.success);
+                this.teams = teamJson.success as TeamTransport[];
             } else {
-                Log.trace('CS340View::fetchData(..) - teams ERROR: ' + json.failure.message);
-                UI.showError(json.failure);
+                Log.trace('CS340View::fetchData(..) - teams ERROR: ' + teamJson.failure.message);
+                UI.showError(teamJson.failure);
             }
         } else {
             Log.trace('CS340View::fetchData(..) - teams !200 received');
         }
 
+        const delivUrl = this.remote + "/portal/cs340/getAllDelivInfo";
+        const delivResponse = await fetch(delivUrl, super.getOptions());
+
+        if(delivResponse.status === 200) {
+            Log.trace('CS340View::fetchData(..) - received deliverables');
+            const delivJson = await delivResponse.json();
+            if(typeof delivJson.response !== "undefined") {
+                this.deliverables = delivJson.response;
+            } else {
+                Log.trace("CS340View::fetchData(..) - deliverable error: " + delivJson.error);
+            }
+        } else {
+            Log.trace('CS340View::fetchData(..) - deliverables !200 received');
+        }
+        
         UI.hideModal();
         return;
+    }
+
+    private async renderDeliverables(deliverables: DeliverableInfo[]): Promise<void> {
+        Log.info("CS340View::renderDeliverables(..) - start");
+
+        const that = this;
+        const deliverables = this.deliverables;
+
+        let delivSelectElement = document.querySelector('#studentDeliverableSelect') as HTMLSelectElement;
+        let delivOptions: string[] = ["--N/A--"];
+
+        for(const deliv of deliverables) {
+            delivOptions.push(deliv.id);
+        }
+
+        delivSelectElement.innerHTML = "";
+        for(const delivOption of delivOptions) {
+            const option = document.createElement("option");
+
+            option.innerText = delivOption;
+
+            delivSelectElement.appendChild(option);
+        }
+
+        delivSelectElement.addEventListener("onchange", (evt) => {
+            that.updateTeams();
+        });
+
+
+        Log.info("CS340View::renderDeliverables(..) - finished rendering deliverable");
+    }
+
+/*
+function editSelects(event) {
+  document.getElementById('choose-sel').removeAttribute('modifier');
+  if (event.target.value == 'material' || event.target.value == 'underbar') {
+    document.getElementById('choose-sel').setAttribute('modifier', event.target.value);
+  }
+}
+function addOption(event) {
+  const option = document.createElement('option');
+  var text = document.getElementById('optionLabel').value;
+  option.innerText = text;
+  text = '';
+  document.getElementById('dynamic-sel').appendChild(option);
+}
+* */
+
+    private async updateTeams(): Promise<void> {
+        let teams: TeamTransport[] = this.teams;
+        const that = this;
+        UI.hideSection('studentSelectPartnerDiv');
+        UI.hideSection('studentPartnerDiv');
+
+        let delivSelectElement = document.querySelector('#studentDeliverableSelect') as HTMLSelectElement;
+        // get the deliverable ID
+        let delivId = delivSelectElement.value;
+        let found = false;
+        let selectedTeam;
+        for(const team of teams) {
+            if(team.delivId === delivId) {
+                found = true;
+                selectedTeam = team;
+            }
+        }
+
+        if(found) {
+            const tName = document.getElementById('studentPartnerTeamName');
+            const pName = document.getElementById('studentPartnerTeammates');
+            const team = this.teams[0];
+
+            if (team.URL !== null) {
+                tName.innerHTML = '<a href="' + team.URL + '">' + team.id + '</a>';
+            } else {
+                tName.innerHTML = team.id;
+            }
+            pName.innerHTML = JSON.stringify(team.people);
+        } else {
+            UI.showSection('studentSelectPartnerDiv');
+            // TODO: Finish rendering this part
+            return;
+        }
     }
 
     private async renderTeams(teams: TeamTransport[]): Promise<void> {
@@ -153,6 +258,22 @@ export class CS340View extends StudentView {
         } else {
             Log.error("CS340View::formTeam() - else ERROR: " + JSON.stringify(body));
         }
+    }
+
+    private async getDeliverables(): Promise<Deliverable[]> {
+        const delivOptions = AdminView.getOptions();
+        const delivUrl: string = this.remote + '/portal/cs340/getAllDeliverables';
+        const delivResponse = await fetch(delivUrl, delivOptions);
+
+        if(delivResponse.status !== 200) {
+            Log.trace("CS340AdminView::renderStudentGrades(..) - !200 " +
+                "response received; code:" + delivResponse.status);
+            return;
+        }
+        const delivJson = await delivResponse.json();
+        const delivArray: Deliverable[] = delivJson.response;
+
+        return delivArray;
     }
 
 /*

@@ -68,7 +68,6 @@ export interface SubQuestionGradingRubric {
     modifiers: any;                 // Custom modifiers - course dependant
 }
 
-
 export enum AssignmentStatus {
                             // Repositories Status:
                             // Created | Pull | Push  |
@@ -76,6 +75,13 @@ export enum AssignmentStatus {
     CREATED, //     = 2,        //    X    |      |       | Repositories are created, not viewable
     RELEASED, //    = 3,        //    X    |  X   |   X   | Created and viewable, with push access
     CLOSED, //      = 4,        //    X    |  X   |       | Created, viewable, no push access
+}
+
+// Contains information about deliverables
+export interface DeliverableInfo {
+    id: string;
+    minStudents: number;
+    maxStudents: number;
 }
 
 /*
