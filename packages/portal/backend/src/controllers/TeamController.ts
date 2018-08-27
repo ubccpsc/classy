@@ -4,8 +4,6 @@ import {TeamTransport} from "../../../../common/types/PortalTypes";
 import {Deliverable, Person, Team} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
-import {DeliverablesController} from "./DeliverablesController";
-import {PersonController} from "./PersonController";
 
 export class TeamController {
 
@@ -48,20 +46,20 @@ export class TeamController {
     /**
      * Convenience method for creating team objects when only primitive types are known. This is
      * especially useful for students specifying their own teams as it checks to ensure that team
-     * constraints (specified in the deliverable) are ahered to. Once all checks pass, the code
+     * constraints (specified in the deliverable) are adhered to. Once all checks pass, the code
      * passes through to TeamController::createTeam(..).
      *
+     * @param teamId
      * @param {string} delivId
-     * @param {string[]} gitHubIds
+     * @param people
+     * @param adminOverride
      * @returns {Promise<Team | null>}
      */
-    public async formTeam(delivId: string, gitHubIds: string[], adminOverride: boolean): Promise<Team | null> {
+    public async formTeam(teamId: string, deliv: Deliverable, people: Person[], adminOverride: boolean): Promise<Team | null> {
         Log.info("TeamController::formTeam( ... ) - start");
 
-        const dc = new DeliverablesController();
-        const pc = new PersonController();
-
-        const deliv = await dc.getDeliverable(delivId);
+        // const dc = new DeliverablesController();
+        // const pc = new PersonController();
 
         // sanity checking
         if (deliv === null) {
@@ -70,25 +68,25 @@ export class TeamController {
         if (deliv.teamStudentsForm === false || adminOverride) {
             throw new Error("Team not created; students cannot form their own teams for this deliverable.");
         }
-        if (gitHubIds.length > deliv.teamMaxSize || adminOverride) {
+        if (people.indexOf(null) >= 0) {
+            throw new Error("Team not created; some students not members of the course.");
+        }
+        if (people.length > deliv.teamMaxSize || adminOverride) {
             throw new Error("Team not created; too many team members specified for this deliverable.");
         }
-        if (gitHubIds.length < deliv.teamMinSize || adminOverride) {
+        if (people.length < deliv.teamMinSize || adminOverride) {
             throw new Error("Team not created; too few team members specified for this deliverable.");
         }
 
-        const teams = await this.getAllTeams();
-        const teamName: string = deliv.teamPrefix + teams.length;
-        const people: Person[] = [];
-
-        for (const ghId of gitHubIds) {
-            const person = await pc.getGitHubPerson(ghId);
-            if (person === null) {
-                throw new Error("Team not created; GitHub id not associated with student registered in course: " + ghId);
-            } else {
-                people.push(person);
-            }
-        }
+        // const people: Person[] = [];
+        // for (const ghId of gitHubIds) {
+        //     const person = await pc.getGitHubPerson(ghId);
+        //     if (person === null) {
+        //         throw new Error("Team not created; GitHub id not associated with student registered in course: " + ghId);
+        //     } else {
+        //         people.push(person);
+        //     }
+        // }
 
         // ensure members are all in the same lab section (if required)
         if (deliv.teamSameLab === true) {
@@ -108,15 +106,15 @@ export class TeamController {
         for (const p of people) {
             const teamsForPerson = await this.getTeamsForPerson(p);
             for (const personTeam of teamsForPerson) {
-                if (personTeam.delivId === delivId) {
+                if (personTeam.delivId === deliv.id) {
                     Log.error("TeamController::formTeam( ... ) - member already on team: " +
-                        personTeam.id + " for deliverable: " + delivId);
+                        personTeam.id + " for deliverable: " + deliv.id);
                     throw new Error("Team not created; some members are already on existing teams for this deliverable.");
                 }
             }
         }
 
-        const team = await this.createTeam(teamName, deliv, people, {});
+        const team = await this.createTeam(teamId, deliv, people, {});
         return team;
     }
 

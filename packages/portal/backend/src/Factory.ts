@@ -2,6 +2,7 @@ import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
 import {CourseController} from "./controllers/CourseController";
+import {CS310Controller} from "./controllers/cs310/CS310Controller";
 import {GitHubController, IGitHubController} from "./controllers/GitHubController";
 import {SDMMController} from "./controllers/SDMM/SDMMController";
 import CS340REST from "./server/340/CS340REST";
@@ -58,9 +59,9 @@ export class Factory {
         if (name === 'sdmm' || name === 'secapstonetest') {
             return new SDMMController(ghController);
         } else if (name === 'cs310' || name === 'classytest') {
-            return new CourseController(ghController);
+            return new CS310Controller(ghController);
         } else if (name === 'cs340' || name === 'cpsc340') {
-            return new CourseController(ghController);
+            return new CourseController(ghController); // NOTE: this should probably be CS340Controller (although this does not exist)
         } else {
             Log.error("Factory::getCourseController() - unknown name: " + name);
             throw new Error("Unknown course name: " + name);

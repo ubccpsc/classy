@@ -250,12 +250,20 @@ export class MockDataStore implements IDataStore {
     }> {
         Log.info("MockDataStore::getAllData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
 
-        const records: IAutoTestResult[] = await fs.readJSON(this.RECORD_PATH);
-        const comments: ICommentEvent[] = await fs.readJSON(this.COMMENT_PATH);
-        const pushes: IPushEvent[] = await fs.readJSON(this.PUSH_PATH);
-        const feedback: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
-
-        return {records, comments, pushes, feedback};
+        try {
+            Log.info("MockDataStore::getAllData() - before records");
+            const records: IAutoTestResult[] = await fs.readJSON(this.RECORD_PATH);
+            Log.info("MockDataStore::getAllData() - before comments");
+            const comments: ICommentEvent[] = await fs.readJSON(this.COMMENT_PATH);
+            Log.info("MockDataStore::getAllData() - before pushes");
+            const pushes: IPushEvent[] = await fs.readJSON(this.PUSH_PATH);
+            Log.info("MockDataStore::getAllData() - before feedback");
+            const feedback: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
+            Log.info("MockDataStore::getAllData() - after all reading");
+            return {records, comments, pushes, feedback};
+        } catch (err) {
+            throw new Error("MockDataStore::getAllData() - error populating data: " + err.message);
+        }
     }
 
     public clearData(): Promise<void> {

@@ -14,9 +14,13 @@ import {
 } from "../../../../../common/types/PortalTypes";
 
 import {AuthController} from "../../controllers/AuthController";
+import {DeliverablesController} from "../../controllers/DeliverablesController";
+import {GitHubController} from "../../controllers/GitHubController";
 import {GradesController} from "../../controllers/GradesController";
 import {PersonController} from "../../controllers/PersonController";
 import {TeamController} from "../../controllers/TeamController";
+import {Factory} from "../../Factory";
+import {Person} from "../../Types";
 
 import IREST from "../IREST";
 
@@ -162,15 +166,34 @@ export default class GeneralRoutes implements IREST {
             throw new Error('Invalid credentials');
         } else {
             const tc = new TeamController();
+            const dc = new DeliverablesController();
+            const pc = new PersonController();
+
+            const people: Person[] = [];
+            let requestor = null;
+            for (const pId of requestedTeam.githubIds) {
+                const p = await pc.getGitHubPerson(pId); // students will provide github ids // getPerson(pId);
+                if (p !== null) {
+                    people.push(p);
+                    if (p.id === user) {
+                        requestor = p;
+                    }
+                } else {
+                    throw new Error("Team not created; GitHub id not associated with student registered in course: " + pId);
+                }
+            }
 
             // make sure the requestor is one of the teammates!
-            const pc = new PersonController();
-            const person = await pc.getPerson(user);
-            if (requestedTeam.githubIds.indexOf(person.githubId) < 0) {
+            // we have to do this here because the TeamController does not actually know who made the request
+            if (requestor === null) {
                 throw new Error('Users cannot form teams they are not going to join.');
             }
 
-            const team = await tc.formTeam(requestedTeam.delivId, requestedTeam.githubIds, false);
+            const cc = Factory.getCourseController(new GitHubController());
+            const deliv = await dc.getDeliverable(requestedTeam.delivId);
+            const names = await cc.computeNames(deliv, people);
+
+            const team = await tc.formTeam(names.teamName, deliv, people, false);
 
             const teamTrans: TeamTransport = {
                 id:      team.id,

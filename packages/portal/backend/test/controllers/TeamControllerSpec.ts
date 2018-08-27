@@ -145,11 +145,15 @@ describe("TeamController", () => {
         let teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(3);
 
+        const p1 = await pc.getGitHubPerson(Test.USERNAMEGITHUB1);
+        const p2 = await pc.getGitHubPerson(Test.USERNAMEGITHUB2);
+        const p4 = await pc.getGitHubPerson(Test.USERNAMEGITHUB4);
+
         // invalid deliverable
         let team = null;
         let ex = null;
         try {
-            team = await tc.formTeam('INVALIDDELIV', [Test.USERNAMEGITHUB1], false);
+            team = await tc.formTeam('testTeamName_' + Date.now(), null, [p1], false);
         } catch (err) {
             Log.test(err);
             ex = err;
@@ -157,11 +161,12 @@ describe("TeamController", () => {
         expect(ex).to.not.be.null;
         expect(team).to.be.null;
 
+        const d0 = await dc.getDeliverable(Test.DELIVID0);
         // too few students
         team = null;
         ex = null;
         try {
-            team = await tc.formTeam(Test.DELIVID0, [], false);
+            team = await tc.formTeam('testTeamName_' + Date.now(), d0, [], false);
         } catch (err) {
             Log.test(err);
             ex = err;
@@ -173,7 +178,7 @@ describe("TeamController", () => {
         team = null;
         ex = null;
         try {
-            team = await tc.formTeam(Test.DELIVID0, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2], false);
+            team = await tc.formTeam('testTeamName_' + Date.now(), d0, [p1, p2], false);
         } catch (err) {
             Log.test(err);
             ex = err;
@@ -185,7 +190,8 @@ describe("TeamController", () => {
         team = null;
         ex = null;
         try {
-            team = await tc.formTeam(Test.DELIVID3, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2], false);
+            const d3 = await dc.getDeliverable(Test.DELIVID0);
+            team = await tc.formTeam('testTeamName_' + Date.now(), d3, [p1, p2], false);
         } catch (err) {
             Log.test(err);
             ex = err;
@@ -193,11 +199,12 @@ describe("TeamController", () => {
         expect(ex).to.not.be.null;
         expect(team).to.be.null;
 
-        // id not in course
+        // github id not in course
+        const proj = await dc.getDeliverable(Test.DELIVIDPROJ);
         team = null;
         ex = null;
         try {
-            team = await tc.formTeam(Test.DELIVIDPROJ, [Test.USER1.github, 'invalidGitHubid'], false);
+            team = await tc.formTeam('testTeamName_' + Date.now(), proj, [p1, null], false);
         } catch (err) {
             Log.test(err);
             ex = err;
@@ -209,7 +216,7 @@ describe("TeamController", () => {
         team = null;
         ex = null;
         try {
-            team = await tc.formTeam(Test.DELIVIDPROJ, [Test.USER1.github, Test.USER4.github], false);
+            team = await tc.formTeam('testTeamName_' + Date.now(), proj, [p1, p4], false);
         } catch (err) {
             Log.test(err);
             ex = err;
@@ -218,10 +225,11 @@ describe("TeamController", () => {
         expect(team).to.be.null;
 
         // students already on teams
+        const d1 = await dc.getDeliverable(Test.DELIVID0);
         team = null;
         ex = null;
         try {
-            team = await tc.formTeam(Test.DELIVID1, [Test.USER1.github, Test.USER2.github], false);
+            team = await tc.formTeam('testTeamName_' + Date.now(), d1, [p2, p2], false);
         } catch (err) {
             Log.test(err);
             ex = err;
@@ -241,7 +249,10 @@ describe("TeamController", () => {
         let team = null;
         let ex = null;
         try {
-            team = await tc.formTeam(Test.DELIVIDPROJ, [Test.USER1.github, Test.USER2.github], false);
+            const proj = await dc.getDeliverable(Test.DELIVIDPROJ);
+            const p1 = await pc.getGitHubPerson(Test.USER1.github);
+            const p2 = await pc.getGitHubPerson(Test.USER2.github);
+            team = await tc.formTeam('testTeamName_' + Date.now(), proj, [p1, p2], false);
         } catch (err) {
             Log.test(err);
             ex = err;
