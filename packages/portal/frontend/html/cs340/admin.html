@@ -339,45 +339,74 @@
                         </div>
                     </ons-list-item>
 
-                    <!--
-                    <ons-list-header>Bootstrap Code</ons-list-header>
-                    <ons-list-item style="display: flex;">
+                    <!--TODO: Finish and move this around-->
+                    <ons-list-item>
                         <div class="left settingIcon">
-                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
+                            <ons-icon icon="fa-cogs"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            <span>GitHub Bootstrap URL:</span>
+                            Is Assignment?
                         </div>
-                        <div class="right settingRight">
-                            <ons-input id="adminEditDeliverablePage-url"></ons-input>
-                        </div>
-                    </ons-list-item>
-                    <ons-list-header>AutoTest</ons-list-header>
-                    <ons-list-item style="display: flex;">
-                        <div class="left settingIcon">
-                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
-                        </div>
-                        <div class="center settingLabel">
-                            <span>GitHub URL for AutoTest Solution:</span>
-                        </div>
-                        <div class="right settingRight">
-                            <ons-input id="adminEditDeliverablePage-solutionsUrl"></ons-input>
+                        <div class="right settingLabel">
+                            <ons-switch disabled id="adminEditDeliverablePage-isAssignmentSwitch" modifier="list-item"></ons-switch>
                         </div>
                     </ons-list-item>
+                    <!--TODO: End of section-->
 
-                    <ons-list-item style="display: flex;">
-                        <div class="left settingIcon">
-                            <ons-icon icon="ion-ios-speedometer"></ons-icon>
-                        </div>
-                        <div class="center settingLabel">
-                            <span title="Grade request delay in minutes.">Delay</span>
-                        </div>
-                        <div class="right settingRight">
-                            <input id="adminEditDeliverablePage-rate" type="text" name="duration-picker">
-                        </div>
 
-                    </ons-list-item>
-                    -->
+                    <!--TODO: Finish and move this around-->
+                    <div style="display: none;">
+                        <ons-list-header>Assignment Configuration</ons-list-header>
+                        <ons-list-item>
+                            <div class="left settingIcon">
+                                <ons-icon icon="fa-cogs"></ons-icon>
+                            </div>
+                            <div class="center settingLabel">
+                                Seed Repo URL
+                            </div>
+                            <div class="right settingLabel">
+                                <ons-input id="adminEditDeliverablePage-seedRepoURL"></ons-input>
+                            </div>
+                        </ons-list-item>
+
+                        <ons-list-item>
+                            <div class="left settingIcon">
+                                <ons-icon icon="fa-cogs"></ons-icon>
+                            </div>
+                            <div class="center settingLabel">
+                                Seed Repo Path
+                            </div>
+                            <div class="right settingLabel">
+                                <ons-input id="adminEditDeliverablePage-seedRepoPath"></ons-input>
+                            </div>
+                        </ons-list-item>
+
+                        <ons-list-item>
+                            <div class="left settingIcon">
+                                <ons-icon icon="fa-cogs"></ons-icon>
+                            </div>
+                            <div class="center settingLabel">
+                                Main File Path
+                            </div>
+                            <div class="right settingLabel">
+                                <ons-input id="adminEditDeliverablePage-mainFilePath"></ons-input>
+                            </div>
+                        </ons-list-item>
+
+                        <ons-list-item>
+                            <div class="left settingIcon">
+                                <ons-icon icon="fa-cogs"></ons-icon>
+                            </div>
+                            <div class="center settingLabel">
+                                Course Weight
+                            </div>
+                            <div class="right settingLabel">
+                                <ons-input id="adminEditDeliverablePage-courseWeight"></ons-input>
+                            </div>
+                        </ons-list-item>
+                    </div>
+d
+                    <!--TODO: End of section-->
 
                     <ons-list-header>Name prefixes</ons-list-header>
                     <ons-list-item expandable>
