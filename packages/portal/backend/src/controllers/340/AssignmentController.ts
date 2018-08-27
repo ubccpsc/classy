@@ -279,19 +279,23 @@ export class AssignmentController {
             }
 
 
-            // attempt to provision the repository,
-            // if success, add it to the AssignmentInfo
-            if(deliv.repoPrefix === null || deliv.repoPrefix === "") {
-                repoName = deliv.id + "_";
-            } else {
-                repoName = deliv.repoPrefix;
-            }
+
             if(typeof personTeams[student.id] === "undefined") {
+                if(deliv.repoPrefix === null || deliv.repoPrefix === "") {
+                    repoName = deliv.id + "_";
+                } else {
+                    repoName = deliv.repoPrefix;
+                }
                 repoName += student.githubId;
             } else {
-                repoName += studentTeam.id;
+                repoName = studentTeam.id;
+                if(!repoName.startsWith(deliv.repoPrefix)) {
+                    repoName = deliv.repoPrefix + repoName;
+                }
             }
 
+            // attempt to provision the repository,
+            // if success, add it to the AssignmentInfo
             let provisionedRepo = await this.createAssignmentRepo(repoName, delivId, [studentTeam]);
 
             if (provisionedRepo !== null) {
@@ -626,7 +630,7 @@ export class AssignmentController {
     // Updates the status of a given assignment
     // iterates over checking each status of the assigned repository
     public async updateAssignmentStatus(delivId: string): Promise<{assignmentStatus: AssignmentStatus,
-                                                                totalStudents: number, studentRepos: number}| null> {
+                                                        totalStudents: number, studentRepos: number}| null> {
         Log.info("AssignmentController::updateAssignmentStatus( " + delivId + " ) - start");
         let deliv = await this.dc.getDeliverable(delivId);
         if (deliv === null) {
@@ -649,9 +653,11 @@ export class AssignmentController {
             }
         }
 
+        // build a repository mapping
         let studentRepoMapping: { [studentId: string]: Repository[] } = {};
         let assignInfo: AssignmentInfo = deliv.custom;
         let repoList: string[] = assignInfo.repositories;
+        // for all repositories associated with the assignment
         for (const repoId of repoList) {
             let repo: Repository;
             Log.info("AssignmentController::updateAssignmentStatus(..) - verifying repo: " + repoId);
@@ -659,6 +665,7 @@ export class AssignmentController {
                 repo = await this.rc.getRepository(repoId);
             } catch ( err) {
                 Log.error("AssignmentController::updateAssignmentStatus(..) - Error: " + err);
+                continue;
             }
             // retrieve all the students associated with the repository, and then record it
             for (const teamId of repo.teamIds) {
@@ -667,6 +674,7 @@ export class AssignmentController {
                 try {
                     team = await this.tc.getTeam(teamId);
                     if(team === null) {
+                        Log.error("AssignmentController::updateAssignmentStatus(..) - Team does not exist: " + teamId);
                         continue;
                     }
 
@@ -695,6 +703,7 @@ export class AssignmentController {
         let newStatus = AssignmentStatus.CLOSED;
         let totalStudentCount = allStudents.length;
         let studentRepoCount = 0;
+        // check each student,
         for (const student of allStudents) {
             if (typeof personVerification[student.githubId] === 'undefined') {
                 Log.warn("Skipping student: " + student.id + " as they are missing from Github.");
@@ -714,12 +723,13 @@ export class AssignmentController {
                 // if the student has repositories,
                 let studentRepos: Repository[] = studentRepoMapping[student.id];
                 for (const repo of studentRepos) {
-                    if (repo.custom === null) {
+                    if (typeof (repo.custom as AssignmentRepositoryInfo).assignmentId === "undefined") {
                         // a repo is not classified properly
                         Log.error("AssignmentController::updateAssignmentStatus(..) - error: " +
                             "repository " + repo.id + " is not set up properly");
 
                         // return null;
+                        continue;
                     }
                     let repoInfo: AssignmentRepositoryInfo = repo.custom;
 
@@ -1217,7 +1227,8 @@ export class AssignmentController {
                 newRow = [deliv.id, "X", weight.toString(), "0"];
             } else {
                 // double check this
-                let studentScore    = (studentGradeMapping[deliv.id].score / this.calculateMaxGrade(deliv.custom)) * 100;
+                let assignmentRubric = (deliv.custom as AssignmentInfo).rubric;
+                let studentScore    = (studentGradeMapping[deliv.id].score / this.calculateMaxGrade(assignmentRubric)) * 100;
                 let weightedScore   =  studentScore * weight;
                 totalRaw            += studentScore;
                 totalScore          += weightedScore;
