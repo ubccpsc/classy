@@ -308,6 +308,14 @@ describe("CS340: AssignmentController", () => {
         expect(result).to.be.true;
     }).timeout(numberOfStudents * TIMEOUT);
 
+    it("Should be able to publish all final grades, after all grades have been inputted", async () => {
+        // set the assignment status to released
+        let assignment: Deliverable = await db.getDeliverable(Test.ASSIGNID0);
+        assignment.gradesReleased = true;
+        await db.writeDeliverable(assignment);
+        let success = await ac.publishAllFinalGrades();
+        expect(success).to.be.true;
+    }).timeout(numberOfStudents * TIMEOUT);
 
     it("Clean stale repositories.", async function() {
         Log.info("Cleaning stale repositories");

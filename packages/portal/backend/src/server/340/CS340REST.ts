@@ -5,7 +5,13 @@ import IREST from "../IREST";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {Deliverable, Grade, Person, Repository, Team} from "../../Types";
 import {AssignmentController} from "../../controllers/340/AssignmentController";
-import {AssignmentGrade, AssignmentGradingRubric, AssignmentInfo, QuestionGrade} from "../../../../../common/types/CS340Types";
+import {
+    AssignmentGrade,
+    AssignmentGradingRubric,
+    AssignmentInfo,
+    DeliverableInfo,
+    QuestionGrade
+} from "../../../../../common/types/CS340Types";
 import {GradesController} from "../../controllers/GradesController";
 import {PersonController} from "../../controllers/PersonController";
 import {RubricController} from "../../controllers/340/RubricController";
@@ -34,8 +40,9 @@ export default class CS340REST implements IREST {
         server.get('/portal/cs340/getAllPersons', CS340REST.getAllPersons);
         server.get('/portal/cs340/updateAssignmentStatus/:delivid', CS340REST.updateAssignmentStatus);
         server.get('/portal/cs340/getAssignmentStatus/:delivid', CS340REST.getAssignmentStatus);
-        server.get('/portal/cs340/getStudentTeamByDeliv/:sid/:delivid', CS340REST.getStudentTeamByDeliv); // TODO
+        server.get('/portal/cs340/getStudentTeamByDeliv/:sid/:delivid', CS340REST.getStudentTeamByDeliv);
         server.get('/portal/cs340/getRepository/:teamid' , CS340REST.getRepositoryFromTeam);
+        server.get('/portal/cs340/getAllDelivInfo' , CS340REST.getAllDelivInfo);
         server.put('/portal/cs340/setAssignmentGrade', CS340REST.setAssignmentGrade);
         server.post('/portal/cs340/releaseGrades/:delivid', CS340REST.releaseGrades);
         server.post('/portal/cs340/initializeAllRepositories/:delivid', CS340REST.initializeAllRepositories);
@@ -44,6 +51,7 @@ export default class CS340REST implements IREST {
         server.post('/portal/cs340/deleteAllRepositories/:delivid', CS340REST.deleteAllRepositories);
         server.post('/portal/cs340/verifyScheduledJobs/:aid', CS340REST.verifyScheduledJobs);
         server.post('/portal/cs340/verifyScheduledJobs/', CS340REST.verifyAllScheduledJobs);
+        server.post('/portal/cs340/publishAllFinalGrades', CS340REST.publishAllFinalGrades);
 
         // server.get('/testPublishRepository/:repoId', CS340REST.testPublishRepository);
         // server.get('/portal/cs340/testPublishGrade', CS340REST.testPublishGrade);
@@ -79,6 +87,38 @@ export default class CS340REST implements IREST {
     }
     */
 
+    /**
+     * Gets all deliverable Ids
+     * Authorization: anyone
+     */
+    public static async getAllDelivInfo(req: any, res: any, next: any) {
+        // TODO [Jonathan]: Admin authentication
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        Log.info("CS340REST::getAllDelivInfo() - start");
+        let dc: DeliverablesController = new DeliverablesController();
+        try {
+            let deliverables: Deliverable[] = await dc.getAllDeliverables();
+            let delivObjs: DeliverableInfo[] = [];
+            for(const deliv of deliverables) {
+                let newObj: DeliverableInfo = {
+                    id: deliv.id,
+                    minStudents: deliv.teamMinSize,
+                    maxStudents: deliv.teamMaxSize
+                };
+                delivObjs.push(newObj);
+            }
+            Log.info("CS340REST::getAllDelivInfo() - received all responses");
+            res.send(200, {response: delivObjs});
+        } catch (err) {
+            Log.error("CS340REST::getAllDelivInfo() - Error: " + err);
+            res.send(500, {error: err});
+        }
+        return next();
+    }
+
     public static async verifyAllScheduledJobs(req: any, res: any, next: any) {
         // TODO [Jonathan]: Admin authentication
         const user = req.headers.user;
@@ -97,6 +137,7 @@ export default class CS340REST implements IREST {
             return next();
         } catch(err) {
             Log.error("CS340REST::verifyAllScheduledJobs(..) - Error: " + err);
+            res.send(500, {error: err});
         }
 
         return next();
@@ -122,6 +163,7 @@ export default class CS340REST implements IREST {
             return next();
         } catch(err) {
             Log.error("CS340REST::verifyScheduledJobs(..) - Error: " + err);
+            res.send(500, {error: err});
         }
 
         return next();
@@ -228,7 +270,7 @@ export default class CS340REST implements IREST {
                 // TODO [Jonathan]: send an appropriate failure
                 res.send(204, {error: "Deliverable not found, please create the deliverable first"});
             } else {
-                if (deliv.custom !== null && deliv.custom.rubric !== null) {
+                if (deliv.custom !== null && typeof deliv.custom.rubric !== "undefined") {
                     let assignInfo: AssignmentInfo = deliv.custom;
                     let rubric: AssignmentGradingRubric = assignInfo.rubric;
                     res.send(200, {response: rubric});
@@ -269,6 +311,7 @@ export default class CS340REST implements IREST {
         return next();
     }
 
+    /*
     public static createAssignmentRubric(req: any, res: any, next: any) {
         // TODO [Jonathan]: Create a deliverable and then store it
         // TODO [Jonathan]: Respond with success or failure
@@ -305,6 +348,7 @@ export default class CS340REST implements IREST {
         //     custom: null
         // }
     }
+    */
 
     // Takes all the grades synced up in the database and pushes them to Github
     public static async releaseGrades(req: any, res: any, next: any) {
@@ -379,11 +423,29 @@ export default class CS340REST implements IREST {
                 res.send(500, {error: "Unable to write to database"});
             }
             Log.info("CS340REST::setAssignmentGrade() - end");
-
+            return next();
         }).catch((error) => {
             Log.error("CS340REST::setAssignmentGrade - Error: " + error);
             res.send(500, error);
+            return next();
         });
+    }
+
+    public static async publishAllFinalGrades(req: any, res: any, next: any) {
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        let ac: AssignmentController = new AssignmentController();
+
+        Log.info("CS340REST::publishAllFinalGrades() - start");
+        try {
+            let success: boolean = await ac.publishAllFinalGrades();
+            res.send(200, {response: success});
+        } catch (err) {
+            res.send(500, {error: "Issue publishing all final grades. " + err});
+        }
+
         return next();
     }
 
@@ -565,7 +627,7 @@ export default class CS340REST implements IREST {
             return next();
         }
 
-        if (deliv.custom === null) {
+        if (typeof (deliv.custom as AssignmentInfo).mainFilePath === "undefined") {
             res.send(400, {error: "Assignment not set up properly"});
             return next();
         }
@@ -597,7 +659,7 @@ export default class CS340REST implements IREST {
             return next();
         }
 
-        if (deliv.custom === null) {
+        if (typeof (deliv.custom as AssignmentInfo).mainFilePath === "undefined") {
             res.send(400, {error: "Assignment not set up properly"});
             return next();
         }

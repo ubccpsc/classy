@@ -18,7 +18,7 @@ import {
 import {RepositoryController} from "../RepositoryController";
 import {TeamController} from "../TeamController";
 import {DeliverablesController} from "../DeliverablesController";
-import {GitHubController} from "../GitHubController";
+import {GitHubController, GitTeamTuple} from "../GitHubController";
 import {PersonController} from "../PersonController";
 import {GitHubActions} from "../GitHubActions";
 import {ScheduleController} from "../ScheduleController";
@@ -184,6 +184,11 @@ export class AssignmentController {
     }
 
 
+    /**
+     * Initializes all repositories, if a team exists with a student and the associated deliverable
+     * create the repository with that team.
+     * @param delivId
+     */
     public async initializeAllRepositories(delivId: string): Promise<boolean> {
         Log.info("AssignmentController::initializeAllRepositories( " + delivId + ") - start");
         // Log.info("AssignmentController::initializeAllRepositories(..)");
@@ -213,6 +218,17 @@ export class AssignmentController {
         let anyError: boolean = false;
 
         // todo: teams?
+        let allTeams: Team[] = await this.tc.getAllTeams();
+        // create a mapping between persons and teams
+        let personTeams: {[personId: string]: Team} = {};
+        for(const team of allTeams) {
+            if(team.delivId === delivId) {
+                for(const personId of team.personIds) {
+                    personTeams[personId] = team;
+                }
+            }
+        }
+
         let peopleList = await this.gha.listPeople();
         let personVerification: { [githubID: string]: any } = {};
 
@@ -231,37 +247,55 @@ export class AssignmentController {
                 continue;
             }
 
-            // for each student, create a team
-            let teamName: string;
-            if(deliv.teamPrefix === null || deliv.teamPrefix === "") {
-                teamName = deliv.id + "_";
+            let studentTeam: Team;
+            let newGithubTeam: {teamName: string, githubTeamNumber: number};
+            let githubTuple: GitTeamTuple;
+            let repoName: string;
+
+            if(typeof personTeams[student.id] === "undefined") {
+                // for each student, create a team
+                let teamName: string;
+                if(deliv.teamPrefix === null || deliv.teamPrefix === "") {
+                    teamName = deliv.id + "_";
+                } else {
+                    teamName = deliv.teamPrefix;
+                }
+                teamName += student.githubId;
+                // verify if the team exists or not
+                studentTeam = await this.tc.getTeam(teamName);
+                if (studentTeam === null) {
+                    // The team doesn't exist, so initialize it
+                    studentTeam = await this.tc.createTeam(teamName, deliv, [student], null);
+                }
+                if (studentTeam === null) {
+                    Log.error("AssignmentController::initializeAllRepositories(..) - error creating team " +
+                        teamName + " for student " + student.githubId);
+                }
+
+                newGithubTeam = await this.gha.createTeam(teamName, "push");
+                githubTuple = await this.gha.addMembersToTeam(newGithubTeam.teamName, newGithubTeam.githubTeamNumber, [student.githubId]);
             } else {
-                teamName = deliv.teamPrefix;
-            }
-            teamName += student.githubId;
-            // verify if the team exists or not
-            let studentTeam: Team = await this.tc.getTeam(teamName);
-            if (studentTeam === null) {
-                // The team doesn't exist, so initialize it
-                studentTeam = await this.tc.createTeam(teamName, deliv, [student], null);
-            }
-            if (studentTeam === null) {
-                Log.error("AssignmentController::initializeAllRepositories(..) - error creating team " +
-                    teamName + " for student " + student.githubId);
+                studentTeam = personTeams[student.id];
             }
 
-            let newGithubTeam = await this.gha.createTeam(teamName, "push");
-            let githubTuple = await this.gha.addMembersToTeam(newGithubTeam.teamName, newGithubTeam.githubTeamNumber, [student.githubId]);
+
+
+            if(typeof personTeams[student.id] === "undefined") {
+                if(deliv.repoPrefix === null || deliv.repoPrefix === "") {
+                    repoName = deliv.id + "_";
+                } else {
+                    repoName = deliv.repoPrefix;
+                }
+                repoName += student.githubId;
+            } else {
+                repoName = studentTeam.id;
+                if(!repoName.startsWith(deliv.repoPrefix)) {
+                    repoName = deliv.repoPrefix + repoName;
+                }
+            }
 
             // attempt to provision the repository,
             // if success, add it to the AssignmentInfo
-            let repoName: string;
-            if(deliv.repoPrefix === null || deliv.repoPrefix === "") {
-                repoName = deliv.id + "_";
-            } else {
-                repoName = deliv.repoPrefix;
-            }
-            repoName += student.githubId;
             let provisionedRepo = await this.createAssignmentRepo(repoName, delivId, [studentTeam]);
 
             if (provisionedRepo !== null) {
@@ -363,7 +397,7 @@ export class AssignmentController {
         }
 
         let deliv = await this.dc.getDeliverable(delivId);
-        if (deliv === null || deliv.custom === null) {
+        if (deliv === null || typeof (deliv.custom as AssignmentInfo).mainFilePath === "undefined") {
             Log.error("AssignmentController::publishAllRepositories(..) - error: assignment not " +
                 "set up properly or doesn't exist");
             return false;
@@ -576,7 +610,7 @@ export class AssignmentController {
             return null;
         }
 
-        if (deliv.custom === null) {
+        if (typeof (deliv.custom as AssignmentInfo).mainFilePath === "undefined") {
             Log.error("AssignmentController::getAssignmentStatus(..) - error: " +
                 delivId + " has no assignment status");
             return null;
@@ -596,7 +630,7 @@ export class AssignmentController {
     // Updates the status of a given assignment
     // iterates over checking each status of the assigned repository
     public async updateAssignmentStatus(delivId: string): Promise<{assignmentStatus: AssignmentStatus,
-                                                                totalStudents: number, studentRepos: number}| null> {
+                                                        totalStudents: number, studentRepos: number}| null> {
         Log.info("AssignmentController::updateAssignmentStatus( " + delivId + " ) - start");
         let deliv = await this.dc.getDeliverable(delivId);
         if (deliv === null) {
@@ -605,7 +639,7 @@ export class AssignmentController {
         }
 
         // if (deliv.custom === null || typeof (deliv.custom as AssignmentInfo).status === 'undefined') {
-        if (deliv.custom === null) {
+        if (typeof (deliv.custom as AssignmentInfo).repositories === "undefined") {
             Log.error("AssignmentController::updateAssignmentStatus(..) - error: " +
                 delivId + " is not an assignment");
             return null;
@@ -619,9 +653,11 @@ export class AssignmentController {
             }
         }
 
+        // build a repository mapping
         let studentRepoMapping: { [studentId: string]: Repository[] } = {};
         let assignInfo: AssignmentInfo = deliv.custom;
         let repoList: string[] = assignInfo.repositories;
+        // for all repositories associated with the assignment
         for (const repoId of repoList) {
             let repo: Repository;
             Log.info("AssignmentController::updateAssignmentStatus(..) - verifying repo: " + repoId);
@@ -629,6 +665,7 @@ export class AssignmentController {
                 repo = await this.rc.getRepository(repoId);
             } catch ( err) {
                 Log.error("AssignmentController::updateAssignmentStatus(..) - Error: " + err);
+                continue;
             }
             // retrieve all the students associated with the repository, and then record it
             for (const teamId of repo.teamIds) {
@@ -637,6 +674,7 @@ export class AssignmentController {
                 try {
                     team = await this.tc.getTeam(teamId);
                     if(team === null) {
+                        Log.error("AssignmentController::updateAssignmentStatus(..) - Team does not exist: " + teamId);
                         continue;
                     }
 
@@ -665,6 +703,7 @@ export class AssignmentController {
         let newStatus = AssignmentStatus.CLOSED;
         let totalStudentCount = allStudents.length;
         let studentRepoCount = 0;
+        // check each student,
         for (const student of allStudents) {
             if (typeof personVerification[student.githubId] === 'undefined') {
                 Log.warn("Skipping student: " + student.id + " as they are missing from Github.");
@@ -684,12 +723,13 @@ export class AssignmentController {
                 // if the student has repositories,
                 let studentRepos: Repository[] = studentRepoMapping[student.id];
                 for (const repo of studentRepos) {
-                    if (repo.custom === null) {
+                    if (typeof (repo.custom as AssignmentRepositoryInfo).assignmentId === "undefined") {
                         // a repo is not classified properly
                         Log.error("AssignmentController::updateAssignmentStatus(..) - error: " +
                             "repository " + repo.id + " is not set up properly");
 
                         // return null;
+                        continue;
                     }
                     let repoInfo: AssignmentRepositoryInfo = repo.custom;
 
@@ -721,7 +761,7 @@ export class AssignmentController {
             return null;
         }
 
-        if (deliv.custom === null) {
+        if (typeof (deliv.custom as AssignmentInfo).mainFilePath === "undefined") {
             Log.error("AssignmentController::getAssignmentRepo(..) - error: deliverable not " +
                 "setup with rubric");
             return null;
@@ -850,6 +890,7 @@ export class AssignmentController {
         //     return false;
         // }
 
+        /*
         // add a file in the repo and then push
         // check if the studentRepo exists
         let repoExists = await this.gha.repoExists(studentGradeRepoName);
@@ -880,6 +921,7 @@ export class AssignmentController {
                 await this.db.writeRepository(studentRepoRecord);
             }
         }
+        */
 
 
         // now assume we have the all the needed pieces
@@ -919,8 +961,6 @@ export class AssignmentController {
 
         let table = require('markdown-table');
 
-
-
         let payload = "# " + deliverableRecord.id;
 
         if (header) {
@@ -942,7 +982,7 @@ export class AssignmentController {
         // get the repo again (in case of database changes)
         Log.info("AssignmentController::publishGrade( .. ) - retrieving repositoryRecord again");
 
-        studentRepoRecord = await this.rc.getRepository(studentGradeRepoName);
+        let studentRepoRecord: Repository = await this.verifyAndCreateRepo(studentGradeRepoName);
 
         let gitSuccess: boolean;
         try {
@@ -1010,10 +1050,12 @@ export class AssignmentController {
 
         // for every student, publish their grade
         let totalSuccess = true;
-        Log.info("AssignmentController::publishAllGrades( .. ) - Publishing grades for " + allStudents.length + " students");
+        Log.info("AssignmentController::publishAllGrades( .. ) - Publishing grades for " +
+                        allStudents.length + " students");
         for (const student of allStudents) {
             if (typeof personVerification[student.id] === 'undefined') continue;
-            if(!await this.publishGrade(student.githubId + "_grades", delivId + "_grades.md", student.id, delivId)) {
+            if(!await this.publishGrade(student.githubId + "_grades",
+                delivId + "_grades.md", student.id, delivId)) {
                 Log.warn("AssignmentController::publishAllGrades( .. ) - Had an issue " +
                     "publishing student: <" + student.id + "> grade");
 
@@ -1031,14 +1073,206 @@ export class AssignmentController {
         return totalSuccess;
     }
 
+    public async publishAllFinalGrades(): Promise<boolean> {
+        Log.info("AssignmentController::publishAllFinalGrades( .. ) - start");
+
+        // get all students
+        let allPeople: Person[] = await this.pc.getAllPeople();
+        let allStudents: Person[] = [];
+        for (const person of allPeople) {
+            if (person.kind === 'student') {
+                allStudents.push(person);
+            }
+        }
+
+        // verification
+        let peopleList = await this.gha.listPeople();
+        let personVerification: { [githubID: string]: any } = {};
+
+        // create a map of personID to
+        for(const person of peopleList) {
+            if(typeof personVerification[person.name] === 'undefined') personVerification[person.name] = person;
+        }
+
+        // for every student, publish their grade
+        let totalSuccess = true;
+        Log.info("AssignmentController::publishAllFinalGrades( .. ) - Publishing grades for " +
+            allStudents.length + " students");
+        let allPromises: Promise<boolean>[] = [];
+        for(const student of allStudents) {
+            if (typeof personVerification[student.id] === 'undefined') continue;
+            allPromises.push(this.publishFinalGrade(student.githubId + "_grades",
+                student.githubId + "_grades.md", student.id));
+        }
+
+        let result: boolean[] = await Promise.all(allPromises);
+        for(let i = 0; i < result.length; i++) {
+            if(!result[i]) {
+                Log.warn("AssignmentController::publishAllFinalGrades(..) - Had an issue publishing the final " +
+                    "grades for student: <" + allStudents[i].id + ">");
+                totalSuccess = false;
+            }
+        }
+
+        if(totalSuccess) {
+            Log.info("AssignmentController::publishAllFinalGrades( .. ) - Published all grades");
+        } else {
+            Log.warn("AssignmentController::publishAllFinalGrades( .. ) - Encountered an error while " +
+                "publishing all grades");
+        }
+
+        return totalSuccess;
+    }
+
+    /**
+     * Verifies that a repository exists, if not, create it.
+     * @param repositoryName
+     * @returns Promise<Repository|null> - The repository object, or null if it fails.
+     */
+    public async verifyAndCreateRepo(repositoryName: string): Promise<Repository | null> {
+        Log.info("AssignmentController::verifyAndCreateRepo( "+repositoryName+" ) - start");
+
+        // check if the repository exists
+        let repoExists = await this.gha.repoExists(repositoryName);
+        let repositoryRecord: Repository = await this.rc.getRepository(repositoryName);
+
+        if(!repoExists) {
+            // Create the repo, it doesn't exist yet
+            // first, need to check if a Repo object has been created
+            if (repositoryRecord === null) {
+                // If no repo object exists
+                Log.info("AssignmentController::verifyAndCreateRepo(..) - No student Repo found, creating repo");
+                // create the record
+                repositoryRecord = await this.rc.createRepository(repositoryName, [], null);
+                if(repositoryRecord === null) {
+                    // we tried multiple times, unable to continue (something is wrong)
+                    Log.error("AssignmentController::verifyAndCreateRepo(..) - Error; unable to " +
+                                                        "create student grade repository.");
+                    return null;
+                }
+            }
+            // create the repo
+            repositoryRecord.URL = await this.gha.createRepo(repositoryName);
+            // write the repository to the database
+            await this.db.writeRepository(repositoryRecord);
+        } else {
+            // if the repo does exist
+            if(repositoryRecord === null) {
+                // but the record doesn't
+                // create the record, and set the URL to the record properly
+                repositoryRecord = await this.rc.createRepository(repositoryName, [], null);
+                repositoryRecord.URL = await this.ghc.getRepositoryUrl(repositoryRecord);
+                // write back to the database
+                await this.db.writeRepository(repositoryRecord);
+            }
+        }
+        // TODO: Return the Repository Object
+        return repositoryRecord;
+    }
+
+
+    /**
+     * Generates the final grade of all student's assignments (not deliverables)
+     * @param {string} studentGradeRepoName
+     * @param {string} fileName
+     * @param {string} studentId
+     * @returns {Promise<boolean>}
+     */
     public async publishFinalGrade(studentGradeRepoName: string, fileName: string, studentId: string) : Promise<boolean> {
         Log.info("AssignmentController::publishFinalGrade( ... ,  " + studentId +  ") - start");
 
+        let studentRepoRecord: Repository = await this.verifyAndCreateRepo(studentGradeRepoName);
+
         // get all the student's grades
-        let studentGrades = await this.gc.getReleasedGradesForPerson(studentId);
+        // this.gc.getAllGrades();
+        let allGrades: Grade[] = await this.gc.getAllGrades();
+        // let studentGrades: Grade[] = await this.gc.getReleasedGradesForPerson(studentId);
+        let deliverables: Deliverable[] = await this.dc.getAllDeliverables();
+
+        // for(const grade of studentGrades) {
+        //     if(grade.custom === null || typeof (grade.custom as AssignmentGrade).questions === 'undefined') {
+        //
+        //     }
+        // }
+
+        let studentGradeMapping: {[delivId: string]: Grade} = {};
+
+        for(const grade of allGrades) {
+            if(grade.personId === studentId) {
+                studentGradeMapping[grade.delivId] = grade;
+            }
+        }
+
+        // TODO: Generate table headings
+        let tableInfo: string[][] = [];
+        let tableHeader: string[] = ["Assessment", "Grade", "Assessment Weight", "Weighted Grade"];
+
+        tableInfo.push(tableHeader);
+
+        // TODO: Generate table insides
+        let totalRaw: number    = 0;
+        let totalWeight: number = 0;
+        let totalScore: number  = 0;
+        for (const deliv of deliverables) {
+            if(deliv.custom === null || typeof (deliv.custom as AssignmentInfo).courseWeight === "undefined") {
+                Log.info("AssignmentController::publishFinalGrade(..) - deliv: " + deliv.id + " is " +
+                    "not an assignment, skipping...");
+                continue;
+            }
+
+            // attempt to get the student's grade
+            let newRow: string[];
+            let weight = deliv.custom.courseWeight;
+
+            totalWeight += weight;
+
+            if(typeof studentGradeMapping[deliv.id] === "undefined" || studentGradeMapping[deliv.id] === null) {
+                // no grade
+                newRow = [deliv.id, "X", weight.toString(), "0"];
+            } else {
+                // double check this
+                let assignmentRubric = (deliv.custom as AssignmentInfo).rubric;
+                let studentScore    = (studentGradeMapping[deliv.id].score / this.calculateMaxGrade(assignmentRubric)) * 100;
+                let weightedScore   =  studentScore * weight;
+                totalRaw            += studentScore;
+                totalScore          += weightedScore;
+
+                newRow = [deliv.id, studentScore.toString(), weight.toString(), weightedScore.toString()];
+            }
+            tableInfo.push(newRow);
+        }
+
+        // TODO: Generate table footings
+
+        let newRow: string[] = ["**COURSE GRADE**", totalRaw.toString(),
+            totalWeight.toString(), totalScore.toString() + "%"];
+        tableInfo.push(newRow);
+
+        Log.info("AssignmentController::publishGrade(..) - generating tableInfo complete; " + tableInfo);
 
 
-        return false;
+        // generate payload
+        let table = require('markdown-table'); // use the markdown-table module
+
+        let payload: string = "# " + "Final Grade";
+
+        payload += "\n\n" + table(tableInfo);
+
+        payload += "\n\n Note: The weighed average of the above grades may deviate by 1 percent from the " +
+            "overall grade due to rounding. However the overall grade shown is the correct one.";
+
+        let gitSuccess: boolean;
+        try {
+            Log.info("AssignmentController::publishFinalGrade( .. ) - writing grade");
+
+            gitSuccess = await this.gha.writeFileToRepo(studentRepoRecord.URL,
+                "final_grade.md", payload, true);
+        } catch (err) {
+            Log.error("AssignmentController::publishFinalGrade() - Error: " + err);
+            return false;
+        }
+
+        return gitSuccess;
     }
 
 
@@ -1082,6 +1316,20 @@ export class AssignmentController {
 
 
         return newAssignmentGrade;
+    }
+
+    public calculateMaxGrade(assignmentRubric: AssignmentGradingRubric): number {
+        if(assignmentRubric === null || typeof assignmentRubric.questions === "undefined") {
+            throw new Error("Unable to calculate max grade of a non-assignment");
+        }
+
+        let maxGrade: number = 0;
+        for(const question of assignmentRubric.questions) {
+            for(const subQuestion of question.subQuestions) {
+                maxGrade += subQuestion.outOf * subQuestion.weight;
+            }
+        }
+        return maxGrade;
     }
 
 

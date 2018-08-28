@@ -945,8 +945,10 @@ export class GitHubActions {
             try {
                 await commitFilesToRepo();
             } catch (err) {
-                Log.warn("GithubActions::writeFileToRepo(..) - Did not write file to repo");
-                return !force; // within specifications ONLY if we are not forcing a change
+                Log.warn("GithubActions::writeFileToRepo(..) - No file differences; " +
+                    "Did not write file to repo");
+                                // this only fails when the files have not changed,
+                return true;    // we technically "wrote" the file still
             }
             await pushToRepo();
         } catch (err) {
