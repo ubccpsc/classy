@@ -1,4 +1,4 @@
-import {OnsButtonElement, OnsFabElement, OnsInputElement, OnsSwitchElement} from "onsenui";
+import {OnsButtonElement, OnsFabElement, OnsInputElement, OnsListItemElement, OnsSwitchElement} from "onsenui";
 import Log from "../../../../../../common/Log";
 import {
     AssignmentGrade,
@@ -123,7 +123,6 @@ export class CS340AdminView extends AdminView {
     }
 
 
-
     protected async handleAdminEditDeliverable(opts: any) {
         //options: {"animationOptions":{},"delivId":"a3","page":"editDeliverable.html"}
         Log.info("CS340AdminView::renderEditDeliverablePage(..) - start");
@@ -214,28 +213,90 @@ export class CS340AdminView extends AdminView {
             }
         }
 
-        // Log.info("CS340AdminView::renderEditDeliverablePage(..) - Checking AssignmentStatus");
-        // // get the deliverable
-        // // let ac: AssignmentController = new AssignmentController();
-        // let delivRecord: Deliverable = await ac.getAssignmentRepo(opts.delivId);
-        //
-    // if(typeof delivRecord.id !== 'undefined') {
-        //     Log.info("CS340AdminView::renderEditDeliverablePage(..) - 1");
-        //     if(delivRecord.custom !== null) {
-        //         Log.info("CS340AdminView::renderEditDeliverablePage(..) - 2");
-        //         if(typeof (delivRecord.custom as AssignmentInfo).status !== 'undefined') {
-        //             Log.info("CS340AdminView::renderEditDeliverablePage(..) - 3");
-        //         }
-        //     }
-        // }
-        // if(typeof opts.id !== 'undefined' && opts.custom !== null &&
-        //         typeof (opts.custom as AssignmentInfo).status !== 'undefined') {
-        //     let deliverableRecord: Deliverable = opts;
-        //     Log.info("CS340AdminView::renderEditDeliverablePage(..) - Adjusting status switches");
-        //
-        //     // set the switches
-        //
-        // }
+        Log.info("CS340AdminView(..) - starting Assignment Interface rendering");
+
+        let delivId: string = opts.delivId;
+        if(delivId === null) {
+            let isAssnSwitch = (document.querySelector("#adminEditDeliverablePage-isAssignmentSwitch") as OnsSwitchElement);
+            isAssnSwitch.removeAttribute("disabled");
+            let generateButton = (document.querySelector("#adminEditDeliverablePage-generateButton") as OnsButtonElement);
+            generateButton.addEventListener("click", async () => {
+                that.generateAssignmentInfo(null);
+            });
+            isAssnSwitch.addEventListener("click", function ()  {
+                // get the current status on the slider
+                let isAssnSwitch = (document.querySelector("#adminEditDeliverablePage-isAssignmentSwitch") as OnsSwitchElement);
+                let switchStatus = isAssnSwitch.checked;
+                if(switchStatus) {
+                    UI.showSection("adminEditDeliverablePage-assignmentConfig");
+                    // UI.showSection("adminEditDeliverablePage-generateButtonSection");
+                } else {
+                    UI.hideSection("adminEditDeliverablePage-assignmentConfig");
+                    // UI.hideSection("adminEditDeliverablePage-generateButtonSection");
+                }
+            });
+        } else {
+            // non-null deliverable
+            for(const deliverableRecord of deliverables) {
+                if(deliverableRecord.id === delivId) {
+                    if(deliverableRecord.custom !== null &&
+                    typeof (deliverableRecord.custom as AssignmentInfo).seedRepoURL !== "undefined") {
+                        let seedRepoURLElement = (document.querySelector("#adminEditDeliverablePage-seedRepoURL") as OnsInputElement);
+                        let seedRepoPathElement = (document.querySelector("#adminEditDeliverablePage-seedRepoPath") as OnsInputElement);
+                        let mainFilePathElement = (document.querySelector("#adminEditDeliverablePage-mainFilePath") as OnsInputElement);
+                        let courseWeightElement = (document.querySelector("#adminEditDeliverablePage-courseWeight") as OnsInputElement);
+                        seedRepoURLElement.value    = (deliverableRecord.custom as AssignmentInfo).seedRepoURL;
+                        seedRepoPathElement.value   = (deliverableRecord.custom as AssignmentInfo).seedRepoPath;
+                        mainFilePathElement.value   = (deliverableRecord.custom as AssignmentInfo).mainFilePath;
+                        courseWeightElement.value   = (deliverableRecord.custom as AssignmentInfo).courseWeight.toString();
+                        let assignConfigElement = (document.querySelector("#adminEditDeliverablePage-assignmentConfig") as HTMLDivElement);
+                        assignConfigElement.removeAttribute("style");
+                        let isAssnSwitch = (document.querySelector("#adminEditDeliverablePage-isAssignmentSwitch") as OnsSwitchElement);
+                        isAssnSwitch.setAttribute("checked", 'true');
+                        // let generateButtonElement = (document.querySelector("#adminEditDeliverablePage-generateButtonSection") as OnsListItemElement);
+                        // generateButtonElement.removeAttribute("style");
+                        let generateButton = (document.querySelector("#adminEditDeliverablePage-generateButton") as OnsButtonElement);
+                        generateButton.addEventListener("click", async () => {
+                            that.generateAssignmentInfo(deliverableRecord);
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    private generateAssignmentInfo(delivRecord: Deliverable) {
+        let seedRepoURLElement = (document.querySelector("#adminEditDeliverablePage-seedRepoURL") as OnsInputElement);
+        let seedRepoPathElement = (document.querySelector("#adminEditDeliverablePage-seedRepoPath") as OnsInputElement);
+        let mainFilePathElement = (document.querySelector("#adminEditDeliverablePage-mainFilePath") as OnsInputElement);
+        let courseWeightElement = (document.querySelector("#adminEditDeliverablePage-courseWeight") as OnsInputElement);
+
+        // adjust the object: pull it from the deliverable object
+        let assignInfo: AssignmentInfo;
+        if(delivRecord === null) {
+            assignInfo = {
+                seedRepoURL: "",
+                seedRepoPath: "",
+                mainFilePath: "",
+                courseWeight: 0,
+                status: AssignmentStatus.INACTIVE,
+                rubric: {
+                    name: "",
+                    comment: "",
+                    questions: []
+                },
+                repositories: []
+            }
+        } else {
+            assignInfo = delivRecord.custom;
+        }
+        assignInfo.seedRepoURL = seedRepoURLElement.value;
+        assignInfo.seedRepoPath = seedRepoPathElement.value;
+        assignInfo.mainFilePath = mainFilePathElement.value;
+        assignInfo.courseWeight = Number(courseWeightElement.value);
+
+        let assignCustomElement = (document.querySelector("#adminEditDeliverablePage-custom") as OnsInputElement);
+        assignCustomElement.value = JSON.stringify(assignInfo);
     }
 
     protected async newSave() {
@@ -1027,7 +1088,6 @@ export class CS340AdminView extends AdminView {
                 if(typeof gradeMapping[student.id] === "undefined") gradeMapping[student.id] = {};
                 if(typeof gradeMapping[student.id][delivCol.id] !== "undefined") foundGrade = true;
 
-
                 // let completelyGraded:boolean = this.checkIfCompletelyGraded(gradeMapping[student.id][delivCol.id]);
 
                 let completelyGraded: boolean;
@@ -1038,11 +1098,8 @@ export class CS340AdminView extends AdminView {
                     completelyGraded = this.checkIfCompletelyGraded(gradeMapping[student.id][delivCol.id]);
                 }
 
-
-
                 if(foundGrade && completelyGraded) {
                     let newEntry = {
-
                         value: gradeMapping[student.githubId][delivCol.id].score,
                         html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
                         student.githubId + "\", \"" + delivCol.id + "\")' href='#'>" +
@@ -1050,7 +1107,6 @@ export class CS340AdminView extends AdminView {
                         "/" + maxGradeMap[delivCol.id] + "</a>"
                     };
                     newRow.push(newEntry);
-
                 } else {
                     let newEntry = {
                         value: "---",
@@ -1060,14 +1116,11 @@ export class CS340AdminView extends AdminView {
 
                     };
                     newRow.push(newEntry);
-
                 }
             }
             st.addRow(newRow);
         }
-
         st.generate();
-
         // TODO [Jonathan]: Add rest of code, regarding student table generation (hideable options)
     }
 

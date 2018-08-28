@@ -345,7 +345,7 @@
                             <ons-icon icon="fa-cogs"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            Is Assignment?
+                            Is Assignment
                         </div>
                         <div class="right settingLabel">
                             <ons-switch disabled id="adminEditDeliverablePage-isAssignmentSwitch" modifier="list-item"></ons-switch>
@@ -355,7 +355,7 @@
 
 
                     <!--TODO: Finish and move this around-->
-                    <div style="display: none;">
+                    <div style="display: none;" id="adminEditDeliverablePage-assignmentConfig">
                         <ons-list-header>Assignment Configuration</ons-list-header>
                         <ons-list-item>
                             <div class="left settingIcon">
@@ -365,7 +365,10 @@
                                 Seed Repo URL
                             </div>
                             <div class="right settingLabel">
-                                <ons-input id="adminEditDeliverablePage-seedRepoURL"></ons-input>
+                                <ons-input class="settingTextInput" id="adminEditDeliverablePage-seedRepoURL"></ons-input>
+                            </div>
+                            <div class="expandable-content">
+                                The URL that student repositories will seed from.
                             </div>
                         </ons-list-item>
 
@@ -374,10 +377,15 @@
                                 <ons-icon icon="fa-cogs"></ons-icon>
                             </div>
                             <div class="center settingLabel">
-                                Seed Repo Path
+                                Seed Repo Path (Optional)
                             </div>
                             <div class="right settingLabel">
-                                <ons-input id="adminEditDeliverablePage-seedRepoPath"></ons-input>
+                                <ons-input class="settingTextInput" id="adminEditDeliverablePage-seedRepoPath"></ons-input>
+                            </div>
+                            <div class="expandable-content">
+                                The path that should be cloned for the repository.
+                                The format of this string should be like: "folder/to/files/*".
+                                This is optional, if not specified, the repository will be fully cloned.
                             </div>
                         </ons-list-item>
 
@@ -386,10 +394,15 @@
                                 <ons-icon icon="fa-cogs"></ons-icon>
                             </div>
                             <div class="center settingLabel">
-                                Main File Path
+                                Main File Path (Optional)
                             </div>
                             <div class="right settingLabel">
-                                <ons-input id="adminEditDeliverablePage-mainFilePath"></ons-input>
+                                <ons-input class="settingTextInput" id="adminEditDeliverablePage-mainFilePath"></ons-input>
+                            </div>
+                            <div class="expandable-content">
+                                Path to the main file that will be parsed to generate the rubric.
+                                Supported file formats: ".tex", ".md", ".ipynb", ".Rmd".
+                                This is optional, if not specified, the rubric will not be automatically generated
                             </div>
                         </ons-list-item>
 
@@ -401,11 +414,20 @@
                                 Course Weight
                             </div>
                             <div class="right settingLabel">
-                                <ons-input id="adminEditDeliverablePage-courseWeight"></ons-input>
+                                <ons-input class="settingTextInput" id="adminEditDeliverablePage-courseWeight"></ons-input>
+                            </div>
+                            <div class="expandable-content">
+                                Determines the weight the assignment should be: From 0-1.
                             </div>
                         </ons-list-item>
+
+                        <!--<ons-list-item style="display: none" id="adminEditDeliverablePage-generateButtonSection">-->
+                        <ons-list-item id="adminEditDeliverablePage-generateButtonSection">
+                            <ons-button id="adminEditDeliverablePage-generateButton" class="right settingLabel">
+                                Generate Assignment Parameters
+                            </ons-button>
+                        </ons-list-item>
                     </div>
-d
                     <!--TODO: End of section-->
 
                     <ons-list-header>Name prefixes</ons-list-header>
