@@ -124,7 +124,7 @@ permission with the host (this is done in the docker-compose.yml file).
     ```
 
 2. Build the grading docker image(s). This is the image that will be used by the grader service when creating a specific
-   container instance to run a student's commit.
+   container instance to run a student's commit. (Only needed if using autotest.)
 
     ```bash
     docker build --tag cpsc310image \
