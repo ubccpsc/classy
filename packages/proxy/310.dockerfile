@@ -21,7 +21,12 @@ ARG UID
 ARG SSL_CERT_PATH
 ARG SSL_KEY_PATH
 ARG CONTAINER_NAME_PORTAL
+ARG CONTAINER_NAME_UI
+ARG CONTAINER_NAME_GRADER
 ARG BACKEND_PORT
+ARG UI_PORT
+ARG GRADER_PORT
+ARG RAND_ENDPOINT
 
 EXPOSE 8080
 EXPOSE 8443
@@ -35,9 +40,9 @@ RUN touch /var/run/nginx.pid && \
   chown -R ${UID} /var/cache/nginx
 
 WORKDIR /etc/nginx
-COPY proxy.conf nginx.rconf ./
-RUN erb nginx.rconf | tee nginx.conf \
- && rm nginx.rconf \
+COPY packages/proxy/proxy.conf packages/proxy/nginx.310.rconf ./
+RUN erb nginx.310.rconf | tee nginx.conf \
+ && rm nginx.310.rconf \
  && apk del ruby
 
 USER ${UID}
