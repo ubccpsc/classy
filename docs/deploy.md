@@ -66,7 +66,7 @@ permission with the host (this is done in the docker-compose.yml file).
        need to increment the version by 1), and
     4. Restart any services that use the SSL certificates.
 
-5. Add the firewall rules to block unwanted traffic.
+5. Add the firewall rules to block unwanted traffic (if using autotest).
 
     ```bash
     # These two rules will block all traffic coming FROM the subnet (i.e. grading container)
@@ -114,9 +114,10 @@ permission with the host (this is done in the docker-compose.yml file).
 
 ### Configuration
 
-1. Configure the `.env`
+1. Configure the `.env` (more instructions inside this file)
 
     ```bash
+    sudo su - # maybe there is a better way?
     cd /opt/classy
     cp .env.sample .env
     nano .env
