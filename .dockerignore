@@ -1,5 +1,23 @@
+.circleci
 .vscode
-data
 docs
-node_modules
+
+**/Dockerfile
+**/node_modules/
+packages/**/src/**/*.js*
+packages/**/test
+packages/common/**/*.js*
+packages/portal/backend/src-util
+
+testOutput
+.dockerignore
 .editorconfig
+# This is required by the common package
+#.env
+.env.sample
+.git
+.gitignore
+.rysncexclude
+LICENSE
+README.md
+yarn.lock
