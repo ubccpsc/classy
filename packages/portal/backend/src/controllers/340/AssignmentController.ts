@@ -984,12 +984,13 @@ export class AssignmentController {
 
         let studentRepoRecord: Repository = await this.verifyAndCreateRepo(studentGradeRepoName);
 
-        // get the teamRecord and verify the Github team
-        // TODO: Create the team record and the github team, then add to the repository
-        let teamRecord = await this.tc.getTeam(studentRecord.id + "_grades");
-        if(teamRecord === null) {
-            // if there is no team,
-        }
+        // create the githubTeam and add the team to the person.
+        let studentRecord = await this.pc.getPerson(studentId);
+        let githubTeamInfo = await this.gha.createTeam(studentId + "_grades", "pull");
+        await this.gha.addMembersToTeam(studentId + "_grades",
+            githubTeamInfo.githubTeamNumber, [studentRecord.githubId]);
+        let addResult = await this.gha.addTeamToRepo(githubTeamInfo.githubTeamNumber,
+            studentGradeRepoName, "pull");
 
 
         let gitSuccess: boolean;
@@ -1174,7 +1175,6 @@ export class AssignmentController {
                 await this.db.writeRepository(repositoryRecord);
             }
         }
-        // TODO: Return the Repository Object
         return repositoryRecord;
     }
 
@@ -1268,6 +1268,13 @@ export class AssignmentController {
 
         payload += "\n\n Note: The weighed average of the above grades may deviate by 1 percent from the " +
             "overall grade due to rounding. However the overall grade shown is the correct one.";
+
+        let studentRecord = await this.pc.getPerson(studentId);
+        let githubTeamInfo = await this.gha.createTeam(studentId + "_grades", "pull");
+        await this.gha.addMembersToTeam(studentId + "_grades",
+            githubTeamInfo.githubTeamNumber, [studentRecord.githubId]);
+        let addResult = await this.gha.addTeamToRepo(githubTeamInfo.githubTeamNumber,
+            studentGradeRepoName, "pull");
 
         let gitSuccess: boolean;
         try {
