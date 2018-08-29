@@ -153,7 +153,7 @@ permission with the host (this is done in the docker-compose.yml file).
     docker-compose up --detach
     ```
 
-5. Build and start the extended system.
+5. Build and start the extended system (if using autotest).
     
     ```bash
     cd /opt/classy
