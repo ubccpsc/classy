@@ -105,7 +105,7 @@ export class AssignmentController {
                     // }
                     let personRecord: Person = await this.db.getPerson(assnPayload.studentID);
                     if(personRecord === null) return success;
-                    await this.publishGrade(personRecord.githubId + "_grades",
+                    this.publishGrade(personRecord.githubId + "_grades",
                         assignId + "_grades.md",personRecord.id, assignId);
 
                 }

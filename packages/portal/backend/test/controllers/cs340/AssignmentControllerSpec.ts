@@ -545,7 +545,7 @@ describe("CS340: AssignmentController", () => {
                 Test.ASSIGNID0, newAssignmentGrade, "testBot");
 
             expect(success).to.be.true;
-        });
+        }).timeout(2 * TIMEOUT);
 
         it("Should be able to publish grades again after grade update.", async () => {
             let result = await ac.publishAllGrades(Test.ASSIGNID0);

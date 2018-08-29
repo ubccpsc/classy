@@ -32,6 +32,8 @@ const WARN_EMPTY_FIELD: string = "empty field";
 
 export class CS340AdminView extends AdminView {
 
+    private grading_selectedDeliverable = "";
+
     public renderPage(name: string, opts: {}) {
         Log.info('CS340AdminView::renderPage( ' + name + ', ... ) - start; options: ' + JSON.stringify(opts));
         super.renderPage(name, opts);
@@ -661,7 +663,7 @@ export class CS340AdminView extends AdminView {
         return;
     }
 
-    private async populateDeliverableDropdown(dropDown: HTMLSelectElement): Promise<void> {
+    private async populateDeliverableDropdown(dropDown: HTMLSelectElement, selectedValue?: string): Promise<void> {
         const deliverables = await this.getDeliverables();
         // const delivDropdown = document.querySelector('#adminDefaultDeliverableSelect') as HTMLSelectElement;
         let delivOptions = ['--N/A--'];
@@ -673,6 +675,11 @@ export class CS340AdminView extends AdminView {
         dropDown.innerHTML = '';
         for (const delivId of delivOptions) {
             let selected = false;
+            if(selectedValue) {
+                if(selectedValue === delivId) {
+                    selected = true;
+                }
+            }
 
             let value = delivId;
             if (delivId.startsWith('--')) {
@@ -708,21 +715,27 @@ export class CS340AdminView extends AdminView {
         let that = this;
 
         const delivSelector = document.querySelector('#adminGradesDeliverableSelect') as HTMLSelectElement;
-        await this.populateDeliverableDropdown(delivSelector);
+        await this.populateDeliverableDropdown(delivSelector, this.grading_selectedDeliverable);
 
         Log.info("CS340AdminView::handleAdminGrades(..) - handling hook");
         delivSelector.onchange = async function(evt) {
             Log.info("CS340AdminView::handleAdminGrades(..)::delivSelector:onChange - event: " + evt);
             await that.renderStudentGradesDeliverable((evt.target as HTMLSelectElement).value);
+            that.grading_selectedDeliverable = (evt.target as HTMLSelectElement).value;
         };
 
         Log.info("CS340AdminView::handleAdminGrades(..) - finished handling hook");
 
-        let emptyResultsElement = document.querySelector('#gradesListTableNone') as HTMLDivElement;
-        let tabledResultsElement = document.querySelector("#gradesListTable") as HTMLDivElement;
-        emptyResultsElement.removeAttribute("style");
-        tabledResultsElement.setAttribute("style", "display:none");
-
+        // let emptyResultsElement = document.querySelector('#gradesListTableNone') as HTMLDivElement;
+        // let tabledResultsElement = document.querySelector("#gradesListTable") as HTMLDivElement;
+        // emptyResultsElement.removeAttribute("style");
+        // tabledResultsElement.setAttribute("style", "display:none");
+        if(this.grading_selectedDeliverable === "" || this.grading_selectedDeliverable == "--N/A--") {
+            UI.hideSection("gradesListTable");
+            UI.showSection("gradesListTableNone");
+        } else {
+            await this.renderStudentGradesDeliverable(this.grading_selectedDeliverable);
+        }
     }
 
     public async handleAdminCustomGrades(opts: any) {
