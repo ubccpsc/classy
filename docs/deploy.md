@@ -54,7 +54,7 @@ permission with the host (this is done in the docker-compose.yml file).
 4. Get the SSL certificates and make them readable by the `docker` user:
 
     ```bash
-    sudo certbot certonly --standalone -d classy.cs.ubc.ca
+    sudo certbot certonly --standalone -d classy.cs.ubc.ca # OR WHATEVER HOSTNAME YOU'RE USING
     sudo chgrp -R docker /etc/letsencrypt/archive
     sudo chmod -R g+rx /etc/letsencrypt/archive/
     ```
