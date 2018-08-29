@@ -1,16 +1,17 @@
-FROM classy:base
+FROM node:8-alpine
 
-VOLUME /app/packages/autotest/ssl
+WORKDIR /app
 
-WORKDIR /app/packages/autotest
-COPY package.json package.json
-COPY src/ src/
-RUN chown -R node /app
+# The common package requires the .env file directly so we have to pass it through
+COPY .env ./
+COPY package.json tsconfig.json ./
+COPY packages/common ./packages/common
+COPY packages/autotest ./packages/autotest
 
-USER node
-RUN yarn install \
- && tsc
+RUN yarn install --pure-lockfile --non-interactive \
+ && yarn tsc --sourceMap false \
+ && chmod -R a+r /app
 
-CMD ["node", "src/AutoTestDaemon.js", "310"]
+CMD ["node", "packages/autotest/src/AutoTestDaemon.js", "310"]
 
 

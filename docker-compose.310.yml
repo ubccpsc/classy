@@ -9,63 +9,9 @@ services:
             args:
                 - CONTAINER_NAME_UI
                 - UI_PORT
-                - CONTAINER_NAME_GRADER
-                - GRADER_PORT
-                - RAND_ENDPOINT
-            dockerfile: 310.dockerfile
+            dockerfile: ./packages/proxy/310.dockerfile
         depends_on:
             - reference_ui
-    portal:
-        depends_on:
-            - autotest
-        # Hack for SDMM since the github webhook hits the port directly
-        ports:
-            - 5000:${BACKEND_PORT}
-    autotest:
-        build:
-            args:
-                - PORT=${AUTOTEST_PORT}
-            context: packages/autotest
-        container_name: ${CONTAINER_NAME_AUTOTEST}
-        depends_on:
-            - base
-            - db
-            - grader
-        env_file: .env
-        expose:
-            - ${AUTOTEST_PORT}
-        restart: always
-        user: "${UID}"
-    grader:
-        build:
-            args:
-                - PORT=${GRADER_PORT}
-            context: packages/grader
-        container_name: ${CONTAINER_NAME_GRADER}
-        depends_on:
-          - base
-        # DO NOT PASS THE ENTIRE ENVIRONMENT FILE
-        # Students could log the token values
-        environment:
-            - GH_BOT_TOKEN  # Only access student repos not oracle
-            - UID
-            - GRADER_HOST_DIR
-            - GRADER_PERSIST_DIR
-            - GRADER_PORT
-            - DOCKER_NET=${GRADE_NET_NAME}
-            - HOSTS_ALLOW
-        expose:
-            - ${GRADER_PORT}
-        networks:
-            default:
-            grader:
-                ipv4_address: 172.28.2.0
-        restart: always
-        user: "0"  # Run as root; needs permission to interact with docker service
-        volumes:
-            - "/var/run/docker.sock:/var/run/docker.sock"
-            - "${GRADER_HOST_DIR}:${GRADER_PERSIST_DIR}"
-        privileged: true
     geolocation:
         build:
             args:
@@ -89,14 +35,3 @@ services:
         restart: always
         user: "${UID}"
 
-# Run grading containers in a subnet to make it easy to block all traffic using iptables.
-networks:
-    grader:
-        driver: bridge
-        driver_opts:
-            ip-range: "172.28.5.0/24"
-            gateway: "172.28.5.254"
-        ipam:
-            config:
-                - subnet: "172.28.0.0/16"
-        name: ${GRADE_NET_NAME}
