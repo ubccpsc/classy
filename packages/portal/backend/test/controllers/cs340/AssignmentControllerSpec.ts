@@ -321,7 +321,7 @@ describe("CS340: AssignmentController", () => {
         Log.info("Cleaning stale repositories");
         await deleteStale();
         Log.info("Cleaned all stale information");
-    }).timeout(2 * TIMEOUT);
+    }).timeout(5 * TIMEOUT);
 
     it("Should be able to create an Assignment Repos.", async function() {
         const exec = Test.runSlowTest();
@@ -403,11 +403,6 @@ describe("CS340: AssignmentController", () => {
         // TODO: verify records are deleted
     });
 
-    it("Clean stale repositories", async function() {
-        Log.info("Cleaning stale repositories");
-        await deleteStale();
-        Log.info("Cleaned all stale information");
-    }).timeout(2 * TIMEOUT);
 
     describe("Slow Assignment Tests", () => {
 
@@ -419,8 +414,7 @@ describe("CS340: AssignmentController", () => {
                 Log.info("Cleaning stale repositories");
                 await deleteStale();
                 Log.info("Cleaned all stale information");
-            }).timeout(2 * TIMEOUT);
-
+            }).timeout(5 * TIMEOUT);
         });
 
         after(function() {
@@ -430,8 +424,7 @@ describe("CS340: AssignmentController", () => {
                 Log.info("Cleaning stale repositories");
                 await deleteStale();
                 Log.info("Cleaned all stale information");
-            }).timeout(2 * TIMEOUT);
-
+            }).timeout(5 * TIMEOUT);
         });
 
         beforeEach(function() {
@@ -443,6 +436,15 @@ describe("CS340: AssignmentController", () => {
                 Log.test("AssignmentControllerSpec::slowTests - skipping (would take multiple minutes otherwise)");
                 this.skip();
             }
+        });
+
+        it("Should be able to pre-create a team for the assignment.", async function () {
+            let delivRecord = await db.getDeliverable(Test.DELIVID0);
+            let personRecord = await pc.getPerson(Test.REALUSER2.id);
+            let teamRecord = await tc.createTeam(Test.DELIVID0 + "_" + Test.REALUSER2,
+                                                    delivRecord,[personRecord], null);
+
+            expect(teamRecord).to.not.be.null;
         });
 
         it("Should be able to create all Assignment Repositories at once.", async function() {
@@ -545,7 +547,7 @@ describe("CS340: AssignmentController", () => {
                 Test.ASSIGNID0, newAssignmentGrade, "testBot");
 
             expect(success).to.be.true;
-        });
+        }).timeout(2 * TIMEOUT);
 
         it("Should be able to publish grades again after grade update.", async () => {
             let result = await ac.publishAllGrades(Test.ASSIGNID0);
@@ -657,9 +659,12 @@ describe("CS340: AssignmentController", () => {
         // delete test repos if needed
         for (const repo of repos as any) {
             Log.info('Evaluating repo: ' + repo.name);
-            if (repo.name.indexOf('TEST__X__') === 0 ||
-                repo.name.startsWith(REPONAME) ||
-                repo.name.startsWith("test_")) {
+            if (repo.name.indexOf('TEST__X__') === 0        ||
+                repo.name.startsWith(REPONAME)              ||
+                repo.name.startsWith(REPONAME2)             ||
+                repo.name.startsWith("test_")               ||
+                repo.name.startsWith(Test.ASSIGNID0 + "_")  ||
+                repo.name.startsWith(Test.ASSIGNID1 + "_")) {
                 Log.info('Removing stale repo: ' + repo.name);
                 let val = await gh.deleteRepo(repo.name);
                 // expect(val).to.be.true;
@@ -679,8 +684,9 @@ describe("CS340: AssignmentController", () => {
             // Log.info('Evaluating team: ' + JSON.stringify(team));
             let done = false;
             for (const t of TESTTEAMNAMES) {
-                if (team.name === t ||
-                    team.name.startsWith(Test.ASSIGNID0 + "_")
+                if (team.name === t                             ||
+                    team.name.startsWith(Test.ASSIGNID0 + "_"   ||
+                    team.name.startsWith(Test.ASSIGNID1 + "_"))
                 ) {
                     Log.test("Removing stale team: " + team.name);
                     let val = await gh.deleteTeam(team.id);
@@ -703,6 +709,7 @@ describe("CS340: AssignmentController", () => {
 });
 
 const REPONAME = getProjectPrefix() + Test.ASSIGNID0;
+const REPONAME2 = getProjectPrefix() + Test.ASSIGNID1;
 const REPONAME3 = getProjectPrefix() + Test.REPONAME3;
 const TEAMNAME = getTeamPrefix() + Test.TEAMNAME1;
 
@@ -715,7 +722,8 @@ let TESTREPONAMES = [
     "TESTrepo1",
     "TESTrepo2",
     "TESTrepo3",
-    Test.REALUSER1.id + "_grades"
+    Test.REALUSER1.id + "_grades",
+    Test.REALUSER2.id + "_grades",
 ];
 
 let TESTTEAMNAMES = [

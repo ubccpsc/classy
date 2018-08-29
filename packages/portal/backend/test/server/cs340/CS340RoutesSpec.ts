@@ -109,7 +109,7 @@ describe("CS340: Routes", () => {
         Log.test("Start");
     });
 
-    it("Clean up stale repos", async function() {
+    it("Clean up stale repos.", async function() {
         Log.test("Cleaning up stale repositories...");
         await deleteStale();
     }).timeout(2 * TIMEOUT);
@@ -134,7 +134,7 @@ describe("CS340: Routes", () => {
     });
 
 
-    it("Should be able to get assignment rubric based on ID", async function() {
+    it("Should be able to get assignment rubric based on ID.", async function() {
         let aid = Test.ASSIGNID0;
         let response = null;
         const url = '/portal/cs340/getAssignmentRubric/' + aid;
@@ -150,7 +150,7 @@ describe("CS340: Routes", () => {
         expect(response.body.response).to.not.be.null;
     });
 
-    it("Should be able to get all assignment rubrics", async function() {
+    it("Should be able to get all assignment rubrics.", async function() {
         let response = null;
         const url = '/portal/cs340/getAllAssignmentRubrics/';
         try {
@@ -165,7 +165,7 @@ describe("CS340: Routes", () => {
         expect(response.body.response).to.not.be.null;
     });
 
-    it("Should not be able to set a student's grade if there is no repo", async function() {
+    it("Should not be able to set a student's grade if there is no repo.", async function() {
         let aid = Test.ASSIGNID0;
         let pc: PersonController = new PersonController();
         let allPeople = await pc.getAllPeople();
@@ -224,7 +224,7 @@ describe("CS340: Routes", () => {
     });
 
 
-    it("Should be able to get all grades", async function() {
+    it("Should be able to get all grades.", async function() {
         let response = null;
         const url = '/portal/cs340/getAllGrades';
         try {
@@ -239,7 +239,7 @@ describe("CS340: Routes", () => {
         expect(response.body.response).to.not.be.null;
     });
 
-    it("Should be able to get all information on deliverables", async function() {
+    it("Should be able to get all information on deliverables.", async function() {
         let response = null;
         const url = '/portal/cs340/getAllDelivInfo';
         try {
@@ -271,7 +271,7 @@ describe("CS340: Routes", () => {
         expect(response.body.response).to.not.be.null;
     });
 
-    it("Should be able to get a person using their Github username", async function() {
+    it("Should be able to get a person using their Github username.", async function() {
         let pc: PersonController = new PersonController();
         let allPeople = await pc.getAllPeople();
 
@@ -292,7 +292,7 @@ describe("CS340: Routes", () => {
         expect(response.body.response).to.not.be.null;
     });
 
-    it("Should be able to get all persons", async function() {
+    it("Should be able to get all persons.", async function() {
         let response = null;
         const url = '/portal/cs340/getAllPersons';
         try {
@@ -307,7 +307,7 @@ describe("CS340: Routes", () => {
         expect(response.body.response).to.not.be.null;
     });
 
-    it("Should be able to update the assignment status", async function() {
+    it("Should be able to update the assignment status.", async function() {
         let response = null;
         let aid = Test.ASSIGNID0;
 
@@ -325,7 +325,7 @@ describe("CS340: Routes", () => {
     });
 
 
-    it("Should be able to get the assignment status", async function() {
+    it("Should be able to get the assignment status.", async function() {
         let response = null;
         let aid = Test.ASSIGNID0;
 
@@ -343,7 +343,7 @@ describe("CS340: Routes", () => {
     }).timeout(numberOfStudents * TIMEOUT);
 
 
-    it("Should be able to initialize all repositories", async function() {
+    it("Should be able to initialize all repositories.", async function() {
         let response = null;
         let aid = Test.ASSIGNID0;
 
@@ -361,7 +361,7 @@ describe("CS340: Routes", () => {
     }).timeout(numberOfStudents * TIMEOUT);
 
 
-    it("Should be able to publish all repositories", async function() {
+    it("Should be able to publish all repositories.", async function() {
         let response = null;
         let aid = Test.ASSIGNID0;
 
@@ -379,7 +379,25 @@ describe("CS340: Routes", () => {
         expect(response.body.response).to.not.be.null;
     }).timeout(2 * TIMEOUT);
 
-    it("Should be able to set a student's grade", async function() {
+    it("Should be able to \"publish\" all repositories again, even though they have already been created.", async function() {
+        let response = null;
+        let aid = Test.ASSIGNID0;
+
+
+        const url = '/portal/cs340/publishAllRepositories/' + aid;
+        try {
+            response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            fail(err);
+        }
+
+        expect(response).to.not.be.null;
+        expect(response.status).to.be.equal(200);
+        expect(response.body.response).to.not.be.null;
+    }).timeout(2 * TIMEOUT);
+
+    it("Should be able to set a student's grade.", async function() {
         Log.test("CS340RoutesSpec:: should be able to set a student's grade");
 
         let aid = Test.ASSIGNID0;
@@ -439,8 +457,6 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/setAssignmentGrade';
 
-        // TODO: Verify this
-
         try {
             response = await request(app).put(url).send(aPayload).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
         } catch (err) {
@@ -453,7 +469,7 @@ describe("CS340: Routes", () => {
         expect(response.body.response).to.not.be.null;
     }).timeout(2 * TIMEOUT);
 
-    it("Should be able to get a specific grade using student ID and assignment ID", async function() {
+    it("Should be able to get a specific grade using student ID and assignment ID.", async function() {
 
         Log.test("CS340RoutesSpec:: get specific grade");
 
@@ -509,7 +525,25 @@ describe("CS340: Routes", () => {
         expect(response.body.response).not.be.null;
     });
 
-    it("Should be able to delete a specific repository", async function() {
+    it("Should be able to close all repositories.", async function() {
+        let response = null;
+        let aid = Test.ASSIGNID0;
+
+
+        const url = '/portal/cs340/closeAllRepositories/' + aid;
+        try {
+            response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            fail(err);
+        }
+
+        expect(response).to.not.be.null;
+        expect(response.status).to.be.equal(200);
+        expect(response.body.response).to.not.be.null;
+    }).timeout(2 * TIMEOUT);
+
+    it("Should be able to delete a specific repository.", async function() {
         let response = null;
         let aid = Test.ASSIGNID0;
         let pc: PersonController = new PersonController();
@@ -632,7 +666,7 @@ describe("CS340: Routes", () => {
     }).timeout(numberOfStudents * TIMEOUT);
 
 
-    it("Clean up stale repos", async function() {
+    it("Clean up stale repos.", async function() {
         Log.test("Cleaning up stale repositories...");
         await deleteStale();
     }).timeout(numberOfStudents * TIMEOUT);
@@ -816,19 +850,6 @@ describe("CS340: Routes", () => {
             expect(response.body.error).to.not.be.null;
         }).timeout(numberOfStudents * TIMEOUT);
 
-        // it("Should be able to ", async function() {
-        //
-        // });
-        //
-        //
-        // it("Should be able to ", async function() {
-        //
-        // });
-        //
-        //
-        // it("Should be able to ", async function() {
-        //
-        // });
     });
 
     /*

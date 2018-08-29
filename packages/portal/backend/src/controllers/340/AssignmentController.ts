@@ -105,9 +105,12 @@ export class AssignmentController {
                     // }
                     let personRecord: Person = await this.db.getPerson(assnPayload.studentID);
                     if(personRecord === null) return success;
-                    await this.publishGrade(personRecord.githubId + "_grades",
-                        assignId + "_grades.md",personRecord.id, assignId);
-
+                    try {
+                        this.publishGrade(personRecord.githubId + "_grades",
+                            assignId + "_grades.md",personRecord.id, assignId);
+                    } catch(err) {
+                        Log.error("AssignmentController::setAssignmentGrade(..) - Error: " + err);
+                    }
                 }
             }
         }
@@ -154,13 +157,16 @@ export class AssignmentController {
 
         // attempt to provision the repository
         let provisionAttempt: boolean;
-        if (seedPath.trim() === "" || seedPath.trim() === "*" || seedPath.trim() === "/*") {
-            // provisionAttempt = await this.ghc.provisionRepository(repoName, [], seedURL, WEBHOOKADDR);
-            provisionAttempt = await this.ghc.createRepository(repoName, seedURL);
-        } else {
-            // provisionAttempt = await dthis.ghc.provisionRepository(repoName, [], seedURL, WEBHOOKADDR, seedPath);
-            provisionAttempt = await this.ghc.createRepository(repoName, seedURL, seedPath.trim());
+        try {
+            if (seedPath.trim() === "" || seedPath.trim() === "*" || seedPath.trim() === "/*") {
+                provisionAttempt = await this.ghc.createRepository(repoName, seedURL);
+            } else {
+                provisionAttempt = await this.ghc.createRepository(repoName, seedURL, seedPath.trim());
+            }
+        } catch (err) {
+            Log.error("AssignmentController::createAssignmentRepo(..) - Error: " + err);
         }
+
 
         if (!provisionAttempt) {
             Log.error("AssignmentController::createAssignmentRepo(..) - error: unable to create repository");
@@ -926,7 +932,8 @@ export class AssignmentController {
 
         // now assume we have the all the needed pieces
         let tableInfo: string[][] = [];
-        let tableHeader: string[] = ["Exercise Name", "Grade", "Out of", "Feedback"];
+        let tableHeader: string[] = ["**Exercise Name**", "**Grade**",
+            "**Out of**", "**Feedback**"];
         tableInfo.push(tableHeader);
 
         // get the rest of the information
@@ -953,7 +960,7 @@ export class AssignmentController {
 
         let percentageReceived: number = totalReceived / totalPossible;
         let newRow = ["**Total**", String(totalReceived), String(totalPossible),
-            "Final Grade: " + String(percentageReceived * 100) + "%"];
+            "Final Grade: " + (Math.round(percentageReceived * 100 * 10) / 10).toFixed(1) + "%"];
         tableInfo.push(newRow);
 
         // construct the md file
@@ -983,6 +990,15 @@ export class AssignmentController {
         Log.info("AssignmentController::publishGrade( .. ) - retrieving repositoryRecord again");
 
         let studentRepoRecord: Repository = await this.verifyAndCreateRepo(studentGradeRepoName);
+
+        // create the githubTeam and add the person to the team.
+        studentRecord = await this.pc.getPerson(studentId);
+        let githubTeamInfo = await this.gha.createTeam(studentId + "_grades", "pull");
+        await this.gha.addMembersToTeam(studentId + "_grades",
+            githubTeamInfo.githubTeamNumber, [studentRecord.githubId]);
+        let addResult = await this.gha.addTeamToRepo(githubTeamInfo.githubTeamNumber,
+            studentGradeRepoName, "pull");
+
 
         let gitSuccess: boolean;
         try {
@@ -1151,10 +1167,16 @@ export class AssignmentController {
                     return null;
                 }
             }
-            // create the repo
-            repositoryRecord.URL = await this.gha.createRepo(repositoryName);
-            // write the repository to the database
-            await this.db.writeRepository(repositoryRecord);
+            try {
+                // create the repo
+                repositoryRecord.URL = await this.gha.createRepo(repositoryName);
+                // write the repository to the database
+                await this.db.writeRepository(repositoryRecord);
+            } catch(err) {
+                Log.error("AssignmentController::verifyAndCreateRepo(..) - Err: ");
+                return repositoryRecord;
+            }
+
         } else {
             // if the repo does exist
             if(repositoryRecord === null) {
@@ -1166,7 +1188,6 @@ export class AssignmentController {
                 await this.db.writeRepository(repositoryRecord);
             }
         }
-        // TODO: Return the Repository Object
         return repositoryRecord;
     }
 
@@ -1205,7 +1226,8 @@ export class AssignmentController {
 
         // TODO: Generate table headings
         let tableInfo: string[][] = [];
-        let tableHeader: string[] = ["Assessment", "Grade", "Assessment Weight", "Weighted Grade"];
+        let tableHeader: string[] = ["**Assessment**", "**Grade**",
+            "**Assessment Weight**", "**Weighted Grade**"];
 
         tableInfo.push(tableHeader);
 
@@ -1232,12 +1254,12 @@ export class AssignmentController {
             } else {
                 // double check this
                 let assignmentRubric = (deliv.custom as AssignmentInfo).rubric;
-                let studentScore    = (studentGradeMapping[deliv.id].score / this.calculateMaxGrade(assignmentRubric)) * 100;
-                let weightedScore   =  studentScore * weight;
+                let studentScore    =  Math.round((studentGradeMapping[deliv.id].score / this.calculateMaxGrade(assignmentRubric)) * 100 * 10) / 10;
+                let weightedScore   =  Math.round(studentScore * weight * 10) / 10;
                 totalRaw            += studentScore;
                 totalScore          += weightedScore;
 
-                newRow = [deliv.id, studentScore.toString(), weight.toString(), weightedScore.toString()];
+                newRow = [deliv.id, studentScore.toFixed(1), weight.toFixed(1), weightedScore.toFixed(1)];
             }
             tableInfo.push(newRow);
         }
@@ -1260,6 +1282,14 @@ export class AssignmentController {
 
         payload += "\n\n Note: The weighed average of the above grades may deviate by 1 percent from the " +
             "overall grade due to rounding. However the overall grade shown is the correct one.";
+
+        // create the githubTeam and add the person to the team.
+        let studentRecord = await this.pc.getPerson(studentId);
+        let githubTeamInfo = await this.gha.createTeam(studentId + "_grades", "pull");
+        await this.gha.addMembersToTeam(studentId + "_grades",
+            githubTeamInfo.githubTeamNumber, [studentRecord.githubId]);
+        let addResult = await this.gha.addTeamToRepo(githubTeamInfo.githubTeamNumber,
+            studentGradeRepoName, "pull");
 
         let gitSuccess: boolean;
         try {
