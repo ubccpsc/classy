@@ -105,9 +105,12 @@ export class AssignmentController {
                     // }
                     let personRecord: Person = await this.db.getPerson(assnPayload.studentID);
                     if(personRecord === null) return success;
-                    this.publishGrade(personRecord.githubId + "_grades",
-                        assignId + "_grades.md",personRecord.id, assignId);
-
+                    try {
+                        this.publishGrade(personRecord.githubId + "_grades",
+                            assignId + "_grades.md",personRecord.id, assignId);
+                    } catch(err) {
+                        Log.error("AssignmentController::setAssignmentGrade(..) - Error: " + err);
+                    }
                 }
             }
         }
@@ -1164,10 +1167,16 @@ export class AssignmentController {
                     return null;
                 }
             }
-            // create the repo
-            repositoryRecord.URL = await this.gha.createRepo(repositoryName);
-            // write the repository to the database
-            await this.db.writeRepository(repositoryRecord);
+            try {
+                // create the repo
+                repositoryRecord.URL = await this.gha.createRepo(repositoryName);
+                // write the repository to the database
+                await this.db.writeRepository(repositoryRecord);
+            } catch(err) {
+                Log.error("AssignmentController::verifyAndCreateRepo(..) - Err: ");
+                return repositoryRecord;
+            }
+
         } else {
             // if the repo does exist
             if(repositoryRecord === null) {
