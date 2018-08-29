@@ -984,6 +984,14 @@ export class AssignmentController {
 
         let studentRepoRecord: Repository = await this.verifyAndCreateRepo(studentGradeRepoName);
 
+        // get the teamRecord and verify the Github team
+        // TODO: Create the team record and the github team, then add to the repository
+        let teamRecord = await this.tc.getTeam(studentRecord.id + "_grades");
+        if(teamRecord === null) {
+            // if there is no team,
+        }
+
+
         let gitSuccess: boolean;
         try {
             Log.info("AssignmentController::publishGrade( .. ) - writing grade");

@@ -68,7 +68,7 @@ export class CS340AdminView extends AdminView {
             Log.info("CS340AdminView::renderPage(..) - initial load; checking scheduler");
             this.verifyScheduledJobs(null).then(function (result) {
                 if(result > 0) {
-                    UI.notification("Verified scheduled tasks; updated " + result + " tasks for related deliverable(s)");
+                    UI.notificationToast("Verified scheduled tasks; updated " + result + " tasks for related deliverable(s)");
                 }
             });
         }
@@ -145,7 +145,12 @@ export class CS340AdminView extends AdminView {
                 //     Log.info("CS340AdminView::renderEditDeliverablePage(..)::checkReleasedGrades(..) - released: " + result);
                 // });
                 Log.info("CS340AdminView::renderEditDeliverablePage::adminEditDeliverableSave::customOnClick - " + delivIdElement.value);
-                that.releaseGrades(delivIdElement.value);
+                // check if it's release
+                const releasedSwitch = document.querySelector('#adminEditDeliverablePage-gradesReleased') as OnsSwitchElement;
+                if(releasedSwitch.checked) {
+                    Log.info("CS340AdminView::renderEditDeliverablePage::adminEditDeliverableSave::customOnClick - releasing grades");
+                    that.releaseGrades(delivIdElement.value);
+                }
             });
             // fab.onclick = function(evt) {
             //     Log.info('CS340AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::customOnClick');
@@ -1298,6 +1303,10 @@ export class CS340AdminView extends AdminView {
                 textBoxLabelElement.setAttribute("class", "textboxLabel");
                 textBoxElement.setAttribute("class", "textarea");
                 textBoxElement.setAttribute("style", "width: 100%;height: 75%; min-width: 100px;min-height: 50px");
+                if(previousSubmission !== null && previousSubmission.questions[i].subQuestion[j].graded) {
+                    textBoxElement.innerHTML = previousSubmission.questions[i].subQuestion[j].feedback;
+                }
+
                 subTextBoxElement.appendChild(textBoxLabelElement);
                 subTextBoxElement.appendChild(textBoxElement);
 
@@ -1414,7 +1423,7 @@ export class CS340AdminView extends AdminView {
                 let newSubGrade : SubQuestionGrade = {
                     sectionName: rubricType,
                     grade: completed? gradeValue: 0,
-                    graded: graded,
+                    graded: completed? graded: true,
                     feedback: responseBoxElement.value
                 };
 
