@@ -29,7 +29,7 @@ sudo. Note: this effectively grants the user root access on the host system.
 permission with the host (this is done in the docker-compose.yml file).
 
     ```bash
-    adduser --system --shell /bin/nologin classy
+    sudo adduser --system --shell /bin/nologin classy
     ```
     
     Note: make sure you logout and back in to see the new user and group.
@@ -44,6 +44,7 @@ permission with the host (this is done in the docker-compose.yml file).
  
     # Set GRADER_HOST_DIR to /var/opt/classy/runs
     # Set database storage to /var/opt/classy/db
+    sudo mkdir /var/opt/classy  
     sudo mkdir /var/opt/classy/db  # for database storage
     sudo mkdir /var/opt/classy/runs  # for grading container output
     sudo chown -R classy:classy /var/opt/classy
