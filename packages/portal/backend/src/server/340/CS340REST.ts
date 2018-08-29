@@ -47,6 +47,7 @@ export default class CS340REST implements IREST {
         server.post('/portal/cs340/releaseGrades/:delivid', CS340REST.releaseGrades);
         server.post('/portal/cs340/initializeAllRepositories/:delivid', CS340REST.initializeAllRepositories);
         server.post('/portal/cs340/publishAllRepositories/:delivid', CS340REST.publishAllRepositories);
+        server.post('/portal/cs340/closeAllRepositories/:delivid', CS340REST.closeAllRepositories);
         server.post('/portal/cs340/deleteRepository/:delivid/:reponame', CS340REST.deleteRepository);
         server.post('/portal/cs340/deleteAllRepositories/:delivid', CS340REST.deleteAllRepositories);
         server.post('/portal/cs340/verifyScheduledJobs/:aid', CS340REST.verifyScheduledJobs);
@@ -671,6 +672,38 @@ export default class CS340REST implements IREST {
 
         return next();
     }
+
+    public static async closeAllRepositories(req: any, res: any, next: any) {
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        // let
+        Log.info("CS340REST::closeAllRepositories(..) - start");
+        let delivId: string = req.params.delivid;
+
+        // validate this is a valid deliverable
+        let delivController: DeliverablesController = new DeliverablesController();
+        let deliv: Deliverable = await delivController.getDeliverable(delivId);
+
+        if (deliv === null) {
+            res.send(400, {error: "Invalid deliverable specified"});
+            return next();
+        }
+
+        if (typeof (deliv.custom as AssignmentInfo).mainFilePath === "undefined") {
+            res.send(400, {error: "Assignment not set up properly"});
+            return next();
+        }
+
+        let assignController: AssignmentController = new AssignmentController();
+        let success = await assignController.closeAllRepositories(delivId);
+
+        res.send(200, {response: success});
+
+        return next();
+    }
+
 
     public static async deleteRepository(req: any, res: any, next: any) {
         const user = req.headers.user;

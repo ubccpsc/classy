@@ -91,7 +91,7 @@ export class RubricController {
                                 if(latexFileExp.test(assignInfo.mainFilePath)) {
                                     // if this is a latex file, use a different exp
                                     headerExp = /(?:sub?:)*section(?:\*?:)?.*/;
-                                    headerCleaner = /[{}\n]/g;
+                                    headerCleaner = /([{}\n]|\\(sub)?section)/g;
                                 } else {
                                     headerExp = /#\s+.*/;
                                     headerCleaner = /((#+\s+)|\\n)/g;

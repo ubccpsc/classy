@@ -197,7 +197,7 @@
                 </ons-list-item>
 
 
-                <ons-list-header>Assignment Status and :</ons-list-header>
+                <ons-list-header>Assignment Status and Manual Controls:</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
                         <ons-icon icon="fa-cogs"></ons-icon>
@@ -211,16 +211,22 @@
                         <!--<ons-button id="adminCheckStatus" style="margin-left: 1em; margin-right: 1em;" disabled="true">-->
                             <!--Recalculate Status-->
                         <!--</ons-button>-->
-                        <ons-button id="adminCreateRepositories" disabled="true">Create Repositories</ons-button>
-                        <ons-button id="adminReleaseRepositories" style="margin-left: 1em" disabled="true">Release
+                        <ons-button id="adminCreateRepositories" disabled="true">
+                            Create Repositories
+                        </ons-button>
+                        <ons-button id="adminReleaseRepositories" style="margin-left: 1em" disabled="true">
+                            Release
                             Repositories
+                        </ons-button>
+                        <ons-button id="adminCloseRepositories" style="margin-left: 1em" disabled="true">
+                            Close Repositories
                         </ons-button>
                         <ons-button id="adminDeleteRepositories" style="margin-left: 1em" disabled="true">DEBUG: Delete
                             Repositories
                         </ons-button>
                     </div>
                     <div class="expandable-content">
-                        Controls early repository provisioning and releasing of deliverables.
+                        Controls meanual repository creation, releasing, and closing of assignments.
                     </div>
                 </ons-list-item>
 
@@ -357,7 +363,7 @@
                     <!--TODO: Finish and move this around-->
                     <div style="display: none;" id="adminEditDeliverablePage-assignmentConfig">
                         <ons-list-header>Assignment Configuration</ons-list-header>
-                        <ons-list-item>
+                        <ons-list-item expandable>
                             <div class="left settingIcon">
                                 <ons-icon icon="fa-cogs"></ons-icon>
                             </div>
@@ -372,7 +378,7 @@
                             </div>
                         </ons-list-item>
 
-                        <ons-list-item>
+                        <ons-list-item expandable>
                             <div class="left settingIcon">
                                 <ons-icon icon="fa-cogs"></ons-icon>
                             </div>
@@ -389,7 +395,7 @@
                             </div>
                         </ons-list-item>
 
-                        <ons-list-item>
+                        <ons-list-item expandable>
                             <div class="left settingIcon">
                                 <ons-icon icon="fa-cogs"></ons-icon>
                             </div>
@@ -406,7 +412,7 @@
                             </div>
                         </ons-list-item>
 
-                        <ons-list-item>
+                        <ons-list-item expandable>
                             <div class="left settingIcon">
                                 <ons-icon icon="fa-cogs"></ons-icon>
                             </div>

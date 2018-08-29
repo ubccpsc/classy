@@ -331,39 +331,43 @@ export class CS340AdminView extends AdminView {
             that.publishAllFinalGrades();
         });
 
-        // fab.addEventListener("click", function(evt) {
+        // reset the information inside of the status boxes
+        let delivInfoElement = (document.querySelector("#adminActionDeliverableID") as HTMLParagraphElement);
+        let delivStatusElement = (document.querySelector("#adminActionStatusText") as HTMLParagraphElement);
+        delivInfoElement.innerHTML = "";
+        delivStatusElement.innerHTML = "";
 
-        // (document.querySelector('#adminReleaseFinalGrades') as OnsButtonElement).onpress = function (evt) {
-        // Log.info("Pressed Final Grades release");
-        //
-        // that.publishAllFinalGrades();
-        // };
-        // (document.querySelector('#adminActionSelectDeliverable') as OnsButtonElement).onclick = function (evt) {
-        //     Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');
-        //
-        //     that.selectDeliverablePressed();
-        // };
+        // lock out all buttons
+        const createRepoButton  = document.querySelector('#adminCreateRepositories') as OnsButtonElement;
+        const releaseRepoButton = document.querySelector('#adminReleaseRepositories') as OnsButtonElement;
+        const closeRepoButton = document.querySelector('#adminCloseRepositories') as OnsButtonElement;
+        const deleteRepoButton  = document.querySelector('#adminDeleteRepositories') as OnsButtonElement; // DEBUG
+        createRepoButton.disabled = true;
+        releaseRepoButton.disabled = true;
+        closeRepoButton.disabled = true;
+        deleteRepoButton.disabled = true; // DEBUG
 
-        // (document.querySelector('#adminCheckStatus') as OnsButtonElement).onclick = function (evt) {
-        //     Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');
-        //
-        //     that.checkStatusAndUpdate(true);
-        // };
 
         (document.querySelector('#adminCreateRepositories') as OnsButtonElement).onclick = function (evt) {
-            Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');
+            Log.info('CS340AdminView::handleAdminConfig(..) - create repo pressed');
 
             that.createRepoPressed();
         };
 
         (document.querySelector('#adminReleaseRepositories') as OnsButtonElement).onclick = function (evt) {
-            Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');
+            Log.info('CS340AdminView::handleAdminConfig(..) - release repo pressed');
 
             that.releaseRepoPressed();
         };
 
+        (document.querySelector("#adminCloseRepositories") as OnsButtonElement).onclick = function (evt) {
+            Log.info('CS340AdminView::handleAdminConfig(..) - close repo pressed');
+
+            that.closeRepoPressed();
+        };
+
         (document.querySelector('#adminDeleteRepositories') as OnsButtonElement).onclick = function (evt) {
-            Log.info('CS340AdminView::handleAdminConfig(..) - action pressed');
+            Log.info('CS340AdminView::handleAdminConfig(..) - delete repo pressed');
 
             UI.notificationConfirm("WARNING: Data will be deleted, and is non-recoverable." +
                 " Are you sure you wish to proceed?", async function(idx: number) {
@@ -391,6 +395,7 @@ export class CS340AdminView extends AdminView {
         // const checkStatusButton = document.querySelector('#adminCheckStatus') as OnsButtonElement;
         const createRepoButton  = document.querySelector('#adminCreateRepositories') as OnsButtonElement;
         const releaseRepoButton = document.querySelector('#adminReleaseRepositories') as OnsButtonElement;
+        const closeRepoButton = document.querySelector('#adminCloseRepositories') as OnsButtonElement;
         const deleteRepoButton  = document.querySelector('#adminDeleteRepositories') as OnsButtonElement; // DEBUG
 
         if(delivId === null) {
@@ -398,11 +403,13 @@ export class CS340AdminView extends AdminView {
             // checkStatusButton.disabled = true;
             createRepoButton.disabled = true;
             releaseRepoButton.disabled = true;
+            closeRepoButton.disabled = true;
             deleteRepoButton.disabled = true; // DEBUG
         } else {
             // checkStatusButton.disabled = false;
             createRepoButton.disabled = false;
             releaseRepoButton.disabled = false;
+            closeRepoButton.disabled = false;
             deleteRepoButton.disabled = false; // DEBUG
         }
 
@@ -519,6 +526,37 @@ export class CS340AdminView extends AdminView {
         Log.info('CS340AdminView::createRepoPressed(..) - finish');
 
         return;
+    }
+
+    private async closeRepoPressed(): Promise<void> {
+        Log.info('CS340AdminView::closeRepoPressed(..) - start');
+        const delivIDBox = document.querySelector('#adminActionDeliverableID') as HTMLParagraphElement;
+        const delivID = delivIDBox.innerHTML;
+
+        Log.info('CS340AdminView::closeRepoPressed(..) - ' + delivID + " selected, beginning repo publishing");
+        UI.showModal("Closing repositories, please wait...");
+        const url = this.remote + '/portal/cs340/closeAllRepositories/' + delivID;
+        let options: any = AdminView.getOptions();
+
+        options.method = 'post';
+        let response = await fetch(url, options);
+        UI.hideModal();
+
+        const jsonResponse = await response.json();
+        if(response.status === 200) {
+            if(jsonResponse.response == true) {
+                UI.notification("Success; All repositories closed!");
+            } else {
+                UI.notification("Error: Some repositories were not closed, please try again");
+            }
+        } else {
+            Log.error("Issue with closing repositories; status: " + response.status);
+
+            UI.notification("Error: " + jsonResponse.error);
+        }
+
+        this.checkStatusAndUpdate();
+        Log.info('CS340AdminView::closeRepoPressed(..) - finish');
     }
 
     private async releaseRepoPressed(): Promise<void> {
@@ -1227,6 +1265,15 @@ export class CS340AdminView extends AdminView {
 
         assignmentInfoElement.appendChild(assignmentInfoList);
 
+
+        // Create a "DID NOT COMPLETE" button
+        let dncButton = document.createElement("ons-button");
+        dncButton.setAttribute("onclick", "window.myApp.view.submitGrade(false)");
+        dncButton.setAttribute("style", "margin-left: 1em; background: red");
+        dncButton.innerHTML = "No Submission";
+        gradingSectionElement!.appendChild(dncButton);
+
+
         for (let i = 0; i < rubric.questions.length; i++) {
             // Get the i-th question
             let question = rubric.questions[i];
@@ -1322,21 +1369,14 @@ export class CS340AdminView extends AdminView {
             gradingSectionElement!.appendChild(questionBox);
         }
 
-        // Create a submission button
+        // Create a Save Grade button
         let submitButton = document.createElement("ons-button");
         submitButton.setAttribute("onclick", "window.myApp.view.submitGrade()");
-        submitButton.innerHTML = "Submit";
+        submitButton.innerHTML = "Save Grade";
 
-
-        // Create a "DID NOT COMPLETE" button
-        let dncButton = document.createElement("ons-button");
-        dncButton.setAttribute("onclick", "window.myApp.view.submitGrade(false)");
-        dncButton.setAttribute("style", "margin-left: 1em");
-        dncButton.innerHTML = "Not submitted";
 
 
         gradingSectionElement!.appendChild(submitButton);
-        gradingSectionElement!.appendChild(dncButton);
     }
 
     public async submitGrade(completed: boolean = true): Promise<AssignmentGrade|null> {
