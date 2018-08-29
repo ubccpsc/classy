@@ -91,6 +91,9 @@ export class Test {
         let p = Test.createPerson(Test.REALUSER1.id, Test.REALUSER1.csId, Test.REALUSER1.github, 'student');
         await dc.writePerson(p);
 
+        p = Test.createPerson(Test.REALUSER2.id, Test.REALUSER2.csId, Test.REALUSER2.github, 'student');
+        await dc.writePerson(p);
+
         p = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, 'student');
         p.labId = 'l1a';
         await dc.writePerson(p);
@@ -498,6 +501,7 @@ export class Test {
     // public static readonly STAFF1 = {id: 'atest-02', csId: 'atest-02', github: 'atest-02'}; // github-dev.ugrad (not provisioned yet)
 
     public static readonly REALUSER1 = {id: 'rthse2', csId: 'rthse2', github: 'rthse2'}; // real account for testing users
+    public static readonly REALUSER2 = {id: "jopika", csId: "jopika", github: "jopika"}; // real account for testing users
 
     public static readonly USERNAMEGITHUB1 = "cpscbot";
     public static readonly USERNAMEGITHUB2 = "rthse2";
