@@ -327,10 +327,36 @@ export class CS340AdminView extends AdminView {
 
 
         let releaseFinalButton: any = (document.querySelector('#adminReleaseFinalGrades') as OnsButtonElement);
-        releaseFinalButton.addEventListener("click", function() {
+        releaseFinalButton.addEventListener("click", async function() {
             Log.info("Pressed Final Grades release");
 
-            that.publishAllFinalGrades();
+            // get all deliverables
+            let deliverables: Deliverable[] = await that.getDeliverables();
+
+            let totalSum = 0;
+            for(const deliv of deliverables) {
+                if(deliv.custom === null || typeof (deliv.custom as AssignmentInfo).courseWeight === "undefined") {
+                    totalSum +=  (deliv.custom as AssignmentInfo).courseWeight;
+                }
+            }
+
+            if(totalSum !== 1) {
+                UI.notificationConfirm("WARNING: Weights for Assignments only" +
+                    " add up to " + totalSum + ", not 1.", async function (index: number) {
+                    switch(index) {
+                        case 1:
+                            Log.info("CS340AdminView::handleAdminConfig::releaseFinalButton::confirm - true");
+                            that.publishAllFinalGrades();
+                            break;
+                        default:
+                            Log.info("CS340AdminView::handleAdminConfig::releaseFinalButton::confirm - cancelled");
+                    }
+                });
+            } else {
+                that.publishAllFinalGrades();
+            }
+
+
         });
 
         // reset the information inside of the status boxes
@@ -1386,7 +1412,6 @@ export class CS340AdminView extends AdminView {
         let submitButton = document.createElement("ons-button");
         submitButton.setAttribute("onclick", "window.myApp.view.submitGrade()");
         submitButton.innerHTML = "Save Grade";
-
 
 
         gradingSectionElement!.appendChild(submitButton);
