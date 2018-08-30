@@ -20,7 +20,7 @@
         "node": ">= 8.9 < 9"
     },
     "workspaces": [
-        "packages/*"
+        "packages/*", "packages/portal/frontend", "packages/portal/backend"
     ],
     "devDependencies": {
         "@types/chai": "4.0.8",
