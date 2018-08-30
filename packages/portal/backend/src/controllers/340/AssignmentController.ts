@@ -23,6 +23,8 @@ import {PersonController} from "../PersonController";
 import {GitHubActions} from "../GitHubActions";
 import {ScheduleController} from "../ScheduleController";
 import {RubricController} from "./RubricController";
+import {CS340Controller} from "./CS340Controller";
+import {Factory} from "../../Factory";
 
 /*
  * Definition of controller object
@@ -39,6 +41,7 @@ export class AssignmentController {
     private gha: GitHubActions = new GitHubActions();
     private sc: ScheduleController = ScheduleController.getInstance();
     private rbc: RubricController = new RubricController();
+    private cc: CS340Controller = Factory.getCourseController(this.ghc);
 
     public async getAssignmentGrade(personId: string, assignId: string): Promise<AssignmentGrade | null> {
         // let returningPromise = new Promise((resolve, reject) => {
@@ -260,13 +263,17 @@ export class AssignmentController {
 
             if(typeof personTeams[student.id] === "undefined") {
                 // for each student, create a team
-                let teamName: string;
-                if(deliv.teamPrefix === null || deliv.teamPrefix === "") {
-                    teamName = deliv.id + "_";
-                } else {
-                    teamName = deliv.teamPrefix;
-                }
-                teamName += student.githubId;
+                // let teamName: string;
+                // if(deliv.teamPrefix === null || deliv.teamPrefix === "") {
+                //     teamName = deliv.id + "_";
+                // } else {
+                //     teamName = deliv.teamPrefix;
+                // }
+                // teamName += student.githubId;
+
+                let computedNames = await this.cc.computeNames(deliv, [student]);
+                let teamName: string = computedNames.teamName;
+
                 // verify if the team exists or not
                 studentTeam = await this.tc.getTeam(teamName);
                 if (studentTeam === null) {
@@ -283,8 +290,6 @@ export class AssignmentController {
             } else {
                 studentTeam = personTeams[student.id];
             }
-
-
 
             if(typeof personTeams[student.id] === "undefined") {
                 if(deliv.repoPrefix === null || deliv.repoPrefix === "") {

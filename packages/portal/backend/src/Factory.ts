@@ -10,6 +10,7 @@ import CS340REST from "./server/340/CS340REST";
 import NoCustomRoutes from "./server/common/NoCustomRoutes";
 import IREST from "./server/IREST";
 import SDMMREST from "./server/SDMM/SDMMREST";
+import {CS340Controller} from "./controllers/340/CS340Controller";
 
 export class Factory {
 
@@ -61,7 +62,7 @@ export class Factory {
         } else if (name === 'cs310' || name === 'classytest') {
             return new CS310Controller(ghController);
         } else if (name === 'cs340' || name === 'cpsc340') {
-            return new CourseController(ghController); // NOTE: this should probably be CS340Controller (although this does not exist)
+            return new CS340Controller(ghController); // NOTE: this should probably be CS340Controller (although this does not exist)
         } else {
             Log.error("Factory::getCourseController() - unknown name: " + name);
             throw new Error("Unknown course name: " + name);

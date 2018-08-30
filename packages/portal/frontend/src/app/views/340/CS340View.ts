@@ -301,21 +301,21 @@ function addOption(event) {
         }
     }
 
-    private async getDeliverables(): Promise<Deliverable[]> {
-        const delivOptions = AdminView.getOptions();
-        const delivUrl: string = this.remote + '/portal/cs340/getAllDeliverables';
-        const delivResponse = await fetch(delivUrl, delivOptions);
-
-        if(delivResponse.status !== 200) {
-            Log.trace("CS340AdminView::renderStudentGrades(..) - !200 " +
-                "response received; code:" + delivResponse.status);
-            return;
-        }
-        const delivJson = await delivResponse.json();
-        const delivArray: Deliverable[] = delivJson.response;
-
-        return delivArray;
-    }
+    // private async getDeliverables(): Promise<Deliverable[]> {
+    //     const delivOptions = AdminView.getOptions();
+    //     const delivUrl: string = this.remote + '/portal/cs340/getAllDeliverables';
+    //     const delivResponse = await fetch(delivUrl, delivOptions);
+    //
+    //     if(delivResponse.status !== 200) {
+    //         Log.trace("CS340AdminView::renderStudentGrades(..) - !200 " +
+    //             "response received; code:" + delivResponse.status);
+    //         return;
+    //     }
+    //     const delivJson = await delivResponse.json();
+    //     const delivArray: Deliverable[] = delivJson.response;
+    //
+    //     return delivArray;
+    // }
 
 /*
     private remote: string = null;
