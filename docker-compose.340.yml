@@ -27,7 +27,8 @@ services:
                 - SSL_KEY_PATH
                 - CONTAINER_NAME_PORTAL
                 - BACKEND_PORT
-            context: packages/proxy
+            context: ./
+            dockerfile: ./packages/proxy/Dockerfile
         container_name: ${CONTAINER_NAME_ROUTER}
         depends_on:
             - portal
@@ -44,11 +45,10 @@ services:
             args:
                 - GH_BOT_USERNAME
                 - GH_BOT_EMAIL
-                - PORT=${BACKEND_PORT}
-            context: packages/portal
+            context: ./
+            dockerfile: ./packages/portal/Dockerfile
         container_name: ${CONTAINER_NAME_PORTAL}
         depends_on:
-            - base
             - db
         env_file: .env
         expose:
