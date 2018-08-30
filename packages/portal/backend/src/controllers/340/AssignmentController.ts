@@ -29,7 +29,6 @@ import {Factory} from "../../Factory";
 /*
  * Definition of controller object
  */
-
 export class AssignmentController {
     private db: DatabaseController = DatabaseController.getInstance();
     private gc: GradesController = new GradesController();
@@ -43,6 +42,11 @@ export class AssignmentController {
     private rbc: RubricController = new RubricController();
     private cc: CS340Controller = Factory.getCourseController(this.ghc);
 
+    /**
+     * Gets the assignment grade for the personId and assignmentId
+     * @param personId
+     * @param assignId
+     */
     public async getAssignmentGrade(personId: string, assignId: string): Promise<AssignmentGrade | null> {
         // let returningPromise = new Promise((resolve, reject) => {
         //     let gradeObj : Grade = await this.gc.getGrade(org, personId, assignId);
@@ -59,6 +63,13 @@ export class AssignmentController {
         return assignmentGrade;
     }
 
+    /**
+     * Sets the assignment grade for the repository, based on the assignment
+     * @param repoID - repository to select for the new grade
+     * @param assignId - assignment that is associated with the grade
+     * @param assnPayload - new assignment grade to save
+     * @param markerId - the person who marked the assignment
+     */
     public async setAssignmentGrade(repoID: string, assignId: string, assnPayload: AssignmentGrade, markerId?: string): Promise<boolean> {
         // Array<Array<SubsectionGrade>>
         Log.info("AssignmentController::setAssignmentGrade(" + ", " + repoID + ", " + assignId + ",..) - start");
@@ -121,7 +132,12 @@ export class AssignmentController {
         return success;
     }
 
-    // Intializes an assignment Repo
+    /**
+     * Intializes an assignment Repo, based on the information specified in the Assignment object
+     * @param repoName
+     * @param delivId
+     * @param teams
+     */
     public async createAssignmentRepo(repoName: string, delivId: string, teams: Team[]): Promise<Repository | null> {
         Log.info("AssignmentController::createAssignmentRepo( " + repoName + ", " + delivId + ",... ) - start");
         // get assignment information
@@ -331,6 +347,10 @@ export class AssignmentController {
         return true;
     }
 
+    /**
+     * Releases an assignment repository to the students
+     * @param repoId
+     */
     public async publishAssignmentRepo(repoId: string): Promise<boolean> {
         Log.info("AssignmentController::publishAssignmentRepo( " + repoId + " ) - start");
         // Log.info("AssignmentController::publishAssignmentRepo(..)");
@@ -395,6 +415,10 @@ export class AssignmentController {
         return true;
     }
 
+    /**
+     * Publishes all repository with the given deliverable ID
+     * @param delivId - Deliverable ID
+     */
     public async publishAllRepositories(delivId: string): Promise<boolean> {
         Log.info("AssignmentController::publishAllRepositories( " + delivId + " ) - start");
         // Log.info("AssignmentController::publishAllRepositories(..)");
@@ -473,6 +497,10 @@ export class AssignmentController {
         return true;
     }
 
+    /**
+     * Closes all repositories
+     * @param delivId - Deliverable ID to close repositories
+     */
     public async closeAllRepositories(delivId: string): Promise<boolean> {
         Log.info("AssignmentController::closeAllRepositories( " + delivId + " ) - start");
         // Log.error("AssignmentController::closeAllRepositories(..) - Error: ");
@@ -609,6 +637,10 @@ export class AssignmentController {
 
     // Retrieves the status of a given assignment
     // Warning: This might be stale
+    /**
+     * [WARNING] DEPRECATED - Gets the last calculated assignment status.
+     * @param delivId
+     */
     public async getAssignmentStatus(delivId: string): Promise<{assignStatus: AssignmentStatus,
                                                             totalStudents: number, studentRepos: number} | null> {
         Log.info("AssignmentController::getAssignmentStatus( " + delivId + ") - start");
@@ -640,6 +672,10 @@ export class AssignmentController {
 
     // Updates the status of a given assignment
     // iterates over checking each status of the assigned repository
+    /**
+     * Updates the assignment status, and returns an object on the newly calculated status
+     * @param delivId
+     */
     public async updateAssignmentStatus(delivId: string): Promise<{assignmentStatus: AssignmentStatus,
                                                         totalStudents: number, studentRepos: number}| null> {
         Log.info("AssignmentController::updateAssignmentStatus( " + delivId + " ) - start");
@@ -837,7 +873,6 @@ export class AssignmentController {
      * @param {string} footer (optional)- Extra string to add at the bottom of the md file
      * @returns {Promise<boolean>}
      */
-
     public async publishGrade(studentGradeRepoName: string, fileName: string, studentId: string,
                               delivId: string,header?: string, footer?: string): Promise<boolean> {
         Log.info("AssignmentController::publishGrade( ..., " + studentId + ", " + delivId + " ) - start");
@@ -1028,8 +1063,8 @@ export class AssignmentController {
     }
 
     /**
-     *
-     * @param delivId
+     * Publishes all grades for all deliverable Id
+     * @param delivId - deliverableID to publish grades for
      */
     public async publishAllGrades(delivId: string): Promise<boolean> {
         Log.info("AssignmentController::publishAllGrades( " + delivId + " ) - start");
@@ -1094,6 +1129,9 @@ export class AssignmentController {
         return totalSuccess;
     }
 
+    /**
+     * Publishes all final grades for every student
+     */
     public async publishAllFinalGrades(): Promise<boolean> {
         Log.info("AssignmentController::publishAllFinalGrades( .. ) - start");
 
@@ -1147,7 +1185,7 @@ export class AssignmentController {
 
     /**
      * Verifies that a repository exists, if not, create it.
-     * @param repositoryName
+     * @param repositoryName - repository name to be verified or created
      * @returns Promise<Repository|null> - The repository object, or null if it fails.
      */
     public async verifyAndCreateRepo(repositoryName: string): Promise<Repository | null> {
@@ -1310,8 +1348,12 @@ export class AssignmentController {
         return gitSuccess;
     }
 
-
-    private generateEmptyGrade(assignmentRubric: AssignmentGradingRubric): AssignmentGrade {
+    /**
+     * Generates an empty Assignment grade, based on a rubric. The grade can be marked, or not.
+     * @param assignmentRubric - the rubric to generate the grade from
+     * @param marked - (false) determines if the grade generated is "marked" or not
+     */
+    private generateEmptyGrade(assignmentRubric: AssignmentGradingRubric, marked: boolean = false): AssignmentGrade {
         if(assignmentRubric === null) {
             Log.error("AssignmentController::generateEmptyGrade(..) - Error: Received null rubric");
             return null;
@@ -1326,7 +1368,7 @@ export class AssignmentController {
                 let newSubQuestion: SubQuestionGrade = {
                     sectionName: rubricSubQuestion.name,
                     grade:0,
-                    graded: false,
+                    graded: marked,
                     feedback: ""
                 };
 
@@ -1353,6 +1395,10 @@ export class AssignmentController {
         return newAssignmentGrade;
     }
 
+    /**
+     * Calculates the maximum grade
+     * @param assignmentRubric
+     */
     public calculateMaxGrade(assignmentRubric: AssignmentGradingRubric): number {
         if(assignmentRubric === null || typeof assignmentRubric.questions === "undefined") {
             throw new Error("Unable to calculate max grade of a non-assignment");
@@ -1373,7 +1419,6 @@ export class AssignmentController {
      * @param {string?} assignId [optional] - the assignment ID to verify,
      * @returns {Promise<number>}
      */
-
     public async verifyScheduledJobs(assignId?: string): Promise<number> {
         Log.info("CS340AdminView::verifyScheduledJobs( " + assignId + " ) - start");
         let count = 0;

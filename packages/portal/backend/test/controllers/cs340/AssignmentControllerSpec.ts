@@ -319,7 +319,7 @@ describe("CS340: AssignmentController", () => {
 
     it("Clean stale repositories.", async function() {
         Log.info("Cleaning stale repositories");
-        await deleteStale();
+        await Test.deleteStaleRepositories();
         Log.info("Cleaned all stale information");
     }).timeout(5 * TIMEOUT);
 
@@ -412,7 +412,7 @@ describe("CS340: AssignmentController", () => {
 
             it("Clean stale repositories", async function() {
                 Log.info("Cleaning stale repositories");
-                await deleteStale();
+                await Test.deleteStaleRepositories();
                 Log.info("Cleaned all stale information");
             }).timeout(5 * TIMEOUT);
         });
@@ -422,7 +422,7 @@ describe("CS340: AssignmentController", () => {
 
             it("Clean stale repositories", async function() {
                 Log.info("Cleaning stale repositories");
-                await deleteStale();
+                await Test.deleteStaleRepositories();
                 Log.info("Cleaned all stale information");
             }).timeout(5 * TIMEOUT);
         });
@@ -625,117 +625,8 @@ describe("CS340: AssignmentController", () => {
             let result = await ac.publishAllGrades(Test.DELIVID0);
             expect(result).to.be.false;
         });
-
-
     });
-
-
-    /*
-        ========= IMPORTED CODE FROM GITHUBACTIONSPEC ===========
-     */
-
-    const OLDORG = Config.getInstance().getProp(ConfigKey.org);
-
-    async function deleteStale(): Promise<true> {
-        Log.test('GitHubActionSpec::deleteStale() - start');
-        let gh: GitHubActions = new GitHubActions();
-        let repos = await gh.listRepos();
-        expect(repos).to.be.an('array');
-        // expect(repos.length > 0).to.be.true; // test org can be empty
-
-        // delete test repos if needed
-        for (const repo of repos as any) {
-            for (const r of TESTREPONAMES) {
-                if (repo.name === r) {
-                    Log.info('Removing stale repo: ' + repo.name);
-                    let val = await gh.deleteRepo(r);
-                    await gh.delay(DELAY_SHORT);
-                    // expect(val).to.be.true;
-                }
-            }
-        }
-
-        repos = await gh.listRepos();
-        // delete test repos if needed
-        for (const repo of repos as any) {
-            Log.info('Evaluating repo: ' + repo.name);
-            if (repo.name.indexOf('TEST__X__') === 0        ||
-                repo.name.startsWith(REPONAME)              ||
-                repo.name.startsWith(REPONAME2)             ||
-                repo.name.startsWith("test_")               ||
-                repo.name.startsWith(Test.ASSIGNID0 + "_")  ||
-                repo.name.startsWith(Test.ASSIGNID1 + "_")) {
-                Log.info('Removing stale repo: ' + repo.name);
-                let val = await gh.deleteRepo(repo.name);
-                // expect(val).to.be.true;
-                let teamName = repo.name.substr(15);
-                Log.info('Adding stale team name: ' + repo.name);
-                TESTTEAMNAMES.push(teamName);
-            }
-        }
-
-        // delete teams if needed
-        let teams = await gh.listTeams();
-        expect(teams).to.be.an('array');
-        // expect(teams.length > 0).to.be.true; // can have 0 teams
-        Log.test('All Teams: ' + JSON.stringify(teams));
-        Log.test('Stale Teams: ' + JSON.stringify(TESTTEAMNAMES));
-        for (const team of teams as any) {
-            // Log.info('Evaluating team: ' + JSON.stringify(team));
-            let done = false;
-            for (const t of TESTTEAMNAMES) {
-                if (team.name === t                             ||
-                    team.name.startsWith(Test.ASSIGNID0 + "_"   ||
-                    team.name.startsWith(Test.ASSIGNID1 + "_"))
-                ) {
-                    Log.test("Removing stale team: " + team.name);
-                    let val = await gh.deleteTeam(team.id);
-                    await gh.delay(DELAY_SHORT);
-                    done = true;
-                }
-            }
-            if (done === false) {
-                if (team.name.startsWith(TEAMNAME) === true) {
-                    Log.test("Removing stale team: " + team.name);
-                    let val = await gh.deleteTeam(team.id);
-                    await gh.delay(DELAY_SHORT);
-                }
-            }
-        }
-        Log.test('GitHubActionSpec::deleteStale() - done');
-        return true;
-    }
-
 });
-
-const REPONAME = getProjectPrefix() + Test.ASSIGNID0;
-const REPONAME2 = getProjectPrefix() + Test.ASSIGNID1;
-const REPONAME3 = getProjectPrefix() + Test.REPONAME3;
-const TEAMNAME = getTeamPrefix() + Test.TEAMNAME1;
-
-let TESTREPONAMES = [
-    "testtest__repo1",
-    "secap_cpscbot",
-    "secap_rthse2",
-    "secap_ubcbot",
-    "secap_testtest__repo1",
-    "TESTrepo1",
-    "TESTrepo2",
-    "TESTrepo3",
-    Test.REALUSER1.id + "_grades",
-    Test.REALUSER2.id + "_grades",
-];
-
-let TESTTEAMNAMES = [
-    "rtholmes",
-    "ubcbot",
-    "rthse2",
-    "cpscbot",
-    "TEST__X__t_TESTteam1",
-    "TESTteam1",
-    "TESTteam2",
-    "TESTteam3"
-];
 
 function getProjectPrefix(): string {
     return "TEST__X__secap_";

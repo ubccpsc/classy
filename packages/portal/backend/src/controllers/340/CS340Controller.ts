@@ -44,8 +44,6 @@ export class CS340Controller extends CourseController {
         const team = await db.getTeam(tName);
         const repo = await db.getRepository(rName);
 
-        let count = 0;
-
         if (team === null && repo === null) {
             Log.info('CS340Controller::computeNames( ... ) - done; t: ' + tName + ', r: ' + rName);
             return {teamName: tName, repoName: rName};

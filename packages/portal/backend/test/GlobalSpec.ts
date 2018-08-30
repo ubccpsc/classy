@@ -15,6 +15,7 @@ import {PersonController} from "../src/controllers/PersonController";
 import {RepositoryController} from "../src/controllers/RepositoryController";
 import {TeamController} from "../src/controllers/TeamController";
 import {Auth, Course, Deliverable, Grade, Person, Repository, Result, Team} from "../src/Types";
+import {GitHubActions} from "../src/controllers/GitHubActions";
 
 if (typeof it === 'function') {
     // only if we're running in mocha
@@ -689,5 +690,101 @@ export class Test {
         };
 
         return Util.clone(result) as Result;
+    }
+
+
+    public static async deleteStaleRepositories(): Promise<boolean> {
+        Log.test('GlobalSpec::deleteStaleRepositories() - start');
+        let gh: GitHubActions = new GitHubActions();
+        let repos = await gh.listRepos();
+
+        let TESTREPONAMES = [
+            "testtest__repo1",
+            "secap_cpscbot",
+            "secap_rthse2",
+            "secap_ubcbot",
+            "secap_testtest__repo1",
+            "TESTrepo1",
+            "TESTrepo2",
+            "TESTrepo3"
+        ];
+
+        let TESTTEAMNAMES = [
+            "rtholmes",
+            "ubcbot",
+            "rthse2",
+            "cpscbot",
+            "TEST__X__t_TESTteam1",
+            "TESTteam1",
+            "TESTteam2",
+            "TESTteam3"
+        ];
+
+        let DELAY_SHORT = 200;
+        const REPONAME = "TEST__X__secap_" + Test.ASSIGNID0;
+        const REPONAME2 = "TEST__X__secap_" + Test.ASSIGNID1;
+        const TEAMNAME = "TEST__X__t_" + Test.TEAMNAME1;
+
+
+        // delete test repos if needed
+        for (const repo of repos as any) {
+            for (const r of TESTREPONAMES) {
+                if (repo.name === r) {
+                    Log.info('Removing stale repo: ' + repo.name);
+                    let val = await gh.deleteRepo(r);
+                    await gh.delay(DELAY_SHORT);
+                    // expect(val).to.be.true;
+                }
+            }
+        }
+
+        // delete test repos if needed
+        for (const repo of repos as any) {
+            Log.info('Evaluating repo: ' + repo.name);
+            if (repo.name.indexOf('TEST__X__') === 0        ||
+                repo.name.startsWith(REPONAME)              ||
+                repo.name.startsWith(REPONAME2)             ||
+                repo.name.startsWith("test_")               ||
+                repo.name.startsWith(Test.ASSIGNID0 + "_")  ||
+                repo.name.startsWith(Test.ASSIGNID1 + "_")  ||
+                repo.name.endsWith("_grades")) {
+                Log.info('Removing stale repo: ' + repo.name);
+                let val = await gh.deleteRepo(repo.name);
+                // expect(val).to.be.true;
+                let teamName = repo.name.substr(15);
+                Log.info('Adding stale team name: ' + repo.name);
+                TESTTEAMNAMES.push(teamName);
+            }
+        }
+
+        // delete teams if needed
+        let teams = await gh.listTeams();
+        expect(teams).to.be.an('array');
+        // expect(teams.length > 0).to.be.true; // can have 0 teams
+        Log.test('All Teams: ' + JSON.stringify(teams));
+        Log.test('Stale Teams: ' + JSON.stringify(TESTTEAMNAMES));
+        for (const team of teams as any) {
+            // Log.info('Evaluating team: ' + JSON.stringify(team));
+            let done = false;
+            for (const t of TESTTEAMNAMES) {
+                if (team.name === t ||
+                    team.name.startsWith(Test.ASSIGNID0 + "_")
+                ) {
+                    Log.test("Removing stale team: " + team.name);
+                    let val = await gh.deleteTeam(team.id);
+                    await gh.delay(DELAY_SHORT);
+                    done = true;
+                }
+            }
+            if (done === false) {
+                if (team.name.startsWith(TEAMNAME) === true) {
+                    Log.test("Removing stale team: " + team.name);
+                    let val = await gh.deleteTeam(team.id);
+                    await gh.delay(DELAY_SHORT);
+                }
+            }
+        }
+        Log.test('GitHubActionSpec::deleteStale() - done');
+        return true;
     }
 }
