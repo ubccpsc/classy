@@ -386,7 +386,7 @@ export class Test {
             },
             visibleToStudents: true,
 
-            rubric: {}, // TODO: should be newAssignmentInfo
+            rubric: {},
             custom: newAssignmentInfo
         };
 
@@ -429,7 +429,7 @@ export class Test {
         const newDeliv: Deliverable = {
             id:               Test.ASSIGNID1,
             URL:              "",
-            repoPrefix:       Test.ASSIGNID1 + "_",
+            repoPrefix:       "",
             visibleToStudents:false,
             rubric:           {},
             openTimestamp:    openNumber,
@@ -439,7 +439,7 @@ export class Test {
             teamMaxSize:      1,
             teamSameLab:      false,
             teamStudentsForm: false,
-            teamPrefix:       Test.ASSIGNID1 + "_",
+            teamPrefix:       "",
             autotest:         {
                 dockerImage:        'testImage',
                 studentDelay:       60 * 60 * 12, // 12h

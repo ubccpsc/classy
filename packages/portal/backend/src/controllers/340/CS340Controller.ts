@@ -44,10 +44,21 @@ export class CS340Controller extends CourseController {
         const team = await db.getTeam(tName);
         const repo = await db.getRepository(rName);
 
+        let count = 0;
+
         if (team === null && repo === null) {
             Log.info('CS340Controller::computeNames( ... ) - done; t: ' + tName + ', r: ' + rName);
             return {teamName: tName, repoName: rName};
         } else {
+            for(let count = 1; count < 30; count++) {
+                const team = await db.getTeam(tName + count);
+                const repo = await db.getRepository(rName + count);
+                if(team === null && repo === null) {
+                    Log.info('CS340Controller::computeNames( ... ) - done; t: ' + tName + count + ', r: ' + rName + count);
+                    return {teamName: tName + count, repoName: rName + count};
+                }
+            }
+
             throw new Error("CS340Controller::computeNames( ... ) - names not available; t: " + tName + "; r: " + rName);
         }
     }
