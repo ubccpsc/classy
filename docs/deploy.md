@@ -29,7 +29,7 @@ sudo. Note: this effectively grants the user root access on the host system.
 permission with the host (this is done in the docker-compose.yml file).
 
     ```bash
-    adduser --system --shell /bin/nologin classy
+    sudo adduser --system --shell /bin/nologin classy
     ```
     
     Note: make sure you logout and back in to see the new user and group.
@@ -44,6 +44,7 @@ permission with the host (this is done in the docker-compose.yml file).
  
     # Set GRADER_HOST_DIR to /var/opt/classy/runs
     # Set database storage to /var/opt/classy/db
+    sudo mkdir /var/opt/classy  
     sudo mkdir /var/opt/classy/db  # for database storage
     sudo mkdir /var/opt/classy/runs  # for grading container output
     sudo chown -R classy:classy /var/opt/classy
@@ -53,7 +54,7 @@ permission with the host (this is done in the docker-compose.yml file).
 4. Get the SSL certificates and make them readable by the `docker` user:
 
     ```bash
-    sudo certbot certonly --standalone -d classy.cs.ubc.ca
+    sudo certbot certonly --standalone -d classy.cs.ubc.ca # OR WHATEVER HOSTNAME YOU'RE USING
     sudo chgrp -R docker /etc/letsencrypt/archive
     sudo chmod -R g+rx /etc/letsencrypt/archive/
     ```
@@ -65,7 +66,7 @@ permission with the host (this is done in the docker-compose.yml file).
        need to increment the version by 1), and
     4. Restart any services that use the SSL certificates.
 
-5. Add the firewall rules to block unwanted traffic.
+5. Add the firewall rules to block unwanted traffic (if using autotest).
 
     ```bash
     # These two rules will block all traffic coming FROM the subnet (i.e. grading container)
@@ -113,16 +114,17 @@ permission with the host (this is done in the docker-compose.yml file).
 
 ### Configuration
 
-1. Configure the `.env`
+1. Configure the `.env` (more instructions inside this file)
 
     ```bash
+    sudo su - # maybe there is a better way?
     cd /opt/classy
     cp .env.sample .env
     nano .env
     ```
 
 2. Build the grading docker image(s). This is the image that will be used by the grader service when creating a specific
-   container instance to run a student's commit.
+   container instance to run a student's commit. (Only needed if using autotest.)
 
     ```bash
     docker build --tag cpsc310image \
@@ -151,7 +153,7 @@ permission with the host (this is done in the docker-compose.yml file).
     docker-compose up --detach
     ```
 
-5. Build and start the extended system.
+5. Build and start the extended system (if using autotest).
     
     ```bash
     cd /opt/classy
