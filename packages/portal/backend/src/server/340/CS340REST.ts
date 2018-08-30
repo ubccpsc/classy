@@ -19,6 +19,7 @@ import {TeamController} from "../../controllers/TeamController";
 import {DatabaseController} from "../../controllers/DatabaseController";
 import {RepositoryTransport, TeamTransport} from "../../../../../common/types/PortalTypes";
 import {RepositoryController} from "../../controllers/RepositoryController";
+import {AuthController} from "../../controllers/AuthController";
 
 export default class CS340REST implements IREST {
     public constructor() {
@@ -98,6 +99,13 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isValid(user, token);
+        if(!authLevel) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
         Log.info("CS340REST::getAllDelivInfo() - start");
         let dc: DeliverablesController = new DeliverablesController();
         try {
@@ -126,6 +134,13 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
         Log.info("CS340REST::verifyAllScheduledJobs() - start");
 
         let ac: AssignmentController = new AssignmentController();
@@ -150,6 +165,13 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
         const aid = req.params.aid;
 
         Log.info("CS340REST::verifyScheduledJobs( " + aid + ") - start");
@@ -176,6 +198,13 @@ export default class CS340REST implements IREST {
         const org = req.headers.org;
         // TODO [Jonathan]: Authenticate token
 
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
         const teamid: string = req.params.teamid;
 
         let db: DatabaseController = DatabaseController.getInstance();
@@ -202,6 +231,13 @@ export default class CS340REST implements IREST {
         const org = req.headers.org;
         // TODO [Jonathan]: Authenticate token
 
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
         const sid: string = req.params.sid;
         const delivid: string = req.params.delivid;
 
@@ -225,11 +261,18 @@ export default class CS340REST implements IREST {
         return next();
     }
 
-    public static getAssignmentGrade(req: any, res: any, next: any) {
+    public static async getAssignmentGrade(req: any, res: any, next: any) {
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
 
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
         // TODO [Jonathan]: Authenticate token
 
         const sid: string = req.params.sid;
@@ -253,12 +296,19 @@ export default class CS340REST implements IREST {
         */
     }
 
-    public static getAssignmentRubric(req: any, res: any, next: any) {
+    public static async getAssignmentRubric(req: any, res: any, next: any) {
         // TODO [Jonathan]: Get Assignment rubric for grading view rendering
         Log.info("cs340REST::getAssignmentRubric(...) - start");
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
         const aid = req.params.aid;                 // Assignment ID
         Log.info("cs340REST::getAssignmentRubric(...) - aid: " + aid);
 
@@ -289,12 +339,19 @@ export default class CS340REST implements IREST {
         return next();
     }
 
-    public static getAllAssignmentRubrics(req: any, res: any, next: any) {
+    public static async getAllAssignmentRubrics(req: any, res: any, next: any) {
         Log.info("cs340REST::getAllGradingRubrics(...) - start");
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
 
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
         let delivController: DeliverablesController = new DeliverablesController();
         delivController.getAllDeliverables().then((result) => {
             let assignRubrics: AssignmentGradingRubric[] = [];
@@ -358,6 +415,13 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
         const delivid = req.params.delivid;
 
         // res.send(501, {
@@ -373,12 +437,19 @@ export default class CS340REST implements IREST {
         return next();
     }
 
-    public static setAssignmentGrade(req: any, res: any, next: any) {
+    public static async setAssignmentGrade(req: any, res: any, next: any) {
         // TODO [Jonathan]: Set assignment grade for the respective student
         // TODO [Jonathan]: Request is well-formed (complies with rubric format)
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
         Log.info("CS340REST::setAssignmentGrade() - start");
         let reqBody: AssignmentGrade;
         if (typeof req.body === 'string') {
@@ -437,6 +508,13 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
         let ac: AssignmentController = new AssignmentController();
 
         Log.info("CS340REST::publishAllFinalGrades() - start");
@@ -450,11 +528,18 @@ export default class CS340REST implements IREST {
         return next();
     }
 
-    public static getAllDeliverables(req: any, res: any, next: any) {
+    public static async getAllDeliverables(req: any, res: any, next: any) {
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
 
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
         let delivController: DeliverablesController = new DeliverablesController();
 
         delivController.getAllDeliverables().then((result) => {
@@ -467,11 +552,18 @@ export default class CS340REST implements IREST {
         // return next();
     }
 
-    public static getAllGrades(req: any, res: any, next: any) {
+    public static async getAllGrades(req: any, res: any, next: any) {
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
 
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
         let gradeController: GradesController = new GradesController();
         gradeController.getAllGrades().then((result) => {
             res.send(200, {response: result});
@@ -483,10 +575,19 @@ export default class CS340REST implements IREST {
 
     // TODO: Should we move something like this to the general routes?
     // Probably want to rename this to something better
-    public static getAllSubmissionsByDelivID(req: any, res: any, next: any) {
+    public static async getAllSubmissionsByDelivID(req: any, res: any, next: any) {
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
+
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
+
         const delivId = req.params.id;                  // Deliverable ID
 
         let gradeController: GradesController = new GradesController();
@@ -508,12 +609,19 @@ export default class CS340REST implements IREST {
         return next();
     }
 
-    public static getPersonByID(req: any, res: any, next: any) {
+    public static async getPersonByID(req: any, res: any, next: any) {
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
         const gitHubUserName = req.params.gitHubUserName;                  // gitHubUserName
 
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
         let personController: PersonController = new PersonController();
 
         personController.getPerson(gitHubUserName).then((result) => {
@@ -530,11 +638,18 @@ export default class CS340REST implements IREST {
         return next();
     }
 
-    public static getAllPersons(req: any, res: any, next: any) {
+    public static async getAllPersons(req: any, res: any, next: any) {
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
 
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
         let personController: PersonController = new PersonController();
 
         personController.getAllPeople().then(result => {
@@ -565,6 +680,13 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
         // get deliverable ID
         let delivid: string = req.params.delivid;
 
@@ -584,6 +706,13 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
         // get deliverable ID
         let delivid: string = req.params.delivid;
 
@@ -615,6 +744,13 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
         // let
         Log.info("CS340REST::intializeAllRepositories(..) - start");
         let delivId: string = req.params.delivid;
@@ -647,6 +783,13 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
         // let
         Log.info("CS340REST::intializeAllRepositories(..) - start");
         let delivId: string = req.params.delivid;
@@ -678,6 +821,13 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
         // let
         Log.info("CS340REST::closeAllRepositories(..) - start");
         let delivId: string = req.params.delivid;
@@ -710,6 +860,13 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
         Log.warn("CS340REST::deleteRepository(..) - start");
         let repoName: string = req.params.reponame;
         let delivId: string = req.params.delivid;
@@ -732,6 +889,13 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                    "an error, please course admins"});
+            return next();
+        }
         Log.warn("CS340REST::deleteRepository(..) - start");
         let delivId: string = req.params.delivid;
 

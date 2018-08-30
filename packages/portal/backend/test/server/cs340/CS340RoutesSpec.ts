@@ -16,27 +16,6 @@ import {AssignmentController} from "../../../src/controllers/340/AssignmentContr
 const loadFirst = require('../../GlobalSpec');
 const https = require('https');
 
-// import {expect} from "chai";
-// import "mocha";
-//
-// import Log from "../../../../../common/Log";
-// import {Test} from "../../GlobalSpec";
-//
-// import BackendServer from "../../../src/server/BackendServer";
-// import {Grade, Person} from "../../../src/Types";
-// import {PersonController} from "../../../src/controllers/PersonController";
-// import Config, {ConfigKey} from "../../../../../common/Config";
-// import {GitHubActions} from "../../../src/controllers/GitHubActions";
-// import {DatabaseController} from "../../../src/controllers/DatabaseController";
-// import {RepositoryController} from "../../../src/controllers/RepositoryController";
-//
-// const loadFirst = require('../../GlobalSpec');
-//
-// import restify = require('restify');
-//
-// const request = require('supertest');
-// const https = require('https');
-
 const TIMEOUT = 7500;
 
 let DELAY_SEC = 1000;
@@ -44,6 +23,10 @@ let DELAY_SHORT = 200;
 
 
 const REPONAME = getProjectPrefix() + Test.ASSIGNID0;
+
+const adminUserName = Test.ADMIN1.id;
+let adminUserToken: string;
+
 
 describe("CS340: Routes", () => {
     let app: restify.Server = null;
@@ -84,6 +67,13 @@ describe("CS340: Routes", () => {
 
         name = Config.getInstance().getProp(ConfigKey.name);
 
+        Log.test("CS340RoutesSpec::before - token set");
+        const auth = await db.getAuth(adminUserName);
+        adminUserToken = auth.token;
+
+        // make sure there are some normal student tokens
+        await db.writeAuth({personId: Test.USER1.id, token: Test.REALTOKEN}); // create an auth record
+
         return server.start().then(function() {
             Log.test('CS340Routes::before - server started');
             // Log.test('orgName: ' + Test.ORGNAME);
@@ -120,8 +110,8 @@ describe("CS340: Routes", () => {
 
         try {
             const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
-            // response = await request(app).get(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).get(url).set({user: adminUserName, token: adminUserToken});
+            // response = await request(app).get(url).send({}).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
             Log.test("ERROR: " + err);
             // fail(err);
@@ -139,7 +129,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/getAssignmentRubric/' + aid;
         try {
-            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).get(url).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -154,7 +144,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/getAllAssignmentRubrics/';
         try {
-            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).get(url).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -212,7 +202,7 @@ describe("CS340: Routes", () => {
         // TODO: Verify this
 
         try {
-            response = await request(app).put(url).send(aPayload).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).put(url).send(aPayload).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -228,7 +218,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/getAllGrades';
         try {
-            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).get(url).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -243,7 +233,22 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/getAllDelivInfo';
         try {
-            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).get(url).set({user: adminUserName, token: adminUserToken});
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            fail(err);
+        }
+
+        expect(response).to.not.be.null;
+        expect(response.status).to.be.equal(200);
+        expect(response.body.response).to.not.be.null;
+    });
+
+    it("Should be able to get all information on deliverables as a student.", async function() {
+        let response = null;
+        const url = '/portal/cs340/getAllDelivInfo';
+        try {
+            response = await request(app).get(url).set({name: name, user: Test.USER1.id, token: Test.REALTOKEN});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -260,7 +265,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/getAllSubmissionsByDelivID/' + aid;
         try {
-            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).get(url).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -281,7 +286,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/getPersonByID/' + sid;
         try {
-            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).get(url).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -296,7 +301,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/getAllPersons';
         try {
-            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).get(url).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -313,7 +318,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/updateAssignmentStatus/' + aid;
         try {
-            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).get(url).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -331,7 +336,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/getAssignmentStatus/' + aid;
         try {
-            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).get(url).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -349,7 +354,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/initializeAllRepositories/' + aid;
         try {
-            response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).post(url).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -368,7 +373,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/publishAllRepositories/' + aid;
         try {
-            response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).post(url).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -386,7 +391,41 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/publishAllRepositories/' + aid;
         try {
-            response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).post(url).set({user: adminUserName, token: adminUserToken});
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            fail(err);
+        }
+
+        expect(response).to.not.be.null;
+        expect(response.status).to.be.equal(200);
+        expect(response.body.response).to.not.be.null;
+    }).timeout(2 * TIMEOUT);
+
+    it("Should be able to retrieve a repository from specifying a team.", async function() {
+        let response = null;
+
+        const url = '/portal/cs340/getRepository/' + Test.ASSIGNID0 + "_" + Test.REALUSER1.id;
+        try {
+            response = await request(app).get(url).set({user: adminUserName, token: adminUserToken});
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            fail(err);
+        }
+
+        expect(response).to.not.be.null;
+        expect(response.status).to.be.equal(200);
+        expect(response.body.response).not.be.null;
+    });
+
+    it("Should be able to close all repositories.", async function() {
+        let response = null;
+        let aid = Test.ASSIGNID0;
+
+
+        const url = '/portal/cs340/closeAllRepositories/' + aid;
+        try {
+            response = await request(app).post(url).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -406,23 +445,9 @@ describe("CS340: Routes", () => {
 
         expect(allPeople.length).to.be.at.least(0);
 
-        // find rthse2
-        let index = -1;
-        for (let i = 0; i < allPeople.length; i++) {
-            if (allPeople[i].githubId === 'rthse2') {
-
-                index = i;
-                break;
-            }
-        }
-
-        if (index === -1) {
-            fail("Unable to find rthse2 in records, something is wrong with the database...");
-        }
-
         let aPayload = {
             assignmentID: aid,
-            studentID:    allPeople[index].id,
+            studentID:    Test.REALUSER1.id,
             questions:    [
                 {
                     questionName: "Question 1",
@@ -458,7 +483,7 @@ describe("CS340: Routes", () => {
         const url = '/portal/cs340/setAssignmentGrade';
 
         try {
-            response = await request(app).put(url).send(aPayload).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).put(url).send(aPayload).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -479,25 +504,12 @@ describe("CS340: Routes", () => {
 
         expect(allPeople.length).to.be.at.least(0);
 
-        // find rthse2
-        let index = -1;
-        for (let i = 0; i < allPeople.length; i++) {
-            if (allPeople[i].githubId === 'rthse2') {
-                index = i;
-                break;
-            }
-        }
-
-        if (index === -1) {
-            fail("Unable to find rthse2 in records, something is wrong with the database...");
-        }
-
-        let sid = allPeople[index].id;
+        let sid = Test.REALUSER1.id;
 
         let response = null;
         const url = '/portal/cs340/getAssignmentGrade/' + sid + '/' + aid;
         try {
-            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).get(url).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -508,40 +520,6 @@ describe("CS340: Routes", () => {
         expect(response.body.response).to.not.be.null;
     }).timeout(2 * TIMEOUT);
 
-
-    it("Should be able to retrieve a repository from specifying a team.", async function() {
-        let response = null;
-
-        const url = '/portal/cs340/getRepository/' + Test.ASSIGNID0 + "_" + Test.REALUSER1.id;
-        try {
-            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
-        } catch (err) {
-            Log.test("ERROR: " + err);
-            fail(err);
-        }
-
-        expect(response).to.not.be.null;
-        expect(response.status).to.be.equal(200);
-        expect(response.body.response).not.be.null;
-    });
-
-    it("Should be able to close all repositories.", async function() {
-        let response = null;
-        let aid = Test.ASSIGNID0;
-
-
-        const url = '/portal/cs340/closeAllRepositories/' + aid;
-        try {
-            response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
-        } catch (err) {
-            Log.test("ERROR: " + err);
-            fail(err);
-        }
-
-        expect(response).to.not.be.null;
-        expect(response.status).to.be.equal(200);
-        expect(response.body.response).to.not.be.null;
-    }).timeout(2 * TIMEOUT);
 
     it("Should be able to delete a specific repository.", async function() {
         let response = null;
@@ -570,7 +548,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/deleteRepository/' + aid + '/' + aid + '_' + sid;
         try {
-            response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).post(url).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -588,7 +566,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/deleteAllRepositories/' + aid;
         try {
-            response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).post(url).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -605,7 +583,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/verifyScheduledJobs/' + aid;
         try {
-            response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).post(url).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -620,7 +598,7 @@ describe("CS340: Routes", () => {
         let response = null;
         const url = '/portal/cs340/verifyScheduledJobs';
         try {
-            response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).post(url).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -637,7 +615,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/getStudentTeamByDeliv/' + Test.REALUSER1.id + '/' + Test.ASSIGNID1;
         try {
-            response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).get(url).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -654,7 +632,7 @@ describe("CS340: Routes", () => {
 
         const url = '/portal/cs340/releaseGrades/' + Test.ASSIGNID1;
         try {
-            response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).post(url).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -677,7 +655,7 @@ describe("CS340: Routes", () => {
         const url = '/portal/cs340/publishAllFinalGrades';
 
         try {
-            response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            response = await request(app).post(url).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
             Log.test("ERROR: " + err);
             fail(err);
@@ -690,12 +668,390 @@ describe("CS340: Routes", () => {
 
     describe("Failing API tests", () => {
         // before()
+
+        it("Should not be able to get all deliverables as an invalid user.", async function() {
+            let response = null;
+            const url = '/portal/cs340/getAllDeliverables';
+
+            try {
+                response = await request(app).get(url).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(401);
+            expect(response.body.response).to.be.undefined;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to get an assignment rubric as an invalid user.", async function() {
+            let response = null;
+            const url = '/portal/cs340/getAssignmentRubric/' + Test.ASSIGNID0;
+
+            try {
+                response = await request(app).get(url).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(401);
+            expect(response.body.response).to.be.undefined;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to get all rubrics as an invalid user.", async function() {
+            let response = null;
+            const url = '/portal/cs340/getAllAssignmentRubrics';
+
+            try {
+                response = await request(app).get(url).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(401);
+            expect(response.body.response).to.be.undefined;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to get all grades as an invalid user.", async function() {
+            let response = null;
+            const url = '/portal/cs340/getAllGrades';
+
+            try {
+                response = await request(app).get(url).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(401);
+            expect(response.body.response).to.be.undefined;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to get an assignment grade " +
+            "as an invalid user.", async function() {
+            let response = null;
+            const url = '/portal/cs340/getAssignmentGrade/' + Test.REALUSER1.id + "/" + Test.ASSIGNID0;
+
+            try {
+                response = await request(app).get(url).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(401);
+            expect(response.body.response).to.be.undefined;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to get all submissions as an invalid user.", async function() {
+            let response = null;
+            const url = '/portal/cs340/getAllSubmissionsByDelivID/'  + Test.ASSIGNID0;
+
+            try {
+                response = await request(app).get(url).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(401);
+            expect(response.body.response).to.be.undefined;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to get a person using their GithubID as an invalid user.", async function() {
+            let response = null;
+            const url = '/portal/cs340/getPersonByID/'  + Test.REALUSER1.github;
+
+            try {
+                response = await request(app).get(url).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(401);
+            expect(response.body.response).to.be.undefined;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to get all persons as an invalid user.", async function() {
+            let response = null;
+            const url = '/portal/cs340/getAllPersons';
+
+            try {
+                response = await request(app).get(url).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(401);
+            expect(response.body.response).to.be.undefined;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to update the assignment status as an invalid user.", async function() {
+            let response = null;
+            const url = '/portal/cs340/updateAssignmentStatus/' + Test.ASSIGNID0;
+
+            try {
+                response = await request(app).get(url).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(401);
+            expect(response.body.response).to.be.undefined;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to get a student team as an invalid user.", async function() {
+            let response = null;
+            const url = '/portal/cs340/getStudentTeamByDeliv/' + Test.REALUSER1.id + "/" + Test.ASSIGNID0;
+
+            try {
+                response = await request(app).get(url).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(401);
+            expect(response.body.response).to.be.undefined;
+            expect(response.body.error).to.not.be.null;
+        });
+
+
+        it("Should not be able to get a repository from a team as an invalid user.", async function() {
+            let response = null;
+            const url = '/portal/cs340/getRepository/' + Test.ASSIGNTEAMNAME0;
+
+            try {
+                response = await request(app).get(url).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(401);
+            expect(response.body.response).to.be.undefined;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to get all deliverable infos as an invalid user.", async function() {
+            let response = null;
+            const url = '/portal/cs340/getAllDelivInfo';
+
+            try {
+                response = await request(app).get(url).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(401);
+            expect(response.body.response).to.be.undefined;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to set an assignment grade as an invalid user.", async function() {
+            let response = null;
+            const url = '/portal/cs340/setAssignmentGrade';
+
+            try {
+                response = await request(app).put(url).send({data: null}).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(401);
+            expect(response.body.response).to.be.undefined;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to release grades as an invalid user.", async function() {
+            let response = null;
+            const url = '/portal/cs340/releaseGrades/' + Test.ASSIGNID0;
+
+            try {
+                response = await request(app).post(url).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(401);
+            expect(response.body.response).to.be.undefined;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to initialize all repos as an invalid user.", async function() {
+            let response = null;
+            const url = '/portal/cs340/initializeAllRepositories/' + Test.ASSIGNID0;
+
+            try {
+                response = await request(app).post(url).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(401);
+            expect(response.body.response).to.be.undefined;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to publish all repos as an invalid user.", async function() {
+            let response = null;
+            const url = '/portal/cs340/publishAllRepositories/' + Test.ASSIGNID0;
+
+            try {
+                response = await request(app).post(url).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(401);
+            expect(response.body.response).to.be.undefined;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to close all repos as an invalid user.", async function() {
+            let response = null;
+            const url = '/portal/cs340/closeAllRepositories/' + Test.ASSIGNID0;
+
+            try {
+                response = await request(app).post(url).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(401);
+            expect(response.body.response).to.be.undefined;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to delete a repo as an invalid user.", async function() {
+            let response = null;
+            const url = '/portal/cs340/deleteRepository/' + Test.ASSIGNID0 + "/" + Test.REPONAME1;
+
+            try {
+                response = await request(app).post(url).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(401);
+            expect(response.body.response).to.be.undefined;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to delete all repos as an invalid user.", async function() {
+            let response = null;
+            const url = '/portal/cs340/deleteAllRepositories/' + Test.ASSIGNID0;
+
+            try {
+                response = await request(app).post(url).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(401);
+            expect(response.body.response).to.be.undefined;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to verify scheduled jobs for an assignment as an invalid user.", async function() {
+            let response = null;
+            const url = '/portal/cs340/verifyScheduledJobs/' + Test.ASSIGNID0;
+
+            try {
+                response = await request(app).post(url).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(401);
+            expect(response.body.response).to.be.undefined;
+            expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to verify scheduled jobs for all assignments as an invalid user.", async function() {
+            let response = null;
+            const url = '/portal/cs340/verifyScheduledJobs';
+
+            try {
+                response = await request(app).post(url).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(401);
+            expect(response.body.response).to.be.undefined;
+            expect(response.body.error).to.not.be.null;
+        });
+
+
+        it("Should not be able to publish final grades as an invalid user.", async function() {
+            let response = null;
+            const url = '/portal/cs340/publishAllFinalGrades';
+
+            try {
+                response = await request(app).post(url).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(401);
+            expect(response.body.response).to.be.undefined;
+            expect(response.body.error).to.not.be.null;
+        });
+
         it("Should not be able to get an assignment grade that doesn't exist.", async function() {
             let response = null;
             const url = '/portal/cs340/getAssignmentGrade/'+ "invalidStudent" + "/" + "invalidAssignmentId";
 
             try {
-                response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+                response = await request(app).get(url).set({user: adminUserName, token: adminUserToken});
             } catch (err) {
                 Log.test("ERROR: " + err);
                 fail(err);
@@ -713,7 +1069,7 @@ describe("CS340: Routes", () => {
             const url = '/portal/cs340/getStudentTeamByDeliv/'+ "invalidStudent" + "/" + "invalidAssignmentId";
 
             try {
-                response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+                response = await request(app).get(url).set({user: adminUserName, token: adminUserToken});
             } catch (err) {
                 Log.test("ERROR: " + err);
                 fail(err);
@@ -730,7 +1086,7 @@ describe("CS340: Routes", () => {
             const url = '/portal/cs340/getRepository/'+ "invalidTeamId";
 
             try {
-                response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+                response = await request(app).get(url).set({user: adminUserName, token: adminUserToken});
             } catch (err) {
                 Log.test("ERROR: " + err);
                 fail(err);
@@ -748,7 +1104,7 @@ describe("CS340: Routes", () => {
             const url = '/portal/cs340/getAssignmentRubric/' + "invalidAssignmentID";
 
             try {
-                response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+                response = await request(app).get(url).set({user: adminUserName, token: adminUserToken});
             } catch (err) {
                 Log.test("ERROR: " + err);
                 fail(err);
@@ -766,7 +1122,7 @@ describe("CS340: Routes", () => {
             const url = '/portal/cs340/getAssignmentRubric/' + Test.DELIVID0;
 
             try {
-                response = await request(app).get(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+                response = await request(app).get(url).set({user: adminUserName, token: adminUserToken});
             } catch (err) {
                 Log.test("ERROR: " + err);
                 fail(err);
@@ -784,7 +1140,7 @@ describe("CS340: Routes", () => {
             const url = '/portal/cs340/initializeAllRepositories/' + "invalidDeliverableID";
 
             try {
-                response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+                response = await request(app).post(url).set({user: adminUserName, token: adminUserToken});
             } catch (err) {
                 Log.test("ERROR: " + err);
                 fail(err);
@@ -802,7 +1158,7 @@ describe("CS340: Routes", () => {
             const url = '/portal/cs340/initializeAllRepositories/' + Test.DELIVID0;
 
             try {
-                response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+                response = await request(app).post(url).set({user: adminUserName, token: adminUserToken});
             } catch (err) {
                 Log.test("ERROR: " + err);
                 fail(err);
@@ -820,7 +1176,7 @@ describe("CS340: Routes", () => {
             const url = '/portal/cs340/publishAllRepositories/' + "invalidDeliverableID";
 
             try {
-                response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+                response = await request(app).post(url).set({user: adminUserName, token: adminUserToken});
             } catch (err) {
                 Log.test("ERROR: " + err);
                 fail(err);
@@ -838,7 +1194,7 @@ describe("CS340: Routes", () => {
             const url = '/portal/cs340/publishAllRepositories/' + Test.DELIVID0;
 
             try {
-                response = await request(app).post(url).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+                response = await request(app).post(url).set({user: adminUserName, token: adminUserToken});
             } catch (err) {
                 Log.test("ERROR: " + err);
                 fail(err);
