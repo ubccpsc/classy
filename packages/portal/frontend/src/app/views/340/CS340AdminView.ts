@@ -331,9 +331,9 @@ export class CS340AdminView extends AdminView {
             Log.info("Pressed Final Grades release");
 
             // get all deliverables
-            let deliverables: Deliverabe[] = await that.getDeliverables();
+            let deliverables: Deliverable[] = await that.getDeliverables();
 
-            totalSum = 0;
+            let totalSum = 0;
             for(const deliv of deliverables) {
                 if(deliv.custom === null || typeof (deliv.custom as AssignmentInfo).courseWeight === "undefined") {
                     totalSum +=  (deliv.custom as AssignmentInfo).courseWeight;
