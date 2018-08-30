@@ -18,7 +18,7 @@ The following software should be installed on the host before attempting to depl
 
 ### Users and Permissions
 
-0. [Optional] Add your user account to the `docker` group to avoid having to run docker/docker-compose commands with
+0. [Optional] Add your user account (and the classy administrator) to the `docker` group to avoid having to run docker/docker-compose commands with
 sudo. Note: this effectively grants the user root access on the host system.
 
     ```bash
@@ -34,7 +34,13 @@ permission with the host (this is done in the docker-compose.yml file).
     
     Note: make sure you logout and back in to see the new user and group.
 
-2. Install classy in `/opt/classy`:
+2. Add your user account (and the classy administrator) to the `classy` group.
+
+    ```bash
+    sudo usermod --append --groups classy USERNAME
+    ```
+
+3. Install classy in `/opt/classy`:
 
     ```bash
     git clone https://github.com/ubccpsc/classy.git ~/classy
@@ -44,7 +50,8 @@ permission with the host (this is done in the docker-compose.yml file).
  
     # Set GRADER_HOST_DIR to /var/opt/classy/runs
     # Set database storage to /var/opt/classy/db
-    sudo mkdir /var/opt/classy  
+    sudo mkdir /var/opt/classy
+    sudo mkdir /var/opt/classy/backups  # for database backups
     sudo mkdir /var/opt/classy/db  # for database storage
     sudo mkdir /var/opt/classy/runs  # for grading container output
     sudo chown -R classy:classy /var/opt/classy
@@ -109,7 +116,18 @@ permission with the host (this is done in the docker-compose.yml file).
     docker run --rm=true --net grading_net alpine wget http://HOST_IP:SERVICE_PORT
     docker run --rm=true --net grading_net --host-add=HOSTNAME:HOST_IP alpine wget http://HOSTNAME:SERVICE_PORT
     ```
+
+7. Add a cron job to backup the database daily at 0400.
+   
+    ```bash
+    echo '0 4 * * * root docker exec db mongodump --gzip --archive > /var/opt/classy/backups/classydb.$(date +\%Y\%m\%dT\%H\%M\%S).gz' | sudo tee /etc/cron.d/backup-classy-db
+    ```
     
+    **Restore:** To restore a backup you can use `cat BACKUP_NAME | docker exec -i db mongorestore --gzip --archive`.
+    
+    Note: you can also use the additional options for [mongodump](https://docs.mongodb.com/manual/reference/program/mongodump/)
+    and [mongorestore](https://docs.mongodb.com/manual/reference/program/mongorestore/) described in the docs.
+
 ## Classy Administrator
 
 ### Configuration
@@ -117,7 +135,7 @@ permission with the host (this is done in the docker-compose.yml file).
 1. Configure the `.env` (more instructions inside this file)
 
     ```bash
-    sudo su - # maybe there is a better way?
+    sudo su - # this shouldn't be needed with the updated steps; leaving just in case.
     cd /opt/classy
     cp .env.sample .env
     nano .env
