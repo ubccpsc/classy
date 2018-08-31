@@ -394,7 +394,15 @@ export class Test {
         // const newDelivSuccess =
         await dc.saveDeliverable(newDeliv);
 
+        // await this.createTeam(this.ASSIGNTEAMNAME0, Test.ASSIGNID0, [Test.REALUSER1.id]);
+    }
+
+    public static async prepareAssignmentTeam() {
         await this.createTeam(this.ASSIGNTEAMNAME0, Test.ASSIGNID0, [Test.REALUSER1.id]);
+    }
+
+    public static async prepareAssignmentTeam2() {
+        await this.createTeam(Test.ASSIGNTEAMNAME1, Test.ASSIGNID1, [Test.REALUSER1.id]);
     }
 
     public static async prepareAssignment2() {
@@ -454,7 +462,7 @@ export class Test {
         // const newDelivSuccess =
         await dc.saveDeliverable(newDeliv);
 
-        await this.createTeam(Test.ASSIGNTEAMNAME1, Test.ASSIGNID1, [Test.REALUSER1.id]);
+        // await this.createTeam(Test.ASSIGNTEAMNAME1, Test.ASSIGNID1, [Test.REALUSER1.id]);
     }
 
     // public static testBefore() {
@@ -503,6 +511,7 @@ export class Test {
 
     public static readonly REALUSER1 = {id: 'rthse2', csId: 'rthse2', github: 'rthse2'}; // real account for testing users
     public static readonly REALUSER2 = {id: "jopika", csId: "jopika", github: "jopika"}; // real account for testing users
+    public static readonly REALUSER3 = {id: "atest-01", csId: "atest-01", github: "atest-01"}; // real account for testing users
 
     public static readonly USERNAMEGITHUB1 = "cpscbot";
     public static readonly USERNAMEGITHUB2 = "rthse2";
@@ -526,8 +535,8 @@ export class Test {
     public static readonly REALTOKEN = 'realtoken';
     public static readonly FAKETOKEN = 'faketoken';
 
-    public static readonly ASSIGNTEAMNAME0 = Test.ASSIGNID0 + "_" + Test.REALUSER1.id;
-    public static readonly ASSIGNTEAMNAME1 = Test.ASSIGNID1 + "_" + Test.REALUSER1.id;
+    public static readonly ASSIGNTEAMNAME0 = Test.ASSIGNID0 + "__" + Test.REALUSER1.id;
+    public static readonly ASSIGNTEAMNAME1 = Test.ASSIGNID1 + "__" + Test.REALUSER1.id;
 
     public static getDeliverable(delivId: string): Deliverable {
         const deliv: Deliverable = {

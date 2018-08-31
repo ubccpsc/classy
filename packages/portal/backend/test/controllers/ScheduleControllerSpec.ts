@@ -31,6 +31,7 @@ describe("ScheduleController", () => {
         await Test.prepareAll();
         await Test.prepareAssignment();
         await Test.prepareAssignment2();
+        await Test.prepareAssignmentTeam2();
     });
 
     after(async () => {
