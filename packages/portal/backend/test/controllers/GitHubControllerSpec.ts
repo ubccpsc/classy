@@ -213,6 +213,8 @@ describe("GitHubController", () => {
 
     it("Should be able to create a repo with a custom path.", async function() {
         // setup
+        await Test.prepareTeams();
+        await Test.prepareRepositories();
         const rc: RepositoryController = new RepositoryController();
         const repo = await rc.getRepository(Test.REPONAME2); // get repo object
 
@@ -230,15 +232,18 @@ describe("GitHubController", () => {
         const allRepos: Repository[] = await rc.getAllRepos();
         const repoCount: number = allRepos.length;
 
+        let repo = await rc.getRepository(Test.REPONAME1);
+
         expect(repoCount).to.be.greaterThan(1);
 
         const tc: TeamController = new TeamController();
         const allTeams: Team[] = await tc.getAllTeams();
+        let team = await tc.getTeam(Test.TEAMNAME1);
         const teamCount: number = allTeams.length;
         Log.info("GithubControllerSpec::ReleasingRepo - repoCount: " + repoCount + " teamcCount: " + teamCount);
         expect(teamCount).to.be.greaterThan(1);
 
-        const success = await gc.releaseRepository(allRepos[1], [allTeams[1]], false);
+        const success = await gc.releaseRepository(repo, [team], false);
         expect(success).to.be.true;
     }).timeout(Test.TIMEOUT);
 
