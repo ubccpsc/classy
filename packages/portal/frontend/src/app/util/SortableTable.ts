@@ -220,7 +220,7 @@ export class SortableTable {
             const aVal = a[sortIndex].value;
             const bVal = b[sortIndex].value;
 
-            Log.trace('sorting; aVal: ' + aVal + " ( " + typeof aVal + " ); bVal: " + bVal + " ( " + typeof bVal + " )");
+            // Log.trace('sorting; aVal: ' + aVal + " ( " + typeof aVal + " ); bVal: " + bVal + " ( " + typeof bVal + " )");
 
             if (aVal === bVal) {
                 // get rid of equality from the start

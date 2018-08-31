@@ -3,6 +3,7 @@ import Log from "../../../../common/Log";
 import {CS340AdminView} from "./views/340/CS340AdminView";
 import {CS340View} from "./views/340/CS340View";
 import {AdminView} from "./views/AdminView";
+import {CS310AdminView} from "./views/cs310/CS310AdminView";
 
 import {CS310View} from "./views/cs310/CS310View";
 
@@ -89,7 +90,8 @@ export class Factory {
                 // tabs.config = false;
                 this.adminView = new AdminView(backendUrl, tabs); // default admin
             } else if (this.name === 'cs310') {
-                this.adminView = new AdminView(backendUrl, tabs); // default admin
+                // this.adminView = new AdminView(backendUrl, tabs); // default admin
+                this.adminView = new CS310AdminView(backendUrl, tabs);
             } else if (this.name === 'sdmm') {
                 this.adminView = new AdminView(backendUrl, tabs); // default admin
             } else if (this.name === 'cs340' || this.name === 'cpsc340') {

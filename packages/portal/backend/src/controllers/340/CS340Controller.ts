@@ -27,13 +27,13 @@ export class CS340Controller extends CourseController {
         let tName: string;
 
         if(deliv.repoPrefix.trim() === "") {
-            rName = deliv.repoPrefix + postfix;
+            rName = deliv.id + postfix;
         } else {
             rName = deliv.repoPrefix + postfix;
         }
 
         if(deliv.teamPrefix.trim() === "") {
-            tName = deliv.teamPrefix + postfix;
+            tName = deliv.id + postfix;
         } else {
             tName = deliv.teamPrefix + postfix;
         }

@@ -21,7 +21,7 @@ import {AdminStudentsTab} from "./AdminStudentsTab";
 import {AdminTeamsTab} from "./AdminTeamsTab";
 import {IView} from "./IView";
 
-interface AdminTabs {
+export interface AdminTabs {
     deliverables: boolean;
     students: boolean;
     teams: boolean;

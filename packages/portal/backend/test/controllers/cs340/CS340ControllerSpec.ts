@@ -34,6 +34,8 @@ describe("CS340: CS340Controller", () => {
         await Test.prepareAll();
         await Test.prepareAssignment();
         await Test.prepareAssignment2();
+        await Test.prepareAssignmentTeam();
+        await Test.prepareAssignmentTeam2();
     });
 
     after(async () => {
