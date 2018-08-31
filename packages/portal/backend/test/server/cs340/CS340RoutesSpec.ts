@@ -156,7 +156,7 @@ describe("CS340: Routes", () => {
         expect(response.body.response).to.not.be.null;
     });
 
-    it("Should not be able to set a student's grade if there is no repo.", async function () {
+    it("Should be able to save a student's grade even if there is no repo.", async function () {
         let aid = Test.ASSIGNID0;
         let pc: PersonController = new PersonController();
         let allPeople = await pc.getAllPeople();
@@ -210,7 +210,7 @@ describe("CS340: Routes", () => {
         }
 
         expect(response).to.not.be.null;
-        expect(response.status).to.be.equal(400);
+        expect(response.status).to.be.equal(200);
         expect(response.body.response).to.not.be.null;
     });
 
@@ -407,6 +407,22 @@ describe("CS340: Routes", () => {
         let response = null;
 
         const url = '/portal/cs340/getRepository/' + Test.ASSIGNID0 + "_" + Test.REALUSER1.id;
+        try {
+            response = await request(app).get(url).set({user: adminUserName, token: adminUserToken});
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            fail(err);
+        }
+
+        expect(response).to.not.be.null;
+        expect(response.status).to.be.equal(200);
+        expect(response.body.response).not.be.null;
+    });
+
+    it("Should be able to get a shortlist of all students.", async function () {
+        let response = null;
+
+        const url = '/portal/cs340/getStudentsInOrg';
         try {
             response = await request(app).get(url).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
@@ -685,6 +701,22 @@ describe("CS340: Routes", () => {
             expect(response.status).to.be.equal(401);
             expect(response.body.response).to.be.undefined;
             expect(response.body.error).to.not.be.null;
+        });
+
+        it("Should not be able to get a shortlist of all students as an invalid user.", async function () {
+            let response = null;
+
+            const url = '/portal/cs340/getStudentsInOrg';
+            try {
+                response = await request(app).get(url).set({user: "invalidUser", token: "invalidToken"});
+            } catch (err) {
+                Log.test("ERROR: " + err);
+                fail(err);
+            }
+
+            expect(response).to.not.be.null;
+            expect(response.status).to.be.equal(200);
+            expect(response.body.response).not.be.null;
         });
 
         it("Should not be able to get an assignment rubric as an invalid user.", async function () {
