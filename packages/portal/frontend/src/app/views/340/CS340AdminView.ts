@@ -725,7 +725,7 @@ export class CS340AdminView extends AdminView {
         const delivResponse = await fetch(delivUrl, delivOptions);
 
         if(delivResponse.status !== 200) {
-            Log.trace("CS340AdminView::renderStudentGrades(..) - !200 " +
+            Log.trace("CS340AdminView::getDeliverables(..) - !200 " +
                 "response received; code:" + delivResponse.status);
             return;
         }
@@ -776,35 +776,36 @@ export class CS340AdminView extends AdminView {
         document.getElementById('studentGradeTable').innerHTML = ""; // Clear target
 
         const studentOptions = AdminView.getOptions();
-        const studentUrl = this.remote + '/portal/admin/students';
+        const studentUrl = this.remote + '/portal/cs340/getStudentsInOrg';
         const studentResponse = await fetch(studentUrl, studentOptions);
         UI.hideModal();
         if(studentResponse.status === 200) {
-            Log.info('CS340AdminView::handCustomGrades(..) - Received student list');
-            const studentJson: StudentTransportPayload = await studentResponse.json();
-            if(typeof studentJson.success !== 'undefined' && Array.isArray(studentJson.success)) {
-                Log.info("CS340AdminView::handCustomGrades(..) - took: " + UI.took(start));
+            Log.info('CS340AdminView::handleCustomGrades(..) - Received student list');
+            const studentJson = await studentResponse.json();
+            if(typeof studentJson.response !== 'undefined' && Array.isArray(studentJson.response)) {
+                Log.info("CS340AdminView::handleCustomGrades(..) - took: " + UI.took(start));
                 const gradesOptions: any= AdminView.getOptions();
                 gradesOptions.method = 'get';
                 const gradesUrl: string = this.remote + '/portal/cs340/getAllGrades';
                 const gradesResponse = await fetch(gradesUrl, gradesOptions);
+                const gradesJson = await gradesResponse.json();
 
                 if(gradesResponse.status === 200) {
-                    Log.info("CS340AdminView::handCustomGrades(..) - got grades");
-                    const gradesJson = await gradesResponse.json();
+                    Log.info("CS340AdminView::handleCustomGrades(..) - got grades");
                     const gradeData: Grade[] = gradesJson.response;
                     // TODO [Jonathan]: Remove the hardcoding(?)
-                    this.renderStudentGrades(studentJson.success, gradeData, "-All-");
+                    this.renderStudentGrades(studentJson.response, gradeData, "-All-");
                 } else {
-                    Log.trace("CS340AdminView::handCustomGrades(..) - !200 received " +
+                    Log.trace("CS340AdminView::handleCustomGrades(..) - !200 received " +
                         "when retrieving grade: " + gradesResponse.status);
+                    Log.error("CS340AdminView::handleCustomGrades(..) - Error: " + gradesJson.error);
                 }
             } else {
-                Log.info("CS340AdminView::handCustomGrades(..) - ERROR: " + studentJson.failure.message);
-                AdminView.showError(studentJson.failure);
+                Log.info("CS340AdminView::handleCustomGrades(..) - ERROR: " + studentJson.error);
+                AdminView.showError(studentJson.error);
             }
         } else {
-            Log.trace("CS340AdminView::handCustomGrades(..) - !200 received when retrieving students: " +
+            Log.trace("CS340AdminView::handleCustomGrades(..) - !200 received when retrieving students: " +
                 studentResponse.status);
             const text = await studentResponse.text();
             AdminView.showError(text);
@@ -917,6 +918,7 @@ export class CS340AdminView extends AdminView {
 
         if(!requestStatus) {
             Log.error("CS340AdminView::renderStudentGradeDeliverable(..) - failed to get all information, unable to continue");
+            UI.hideModal();
             return;
         }
 

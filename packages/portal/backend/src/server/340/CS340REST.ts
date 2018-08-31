@@ -17,9 +17,10 @@ import {PersonController} from "../../controllers/PersonController";
 import {RubricController} from "../../controllers/340/RubricController";
 import {TeamController} from "../../controllers/TeamController";
 import {DatabaseController} from "../../controllers/DatabaseController";
-import {RepositoryTransport, TeamTransport} from "../../../../../common/types/PortalTypes";
+import {RepositoryTransport, StudentTransport, TeamTransport} from "../../../../../common/types/PortalTypes";
 import {RepositoryController} from "../../controllers/RepositoryController";
 import {AuthController} from "../../controllers/AuthController";
+import {GitHubActions} from "../../controllers/GitHubActions";
 
 export default class CS340REST implements IREST {
     public constructor() {
@@ -44,6 +45,7 @@ export default class CS340REST implements IREST {
         server.get('/portal/cs340/getStudentTeamByDeliv/:sid/:delivid', CS340REST.getStudentTeamByDeliv);
         server.get('/portal/cs340/getRepository/:teamid' , CS340REST.getRepositoryFromTeam);
         server.get('/portal/cs340/getAllDelivInfo' , CS340REST.getAllDelivInfo);
+        server.get('/portal/cs340/getStudentsInOrg', CS340REST.getTrimmedStudentsList);
         server.put('/portal/cs340/setAssignmentGrade', CS340REST.setAssignmentGrade);
         server.post('/portal/cs340/releaseGrades/:delivid', CS340REST.releaseGrades);
         server.post('/portal/cs340/initializeAllRepositories/:delivid', CS340REST.initializeAllRepositories);
@@ -196,7 +198,6 @@ export default class CS340REST implements IREST {
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
-        // TODO [Jonathan]: Authenticate token
 
         let auth: AuthController = new AuthController();
         let authLevel = await auth.isPrivileged(user, token);
@@ -229,7 +230,6 @@ export default class CS340REST implements IREST {
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
-        // TODO [Jonathan]: Authenticate token
 
         let auth: AuthController = new AuthController();
         let authLevel = await auth.isPrivileged(user, token);
@@ -273,7 +273,6 @@ export default class CS340REST implements IREST {
                     "an error, please course admins"});
             return next();
         }
-        // TODO [Jonathan]: Authenticate token
 
         const sid: string = req.params.sid;
         const aid: string = req.params.aid;
@@ -283,7 +282,7 @@ export default class CS340REST implements IREST {
             if (result !== null) {
                 res.send(200, {response: result});
             } else {
-                res.send(404, {response: null, error: "Not found"}); // TODO [Jonathan]: Find proper HTML code for this
+                res.send(404, {response: null, error: "Not found"});
             }
         }).catch((error) => {
             Log.error("CS340REST::getAssignmentGrade - Error: " + error);
@@ -312,7 +311,6 @@ export default class CS340REST implements IREST {
         const aid = req.params.aid;                 // Assignment ID
         Log.info("cs340REST::getAssignmentRubric(...) - aid: " + aid);
 
-        // TODO [Jonathan]: Authenticate token
 
         // TODO: retrieve the information from the deliverable, then return the information
         let delivController: DeliverablesController = new DeliverablesController();
@@ -475,7 +473,9 @@ export default class CS340REST implements IREST {
 
         let assignController = new AssignmentController();
         let personController = new PersonController();
-
+        let repoController = new RepositoryController();
+        let teamController = new TeamController();
+        let db = DatabaseController.getInstance();
         personController.getPerson(studentId).then(async function (result) {
             let person: Person = result;
 
@@ -485,8 +485,19 @@ export default class CS340REST implements IREST {
             }
             let repo: Repository = await assignController.getAssignmentRepo(assignId, person);
             if (repo === null) {
-                res.send(400, {error: "No Assignment Repository found, unable to record grade"});
-                return next();
+                // res.send(400, {error: "No Assignment Repository found, unable to record grade"});
+                // return next();
+                // create a team just for the student
+
+                let team = await teamController.getTeam("emptyGrade_" + person.id);
+                if(team === null) {
+                    let deliv = await db.getDeliverable(assignId);
+                    if (deliv === null) {
+                        res.send(400, {error: "Invalid deliverable specified"});
+                    }
+                    team = await teamController.createTeam("emptyGrade_" + person.id, deliv, [person], null)
+                }
+                repo = await repoController.createRepository("emptyGrade_" + person.id, [team], null);
             }
             let success = await assignController.setAssignmentGrade(repo.id, assignId, reqBody, user);
             if (success) {
@@ -552,6 +563,67 @@ export default class CS340REST implements IREST {
         // return next();
     }
 
+    public static async getTrimmedStudentsList(req: any, res: any, next: any) {
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const org = req.headers.org;
+
+        let auth: AuthController = new AuthController();
+        let authLevel = await auth.isPrivileged(user, token);
+        if(!authLevel.isStaff) {
+            res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
+                "an error, please course admins"});
+            return next();
+        }
+
+        try {
+            let pc: PersonController = new PersonController();
+            let gha: GitHubActions = new GitHubActions();
+
+            let githubPeoplePromise = gha.listPeople();
+            let allPeoplePromise = pc.getAllPeople();
+
+            let githubPeople = await githubPeoplePromise;
+            let allPeople = await allPeoplePromise;
+
+            let personVerification: { [githubID: string]: any } = {};
+            for(const githubPerson of githubPeople) {
+                if(typeof personVerification[githubPerson.name] === "undefined") {
+                    personVerification[githubPerson.name] = githubPerson;
+                }
+            }
+
+            let filteredPerson: StudentTransport[] = [];
+
+            for(const person of allPeople) {
+                if(typeof personVerification[person.githubId] === "undefined") continue;
+                if(person.kind !== "student") continue;
+                filteredPerson.push(PersonController.personToTransport(person));
+            }
+
+            // let personMap: { [personId: string]: Person} = {};
+            // for(const person of allPeople) {
+            //     personMap[person.id] = person;
+            // }
+
+            // let filteredGrades: Grade[] = [];
+            // for(const grade of allGrades) {
+            //     if(typeof personMap[grade.personId] === "undefined") continue;
+            //     let person: Person = personMap[grade.personId];
+            //     if(typeof personVerification[person.githubId] === "undefined") continue;
+            //     filteredGrades.push(grade);
+            // }
+
+            res.send(200, {response: filteredPerson});
+            // res.send(200, {response: filteredGrades});
+        } catch (err) {
+            Log.error("CS340REST::getTrimmedStudentsList - Error: " + err);
+            res.send(500, {error: err});
+        }
+
+        return next();
+    }
+
     public static async getAllGrades(req: any, res: any, next: any) {
         const user = req.headers.user;
         const token = req.headers.token;
@@ -564,13 +636,50 @@ export default class CS340REST implements IREST {
                     "an error, please course admins"});
             return next();
         }
-        let gradeController: GradesController = new GradesController();
-        gradeController.getAllGrades().then((result) => {
-            res.send(200, {response: result});
-        }).catch((error) => {
-            Log.error("CS340REST::getAllgrades - Error: " + error);
-            res.send(500, error);
-        });
+
+        try {
+            let gc: GradesController = new GradesController();
+            // let pc: PersonController = new PersonController();
+            // let gha: GitHubActions = new GitHubActions();
+            //
+            // let githubPeoplePromise = gha.listPeople();
+            // let allPeoplePromise = pc.getAllPeople();
+            // let allGradesPromise = gc.getAllGrades();
+            //
+            // let githubPeople = await githubPeoplePromise;
+            // let allPeople = await allPeoplePromise;
+            // let allGrades = await allGradesPromise;
+            //
+            // let personVerification: { [githubID: string]: any } = {};
+            // for(const githubPerson of githubPeople) {
+            //     if(typeof personVerification[githubPerson.name] === "undefined") {
+            //         personVerification[githubPerson.name] = githubPerson;
+            //     }
+            // }
+            //
+            // let personMap: { [personId: string]: Person} = {};
+            // for(const person of allPeople) {
+            //     personMap[person.id] = person;
+            // }
+            //
+            // let filteredGrades: Grade[] = [];
+            // for(const grade of allGrades) {
+            //     if(typeof personMap[grade.personId] === "undefined") continue;
+            //     let person: Person = personMap[grade.personId];
+            //     if(typeof personVerification[person.githubId] === "undefined") continue;
+            //     filteredGrades.push(grade);
+            // }
+
+            let allGrades = await gc.getAllGrades();
+
+            // res.send(200, {response: filteredGrades});
+            res.send(200, {response: allGrades});
+        } catch (err) {
+            Log.error("CS340REST::getAllgrades - Error: " + err);
+            res.send(500, {error: err});
+        }
+
+        return next();
     }
 
     // TODO: Should we move something like this to the general routes?
