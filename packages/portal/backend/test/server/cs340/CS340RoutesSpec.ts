@@ -715,7 +715,7 @@ describe("CS340: Routes", () => {
             }
 
             expect(response).to.not.be.null;
-            expect(response.status).to.be.equal(200);
+            expect(response.status).to.be.equal(401);
             expect(response.body.response).not.be.null;
         });
 

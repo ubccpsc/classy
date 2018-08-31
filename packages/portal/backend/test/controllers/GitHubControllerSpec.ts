@@ -215,6 +215,7 @@ describe("GitHubController", () => {
         // setup
         await Test.prepareTeams();
         await Test.prepareRepositories();
+        // await Test.deleteStaleRepositories();
         const rc: RepositoryController = new RepositoryController();
         const repo = await rc.getRepository(Test.REPONAME2); // get repo object
 
