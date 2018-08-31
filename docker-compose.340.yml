@@ -60,6 +60,9 @@ services:
             - "${HOST_SSL_KEY_PATH}:${SSL_KEY_PATH}"
     db:
         container_name: ${CONTAINER_NAME_DATABASE}
+        environment:
+            - MONGO_INITDB_ROOT_USERNAME
+            - MONGO_INITDB_ROOT_PASSWORD
         ports:
             - "27017:27017"
         image: mongo:3-jessie
