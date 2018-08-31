@@ -1080,6 +1080,13 @@ export class CS340AdminView extends AdminView {
         UI.hideModal();
     }
 
+    /**
+     * Renders the student grades for the custom tab (one giant table for all assignments)
+     * @param {StudentTransport[]} students
+     * @param {Grade[]} grades
+     * @param {string} selectedAssign
+     * @returns {Promise<void>}
+     */
     private async renderStudentGrades(students: StudentTransport[], grades: Grade[], selectedAssign: string) {
         Log.info("CS340AdminView::renderStudentGrades( " + students.toString() +
             ", " + grades.toString() + ", " + selectedAssign + ", " + " ) - start");
@@ -1161,7 +1168,7 @@ export class CS340AdminView extends AdminView {
         }
 
         for(const student of students) {
-            // TODO [Jonathan]: Add SID and hideable student names
+            // TODO: Add SID and hideable student names
             let newRow: TableCell[] = [
                 {value: student.id, html: '<a href="' + student.userUrl + '">' + student.id + '</a>'},
                 {value: student.firstName, html: student.firstName},
@@ -1182,30 +1189,48 @@ export class CS340AdminView extends AdminView {
                     completelyGraded = this.checkIfCompletelyGraded(gradeMapping[student.id][delivCol.id]);
                 }
 
-                if(foundGrade && completelyGraded) {
+                let assignInfo = (delivCol.custom as AssignmentInfo);
+                if (assignInfo === null || typeof (assignInfo.status) === "undefined") {
                     let newEntry = {
                         value: gradeMapping[student.githubId][delivCol.id].score,
-                        html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
-                        student.githubId + "\", \"" + delivCol.id + "\")' href='#'>" +
-                        gradeMapping[student.githubId][delivCol.id].score.toString() +
-                        "/" + maxGradeMap[delivCol.id] + "</a>"
+                        html: "<p>" + gradeMapping[student.githubId][delivCol.id].score + "</p>"
                     };
                     newRow.push(newEntry);
-                } else {
+                } else if(assignInfo.status !== AssignmentStatus.CLOSED) {
+
                     let newEntry = {
-                        value: "---",
-
-                        html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
-                        student.githubId + "\", \"" + delivCol.id + "\")' href='#'> ---" + "</a>",
-
+                        value: "",
+                        html: "<p></p>"
                     };
                     newRow.push(newEntry);
+
+                } else {
+                    if(foundGrade && completelyGraded) {
+                        let newEntry = {
+                            value: gradeMapping[student.githubId][delivCol.id].score,
+                            html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
+                            student.githubId + "\", \"" + delivCol.id + "\")' href='#'>" +
+                            gradeMapping[student.githubId][delivCol.id].score.toString() +
+                            "/" + maxGradeMap[delivCol.id] + "</a>"
+                        };
+                        newRow.push(newEntry);
+                    } else {
+                        let newEntry = {
+                            value: "---",
+
+                            html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
+                            student.githubId + "\", \"" + delivCol.id + "\")' href='#'> ---" + "</a>",
+
+                        };
+                        newRow.push(newEntry);
+                    }
                 }
+
             }
             st.addRow(newRow);
         }
         st.generate();
-        // TODO [Jonathan]: Add rest of code, regarding student table generation (hideable options)
+        // TODO: Add rest of code, regarding student table generation (hideable options)
     }
 
 

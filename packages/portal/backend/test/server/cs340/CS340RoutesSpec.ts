@@ -406,6 +406,8 @@ describe("CS340: Routes", () => {
     it("Should be able to retrieve a repository from specifying a team.", async function () {
         let response = null;
 
+        await Test.prepareAssignmentTeam();
+
         const url = '/portal/cs340/getRepository/' + Test.ASSIGNID0 + "_" + Test.REALUSER1.id;
         try {
             response = await request(app).get(url).set({user: adminUserName, token: adminUserToken});
