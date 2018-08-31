@@ -817,12 +817,14 @@ export class CS340AdminView extends AdminView {
         let maxGrade:number = 0;
         let assignInfo: AssignmentInfo | null = deliverableRecord.custom;
         if(assignInfo === null || typeof assignInfo.rubric === 'undefined') {
-            Log.error("CS340AdminView::calculateMaxGrade(..) - Error: Deliverable is not an assignment");
+            Log.warn("CS340AdminView::calculateMaxGrade(..) - Error: Deliverable: " +
+                deliverableRecord.id + " is not an assignment");
             return -1;
         }
         let assignRubric: AssignmentGradingRubric = assignInfo.rubric;
         if(assignRubric === null || typeof assignRubric.questions === 'undefined') {
-            Log.error("CS340AdminView::calculateMaxGrade(..) - Error: Deliverable is not an assignment");
+            Log.warn("CS340AdminView::calculateMaxGrade(..) - Error: Deliverable: " +
+                deliverableRecord.id + " is not an assignment");
             return -1;
         }
 
@@ -1190,41 +1192,95 @@ export class CS340AdminView extends AdminView {
                 }
 
                 let assignInfo = (delivCol.custom as AssignmentInfo);
-                if (assignInfo === null || typeof (assignInfo.status) === "undefined") {
-                    let newEntry = {
-                        value: gradeMapping[student.githubId][delivCol.id].score,
-                        html: "<p>" + gradeMapping[student.githubId][delivCol.id].score + "</p>"
-                    };
-                    newRow.push(newEntry);
-                } else if(assignInfo.status !== AssignmentStatus.CLOSED) {
 
-                    let newEntry = {
-                        value: "",
-                        html: "<p></p>"
-                    };
-                    newRow.push(newEntry);
-
-                } else {
-                    if(foundGrade && completelyGraded) {
-                        let newEntry = {
+                // TODO: Fix this logic. 5 cases
+                // 1) Not an assignment
+                // - has a grade
+                // - has no grade
+                // 2) Is an assignment
+                // - is closed
+                //      - has a grade
+                //      - has no grade
+                // - is not closed
+                let newEntry: {value: any, html: string};
+                if(assignInfo === null || typeof assignInfo.status === "undefined") {
+                    if(foundGrade) {
+                        newEntry = {
                             value: gradeMapping[student.githubId][delivCol.id].score,
-                            html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
-                            student.githubId + "\", \"" + delivCol.id + "\")' href='#'>" +
-                            gradeMapping[student.githubId][delivCol.id].score.toString() +
-                            "/" + maxGradeMap[delivCol.id] + "</a>"
+                            html: "<span>" + gradeMapping[student.githubId][delivCol.id].score + "</span>"
                         };
-                        newRow.push(newEntry);
                     } else {
-                        let newEntry = {
-                            value: "---",
+                        newEntry = {
+                            value: "-",
+                            html: "<span>-</span>"
+                        }
+                    }
+                } else {
+                    if(assignInfo.status === AssignmentStatus.CLOSED) {
+                        if(foundGrade && completelyGraded) {
+                            // if we have a grade, and it is completely graded
+                            newEntry = {
+                                value: gradeMapping[student.githubId][delivCol.id].score,
+                                html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
+                                student.githubId + "\", \"" + delivCol.id + "\")' href='#'>" +
+                                gradeMapping[student.githubId][delivCol.id].score.toString() +
+                                "/" + maxGradeMap[delivCol.id] + "</a>"
+                            };
+                        } else {
+                            // if we do not have a grade or it's not completely graded
+                            newEntry = {
+                                value: "---",
+                                html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
+                                student.githubId + "\", \"" + delivCol.id + "\")' href='#'> ---" + "</a>",
 
-                            html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
-                            student.githubId + "\", \"" + delivCol.id + "\")' href='#'> ---" + "</a>",
-
+                            };
+                        }
+                    } else {
+                        // if it's not closed
+                        newEntry = {
+                            value: "",
+                            html: "<span>---</span>"
                         };
-                        newRow.push(newEntry);
                     }
                 }
+                newRow.push(newEntry);
+
+
+                // if (assignInfo === null || typeof (assignInfo.status) === "undefined") {
+                //     let newEntry = {
+                //         value: gradeMapping[student.githubId][delivCol.id].score,
+                //         html: "<p>" + gradeMapping[student.githubId][delivCol.id].score + "</p>"
+                //     };
+                //     newRow.push(newEntry);
+                // } else if(assignInfo.status !== AssignmentStatus.CLOSED) {
+                //
+                //     let newEntry = {
+                //         value: "",
+                //         html: "<p></p>"
+                //     };
+                //     newRow.push(newEntry);
+                //
+                // } else {
+                //     if(foundGrade && completelyGraded) {
+                //         let newEntry = {
+                //             value: gradeMapping[student.githubId][delivCol.id].score,
+                //             html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
+                //             student.githubId + "\", \"" + delivCol.id + "\")' href='#'>" +
+                //             gradeMapping[student.githubId][delivCol.id].score.toString() +
+                //             "/" + maxGradeMap[delivCol.id] + "</a>"
+                //         };
+                //         newRow.push(newEntry);
+                //     } else {
+                //         let newEntry = {
+                //             value: "---",
+                //
+                //             html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
+                //             student.githubId + "\", \"" + delivCol.id + "\")' href='#'> ---" + "</a>",
+                //
+                //         };
+                //         newRow.push(newEntry);
+                //     }
+                // }
 
             }
             st.addRow(newRow);

@@ -70,7 +70,7 @@ export class AssignmentController {
      * @param assnPayload - new assignment grade to save
      * @param markerId - the person who marked the assignment
      */
-    public async setAssignmentGrade(repoID: string, assignId: string, assnPayload: AssignmentGrade, markerId?: string): Promise<boolean> {
+    public async setAssignmentGrade(repoID: string, assignId: string, assnPayload: AssignmentGrade, markerId: string = ""): Promise<boolean> {
         // Array<Array<SubsectionGrade>>
         Log.info("AssignmentController::setAssignmentGrade(" + ", " + repoID + ", " + assignId + ",..) - start");
         Log.trace("AssignmentController::setAssignmentGrade(..) - payload: " + JSON.stringify(assnPayload));
@@ -84,10 +84,34 @@ export class AssignmentController {
             }
         }
 
-        // Assume Repository exists
+        // check if the repository exists
         let repo: Repository = await this.rc.getRepository(repoID);
+        if(repo === null) {
+            // create the repo
+            let person = await this.pc.getPerson(assnPayload.studentID);
+
+            // check if there is an empty repo
+            repo = await this.rc.getRepository("empty_" + person.id);
+            if(repo === null) {
+                let deliv = await this.db.getDeliverable(assignId);
+                if(deliv === null || typeof(deliv.custom as AssignmentInfo).rubric === "undefined") {
+                    return false;
+                }
+                let team = await this.tc.getTeam("empty_" + person.id);
+                if(team === null) {
+                    team = await this.tc.createTeam("empty_" + person.id, deliv, [person], null);
+                }
+
+                // let arepoInfo: AssignmentRepositoryInfo = {
+                //     assignmentId: []
+                // }
+                repo = await this.rc.createRepository("empty_" + person.id, [team], null);
+            }
+        }
+
 
         if (repo === null) {
+            Log.error("AssignmentController::setAssignmentGrade(..) - multiple attempts at repository fetching, error");
             return false;
         }
 
@@ -97,14 +121,14 @@ export class AssignmentController {
             // assignmentID: assnPayload.assignmentID,
             // studentID: assnPayload.studentID,
             score:     totalGrade,
-            comment:   markerId ? 'Marked by ' + markerId : 'Marked assignment',
+            comment:   markerId !== "" ? 'Marked by ' + markerId : 'Marked assignment',
             urlName:   repo.id,
             URL:       repo.URL,
             timestamp: Date.now(),
             custom:    assnPayload
         };
 
-        let success = await this.gc.createGrade(repoID, assignId, newGradePayload);
+        let success = await this.gc.createGrade(repo.id, assignId, newGradePayload);
         let deliverableRecord: Deliverable = await this.db.getDeliverable(assignId);
         if(deliverableRecord !== null && deliverableRecord.custom !== null) {
             if(typeof (deliverableRecord.custom as AssignmentInfo).status !== "undefined") {
