@@ -1,31 +1,19 @@
 ## Must run as ROOT user to invoke docker and IP Tables commands
 
-FROM classy:base
+FROM node:8-alpine
 
-ARG PORT
+RUN apk add --no-cache docker git
 
-ENV GRADER_PORT ${PORT:-3000}
-ENV NODE_ENV ${NODE_ENV:-production}
+WORKDIR /app
 
-EXPOSE $PORT
+# The common package requires the .env file directly so we have to pass it through
+COPY .env ./
+COPY package.json tsconfig.json ./
+COPY packages/common ./packages/common
+COPY packages/grader ./packages/grader
 
-VOLUME [ "/temp" ]
-VOLUME [ "/archive" ]
+RUN yarn install --pure-lockfile --non-interactive \
+ && yarn tsc --sourceMap false \
+ && chmod -R a+r /app
 
-RUN apk add --no-cache docker
-RUN apk add --no-cache iptables
-RUN apk add --no-cache git
-
-WORKDIR /app/packages/grader
-COPY package.json package.json
-COPY src/ src/
-RUN chown -R node /app
-
-RUN yarn install --pure-lockfile --non-interactive --production=false \
- && tsc --outDir /app --sourceMap false \
- && cp package.json /app/grader \
- && rm -r /app/packages /app/package.json /app/tsconfig.json
-
-WORKDIR /app/grader
-
-CMD ["node", "src/Daemon.js"]
+CMD ["node", "packages/grader/src/Daemon.js"]
