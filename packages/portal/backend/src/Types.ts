@@ -83,7 +83,7 @@ export interface Deliverable {
     rubric: any; // captures rubric-specific definitions
     custom: any; // {}; not used by the default implementation, but useful for extension (e.g., schemas)
 
-    shouldAutotest: boolean; // whether the deliv will use AutoTest
+    shouldAutoTest: boolean; // whether the deliv will use AutoTest
     autotest: AutoTestConfig;
 
     // these options are only set if shouldProvision is true

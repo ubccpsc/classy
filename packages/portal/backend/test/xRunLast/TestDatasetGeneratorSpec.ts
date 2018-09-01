@@ -138,7 +138,7 @@ describe.skip('TestDatasetGenerator', function() {
             teamStudentsForm: true,
             // bootstrapUrl:     '',
 
-            shouldAutotest: true,
+            shouldAutoTest: true,
             autotest:       {
                 dockerImage:        'testImage',
                 studentDelay:       60 * 60 * 12, // 12h

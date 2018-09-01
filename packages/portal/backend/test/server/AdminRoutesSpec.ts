@@ -436,7 +436,7 @@ describe('Admin Routes', function() {
                 visibleToStudents: d0.visibleToStudents,
                 URL:               d0.URL,
                 gradesReleased:    d0.gradesReleased,
-                shouldAutoTest:    d0.shouldAutotest,
+                shouldAutoTest:    d0.shouldAutoTest,
                 autoTest:          d0.autotest,
                 rubric:            d0.rubric,
                 custom:            d0.custom

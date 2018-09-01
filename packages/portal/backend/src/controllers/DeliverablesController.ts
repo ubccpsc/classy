@@ -105,7 +105,7 @@ export class DeliverablesController {
             gradesReleased:    deliv.gradesReleased,
             visibleToStudents: deliv.visibleToStudents,
 
-            shouldAutoTest: deliv.shouldProvision,
+            shouldAutoTest: deliv.shouldAutoTest,
             autoTest:       deliv.autotest,
             rubric:         deliv.rubric,
             custom:         deliv.custom
@@ -135,7 +135,7 @@ export class DeliverablesController {
 
             visibleToStudents: trans.visibleToStudents,
 
-            shouldAutotest: trans.shouldAutoTest,
+            shouldAutoTest: trans.shouldAutoTest,
             autotest:       trans.autoTest,
 
             rubric: trans.rubric,

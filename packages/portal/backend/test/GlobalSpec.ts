@@ -263,7 +263,7 @@ export class Test {
 
             visibleToStudents: true,
 
-            shouldAutotest: true,
+            shouldAutoTest: true,
             autotest:       {
                 dockerImage:        'testImage',
                 studentDelay:       60 * 60 * 12, // 12h
@@ -383,7 +383,7 @@ export class Test {
             teamSameLab:       false,
             teamStudentsForm:  false,
             teamPrefix:        Test.ASSIGNID0 + "_",
-            shouldAutotest:    true,
+            shouldAutoTest:    true,
             autotest:          {
                 dockerImage:        'testImage',
                 studentDelay:       60 * 60 * 12, // 12h
@@ -457,7 +457,7 @@ export class Test {
             teamSameLab:       false,
             teamStudentsForm:  false,
             teamPrefix:        "",
-            shouldAutotest:    true,
+            shouldAutoTest:    true,
             autotest:          {
                 dockerImage:        'testImage',
                 studentDelay:       60 * 60 * 12, // 12h
@@ -565,7 +565,7 @@ export class Test {
             teamPrefix:        'team_',
             repoPrefix:        '',
             // bootstrapUrl:     '',
-            shouldAutotest:    true,
+            shouldAutoTest:    true,
             autotest:          {
                 dockerImage:        'testImage',
                 studentDelay:       60 * 60 * 12, // 12h
