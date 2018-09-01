@@ -314,7 +314,7 @@ describe("SDMM: SDMMController", () => {
     it("Should not be able to provision a d0 repo for a random person.", async () => {
         let val = null;
         try {
-            await sc.provision(Test.DELIVID0, ["this is a random name #@"]);
+            await sc.provisionDeliverable(Test.DELIVID0, ["this is a random name #@"]);
         } catch (err) {
             val = err;
         }
@@ -346,7 +346,7 @@ describe("SDMM: SDMMController", () => {
         // don't provision for non-existent users
         let val = null;
         try {
-            await sc.provision(Test.DELIVID0, ['23234#$Q#@#invalid']);
+            await sc.provisionDeliverable(Test.DELIVID0, ['23234#$Q#@#invalid']);
         } catch (err) {
             val = err;
         }
@@ -359,7 +359,7 @@ describe("SDMM: SDMMController", () => {
         // don't create a d0 repo with multiple people
         val = null;
         try {
-            await sc.provision(Test.DELIVID0, [data.PERSON2.id, data.PERSON3.id]);
+            await sc.provisionDeliverable(Test.DELIVID0, [data.PERSON2.id, data.PERSON3.id]);
         } catch (err) {
             val = err;
         }
@@ -381,7 +381,7 @@ describe("SDMM: SDMMController", () => {
         let allTeams = await tc.getTeamsForPerson(person);
         expect(allTeams).to.be.empty;
 
-        const payload = await sc.provision(Test.DELIVID0, [p.id]);
+        const payload = await sc.provisionDeliverable(Test.DELIVID0, [p.id]);
         expect(payload.success).to.not.be.undefined;
         expect(payload.failure).to.be.undefined;
         const status = (payload.success as ActionPayload).status;
@@ -403,7 +403,7 @@ describe("SDMM: SDMMController", () => {
 
         let val = null;
         try {
-            await sc.provision(Test.DELIVID1, [p.id]);
+            await sc.provisionDeliverable(Test.DELIVID1, [p.id]);
         } catch (err) {
             val = err;
         }
@@ -451,7 +451,7 @@ describe("SDMM: SDMMController", () => {
         expect(allRepos[0].custom.d1enabled).to.be.false;
 
         Log.test('provisioning d1 repo');
-        const payload = await sc.provision(Test.DELIVID1, [p.id]); // do it
+        const payload = await sc.provisionDeliverable(Test.DELIVID1, [p.id]); // do it
         Log.test('provisioning d1 repo complete');
         expect(payload.success).to.not.be.undefined;
         expect(payload.failure).to.be.undefined;
@@ -475,7 +475,7 @@ describe("SDMM: SDMMController", () => {
         let val = null;
         try {
             Log.test("ensuring we can't provision d1 again");
-            await sc.provision(Test.DELIVID1, [p.id]); // do it
+            await sc.provisionDeliverable(Test.DELIVID1, [p.id]); // do it
         } catch (err) {
             val = err;
         }
@@ -496,7 +496,7 @@ describe("SDMM: SDMMController", () => {
         // don't allow pairing with someone who doesn't exist
         let val = null;
         try {
-            await sc.provision(Test.DELIVID1, [data.PERSON3.id, "asdf32#@@#INVALIDPERSON"]);
+            await sc.provisionDeliverable(Test.DELIVID1, [data.PERSON3.id, "asdf32#@@#INVALIDPERSON"]);
         } catch (err) {
             val = err;
         }
@@ -512,7 +512,7 @@ describe("SDMM: SDMMController", () => {
         // don't allow pairing with someone with insufficient d0 credit
         val = null;
         try {
-            await sc.provision(Test.DELIVID1, [data.PERSON2.id, data.PERSON3.id]);
+            await sc.provisionDeliverable(Test.DELIVID1, [data.PERSON2.id, data.PERSON3.id]);
         } catch (err) {
             val = err;
         }
@@ -530,7 +530,7 @@ describe("SDMM: SDMMController", () => {
         // need at least one person
         val = null;
         try {
-            await sc.provision(Test.DELIVID1, []);
+            await sc.provisionDeliverable(Test.DELIVID1, []);
         } catch (err) {
             val = err;
         }
@@ -540,7 +540,7 @@ describe("SDMM: SDMMController", () => {
         // can't form a group with yourself
         val = null;
         try {
-            await sc.provision(Test.DELIVID1, [data.PERSON2.id, data.PERSON2.id]);
+            await sc.provisionDeliverable(Test.DELIVID1, [data.PERSON2.id, data.PERSON2.id]);
         } catch (err) {
             val = err;
         }
@@ -554,7 +554,7 @@ describe("SDMM: SDMMController", () => {
         // prepare person 2
         const pA = await pc.getPerson(personA.id);
         expect(pA).to.not.be.null;
-        let payload = await sc.provision(Test.DELIVID0, [pA.id]);
+        let payload = await sc.provisionDeliverable(Test.DELIVID0, [pA.id]);
         expect(payload.success).to.not.be.undefined;
         expect((payload.success as ActionPayload).status.status).to.equal(SDMMStatus[SDMMStatus.D0]);
 
@@ -575,7 +575,7 @@ describe("SDMM: SDMMController", () => {
         const pB = await pc.getPerson(personB.id); // pc.createPerson(data.PERSON1);
         expect(pB).to.not.be.null;
         // create d0 payload for person2
-        payload = await sc.provision(Test.DELIVID0, [pB.id]);
+        payload = await sc.provisionDeliverable(Test.DELIVID0, [pB.id]);
         expect(payload.success).to.not.be.undefined;
         expect((payload.success as ActionPayload).status.status).to.equal(SDMMStatus[SDMMStatus.D0]);
 
@@ -595,7 +595,7 @@ describe("SDMM: SDMMController", () => {
 
         // try to upgrade them to d1
         Log.test('Updating to d1');
-        payload = await sc.provision(Test.DELIVID1, [pA.id, pB.id]);
+        payload = await sc.provisionDeliverable(Test.DELIVID1, [pA.id, pB.id]);
         expect(payload.success).to.not.be.undefined;
         expect(payload.failure).to.be.undefined;
         const status = (payload.success as ActionPayload).status;
@@ -618,7 +618,7 @@ describe("SDMM: SDMMController", () => {
         let payload = null;
         let ex = null;
         try {
-            payload = await sc.provision(Test.DELIVID1, [data.PERSON1.id, data.PERSON2.id, data.PERSON3.id]);
+            payload = await sc.provisionDeliverable(Test.DELIVID1, [data.PERSON1.id, data.PERSON2.id, data.PERSON3.id]);
         } catch (err) {
             ex = err;
         }
@@ -631,7 +631,7 @@ describe("SDMM: SDMMController", () => {
         let payload = null;
         let ex = null;
         try {
-            payload = await sc.provision(Test.DELIVID2, [data.PERSON1.id, data.PERSON2.id]);
+            payload = await sc.provisionDeliverable(Test.DELIVID2, [data.PERSON1.id, data.PERSON2.id]);
         } catch (err) {
             ex = err;
         }

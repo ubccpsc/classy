@@ -10,11 +10,12 @@ import {
     StudentTransport,
     TeamTransport
 } from '../../../../common/types/PortalTypes';
-import {Course, Deliverable, Grade, Person} from "../Types";
+import {Course, Deliverable, Grade, Person, Repository, Team} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
 import {DeliverablesController} from "./DeliverablesController";
-import {IGitHubController} from "./GitHubController";
+import {GitHubActions} from "./GitHubActions";
+import {GitHubController, IGitHubController} from "./GitHubController";
 import {GradesController} from "./GradesController";
 import {PersonController} from "./PersonController";
 import {RepositoryController} from "./RepositoryController";
@@ -418,6 +419,186 @@ export class CourseController implements ICourseController {
         }
 
         return null;
+    }
+
+    /**
+     *
+     * @param {Deliverable} deliv
+     * @param {boolean} formSingleTeams specify whether singletons should be allocated into teams.
+     * Choose false if you want to wait for the students to specify, choose true if you want to
+     * let them work individually. (Note: if your teams are of max size 1, you still need to say
+     * yes to make this happen.)
+     *
+     * @returns {Promise<RepositoryTransport[]>}
+     */
+    public async provision(deliv: Deliverable, formSingleTeams: boolean): Promise<RepositoryTransport[]> {
+        const allPeople: Person[] = await this.pc.getAllPeople();
+        const allTeams: Team[] = await this.tc.getAllTeams();
+
+        const delivTeams: Team[] = [];
+        for (const team of allTeams) {
+            if (team.delivId === deliv.id) {
+                delivTeams.push(team);
+            }
+        }
+
+        // remove any people who are already on teams
+        for (const team of delivTeams) {
+            for (const personId of team.personIds) {
+                const index = allPeople.map(function(p: Person) {
+                    return p.id;
+                }).indexOf(personId);
+                if (index >= 0) {
+                    allPeople.splice(index, 1);
+                } else {
+                    Log.error("CourseController::provision(..) - allPeople does not contain: " + personId);
+                }
+            }
+        }
+
+        // now create teams for individuals
+        for (const individual of allPeople) {
+            const names = await this.computeNames(deliv, [individual]);
+
+            const team = await this.tc.formTeam(names.teamName, deliv, [individual], false);
+            delivTeams.push(team);
+        }
+
+        const reposToProvision: Repository[] = [];
+        // now process the teams to create their repos
+        for (const delivTeam of delivTeams) {
+            // if (team.URL === null) { // this would be faster, but we are being more conservative here
+
+            const people: Person[] = [];
+            for (const pId of delivTeam.personIds) {
+                people.push(await this.pc.getPerson(pId));
+            }
+            const names = await this.computeNames(deliv, people);
+
+            const team = await this.tc.getTeam(names.teamName);
+            let repo = await this.rc.getRepository(names.repoName);
+
+            if (team === null) {
+                // sanity checking team must not be null given what we have done above (should never happen)
+                throw new Error("CourseController::provision(..) - team unexpectedly null: " + names.teamName);
+            }
+
+            if (repo === null) {
+                repo = await this.rc.createRepository(names.repoName, [team], {});
+            }
+
+            if (repo === null) {
+                // sanity checking repo must not be null given what we have done above (should never happen)
+                throw new Error("CourseController::provision(..) - repo unexpectedly null: " + names.repoName);
+            }
+
+            // teams and repos should be provisioned together; this makes sure this consistency is maintained
+            if (team.URL === null && repo.URL === null) {
+                // provision
+                reposToProvision.push(repo);
+            } else if (team.URL !== null && repo.URL !== null) {
+                // already provisioned
+            } else {
+                Log.error("CourseController::provision(..) - inconsistent repo/team; repo.URL: " + repo.URL + "; team.URL: " + team.URL);
+            }
+        }
+
+        const provisionedRepos = await this.provisionRepositories(reposToProvision, deliv.importURL);
+        return provisionedRepos; // only returns provisioned this time; should it return all of them?
+    }
+
+    /**
+     * Creates the GitHub side of the provided repositories. Only provisions those that
+     * have not already been configured (e.g., their URL field is null).
+     *
+     * Does not release the repos to the students (e.g., the student team is not attached
+     * to the repository; this should be done with releaseRepositories). Released repos will
+     * have their Team.URL fields set. e.g., creating the repo sets Repository.URL; releasing
+     * the repo sets Team.URL (for the student teams associated with the repo).
+     *
+     * @param {Repository[]} repos
+     * @param {string} importURL
+     * @returns {Promise<Repository[]>}
+     */
+    public async provisionRepositories(repos: Repository[], importURL: string): Promise<RepositoryTransport[]> {
+        const ghc = new GitHubController();
+        const gha = new GitHubActions();
+
+        Log.info("CourseController::provisionRepositories( .. ) - start; # repos: " +
+            repos.length + "; importURL: " + importURL);
+        const provisionedRepos: Repository[] = [];
+        for (const repo of repos) {
+            try {
+                if (repo.URL === null) {
+                    const teams: Team[] = [];
+                    for (const teamId of repo.teamIds) {
+                        teams.push(await this.dc.getTeam(teamId));
+                    }
+                    const success = await ghc.provisionRepository(repo.id, teams, importURL, false);
+
+                    if (success === true) {
+                        Log.info("CourseController::provisionRepositories( .. ) - success: " + repo.id + "; URL: " + repo.URL);
+                        provisionedRepos.push(repo);
+                    } else {
+                        Log.warn("CourseController::provisionRepositories( .. ) - FAILED: " + repo.id + "; URL: " + repo.URL);
+                    }
+
+                    await gha.delay(5 * 1000); // after any provisioning wait a bit
+                } else {
+                    Log.info("CourseController::provisionRepositories( .. ) - skipped; already provisioned: " +
+                        repo.id + "; URL: " + repo.URL);
+                }
+            } catch (err) {
+                Log.error("CourseController::provisionRepositories( .. ) - FAILED: " +
+                    repo.id + "; URL: " + repo.URL + "; ERROR: " + err.message);
+            }
+        }
+
+        const provisionedRepositoryTransport: RepositoryTransport[] = [];
+        for (const repo of provisionedRepos) {
+            provisionedRepositoryTransport.push(RepositoryController.repositoryToTransport(repo));
+        }
+        return provisionedRepositoryTransport;
+    }
+
+    public async releaseRepositories(repos: Repository[]): Promise<RepositoryTransport[]> {
+        const ghc = new GitHubController();
+        const gha = new GitHubActions();
+
+        Log.info("CourseController::releaseRepositories( .. ) - start; # repos: " + repos.length);
+        const releasedRepos = [];
+        for (const repo of repos) {
+            try {
+                if (repo.URL !== null) {
+                    const teams: Team[] = [];
+                    for (const teamId of repo.teamIds) {
+                        teams.push(await this.dc.getTeam(teamId));
+                    }
+                    const success = await ghc.releaseRepository(repo, teams, false);
+
+                    if (success === true) {
+                        Log.info("CourseController::releaseRepositories( .. ) - success: " + repo.id);
+                        releasedRepos.push(repo);
+                    } else {
+                        Log.warn("CourseController::releaseRepositories( .. ) - FAILED: " + repo.id);
+                    }
+
+                    await gha.delay(2 * 1000); // after any releasing wait a bit
+                } else {
+                    Log.info("CourseController::releaseRepositories( .. ) - skipped; repo not yet provisioned: " +
+                        repo.id + "; URL: " + repo.URL);
+                }
+            } catch (err) {
+                Log.error("CourseController::releaseRepositories( .. ) - FAILED: " +
+                    repo.id + "; URL: " + repo.URL + "; ERROR: " + err.message);
+            }
+        }
+
+        const releasedRepositoryTransport: RepositoryTransport[] = [];
+        for (const repo of releasedRepos) {
+            releasedRepositoryTransport.push(RepositoryController.repositoryToTransport(repo));
+        }
+        return releasedRepositoryTransport;
     }
 
     public async computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}> {

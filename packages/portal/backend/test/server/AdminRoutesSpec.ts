@@ -423,6 +423,8 @@ describe('Admin Routes', function() {
                 id:                d0.id,
                 openTimestamp:     d0.openTimestamp,
                 closeTimestamp:    d0.closeTimestamp,
+                shouldProvision:   d0.shouldProvision,
+                importURL:         d0.importURL,
                 minTeamSize:       d0.teamMinSize,
                 maxTeamSize:       d0.teamMaxSize,
                 teamsSameLab:      d0.teamSameLab,
@@ -434,6 +436,7 @@ describe('Admin Routes', function() {
                 visibleToStudents: d0.visibleToStudents,
                 URL:               d0.URL,
                 gradesReleased:    d0.gradesReleased,
+                shouldAutoTest:    d0.shouldAutotest,
                 autoTest:          d0.autotest,
                 rubric:            d0.rubric,
                 custom:            d0.custom

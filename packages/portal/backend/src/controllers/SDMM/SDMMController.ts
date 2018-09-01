@@ -1,5 +1,4 @@
 import * as crypto from 'crypto';
-import Config, {ConfigKey} from "../../../../../common/Config";
 
 import Log from "../../../../../common/Log";
 import {GradePayload, Payload, SDMMStatus, StatusPayload} from "../../../../../common/types/SDMMTypes";
@@ -81,12 +80,12 @@ export class SDMMController extends CourseController {
      * @param {string[]} peopleIds people order matters; requestor should be peopleIds[0]
      * @returns {Promise<Payload>}
      */
-    public async provision(delivId: string, peopleIds: string[]): Promise<Payload> {
-        Log.info("SDMMController::provision( " + delivId + ", ... ) - start");
+    public async provisionDeliverable(delivId: string, peopleIds: string[]): Promise<Payload> {
+        Log.info("SDMMController::provisionDeliverable( " + delivId + ", ... ) - start");
 
         try {
             if (peopleIds.length < 1) {
-                Log.error("SDMMController::provision(..) - there needs to be at least one person on a repo");
+                Log.error("SDMMController::provisionDeliverable(..) - there needs to be at least one person on a repo");
                 throw new Error("Invalid # of people; contact course staff.");
             }
 
@@ -100,35 +99,36 @@ export class SDMMController extends CourseController {
 
             if (delivId === "d0") {
                 if (peopleIds.length === 1) {
-                    Log.info("SDMMController::provision(..) - provisioning new d0 repo for " + peopleIds[0]);
+                    Log.info("SDMMController::provisionDeliverable(..) - provisioning new d0 repo for " + peopleIds[0]);
                     return await this.provisionD0Repo(peopleIds[0]);
                 } else {
-                    Log.error("SDMMController::provision(..) - d0 repos are only for individuals");
+                    Log.error("SDMMController::provisionDeliverable(..) - d0 repos are only for individuals");
                     throw new Error("D0 for indivduals only; contact course staff.");
                 }
             } else if (delivId === "d1") {
 
                 if (peopleIds.length === 1) {
-                    Log.info("SDMMController::provision(..) - updating existing d0 repo to d1 for " + peopleIds[0]);
+                    Log.info("SDMMController::provisionDeliverable(..) - updating existing d0 repo to d1 for " + peopleIds[0]);
                     return await this.updateIndividualD0toD1(peopleIds[0]);
                 } else if (peopleIds.length === 2) {
-                    Log.info("SDMMController::provision(..) - provisioning new d1 repo for " + JSON.stringify(peopleIds));
+                    Log.info("SDMMController::provisionDeliverable(..) - provisioning new d1 repo for " + JSON.stringify(peopleIds));
                     if (peopleIds[0] !== peopleIds[1]) {
                         return await this.provisionD1Repo(peopleIds);
                     } else {
-                        Log.error("SDMMController::provision(..) - d1 duplicate users");
+                        Log.error("SDMMController::provisionDeliverable(..) - d1 duplicate users");
                         throw new Error("D1 duplicate users; if you wish to work alone, please select 'work individually'.");
                     }
                 } else {
-                    Log.error("SDMMController::provision(..) - d1 can only be performed by single students or pairs of students.");
+                    Log.error("SDMMController::provisionDeliverable(..) - " +
+                        "d1 can only be performed by single students or pairs of students.");
                     throw new Error("D1 can only be performed by single students or pairs of students.");
                 }
             } else {
-                Log.warn("SDMMController::provision(..) - new repo not needed for delivId: " + delivId);
+                Log.warn("SDMMController::provisionDeliverable(..) - new repo not needed for delivId: " + delivId);
                 throw new Error("Repo not needed; contact course staff.");
             }
         } catch (err) {
-            Log.error("SDMMController::provision(..) - ERROR: " + err);
+            Log.error("SDMMController::provisionDeliverable(..) - ERROR: " + err);
             throw new Error(err.message);
         }
     }
@@ -571,9 +571,9 @@ export class SDMMController extends CourseController {
 
             // create remote repo
             const INPUTREPO = "https://github.com/SECapstone/bootstrap";
-            const host = Config.getInstance().getProp(ConfigKey.backendUrl);
-            const WEBHOOKADDR = host + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/portal/githubWebhook';
-            const provisionResult = await this.gh.provisionRepository(repoName, [team], INPUTREPO, WEBHOOKADDR);
+            // const host = Config.getInstance().getProp(ConfigKey.backendUrl);
+            // const WEBHOOKADDR = host + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/portal/githubWebhook';
+            const provisionResult = await this.gh.provisionRepository(repoName, [team], INPUTREPO, true);
 
             if (provisionResult === true) {
                 Log.info("SDMMController::provisionD0Repo(..) - d0 GitHub provisioning successful");
@@ -773,9 +773,9 @@ export class SDMMController extends CourseController {
 
             // create remote repo
             const INPUTREPO = "https://github.com/SECapstone/bootstrap"; // HARDCODED for SDMM
-            const host = Config.getInstance().getProp(ConfigKey.backendUrl);
-            const WEBHOOKADDR = host + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/portal/githubWebhook';
-            const provisionResult = await this.gh.provisionRepository(repoName, [team], INPUTREPO, WEBHOOKADDR);
+            // const host = Config.getInstance().getProp(ConfigKey.backendUrl);
+            // const WEBHOOKADDR = host + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/portal/githubWebhook';
+            const provisionResult = await this.gh.provisionRepository(repoName, [team], INPUTREPO, true);
 
             if (provisionResult === true) {
                 Log.info("SDMMController::provisionD1Repo(..) - d1 github provisioning successful");

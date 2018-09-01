@@ -10,12 +10,12 @@ import Util from "../../../common/Util";
 
 import {DatabaseController} from "../src/controllers/DatabaseController";
 import {DeliverablesController} from "../src/controllers/DeliverablesController";
+import {GitHubActions} from "../src/controllers/GitHubActions";
 import {GradesController} from "../src/controllers/GradesController";
 import {PersonController} from "../src/controllers/PersonController";
 import {RepositoryController} from "../src/controllers/RepositoryController";
 import {TeamController} from "../src/controllers/TeamController";
 import {Auth, Course, Deliverable, Grade, Person, Repository, Result, Team} from "../src/Types";
-import {GitHubActions} from "../src/controllers/GitHubActions";
 
 if (typeof it === 'function') {
     // only if we're running in mocha
@@ -251,6 +251,8 @@ export class Test {
             gradesReleased: false,
             // delay:          300,
 
+            shouldProvision:  true,
+            importURL:        null,
             teamMinSize:      2,
             teamMaxSize:      2,
             teamSameLab:      true,
@@ -261,7 +263,8 @@ export class Test {
 
             visibleToStudents: true,
 
-            autotest: {
+            shouldAutotest: true,
+            autotest:       {
                 dockerImage:        'testImage',
                 studentDelay:       60 * 60 * 12, // 12h
                 maxExecTime:        300,
@@ -357,28 +360,31 @@ export class Test {
             repositories: []
         };
 
-        let openDate: Date = new Date();
+        const openDate: Date = new Date();
         openDate.setHours(openDate.getHours() + 4);
 
-        let closeDate: Date = new Date();
+        const closeDate: Date = new Date();
         closeDate.setDate(closeDate.getDate() + 4);
 
-        let openNumber  : number = Date.parse(openDate.toISOString());
-        let closeNumber : number = Date.parse(closeDate.toISOString());
+        const openNumber: number = Date.parse(openDate.toISOString());
+        const closeNumber: number = Date.parse(closeDate.toISOString());
 
         const newDeliv: Deliverable = {
-            id:               Test.ASSIGNID0,
-            URL:              "",
-            repoPrefix:       Test.ASSIGNID0 + "_",
-            openTimestamp:    openNumber,
-            closeTimestamp:   closeNumber,
-            gradesReleased:   false,
-            teamMinSize:      1,
-            teamMaxSize:      1,
-            teamSameLab:      false,
-            teamStudentsForm: false,
-            teamPrefix:       Test.ASSIGNID0 + "_",
-            autotest:         {
+            id:                Test.ASSIGNID0,
+            URL:               "",
+            repoPrefix:        Test.ASSIGNID0 + "_",
+            openTimestamp:     openNumber,
+            closeTimestamp:    closeNumber,
+            gradesReleased:    false,
+            shouldProvision:   true,
+            importURL:         null,
+            teamMinSize:       1,
+            teamMaxSize:       1,
+            teamSameLab:       false,
+            teamStudentsForm:  false,
+            teamPrefix:        Test.ASSIGNID0 + "_",
+            shouldAutotest:    true,
+            autotest:          {
                 dockerImage:        'testImage',
                 studentDelay:       60 * 60 * 12, // 12h
                 maxExecTime:        300,
@@ -426,37 +432,40 @@ export class Test {
             repositories: []
         };
 
-        let openDate: Date = new Date();
+        const openDate: Date = new Date();
         openDate.setHours(openDate.getHours() + 4);
 
-        let closeDate: Date = new Date();
+        const closeDate: Date = new Date();
         closeDate.setDate(closeDate.getDate() + 4);
 
-        let openNumber  : number = Date.parse(openDate.toISOString());
-        let closeNumber : number = Date.parse(closeDate.toISOString());
+        const openNumber: number = Date.parse(openDate.toISOString());
+        const closeNumber: number = Date.parse(closeDate.toISOString());
 
         const newDeliv: Deliverable = {
-            id:               Test.ASSIGNID1,
-            URL:              "",
-            repoPrefix:       "",
-            visibleToStudents:false,
-            rubric:           {},
-            openTimestamp:    openNumber,
-            closeTimestamp:   closeNumber,
-            gradesReleased:   false,
-            teamMinSize:      1,
-            teamMaxSize:      1,
-            teamSameLab:      false,
-            teamStudentsForm: false,
-            teamPrefix:       "",
-            autotest:         {
+            id:                Test.ASSIGNID1,
+            URL:               "",
+            repoPrefix:        "",
+            visibleToStudents: false,
+            rubric:            {},
+            openTimestamp:     openNumber,
+            closeTimestamp:    closeNumber,
+            gradesReleased:    false,
+            shouldProvision:   true,
+            importURL:         null,
+            teamMinSize:       1,
+            teamMaxSize:       1,
+            teamSameLab:       false,
+            teamStudentsForm:  false,
+            teamPrefix:        "",
+            shouldAutotest:    true,
+            autotest:          {
                 dockerImage:        'testImage',
                 studentDelay:       60 * 60 * 12, // 12h
                 maxExecTime:        300,
                 regressionDelivIds: [],
                 custom:             {}
             },
-            custom:           newAssignmentInfo
+            custom:            newAssignmentInfo
         };
 
         // const newDelivSuccess =
@@ -547,6 +556,8 @@ export class Test {
             closeTimestamp:    -1,
             gradesReleased:    false,
             // delay:            -1,
+            shouldProvision:   true,
+            importURL:         null,
             teamMinSize:       1,
             teamMaxSize:       1,
             teamSameLab:       false,
@@ -554,6 +565,7 @@ export class Test {
             teamPrefix:        'team_',
             repoPrefix:        '',
             // bootstrapUrl:     '',
+            shouldAutotest:    true,
             autotest:          {
                 dockerImage:        'testImage',
                 studentDelay:       60 * 60 * 12, // 12h
@@ -751,12 +763,12 @@ export class Test {
         // delete test repos if needed
         for (const repo of repos as any) {
             Log.info('Evaluating repo: ' + repo.name);
-            if (repo.name.indexOf('TEST__X__') === 0        ||
-                repo.name.startsWith(ASSIGNREPO1)              ||
-                repo.name.startsWith(ASSIGNREPO2)             ||
-                repo.name.startsWith("test_")               ||
-                repo.name.startsWith(Test.ASSIGNID0 + "_")  ||
-                repo.name.startsWith(Test.ASSIGNID1 + "_")  ||
+            if (repo.name.indexOf('TEST__X__') === 0 ||
+                repo.name.startsWith(ASSIGNREPO1) ||
+                repo.name.startsWith(ASSIGNREPO2) ||
+                repo.name.startsWith("test_") ||
+                repo.name.startsWith(Test.ASSIGNID0 + "_") ||
+                repo.name.startsWith(Test.ASSIGNID1 + "_") ||
                 repo.name.endsWith("_grades")) {
                 Log.info('Removing stale repo: ' + repo.name);
                 let val = await gh.deleteRepo(repo.name);

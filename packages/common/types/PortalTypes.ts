@@ -80,19 +80,23 @@ export interface DeliverableTransport {
     id: string;
     openTimestamp: number;
     closeTimestamp: number;
-    minTeamSize: number; // must be > 0
-    maxTeamSize: number; // leave at 1 for individual assignments
-    teamsSameLab: boolean;
-    studentsFormTeams: boolean;
+
     onOpenAction: string; // will change to something else
     onCloseAction: string; // will change to something else
     URL: string; // student-facing description
     gradesReleased: boolean;
 
+    shouldAutoTest: boolean;
     autoTest: AutoTestConfigTransport; // autoTest options
 
-    repoPrefix: string;
-    teamPrefix: string;
+    shouldProvision: boolean;
+    repoPrefix: string | null;
+    teamPrefix: string | null;
+    minTeamSize: number; // must be > 0
+    maxTeamSize: number; // leave at 1 for individual assignments
+    teamsSameLab: boolean;
+    studentsFormTeams: boolean;
+    importURL: string | null;
 
     visibleToStudents: boolean;
     rubric: object;

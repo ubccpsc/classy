@@ -37,7 +37,7 @@ export default class SDMMREST implements IREST {
             if (isValid === true) {
                 const sc: SDMMController = new SDMMController(new GitHubController());
                 if (action === 'provisionD0') {
-                    sc.provision("d0", [user]).then(function(provisionResult) {
+                    sc.provisionDeliverable("d0", [user]).then(function(provisionResult) {
                         Log.trace('SDMMREST::performAction(..) - sending 200; result: ' + JSON.stringify(provisionResult));
                         res.send(provisionResult);
                     }).catch(function(err) {
@@ -45,7 +45,7 @@ export default class SDMMREST implements IREST {
                         // return SDMMREST.handleError(400, "SDMMREST::performAction(..) d0 provision failed.", res, next);
                     });
                 } else if (action === 'provisionD1individual') {
-                    sc.provision("d1", [user]).then(function(provisionResult) {
+                    sc.provisionDeliverable("d1", [user]).then(function(provisionResult) {
                         Log.info('SDMMREST::performAction(..) - sending 200; success: ' + JSON.stringify(provisionResult));
                         res.send(provisionResult);
                     }).catch(function(err) {
@@ -53,7 +53,7 @@ export default class SDMMREST implements IREST {
                         return SDMMREST.handleError(400, err.message, res, next);
                     });
                 } else if (action === 'provisionD1team') {
-                    sc.provision("d1", [user, param]).then(function(provisionResult) {
+                    sc.provisionDeliverable("d1", [user, param]).then(function(provisionResult) {
                         Log.info('SDMMREST::performAction(..) - sending 200; success: ' + JSON.stringify(provisionResult));
                         res.send(provisionResult);
                     }).catch(function(err) {

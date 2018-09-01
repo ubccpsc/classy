@@ -128,16 +128,18 @@ describe.skip('TestDatasetGenerator', function() {
             gradesReleased:    false,
             visibleToStudents: true,
 
-            repoPrefix: 'r_',
-            teamPrefix: 't_',
-
+            shouldProvision:  true,
+            repoPrefix:       'r_',
+            teamPrefix:       't_',
+            importURL:        null,
             teamMinSize:      1,
             teamMaxSize:      2,
             teamSameLab:      true,
             teamStudentsForm: true,
             // bootstrapUrl:     '',
 
-            autotest: {
+            shouldAutotest: true,
+            autotest:       {
                 dockerImage:        'testImage',
                 studentDelay:       60 * 60 * 12, // 12h
                 maxExecTime:        300,

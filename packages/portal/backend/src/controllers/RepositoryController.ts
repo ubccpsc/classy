@@ -1,4 +1,5 @@
 import Log from "../../../../common/Log";
+import {RepositoryTransport} from "../../../../common/types/PortalTypes";
 import {Person, Repository, Team} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
@@ -134,5 +135,18 @@ export class RepositoryController {
             }
         }
         return peopleIds;
+    }
+
+    public static repositoryToTransport(repository: Repository): RepositoryTransport {
+        if (typeof repository === 'undefined' || repository === null) {
+            throw new Error("RepositoryController::repositoryToTransport( ... ) - ERROR: repository not provided.");
+        }
+
+        const repo: RepositoryTransport = {
+            id:  repository.id,
+            URL: repository.URL
+        };
+
+        return repo;
     }
 }

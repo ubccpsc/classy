@@ -92,10 +92,12 @@ export class DeliverablesController {
             openTimestamp:  deliv.openTimestamp,
             closeTimestamp: deliv.closeTimestamp,
 
+            shouldProvision:   deliv.shouldProvision,
             minTeamSize:       deliv.teamMinSize,
             maxTeamSize:       deliv.teamMaxSize,
             teamsSameLab:      deliv.teamSameLab,
             studentsFormTeams: deliv.teamStudentsForm,
+            importURL:         deliv.importURL,
 
             onOpenAction:  '',
             onCloseAction: '',
@@ -103,9 +105,10 @@ export class DeliverablesController {
             gradesReleased:    deliv.gradesReleased,
             visibleToStudents: deliv.visibleToStudents,
 
-            autoTest: deliv.autotest,
-            rubric:   deliv.rubric,
-            custom:   deliv.custom
+            shouldAutoTest: deliv.shouldProvision,
+            autoTest:       deliv.autotest,
+            rubric:         deliv.rubric,
+            custom:         deliv.custom
         };
         return trans;
     }
@@ -120,16 +123,20 @@ export class DeliverablesController {
             closeTimestamp: trans.closeTimestamp,
             gradesReleased: trans.gradesReleased,
 
+            shouldProvision:  trans.shouldProvision,
             teamMinSize:      trans.minTeamSize,
             teamMaxSize:      trans.maxTeamSize,
             teamSameLab:      trans.teamsSameLab,
             teamStudentsForm: trans.studentsFormTeams,
+            importURL:        trans.importURL,
 
             repoPrefix: trans.repoPrefix,
             teamPrefix: trans.teamPrefix,
 
             visibleToStudents: trans.visibleToStudents,
-            autotest:          trans.autoTest,
+
+            shouldAutotest: trans.shouldAutoTest,
+            autotest:       trans.autoTest,
 
             rubric: trans.rubric,
             custom: trans.custom

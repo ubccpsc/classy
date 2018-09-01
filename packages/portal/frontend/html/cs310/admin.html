@@ -25,10 +25,10 @@
 
         <ons-tab id="AdminResultTab" page="results.html" label="Results" icon="ion-android-checkmark-circle">
         </ons-tab>
-<!--
-        <ons-tab id="AdminDashboardTab" page="dashboard.html" label="Dash" icon="ion-ios-speedometer-outline">
-        </ons-tab>
--->
+        <!--
+                <ons-tab id="AdminDashboardTab" page="dashboard.html" label="Dash" icon="ion-ios-speedometer-outline">
+                </ons-tab>
+        -->
         <ons-tab id="AdminConfigTab" page="config.html" label="Config" icon="ion-ios-gear">
         </ons-tab>
     </ons-tabbar>
@@ -266,7 +266,8 @@
                             <ons-switch id="adminEditDeliverablePage-visible" modifier="list-item" onclick=""></ons-switch>
                         </div>
                         <div class="expandable-content">
-                            Whether the deliverable is visible to students. For instance, if a deliverable is really just a grading column they do not need to see.
+                            Whether the deliverable is visible to students. For instance, if a deliverable is really just a grading column
+                            they do not need to see.
                         </div>
                     </ons-list-item>
 
@@ -343,6 +344,38 @@
                     </ons-list-item>
                     -->
 
+                    <ons-list-item style="display: flex;" expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-location-arrow"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span>Deliverable will provision repos</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-switch id="adminEditDeliverablePage-shouldProvision" modifier="list-item" onclick=""></ons-switch>
+                        </div>
+                        <div class="expandable-content">
+                            If new repositories will be provisioned for this deliverable, say yes. Otherwise no.
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-header>Import URL</ons-list-header>
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-cloud"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            Import URL
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-importURL"></ons-input>
+                        </div>
+                        <div class="expandable-content">
+                            If any repos are provisioned for this deliverable, where should they be imported from (e.g., the boostrap clone
+                            URL).
+                        </div>
+                    </ons-list-item>
+
                     <ons-list-header>Name prefixes</ons-list-header>
                     <ons-list-item expandable>
                         <div class="left settingIcon">
@@ -355,7 +388,8 @@
                             <ons-input class="settingTextInput" id="adminEditDeliverablePage-repoPrefix"></ons-input>
                         </div>
                         <div class="expandable-content">
-                            If any repositories are generated as a part of this deliverable, this prefix will be used when naming. Should not be empty; otherwise will revert to '&lt;delivId&gt;'.
+                            If any repositories are generated as a part of this deliverable, this prefix will be used when naming. Should
+                            not be empty; otherwise will revert to '&lt;delivId&gt;'.
                         </div>
                     </ons-list-item>
                     <ons-list-item expandable>
@@ -369,7 +403,8 @@
                             <ons-input class="settingTextInput" id="adminEditDeliverablePage-teamPrefix"></ons-input>
                         </div>
                         <div class="expandable-content">
-                            If any teams are generated as a part of this deliverable, this prefix will be used when naming. Should not be empty; otherwise will revert to 't_&lt;delivId&gt;'.
+                            If any teams are generated as a part of this deliverable, this prefix will be used when naming. Should not be
+                            empty; otherwise will revert to 't_&lt;delivId&gt;'.
                         </div>
                     </ons-list-item>
 
@@ -485,6 +520,20 @@
 
 
                     <ons-list-header>AutoTest Options</ons-list-header>
+                    <ons-list-item style="display: flex;" expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-location-arrow"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span>Deliverable will provision repos</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-switch id="adminEditDeliverablePage-shouldAutoTest" modifier="list-item" onclick=""></ons-switch>
+                        </div>
+                        <div class="expandable-content">
+                            If AutoTest will be used for this deliverable, say yes. Otherwise no.
+                        </div>
+                    </ons-list-item>
                     <ons-list-item expandable>
                         <div class="left settingIcon">
                             <ons-icon icon="fa-cloud"></ons-icon>

@@ -131,9 +131,9 @@ describe("GitHubController", () => {
         const teams = await new TeamController().getAllTeams();
         expect(teams.length).to.be.greaterThan(0);
 
-        const webhook = 'https://devnull.cs.ubc.ca/classyWebhook';
+        // const webhook = 'https://devnull.cs.ubc.ca/classyWebhook';
         const importUrl = 'https://github.com/SECapstone/bootstrap';
-        const provisioned = await gc.provisionRepository(repos[0].id, teams, importUrl, webhook);
+        const provisioned = await gc.provisionRepository(repos[0].id, teams, importUrl, true);
         expect(provisioned).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
 
@@ -144,12 +144,12 @@ describe("GitHubController", () => {
         const teams = await new TeamController().getAllTeams();
         expect(teams.length).to.be.greaterThan(0);
 
-        const webhook = 'https://devnull.cs.ubc.ca/classyWebhook';
+        // const webhook = 'https://devnull.cs.ubc.ca/classyWebhook';
         const importUrl = 'https://github.com/SECapstone/bootstrap';
         let res = null;
         let ex = null;
         try {
-            res = await gc.provisionRepository(repos[0].id, teams, importUrl, webhook);
+            res = await gc.provisionRepository(repos[0].id, teams, importUrl, true);
         } catch (err) {
             ex = err;
         }
@@ -160,7 +160,7 @@ describe("GitHubController", () => {
         ex = null;
         try {
             // no repository object for this repoName
-            res = await gc.provisionRepository('invalidRepo' + Date.now(), teams, importUrl, webhook);
+            res = await gc.provisionRepository('invalidRepo' + Date.now(), teams, importUrl, true);
         } catch (err) {
             ex = err;
         }
@@ -233,13 +233,13 @@ describe("GitHubController", () => {
         const allRepos: Repository[] = await rc.getAllRepos();
         const repoCount: number = allRepos.length;
 
-        let repo = await rc.getRepository(Test.REPONAME1);
+        const repo = await rc.getRepository(Test.REPONAME1);
 
         expect(repoCount).to.be.greaterThan(1);
 
         const tc: TeamController = new TeamController();
         const allTeams: Team[] = await tc.getAllTeams();
-        let team = await tc.getTeam(Test.TEAMNAME1);
+        const team = await tc.getTeam(Test.TEAMNAME1);
         const teamCount: number = allTeams.length;
         Log.info("GithubControllerSpec::ReleasingRepo - repoCount: " + repoCount + " teamcCount: " + teamCount);
         expect(teamCount).to.be.greaterThan(1);

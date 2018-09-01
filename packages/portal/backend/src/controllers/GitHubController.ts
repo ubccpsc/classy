@@ -14,10 +14,10 @@ export interface IGitHubController {
      * @param {string} repoName
      * @param {Team[]} teams
      * @param {string} sourceRepo
-     * @param {string} webhookAddress
+     * @param {boolean} shouldRelease; whether the student team should be added to the repo
      * @returns {Promise<boolean>}
      */
-    provisionRepository(repoName: string, teams: Team[], sourceRepo: string, webhookAddress: string): Promise<boolean>;
+    provisionRepository(repoName: string, teams: Team[], sourceRepo: string, shouldRelease: boolean): Promise<boolean>;
 
     createPullRequest(repoName: string, prName: string): Promise<boolean>;
 
@@ -64,7 +64,6 @@ export class GitHubController implements IGitHubController {
     public async createRepository(repoName: string, importUrl: string, path?: string): Promise<boolean> {
         const config = Config.getInstance();
         const host = config.getProp(ConfigKey.backendUrl);
-        // const port = config.getProp(ConfigKey.backendPort);
         const WEBHOOKADDR = host + '/portal/githubWebhook';
 
         Log.info("GitHubController::createRepository( " + repoName + ", ...) - start");
@@ -192,7 +191,7 @@ export class GitHubController implements IGitHubController {
     public async provisionRepository(repoName: string,
                                      teams: Team[],
                                      importUrl: string,
-                                     webhookAddress: string): Promise<boolean> {
+                                     shouldRelease: boolean): Promise<boolean> {
         Log.info("GitHubController::provisionRepository( " + repoName + ", ...) - start");
         const start = Date.now();
 
@@ -237,9 +236,14 @@ export class GitHubController implements IGitHubController {
                     const addMembers = await gh.addMembersToTeam(teamValue.teamName, teamValue.githubTeamNumber, team.personIds);
                     Log.trace('GitHubController::provisionRepository(..) - addMembers: ' + addMembers.teamName);
 
-                    Log.trace("GitHubController::provisionRepository() - add team to repo");
-                    const teamAdd = await gh.addTeamToRepo(teamValue.githubTeamNumber, repoName, 'push');
-                    Log.trace('GitHubController::provisionRepository(..) - team name: ' + teamAdd.teamName);
+                    if (shouldRelease === true) {
+                        Log.trace("GitHubController::provisionRepository() - add team: " + teamValue.teamName + " to repo");
+                        const teamAdd = await gh.addTeamToRepo(teamValue.githubTeamNumber, repoName, 'push');
+                        Log.trace('GitHubController::provisionRepository(..) - team name: ' + teamAdd.teamName);
+                    } else {
+                        Log.trace("GitHubController::provisionRepository() - team: " +
+                            teamValue.teamName + " NOT added to repo (shouldRelease === false)");
+                    }
                 }
             } catch (err) {
                 Log.warn("GitHubController::provisionRepository() - create team ERROR: " + err);
@@ -253,8 +257,10 @@ export class GitHubController implements IGitHubController {
             Log.trace('GitHubController::provisionRepository(..) - team name: ' + staffAdd.teamName);
 
             // add webhooks
-            Log.trace("GitHubController::provisionRepository() - add webhook");
-            const createHook = await gh.addWebhook(repoName, webhookAddress);
+            const host = Config.getInstance().getProp(ConfigKey.backendUrl);
+            const WEBHOOKADDR = host + '/portal/githubWebhook';
+            Log.trace("GitHubController::provisionRepository() - add webhook to: " + WEBHOOKADDR);
+            const createHook = await gh.addWebhook(repoName, WEBHOOKADDR);
             Log.trace('GitHubController::provisionRepository(..) - webook successful: ' + createHook);
 
             // perform import
@@ -299,8 +305,7 @@ export class TestGitHubController implements IGitHubController {
 
     public async provisionRepository(repoName: string,
                                      teams: Team[],
-                                     sourceRepo: string,
-                                     webhookAddress: string): Promise<boolean> {
+                                     sourceRepo: string): Promise<boolean> {
         Log.warn("TestGitHubController::provisionRepository(..) - TEST");
         return true;
     }

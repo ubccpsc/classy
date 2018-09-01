@@ -234,6 +234,8 @@ export class AdminDeliverablesTab {
         const openTimestamp = this.openPicker.latestSelectedDateObj.getTime();
         const closeTimestamp = this.closePicker.latestSelectedDateObj.getTime();
 
+        const shouldProvision = UI.getToggleValue('adminEditDeliverablePage-shouldProvision');
+        const importURL = UI.getTextFieldValue('adminEditDeliverablePage-importURL');
         const minTeamSize = Number(UI.getDropdownValue('adminEditDeliverablePage-minTeamSize'));
         const maxTeamSize = Number(UI.getDropdownValue('adminEditDeliverablePage-maxTeamSize'));
         const teamsSameLab = UI.getToggleValue('adminEditDeliverablePage-inSameLab');
@@ -242,6 +244,7 @@ export class AdminDeliverablesTab {
         const gradesReleased = UI.getToggleValue('adminEditDeliverablePage-gradesReleased');
         const visibleToStudents = UI.getToggleValue('adminEditDeliverablePage-visible');
 
+        const shouldAutoTest = UI.getToggleValue('adminEditDeliverablePage-shouldAutoTest');
         const dockerImage = UI.getTextFieldValue('adminEditDeliverablePage-atDockerName');
         const maxExecTime = Number(UI.getTextFieldValue('adminEditDeliverablePage-atContainerTimeout'));
         const studentDelay = Number(UI.getTextFieldValue('adminEditDeliverablePage-atStudentDelay'));
@@ -317,11 +320,14 @@ export class AdminDeliverablesTab {
             closeTimestamp,
             onOpenAction:  '', // TODO: add this
             onCloseAction: '', // TODO: add this
+            shouldAutoTest,
+            importURL,
             minTeamSize,
             maxTeamSize,
             studentsFormTeams,
             teamsSameLab,
             gradesReleased,
+            shouldProvision,
             autoTest:      at,
             repoPrefix,
             teamPrefix,
