@@ -221,6 +221,7 @@ describe("GitHubController", () => {
 
         const gha = new GitHubActions();
         await gha.deleteRepo(repo.id); // delete repo from github
+        await gha.deleteRepo(Test.REPONAME2); // delete repo from github
 
         const importURL = 'https://github.com/SECapstone/capstone';
         const success = await gc.createRepository(repo.id, importURL, "AutoTest.md");

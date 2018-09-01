@@ -222,7 +222,7 @@ export default class CS340REST implements IREST {
             }
         }
 
-        res.send(404, {error: "Unable to find a repository using teamId: " + teamid});
+        res.send(400, {error: "Unable to find a repository using teamId: " + teamid});
         return next();
     }
 
@@ -257,7 +257,7 @@ export default class CS340REST implements IREST {
             }
         }
 
-        res.send(404, {error: "No team for student: " + sid + " and deliverable: " + delivid});
+        res.send(400, {error: "No team for student: " + sid + " and deliverable: " + delivid});
         return next();
     }
 
@@ -282,14 +282,14 @@ export default class CS340REST implements IREST {
             if (result !== null) {
                 res.send(200, {response: result});
             } else {
-                res.send(404, {response: null, error: "Not found"});
+                res.send(400, {response: null, error: "Not found"});
             }
         }).catch((error) => {
             Log.error("CS340REST::getAssignmentGrade - Error: " + error);
             res.send(500, {error: error});
         });
 
-        /*        res.send(404, {
+        /*        res.send(400, {
                     message: "Not implemented"
                 });
         */
@@ -478,28 +478,59 @@ export default class CS340REST implements IREST {
         let db = DatabaseController.getInstance();
         personController.getPerson(studentId).then(async function (result) {
             let person: Person = result;
-
+            let success: boolean;
             if (result === null) {
                 res.send(400, {error: "Invalid student ID, unable to record grade"});
                 return next();
             }
             let repo: Repository = await assignController.getAssignmentRepo(assignId, person);
             if (repo === null) {
+                // success = await assignController.setAssignmentGrade("", assignId, reqBody, user);
+
+
                 // res.send(400, {error: "No Assignment Repository found, unable to record grade"});
                 // return next();
+
+                let totalGrade = 0;
+                for (const aQuestion of reqBody.questions) {
+                    for (const aSubQuestion of aQuestion.subQuestion) {
+                        // Sum up all subcompartment grades
+                        totalGrade += aSubQuestion.grade;
+                    }
+                }
+
+                let newGrade: Grade = {
+                    personId: person.id,
+                    delivId: assignId,
+
+                    score: totalGrade,
+                    comment: "Marked by " + user,
+                    timestamp: Date.now(),
+
+                    urlName: "",
+                    URL: "",
+
+                    custom: reqBody
+                };
+
+                await db.writeGrade(newGrade);
+                res.send(200, {response: "Success"});
+                return next();
+
                 // create a team just for the student
 
-                let team = await teamController.getTeam("emptyGrade_" + person.id);
-                if(team === null) {
-                    let deliv = await db.getDeliverable(assignId);
-                    if (deliv === null) {
-                        res.send(400, {error: "Invalid deliverable specified"});
-                    }
-                    team = await teamController.createTeam("emptyGrade_" + person.id, deliv, [person], null)
-                }
-                repo = await repoController.createRepository("emptyGrade_" + person.id, [team], null);
+                // let team = await teamController.getTeam("emptyGrade_" + person.id);
+                // if(team === null) {
+                //     let deliv = await db.getDeliverable(assignId);
+                //     if (deliv === null) {
+                //         res.send(400, {error: "Invalid deliverable specified"});
+                //     }
+                //     team = await teamController.createTeam("emptyGrade_" + person.id, deliv, [person], null)
+                // }
+                // repo = await repoController.createRepository("emptyGrade_" + person.id, [team], null);
+            } else {
+                success = await assignController.setAssignmentGrade(repo.id, assignId, reqBody, user);
             }
-            let success = await assignController.setAssignmentGrade(repo.id, assignId, reqBody, user);
             if (success) {
                 res.send(200, {response: "Success"});
             } else {
@@ -735,7 +766,7 @@ export default class CS340REST implements IREST {
 
         personController.getPerson(gitHubUserName).then((result) => {
             if (result === null) {
-                res.send(404, {error: "Username not found"});
+                res.send(400, {error: "Username not found"});
             } else {
                 res.send(200, {response: result});
             }

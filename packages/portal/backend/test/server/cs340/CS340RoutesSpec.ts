@@ -54,6 +54,7 @@ describe("CS340: Routes", () => {
         await Test.prepareAll();
         await Test.prepareAssignment();
         await Test.prepareAssignment2();
+        await Test.prepareAssignmentTeam();
         await Test.prepareAssignmentTeam2();
 
         Config.getInstance().setProp(ConfigKey.name, 'cs340');
@@ -406,7 +407,7 @@ describe("CS340: Routes", () => {
     it("Should be able to retrieve a repository from specifying a team.", async function () {
         let response = null;
 
-        const url = '/portal/cs340/getRepository/' + Test.ASSIGNID0 + "_" + Test.REALUSER1.id;
+        const url = '/portal/cs340/getRepository/' + Test.ASSIGNTEAMNAME0;
         try {
             response = await request(app).get(url).set({user: adminUserName, token: adminUserToken});
         } catch (err) {
@@ -1094,7 +1095,7 @@ describe("CS340: Routes", () => {
             }
 
             expect(response).to.not.be.null;
-            expect(response.status).to.be.equal(404);
+            expect(response.status).to.be.equal(400);
             expect(response.body.response).to.be.null;
             expect(response.body.error).to.not.be.null;
         });
@@ -1112,7 +1113,7 @@ describe("CS340: Routes", () => {
             }
 
             expect(response).to.not.be.null;
-            expect(response.status).to.be.equal(404);
+            expect(response.status).to.be.equal(400);
             expect(response.body.response).to.not.exist;
             expect(response.body.error).to.not.be.null;
         });
@@ -1129,7 +1130,7 @@ describe("CS340: Routes", () => {
             }
 
             expect(response).to.not.be.null;
-            expect(response.status).to.be.equal(404);
+            expect(response.status).to.be.equal(400);
             expect(response.body.response).to.not.exist;
             expect(response.body.error).to.not.be.null;
         });
