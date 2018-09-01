@@ -904,7 +904,7 @@ export class GitHubActions {
         return url.slice(0, startAppend) + authKey + url.slice(startAppend);
     }
 
-    private async reportStdErr(stderr: any, prefix: string) {
+    private reportStdErr(stderr: any, prefix: string) {
         if (stderr) {
             Log.warn('GithubManager::reportStdErr - ' + prefix + ': ' + stderr);
         }

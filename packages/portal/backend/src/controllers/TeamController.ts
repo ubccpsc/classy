@@ -50,7 +50,7 @@ export class TeamController {
      * passes through to TeamController::createTeam(..).
      *
      * @param teamId
-     * @param {string} delivId
+     * @param deliv
      * @param people
      * @param adminOverride
      * @returns {Promise<Team | null>}

@@ -303,8 +303,8 @@ export class CourseController implements ICourseController {
 
     /**
      * Gets the results associated with the course.
-     * @param {reqDelivId: string} * for any
-     * @param {reqRepoId: string} * for any
+     * @param reqDelivId ('any' for *)
+     * @param reqRepoId ('any' for *)
      * @returns {Promise<AutoTestGradeTransport[]>}
      */
     public async getResults(reqDelivId: string, reqRepoId: string): Promise<AutoTestResultSummaryTransport[]> {

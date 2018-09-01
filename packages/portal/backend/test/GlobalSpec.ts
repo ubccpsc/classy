@@ -713,13 +713,12 @@ export class Test {
         return Util.clone(result) as Result;
     }
 
-
     public static async deleteStaleRepositories(): Promise<boolean> {
         Log.test('GlobalSpec::deleteStaleRepositories() - start');
-        let gh: GitHubActions = new GitHubActions();
-        let repos = await gh.listRepos();
+        const gh: GitHubActions = new GitHubActions();
+        const repos = await gh.listRepos();
 
-        let TESTREPONAMES = [
+        const TESTREPONAMES = [
             "testtest__repo1",
             "secap_cpscbot",
             "secap_rthse2",
@@ -731,7 +730,7 @@ export class Test {
             this.REPONAME1
         ];
 
-        let TESTTEAMNAMES = [
+        const TESTTEAMNAMES = [
             "rtholmes",
             "ubcbot",
             "rthse2",
@@ -742,18 +741,17 @@ export class Test {
             "TESTteam3"
         ];
 
-        let DELAY_SHORT = 200;
+        const DELAY_SHORT = 200;
         const ASSIGNREPO1 = "TEST__X__secap_" + Test.ASSIGNID0;
         const ASSIGNREPO2 = "TEST__X__secap_" + Test.ASSIGNID1;
         const TEAMNAME = "TEST__X__t_" + Test.TEAMNAME1;
-
 
         // delete test repos if needed
         for (const repo of repos as any) {
             for (const r of TESTREPONAMES) {
                 if (repo.name === r) {
                     Log.info('Removing stale repo: ' + repo.name);
-                    let val = await gh.deleteRepo(r);
+                    const val = await gh.deleteRepo(r);
                     await gh.delay(DELAY_SHORT);
                     // expect(val).to.be.true;
                 }
@@ -771,16 +769,16 @@ export class Test {
                 repo.name.startsWith(Test.ASSIGNID1 + "_") ||
                 repo.name.endsWith("_grades")) {
                 Log.info('Removing stale repo: ' + repo.name);
-                let val = await gh.deleteRepo(repo.name);
+                const val = await gh.deleteRepo(repo.name);
                 // expect(val).to.be.true;
-                let teamName = repo.name.substr(15);
+                const teamName = repo.name.substr(15);
                 Log.info('Adding stale team name: ' + repo.name);
                 TESTTEAMNAMES.push(teamName);
             }
         }
 
         // delete teams if needed
-        let teams = await gh.listTeams();
+        const teams = await gh.listTeams();
         expect(teams).to.be.an('array');
         // expect(teams.length > 0).to.be.true; // can have 0 teams
         Log.test('All Teams: ' + JSON.stringify(teams));
@@ -793,7 +791,7 @@ export class Test {
                     team.name.startsWith(Test.ASSIGNID0 + "_")
                 ) {
                     Log.test("Removing stale team: " + team.name);
-                    let val = await gh.deleteTeam(team.id);
+                    const val = await gh.deleteTeam(team.id);
                     await gh.delay(DELAY_SHORT);
                     done = true;
                 }
@@ -801,7 +799,7 @@ export class Test {
             if (done === false) {
                 if (team.name.startsWith(TEAMNAME) === true) {
                     Log.test("Removing stale team: " + team.name);
-                    let val = await gh.deleteTeam(team.id);
+                    await gh.deleteTeam(team.id);
                     await gh.delay(DELAY_SHORT);
                 }
             }
