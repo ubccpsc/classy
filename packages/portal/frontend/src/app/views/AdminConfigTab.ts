@@ -31,7 +31,7 @@ export class AdminConfigTab {
         const that = this;
         // Can init frame here if needed
 
-        this.deliverablesPage.init(opts);
+        await this.deliverablesPage.init(opts);
 
         (document.querySelector('#adminSubmitClasslist') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminView::handleAdminConfig(..) - upload pressed');
@@ -40,14 +40,22 @@ export class AdminConfigTab {
             const fileInput = document.querySelector('#adminClasslistFile') as HTMLInputElement;
             const isValid: boolean = that.validateClasslistSpecified(fileInput);
             if (isValid === true) {
-                that.uploadClasslist(fileInput.files);
+                that.uploadClasslist(fileInput.files).then(function() {
+                    // done
+                }).catch(function(err) {
+                    Log.error('AdminView::handleAdminConfig(..) - upload pressed ERROR: ' + err.message);
+                });
             }
         };
 
         (document.querySelector('#adminSubmitDefaultDeliverable') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminView::handleAdminConfig(..) - default deliverable pressed');
 
-            that.defaultDeliverablePressed();
+            that.defaultDeliverablePressed().then(function() {
+                // worked
+            }).catch(function(err) {
+                Log.info('AdminView::handleAdminConfig(..) - default deliverable pressed; ERROR: ' + err.message);
+            });
         };
 
         UI.showModal("Retriving config / deliverable details.");

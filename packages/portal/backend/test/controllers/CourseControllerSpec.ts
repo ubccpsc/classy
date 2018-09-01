@@ -282,9 +282,9 @@ describe("CourseController", () => {
 
         // make those teams
         const t = await Test.createTeam(res.teamName, deliv.id, []);
-        db.writeTeam(t);
+        await db.writeTeam(t);
         const r = await Test.createRepository(res.repoName, res.teamName);
-        db.writeRepository(r);
+        await db.writeRepository(r);
 
         // make sure the bar has been raised
         res = await cc.computeNames(deliv, [p1, p2]);

@@ -156,7 +156,11 @@ export class AdminDeliverablesTab {
         } else {
             fab.onclick = function(evt) {
                 Log.info('AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::onClick');
-                that.save();
+                that.save().then(function() {
+                    // worked
+                }).catch(function(err) {
+                    Log.info('AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::onClick - ERROR: ' + err.message);
+                });
             };
         }
 

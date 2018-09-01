@@ -208,7 +208,11 @@ export class App {
 
         if (token === null || userId === null) {
             Log.info("App::validateCredentials() - user or token not set on cookie or localstorage; clearing for safety");
-            this.clearCredentials();
+            this.clearCredentials().then(function() {
+                // worked
+            }).catch(function(err) {
+                Log.trace("App::validateCredentials(..) - clear credentials error: " + err.message);
+            });
         } else {
             Log.info("App::validateCredentials() - token available");
             const githubId = await this.getGithubCredentials(token);
@@ -219,7 +223,11 @@ export class App {
                 const credentials = await this.getServerCredentials(userId, token); // send userId, not githubId
                 if (credentials === null || typeof credentials.failure !== 'undefined') {
                     Log.info("App::validateCredentials() - server validation failed");
-                    this.clearCredentials();
+                    this.clearCredentials().then(function() {
+                        // worked
+                    }).catch(function(err) {
+                        Log.trace("App::validateCredentials(..) - clear credentials error: " + err.message);
+                    });
                 } else {
                     Log.info("App::validateCredentials() - validated with server; isAdmin: " +
                         credentials.success.isAdmin + "; isStaff: " + credentials.success.isStaff);
@@ -231,7 +239,11 @@ export class App {
                 }
             } else {
                 Log.info("App::validateCredentials() - invalid username; clearing for safety");
-                this.clearCredentials();
+                this.clearCredentials().then(function() {
+                    // worked
+                }).catch(function(err) {
+                    Log.trace("App::validateCredentials(..) - clear credentials error: " + err.message);
+                });
             }
         }
         Log.info("App::validateCredentials() - returning false");
@@ -348,7 +360,11 @@ export class App {
                 Log.trace("App::getServerCredentials(..) - code returned: " + resp.status);
 
                 if (resp.status === 400) {
-                    that.clearCredentials();
+                    that.clearCredentials().then(function() {
+                        // worked
+                    }).catch(function(err) {
+                        Log.trace("App::getServerCredentials(..) - clear credentials error: " + err.message);
+                    });
                 }
                 return resp;
             }
@@ -462,10 +478,10 @@ export class App {
         return null;
     }
 
-    public logout() {
+    public async logout(): Promise<void> {
         Log.trace("App::logout() - start");
 
-        this.clearCredentials();
+        await this.clearCredentials();
         UI.pushPage("index.html");
     }
 

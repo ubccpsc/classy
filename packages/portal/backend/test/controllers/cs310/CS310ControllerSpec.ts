@@ -53,9 +53,9 @@ describe("CS310: CS310Controller", () => {
 
         // make those teams
         const t = await Test.createTeam(res.teamName, deliv.id, []);
-        db.writeTeam(t);
+        await db.writeTeam(t);
         const r = await Test.createRepository(res.repoName, res.teamName);
-        db.writeRepository(r);
+        await db.writeRepository(r);
 
         // make sure this fails
         let ex = null;

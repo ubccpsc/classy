@@ -6,7 +6,7 @@
       140
     ],
     "no-unused-expression": false,
-    "member-ordering": "fields-first",
+	"member-ordering": [false, {"order": "fields-first"}],
     "object-literal-shorthand": false,
     "quotemark": false,
     "trailing-comma": "never",

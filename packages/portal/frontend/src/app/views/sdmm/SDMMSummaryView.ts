@@ -48,7 +48,11 @@ export class SDMMSummaryView implements IView {
         // UI.showModal(msg);
 
         const url = this.remote + '/portal/sdmm/currentStatus';
-        this.fetchStatus(url);
+        this.fetchStatus(url).then(function() {
+            Log.trace('fechStatus complete');
+        }).catch(function(err) {
+            Log.trace('fechStatus error: ' + err.message);
+        });
     }
 
     public async createD0Repository(): Promise<void> {
@@ -516,7 +520,11 @@ export class SDMMSummaryView implements IView {
         partnerUser = partnerUser.trim();
         Log.info("SDDM::d1TeamForm() - partner name: " + partnerUser);
         UI.hideD1TeamDialog();
-        this.createD1Team(partnerUser);
+        this.createD1Team(partnerUser).then(function() {
+            Log.trace("SDDM::d1TeamForm() - done");
+        }).catch(function(err) {
+            Log.trace("SDDM::d1TeamForm() - failed; ERROR: " + err.message);
+        });
     }
 
     /**
