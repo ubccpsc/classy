@@ -16,7 +16,10 @@ for a specific deliverable.
 the assignment information. 
 
 * The grades view shows all students who _have been uploaded by csv_ **and**
-who are _still registered_ in the org.
+who are _still registered_ in the org, and all their scores, per deliverable/assignment
+
+* The deliverable grades view shows all teams, and their respective grades and repositories.  
+Note: 
 
 
 <!-- 

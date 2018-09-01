@@ -870,6 +870,7 @@ export class CS340AdminView extends AdminView {
             Log.info("CS340AdminView::renderStudentGradeDeliverable(..) - null value, hiding the table");
             emptyResultsElement.removeAttribute("style");
             tabledResultsElement.setAttribute("style", "display:none");
+            return;
         } else {
             tabledResultsElement.removeAttribute("style");
             emptyResultsElement.setAttribute("style", "display:none");
@@ -965,9 +966,19 @@ export class CS340AdminView extends AdminView {
         const delivArray: Deliverable[] = await this.getDeliverables();
 
         let maxGrade: number = -1;
+        let deliv = null;
         for (const deliverableRecord of delivArray) {
-            if(deliverableRecord.id === delivId) maxGrade = this.calculateMaxGrade(deliverableRecord);
+            if(deliverableRecord.id === delivId) {
+                maxGrade = this.calculateMaxGrade(deliverableRecord);
+                deliv = deliverableRecord;
+            }
         }
+
+        // if(deliv === null || typeof deliv.custom.status === "undefined") {
+        //     Log.info("CS340AdminView::renderStudentGradeDeliverable(..) - deliv not found or is not assignment, hiding the table");
+        //     emptyResultsElement.removeAttribute("style");
+        //     tabledResultsElement.setAttribute("style", "display:none");
+        // }
 
         let tableHeaders: TableHeader[] = [];
         if(!hiddenNames) {
@@ -1053,22 +1064,31 @@ export class CS340AdminView extends AdminView {
                 completelyGraded = this.checkIfCompletelyGraded(gradeMapping[studentId]);
             }
 
-            if(typeof gradeMapping[studentId] !== 'undefined' && completelyGraded) {
-                // we have a grade for this team
+
+
+            if(typeof deliv.custom.status !== "undefined" && deliv.custom.status !== AssignmentStatus.CLOSED) {
                 newEntry = {
-                    value: gradeMapping[studentId].score,
-                    html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
+                    value: "---",
+                    html: "<span>---</span>"
+                };
+            } else {
+                if(typeof gradeMapping[studentId] !== 'undefined' && completelyGraded) {
+                    // we have a grade for this team
+                    newEntry = {
+                        value: gradeMapping[studentId].score,
+                        html: "<a onclick='window.myApp.view.transitionGradingPage(\""+
                         studentMapping[studentId].id + "\", \"" + delivId + "\", true)' href='#'>" +
                         gradeMapping[studentId].score.toString() + "/" +
                         maxGrade + "</a>"
-                };
-            } else {
-                // we do not have a grade for this team
-                newEntry = {
-                    value: "---",
-                    html: "<a onclick='window.myApp.view.transitionGradingPage(\"" +
-                    studentMapping[studentId].id + "\", \"" + delivId + "\", true)' href='#'> ---" + "</a>",
-                };
+                    };
+                } else {
+                    // we do not have a grade for this team
+                    newEntry = {
+                        value: "---",
+                        html: "<a onclick='window.myApp.view.transitionGradingPage(\"" +
+                        studentMapping[studentId].id + "\", \"" + delivId + "\", true)' href='#'> ---" + "</a>",
+                    };
+                }
             }
 
             newRow.push(newEntry);

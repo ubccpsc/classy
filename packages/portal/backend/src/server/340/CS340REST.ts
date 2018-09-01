@@ -510,7 +510,7 @@ export default class CS340REST implements IREST {
                     urlName: "",
                     URL: "",
 
-                    custom: {}
+                    custom: reqBody
                 };
 
                 await db.writeGrade(newGrade);

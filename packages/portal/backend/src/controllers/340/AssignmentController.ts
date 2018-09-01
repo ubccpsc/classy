@@ -86,28 +86,28 @@ export class AssignmentController {
 
         // check if the repository exists
         let repo: Repository = await this.rc.getRepository(repoID);
-        if(repo === null) {
-            // create the repo
-            let person = await this.pc.getPerson(assnPayload.studentID);
-
-            // check if there is an empty repo
-            repo = await this.rc.getRepository("empty_" + person.id);
-            if(repo === null) {
-                let deliv = await this.db.getDeliverable(assignId);
-                if(deliv === null || typeof(deliv.custom as AssignmentInfo).rubric === "undefined") {
-                    return false;
-                }
-                let team = await this.tc.getTeam("empty_" + person.id);
-                if(team === null) {
-                    team = await this.tc.createTeam("empty_" + person.id, deliv, [person], null);
-                }
-
-                // let arepoInfo: AssignmentRepositoryInfo = {
-                //     assignmentId: []
-                // }
-                repo = await this.rc.createRepository("empty_" + person.id, [team], null);
-            }
-        }
+        // if(repo === null) {
+        //     // create the repo
+        //     let person = await this.pc.getPerson(assnPayload.studentID);
+        //
+        //     // check if there is an empty repo
+        //     repo = await this.rc.getRepository("empty_" + person.id);
+        //     if(repo === null) {
+        //         let deliv = await this.db.getDeliverable(assignId);
+        //         if(deliv === null || typeof(deliv.custom as AssignmentInfo).rubric === "undefined") {
+        //             return false;
+        //         }
+        //         let team = await this.tc.getTeam("empty_" + person.id);
+        //         if(team === null) {
+        //             team = await this.tc.createTeam("empty_" + person.id, deliv, [person], null);
+        //         }
+        //
+        //         // let arepoInfo: AssignmentRepositoryInfo = {
+        //         //     assignmentId: []
+        //         // }
+        //         repo = await this.rc.createRepository("empty_" + person.id, [team], null);
+        //     }
+        // }
 
 
         if (repo === null) {
@@ -796,8 +796,8 @@ export class AssignmentController {
                 // this means a repository is missing,
                 Log.info("AssignmentController::updateAssignmentStatus(..) - student: " + student.id + " " +
                     "is missing a repository");
-                (deliv.custom as AssignmentInfo).status = AssignmentStatus.INACTIVE;
-                await this.dc.saveDeliverable(deliv);
+                // (deliv.custom as AssignmentInfo).status = AssignmentStatus.INACTIVE;
+                // await this.dc.saveDeliverable(deliv);
                 if(AssignmentStatus.INACTIVE < newStatus) {
                     newStatus = AssignmentStatus.INACTIVE;
                 }
@@ -825,9 +825,12 @@ export class AssignmentController {
             }
         }
 
-        (deliv.custom as AssignmentInfo).status = newStatus;
-        await this.dc.saveDeliverable(deliv);
+        if((deliv.custom as AssignmentInfo).status !== AssignmentStatus.CLOSED) {
+            (deliv.custom as AssignmentInfo).status = newStatus;
+            await this.dc.saveDeliverable(deliv);
+        }
 
+        newStatus = ((await this.db.getDeliverable(delivId)).custom as AssignmentInfo).status;
 
         Log.info("AssignmentController::updateAssignmentStatus(..) - finish");
         return {assignmentStatus: newStatus, totalStudents: totalStudentCount, studentRepos: studentRepoCount};
