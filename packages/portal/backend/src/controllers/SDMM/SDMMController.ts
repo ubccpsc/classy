@@ -6,6 +6,7 @@ import Util from "../../../../../common/Util";
 import {Deliverable, Grade, Person, Team} from "../../Types";
 
 import {CourseController} from "../CourseController";
+import {DeliverablesController} from '../DeliverablesController';
 import {IGitHubController} from "../GitHubController";
 import {PersonController} from "../PersonController";
 
@@ -533,8 +534,8 @@ export class SDMMController extends CourseController {
         try {
             const name = personId;
             const person = await this.pc.getPerson(name);
-            // const dbc = new DeliverablesController();
-            const deliv = await this.dbc.getDeliverable('d0');
+            const dc = new DeliverablesController();
+            const deliv = await dc.getDeliverable('d0');
             const r = await this.computeNames(deliv, [person]);
             const teamName = r.teamName; // SDMMController.getTeamPrefix() + name;
             const repoName = r.repoName; // SDMMController.getProjectPrefix() + teamName;
@@ -568,7 +569,8 @@ export class SDMMController extends CourseController {
                 throw new Error("Failed to provision d0 repo; repository already exists in datastore: " + repoName);
             }
             const repoCustom = {d0enabled: true, d1enabled: false, d2enabled: false, d3enabled: false, sddmD3pr: false}; // d0 repo for now
-            const repo = await this.rc.createRepository(repoName, [team], repoCustom);
+
+            const repo = await this.rc.createRepository(repoName, deliv, [team], repoCustom);
 
             // create remote repo
             const INPUTREPO = "https://github.com/SECapstone/bootstrap";
@@ -713,7 +715,7 @@ export class SDMMController extends CourseController {
             for (const pid of peopleIds) {
                 const person = await this.dbc.getPerson(pid); // make sure the person exists
                 if (person !== null) {
-                    const grade = await this.gc.getGrade(pid, "d0"); // make sure they can move on
+                    const grade = await this.gc.getGrade(pid, SDMMController.D0); // make sure they can move on
                     if (grade !== null && grade.score > 59) {
                         people.push(person);
                     } else {
@@ -728,7 +730,8 @@ export class SDMMController extends CourseController {
                 }
             }
 
-            const deliv = await this.dbc.getDeliverable('d1');
+            const dc = new DeliverablesController();
+            const deliv = await dc.getDeliverable(SDMMController.D1);
             const names = await this.computeNames(deliv, people);
             const teamName = names.teamName;
             const repoName = names.repoName;
@@ -770,7 +773,7 @@ export class SDMMController extends CourseController {
             // create local repo
             // const repoName = SDMMController.getProjectPrefix() + teamName;
             const repoCustom = {d0enabled: false, d1enabled: true, d2enabled: true, d3enabled: true, sddmD3pr: false}; // d0 repo for now
-            const repo = await this.rc.createRepository(repoName, [team], repoCustom);
+            const repo = await this.rc.createRepository(repoName, deliv, [team], repoCustom);
 
             // create remote repo
             const INPUTREPO = "https://github.com/SECapstone/bootstrap"; // HARDCODED for SDMM

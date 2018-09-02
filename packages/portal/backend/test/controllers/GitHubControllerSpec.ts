@@ -4,6 +4,7 @@ import "mocha";
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
+import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {GitHubActions} from "../../src/controllers/GitHubActions";
 import {GitHubController} from "../../src/controllers/GitHubController";
 import {PersonController} from "../../src/controllers/PersonController";
@@ -32,7 +33,7 @@ describe("GitHubController", () => {
         await Test.suiteBefore('GitHubController');
 
         // clear stale data (removed; happens in suitebefore)
-        const dc = DatabaseController.getInstance();
+        const dbc = DatabaseController.getInstance();
         // await dbc.clearData();
 
         // get data ready
@@ -47,15 +48,18 @@ describe("GitHubController", () => {
 
         // const tc = new TeamController();
         const t1 = await Test.createTeam(Test.TEAMNAME1, Test.DELIVID0, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
-        await dc.writeTeam(t1);
+        await dbc.writeTeam(t1);
         const t2 = await Test.createTeam(Test.TEAMNAME2, Test.DELIVID1, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
-        await dc.writeTeam(t2);
+        await dbc.writeTeam(t2);
         // const t3 = await Test.createTeam(Test.TEAMNAME3, Test.DELIVID2, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
         // await dbc.writeTeam(t3);
 
+        const dc = new DeliverablesController();
+        const deliv = await dc.getDeliverable(Test.DELIVIDPROJ);
+
         const rc = new RepositoryController();
-        await rc.createRepository(Test.REPONAME1, [t1], {});
-        await rc.createRepository(Test.REPONAME2, [t2], {});
+        await rc.createRepository(Test.REPONAME1, deliv, [t1], {});
+        await rc.createRepository(Test.REPONAME2, deliv, [t2], {});
         // await rc.createRepository(Test.REPONAME3, [t3], {});
     });
 

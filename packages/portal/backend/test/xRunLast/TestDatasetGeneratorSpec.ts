@@ -194,15 +194,16 @@ describe.skip('TestDatasetGenerator', function() {
 
         const teams = await tc.getAllTeams();
         const rc: RepositoryController = new RepositoryController();
-
+        const dc = new DeliverablesController();
+        const deliv = await dc.getDeliverable(Test.DELIVID1);
         try {
-            await rc.createRepository(Test.REPONAME1, [teams[0]], {});
+            await rc.createRepository(Test.REPONAME1, deliv, [teams[0]], {});
         } catch (err) {
             // Fail silently, it's fine, the team already exists
         }
 
         try {
-            await rc.createRepository(Test.REPONAME2, [teams[1]], {});
+            await rc.createRepository(Test.REPONAME2, deliv, [teams[1]], {});
         } catch (err) {
             // Fail silently, it's fine, the team already exists
         }

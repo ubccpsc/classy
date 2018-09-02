@@ -147,7 +147,7 @@ export class FrontendDatasetGenerator {
         const teams = await this.dc.getTeams();
         for (const team of teams) {
             const repoName = team.id;
-            const repo = Test.getRepository(repoName, team.id);
+            const repo = Test.getRepository(repoName, Test.DELIVID0, team.id);
             await this.dc.writeRepository(repo);
         }
     }

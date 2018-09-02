@@ -178,7 +178,7 @@ describe("SDMM: SDMMController", () => {
         const person = await pc.getPerson(data.PERSON1.id);
         const deliv = await dc.getDeliverable('d0');
         const team = await tc.createTeam(data.TEAMD0, deliv, [person], {sdmmd0: true});
-        const repo = await rc.createRepository(data.REPOD0, [team], {d0enabled: true});
+        const repo = await rc.createRepository(data.REPOD0, deliv, [team], {d0enabled: true});
         expect(repo).to.not.be.null;
 
         status = await sc.getStatus(data.PERSON1.id);
@@ -231,8 +231,9 @@ describe("SDMM: SDMMController", () => {
         let status = await sc.getStatus(data.PERSON1.id);
         expect(status.status).to.equal("D1TEAMSET");
 
+        const deliv = await dc.getDeliverable('d1');
         const team = await tc.getTeam(data.TEAMD1);
-        const repo = await rc.createRepository(data.REPOD1, [team], {d1enabled: true});
+        const repo = await rc.createRepository(data.REPOD1, deliv, [team], {d1enabled: true});
         expect(repo).to.not.be.null;
 
         status = await sc.getStatus(data.PERSON1.id);

@@ -334,7 +334,7 @@ describe("DatabaseController", () => {
         // let res = await dbc.writePerson(p2);
         // expect(res).to.be.true;
 
-        const repo = await Test.createRepository(Test.REPONAME1, Test.TEAMNAME1);
+        const repo = await Test.createRepository(Test.REPONAME1, Test.DELIVID0, Test.TEAMNAME1);
         const worked = await dc.writeRepository(repo);
         expect(worked).to.be.true;
     });
@@ -364,7 +364,7 @@ describe("DatabaseController", () => {
     // update repository
     it("Should be able to update a repository.", async () => {
         // get the team in there
-        const repo = await Test.createRepository(Test.REPONAME1, Test.TEAMNAME1);
+        const repo = await Test.createRepository(Test.REPONAME1, Test.DELIVID0, Test.TEAMNAME1);
         await dc.writeRepository(repo);
 
         let res = await dc.getRepository(Test.REPONAME1);

@@ -10,12 +10,6 @@ import {AutoTestConfig, IAutoTestResult} from "../../../common/types/AutoTestTyp
  * This strict separation is to allow us to more easily evolve
  * portal-backend without impacting portal-frontend.
  *
- * On Deliverable:Repository mapping. This is explicitly not recorded.
- * If repositories need to be made for a deliverable, course staff should
- * do this. With AutoTest, students can invoke tests for deliverable
- * against any repository. Of course, if they invoke it against the wrong
- * one they won't do very well, but that is ok. Tracking this just is not
- * worth the complexity.
  */
 
 /**
@@ -98,22 +92,37 @@ export interface Deliverable {
 }
 
 export interface Team {
-    readonly id: string; // invariant; is the name of the team
-    readonly delivId: string; // invariant; this is the deliverable the team is for
+    readonly id: string; // invariant; the name of the team. must be unique locally and on GitHub
+    /**
+     * The deliverable the team was provisioned for. Does _NOT_ influence what AutoTest can be
+     * run against, but specifies the constraints placed upon the team (e.g., from the Deliverable).
+     */
+    readonly delivId: string; // invariant
 
     URL: string | null; // null when not yet created
     personIds: string[]; // Person.id[] - foreign key
 
+    // githubStatus: string; // NONE | CREATED | LINKED
     custom: any;
 }
 
 // NOTE: Intentionally not linked to Deliverable (see docs at top of file)
 export interface Repository {
-    readonly id: string; // invariant; is the name of the repo
+    /**
+     * The name of the repo; must be unique locally and on GitHub.
+     */
+    readonly id: string; // invariant
+    /**
+     * The deliverable the repository was provisioned for. This does not modify AutoTest
+     * but is used to track provisioning.
+     */
+    readonly delivId: string; // invariant
 
     URL: string | null; // URL for project in version control system; null if not yet created
     cloneURL: string | null; // git clone URL for project; null if not yet created
     teamIds: string[]; // Team.id[] - foreign key
+
+    // githubStatus: string; // NONE | CREATED
 
     custom: any; // {}; not used by default
 }

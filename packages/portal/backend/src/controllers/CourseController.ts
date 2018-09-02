@@ -496,7 +496,7 @@ export abstract class CourseController implements ICourseController {
             }
 
             if (repo === null) {
-                repo = await this.rc.createRepository(names.repoName, [team], {});
+                repo = await this.rc.createRepository(names.repoName, deliv, [team], {});
             }
 
             if (repo === null) {

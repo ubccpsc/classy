@@ -110,7 +110,9 @@ describe("GitHubActions", () => {
 
     it("Should be able to create a repo.", async function() {
         const rc = new RepositoryController();
-        await rc.createRepository(REPONAME, [], {});
+        const dc = new DeliverablesController();
+        const deliv = await dc.getDeliverable(Test.DELIVID0);
+        await rc.createRepository(REPONAME, deliv, [], {});
 
         const val = await gh.createRepo(REPONAME);
         const name = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
@@ -303,11 +305,14 @@ describe("GitHubActions", () => {
         const NUM_REPOS = 4;
         const rc = new RepositoryController();
 
+        const dc = new DeliverablesController();
+        const deliv = await dc.getDeliverable(Test.DELIVID0);
+
         gh.PAGE_SIZE = 2; // force a small page size for testing
         // should be able to create the teams
         for (let i = 0; i < NUM_REPOS; i++) {
             const reponame = REPONAME + '_paging-' + i;
-            await rc.createRepository(reponame, [], {});
+            await rc.createRepository(reponame, deliv, [], {});
             const val = await gh.createRepo(reponame);
             await gh.delay(200);
             Log.test("Repo details: " + JSON.stringify(val));
@@ -367,7 +372,7 @@ describe("GitHubActions", () => {
         expect(team).to.not.be.null;
 
         // create the repository
-        const repo = await rc.createRepository(REPONAME3, [team], {});
+        const repo = await rc.createRepository(REPONAME3, deliv, [team], {});
         expect(repo).to.not.be.null;
         const val = await gh.createRepo(REPONAME3);
         const newName = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +

@@ -2,13 +2,7 @@ import {expect} from "chai";
 import "mocha";
 import Config, {ConfigKey} from "../../../../../common/Config";
 import Log from "../../../../../common/Log";
-import {
-    AssignmentGrade,
-    AssignmentGradingRubric,
-    AssignmentInfo,
-    AssignmentStatus,
-    QuestionGrade, SubQuestionGrade
-} from "../../../../../common/types/CS340Types";
+import {AssignmentGrade, AssignmentStatus} from "../../../../../common/types/CS340Types";
 import {AssignmentController} from "../../../src/controllers/340/AssignmentController";
 import {DatabaseController} from "../../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../../src/controllers/DeliverablesController";
@@ -120,6 +114,7 @@ describe("CS340: AssignmentController", () => {
     });
 
     it("Should be able to publish all grades, even if students do not have submissions.", async () => {
+        // TODO: move this to the slow tests below; takes too long to run locally
         let result = await ac.publishAllGrades(Test.ASSIGNID0);
         expect(result).to.be.true;
     }).timeout(numberOfStudents * TIMEOUT);
@@ -169,7 +164,9 @@ describe("CS340: AssignmentController", () => {
         };
         let team1: Team = await tc.getTeam(Test.TEAMNAME1);
 
-        let repo3: Repository = await rc.createRepository(Test.REPONAME3, [team1], null);
+        const deliv = await dc.getDeliverable(Test.ASSIGNID0);
+
+        let repo3: Repository = await rc.createRepository(Test.REPONAME3, deliv, [team1], null);
 
         await ac.setAssignmentGrade(Test.REPONAME3, Test.ASSIGNID0, aPayload);
 
@@ -438,11 +435,11 @@ describe("CS340: AssignmentController", () => {
             }
         });
 
-        it("Should be able to pre-create a team for the assignment.", async function () {
+        it("Should be able to pre-create a team for the assignment.", async function() {
             let delivRecord = await db.getDeliverable(Test.DELIVID0);
             let personRecord = await pc.getPerson(Test.REALUSER2.id);
             let teamRecord = await tc.createTeam(Test.DELIVID0 + "_" + Test.REALUSER2,
-                                                    delivRecord,[personRecord], null);
+                delivRecord, [personRecord], null);
 
             expect(teamRecord).to.not.be.null;
         });
@@ -466,8 +463,10 @@ describe("CS340: AssignmentController", () => {
 
         it("Should be able to get the correct assignment status after creating repositories.", async function() {
 
-            let assignStatus: {assignStatus: AssignmentStatus,
-                totalStudents: number, studentRepos: number} = await ac.getAssignmentStatus(Test.ASSIGNID0);
+            let assignStatus: {
+                assignStatus: AssignmentStatus,
+                totalStudents: number, studentRepos: number
+            } = await ac.getAssignmentStatus(Test.ASSIGNID0);
 
             expect(assignStatus).to.not.be.null;
             expect(assignStatus.assignStatus).to.be.equal(AssignmentStatus.CREATED);
@@ -475,8 +474,10 @@ describe("CS340: AssignmentController", () => {
 
         it("Should be able to update an assignment status that has been created", async function() {
 
-            let assignStatus: {assignmentStatus: AssignmentStatus,
-                totalStudents: number, studentRepos: number} = await ac.updateAssignmentStatus(Test.ASSIGNID0);
+            let assignStatus: {
+                assignmentStatus: AssignmentStatus,
+                totalStudents: number, studentRepos: number
+            } = await ac.updateAssignmentStatus(Test.ASSIGNID0);
 
             expect(assignStatus).to.not.be.null;
             expect(assignStatus.assignmentStatus).to.be.equal(AssignmentStatus.CREATED);
@@ -513,30 +514,30 @@ describe("CS340: AssignmentController", () => {
         it("Should be able to assign a grade to a student after repositories close.", async function() {
             let newAssignmentGrade: AssignmentGrade = {
                 assignmentID: Test.ASSIGNID0,
-                studentID: Test.REALUSER1.id,
-                released: false,
-                questions: [
+                studentID:    Test.REALUSER1.id,
+                released:     false,
+                questions:    [
                     {
                         questionName: "question 1",
-                        commentName: "",
-                        subQuestion: [
+                        commentName:  "",
+                        subQuestion:  [
                             {
                                 sectionName: "rubric",
-                                grade: 3,
-                                graded: true,
-                                feedback: "mistakes were made",
+                                grade:       3,
+                                graded:      true,
+                                feedback:    "mistakes were made"
                             }
                         ]
                     },
                     {
                         questionName: "question 2",
-                        commentName: "",
-                        subQuestion: [
+                        commentName:  "",
+                        subQuestion:  [
                             {
                                 sectionName: "code quality",
-                                grade: 6,
-                                graded: true,
-                                feedback: "good job!",
+                                grade:       6,
+                                graded:      true,
+                                feedback:    "good job!"
                             }
                         ]
                     }
@@ -660,18 +661,22 @@ describe("CS340: AssignmentController", () => {
         }).timeout(numberOfStudents * TIMEOUT);
 
         it("Should be able to see an assignment status changing after a new student joins.", async () => {
-            let assignStatus: {assignmentStatus: AssignmentStatus,
-                totalStudents: number, studentRepos: number} = await ac.updateAssignmentStatus(Test.ASSIGNID0);
+            let assignStatus: {
+                assignmentStatus: AssignmentStatus,
+                totalStudents: number, studentRepos: number
+            } = await ac.updateAssignmentStatus(Test.ASSIGNID0);
 
             expect(assignStatus.assignmentStatus).to.be.equal(AssignmentStatus.CREATED);
-            let totalStudentCount   = assignStatus.totalStudents;
-            let studentReposCount   = assignStatus.studentRepos;
+            let totalStudentCount = assignStatus.totalStudents;
+            let studentReposCount = assignStatus.studentRepos;
 
             let p = Test.createPerson(Test.REALUSER3.id, Test.REALUSER3.csId, Test.REALUSER3.github, "student");
             await db.writePerson(p);
 
-            let newAssignStatus: {assignmentStatus: AssignmentStatus,
-                totalStudents: number, studentRepos: number} = await ac.updateAssignmentStatus(Test.ASSIGNID0);
+            let newAssignStatus: {
+                assignmentStatus: AssignmentStatus,
+                totalStudents: number, studentRepos: number
+            } = await ac.updateAssignmentStatus(Test.ASSIGNID0);
 
             expect(newAssignStatus.assignmentStatus).to.be.equal(AssignmentStatus.INACTIVE);
             expect(newAssignStatus.totalStudents).to.be.greaterThan(totalStudentCount);
@@ -682,8 +687,10 @@ describe("CS340: AssignmentController", () => {
             let success = await ac.initializeAllRepositories(Test.ASSIGNID0);
             expect(success).to.be.true;
 
-            let assignStatus: {assignmentStatus: AssignmentStatus,
-                totalStudents: number, studentRepos: number} = await ac.updateAssignmentStatus(Test.ASSIGNID0);
+            let assignStatus: {
+                assignmentStatus: AssignmentStatus,
+                totalStudents: number, studentRepos: number
+            } = await ac.updateAssignmentStatus(Test.ASSIGNID0);
 
             expect(assignStatus.assignmentStatus).to.be.equal(AssignmentStatus.CREATED);
             expect(assignStatus.totalStudents).to.be.equal(assignStatus.studentRepos);
@@ -698,8 +705,10 @@ describe("CS340: AssignmentController", () => {
             await ac.initializeAllRepositories(Test.ASSIGNID0);
             await ac.publishAllRepositories(Test.ASSIGNID0);
 
-            let assignStatus: {assignmentStatus: AssignmentStatus,
-                totalStudents: number, studentRepos: number} = await ac.updateAssignmentStatus(Test.ASSIGNID0);
+            let assignStatus: {
+                assignmentStatus: AssignmentStatus,
+                totalStudents: number, studentRepos: number
+            } = await ac.updateAssignmentStatus(Test.ASSIGNID0);
             expect(assignStatus.assignmentStatus).to.equal(AssignmentStatus.RELEASED);
             expect(assignStatus.totalStudents).to.equal(assignStatus.studentRepos);
         }).timeout(numberOfStudents * TIMEOUT);
@@ -708,16 +717,20 @@ describe("CS340: AssignmentController", () => {
             await ac.initializeAllRepositories(Test.ASSIGNID0);
             await ac.publishAllRepositories(Test.ASSIGNID0);
 
-            let assignStatus: {assignmentStatus: AssignmentStatus,
-                totalStudents: number, studentRepos: number} = await ac.updateAssignmentStatus(Test.ASSIGNID0);
+            let assignStatus: {
+                assignmentStatus: AssignmentStatus,
+                totalStudents: number, studentRepos: number
+            } = await ac.updateAssignmentStatus(Test.ASSIGNID0);
             expect(assignStatus.assignmentStatus).to.equal(AssignmentStatus.RELEASED);
             expect(assignStatus.totalStudents).to.equal(assignStatus.studentRepos);
 
             let p = Test.createPerson(Test.REALUSER3.id, Test.REALUSER3.csId, Test.REALUSER3.github, "student");
             await db.writePerson(p);
 
-            let assignStatus2: {assignmentStatus: AssignmentStatus,
-                totalStudents: number, studentRepos: number} = await ac.updateAssignmentStatus(Test.ASSIGNID0);
+            let assignStatus2: {
+                assignmentStatus: AssignmentStatus,
+                totalStudents: number, studentRepos: number
+            } = await ac.updateAssignmentStatus(Test.ASSIGNID0);
             expect(assignStatus2.assignmentStatus).to.be.equal(AssignmentStatus.INACTIVE);
             expect(assignStatus2.totalStudents).to.not.be.equal(assignStatus.totalStudents);
         }).timeout(numberOfStudents * TIMEOUT);
@@ -725,8 +738,10 @@ describe("CS340: AssignmentController", () => {
         it("Should be able to initialize repositories again, after a student has been added to a published assignment.", async () => {
             await ac.initializeAllRepositories(Test.ASSIGNID0);
 
-            let assignStatus: {assignmentStatus: AssignmentStatus,
-                totalStudents: number, studentRepos: number} = await ac.updateAssignmentStatus(Test.ASSIGNID0);
+            let assignStatus: {
+                assignmentStatus: AssignmentStatus,
+                totalStudents: number, studentRepos: number
+            } = await ac.updateAssignmentStatus(Test.ASSIGNID0);
             expect(assignStatus.assignmentStatus).to.equal(AssignmentStatus.CREATED);
             expect(assignStatus.totalStudents).to.equal(assignStatus.studentRepos);
         }).timeout(numberOfStudents * TIMEOUT);
@@ -734,8 +749,10 @@ describe("CS340: AssignmentController", () => {
         it("Should be able to release repositories again, after a student has been added to a published assignment.", async () => {
             await ac.publishAllRepositories(Test.ASSIGNID0);
 
-            let assignStatus: {assignmentStatus: AssignmentStatus,
-                totalStudents: number, studentRepos: number} = await ac.updateAssignmentStatus(Test.ASSIGNID0);
+            let assignStatus: {
+                assignmentStatus: AssignmentStatus,
+                totalStudents: number, studentRepos: number
+            } = await ac.updateAssignmentStatus(Test.ASSIGNID0);
             expect(assignStatus.assignmentStatus).to.equal(AssignmentStatus.RELEASED);
             expect(assignStatus.totalStudents).to.equal(assignStatus.studentRepos);
         }).timeout(numberOfStudents * TIMEOUT);

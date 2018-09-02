@@ -2,6 +2,7 @@ import {expect} from "chai";
 import "mocha";
 
 import Log from "../../../../common/Log";
+import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
@@ -16,6 +17,7 @@ describe("RepositoryController", () => {
     let rc: RepositoryController;
     let tc: TeamController;
     let pc: PersonController;
+    let dc: DeliverablesController;
 
     before(async () => {
         await Test.suiteBefore('RepositoryController');
@@ -33,6 +35,7 @@ describe("RepositoryController", () => {
         tc = new TeamController();
         rc = new RepositoryController();
         pc = new PersonController();
+        dc = new DeliverablesController();
     });
 
     after(async () => {
@@ -51,7 +54,9 @@ describe("RepositoryController", () => {
         const team = await tc.getTeam(Test.TEAMNAME1);
         expect(team).to.not.be.null;
 
-        const repo = await rc.createRepository(Test.REPONAME1, [team], {});
+        const deliv = await dc.getDeliverable(Test.DELIVID0);
+
+        const repo = await rc.createRepository(Test.REPONAME1, deliv, [team], {});
         expect(repo).to.not.be.null;
 
         repos = await rc.getAllRepos();
@@ -65,7 +70,9 @@ describe("RepositoryController", () => {
         const team = await tc.getTeam(Test.TEAMNAME1);
         expect(team).to.not.be.null;
 
-        const repo = await rc.createRepository(Test.REPONAME1, [team], {});
+        const deliv = await dc.getDeliverable(Test.DELIVID0);
+
+        const repo = await rc.createRepository(Test.REPONAME1, deliv, [team], {});
         expect(repo).to.not.be.null;
 
         repos = await rc.getAllRepos();
@@ -121,6 +128,7 @@ describe("RepositoryController", () => {
 
         const repo: Repository = {
             id:       Date.now() + '_id',
+            delivId:  Test.DELIVID0,
             URL:      null,
             cloneURL: null,
             custom:   {},

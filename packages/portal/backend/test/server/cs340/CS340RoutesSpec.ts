@@ -369,6 +369,9 @@ describe("CS340: Routes", () => {
 
 
     it("Should be able to publish all repositories.", async function () {
+
+        // TODO: move this to a 'slow tests' block
+
         let response = null;
         let aid = Test.ASSIGNID0;
 
@@ -390,6 +393,7 @@ describe("CS340: Routes", () => {
         let response = null;
         let aid = Test.ASSIGNID0;
 
+        // TODO: move this to a 'slow tests' block
 
         const url = '/portal/cs340/publishAllRepositories/' + aid;
         try {
@@ -647,6 +651,8 @@ describe("CS340: Routes", () => {
 
     it("Should be able release grades of an assignment.", async function () {
         let response = null;
+
+        // TODO: move this to a 'slow tests' block
 
         const url = '/portal/cs340/releaseGrades/' + Test.ASSIGNID1;
         try {

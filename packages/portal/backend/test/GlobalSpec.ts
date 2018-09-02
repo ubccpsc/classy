@@ -154,12 +154,14 @@ export class Test {
         return team;
     }
 
-    public static async createRepository(repoName: string, teamName: string): Promise<Repository> {
+    public static async createRepository(repoName: string, delivName: string, teamName: string): Promise<Repository> {
         const tc = new TeamController();
         const rc = new RepositoryController();
+        const dc = new DeliverablesController();
 
+        const deliv = await dc.getDeliverable(delivName);
         const team = await tc.getTeam(teamName);
-        const repo = await rc.createRepository(repoName, [team], {});
+        const repo = await rc.createRepository(repoName, deliv, [team], {});
 
         return repo;
     }
@@ -173,12 +175,13 @@ export class Test {
             //
             // let team = await tc.getTeam(Test.TEAMNAME1);
             // let repo = await rc.createRepository(Test.REPONAME1, [team], {});
-            let repo = await Test.createRepository(Test.REPONAME1, Test.TEAMNAME1);
+
+            let repo = await Test.createRepository(Test.REPONAME1, Test.DELIVID1, Test.TEAMNAME1);
             await db.writeRepository(repo);
 
             // team = await tc.getTeam(Test.TEAMNAME2);
             // repo = await rc.createRepository(Test.REPONAME2, [team], {});
-            repo = await Test.createRepository(Test.REPONAME2, Test.TEAMNAME2);
+            repo = await Test.createRepository(Test.REPONAME2, Test.DELIVID1, Test.TEAMNAME2);
             await db.writeRepository(repo);
 
         } catch (err) {
@@ -628,9 +631,10 @@ export class Test {
         return Util.clone(team) as Team;
     }
 
-    public static getRepository(id: string, teamId: string): Repository {
+    public static getRepository(id: string, delivId: string, teamId: string): Repository {
         const repo: Repository = {
             id:       id,
+            delivId:  delivId,
             URL:      Config.getInstance().getProp(ConfigKey.githubHost) + '/' + id,
             cloneURL: Config.getInstance().getProp(ConfigKey.githubHost) + '/' + id + '.git',
             teamIds:  [teamId],

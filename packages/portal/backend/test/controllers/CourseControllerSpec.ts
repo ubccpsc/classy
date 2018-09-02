@@ -326,7 +326,7 @@ describe("CourseController", () => {
         // make those teams
         const t = await Test.createTeam(res.teamName, deliv.id, []);
         await db.writeTeam(t);
-        const r = await Test.createRepository(res.repoName, res.teamName);
+        const r = await Test.createRepository(res.repoName, deliv.id, res.teamName);
         await db.writeRepository(r);
 
         // make sure the bar has been raised
@@ -335,130 +335,143 @@ describe("CourseController", () => {
         expect(res.repoName).to.equal('d0_user1id_user2id');
     });
 
-    it("Should provision repos if there are some to do and singles are disabled.", async () => {
-        await clearAndPreparePartial();
-        const allRepos = await rc.getAllRepos();
-        expect(allRepos.length).to.equal(0);
+    describe("Slow CourseController Tests", () => {
 
-        const allTeams = await tc.getAllTeams();
-        expect(allTeams.length).to.equal(1);
-        expect(allTeams[0].URL).to.be.null; // not provisioned yet
+        beforeEach(function() {
+            const exec = Test.runSlowTest();
 
-        const d0 = await dc.getDeliverable(Test.DELIVID0);
-        const res = await cc.provision(d0, false);
-        Log.test("provisioned: " + JSON.stringify(res));
-        expect(res).to.be.an('array');
-        expect(res.length).to.equal(1);
+            if (exec) {
+                Log.test("CourseControllerSpec::slowTests - running");
+            } else {
+                Log.test("CourseControllerSpec::slowTests - skipping; will run on CI");
+                this.skip();
+            }
+        });
 
-        const allNewRepos = await rc.getAllRepos();
-        const allNewTeams = await tc.getAllTeams();
+        it("Should provision repos if there are some to do and singles are disabled.", async () => {
+            await clearAndPreparePartial();
+            const allRepos = await rc.getAllRepos();
+            expect(allRepos.length).to.equal(0);
 
-        expect(allNewRepos.length).to.equal(1);
-        expect(allNewTeams.length).to.equal(1);
+            const allTeams = await tc.getAllTeams();
+            expect(allTeams.length).to.equal(1);
+            expect(allTeams[0].URL).to.be.null; // not provisioned yet
 
-        const gha = new GitHubActions();
-        const teamNum = await gha.getTeamNumber(allNewTeams[0].id);
-        expect(teamNum).to.be.greaterThan(0); // should be provisioned
+            const d0 = await dc.getDeliverable(Test.DELIVID0);
+            const res = await cc.provision(d0, false);
+            Log.test("provisioned: " + JSON.stringify(res));
+            expect(res).to.be.an('array');
+            expect(res.length).to.equal(1);
 
-        const repoExists = await gha.repoExists(allNewRepos[0].id);
-        expect(repoExists).to.be.true; // should be provisioned
+            const allNewRepos = await rc.getAllRepos();
+            const allNewTeams = await tc.getAllTeams();
 
-        expect(allNewTeams[0].URL).to.not.be.null; // team was used, but repo was only provisioned, not released
-        expect(allNewRepos[0].URL).to.not.be.null;
+            expect(allNewRepos.length).to.equal(1);
+            expect(allNewTeams.length).to.equal(1);
 
-    }).timeout(Test.TIMEOUTLONG);
+            const gha = new GitHubActions();
+            const teamNum = await gha.getTeamNumber(allNewTeams[0].id);
+            expect(teamNum).to.be.greaterThan(0); // should be provisioned
 
-    it("Should release repos.", async () => {
-        // await clearAndPreparePartial();
-        const allRepos = await rc.getAllRepos();
-        expect(allRepos.length).to.equal(1);
-        expect(allRepos[0].URL).to.not.be.null; // provisioned
+            const repoExists = await gha.repoExists(allNewRepos[0].id);
+            expect(repoExists).to.be.true; // should be provisioned
 
-        const allTeams = await tc.getAllTeams();
-        expect(allTeams.length).to.equal(1);
-        expect(allTeams[0].URL).to.not.be.null; // provisioned
+            expect(allNewTeams[0].URL).to.not.be.null; // team was used, but repo was only provisioned, not released
+            expect(allNewRepos[0].URL).to.not.be.null;
 
-        const d0 = await dc.getDeliverable(Test.DELIVID0);
-        let res = await cc.release(d0);
+        }).timeout(Test.TIMEOUTLONG);
 
-        Log.test("released: " + JSON.stringify(res));
-        expect(res).to.be.an('array');
-        expect(res.length).to.equal(1);
+        it("Should release repos.", async () => {
+            // await clearAndPreparePartial();
+            const allRepos = await rc.getAllRepos();
+            expect(allRepos.length).to.equal(1);
+            expect(allRepos[0].URL).to.not.be.null; // provisioned
 
-        const allNewTeams = await tc.getAllTeams();
-        expect(allNewTeams.length).to.equal(1);
-        expect(allNewTeams[0].custom.githubAttached).to.be.true;
+            const allTeams = await tc.getAllTeams();
+            expect(allTeams.length).to.equal(1);
+            expect(allTeams[0].URL).to.not.be.null; // provisioned
 
-        // try again: should not release any more repos
-        res = await cc.release(d0);
-        Log.test("released: " + JSON.stringify(res));
-        expect(res).to.be.an('array');
-        expect(res.length).to.equal(0);
-    }).timeout(Test.TIMEOUTLONG);
+            const d0 = await dc.getDeliverable(Test.DELIVID0);
+            let res = await cc.release(d0);
 
-    it("Should provision repos if singles are enabled.", async () => {
-        await clearAndPreparePartial();
+            Log.test("released: " + JSON.stringify(res));
+            expect(res).to.be.an('array');
+            expect(res.length).to.equal(1);
 
-        const allRepos = await rc.getAllRepos();
-        const allTeams = await tc.getAllTeams();
+            const allNewTeams = await tc.getAllTeams();
+            expect(allNewTeams.length).to.equal(1);
+            expect(allNewTeams[0].custom.githubAttached).to.be.true;
 
-        expect(allRepos.length).to.equal(0);
-        expect(allTeams.length).to.equal(1);
-        const gha = new GitHubActions();
-        let teamNum = await gha.getTeamNumber(allTeams[0].id);
-        expect(teamNum).to.be.lessThan(0); // should not be provisioned yet
+            // try again: should not release any more repos
+            res = await cc.release(d0);
+            Log.test("released: " + JSON.stringify(res));
+            expect(res).to.be.an('array');
+            expect(res.length).to.equal(0);
+        }).timeout(Test.TIMEOUTLONG);
 
-        const d0 = await dc.getDeliverable(Test.DELIVID0);
-        const res = await cc.provision(d0, true);
-        Log.test("provisioned: " + JSON.stringify(res));
-        expect(res).to.be.an('array');
-        expect(res.length).to.equal(2);
+        it("Should provision repos if singles are enabled.", async () => {
+            await clearAndPreparePartial();
 
-        const allNewRepos = await rc.getAllRepos();
-        const allNewTeams = await tc.getAllTeams();
+            const allRepos = await rc.getAllRepos();
+            const allTeams = await tc.getAllTeams();
 
-        expect(allNewRepos.length).to.equal(2);
-        expect(allNewTeams.length).to.equal(2);
+            expect(allRepos.length).to.equal(0);
+            expect(allTeams.length).to.equal(1);
+            const gha = new GitHubActions();
+            let teamNum = await gha.getTeamNumber(allTeams[0].id);
+            expect(teamNum).to.be.lessThan(0); // should not be provisioned yet
 
-        teamNum = await gha.getTeamNumber(allNewTeams[0].id);
-        expect(teamNum).to.be.greaterThan(0); // should be provisioned
+            const d0 = await dc.getDeliverable(Test.DELIVID0);
+            const res = await cc.provision(d0, true);
+            Log.test("provisioned: " + JSON.stringify(res));
+            expect(res).to.be.an('array');
+            expect(res.length).to.equal(2);
 
-        teamNum = await gha.getTeamNumber(allNewTeams[1].id);
-        expect(teamNum).to.be.greaterThan(0); // should be provisioned
+            const allNewRepos = await rc.getAllRepos();
+            const allNewTeams = await tc.getAllTeams();
 
-        let repoExists = await gha.repoExists(allNewRepos[0].id);
-        expect(repoExists).to.be.true; // should be provisioned
+            expect(allNewRepos.length).to.equal(2);
+            expect(allNewTeams.length).to.equal(2);
 
-        repoExists = await gha.repoExists(allNewRepos[1].id);
-        expect(repoExists).to.be.true; // should be provisioned
+            teamNum = await gha.getTeamNumber(allNewTeams[0].id);
+            expect(teamNum).to.be.greaterThan(0); // should be provisioned
 
-        expect(allNewRepos[0].URL).to.not.be.null;
-        expect(allNewRepos[1].URL).to.not.be.null;
+            teamNum = await gha.getTeamNumber(allNewTeams[1].id);
+            expect(teamNum).to.be.greaterThan(0); // should be provisioned
 
-        expect(allNewTeams[0].URL).to.not.be.null;
-        expect(allNewTeams[1].URL).to.not.be.null;
-    }).timeout(Test.TIMEOUTLONG * 5);
+            let repoExists = await gha.repoExists(allNewRepos[0].id);
+            expect(repoExists).to.be.true; // should be provisioned
 
-    it("Should not provision any new repos if nothing has changed.", async () => {
-        // await clearAndPreparePartial();
+            repoExists = await gha.repoExists(allNewRepos[1].id);
+            expect(repoExists).to.be.true; // should be provisioned
 
-        const allRepos = await rc.getAllRepos();
-        const allTeams = await tc.getAllTeams();
+            expect(allNewRepos[0].URL).to.not.be.null;
+            expect(allNewRepos[1].URL).to.not.be.null;
 
-        expect(allRepos.length).to.equal(2);
-        expect(allTeams.length).to.equal(2);
+            expect(allNewTeams[0].URL).to.not.be.null;
+            expect(allNewTeams[1].URL).to.not.be.null;
+        }).timeout(Test.TIMEOUTLONG * 5);
 
-        const d0 = await dc.getDeliverable(Test.DELIVID0);
-        const res = await cc.provision(d0, true);
-        Log.test("provisioned: " + JSON.stringify(res));
-        expect(res).to.be.an('array');
-        expect(res.length).to.equal(0);
+        it("Should not provision any new repos if nothing has changed.", async () => {
+            // await clearAndPreparePartial();
 
-        const allNewRepos = await rc.getAllRepos();
-        const allNewTeams = await tc.getAllTeams();
+            const allRepos = await rc.getAllRepos();
+            const allTeams = await tc.getAllTeams();
 
-        expect(allNewRepos.length).to.equal(2);
-        expect(allNewTeams.length).to.equal(2);
-    }).timeout(Test.TIMEOUTLONG * 5);
+            expect(allRepos.length).to.equal(2);
+            expect(allTeams.length).to.equal(2);
 
+            const d0 = await dc.getDeliverable(Test.DELIVID0);
+            const res = await cc.provision(d0, true);
+            Log.test("provisioned: " + JSON.stringify(res));
+            expect(res).to.be.an('array');
+            expect(res.length).to.equal(0);
+
+            const allNewRepos = await rc.getAllRepos();
+            const allNewTeams = await tc.getAllTeams();
+
+            expect(allNewRepos.length).to.equal(2);
+            expect(allNewTeams.length).to.equal(2);
+        }).timeout(Test.TIMEOUTLONG * 5);
+    });
 });

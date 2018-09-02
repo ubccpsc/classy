@@ -4,6 +4,7 @@ import "mocha";
 import Log from "../../../../../common/Log";
 import {CS310Controller} from "../../../src/controllers/cs310/CS310Controller";
 import {DatabaseController} from "../../../src/controllers/DatabaseController";
+import {DeliverablesController} from "../../../src/controllers/DeliverablesController";
 import {TestGitHubController} from "../../../src/controllers/GitHubController";
 import {Test} from "../../GlobalSpec";
 
@@ -41,11 +42,11 @@ describe("CS310: CS310Controller", () => {
     });
 
     it("Should be able to compute a team and repo name.", async () => {
-        const db = DatabaseController.getInstance();
-
-        const deliv = await db.getDeliverable(Test.DELIVID0);
-        const p1 = await db.getPerson(Test.USER1.id);
-        const p2 = await db.getPerson(Test.USER2.id);
+        const dbc = DatabaseController.getInstance();
+        const dc = new DeliverablesController();
+        const deliv = await dc.getDeliverable(Test.DELIVID0);
+        const p1 = await dbc.getPerson(Test.USER1.id);
+        const p2 = await dbc.getPerson(Test.USER2.id);
 
         let res = await cc.computeNames(deliv, [p1, p2]);
 
@@ -54,9 +55,10 @@ describe("CS310: CS310Controller", () => {
 
         // make those teams
         const t = await Test.createTeam(res.teamName, deliv.id, []);
-        await db.writeTeam(t);
-        const r = await Test.createRepository(res.repoName, res.teamName);
-        await db.writeRepository(r);
+        await dbc.writeTeam(t);
+
+        const r = await Test.createRepository(res.repoName, deliv.id, res.teamName);
+        await dbc.writeRepository(r);
 
         // try again once the teams / repos exist
         let ex = null;
