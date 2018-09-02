@@ -3,6 +3,7 @@ import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
 
 import {Repository, Team} from "../Types";
+import {DatabaseController} from "./DatabaseController";
 import {GitHubActions} from "./GitHubActions";
 
 export interface IGitHubController {
@@ -32,6 +33,8 @@ export interface GitTeamTuple {
 }
 
 export class GitHubController implements IGitHubController {
+
+    private readonly dbc = DatabaseController.getInstance();
 
     public async getRepositoryUrl(repo: Repository): Promise<string> {
         Log.info("GitHubController::GetRepositoryUrl - start");
@@ -178,7 +181,13 @@ export class GitHubController implements IGitHubController {
                 }
                 // now, add the team to the repository
                 // const teamAdd =
-                await gh.addTeamToRepo(teamNum, repo.id, "push");
+                const res = await gh.addTeamToRepo(teamNum, repo.id, "push");
+                if (res.githubTeamNumber > 0) {
+
+                    // keep track of team addition
+                    team.custom.githubAttached = true;
+                    await this.dbc.writeTeam(team);
+                }
                 Log.info("GitHubController::releaseRepository(..) - added team (" + team.id + "" +
                     ") with push permissions to repository (" + repo.id + ")");
             }
@@ -193,6 +202,8 @@ export class GitHubController implements IGitHubController {
                                      importUrl: string,
                                      shouldRelease: boolean): Promise<boolean> {
         Log.info("GitHubController::provisionRepository( " + repoName + ", ...) - start");
+        const dbc = DatabaseController.getInstance();
+
         const start = Date.now();
 
         if (teams.length < 1 || teams.length > 1) {
@@ -215,6 +226,14 @@ export class GitHubController implements IGitHubController {
             // create a repo
             Log.trace("GitHubController::provisionRepository() - create GitHub repo");
             const repoVal = await gh.createRepo(repoName);
+
+            const repo = await dbc.getRepository(repoName);
+            // NOTE: this isn't done here on purpose: we consider the repo to be provisioned once the whole flow is done
+            // callers of this method should instead set the URL field
+            // repo.URL = repoVal;
+            repo.custom.githubCreated = true;
+            await dbc.writeRepository(repo);
+
             Log.trace('GitHubController::provisionRepository(..) - repo: ' + repoVal);
         } catch (err) {
             Log.error('GitHubController::provisionRepository(..) - create repo error: ' + err);
@@ -232,6 +251,12 @@ export class GitHubController implements IGitHubController {
                     teamValue = await gh.createTeam(team.id, 'push');
                     Log.trace('GitHubController::provisionRepository(..) createTeam: ' + teamValue.teamName);
 
+                    if (teamValue.githubTeamNumber > 0) {
+                        // worked
+                        team.URL = teamValue.URL;
+                        await dbc.writeTeam(team);
+                    }
+
                     Log.trace("GitHubController::provisionRepository() - add members to GitHub team");
                     const addMembers = await gh.addMembersToTeam(teamValue.teamName, teamValue.githubTeamNumber, team.personIds);
                     Log.trace('GitHubController::provisionRepository(..) - addMembers: ' + addMembers.teamName);
@@ -239,8 +264,19 @@ export class GitHubController implements IGitHubController {
                     if (shouldRelease === true) {
                         Log.trace("GitHubController::provisionRepository() - add team: " + teamValue.teamName + " to repo");
                         const teamAdd = await gh.addTeamToRepo(teamValue.githubTeamNumber, repoName, 'push');
+
+                        if (teamAdd.githubTeamNumber > 0) {
+                            // keep track of team addition
+                            team.custom.githubAttached = true;
+                            await dbc.writeTeam(team);
+                        }
+
                         Log.trace('GitHubController::provisionRepository(..) - team name: ' + teamAdd.teamName);
                     } else {
+                        // keep track of fact that team wasn't added to repo
+                        team.custom.githubAttached = false;
+                        await dbc.writeTeam(team);
+
                         Log.trace("GitHubController::provisionRepository() - team: " +
                             teamValue.teamName + " NOT added to repo (shouldRelease === false)");
                     }

@@ -331,7 +331,7 @@ describe("DatabaseController", () => {
     it("Should be able to write a repository.", async () => {
         // prep
         // const p2 = Test.createPerson(Test.USER2.id, Test.USER2.csId, Test.USER2.github, 'student');
-        // let res = await dc.writePerson(p2);
+        // let res = await dbc.writePerson(p2);
         // expect(res).to.be.true;
 
         const repo = await Test.createRepository(Test.REPONAME1, Test.TEAMNAME1);

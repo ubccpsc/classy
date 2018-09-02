@@ -28,7 +28,7 @@ export class RubricController {
     // private gc: GradesController = new GradesController();
     // private rc: RepositoryController = new RepositoryController();
     // private tc: TeamController = new TeamController();
-    // private dc: DeliverablesController = new DeliverablesController();
+    // private dbc: DeliverablesController = new DeliverablesController();
     // private ghc: GitHubController = new GitHubController();
     // private pc: PersonController = new PersonController();
     private gha: GitHubActions = new GitHubActions();

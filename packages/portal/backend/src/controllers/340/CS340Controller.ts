@@ -9,6 +9,7 @@ export class CS340Controller extends CourseController {
 
     public constructor(ghController: IGitHubController) {
         super(ghController);
+        Log.info("CS340Controller::<init>");
     }
 
     public async computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}> {

@@ -71,7 +71,7 @@ export interface ICourseController {
     computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}>;
 }
 
-export class CourseController implements ICourseController {
+export abstract class CourseController implements ICourseController {
 
     public static getName(): string | null {
         try {
@@ -87,7 +87,7 @@ export class CourseController implements ICourseController {
         return null;
     }
 
-    protected dc = DatabaseController.getInstance();
+    protected dbc = DatabaseController.getInstance();
     protected pc = new PersonController();
     protected rc = new RepositoryController();
     protected tc = new TeamController();
@@ -97,7 +97,7 @@ export class CourseController implements ICourseController {
     protected gh: IGitHubController = null;
 
     constructor(ghController: IGitHubController) {
-        Log.trace("CourseController::<init> - start");
+        Log.info("CourseController::<init> - start");
         this.gh = ghController;
     }
 
@@ -186,7 +186,7 @@ export class CourseController implements ICourseController {
     }
 
     public async getCourse(): Promise<Course> {
-        let record: Course = await this.dc.getCourseRecord();
+        let record: Course = await this.dbc.getCourseRecord();
         if (record === null) {
             // create default and write it
             record = {
@@ -194,20 +194,20 @@ export class CourseController implements ICourseController {
                 defaultDeliverableId: null,
                 custom:               {}
             };
-            await this.dc.writeCourseRecord(record);
+            await this.dbc.writeCourseRecord(record);
         }
         return record;
     }
 
     public async saveCourse(course: Course): Promise<boolean> {
-        const record: Course = await this.dc.getCourseRecord();
+        const record: Course = await this.dbc.getCourseRecord();
         if (record !== null) {
             // merge the new with the old
             record.defaultDeliverableId = course.defaultDeliverableId;
             const custom = Object.assign({}, record.custom, course.custom); // merge custom properties
             record.custom = custom;
         }
-        return await this.dc.writeCourseRecord(record);
+        return await this.dbc.writeCourseRecord(record);
     }
 
     /**
@@ -367,7 +367,7 @@ export class CourseController implements ICourseController {
      * @returns {Promise<DeliverableTransport[]>}
      */
     public async getDeliverables(): Promise<DeliverableTransport[]> {
-        const deliverables = await this.dc.getDeliverables();
+        const deliverables = await this.dbc.getDeliverables();
 
         let delivs: DeliverableTransport[] = [];
         for (const deliv of deliverables) {
@@ -438,9 +438,11 @@ export class CourseController implements ICourseController {
         const delivTeams: Team[] = [];
         for (const team of allTeams) {
             if (team.delivId === deliv.id) {
+                Log.trace("adding team: " + team.id + " to delivTeams");
                 delivTeams.push(team);
             }
         }
+        Log.trace("# deliv teams: " + delivTeams.length + "; total people: " + allPeople.length);
 
         // remove any people who are already on teams
         for (const team of delivTeams) {
@@ -456,24 +458,34 @@ export class CourseController implements ICourseController {
             }
         }
 
-        // now create teams for individuals
-        for (const individual of allPeople) {
-            const names = await this.computeNames(deliv, [individual]);
+        Log.trace("# people not on teams: " + allPeople.length);
 
-            const team = await this.tc.formTeam(names.teamName, deliv, [individual], false);
-            delivTeams.push(team);
+        if (formSingleTeams === true) {
+            // now create teams for individuals
+            for (const individual of allPeople) {
+                const names = await this.computeNames(deliv, [individual]);
+
+                const team = await this.tc.formTeam(names.teamName, deliv, [individual], false);
+                delivTeams.push(team);
+            }
         }
+
+        Log.trace("# delivTeams after individual teams added: " + delivTeams.length);
 
         const reposToProvision: Repository[] = [];
         // now process the teams to create their repos
         for (const delivTeam of delivTeams) {
             // if (team.URL === null) { // this would be faster, but we are being more conservative here
 
+            Log.trace('delivTeam: ' + delivTeam.id);
+
             const people: Person[] = [];
             for (const pId of delivTeam.personIds) {
                 people.push(await this.pc.getPerson(pId));
             }
             const names = await this.computeNames(deliv, people);
+
+            Log.trace('delivTeam: ' + delivTeam.id + '; computed team: ' + names.teamName + '; computed repo: ' + names.repoName);
 
             const team = await this.tc.getTeam(names.teamName);
             let repo = await this.rc.getRepository(names.repoName);
@@ -503,6 +515,8 @@ export class CourseController implements ICourseController {
             }
         }
 
+        Log.trace("# repos to provision: " + reposToProvision.length);
+
         const provisionedRepos = await this.provisionRepositories(reposToProvision, deliv.importURL);
         return provisionedRepos; // only returns provisioned this time; should it return all of them?
     }
@@ -523,27 +537,33 @@ export class CourseController implements ICourseController {
     public async provisionRepositories(repos: Repository[], importURL: string): Promise<RepositoryTransport[]> {
         const ghc = new GitHubController();
         const gha = new GitHubActions();
+        const config = Config.getInstance();
+        const dbc = DatabaseController.getInstance();
 
         Log.info("CourseController::provisionRepositories( .. ) - start; # repos: " +
             repos.length + "; importURL: " + importURL);
         const provisionedRepos: Repository[] = [];
+
         for (const repo of repos) {
             try {
                 if (repo.URL === null) {
                     const teams: Team[] = [];
                     for (const teamId of repo.teamIds) {
-                        teams.push(await this.dc.getTeam(teamId));
+                        teams.push(await this.dbc.getTeam(teamId));
                     }
                     const success = await ghc.provisionRepository(repo.id, teams, importURL, false);
 
                     if (success === true) {
+                        repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
+                        repo.custom.githubProvisioned = true;
+                        await dbc.writeRepository(repo);
                         Log.info("CourseController::provisionRepositories( .. ) - success: " + repo.id + "; URL: " + repo.URL);
                         provisionedRepos.push(repo);
                     } else {
                         Log.warn("CourseController::provisionRepositories( .. ) - FAILED: " + repo.id + "; URL: " + repo.URL);
                     }
 
-                    await gha.delay(5 * 1000); // after any provisioning wait a bit
+                    await gha.delay(1 * 1000); // after any provisioning wait a bit
                 } else {
                     Log.info("CourseController::provisionRepositories( .. ) - skipped; already provisioned: " +
                         repo.id + "; URL: " + repo.URL);
@@ -561,7 +581,41 @@ export class CourseController implements ICourseController {
         return provisionedRepositoryTransport;
     }
 
-    public async releaseRepositories(repos: Repository[]): Promise<RepositoryTransport[]> {
+    public async release(deliv: Deliverable): Promise<RepositoryTransport[]> {
+        Log.info("CourseController::release( " + deliv.id + " ) - start");
+        const allTeams: Team[] = await this.tc.getAllTeams();
+        Log.info("CourseController::release( " + deliv.id + " ) - # teams: " + allTeams.length);
+
+        const delivTeams: Team[] = [];
+        for (const team of allTeams) {
+            if (team.delivId === deliv.id) {
+                Log.trace("adding team: " + team.id + " to delivTeams");
+                delivTeams.push(team);
+            }
+        }
+
+        Log.info("CourseController::release( " + deliv.id + " ) - # deliv teams: " + delivTeams.length);
+        const reposToRelease: Repository[] = [];
+        for (const team of delivTeams) {
+            if (typeof team.custom.githubAttached === 'undefined' || team.custom.githubAttached === false) {
+                // if the team
+                const people: Person[] = [];
+                for (const pId of team.personIds) {
+                    people.push(await this.dbc.getPerson(pId));
+                }
+                const names = await this.computeNames(deliv, people);
+                const repo = await this.dbc.getRepository(names.repoName);
+                reposToRelease.push(repo);
+            } else {
+                Log.info("CourseController::release( " + deliv.id + " ) - skipping team: " + team.id + "; already attached");
+            }
+        }
+
+        Log.info("CourseController::release( " + deliv.id + " ) - # repos to release: " + reposToRelease.length);
+        return await this.releaseRepositories(reposToRelease);
+    }
+
+    private async releaseRepositories(repos: Repository[]): Promise<RepositoryTransport[]> {
         const ghc = new GitHubController();
         const gha = new GitHubActions();
 
@@ -572,7 +626,7 @@ export class CourseController implements ICourseController {
                 if (repo.URL !== null) {
                     const teams: Team[] = [];
                     for (const teamId of repo.teamIds) {
-                        teams.push(await this.dc.getTeam(teamId));
+                        teams.push(await this.dbc.getTeam(teamId));
                     }
                     const success = await ghc.releaseRepository(repo, teams, false);
 
@@ -601,35 +655,47 @@ export class CourseController implements ICourseController {
         return releasedRepositoryTransport;
     }
 
-    public async computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}> {
-        Log.info("CourseController::computeNames(..) - start; # people: " + people.length);
-        const repos = await this.dc.getRepositories();
+    public abstract computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}>;
 
-        // the repo name and the team name should be the same, so just use the repo name
-        let repoCount = 0;
-        for (const repo of repos) {
-            if (repo.id.startsWith(deliv.repoPrefix)) {
-                repoCount++;
-            }
-        }
-        let repoName = '';
-        let teamName = '';
-
-        let ready = false;
-        while (!ready) {
-            repoName = deliv.repoPrefix + '_' + repoCount;
-            teamName = deliv.teamPrefix + '_' + repoCount;
-            const r = await this.dc.getRepository(repoName);
-            const t = await this.dc.getTeam(teamName);
-            if (r === null && t === null) {
-                ready = true;
-            } else {
-                Log.warn("CourseController::computeNames(..) - name not available; r: " + repoName + "; t: " + teamName);
-                repoCount++; // try the next one
-            }
-        }
-        Log.info("CourseController::computeNames(..) - done; r: " + repoName + "; t: " + teamName);
-        return {teamName: teamName, repoName: repoName};
-    }
+    // /**
+    //  * This is a method that subtypes can call from computeNames if they do not want to implement it themselves.
+    //  *
+    //  * @param {Deliverable} deliv
+    //  * @param {Person[]} people
+    //  * @returns {Promise<{teamName: string | null; repoName: string | null}>}
+    //  */
+    // public async computeNamesDefault(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}> {
+    //     Log.info("CourseController::computeNames(..) - start; # people: " + people.length);
+    //     const repos = await this.dbc.getRepositories();
+    //
+    //     // TODO: this code has a fatal flaw; if the team/repo exists already for the specified people,
+    //     // it is correct to return those.
+    //
+    //     // the repo name and the team name should be the same, so just use the repo name
+    //     let repoCount = 0;
+    //     for (const repo of repos) {
+    //         if (repo.id.startsWith(deliv.repoPrefix)) {
+    //             repoCount++;
+    //         }
+    //     }
+    //     let repoName = '';
+    //     let teamName = '';
+    //
+    //     let ready = false;
+    //     while (!ready) {
+    //         repoName = deliv.repoPrefix + '_' + repoCount;
+    //         teamName = deliv.teamPrefix + '_' + repoCount;
+    //         const r = await this.dbc.getRepository(repoName);
+    //         const t = await this.dbc.getTeam(teamName);
+    //         if (r === null && t === null) {
+    //             ready = true;
+    //         } else {
+    //             Log.warn("CourseController::computeNames(..) - name not available; r: " + repoName + "; t: " + teamName);
+    //             repoCount++; // try the next one
+    //         }
+    //     }
+    //     Log.info("CourseController::computeNames(..) - done; r: " + repoName + "; t: " + teamName);
+    //     return {teamName: teamName, repoName: repoName};
+    // }
 
 }

@@ -149,10 +149,8 @@ export class GitHubActions {
         const ctx = this;
         Log.info("GitHubAction::repoExists( " + ctx.org + ", " + repoName + " ) - start");
 
-        // return new Promise(function(fulfill) {
-
         const uri = ctx.apiPath + '/repos/' + ctx.org + '/' + repoName;
-        // Log.trace("GitHubAction::repoExists(..) - URI: " + uri);
+        Log.trace("GitHubAction::repoExists(..) - URI: " + uri);
         const options = {
             method:  'GET',
             uri:     uri,
@@ -164,20 +162,13 @@ export class GitHubActions {
         };
 
         try {
-            await rp(options); // .then(function(); // body: any
-            Log.trace("GitHubAction::repoExists(..) - true"); // body: " + body);
-            // fulfill(true);
+            await rp(options);
+            Log.trace("GitHubAction::repoExists(..) - true");
             return true;
         } catch (err) {
             Log.trace("GitHubAction::repoExists(..) - false");
             return false;
         }
-        // }).catch(function() { // err: any
-        //     // Log.trace("GitHubAction::repoExists(..) - ERROR: " + JSON.stringify(err));
-        //     Log.trace("GitHubAction::repoExists(..) - false");
-        //     fulfill(false);
-        // });
-        // });
     }
 
     /**
@@ -469,7 +460,7 @@ export class GitHubActions {
      * @param permission 'admin', 'pull', 'push' // admin for staff, push for students
      * @returns {Promise<number>} team id
      */
-    public async createTeam(teamName: string, permission: string): Promise<{teamName: string, githubTeamNumber: number}> {
+    public async createTeam(teamName: string, permission: string): Promise<{teamName: string, githubTeamNumber: number, URL: string}> {
         const ctx = this;
         Log.info("GitHubAction::createTeam( " + ctx.org + ", " + teamName + ", " + permission + ", ... ) - start");
 
@@ -477,7 +468,9 @@ export class GitHubActions {
             const teamNum = await this.getTeamNumber(teamName);
             if (teamNum > 0) {
                 Log.info("GitHubAction::createTeam( " + teamName + ", ... ) - success; exists: " + teamNum);
-                return {teamName: teamName, githubTeamNumber: teamNum};
+                const config = Config.getInstance();
+                const url = config.getProp(ConfigKey.githubHost) + "/orgs/" + config.getProp(ConfigKey.org) + "/teams/" + teamName;
+                return {teamName: teamName, githubTeamNumber: teamNum, URL: url};
             } else {
                 Log.info('GitHubAction::createTeam( ' + teamName + ', ... ) - does not exist; creating');
                 const uri = ctx.apiPath + '/orgs/' + ctx.org + '/teams';
@@ -497,8 +490,10 @@ export class GitHubActions {
                 };
                 const body = await rp(options);
                 const id = body.id;
+                const config = Config.getInstance();
+                const url = config.getProp(ConfigKey.githubHost) + "/orgs/" + config.getProp(ConfigKey.org) + "/teams/" + teamName;
                 Log.info("GitHubAction::createTeam(..) - success; new: " + id);
-                return {teamName: teamName, githubTeamNumber: id};
+                return {teamName: teamName, githubTeamNumber: id, URL: url};
             }
         } catch (err) {
             Log.error("GitHubAction::createTeam(..) - ERROR: " + err);
@@ -947,7 +942,7 @@ export class GitHubActions {
             } catch (err) {
                 Log.warn("GithubActions::writeFileToRepo(..) - No file differences; " +
                     "Did not write file to repo");
-                                // this only fails when the files have not changed,
+                // this only fails when the files have not changed,
                 return true;    // we technically "wrote" the file still
             }
             await pushToRepo();

@@ -33,7 +33,7 @@ describe("GitHubController", () => {
 
         // clear stale data (removed; happens in suitebefore)
         const dc = DatabaseController.getInstance();
-        // await dc.clearData();
+        // await dbc.clearData();
 
         // get data ready
         await Test.prepareDeliverables();
@@ -51,7 +51,7 @@ describe("GitHubController", () => {
         const t2 = await Test.createTeam(Test.TEAMNAME2, Test.DELIVID1, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
         await dc.writeTeam(t2);
         // const t3 = await Test.createTeam(Test.TEAMNAME3, Test.DELIVID2, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
-        // await dc.writeTeam(t3);
+        // await dbc.writeTeam(t3);
 
         const rc = new RepositoryController();
         await rc.createRepository(Test.REPONAME1, [t1], {});

@@ -797,7 +797,7 @@ export class AssignmentController {
                 Log.info("AssignmentController::updateAssignmentStatus(..) - student: " + student.id + " " +
                     "is missing a repository");
                 // (deliv.custom as AssignmentInfo).status = AssignmentStatus.INACTIVE;
-                // await this.dc.saveDeliverable(deliv);
+                // await this.dbc.saveDeliverable(deliv);
                 if(AssignmentStatus.INACTIVE < newStatus) {
                     newStatus = AssignmentStatus.INACTIVE;
                 }

@@ -21,6 +21,7 @@ import {CourseController} from "../../controllers/CourseController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GitHubController} from "../../controllers/GitHubController";
 import {PersonController} from "../../controllers/PersonController";
+import {Factory} from "../../Factory";
 
 import {Person} from "../../Types";
 
@@ -127,7 +128,7 @@ export default class AdminRoutes implements IREST {
         //     return next(false);
         // };
 
-        const cc = new CourseController(new GitHubController());
+        const cc = Factory.getCourseController(new GitHubController());
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getStudents().then(function(students) {
             Log.trace('AdminRoutes::getStudents(..) - in then; # students: ' + students.length);
@@ -149,7 +150,7 @@ export default class AdminRoutes implements IREST {
     private static getTeams(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getTeams(..) - start');
 
-        const cc = new CourseController(new GitHubController());
+        const cc = Factory.getCourseController(new GitHubController());
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getTeams().then(function(teams) {
             Log.trace('AdminRoutes::getTeams(..) - in then; # teams: ' + teams.length);
@@ -164,7 +165,7 @@ export default class AdminRoutes implements IREST {
     private static getRepositories(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getRepositories(..) - start');
 
-        const cc = new CourseController(new GitHubController());
+        const cc = Factory.getCourseController(new GitHubController());
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getRepositories().then(function(repos) {
             Log.trace('AdminRoutes::getRepositories(..) - in then; # repos: ' + repos.length);
@@ -185,7 +186,7 @@ export default class AdminRoutes implements IREST {
      */
     private static getResults(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getResults(..) - start');
-        const cc = new CourseController(new GitHubController());
+        const cc = Factory.getCourseController(new GitHubController());
 
         // if these params are missing the client will get 404 since they are part of the path
         const delivId = req.params.delivId;
@@ -212,7 +213,7 @@ export default class AdminRoutes implements IREST {
     private static getGrades(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getGrades(..) - start');
 
-        const cc = new CourseController(new GitHubController());
+        const cc = Factory.getCourseController(new GitHubController());
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getGrades().then(function(grades) {
             Log.trace('AdminRoutes::getGrades(..) - in then; # teams: ' + grades.length);
@@ -234,7 +235,7 @@ export default class AdminRoutes implements IREST {
     private static getDeliverables(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getDeliverables(..) - start');
 
-        const cc = new CourseController(new GitHubController());
+        const cc = Factory.getCourseController(new GitHubController());
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getDeliverables().then(function(delivs) {
             Log.trace('AdminRoutes::getDeliverables(..) - in then; # deliverables: ' + delivs.length);
@@ -359,7 +360,7 @@ export default class AdminRoutes implements IREST {
     private static getCourse(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getCourse(..) - start');
 
-        const cc = new CourseController(new GitHubController());
+        const cc = Factory.getCourseController(new GitHubController());
         cc.getCourse().then(function(course) {
             Log.trace('AdminRoutes::getCourse(..) - in then');
 
@@ -387,7 +388,7 @@ export default class AdminRoutes implements IREST {
     }
 
     private static async handlePostCourse(courseTrans: CourseTransport): Promise<boolean> {
-        const cc = new CourseController(new GitHubController());
+        const cc = Factory.getCourseController(new GitHubController());
         const result = CourseController.validateCourseTransport(courseTrans);
         if (result === null) {
             const saveSucceeded = await cc.saveCourse(courseTrans);

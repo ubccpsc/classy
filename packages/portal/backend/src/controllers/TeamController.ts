@@ -58,7 +58,7 @@ export class TeamController {
     public async formTeam(teamId: string, deliv: Deliverable, people: Person[], adminOverride: boolean): Promise<Team | null> {
         Log.info("TeamController::formTeam( ... ) - start");
 
-        // const dc = new DeliverablesController();
+        // const dbc = new DeliverablesController();
         // const pc = new PersonController();
 
         // sanity checking

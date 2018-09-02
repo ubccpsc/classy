@@ -15,6 +15,7 @@ export class CS310Controller extends CourseController {
 
     public constructor(ghController: IGitHubController) {
         super(ghController);
+        Log.info("CS310Controller::<init>");
     }
 
     public async handleUnknownUser(githubUsername: string): Promise<Person | null> {
@@ -121,7 +122,9 @@ export class CS310Controller extends CourseController {
             Log.info('CS310Controller::computeNames( ... ) - done; t: ' + tName + ', r: ' + rName);
             return {teamName: tName, repoName: rName};
         } else {
-            throw new Error("CS310Controller::computeNames( ... ) - names not available; t: " + tName + "; r: " + rName);
+            // TODO: should really verify that the existing teams contain the right people already
+            return {teamName: tName, repoName: rName};
+            // throw new Error("CS310Controller::computeNames( ... ) - names not available; t: " + tName + "; r: " + rName);
         }
     }
 

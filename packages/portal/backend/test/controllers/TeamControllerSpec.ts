@@ -22,7 +22,7 @@ describe("TeamController", () => {
         await Test.suiteBefore('TeamController');
 
         // clear stale data (removed; happens in suitebefore)
-        // await dc.clearData();
+        // await dbc.clearData();
 
         // get data ready
         await Test.prepareDeliverables();

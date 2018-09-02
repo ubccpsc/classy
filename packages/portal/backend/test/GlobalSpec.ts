@@ -252,7 +252,7 @@ export class Test {
             // delay:          300,
 
             shouldProvision:  true,
-            importURL:        null,
+            importURL:        'https://github.com/classytest/PostTestDoNotDelete.git', // TODO: create ImportTestDoNotDelete
             teamMinSize:      2,
             teamMaxSize:      2,
             teamSameLab:      true,

@@ -463,7 +463,7 @@ describe('SDMM Routes', function() {
     //     await pc.createPerson(PERSON2);
     //     await pc.createPerson(PERSON3);
     //
-    //     const dc = DatabaseController.getInstance();
+    //     const dbc = DatabaseController.getInstance();
     //     const g: Grade = {
     //         personId:  Test.USERNAME2,
     //         delivId:   Test.DELIVID0,
@@ -476,11 +476,11 @@ describe('SDMM Routes', function() {
     //
     //         custom: {}
     //     };
-    //     await dc.writeGrade(g);
+    //     await dbc.writeGrade(g);
     //
     //     (<any>g).personId = Test.USERNAME3;
     //     g.score = 71;
-    //     await dc.writeGrade(g);
+    //     await dbc.writeGrade(g);
     //
     //     let response = null;
     //     const url = '/sdmm/performAction/provisionD1team/' + Test.USERNAME3;

@@ -70,7 +70,7 @@ export class AuthController {
                     // else {
                     // shouldn't happen: students shouldn't have null kind
                     // person.kind = 'student';
-                    // await dc.writePerson(person);
+                    // await dbc.writePerson(person);
                     // }
                 }
 
