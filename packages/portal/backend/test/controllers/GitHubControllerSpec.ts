@@ -17,7 +17,7 @@ import './TeamControllerSpec';
 // const loadFirst = require('../GlobalSpec');
 // const rFirst = require('./TeamControllerSpec');
 
-describe("GitHubController", () => {
+describe.only("GitHubController", () => {
     // TODO: investigate skipping this way: https://stackoverflow.com/a/41908943 (and turning them on/off with an env flag)
 
     let gc: GitHubController;
@@ -276,7 +276,7 @@ describe("GitHubController", () => {
         const team: any = {id: Test.TEAMNAME3, personIds: [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]};
         // try to release a repo with a team that doesn't exist
         res = await gc.releaseRepository(allRepos[1], [team], false);
-        expect(res).to.be.true;
+        expect(res).to.be.false;
 
     }).timeout(Test.TIMEOUT);
 

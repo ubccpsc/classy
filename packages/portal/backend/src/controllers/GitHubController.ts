@@ -156,6 +156,13 @@ export class GitHubController implements IGitHubController {
                 Log.error("GitHubController::releaseRepository(..) - ERROR: Not implemented");
                 throw new Error("GitHubController - w/ collaborators NOT IMPLEMENTED");
             } else {
+                // make sure team exists in datastore
+                const existingTeam = await this.dbc.getTeam(team.id);
+                if (existingTeam === null) {
+                    Log.error("GitHubController::releaseRepository(..) - ERROR: team not in datastore: " + team.id);
+                    return false;
+                }
+
                 // using GithubTeams
                 // see if the team exists
                 let teamNum = await gh.getTeamNumber(team.id);
@@ -211,6 +218,13 @@ export class GitHubController implements IGitHubController {
         }
 
         Log.trace("GitHubController::provisionRepository() - see if repo already exists");
+        const repo = await dbc.getRepository(repoName);
+        if (repo === null) {
+            // repo object should be in datastore before we try to provision it
+            Log.trace('GitHubController::provisionRepository(..) - repo does not exist in datastore (but should): ' + repo.id);
+            return false;
+        }
+
         const gh = new GitHubActions();
         const repoExists = await gh.repoExists(repoName);
         Log.trace('GitHubController::provisionRepository(..) - repo exists: ' + repoExists);
@@ -227,7 +241,6 @@ export class GitHubController implements IGitHubController {
             Log.trace("GitHubController::provisionRepository() - create GitHub repo");
             const repoVal = await gh.createRepo(repoName);
 
-            const repo = await dbc.getRepository(repoName);
             // NOTE: this isn't done here on purpose: we consider the repo to be provisioned once the whole flow is done
             // callers of this method should instead set the URL field
             // repo.URL = repoVal;
