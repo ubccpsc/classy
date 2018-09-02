@@ -17,7 +17,7 @@ import './TeamControllerSpec';
 // const loadFirst = require('../GlobalSpec');
 // const rFirst = require('./TeamControllerSpec');
 
-describe.only("GitHubController", () => {
+describe("GitHubController", () => {
     // TODO: investigate skipping this way: https://stackoverflow.com/a/41908943 (and turning them on/off with an env flag)
 
     let gc: GitHubController;
