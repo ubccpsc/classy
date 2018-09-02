@@ -147,6 +147,8 @@ export class GitHubController implements IGitHubController {
                                    asCollaborators: boolean = false): Promise<boolean> {
         Log.info("GitHubController::releaseRepository( {" + repo.id + ", ...}, ...) - start");
 
+        this.checkDatabase(repo.id, null);
+
         const gh = new GitHubActions();
 
         for (const team of teams) {
@@ -157,11 +159,13 @@ export class GitHubController implements IGitHubController {
                 throw new Error("GitHubController - w/ collaborators NOT IMPLEMENTED");
             } else {
                 // make sure team exists in datastore
-                const existingTeam = await this.dbc.getTeam(team.id);
-                if (existingTeam === null) {
-                    Log.error("GitHubController::releaseRepository(..) - ERROR: team not in datastore: " + team.id);
-                    return false;
-                }
+                // const existingTeam = await this.dbc.getTeam(team.id);
+                // if (existingTeam === null) {
+                //     Log.error("GitHubController::releaseRepository(..) - ERROR: team not in datastore: " + team.id);
+                //     return false;
+                // }
+
+                this.checkDatabase(null, team.id);
 
                 // using GithubTeams
                 // see if the team exists
@@ -221,8 +225,8 @@ export class GitHubController implements IGitHubController {
         const repo = await dbc.getRepository(repoName);
         if (repo === null) {
             // repo object should be in datastore before we try to provision it
-            Log.trace('GitHubController::provisionRepository(..) - repo does not exist in datastore (but should): ' + repo.id);
-            return false;
+            throw new Error('GitHubController::provisionRepository(..) - repo does not exist in datastore (but should): ' + repo.id);
+            // return false;
         }
 
         const gh = new GitHubActions();
@@ -261,6 +265,12 @@ export class GitHubController implements IGitHubController {
             try {
                 Log.trace("GitHubController::provisionRepository() - create GitHub team");
                 for (const team of teams) {
+
+                    const dbT = await dbc.getTeam(team.id);
+                    if (dbT === null) {
+                        throw new Error('GitHubController::provisionRepository(..) - ' +
+                            'team does not exist in datastore (but should): ' + team.id);
+                    }
                     teamValue = await gh.createTeam(team.id, 'push');
                     Log.trace('GitHubController::provisionRepository(..) createTeam: ' + teamValue.teamName);
 
@@ -333,6 +343,27 @@ export class GitHubController implements IGitHubController {
     public async createPullRequest(repoName: string, prName: string): Promise<boolean> {
         Log.error("GitHubController::createPullRequest(..) - NOT IMPLEMENTED");
         throw new Error("NOT IMPLEMENTED");
+    }
+
+    private async checkDatabase(repoName: string | null, teamName: string | null): Promise<boolean> {
+        const dbc = DatabaseController.getInstance();
+        if (repoName !== null) {
+            const repo = await dbc.getRepository(repoName);
+            if (repo === null) {
+                throw new Error("Repository: " + repoName +
+                    " does not exist in datastore; make sure you add it before calling this operation");
+            }
+        }
+
+        if (teamName !== null) {
+            const team = await dbc.getTeam(teamName);
+            if (team === null) {
+                throw new Error("Team: " + teamName +
+                    " does not exist in datastore; make sure you add it before calling this operation");
+            }
+        }
+
+        return true;
     }
 }
 

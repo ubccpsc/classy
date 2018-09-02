@@ -41,11 +41,13 @@ export class GitHubActions {
 
         Log.info("GitHubAction::createRepo( " + repoId + " ) - start");
 
+        ctx.checkDatabase(repoId, null);
+
         const repo = await this.dc.getRepository(repoId);
-        if (repo === null) {
-            Log.error("GitHubAction::createRepo(..) - unknown Repository object: " + repoId);
-            throw new Error("GitHubAction::createRepo(..) - Repository not in datastore: " + repoId);
-        }
+        // if (repo === null) {
+        //     Log.error("GitHubAction::createRepo(..) - unknown Repository object: " + repoId);
+        //     throw new Error("GitHubAction::createRepo(..) - Repository not in datastore: " + repoId);
+        // }
 
         try {
             const uri = ctx.apiPath + '/orgs/' + ctx.org + '/repos';
@@ -465,6 +467,8 @@ export class GitHubActions {
         Log.info("GitHubAction::createTeam( " + ctx.org + ", " + teamName + ", " + permission + ", ... ) - start");
 
         try {
+            ctx.checkDatabase(null, teamName);
+
             const teamNum = await this.getTeamNumber(teamName);
             if (teamNum > 0) {
                 Log.info("GitHubAction::createTeam( " + teamName + ", ... ) - success; exists: " + teamNum);
@@ -681,6 +685,8 @@ export class GitHubActions {
 
     private async isOnTeam(teamName: string, userName: string): Promise<boolean> {
         const gh = this;
+
+        this.checkDatabase(null, teamName);
 
         const teamNumber = await gh.getTeamNumber(teamName);
         // code just returns false anyways because getTeamMembers will return [] and not match anything
@@ -1130,6 +1136,27 @@ export class GitHubActions {
                 reject(err);
             });
         });
+    }
+
+    private async checkDatabase(repoName: string | null, teamName: string | null): Promise<boolean> {
+        const dbc = DatabaseController.getInstance();
+        if (repoName !== null) {
+            const repo = await dbc.getRepository(repoName);
+            if (repo === null) {
+                throw new Error("Repository: " + repoName +
+                    " does not exist in datastore; make sure you add it before calling this operation");
+            }
+        }
+
+        if (teamName !== null) {
+            const team = await dbc.getTeam(teamName);
+            if (team === null) {
+                throw new Error("Team: " + teamName +
+                    " does not exist in datastore; make sure you add it before calling this operation");
+            }
+        }
+
+        return true;
     }
 
 }
