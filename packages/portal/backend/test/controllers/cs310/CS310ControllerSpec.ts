@@ -1,12 +1,13 @@
 import {expect} from "chai";
 import "mocha";
 
+import Log from "../../../../../common/Log";
 import {CS310Controller} from "../../../src/controllers/cs310/CS310Controller";
 import {DatabaseController} from "../../../src/controllers/DatabaseController";
 import {TestGitHubController} from "../../../src/controllers/GitHubController";
+import {Test} from "../../GlobalSpec";
 
 import "../../GlobalSpec";
-import {Test} from "../../GlobalSpec";
 
 describe("CS310: CS310Controller", () => {
 
@@ -57,7 +58,7 @@ describe("CS310: CS310Controller", () => {
         const r = await Test.createRepository(res.repoName, res.teamName);
         await db.writeRepository(r);
 
-        // make sure this fails
+        // try again once the teams / repos exist
         let ex = null;
         res = null;
         try {
@@ -65,8 +66,11 @@ describe("CS310: CS310Controller", () => {
         } catch (err) {
             ex = err;
         }
-        expect(res).to.be.null;
-        expect(ex).to.not.be.null;
+        Log.test("res: " + res + "; ex: " + ex);
+        expect(ex).to.be.null;
+        expect(res).to.not.be.null;
+        expect(res.teamName).to.equal('t_d0_user1id_user2id');
+        expect(res.repoName).to.equal('d0_user1id_user2id');
     });
 
     it("Should fail to compute a team and repo name if people aren't sepecified.", async () => {
