@@ -105,15 +105,15 @@ describe("GitHubAutoTest", () => {
             arr.push(at.handlePushEvent(pushes[4]));
             arr.push(at.handlePushEvent(pushes[5]));
 
-            Log.test('before promise.all');
+            Log.test('multiple concurrent pushes - before promise.all');
             await Promise.all(arr);
-            Log.test('after promise.all');
-            const allData = await data.getAllData();
-            Log.test('after getAllData');
+            Log.test('multiple concurrent pushes - after promise.all');
+            // const allData = await data.getAllData();
+            // Log.test('after getAllData');
             // expect(allData.pushes.length).to.equal(6);
         } catch (err) {
-            Log.error('should never happen: ' + err);
-            expect.fail('should never happen', err);
+            Log.error('multiple concurrent pushes - should never happen: ' + err);
+            expect.fail('multiple concurrent pushes - should never happen', err);
         }
     });
 
