@@ -248,7 +248,7 @@ export class AssignmentController {
         }
 
         // get assignment information
-        if (deliv.custom === null) {
+        if (deliv.custom.assignment === null) {
             Log.error("AssignmentController::initializeAllRepositories(..) - assignment not set up" +
                 "properly");
             return false;
@@ -376,7 +376,7 @@ export class AssignmentController {
         if (!anyError) {
             assignInfo.status = AssignmentStatus.CREATED;
         }
-        deliv.custom = assignInfo;
+        deliv.custom.assignment = assignInfo;
         await this.dc.saveDeliverable(deliv);
         Log.info("AssignmentController::initializeAllRepositories(..) - finish");
         return true;
@@ -390,7 +390,7 @@ export class AssignmentController {
         Log.info("AssignmentController::publishAssignmentRepo( " + repoId + " ) - start");
         // Log.info("AssignmentController::publishAssignmentRepo(..)");
         let repo: Repository = await this.rc.getRepository(repoId);
-        if (repo.custom === null) {
+        if (repo.custom.assignmentInfo === null) {
             Log.error("AssignmentController::publishAssignmentRepo(..) - error: repository " + repoId +
                 " not created properly");
             return false;
@@ -499,7 +499,7 @@ export class AssignmentController {
         }
 
         assignInfo.status = AssignmentStatus.RELEASED;
-        deliv.custom = assignInfo;
+        deliv.custom.assignment = assignInfo;
         await this.dc.saveDeliverable(deliv);
         Log.info("AssignmentController::publishAllRepositories(..) - finish");
         return true;
@@ -514,7 +514,7 @@ export class AssignmentController {
             return false;
         }
 
-        if (repoRecord.custom === null || typeof repoRecord.custom.assignmentInfo.status === 'undefined') {
+        if (repoRecord.custom.assignmentInfo === null || typeof repoRecord.custom.assignmentInfo.status === 'undefined') {
             Log.error("AssignmentController::closeRepository(..) - Error: RepoId: " + repoId + " is " +
                 "not an assignment Repo");
             return false;
@@ -547,7 +547,7 @@ export class AssignmentController {
         }
 
         // verify deliverable is an assignment
-        if (deliverableRecord.custom === null || typeof (deliverableRecord.custom as AssignmentInfo).repositories === 'undefined') {
+        if (deliverableRecord.custom.assignment === null || typeof (deliverableRecord.custom.assignment as AssignmentInfo).repositories === 'undefined') {
             Log.error("AssignmentController::closeAllRepositories(..) - Error: Deliverable: " + delivId + " is not an assignment");
             return false;
         }
@@ -642,7 +642,7 @@ export class AssignmentController {
 
         let deliv: Deliverable = await this.dc.getDeliverable(delivId);
         // get assignment information
-        if (deliv.custom === null || typeof (deliv.custom as AssignmentInfo).repositories === 'undefined') {
+        if (deliv.custom.assignment === null || typeof (deliv.custom.assignment as AssignmentInfo).repositories === 'undefined') {
             Log.error("AssignmentController::deleteAllAssignmentRepositories(..) - " +
                 "assignment not set up properly");
             return false;
@@ -725,7 +725,7 @@ export class AssignmentController {
         }
 
         // if (deliv.custom === null || typeof (deliv.custom as AssignmentInfo).status === 'undefined') {
-        if (typeof (deliv.custom as AssignmentInfo).repositories === "undefined") {
+        if (typeof (deliv.custom.assignment as AssignmentInfo).repositories === "undefined") {
             Log.error("AssignmentController::updateAssignmentStatus(..) - error: " +
                 delivId + " is not an assignment");
             return null;
@@ -950,14 +950,14 @@ export class AssignmentController {
         let gradeRecord: Grade = await this.gc.getGrade(studentId, delivId);
         let assignmentGrade: AssignmentGrade;
         let validGrade: boolean = false;
-        if (gradeRecord === null || gradeRecord.custom === null ||
+        if (gradeRecord === null || gradeRecord.custom === null || gradeRecord.custom.assignmentGrade !== null ||
             typeof gradeRecord.custom.assignmentGrade.questions === 'undefined') {
             // Log.error("AssignmentController::publishGrade(..) - Unable to find grade for student: " + studentId + "" +
             //     " and delivId: " + delivId);
             // return false;
             Log.info("AssignmentController::publishGrade(..) - Unable to find student grade");
             assignmentGrade = this.generateEmptyGrade(assignmentRubric);
-        } else if (gradeRecord.custom === null || typeof gradeRecord.custom.assignmentGrade.questions === 'undefined') {
+        } else if (gradeRecord.custom.assignmentGrade === null || typeof gradeRecord.custom.assignmentGrade.questions === 'undefined') {
             Log.info("AssignmentController::publishGrade(..) - Student does not have an assignmentGrade");
             assignmentGrade = this.generateEmptyGrade(assignmentRubric);
         } else {
@@ -1337,7 +1337,7 @@ export class AssignmentController {
         let totalWeight: number = 0;
         let totalScore: number = 0;
         for (const deliv of deliverables) {
-            if (deliv.custom === null || typeof (deliv.custom as AssignmentInfo).courseWeight === "undefined") {
+            if (deliv.custom.assignment === null || typeof (deliv.custom.assignment as AssignmentInfo).courseWeight === "undefined") {
                 Log.info("AssignmentController::publishFinalGrade(..) - deliv: " + deliv.id + " is " +
                     "not an assignment, skipping...");
                 continue;
