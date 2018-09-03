@@ -1,7 +1,9 @@
 import {expect} from "chai";
 import "mocha";
+
 import Config, {ConfigKey} from "../../../../../common/Config";
 import Log from "../../../../../common/Log";
+
 import {AssignmentGrade, AssignmentStatus} from "../../../../../common/types/CS340Types";
 import {AssignmentController} from "../../../src/controllers/340/AssignmentController";
 import {DatabaseController} from "../../../src/controllers/DatabaseController";
@@ -16,12 +18,11 @@ import {TeamController} from "../../../src/controllers/TeamController";
 import {Deliverable, Grade, Repository, Team} from "../../../src/Types";
 
 import {Test} from "../../GlobalSpec";
+import '../../GlobalSpec';
+import '../GradeControllerSpec';
 
 // const loadFirst = require('../../GlobalSpec');
 // const dFirst = require('../GradeControllerSpec');
-
-import '../GlobalSpec';
-import '../GradeControllerSpec';
 
 const TEST_ORG = "CPSC340";
 const TEST_STUDENT_ID_0 = "student0";
@@ -43,7 +44,7 @@ const TIMEOUT = 7500;
 const DELAY_SEC = 1000;
 const DELAY_SHORT = 200;
 
-describe.only("CS340: AssignmentController", () => {
+describe.skip("CS340: AssignmentController", () => {
     let ac: AssignmentController = new AssignmentController();
     const gc: GradesController = new GradesController();
     const tc: TeamController = new TeamController();

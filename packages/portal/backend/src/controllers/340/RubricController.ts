@@ -36,7 +36,8 @@ export class RubricController {
             return false;
         }
 
-        if (deliverableRecord.custom === null || typeof (deliverableRecord.custom as AssignmentInfo).status === 'undefined') {
+        if (deliverableRecord.custom.assignment === undefined || deliverableRecord.custom.assignment === null ||
+            typeof (deliverableRecord.custom.assignment as AssignmentInfo).status === 'undefined') {
             // Log.error("RubricController::updateRubric(..) - Error: ");
             Log.error("RubricController::updateRubric(..) - Error: deliverable with id: " +
                 assignId + " is not an assignment");
@@ -166,7 +167,7 @@ export class RubricController {
 
                         assignInfo.rubric = assignGradingRubric;
 
-                        deliverableRecord.custom = assignInfo;
+                        deliverableRecord.custom.assignment = assignInfo;
 
                         await this.db.writeDeliverable(deliverableRecord);
                         resolve(true);
