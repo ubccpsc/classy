@@ -397,7 +397,9 @@ export class Test {
             visibleToStudents: true,
 
             rubric: {},
-            custom: newAssignmentInfo
+            custom: {
+                assignment: newAssignmentInfo
+            }
         };
 
         // const newDelivSuccess =
@@ -468,7 +470,9 @@ export class Test {
                 regressionDelivIds: [],
                 custom:             {}
             },
-            custom:            newAssignmentInfo
+            custom:            {
+                assignment: newAssignmentInfo
+            }
         };
 
         // const newDelivSuccess =

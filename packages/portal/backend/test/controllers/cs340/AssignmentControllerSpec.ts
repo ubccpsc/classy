@@ -41,7 +41,7 @@ let DELAY_SEC = 1000;
 let DELAY_SHORT = 200;
 
 
-describe("CS340: AssignmentController", () => {
+describe.only("CS340: AssignmentController", () => {
     let ac: AssignmentController = new AssignmentController();
     let gc: GradesController = new GradesController();
     let tc: TeamController = new TeamController();

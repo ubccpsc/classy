@@ -157,7 +157,7 @@ export class ScheduleController {
             return false;
         }
 
-        if(deliv.custom === null || typeof deliv.custom === 'undefined' || typeof deliv.custom.seedRepoURL === 'undefined') {
+        if(deliv.custom === null || typeof deliv.custom === 'undefined' || typeof deliv.custom.assignment === 'undefined' || typeof deliv.custom.assignment.seedRepoURL === 'undefined') {
             Log.error("ScheduleController::createAssignmentTasks(..) - Error: deliv: " + assignId + " is not an assignment");
             return false;
         }

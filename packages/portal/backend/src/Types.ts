@@ -1,4 +1,5 @@
 import {AutoTestConfig, IAutoTestResult} from "../../../common/types/AutoTestTypes";
+import {AssignmentGrade, AssignmentInfo, AssignmentRepositoryInfo} from "../../../common/types/CS340Types";
 
 /**
  * These types are the storage-specific types used by the backend.
@@ -80,10 +81,12 @@ export interface Deliverable {
     rubric: any; // captures rubric-specific definitions
     // custom: any; // {}; not used by the default implementation, but useful for extension (e.g., schemas)
     custom: {
-        seedRepoURL?: any, // RubricController // TODO: make into rubric.seedRepoURL
-        seedRepoPath?: any, // RubricController // TODO: make into rubric.seedRepoPath
         rubric?: any, // CS340REST
-        courseWeight?: any // AssignmentController // TODO: make into assignment.courseWeight
+        assignment?: AssignmentInfo // AssignmentController
+        // courseWeight?: any, // AssignmentController // TODO: make into assignment.courseWeight
+        // seedRepoURL?: any, // RubricController // TODO: make into rubric.seedRepoURL
+        // seedRepoPath?: any, // RubricController // TODO: make into rubric.seedRepoPath
+        // mainFilePath?: any // AssignmentController // TODO: make into assignment.mainFilePath
     };
 
     shouldAutoTest: boolean; // whether the deliv will use AutoTest
@@ -144,9 +147,11 @@ export interface Repository {
         githubCreated?: boolean,
         githubProvisioned?: boolean,
 
-        status?: any, // AssignmentController // TODO: make into assignment.status
-        assignmentId?: any, // AssignmentController // TODO: make into assignment.id
-        assignedTeams?: any, // AssignmentController // TODO: make into assignment.assignedTeams
+        // status?: any, // AssignmentController // TODO: make into assignment.status
+        // assignmentId?: any, // AssignmentController // TODO: make into assignment.id
+        // assignedTeams?: any, // AssignmentController // TODO: make into assignment.assignedTeams
+
+        assignmentInfo?: AssignmentRepositoryInfo,
 
         d0enabled?: boolean, // SDDM // TODO: make sddm.d0enabled
         d1enabled?: boolean, // SDDM // TODO: make sddm.d1enabled
@@ -184,10 +189,11 @@ export interface Grade {
     custom: { // rather than having custom be .any, this allows courses to make sure they don't clash on their .custom parameters
         sdmmStatus?: boolean
 
-        questions?: any, // AssignmentController // TODO: make into assignment.questions
-        assignmentID?: any, // AssignmentController // TODO: make into assignment.id
-        studentID?: any, // AssignmentController // TODO: make into assignment.personId
-        released?: any, // AssignmentController // TODO: make into assignment.released
+        // questions?: any, // AssignmentController // TODO: make into assignment.questions
+        // assignmentID?: any, // AssignmentController // TODO: make into assignment.id
+        // studentID?: any, // AssignmentController // TODO: make into assignment.personId
+        // released?: any, // AssignmentController // TODO: make into assignment.released
+        assignmentGrade?: AssignmentGrade
     };
 }
 

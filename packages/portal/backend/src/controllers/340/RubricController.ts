@@ -53,7 +53,7 @@ export class RubricController {
             return false;
         }
 
-        let assignInfo: AssignmentInfo = deliverableRecord.custom;
+        let assignInfo: AssignmentInfo = deliverableRecord.custom.assignment;
 
         if(assignInfo.mainFilePath === "" ) {
             Log.info("RubricController::updateRubric(..) - No automatic rubric generation; skipping");

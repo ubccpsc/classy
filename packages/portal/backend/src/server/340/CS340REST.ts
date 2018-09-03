@@ -320,7 +320,7 @@ export default class CS340REST implements IREST {
                 res.send(204, {error: "Deliverable not found, please create the deliverable first"});
             } else {
                 if (deliv.custom !== null && typeof deliv.custom.rubric !== "undefined") {
-                    let assignInfo: AssignmentInfo = deliv.custom;
+                    let assignInfo: AssignmentInfo = deliv.custom.assignment;
                     let rubric: AssignmentGradingRubric = assignInfo.rubric;
                     res.send(200, {response: rubric});
                 } else {
@@ -355,7 +355,7 @@ export default class CS340REST implements IREST {
             let assignRubrics: AssignmentGradingRubric[] = [];
             for (const deliv of result) {
                 if (deliv.custom !== null && deliv.custom.rubric !== null) {
-                    let assignInfo: AssignmentInfo = deliv.custom;
+                    let assignInfo: AssignmentInfo = deliv.custom.assignment;
                     assignRubrics.push(assignInfo.rubric);
                 }
             }
@@ -510,7 +510,9 @@ export default class CS340REST implements IREST {
                     urlName: "",
                     URL: "",
 
-                    custom: reqBody
+                    custom: {
+                        assignmentGrade: reqBody
+                    }
                 };
 
                 await db.writeGrade(newGrade);

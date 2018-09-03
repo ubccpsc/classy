@@ -86,7 +86,7 @@ describe("CS340: RubricController", () => {
 
         expect(deliverableRecord).to.not.be.null;
 
-        let assignmentInfo: AssignmentInfo = deliverableRecord.custom;
+        let assignmentInfo: AssignmentInfo = deliverableRecord.custom.assignment;
 
         expect(assignmentInfo).to.not.be.null;
         expect(typeof assignmentInfo.rubric).to.not.be.equal("undefined");
