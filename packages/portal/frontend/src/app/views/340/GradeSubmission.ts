@@ -80,7 +80,6 @@ interface MarkBreakdown {
 
 export class GradingView implements IView {
 
-
     renderPage(): void {
     }
 
@@ -183,7 +182,6 @@ function getStudentGrade(sid: string) : AssignmentGrade {
     return null; // stub
 }
 
-
 // Adds grading items to the webpage
 // Consumes an assignment ID and a student ID and displays the grading view
 function populateGrading(assID: string, sid: string) {
@@ -226,7 +224,6 @@ function populateGrading(assID: string, sid: string) {
 
         questionHeaderElement.appendChild(questionHeader);
         // questionHeaderElement.appendChild(questionHeaderComponent2);
-
 
         if (gradingSectionElement === null) {
             return null;
@@ -285,7 +282,6 @@ function populateGrading(assID: string, sid: string) {
             subTextBoxElement.appendChild(textBoxLabelElement);
             subTextBoxElement.appendChild(textBoxElement);
 
-
             questionSubBoxElement.appendChild(subInfoBoxElement);
             questionSubBoxElement.appendChild(subTextBoxElement);
 
@@ -328,7 +324,6 @@ function checkIfWarning(event: HTMLInputElement): void {
         errorBox.innerHTML = "";
     }
 }
-
 
 // Pulls all fields and returns a JSON
 function submitGrades(): Array<Array<SubsectionGrade>> {

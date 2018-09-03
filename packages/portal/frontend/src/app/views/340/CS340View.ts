@@ -7,7 +7,6 @@
 
 import {OnsButtonElement, OnsSelectElement} from "onsenui";
 import Log from "../../../../../../common/Log";
-import {UI} from "../../util/UI";
 import {
     AssignmentGrade,
     AssignmentGradingRubric, DeliverableInfo,
@@ -15,20 +14,20 @@ import {
     SubQuestionGrade,
     SubQuestionGradingRubric
 } from "../../../../../../common/types/CS340Types";
+import {UI} from "../../util/UI";
 
-import {IView} from "../IView";
-import {Deliverable, Grade, Person, Team} from "../../../../../backend/src/Types";
-import {Factory} from "../../Factory";
-import {SortableTable, TableHeader} from "../../util/SortableTable";
 import {
     DeliverableTransport,
     Payload,
     TeamFormationTransport,
     TeamTransport
 } from "../../../../../../common/types/PortalTypes";
-import {StudentView} from "../StudentView";
+import {Deliverable, Grade, Person, Team} from "../../../../../backend/src/Types";
+import {Factory} from "../../Factory";
+import {SortableTable, TableHeader} from "../../util/SortableTable";
 import {AdminView} from "../AdminView";
-
+import {IView} from "../IView";
+import {StudentView} from "../StudentView";
 
 export class CS340View extends StudentView {
     private teams: TeamTransport[];
@@ -85,10 +84,10 @@ export class CS340View extends StudentView {
         const delivUrl = this.remote + "/portal/cs340/getAllDelivInfo";
         const delivResponse = await fetch(delivUrl, super.getOptions());
 
-        if(delivResponse.status === 200) {
+        if (delivResponse.status === 200) {
             Log.trace('CS340View::fetchData(..) - received deliverables');
             const delivJson = await delivResponse.json();
-            if(typeof delivJson.response !== "undefined") {
+            if (typeof delivJson.response !== "undefined") {
                 this.deliverables = delivJson.response;
             } else {
                 Log.trace("CS340View::fetchData(..) - deliverable error: " + delivJson.error);
@@ -107,15 +106,15 @@ export class CS340View extends StudentView {
         const that = this;
         const deliverables = this.deliverables;
 
-        let delivSelectElement = document.querySelector('#studentDeliverableSelect') as HTMLSelectElement;
-        let delivOptions: string[] = ["--N/A--"];
+        const delivSelectElement = document.querySelector('#studentDeliverableSelect') as HTMLSelectElement;
+        const delivOptions: string[] = ["--N/A--"];
 
-        for(const deliv of deliverables) {
+        for (const deliv of deliverables) {
             delivOptions.push(deliv.id);
         }
 
         delivSelectElement.innerHTML = "";
-        for(const delivOption of delivOptions) {
+        for (const delivOption of delivOptions) {
             const option = document.createElement("option");
 
             option.innerText = delivOption;
@@ -153,27 +152,27 @@ function addOption(event) {
     private async updateTeams(): Promise<void> {
         Log.info('CS340View::updateTeams(..) - start');
 
-        let teams: TeamTransport[] = this.teams;
+        const teams: TeamTransport[] = this.teams;
         const that = this;
         UI.hideSection('studentSelectPartnerDiv');
         UI.hideSection('studentPartnerDiv');
 
-        let delivSelectElement = document.querySelector('#studentDeliverableSelect') as HTMLSelectElement;
+        const delivSelectElement = document.querySelector('#studentDeliverableSelect') as HTMLSelectElement;
         // get the deliverable ID
-        let delivId = delivSelectElement.value;
-        if(delivId === "--N/A--") return;
+        const delivId = delivSelectElement.value;
+        if (delivId === "--N/A--") { return; }
         Log.info('CS340View::updateTeams(..) - selected ' + delivId);
 
         let found = false;
         let selectedTeam;
-        for(const team of teams) {
-            if(team.delivId === delivId) {
+        for (const team of teams) {
+            if (team.delivId === delivId) {
                 found = true;
                 selectedTeam = team;
             }
         }
 
-        if(found) {
+        if (found) {
             const tName = document.getElementById('studentPartnerTeamName');
             const pName = document.getElementById('studentPartnerTeammates');
 
@@ -188,12 +187,12 @@ function addOption(event) {
             const button = document.querySelector('#studentSelectPartnerButton') as OnsButtonElement;
 
             button.onclick = async function(evt: any) {
-                let selectedID = (document.querySelector('#studentDeliverableSelect') as HTMLSelectElement).value;
+                const selectedID = (document.querySelector('#studentDeliverableSelect') as HTMLSelectElement).value;
 
                 Log.info("CS340View::updateTeams(..)::createTeam::onClick - selectedDeliv: " + selectedID);
-                let teamCreation: TeamTransport = await that.formTeam(selectedID);
+                const teamCreation: TeamTransport = await that.formTeam(selectedID);
                 Log.info("CS340View::updateTeams(..)::createTeam::onClick::then - result: " + teamCreation.toString());
-                if(teamCreation === null) return;
+                if (teamCreation === null) { return; }
                 that.teams.push(teamCreation);
 
                 that.renderPage({});
@@ -202,8 +201,8 @@ function addOption(event) {
             const minTeam = document.querySelector("#minimumNum");
             const maxTeam = document.querySelector("#maximumNum");
 
-            for(const delivInfo of this.deliverables) {
-                if(delivInfo.id === delivId) {
+            for (const delivInfo of this.deliverables) {
+                if (delivInfo.id === delivId) {
                     minTeam.innerHTML = delivInfo.minStudents.toString();
                     maxTeam.innerHTML = delivInfo.maxStudents.toString();
                 }
@@ -264,9 +263,9 @@ function addOption(event) {
         // split the other IDs by semicolons
         const idArray: string[] = otherIds.split(";");
         const myGithubId = this.getStudent().githubId;
-        let githubIds: string[] = [];
+        const githubIds: string[] = [];
         githubIds.push(myGithubId);
-        for(const id of idArray) {
+        for (const id of idArray) {
             githubIds.push(id.trim());
         }
 
@@ -331,7 +330,6 @@ function addOption(event) {
     }
 
 */
-
 
 /*
     public testfunction() {
@@ -705,7 +703,6 @@ function addOption(event) {
 
     }
 
-
     public async renderDeliverables() {
         // TODO [Jonathan]: Get the deliverables
         Log.info("CS340View::getAllDeliverables() - start");
@@ -822,7 +819,6 @@ function addOption(event) {
                         personIdMap[person.id] = person;
                     }
                 }
-
 
                 let table = new SortableTable(headers, "grades-table");
             }
@@ -963,7 +959,6 @@ function addOption(event) {
             // console.log('grade data processed: ' + JSON.stringify(students));
             return students;
         }*!/
-
 
     // Helper to decide if record should be included in table
     private includeRecord(data: Grade, delivId: string): boolean {

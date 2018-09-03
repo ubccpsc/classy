@@ -3,19 +3,18 @@
 //
 //
 
-import {GitHubController} from "./GitHubController";
-import {AssignmentController} from "./340/AssignmentController";
 import Log from "../../../../common/Log";
-import {DeliverablesController} from "./DeliverablesController";
-import {DatabaseController} from "./DatabaseController";
 import {Deliverable} from "../Types";
-import {Data} from "client-oauth2";
+import {AssignmentController} from "./340/AssignmentController";
+import {DatabaseController} from "./DatabaseController";
+import {GitHubController} from "./GitHubController";
 
-let schedule = require('node-schedule');
+// tslint:disable-next-line
+const schedule = require('node-schedule');
 
 // This exists so we can potentially add more information to the task
 export interface Task {
-    scheduledTask: any,
+    scheduledTask: any;
     // time: string
 }
 
@@ -24,11 +23,11 @@ export interface Task {
 
 export class ScheduleController {
 
-    private taskList: {[taskName: string]:Task};
+    private taskList: {[taskName: string]: Task};
     private static instance: ScheduleController = null;
 
     public static getInstance(): ScheduleController {
-        if(ScheduleController.instance === null) {
+        if (ScheduleController.instance === null) {
             ScheduleController.instance = new ScheduleController();
         }
         return ScheduleController.instance;
@@ -39,31 +38,33 @@ export class ScheduleController {
     }
 
     public async scheduleAssignmentCreation(scheduledTime: Date, assignId: string): Promise<boolean> {
-        let taskName: string = "CREATE_" + assignId;
+        const taskName: string = "CREATE_" + assignId;
 
         if (typeof this.taskList[taskName] !== 'undefined') {
             delete this.taskList[taskName];
         }
 
-        let scheduledJob = schedule.scheduleJob(scheduledTime, () => {
-            let ac: AssignmentController = new AssignmentController();
-            let ghc: GitHubController = new GitHubController();
+        const scheduledJob = schedule.scheduleJob(scheduledTime, () => {
+            const ac: AssignmentController = new AssignmentController();
+            const ghc: GitHubController = new GitHubController();
 
             ac.initializeAllRepositories(assignId).then((result) => {
                 // remove from taskList
                 if (result) {
-                Log.info("ScheduleController::scheduleAssignmentCreation - Finished initializing repositories for deliverable: " + assignId);
+                    Log.info("ScheduleController::scheduleAssignmentCreation - " +
+                        "Finished initializing repositories for deliverable: " + assignId);
                 } else {
-                    Log.warn("ScheduleController::scheduleAssignmentCreation - An error occurred when initializing repositories for deliverable: " + assignId);
+                    Log.warn("ScheduleController::scheduleAssignmentCreation - " +
+                        "An error occurred when initializing repositories for deliverable: " + assignId);
                 }
                 delete this.taskList[taskName];
-            }).catch(function (err) {
+            }).catch(function(err) {
                 Log.error("ScheduleController::scheduleAssignmentCreation - Error: " + err);
             });
         });
 
-        let newTask: Task = {
-            scheduledTask: scheduledJob,
+        const newTask: Task = {
+            scheduledTask: scheduledJob
         };
 
         this.taskList[taskName] = newTask;
@@ -75,31 +76,33 @@ export class ScheduleController {
     // }
 
     public async scheduleAssignmentPublish(scheduledTime: Date, assignId: string): Promise<boolean> {
-        let taskName: string = "PUBLISH_" + assignId;
+        const taskName: string = "PUBLISH_" + assignId;
 
         if (typeof this.taskList[taskName] !== 'undefined') {
             delete this.taskList[taskName];
         }
 
-        let scheduledJob = schedule.scheduleJob(scheduledTime, () => {
-            let ac: AssignmentController = new AssignmentController();
-            let ghc: GitHubController = new GitHubController();
+        const scheduledJob = schedule.scheduleJob(scheduledTime, () => {
+            const ac: AssignmentController = new AssignmentController();
+            const ghc: GitHubController = new GitHubController();
 
             ac.publishAllRepositories(assignId).then((result) => {
                 // remove from taskList
                 if (result) {
-                Log.info("ScheduleController::scheduleAssignmentPublish - Finished publishing repositories for deliverable: " + assignId);
+                    Log.info("ScheduleController::scheduleAssignmentPublish - " +
+                        "Finished publishing repositories for deliverable: " + assignId);
                 } else {
-                    Log.warn("ScheduleController::scheduleAssignmentPublish - An error occurred when publishing repositories for deliverable: " + assignId);
+                    Log.warn("ScheduleController::scheduleAssignmentPublish - " +
+                        "An error occurred when publishing repositories for deliverable: " + assignId);
                 }
                 delete this.taskList[taskName];
-            }).catch(function (err) {
+            }).catch(function(err) {
                 Log.error("ScheduleController::scheduleAssignmentPublish - Error: " + err);
             });
         });
 
-        let newTask: Task = {
-            scheduledTask: scheduledJob,
+        const newTask: Task = {
+            scheduledTask: scheduledJob
         };
 
         this.taskList[taskName] = newTask;
@@ -107,31 +110,33 @@ export class ScheduleController {
     }
 
     public async scheduleAssignmentClosure(scheduledTime: Date, assignId: string): Promise<boolean> {
-        let taskName: string = "CLOSE_" + assignId;
+        const taskName: string = "CLOSE_" + assignId;
 
         if (typeof this.taskList[taskName] !== 'undefined') {
             delete this.taskList[taskName];
         }
 
-        let scheduledJob = schedule.scheduleJob(scheduledTime, () => {
-            let ac: AssignmentController = new AssignmentController();
-            let ghc: GitHubController = new GitHubController();
+        const scheduledJob = schedule.scheduleJob(scheduledTime, () => {
+            const ac: AssignmentController = new AssignmentController();
+            const ghc: GitHubController = new GitHubController();
 
             ac.closeAllRepositories(assignId).then((result) => {
                 // remove from taskList
                 if (result) {
-                Log.info("ScheduleController::scheduleAssignmentClosure - Finished closing repositories for deliverable: " + assignId);
+                    Log.info("ScheduleController::scheduleAssignmentClosure - " +
+                        "Finished closing repositories for deliverable: " + assignId);
                 } else {
-                    Log.warn("ScheduleController::scheduleAssignmentClosure - An error occurred when closing repositories for deliverable: " + assignId);
+                    Log.warn("ScheduleController::scheduleAssignmentClosure - " +
+                        "An error occurred when closing repositories for deliverable: " + assignId);
                 }
                 delete this.taskList[taskName];
-            }).catch(function (err) {
+            }).catch(function(err) {
                 Log.error("ScheduleController::scheduleAssignmentClosure - Error: " + err);
             });
         });
 
-        let newTask: Task = {
-            scheduledTask: scheduledJob,
+        const newTask: Task = {
+            scheduledTask: scheduledJob
         };
 
         this.taskList[taskName] = newTask;
@@ -149,29 +154,30 @@ export class ScheduleController {
 
         const CREATE_OFFSET_HOURS = 2;
 
-        let db: DatabaseController = DatabaseController.getInstance();
+        const db: DatabaseController = DatabaseController.getInstance();
 
-        let deliv: Deliverable = await db.getDeliverable(assignId);
-        if(deliv === null) {
+        const deliv: Deliverable = await db.getDeliverable(assignId);
+        if (deliv === null) {
             Log.error("ScheduleController::createAssignmentTasks(..) - Error: no deliverable found with id: " + assignId);
             return false;
         }
 
-        if(deliv.custom === null || typeof deliv.custom === 'undefined' || typeof deliv.custom.assignment === 'undefined' || typeof deliv.custom.assignment.seedRepoURL === 'undefined') {
+        if (deliv.custom === null || typeof deliv.custom === 'undefined' ||
+            typeof deliv.custom.assignment === 'undefined' || typeof deliv.custom.assignment.seedRepoURL === 'undefined') {
             Log.error("ScheduleController::createAssignmentTasks(..) - Error: deliv: " + assignId + " is not an assignment");
             return false;
         }
 
-        let sc: ScheduleController = ScheduleController.getInstance();
+        const sc: ScheduleController = ScheduleController.getInstance();
 
-        let openDate: Date = new Date(deliv.openTimestamp);
-        let closeDate: Date = new Date(deliv.closeTimestamp);
-        let createDate: Date = new Date(deliv.openTimestamp);
+        const openDate: Date = new Date(deliv.openTimestamp);
+        const closeDate: Date = new Date(deliv.closeTimestamp);
+        const createDate: Date = new Date(deliv.openTimestamp);
         createDate.setHours(createDate.getHours() - CREATE_OFFSET_HOURS);
 
         let created = false;
-        let currentDate: Date = new Date();
-        if(createDate > currentDate) {
+        const currentDate: Date = new Date();
+        if (createDate > currentDate) {
             if (this.getTask("CREATE_" + assignId) === null) {
                 created = true;
             }
@@ -180,7 +186,7 @@ export class ScheduleController {
             Log.info("ScheduleController::createAssignmentTasks(..) - Task will execute at: " + createDate.toISOString());
         }
 
-        if(openDate > currentDate) {
+        if (openDate > currentDate) {
             if (this.getTask("OPEN_" + assignId) === null) {
                 created = true;
             }
@@ -189,20 +195,19 @@ export class ScheduleController {
             Log.info("ScheduleController::createAssignmentTasks(..) - Task will execute at: " + openDate.toISOString());
         }
 
-        if(closeDate > currentDate) {
+        if (closeDate > currentDate) {
             if (this.getTask("CLOSE_" + assignId) === null) {
                 created = true;
             }
             Log.info("ScheduleController::createAssignmentTasks(..) - Making close repo task");
             await sc.scheduleAssignmentClosure(closeDate, assignId);
-            Log.info("ScheduleController::createAssignmentTasks(..) - Task will execute at: " +  closeDate.toISOString());
+            Log.info("ScheduleController::createAssignmentTasks(..) - Task will execute at: " + closeDate.toISOString());
         }
 
         Log.info("ScheduleController::createAssignmentTasks(..) - Current date is: " + currentDate.toISOString());
 
         return created;
     }
-
 
     public getTask(taskName: string): Task | null {
         Log.info("ScheduleController::getTask( " + taskName + " ) - start");
@@ -216,13 +221,13 @@ export class ScheduleController {
 
     public deleteTask(taskName: string): boolean {
         Log.info("ScheduleController::deleteTask( " + taskName + " ) - start");
-        if(typeof this.taskList[taskName] === 'undefined') {
+        if (typeof this.taskList[taskName] === 'undefined') {
             Log.error("ScheduleController::deleteTask(..) - error: " + taskName + " was not found");
             return false;
         }
-        let task: Task = this.taskList[taskName];
+        const task: Task = this.taskList[taskName];
 
-        let job = task.scheduledTask;
+        const job = task.scheduledTask;
 
         job.cancel();
 

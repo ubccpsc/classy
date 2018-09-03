@@ -1,27 +1,18 @@
-import {DatabaseController} from "../DatabaseController";
-import {GradesController} from "../GradesController";
-import {RepositoryController} from "../RepositoryController";
-import {TeamController} from "../TeamController";
-import {DeliverablesController} from "../DeliverablesController";
-import {GitHubController} from "../GitHubController";
-import {PersonController} from "../PersonController";
-import {GitHubActions} from "../GitHubActions";
-import {ScheduleController} from "../ScheduleController";
-import {AssignmentController} from "./AssignmentController";
+import * as fs from "fs";
+import * as path from 'path';
+import Log from "../../../../../common/Log";
 import {
     AssignmentGradingRubric,
     AssignmentInfo,
     QuestionGradingRubric,
     SubQuestionGradingRubric
 } from "../../../../../common/types/CS340Types";
-import * as fs from "fs";
-import * as path from 'path';
-import Log from "../../../../../common/Log"
 import {Deliverable} from "../../Types";
+import {DatabaseController} from "../DatabaseController";
+import {GitHubActions} from "../GitHubActions";
 
+// tslint:disable-next-line
 const tmp = require('tmp-promise');
-
-
 
 export class RubricController {
     private db: DatabaseController = DatabaseController.getInstance();
@@ -35,11 +26,10 @@ export class RubricController {
     // private sc: ScheduleController = ScheduleController.getInstance();
     // private ac: AssignmentController = new AssignmentController();
 
-
     public async updateRubric(assignId: string): Promise<boolean> {
-        Log.info("RubricController::updateRubric( "+ assignId + " ) - start");
+        Log.info("RubricController::updateRubric( " + assignId + " ) - start");
 
-        let deliverableRecord: Deliverable = await this.db.getDeliverable(assignId);
+        const deliverableRecord: Deliverable = await this.db.getDeliverable(assignId);
         if (deliverableRecord === null) {
             Log.error("RubricController::updateRubric(..) - Error:  Unable to find " +
                 "deliverable with id: " + assignId);
@@ -53,9 +43,9 @@ export class RubricController {
             return false;
         }
 
-        let assignInfo: AssignmentInfo = deliverableRecord.custom.assignment;
+        const assignInfo: AssignmentInfo = deliverableRecord.custom.assignment;
 
-        if(assignInfo.mainFilePath === "" ) {
+        if (assignInfo.mainFilePath === "") {
             Log.info("RubricController::updateRubric(..) - No automatic rubric generation; skipping");
             return true;
         }
@@ -69,26 +59,28 @@ export class RubricController {
         let exists: boolean;
         try {
             exists = fs.existsSync(path.join(tempPath, assignInfo.mainFilePath));
-            if(exists) {
+            if (exists) {
                 return (new Promise((resolve, reject) => {
                     fs.readFile(path.join(tempPath, assignInfo.mainFilePath), async (err, data) => {
-                        if(err) reject(false);
+                        if (err) {
+                            reject(false);
+                        }
                         // Log.info("RubricController::updateRubric(..) - data: " + data);
-                        let arrayData: string[] = data.toString().split('\n');
+                        const arrayData: string[] = data.toString().split('\n');
                         // Log.info("RubricController::updateRubric(..) - ");
                         // create a skeleton framework to fill in the blanks
-                        let newQuestions: QuestionGradingRubric[] = [];
-                        for(let i = 0; i < arrayData.length; i++) {
-                            let regexp: RegExp = /rub(r(ic)?)? *[=:]? *({.*})/;
-                            if(regexp.test(arrayData[i])) {
+                        const newQuestions: QuestionGradingRubric[] = [];
+                        for (let i = 0; i < arrayData.length; i++) {
+                            const regexp: RegExp = /rub(r(ic)?)? *[=:]? *({.*})/;
+                            if (regexp.test(arrayData[i])) {
                                 Log.info("RubricController::updateRubric(..) - rubric found: " + arrayData[i]);
                                 // depends on what kind of file
                                 // check for LaTeX
-                                let latexFileExp: RegExp = /[^.]*\.tex/;
+                                const latexFileExp: RegExp = /[^.]*\.tex/;
                                 let headerString: string;
                                 let headerExp: RegExp;
                                 let headerCleaner: RegExp;
-                                if(latexFileExp.test(assignInfo.mainFilePath)) {
+                                if (latexFileExp.test(assignInfo.mainFilePath)) {
                                     // if this is a latex file, use a different exp
                                     headerExp = /(?:sub?:)*section(?:\*?:)?.*/;
                                     headerCleaner = /([{}\n]|\\(sub)?section)/g;
@@ -96,7 +88,7 @@ export class RubricController {
                                     headerExp = /#\s+.*/;
                                     headerCleaner = /((#+\s+)|\\n)/g;
                                 }
-                                let rubricString = arrayData[i];
+                                const rubricString = arrayData[i];
                                 headerString = this.reverseBack(arrayData, i, headerExp);
                                 Log.info("RubricController::updateRubric(..) - header found: " + headerString);
 
@@ -109,25 +101,25 @@ export class RubricController {
 
                                 // clean the data
                                 // get only the inside of the rubric
-                                let rubricArray: string[] = rubricString.match(/{.*}/);
-                                let subQuestionArray: SubQuestionGradingRubric[] = [];
+                                const rubricArray: string[] = rubricString.match(/{.*}/);
+                                const subQuestionArray: SubQuestionGradingRubric[] = [];
                                 // check if we actually found a match
                                 // WARN: We only are looking for the first one that matches this string, we
                                 // don't expect something to be the form of {something}{here}
-                                if(rubricArray.length > 0) {
-                                    let dirtySubQuestionString: string = rubricArray[0];
+                                if (rubricArray.length > 0) {
+                                    const dirtySubQuestionString: string = rubricArray[0];
                                     // convert to an object
                                     // using https://stackoverflow.com/a/34763398
-                                    let cleanSubQuestionString: string = dirtySubQuestionString.replace(
+                                    const cleanSubQuestionString: string = dirtySubQuestionString.replace(
                                         /(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ');
-                                    let subQuestionObj = JSON.parse(cleanSubQuestionString);
+                                    const subQuestionObj = JSON.parse(cleanSubQuestionString);
                                     // now we are able to get the mapping of values
-                                    let keyArray: string[] = Object.keys(subQuestionObj);
-                                    for(const key of keyArray) {
+                                    const keyArray: string[] = Object.keys(subQuestionObj);
+                                    for (const key of keyArray) {
                                         // TODO: Look up if this splits anymore
                                         // the key is the rubric critera, and value is
                                         // the score that it is out of
-                                        let rawValue = subQuestionObj[key];
+                                        const rawValue = subQuestionObj[key];
                                         let value: number;
                                         if (typeof rawValue === 'string') {
                                             try {
@@ -140,11 +132,11 @@ export class RubricController {
                                             value = rawValue;
                                         }
 
-                                        let newSubquestion: SubQuestionGradingRubric = {
-                                            name: key,
-                                            comment: "",
-                                            outOf: value,
-                                            weight: 1,
+                                        const newSubquestion: SubQuestionGradingRubric = {
+                                            name:      key,
+                                            comment:   "",
+                                            outOf:     value,
+                                            weight:    1,
                                             modifiers: null
                                         };
 
@@ -152,9 +144,9 @@ export class RubricController {
                                     }
 
                                     // once you get the information
-                                    let newQuestion: QuestionGradingRubric = {
-                                        name: cleanedHeader,
-                                        comment: "",
+                                    const newQuestion: QuestionGradingRubric = {
+                                        name:         cleanedHeader,
+                                        comment:      "",
                                         subQuestions: subQuestionArray
                                     };
 
@@ -166,9 +158,9 @@ export class RubricController {
                             }
                         }
 
-                        let assignGradingRubric: AssignmentGradingRubric = {
-                            name: assignInfo.rubric.name,
-                            comment: assignInfo.rubric.comment,
+                        const assignGradingRubric: AssignmentGradingRubric = {
+                            name:      assignInfo.rubric.name,
+                            comment:   assignInfo.rubric.comment,
                             questions: newQuestions
                         };
 
@@ -180,7 +172,6 @@ export class RubricController {
                         resolve(true);
                     });
                 }) as Promise<boolean>);
-
 
                 // let lineReader = require('readline').createInterface({
                 //     input: fs.createReadStream(path.join(tempPath, assignInfo.mainFilePath))
@@ -208,18 +199,17 @@ export class RubricController {
      * @param regexp
      */
     private reverseBack(data: string[], index: number, regexp: RegExp): string {
-        for(let i = index; i >= 0; i--) {
-            if(regexp.test(data[i])) {
+        for (let i = index; i >= 0; i--) {
+            if (regexp.test(data[i])) {
                 return data[i];
             }
         }
         return "";
     }
 
-
     private async cloneRepo(repoUrl: string, repoPath: string) {
         const exec = require('child-process-promise').exec;
-        let authedRepo: string = await this.gha.addGithubAuthToken(repoUrl);
+        const authedRepo: string = await this.gha.addGithubAuthToken(repoUrl);
         Log.info('RubricController::cloneRepo(..) - cloning from: ' + repoUrl);
         return exec(`git clone ${authedRepo} ${repoPath}`)
             .then(function(result: any) {

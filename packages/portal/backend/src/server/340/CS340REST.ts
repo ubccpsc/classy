@@ -1,10 +1,6 @@
 import restify = require('restify');
 import Log from "../../../../../common/Log";
 
-import IREST from "../IREST";
-import {DeliverablesController} from "../../controllers/DeliverablesController";
-import {Deliverable, Grade, Person, Repository, Team} from "../../Types";
-import {AssignmentController} from "../../controllers/340/AssignmentController";
 import {
     AssignmentGrade,
     AssignmentGradingRubric,
@@ -12,15 +8,19 @@ import {
     DeliverableInfo,
     QuestionGrade
 } from "../../../../../common/types/CS340Types";
+import {RepositoryTransport, StudentTransport, TeamTransport} from "../../../../../common/types/PortalTypes";
+import {AssignmentController} from "../../controllers/340/AssignmentController";
+import {RubricController} from "../../controllers/340/RubricController";
+import {AuthController} from "../../controllers/AuthController";
+import {DatabaseController} from "../../controllers/DatabaseController";
+import {DeliverablesController} from "../../controllers/DeliverablesController";
+import {GitHubActions} from "../../controllers/GitHubActions";
 import {GradesController} from "../../controllers/GradesController";
 import {PersonController} from "../../controllers/PersonController";
-import {RubricController} from "../../controllers/340/RubricController";
-import {TeamController} from "../../controllers/TeamController";
-import {DatabaseController} from "../../controllers/DatabaseController";
-import {RepositoryTransport, StudentTransport, TeamTransport} from "../../../../../common/types/PortalTypes";
 import {RepositoryController} from "../../controllers/RepositoryController";
-import {AuthController} from "../../controllers/AuthController";
-import {GitHubActions} from "../../controllers/GitHubActions";
+import {TeamController} from "../../controllers/TeamController";
+import {Deliverable, Grade, Person, Repository, Team} from "../../Types";
+import IREST from "../IREST";
 
 export default class CS340REST implements IREST {
     public constructor() {
@@ -101,20 +101,20 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isValid(user, token);
-        if(!authLevel) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isValid(user, token);
+        if (!authLevel) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
         }
         Log.info("CS340REST::getAllDelivInfo() - start");
-        let dc: DeliverablesController = new DeliverablesController();
+        const dc: DeliverablesController = new DeliverablesController();
         try {
-            let deliverables: Deliverable[] = await dc.getAllDeliverables();
-            let delivObjs: DeliverableInfo[] = [];
-            for(const deliv of deliverables) {
-                let newObj: DeliverableInfo = {
+            const deliverables: Deliverable[] = await dc.getAllDeliverables();
+            const delivObjs: DeliverableInfo[] = [];
+            for (const deliv of deliverables) {
+                const newObj: DeliverableInfo = {
                     id: deliv.id,
                     minStudents: deliv.teamMinSize,
                     maxStudents: deliv.teamMaxSize
@@ -136,24 +136,24 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
         }
         Log.info("CS340REST::verifyAllScheduledJobs() - start");
 
-        let ac: AssignmentController = new AssignmentController();
+        const ac: AssignmentController = new AssignmentController();
 
         try {
-            let numberScheduled = await ac.verifyScheduledJobs();
+            const numberScheduled = await ac.verifyScheduledJobs();
             res.send(200, {response: numberScheduled});
             Log.info("CS340REST::verifyAllScheduledJobs(..) - completed verification; " +
                 "created " + numberScheduled + " new tasks");
             return next();
-        } catch(err) {
+        } catch (err) {
             Log.error("CS340REST::verifyAllScheduledJobs(..) - Error: " + err);
             res.send(500, {error: err});
         }
@@ -167,9 +167,9 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
@@ -178,15 +178,15 @@ export default class CS340REST implements IREST {
 
         Log.info("CS340REST::verifyScheduledJobs( " + aid + ") - start");
 
-        let ac: AssignmentController = new AssignmentController();
+        const ac: AssignmentController = new AssignmentController();
 
         try {
-            let numberScheduled = await ac.verifyScheduledJobs(aid);
+            const numberScheduled = await ac.verifyScheduledJobs(aid);
             res.send(200, {response: numberScheduled});
             Log.info("CS340REST::verifyScheduledJobs(..) - completed verification; " +
                 "created " + numberScheduled + " new tasks");
             return next();
-        } catch(err) {
+        } catch (err) {
             Log.error("CS340REST::verifyScheduledJobs(..) - Error: " + err);
             res.send(500, {error: err});
         }
@@ -199,21 +199,21 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
         }
         const teamid: string = req.params.teamid;
 
-        let db: DatabaseController = DatabaseController.getInstance();
+        const db: DatabaseController = DatabaseController.getInstance();
 
-        let repositories = await db.getRepositories();
-        for(const repo of repositories) {
-            if(repo.teamIds.includes(teamid)) {
-                let result: RepositoryTransport = {
+        const repositories = await db.getRepositories();
+        for (const repo of repositories) {
+            if (repo.teamIds.includes(teamid)) {
+                const result: RepositoryTransport = {
                     id: repo.id,
                     URL: repo.URL
                 };
@@ -231,9 +231,9 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
@@ -241,12 +241,12 @@ export default class CS340REST implements IREST {
         const sid: string = req.params.sid;
         const delivid: string = req.params.delivid;
 
-        let db: DatabaseController = DatabaseController.getInstance();
+        const db: DatabaseController = DatabaseController.getInstance();
 
-        let teams: Team[] = await db.getTeamsForPerson(sid);
-        for(const team of teams) {
-            if(team.delivId === delivid && team.personIds.includes(sid)) {
-                let response: TeamTransport = {
+        const teams: Team[] = await db.getTeamsForPerson(sid);
+        for (const team of teams) {
+            if (team.delivId === delivid && team.personIds.includes(sid)) {
+                const response: TeamTransport = {
                     id: team.id,
                     delivId: delivid,
                     people: team.personIds,
@@ -266,9 +266,9 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
@@ -277,7 +277,7 @@ export default class CS340REST implements IREST {
         const sid: string = req.params.sid;
         const aid: string = req.params.aid;
 
-        let ac: AssignmentController = new AssignmentController();
+        const ac: AssignmentController = new AssignmentController();
         ac.getAssignmentGrade(sid, aid).then((result) => {
             if (result !== null) {
                 res.send(200, {response: result});
@@ -301,9 +301,9 @@ export default class CS340REST implements IREST {
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
@@ -311,17 +311,16 @@ export default class CS340REST implements IREST {
         const aid = req.params.aid;                 // Assignment ID
         Log.info("cs340REST::getAssignmentRubric(...) - aid: " + aid);
 
-
         // TODO: retrieve the information from the deliverable, then return the information
-        let delivController: DeliverablesController = new DeliverablesController();
+        const delivController: DeliverablesController = new DeliverablesController();
         delivController.getDeliverable(aid).then((deliv) => {
             if (deliv === null) {
                 // TODO [Jonathan]: send an appropriate failure
                 res.send(204, {error: "Deliverable not found, please create the deliverable first"});
             } else {
                 if (deliv.custom !== null && typeof deliv.custom.rubric !== "undefined") {
-                    let assignInfo: AssignmentInfo = deliv.custom.assignment;
-                    let rubric: AssignmentGradingRubric = assignInfo.rubric;
+                    const assignInfo: AssignmentInfo = deliv.custom.assignment;
+                    const rubric: AssignmentGradingRubric = assignInfo.rubric;
                     res.send(200, {response: rubric});
                 } else {
                     Log.info("cs340REST::getAssignmentRubric(...) - deliv.custom: " + deliv.custom);
@@ -343,19 +342,19 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
         }
-        let delivController: DeliverablesController = new DeliverablesController();
+        const delivController: DeliverablesController = new DeliverablesController();
         delivController.getAllDeliverables().then((result) => {
-            let assignRubrics: AssignmentGradingRubric[] = [];
+            const assignRubrics: AssignmentGradingRubric[] = [];
             for (const deliv of result) {
                 if (deliv.custom !== null && deliv.custom.rubric !== null) {
-                    let assignInfo: AssignmentInfo = deliv.custom.assignment;
+                    const assignInfo: AssignmentInfo = deliv.custom.assignment;
                     assignRubrics.push(assignInfo.rubric);
                 }
             }
@@ -413,9 +412,9 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
@@ -426,9 +425,9 @@ export default class CS340REST implements IREST {
         //     message: "Not implemented"
         // });
 
-        let ac: AssignmentController = new AssignmentController();
+        const ac: AssignmentController = new AssignmentController();
 
-        let success = await ac.publishAllGrades(delivid);
+        const success = await ac.publishAllGrades(delivid);
 
         res.send(200, {response: success});
 
@@ -441,9 +440,9 @@ export default class CS340REST implements IREST {
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
@@ -471,22 +470,21 @@ export default class CS340REST implements IREST {
 
         Log.info("CS340REST::setAssignmentGrade() - aid: " + assignId + " sid: " + studentId);
 
-        let assignController = new AssignmentController();
-        let personController = new PersonController();
-        let repoController = new RepositoryController();
-        let teamController = new TeamController();
-        let db = DatabaseController.getInstance();
-        personController.getPerson(studentId).then(async function (result) {
-            let person: Person = result;
+        const assignController = new AssignmentController();
+        const personController = new PersonController();
+        const repoController = new RepositoryController();
+        const teamController = new TeamController();
+        const db = DatabaseController.getInstance();
+        personController.getPerson(studentId).then(async function(result) {
+            const person: Person = result;
             let success: boolean;
             if (result === null) {
                 res.send(400, {error: "Invalid student ID, unable to record grade"});
                 return next();
             }
-            let repo: Repository = await assignController.getAssignmentRepo(assignId, person);
+            const repo: Repository = await assignController.getAssignmentRepo(assignId, person);
             if (repo === null) {
                 // success = await assignController.setAssignmentGrade("", assignId, reqBody, user);
-
 
                 // res.send(400, {error: "No Assignment Repository found, unable to record grade"});
                 // return next();
@@ -499,7 +497,7 @@ export default class CS340REST implements IREST {
                     }
                 }
 
-                let newGrade: Grade = {
+                const newGrade: Grade = {
                     personId: person.id,
                     delivId: assignId,
 
@@ -552,18 +550,18 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
         }
-        let ac: AssignmentController = new AssignmentController();
+        const ac: AssignmentController = new AssignmentController();
 
         Log.info("CS340REST::publishAllFinalGrades() - start");
         try {
-            let success: boolean = await ac.publishAllFinalGrades();
+            const success: boolean = await ac.publishAllFinalGrades();
             res.send(200, {response: success});
         } catch (err) {
             res.send(500, {error: "Issue publishing all final grades. " + err});
@@ -577,14 +575,14 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
         }
-        let delivController: DeliverablesController = new DeliverablesController();
+        const delivController: DeliverablesController = new DeliverablesController();
 
         delivController.getAllDeliverables().then((result) => {
             res.send(200, {response: result});
@@ -601,36 +599,36 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                 "an error, please course admins"});
             return next();
         }
 
         try {
-            let pc: PersonController = new PersonController();
-            let gha: GitHubActions = new GitHubActions();
+            const pc: PersonController = new PersonController();
+            const gha: GitHubActions = new GitHubActions();
 
-            let githubPeoplePromise = gha.listPeople();
-            let allPeoplePromise = pc.getAllPeople();
+            const githubPeoplePromise = gha.listPeople();
+            const allPeoplePromise = pc.getAllPeople();
 
-            let githubPeople = await githubPeoplePromise;
-            let allPeople = await allPeoplePromise;
+            const githubPeople = await githubPeoplePromise;
+            const allPeople = await allPeoplePromise;
 
-            let personVerification: { [githubID: string]: any } = {};
-            for(const githubPerson of githubPeople) {
-                if(typeof personVerification[githubPerson.name] === "undefined") {
+            const personVerification: { [githubID: string]: any } = {};
+            for (const githubPerson of githubPeople) {
+                if (typeof personVerification[githubPerson.name] === "undefined") {
                     personVerification[githubPerson.name] = githubPerson;
                 }
             }
 
-            let filteredPerson: StudentTransport[] = [];
+            const filteredPerson: StudentTransport[] = [];
 
-            for(const person of allPeople) {
-                if(typeof personVerification[person.githubId] === "undefined") continue;
-                if(person.kind !== "student") continue;
+            for (const person of allPeople) {
+                if (typeof personVerification[person.githubId] === "undefined") { continue; }
+                if (person.kind !== "student") { continue; }
                 filteredPerson.push(PersonController.personToTransport(person));
             }
 
@@ -662,16 +660,16 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
         }
 
         try {
-            let gc: GradesController = new GradesController();
+            const gc: GradesController = new GradesController();
             // let pc: PersonController = new PersonController();
             // let gha: GitHubActions = new GitHubActions();
             //
@@ -703,7 +701,7 @@ export default class CS340REST implements IREST {
             //     filteredGrades.push(grade);
             // }
 
-            let allGrades = await gc.getAllGrades();
+            const allGrades = await gc.getAllGrades();
 
             // res.send(200, {response: filteredGrades});
             res.send(200, {response: allGrades});
@@ -722,9 +720,9 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
@@ -732,13 +730,13 @@ export default class CS340REST implements IREST {
 
         const delivId = req.params.id;                  // Deliverable ID
 
-        let gradeController: GradesController = new GradesController();
+        const gradeController: GradesController = new GradesController();
 
         gradeController.getAllGrades().then((result) => {
-            let resultArray: Grade[] = [];
+            const resultArray: Grade[] = [];
             for (const grade of result) {
                 // <Grade>gradeValue.
-                if (grade.delivId == delivId) {
+                if (grade.delivId === delivId) {
                     resultArray.push(grade);
                 }
             }
@@ -757,14 +755,14 @@ export default class CS340REST implements IREST {
         const org = req.headers.org;
         const gitHubUserName = req.params.gitHubUserName;                  // gitHubUserName
 
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
         }
-        let personController: PersonController = new PersonController();
+        const personController: PersonController = new PersonController();
 
         personController.getPerson(gitHubUserName).then((result) => {
             if (result === null) {
@@ -785,16 +783,16 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
         }
-        let personController: PersonController = new PersonController();
+        const personController: PersonController = new PersonController();
 
-        personController.getAllPeople().then(result => {
+        personController.getAllPeople().then((result) => {
             res.send(200, {response: result});
         }).catch((error) => {
             Log.error("CS340REST::getAllPersons - Error: " + error);
@@ -822,18 +820,18 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
         }
         // get deliverable ID
-        let delivid: string = req.params.delivid;
+        const delivid: string = req.params.delivid;
 
-        let assignController: AssignmentController = new AssignmentController();
-        let newResult = await assignController.updateAssignmentStatus(delivid);
+        const assignController: AssignmentController = new AssignmentController();
+        const newResult = await assignController.updateAssignmentStatus(delivid);
         if (newResult === null) {
             res.send(400, {error: "Assignment not initialized properly"});
         } else {
@@ -848,18 +846,18 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
         }
         // get deliverable ID
-        let delivid: string = req.params.delivid;
+        const delivid: string = req.params.delivid;
 
-        let assignController: AssignmentController = new AssignmentController();
-        let newResult = await assignController.updateAssignmentStatus(delivid);
+        const assignController: AssignmentController = new AssignmentController();
+        const newResult = await assignController.updateAssignmentStatus(delivid);
 
         res.send(200, {response: newResult});
         return next();
@@ -871,7 +869,6 @@ export default class CS340REST implements IREST {
             const org = req.headers.org;
 
             let repoId: string = req.params.repoId;
-
 
             let assignController: AssignmentController = new AssignmentController();
             let success = await assignController.publishAssignmentRepo(repoId);
@@ -886,20 +883,20 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
         }
         // let
         Log.info("CS340REST::intializeAllRepositories(..) - start");
-        let delivId: string = req.params.delivid;
+        const delivId: string = req.params.delivid;
 
         // validate this is a valid deliverable
-        let delivController: DeliverablesController = new DeliverablesController();
-        let deliv: Deliverable = await delivController.getDeliverable(delivId);
+        const delivController: DeliverablesController = new DeliverablesController();
+        const deliv: Deliverable = await delivController.getDeliverable(delivId);
 
         if (deliv === null) {
             res.send(400, {error: "Invalid deliverable specified"});
@@ -911,34 +908,33 @@ export default class CS340REST implements IREST {
             return next();
         }
 
-        let assignController: AssignmentController = new AssignmentController();
-        let success = await assignController.initializeAllRepositories(delivId);
+        const assignController: AssignmentController = new AssignmentController();
+        const success = await assignController.initializeAllRepositories(delivId);
 
         res.send(200, {response: success});
 
         return next();
     }
 
-
     public static async publishAllRepositories(req: any, res: any, next: any) {
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
 
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
         }
         // let
         Log.info("CS340REST::intializeAllRepositories(..) - start");
-        let delivId: string = req.params.delivid;
+        const delivId: string = req.params.delivid;
 
         // validate this is a valid deliverable
-        let delivController: DeliverablesController = new DeliverablesController();
-        let deliv: Deliverable = await delivController.getDeliverable(delivId);
+        const delivController: DeliverablesController = new DeliverablesController();
+        const deliv: Deliverable = await delivController.getDeliverable(delivId);
 
         if (deliv === null) {
             res.send(400, {error: "Invalid deliverable specified"});
@@ -950,8 +946,8 @@ export default class CS340REST implements IREST {
             return next();
         }
 
-        let assignController: AssignmentController = new AssignmentController();
-        let success = await assignController.publishAllRepositories(delivId);
+        const assignController: AssignmentController = new AssignmentController();
+        const success = await assignController.publishAllRepositories(delivId);
 
         res.send(200, {response: success});
 
@@ -963,20 +959,20 @@ export default class CS340REST implements IREST {
         const token = req.headers.token;
         const org = req.headers.org;
 
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
         }
         // let
         Log.info("CS340REST::closeAllRepositories(..) - start");
-        let delivId: string = req.params.delivid;
+        const delivId: string = req.params.delivid;
 
         // validate this is a valid deliverable
-        let delivController: DeliverablesController = new DeliverablesController();
-        let deliv: Deliverable = await delivController.getDeliverable(delivId);
+        const delivController: DeliverablesController = new DeliverablesController();
+        const deliv: Deliverable = await delivController.getDeliverable(delivId);
 
         if (deliv === null) {
             res.send(400, {error: "Invalid deliverable specified"});
@@ -988,33 +984,32 @@ export default class CS340REST implements IREST {
             return next();
         }
 
-        let assignController: AssignmentController = new AssignmentController();
-        let success = await assignController.closeAllRepositories(delivId);
+        const assignController: AssignmentController = new AssignmentController();
+        const success = await assignController.closeAllRepositories(delivId);
 
         res.send(200, {response: success});
 
         return next();
     }
 
-
     public static async deleteRepository(req: any, res: any, next: any) {
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
 
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
         }
         Log.warn("CS340REST::deleteRepository(..) - start");
-        let repoName: string = req.params.reponame;
-        let delivId: string = req.params.delivid;
+        const repoName: string = req.params.reponame;
+        const delivId: string = req.params.delivid;
 
-        let assignController: AssignmentController = new AssignmentController();
-        let success = await assignController.deleteAssignmentRepository(repoName, delivId);
+        const assignController: AssignmentController = new AssignmentController();
+        const success = await assignController.deleteAssignmentRepository(repoName, delivId);
 
         if (success === null) {
             res.send(400, {error: "Unable to delete repository " + repoName + " from deliverable " + delivId});
@@ -1025,24 +1020,23 @@ export default class CS340REST implements IREST {
         return next();
     }
 
-
     public static async deleteAllRepositories(req: any, res: any, next: any) {
         const user = req.headers.user;
         const token = req.headers.token;
         const org = req.headers.org;
 
-        let auth: AuthController = new AuthController();
-        let authLevel = await auth.isPrivileged(user, token);
-        if(!authLevel.isStaff) {
+        const auth: AuthController = new AuthController();
+        const authLevel = await auth.isPrivileged(user, token);
+        if (!authLevel.isStaff) {
             res.send(401, {error: "Unauthorized usage of API: If you believe this is " +
                     "an error, please course admins"});
             return next();
         }
         Log.warn("CS340REST::deleteRepository(..) - start");
-        let delivId: string = req.params.delivid;
+        const delivId: string = req.params.delivid;
 
-        let assignController: AssignmentController = new AssignmentController();
-        let success = await assignController.deleteAllAssignmentRepositories(delivId);
+        const assignController: AssignmentController = new AssignmentController();
+        const success = await assignController.deleteAllAssignmentRepositories(delivId);
 
         if (success === null) {
             res.send(400, {error: "Unable to delete all repositories from " + delivId});
