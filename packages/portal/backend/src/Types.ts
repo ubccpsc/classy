@@ -55,7 +55,10 @@ export interface Person {
 
     labId: string | null; // null for non-students
 
-    custom: any; // used for anything. in sdmm will track 'custom.sdmmStatus'
+    custom: {
+        sdmmStatus?: string, // SDMM // TODO: make into sdmm.status
+        myProp?: any // PersonControllerSpec
+    };
 }
 
 export interface Auth {
@@ -75,7 +78,13 @@ export interface Deliverable {
     visibleToStudents: boolean; // whether students even see the column
 
     rubric: any; // captures rubric-specific definitions
-    custom: any; // {}; not used by the default implementation, but useful for extension (e.g., schemas)
+    // custom: any; // {}; not used by the default implementation, but useful for extension (e.g., schemas)
+    custom: {
+        seedRepoURL?: any, // RubricController // TODO: make into rubric.seedRepoURL
+        seedRepoPath?: any, // RubricController // TODO: make into rubric.seedRepoPath
+        rubric?: any, // CS340REST
+        courseWeight?: any // AssignmentController // TODO: make into assignment.courseWeight
+    };
 
     shouldAutoTest: boolean; // whether the deliv will use AutoTest
     autotest: AutoTestConfig;
@@ -103,7 +112,14 @@ export interface Team {
     personIds: string[]; // Person.id[] - foreign key
 
     // githubStatus: string; // NONE | CREATED | LINKED
-    custom: any;
+    custom: {
+        githubAttached?: boolean,
+
+        sdmmd0?: boolean,
+        sdmmd1?: boolean,
+        sdmmd2?: boolean,
+        sdmmd3?: boolean,
+    };
 }
 
 // NOTE: Intentionally not linked to Deliverable (see docs at top of file)
@@ -124,7 +140,20 @@ export interface Repository {
 
     // githubStatus: string; // NONE | CREATED
 
-    custom: any; // {}; not used by default
+    custom: { // rather than having custom be .any, this allows courses to make sure they don't clash on their .custom parameters
+        githubCreated?: boolean,
+        githubProvisioned?: boolean,
+
+        status?: any, // AssignmentController // TODO: make into assignment.status
+        assignmentId?: any, // AssignmentController // TODO: make into assignment.id
+        assignedTeams?: any, // AssignmentController // TODO: make into assignment.assignedTeams
+
+        d0enabled?: boolean, // SDDM // TODO: make sddm.d0enabled
+        d1enabled?: boolean, // SDDM // TODO: make sddm.d1enabled
+        d2enabled?: boolean, // SDDM // TODO: make sddm.d2enabled
+        d3enabled?: boolean  // SDDM // TODO: make sddm.d3enabled
+        sddmD3pr?: boolean, // SDDM // TODO: make sddm.d3pr
+    };
 }
 
 /**
@@ -134,7 +163,9 @@ export interface Repository {
 export interface Course {
     readonly id: string; // invariant; this is the name of the course
     defaultDeliverableId: string | null; // Deliverable.id foreign key
-    custom: object;
+    custom: {
+        status?: string
+    };
 }
 
 export interface Grade {
@@ -149,31 +180,17 @@ export interface Grade {
     urlName: string | null; // name associated with URL (e.g., project name)
     URL: string | null; // link to commit, if appropriate or repoUrl if not
 
-    custom: any; // {}; not used by the default implementation, but useful for extension (e.g., custom grade values)
+    // custom: any; // {}; not used by the default implementation, but useful for extension (e.g., custom grade values)
+    custom: { // rather than having custom be .any, this allows courses to make sure they don't clash on their .custom parameters
+        sdmmStatus?: boolean
+
+        questions?: any, // AssignmentController // TODO: make into assignment.questions
+        assignmentID?: any, // AssignmentController // TODO: make into assignment.id
+        studentID?: any, // AssignmentController // TODO: make into assignment.personId
+        released?: any, // AssignmentController // TODO: make into assignment.released
+    };
 }
 
 export interface Result extends IAutoTestResult { // TODO: define this without this extends. This import is no good!
     people: string[];
 }
-
-/**
- *
- *
- * Types below are not in DB but are projections for sending to the frontend.
- *
- *
- */
-/*
-export interface PersonRecord {
-    person: Person;
-    delivId: string;
-    // org: string;
-    results: ResultSummary[];
-}
-
-export interface ResultSummary {
-    timestamp: number;
-    grade: number;
-    URL: string;
-}
-*/
