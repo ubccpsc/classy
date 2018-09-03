@@ -68,6 +68,9 @@ describe("CourseController", () => {
         const gha = new GitHubActions();
         await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
         await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB3);
+        await gha.deleteRepo(Test.REPONAME1);
+        await gha.deleteRepo(Test.REPONAME2);
+
         let teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
         gha.deleteTeam(teamNum);
         teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB3);

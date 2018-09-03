@@ -44,6 +44,12 @@ export interface CourseTransport {
     custom: object;
 }
 
+export interface ProvisionTransport {
+    delivId: string;
+    action: string; // PROVISION | RELEASE
+    formSingle: boolean;
+}
+
 export interface AuthTransportPayload {
     success?: AuthTransport; // only set if defined
     failure?: FailurePayload; // only set if defined

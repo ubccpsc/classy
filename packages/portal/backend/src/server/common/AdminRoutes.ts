@@ -11,7 +11,9 @@ import {
     DeliverableTransportPayload,
     GradeTransportPayload,
     Payload,
+    ProvisionTransport,
     RepositoryPayload,
+    RepositoryTransport,
     StudentTransportPayload,
     TeamTransportPayload
 } from '../../../../../common/types/PortalTypes';
@@ -49,6 +51,9 @@ export default class AdminRoutes implements IREST {
         server.post('/portal/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
         server.post('/portal/admin/deliverable', AdminRoutes.isAdmin, AdminRoutes.postDeliverable);
         server.post('/portal/admin/course', AdminRoutes.isAdmin, AdminRoutes.postCourse);
+        server.post('/portal/admin/provision', AdminRoutes.isAdmin, AdminRoutes.postProvision);
+        server.post('/portal/admin/release', AdminRoutes.isAdmin, AdminRoutes.postRelease);
+        // TODO: unrelease
 
         // staff-only functions
         // NOTHING
@@ -399,5 +404,77 @@ export default class AdminRoutes implements IREST {
         }
         // should never get here unless something goes wrong
         throw new Error("Course object not saved.");
+    }
+
+    private static postProvision(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::postProvision(..) - start');
+        let payload: Payload;
+
+        const provisionTrans: ProvisionTransport = req.params;
+        Log.info('AdminRoutes::postProvision() - body: ' + provisionTrans);
+        AdminRoutes.handleProvision(provisionTrans).then(function(success) {
+            payload = {success: success};
+            res.send(200, payload);
+            return next(true);
+        }).catch(function(err) {
+            return AdminRoutes.handleError(400, 'Unable to provision repos: ' + err.message, res, next);
+        });
+    }
+
+    private static async handleProvision(provisionTrans: ProvisionTransport): Promise<RepositoryTransport[]> {
+        const cc = Factory.getCourseController(new GitHubController());
+        const result = CourseController.validateProvisionTransport(provisionTrans);
+
+        // TODO: if course is SDMM, always fail
+
+        if (result === null) {
+            const dc = new DeliverablesController();
+            const deliv = await dc.getDeliverable(provisionTrans.delivId);
+            if (deliv !== null && deliv.shouldProvision === true) {
+                const provisionSucceeded = await cc.provision(deliv, provisionTrans.formSingle);
+                if (provisionSucceeded !== null) {
+                    Log.info('AdminRoutes::handleProvision() - done');
+                    return provisionSucceeded;
+                }
+            }
+        }
+        // should never get here unless something goes wrong
+        throw new Error("Provisioning unsuccessful.");
+    }
+
+    private static postRelease(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::postRelease(..) - start');
+        let payload: Payload;
+
+        const provisionTrans: ProvisionTransport = req.params;
+        Log.info('AdminRoutes::postRelease() - body: ' + provisionTrans);
+        AdminRoutes.handleRelease(provisionTrans).then(function(success) {
+            payload = {success: success};
+            res.send(200, payload);
+            return next(true);
+        }).catch(function(err) {
+            return AdminRoutes.handleError(400, 'Unable to release repos: ' + err.message, res, next);
+        });
+    }
+
+    private static async handleRelease(provisionTrans: ProvisionTransport): Promise<RepositoryTransport[]> {
+        const cc = Factory.getCourseController(new GitHubController());
+        const result = CourseController.validateProvisionTransport(provisionTrans);
+
+        // TODO: if course is SDMM, always fail
+
+        if (result === null) {
+            const dc = new DeliverablesController();
+            const deliv = await dc.getDeliverable(provisionTrans.delivId);
+            if (deliv !== null && deliv.shouldProvision === true) {
+                const provisionSucceeded = await cc.release(deliv); // , provisionTrans.formSingle);
+                if (provisionSucceeded !== null) {
+                    Log.info('AdminRoutes::handleRelease() - done');
+                    return provisionSucceeded;
+                }
+            }
+        }
+        // should never get here unless something goes wrong
+        throw new Error("Release unsuccessful.");
     }
 }

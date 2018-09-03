@@ -35,7 +35,7 @@ export class CS310Controller extends CourseController {
      */
     public async handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean> {
         // just use the default implementation
-        const updateGrade = await super.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
+        const updateGrade = await super.handleNewAutoTestGradeDefault(deliv, newGrade, existingGrade);
         if (updateGrade === true) {
             // consider updating overall project grade here?
             const personId = newGrade.personId;
@@ -111,8 +111,19 @@ export class CS310Controller extends CourseController {
             postfix = postfix + '_' + person.id;
         }
 
-        const tName = deliv.teamPrefix + postfix;
-        const rName = deliv.repoPrefix + postfix;
+        let tName = '';
+        if (deliv.teamPrefix.length > 0) {
+            tName = deliv.teamPrefix + '_' + deliv.id + postfix;
+        } else {
+            tName = deliv.id + postfix;
+        }
+
+        let rName = '';
+        if (deliv.repoPrefix.length > 0) {
+            rName = deliv.repoPrefix + '_' + deliv.id + postfix;
+        } else {
+            rName = deliv.id + postfix;
+        }
 
         const db = DatabaseController.getInstance();
         const team = await db.getTeam(tName);

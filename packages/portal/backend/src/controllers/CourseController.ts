@@ -6,6 +6,7 @@ import {
     CourseTransport,
     DeliverableTransport,
     GradeTransport,
+    ProvisionTransport,
     RepositoryTransport,
     StudentTransport,
     TeamTransport
@@ -101,6 +102,8 @@ export abstract class CourseController implements ICourseController {
         this.gh = ghController;
     }
 
+    public abstract async handleUnknownUser(githubUsername: string): Promise<Person | null>;
+
     /**
      * This endpoint just lets subclasses change the behaviour for when users are unknown.
      *
@@ -110,10 +113,12 @@ export abstract class CourseController implements ICourseController {
      * @param {string} githubUsername
      * @returns {Promise<Person | null>}
      */
-    public async handleUnknownUser(githubUsername: string): Promise<Person | null> {
+    public async handleUnknownUserDefault(githubUsername: string): Promise<Person | null> {
         Log.warn("CourseController::handleUnknownUser( " + githubUsername + " ) - person unknown; returning null");
         return null;
     }
+
+    public abstract handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean>;
 
     /**
      * Default behaviour is that if the deadline has not passed, and the grade is higher, accept it.
@@ -123,7 +128,7 @@ export abstract class CourseController implements ICourseController {
      * @param {Grade} existingGrade
      * @returns {boolean}
      */
-    public handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean> {
+    public handleNewAutoTestGradeDefault(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean> {
         Log.info("CourseController:handleNewAutoTestGrade( " + deliv.id + ", " +
             newGrade.personId + ", " + newGrade.score + ", ... ) - start");
         if ((existingGrade === null || newGrade.score > existingGrade.score) && newGrade.timestamp < deliv.closeTimestamp) {
@@ -581,6 +586,14 @@ export abstract class CourseController implements ICourseController {
         return provisionedRepositoryTransport;
     }
 
+    /**
+     * Releases any provisioned repositories to their respective teams.
+     *
+     * NOTE: this does _not_ provision the repos; it just releases previously-provisioned repositories.
+     *
+     * @param {Deliverable} deliv
+     * @returns {Promise<RepositoryTransport[]>}
+     */
     public async release(deliv: Deliverable): Promise<RepositoryTransport[]> {
         Log.info("CourseController::release( " + deliv.id + " ) - start");
         const allTeams: Team[] = await this.tc.getAllTeams();
@@ -628,6 +641,8 @@ export abstract class CourseController implements ICourseController {
                     for (const teamId of repo.teamIds) {
                         teams.push(await this.dbc.getTeam(teamId));
                     }
+
+                    // actually release the repo
                     const success = await ghc.releaseRepository(repo, teams, false);
 
                     if (success === true) {
@@ -698,4 +713,42 @@ export abstract class CourseController implements ICourseController {
     //     return {teamName: teamName, repoName: repoName};
     // }
 
+    public static validateProvisionTransport(obj: ProvisionTransport) {
+        if (typeof obj === 'undefined' || obj === null) {
+            const msg = 'Transport not populated.';
+            Log.error('CourseController::validateProvisionTransport(..) - ERROR: ' + msg);
+            throw new Error(msg);
+        }
+
+        // noinspection SuspiciousTypeOfGuard
+        if (typeof obj.delivId !== 'string') {
+            const msg = 'Provision.id not specified';
+            Log.error('CourseController::validateProvisionTransport(..) - ERROR: ' + msg);
+            throw new Error(msg);
+        }
+
+        // noinspection SuspiciousTypeOfGuard
+        if (obj.action !== 'PROVISION' && obj.action !== 'RELEASE') {
+            const msg = 'action not correct: ' + obj.action;
+            Log.error('CourseController::validateProvisionTransport(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        // noinspection SuspiciousTypeOfGuard
+        if (typeof obj.formSingle !== 'boolean') {
+            const msg = 'formSingle not specified';
+            Log.error('CourseController::validateProvisionTransport(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        // const dc = new DeliverablesController();
+        // const deliv = await dc.getDeliverable(obj.delivId);
+        // if (deliv === null && deliv.shouldProvision === true){
+        //     const msg = 'delivId does not correspond to a real deliverable or that deliverable is not provisionable';
+        //     Log.error('CourseController::validateProvisionTransport(..) - ERROR: ' + msg);
+        //     return msg;
+        // }
+
+        return null;
+    }
 }

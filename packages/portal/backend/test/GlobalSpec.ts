@@ -252,7 +252,6 @@ export class Test {
             openTimestamp:  new Date(1400000000000).getTime(),
             closeTimestamp: new Date(1500000000000).getTime(),
             gradesReleased: false,
-            // delay:          300,
 
             shouldProvision:  true,
             importURL:        'https://github.com/classytest/PostTestDoNotDelete.git', // TODO: create ImportTestDoNotDelete
@@ -260,9 +259,8 @@ export class Test {
             teamMaxSize:      2,
             teamSameLab:      true,
             teamStudentsForm: true,
-            teamPrefix:       't_' + delivId, // + '_',
-            repoPrefix:       delivId, // + '_',
-            // bootstrapUrl:     '',
+            teamPrefix:       't',
+            repoPrefix:       '',
 
             visibleToStudents: true,
 
@@ -563,13 +561,13 @@ export class Test {
             closeTimestamp:    -1,
             gradesReleased:    false,
             // delay:            -1,
-            shouldProvision:   true,
-            importURL:         null,
+            shouldProvision:   false,
+            importURL:         'https://github.com/classytest/PostTestDoNotDelete.git',
             teamMinSize:       1,
             teamMaxSize:       1,
             teamSameLab:       false,
             teamStudentsForm:  false,
-            teamPrefix:        'team_',
+            teamPrefix:        'team',
             repoPrefix:        '',
             // bootstrapUrl:     '',
             shouldAutoTest:    true,
@@ -627,8 +625,9 @@ export class Test {
         const team: Team = {
             id:        teamId,
             delivId:   delivId,
-            URL:       Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
-                       Config.getInstance().getProp(ConfigKey.org) + '/teams/' + teamId,
+            // URL:       Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
+            //            Config.getInstance().getProp(ConfigKey.org) + '/teams/' + teamId,
+            URL:       null,
             personIds: people,
             custom:    {}
         };

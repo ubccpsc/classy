@@ -497,6 +497,7 @@ export class GitHubActions {
                 const id = body.id;
                 const config = Config.getInstance();
                 const url = config.getProp(ConfigKey.githubHost) + "/orgs/" + config.getProp(ConfigKey.org) + "/teams/" + teamName;
+                // TODO: simplify callees by setting Team.URL here and persisting it (like we do with createRepo)
                 Log.info("GitHubAction::createTeam(..) - success; new: " + id);
                 return {teamName: teamName, githubTeamNumber: id, URL: url};
             }

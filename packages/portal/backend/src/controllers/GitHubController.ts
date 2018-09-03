@@ -164,32 +164,23 @@ export class GitHubController implements IGitHubController {
 
                 await this.checkDatabase(null, team.id);
 
-                // using GithubTeams
-                // see if the team exists
                 let teamNum = await gh.getTeamNumber(team.id);
                 if (teamNum === -1) {
                     // did not find a team, create one first
                     Log.info("GitHubController::releaseRepository(..) - did not find team, creating");
+
                     const newTeam = await gh.createTeam(team.id, "push");
                     Log.info("GitHubController::releaseRepository(..) - created team " +
                         "with #: " + newTeam.githubTeamNumber);
 
                     teamNum = newTeam.githubTeamNumber;
-                    // add the students to the team
-                    // const teamTuple: GitTeamTuple =
                     await gh.addMembersToTeam(team.id, teamNum, team.personIds);
                     Log.info("GitHubController::releaseRepository(..) - added members to team");
-                    // TODO: this is what should really be happening here:
-                    // const msg = "release failed; Team: \" + team.id + \" has not been created on GitHub";
-                    // Log.error("GitHubController::releaseRepository(..) - "+msg);
-                    // throw new Error("relaseRepository(..) failed; Team " + team.id + " should already exist on GitHub");
                 }
+
                 // now, add the team to the repository
                 const res = await gh.addTeamToRepo(teamNum, repo.id, "push");
                 if (res.githubTeamNumber > 0) {
-                    // if (team === null || typeof team.custom === 'undefined' || team.custom === null) {
-                    //     Log.trace("uh oh");
-                    // }
                     // keep track of team addition
                     team.custom.githubAttached = true;
                     await this.dbc.writeTeam(team);

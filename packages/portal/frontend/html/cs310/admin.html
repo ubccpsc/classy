@@ -1,6 +1,6 @@
 <ons-page id="AdminRoot">
     <ons-toolbar>
-        <div class="center">CPSC 310 Admin Portal</div>
+        <div class="center">Classy Admin Portal</div>
         <div id='indexLogin' class="right">
             <ons-toolbar-button onclick="myApp.logout();">
                 <ons-icon icon="fa-sign-out"></ons-icon>
@@ -188,6 +188,40 @@
                         Setting the default deliverable is only required for AutoTest. This lets the container know what tests
                         to run by default when a push is made. If you are not using AutoTest or do not want any tests to be run
                         automatically, just leave this blank.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-header>Provision Repositories</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Provision Repositories for Deliverable
+                        <select id="adminProvisionDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                        <ons-button id="adminProvisionButton" modifier="medium">Provision</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Creates the repositories for any provisionable Deliverable using all of the settings specified in the deliverable
+                        page. This is an incremental function; you can release a deliverable several times as teams are formed, or after the
+                        class composition changes. This is a slow action (up to 30 seconds / repository) so do not leave this until the last
+                        second. Cannot be undone, so use this with care.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-header>Release Repositories</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Release Repositories for Deliverable
+                        <select id="adminReleaseDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                        <ons-button id="adminReleaseButton" modifier="medium">Release</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Releases any provisoined repositories. This is an incremental function; you can release a deliverable several times
+                        as teams are formed, or after the class composition changes. Cannot be undone, so use this with care.
                     </div>
                 </ons-list-item>
 
