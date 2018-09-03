@@ -701,7 +701,7 @@ describe("CS340: AssignmentController", () => {
             await Test.deleteStaleRepositories();
         }).timeout(numberOfStudents * TIMEOUT);
 
-        it("Should be able to initialize and publish assignment repositories.", async () => {
+        it.only("Should be able to initialize and publish assignment repositories.", async () => {
             await ac.initializeAllRepositories(Test.ASSIGNID0);
             await ac.publishAllRepositories(Test.ASSIGNID0);
 

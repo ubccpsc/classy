@@ -161,12 +161,6 @@ export class GitHubController implements IGitHubController {
                 Log.error("GitHubController::releaseRepository(..) - ERROR: Not implemented");
                 throw new Error("GitHubController - w/ collaborators NOT IMPLEMENTED");
             } else {
-                // make sure team exists in datastore
-                // const existingTeam = await this.dbc.getTeam(team.id);
-                // if (existingTeam === null) {
-                //     Log.error("GitHubController::releaseRepository(..) - ERROR: team not in datastore: " + team.id);
-                //     return false;
-                // }
 
                 await this.checkDatabase(null, team.id);
 
@@ -174,9 +168,6 @@ export class GitHubController implements IGitHubController {
                 // see if the team exists
                 let teamNum = await gh.getTeamNumber(team.id);
                 if (teamNum === -1) {
-                    // TODO: check to see if Team exists in database; if not, fail
-                    // (aka team objects must exist before they are provisioned)
-
                     // did not find a team, create one first
                     Log.info("GitHubController::releaseRepository(..) - did not find team, creating");
                     const newTeam = await gh.createTeam(team.id, "push");
@@ -194,16 +185,17 @@ export class GitHubController implements IGitHubController {
                     // throw new Error("relaseRepository(..) failed; Team " + team.id + " should already exist on GitHub");
                 }
                 // now, add the team to the repository
-                // const teamAdd =
                 const res = await gh.addTeamToRepo(teamNum, repo.id, "push");
                 if (res.githubTeamNumber > 0) {
-
+                    // if (team === null || typeof team.custom === 'undefined' || team.custom === null) {
+                    //     Log.trace("uh oh");
+                    // }
                     // keep track of team addition
                     team.custom.githubAttached = true;
                     await this.dbc.writeTeam(team);
                 }
-                Log.info("GitHubController::releaseRepository(..) - added team (" + team.id + "" +
-                    ") with push permissions to repository (" + repo.id + ")");
+                Log.info("GitHubController::releaseRepository(..) - " +
+                    " added team (" + team.id + " ) with push permissions to repository (" + repo.id + ")");
             }
         }
 
@@ -361,6 +353,7 @@ export class GitHubController implements IGitHubController {
      * @returns {Promise<boolean>}
      */
     private async checkDatabase(repoName: string | null, teamName: string | null): Promise<boolean> {
+        Log.trace("GitHubController::checkDatabase( repo:_" + repoName + "_, team:_" + teamName + "_) - start");
         const dbc = DatabaseController.getInstance();
         if (repoName !== null) {
             const repo = await dbc.getRepository(repoName);
@@ -369,6 +362,13 @@ export class GitHubController implements IGitHubController {
                     " does not exist in datastore; make sure you add it before calling this operation";
                 Log.error("GitHubController::checkDatabase() - repo ERROR: " + msg);
                 throw new Error(msg);
+            } else {
+                // ensure custom property is there
+                if (typeof repo.custom === 'undefined' || repo.custom === null || typeof repo.custom !== 'object') {
+                    const msg = "Repository: " + repoName + " has a non-object .custom property";
+                    Log.error("GitHubController::checkDatabase() - repo ERROR: " + msg);
+                    throw new Error(msg);
+                }
             }
         }
 
@@ -379,9 +379,16 @@ export class GitHubController implements IGitHubController {
                     " does not exist in datastore; make sure you add it before calling this operation";
                 Log.error("GitHubController::checkDatabase() - team ERROR: " + msg);
                 throw new Error(msg);
+            } else {
+                // ensure custom property is there
+                if (typeof team.custom === 'undefined' || team.custom === null || typeof team.custom !== 'object') {
+                    const msg = "Team: " + teamName + " has a non-object .custom property";
+                    Log.error("GitHubController::checkDatabase() - team ERROR: " + msg);
+                    throw new Error(msg);
+                }
             }
         }
-
+        Log.trace("GitHubController::checkDatabase( repo:_" + repoName + "_, team:_" + teamName + "_) - exists");
         return true;
     }
 }

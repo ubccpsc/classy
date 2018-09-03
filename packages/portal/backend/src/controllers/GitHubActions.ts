@@ -1150,23 +1150,42 @@ export class GitHubActions {
      * @returns {Promise<boolean>}
      */
     private async checkDatabase(repoName: string | null, teamName: string | null): Promise<boolean> {
+        Log.trace("GitHubActions::checkDatabase( repo:_" + repoName + "_, team:_" + teamName + "_) - start");
         const dbc = DatabaseController.getInstance();
         if (repoName !== null) {
             const repo = await dbc.getRepository(repoName);
             if (repo === null) {
-                throw new Error("Repository: " + repoName +
-                    " does not exist in datastore; make sure you add it before calling this operation");
+                const msg = "Repository: " + repoName +
+                    " does not exist in datastore; make sure you add it before calling this operation";
+                Log.error("GitHubActions::checkDatabase() - repo ERROR: " + msg);
+                throw new Error(msg);
+            } else {
+                // ensure custom property is there
+                if (typeof repo.custom === 'undefined' || repo.custom === null || typeof repo.custom !== 'object') {
+                    const msg = "Repository: " + repoName + " has a non-object .custom property";
+                    Log.error("GitHubActions::checkDatabase() - repo ERROR: " + msg);
+                    throw new Error(msg);
+                }
             }
         }
 
         if (teamName !== null) {
             const team = await dbc.getTeam(teamName);
             if (team === null) {
-                throw new Error("Team: " + teamName +
-                    " does not exist in datastore; make sure you add it before calling this operation");
+                const msg = "Team: " + teamName +
+                    " does not exist in datastore; make sure you add it before calling this operation";
+                Log.error("GitHubActions::checkDatabase() - team ERROR: " + msg);
+                throw new Error(msg);
+            } else {
+                // ensure custom property is there
+                if (typeof team.custom === 'undefined' || team.custom === null || typeof team.custom !== 'object') {
+                    const msg = "Team: " + teamName + " has a non-object .custom property";
+                    Log.error("GitHubActions::checkDatabase() - team ERROR: " + msg);
+                    throw new Error(msg);
+                }
             }
         }
-
+        Log.trace("GitHubActions::checkDatabase( repo:_" + repoName + "_, team:_" + teamName + "_) - exists");
         return true;
     }
 
