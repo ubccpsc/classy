@@ -65,12 +65,15 @@ export class GitHubController implements IGitHubController {
      * @returns {Promise<boolean>}
      */
     public async createRepository(repoName: string, importUrl: string, path?: string): Promise<boolean> {
+        Log.info("GitHubController::createRepository( " + repoName + ", ...) - start");
+
+        // make sure repoName already exists in the database
+        await this.checkDatabase(repoName, null);
+
         const config = Config.getInstance();
         const host = config.getProp(ConfigKey.backendUrl);
         const WEBHOOKADDR = host + '/portal/githubWebhook';
 
-        Log.info("GitHubController::createRepository( " + repoName + ", ...) - start");
-        // Log.info("GitHubController::createRepository(..) - ");
         const startTime = Date.now();
 
         const gh = new GitHubActions();
@@ -147,7 +150,7 @@ export class GitHubController implements IGitHubController {
                                    asCollaborators: boolean = false): Promise<boolean> {
         Log.info("GitHubController::releaseRepository( {" + repo.id + ", ...}, ...) - start");
 
-        this.checkDatabase(repo.id, null);
+        await this.checkDatabase(repo.id, null);
 
         const gh = new GitHubActions();
 
@@ -165,7 +168,7 @@ export class GitHubController implements IGitHubController {
                 //     return false;
                 // }
 
-                this.checkDatabase(null, team.id);
+                await this.checkDatabase(null, team.id);
 
                 // using GithubTeams
                 // see if the team exists
@@ -345,21 +348,37 @@ export class GitHubController implements IGitHubController {
         throw new Error("NOT IMPLEMENTED");
     }
 
+    /**
+     * Checks to make sure the repoName or teamName (or both, if specified) are in the database.
+     *
+     * This is like an assertion that should be picked up by tests, although it should never
+     * happen in production (if our suite is any good).
+     *
+     * NOTE: ASYNC FUNCTION!
+     *
+     * @param {string | null} repoName
+     * @param {string | null} teamName
+     * @returns {Promise<boolean>}
+     */
     private async checkDatabase(repoName: string | null, teamName: string | null): Promise<boolean> {
         const dbc = DatabaseController.getInstance();
         if (repoName !== null) {
             const repo = await dbc.getRepository(repoName);
             if (repo === null) {
-                throw new Error("Repository: " + repoName +
-                    " does not exist in datastore; make sure you add it before calling this operation");
+                const msg = "Repository: " + repoName +
+                    " does not exist in datastore; make sure you add it before calling this operation";
+                Log.error("GitHubController::checkDatabase() - repo ERROR: " + msg);
+                throw new Error(msg);
             }
         }
 
         if (teamName !== null) {
             const team = await dbc.getTeam(teamName);
             if (team === null) {
-                throw new Error("Team: " + teamName +
-                    " does not exist in datastore; make sure you add it before calling this operation");
+                const msg = "Team: " + teamName +
+                    " does not exist in datastore; make sure you add it before calling this operation";
+                Log.error("GitHubController::checkDatabase() - team ERROR: " + msg);
+                throw new Error(msg);
             }
         }
 

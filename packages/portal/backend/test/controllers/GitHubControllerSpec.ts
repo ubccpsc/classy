@@ -195,6 +195,7 @@ describe("GitHubController", () => {
         let ex = null;
         try {
             // repo already exists
+            Log.test('checking repo that already exists');
             res = await gc.createRepository(repo.id, importURL);
         } catch (err) {
             ex = err;
@@ -206,6 +207,7 @@ describe("GitHubController", () => {
         ex = null;
         try {
             // should fail because Repository object does not exist for this repoName
+            Log.test('checking repo that is not in datastore');
             res = await gc.createRepository('unknownId' + Date.now(), importURL);
         } catch (err) {
             ex = err;
@@ -277,11 +279,18 @@ describe("GitHubController", () => {
         expect(res).to.be.null;
         expect(ex).to.not.be.null;
 
-        const team: any = {id: Test.TEAMNAME3, personIds: [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]};
-        // try to release a repo with a team that doesn't exist
-        res = await gc.releaseRepository(allRepos[1], [team], false);
-        expect(res).to.be.false;
-
+        res = null;
+        ex = null;
+        try {
+            const team: any = {id: Test.TEAMNAME3, personIds: [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]};
+            // try to release a repo with a team that doesn't exist
+            res = await gc.releaseRepository(allRepos[1], [team], false);
+            expect(res).to.be.false;
+        } catch (err) {
+            ex = err;
+        }
+        expect(res).to.be.null;
+        expect(ex).to.not.be.null;
     }).timeout(Test.TIMEOUT);
 
     it("Should fail to create a pull request.", async function() {

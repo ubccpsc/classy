@@ -4,6 +4,7 @@ import "mocha";
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
+import {DatabaseController} from "../../src/controllers/DatabaseController";
 
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {GitHubActions} from "../../src/controllers/GitHubActions";
@@ -26,9 +27,9 @@ describe("GitHubActions", () => {
     // let DELAY_SEC = 1000;
     const DELAY_SHORT = 200;
 
-    const REPONAME = getProjectPrefix() + Test.REPONAME1;
-    const REPONAME3 = getProjectPrefix() + Test.REPONAME3;
-    const TEAMNAME = getTeamPrefix() + Test.TEAMNAME1;
+    const REPONAME = Test.REPONAME1;
+    const REPONAME3 = Test.REPONAME3;
+    const TEAMNAME = Test.TEAMNAME1;
 
     const OLDORG = Config.getInstance().getProp(ConfigKey.org);
 
@@ -276,10 +277,14 @@ describe("GitHubActions", () => {
 
         gh.PAGE_SIZE = 2; // force a small page size for testing
         const NUM_TEAMS = 4; // could do 100 for a special test, but this is really slow
+        const dbc = DatabaseController.getInstance();
 
         // should be able to create the teams
         for (let i = 0; i < NUM_TEAMS; i++) {
             const teamname = TEAMNAME + '_paging-' + i;
+            const team = await Test.createTeam(teamname, Test.DELIVID0, []);
+            await dbc.writeTeam(team); // get in database
+
             const val = await gh.createTeam(teamname, 'push');
             await gh.delay(200);
             Log.test("Team details: " + JSON.stringify(val));
