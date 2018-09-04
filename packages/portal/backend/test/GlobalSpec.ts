@@ -40,7 +40,7 @@ if (typeof it === 'function') {
 export class Test {
 
     public static readonly TIMEOUT = 1000 * 10;
-    public static readonly TIMEOUTLONG = 1000 * 120;
+    public static readonly TIMEOUTLONG = 1000 * 300; // 5 minutes
 
     public static async suiteBefore(suiteName: string) {
         Log.test("Test::suiteBefore( ... ) - suite: " + suiteName);
