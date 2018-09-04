@@ -108,7 +108,7 @@ export class CS310Controller extends CourseController {
 
         let postfix = '';
         for (const person of people) {
-            postfix = postfix + '_' + person.id;
+            postfix = postfix + '_' + person.githubId;
         }
 
         let tName = '';

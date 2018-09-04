@@ -132,7 +132,7 @@ describe("CourseController", () => {
 
         Log.test('teams: ' + JSON.stringify(res));
         const t: TeamTransport = {
-            id:      "TESTteam1",
+            id:      Test.TEAMNAME1,
             delivId: "d0",
             people:  [Test.USER1.id, Test.USER2.id],
             URL:     null
@@ -312,10 +312,13 @@ describe("CourseController", () => {
     it("Should be able to compute a team and repo name.", async () => {
         const db = DatabaseController.getInstance();
 
+        const tExpected = 't_d0_' + Test.USER1.github + '_' + Test.USER2.github;
+        const rExpected = 'd0_' + Test.USER1.github + '_' + Test.USER2.github;
+
         // prepare
         const dbc = DatabaseController.getInstance();
-        await dbc.deleteRepository({id: 'd0_user1id_user2id'} as Repository);
-        await dbc.deleteTeam({id: 't_d0_user1id_user2id'} as Team);
+        await dbc.deleteRepository({id: rExpected} as Repository);
+        await dbc.deleteTeam({id: tExpected} as Team);
 
         const deliv = await db.getDeliverable(Test.DELIVID0);
         const p1 = await db.getPerson(Test.USER1.id);
@@ -323,8 +326,8 @@ describe("CourseController", () => {
 
         let res = await cc.computeNames(deliv, [p1, p2]);
 
-        expect(res.teamName).to.equal('t_d0_user1id_user2id');
-        expect(res.repoName).to.equal('d0_user1id_user2id');
+        expect(res.teamName).to.equal(tExpected);
+        expect(res.repoName).to.equal(rExpected);
 
         // make those teams
         const t = await Test.createTeam(res.teamName, deliv.id, []);
@@ -334,8 +337,8 @@ describe("CourseController", () => {
 
         // make sure the bar has been raised
         res = await cc.computeNames(deliv, [p1, p2]);
-        expect(res.teamName).to.equal('t_d0_user1id_user2id');
-        expect(res.repoName).to.equal('d0_user1id_user2id');
+        expect(res.teamName).to.equal(tExpected);
+        expect(res.repoName).to.equal(rExpected);
     });
 
     describe("Slow CourseController Tests", () => {

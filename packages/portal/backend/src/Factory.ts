@@ -39,6 +39,9 @@ export class Factory {
         return new NoCustomRoutes(); // default handler
     }
 
+    // only visible for testing
+    public static controller: CourseController = null;
+
     /**
      *
      * @param {IGitHubController} ghController
@@ -50,6 +53,12 @@ export class Factory {
             name = Factory.getName();
         }
 
+        // Disabled; do not return the cached controller for now
+        // if (Factory.controller !== null) {
+        //     Log.trace("Factory::getCourseController() - returning cached course controller");
+        //     return Factory.controller;
+        // }
+
         if (typeof ghController === 'undefined') {
             ghController = new GitHubController();
         } else {
@@ -58,15 +67,16 @@ export class Factory {
         }
 
         if (name === 'sdmm' || name === 'secapstonetest') {
-            return new SDMMController(ghController);
+            Factory.controller = new SDMMController(ghController);
         } else if (name === 'cs310' || name === 'classytest') {
-            return new CS310Controller(ghController);
+            Factory.controller = new CS310Controller(ghController);
         } else if (name === 'cs340' || name === 'cpsc340') {
-            return new CS340Controller(ghController);
+            Factory.controller = new CS340Controller(ghController);
         } else {
             Log.error("Factory::getCourseController() - unknown name: " + name);
             throw new Error("Unknown course name: " + name);
         }
+        return Factory.controller;
     }
 
     /**
