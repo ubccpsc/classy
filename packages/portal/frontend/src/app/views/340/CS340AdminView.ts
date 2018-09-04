@@ -206,15 +206,19 @@ export class CS340AdminView extends AdminView {
                     const assignStatusBody = (document.querySelector('#adminEditDeliverablePage-assignmentStatus') as HTMLElement);
 
                     // assignStatusHeader.style.display = "initial";
-                    assignStatusHeader.removeAttribute("style");
-                    assignStatusBody.setAttribute("style", "display: initial");
+                    // assignStatusHeader.removeAttribute("style");
+                    UI.showSection("adminEditDeliverablePage-assignmentStatusHeader");
+                    UI.showSection("adminEditDeliverablePage-assignmentStatus");
+                    // assignStatusBody.setAttribute("style", "display: initial");
                 } else {
                     Log.info("CS340AdminView::renderEditDeliverablePage(..) - Not an assignment, hiding elements");
                     const assignStatusHeader = (document.querySelector('#adminEditDeliverablePage-assignmentStatusHeader') as HTMLElement);
                     const assignStatusBody = (document.querySelector('#adminEditDeliverablePage-assignmentStatus') as HTMLElement);
 
-                    assignStatusHeader.setAttribute("style" , "display: none");
-                    assignStatusBody.setAttribute("style" , "display: none");
+                    UI.hideSection("adminEditDeliverablePage-assignmentStatusHeader");
+                    UI.hideSection("adminEditDeliverablePage-assignmentStatus");
+                    // assignStatusHeader.setAttribute("style" , "display: none");
+                    // assignStatusBody.setAttribute("style" , "display: none");
                 }
             }
         }
