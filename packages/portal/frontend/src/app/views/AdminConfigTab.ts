@@ -1,6 +1,6 @@
 import {OnsButtonElement} from "onsenui";
 import Log from "../../../../../common/Log";
-import {CourseTransport, CourseTransportPayload} from "../../../../../common/types/PortalTypes";
+import {CourseTransport, CourseTransportPayload, ProvisionTransport} from "../../../../../common/types/PortalTypes";
 import {Network} from "../util/Network";
 import {UI} from "../util/UI";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
@@ -221,7 +221,8 @@ export class AdminConfigTab {
             const options: any = AdminView.getOptions();
             options.method = 'post';
 
-            options.body = JSON.stringify({delivId: value, action: 'PROVISION', formSingle: false}); // TODO: handle formSingle correctly
+            const provision: ProvisionTransport = {delivId: value, formSingle: false};
+            options.body = JSON.stringify(provision); // TODO: handle formSingle correctly
 
             UI.showAlert("This is going to be a long-running operation;" +
                 " you can monitor progress by watching your GitHub org for newly created repos " +
@@ -264,7 +265,8 @@ export class AdminConfigTab {
                 " as teams are added to repos. " +
                 "Please make sure this operation completes before you release again or provision new repos.");
 
-            options.body = JSON.stringify({delivId: value, action: 'RELEASE', formSingle: false}); // TODO: handle formSingle correctly
+            const provision: ProvisionTransport = {delivId: value, formSingle: false};
+            options.body = JSON.stringify(provision); // TODO: handle formSingle correctly
 
             Log.trace('AdminView::releaseDeliverablePressed(..) - POSTing to: ' + url);
 

@@ -46,7 +46,7 @@ export interface CourseTransport {
 
 export interface ProvisionTransport {
     delivId: string;
-    action: string; // PROVISION | RELEASE
+    // action: string; // PROVISION | RELEASE // should be embedded in the route
     formSingle: boolean;
 }
 

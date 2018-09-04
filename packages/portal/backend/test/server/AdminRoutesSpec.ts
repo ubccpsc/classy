@@ -5,7 +5,6 @@ import * as request from 'supertest';
 
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
-
 import {
     AutoTestResultPayload,
     CourseTransport,
@@ -13,6 +12,7 @@ import {
     DeliverableTransport,
     DeliverableTransportPayload,
     Payload,
+    ProvisionTransport,
     RepositoryPayload,
     StudentTransportPayload,
     TeamTransportPayload
@@ -630,6 +630,64 @@ describe('Admin Routes', function() {
             expect(body.failure).to.not.be.undefined;
             expect(body.failure.message).to.be.an('string');
 
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+    });
+
+    it('Should be able to provision a deliverable', async function() {
+        let response = null;
+        let body: Payload;
+        const url = '/portal/admin/provision';
+        try {
+            const provision: ProvisionTransport = {
+                delivId:    Test.DELIVID0,
+                formSingle: false
+            };
+            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+            body = response.body;
+            Log.test(response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(200);
+            expect(body.success).to.not.be.undefined;
+            expect(body.success).to.be.an('array');
+            expect(body.success.length).to.be.greaterThan(0);
+
+            // provision again; should not make anything new
+            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+            body = response.body;
+            Log.test(response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(200);
+            expect(body.success).to.be.an('array');
+            expect(body.success.length).to.equal(0);
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+    });
+
+    it('Should be able to release a deliverable', async function() {
+        let response = null;
+        let body: Payload;
+        const url = '/portal/admin/release';
+        try {
+            const provision: ProvisionTransport = {
+                delivId:    Test.DELIVID0,
+                formSingle: false
+            };
+            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+            body = response.body;
+            Log.test(response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(200);
+            expect(body.success).to.not.be.undefined;
+            expect(body.success).to.be.an('array');
+            expect(body.success.length).to.be.greaterThan(0);
+
+            // release again; should not release anything new
+            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+            body = response.body;
+            Log.test(response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(200);
+            expect(body.success).to.be.an('array');
+            expect(body.success.length).to.equal(0);
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
