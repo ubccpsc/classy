@@ -187,7 +187,7 @@ export class DatabaseValidator {
                     isValid = false;
 
                     if (Config.getInstance().getProp(ConfigKey.name) === ConfigCourses.sdmm) {
-                        if (typeof team.custom !== null) {
+                        if (team.custom !== null) {
                             if (team.custom.sdmmd0) {
                                 (team as any).delivId = 'd0';
                             }

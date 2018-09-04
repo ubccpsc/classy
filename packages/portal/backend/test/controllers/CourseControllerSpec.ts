@@ -72,9 +72,9 @@ describe("CourseController", () => {
         await gha.deleteRepo(Test.REPONAME2);
 
         let teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
-        gha.deleteTeam(teamNum);
+        await gha.deleteTeam(teamNum);
         teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB3);
-        gha.deleteTeam(teamNum);
+        await gha.deleteTeam(teamNum);
 
         await Test.prepareDeliverables();
 
@@ -89,7 +89,7 @@ describe("CourseController", () => {
         const names = await cc.computeNames(d0, [p1, p2]);
 
         const t = await Test.createTeam(names.teamName, Test.DELIVID0, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
-        dbc.writeTeam(t);
+        await dbc.writeTeam(t);
     }
 
     it("Should be able to get the config name.", async () => {

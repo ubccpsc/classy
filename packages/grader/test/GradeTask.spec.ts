@@ -1,6 +1,5 @@
 import {expect} from "chai";
 import {IContainerOutput} from "../../common/types/AutoTestTypes";
-import {IDockerContainer} from "../src/docker/DockerContainer";
 
 // class ContainerMock implements IDockerContainer {
 //     public id: string;
@@ -8,13 +7,11 @@ import {IDockerContainer} from "../src/docker/DockerContainer";
 //
 // }
 
-
-
 // The most important requirement is that the GradeTask should ALWAYS produce a valid IContainerOutput record.
 describe("GradeTask", function() {
     const sampleOutput: IContainerOutput = {
-        timestamp: Date.now(),
-        report: {
+        timestamp:          Date.now(),
+        report:             {
             scoreOverall: 0,
             scoreCover:   null,
             scoreTest:    null,
@@ -26,9 +23,9 @@ describe("GradeTask", function() {
             custom:       {}
         },
         postbackOnComplete: false,
-        custom: {},
-        attachments: [],
-        state: "FAIL"
+        custom:             {},
+        attachments:        [],
+        state:              "FAIL"
     };
 
     function isValid(output: IContainerOutput) {
@@ -36,7 +33,7 @@ describe("GradeTask", function() {
     }
 
     before(function() {
-       // construct mocks
+        // construct mocks
     });
 
     it("Should execute a valid task.");

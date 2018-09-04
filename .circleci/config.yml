@@ -85,10 +85,10 @@ jobs:
             name: Building autotest
             when: always
 
-#      - run:
-#            command: yarn run lint
-#            name: Linting project
-#            when: always
+      - run:
+            command: yarn run lint
+            name: Linting project
+            when: always
 
       - run:
             command: git config --global user.email "CI@test.com" && git config --global user.name "CI Test Name"

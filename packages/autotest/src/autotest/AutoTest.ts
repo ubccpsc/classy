@@ -73,6 +73,7 @@ export abstract class AutoTest implements IAutoTest {
                         info.pushInfo.commitSHA);
                     this.standardExecution = info;
                     // noinspection JSIgnoredPromiseFromCall
+                    // tslint:disable-next-line
                     this.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
                 }
             }
@@ -85,6 +86,7 @@ export abstract class AutoTest implements IAutoTest {
                     Log.info("AutoTest::tick(..) - express queue clear; launching new job - commit: " + info.pushInfo.commitSHA);
                     this.expresssExecution = info;
                     // noinspection JSIgnoredPromiseFromCall
+                    // tslint:disable-next-line
                     this.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
                 }
             }
@@ -96,6 +98,7 @@ export abstract class AutoTest implements IAutoTest {
                     Log.info("AutoTest::tick(..) - regression queue clear; launching new job - commit: " + info.pushInfo.commitSHA);
                     this.regressionExecution = info;
                     // noinspection JSIgnoredPromiseFromCall
+                    // tslint:disable-next-line
                     this.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
                 }
             }

@@ -1,6 +1,6 @@
 import {exec} from "child_process";
 import {CommandResult, IDockerImageProperties} from "../Types";
-import { Command } from "../util/Command";
+import {Command} from "../util/Command";
 
 /* Simple wrapper for managing Docker images. */
 export interface IDockerImage {
@@ -30,6 +30,7 @@ export interface IDockerImage {
 }
 
 export class DockerImage extends Command implements IDockerImage {
+    // tslint:disable-next-line
     private _id: string;
 
     constructor() {

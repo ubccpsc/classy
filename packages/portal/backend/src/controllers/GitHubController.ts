@@ -385,8 +385,7 @@ export class GitHubController implements IGitHubController {
 }
 
 /* istanbul ignore next */
-
-// noinspection TsLint
+// tslint:disable-next-line
 export class TestGitHubController implements IGitHubController {
 
     public async getRepositoryUrl(repo: Repository): Promise<string> {

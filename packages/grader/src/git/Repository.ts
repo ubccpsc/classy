@@ -1,4 +1,4 @@
-import { exec } from "child_process";
+import {exec} from "child_process";
 import * as fs from "fs-extra";
 import * as path from "path";
 
@@ -9,6 +9,7 @@ export class Repository {
     public path: string;
 
     constructor() {
+        // blank
     }
 
     /**
@@ -18,7 +19,7 @@ export class Repository {
      */
     public async checkout(commit: string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            exec(`git checkout ${commit}`, { cwd: this.path }, (error, stdout, stderr) => {
+            exec(`git checkout ${commit}`, {cwd: this.path}, (error, stdout, stderr) => {
                 if (error) {
                     reject(error);
                 }
@@ -49,10 +50,11 @@ export class Repository {
     public async clone(url: string, dir: string): Promise<void> {
         this.path = path.resolve(dir);
         return new Promise<void>((resolve, reject) => {
-            exec(`git clone ${url} ${this.path}`, { env: {GIT_TERMINAL_PROMPT: 0} }, (error, stdout, stderr) => {
+            exec(`git clone ${url} ${this.path}`, {env: {GIT_TERMINAL_PROMPT: 0}}, (error, stdout, stderr) => {
                 if (error) {
                     reject(error);
                 }
+                // tslint:disable-next-line
                 console.log("GIT CLONE", stdout, stderr);
                 resolve();
             });
@@ -61,7 +63,7 @@ export class Repository {
 
     public async getSha(): Promise<string> {
         return new Promise<string>((resolve, reject) => {
-            exec(`git rev-parse HEAD`, { cwd: this.path }, (error, stdout, stderr) => {
+            exec(`git rev-parse HEAD`, {cwd: this.path}, (error, stdout, stderr) => {
                 if (error) {
                     reject(error);
                 }

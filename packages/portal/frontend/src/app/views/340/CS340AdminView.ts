@@ -1,4 +1,4 @@
-import {OnsButtonElement, OnsFabElement, OnsInputElement, OnsListItemElement, OnsSwitchElement} from "onsenui";
+import {OnsButtonElement, OnsFabElement, OnsInputElement, OnsSwitchElement} from "onsenui";
 import Log from "../../../../../../common/Log";
 import {
     AssignmentGrade,
@@ -10,7 +10,6 @@ import {
     SubQuestionGradingRubric
 } from "../../../../../../common/types/CS340Types";
 import {
-    RepositoryPayload,
     RepositoryTransport,
     StudentTransport,
     StudentTransportPayload,
@@ -30,6 +29,8 @@ const ERROR_NULL_RUBRIC: string = "null rubric-data";
 const ERROR_MALFORMED_PAGE: string = "malformed page with info elements";
 const WARN_EMPTY_FIELD: string = "empty field";
 
+// too many lint errors; disabling for file
+/* tslint:disable */
 export class CS340AdminView extends AdminView {
 
     private grading_selectedDeliverable = "";
@@ -138,7 +139,9 @@ export class CS340AdminView extends AdminView {
             Log.info("CS340AdminView::renderEditDeliverablePage(..) - Adding onclick function");
             fab.addEventListener("click", function(evt) {
                 const delivIdElement = document.querySelector('#adminEditDeliverablePage-name') as OnsInputElement;
-                if (delivIdElement === null) { return; }
+                if (delivIdElement === null) {
+                    return;
+                }
 
                 // Log.info('CS340AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::customOnClick');
                 // that.checkReleasedGrades().then(function (result) {
@@ -233,7 +236,7 @@ export class CS340AdminView extends AdminView {
             generateButton.addEventListener("click", async () => {
                 that.generateAssignmentInfo(null);
             });
-            isAssnSwitch.addEventListener("click", function()  {
+            isAssnSwitch.addEventListener("click", function() {
                 // get the current status on the slider
                 const isAssnSwitch = (document.querySelector("#adminEditDeliverablePage-isAssignmentSwitch") as OnsSwitchElement);
                 const switchStatus = isAssnSwitch.checked;
@@ -250,15 +253,15 @@ export class CS340AdminView extends AdminView {
             for (const deliverableRecord of deliverables) {
                 if (deliverableRecord.id === delivId) {
                     if (deliverableRecord.custom.assignment !== undefined &&
-                    typeof (deliverableRecord.custom.assignment as AssignmentInfo).seedRepoURL !== "undefined") {
+                        typeof (deliverableRecord.custom.assignment as AssignmentInfo).seedRepoURL !== "undefined") {
                         const seedRepoURLElement = (document.querySelector("#adminEditDeliverablePage-seedRepoURL") as OnsInputElement);
                         const seedRepoPathElement = (document.querySelector("#adminEditDeliverablePage-seedRepoPath") as OnsInputElement);
                         const mainFilePathElement = (document.querySelector("#adminEditDeliverablePage-mainFilePath") as OnsInputElement);
                         const courseWeightElement = (document.querySelector("#adminEditDeliverablePage-courseWeight") as OnsInputElement);
-                        seedRepoURLElement.value    = (deliverableRecord.custom.assignment as AssignmentInfo).seedRepoURL;
-                        seedRepoPathElement.value   = (deliverableRecord.custom.assignment as AssignmentInfo).seedRepoPath;
-                        mainFilePathElement.value   = (deliverableRecord.custom.assignment as AssignmentInfo).mainFilePath;
-                        courseWeightElement.value   = (deliverableRecord.custom.assignment as AssignmentInfo).courseWeight.toString();
+                        seedRepoURLElement.value = (deliverableRecord.custom.assignment as AssignmentInfo).seedRepoURL;
+                        seedRepoPathElement.value = (deliverableRecord.custom.assignment as AssignmentInfo).seedRepoPath;
+                        mainFilePathElement.value = (deliverableRecord.custom.assignment as AssignmentInfo).mainFilePath;
+                        courseWeightElement.value = (deliverableRecord.custom.assignment as AssignmentInfo).courseWeight.toString();
                         const assignConfigElement = (document.querySelector("#adminEditDeliverablePage-assignmentConfig") as HTMLDivElement);
                         assignConfigElement.removeAttribute("style");
                         const isAssnSwitch = (document.querySelector("#adminEditDeliverablePage-isAssignmentSwitch") as OnsSwitchElement);
@@ -285,14 +288,14 @@ export class CS340AdminView extends AdminView {
         let assignInfo: AssignmentInfo;
         if (delivRecord === null || delivRecord.custom.assignment === undefined) {
             assignInfo = {
-                seedRepoURL: "",
+                seedRepoURL:  "",
                 seedRepoPath: "",
                 mainFilePath: "",
                 courseWeight: 0,
-                status: AssignmentStatus.INACTIVE,
-                rubric: {
-                    name: "",
-                    comment: "",
+                status:       AssignmentStatus.INACTIVE,
+                rubric:       {
+                    name:      "",
+                    comment:   "",
                     questions: []
                 },
                 repositories: []
@@ -306,7 +309,7 @@ export class CS340AdminView extends AdminView {
         assignInfo.courseWeight = Number(courseWeightElement.value);
 
         let newCustomObj: any;
-        if(delivRecord === null) {
+        if (delivRecord === null) {
             newCustomObj = {};
         } else {
             newCustomObj = delivRecord.custom;
@@ -347,7 +350,7 @@ export class CS340AdminView extends AdminView {
             let totalSum = 0;
             for (const deliv of deliverables) {
                 if (deliv.custom.assignment === undefined || typeof (deliv.custom.assignment as AssignmentInfo).courseWeight === "undefined") {
-                    totalSum +=  (deliv.custom.assignment as AssignmentInfo).courseWeight;
+                    totalSum += (deliv.custom.assignment as AssignmentInfo).courseWeight;
                 }
             }
 
@@ -376,10 +379,10 @@ export class CS340AdminView extends AdminView {
         delivStatusElement.innerHTML = "";
 
         // lock out all buttons
-        const createRepoButton  = document.querySelector('#adminCreateRepositories') as OnsButtonElement;
+        const createRepoButton = document.querySelector('#adminCreateRepositories') as OnsButtonElement;
         const releaseRepoButton = document.querySelector('#adminReleaseRepositories') as OnsButtonElement;
         const closeRepoButton = document.querySelector('#adminCloseRepositories') as OnsButtonElement;
-        const deleteRepoButton  = document.querySelector('#adminDeleteRepositories') as OnsButtonElement; // DEBUG
+        const deleteRepoButton = document.querySelector('#adminDeleteRepositories') as OnsButtonElement; // DEBUG
         createRepoButton.disabled = true;
         releaseRepoButton.disabled = true;
         closeRepoButton.disabled = true;
@@ -429,10 +432,10 @@ export class CS340AdminView extends AdminView {
 
         // (un)lock other buttons
         // const checkStatusButton = document.querySelector('#adminCheckStatus') as OnsButtonElement;
-        const createRepoButton  = document.querySelector('#adminCreateRepositories') as OnsButtonElement;
+        const createRepoButton = document.querySelector('#adminCreateRepositories') as OnsButtonElement;
         const releaseRepoButton = document.querySelector('#adminReleaseRepositories') as OnsButtonElement;
         const closeRepoButton = document.querySelector('#adminCloseRepositories') as OnsButtonElement;
-        const deleteRepoButton  = document.querySelector('#adminDeleteRepositories') as OnsButtonElement; // DEBUG
+        const deleteRepoButton = document.querySelector('#adminDeleteRepositories') as OnsButtonElement; // DEBUG
 
         if (delivId === null) {
             Log.info('CS340AdminView::selectDeliverable(..) - did not select deliv, locking buttons');
@@ -466,8 +469,12 @@ export class CS340AdminView extends AdminView {
         const delivIDBox = document.querySelector('#adminActionDeliverableID') as HTMLParagraphElement;
         delivIDBox.innerHTML = "";
 
-        if (value === null || value == "null") { return null; }
-        if (value === "--N/A--") { return null; }
+        if (value === null || value == "null") {
+            return null;
+        }
+        if (value === "--N/A--") {
+            return null;
+        }
 
         Log.trace("CS340AdminView::checkStatusAndUpdate(..) - value: " + value);
         let url: string;
@@ -484,7 +491,9 @@ export class CS340AdminView extends AdminView {
         options.method = 'get';
         const response = await fetch(url, options);
 
-        if (update) { UI.hideModal(); }
+        if (update) {
+            UI.hideModal();
+        }
 
         if (response.status === 200) {
             const responseJson = await response.json();
@@ -988,12 +997,12 @@ export class CS340AdminView extends AdminView {
             let firstHeader = true; // only the first header is sorted by default
             for (let i = 0; i < maxSize; i++) {
                 const newHeader: TableHeader = {
-                    id:             'uid' + i,
-                    text:           'id' + i,
-                    sortable:       true,
-                    defaultSort:    firstHeader,
-                    sortDown:       false,
-                    style:          'padding-left: 1em; padding-right: 1em;'
+                    id:          'uid' + i,
+                    text:        'id' + i,
+                    sortable:    true,
+                    defaultSort: firstHeader,
+                    sortDown:    false,
+                    style:       'padding-left: 1em; padding-right: 1em;'
                 };
                 firstHeader = false; // don't want any other headers to be 'default sorted'!
                 tableHeaders.push(newHeader);
@@ -1004,21 +1013,21 @@ export class CS340AdminView extends AdminView {
         }
 
         tableHeaders.push({
-            id:             "repo",
-            text:           "Repository",
-            sortable:       true,
-            defaultSort:    false,
-            sortDown:       false,
-            style:          'padding-left: 1em; padding-right: 1em;'
+            id:          "repo",
+            text:        "Repository",
+            sortable:    true,
+            defaultSort: false,
+            sortDown:    false,
+            style:       'padding-left: 1em; padding-right: 1em;'
         });
 
         tableHeaders.push({
-            id:             "grade",
-            text:           "Grade",
-            sortable:       true,
-            defaultSort:    false,
-            sortDown:       false,
-            style:          'padding-left: 1em; padding-right: 1em;'
+            id:          "grade",
+            text:        "Grade",
+            sortable:    true,
+            defaultSort: false,
+            sortDown:    false,
+            style:       'padding-left: 1em; padding-right: 1em;'
         });
 
         const st = new SortableTable(tableHeaders, "#gradesListTable");
@@ -1055,7 +1064,7 @@ export class CS340AdminView extends AdminView {
 
             const repoEntry: TableCell = {
                 value: repoTransport.URL,
-                html: "<a href='" + repoTransport.URL + "'> Link </a>"
+                html:  "<a href='" + repoTransport.URL + "'> Link </a>"
             };
 
             newRow.push(repoEntry);
@@ -1070,24 +1079,24 @@ export class CS340AdminView extends AdminView {
             if (typeof deliv.custom.assignment.status !== "undefined" && deliv.custom.assignment.status !== AssignmentStatus.CLOSED) {
                 newEntry = {
                     value: "---",
-                    html: "<span>---</span>"
+                    html:  "<span>---</span>"
                 };
             } else {
                 if (typeof gradeMapping[studentId] !== 'undefined' && completelyGraded) {
                     // we have a grade for this team
                     newEntry = {
                         value: gradeMapping[studentId].score,
-                        html: "<a onclick='window.myApp.view.transitionGradingPage(\"" +
-                        studentMapping[studentId].id + "\", \"" + delivId + "\", true)' href='#'>" +
-                        gradeMapping[studentId].score.toString() + "/" +
-                        maxGrade + "</a>"
+                        html:  "<a onclick='window.myApp.view.transitionGradingPage(\"" +
+                               studentMapping[studentId].id + "\", \"" + delivId + "\", true)' href='#'>" +
+                               gradeMapping[studentId].score.toString() + "/" +
+                               maxGrade + "</a>"
                     };
                 } else {
                     // we do not have a grade for this team
                     newEntry = {
                         value: "---",
-                        html: "<a onclick='window.myApp.view.transitionGradingPage(\"" +
-                        studentMapping[studentId].id + "\", \"" + delivId + "\", true)' href='#'> ---" + "</a>",
+                        html:  "<a onclick='window.myApp.view.transitionGradingPage(\"" +
+                               studentMapping[studentId].id + "\", \"" + delivId + "\", true)' href='#'> ---" + "</a>"
                     };
                 }
             }
@@ -1160,12 +1169,12 @@ export class CS340AdminView extends AdminView {
             if (selectedAssign === "-All-" || selectedAssign === deliv.id) {
                 Log.info("CS340AdminView::renderStudentGrades(..) - Adding deliverable: " + deliv.id);
                 const newHeader = {
-                    id:             deliv.id,
-                    text:           deliv.id,
-                    sortable:       false,
-                    defaultSort:    false,
-                    sortDown:       true,
-                    style:          'padding-left: 1em; padding-right: 1em;',
+                    id:          deliv.id,
+                    text:        deliv.id,
+                    sortable:    false,
+                    defaultSort: false,
+                    sortDown:    true,
+                    style:       'padding-left: 1em; padding-right: 1em;'
                 };
                 filteredDelivArray.push(deliv);
                 tableHeaders.push(newHeader);
@@ -1185,7 +1194,7 @@ export class CS340AdminView extends AdminView {
                 gradeMapping[grade.personId] = {};
             }
             // If the grade is a valid AssignmentGrade, place it in the mapping
-            if (grade.custom.assignmentGrade!== null && typeof grade.custom.assignmentGrade.assignmentID !== "undefined") {
+            if (grade.custom.assignmentGrade !== null && typeof grade.custom.assignmentGrade.assignmentID !== "undefined") {
                 gradeMapping[grade.personId][grade.custom.assignmentGrade.assignmentID] = grade;
             }
         }
@@ -1195,18 +1204,22 @@ export class CS340AdminView extends AdminView {
             const newRow: TableCell[] = [
                 {value: student.id, html: '<a href="' + student.userUrl + '">' + student.id + '</a>'},
                 {value: student.firstName, html: student.firstName},
-                {value: student.lastName, html: student.lastName},
+                {value: student.lastName, html: student.lastName}
             ];
             for (const delivCol of filteredDelivArray) {
                 let foundGrade = false;
-                if (typeof gradeMapping[student.id] === "undefined") { gradeMapping[student.id] = {}; }
-                if (typeof gradeMapping[student.id][delivCol.id] !== "undefined") { foundGrade = true; }
+                if (typeof gradeMapping[student.id] === "undefined") {
+                    gradeMapping[student.id] = {};
+                }
+                if (typeof gradeMapping[student.id][delivCol.id] !== "undefined") {
+                    foundGrade = true;
+                }
 
                 // let completelyGraded:boolean = this.checkIfCompletelyGraded(gradeMapping[student.id][delivCol.id]);
 
                 let completelyGraded: boolean;
                 if (typeof gradeMapping[student.id] === 'undefined' ||
-                    typeof gradeMapping[student.id][delivCol.id] === 'undefined' ) {
+                    typeof gradeMapping[student.id][delivCol.id] === 'undefined') {
                     completelyGraded = false;
                 } else {
                     completelyGraded = this.checkIfCompletelyGraded(gradeMapping[student.id][delivCol.id]);
@@ -1228,12 +1241,12 @@ export class CS340AdminView extends AdminView {
                     if (foundGrade) {
                         newEntry = {
                             value: gradeMapping[student.githubId][delivCol.id].score,
-                            html: "<span>" + gradeMapping[student.githubId][delivCol.id].score + "</span>"
+                            html:  "<span>" + gradeMapping[student.githubId][delivCol.id].score + "</span>"
                         };
                     } else {
                         newEntry = {
                             value: "-",
-                            html: "<span>-</span>"
+                            html:  "<span>-</span>"
                         };
                     }
                 } else {
@@ -1242,17 +1255,17 @@ export class CS340AdminView extends AdminView {
                             // if we have a grade, and it is completely graded
                             newEntry = {
                                 value: gradeMapping[student.githubId][delivCol.id].score,
-                                html: "<a onclick='window.myApp.view.transitionGradingPage(\"" +
-                                student.githubId + "\", \"" + delivCol.id + "\")' href='#'>" +
-                                gradeMapping[student.githubId][delivCol.id].score.toString() +
-                                "/" + maxGradeMap[delivCol.id] + "</a>"
+                                html:  "<a onclick='window.myApp.view.transitionGradingPage(\"" +
+                                       student.githubId + "\", \"" + delivCol.id + "\")' href='#'>" +
+                                       gradeMapping[student.githubId][delivCol.id].score.toString() +
+                                       "/" + maxGradeMap[delivCol.id] + "</a>"
                             };
                         } else {
                             // if we do not have a grade or it's not completely graded
                             newEntry = {
                                 value: "---",
-                                html: "<a onclick='window.myApp.view.transitionGradingPage(\"" +
-                                student.githubId + "\", \"" + delivCol.id + "\")' href='#'> ---" + "</a>",
+                                html:  "<a onclick='window.myApp.view.transitionGradingPage(\"" +
+                                       student.githubId + "\", \"" + delivCol.id + "\")' href='#'> ---" + "</a>"
 
                             };
                         }
@@ -1260,7 +1273,7 @@ export class CS340AdminView extends AdminView {
                         // if it's not closed
                         newEntry = {
                             value: "",
-                            html: "<span>---</span>"
+                            html:  "<span>---</span>"
                         };
                     }
                 }
@@ -1332,7 +1345,9 @@ export class CS340AdminView extends AdminView {
         // });
         const result = await Promise.all(promiseArray);
         for (const value of result) {
-            if (value) { count++; }
+            if (value) {
+                count++;
+            }
         }
 
         return count;
@@ -1361,7 +1376,7 @@ export class CS340AdminView extends AdminView {
      * @param {string} sid
      * @returns {Promise<void>}
      */
-    public async populateGradingPage(delivId: string, sid: string, isTeam: boolean= false) {
+    public async populateGradingPage(delivId: string, sid: string, isTeam: boolean = false) {
         Log.info("CS340View::populateGradingPage() - start");
 
         UI.showModal("Populating grading view, please wait...");
@@ -1375,12 +1390,12 @@ export class CS340AdminView extends AdminView {
 
         const previousSubmission = await this.getStudentGrade(sid, delivId);
 
-        const assignmentInfoElement   = document.getElementById('assignmentInfoSection');
-        const gradingSectionElement   = document.getElementById('gradingSection');
+        const assignmentInfoElement = document.getElementById('assignmentInfoSection');
+        const gradingSectionElement = document.getElementById('gradingSection');
 
-        const assignmentInfoList      = document.createElement("div");
-        const assignmentIDBox         = document.getElementById("aidBox");
-        const studentIDBox            = document.getElementById("sidBox");
+        const assignmentInfoList = document.createElement("div");
+        const assignmentIDBox = document.getElementById("aidBox");
+        const studentIDBox = document.getElementById("sidBox");
 
         if (isTeam) {
             const teamIndicator: HTMLParagraphElement = document.createElement("p");
@@ -1515,7 +1530,7 @@ export class CS340AdminView extends AdminView {
         gradingSectionElement!.appendChild(submitButton);
     }
 
-    public async submitGrade(completed: boolean = true): Promise<AssignmentGrade|null> {
+    public async submitGrade(completed: boolean = true): Promise<AssignmentGrade | null> {
         let errorStatus = false;
         let warnStatus = false;
         let warnComment: string = "";
@@ -1566,14 +1581,18 @@ export class CS340AdminView extends AdminView {
                 // If the value is not found, set it to a default empty string
                 if (rubricType === null) {
                     rubricType = "";
-                    if (!errorStatus) { errorComment = ERROR_NULL_RUBRIC; }
+                    if (!errorStatus) {
+                        errorComment = ERROR_NULL_RUBRIC;
+                    }
                     errorStatus = true;
                     continue;
                 }
 
                 if (gradeInputElement.value === "") {
                     gradeValue = 0;
-                    if (!warnStatus) { warnComment = WARN_EMPTY_FIELD; }
+                    if (!warnStatus) {
+                        warnComment = WARN_EMPTY_FIELD;
+                    }
                     warnStatus = true;
                     graded = false;
                     errorElement.innerHTML = "Warning: Input field is empty";
@@ -1582,7 +1601,9 @@ export class CS340AdminView extends AdminView {
                 // If the grade value retrieved is not a number, default the value to 0
                 if (gradeInputElement.value !== "" && isNaN(gradeValue)) {
                     gradeValue = 0;
-                    if (!errorStatus) { errorComment = ERROR_NON_NUMERICAL_GRADE; }
+                    if (!errorStatus) {
+                        errorComment = ERROR_NON_NUMERICAL_GRADE;
+                    }
                     errorStatus = true;
                     errorElement.innerHTML = "Error: Must specify a valid number";
                     continue;
@@ -1590,7 +1611,9 @@ export class CS340AdminView extends AdminView {
                     // If the gradeValue is an actual number
                     // check if there are any warnings about the input value
                     if (this.checkIfWarning(gradeInputElement)) {
-                        if (!errorStatus) { errorComment = ERROR_POTENTIAL_INCORRECT_INPUT; }
+                        if (!errorStatus) {
+                            errorComment = ERROR_POTENTIAL_INCORRECT_INPUT;
+                        }
                         errorStatus = true;
                     }
                 }
@@ -1598,9 +1621,9 @@ export class CS340AdminView extends AdminView {
                 // create a new subgrade, but if assignment was NOT _completed_, give 0
                 const newSubGrade: SubQuestionGrade = {
                     sectionName: rubricType,
-                    grade: completed ? gradeValue : 0,
-                    graded: completed ? graded : true,
-                    feedback: responseBoxElement.value
+                    grade:       completed ? gradeValue : 0,
+                    graded:      completed ? graded : true,
+                    feedback:    responseBoxElement.value
                 };
 
                 subQuestionArray.push(newSubGrade);
@@ -1610,8 +1633,8 @@ export class CS340AdminView extends AdminView {
 
             const newQuestion: QuestionGrade = {
                 questionName: questionNames[i].innerHTML,
-                commentName: "",
-                subQuestion: subQuestionArray
+                commentName:  "",
+                subQuestion:  subQuestionArray
             };
 
             questionArray.push(newQuestion);
@@ -1621,7 +1644,9 @@ export class CS340AdminView extends AdminView {
         const aInfoIDElements = document.getElementsByClassName("aInfoID");
 
         if (aInfoSIDElements.length !== 1 || aInfoIDElements.length !== 1) {
-            if (!errorStatus) { errorComment = ERROR_MALFORMED_PAGE; }
+            if (!errorStatus) {
+                errorComment = ERROR_MALFORMED_PAGE;
+            }
             errorStatus = true;
         }
 
@@ -1737,9 +1762,9 @@ export class CS340AdminView extends AdminView {
             // create a new grade
             const newAssignmentGrade: AssignmentGrade = {
                 assignmentID: aid,
-                studentID: personId,
-                released: false,
-                questions: questionArray
+                studentID:    personId,
+                released:     false,
+                questions:    questionArray
             };
 
             const url = this.remote + '/portal/cs340/setAssignmentGrade';
@@ -1788,7 +1813,7 @@ export class CS340AdminView extends AdminView {
         let reply;
         if (response.status !== 200) {
             Log.info("CS340View::getStudentGrade(..) - unable to find grade record");
-            reply =  null;
+            reply = null;
         } else {
             Log.info("CS340View::getStudentGrade(..) - found grade record");
             const responseJson = await response.json();
@@ -1888,11 +1913,11 @@ export class CS340AdminView extends AdminView {
         });
     }
 
-    public transitionGradingPage(sid: string, aid: string, isTeam: boolean= false) {
+    public transitionGradingPage(sid: string, aid: string, isTeam: boolean = false) {
         // Move to grading
         UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/GradingView.html', {
-            sid: sid,
-            aid: aid,
+            sid:    sid,
+            aid:    aid,
             isTeam: isTeam
         });
     }

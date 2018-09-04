@@ -78,7 +78,10 @@ export class AssignmentController {
      * @param assnPayload - new assignment grade to save
      * @param markerId - the person who marked the assignment
      */
-    public async setAssignmentGrade(repoID: string, assignId: string, assnPayload: AssignmentGrade, markerId: string = ""): Promise<boolean> {
+    public async setAssignmentGrade(repoID: string,
+                                    assignId: string,
+                                    assnPayload: AssignmentGrade,
+                                    markerId: string = ""): Promise<boolean> {
         // Array<Array<SubsectionGrade>>
         Log.info("AssignmentController::setAssignmentGrade(" + ", " + repoID + ", " + assignId + ",..) - start");
         Log.trace("AssignmentController::setAssignmentGrade(..) - payload: " + JSON.stringify(assnPayload));
@@ -151,7 +154,7 @@ export class AssignmentController {
                     try {
                         // TODO: Return this as part of the response (?), leaving it as is might be annoying for tests b/c of timing issues
                         // do this async
-                        this.publishGrade(personRecord.githubId + "_grades",
+                        await this.publishGrade(personRecord.githubId + "_grades",
                             assignId + "_grades.md", personRecord.id, assignId);
                     } catch (err) {
                         Log.error("AssignmentController::setAssignmentGrade(..) - Error: " + err);
@@ -486,8 +489,8 @@ export class AssignmentController {
 
         let assignInfo: AssignmentInfo = deliv.custom.assignment;
 
-        if(assignInfo === undefined || typeof  assignInfo.status === "undefined") {
-            Log.error("AssignmentController::publishAllRepositories(..) - Error: Deliverable: " +delivId+ " " +
+        if (assignInfo === undefined || typeof  assignInfo.status === "undefined") {
+            Log.error("AssignmentController::publishAllRepositories(..) - Error: Deliverable: " + delivId + " " +
                 "is not an assignment.");
             return false;
         }
@@ -1057,9 +1060,9 @@ export class AssignmentController {
                 const assignmentSubQuestion: SubQuestionGradingRubric = assignmentQuestion.subQuestions[j];
                 const gradeSubQuestion: SubQuestionGrade = studentGrade.subQuestion[j];
                 const rowName = assignmentQuestion.name + " - " + assignmentSubQuestion.name;
-                const newRow = [rowName, String(gradeSubQuestion.grade),
+                const newRowRec = [rowName, String(gradeSubQuestion.grade),
                     String(assignmentSubQuestion.outOf), gradeSubQuestion.feedback];
-                tableInfo.push(newRow);
+                tableInfo.push(newRowRec);
                 totalReceived += gradeSubQuestion.grade * assignmentSubQuestion.weight;
                 totalPossible += assignmentSubQuestion.outOf * assignmentSubQuestion.weight;
             }
@@ -1329,20 +1332,12 @@ export class AssignmentController {
         Log.info("AssignmentController::publishFinalGrade( ... ,  " + studentId + ") - start");
 
         // get all the student's grades
-        // this.gc.getAllGrades();
         const allGrades: Grade[] = await this.gc.getAllGrades();
-        // let studentGrades: Grade[] = await this.gc.getReleasedGradesForPerson(studentId);
         const deliverables: Deliverable[] = await this.dc.getAllDeliverables();
 
         // TODO: Check if this has any unintended consequences
         const deliv = deliverables[0];
         const studentRepoRecord: Repository = await this.verifyAndCreateRepo(studentGradeRepoName, deliv);
-
-        // for(const grade of studentGrades) {
-        //     if(grade.custom === null || typeof (grade.custom as AssignmentGrade).questions === 'undefined') {
-        //
-        //     }
-        // }
 
         const studentGradeMapping: {[delivId: string]: Grade} = {};
 
@@ -1353,17 +1348,16 @@ export class AssignmentController {
         }
 
         const tableInfo: string[][] = [];
-        const tableHeader: string[] = ["**Assessment**", "**Grade**",
-            "**Assessment Weight**", "**Weighted Grade**"];
+        const tableHeader: string[] = ["**Assessment**", "**Grade**", "**Assessment Weight**", "**Weighted Grade**"];
 
         tableInfo.push(tableHeader);
 
         let totalRaw: number = 0;
         let totalWeight: number = 0;
         let totalScore: number = 0;
-        for (const deliv of deliverables) {
-            if (deliv.custom.assignment === undefined || typeof (deliv.custom.assignment as AssignmentInfo).courseWeight === "undefined") {
-                Log.info("AssignmentController::publishFinalGrade(..) - deliv: " + deliv.id + " is " +
+        for (const delivRec of deliverables) {
+            if (delivRec.custom.assignment === undefined || typeof delivRec.custom.assignment.courseWeight === "undefined") {
+                Log.info("AssignmentController::publishFinalGrade(..) - deliv: " + delivRec.id + " is " +
                     "not an assignment, skipping...");
                 continue;
             }
@@ -1380,19 +1374,21 @@ export class AssignmentController {
             } else {
                 // double check this
                 const assignmentRubric = (deliv.custom.assignment as AssignmentInfo).rubric;
-                const studentScore = Math.round((studentGradeMapping[deliv.id].score / this.calculateMaxGrade(assignmentRubric)) * 100 * 10) / 10;
+                const studentScore = Math.round(
+                    (studentGradeMapping[deliv.id].score / this.calculateMaxGrade(assignmentRubric)) * 100 * 10) / 10;
                 const weightedScore = Math.round(studentScore * weight * 10) / 10;
                 totalRaw += studentScore;
                 totalScore += weightedScore;
 
-                newRow = [deliv.id, studentScore.toFixed(1), weight.toFixed(1), weightedScore.toFixed(1)];
+                newRow = [deliv.id, studentScore.toFixed(1),
+                    weight.toFixed(1), weightedScore.toFixed(1)];
             }
             tableInfo.push(newRow);
         }
 
-        const newRow: string[] = ["**COURSE GRADE**", totalRaw.toString(),
+        const newRowRec: string[] = ["**COURSE GRADE**", totalRaw.toString(),
             totalWeight.toString(), totalScore.toString() + "%"];
-        tableInfo.push(newRow);
+        tableInfo.push(newRowRec);
 
         Log.info("AssignmentController::publishGrade(..) - generating tableInfo complete; " + tableInfo);
 

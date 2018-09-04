@@ -32,6 +32,7 @@
 //                 expect(id).to.have.length(12);
 //             }
 //         });
+// tslint:disable-next-line
 //         it(`Should create an image from an URL pointing to a git repository containing a Dockerfile [Uses external resource].`, async () => {
 //             const tag: string = `test-img-640`;
 //             const url: string = `https://github.com/docker/dockercloud-hello-world.git`;
@@ -68,6 +69,7 @@
 //                 id = err;
 //             } finally {
 //                 expect(id).to.be.instanceof(Error);
+// tslint:disable-next-line
 //                 expect(id.message).to.equal(`Command failed: docker build --tag test-img-643 --rm /does/not/exist\nunable to prepare context: path "/does/not/exist" not found\n`);
 //             }
 //         });

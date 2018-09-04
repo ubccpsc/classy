@@ -45,11 +45,22 @@ export interface IFeedbackGiven {
  *
  */
 export interface IAutoTestResult {
-    delivId: string; // foreign key into Deliverables (so we know what this run is scoring) (intentional duplication with input.delivId)
-    repoId: string;  // foreign key into Repositories (so we know what repository (and people) this run is for) (intentional duplication with input.pushInfo.repoId)
 
-    // input.pushInfo.timestamp // timestamp of push
-    // output.timestamp // timestamp of grading completion
+    /**
+     * Foreign key into Deliverables.
+     * This lets us know what deliverable this run is scoring.
+     *
+     * (intentional duplication with input.delivId)
+     */
+    delivId: string;
+
+    /**
+     * Foreign key into Repositories.
+     * This helps us know what repository (and people) this run is for.
+     *
+     * (intentional duplication with input.pushInfo.repoId)
+     */
+    repoId: string;
 
     commitURL: string;
     commitSHA: string; // can be used to index into the AutoTest collections (pushes, comments, & feedback)

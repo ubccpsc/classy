@@ -1,9 +1,10 @@
-import { IFirewallRule } from "../Types";
-import { IFirewallController } from "./FirewallController";
+import {IFirewallRule} from "../Types";
+import {IFirewallController} from "./FirewallController";
 
 // wrapper for FirewallController that maintains the container's chain state
 export interface IContainerFirewall {
     unblock(host: string, port?: number): Promise<void>;
+
     delete(): Promise<void>;
 }
 
@@ -24,10 +25,10 @@ export class ContainerFirewall implements IContainerFirewall {
 
     public async unblock(host: string, port?: number): Promise<void> {
         try {
-            const rule: IFirewallRule = { chain: this.chain, jump: "ACCEPT", destination: host };
+            const rule: IFirewallRule = {chain: this.chain, jump: "ACCEPT", destination: host};
             if (port > 0) {
-                rule["protocol"] = "tcp";
-                rule["dport"] = port;
+                rule.protocol = "tcp";
+                rule.dport = port;
             }
             if (!this.hasChain) {
                 await this.initChain();
@@ -50,11 +51,11 @@ export class ContainerFirewall implements IContainerFirewall {
 
     protected async initChain(): Promise<void> {
         try {
-            const forwardToChain: IFirewallRule = { chain: "FORWARD", source: this.addr, jump: this.chain };
+            const forwardToChain: IFirewallRule = {chain: "FORWARD", source: this.addr, jump: this.chain};
             // TODO do I need tcp versions as well? Can these be simplified?
             const dnsRules: IFirewallRule[] = [
                 {chain: this.chain, jump: "ACCEPT", protocol: "udp", dport: 53, module: "state", state: "NEW,ESTABLISHED"},
-                {chain: this.chain, jump: "ACCEPT", protocol: "udp", sport: 53, module: "state", state: "ESTABLISHED"},
+                {chain: this.chain, jump: "ACCEPT", protocol: "udp", sport: 53, module: "state", state: "ESTABLISHED"}
             ];
             await this.fwCtrl.createChain(this.chain);
             await this.fwCtrl.insertRule(forwardToChain);

@@ -32,13 +32,13 @@ describe("GitHubAutoTest", () => {
     // now -10h: 1516523258762
     // now - 24h: 1516472872288
 
-    before(function() {
+    before(async function() {
         Log.test("AutoTest::before() - start");
 
         pushes = fs.readJSONSync(__dirname + "/githubAutoTestData/pushes.json");
 
         data = new MockDataStore();
-        data.clearData();
+        await data.clearData();
 
         portal = new MockClassPortal();
         gh = new GitHubService();
@@ -49,9 +49,9 @@ describe("GitHubAutoTest", () => {
         Log.test("AutoTest::before() - done");
     });
 
-    beforeEach(function() {
+    beforeEach(async function() {
         Log.test("AutoTest::beforeEach() - start");
-        data.clearData();
+        await data.clearData();
     });
 
     afterEach(async function() {
@@ -186,7 +186,7 @@ describe("GitHubAutoTest", () => {
         expect(at).not.to.equal(null);
 
         // start fresh
-        data.clearData();
+        await data.clearData();
         gh.messages = [];
 
         // SETUP: add a push with no output records
@@ -208,7 +208,7 @@ describe("GitHubAutoTest", () => {
         expect(at).not.to.equal(null);
 
         // start fresh
-        data.clearData();
+        await data.clearData();
         gh.messages = [];
 
         // SETUP: add a push with no output records
@@ -232,7 +232,7 @@ describe("GitHubAutoTest", () => {
         expect(at).not.to.equal(null);
 
         // start fresh
-        data.clearData();
+        await data.clearData();
         gh.messages = [];
 
         // SETUP: add a push with no output records
@@ -266,7 +266,7 @@ describe("GitHubAutoTest", () => {
         expect(at).not.to.equal(null);
 
         // start fresh
-        data.clearData();
+        await data.clearData();
         gh.messages = [];
 
         // SETUP: add a push with no output records
@@ -298,7 +298,7 @@ describe("GitHubAutoTest", () => {
         expect(at).not.to.equal(null);
 
         // start fresh
-        data.clearData();
+        await data.clearData();
         gh.messages = [];
 
         // SETUP: add a push with no output records
@@ -330,7 +330,7 @@ describe("GitHubAutoTest", () => {
         expect(at).not.to.equal(null);
 
         // start fresh
-        data.clearData();
+        await data.clearData();
         gh.messages = [];
 
         // SETUP: add a push with no output records
@@ -366,7 +366,7 @@ describe("GitHubAutoTest", () => {
         expect(at).not.to.equal(null);
 
         // start fresh
-        data.clearData();
+        await data.clearData();
         gh.messages = [];
 
         // SETUP: add a push with no output records
@@ -377,9 +377,9 @@ describe("GitHubAutoTest", () => {
             personId:  "cs310test"
         };
 
-        data.savePush(TestData.inputRecordA.pushInfo);
+        await data.savePush(TestData.inputRecordA.pushInfo);
 
-        data.saveFeedbackGivenRecord(fg);
+        await data.saveFeedbackGivenRecord(fg);
         let allData = await data.getAllData();
         expect(allData.pushes.length).to.equal(1);
         expect(allData.feedback.length).to.equal(1); // the feedback record we inserted from a recent past request
@@ -410,28 +410,28 @@ describe("GitHubAutoTest", () => {
 
     });
 
-    it.skip("Should let a user request results without specifying delivId.", async () => {
-        return;
-    });
-
-    it.skip("Should let a user request results for a delivId other than the default.", async () => {
-        return;
-    });
-
-    it.skip("Should let a user request results that promotes a push to the express queue.", async () => {
-        return;
-    });
-
-    it.skip("Should let a staff request results without being rate limited.", async () => {
-        return;
-    });
-
-    it.skip("Should ignore comments made by @autobot.", async () => {
-        return;
-    });
-
-    it.skip("Should ignore comments that don't mention @autobot.", async () => {
-        return;
-    });
+    // it.skip("Should let a user request results without specifying delivId.", async () => {
+    //     return;
+    // });
+    //
+    // it.skip("Should let a user request results for a delivId other than the default.", async () => {
+    //     return;
+    // });
+    //
+    // it.skip("Should let a user request results that promotes a push to the express queue.", async () => {
+    //     return;
+    // });
+    //
+    // it.skip("Should let a staff request results without being rate limited.", async () => {
+    //     return;
+    // });
+    //
+    // it.skip("Should ignore comments made by @autobot.", async () => {
+    //     return;
+    // });
+    //
+    // it.skip("Should ignore comments that don't mention @autobot.", async () => {
+    //     return;
+    // });
 
 });

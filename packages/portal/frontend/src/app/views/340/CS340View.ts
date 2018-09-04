@@ -5,28 +5,12 @@
  * student views, as they need for their own courses.
  */
 
-import {OnsButtonElement, OnsSelectElement} from "onsenui";
+import {OnsButtonElement} from "onsenui";
 import Log from "../../../../../../common/Log";
-import {
-    AssignmentGrade,
-    AssignmentGradingRubric, DeliverableInfo,
-    QuestionGrade,
-    SubQuestionGrade,
-    SubQuestionGradingRubric
-} from "../../../../../../common/types/CS340Types";
-import {UI} from "../../util/UI";
+import {DeliverableInfo} from "../../../../../../common/types/CS340Types";
 
-import {
-    DeliverableTransport,
-    Payload,
-    TeamFormationTransport,
-    TeamTransport
-} from "../../../../../../common/types/PortalTypes";
-import {Deliverable, Grade, Person, Team} from "../../../../../backend/src/Types";
-import {Factory} from "../../Factory";
-import {SortableTable, TableHeader} from "../../util/SortableTable";
-import {AdminView} from "../AdminView";
-import {IView} from "../IView";
+import {Payload, TeamFormationTransport, TeamTransport} from "../../../../../../common/types/PortalTypes";
+import {UI} from "../../util/UI";
 import {StudentView} from "../StudentView";
 
 export class CS340View extends StudentView {
@@ -51,7 +35,8 @@ export class CS340View extends StudentView {
             return that.fetchData();
         }).then(function() {
             // that.renderTeams(that.teams);
-            that.renderDeliverables();
+            return that.renderDeliverables();
+        }).then(function() {
             UI.hideModal();
             Log.info('CS340View::renderPage(..) - prep & render took: ' + UI.took(start));
         }).catch(function(err) {
@@ -125,7 +110,11 @@ export class CS340View extends StudentView {
         Log.info('CS340View::renderDeliverables(..) - hooking event listener');
 
         delivSelectElement.addEventListener("change", (evt) => {
-            that.updateTeams();
+            that.updateTeams().then(function() {
+                // then
+            }).catch(function(err) {
+                // catch
+            });
         });
 
         Log.info('CS340View::renderDeliverables(..) - finished hooking event listener');
@@ -133,21 +122,21 @@ export class CS340View extends StudentView {
         Log.info("CS340View::renderDeliverables(..) - finished rendering deliverable");
     }
 
-/*
-function editSelects(event) {
-  document.getElementById('choose-sel').removeAttribute('modifier');
-  if (event.target.value == 'material' || event.target.value == 'underbar') {
-    document.getElementById('choose-sel').setAttribute('modifier', event.target.value);
-  }
-}
-function addOption(event) {
-  const option = document.createElement('option');
-  var text = document.getElementById('optionLabel').value;
-  option.innerText = text;
-  text = '';
-  document.getElementById('dynamic-sel').appendChild(option);
-}
-* */
+    /*
+    function editSelects(event) {
+      document.getElementById('choose-sel').removeAttribute('modifier');
+      if (event.target.value == 'material' || event.target.value == 'underbar') {
+        document.getElementById('choose-sel').setAttribute('modifier', event.target.value);
+      }
+    }
+    function addOption(event) {
+      const option = document.createElement('option');
+      var text = document.getElementById('optionLabel').value;
+      option.innerText = text;
+      text = '';
+      document.getElementById('dynamic-sel').appendChild(option);
+    }
+    * */
 
     private async updateTeams(): Promise<void> {
         Log.info('CS340View::updateTeams(..) - start');
@@ -160,7 +149,9 @@ function addOption(event) {
         const delivSelectElement = document.querySelector('#studentDeliverableSelect') as HTMLSelectElement;
         // get the deliverable ID
         const delivId = delivSelectElement.value;
-        if (delivId === "--N/A--") { return; }
+        if (delivId === "--N/A--") {
+            return;
+        }
         Log.info('CS340View::updateTeams(..) - selected ' + delivId);
 
         let found = false;
@@ -192,7 +183,9 @@ function addOption(event) {
                 Log.info("CS340View::updateTeams(..)::createTeam::onClick - selectedDeliv: " + selectedID);
                 const teamCreation: TeamTransport = await that.formTeam(selectedID);
                 Log.info("CS340View::updateTeams(..)::createTeam::onClick::then - result: " + teamCreation.toString());
-                if (teamCreation === null) { return; }
+                if (teamCreation === null) {
+                    return;
+                }
                 that.teams.push(teamCreation);
 
                 that.renderPage({});
@@ -300,6 +293,7 @@ function addOption(event) {
         }
     }
 
+    // tslint:disable
     // private async getDeliverables(): Promise<Deliverable[]> {
     //     const delivOptions = AdminView.getOptions();
     //     const delivUrl: string = this.remote + '/portal/cs340/getAllDeliverables';
@@ -316,660 +310,660 @@ function addOption(event) {
     //     return delivArray;
     // }
 
-/*
-    private remote: string = null;
+    /*
+        private remote: string = null;
 
-    constructor(remoteUrl: string) {
-        Log.info("CS340View::<init>");
-        this.remote = remoteUrl;
-    }
+        constructor(remoteUrl: string) {
+            Log.info("CS340View::<init>");
+            this.remote = remoteUrl;
+        }
 
-    public renderPage(opts: {}) {
-        Log.info('CS340View::renderPage() - start; opts: ' + JSON.stringify(opts));
+        public renderPage(opts: {}) {
+            Log.info('CS340View::renderPage() - start; opts: ' + JSON.stringify(opts));
 
-    }
+        }
 
-*/
+    */
 
-/*
-    public testfunction() {
-        console.log("A spooky message!");
-        UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/GradingView.html', {
-            hello:  "world"
-            , page: Factory.getInstance().getHTMLPrefix() + '/GradingView.html'
-        }).then(() => {
-            this.renderPage({page: Factory.getInstance().getHTMLPrefix() + '/GradingView.html'});
-            console.log("all done!");
-        });
-    }
+    /*
+        public testfunction() {
+            console.log("A spooky message!");
+            UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/GradingView.html', {
+                hello:  "world"
+                , page: Factory.getInstance().getHTMLPrefix() + '/GradingView.html'
+            }).then(() => {
+                this.renderPage({page: Factory.getInstance().getHTMLPrefix() + '/GradingView.html'});
+                console.log("all done!");
+            });
+        }
 
-    private getOptions() {
-        const options = {
-            headers: {
-                user:  localStorage.user,
-                token: localStorage.token,
-                // org:   localStorage.org
-                name:  Factory.getInstance().getName()
+        private getOptions() {
+            const options = {
+                headers: {
+                    user:  localStorage.user,
+                    token: localStorage.token,
+                    // org:   localStorage.org
+                    name:  Factory.getInstance().getName()
+                }
+            };
+            return options;
+        }
+
+        // public showModal(text?: string) {
+        //     // https://onsen.io/v2/api/js/ons-modal.html
+        //     if (typeof text === 'undefined') {
+        //         text = null;
+        //     }
+        //
+        //     const modal = document.querySelector('ons-modal') as OnsModalElement;
+        //     if (modal !== null) {
+        //         modal.style.backgroundColor = '#444444'; // modal opaque
+        //         if (text != null) {
+        //             document.getElementById('modalText').innerHTML = text;
+        //         }
+        //         modal.show({animation: 'fade'});
+        //     } else {
+        //         console.log('UI::showModal(..) - Modal is null');
+        //     }
+        // }
+        //
+        // public hideModal() {
+        //     const modal = document.querySelector('ons-modal') as OnsModalElement;
+        //     if (modal !== null) {
+        //         modal.hide({animation: 'fade'});
+        //     } else {
+        //         console.log('UI::hideModal(..) - Modal is null');
+        //     }
+        // }
+
+        public showError(failure: any) { // FailurePayload
+            Log.error("SDDM::showError(..) - failure: " + JSON.stringify(failure));
+            if (typeof failure === 'string') {
+                UI.showAlert(failure);
+            } else if (typeof failure.failure !== 'undefined') {
+                UI.showAlert(failure.failure.message);
+            } else {
+                Log.error("Unknown message: " + JSON.stringify(failure));
+                UI.showAlert("Action unsuccessful.");
             }
-        };
-        return options;
-    }
-
-    // public showModal(text?: string) {
-    //     // https://onsen.io/v2/api/js/ons-modal.html
-    //     if (typeof text === 'undefined') {
-    //         text = null;
-    //     }
-    //
-    //     const modal = document.querySelector('ons-modal') as OnsModalElement;
-    //     if (modal !== null) {
-    //         modal.style.backgroundColor = '#444444'; // modal opaque
-    //         if (text != null) {
-    //             document.getElementById('modalText').innerHTML = text;
-    //         }
-    //         modal.show({animation: 'fade'});
-    //     } else {
-    //         console.log('UI::showModal(..) - Modal is null');
-    //     }
-    // }
-    //
-    // public hideModal() {
-    //     const modal = document.querySelector('ons-modal') as OnsModalElement;
-    //     if (modal !== null) {
-    //         modal.hide({animation: 'fade'});
-    //     } else {
-    //         console.log('UI::hideModal(..) - Modal is null');
-    //     }
-    // }
-
-    public showError(failure: any) { // FailurePayload
-        Log.error("SDDM::showError(..) - failure: " + JSON.stringify(failure));
-        if (typeof failure === 'string') {
-            UI.showAlert(failure);
-        } else if (typeof failure.failure !== 'undefined') {
-            UI.showAlert(failure.failure.message);
-        } else {
-            Log.error("Unknown message: " + JSON.stringify(failure));
-            UI.showAlert("Action unsuccessful.");
-        }
-    }
-
-    public async getGradingRubric(assignmentId: string): Promise<AssignmentGradingRubric | null> {
-        Log.info("CS340View::getGradingRubric(" + assignmentId + ") - start");
-        const url = this.remote + '/portal/getAssignmentRubric/' + assignmentId;
-        Log.info("CS340View::getGradingRubric(...) - uri: " + url);
-
-        UI.showModal("Getting grading rubric, please wait...");
-        // Call the function
-        let options: any = this.getOptions();
-
-        options.method = 'get';
-        let response = await fetch(url, options);
-        UI.hideModal();
-
-        // If the response was valid:
-        if (response.status === 200) {
-            let jsonResponse = await response.json();
-            // TODO [Jonathan]: Do something with the response
-            return jsonResponse.response;
-        } else {
-            Log.trace('CS340View::getGradingRubric(...) - !200; Code: ' + response.status);
-            return null;
-        }
-    }
-
-    /!**
-     * Grabs the page and adds the grading view as specified in the deliverable
-     * @param {string} delivId
-     * @param {string} sid
-     * @returns {Promise<void>}
-     *!/
-    public async populateGradingPage(delivId: string, sid: string) {
-        Log.info("CS340View::populateGradingPage() - start");
-
-        UI.showModal("Populating grading view, please wait...");
-        let rubric: AssignmentGradingRubric = await this.getGradingRubric(delivId);
-        if (rubric === null) {
-            // Log.error(rubric);
-            Log.error("CS340View::populateGradingPage() - Unable to populate page due to missing rubric");
-            return;
-        }
-        Log.info("CS340View::populateGradingPage() - Rubric: " + rubric);
-
-        // TODO: Do something about the previous submission
-        let previousSubmission = await this.getStudentGrade(sid, delivId);
-
-        let assignmentInfoElement = document.getElementById('assignmentInfoSection');
-        let gradingSectionElement = document.getElementById('gradingSection');
-
-        // let assignmentInfoList = document.createElement("ons-list");
-        // let assignmentInfoAssignmentID = document.createElement("ons-list-item");
-        // let assignmentInfoAssignmentStudent = document.createElement("ons-list-item");
-
-        let assignmentInfoList = document.createElement("div");
-
-        let assignmentInfoAssignmentID = document.createElement("p");
-        assignmentInfoAssignmentID.innerHTML = delivId;
-        assignmentInfoAssignmentID.setAttribute("class", "aInfoID");
-
-        let assignmentInfoStudentID = document.createElement("p");
-        assignmentInfoStudentID.innerHTML = sid;
-        assignmentInfoStudentID.setAttribute("class", "aInfoSID");
-        assignmentInfoList.appendChild(assignmentInfoAssignmentID);
-        assignmentInfoList.appendChild(assignmentInfoStudentID);
-
-        if (gradingSectionElement === null || assignmentInfoElement === null) {
-            Log.error("CS340View::populateGradingPage() - Unable to populate page due to missing elements");
-            return;
         }
 
-        assignmentInfoElement.appendChild(assignmentInfoList);
+        public async getGradingRubric(assignmentId: string): Promise<AssignmentGradingRubric | null> {
+            Log.info("CS340View::getGradingRubric(" + assignmentId + ") - start");
+            const url = this.remote + '/portal/getAssignmentRubric/' + assignmentId;
+            Log.info("CS340View::getGradingRubric(...) - uri: " + url);
 
-        for (let i = 0; i < rubric.questions.length; i++) {
-            // Get the i-th question
-            let question = rubric.questions[i];
+            UI.showModal("Getting grading rubric, please wait...");
+            // Call the function
+            let options: any = this.getOptions();
 
-            let questionHeaderElement = document.createElement("h3");
-            let questionHeader = document.createElement("span");
-            let questionHeaderComponent1 = document.createElement("span");
-            let questionHeaderComponent2 = document.createElement("span");
+            options.method = 'get';
+            let response = await fetch(url, options);
+            UI.hideModal();
 
-            // TODO: Check this
-            questionHeaderComponent1.innerHTML = question.name;
-            questionHeaderComponent1.setAttribute("class", "questionName");
-            questionHeaderComponent2.setAttribute("class", "redText");
-            questionHeaderComponent2.innerHTML = " *";
+            // If the response was valid:
+            if (response.status === 200) {
+                let jsonResponse = await response.json();
+                // TODO [Jonathan]: Do something with the response
+                return jsonResponse.response;
+            } else {
+                Log.trace('CS340View::getGradingRubric(...) - !200; Code: ' + response.status);
+                return null;
+            }
+        }
 
-            questionHeader.appendChild(questionHeaderComponent1);
-            questionHeader.appendChild(questionHeaderComponent2);
-            questionHeaderElement.appendChild(questionHeader);
-            gradingSectionElement.appendChild(questionHeaderElement);
+        /!**
+         * Grabs the page and adds the grading view as specified in the deliverable
+         * @param {string} delivId
+         * @param {string} sid
+         * @returns {Promise<void>}
+         *!/
+        public async populateGradingPage(delivId: string, sid: string) {
+            Log.info("CS340View::populateGradingPage() - start");
 
-            let questionBox = document.createElement("div");
-            questionBox.setAttribute("class", "questionBox");
+            UI.showModal("Populating grading view, please wait...");
+            let rubric: AssignmentGradingRubric = await this.getGradingRubric(delivId);
+            if (rubric === null) {
+                // Log.error(rubric);
+                Log.error("CS340View::populateGradingPage() - Unable to populate page due to missing rubric");
+                return;
+            }
+            Log.info("CS340View::populateGradingPage() - Rubric: " + rubric);
 
-            for (let j = 0; j < question.subQuestions.length; j++) {
-                let subQuestion: SubQuestionGradingRubric = question.subQuestions[j];
+            // TODO: Do something about the previous submission
+            let previousSubmission = await this.getStudentGrade(sid, delivId);
 
-                let questionSubBoxElement = document.createElement("div");
-                questionSubBoxElement.setAttribute("class", "subQuestionBody");
+            let assignmentInfoElement = document.getElementById('assignmentInfoSection');
+            let gradingSectionElement = document.getElementById('gradingSection');
 
-                // Create the grade input element
-                let subInfoBoxElement = document.createElement("div");
-                subInfoBoxElement.setAttribute("class", "subQuestionInfoBox");
+            // let assignmentInfoList = document.createElement("ons-list");
+            // let assignmentInfoAssignmentID = document.createElement("ons-list-item");
+            // let assignmentInfoAssignmentStudent = document.createElement("ons-list-item");
 
-                // Contains the feedback box for the particular subquestion
-                let subTextBoxElement = document.createElement("div");
-                subTextBoxElement.setAttribute("class", "subQuestionTextBox");
+            let assignmentInfoList = document.createElement("div");
 
-                let subErrorBoxElement = document.createElement("div");
-                subErrorBoxElement.setAttribute("class", "subQuestionErrorBox");
+            let assignmentInfoAssignmentID = document.createElement("p");
+            assignmentInfoAssignmentID.innerHTML = delivId;
+            assignmentInfoAssignmentID.setAttribute("class", "aInfoID");
 
-                // Create the grade input element
-                let gradeInputElement = document.createElement("ons-input");
-                gradeInputElement.setAttribute("type", "number");
-                gradeInputElement.setAttribute("placeHolder", subQuestion.name);
-                gradeInputElement.setAttribute("data-type", subQuestion.name);
-                gradeInputElement.setAttribute("modifier", "underbar");
-                gradeInputElement.setAttribute("class", "subQuestionGradeInput");
-                // gradeInputElement.setAttribute("onchange", "checkIfWarning(this)");
-                gradeInputElement.setAttribute("data-outOf", "" + subQuestion.outOf);
-                gradeInputElement.innerHTML = subQuestion.name + " [out of " + subQuestion.outOf + "]";
+            let assignmentInfoStudentID = document.createElement("p");
+            assignmentInfoStudentID.innerHTML = sid;
+            assignmentInfoStudentID.setAttribute("class", "aInfoSID");
+            assignmentInfoList.appendChild(assignmentInfoAssignmentID);
+            assignmentInfoList.appendChild(assignmentInfoStudentID);
 
-                // Add grade input to infoBox
-                subInfoBoxElement.appendChild(gradeInputElement);
-
-                // Create error box that is initially invisible
-                let errorBox = document.createElement("p");
-                errorBox.setAttribute("class", "errorBox");
-
-                // Add the error box to the info box section
-                subInfoBoxElement.appendChild(errorBox);
-
-                // Create input form for feedback form
-                let textBoxElement = document.createElement("textArea");
-                let textBoxLabelElement = document.createElement("p");
-                textBoxLabelElement.innerHTML = "Comments & Feedback";
-                textBoxLabelElement.setAttribute("class", "textboxLabel");
-                textBoxElement.setAttribute("class", "textarea");
-                textBoxElement.setAttribute("style", "width: 100%;height: 75%; min-width: 100px;min-height: 50px");
-                subTextBoxElement.appendChild(textBoxLabelElement);
-                subTextBoxElement.appendChild(textBoxElement);
-
-                // Add two subboxes to the subQuestion box
-                questionSubBoxElement.appendChild(subInfoBoxElement);
-                questionSubBoxElement.appendChild(subTextBoxElement);
-
-                // Add the subQuestion to the question box
-                questionBox.appendChild(questionSubBoxElement);
+            if (gradingSectionElement === null || assignmentInfoElement === null) {
+                Log.error("CS340View::populateGradingPage() - Unable to populate page due to missing elements");
+                return;
             }
 
-            // Add the questionBox to the gradingSection
-            gradingSectionElement!.appendChild(questionBox);
+            assignmentInfoElement.appendChild(assignmentInfoList);
+
+            for (let i = 0; i < rubric.questions.length; i++) {
+                // Get the i-th question
+                let question = rubric.questions[i];
+
+                let questionHeaderElement = document.createElement("h3");
+                let questionHeader = document.createElement("span");
+                let questionHeaderComponent1 = document.createElement("span");
+                let questionHeaderComponent2 = document.createElement("span");
+
+                // TODO: Check this
+                questionHeaderComponent1.innerHTML = question.name;
+                questionHeaderComponent1.setAttribute("class", "questionName");
+                questionHeaderComponent2.setAttribute("class", "redText");
+                questionHeaderComponent2.innerHTML = " *";
+
+                questionHeader.appendChild(questionHeaderComponent1);
+                questionHeader.appendChild(questionHeaderComponent2);
+                questionHeaderElement.appendChild(questionHeader);
+                gradingSectionElement.appendChild(questionHeaderElement);
+
+                let questionBox = document.createElement("div");
+                questionBox.setAttribute("class", "questionBox");
+
+                for (let j = 0; j < question.subQuestions.length; j++) {
+                    let subQuestion: SubQuestionGradingRubric = question.subQuestions[j];
+
+                    let questionSubBoxElement = document.createElement("div");
+                    questionSubBoxElement.setAttribute("class", "subQuestionBody");
+
+                    // Create the grade input element
+                    let subInfoBoxElement = document.createElement("div");
+                    subInfoBoxElement.setAttribute("class", "subQuestionInfoBox");
+
+                    // Contains the feedback box for the particular subquestion
+                    let subTextBoxElement = document.createElement("div");
+                    subTextBoxElement.setAttribute("class", "subQuestionTextBox");
+
+                    let subErrorBoxElement = document.createElement("div");
+                    subErrorBoxElement.setAttribute("class", "subQuestionErrorBox");
+
+                    // Create the grade input element
+                    let gradeInputElement = document.createElement("ons-input");
+                    gradeInputElement.setAttribute("type", "number");
+                    gradeInputElement.setAttribute("placeHolder", subQuestion.name);
+                    gradeInputElement.setAttribute("data-type", subQuestion.name);
+                    gradeInputElement.setAttribute("modifier", "underbar");
+                    gradeInputElement.setAttribute("class", "subQuestionGradeInput");
+                    // gradeInputElement.setAttribute("onchange", "checkIfWarning(this)");
+                    gradeInputElement.setAttribute("data-outOf", "" + subQuestion.outOf);
+                    gradeInputElement.innerHTML = subQuestion.name + " [out of " + subQuestion.outOf + "]";
+
+                    // Add grade input to infoBox
+                    subInfoBoxElement.appendChild(gradeInputElement);
+
+                    // Create error box that is initially invisible
+                    let errorBox = document.createElement("p");
+                    errorBox.setAttribute("class", "errorBox");
+
+                    // Add the error box to the info box section
+                    subInfoBoxElement.appendChild(errorBox);
+
+                    // Create input form for feedback form
+                    let textBoxElement = document.createElement("textArea");
+                    let textBoxLabelElement = document.createElement("p");
+                    textBoxLabelElement.innerHTML = "Comments & Feedback";
+                    textBoxLabelElement.setAttribute("class", "textboxLabel");
+                    textBoxElement.setAttribute("class", "textarea");
+                    textBoxElement.setAttribute("style", "width: 100%;height: 75%; min-width: 100px;min-height: 50px");
+                    subTextBoxElement.appendChild(textBoxLabelElement);
+                    subTextBoxElement.appendChild(textBoxElement);
+
+                    // Add two subboxes to the subQuestion box
+                    questionSubBoxElement.appendChild(subInfoBoxElement);
+                    questionSubBoxElement.appendChild(subTextBoxElement);
+
+                    // Add the subQuestion to the question box
+                    questionBox.appendChild(questionSubBoxElement);
+                }
+
+                // Add the questionBox to the gradingSection
+                gradingSectionElement!.appendChild(questionBox);
+            }
+
+            // TODO: Work on this
+            // Create a submission button
+            let submitButton = document.createElement("ons-button");
+            // TODO: Link this better
+            submitButton.setAttribute("onclick", "window.classportal.view.submitGrade()");
+            submitButton.innerHTML = "Submit";
+
+            gradingSectionElement!.appendChild(submitButton);
         }
 
-        // TODO: Work on this
-        // Create a submission button
-        let submitButton = document.createElement("ons-button");
-        // TODO: Link this better
-        submitButton.setAttribute("onclick", "window.classportal.view.submitGrade()");
-        submitButton.innerHTML = "Submit";
+        public async submitGrade(): Promise<AssignmentGrade | null> {
+            let error = false;
+            let questionArray: QuestionGrade[] = [];
+            let questionBoxes = document.getElementsByClassName("questionBox");
 
-        gradingSectionElement!.appendChild(submitButton);
-    }
+            for (let i = 0; i < questionBoxes.length; i++) {
+                // A single question box, representative of many subquestions
+                let questionBox = questionBoxes[i];
+                // Get each subquestion from the questionBox
+                let subQuestions = questionBox.getElementsByClassName("subQuestionBody");
+                // initalize an array to place all the information inside
+                let subQuestionArray: SubQuestionGrade[] = [];
 
-    public async submitGrade(): Promise<AssignmentGrade | null> {
-        let error = false;
-        let questionArray: QuestionGrade[] = [];
-        let questionBoxes = document.getElementsByClassName("questionBox");
+                // for each subQuestion
+                for (let j = 0; j < subQuestions.length; j++) {
+                    // Get a single subQuestion
+                    let subQuestion = subQuestions[j];
 
-        for (let i = 0; i < questionBoxes.length; i++) {
-            // A single question box, representative of many subquestions
-            let questionBox = questionBoxes[i];
-            // Get each subquestion from the questionBox
-            let subQuestions = questionBox.getElementsByClassName("subQuestionBody");
-            // initalize an array to place all the information inside
-            let subQuestionArray: SubQuestionGrade[] = [];
+                    // Grab the elements associated with the subQuesiton
+                    let gradeInputElements = subQuestion.getElementsByClassName("subQuestionGradeInput");
+                    let errorElements = subQuestion.getElementsByClassName("errorBox");
+                    let responseBoxElements = subQuestion.getElementsByClassName("textarea");
 
-            // for each subQuestion
-            for (let j = 0; j < subQuestions.length; j++) {
-                // Get a single subQuestion
-                let subQuestion = subQuestions[j];
+                    // Check if there is exactly one element in each
+                    // otherwise something is wrong with the webpage
+                    if (gradeInputElements.length !== 1 ||
+                        responseBoxElements.length !== 1 ||
+                        errorElements.length !== 1) {
+                        // Display an error
+                        Log.error("CS340View::submitGrade - Error: Page is malformed");
+                        return null;
+                    }
 
-                // Grab the elements associated with the subQuesiton
-                let gradeInputElements = subQuestion.getElementsByClassName("subQuestionGradeInput");
-                let errorElements = subQuestion.getElementsByClassName("errorBox");
-                let responseBoxElements = subQuestion.getElementsByClassName("textarea");
+                    // Grab the elements
+                    let gradeInputElement = gradeInputElements[0] as HTMLInputElement;
+                    let responseBoxElement = responseBoxElements[0] as HTMLTextAreaElement;
+                    let errorElement = errorElements[0] as HTMLElement;
 
-                // Check if there is exactly one element in each
-                // otherwise something is wrong with the webpage
-                if (gradeInputElements.length !== 1 ||
-                    responseBoxElements.length !== 1 ||
-                    errorElements.length !== 1) {
-                    // Display an error
-                    Log.error("CS340View::submitGrade - Error: Page is malformed");
-                    return null;
-                }
+                    // Get the type from the embedded HTML data
+                    let rubricType = gradeInputElement.getAttribute("data-type");
 
-                // Grab the elements
-                let gradeInputElement = gradeInputElements[0] as HTMLInputElement;
-                let responseBoxElement = responseBoxElements[0] as HTMLTextAreaElement;
-                let errorElement = errorElements[0] as HTMLElement;
+                    // Retrieve the value inputted into the form field
+                    let gradeValue = parseFloat(gradeInputElement.value);
 
-                // Get the type from the embedded HTML data
-                let rubricType = gradeInputElement.getAttribute("data-type");
-
-                // Retrieve the value inputted into the form field
-                let gradeValue = parseFloat(gradeInputElement.value);
-
-                // If the value is not found, set it to a default empty string
-                if (rubricType === null) {
-                    rubricType = "";
-                    error = true;
-                    continue;
-                }
-
-                // If the grade value retrieved is not a number, default the value to 0
-                if (isNaN(gradeValue)) {
-                    gradeValue = 0;
-                    error = true;
-                    errorElement.innerHTML = "Error: Must specify a valid number";
-                    continue;
-                } else {
-                    // If the gradeValue is an actual number
-                    // check if there are any warnings about the input value
-                    if (this.checkIfWarning(gradeInputElement)) {
+                    // If the value is not found, set it to a default empty string
+                    if (rubricType === null) {
+                        rubricType = "";
                         error = true;
                         continue;
                     }
+
+                    // If the grade value retrieved is not a number, default the value to 0
+                    if (isNaN(gradeValue)) {
+                        gradeValue = 0;
+                        error = true;
+                        errorElement.innerHTML = "Error: Must specify a valid number";
+                        continue;
+                    } else {
+                        // If the gradeValue is an actual number
+                        // check if there are any warnings about the input value
+                        if (this.checkIfWarning(gradeInputElement)) {
+                            error = true;
+                            continue;
+                        }
+                    }
+
+                    let newSubGrade: SubQuestionGrade = {
+                        sectionName: rubricType,
+                        grade:       gradeValue,
+                        feedback:    responseBoxElement.value
+                    };
+
+                    subQuestionArray.push(newSubGrade);
                 }
 
-                let newSubGrade: SubQuestionGrade = {
-                    sectionName: rubricType,
-                    grade:       gradeValue,
-                    feedback:    responseBoxElement.value
+                let questionNames = document.getElementsByClassName("questionName");
+                if (questionNames.length !== 1) {
+                    error = true;
+                    continue;
+                }
+
+                let newQuestion: QuestionGrade = {
+                    questionName: questionNames[0].innerHTML,
+                    commentName:  "",
+                    subQuestion:  subQuestionArray
                 };
 
-                subQuestionArray.push(newSubGrade);
+                questionArray.push(newQuestion);
             }
 
-            let questionNames = document.getElementsByClassName("questionName");
-            if (questionNames.length !== 1) {
+            let aInfoSIDElements = document.getElementsByClassName("aInfoSID");
+            let aInfoIDElements = document.getElementsByClassName("aInfoID");
+
+            if (aInfoSIDElements.length !== 1 || aInfoIDElements.length !== 1) {
                 error = true;
-                continue;
             }
 
-            let newQuestion: QuestionGrade = {
-                questionName: questionNames[0].innerHTML,
-                commentName:  "",
-                subQuestion:  subQuestionArray
+            if (error) {
+                Log.error("CS340View::submitGrade() - Unable to submit data");
+                return null;
+            }
+
+            let sid = aInfoSIDElements[0].innerHTML;
+            let aid = aInfoIDElements[0].innerHTML;
+
+            let newAssignmentGrade: AssignmentGrade = {
+                assignmentID: aid,
+                studentID:    sid,
+                questions:    questionArray
             };
 
-            questionArray.push(newQuestion);
+            // TODO: Record in database the new Grade
+            const url = this.remote + '/portal/setAssignmentGrade';
+            Log.info("CS340View::submitGrade() - uri: " + url);
+
+            UI.showModal("Submitting grade, please wait...");
+            // Call the function
+            let options: any = this.getOptions();
+
+            options.method = 'put';
+            options.headers.Accept = 'application/json';
+            options.json = true;
+            // options.body = JSON.stringify({"value": "response"});
+            options.body = JSON.stringify(newAssignmentGrade);
+
+            Log.info("CS340View::submitGrade() - request body: " + options.body);
+
+            let response = await fetch(url, options);
+
+            UI.hideModal();
+            Log.info("CS340View::submitGrade() - response from api " + response);
+
+            return newAssignmentGrade;
         }
 
-        let aInfoSIDElements = document.getElementsByClassName("aInfoSID");
-        let aInfoIDElements = document.getElementsByClassName("aInfoID");
-
-        if (aInfoSIDElements.length !== 1 || aInfoIDElements.length !== 1) {
-            error = true;
-        }
-
-        if (error) {
-            Log.error("CS340View::submitGrade() - Unable to submit data");
+        public async getStudentGrade(sid: string, aid: string): Promise<AssignmentGrade | null> {
+            // TODO [Jonathan]: Complete this
             return null;
         }
 
-        let sid = aInfoSIDElements[0].innerHTML;
-        let aid = aInfoIDElements[0].innerHTML;
+        public async pageSetup() {
+            Log.info("CS340View::pageSetup - Setting up page with default dropdowns");
 
-        let newAssignmentGrade: AssignmentGrade = {
-            assignmentID: aid,
-            studentID:    sid,
-            questions:    questionArray
-        };
-
-        // TODO: Record in database the new Grade
-        const url = this.remote + '/portal/setAssignmentGrade';
-        Log.info("CS340View::submitGrade() - uri: " + url);
-
-        UI.showModal("Submitting grade, please wait...");
-        // Call the function
-        let options: any = this.getOptions();
-
-        options.method = 'put';
-        options.headers.Accept = 'application/json';
-        options.json = true;
-        // options.body = JSON.stringify({"value": "response"});
-        options.body = JSON.stringify(newAssignmentGrade);
-
-        Log.info("CS340View::submitGrade() - request body: " + options.body);
-
-        let response = await fetch(url, options);
-
-        UI.hideModal();
-        Log.info("CS340View::submitGrade() - response from api " + response);
-
-        return newAssignmentGrade;
-    }
-
-    public async getStudentGrade(sid: string, aid: string): Promise<AssignmentGrade | null> {
-        // TODO [Jonathan]: Complete this
-        return null;
-    }
-
-    public async pageSetup() {
-        Log.info("CS340View::pageSetup - Setting up page with default dropdowns");
-
-    }
-
-    public async renderDeliverables() {
-        // TODO [Jonathan]: Get the deliverables
-        Log.info("CS340View::getAllDeliverables() - start");
-        const url = this.remote + '/portal/getAllDeliverables';
-        UI.showModal("Getting all deliverables, please wait...");
-
-        let options: any = this.getOptions();
-        options.method = 'get';
-        let response = await fetch(url, options);
-        UI.hideModal();
-
-        if (response.status === 200) {
-            Log.info("CS340View::getAllDeliverables() - response 200");
-
-            // console.log("This is the result received: ");
-            let jsonResponse = await response.json();
-            let responseData = jsonResponse.response;
-
-            // console.log(jsonResponse);
-            Log.info("CS340View::getAllDeliverables() - response data: " + JSON.stringify(responseData));
-
-            let deliverableListElement = document.getElementById("select-deliverable-list") as OnsSelectElement;
-            while (deliverableListElement.firstChild) {
-                deliverableListElement.removeChild(deliverableListElement.firstChild);
-                // deliverableListElement.remove();
-            }
-            let arrayResponse: Deliverable[] = responseData;
-            // Log.info("CS340View::getAllDeliverables() value- " + JSON.stringify(arrayResponse));
-            // Log.info("CS340View::getAllDeliverables() value- " + arrayResponse);
-            if (arrayResponse == null || typeof arrayResponse == "undefined") {
-                Log.error("CS340View::getAllDeliverables() - error, response is null or undefined");
-                return;
-            }
-            for (const deliv of arrayResponse) {
-                // let newOption = document.createElement("ons-list-item");
-                let newOption = document.createElement("option");
-                // newOption.setAttribute("tappable", "true");
-                newOption.setAttribute("value", "material");
-                newOption.text = deliv.id;
-                newOption.value = deliv.id;
-                // TODO [Jonathan]: Make this call the page transition function
-                // newOption.setAttribute("onclick", "window.classportal.view.changeStudentList(\""+deliv.id+"\")");
-                // selectElement.appendChild(newOption);
-                Log.info("CS340View::getAllDeliverables - Add new option: " + deliv.id);
-                (<any>deliverableListElement).appendChild(newOption);
-            }
-            // TODO [Jonathan]: Setup an event listener on the button to show the grades
-            let deliverableButton = document.getElementById("select-deliverable-button") as OnsButtonElement;
-            deliverableButton.addEventListener('click', () => {
-                let selectedDeliverable = deliverableListElement.options[deliverableListElement.options.selectedIndex].value;
-                // Log.info("CS340View::clickListener - value: " + selectedDeliverable);
-                this.renderStudentSubmissions(selectedDeliverable);
-            });
-        } else {
-            Log.error("CS340View::getAllDeliverables() - Error: unable to retrieve deliverables");
-            // return null;
         }
 
-        Log.info("CS340View::getAllDeliverables() - end");
-    }
+        public async renderDeliverables() {
+            // TODO [Jonathan]: Get the deliverables
+            Log.info("CS340View::getAllDeliverables() - start");
+            const url = this.remote + '/portal/getAllDeliverables';
+            UI.showModal("Getting all deliverables, please wait...");
 
-// <<<<<<< HEAD
-    public async renderStudentSubmissions(delivId: string) {
-        Log.info("CS340View::renderStudentSubmissions(" + delivId + ") -- start");
-        let gradeTable = document.getElementById("grades-table");
-        const submissionRetrieveURL = this.remote + '/portal/getAllSubmissionsByDelivID/' + delivId;
+            let options: any = this.getOptions();
+            options.method = 'get';
+            let response = await fetch(url, options);
+            UI.hideModal();
 
-        UI.showModal("Loading submissions, please wait...");
-        let options: any = this.getOptions();
-        options.method = 'get';
-        let response = await fetch(submissionRetrieveURL, options);
+            if (response.status === 200) {
+                Log.info("CS340View::getAllDeliverables() - response 200");
 
-        if (response.status === 200) {
-            let jsonResponse = await response.json();
-            let responseData = jsonResponse.response; // TODO: Check if this is null
+                // console.log("This is the result received: ");
+                let jsonResponse = await response.json();
+                let responseData = jsonResponse.response;
 
-            if (gradeTable !== null) {
-                gradeTable.innerHTML = ''; // destructively delete the table entries
-                let headerValues = ['Username', 'SNum', 'First', 'Last'];
+                // console.log(jsonResponse);
+                Log.info("CS340View::getAllDeliverables() - response data: " + JSON.stringify(responseData));
 
-                headerValues.push(delivId); // Append the deliverable ID to the end of the header
-                let delivCount = 1; // Constant: Change if dynamic
-
-                let headers: TableHeader[] = [];
-                let defaultSort = true; // Set true for first value
-                for (let h of headerValues) {
-                    headers.push({id: h, text: h, sortable: true, defaultSort: defaultSort, sortDown: true});
-                    defaultSort = false;
+                let deliverableListElement = document.getElementById("select-deliverable-list") as OnsSelectElement;
+                while (deliverableListElement.firstChild) {
+                    deliverableListElement.removeChild(deliverableListElement.firstChild);
+                    // deliverableListElement.remove();
                 }
+                let arrayResponse: Deliverable[] = responseData;
+                // Log.info("CS340View::getAllDeliverables() value- " + JSON.stringify(arrayResponse));
+                // Log.info("CS340View::getAllDeliverables() value- " + arrayResponse);
+                if (arrayResponse == null || typeof arrayResponse == "undefined") {
+                    Log.error("CS340View::getAllDeliverables() - error, response is null or undefined");
+                    return;
+                }
+                for (const deliv of arrayResponse) {
+                    // let newOption = document.createElement("ons-list-item");
+                    let newOption = document.createElement("option");
+                    // newOption.setAttribute("tappable", "true");
+                    newOption.setAttribute("value", "material");
+                    newOption.text = deliv.id;
+                    newOption.value = deliv.id;
+                    // TODO [Jonathan]: Make this call the page transition function
+                    // newOption.setAttribute("onclick", "window.classportal.view.changeStudentList(\""+deliv.id+"\")");
+                    // selectElement.appendChild(newOption);
+                    Log.info("CS340View::getAllDeliverables - Add new option: " + deliv.id);
+                    (<any>deliverableListElement).appendChild(newOption);
+                }
+                // TODO [Jonathan]: Setup an event listener on the button to show the grades
+                let deliverableButton = document.getElementById("select-deliverable-button") as OnsButtonElement;
+                deliverableButton.addEventListener('click', () => {
+                    let selectedDeliverable = deliverableListElement.options[deliverableListElement.options.selectedIndex].value;
+                    // Log.info("CS340View::clickListener - value: " + selectedDeliverable);
+                    this.renderStudentSubmissions(selectedDeliverable);
+                });
+            } else {
+                Log.error("CS340View::getAllDeliverables() - Error: unable to retrieve deliverables");
+                // return null;
+            }
 
-                // Get all students and their associated information, then store in a map for constant time access
+            Log.info("CS340View::getAllDeliverables() - end");
+        }
+
+    // <<<<<<< HEAD
+        public async renderStudentSubmissions(delivId: string) {
+            Log.info("CS340View::renderStudentSubmissions(" + delivId + ") -- start");
+            let gradeTable = document.getElementById("grades-table");
+            const submissionRetrieveURL = this.remote + '/portal/getAllSubmissionsByDelivID/' + delivId;
+
+            UI.showModal("Loading submissions, please wait...");
+            let options: any = this.getOptions();
+            options.method = 'get';
+            let response = await fetch(submissionRetrieveURL, options);
+
+            if (response.status === 200) {
+                let jsonResponse = await response.json();
+                let responseData = jsonResponse.response; // TODO: Check if this is null
+
+                if (gradeTable !== null) {
+                    gradeTable.innerHTML = ''; // destructively delete the table entries
+                    let headerValues = ['Username', 'SNum', 'First', 'Last'];
+
+                    headerValues.push(delivId); // Append the deliverable ID to the end of the header
+                    let delivCount = 1; // Constant: Change if dynamic
+
+                    let headers: TableHeader[] = [];
+                    let defaultSort = true; // Set true for first value
+                    for (let h of headerValues) {
+                        headers.push({id: h, text: h, sortable: true, defaultSort: defaultSort, sortDown: true});
+                        defaultSort = false;
+                    }
+
+                    // Get all students and their associated information, then store in a map for constant time access
+                    const url = this.remote + '/portal/getAllPersons';
+                    let options: any = this.getOptions();
+                    options.method = 'get';
+                    let response = await fetch(url, options);
+
+                    if (response.status !== 200) {
+                        // Fail, unable to join person data
+                        Log.trace("CS340View::renderStudentSubmissions - unable to join person data; code: " + response.status);
+                        return;
+                    }
+
+                    let jsonResponse = await response.json();
+                    const personData: Person[] = jsonResponse.response;
+
+                    if (personData === null) {
+                        Log.trace("CS340View::renderStudentSubmissions - unable to parse person data");
+                    }
+
+                    // Person Lookup mapping, for close to constant lookups
+                    let personIdMap: { [s: string]: Person } = {};
+                    for (const person of personData) {
+                        if (typeof personIdMap[person.id] === 'undefined') {
+                            personIdMap[person.id] = person;
+                        }
+                    }
+
+                    let table = new SortableTable(headers, "grades-table");
+                }
+            } else {
+                Log.info("CS340View::renderStudentSubmissions - error; backend api response code: " + response.status);
+            }
+    // =======
+    //     public async changeStudentList(delivId: string) {
+    //         console.log(delivId);
+    //
+    //         const nav = document.querySelector('#myNavigator') as any;
+    //         let page = nav.pushPage(Factory.getInstance().getHTMLPrefix() + "/deliverableView.html", {
+    //             delivId: delivId
+    //         });
+    //
+    //         Log.info("CS340View::renderStudentSubmission() -- Complete");
+    //         console.log("data: "+ JSON.stringify(nav.topPage.data));
+    //         // console.log();
+    // >>>>>>> 6485a394b8e4acf9036fc5e5c2b3121698aa8cee
+        }
+
+        // Takes the data, and removes unnecessary data based on the delivId string, and returns a filtered Grade Array
+        private processGradeTableData(data: Grade[], delivId: string): Grade[] {
+            let returnArray: Grade[] = [];
+            for (const grade of data) {
+                if (grade.delivId === delivId || delivId === "all") {
+                    returnArray.push(grade);
+                }
+            }
+            return returnArray;
+        }
+
+        /!*
+            // Using the submission data (grades), join the data with student and deliverable information
+            private async processData(data: Grade[], delivId: string) {
+
+                Log.info("CS340View::processResponse - start");
                 const url = this.remote + '/portal/getAllPersons';
-                let options: any = this.getOptions();
+                let options : any = this.getOptions();
                 options.method = 'get';
                 let response = await fetch(url, options);
 
-                if (response.status !== 200) {
+                if(response.status !== 200) {
                     // Fail, unable to join person data
-                    Log.trace("CS340View::renderStudentSubmissions - unable to join person data; code: " + response.status);
+                    Log.trace("CS340View::processResponse - unable to join person data; code: " + response.status);
                     return;
                 }
 
                 let jsonResponse = await response.json();
-                const personData: Person[] = jsonResponse.response;
+                const personData : Person[] = jsonResponse.response;
 
-                if (personData === null) {
-                    Log.trace("CS340View::renderStudentSubmissions - unable to parse person data");
+                if(personData === null) {
+                    Log.trace("CS340View::processResponse - unable to parse person data");
                 }
 
                 // Person Lookup mapping, for close to constant lookups
-                let personIdMap: { [s: string]: Person } = {};
-                for (const person of personData) {
-                    if (typeof personIdMap[person.id] === 'undefined') {
+                let personIdMap : {[s:string] : Person} = {};
+                for(const person of personData) {
+                    if(typeof personIdMap[person.id] === 'undefined') {
                         personIdMap[person.id] = person;
                     }
                 }
 
-                let table = new SortableTable(headers, "grades-table");
-            }
-        } else {
-            Log.info("CS340View::renderStudentSubmissions - error; backend api response code: " + response.status);
-        }
-// =======
-//     public async changeStudentList(delivId: string) {
-//         console.log(delivId);
-//
-//         const nav = document.querySelector('#myNavigator') as any;
-//         let page = nav.pushPage(Factory.getInstance().getHTMLPrefix() + "/deliverableView.html", {
-//             delivId: delivId
-//         });
-//
-//         Log.info("CS340View::renderStudentSubmission() -- Complete");
-//         console.log("data: "+ JSON.stringify(nav.topPage.data));
-//         // console.log();
-// >>>>>>> 6485a394b8e4acf9036fc5e5c2b3121698aa8cee
-    }
+                // let students : Map<string,String[]> = new Map<string, String[]>();
+                let students : {[s: string]: any} = {};
+                let delivNamesMap : {[s: string]: string} = {};
 
-    // Takes the data, and removes unnecessary data based on the delivId string, and returns a filtered Grade Array
-    private processGradeTableData(data: Grade[], delivId: string): Grade[] {
-        let returnArray: Grade[] = [];
-        for (const grade of data) {
-            if (grade.delivId === delivId || delivId === "all") {
-                returnArray.push(grade);
-            }
-        }
-        return returnArray;
-    }
+                // Prepare student map and deliverable map data
+                for (var row of data) {
+                    let personId = row.personId;
 
-    /!*
-        // Using the submission data (grades), join the data with student and deliverable information
-        private async processData(data: Grade[], delivId: string) {
-
-            Log.info("CS340View::processResponse - start");
-            const url = this.remote + '/portal/getAllPersons';
-            let options : any = this.getOptions();
-            options.method = 'get';
-            let response = await fetch(url, options);
-
-            if(response.status !== 200) {
-                // Fail, unable to join person data
-                Log.trace("CS340View::processResponse - unable to join person data; code: " + response.status);
-                return;
-            }
-
-            let jsonResponse = await response.json();
-            const personData : Person[] = jsonResponse.response;
-
-            if(personData === null) {
-                Log.trace("CS340View::processResponse - unable to parse person data");
-            }
-
-            // Person Lookup mapping, for close to constant lookups
-            let personIdMap : {[s:string] : Person} = {};
-            for(const person of personData) {
-                if(typeof personIdMap[person.id] === 'undefined') {
-                    personIdMap[person.id] = person;
-                }
-            }
-
-            // let students : Map<string,String[]> = new Map<string, String[]>();
-            let students : {[s: string]: any} = {};
-            let delivNamesMap : {[s: string]: string} = {};
-
-            // Prepare student map and deliverable map data
-            for (var row of data) {
-                let personId = row.personId;
-
-                const deliverable = row.delivId;
-
-                // Create a new array for the given personId
-                if (typeof students[personId] === 'undefined') {
-                    students[personId] = [];                            // get ready for grades
-                }
-
-                if (this.includeRecord(row, delivId)) {
-                    // not captured yet
-                    if (typeof delivNamesMap[deliverable] === 'undefined') {
-                        delivNamesMap[deliverable] = deliverable;
-                    }
-                }
-            }
-
-            // Basic sorting function based on strings
-            const stringSort = function (a: string, b: string) {
-                return (a.localeCompare(b));
-            };
-
-            // Sort the deliverables list
-            let delivKeys = Object.keys(delivNamesMap).sort(stringSort);
-
-            let headers = ['ID', 'SNUM', 'First', 'Last'];
-
-            headers = headers.concat(delivKeys);
-
-            students['_index'] = headers;
-
-            // UPDATE: At this point, we have all the headers in the Array that will be appended to the Table
-            for (let row of data) {
-                if (this.includeRecord(row, delivId)) {
-                    if(typeof personIdMap[row.personId] === 'undefined') {
-                        Log.trace("CS340View::processResponse - error; something is wrong with the data");
-                        continue;
-                    }
-
-                    const username = personIdMap[row.personId].githubId;
                     const deliverable = row.delivId;
-                    const student = students[username];
-                    const grade = row.score === null ? '' : row.score;
-                    const index = delivKeys.indexOf(deliverable);
 
-                    student.snum = personIdMap[row.personId].studentNumber;
-                    student.fname = personIdMap[row.personId].fName;
-                    student.lname = personIdMap[row.personId].lName;
-                    student.username = personIdMap[row.personId].githubId;
-
-                    if (typeof student.grades === 'undefined') {
-                        student.grades = [];
+                    // Create a new array for the given personId
+                    if (typeof students[personId] === 'undefined') {
+                        students[personId] = [];                            // get ready for grades
                     }
 
-                    // Gets an action-clickable-comment if a comment exists in the Grade object.
-                    let htmlNoComment: string = grade;
-                    let htmlComment: string = '<a class="adminGradesView__comment" href="#" data-comment="' + row.comments + '">' + grade + '</a>';
-                    let html: string = row.comments === '' ? htmlNoComment : htmlComment;
-
-                    student.grades[index] = {
-                        value: grade,
-                        html:  html
-                    };
-
-                    // row.delivDetails // UNUSED right now
+                    if (this.includeRecord(row, delivId)) {
+                        // not captured yet
+                        if (typeof delivNamesMap[deliverable] === 'undefined') {
+                            delivNamesMap[deliverable] = deliverable;
+                        }
+                    }
                 }
+
+                // Basic sorting function based on strings
+                const stringSort = function (a: string, b: string) {
+                    return (a.localeCompare(b));
+                };
+
+                // Sort the deliverables list
+                let delivKeys = Object.keys(delivNamesMap).sort(stringSort);
+
+                let headers = ['ID', 'SNUM', 'First', 'Last'];
+
+                headers = headers.concat(delivKeys);
+
+                students['_index'] = headers;
+
+                // UPDATE: At this point, we have all the headers in the Array that will be appended to the Table
+                for (let row of data) {
+                    if (this.includeRecord(row, delivId)) {
+                        if(typeof personIdMap[row.personId] === 'undefined') {
+                            Log.trace("CS340View::processResponse - error; something is wrong with the data");
+                            continue;
+                        }
+
+                        const username = personIdMap[row.personId].githubId;
+                        const deliverable = row.delivId;
+                        const student = students[username];
+                        const grade = row.score === null ? '' : row.score;
+                        const index = delivKeys.indexOf(deliverable);
+
+                        student.snum = personIdMap[row.personId].studentNumber;
+                        student.fname = personIdMap[row.personId].fName;
+                        student.lname = personIdMap[row.personId].lName;
+                        student.username = personIdMap[row.personId].githubId;
+
+                        if (typeof student.grades === 'undefined') {
+                            student.grades = [];
+                        }
+
+                        // Gets an action-clickable-comment if a comment exists in the Grade object.
+                        let htmlNoComment: string = grade;
+                        let htmlComment: string = '<a class="adminGradesView__comment" href="#" data-comment="' + row.comments + '">' + grade + '</a>';
+                        let html: string = row.comments === '' ? htmlNoComment : htmlComment;
+
+                        student.grades[index] = {
+                            value: grade,
+                            html:  html
+                        };
+
+                        // row.delivDetails // UNUSED right now
+                    }
+                }
+
+                // console.log('grade data processed: ' + JSON.stringify(students));
+                return students;
+            }*!/
+
+        // Helper to decide if record should be included in table
+        private includeRecord(data: Grade, delivId: string): boolean {
+            if (delivId === "all" || data.delivId === delivId) {
+                return true;
             }
-
-            // console.log('grade data processed: ' + JSON.stringify(students));
-            return students;
-        }*!/
-
-    // Helper to decide if record should be included in table
-    private includeRecord(data: Grade, delivId: string): boolean {
-        if (delivId === "all" || data.delivId === delivId) {
-            return true;
+            return false;
         }
-        return false;
-    }
 
-    private checkIfWarning(gradeInputElement: HTMLInputElement): boolean {
-        // TODO: Complete this
-        return false; // stub
-    }*/
+        private checkIfWarning(gradeInputElement: HTMLInputElement): boolean {
+            // TODO: Complete this
+            return false; // stub
+        }*/
 }

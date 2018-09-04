@@ -1,6 +1,6 @@
 import {ChildProcess, spawn, SpawnOptions} from "child_process";
-import {CommandResult} from "../Types";
 import Log from "../../../common/Log";
+import {CommandResult} from "../Types";
 
 export interface ICommand {
     executeCommand(args: string[], options?: SpawnOptions): Promise<CommandResult>;
@@ -21,7 +21,7 @@ export class Command implements ICommand {
             const cmd: ChildProcess = spawn(this.cmdName, args, options);
             cmd.on(`error`, (err) => {
                 reject(err);
-             });
+            });
             cmd.stdout.on(`data`, (data: Buffer) => {
                 output = Buffer.concat([output, data], output.length + data.length);
             });

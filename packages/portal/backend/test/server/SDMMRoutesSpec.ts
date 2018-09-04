@@ -367,8 +367,10 @@ describe('SDMM Routes', function() {
                 const rc = new RepositoryController();
 
                 deliv = await dc.getDeliverable('d1');
-                await rc.createRepository('secap_' + Test.USERNAMEGITHUB2, deliv, [t2], {d0enabled: true}); // make sure the repo exists already
-                await rc.createRepository('secap_' + Test.USERNAMEGITHUB3, deliv, [t3], {d0enabled: true}); // make sure the repo exists already
+                await rc.createRepository('secap_' + Test.USERNAMEGITHUB2, deliv,
+                    [t2], {d0enabled: true}); // make sure the repo exists already
+                await rc.createRepository('secap_' + Test.USERNAMEGITHUB3, deliv,
+                    [t3], {d0enabled: true}); // make sure the repo exists already
 
                 let g: Grade = {
                     personId:  Test.USERNAMEGITHUB2, // rthse2
