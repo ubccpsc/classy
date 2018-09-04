@@ -318,12 +318,12 @@ export default class CS340REST implements IREST {
                 // TODO [Jonathan]: send an appropriate failure
                 res.send(204, {error: "Deliverable not found, please create the deliverable first"});
             } else {
-                if (deliv.custom !== null && typeof deliv.custom.rubric !== "undefined") {
+                if (deliv.custom.assignment !== undefined && typeof deliv.custom.assignment.rubric !== "undefined") {
                     const assignInfo: AssignmentInfo = deliv.custom.assignment;
                     const rubric: AssignmentGradingRubric = assignInfo.rubric;
                     res.send(200, {response: rubric});
                 } else {
-                    Log.info("cs340REST::getAssignmentRubric(...) - deliv.custom: " + deliv.custom);
+                    Log.info("cs340REST::getAssignmentRubric(...) - deliv.custom.assignment: " + deliv.custom.assignment);
 
                     // TODO [Jonathan]: Set this up to inform there was no rubric
                     res.send(204, {error: "Rubric not found, perhaps the deliverable has no rubric?"});
@@ -353,7 +353,7 @@ export default class CS340REST implements IREST {
         delivController.getAllDeliverables().then((result) => {
             const assignRubrics: AssignmentGradingRubric[] = [];
             for (const deliv of result) {
-                if (deliv.custom !== null && deliv.custom.rubric !== null) {
+                if (deliv.custom.assignment !== undefined && typeof deliv.custom.assignment.rubric !== "undefined") {
                     const assignInfo: AssignmentInfo = deliv.custom.assignment;
                     assignRubrics.push(assignInfo.rubric);
                 }
@@ -903,7 +903,7 @@ export default class CS340REST implements IREST {
             return next();
         }
 
-        if (typeof (deliv.custom as AssignmentInfo).mainFilePath === "undefined") {
+        if (typeof (deliv.custom.assignment as AssignmentInfo).mainFilePath === "undefined") {
             res.send(400, {error: "Assignment not set up properly"});
             return next();
         }
@@ -941,7 +941,7 @@ export default class CS340REST implements IREST {
             return next();
         }
 
-        if (typeof (deliv.custom as AssignmentInfo).mainFilePath === "undefined") {
+        if (typeof (deliv.custom.assignment as AssignmentInfo).mainFilePath === "undefined") {
             res.send(400, {error: "Assignment not set up properly"});
             return next();
         }
@@ -979,7 +979,7 @@ export default class CS340REST implements IREST {
             return next();
         }
 
-        if (typeof (deliv.custom as AssignmentInfo).mainFilePath === "undefined") {
+        if (typeof (deliv.custom.assignment as AssignmentInfo).mainFilePath === "undefined") {
             res.send(400, {error: "Assignment not set up properly"});
             return next();
         }

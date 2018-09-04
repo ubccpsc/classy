@@ -44,7 +44,7 @@ const TIMEOUT = 7500;
 const DELAY_SEC = 1000;
 const DELAY_SHORT = 200;
 
-describe.skip("CS340: AssignmentController", () => {
+describe("CS340: AssignmentController", () => {
     let ac: AssignmentController = new AssignmentController();
     const gc: GradesController = new GradesController();
     const tc: TeamController = new TeamController();
@@ -168,7 +168,7 @@ describe.skip("CS340: AssignmentController", () => {
 
         const deliv = await dc.getDeliverable(Test.ASSIGNID0);
 
-        const repo3: Repository = await rc.createRepository(Test.REPONAME3, deliv, [team1], null);
+        const repo3: Repository = await rc.createRepository(Test.REPONAME3, deliv, [team1], {});
 
         await ac.setAssignmentGrade(Test.REPONAME3, Test.ASSIGNID0, aPayload);
 
@@ -409,15 +409,12 @@ describe.skip("CS340: AssignmentController", () => {
 
     describe("Slow Assignment Tests", () => {
 
-        before(function() {
+        before(async function() {
             Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
             gha = new GitHubActions();
 
-            it("Clean stale repositories", async function() {
-                Log.info("Cleaning stale repositories");
-                await Test.deleteStaleRepositories();
-                Log.info("Cleaned all stale information");
-            }).timeout(5 * TIMEOUT);
+            await db.clearData();
+            await resetData();
         });
 
         after(function() {
@@ -435,11 +432,17 @@ describe.skip("CS340: AssignmentController", () => {
             }
         });
 
+        it("Clean stale repositories", async function() {
+            Log.info("Cleaning stale repositories");
+            await Test.deleteStaleRepositories();
+            Log.info("Cleaned all stale information");
+        }).timeout(5 * TIMEOUT);
+
         it("Should be able to pre-create a team for the assignment.", async function() {
-            const delivRecord = await db.getDeliverable(Test.DELIVID0);
+            const delivRecord = await db.getDeliverable(Test.ASSIGNID0);
             const personRecord = await pc.getPerson(Test.REALUSER2.id);
-            const teamRecord = await tc.createTeam(Test.DELIVID0 + "_" + Test.REALUSER2,
-                delivRecord, [personRecord], null);
+            const teamRecord = await tc.createTeam(Test.ASSIGNID0 + "_" + Test.REALUSER2.id,
+                delivRecord, [personRecord], {});
 
             expect(teamRecord).to.not.be.null;
         });
@@ -458,7 +461,7 @@ describe.skip("CS340: AssignmentController", () => {
             const newGithubRepoArray = await gha.listRepos();
             const newGithubRepoCount = newGithubRepoArray.length;
 
-            expect(newGithubRepoCount).to.be.at.least(oldGithubRepoCount);
+            expect(newGithubRepoCount).to.be.greaterThan(oldGithubRepoCount);
         }).timeout(numberOfStudents * 2 * TIMEOUT);
 
         it("Should be able to get the correct assignment status after creating repositories.", async function() {
@@ -544,7 +547,7 @@ describe.skip("CS340: AssignmentController", () => {
                 ]
             };
 
-            const success = await ac.setAssignmentGrade(Test.ASSIGNID0 + "__" + Test.REALUSER1.id,
+            const success = await ac.setAssignmentGrade(Test.ASSIGNID0 + "_" + Test.REALUSER1.id,
                 Test.ASSIGNID0, newAssignmentGrade, "testBot");
 
             expect(success).to.be.true;

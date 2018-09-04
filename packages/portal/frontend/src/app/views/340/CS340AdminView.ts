@@ -164,8 +164,8 @@ export class CS340AdminView extends AdminView {
         for (const deliverableRecord of deliverables) {
             if (deliverableRecord.id === opts.delivId) {
                 Log.info("CS340AdminView::renderEditDeliverablePage(..) - Checking AssignmentStatus");
-                if (typeof deliverableRecord.custom !== 'undefined' && typeof deliverableRecord.custom.assignment.status !== 'undefined') {
-                    const assignInfo: AssignmentInfo = (deliverableRecord.custom as AssignmentInfo);
+                if (deliverableRecord.custom.assignment !== undefined && typeof deliverableRecord.custom.assignment.status !== 'undefined') {
+                    const assignInfo: AssignmentInfo = (deliverableRecord.custom.assignment as AssignmentInfo);
                     const assignStatus: AssignmentStatus = assignInfo.status;
                     const createdSwitch = (document.querySelector('#adminEditDeliverablePage-createdSwitch') as OnsSwitchElement);
                     const readSwitch = (document.querySelector('#adminEditDeliverablePage-readSwitch') as OnsSwitchElement);
@@ -245,16 +245,16 @@ export class CS340AdminView extends AdminView {
             // non-null deliverable
             for (const deliverableRecord of deliverables) {
                 if (deliverableRecord.id === delivId) {
-                    if (deliverableRecord.custom !== null &&
-                    typeof (deliverableRecord.custom as AssignmentInfo).seedRepoURL !== "undefined") {
+                    if (deliverableRecord.custom.assignment !== undefined &&
+                    typeof (deliverableRecord.custom.assignment as AssignmentInfo).seedRepoURL !== "undefined") {
                         const seedRepoURLElement = (document.querySelector("#adminEditDeliverablePage-seedRepoURL") as OnsInputElement);
                         const seedRepoPathElement = (document.querySelector("#adminEditDeliverablePage-seedRepoPath") as OnsInputElement);
                         const mainFilePathElement = (document.querySelector("#adminEditDeliverablePage-mainFilePath") as OnsInputElement);
                         const courseWeightElement = (document.querySelector("#adminEditDeliverablePage-courseWeight") as OnsInputElement);
-                        seedRepoURLElement.value    = (deliverableRecord.custom as AssignmentInfo).seedRepoURL;
-                        seedRepoPathElement.value   = (deliverableRecord.custom as AssignmentInfo).seedRepoPath;
-                        mainFilePathElement.value   = (deliverableRecord.custom as AssignmentInfo).mainFilePath;
-                        courseWeightElement.value   = (deliverableRecord.custom as AssignmentInfo).courseWeight.toString();
+                        seedRepoURLElement.value    = (deliverableRecord.custom.assignment as AssignmentInfo).seedRepoURL;
+                        seedRepoPathElement.value   = (deliverableRecord.custom.assignment as AssignmentInfo).seedRepoPath;
+                        mainFilePathElement.value   = (deliverableRecord.custom.assignment as AssignmentInfo).mainFilePath;
+                        courseWeightElement.value   = (deliverableRecord.custom.assignment as AssignmentInfo).courseWeight.toString();
                         const assignConfigElement = (document.querySelector("#adminEditDeliverablePage-assignmentConfig") as HTMLDivElement);
                         assignConfigElement.removeAttribute("style");
                         const isAssnSwitch = (document.querySelector("#adminEditDeliverablePage-isAssignmentSwitch") as OnsSwitchElement);
@@ -333,8 +333,8 @@ export class CS340AdminView extends AdminView {
 
             let totalSum = 0;
             for (const deliv of deliverables) {
-                if (deliv.custom === null || typeof (deliv.custom as AssignmentInfo).courseWeight === "undefined") {
-                    totalSum +=  (deliv.custom as AssignmentInfo).courseWeight;
+                if (deliv.custom.assignment === undefined || typeof (deliv.custom.assignment as AssignmentInfo).courseWeight === "undefined") {
+                    totalSum +=  (deliv.custom.assignment as AssignmentInfo).courseWeight;
                 }
             }
 
@@ -938,8 +938,8 @@ export class CS340AdminView extends AdminView {
         for (const grade of grades) {
             // if(typeof gradeMapping[grade.personId] === 'undefined') gradeMapping[grade.personId] = {};
             // if the grade is an assignmentGrade; place it in the mapping
-            if (grade.custom !== null && typeof (grade.custom as AssignmentGrade).assignmentID !== "undefined") {
-                if ((grade.custom as AssignmentGrade).assignmentID === delivId) {
+            if (grade.custom.assignmentGrade !== undefined && typeof (grade.custom.assignmentGrade as AssignmentGrade).assignmentID !== "undefined") {
+                if ((grade.custom.assignmentGrade as AssignmentGrade).assignmentID === delivId) {
                     gradeMapping[grade.personId] = grade;
                 }
             }
@@ -1172,7 +1172,7 @@ export class CS340AdminView extends AdminView {
                 gradeMapping[grade.personId] = {};
             }
             // If the grade is a valid AssignmentGrade, place it in the mapping
-            if (grade.custom !== null && typeof grade.custom.assignmentGrade.assignmentID !== "undefined") {
+            if (grade.custom.assignmentGrade!== null && typeof grade.custom.assignmentGrade.assignmentID !== "undefined") {
                 gradeMapping[grade.personId][grade.custom.assignmentGrade.assignmentID] = grade;
             }
         }
@@ -1199,7 +1199,7 @@ export class CS340AdminView extends AdminView {
                     completelyGraded = this.checkIfCompletelyGraded(gradeMapping[student.id][delivCol.id]);
                 }
 
-                const assignInfo = (delivCol.custom as AssignmentInfo);
+                const assignInfo = (delivCol.custom.assignment as AssignmentInfo);
 
                 // TODO: Fix this logic. 5 cases
                 // 1) Not an assignment

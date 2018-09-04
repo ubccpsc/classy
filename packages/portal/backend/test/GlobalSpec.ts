@@ -734,6 +734,8 @@ export class Test {
             "TESTrepo1",
             "TESTrepo2",
             "TESTrepo3",
+            "a0__rthse2",
+            "a0_rthse2",
             this.REPONAME1
         ];
 
