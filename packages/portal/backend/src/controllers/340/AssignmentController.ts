@@ -1364,23 +1364,23 @@ export class AssignmentController {
 
             // attempt to get the student's grade
             let newRow: string[];
-            const weight = deliv.custom.assignment.courseWeight;
+            const weight = delivRec.custom.assignment.courseWeight;
 
             totalWeight += weight;
 
-            if (typeof studentGradeMapping[deliv.id] === "undefined" || studentGradeMapping[deliv.id] === null) {
+            if (typeof studentGradeMapping[delivRec.id] === "undefined" || studentGradeMapping[delivRec.id] === null) {
                 // no grade
-                newRow = [deliv.id, "X", weight.toString(), "0"];
+                newRow = [delivRec.id, "X", weight.toString(), "0"];
             } else {
                 // double check this
-                const assignmentRubric = (deliv.custom.assignment as AssignmentInfo).rubric;
+                const assignmentRubric = (delivRec.custom.assignment as AssignmentInfo).rubric;
                 const studentScore = Math.round(
-                    (studentGradeMapping[deliv.id].score / this.calculateMaxGrade(assignmentRubric)) * 100 * 10) / 10;
+                    (studentGradeMapping[delivRec.id].score / this.calculateMaxGrade(assignmentRubric)) * 100 * 10) / 10;
                 const weightedScore = Math.round(studentScore * weight * 10) / 10;
                 totalRaw += studentScore;
                 totalScore += weightedScore;
 
-                newRow = [deliv.id, studentScore.toFixed(1),
+                newRow = [delivRec.id, studentScore.toFixed(1),
                     weight.toFixed(1), weightedScore.toFixed(1)];
             }
             tableInfo.push(newRow);
