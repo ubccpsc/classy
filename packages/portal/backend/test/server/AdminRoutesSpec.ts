@@ -28,7 +28,7 @@ import './AuthRoutesSpec';
 // const request = require('supertest');
 // const loadFirst = require("./AuthRoutesSpec");
 
-describe('Admin Routes', function() {
+describe.only('Admin Routes', function() {
 
     // const TIMEOUT = 5000;
 
@@ -646,7 +646,7 @@ describe('Admin Routes', function() {
             };
             response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
             body = response.body;
-            Log.test(response.status + " -> " + JSON.stringify(body));
+            Log.test('first provision: ' + response.status + " -> " + JSON.stringify(body));
             expect(response.status).to.equal(200);
             expect(body.success).to.not.be.undefined;
             expect(body.success).to.be.an('array');
@@ -655,7 +655,7 @@ describe('Admin Routes', function() {
             // provision again; should not make anything new
             response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
             body = response.body;
-            Log.test(response.status + " -> " + JSON.stringify(body));
+            Log.test('second provision: ' + response.status + " -> " + JSON.stringify(body));
             expect(response.status).to.equal(200);
             expect(body.success).to.be.an('array');
             expect(body.success.length).to.equal(0);
@@ -675,7 +675,7 @@ describe('Admin Routes', function() {
             };
             response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
             body = response.body;
-            Log.test(response.status + " -> " + JSON.stringify(body));
+            Log.test('first release: ' + response.status + " -> " + JSON.stringify(body));
             expect(response.status).to.equal(200);
             expect(body.success).to.not.be.undefined;
             expect(body.success).to.be.an('array');
@@ -684,7 +684,7 @@ describe('Admin Routes', function() {
             // release again; should not release anything new
             response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
             body = response.body;
-            Log.test(response.status + " -> " + JSON.stringify(body));
+            Log.test('second release: ' + response.status + " -> " + JSON.stringify(body));
             expect(response.status).to.equal(200);
             expect(body.success).to.be.an('array');
             expect(body.success.length).to.equal(0);
