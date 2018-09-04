@@ -29,13 +29,21 @@ export class CS340Controller extends CourseController {
         if (deliv.repoPrefix.trim() === "") {
             rName = deliv.id + postfix;
         } else {
-            rName = deliv.repoPrefix + postfix;
+            if( deliv.repoPrefix.trim().endsWith("_") ) {
+                rName = deliv.repoPrefix.substring(0, deliv.repoPrefix.length - 1) + postfix;
+            } else {
+                rName = deliv.repoPrefix + postfix;
+            }
         }
 
         if (deliv.teamPrefix.trim() === "") {
             tName = deliv.id + postfix;
         } else {
-            tName = deliv.teamPrefix + postfix;
+            if( deliv.teamPrefix.trim().endsWith("_") ) {
+                tName = deliv.teamPrefix.substring(0, deliv.teamPrefix.length - 1) + postfix;
+            } else {
+                tName = deliv.teamPrefix + postfix;
+            }
         }
 
         const db = DatabaseController.getInstance();
