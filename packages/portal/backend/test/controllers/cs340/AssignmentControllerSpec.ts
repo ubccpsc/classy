@@ -84,7 +84,7 @@ describe("CS340: AssignmentController", () => {
             Log.info("Cleaning stale repositories");
             await Test.deleteStaleRepositories();
             Log.info("Cleaned all stale information");
-        }).timeout(5 * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
     });
 
     beforeEach(() => {
@@ -120,7 +120,7 @@ describe("CS340: AssignmentController", () => {
         // TODO: move this to the slow tests below; takes too long to run locally
         const result = await ac.publishAllGrades(Test.ASSIGNID0);
         expect(result).to.be.true;
-    }).timeout(numberOfStudents * TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Should be able to create an assignment grade.", async () => {
         // Check there is no grade associated with the assignment specified
@@ -320,7 +320,7 @@ describe("CS340: AssignmentController", () => {
         await db.writeDeliverable(assignment);
         const success = await ac.publishAllFinalGrades();
         expect(success).to.be.true;
-    }).timeout(numberOfStudents * TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Clean stale repositories.", async function() {
         Log.info("Cleaning stale repositories");
@@ -351,7 +351,7 @@ describe("CS340: AssignmentController", () => {
             Test.ASSIGNID0, [assignTeam]);
 
         expect(newAssignRepo).to.not.be.null;
-    }).timeout(3 * TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Should be able to release an Assignment Repo.", async function() {
         const exec = Test.runSlowTest();
@@ -368,7 +368,7 @@ describe("CS340: AssignmentController", () => {
 
         const success = await ac.publishAssignmentRepo(Test.ASSIGNID0 + "_" + Test.REALUSER1.id);
         expect(success).to.be.true;
-    }).timeout(3 * TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Should not be able to publish an assignment repository again.", async function() {
         const exec = Test.runSlowTest();
@@ -385,7 +385,7 @@ describe("CS340: AssignmentController", () => {
 
         const success = await ac.publishAssignmentRepo(Test.ASSIGNID0 + "_" + Test.REALUSER1.id);
         expect(success).to.be.false;
-    }).timeout(3 * TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Should be able to delete Assignment Repo, along with it's records.", async function() {
         const exec = Test.runSlowTest();
@@ -507,12 +507,12 @@ describe("CS340: AssignmentController", () => {
             expect(success).to.be.false;
 
             // TODO: Verify
-        }).timeout(numberOfStudents * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
 
         it("Should be able to close all Assignment Repositories at once.", async function() {
             const success = await ac.closeAllRepositories(Test.ASSIGNID0);
             expect(success).to.be.true;
-        }).timeout(numberOfStudents * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
 
         it("Should be able to assign a grade to a student after repositories close.", async function() {
             const newAssignmentGrade: AssignmentGrade = {
@@ -551,12 +551,12 @@ describe("CS340: AssignmentController", () => {
                 Test.ASSIGNID0, newAssignmentGrade, "testBot");
 
             expect(success).to.be.true;
-        }).timeout(2 * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
 
         it("Should be able to publish grades again after grade update.", async () => {
             const result = await ac.publishAllGrades(Test.ASSIGNID0);
             expect(result).to.be.true;
-        }).timeout(numberOfStudents * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
 
         it("Should not be able to release all Assignment " +
             "Repositories after closing.", async function() {
@@ -568,12 +568,12 @@ describe("CS340: AssignmentController", () => {
             expect(success).to.be.false;
 
             // TODO: Verify
-        }).timeout(numberOfStudents * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
 
         it("Should be able to publish all grades after release.", async function() {
             const success = await ac.publishAllGrades(Test.ASSIGNID0);
             expect(success).to.be.true;
-        }).timeout(numberOfStudents * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
 
         it("Should be able to delete all Assignment Repositories, along with their records", async function() {
             const allStudents = await pc.getAllPeople();
@@ -590,7 +590,7 @@ describe("CS340: AssignmentController", () => {
             const newGithubRepoCount = newGithubRepoArray.length;
 
             expect(newGithubRepoCount).to.be.at.most(oldGithubRepoCount);
-        }).timeout(numberOfStudents * 2 * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
 
         it("Should be able to verify and schedule jobs for assignments", async () => {
             const count = await ac.verifyScheduledJobs();
@@ -654,12 +654,12 @@ describe("CS340: AssignmentController", () => {
         it("Should be able to reset and clean everything up.", async () => {
             await Test.deleteStaleRepositories();
             await resetData();
-        }).timeout(numberOfStudents * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
 
         it("Should be able to create repositories for an assignment.", async () => {
             const success = await ac.initializeAllRepositories(Test.ASSIGNID0);
             expect(success).to.be.true;
-        }).timeout(numberOfStudents * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
 
         it("Should be able to see an assignment status changing after a new student joins.", async () => {
             const assignStatus: {
@@ -682,7 +682,7 @@ describe("CS340: AssignmentController", () => {
             expect(newAssignStatus.assignmentStatus).to.be.equal(AssignmentStatus.INACTIVE);
             expect(newAssignStatus.totalStudents).to.be.greaterThan(totalStudentCount);
             expect(newAssignStatus.studentRepos).to.be.equal(studentReposCount);
-        }).timeout(numberOfStudents * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
 
         it("Should be able to re-create repositories, after a student has been added.", async () => {
             const success = await ac.initializeAllRepositories(Test.ASSIGNID0);
@@ -695,12 +695,12 @@ describe("CS340: AssignmentController", () => {
 
             expect(assignStatus.assignmentStatus).to.be.equal(AssignmentStatus.CREATED);
             expect(assignStatus.totalStudents).to.be.equal(assignStatus.studentRepos);
-        }).timeout(numberOfStudents * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
 
         it("Should be able to reset all the assignment and repositories.", async () => {
             await resetData();
             await Test.deleteStaleRepositories();
-        }).timeout(numberOfStudents * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
 
         it("Should be able to initialize and publish assignment repositories.", async () => {
             await ac.initializeAllRepositories(Test.ASSIGNID0);
@@ -712,7 +712,7 @@ describe("CS340: AssignmentController", () => {
             } = await ac.updateAssignmentStatus(Test.ASSIGNID0);
             expect(assignStatus.assignmentStatus).to.equal(AssignmentStatus.RELEASED);
             expect(assignStatus.totalStudents).to.equal(assignStatus.studentRepos);
-        }).timeout(numberOfStudents * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
 
         it("Should be able see an updated assignment status after a student joins.", async () => {
             await ac.initializeAllRepositories(Test.ASSIGNID0);
@@ -734,7 +734,7 @@ describe("CS340: AssignmentController", () => {
             } = await ac.updateAssignmentStatus(Test.ASSIGNID0);
             expect(assignStatus2.assignmentStatus).to.be.equal(AssignmentStatus.INACTIVE);
             expect(assignStatus2.totalStudents).to.not.be.equal(assignStatus.totalStudents);
-        }).timeout(numberOfStudents * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
 
         it("Should be able to initialize repositories again, after a student has been added to a published assignment.", async () => {
             await ac.initializeAllRepositories(Test.ASSIGNID0);
@@ -745,7 +745,7 @@ describe("CS340: AssignmentController", () => {
             } = await ac.updateAssignmentStatus(Test.ASSIGNID0);
             expect(assignStatus.assignmentStatus).to.equal(AssignmentStatus.CREATED);
             expect(assignStatus.totalStudents).to.equal(assignStatus.studentRepos);
-        }).timeout(numberOfStudents * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
 
         it("Should be able to release repositories again, after a student has been added to a published assignment.", async () => {
             await ac.publishAllRepositories(Test.ASSIGNID0);
@@ -756,7 +756,7 @@ describe("CS340: AssignmentController", () => {
             } = await ac.updateAssignmentStatus(Test.ASSIGNID0);
             expect(assignStatus.assignmentStatus).to.equal(AssignmentStatus.RELEASED);
             expect(assignStatus.totalStudents).to.equal(assignStatus.studentRepos);
-        }).timeout(numberOfStudents * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
     });
 });
 

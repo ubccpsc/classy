@@ -432,10 +432,10 @@ export default class AdminRoutes implements IREST {
             const deliv = await dc.getDeliverable(provisionTrans.delivId);
             if (deliv !== null && deliv.shouldProvision === true) {
                 const provisionSucceeded = await cc.provision(deliv, provisionTrans.formSingle);
-                if (provisionSucceeded !== null) {
-                    Log.info('AdminRoutes::handleProvision() - done');
-                    return provisionSucceeded;
-                }
+                Log.info('AdminRoutes::handleProvision() - success; # results: ' + provisionSucceeded.length);
+                return provisionSucceeded;
+            } else {
+                throw new Error("Provisioning unsuccessful; cannot provision: " + provisionTrans.delivId);
             }
         }
         // should never get here unless something goes wrong
@@ -467,11 +467,11 @@ export default class AdminRoutes implements IREST {
             const dc = new DeliverablesController();
             const deliv = await dc.getDeliverable(provisionTrans.delivId);
             if (deliv !== null && deliv.shouldProvision === true) {
-                const provisionSucceeded = await cc.release(deliv); // , provisionTrans.formSingle);
-                if (provisionSucceeded !== null) {
-                    Log.info('AdminRoutes::handleRelease() - done');
-                    return provisionSucceeded;
-                }
+                const releaseSucceeded = await cc.release(deliv);
+                Log.info('AdminRoutes::handleRelease() - success; # results: ' + releaseSucceeded.length);
+                return releaseSucceeded;
+            } else {
+                throw new Error("Release unsuccessful, cannot release: " + provisionTrans.delivId);
             }
         }
         // should never get here unless something goes wrong

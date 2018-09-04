@@ -19,6 +19,24 @@ Full details about how classy should be configured can be found in [docs/config.
 
 All Classy development takes place in the public GitHub instance. Commits and Pull Requests are sent to a Continuous Integration service (CircleCI) for validation. All contributions to Classy must be made via Pull Request.
 
+e.g.,
+
+```
+# if you made some changes and forgot to branch:
+git stash
+git checkout -b <DESCRIPTIVE_BRANCH_NAME>
+git stash pop
+git commit -a
+git push --set-upstream origin <DESCRIPTIVE_BRANCH_NAME>
+
+# if you didn't forget to branch first:
+git checkout -b <DESCRIPTIVE_BRANCH_NAME>
+git commit -a
+git push --set-upstream origin <DESCRIPTIVE_BRANCH_NAME>
+```
+
+You can open a PR on GitHub at any time for your branch, but it cannot be merged until the PR passes all CI checks.
+
 Any contributions must pass the following criteria:
 
 1. The Pull Request must pass all existing tests. New contributions should not require existing tests to be changed as other courses might depend on the modified behaviour; if you feel such a change is needed, please mention the rationale in the Pull Request comments.

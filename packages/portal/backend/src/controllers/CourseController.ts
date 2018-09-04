@@ -727,12 +727,12 @@ export abstract class CourseController implements ICourseController {
             throw new Error(msg);
         }
 
-        // noinspection SuspiciousTypeOfGuard
-        if (obj.action !== 'PROVISION' && obj.action !== 'RELEASE') {
-            const msg = 'action not correct: ' + obj.action;
-            Log.error('CourseController::validateProvisionTransport(..) - ERROR: ' + msg);
-            return msg;
-        }
+        // // noinspection SuspiciousTypeOfGuard
+        // if (obj.action !== 'PROVISION' && obj.action !== 'RELEASE') {
+        //     const msg = 'action not correct: ' + obj.action;
+        //     Log.error('CourseController::validateProvisionTransport(..) - ERROR: ' + msg);
+        //     return msg;
+        // }
 
         // noinspection SuspiciousTypeOfGuard
         if (typeof obj.formSingle !== 'boolean') {
