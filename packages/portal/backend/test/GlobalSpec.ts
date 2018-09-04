@@ -40,7 +40,7 @@ if (typeof it === 'function') {
 export class Test {
 
     public static readonly TIMEOUT = 1000 * 10;
-    public static readonly TIMEOUTLONG = 1000 * 120;
+    public static readonly TIMEOUTLONG = 1000 * 300; // 5 minutes
 
     public static async suiteBefore(suiteName: string) {
         Log.test("Test::suiteBefore( ... ) - suite: " + suiteName);
@@ -63,6 +63,24 @@ export class Test {
         await Test.prepareResults();
     }
 
+    public static async prepareAllReal() {
+        const dbc = DatabaseController.getInstance();
+
+        await Test.prepareDeliverables();
+
+        let person = await Test.createPerson(Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, 'student');
+        await dbc.writePerson(person);
+        person = await Test.createPerson(Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, 'student');
+        await dbc.writePerson(person);
+        person = await Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.id, Test.ADMIN1.id, 'adminstaff');
+        await dbc.writePerson(person);
+
+        await Test.prepareAuth(); // adds admin token (and user1 which is not real)
+        // create a team
+        const team = await Test.createTeam(Test.TEAMNAMEREAL, Test.DELIVID0, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+        await dbc.writeTeam(team);
+    }
+
     public static async prepareDeliverables(): Promise<void> {
         const dc = DatabaseController.getInstance();
 
@@ -72,6 +90,7 @@ export class Test {
         await dc.writeDeliverable(d);
 
         d = Test.createDeliverable(Test.DELIVID1);
+        d.shouldProvision = false;
         await dc.writeDeliverable(d);
 
         d = Test.createDeliverable(Test.DELIVID2);
@@ -233,6 +252,12 @@ export class Test {
 
         let auth: Auth = {
             personId: Test.USER1.id,
+            token:    Test.REALTOKEN
+        };
+        await dc.writeAuth(auth);
+
+        auth = {
+            personId: Test.USERNAMEGITHUB1,
             token:    Test.REALTOKEN
         };
         await dc.writeAuth(auth);
@@ -506,10 +531,11 @@ export class Test {
         }
     }
 
-    public static readonly TEAMNAME1 = 'TESTteam1';
+    public static readonly TEAMNAME1 = 't_d0_user1id_user2id';
     public static readonly TEAMNAME2 = 'TESTteam2';
     public static readonly TEAMNAME3 = 'TESTteam3';
     public static readonly TEAMNAME4 = 'TESTteam4';
+    public static readonly TEAMNAMEREAL = 't_d0_cpscbot_rthse2';
 
     public static readonly USER1 = {id: 'user1id', csId: 'user1id', github: 'user1gh'};
     public static readonly USER2 = {id: 'user2id', csId: 'user2id', github: 'user2gh'};
@@ -545,6 +571,7 @@ export class Test {
     public static readonly REPONAME1 = 'TESTrepo1';
     public static readonly REPONAME2 = 'TESTrepo2';
     public static readonly REPONAME3 = 'TESTrepo3';
+    public static readonly REPONAMEREAL = 'd0_cpscbot_rthse2';
 
     public static readonly REALTOKEN = 'realtoken';
     public static readonly FAKETOKEN = 'faketoken';

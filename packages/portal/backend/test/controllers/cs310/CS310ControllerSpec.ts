@@ -49,9 +49,11 @@ describe("CS310: CS310Controller", () => {
         const p2 = await dbc.getPerson(Test.USER2.id);
 
         let res = await cc.computeNames(deliv, [p1, p2]);
+        const tExpected = deliv.teamPrefix + '_' + deliv.id + '_' + Test.USER1.github + '_' + Test.USER2.github;
+        const rExpected = deliv.id + '_' + Test.USER1.github + '_' + Test.USER2.github;
 
-        expect(res.teamName).to.equal('t_d0_user1id_user2id');
-        expect(res.repoName).to.equal('d0_user1id_user2id');
+        expect(res.teamName).to.equal(tExpected);
+        expect(res.repoName).to.equal(rExpected);
 
         // make those teams
         const t = await Test.createTeam(res.teamName, deliv.id, []);
@@ -71,8 +73,8 @@ describe("CS310: CS310Controller", () => {
         Log.test("res: " + res + "; ex: " + ex);
         expect(ex).to.be.null;
         expect(res).to.not.be.null;
-        expect(res.teamName).to.equal('t_d0_user1id_user2id');
-        expect(res.repoName).to.equal('d0_user1id_user2id');
+        expect(res.teamName).to.equal(tExpected);
+        expect(res.repoName).to.equal(rExpected);
     });
 
     it("Should fail to compute a team and repo name if people aren't sepecified.", async () => {
