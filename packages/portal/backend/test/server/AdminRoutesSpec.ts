@@ -664,6 +664,46 @@ describe.only('Admin Routes', function() {
         }
     });
 
+    it('Should fail to provision a deliverable if invalid options are given', async function() {
+        let response = null;
+        let body: Payload;
+        const url = '/portal/admin/provision';
+        try {
+            const provision: ProvisionTransport = {
+                delivId:    Test.DELIVID0,
+                formSingle: false
+            };
+            // bad token
+            response = await request(app).post(url).send(provision).set({user: userName, token: Test.FAKETOKEN});
+            body = response.body;
+            Log.test('bad token: ' + response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(400);
+            expect(body.success).to.be.undefined;
+            expect(body.failure).to.not.be.undefined;
+
+            // invalid deliverable
+            provision.delivId = 'FAKEDELIVERABLE';
+            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+            body = response.body;
+            Log.test('invalid deliverable: ' + response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(400);
+            expect(body.success).to.be.undefined;
+            expect(body.failure).to.not.be.undefined;
+
+            // non-provisioning deliverable
+            provision.delivId = Test.DELIVID1;
+            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+            body = response.body;
+            Log.test('non-provisioning deliverable: ' + response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(400);
+            expect(body.success).to.be.undefined;
+            expect(body.failure).to.not.be.undefined;
+
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+    });
+
     it('Should be able to release a deliverable', async function() {
         let response = null;
         let body: Payload;
@@ -688,6 +728,46 @@ describe.only('Admin Routes', function() {
             expect(response.status).to.equal(200);
             expect(body.success).to.be.an('array');
             expect(body.success.length).to.equal(0);
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+    });
+
+    it('Should fail to release a deliverable if invalid options are given', async function() {
+        let response = null;
+        let body: Payload;
+        const url = '/portal/admin/release';
+        try {
+            const provision: ProvisionTransport = {
+                delivId:    Test.DELIVID0,
+                formSingle: false
+            };
+            // bad token
+            response = await request(app).post(url).send(provision).set({user: userName, token: Test.FAKETOKEN});
+            body = response.body;
+            Log.test('bad token: ' + response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(400);
+            expect(body.success).to.be.undefined;
+            expect(body.failure).to.not.be.undefined;
+
+            // invalid deliverable
+            provision.delivId = 'FAKEDELIVERABLE';
+            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+            body = response.body;
+            Log.test('invalid deliverable: ' + response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(400);
+            expect(body.success).to.be.undefined;
+            expect(body.failure).to.not.be.undefined;
+
+            // non-provisioning deliverable
+            provision.delivId = Test.DELIVID1;
+            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+            body = response.body;
+            Log.test('non-provisioning deliverable: ' + response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(400);
+            expect(body.success).to.be.undefined;
+            expect(body.failure).to.not.be.undefined;
+
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
