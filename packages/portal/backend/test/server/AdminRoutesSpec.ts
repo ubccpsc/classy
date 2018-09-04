@@ -583,30 +583,27 @@ describe.only('Admin Routes', function() {
         let response = null;
         let body: Payload;
         const url = '/portal/admin/course';
-        try {
-            const newId = Date.now() + 'id';
 
-            const course: CourseTransport = {
-                id:                   Config.getInstance().getProp(ConfigKey.testname),
-                defaultDeliverableId: newId,
-                custom:               {}
-            };
-            response = await request(app).post(url).send(course).set({user: userName, token: userToken});
-            body = response.body;
-            Log.test(response.status + " -> " + JSON.stringify(body));
-            expect(response.status).to.equal(200);
-            expect(body.success).to.not.be.undefined;
-            expect(body.success.message).to.be.an('string');
+        const newId = Date.now() + 'id';
 
-            // replace the defaultDeliverableId
-            course.defaultDeliverableId = 'd0';
-            response = await request(app).post(url).send(course).set({user: userName, token: userToken});
-            body = response.body;
-            Log.test(response.status + " -> " + JSON.stringify(body));
-            expect(response.status).to.equal(200);
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-        }
+        const course: CourseTransport = {
+            id:                   Config.getInstance().getProp(ConfigKey.testname),
+            defaultDeliverableId: newId,
+            custom:               {}
+        };
+        response = await request(app).post(url).send(course).set({user: userName, token: userToken});
+        body = response.body;
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.message).to.be.an('string');
+
+        // replace the defaultDeliverableId
+        course.defaultDeliverableId = 'd0';
+        response = await request(app).post(url).send(course).set({user: userName, token: userToken});
+        body = response.body;
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
     });
 
     it('Should not be able to update the course object with invalid settings', async function() {
@@ -614,163 +611,146 @@ describe.only('Admin Routes', function() {
         let response = null;
         let body: Payload;
         const url = '/portal/admin/course';
-        try {
-            const newId = Date.now() + 'id';
 
-            const course: any = {
-                // id: 'some id', // THIS IS A REQUIRED FIELD
-                defaultDeliverableId: newId,
-                custom:               {}
-            };
-            response = await request(app).post(url).send(course).set({user: userName, token: userToken});
-            body = response.body;
-            Log.test(response.status + " -> " + JSON.stringify(body));
-            expect(response.status).to.equal(400);
-            expect(body.success).to.be.undefined;
-            expect(body.failure).to.not.be.undefined;
-            expect(body.failure.message).to.be.an('string');
+        const newId = Date.now() + 'id';
 
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-        }
+        const course: any = {
+            // id: 'some id', // THIS IS A REQUIRED FIELD
+            defaultDeliverableId: newId,
+            custom:               {}
+        };
+        response = await request(app).post(url).send(course).set({user: userName, token: userToken});
+        body = response.body;
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+        expect(body.failure.message).to.be.an('string');
     });
 
     it('Should be able to provision a deliverable', async function() {
         let response = null;
         let body: Payload;
         const url = '/portal/admin/provision';
-        try {
-            const provision: ProvisionTransport = {
-                delivId:    Test.DELIVID0,
-                formSingle: false
-            };
-            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
-            body = response.body;
-            Log.test('first provision: ' + response.status + " -> " + JSON.stringify(body));
-            expect(response.status).to.equal(200);
-            expect(body.success).to.not.be.undefined;
-            expect(body.success).to.be.an('array');
-            expect(body.success.length).to.be.greaterThan(0);
 
-            // provision again; should not make anything new
-            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
-            body = response.body;
-            Log.test('second provision: ' + response.status + " -> " + JSON.stringify(body));
-            expect(response.status).to.equal(200);
-            expect(body.success).to.be.an('array');
-            expect(body.success.length).to.equal(0);
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-        }
+        const provision: ProvisionTransport = {
+            delivId:    Test.DELIVID0,
+            formSingle: false
+        };
+        response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+        body = response.body;
+        Log.test('first provision: ' + response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success).to.be.an('array');
+        expect(body.success.length).to.be.greaterThan(0);
+
+        // provision again; should not make anything new
+        response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+        body = response.body;
+        Log.test('second provision: ' + response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.be.an('array');
+        expect(body.success.length).to.equal(0);
+
     });
 
     it('Should fail to provision a deliverable if invalid options are given', async function() {
         let response = null;
         let body: Payload;
         const url = '/portal/admin/provision';
-        try {
-            const provision: ProvisionTransport = {
-                delivId:    Test.DELIVID0,
-                formSingle: false
-            };
-            // bad token
-            response = await request(app).post(url).send(provision).set({user: userName, token: Test.FAKETOKEN});
-            body = response.body;
-            Log.test('bad token: ' + response.status + " -> " + JSON.stringify(body));
-            expect(response.status).to.equal(400);
-            expect(body.success).to.be.undefined;
-            expect(body.failure).to.not.be.undefined;
 
-            // invalid deliverable
-            provision.delivId = 'FAKEDELIVERABLE';
-            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
-            body = response.body;
-            Log.test('invalid deliverable: ' + response.status + " -> " + JSON.stringify(body));
-            expect(response.status).to.equal(400);
-            expect(body.success).to.be.undefined;
-            expect(body.failure).to.not.be.undefined;
+        const provision: ProvisionTransport = {
+            delivId:    Test.DELIVID0,
+            formSingle: false
+        };
+        // bad token
+        response = await request(app).post(url).send(provision).set({user: userName, token: Test.FAKETOKEN});
+        body = response.body;
+        Log.test('bad token: ' + response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
 
-            // non-provisioning deliverable
-            provision.delivId = Test.DELIVID1;
-            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
-            body = response.body;
-            Log.test('non-provisioning deliverable: ' + response.status + " -> " + JSON.stringify(body));
-            expect(response.status).to.equal(400);
-            expect(body.success).to.be.undefined;
-            expect(body.failure).to.not.be.undefined;
+        // invalid deliverable
+        provision.delivId = 'FAKEDELIVERABLE';
+        response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+        body = response.body;
+        Log.test('invalid deliverable: ' + response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
 
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-        }
+        // non-provisioning deliverable
+        provision.delivId = Test.DELIVID1;
+        response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+        body = response.body;
+        Log.test('non-provisioning deliverable: ' + response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
     });
 
     it('Should be able to release a deliverable', async function() {
         let response = null;
         let body: Payload;
         const url = '/portal/admin/release';
-        try {
-            const provision: ProvisionTransport = {
-                delivId:    Test.DELIVID0,
-                formSingle: false
-            };
-            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
-            body = response.body;
-            Log.test('first release: ' + response.status + " -> " + JSON.stringify(body));
-            expect(response.status).to.equal(200);
-            expect(body.success).to.not.be.undefined;
-            expect(body.success).to.be.an('array');
-            expect(body.success.length).to.be.greaterThan(0);
 
-            // release again; should not release anything new
-            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
-            body = response.body;
-            Log.test('second release: ' + response.status + " -> " + JSON.stringify(body));
-            expect(response.status).to.equal(200);
-            expect(body.success).to.be.an('array');
-            expect(body.success.length).to.equal(0);
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-        }
+        const provision: ProvisionTransport = {
+            delivId:    Test.DELIVID0,
+            formSingle: false
+        };
+        response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+        body = response.body;
+        Log.test('first release: ' + response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success).to.be.an('array');
+        expect(body.success.length).to.be.greaterThan(0);
+
+        // release again; should not release anything new
+        response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+        body = response.body;
+        Log.test('second release: ' + response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.be.an('array');
+        expect(body.success.length).to.equal(0);
     });
 
     it('Should fail to release a deliverable if invalid options are given', async function() {
         let response = null;
         let body: Payload;
         const url = '/portal/admin/release';
-        try {
-            const provision: ProvisionTransport = {
-                delivId:    Test.DELIVID0,
-                formSingle: false
-            };
-            // bad token
-            response = await request(app).post(url).send(provision).set({user: userName, token: Test.FAKETOKEN});
-            body = response.body;
-            Log.test('bad token: ' + response.status + " -> " + JSON.stringify(body));
-            expect(response.status).to.equal(400);
-            expect(body.success).to.be.undefined;
-            expect(body.failure).to.not.be.undefined;
 
-            // invalid deliverable
-            provision.delivId = 'FAKEDELIVERABLE';
-            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
-            body = response.body;
-            Log.test('invalid deliverable: ' + response.status + " -> " + JSON.stringify(body));
-            expect(response.status).to.equal(400);
-            expect(body.success).to.be.undefined;
-            expect(body.failure).to.not.be.undefined;
+        const provision: ProvisionTransport = {
+            delivId:    Test.DELIVID0,
+            formSingle: false
+        };
+        // bad token
+        response = await request(app).post(url).send(provision).set({user: userName, token: Test.FAKETOKEN});
+        body = response.body;
+        Log.test('bad token: ' + response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
 
-            // non-provisioning deliverable
-            provision.delivId = Test.DELIVID1;
-            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
-            body = response.body;
-            Log.test('non-provisioning deliverable: ' + response.status + " -> " + JSON.stringify(body));
-            expect(response.status).to.equal(400);
-            expect(body.success).to.be.undefined;
-            expect(body.failure).to.not.be.undefined;
+        // invalid deliverable
+        provision.delivId = 'FAKEDELIVERABLE';
+        response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+        body = response.body;
+        Log.test('invalid deliverable: ' + response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
 
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-        }
+        // non-provisioning deliverable
+        provision.delivId = Test.DELIVID1;
+        response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+        body = response.body;
+        Log.test('non-provisioning deliverable: ' + response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
     });
 
 });
