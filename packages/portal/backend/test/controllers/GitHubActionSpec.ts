@@ -16,11 +16,11 @@ import {Test} from "../GlobalSpec";
 import '../GlobalSpec';
 // const loadFirst = require('../GlobalSpec');
 
-describe("GitHubActions", () => {
+describe.only("GitHubActions", () => {
 
     // TODO: investigate skipping this way: https://stackoverflow.com/a/41908943 (and turning them on/off with an env flag)
 
-    let gh: GitHubActions;
+    let gh: GitHubActions = new GitHubActions();
 
     const TIMEOUT = Test.TIMEOUTLONG; // was 20000; // was 5000
 
@@ -44,6 +44,7 @@ describe("GitHubActions", () => {
 
     beforeEach(function() {
         Log.test('GitHubActionSpec::BeforeEach - "' + (this as any).currentTest.title + '"');
+        gh.PAGE_SIZE = 2; // force a small page size for testing
 
         const exec = Test.runSlowTest();
         // exec = true;
@@ -58,6 +59,7 @@ describe("GitHubActions", () => {
 
     afterEach(function() {
         Log.test('AfterTest: "' + (this as any).currentTest.title + '"');
+        gh.PAGE_SIZE = 100;
     });
 
     after(async () => {

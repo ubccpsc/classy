@@ -89,18 +89,13 @@ export class GitHubActions {
      * @returns {Promise<boolean>}
      */
     public async deleteRepo(repoName: string): Promise<boolean> {
-        // const ctx = this;
         Log.info("GitHubAction::deleteRepo( " + this.org + ", " + repoName + " ) - start");
 
-        // first make sure the repo exists
-
-        // return new Promise(function(fulfill, reject) {
         try {
-            const repoExists = await this.repoExists(repoName); // .then(function(repoExists: boolean) {
+            // first make sure the repo exists
+            const repoExists = await this.repoExists(repoName);
 
             if (repoExists === true) {
-                // Log.info("GitHubAction::deleteRepo(..) - repo exists; deleting");
-
                 const uri = this.apiPath + '/repos/' + this.org + '/' + repoName;
                 Log.trace("GitHubAction::deleteRepo( " + repoName + " ) - URI: " + uri);
                 const options = {
@@ -113,17 +108,8 @@ export class GitHubActions {
                     }
                 };
 
-                await rp(options); // .then(function() { // body: any
-                Log.info("GitHubAction::deleteRepo( " + repoName + " ) - successfully deleted"); // body: " + body);
-                // fulfill(true);
-                //     }).catch(function(err: any) {
-                //         Log.error("GitHubAction::deleteRepo(..) - ERROR: " + JSON.stringify(err));
-                //         reject(err);
-                //     });
-                // } else {
-                //     Log.info("GitHubAction::deleteRepo(..) - repo does not exists; not deleting");
-                //     fulfill(false);
-                // }
+                await rp(options);
+                Log.info("GitHubAction::deleteRepo( " + repoName + " ) - successfully deleted");
                 return true;
             } else {
                 Log.info("GitHubAction::deleteRepo( " + repoName + " ) - repo does not exists; not deleting");
@@ -143,17 +129,14 @@ export class GitHubActions {
      * @returns {Promise<boolean>}
      */
     public async repoExists(repoName: string): Promise<boolean> {
-        const ctx = this;
-        // Log.info("GitHubAction::repoExists( " + ctx.org + ", " + repoName + " ) - start");
 
-        const uri = ctx.apiPath + '/repos/' + ctx.org + '/' + repoName;
-        // Log.trace("GitHubAction::repoExists(..) - URI: " + uri);
+        const uri = this.apiPath + '/repos/' + this.org + '/' + repoName;
         const options = {
             method:  'GET',
             uri:     uri,
             headers: {
-                'Authorization': ctx.gitHubAuthToken,
-                'User-Agent':    ctx.gitHubUserName,
+                'Authorization': this.gitHubAuthToken,
+                'User-Agent':    this.gitHubUserName,
                 'Accept':        'application/json'
             }
         };
@@ -169,37 +152,40 @@ export class GitHubActions {
     }
 
     /**
-     * Deletes a team
+     * Deletes a team.
      *
      * @param teamId
      */
-    public deleteTeam(teamId: number): Promise<boolean> {
-        const ctx = this;
+    public async deleteTeam(teamId: number): Promise<boolean> {
 
-        Log.info("GitHubAction::deleteTeam( " + ctx.org + ", " + teamId + " ) - start");
-        return new Promise(function(fulfill) {
+        try {
+            Log.info("GitHubAction::deleteTeam( " + this.org + ", " + teamId + " ) - start");
 
-            const uri = ctx.apiPath + '/teams/' + teamId;
-            // Log.trace("GitHubAction::deleteRepo(..) - URI: " + uri);
+            const uri = this.apiPath + '/teams/' + teamId;
             const options = {
                 method:  'DELETE',
                 uri:     uri,
                 headers: {
-                    'Authorization': ctx.gitHubAuthToken,
-                    'User-Agent':    ctx.gitHubUserName,
+                    'Authorization': this.gitHubAuthToken,
+                    'User-Agent':    this.gitHubUserName,
                     // 'Accept': 'application/json', // custom because this is a preview api
                     'Accept':        'application/vnd.github.hellcat-preview+json'
                 }
             };
 
-            rp(options).then(function() { // body: any
+            const status = await rp(options);
+            if (status.statusCode === 200) {
                 Log.info("GitHubAction::deleteTeam(..) - success"); // body: " + body);
-                fulfill(true);
-            }).catch(function(err) { // err: any
-                Log.error("GitHubAction::deleteTeam(..) - failed; ERROR: " + err);
-                fulfill(false);
-            });
-        });
+                return true;
+            } else {
+                Log.info("GitHubAction::deleteTeam(..) - not deleted; code: " + status.statusCode);
+                return false;
+            }
+
+        } catch (err) {
+            Log.error("GitHubAction::deleteTeam(..) - failed; ERROR: " + err);
+            return false;
+        }
     }
 
     /**
@@ -209,26 +195,25 @@ export class GitHubActions {
      * @returns {Promise<{ id: number, name: string, url: string }[]>}
      */
     public async listRepos(): Promise<Array<{id: number, name: string, url: string}>> {
-        const ctx = this;
         Log.info("GitHubActions::listRepos(..) - start");
         const start = Date.now();
 
         // per_page max is 100; 10 is useful for testing pagination though
-        const uri = ctx.apiPath + '/orgs/' + ctx.org + '/repos?per_page=' + ctx.PAGE_SIZE;
+        const uri = this.apiPath + '/orgs/' + this.org + '/repos?per_page=' + this.PAGE_SIZE;
         Log.trace("GitHubActions::listRepos(..) - URI: " + uri);
         const options = {
             method:                  'GET',
             uri:                     uri,
             headers:                 {
-                'Authorization': ctx.gitHubAuthToken,
-                'User-Agent':    ctx.gitHubUserName,
+                'Authorization': this.gitHubAuthToken,
+                'User-Agent':    this.gitHubUserName,
                 'Accept':        'application/json'
             },
             resolveWithFullResponse: true,
             json:                    true
         };
 
-        const raw: any = await ctx.handlePagination(options);
+        const raw: any = await this.handlePagination(options);
 
         const rows: Array<{id: number, name: string, url: string}> = [];
         for (const entry of raw) {
@@ -250,25 +235,23 @@ export class GitHubActions {
      * this is just a subset of the return, but it is the subset we actually use
      */
     public async listPeople(): Promise<Array<{id: number, type: string, url: string, name: string}>> {
-        const ctx = this;
-
         Log.info("GitHubActions::listRepos(..) - start");
 
         // GET /orgs/:org/members
-        const uri = ctx.apiPath + '/orgs/' + ctx.org + '/members'; // per_page max is 100; 10 is useful for testing pagination though
+        const uri = this.apiPath + '/orgs/' + this.org + '/members'; // per_page max is 100; 10 is useful for testing pagination though
         const options = {
             method:                  'GET',
             uri:                     uri,
             headers:                 {
-                'Authorization': ctx.gitHubAuthToken,
-                'User-Agent':    ctx.gitHubUserName,
+                'Authorization': this.gitHubAuthToken,
+                'User-Agent':    this.gitHubUserName,
                 'Accept':        'application/json'
             },
             resolveWithFullResponse: true,
             json:                    true
         };
 
-        const raw: any = await ctx.handlePagination(options);
+        const raw: any = await this.handlePagination(options);
 
         const rows: Array<{id: number, type: string, url: string, name: string}> = [];
         for (const entry of raw) {
@@ -357,18 +340,17 @@ export class GitHubActions {
      */
     public async listTeams(): Promise<Array<{id: number, name: string}>> {
         Log.info("GitHubActions::listTeams(..) - start");
-        const ctx = this;
         const start = Date.now();
 
         // per_page max is 100; 10 is useful for testing pagination though
-        const uri = ctx.apiPath + '/orgs/' + ctx.org + '/teams?per_page=' + ctx.PAGE_SIZE;
+        const uri = this.apiPath + '/orgs/' + this.org + '/teams?per_page=' + this.PAGE_SIZE;
         Log.info("GitHubActions::listTeams(..) - uri: " + uri);
         const options = {
             method:                  'GET',
             uri:                     uri,
             headers:                 {
-                'Authorization': ctx.gitHubAuthToken,
-                'User-Agent':    ctx.gitHubUserName,
+                'Authorization': this.gitHubAuthToken,
+                'User-Agent':    this.gitHubUserName,
                 // 'Accept':        'application/json',
                 'Accept':        'application/vnd.github.hellcat-preview+json'
             },
@@ -376,7 +358,7 @@ export class GitHubActions {
             json:                    true
         };
 
-        const teamsRaw: any = await ctx.handlePagination(options);
+        const teamsRaw: any = await this.handlePagination(options);
 
         const teams: Array<{id: number, name: string}> = [];
         for (const team of teamsRaw) {
@@ -389,69 +371,53 @@ export class GitHubActions {
         return teams;
     }
 
-    public listWebhooks(repoName: string): Promise<{}> {
-        const ctx = this;
-        Log.info("GitHubAction::listWebhooks( " + ctx.org + ", " + repoName + " ) - start");
+    public async listWebhooks(repoName: string): Promise<{}> {
+        Log.info("GitHubAction::listWebhooks( " + this.org + ", " + repoName + " ) - start");
 
-        return new Promise(function(fulfill, reject) {
+        // POST /repos/:owner/:repo/hooks
+        const uri = this.apiPath + '/repos/' + this.org + '/' + repoName + '/hooks';
+        const opts = {
+            method:  'GET',
+            uri:     uri,
+            headers: {
+                'Authorization': this.gitHubAuthToken,
+                'User-Agent':    this.gitHubUserName
+            },
+            json:    true
+        };
 
-            // POST /repos/:owner/:repo/hooks
-            const uri = ctx.apiPath + '/repos/' + ctx.org + '/' + repoName + '/hooks';
-            const opts = {
-                method:  'GET',
-                uri:     uri,
-                headers: {
-                    'Authorization': ctx.gitHubAuthToken,
-                    'User-Agent':    ctx.gitHubUserName
-                },
-                json:    true
-            };
-
-            rp(opts).then(function(results: any) {
-                Log.info("GitHubAction::listWebhooks(..) - success: " + results);
-                fulfill(results);
-            }).catch(function(err: any) {
-                Log.error("GitHubAction::listWebhooks(..) - ERROR: " + err);
-                reject(err);
-            });
-        });
+        const results = await rp(opts); // .then(function(results: any) {
+        Log.info("GitHubAction::listWebhooks(..) - success: " + results);
+        return results;
     }
 
-    public addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
-        const ctx = this;
-        Log.info("GitHubAction::addWebhook( " + ctx.org + ", " + repoName + ", " + webhookEndpoint + " ) - start");
+    public async addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
+        Log.info("GitHubAction::addWebhook( " + this.org + ", " + repoName + ", " + webhookEndpoint + " ) - start");
 
-        return new Promise(function(fulfill, reject) {
+        // POST /repos/:owner/:repo/hooks
+        const uri = this.apiPath + '/repos/' + this.org + '/' + repoName + '/hooks';
+        const opts = {
+            method:  'POST',
+            uri:     uri,
+            headers: {
+                'Authorization': this.gitHubAuthToken,
+                'User-Agent':    this.gitHubUserName
+            },
+            body:    {
+                name:   "web",
+                active: true,
+                events: ["commit_comment", "push"],
+                config: {
+                    url:          webhookEndpoint,
+                    content_type: "json"
+                }
+            },
+            json:    true
+        };
 
-            // POST /repos/:owner/:repo/hooks
-            const uri = ctx.apiPath + '/repos/' + ctx.org + '/' + repoName + '/hooks';
-            const opts = {
-                method:  'POST',
-                uri:     uri,
-                headers: {
-                    'Authorization': ctx.gitHubAuthToken,
-                    'User-Agent':    ctx.gitHubUserName
-                },
-                body:    {
-                    name:   "web",
-                    active: true,
-                    events: ["commit_comment", "push"],
-                    config: {
-                        url:          webhookEndpoint,
-                        content_type: "json"
-                    }
-                },
-                json:    true
-            };
-
-            rp(opts).then(function(results: any) {
-                Log.info("GitHubAction::addWebhook(..) - success: " + results);
-                fulfill(true);
-            }).catch(function(err: any) {
-                Log.error("GitHubAction::addWebhook(..) - ERROR: " + err);
-                reject(err);
-            });
-        });
+        const results = await rp(opts); // .then(function(results: any) {
+        Log.info("GitHubAction::addWebhook(..) - success: " + results);
+        return true;
     }
 
     /**
@@ -464,11 +430,10 @@ export class GitHubActions {
      * @returns {Promise<number>} team id
      */
     public async createTeam(teamName: string, permission: string): Promise<{teamName: string, githubTeamNumber: number, URL: string}> {
-        const ctx = this;
-        Log.info("GitHubAction::createTeam( " + ctx.org + ", " + teamName + ", " + permission + ", ... ) - start");
 
+        Log.info("GitHubAction::createTeam( " + this.org + ", " + teamName + ", " + permission + ", ... ) - start");
         try {
-            await ctx.checkDatabase(null, teamName);
+            await this.checkDatabase(null, teamName);
 
             const teamNum = await this.getTeamNumber(teamName);
             if (teamNum > 0) {
@@ -478,13 +443,13 @@ export class GitHubActions {
                 return {teamName: teamName, githubTeamNumber: teamNum, URL: url};
             } else {
                 Log.info('GitHubAction::createTeam( ' + teamName + ', ... ) - does not exist; creating');
-                const uri = ctx.apiPath + '/orgs/' + ctx.org + '/teams';
+                const uri = this.apiPath + '/orgs/' + this.org + '/teams';
                 const options = {
                     method:  'POST',
                     uri:     uri,
                     headers: {
-                        'Authorization': ctx.gitHubAuthToken,
-                        'User-Agent':    ctx.gitHubUserName,
+                        'Authorization': this.gitHubAuthToken,
+                        'User-Agent':    this.gitHubUserName,
                         'Accept':        'application/json'
                     },
                     body:    {
@@ -502,6 +467,7 @@ export class GitHubActions {
                 return {teamName: teamName, githubTeamNumber: id, URL: url};
             }
         } catch (err) {
+            // explicitly log this failure
             Log.error("GitHubAction::createTeam(..) - ERROR: " + err);
             throw err;
         }
@@ -515,40 +481,34 @@ export class GitHubActions {
      * @param members: string[] // github usernames
      * @returns {Promise<GitTeamTuple>}
      */
-    public addMembersToTeam(teamName: string, githubTeamId: number, members: string[]): Promise<GitTeamTuple> {
-        const ctx = this;
+    public async addMembersToTeam(teamName: string, githubTeamId: number, members: string[]): Promise<GitTeamTuple> {
         Log.info("GitHubAction::addMembersToTeam( " + teamName + ", ..) - start; id: " +
             githubTeamId + "; members: " + JSON.stringify(members));
 
-        return new Promise(function(fulfill, reject) {
-            const promises: any = [];
-            for (const member of members) {
-                Log.info("GitHubAction::addMembersToTeam(..) - adding member: " + member);
+        const promises: any = [];
+        for (const member of members) {
+            Log.info("GitHubAction::addMembersToTeam(..) - adding member: " + member);
 
-                // PUT /teams/:id/memberships/:username
-                const uri = ctx.apiPath + '/teams/' + githubTeamId + '/memberships/' + member;
-                Log.info("GitHubAction::addMembersToTeam(..) - uri: " + uri);
-                const opts = {
-                    method:  'PUT',
-                    uri:     uri,
-                    headers: {
-                        'Authorization': ctx.gitHubAuthToken,
-                        'User-Agent':    ctx.gitHubUserName,
-                        'Accept':        'application/json'
-                    },
-                    json:    true
-                };
-                promises.push(rp(opts));
-            }
+            // PUT /teams/:id/memberships/:username
+            const uri = this.apiPath + '/teams/' + githubTeamId + '/memberships/' + member;
+            Log.info("GitHubAction::addMembersToTeam(..) - uri: " + uri);
+            const opts = {
+                method:  'PUT',
+                uri:     uri,
+                headers: {
+                    'Authorization': this.gitHubAuthToken,
+                    'User-Agent':    this.gitHubUserName,
+                    'Accept':        'application/json'
+                },
+                json:    true
+            };
+            promises.push(rp(opts));
+        }
 
-            Promise.all(promises).then(function(results: any) {
-                Log.info("GitHubAction::addMembersToTeam(..) - success: " + JSON.stringify(results));
-                fulfill({teamName: teamName, githubTeamNumber: githubTeamId});
-            }).catch(function(err: any) {
-                Log.error("GitHubAction::addMembersToTeam(..) - ERROR: " + err);
-                reject(err);
-            });
-        });
+        const results = await Promise.all(promises);
+        Log.info("GitHubAction::addMembersToTeam(..) - success: " + JSON.stringify(results));
+
+        return {teamName: teamName, githubTeamNumber: githubTeamId};
     }
 
     /**
@@ -559,19 +519,18 @@ export class GitHubActions {
      * @param permission ('pull', 'push', 'admin')
      * @returns {Promise<GitTeamTuple>}
      */
-    public addTeamToRepo(teamId: number, repoName: string, permission: string): Promise<GitTeamTuple> {
-        const ctx = this;
-        Log.info("GitHubAction::addTeamToRepo( " + teamId + ", " + repoName + " ) - start");
-        return new Promise(function(fulfill, reject) {
+    public async addTeamToRepo(teamId: number, repoName: string, permission: string): Promise<GitTeamTuple> {
 
-            const uri = ctx.apiPath + '/teams/' + teamId + '/repos/' + ctx.org + '/' + repoName;
+        Log.info("GitHubAction::addTeamToRepo( " + teamId + ", " + repoName + " ) - start");
+        try {
+            const uri = this.apiPath + '/teams/' + teamId + '/repos/' + this.org + '/' + repoName;
             Log.info("GitHubAction::addTeamToRepo(..) - URI: " + uri);
             const options = {
                 method:  'PUT',
                 uri:     uri,
                 headers: {
-                    'Authorization': ctx.gitHubAuthToken,
-                    'User-Agent':    ctx.gitHubUserName,
+                    'Authorization': this.gitHubAuthToken,
+                    'User-Agent':    this.gitHubUserName,
                     'Accept':        'application/json'
                     // 'Accept':        'application/vnd.github.hellcat-preview+json'
                 },
@@ -581,96 +540,89 @@ export class GitHubActions {
                 json:    true
             };
 
-            rp(options).then(function() { // body
-                Log.info("GitHubAction::addTeamToRepo(..) - success; team: " + teamId + "; repo: " + repoName);
-                fulfill({githubTeamNumber: teamId, teamName: 'NOTSETHERE'});
-            }).catch(function(err: any) {
-                Log.error("GitHubAction::addTeamToRepo(..) - ERROR: " + err);
-                reject(err);
-            });
-        });
+            await rp(options);
+            Log.info("GitHubAction::addTeamToRepo(..) - success; team: " + teamId + "; repo: " + repoName);
+            return {githubTeamNumber: teamId, teamName: 'NOTSETHERE'};
+
+        } catch (err) {
+            Log.error("GitHubAction::addTeamToRepo(..) - ERROR: " + err);
+            throw err;
+        }
     }
 
     /**
      * Gets the internal number for a team.
      *
-     * Returns -1 if the team does not exist. Will throw an error
-     * if some other configuration problem is encountered.
+     * Returns -1 if the team does not exist.
      *
      * @param {string} teamName
      * @returns {Promise<number>}
      */
-    public getTeamNumber(teamName: string): Promise<number> {
-        const ctx = this;
+    public async getTeamNumber(teamName: string): Promise<number> {
+
         Log.info("GitHubAction::getTeamNumber( " + teamName + " ) - start");
 
-        return new Promise(function(fulfill, reject) {
+        try {
             let teamId = -1;
-            ctx.listTeams().then(function(teamList: any) {
-                for (const team of teamList) {
-                    if (team.name === teamName) {
-                        teamId = team.id;
-                        Log.info("GitHubAction::getTeamNumber(..) - matched team: " + teamName + "; id: " + teamId);
-                    }
+            const teamList = await this.listTeams();
+            for (const team of teamList) {
+                if (team.name === teamName) {
+                    teamId = team.id;
+                    Log.info("GitHubAction::getTeamNumber(..) - matched team: " + teamName + "; id: " + teamId);
                 }
+            }
 
-                if (teamId < 0) {
-                    // reject('GitHubAction::getTeamNumber(..) - ERROR: Could not find team: ' + teamName);
-                    Log.info('GitHubAction::getTeamNumber(..) - WARN: Could not find team: ' + teamName);
-                    fulfill(-1);
-                } else {
-                    fulfill(teamId);
-                }
-            }).catch(function(err) {
-                Log.warn("GitHubAction::getTeamNumber(..) - could not match team: " + teamName + "; ERROR: " + err);
-                // reject(err);
-                fulfill(-1);
-            });
-        });
+            if (teamId <= 0) {
+                Log.info('GitHubAction::getTeamNumber(..) - WARN: Could not find team: ' + teamName);
+                return -1;
+            } else {
+                return teamId;
+            }
+        } catch (err) {
+            Log.warn("GitHubAction::getTeamNumber(..) - could not match team: " + teamName + "; ERROR: " + err);
+            return -1;
+        }
     }
 
     /**
      * Gets the list of users on a team.
      *
      * Returns [] if the team does not exist or nobody is on the team.
-     * Will throw an error if some other configuration problem is encountered.
      *
      * @param {string} teamNumber
      * @returns {Promise<number>}
      */
-    public getTeamMembers(teamNumber: number): Promise<string[]> {
-        const ctx = this;
+    public async getTeamMembers(teamNumber: number): Promise<string[]> {
 
         Log.info("GitHubAction::getTeamMembers( " + teamNumber + " ) - start");
-        return new Promise(function(fulfill) {
 
-            const uri = ctx.apiPath + '/teams/' + teamNumber + '/members';
+        try {
+            const uri = this.apiPath + '/teams/' + teamNumber + '/members';
             const options = {
                 method:  'GET',
                 uri:     uri,
                 headers: {
-                    'Authorization': ctx.gitHubAuthToken,
-                    'User-Agent':    ctx.gitHubUserName,
+                    'Authorization': this.gitHubAuthToken,
+                    'User-Agent':    this.gitHubUserName,
                     'Accept':        'application/json'
                 }
             };
 
             // NOTE: not sure how this will respond to paging if there are lots of members on the team
-            rp(options).then(function(body: any) {
-                Log.info("GitHubAction::getTeamMembers(..) - success"); //  body: " + body);
-                const resp = JSON.parse(body);
-                const ids: string[] = [];
-                for (const result of resp) {
-                    ids.push(result.login);
-                }
+            const body = await rp(options);
+            Log.info("GitHubAction::getTeamMembers(..) - success");
+            const resp = JSON.parse(body);
+            const ids: string[] = [];
+            for (const result of resp) {
+                ids.push(result.login);
+            }
 
-                fulfill(ids);
-            }).catch(function(err: any) {
-                Log.warn("GitHubAction::getTeamMembers(..) - ERROR: " + JSON.stringify(err));
-                // just return empy [] rather than failing
-                fulfill([]);
-            });
-        });
+            return ids;
+        } catch (err) {
+            Log.warn("GitHubAction::getTeamMembers(..) - ERROR: " + JSON.stringify(err));
+            // just return empy [] rather than failing
+            return [];
+        }
     }
 
     public async isOnAdminTeam(userName: string): Promise<boolean> {
@@ -888,13 +840,16 @@ export class GitHubActions {
 
     // just a useful delay function for when we need to wait for GH to do something
     // or we want a test to be able to slow itself down
-    public delay(ms: number): Promise<{}> {
-        // logger.info("GitHubActions::delay( " + ms + ") - start");
-        return new Promise(function(resolve) {
-            const fire = new Date(new Date().getTime() + ms);
-            Log.info("GitHubAction::delay( " + ms + " ms ) - waiting; will trigger at " + fire.toLocaleTimeString());
-            setTimeout(resolve, ms);
-        });
+    public async delay(ms: number): Promise<{}> {
+        Log.info("GitHubActions::delay( " + ms + ") - start: " + Date.now());
+
+        const fire = new Date(new Date().getTime() + ms);
+        Log.info("GitHubAction::delay( " + ms + " ms ) - waiting; will trigger at " + fire.toLocaleTimeString());
+
+        await setTimeout(null, ms);
+
+        Log.info("GitHubActions::delay( " + ms + ") - done: " + Date.now());
+        return;
     }
 
     public addGithubAuthToken(url: string) {
@@ -1061,81 +1016,74 @@ export class GitHubActions {
      * @param {string} permissionLevel - one of: 'push' 'pull'
      * @returns {Promise<boolean>}
      */
-    public setRepoPermission(repoName: string, permissionLevel: string): Promise<boolean> {
-        const ctx = this;
+    public async setRepoPermission(repoName: string, permissionLevel: string): Promise<boolean> {
         Log.info("GithubAction::setRepoPermission( " + repoName + ", " + permissionLevel + " ) - start");
 
-        return new Promise(function(fulfill, reject) {
+        try {
             // Check if permissionLevel is one of: {push, pull}
             // We don't want to be able to grant a team admin access!
             if (permissionLevel !== "pull" && permissionLevel !== "push") {
-                Log.error("GitHubAction::setRepoPermission(..) - ERROR, Invalid permissionLevel: " + permissionLevel);
-                reject(false);
+                const msg = "GitHubAction::setRepoPermission(..) - ERROR, Invalid permissionLevel: " + permissionLevel;
+                Log.error(msg);
+                throw new Error(msg);
             }
 
             // Make sure the repo exists
             // tslint:disable-next-line:no-floating-promises
-            ctx.repoExists(repoName).then(function(repoExists: boolean) {
-                if (repoExists) {
-                    Log.info("GitHubAction::setRepoPermission(..) - repo exists");
-                    Log.info("GitHubAction::setRepoPermission(..) - getting teams associated with repo");
-                    const teamsUri = ctx.apiPath + '/repos/' + ctx.org + '/' + repoName + '/teams';
-                    Log.trace("GitHubAction::setRepoPermission(..) - URI: " + teamsUri);
-                    const teamOptions = {
-                        method:  'GET',
-                        uri:     teamsUri,
-                        headers: {
-                            'Authorization': ctx.gitHubAuthToken,
-                            'User-Agent':    ctx.gitHubUserName,
-                            'Accept':        'application/json'
-                        },
-                        json:    true
-                    };
+            const repoExists = await this.repoExists(repoName);
+            if (repoExists) {
+                Log.info("GitHubAction::setRepoPermission(..) - repo exists");
+                Log.info("GitHubAction::setRepoPermission(..) - getting teams associated with repo");
+                const teamsUri = this.apiPath + '/repos/' + this.org + '/' + repoName + '/teams';
+                Log.trace("GitHubAction::setRepoPermission(..) - URI: " + teamsUri);
+                const teamOptions = {
+                    method:  'GET',
+                    uri:     teamsUri,
+                    headers: {
+                        'Authorization': this.gitHubAuthToken,
+                        'User-Agent':    this.gitHubUserName,
+                        'Accept':        'application/json'
+                    },
+                    json:    true
+                };
 
-                    // Change each team's permission
-                    // tslint:disable-next-line:no-floating-promises
-                    rp(teamOptions).then(function(responseData: any) {
-                        Log.info("GitHubAction::setRepoPermission(..) - setting permission for teams on repo");
-                        for (const team of responseData) {
-                            // Don't change teams that have admin permission
-                            if (team.permission !== "admin") {
-                                Log.info("GitHubAction::setRepoPermission(..) - set team: " + team.name + " to " + permissionLevel);
-                                const permissionUri = ctx.apiPath + '/teams/' + team.id + '/repos/' + ctx.org + '/' + repoName;
-                                Log.trace("GitHubAction::setRepoPermission(..) - URI: " + permissionUri);
-                                const permissionOptions = {
-                                    method:  'PUT',
-                                    uri:     permissionUri,
-                                    headers: {
-                                        'Authorization': ctx.gitHubAuthToken,
-                                        'User-Agent':    ctx.gitHubUserName,
-                                        'Accept':        'application/json'
-                                    },
-                                    body:    {
-                                        permission: permissionLevel
-                                    },
-                                    json:    true
-                                };
+                // Change each team's permission
+                // tslint:disable-next-line:no-floating-promises
+                const responseData = await rp(teamOptions); // .then(function(responseData: any) {
+                Log.info("GitHubAction::setRepoPermission(..) - setting permission for teams on repo");
+                for (const team of responseData) {
+                    // Don't change teams that have admin permission
+                    if (team.permission !== "admin") {
+                        Log.info("GitHubAction::setRepoPermission(..) - set team: " + team.name + " to " + permissionLevel);
+                        const permissionUri = this.apiPath + '/teams/' + team.id + '/repos/' + this.org + '/' + repoName;
+                        Log.trace("GitHubAction::setRepoPermission(..) - URI: " + permissionUri);
+                        const permissionOptions = {
+                            method:  'PUT',
+                            uri:     permissionUri,
+                            headers: {
+                                'Authorization': this.gitHubAuthToken,
+                                'User-Agent':    this.gitHubUserName,
+                                'Accept':        'application/json'
+                            },
+                            body:    {
+                                permission: permissionLevel
+                            },
+                            json:    true
+                        };
 
-                                rp(permissionOptions).then(function() {
-                                    Log.info("GitHubAction::setRepoPermission(..) - changed team: " + team.id + " permissions");
-                                }).catch(function(err) {
-                                    Log.error("GitHubAction::setRepoPermission(..) - ERROR: " + err);
-                                    fulfill(false);
-                                });
-                            }
-                        }
-                    });
-                    fulfill(true);
-                } else {
-                    Log.info("GitHubAction::setRepoPermission(..) - repo does not exists; unable to revoke push");
-                    fulfill(false);
+                        await rp(permissionOptions); // TODO: evaluate statusCode from this call
+                        Log.info("GitHubAction::setRepoPermission(..) - changed team: " + team.id + " permissions");
+                    }
                 }
-            }).catch(function(err) {
-                // If we get an error; something went wrong
-                Log.error("GitHubAction::setRepoPermission(..) - ERROR: " + JSON.stringify(err));
-                reject(err);
-            });
-        });
+            } else {
+                Log.info("GitHubAction::setRepoPermission(..) - repo does not exists; unable to revoke push");
+                return false;
+            }
+        } catch (err) {
+            // If we get an error; something went wrong
+            Log.error("GitHubAction::setRepoPermission(..) - ERROR: " + err.message);
+            throw err;
+        }
     }
 
     /**
