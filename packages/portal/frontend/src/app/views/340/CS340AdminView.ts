@@ -140,7 +140,7 @@ export class CS340AdminView extends AdminView {
                 const delivIdElement = document.querySelector('#adminEditDeliverablePage-name') as OnsInputElement;
                 if (delivIdElement === null) { return; }
 
-                Log.info('CS340AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::customOnClick');
+                // Log.info('CS340AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::customOnClick');
                 // that.checkReleasedGrades().then(function (result) {
                 //     Log.info("CS340AdminView::renderEditDeliverablePage(..)::checkReleasedGrades(..) - then: - start");
                 //     Log.info("CS340AdminView::renderEditDeliverablePage(..)::checkReleasedGrades(..) - released: " + result);
@@ -279,7 +279,7 @@ export class CS340AdminView extends AdminView {
 
         // adjust the object: pull it from the deliverable object
         let assignInfo: AssignmentInfo;
-        if (delivRecord === null) {
+        if (delivRecord === null || delivRecord.custom.assignment === undefined) {
             assignInfo = {
                 seedRepoURL: "",
                 seedRepoPath: "",
@@ -301,8 +301,17 @@ export class CS340AdminView extends AdminView {
         assignInfo.mainFilePath = mainFilePathElement.value;
         assignInfo.courseWeight = Number(courseWeightElement.value);
 
+        let newCustomObj: any;
+        if(delivRecord === null) {
+            newCustomObj = {};
+        } else {
+            newCustomObj = delivRecord.custom;
+        }
+
+        newCustomObj.assignment = assignInfo;
+
         const assignCustomElement = (document.querySelector("#adminEditDeliverablePage-custom") as OnsInputElement);
-        assignCustomElement.value = JSON.stringify(assignInfo);
+        assignCustomElement.value = JSON.stringify(newCustomObj);
     }
 
     protected async newSave() {
@@ -809,7 +818,7 @@ export class CS340AdminView extends AdminView {
         Log.info("CS340AdminView::calculateMaxGrade( " + deliverableRecord.id + " ) - start");
         let maxGrade: number = 0;
         const assignInfo: AssignmentInfo | null = deliverableRecord.custom.assignment;
-        if (assignInfo === null || typeof assignInfo.rubric === 'undefined') {
+        if (assignInfo === undefined || typeof assignInfo.rubric === 'undefined') {
             Log.warn("CS340AdminView::calculateMaxGrade(..) - Error: Deliverable: " +
                 deliverableRecord.id + " is not an assignment");
             return -1;
@@ -1211,7 +1220,7 @@ export class CS340AdminView extends AdminView {
                 //      - has no grade
                 // - is not closed
                 let newEntry: {value: any, html: string};
-                if (assignInfo === null || typeof assignInfo.status === "undefined") {
+                if (assignInfo === undefined || typeof assignInfo.status === "undefined") {
                     if (foundGrade) {
                         newEntry = {
                             value: gradeMapping[student.githubId][delivCol.id].score,
