@@ -189,16 +189,30 @@ export class GitHubActions implements IGitHubActions {
     private static instance: IGitHubActions = null;
 
     public static getInstance(forceReal?: boolean): IGitHubActions {
-        // if (typeof forceReal !== 'undefined' && forceReal === true) {
-        //     return new GitHubActions();
-        // } else {
-        //     // for now
-        //     return new GitHubActions();
-        // }
-        // return new GitHubActions();
+
+        if (typeof forceReal === 'undefined') {
+            forceReal = false;
+        }
+
+        // NOTE: this is bad form, but we want to make sure we always return the real thing in production
+        // this detects the mocha testing environment
+        const isInTest = typeof (global as any).it === 'function';
+        if (isInTest === false) {
+            // we're in prod, always return the real thing
+            Log.test("GitHubActions::getInstance(.. ) - prod; returning GitHubActions");
+            return new GitHubActions();
+        }
+
+        if (forceReal === true) {
+            Log.test("GitHubActions::getInstance( true ) - returning live GitHubActions");
+            return new GitHubActions(); // don't need to cache this since it is backed by GitHub instead of an in-memory cache
+        }
+
         if (GitHubActions.instance === null) {
             GitHubActions.instance = new TestGitHubActions();
         }
+
+        Log.test("GitHubActions::getInstance() - returning cached TestGitHubActions");
         return GitHubActions.instance;
     }
 

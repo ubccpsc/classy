@@ -50,7 +50,6 @@ describe("CS340: AssignmentController", () => {
     const rc: RepositoryController = new RepositoryController();
     const dc: DeliverablesController = new DeliverablesController();
     const pc: PersonController = new PersonController();
-    // const gh: GitHubController = new GitHubController();
     const gha: IGitHubActions = GitHubActions.getInstance();
     const db: DatabaseController = DatabaseController.getInstance();
 
