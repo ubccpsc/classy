@@ -21,7 +21,7 @@ describe("GitHubActions", () => {
     // TODO: investigate skipping this way: https://stackoverflow.com/a/41908943 (and turning them on/off with an env flag)
 
     // const gh: IGitHubActions = new TestGitHubActions();
-    const gh: IGitHubActions = GitHubActions.getInstance();
+    const gh: IGitHubActions = GitHubActions.getInstance(true);
 
     const TIMEOUT = Test.TIMEOUTLONG; // was 20000; // was 5000
 
