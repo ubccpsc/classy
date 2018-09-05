@@ -9,7 +9,6 @@ import {AssignmentController} from "../../../src/controllers/340/AssignmentContr
 import {DatabaseController} from "../../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../../src/controllers/DeliverablesController";
 import {GitHubActions, IGitHubActions} from "../../../src/controllers/GitHubActions";
-import {GitHubController} from "../../../src/controllers/GitHubController";
 
 import {GradesController} from "../../../src/controllers/GradesController";
 import {PersonController} from "../../../src/controllers/PersonController";
@@ -41,8 +40,8 @@ const ORIGINAL_ORG = Config.getInstance().getProp(ConfigKey.org);
 
 const TIMEOUT = 7500;
 
-const DELAY_SEC = 1000;
-const DELAY_SHORT = 200;
+// const DELAY_SEC = 1000;
+// const DELAY_SHORT = 200;
 
 describe("CS340: AssignmentController", () => {
     let ac: AssignmentController = new AssignmentController();
@@ -51,7 +50,7 @@ describe("CS340: AssignmentController", () => {
     const rc: RepositoryController = new RepositoryController();
     const dc: DeliverablesController = new DeliverablesController();
     const pc: PersonController = new PersonController();
-    const gh: GitHubController = new GitHubController();
+    // const gh: GitHubController = new GitHubController();
     const gha: IGitHubActions = GitHubActions.getInstance();
     const db: DatabaseController = DatabaseController.getInstance();
 

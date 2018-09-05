@@ -90,7 +90,6 @@ describe("GitHubController", () => {
         // not really a test, we just want something to run first we can set timeout on
         Log.test("Clearing prior state");
         try {
-            const gha = GitHubActions.getInstance(true);
             await gha.deleteRepo(Test.REPONAME1);
             await gha.deleteRepo(Test.REPONAME2);
             await gha.deleteRepo(Test.REPONAME3);

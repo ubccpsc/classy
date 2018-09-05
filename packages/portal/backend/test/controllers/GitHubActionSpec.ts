@@ -274,7 +274,9 @@ describe("GitHubActions", () => {
 
     it("Should be able to get member names for a valid team.", async function() {
         const teamnum = await gh.getTeamNumber('staff');
-        expect(teamnum).to.be.greaterThan(0);
+        Log.test("staff team #: " + teamnum);
+        expect(teamnum).to.be.an('number');
+        expect(teamnum > 0).to.be.true;
         const val = await gh.getTeamMembers(teamnum);
         Log.test('# Team members: ' + val.length);
         expect(val.length).to.be.greaterThan(0);

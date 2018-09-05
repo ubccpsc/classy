@@ -31,7 +31,7 @@ export class AuthController {
         if (person !== null) {
             // person exists
             const valid = await this.verifyToken(personId, token);
-            Log.trace("AuthController::isValid( " + personId + ", ... ) - " + valid + "; !null person");
+            Log.trace("AuthController::isValid( " + personId + ", ... ) - valid: " + valid + "; !null person");
             return valid;
         } else {
             // person does not exist

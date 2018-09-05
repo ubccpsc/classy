@@ -67,6 +67,7 @@ describe("CourseController", () => {
         await dbc.clearData();
 
         // clear github teams and repositories we will end up provisioning
+        await gha.deleteRepo(Test.REPONAMEREAL);
         await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
         await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB3);
         await gha.deleteRepo(Test.REPONAME1);
@@ -75,6 +76,8 @@ describe("CourseController", () => {
         let teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
         await gha.deleteTeam(teamNum);
         teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB3);
+        await gha.deleteTeam(teamNum);
+        teamNum = await gha.getTeamNumber(Test.TEAMNAMEREAL);
         await gha.deleteTeam(teamNum);
 
         await Test.prepareDeliverables();
@@ -344,11 +347,14 @@ describe("CourseController", () => {
 
     describe("Slow CourseController Tests", () => {
 
+        // before(async function() {
+        //     await clearAndPreparePartial();
+        // });
+
         beforeEach(function() {
             const exec = Test.runSlowTest();
-
             if (exec) {
-                Log.test("CourseControllerSpec::slowTests - running");
+                Log.test("CourseControllerSpec::slowTests - running: " + this.currentTest.title);
             } else {
                 Log.test("CourseControllerSpec::slowTests - skipping; will run on CI");
                 this.skip();
@@ -357,6 +363,7 @@ describe("CourseController", () => {
 
         it("Should provision repos if there are some to do and singles are disabled.", async () => {
             await clearAndPreparePartial();
+
             const allRepos = await rc.getAllRepos();
             expect(allRepos.length).to.equal(0);
 
@@ -384,7 +391,6 @@ describe("CourseController", () => {
 
             expect(allNewTeams[0].URL).to.not.be.null; // team was used, but repo was only provisioned, not released
             expect(allNewRepos[0].URL).to.not.be.null;
-
         }).timeout(Test.TIMEOUTLONG);
 
         it("Should release repos.", async () => {

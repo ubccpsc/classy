@@ -177,6 +177,7 @@ export class GitHubActions implements IGitHubActions {
     private dc: DatabaseController = null;
 
     private constructor() {
+        Log.info("GitHubActions::<init> - start");
         // NOTE: this is not very controllable; these would be better as params
         this.org = Config.getInstance().getProp(ConfigKey.org);
         this.apiPath = Config.getInstance().getProp(ConfigKey.githubAPI);
@@ -185,6 +186,8 @@ export class GitHubActions implements IGitHubActions {
         this.dc = DatabaseController.getInstance();
     }
 
+    private static instance: IGitHubActions = null;
+
     public static getInstance(forceReal?: boolean): IGitHubActions {
         // if (typeof forceReal !== 'undefined' && forceReal === true) {
         //     return new GitHubActions();
@@ -192,8 +195,11 @@ export class GitHubActions implements IGitHubActions {
         //     // for now
         //     return new GitHubActions();
         // }
-        return new GitHubActions();
-        // return new TestGitHubActions();
+        // return new GitHubActions();
+        if (GitHubActions.instance === null) {
+            GitHubActions.instance = new TestGitHubActions();
+        }
+        return GitHubActions.instance;
     }
 
     public setPageSize(size: number) {
@@ -1300,6 +1306,11 @@ export class GitHubActions implements IGitHubActions {
 
 // tslint:disable-next-line
 export class TestGitHubActions implements IGitHubActions {
+
+    public constructor() {
+        Log.info("TestGitHubActions::<init> - start");
+    }
+
     public async addMembersToTeam(teamName: string, githubTeamId: number, members: string[]): Promise<GitTeamTuple> {
         Log.info("TestGitHubActions::addMembersToTeam(..)");
         return {teamName: teamName, githubTeamNumber: githubTeamId};
@@ -1319,65 +1330,116 @@ export class TestGitHubActions implements IGitHubActions {
         return true;
     }
 
+    private repos: any = {};
+
     public async createRepo(repoId: string): Promise<string> {
-        Log.info("TestGitHubActions::createRepo(..)");
+        Log.info("TestGitHubActions::createRepo( " + repoId + " ) - start");
         await GitHubActions.checkDatabase(repoId, null);
-        const c = Config.getInstance();
-        return c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/' + repoId;
+
+        if (typeof this.repos[repoId] === 'undefined') {
+            Log.info("TestGitHubActions::createRepo( " + repoId + " ) - created");
+            const c = Config.getInstance();
+            this.repos[repoId] = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/' + repoId;
+        }
+        Log.info("TestGitHubActions::createRepo( " + repoId + " ) - repos: " + JSON.stringify(this.repos));
+        return this.repos[repoId];
     }
 
     public async createTeam(teamName: string, permission: string): Promise<{teamName: string; githubTeamNumber: number; URL: string}> {
-        Log.info("TestGitHubActions::createTeam(..)");
-        return {teamName, githubTeamNumber: Date.now(), URL: 'URLHERE'};
+        if (typeof this.teams[teamName] === 'undefined') {
+            const c = Config.getInstance();
+            const url = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/teams/' + teamName;
+            this.teams[teamName] = {teamName: teamName, githubTeamNumber: Date.now(), URL: 'teamURL'};
+        }
+        Log.info("TestGitHubActions::createTeam( " + teamName + " ) - created; exists: " +
+            (typeof this.teams[teamName] !== 'undefined') + "; records: " + JSON.stringify(this.teams));
+
+        return this.teams[teamName];
     }
 
     public async deleteRepo(repoName: string): Promise<boolean> {
         Log.info("TestGitHubActions::deleteRepo( " + repoName + " )");
-        if (repoName === Test.INVALIDREPONAME) {
-            return false;
+        // if (repoName === Test.INVALIDREPONAME) {
+        //     return false;
+        // }
+        // const repoExists = await this.repoExists(repoName);
+        // if (repoExists === false){
+        //     Log.info("TestGitHubActions::deleteRepo( " + repoName + " ) - false; does not exist");
+        //     return false;
+        // }
+
+        if (typeof this.repos[repoName] !== 'undefined') {
+            Log.info("TestGitHubActions::deleteRepo( " + repoName + " ) - true; deleted");
+            delete this.repos[repoName];
+            return true;
         }
-        return true;
+
+        Log.info("TestGitHubActions::deleteRepo( " + repoName + " ) - false; does not exist");
+        return false;
     }
 
+    private teams: any = {
+        staff: {id: 'staff', teamName: 'staff', githubTeamNumber: '1000'},
+        admin: {id: 'admin', teamName: 'admin', githubTeamNumber: '1001'}
+    };
+
     public async deleteTeam(teamId: number): Promise<boolean> {
-        Log.info("TestGitHubActions::deleteTeam(..)");
-        return true;
+        Log.info("TestGitHubActions::deleteTeam( " + teamId + " )");
+        for (const teamName of Object.keys(this.teams)) {
+            const team = this.teams[teamName];
+            if (team.githubTeamNumber === teamId) {
+                Log.info("TestGitHubActions::deleteTeam( " + teamId + " ) - deleting team name: " + team.id);
+                delete this.teams[teamName];
+            }
+        }
+        // if (typeof this.teams[teamId] !== 'undefined') {
+        //     delete this.teams[teamId];
+        //     Log.info("TestGitHubActions::deleteTeam( " + teamId + " ); deleted: " + (typeof this.teams[teamId] === 'undefined'));
+        //     return true;
+        // }
+        Log.info("TestGitHubActions::deleteTeam( " + teamId + " ); not deleted");
+        return false;
     }
 
     public async getTeamMembers(teamNumber: number): Promise<string[]> {
         Log.info("TestGitHubActions::getTeamMembers( " + teamNumber + " )");
-        if (teamNumber <= 0) {
+        if (teamNumber < 0) {
             return [];
         }
         return [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2, Test.ADMIN1.github];
     }
 
     public async getTeamNumber(teamName: string): Promise<number> {
-        Log.info("TestGitHubActions::getTeamNumber( " + teamName + " )");
-        if (teamName === Test.INVALIDTEAMNAME) {
-            return -1;
+        if (typeof this.teams[teamName] !== 'undefined') {
+            const num = this.teams[teamName].githubTeamNumber;
+            Log.info("TestGitHubActions::getTeamNumber( " + teamName + " ) - returning: " + num);
+            return Number(num);
         }
-        return Date.now();
+        Log.info("TestGitHubActions::getTeamNumber( " + teamName + " ) - returning: -1; other records: " + JSON.stringify(this.teams));
+        return -1;
     }
 
     public async importRepoFS(importRepo: string, studentRepo: string, seedFilePath?: string): Promise<boolean> {
-        Log.info("TestGitHubActions::importRepoFS(..)");
+        Log.info("TestGitHubActions::importRepoFS( " + importRepo + ", ... ) - start");
+
         return true;
     }
 
     public async isOnAdminTeam(userName: string): Promise<boolean> {
-        Log.info("TestGitHubActions::isOnAdminTeam( " + userName + " )");
         if (userName === Test.ADMIN1.id) {
+            Log.info("TestGitHubActions::isOnAdminTeam( " + userName + " ) - true");
             return true;
         }
+        Log.info("TestGitHubActions::isOnAdminTeam( " + userName + " ) - false");
         return false;
     }
 
     public async isOnStaffTeam(userName: string): Promise<boolean> {
-        Log.info("TestGitHubActions::isOnStaffTeam( " + userName + " )");
-        if (userName === Test.STAFF1.id) {
+        if (userName === Test.STAFF1.id || userName === Test.ADMIN1.id) {
+            Log.info("TestGitHubActions::isOnStaffTeam( " + userName + " ) - true");
             return true;
         }
+        Log.info("TestGitHubActions::isOnStaffTeam( " + userName + " ) - false");
         return false;
     }
 
@@ -1388,12 +1450,32 @@ export class TestGitHubActions implements IGitHubActions {
 
     public async listPeople(): Promise<Array<{id: number; type: string; url: string; name: string}>> {
         Log.info("TestGitHubActions::listPeople(..)");
-        return [];
+        const people = [];
+
+        const start = Date.now();
+        people.push({id: start, type: 'student', url: 'URL', name: Test.USERNAMEGITHUB1});
+        people.push({id: start - 5, type: 'student', url: 'URL', name: Test.USERNAMEGITHUB2});
+        people.push({id: start - 15, type: 'student', url: 'URL', name: Test.USERNAMEGITHUB3});
+        people.push({id: start - 15, type: 'student', url: 'URL', name: Test.REALUSER1.github});
+        people.push({id: start - 15, type: 'student', url: 'URL', name: Test.REALUSER2.github});
+        people.push({id: start - 15, type: 'student', url: 'URL', name: Test.REALUSER3.github});
+        people.push({id: start - 25, type: 'student', url: 'URL', name: Test.USER1.github});
+        people.push({id: start - 35, type: 'student', url: 'URL', name: Test.USER2.github});
+        people.push({id: start - 45, type: 'student', url: 'URL', name: Test.USER3.github});
+        people.push({id: start - 55, type: 'student', url: 'URL', name: Test.USER4.github});
+
+        return people;
     }
 
     public async listRepos(): Promise<Array<{id: number; name: string; url: string}>> {
         Log.info("TestGitHubActions::listRepos(..)");
-        return [{id: Date.now(), name: Test.REPONAME1, url: 'URLHERE!'}];
+        const ret = [];
+        for (const name of Object.keys(this.repos)) {
+            const repo = this.repos[name];
+            ret.push({id: Date.now(), name: name, url: repo});
+        }
+        Log.info("TestGitHubActions::listRepos(..) - #: " + ret.length + "; content: " + JSON.stringify(ret));
+        return ret;
     }
 
     public async listTeams(): Promise<Array<{id: number; name: string}>> {
@@ -1413,10 +1495,16 @@ export class TestGitHubActions implements IGitHubActions {
 
     public async repoExists(repoName: string): Promise<boolean> {
         Log.info("TestGitHubActions::repoExists( " + repoName + " )");
-        if (repoName === Test.INVALIDREPONAME) {
-            return false;
+        // if (repoName === Test.INVALIDREPONAME) {
+        //     return false;
+        // }
+        // return true;
+        if (typeof this.repos[repoName] !== 'undefined') {
+            Log.info("TestGitHubActions::repoExists( " + repoName + " ) - exists");
+            return true;
         }
-        return true;
+        Log.info("TestGitHubActions::repoExists( " + repoName + " ) - does not exist");
+        return false;
     }
 
     public async setRepoPermission(repoName: string, permissionLevel: string): Promise<boolean> {
