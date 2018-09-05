@@ -1,9 +1,7 @@
 import {fail} from "assert";
 import {expect} from "chai";
 import "mocha";
-// import request = require("request");
-// const request = require('supertest');
-// import restify = require('restify');
+
 import * as restify from 'restify';
 import * as request from 'supertest';
 import Config, {ConfigCourses, ConfigKey} from "../../../../../common/Config";
@@ -12,22 +10,18 @@ import {DatabaseController} from "../../../src/controllers/DatabaseController";
 import {PersonController} from "../../../src/controllers/PersonController";
 import BackendServer from "../../../src/server/BackendServer";
 import {Test} from "../../GlobalSpec";
-// const loadFirst = require('../../GlobalSpec');
+
 import '../../GlobalSpec';
+
 // tslint:disable-next-line
 const https = require('https');
-
-const TIMEOUT = 7500;
-
-const DELAY_SEC = 1000;
-const DELAY_SHORT = 200;
 
 const REPONAME = getProjectPrefix() + Test.ASSIGNID0;
 
 const adminUserName = Test.ADMIN1.id;
 let adminUserToken: string;
 
-describe.skip("CS340: Routes", () => {
+describe("CS340: Routes", () => {
     let app: restify.Server = null;
     let server: BackendServer = null;
 
@@ -103,7 +97,7 @@ describe.skip("CS340: Routes", () => {
     it("Clean up stale repos.", async function() {
         Log.test("Cleaning up stale repositories...");
         await Test.deleteStaleRepositories();
-    }).timeout(5 * TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Should be able to get all deliverables.", async function() {
         let response = null;
@@ -343,7 +337,7 @@ describe.skip("CS340: Routes", () => {
         expect(response).to.not.be.null;
         expect(response.status).to.be.equal(200);
         expect(response.body.response).to.not.be.null;
-    }).timeout(numberOfStudents * TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Should be able to initialize all repositories.", async function() {
         let response = null;
@@ -360,7 +354,7 @@ describe.skip("CS340: Routes", () => {
         expect(response).to.not.be.null;
         expect(response.status).to.be.equal(200);
         expect(response.body.response).to.not.be.null;
-    }).timeout(numberOfStudents * TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Should be able to publish all repositories.", async function() {
 
@@ -380,7 +374,7 @@ describe.skip("CS340: Routes", () => {
         expect(response).to.not.be.null;
         expect(response.status).to.be.equal(200);
         expect(response.body.response).to.not.be.null;
-    }).timeout(2 * TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Should be able to \"publish\" all repositories again, even though they have already been created.", async function() {
         let response = null;
@@ -399,7 +393,7 @@ describe.skip("CS340: Routes", () => {
         expect(response).to.not.be.null;
         expect(response.status).to.be.equal(200);
         expect(response.body.response).to.not.be.null;
-    }).timeout(2 * TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Should be able to retrieve a repository from specifying a team.", async function() {
         let response = null;
@@ -448,7 +442,7 @@ describe.skip("CS340: Routes", () => {
         expect(response).to.not.be.null;
         expect(response.status).to.be.equal(200);
         expect(response.body.response).to.not.be.null;
-    }).timeout(2 * TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Should be able to set a student's grade.", async function() {
         Log.test("CS340RoutesSpec:: should be able to set a student's grade");
@@ -506,7 +500,7 @@ describe.skip("CS340: Routes", () => {
         expect(response).to.not.be.null;
         expect(response.status).to.be.equal(200);
         expect(response.body.response).to.not.be.null;
-    }).timeout(2 * TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Should be able to get a specific grade using student ID and assignment ID.", async function() {
 
@@ -532,7 +526,7 @@ describe.skip("CS340: Routes", () => {
         expect(response).to.not.be.null;
         expect(response.status).to.be.equal(200);
         expect(response.body.response).to.not.be.null;
-    }).timeout(2 * TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Should be able to delete a specific repository.", async function() {
         let response = null;
@@ -569,7 +563,7 @@ describe.skip("CS340: Routes", () => {
         expect(response).to.not.be.null;
         expect(response.status).to.be.equal(200);
         expect(response.body.response).to.not.be.null;
-    }).timeout(2 * TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Should be able to delete all repositories of a given assignment.", async function() {
         let response = null;
@@ -586,7 +580,7 @@ describe.skip("CS340: Routes", () => {
         expect(response).to.not.be.null;
         expect(response.status).to.be.equal(200);
         expect(response.body.response).to.not.be.null;
-    }).timeout(10 * TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Should be able to verify all and create jobs for an assignment.", async function() {
         const aid = Test.ASSIGNID0;
@@ -652,12 +646,12 @@ describe.skip("CS340: Routes", () => {
         expect(response).to.not.be.null;
         expect(response.status).to.be.equal(200);
         expect(response.body.response).to.be.true;
-    }).timeout(numberOfStudents * TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Clean up stale repos.", async function() {
         Log.test("Cleaning up stale repositories...");
         await Test.deleteStaleRepositories();
-    }).timeout(numberOfStudents * TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Should be able to publish final grades of all students using the API.", async function() {
         let response = null;
@@ -673,7 +667,7 @@ describe.skip("CS340: Routes", () => {
         expect(response).to.not.be.null;
         expect(response.status).to.be.equal(200);
         expect(response.body.response).to.be.true;
-    }).timeout(numberOfStudents * TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     describe("Failing API tests", () => {
         // before()
@@ -1175,7 +1169,7 @@ describe.skip("CS340: Routes", () => {
             expect(response.status).to.be.equal(400);
             expect(response.body.response).to.not.exist;
             expect(response.body.error).to.not.be.null;
-        }).timeout(numberOfStudents * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
 
         it("Should not be able to initialize all repositories for a deliverable " +
             "that exists, but is not an assignment.", async function() {
@@ -1184,6 +1178,7 @@ describe.skip("CS340: Routes", () => {
 
             try {
                 response = await request(app).post(url).set({user: adminUserName, token: adminUserToken});
+                Log.test("response receiced");
             } catch (err) {
                 Log.test("ERROR: " + err);
                 fail(err);
@@ -1193,7 +1188,7 @@ describe.skip("CS340: Routes", () => {
             expect(response.status).to.be.equal(400);
             expect(response.body.response).to.not.exist;
             expect(response.body.error).to.not.be.null;
-        }).timeout(numberOfStudents * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
 
         it("Should not be able to publish all repositories for a deliverable " +
             "that doesn't exist.", async function() {
@@ -1211,7 +1206,7 @@ describe.skip("CS340: Routes", () => {
             expect(response.status).to.be.equal(400);
             expect(response.body.response).to.not.exist;
             expect(response.body.error).to.not.be.null;
-        }).timeout(numberOfStudents * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
 
         it("Should not be able to publish all repositories for a deliverable " +
             "that exists, but is not an assignment.", async function() {
@@ -1229,7 +1224,7 @@ describe.skip("CS340: Routes", () => {
             expect(response.status).to.be.equal(400);
             expect(response.body.response).to.not.exist;
             expect(response.body.error).to.not.be.null;
-        }).timeout(numberOfStudents * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
 
     });
 });
