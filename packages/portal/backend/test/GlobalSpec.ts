@@ -556,10 +556,10 @@ export class Test {
 
     public static readonly USERNAMEGITHUB1 = "cpscbot";
     public static readonly USERNAMEGITHUB2 = "rthse2";
-    // public static readonly USERNAMEGITHUB1 = "atest-01"; // "cpscbot"; // github-dev.ugrad
-    // public static readonly USERNAMEGITHUB2 = "atest-02"; // "rthse2"; // github-dev.ugrad
     public static readonly USERNAMEGITHUB3 = "ubcbot";
     public static readonly USERNAMEGITHUB4 = "classystaff";
+    // public static readonly USERNAMEGITHUB1 = "atest-01"; // "cpscbot"; // github-dev.ugrad
+    // public static readonly USERNAMEGITHUB2 = "atest-02"; // "rthse2"; // github-dev.ugrad
 
     public static readonly DELIVIDPROJ = 'project';
     public static readonly DELIVID0 = 'd0';

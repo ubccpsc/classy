@@ -2,7 +2,7 @@ import * as rp from "request-promise-native";
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
-import {Test} from "../../test/GlobalSpec";
+// import {Test} from "../../test/GlobalSpec";
 import {DatabaseController} from "./DatabaseController";
 import {GitTeamTuple} from "./GitHubController";
 
@@ -1431,7 +1431,7 @@ export class TestGitHubActions implements IGitHubActions {
         if (teamNumber < 0) {
             return [];
         }
-        return [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2, Test.ADMIN1.github];
+        return [this.Test.USERNAMEGITHUB1, this.Test.USERNAMEGITHUB2, this.Test.ADMIN1.github];
     }
 
     public async getTeamNumber(teamName: string): Promise<number> {
@@ -1451,7 +1451,7 @@ export class TestGitHubActions implements IGitHubActions {
     }
 
     public async isOnAdminTeam(userName: string): Promise<boolean> {
-        if (userName === Test.ADMIN1.id) {
+        if (userName === this.Test.ADMIN1.id) {
             Log.info("TestGitHubActions::isOnAdminTeam( " + userName + " ) - true");
             return true;
         }
@@ -1460,13 +1460,31 @@ export class TestGitHubActions implements IGitHubActions {
     }
 
     public async isOnStaffTeam(userName: string): Promise<boolean> {
-        if (userName === Test.STAFF1.id || userName === Test.ADMIN1.id) {
+        if (userName === this.Test.STAFF1.id || userName === this.Test.ADMIN1.id) {
             Log.info("TestGitHubActions::isOnStaffTeam( " + userName + " ) - true");
             return true;
         }
         Log.info("TestGitHubActions::isOnStaffTeam( " + userName + " ) - false");
         return false;
     }
+
+    // HACK: can't reference GlobalSpec::Test here (docker limitation); need to move these to common?
+    private Test = {
+        USERNAMEGITHUB1: 'cpscbot',
+        USERNAMEGITHUB2: 'rthse2',
+        USERNAMEGITHUB3: 'ubcbot',
+        REALUSER1:       {id: 'rthse2', csId: 'rthse2', github: 'rthse2'}, // real account for testing users
+        REALUSER2:       {id: "jopika", csId: "jopika", github: "jopika"}, // real account for testing users
+        REALUSER3:       {id: "atest-01", csId: "atest-01", github: "atest-01"}, // real account for testing users
+        USER1:           {id: 'user1id', csId: 'user1id', github: 'user1gh'},
+        USER2:           {id: 'user2id', csId: 'user2id', github: 'user2gh'},
+        USER3:           {id: 'user3id', csId: 'user3id', github: 'user3gh'},
+        USER4:           {id: 'user4id', csId: 'user4id', github: 'user4gh'},
+        ADMIN1:          {id: 'classyadmin', csId: 'classyadmin', github: 'classyadmin'},
+        STAFF1:          {id: 'classystaff', csId: 'classystaff', github: 'classystaff'},
+        TEAMNAME1:       't_d0_user1id_user2id',
+        INVALIDREPONAME: 'InvalidRepoNameShouldNotExist'
+    };
 
     public async isOnTeam(teamName: string, userName: string): Promise<boolean> {
         Log.info("TestGitHubActions::isOnTeam( t: " + teamName + ", u: " + userName + " )");
@@ -1478,16 +1496,16 @@ export class TestGitHubActions implements IGitHubActions {
         const people = [];
 
         const start = Date.now();
-        people.push({id: start, type: 'student', url: 'URL', name: Test.USERNAMEGITHUB1});
-        people.push({id: start - 5, type: 'student', url: 'URL', name: Test.USERNAMEGITHUB2});
-        people.push({id: start - 15, type: 'student', url: 'URL', name: Test.USERNAMEGITHUB3});
-        people.push({id: start - 15, type: 'student', url: 'URL', name: Test.REALUSER1.github});
-        people.push({id: start - 15, type: 'student', url: 'URL', name: Test.REALUSER2.github});
-        people.push({id: start - 15, type: 'student', url: 'URL', name: Test.REALUSER3.github});
-        people.push({id: start - 25, type: 'student', url: 'URL', name: Test.USER1.github});
-        people.push({id: start - 35, type: 'student', url: 'URL', name: Test.USER2.github});
-        people.push({id: start - 45, type: 'student', url: 'URL', name: Test.USER3.github});
-        people.push({id: start - 55, type: 'student', url: 'URL', name: Test.USER4.github});
+        people.push({id: start, type: 'student', url: 'URL', name: this.Test.USERNAMEGITHUB1});
+        people.push({id: start - 5, type: 'student', url: 'URL', name: this.Test.USERNAMEGITHUB2});
+        people.push({id: start - 15, type: 'student', url: 'URL', name: this.Test.USERNAMEGITHUB3});
+        people.push({id: start - 15, type: 'student', url: 'URL', name: this.Test.REALUSER1.github});
+        people.push({id: start - 15, type: 'student', url: 'URL', name: this.Test.REALUSER2.github});
+        people.push({id: start - 15, type: 'student', url: 'URL', name: this.Test.REALUSER3.github});
+        people.push({id: start - 25, type: 'student', url: 'URL', name: this.Test.USER1.github});
+        people.push({id: start - 35, type: 'student', url: 'URL', name: this.Test.USER2.github});
+        people.push({id: start - 45, type: 'student', url: 'URL', name: this.Test.USER3.github});
+        people.push({id: start - 55, type: 'student', url: 'URL', name: this.Test.USER4.github});
 
         return people;
     }
@@ -1505,7 +1523,7 @@ export class TestGitHubActions implements IGitHubActions {
 
     public async listTeams(): Promise<Array<{id: number; name: string}>> {
         Log.info("TestGitHubActions::listTeams(..)");
-        return [{id: Date.now(), name: Test.TEAMNAME1}];
+        return [{id: Date.now(), name: this.Test.TEAMNAME1}];
     }
 
     private webHookState: any = {};
@@ -1534,7 +1552,7 @@ export class TestGitHubActions implements IGitHubActions {
 
     public async setRepoPermission(repoName: string, permissionLevel: string): Promise<boolean> {
         Log.info("TestGitHubActions::setRepoPermission( " + repoName + ", " + permissionLevel + " )");
-        if (repoName === Test.INVALIDREPONAME) {
+        if (repoName === this.Test.INVALIDREPONAME) {
             return false;
         }
         if (permissionLevel === "admin") {
