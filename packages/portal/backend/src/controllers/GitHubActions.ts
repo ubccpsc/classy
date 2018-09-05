@@ -199,6 +199,12 @@ export class GitHubActions implements IGitHubActions {
             forceReal = false;
         }
 
+        // if we're on CI, still run the whole thing
+        const ci = process.env.CI;
+        if (typeof ci !== 'undefined' && Boolean(ci) === true) {
+            forceReal = true;
+        }
+
         // NOTE: this is bad form, but we want to make sure we always return the real thing in production
         // this detects the mocha testing environment
         const isInTest = typeof (global as any).it === 'function';
