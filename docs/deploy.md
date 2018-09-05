@@ -61,7 +61,7 @@ permission with the host (this is done in the docker-compose.yml file).
 4. Get the SSL certificates and make them readable by the `docker` user:
 
     ```bash
-    sudo certbot certonly --standalone -d classy.cs.ubc.ca # OR WHATEVER HOSTNAME YOU'RE USING
+    sudo certbot certonly --standalone -d $(hostname)
     sudo chgrp -R docker /etc/letsencrypt/archive
     sudo chmod -R g+rx /etc/letsencrypt/archive/
     ```
@@ -79,19 +79,19 @@ permission with the host (this is done in the docker-compose.yml file).
     # These two rules will block all traffic coming FROM the subnet (i.e. grading container)
     # Block any traffic destined for the same host (any subnet) (i.e. don't allow requests to classy.cs.ubc.ca/reference_ui)
     # NOTE: make sure this rule is inserted in the chain *before* a permissive accept.
-    sudo iptables -I INPUT -s 172.28.0.0/16 -j DROP
+    sudo iptables -I INPUT 1 -s 172.28.0.0/16 -j DROP
     # Block any traffic destined for an external host (i.e. don't allow requests to a student-operated host or mirrored
     # reference UI instance)
     # NOTE: make sure this rule is inserted in the chain *before* a permissive accept.
-    sudo iptables -I FORWARD -s 172.28.0.0/16 -j DROP
+    sudo iptables -I DOCKER-USER 1 -s 172.28.0.0/16 -j DROP
  
     # Add exceptions here. Depending on where the services are hosted, use ONE of the two forms below.
-    # If the service is hosted on the SAME machine on a specific port (HOST_IP is the ip of the host--i.e. from
-    # nslookup classy.cs.ubc.ca; SERVICE_PORT is the port used by the service):
-    sudo iptables -I INPUT -s 172.28.0.0/16 -d HOST_IP -p tcp --dport SERVICE_PORT -j ACCEPT
+    # If the service is hosted on the SAME machine on a specific port (e.g. SERVICE_PORT would be the GEO_PORT set in
+    # the .env):
+    sudo iptables -I INPUT 1 -s 172.28.0.0/16 -d $(hostname) -p tcp --dport SERVICE_PORT -j ACCEPT
     
     # If the service is hosted externally on a DIFFERENT machine:
-    sudo iptables -I FORWARD -s 172.28.0.0/16 -d HOST_IP -j ACCEPT
+    sudo iptables -I DOCKER-USER 1 -s 172.28.0.0/16 -d HOST_IP -j ACCEPT
     ```
     
     **Notes:**
@@ -105,16 +105,22 @@ permission with the host (this is done in the docker-compose.yml file).
    connected to the subnet.
    
     ```bash
+    # Create the same network that docker-compose will create (with a different name)
+    docker network create --attachable --ip-range "172.28.5.0/24" --gateway "172.28.5.254" --subnet "172.28.0.0/16" test_net   
+ 
     # Check that the container cannot resolve hostnames (since DNS traffic is blocked).
-    docker run --rm=true --net grading_net alpine nslookup google.ca
+    docker run --rm=true --net test_net alpine nslookup google.ca
     # Check that the container cannot access various common ports.
-    docker run --rm=true --net grading_net alpine ping 1.1.1.1 -c 5
-    docker run --rm=true --net grading_net alpine wget http://1.1.1.1 --timeout=10
-    docker run --rm=true --net grading_net alpine wget https://1.1.1.1 --timeout=10
+    docker run --rm=true --net test_net alpine ping 1.1.1.1 -c 5
+    docker run --rm=true --net test_net alpine wget http://1.1.1.1 --timeout=10
+    docker run --rm=true --net test_net alpine wget https://1.1.1.1 --timeout=10
 
     # If the allowed services are running, you can make sure they are accessible:
-    docker run --rm=true --net grading_net alpine wget http://HOST_IP:SERVICE_PORT
-    docker run --rm=true --net grading_net --host-add=HOSTNAME:HOST_IP alpine wget http://HOSTNAME:SERVICE_PORT
+    docker run --rm=true --net test_net alpine wget http://HOST_IP:SERVICE_PORT
+    docker run --rm=true --net test_net --host-add=HOSTNAME:HOST_IP alpine wget http://HOSTNAME:SERVICE_PORT
+
+    # Clean up our test network
+    docker network rm test_net
     ```
 
 7. Add a cron job to backup the database daily at 0400.
