@@ -13,8 +13,6 @@ import {
     AutoTestResultTransport,
     Payload
 } from "../../../../../common/types/PortalTypes";
-
-import {CourseController} from "../../controllers/CourseController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GitHubController} from "../../controllers/GitHubController";
 import {GradesController} from "../../controllers/GradesController";

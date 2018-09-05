@@ -2,6 +2,7 @@ import {expect} from "chai";
 import "mocha";
 
 import Config, {ConfigKey} from "../../../../common/Config";
+import Log from "../../../../common/Log";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 
@@ -15,6 +16,10 @@ import "../server/SDMMRoutesSpec"; // try to run last
 // const loadFirst = require('../GlobalSpec');
 
 describe('TestDatasetGenerator', function() {
+
+    before(async function() {
+        // await Test.suiteBefore('TestDatasetGenerator');
+    });
 
     it('Can generate the course object', async function() {
         const dc: DatabaseController = DatabaseController.getInstance();
@@ -130,8 +135,8 @@ describe('TestDatasetGenerator', function() {
             visibleToStudents: true,
 
             shouldProvision:  true,
-            repoPrefix:       'r_',
-            teamPrefix:       't_',
+            repoPrefix:       '',
+            teamPrefix:       't',
             importURL:        null,
             teamMinSize:      1,
             teamMaxSize:      2,
@@ -155,7 +160,7 @@ describe('TestDatasetGenerator', function() {
         for (let i = 0; i < 5; i++) {
             const deliv = JSON.parse(JSON.stringify(d));
             deliv.id = 'd' + i;
-            deliv.repoPrefix = 'd' + i + '_';
+            deliv.repoPrefix = ''; // 'd' + i + '_';
             deliv.openTimestamp = new Date().getTime();
             deliv.closeTimestamp = new Date().getTime();
             try {
@@ -208,6 +213,12 @@ describe('TestDatasetGenerator', function() {
         } catch (err) {
             // Fail silently, it's fine, the team already exists
         }
+    });
+
+    it('Run prepareAll at the end', async function() {
+        Log.test("Finishing by preparing all");
+        await Test.prepareAll();
+        Log.test("Finishing by preparing all - done");
     });
 
 });
