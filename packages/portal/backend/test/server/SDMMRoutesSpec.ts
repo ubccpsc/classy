@@ -26,6 +26,9 @@ describe('SDMM Routes', function() {
     let app: restify.Server = null;
     let server: BackendServer = null;
 
+    const gha = GitHubActions.getInstance();
+    const ghc = new GitHubController(gha);
+
     const OLDNAME = Config.getInstance().getProp(ConfigKey.name);
     const OLDORG = Config.getInstance().getProp(ConfigKey.org);
     // const user1id = Test.REALUSER1.github; // sdmm only uses github
@@ -74,7 +77,6 @@ describe('SDMM Routes', function() {
         Log.test('SDMMRoutesSpec::clearGithub() - start');
 
         // clear repos from github
-        const gha = new GitHubActions();
         await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB1);
         await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB2);
         await gha.deleteRepo('TEST__X__p_cpscbot');
@@ -141,8 +143,8 @@ describe('SDMM Routes', function() {
     it('Should respond to a valid status request.', async function() {
         const dc: DatabaseController = DatabaseController.getInstance();
 
-        const ghInstance = new GitHubController();
-        const sc = new SDMMController(ghInstance);
+        // const ghInstance = new GitHubController();
+        const sc = new SDMMController(ghc);
 
         // create some users
         let p = await sc.handleUnknownUser(Test.USERNAMEGITHUB1);
@@ -214,315 +216,335 @@ describe('SDMM Routes', function() {
         expect(response.body.failure.message).to.equal('Invalid login token. Please logout and try again.');
     });
 
-    it('Should provision a d0 repo.', async function() {
-        let response = null;
+    describe("Slow SDMM Tests", () => {
 
-        // // this test is slow, so skip it if we aren't on CI
-        // const shouldRun = Test.runSlowTest();
-        // if (shouldRun === false) {
-        //     this.skip();
-        // }
-        try {
-            // const gha = new GitHubActions();
-            // const deleted = await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB1); // make sure the repo doesn't exist
+        beforeEach(function() {
+            const exec = Test.runSlowTest();
+
+            if (exec) {
+                Log.test("SDMMRoutesSpec::slowTests - running");
+            } else {
+                Log.test("SDMMRoutesSpec::slowTests - skipping; will run on CI");
+                this.skip();
+            }
+        });
+
+        it('Should provision a d0 repo.', async function() {
+            let response = null;
+
+            // // this test is slow, so skip it if we aren't on CI
+            // const shouldRun = Test.runSlowTest();
+            // if (shouldRun === false) {
+            //     this.skip();
+            // }
+            try {
+                // const gha = new GitHubActions();
+                // const deleted = await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB1); // make sure the repo doesn't exist
+                const url = '/portal/sdmm/performAction/provisionD0';
+                const name = Config.getInstance().getProp(ConfigKey.name);
+                response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            } catch (err) {
+                Log.test('ERROR: ' + err);
+            }
+            // works on its own but not with others
+            Log.test(response.status + " -> " + JSON.stringify(response.body));
+            expect(response.status).to.equal(200);
+
+            expect(response.body.success).to.not.be.undefined;
+            expect(response.body.success.message).to.equal('Repository successfully created.');
+        }).timeout(Test.TIMEOUTLONG * 2);
+
+        it('Should fail to provision a d0 repo if one already exists.', async function() {
+
+            let response = null;
             const url = '/portal/sdmm/performAction/provisionD0';
-            const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-        }
-        // works on its own but not with others
-        Log.test(response.status + " -> " + JSON.stringify(response.body));
-        expect(response.status).to.equal(200);
-
-        expect(response.body.success).to.not.be.undefined;
-        expect(response.body.success.message).to.equal('Repository successfully created.');
-    }).timeout(Test.TIMEOUTLONG * 2);
-
-    it('Should fail to provision a d0 repo if one already exists.', async function() {
-
-        let response = null;
-        const url = '/portal/sdmm/performAction/provisionD0';
-        const rc = new RepositoryController();
-        try {
-            await rc.createRepository('secap_' + Test.USERNAMEGITHUB1, [], {}); // make sure the repo exists already
-            const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-        }
-
-        // works on its own but not with others
-        Log.test(response.status + " -> " + JSON.stringify(response.body));
-        expect(response.status).to.equal(400);
-
-        expect(response.body.failure).to.not.be.undefined;
-        // expect(response.body.failure.message).to.equal('Failed to provision d0 repo; ' +
-        //     'repository already exists in datastore: secap_' + Test.USERNAMEGITHUB1);
-    }).timeout(Test.TIMEOUTLONG);
-
-    it('Should not be able provision a d1 repo if their d0 grade is too low.', async function() {
-
-        let response = null;
-        const url = '/portal/sdmm/performAction/provisionD1individual';
-        try {
-            const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-        }
-        // works on its own but not with others
-        Log.test(response.status + " -> " + JSON.stringify(response.body));
-        expect(response.status).to.equal(400);
-
-        expect(response.body.failure).to.not.be.undefined;
-        expect(response.body.failure.message).to.equal('Current d0 grade is not sufficient to move on to d1.');
-    }).timeout(Test.TIMEOUTLONG);
-
-    it('Should be able provision a d1 individual repo.', async function() {
-
-        let response = null;
-        const url = '/portal/sdmm/performAction/provisionD1individual';
-        try {
-            const dc = DatabaseController.getInstance();
-            const g: Grade = {
-                personId:  Test.USERNAMEGITHUB1,
-                delivId:   Test.DELIVID0,
-                score:     90,
-                comment:   'comment',
-                timestamp: Date.now(),
-
-                urlName: 'urlName',
-                URL:     'url',
-
-                custom: {}
-            };
-            await dc.writeGrade(g);
-
-            const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-        }
-        // works on its own but not with others
-        Log.test(response.status + " -> " + JSON.stringify(response.body));
-        expect(response.status).to.equal(200);
-
-        expect(response.body.success).to.not.be.undefined;
-        expect(response.body.success.message).to.equal('D0 repo successfully updated to D1.');
-    }).timeout(Test.TIMEOUTLONG);
-
-    it('Should fail to provision a d1 team repo if both users are not known.', async function() {
-
-        let response = null;
-        const url = '/portal/sdmm/performAction/provisionD1team/somerandmomusernamethatdoesnotexist';
-        try {
-            const gha = new GitHubActions();
-            await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB1); // make sure the repo doesn't exist
-
-            const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-        }
-        // works on its own but not with others
-        Log.test(response.status + " -> " + JSON.stringify(response.body));
-        expect(response.status).to.equal(400);
-
-        expect(response.body.failure).to.not.be.undefined;
-        expect(response.body.failure.message).to.equal(
-            'Username ( somerandmomusernamethatdoesnotexist ) not registered; contact course staff.');
-    }).timeout(Test.TIMEOUTLONG);
-
-    it('Should be able provision a d1 team repo.', async function() {
-
-        let response = null;
-        const url = '/portal/sdmm/performAction/provisionD1team/' + Test.USERNAMEGITHUB3;
-        try {
-            const dc = DatabaseController.getInstance();
-
-            const tc = new TeamController();
-            // public async createTeam(name: string, deliv: Deliverable, people: Person[], custom: any): Promise<Team | null> {
-            const deliv = await dc.getDeliverable(Test.DELIVID0);
-            const p2 = await dc.getPerson(Test.USERNAMEGITHUB2);
-            const t2 = await tc.createTeam('secap_' + Test.TEAMNAME2, deliv, [p2], {});
-            const p3 = await dc.getPerson(Test.USERNAMEGITHUB3);
-            const t3 = await tc.createTeam('secap_' + Test.TEAMNAME3, deliv, [p3], {});
             const rc = new RepositoryController();
-            await rc.createRepository('secap_' + Test.USERNAMEGITHUB2, [t2], {d0enabled: true}); // make sure the repo exists already
-            await rc.createRepository('secap_' + Test.USERNAMEGITHUB3, [t3], {d0enabled: true}); // make sure the repo exists already
+            try {
+                const dc = new DeliverablesController();
+                const deliv = await dc.getDeliverable('d0');
+                await rc.createRepository('secap_' + Test.USERNAMEGITHUB1, deliv, [], {}); // make sure the repo exists already
+                const name = Config.getInstance().getProp(ConfigKey.name);
+                response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            } catch (err) {
+                Log.test('ERROR: ' + err);
+            }
 
-            let g: Grade = {
-                personId:  Test.USERNAMEGITHUB2, // rthse2
-                delivId:   Test.DELIVID0,
-                score:     90,
-                comment:   'comment',
-                timestamp: Date.now(),
+            // works on its own but not with others
+            Log.test(response.status + " -> " + JSON.stringify(response.body));
+            expect(response.status).to.equal(400);
 
-                urlName: 'urlName',
-                URL:     'url',
+            expect(response.body.failure).to.not.be.undefined;
+            // expect(response.body.failure.message).to.equal('Failed to provision d0 repo; ' +
+            //     'repository already exists in datastore: secap_' + Test.USERNAMEGITHUB1);
+        }).timeout(Test.TIMEOUTLONG);
 
-                custom: {}
-            };
-            await dc.writeGrade(g);
+        it('Should not be able provision a d1 repo if their d0 grade is too low.', async function() {
 
-            g = {
-                personId:  Test.USERNAMEGITHUB3, // ubccpscbot
-                delivId:   Test.DELIVID0,
-                score:     90,
-                comment:   'comment',
-                timestamp: Date.now(),
+            let response = null;
+            const url = '/portal/sdmm/performAction/provisionD1individual';
+            try {
+                const name = Config.getInstance().getProp(ConfigKey.name);
+                response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            } catch (err) {
+                Log.test('ERROR: ' + err);
+            }
+            // works on its own but not with others
+            Log.test(response.status + " -> " + JSON.stringify(response.body));
+            expect(response.status).to.equal(400);
 
-                urlName: 'urlName',
-                URL:     'url',
+            expect(response.body.failure).to.not.be.undefined;
+            expect(response.body.failure.message).to.equal('Current d0 grade is not sufficient to move on to d1.');
+        }).timeout(Test.TIMEOUTLONG);
 
-                custom: {}
-            };
-            await dc.writeGrade(g);
+        it('Should be able provision a d1 individual repo.', async function() {
 
-            const name = Config.getInstance().getProp(ConfigKey.name);
-            response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB2, token: Test.REALTOKEN});
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-        }
-        // works on its own but not with others
-        Log.test(response.status + " -> " + JSON.stringify(response.body));
-        expect(response.status).to.equal(200);
+            let response = null;
+            const url = '/portal/sdmm/performAction/provisionD1individual';
+            try {
+                const dc = DatabaseController.getInstance();
+                const g: Grade = {
+                    personId:  Test.USERNAMEGITHUB1,
+                    delivId:   Test.DELIVID0,
+                    score:     90,
+                    comment:   'comment',
+                    timestamp: Date.now(),
 
-        expect(response.body.success).to.not.be.undefined;
-        expect(response.body.success.message).to.equal('D1 repository successfully provisioned.');
-    }).timeout(Test.TIMEOUTLONG);
-    // it('Should fail to provision a d1 team repo if both users do not have sufficient d0 grades.', async function () {
-    //
-    //     const PERSON2: Person = {
-    //         id:            Test.USERNAME2,
-    //         csId:          Test.USERNAME2, // sdmm doesn't have these
-    //         githubId:      Test.USERNAME2,
-    //         studentNumber: null,
-    //
-    //         fName:  '',
-    //         lName:  '',
-    //         kind:   'student',
-    //         URL:    'https://github.com/' + Test.USERNAME2,
-    //         labId:  'UNKNOWN',
-    //         custom: {}
-    //     };
-    //
-    //     const pc = new PersonController();
-    //     await pc.createPerson(PERSON2);
-    //
-    //     let response = null;
-    //     const url = '/sdmm/performAction/provisionD1team/' + Test.USERNAME2;
-    //     try {
-    //         const gha = new GitHubActions();
-    //         const deleted = await gha.deleteRepo('secap_user1'); // make sure the repo doesn't exist
-    //
-    //         const name = Config.getInstance().getProp(ConfigKey.name);
-    //         response = await request(app).post(url).send({}).set({name: name, user: Test.USER1.id, token: 'testtoken'});
-    //     } catch (err) {
-    //         Log.test('ERROR: ' + err);
-    //     }
-    //     // works on its own but not with others
-    //     Log.test(response.status + " -> " + JSON.stringify(response.body));
-    //     expect(response.status).to.equal(200); // TODO: should be 400
-    //
-    //     expect(response.body.failure).to.not.be.undefined;
-    //     expect(response.body.failure.message).to.equal('All teammates must have achieved a score of 60% or more to join a team.');
-    // }).timeout(1000 * 30);
+                    urlName: 'urlName',
+                    URL:     'url',
 
-    // it('Should be able to provision a d1 team repo.', async function () {
-    //
-    //     const PERSON2: Person = {
-    //         id:            Test.USERNAME2,
-    //         csId:          Test.USERNAME2, // sdmm doesn't have these
-    //         githubId:      Test.USERNAME2,
-    //         studentNumber: null,
-    //
-    //         fName:  '',
-    //         lName:  '',
-    //         kind:   'student',
-    //         URL:    'https://github.com/' + Test.USERNAME2,
-    //         labId:  'UNKNOWN',
-    //         custom: {}
-    //     };
-    //
-    //     const PERSON3: Person = {
-    //         id:            Test.USERNAME3,
-    //         csId:          Test.USERNAME3, // sdmm doesn't have these
-    //         githubId:      Test.USERNAME3,
-    //         studentNumber: null,
-    //
-    //         fName:  '',
-    //         lName:  '',
-    //         kind:   'student',
-    //         URL:    'https://github.com/' + Test.USERNAME3,
-    //         labId:  'UNKNOWN',
-    //         custom: {}
-    //     };
-    //     const pc = new PersonController();
-    //     await pc.createPerson(PERSON2);
-    //     await pc.createPerson(PERSON3);
-    //
-    //     const dc = DatabaseController.getInstance();
-    //     const g: Grade = {
-    //         personId:  Test.USERNAME2,
-    //         delivId:   Test.DELIVID0,
-    //         score:     60,
-    //         comment:   'comment',
-    //         timestamp: Date.now(),
-    //
-    //         urlName: 'urlName',
-    //         URL:     'url',
-    //
-    //         custom: {}
-    //     };
-    //     await dc.writeGrade(g);
-    //
-    //     (<any>g).personId = Test.USERNAME3;
-    //     g.score = 71;
-    //     await dc.writeGrade(g);
-    //
-    //     let response = null;
-    //     const url = '/sdmm/performAction/provisionD1team/' + Test.USERNAME3;
-    //     try {
-    //         // const gha = new GitHubActions();
-    //         // const deleted = await gha.deleteRepo('secap_user1'); // make sure the repo doesn't exist
-    //
-    //         const name = Config.getInstance().getProp(ConfigKey.name);
-    //         response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAME2, token: 'testtoken'});
-    //     } catch (err) {
-    //         Log.test('ERROR: ' + err);
-    //     }
-    //     // works on its own but not with others
-    //     Log.test(response.status + " -> " + JSON.stringify(response.body));
-    //     expect(response.status).to.equal(200);
-    //
-    //     expect(response.body.success).to.not.be.undefined;
-    //     expect(response.body.success.message).to.equal('sweetas');
-    // }).timeout(1000 * 30);
+                    custom: {}
+                };
+                await dc.writeGrade(g);
 
-    // this test was passing, but for the wrong reason:
-    //
-    // it('Should fail provision repo that already exists.', async function () {
-    //
-    //     let response = null;
-    //     const url = '/sdmm/performAction/provisionD0';
-    //     try {
-    //         const name = Config.getInstance().getProp(ConfigKey.name);
-    //         response = await request(app).post(url).send({}).set({name: name, user: Test.USER1.id, token: 'testtoken'});
-    //     } catch (err) {
-    //         Log.test('ERROR: ' + err);
-    //     }
-    //     // works on its own but not with others
-    //     Log.test(response.status + " -> " + JSON.stringify(response.body));
-    //     expect(response.status).to.equal(200); // TODO: should be 400
-    //
-    //     expect(response.body.failure).to.not.be.undefined;
-    //     // expect(response.body.failure.message).to.equal('Error provisioning d0 repo.');
-    // }).timeout(1000 * 10);
+                const name = Config.getInstance().getProp(ConfigKey.name);
+                response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            } catch (err) {
+                Log.test('ERROR: ' + err);
+            }
+            // works on its own but not with others
+            Log.test(response.status + " -> " + JSON.stringify(response.body));
+            expect(response.status).to.equal(200);
 
-    it('Should be possible to clear stale state.', async function() {
-        await clearGithub();
-    }).timeout(Test.TIMEOUTLONG);
+            expect(response.body.success).to.not.be.undefined;
+            expect(response.body.success.message).to.equal('D0 repo successfully updated to D1.');
+        }).timeout(Test.TIMEOUTLONG);
 
+        it('Should fail to provision a d1 team repo if both users are not known.', async function() {
+
+            let response = null;
+            const url = '/portal/sdmm/performAction/provisionD1team/somerandmomusernamethatdoesnotexist';
+            try {
+                await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB1); // make sure the repo doesn't exist
+
+                const name = Config.getInstance().getProp(ConfigKey.name);
+                response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB1, token: Test.REALTOKEN});
+            } catch (err) {
+                Log.test('ERROR: ' + err);
+            }
+            // works on its own but not with others
+            Log.test(response.status + " -> " + JSON.stringify(response.body));
+            expect(response.status).to.equal(400);
+
+            expect(response.body.failure).to.not.be.undefined;
+            expect(response.body.failure.message).to.equal(
+                'Username ( somerandmomusernamethatdoesnotexist ) not registered; contact course staff.');
+        }).timeout(Test.TIMEOUTLONG);
+
+        it('Should be able provision a d1 team repo.', async function() {
+
+            let response = null;
+            const url = '/portal/sdmm/performAction/provisionD1team/' + Test.USERNAMEGITHUB3;
+            try {
+                const dbc = DatabaseController.getInstance();
+                const dc = new DeliverablesController();
+
+                const tc = new TeamController();
+                // public async createTeam(name: string, deliv: Deliverable, people: Person[], custom: any): Promise<Team | null> {
+                let deliv = await dc.getDeliverable(Test.DELIVID0);
+                const p2 = await dbc.getPerson(Test.USERNAMEGITHUB2);
+                const t2 = await tc.createTeam('secap_' + Test.TEAMNAME2, deliv, [p2], {});
+                const p3 = await dbc.getPerson(Test.USERNAMEGITHUB3);
+                const t3 = await tc.createTeam('secap_' + Test.TEAMNAME3, deliv, [p3], {});
+                const rc = new RepositoryController();
+
+                deliv = await dc.getDeliverable('d1');
+                await rc.createRepository('secap_' + Test.USERNAMEGITHUB2, deliv,
+                    [t2], {d0enabled: true}); // make sure the repo exists already
+                await rc.createRepository('secap_' + Test.USERNAMEGITHUB3, deliv,
+                    [t3], {d0enabled: true}); // make sure the repo exists already
+
+                let g: Grade = {
+                    personId:  Test.USERNAMEGITHUB2, // rthse2
+                    delivId:   Test.DELIVID0,
+                    score:     90,
+                    comment:   'comment',
+                    timestamp: Date.now(),
+
+                    urlName: 'urlName',
+                    URL:     'url',
+
+                    custom: {}
+                };
+                await dbc.writeGrade(g);
+
+                g = {
+                    personId:  Test.USERNAMEGITHUB3, // ubccpscbot
+                    delivId:   Test.DELIVID0,
+                    score:     90,
+                    comment:   'comment',
+                    timestamp: Date.now(),
+
+                    urlName: 'urlName',
+                    URL:     'url',
+
+                    custom: {}
+                };
+                await dbc.writeGrade(g);
+
+                const name = Config.getInstance().getProp(ConfigKey.name);
+                response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAMEGITHUB2, token: Test.REALTOKEN});
+            } catch (err) {
+                Log.test('ERROR: ' + err);
+            }
+            // works on its own but not with others
+            Log.test(response.status + " -> " + JSON.stringify(response.body));
+            expect(response.status).to.equal(200);
+
+            expect(response.body.success).to.not.be.undefined;
+            expect(response.body.success.message).to.equal('D1 repository successfully provisioned.');
+        }).timeout(Test.TIMEOUTLONG);
+        // it('Should fail to provision a d1 team repo if both users do not have sufficient d0 grades.', async function () {
+        //
+        //     const PERSON2: Person = {
+        //         id:            Test.USERNAME2,
+        //         csId:          Test.USERNAME2, // sdmm doesn't have these
+        //         githubId:      Test.USERNAME2,
+        //         studentNumber: null,
+        //
+        //         fName:  '',
+        //         lName:  '',
+        //         kind:   'student',
+        //         URL:    'https://github.com/' + Test.USERNAME2,
+        //         labId:  'UNKNOWN',
+        //         custom: {}
+        //     };
+        //
+        //     const pc = new PersonController();
+        //     await pc.createPerson(PERSON2);
+        //
+        //     let response = null;
+        //     const url = '/sdmm/performAction/provisionD1team/' + Test.USERNAME2;
+        //     try {
+        //         const gha = new GitHubActions();
+        //         const deleted = await gha.deleteRepo('secap_user1'); // make sure the repo doesn't exist
+        //
+        //         const name = Config.getInstance().getProp(ConfigKey.name);
+        //         response = await request(app).post(url).send({}).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+        //     } catch (err) {
+        //         Log.test('ERROR: ' + err);
+        //     }
+        //     // works on its own but not with others
+        //     Log.test(response.status + " -> " + JSON.stringify(response.body));
+        //     expect(response.status).to.equal(200); // TODO: should be 400
+        //
+        //     expect(response.body.failure).to.not.be.undefined;
+        //     expect(response.body.failure.message).to.equal('All teammates must have achieved a score of 60% or more to join a team.');
+        // }).timeout(1000 * 30);
+
+        // it('Should be able to provision a d1 team repo.', async function () {
+        //
+        //     const PERSON2: Person = {
+        //         id:            Test.USERNAME2,
+        //         csId:          Test.USERNAME2, // sdmm doesn't have these
+        //         githubId:      Test.USERNAME2,
+        //         studentNumber: null,
+        //
+        //         fName:  '',
+        //         lName:  '',
+        //         kind:   'student',
+        //         URL:    'https://github.com/' + Test.USERNAME2,
+        //         labId:  'UNKNOWN',
+        //         custom: {}
+        //     };
+        //
+        //     const PERSON3: Person = {
+        //         id:            Test.USERNAME3,
+        //         csId:          Test.USERNAME3, // sdmm doesn't have these
+        //         githubId:      Test.USERNAME3,
+        //         studentNumber: null,
+        //
+        //         fName:  '',
+        //         lName:  '',
+        //         kind:   'student',
+        //         URL:    'https://github.com/' + Test.USERNAME3,
+        //         labId:  'UNKNOWN',
+        //         custom: {}
+        //     };
+        //     const pc = new PersonController();
+        //     await pc.createPerson(PERSON2);
+        //     await pc.createPerson(PERSON3);
+        //
+        //     const dbc = DatabaseController.getInstance();
+        //     const g: Grade = {
+        //         personId:  Test.USERNAME2,
+        //         delivId:   Test.DELIVID0,
+        //         score:     60,
+        //         comment:   'comment',
+        //         timestamp: Date.now(),
+        //
+        //         urlName: 'urlName',
+        //         URL:     'url',
+        //
+        //         custom: {}
+        //     };
+        //     await dbc.writeGrade(g);
+        //
+        //     (<any>g).personId = Test.USERNAME3;
+        //     g.score = 71;
+        //     await dbc.writeGrade(g);
+        //
+        //     let response = null;
+        //     const url = '/sdmm/performAction/provisionD1team/' + Test.USERNAME3;
+        //     try {
+        //         // const gha = new GitHubActions();
+        //         // const deleted = await gha.deleteRepo('secap_user1'); // make sure the repo doesn't exist
+        //
+        //         const name = Config.getInstance().getProp(ConfigKey.name);
+        //         response = await request(app).post(url).send({}).set({name: name, user: Test.USERNAME2, token: 'testtoken'});
+        //     } catch (err) {
+        //         Log.test('ERROR: ' + err);
+        //     }
+        //     // works on its own but not with others
+        //     Log.test(response.status + " -> " + JSON.stringify(response.body));
+        //     expect(response.status).to.equal(200);
+        //
+        //     expect(response.body.success).to.not.be.undefined;
+        //     expect(response.body.success.message).to.equal('sweetas');
+        // }).timeout(1000 * 30);
+
+        // this test was passing, but for the wrong reason:
+        //
+        // it('Should fail provision repo that already exists.', async function () {
+        //
+        //     let response = null;
+        //     const url = '/sdmm/performAction/provisionD0';
+        //     try {
+        //         const name = Config.getInstance().getProp(ConfigKey.name);
+        //         response = await request(app).post(url).send({}).set({name: name, user: Test.USER1.id, token: 'testtoken'});
+        //     } catch (err) {
+        //         Log.test('ERROR: ' + err);
+        //     }
+        //     // works on its own but not with others
+        //     Log.test(response.status + " -> " + JSON.stringify(response.body));
+        //     expect(response.status).to.equal(200); // TODO: should be 400
+        //
+        //     expect(response.body.failure).to.not.be.undefined;
+        //     // expect(response.body.failure.message).to.equal('Error provisioning d0 repo.');
+        // }).timeout(1000 * 10);
+
+        it('Should be possible to clear stale state.', async function() {
+            await clearGithub();
+        }).timeout(Test.TIMEOUTLONG);
+
+    });
 });

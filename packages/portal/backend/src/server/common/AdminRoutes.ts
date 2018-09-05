@@ -11,7 +11,9 @@ import {
     DeliverableTransportPayload,
     GradeTransportPayload,
     Payload,
+    ProvisionTransport,
     RepositoryPayload,
+    RepositoryTransport,
     StudentTransportPayload,
     TeamTransportPayload
 } from '../../../../../common/types/PortalTypes';
@@ -19,14 +21,18 @@ import {
 import {AuthController} from "../../controllers/AuthController";
 import {CourseController} from "../../controllers/CourseController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
+import {GitHubActions} from "../../controllers/GitHubActions";
 import {GitHubController} from "../../controllers/GitHubController";
 import {PersonController} from "../../controllers/PersonController";
+import {Factory} from "../../Factory";
 
 import {Person} from "../../Types";
 
 import IREST from "../IREST";
 
 export default class AdminRoutes implements IREST {
+
+    private static ghc = new GitHubController(GitHubActions.getInstance());
 
     public registerRoutes(server: restify.Server) {
         Log.trace('AdminRoutes::registerRoutes() - start');
@@ -48,6 +54,9 @@ export default class AdminRoutes implements IREST {
         server.post('/portal/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
         server.post('/portal/admin/deliverable', AdminRoutes.isAdmin, AdminRoutes.postDeliverable);
         server.post('/portal/admin/course', AdminRoutes.isAdmin, AdminRoutes.postCourse);
+        server.post('/portal/admin/provision', AdminRoutes.isAdmin, AdminRoutes.postProvision);
+        server.post('/portal/admin/release', AdminRoutes.isAdmin, AdminRoutes.postRelease);
+        // TODO: unrelease
 
         // staff-only functions
         // NOTHING
@@ -127,7 +136,7 @@ export default class AdminRoutes implements IREST {
         //     return next(false);
         // };
 
-        const cc = new CourseController(new GitHubController());
+        const cc = Factory.getCourseController(AdminRoutes.ghc);
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getStudents().then(function(students) {
             Log.trace('AdminRoutes::getStudents(..) - in then; # students: ' + students.length);
@@ -149,7 +158,7 @@ export default class AdminRoutes implements IREST {
     private static getTeams(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getTeams(..) - start');
 
-        const cc = new CourseController(new GitHubController());
+        const cc = Factory.getCourseController(AdminRoutes.ghc);
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getTeams().then(function(teams) {
             Log.trace('AdminRoutes::getTeams(..) - in then; # teams: ' + teams.length);
@@ -164,7 +173,7 @@ export default class AdminRoutes implements IREST {
     private static getRepositories(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getRepositories(..) - start');
 
-        const cc = new CourseController(new GitHubController());
+        const cc = Factory.getCourseController(AdminRoutes.ghc);
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getRepositories().then(function(repos) {
             Log.trace('AdminRoutes::getRepositories(..) - in then; # repos: ' + repos.length);
@@ -185,7 +194,7 @@ export default class AdminRoutes implements IREST {
      */
     private static getResults(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getResults(..) - start');
-        const cc = new CourseController(new GitHubController());
+        const cc = Factory.getCourseController(AdminRoutes.ghc);
 
         // if these params are missing the client will get 404 since they are part of the path
         const delivId = req.params.delivId;
@@ -212,7 +221,7 @@ export default class AdminRoutes implements IREST {
     private static getGrades(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getGrades(..) - start');
 
-        const cc = new CourseController(new GitHubController());
+        const cc = Factory.getCourseController(AdminRoutes.ghc);
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getGrades().then(function(grades) {
             Log.trace('AdminRoutes::getGrades(..) - in then; # teams: ' + grades.length);
@@ -234,7 +243,7 @@ export default class AdminRoutes implements IREST {
     private static getDeliverables(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getDeliverables(..) - start');
 
-        const cc = new CourseController(new GitHubController());
+        const cc = Factory.getCourseController(AdminRoutes.ghc);
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getDeliverables().then(function(delivs) {
             Log.trace('AdminRoutes::getDeliverables(..) - in then; # deliverables: ' + delivs.length);
@@ -359,7 +368,7 @@ export default class AdminRoutes implements IREST {
     private static getCourse(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getCourse(..) - start');
 
-        const cc = new CourseController(new GitHubController());
+        const cc = Factory.getCourseController(AdminRoutes.ghc);
         cc.getCourse().then(function(course) {
             Log.trace('AdminRoutes::getCourse(..) - in then');
 
@@ -387,7 +396,7 @@ export default class AdminRoutes implements IREST {
     }
 
     private static async handlePostCourse(courseTrans: CourseTransport): Promise<boolean> {
-        const cc = new CourseController(new GitHubController());
+        const cc = Factory.getCourseController(AdminRoutes.ghc);
         const result = CourseController.validateCourseTransport(courseTrans);
         if (result === null) {
             const saveSucceeded = await cc.saveCourse(courseTrans);
@@ -398,5 +407,77 @@ export default class AdminRoutes implements IREST {
         }
         // should never get here unless something goes wrong
         throw new Error("Course object not saved.");
+    }
+
+    private static postProvision(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::postProvision(..) - start');
+        let payload: Payload;
+
+        const provisionTrans: ProvisionTransport = req.params;
+        Log.info('AdminRoutes::postProvision() - body: ' + provisionTrans);
+        AdminRoutes.handleProvision(provisionTrans).then(function(success) {
+            payload = {success: success};
+            res.send(200, payload);
+            return next(true);
+        }).catch(function(err) {
+            return AdminRoutes.handleError(400, 'Unable to provision repos: ' + err.message, res, next);
+        });
+    }
+
+    private static async handleProvision(provisionTrans: ProvisionTransport): Promise<RepositoryTransport[]> {
+        const cc = Factory.getCourseController(AdminRoutes.ghc);
+        const result = CourseController.validateProvisionTransport(provisionTrans);
+
+        // TODO: if course is SDMM, always fail
+
+        if (result === null) {
+            const dc = new DeliverablesController();
+            const deliv = await dc.getDeliverable(provisionTrans.delivId);
+            if (deliv !== null && deliv.shouldProvision === true) {
+                const provisionSucceeded = await cc.provision(deliv, provisionTrans.formSingle);
+                Log.info('AdminRoutes::handleProvision() - success; # results: ' + provisionSucceeded.length);
+                return provisionSucceeded;
+            } else {
+                throw new Error("Provisioning unsuccessful; cannot provision: " + provisionTrans.delivId);
+            }
+        }
+        // should never get here unless something goes wrong
+        throw new Error("Provisioning unsuccessful.");
+    }
+
+    private static postRelease(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::postRelease(..) - start');
+        let payload: Payload;
+
+        const provisionTrans: ProvisionTransport = req.params;
+        Log.info('AdminRoutes::postRelease() - body: ' + provisionTrans);
+        AdminRoutes.handleRelease(provisionTrans).then(function(success) {
+            payload = {success: success};
+            res.send(200, payload);
+            return next(true);
+        }).catch(function(err) {
+            return AdminRoutes.handleError(400, 'Unable to release repos: ' + err.message, res, next);
+        });
+    }
+
+    private static async handleRelease(provisionTrans: ProvisionTransport): Promise<RepositoryTransport[]> {
+        const cc = Factory.getCourseController(AdminRoutes.ghc);
+        const result = CourseController.validateProvisionTransport(provisionTrans);
+
+        // TODO: if course is SDMM, always fail
+
+        if (result === null) {
+            const dc = new DeliverablesController();
+            const deliv = await dc.getDeliverable(provisionTrans.delivId);
+            if (deliv !== null && deliv.shouldProvision === true) {
+                const releaseSucceeded = await cc.release(deliv);
+                Log.info('AdminRoutes::handleRelease() - success; # results: ' + releaseSucceeded.length);
+                return releaseSucceeded;
+            } else {
+                throw new Error("Release unsuccessful, cannot release: " + provisionTrans.delivId);
+            }
+        }
+        // should never get here unless something goes wrong
+        throw new Error("Release unsuccessful.");
     }
 }

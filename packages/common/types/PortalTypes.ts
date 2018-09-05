@@ -1,9 +1,9 @@
 /**
- Default portal types should be declared here.
-
- These are transport types to send data between the backend and the frontend.
-
- All fields should be primitives.
+ * Default portal types should be declared here.
+ *
+ * These are transport types to send data between the backend and the frontend.
+ *
+ * All fields should be primitives.
  */
 import {IAutoTestResult} from "./AutoTestTypes";
 
@@ -44,6 +44,12 @@ export interface CourseTransport {
     custom: object;
 }
 
+export interface ProvisionTransport {
+    delivId: string;
+    // action: string; // PROVISION | RELEASE // should be embedded in the route
+    formSingle: boolean;
+}
+
 export interface AuthTransportPayload {
     success?: AuthTransport; // only set if defined
     failure?: FailurePayload; // only set if defined
@@ -80,19 +86,23 @@ export interface DeliverableTransport {
     id: string;
     openTimestamp: number;
     closeTimestamp: number;
-    minTeamSize: number; // must be > 0
-    maxTeamSize: number; // leave at 1 for individual assignments
-    teamsSameLab: boolean;
-    studentsFormTeams: boolean;
+
     onOpenAction: string; // will change to something else
     onCloseAction: string; // will change to something else
     URL: string; // student-facing description
     gradesReleased: boolean;
 
+    shouldAutoTest: boolean;
     autoTest: AutoTestConfigTransport; // autoTest options
 
-    repoPrefix: string;
-    teamPrefix: string;
+    shouldProvision: boolean;
+    repoPrefix: string | null;
+    teamPrefix: string | null;
+    minTeamSize: number; // must be > 0
+    maxTeamSize: number; // leave at 1 for individual assignments
+    teamsSameLab: boolean;
+    studentsFormTeams: boolean;
+    importURL: string | null;
 
     visibleToStudents: boolean;
     rubric: object;
@@ -161,30 +171,30 @@ export interface AutoTestConfigTransport {
     /**
      * Name of docker image that should be invoked.
      */
-    dockerImage: string,
+    dockerImage: string;
 
     /**
      * Interval in seconds between student requests.
      * e.g., 43,200 (12 hours)
      */
-    studentDelay: number,
+    studentDelay: number;
 
     /**
      * Max time in seconds before the container should timeout.
      * e.g., 300 (5 mins)
      */
-    maxExecTime: number,
+    maxExecTime: number;
 
     /**
      * Other deliverables that should be invoked against the container (can be empty array).
      * e.g., ['d1', 'd2'] for d3 of a project.
      */
-    regressionDelivIds: string[],
+    regressionDelivIds: string[];
 
     /**
      * A custom JSON object that will be passed to the container. Can be {}.
      */
-    custom: object
+    custom: object;
 }
 
 export interface AutoTestAuthPayload {
@@ -197,9 +207,9 @@ export interface AutoTestAuthPayload {
  * Requested per-deliverable.
  */
 export interface AutoTestAuthTransport {
-    personId: string,
-    isStaff: boolean,
-    isAdmin: boolean
+    personId: string;
+    isStaff: boolean;
+    isAdmin: boolean;
 }
 
 export interface AutoTestDefaultDeliverablePayload {
@@ -234,6 +244,7 @@ export interface AutoTestResultPayload {
     failure?: FailurePayload; // only set if defined
 }
 
+/* tslint:disable-next-line */ // This will get properties eventually
 export interface AutoTestResultTransport extends IAutoTestResult {
     // NOTE: this extends should go away, but is easiest right now
 }

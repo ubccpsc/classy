@@ -1,31 +1,234 @@
 import * as rp from "request-promise-native";
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
+import Util from "../../../../common/Util";
+// import {Test} from "../../test/GlobalSpec";
 import {DatabaseController} from "./DatabaseController";
 import {GitTeamTuple} from "./GitHubController";
 
 // tslint:disable-next-line
 const tmp = require('tmp-promise');
 
-export class GitHubActions {
+export interface IGitHubActions {
+
+    /**
+     * Paging page size. For testing only.
+     *
+     * @param {number} size
+     */
+    setPageSize(size: number): void;
+
+    /**
+     * Creates a given repo and returns its URL. If the repo exists, return the URL for that repo.
+     *
+     * Also updates the Repository object in the datastore with the URL and cloneURL.
+     *
+     * @param repoId The name of the repo. Must be unique within the organization.
+     * @returns {Promise<string>} provisioned team URL
+     */
+    createRepo(repoId: string): Promise<string>;
+
+    /**
+     * Deletes a repo from the organization.
+     *
+     * @param repoName
+     * @returns {Promise<boolean>}
+     */
+    deleteRepo(repoName: string): Promise<boolean>;
+
+    /**
+     * Checks if a repo exists or not. If the request fails for _ANY_ reason the failure will not
+     * be reported, only that the repo does not exist.
+     *
+     * @param repoName
+     * @returns {Promise<boolean>}
+     */
+    repoExists(repoName: string): Promise<boolean>;
+
+    /**
+     * Deletes a team.
+     *
+     * @param teamId
+     */
+    deleteTeam(teamId: number): Promise<boolean>;
+
+    /**
+     *
+     * Gets all repos in an org.
+     * This is just a subset of the return, but it is the subset we actually use:
+     * @returns {Promise<{ id: number, name: string, url: string }[]>}
+     */
+    listRepos(): Promise<Array<{id: number, name: string, url: string}>>;
+
+    /**
+     * Gets all people in an org.
+     *
+     * @returns {Promise<{ id: number, type: string, url: string, name: string }[]>}
+     * this is just a subset of the return, but it is the subset we actually use
+     */
+    listPeople(): Promise<Array<{id: number, type: string, url: string, name: string}>>;
+
+    /**
+     * Lists the teams for the current org.
+     *
+     * NOTE: this is a slow operation (if there are many teams) so try not to do it too much!
+     *
+     * @returns {Promise<{id: number, name: string}[]>}
+     */
+    listTeams(): Promise<Array<{id: number, name: string}>>;
+
+    listWebhooks(repoName: string): Promise<{}>;
+
+    addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean>;
+
+    /**
+     * Creates a team for a groupName (e.g., cpsc310_team1).
+     *
+     * Returns the teamId (used by many other Github calls).
+     *
+     * @param teamName
+     * @param permission 'admin', 'pull', 'push' // admin for staff, push for students
+     * @returns {Promise<number>} team id
+     */
+    createTeam(teamName: string, permission: string): Promise<{teamName: string, githubTeamNumber: number, URL: string}>;
+
+    /**
+     * Add a set of Github members (their usernames) to a given team.
+     *
+     * @param teamName
+     * @param githubTeamId
+     * @param members: string[] // github usernames
+     * @returns {Promise<GitTeamTuple>}
+     */
+    addMembersToTeam(teamName: string, githubTeamId: number, members: string[]): Promise<GitTeamTuple>;
+
+    /**
+     * NOTE: needs the team Id (number), not the team name (string)!
+     *
+     * @param teamId
+     * @param repoName
+     * @param permission ('pull', 'push', 'admin')
+     * @returns {Promise<GitTeamTuple>}
+     */
+    addTeamToRepo(teamId: number, repoName: string, permission: string): Promise<GitTeamTuple>;
+
+    /**
+     * Gets the internal number for a team.
+     *
+     * Returns -1 if the team does not exist.
+     *
+     * @param {string} teamName
+     * @returns {Promise<number>}
+     */
+    getTeamNumber(teamName: string): Promise<number>;
+
+    /**
+     * Gets the list of users on a team.
+     *
+     * Returns [] if the team does not exist or nobody is on the team.
+     *
+     * @param {string} teamNumber
+     * @returns {Promise<number>}
+     */
+    getTeamMembers(teamNumber: number): Promise<string[]>;
+
+    isOnAdminTeam(userName: string): Promise<boolean>;
+
+    isOnStaffTeam(userName: string): Promise<boolean>;
+
+    isOnTeam(teamName: string, userName: string): Promise<boolean>;
+
+    importRepoFS(importRepo: string, studentRepo: string, seedFilePath?: string): Promise<boolean>;
+
+    addGithubAuthToken(url: string): string;
+
+    // reportStdErr(stderr: any, prefix: string): void;
+
+    /**
+     * Adds a file with the data given, to the specified repository.
+     * If force is set to true, will overwrite old files
+     * @param {string} repoURL - name of repository
+     * @param {string} fileName - name of file to write
+     * @param {string} fileContent - the content of the file to write to repo
+     * @param {boolean} force - allow for overwriting of old files
+     * @returns {Promise<boolean>} - true if write was successful
+     */
+    writeFileToRepo(repoURL: string, fileName: string, fileContent: string, force?: boolean): Promise<boolean>;
+
+    /**
+     * Changes permissions for all teams for the given repository
+     * @param {string} repoName
+     * @param {string} permissionLevel - one of: 'push' 'pull'
+     * @returns {Promise<boolean>}
+     */
+    setRepoPermission(repoName: string, permissionLevel: string): Promise<boolean>;
+}
+
+export class GitHubActions implements IGitHubActions {
 
     private readonly apiPath: string | null = null;
     private readonly gitHubUserName: string | null = null;
     private readonly gitHubAuthToken: string | null = null;
     private readonly org: string | null = null;
 
-    private DELAY_SEC = 1000;
-    public PAGE_SIZE = 100; // public for testing; 100 is the max; 10 is good for tests
+    private PAUSE = 1000;
+    private pageSize = 100; // public for testing; 100 is the max; 10 is good for tests
 
     private dc: DatabaseController = null;
 
-    constructor() {
+    private constructor() {
+        Log.info("GitHubActions::<init> - start");
         // NOTE: this is not very controllable; these would be better as params
         this.org = Config.getInstance().getProp(ConfigKey.org);
         this.apiPath = Config.getInstance().getProp(ConfigKey.githubAPI);
         this.gitHubUserName = Config.getInstance().getProp(ConfigKey.githubBotName);
         this.gitHubAuthToken = Config.getInstance().getProp(ConfigKey.githubBotToken);
         this.dc = DatabaseController.getInstance();
+    }
+
+    private static instance: IGitHubActions = null;
+
+    public static getInstance(forceReal?: boolean): IGitHubActions {
+
+        const override = false; // Sometimes we will want to run against the full live GitHub suite
+
+        if (override) {
+            forceReal = true;
+        }
+        if (typeof forceReal === 'undefined') {
+            forceReal = false;
+        }
+
+        // if we're on CI, still run the whole thing
+        const ci = process.env.CI;
+        if (typeof ci !== 'undefined' && Boolean(ci) === true) {
+            forceReal = true;
+        }
+
+        // NOTE: this is bad form, but we want to make sure we always return the real thing in production
+        // this detects the mocha testing environment
+        const isInTest = typeof (global as any).it === 'function';
+        if (isInTest === false) {
+            // we're in prod, always return the real thing
+            Log.test("GitHubActions::getInstance(.. ) - prod; returning GitHubActions");
+            return new GitHubActions();
+        }
+
+        if (forceReal === true) {
+            Log.test("GitHubActions::getInstance( true ) - returning live GitHubActions");
+            return new GitHubActions(); // don't need to cache this since it is backed by GitHub instead of an in-memory cache
+        }
+
+        if (GitHubActions.instance === null) {
+            GitHubActions.instance = new TestGitHubActions();
+        }
+
+        Log.test("GitHubActions::getInstance() - returning cached TestGitHubActions");
+        return GitHubActions.instance;
+    }
+
+    public setPageSize(size: number) {
+        this.pageSize = size;
     }
 
     /**
@@ -37,24 +240,18 @@ export class GitHubActions {
      * @returns {Promise<string>} provisioned team URL
      */
     public async createRepo(repoId: string): Promise<string> {
-        const ctx = this;
-
-        Log.info("GitHubAction::createRepo( " + repoId + " ) - start");
-
-        const repo = await this.dc.getRepository(repoId);
-        if (repo === null) {
-            Log.error("GitHubAction::createRepo(..) - unknown Repository object: " + repoId);
-            throw new Error("GitHubAction::createRepo(..) - Repository not in datastore: " + repoId);
-        }
-
+        const start = Date.now();
         try {
-            const uri = ctx.apiPath + '/orgs/' + ctx.org + '/repos';
+            Log.info("GitHubAction::createRepo( " + repoId + " ) - start");
+            await GitHubActions.checkDatabase(repoId, null);
+
+            const uri = this.apiPath + '/orgs/' + this.org + '/repos';
             const options = {
                 method:  'POST',
                 uri:     uri,
                 headers: {
-                    'Authorization': ctx.gitHubAuthToken,
-                    'User-Agent':    ctx.gitHubUserName,
+                    'Authorization': this.gitHubAuthToken,
+                    'User-Agent':    this.gitHubUserName,
                     'Accept':        'application/json'
                 },
                 body:    {
@@ -71,17 +268,19 @@ export class GitHubActions {
 
             const body = await rp(options);
             const url = body.html_url;
+
+            const repo = await this.dc.getRepository(repoId);
             repo.URL = url; // only update this field in the existing Repository record
             repo.cloneURL = body.clone_url; // only update this field in the existing Repository record
             await this.dc.writeRepository(repo);
 
-            Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; delaying to prep repo.");
-            await ctx.delay(ctx.DELAY_SEC);
+            Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; delaying to prep repo. Took: " + Util.took(start));
+            await Util.delay(this.PAUSE);
 
             return url;
         } catch (err) {
             Log.error("GitHubAction::createRepo(..) - ERROR: " + err);
-            throw new Error("Repository not created");
+            throw new Error("Repository not created; " + err.message);
         }
     }
 
@@ -92,20 +291,16 @@ export class GitHubActions {
      * @returns {Promise<boolean>}
      */
     public async deleteRepo(repoName: string): Promise<boolean> {
-        // const ctx = this;
         Log.info("GitHubAction::deleteRepo( " + this.org + ", " + repoName + " ) - start");
+        const start = Date.now();
 
-        // first make sure the repo exists
-
-        // return new Promise(function(fulfill, reject) {
         try {
-            const repoExists = await this.repoExists(repoName); // .then(function(repoExists: boolean) {
+            // first make sure the repo exists
+            const repoExists = await this.repoExists(repoName);
 
             if (repoExists === true) {
-                Log.info("GitHubAction::deleteRepo(..) - repo exists; deleting");
-
                 const uri = this.apiPath + '/repos/' + this.org + '/' + repoName;
-                Log.trace("GitHubAction::deleteRepo(..) - URI: " + uri);
+                Log.trace("GitHubAction::deleteRepo( " + repoName + " ) - URI: " + uri);
                 const options = {
                     method:  'DELETE',
                     uri:     uri,
@@ -116,20 +311,11 @@ export class GitHubActions {
                     }
                 };
 
-                await rp(options); // .then(function() { // body: any
-                Log.info("GitHubAction::deleteRepo(..) - success"); // body: " + body);
-                // fulfill(true);
-                //     }).catch(function(err: any) {
-                //         Log.error("GitHubAction::deleteRepo(..) - ERROR: " + JSON.stringify(err));
-                //         reject(err);
-                //     });
-                // } else {
-                //     Log.info("GitHubAction::deleteRepo(..) - repo does not exists; not deleting");
-                //     fulfill(false);
-                // }
+                await rp(options);
+                Log.info("GitHubAction::deleteRepo( " + repoName + " ) - successfully deleted; took: " + Util.took(start));
                 return true;
             } else {
-                Log.info("GitHubAction::deleteRepo(..) - repo does not exists; not deleting");
+                Log.info("GitHubAction::deleteRepo( " + repoName + " ) - repo does not exists, not deleting; took: " + Util.took(start));
                 return false;
             }
         } catch (err) {
@@ -146,72 +332,65 @@ export class GitHubActions {
      * @returns {Promise<boolean>}
      */
     public async repoExists(repoName: string): Promise<boolean> {
-        const ctx = this;
-        Log.info("GitHubAction::repoExists( " + ctx.org + ", " + repoName + " ) - start");
 
-        // return new Promise(function(fulfill) {
-
-        const uri = ctx.apiPath + '/repos/' + ctx.org + '/' + repoName;
-        // Log.trace("GitHubAction::repoExists(..) - URI: " + uri);
+        const start = Date.now();
+        const uri = this.apiPath + '/repos/' + this.org + '/' + repoName;
         const options = {
             method:  'GET',
             uri:     uri,
             headers: {
-                'Authorization': ctx.gitHubAuthToken,
-                'User-Agent':    ctx.gitHubUserName,
+                'Authorization': this.gitHubAuthToken,
+                'User-Agent':    this.gitHubUserName,
                 'Accept':        'application/json'
             }
         };
 
         try {
-            await rp(options); // .then(function(); // body: any
-            Log.trace("GitHubAction::repoExists(..) - true"); // body: " + body);
-            // fulfill(true);
+            await rp(options);
+            Log.trace("GitHubAction::repoExists( " + repoName + " ) - true; took: " + Util.took(start));
             return true;
         } catch (err) {
-            Log.trace("GitHubAction::repoExists(..) - false");
+            Log.trace("GitHubAction::repoExists( " + repoName + " ) - false; took: " + Util.took(start));
             return false;
         }
-        // }).catch(function() { // err: any
-        //     // Log.trace("GitHubAction::repoExists(..) - ERROR: " + JSON.stringify(err));
-        //     Log.trace("GitHubAction::repoExists(..) - false");
-        //     fulfill(false);
-        // });
-        // });
     }
 
     /**
-     * Deletes a team
+     * Deletes a team.
      *
      * @param teamId
      */
-    public deleteTeam(teamId: number): Promise<boolean> {
-        const ctx = this;
+    public async deleteTeam(teamId: number): Promise<boolean> {
 
-        Log.info("GitHubAction::deleteTeam( " + ctx.org + ", " + teamId + " ) - start");
-        return new Promise(function(fulfill) {
+        try {
+            const start = Date.now();
+            Log.info("GitHubAction::deleteTeam( " + this.org + ", " + teamId + " ) - start");
 
-            const uri = ctx.apiPath + '/teams/' + teamId;
-            // Log.trace("GitHubAction::deleteRepo(..) - URI: " + uri);
+            const uri = this.apiPath + '/teams/' + teamId;
             const options = {
                 method:  'DELETE',
                 uri:     uri,
                 headers: {
-                    'Authorization': ctx.gitHubAuthToken,
-                    'User-Agent':    ctx.gitHubUserName,
+                    'Authorization': this.gitHubAuthToken,
+                    'User-Agent':    this.gitHubUserName,
                     // 'Accept': 'application/json', // custom because this is a preview api
                     'Accept':        'application/vnd.github.hellcat-preview+json'
                 }
             };
 
-            rp(options).then(function() { // body: any
-                Log.info("GitHubAction::deleteTeam(..) - success"); // body: " + body);
-                fulfill(true);
-            }).catch(function(err) { // err: any
-                Log.error("GitHubAction::deleteTeam(..) - failed; ERROR: " + err);
-                fulfill(false);
-            });
-        });
+            const status = await rp(options);
+            if (status.statusCode === 200) {
+                Log.info("GitHubAction::deleteTeam(..) - success; took: " + Util.took(start));
+                return true;
+            } else {
+                Log.info("GitHubAction::deleteTeam(..) - not deleted; code: " + status.statusCode + "; took: " + Util.took(start));
+                return false;
+            }
+
+        } catch (err) {
+            Log.error("GitHubAction::deleteTeam(..) - failed; ERROR: " + err);
+            return false;
+        }
     }
 
     /**
@@ -221,25 +400,25 @@ export class GitHubActions {
      * @returns {Promise<{ id: number, name: string, url: string }[]>}
      */
     public async listRepos(): Promise<Array<{id: number, name: string, url: string}>> {
-        const ctx = this;
-        Log.info("GitHubManager::listRepos(..) - start");
+        Log.info("GitHubActions::listRepos(..) - start");
+        const start = Date.now();
 
         // per_page max is 100; 10 is useful for testing pagination though
-        const uri = ctx.apiPath + '/orgs/' + ctx.org + '/repos?per_page=' + ctx.PAGE_SIZE;
-        Log.trace("GitHubManager::listRepos(..) - URI: " + uri);
+        const uri = this.apiPath + '/orgs/' + this.org + '/repos?per_page=' + this.pageSize;
+        Log.trace("GitHubActions::listRepos(..) - URI: " + uri);
         const options = {
             method:                  'GET',
             uri:                     uri,
             headers:                 {
-                'Authorization': ctx.gitHubAuthToken,
-                'User-Agent':    ctx.gitHubUserName,
+                'Authorization': this.gitHubAuthToken,
+                'User-Agent':    this.gitHubUserName,
                 'Accept':        'application/json'
             },
             resolveWithFullResponse: true,
             json:                    true
         };
 
-        const raw: any = await ctx.handlePagination(options);
+        const raw: any = await this.handlePagination(options);
 
         const rows: Array<{id: number, name: string, url: string}> = [];
         for (const entry of raw) {
@@ -248,6 +427,8 @@ export class GitHubActions {
             const url = entry.url;
             rows.push({id: id, name: name, url: url});
         }
+
+        Log.info("GitHubActions::listRepos(..) - done; # repos: " + rows.length + "; took: " + Util.took(start));
 
         return rows;
     }
@@ -259,25 +440,24 @@ export class GitHubActions {
      * this is just a subset of the return, but it is the subset we actually use
      */
     public async listPeople(): Promise<Array<{id: number, type: string, url: string, name: string}>> {
-        const ctx = this;
-
-        Log.info("GitHubManager::listRepos(..) - start");
+        Log.info("GitHubActions::listPeople(..) - start");
+        const start = Date.now();
 
         // GET /orgs/:org/members
-        const uri = ctx.apiPath + '/orgs/' + ctx.org + '/members'; // per_page max is 100; 10 is useful for testing pagination though
+        const uri = this.apiPath + '/orgs/' + this.org + '/members'; // per_page max is 100; 10 is useful for testing pagination though
         const options = {
             method:                  'GET',
             uri:                     uri,
             headers:                 {
-                'Authorization': ctx.gitHubAuthToken,
-                'User-Agent':    ctx.gitHubUserName,
+                'Authorization': this.gitHubAuthToken,
+                'User-Agent':    this.gitHubUserName,
                 'Accept':        'application/json'
             },
             resolveWithFullResponse: true,
             json:                    true
         };
 
-        const raw: any = await ctx.handlePagination(options);
+        const raw: any = await this.handlePagination(options);
 
         const rows: Array<{id: number, type: string, url: string, name: string}> = [];
         for (const entry of raw) {
@@ -288,18 +468,21 @@ export class GitHubActions {
             rows.push({id: id, type: type, url: url, name: name});
         }
 
+        Log.info("GitHubActions::listPeople(..) - done; # people: " + rows.length + "; took: " + Util.took(start));
         return rows;
     }
 
-    public async handlePagination(rpOptions: rp.RequestPromiseOptions): Promise<object[]> {
-        Log.info("GitHubActions::handlePagination(..) - start");
+    private async handlePagination(rpOptions: rp.RequestPromiseOptions): Promise<object[]> {
+        Log.info("GitHubActions::handlePagination(..) - start; PAGE_SIZE: " + this.pageSize);
+
+        const start = Date.now();
 
         rpOptions.resolveWithFullResponse = true; // in case clients forget
         rpOptions.json = true; // in case clients forget
 
         const fullResponse = await rp(rpOptions as any); // rpOptions is the right type already
 
-        Log.trace("GitHubActions::handlePagination(..) - after initial request");
+        // Log.trace("GitHubActions::handlePagination(..) - after initial request");
 
         let raw: any[] = [];
         const paginationPromises: any[] = [];
@@ -332,17 +515,17 @@ export class GitHubActions {
                 }
             }
 
-            Log.trace("GitHubManager::handlePagination(..) - handling pagination; #pages: " + lastPage);
+            Log.trace("GitHubActions::handlePagination(..) - handling pagination; # pages: " + lastPage);
             for (let i = 2; i <= lastPage; i++) {
                 const pageUri = pageBase + i;
                 // Log.trace('page to request: ' + page);
                 (rpOptions as any).uri = pageUri; // not sure why this is needed
                 // NOTE: this needs to be slowed down to prevent DNS problems (issuing 10+ concurrent dns requests can be problematic)
-                await this.delay(100);
+                await Util.delay(100);
                 paginationPromises.push(rp(rpOptions as any));
             }
         } else {
-            Log.trace("GitHubManager::handlePagination(..) - single page");
+            Log.trace("GitHubActions::handlePagination(..) - single page");
             raw = fullResponse.body;
             // don't put anything on the paginationPromise if it isn't paginated
         }
@@ -352,7 +535,7 @@ export class GitHubActions {
         for (const body of bodies) {
             raw = raw.concat(body.body);
         }
-        Log.trace("GitHubManager::handlePagination(..) - total count: " + raw.length);
+        Log.trace("GitHubActions::handlePagination(..) - total count: " + raw.length + "; took: " + Util.took(start));
 
         return raw;
     }
@@ -365,17 +548,18 @@ export class GitHubActions {
      * @returns {Promise<{id: number, name: string}[]>}
      */
     public async listTeams(): Promise<Array<{id: number, name: string}>> {
-        Log.info("GitHubManager::listTeams(..) - start");
-        const ctx = this;
+        Log.info("GitHubActions::listTeams(..) - start");
+        const start = Date.now();
+
         // per_page max is 100; 10 is useful for testing pagination though
-        const uri = ctx.apiPath + '/orgs/' + ctx.org + '/teams?per_page=' + ctx.PAGE_SIZE;
-        Log.info("GitHubManager::listTeams(..) - uri: " + uri);
+        const uri = this.apiPath + '/orgs/' + this.org + '/teams?per_page=' + this.pageSize;
+        Log.info("GitHubActions::listTeams(..) - uri: " + uri);
         const options = {
             method:                  'GET',
             uri:                     uri,
             headers:                 {
-                'Authorization': ctx.gitHubAuthToken,
-                'User-Agent':    ctx.gitHubUserName,
+                'Authorization': this.gitHubAuthToken,
+                'User-Agent':    this.gitHubUserName,
                 // 'Accept':        'application/json',
                 'Accept':        'application/vnd.github.hellcat-preview+json'
             },
@@ -383,7 +567,7 @@ export class GitHubActions {
             json:                    true
         };
 
-        const teamsRaw: any = await ctx.handlePagination(options);
+        const teamsRaw: any = await this.handlePagination(options);
 
         const teams: Array<{id: number, name: string}> = [];
         for (const team of teamsRaw) {
@@ -392,72 +576,58 @@ export class GitHubActions {
             teams.push({id: id, name: name});
         }
 
+        Log.info("GitHubActions::listTeams(..) - done; # teams: " + teams.length + "; took: " + Util.took(start));
         return teams;
     }
 
-    public listWebhooks(repoName: string): Promise<{}> {
-        const ctx = this;
-        Log.info("GitHubAction::listWebhooks( " + ctx.org + ", " + repoName + " ) - start");
+    public async listWebhooks(repoName: string): Promise<{}> {
+        Log.info("GitHubAction::listWebhooks( " + this.org + ", " + repoName + " ) - start");
+        const start = Date.now();
+        // POST /repos/:owner/:repo/hooks
+        const uri = this.apiPath + '/repos/' + this.org + '/' + repoName + '/hooks';
+        const opts = {
+            method:  'GET',
+            uri:     uri,
+            headers: {
+                'Authorization': this.gitHubAuthToken,
+                'User-Agent':    this.gitHubUserName
+            },
+            json:    true
+        };
 
-        return new Promise(function(fulfill, reject) {
-
-            // POST /repos/:owner/:repo/hooks
-            const uri = ctx.apiPath + '/repos/' + ctx.org + '/' + repoName + '/hooks';
-            const opts = {
-                method:  'GET',
-                uri:     uri,
-                headers: {
-                    'Authorization': ctx.gitHubAuthToken,
-                    'User-Agent':    ctx.gitHubUserName
-                },
-                json:    true
-            };
-
-            rp(opts).then(function(results: any) {
-                Log.info("GitHubAction::listWebhooks(..) - success: " + results);
-                fulfill(results);
-            }).catch(function(err: any) {
-                Log.error("GitHubAction::listWebhooks(..) - ERROR: " + err);
-                reject(err);
-            });
-        });
+        const results = await rp(opts);
+        Log.info("GitHubAction::listWebhooks(..) - success: " + results + "; took: " + Util.took(start));
+        return results;
     }
 
-    public addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
-        const ctx = this;
-        Log.info("GitHubAction::addWebhook( " + ctx.org + ", " + repoName + ", " + webhookEndpoint + " ) - start");
+    public async addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
+        Log.info("GitHubAction::addWebhook( " + this.org + ", " + repoName + ", " + webhookEndpoint + " ) - start");
+        const start = Date.now();
 
-        return new Promise(function(fulfill, reject) {
+        // POST /repos/:owner/:repo/hooks
+        const uri = this.apiPath + '/repos/' + this.org + '/' + repoName + '/hooks';
+        const opts = {
+            method:  'POST',
+            uri:     uri,
+            headers: {
+                'Authorization': this.gitHubAuthToken,
+                'User-Agent':    this.gitHubUserName
+            },
+            body:    {
+                name:   "web",
+                active: true,
+                events: ["commit_comment", "push"],
+                config: {
+                    url:          webhookEndpoint,
+                    content_type: "json"
+                }
+            },
+            json:    true
+        };
 
-            // POST /repos/:owner/:repo/hooks
-            const uri = ctx.apiPath + '/repos/' + ctx.org + '/' + repoName + '/hooks';
-            const opts = {
-                method:  'POST',
-                uri:     uri,
-                headers: {
-                    'Authorization': ctx.gitHubAuthToken,
-                    'User-Agent':    ctx.gitHubUserName
-                },
-                body:    {
-                    name:   "web",
-                    active: true,
-                    events: ["commit_comment", "push"],
-                    config: {
-                        url:          webhookEndpoint,
-                        content_type: "json"
-                    }
-                },
-                json:    true
-            };
-
-            rp(opts).then(function(results: any) {
-                Log.info("GitHubAction::addWebhook(..) - success: " + results);
-                fulfill(true);
-            }).catch(function(err: any) {
-                Log.error("GitHubAction::addWebhook(..) - ERROR: " + err);
-                reject(err);
-            });
-        });
+        const results = await rp(opts); // .then(function(results: any) {
+        Log.info("GitHubAction::addWebhook(..) - success: " + results + "; took: " + Util.took(start));
+        return true;
     }
 
     /**
@@ -469,24 +639,28 @@ export class GitHubActions {
      * @param permission 'admin', 'pull', 'push' // admin for staff, push for students
      * @returns {Promise<number>} team id
      */
-    public async createTeam(teamName: string, permission: string): Promise<{teamName: string, githubTeamNumber: number}> {
-        const ctx = this;
-        Log.info("GitHubAction::createTeam( " + ctx.org + ", " + teamName + ", " + permission + ", ... ) - start");
+    public async createTeam(teamName: string, permission: string): Promise<{teamName: string, githubTeamNumber: number, URL: string}> {
 
+        Log.info("GitHubAction::createTeam( " + this.org + ", " + teamName + ", " + permission + ", ... ) - start");
+        const start = Date.now();
         try {
+            await GitHubActions.checkDatabase(null, teamName);
+
             const teamNum = await this.getTeamNumber(teamName);
             if (teamNum > 0) {
                 Log.info("GitHubAction::createTeam( " + teamName + ", ... ) - success; exists: " + teamNum);
-                return {teamName: teamName, githubTeamNumber: teamNum};
+                const config = Config.getInstance();
+                const url = config.getProp(ConfigKey.githubHost) + "/orgs/" + config.getProp(ConfigKey.org) + "/teams/" + teamName;
+                return {teamName: teamName, githubTeamNumber: teamNum, URL: url};
             } else {
                 Log.info('GitHubAction::createTeam( ' + teamName + ', ... ) - does not exist; creating');
-                const uri = ctx.apiPath + '/orgs/' + ctx.org + '/teams';
+                const uri = this.apiPath + '/orgs/' + this.org + '/teams';
                 const options = {
                     method:  'POST',
                     uri:     uri,
                     headers: {
-                        'Authorization': ctx.gitHubAuthToken,
-                        'User-Agent':    ctx.gitHubUserName,
+                        'Authorization': this.gitHubAuthToken,
+                        'User-Agent':    this.gitHubUserName,
                         'Accept':        'application/json'
                     },
                     body:    {
@@ -497,10 +671,14 @@ export class GitHubActions {
                 };
                 const body = await rp(options);
                 const id = body.id;
-                Log.info("GitHubAction::createTeam(..) - success; new: " + id);
-                return {teamName: teamName, githubTeamNumber: id};
+                const config = Config.getInstance();
+                const url = config.getProp(ConfigKey.githubHost) + "/orgs/" + config.getProp(ConfigKey.org) + "/teams/" + teamName;
+                // TODO: simplify callees by setting Team.URL here and persisting it (like we do with createRepo)
+                Log.info("GitHubAction::createTeam(..) - success; new: " + id + "; took: " + Util.took(start));
+                return {teamName: teamName, githubTeamNumber: id, URL: url};
             }
         } catch (err) {
+            // explicitly log this failure
             Log.error("GitHubAction::createTeam(..) - ERROR: " + err);
             throw err;
         }
@@ -514,40 +692,35 @@ export class GitHubActions {
      * @param members: string[] // github usernames
      * @returns {Promise<GitTeamTuple>}
      */
-    public addMembersToTeam(teamName: string, githubTeamId: number, members: string[]): Promise<GitTeamTuple> {
-        const ctx = this;
+    public async addMembersToTeam(teamName: string, githubTeamId: number, members: string[]): Promise<GitTeamTuple> {
         Log.info("GitHubAction::addMembersToTeam( " + teamName + ", ..) - start; id: " +
             githubTeamId + "; members: " + JSON.stringify(members));
+        const start = Date.now();
 
-        return new Promise(function(fulfill, reject) {
-            const promises: any = [];
-            for (const member of members) {
-                Log.info("GitHubAction::addMembersToTeam(..) - adding member: " + member);
+        const promises: any = [];
+        for (const member of members) {
+            Log.info("GitHubAction::addMembersToTeam(..) - adding member: " + member);
 
-                // PUT /teams/:id/memberships/:username
-                const uri = ctx.apiPath + '/teams/' + githubTeamId + '/memberships/' + member;
-                Log.info("GitHubAction::addMembersToTeam(..) - uri: " + uri);
-                const opts = {
-                    method:  'PUT',
-                    uri:     uri,
-                    headers: {
-                        'Authorization': ctx.gitHubAuthToken,
-                        'User-Agent':    ctx.gitHubUserName,
-                        'Accept':        'application/json'
-                    },
-                    json:    true
-                };
-                promises.push(rp(opts));
-            }
+            // PUT /teams/:id/memberships/:username
+            const uri = this.apiPath + '/teams/' + githubTeamId + '/memberships/' + member;
+            Log.info("GitHubAction::addMembersToTeam(..) - uri: " + uri);
+            const opts = {
+                method:  'PUT',
+                uri:     uri,
+                headers: {
+                    'Authorization': this.gitHubAuthToken,
+                    'User-Agent':    this.gitHubUserName,
+                    'Accept':        'application/json'
+                },
+                json:    true
+            };
+            promises.push(rp(opts));
+        }
 
-            Promise.all(promises).then(function(results: any) {
-                Log.info("GitHubAction::addMembersToTeam(..) - success: " + JSON.stringify(results));
-                fulfill({teamName: teamName, githubTeamNumber: githubTeamId});
-            }).catch(function(err: any) {
-                Log.error("GitHubAction::addMembersToTeam(..) - ERROR: " + err);
-                reject(err);
-            });
-        });
+        const results = await Promise.all(promises);
+        Log.info("GitHubAction::addMembersToTeam(..) - success; took: " + Util.took(start) + "; results:" + JSON.stringify(results));
+
+        return {teamName: teamName, githubTeamNumber: githubTeamId};
     }
 
     /**
@@ -558,19 +731,19 @@ export class GitHubActions {
      * @param permission ('pull', 'push', 'admin')
      * @returns {Promise<GitTeamTuple>}
      */
-    public addTeamToRepo(teamId: number, repoName: string, permission: string): Promise<GitTeamTuple> {
-        const ctx = this;
-        Log.info("GitHubAction::addTeamToRepo( " + teamId + ", " + repoName + " ) - start");
-        return new Promise(function(fulfill, reject) {
+    public async addTeamToRepo(teamId: number, repoName: string, permission: string): Promise<GitTeamTuple> {
 
-            const uri = ctx.apiPath + '/teams/' + teamId + '/repos/' + ctx.org + '/' + repoName;
+        Log.info("GitHubAction::addTeamToRepo( " + teamId + ", " + repoName + " ) - start");
+        const start = Date.now();
+        try {
+            const uri = this.apiPath + '/teams/' + teamId + '/repos/' + this.org + '/' + repoName;
             Log.info("GitHubAction::addTeamToRepo(..) - URI: " + uri);
             const options = {
                 method:  'PUT',
                 uri:     uri,
                 headers: {
-                    'Authorization': ctx.gitHubAuthToken,
-                    'User-Agent':    ctx.gitHubUserName,
+                    'Authorization': this.gitHubAuthToken,
+                    'User-Agent':    this.gitHubUserName,
                     'Accept':        'application/json'
                     // 'Accept':        'application/vnd.github.hellcat-preview+json'
                 },
@@ -580,96 +753,93 @@ export class GitHubActions {
                 json:    true
             };
 
-            rp(options).then(function() { // body
-                Log.info("GitHubAction::addTeamToRepo(..) - success; team: " + teamId + "; repo: " + repoName);
-                fulfill({githubTeamNumber: teamId, teamName: 'NOTSETHERE'});
-            }).catch(function(err: any) {
-                Log.error("GitHubAction::addTeamToRepo(..) - ERROR: " + err);
-                reject(err);
-            });
-        });
+            await rp(options);
+            Log.info("GitHubAction::addTeamToRepo(..) - success; team: " + teamId + "; repo: " + repoName + "; took: " + Util.took(start));
+            return {githubTeamNumber: teamId, teamName: 'NOTSETHERE'};
+
+        } catch (err) {
+            Log.error("GitHubAction::addTeamToRepo(..) - ERROR: " + err);
+            throw err;
+        }
     }
 
     /**
      * Gets the internal number for a team.
      *
-     * Returns -1 if the team does not exist. Will throw an error
-     * if some other configuration problem is encountered.
+     * Returns -1 if the team does not exist.
      *
      * @param {string} teamName
      * @returns {Promise<number>}
      */
-    public getTeamNumber(teamName: string): Promise<number> {
-        const ctx = this;
+    public async getTeamNumber(teamName: string): Promise<number> {
+
         Log.info("GitHubAction::getTeamNumber( " + teamName + " ) - start");
-
-        return new Promise(function(fulfill, reject) {
+        const start = Date.now();
+        try {
             let teamId = -1;
-            ctx.listTeams().then(function(teamList: any) {
-                for (const team of teamList) {
-                    if (team.name === teamName) {
-                        teamId = team.id;
-                        Log.info("GitHubAction::getTeamNumber(..) - matched team: " + teamName + "; id: " + teamId);
-                    }
+            const teamList = await this.listTeams();
+            for (const team of teamList) {
+                if (team.name === teamName) {
+                    teamId = team.id;
+                    // Log.info("GitHubAction::getTeamNumber(..) - matched team: " + teamName + "; id: " + teamId);
                 }
+            }
 
-                if (teamId < 0) {
-                    // reject('GitHubAction::getTeamNumber(..) - ERROR: Could not find team: ' + teamName);
-                    Log.info('GitHubAction::getTeamNumber(..) - WARN: Could not find team: ' + teamName);
-                    fulfill(-1);
-                } else {
-                    fulfill(teamId);
-                }
-            }).catch(function(err) {
-                Log.warn("GitHubAction::getTeamNumber(..) - could not match team: " + teamName + "; ERROR: " + err);
-                // reject(err);
-                fulfill(-1);
-            });
-        });
+            if (teamId <= 0) {
+                Log.info('GitHubAction::getTeamNumber(..) - WARN: Could not find team: ' + teamName + "; took: " + Util.took(start));
+                return -1;
+            } else {
+                Log.info('GitHubAction::getTeamNumber(..) - Found team: ' + teamName +
+                    "; teamId: " + teamId + "; took: " + Util.took(start));
+                return teamId;
+            }
+        } catch (err) {
+            Log.warn("GitHubAction::getTeamNumber(..) - could not match team: " + teamName + "; ERROR: " + err);
+            return -1;
+        }
     }
 
     /**
      * Gets the list of users on a team.
      *
      * Returns [] if the team does not exist or nobody is on the team.
-     * Will throw an error if some other configuration problem is encountered.
      *
      * @param {string} teamNumber
      * @returns {Promise<number>}
      */
-    public getTeamMembers(teamNumber: number): Promise<string[]> {
-        const ctx = this;
+    public async getTeamMembers(teamNumber: number): Promise<string[]> {
 
         Log.info("GitHubAction::getTeamMembers( " + teamNumber + " ) - start");
-        return new Promise(function(fulfill) {
-
-            const uri = ctx.apiPath + '/teams/' + teamNumber + '/members';
+        const start = Date.now();
+        try {
+            const uri = this.apiPath + '/teams/' + teamNumber + '/members';
             const options = {
                 method:  'GET',
                 uri:     uri,
                 headers: {
-                    'Authorization': ctx.gitHubAuthToken,
-                    'User-Agent':    ctx.gitHubUserName,
+                    'Authorization': this.gitHubAuthToken,
+                    'User-Agent':    this.gitHubUserName,
                     'Accept':        'application/json'
                 }
             };
 
             // NOTE: not sure how this will respond to paging if there are lots of members on the team
-            rp(options).then(function(body: any) {
-                Log.info("GitHubAction::getTeamMembers(..) - success"); //  body: " + body);
-                const resp = JSON.parse(body);
-                const ids: string[] = [];
-                for (const result of resp) {
-                    ids.push(result.login);
-                }
+            const body = await rp(options);
 
-                fulfill(ids);
-            }).catch(function(err: any) {
-                Log.warn("GitHubAction::getTeamMembers(..) - ERROR: " + JSON.stringify(err));
-                // just return empy [] rather than failing
-                fulfill([]);
-            });
-        });
+            const resp = JSON.parse(body);
+            const ids: string[] = [];
+            for (const result of resp) {
+                ids.push(result.login);
+            }
+
+            Log.info("GitHubAction::getTeamMembers(..) - success; # results: " + ids.length + "; took: " + Util.took(start));
+
+            return ids;
+        } catch (err) {
+            Log.warn("GitHubAction::getTeamMembers(..) - ERROR: " + JSON.stringify(err));
+            // just return empy [] rather than failing
+            return [];
+        }
     }
 
     public async isOnAdminTeam(userName: string): Promise<boolean> {
@@ -684,15 +854,15 @@ export class GitHubActions {
         return isStaff;
     }
 
-    private async isOnTeam(teamName: string, userName: string): Promise<boolean> {
+    public async isOnTeam(teamName: string, userName: string): Promise<boolean> {
         const gh = this;
 
+        if (teamName !== 'staff' && teamName !== 'admin') {
+            // sanity-check non admin/staff teams
+            await GitHubActions.checkDatabase(null, teamName);
+        }
+
         const teamNumber = await gh.getTeamNumber(teamName);
-        // code just returns false anyways because getTeamMembers will return [] and not match anything
-        // if (teamNumber < 0) {
-        //     Log.warn('GitHubAction::isOnTeam(..) - team: ' + teamName + ' does not exist for org: ' + gh.org);
-        //     return false;
-        // }
 
         const teamMembers = await gh.getTeamMembers(teamNumber);
         for (const member of teamMembers) {
@@ -709,6 +879,7 @@ export class GitHubActions {
     public async importRepoFS(importRepo: string, studentRepo: string, seedFilePath?: string): Promise<boolean> {
         Log.info('GitHubAction::importRepoFS( ' + importRepo + ', ' + studentRepo + ' ) - start');
         const that = this;
+        const start = Date.now();
 
         function addGithubAuthToken(url: string) {
             const startAppend = url.indexOf('//') + 2;
@@ -749,9 +920,10 @@ export class GitHubActions {
                     }).then(() => {
                         return pushToNewRepo();
                     }).then(() => {
+                        Log.info('GitHubAction::cloneRepo() seedPath - done; took: ' + Util.took(start));
                         return Promise.resolve(true); // made it cleanly
                     }).catch((err: any) => {
-                        Log.error('GitHubAction::cloneRepo() - ERROR: ' + err);
+                        Log.error('GitHubAction::cloneRepo() seedPath - ERROR: ' + err);
                         return Promise.reject(err);
                     });
             });
@@ -769,6 +941,7 @@ export class GitHubActions {
                     }).then(() => {
                         return pushToNewRepo();
                     }).then(() => {
+                        Log.info('GitHubAction::cloneRepo() - done; took: ' + Util.took(start));
                         return Promise.resolve(true); // made it cleanly
                     }).catch((err: any) => {
                         Log.error('GitHubAction::cloneRepo() - ERROR: ' + err);
@@ -778,122 +951,89 @@ export class GitHubActions {
         }
 
         function moveFiles(originPath: string, filesLocation: string, destPath: string) {
-            Log.info('GithubManager::importRepoFS(..)::moveFiles( ' + originPath + ', '
+            Log.info('GitHubActions::importRepoFS(..)::moveFiles( ' + originPath + ', '
                 + filesLocation + ', ' + destPath + ') - moving files');
             return exec(`cp -r ${originPath}/${filesLocation} ${destPath}`)
                 .then(function(result: any) {
-                    Log.info('GithubManager::importRepoFS(..)::moveFiles(..) - done');
-                    Log.trace('GithubManager::importRepoFS(..)::moveFiles(..) - stdout: ' + result.stdout);
-                    // if (result.stderr) {
-                    //     Log.warn('GithubManager::importRepoFS(..)::moveFiles(..) - stderr: ' + result.stderr);
-                    // }
+                    Log.info('GitHubActions::importRepoFS(..)::moveFiles(..) - done');
+                    Log.trace('GitHubActions::importRepoFS(..)::moveFiles(..) - stdout: ' + result.stdout);
                     that.reportStdErr(result.stderr, 'importRepoFS(..)::moveFiles(..)');
                 });
         }
 
         function cloneRepo(repoPath: string) {
-            Log.info('GithubManager::importRepoFS(..)::cloneRepo() - cloning: ' + importRepo);
+            Log.info('GitHubActions::importRepoFS(..)::cloneRepo() - cloning: ' + importRepo);
             return exec(`git clone ${authedImportRepo} ${repoPath}`)
                 .then(function(result: any) {
-                    Log.info('GithubManager::importRepoFS(..)::cloneRepo() - done:');
-                    Log.trace('GithubManager::importRepoFS(..)::cloneRepo() - stdout: ' + result.stdout);
+                    Log.info('GitHubActions::importRepoFS(..)::cloneRepo() - done:');
+                    Log.trace('GitHubActions::importRepoFS(..)::cloneRepo() - stdout: ' + result.stdout);
                     that.reportStdErr(result.stderr, 'importRepoFS(..)::cloneRepo()');
-                    // if (result.stderr) {
-                    //     Log.warn('GithubManager::importRepoFS(..)::cloneRepo() - stderr: ' + result.stderr);
-                    // }
                 });
         }
 
         function enterRepoPath() {
-            Log.info('GithubManager::importRepoFS(..)::enterRepoPath() - entering: ' + tempPath);
+            Log.info('GitHubActions::importRepoFS(..)::enterRepoPath() - entering: ' + tempPath);
             return exec(`cd ${tempPath}`)
                 .then(function(result: any) {
-                    Log.info('GithubManager::importRepoFS(..)::enterRepoPath() - done:');
-                    Log.trace('GithubManager::importRepoFS(..)::enterRepoPath() - stdout: ' + result.stdout);
-                    // if (result.stderr) {
-                    //     Log.warn('GithubManager::importRepoFS(..)::enterRepoPath() - stderr: ' + result.stderr);
-                    // }
+                    Log.info('GitHubActions::importRepoFS(..)::enterRepoPath() - done:');
+                    Log.trace('GitHubActions::importRepoFS(..)::enterRepoPath() - stdout: ' + result.stdout);
                     that.reportStdErr(result.stderr, 'importRepoFS(..)::enterRepoPath()');
                 });
         }
 
         function removeGitDir() {
-            Log.info('GithubManager::importRepoFS(..)::removeGitDir() - removing .git from cloned repo');
+            Log.info('GitHubActions::importRepoFS(..)::removeGitDir() - removing .git from cloned repo');
             return exec(`cd ${tempPath} && rm -rf .git`)
                 .then(function(result: any) {
-                    Log.info('GithubManager::importRepoFS(..)::removeGitDir() - done:');
-                    Log.trace('GithubManager::importRepoFS(..)::removeGitDir() - stdout: ' + result.stdout);
-                    // Log.trace('GithubManager::importRepoFS(..)::removeGitDir() - stderr: ' + result.stderr);
+                    Log.info('GitHubActions::importRepoFS(..)::removeGitDir() - done:');
+                    Log.trace('GitHubActions::importRepoFS(..)::removeGitDir() - stdout: ' + result.stdout);
                     that.reportStdErr(result.stderr, 'importRepoFS(..)::removeGitDir()');
                 });
         }
 
         function initGitDir() {
-            Log.info('GithubManager::importRepoFS(..)::initGitDir() - start');
+            Log.info('GitHubActions::importRepoFS(..)::initGitDir() - start');
             return exec(`cd ${tempPath} && git init`)
                 .then(function(result: any) {
-                    Log.info('GithubManager::importRepoFS(..)::initGitDir() - done:');
-                    Log.trace('GithubManager::importRepoFS(..)::initGitDir() - stdout: ' + result.stdout);
-                    // if (result.stderr) {
-                    //     Log.warn('GithubManager::importRepoFS(..)::initGitDir() - stderr: ' + result.stderr);
-                    // }
+                    Log.info('GitHubActions::importRepoFS(..)::initGitDir() - done:');
+                    Log.trace('GitHubActions::importRepoFS(..)::initGitDir() - stdout: ' + result.stdout);
                     that.reportStdErr(result.stderr, 'importRepoFS(..)::initGitDir()');
                 });
         }
 
         function changeGitRemote() {
-            Log.info('GithubManager::importRepoFS(..)::changeGitRemote() - start');
+            Log.info('GitHubActions::importRepoFS(..)::changeGitRemote() - start');
             const command = `cd ${tempPath} && git remote add origin ${authedStudentRepo}.git && git fetch --all`;
             return exec(command)
                 .then(function(result: any) {
-                    Log.info('GithubManager::importRepoFS(..)::changeGitRemote() - done:');
-                    Log.trace('GithubManager::importRepoFS(..)::changeGitRemote() - stdout: ' + result.stdout);
-                    // if (result.stderr) {
-                    //     Log.warn('GithubManager::importRepoFS(..)::changeGitRemote() - stderr: ' + result.stderr);
-                    // }
+                    Log.info('GitHubActions::importRepoFS(..)::changeGitRemote() - done:');
+                    Log.trace('GitHubActions::importRepoFS(..)::changeGitRemote() - stdout: ' + result.stdout);
                     that.reportStdErr(result.stderr, 'importRepoFS(..)::changeGitRemote()');
                 });
         }
 
         function addFilesToRepo() {
-            Log.info('GithubManager::importRepoFS(..)::addFilesToRepo() - start');
+            Log.info('GitHubActions::importRepoFS(..)::addFilesToRepo() - start');
             // tslint:disable-next-line
             const command = `cd ${tempPath} && git config user.email "classy@cs.ubc.ca" && git config user.name "classy" && git add . && git commit -m "Starter files"`;
             return exec(command)
                 .then(function(result: any) {
-                    Log.info('GithubManager::importRepoFS(..)::addFilesToRepo() - done:');
-                    Log.trace('GithubManager::importRepoFS(..)::addFilesToRepo() - stdout: ' + result.stdout);
-                    // if (result.stderr) {
-                    //     Log.warn('GithubManager::importRepoFS(..)::addFilesToRepo() - stderr: ' + result.stderr);
-                    // }
+                    Log.info('GitHubActions::importRepoFS(..)::addFilesToRepo() - done:');
+                    Log.trace('GitHubActions::importRepoFS(..)::addFilesToRepo() - stdout: ' + result.stdout);
                     that.reportStdErr(result.stderr, 'importRepoFS(..)::addFilesToRepo()');
                 });
         }
 
         function pushToNewRepo() {
-            Log.info('GithubManager::importRepoFS(..)::pushToNewRepo() - start');
+            Log.info('GitHubActions::importRepoFS(..)::pushToNewRepo() - start');
             const command = `cd ${tempPath} && git push origin master`;
             return exec(command)
                 .then(function(result: any) {
-                    Log.info('GithubManager::importRepoFS(..)::pushToNewRepo() - done: ');
-                    Log.trace('GithubManager::importRepoFS(..)::pushToNewRepo() - stdout: ' + result.stdout);
-                    // if (result.stderr) {
-                    //     Log.warn('GithubManager::importRepoFS(..)::pushToNewRepo() - stderr: ' + result.stderr);
-                    // }
+                    Log.info('GitHubActions::importRepoFS(..)::pushToNewRepo() - done: ');
+                    Log.trace('GitHubActions::importRepoFS(..)::pushToNewRepo() - stdout: ' + result.stdout);
                     that.reportStdErr(result.stderr, 'importRepoFS(..)::pushToNewRepo()');
                 });
         }
-    }
-
-    // just a useful delay function for when we need to wait for GH to do something
-    // or we want a test to be able to slow itself down
-    public delay(ms: number): Promise<{}> {
-        // logger.info("GitHubManager::delay( " + ms + ") - start");
-        return new Promise(function(resolve) {
-            const fire = new Date(new Date().getTime() + ms);
-            Log.info("GitHubAction::delay( " + ms + " ms ) - waiting; will trigger at " + fire.toLocaleTimeString());
-            setTimeout(resolve, ms);
-        });
     }
 
     public addGithubAuthToken(url: string) {
@@ -904,9 +1044,9 @@ export class GitHubActions {
         return url.slice(0, startAppend) + authKey + url.slice(startAppend);
     }
 
-    private async reportStdErr(stderr: any, prefix: string) {
+    private reportStdErr(stderr: any, prefix: string) {
         if (stderr) {
-            Log.warn('GithubManager::reportStdErr - ' + prefix + ': ' + stderr);
+            Log.warn('GitHubActions::reportStdErr - ' + prefix + ': ' + stderr);
         }
     }
 
@@ -919,11 +1059,14 @@ export class GitHubActions {
      * @param {boolean} force - allow for overwriting of old files
      * @returns {Promise<boolean>} - true if write was successful
      */
-    public async writeFileToRepo(repoURL: string, fileName: string, fileContent: string, force: boolean = false): Promise<boolean> {
+    public async writeFileToRepo(repoURL: string, fileName: string, fileContent: string, force?: boolean): Promise<boolean> {
         Log.info("GithubAction::writeFileToRepo( " + repoURL + " , " + fileName + "" +
             " , " + fileContent + " , " + force + " ) - start");
         const that = this;
 
+        if (typeof force === 'undefined') {
+            force = false;
+        }
         // TAKEN FROM importFS
 
         // generate temp path
@@ -947,7 +1090,7 @@ export class GitHubActions {
             } catch (err) {
                 Log.warn("GithubActions::writeFileToRepo(..) - No file differences; " +
                     "Did not write file to repo");
-                                // this only fails when the files have not changed,
+                // this only fails when the files have not changed,
                 return true;    // we technically "wrote" the file still
             }
             await pushToRepo();
@@ -959,94 +1102,94 @@ export class GitHubActions {
         return true;
 
         function cloneRepo(repoPath: string) {
-            Log.info('GithubManager::writeFileToRepo(..)::cloneRepo() - cloning: ' + repoURL);
+            Log.info('GitHubActions::writeFileToRepo(..)::cloneRepo() - cloning: ' + repoURL);
             return exec(`git clone ${authedRepo} ${repoPath}`)
                 .then(function(result: any) {
-                    Log.info('GithubManager::writeFileToRepo(..)::cloneRepo() - done:');
-                    Log.trace('GithubManager::writeFileToRepo(..)::cloneRepo() - stdout: ' + result.stdout);
+                    Log.info('GitHubActions::writeFileToRepo(..)::cloneRepo() - done:');
+                    Log.trace('GitHubActions::writeFileToRepo(..)::cloneRepo() - stdout: ' + result.stdout);
                     // if (result.stderr) {
-                    //     Log.warn('GithubManager::writeFileToRepo(..)::cloneRepo() - stderr: ' + result.stderr);
+                    //     Log.warn('GitHubActions::writeFileToRepo(..)::cloneRepo() - stderr: ' + result.stderr);
                     // }
                     that.reportStdErr(result.stderr, 'writeFileToRepo(..)::cloneRepo()');
                 });
         }
 
         function enterRepoPath() {
-            Log.info('GithubManager::writeFileToRepo(..)::enterRepoPath() - entering: ' + tempPath);
+            Log.info('GitHubActions::writeFileToRepo(..)::enterRepoPath() - entering: ' + tempPath);
             return exec(`cd ${tempPath}`)
                 .then(function(result: any) {
-                    Log.info('GithubManager::writeFileToRepo(..)::enterRepoPath() - done:');
-                    Log.trace('GithubManager::writeFileToRepo(..)::enterRepoPath() - stdout: ' + result.stdout);
+                    Log.info('GitHubActions::writeFileToRepo(..)::enterRepoPath() - done:');
+                    Log.trace('GitHubActions::writeFileToRepo(..)::enterRepoPath() - stdout: ' + result.stdout);
                     // if (result.stderr) {
-                    //     Log.warn('GithubManager::writeFileToRepo(..)::enterRepoPath() - stderr: ' + result.stderr);
+                    //     Log.warn('GitHubActions::writeFileToRepo(..)::enterRepoPath() - stderr: ' + result.stderr);
                     // }
                     that.reportStdErr(result.stderr, 'writeFileToRepo(..)::enterRepoPath()');
                 });
         }
 
         function createNewFileForce() {
-            Log.info('GithubManager::writeFileToRepo(..)::createNewFileForce() - writing: ' + fileName);
+            Log.info('GitHubActions::writeFileToRepo(..)::createNewFileForce() - writing: ' + fileName);
             return exec(`cd ${tempPath} && if [ -f ${fileName} ]; then rm ${fileName};  fi; echo '${fileContent}' >> ${fileName};`)
                 .then(function(result: any) {
-                    Log.info('GithubManager::writeFileToRepo(..)::createNewFileForce() - done:');
-                    Log.trace('GithubManager::writeFileToRepo(..)::createNewFileForce() - stdout: ' + result.stdout);
+                    Log.info('GitHubActions::writeFileToRepo(..)::createNewFileForce() - done:');
+                    Log.trace('GitHubActions::writeFileToRepo(..)::createNewFileForce() - stdout: ' + result.stdout);
                     // if (result.stderr) {
-                    //     Log.warn('GithubManager::writeFileToRepo(..)::createNewFileForce() - stderr: ' + result.stderr);
+                    //     Log.warn('GitHubActions::writeFileToRepo(..)::createNewFileForce() - stderr: ' + result.stderr);
                     // }
                     that.reportStdErr(result.stderr, 'writeFileToRepo(..)::createNewFileForce()');
                 });
         }
 
         function createNewFile() {
-            Log.info('GithubManager::writeFileToRepo(..)::createNewFile() - writing: ' + fileName);
+            Log.info('GitHubActions::writeFileToRepo(..)::createNewFile() - writing: ' + fileName);
             return exec(`cd ${tempPath} && if [ ! -f ${fileName} ]; then echo \"${fileContent}\" >> ${fileName};fi`)
                 .then(function(result: any) {
-                    Log.info('GithubManager::writeFileToRepo(..)::createNewFile() - done:');
-                    Log.trace('GithubManager::writeFileToRepo(..)::createNewFile() - stdout: ' + result.stdout);
+                    Log.info('GitHubActions::writeFileToRepo(..)::createNewFile() - done:');
+                    Log.trace('GitHubActions::writeFileToRepo(..)::createNewFile() - stdout: ' + result.stdout);
                     // if (result.stderr) {
-                    //     Log.warn('GithubManager::writeFileToRepo(..)::createNewFile() - stderr: ' + result.stderr);
+                    //     Log.warn('GitHubActions::writeFileToRepo(..)::createNewFile() - stderr: ' + result.stderr);
                     // }
                     that.reportStdErr(result.stderr, 'writeFileToRepo(..)::createNewFile()');
                 });
         }
 
         function addFilesToRepo() {
-            Log.info('GithubManager::writeFileToRepo(..)::addFilesToRepo() - start');
+            Log.info('GitHubActions::writeFileToRepo(..)::addFilesToRepo() - start');
             const command = `cd ${tempPath} && git add ${fileName}`;
             return exec(command)
                 .then(function(result: any) {
-                    Log.info('GithubManager::writeFileToRepo(..)::addFilesToRepo() - done:');
-                    Log.trace('GithubManager::writeFileToRepo(..)::addFilesToRepo() - stdout: ' + result.stdout);
+                    Log.info('GitHubActions::writeFileToRepo(..)::addFilesToRepo() - done:');
+                    Log.trace('GitHubActions::writeFileToRepo(..)::addFilesToRepo() - stdout: ' + result.stdout);
                     // if (result.stderr) {
-                    //     Log.warn('GithubManager::writeFileToRepo(..)::addFilesToRepo() - stderr: ' + result.stderr);
+                    //     Log.warn('GitHubActions::writeFileToRepo(..)::addFilesToRepo() - stderr: ' + result.stderr);
                     // }
                     that.reportStdErr(result.stderr, 'writeFileToRepo(..)::addFilesToRepo()');
                 });
         }
 
         function commitFilesToRepo() {
-            Log.info('GithubManager::writeFileToRepo(..)::commitFilesToRepo() - start');
+            Log.info('GitHubActions::writeFileToRepo(..)::commitFilesToRepo() - start');
             const command = `cd ${tempPath} && git commit -m "Update ${fileName}"`;
             return exec(command)
                 .then(function(result: any) {
-                    Log.info('GithubManager::writeFileToRepo(..)::commitFilesToRepo() - done:');
-                    Log.trace('GithubManager::writeFileToRepo(..)::commitFilesToRepo() - stdout: ' + result.stdout);
+                    Log.info('GitHubActions::writeFileToRepo(..)::commitFilesToRepo() - done:');
+                    Log.trace('GitHubActions::writeFileToRepo(..)::commitFilesToRepo() - stdout: ' + result.stdout);
                     // if (result.stderr) {
-                    //     Log.warn('GithubManager::writeFileToRepo(..)::commitFilesToRepo() - stderr: ' + result.stderr);
+                    //     Log.warn('GitHubActions::writeFileToRepo(..)::commitFilesToRepo() - stderr: ' + result.stderr);
                     // }
                     that.reportStdErr(result.stderr, 'writeFileToRepo(..)::commitFilesToRepo()');
                 });
         }
 
         function pushToRepo() {
-            Log.info('GithubManager::writeFileToRepo(..)::pushToRepo() - start');
+            Log.info('GitHubActions::writeFileToRepo(..)::pushToRepo() - start');
             const command = `cd ${tempPath} && git push`;
             return exec(command)
                 .then(function(result: any) {
-                    Log.info('GithubManager::writeFileToRepo(..)::pushToNewRepo() - done: ');
-                    Log.trace('GithubManager::writeFileToRepo(..)::pushToNewRepo() - stdout: ' + result.stdout);
+                    Log.info('GitHubActions::writeFileToRepo(..)::pushToNewRepo() - done: ');
+                    Log.trace('GitHubActions::writeFileToRepo(..)::pushToNewRepo() - stdout: ' + result.stdout);
                     // if (result.stderr) {
-                    //     Log.warn('GithubManager::writeFileToRepo(..)::pushToNewRepo() - stderr: ' + result.stderr);
+                    //     Log.warn('GitHubActions::writeFileToRepo(..)::pushToNewRepo() - stderr: ' + result.stderr);
                     // }
                     that.reportStdErr(result.stderr, 'writeFileToRepo(..)::pushToNewRepo()');
                 });
@@ -1060,81 +1203,380 @@ export class GitHubActions {
      * @param {string} permissionLevel - one of: 'push' 'pull'
      * @returns {Promise<boolean>}
      */
-    public setRepoPermission(repoName: string, permissionLevel: string): Promise<boolean> {
-        const ctx = this;
+    public async setRepoPermission(repoName: string, permissionLevel: string): Promise<boolean> {
         Log.info("GithubAction::setRepoPermission( " + repoName + ", " + permissionLevel + " ) - start");
 
-        return new Promise(function(fulfill, reject) {
+        try {
             // Check if permissionLevel is one of: {push, pull}
             // We don't want to be able to grant a team admin access!
             if (permissionLevel !== "pull" && permissionLevel !== "push") {
-                Log.error("GitHubAction::setRepoPermission(..) - ERROR, Invalid permissionLevel: " + permissionLevel);
-                reject(false);
+                const msg = "GitHubAction::setRepoPermission(..) - ERROR, Invalid permissionLevel: " + permissionLevel;
+                Log.error(msg);
+                throw new Error(msg);
             }
 
             // Make sure the repo exists
             // tslint:disable-next-line:no-floating-promises
-            ctx.repoExists(repoName).then(function(repoExists: boolean) {
-                if (repoExists) {
-                    Log.info("GitHubAction::setRepoPermission(..) - repo exists");
-                    Log.info("GitHubAction::setRepoPermission(..) - getting teams associated with repo");
-                    const teamsUri = ctx.apiPath + '/repos/' + ctx.org + '/' + repoName + '/teams';
-                    Log.trace("GitHubAction::setRepoPermission(..) - URI: " + teamsUri);
-                    const teamOptions = {
-                        method:  'GET',
-                        uri:     teamsUri,
-                        headers: {
-                            'Authorization': ctx.gitHubAuthToken,
-                            'User-Agent':    ctx.gitHubUserName,
-                            'Accept':        'application/json'
-                        },
-                        json:    true
-                    };
+            const repoExists = await this.repoExists(repoName);
+            if (repoExists) {
+                Log.info("GitHubAction::setRepoPermission(..) - repo exists");
+                Log.info("GitHubAction::setRepoPermission(..) - getting teams associated with repo");
+                const teamsUri = this.apiPath + '/repos/' + this.org + '/' + repoName + '/teams';
+                Log.trace("GitHubAction::setRepoPermission(..) - URI: " + teamsUri);
+                const teamOptions = {
+                    method:  'GET',
+                    uri:     teamsUri,
+                    headers: {
+                        'Authorization': this.gitHubAuthToken,
+                        'User-Agent':    this.gitHubUserName,
+                        'Accept':        'application/json'
+                    },
+                    json:    true
+                };
 
-                    // Change each team's permission
-                    // tslint:disable-next-line:no-floating-promises
-                    rp(teamOptions).then(function(responseData: any) {
-                        Log.info("GitHubAction::setRepoPermission(..) - setting permission for teams on repo");
-                        for (const team of responseData) {
-                            // Don't change teams that have admin permission
-                            if (team.permission !== "admin") {
-                                Log.info("GitHubAction::setRepoPermission(..) - set team: " + team.name + " to " + permissionLevel);
-                                const permissionUri = ctx.apiPath + '/teams/' + team.id + '/repos/' + ctx.org + '/' + repoName;
-                                Log.trace("GitHubAction::setRepoPermission(..) - URI: " + permissionUri);
-                                const permissionOptions = {
-                                    method:  'PUT',
-                                    uri:     permissionUri,
-                                    headers: {
-                                        'Authorization': ctx.gitHubAuthToken,
-                                        'User-Agent':    ctx.gitHubUserName,
-                                        'Accept':        'application/json'
-                                    },
-                                    body:    {
-                                        permission: permissionLevel
-                                    },
-                                    json:    true
-                                };
+                // Change each team's permission
+                // tslint:disable-next-line:no-floating-promises
+                const responseData = await rp(teamOptions); // .then(function(responseData: any) {
+                Log.info("GitHubAction::setRepoPermission(..) - setting permission for teams on repo");
+                for (const team of responseData) {
+                    // Don't change teams that have admin permission
+                    if (team.permission !== "admin") {
+                        Log.info("GitHubAction::setRepoPermission(..) - set team: " + team.name + " to " + permissionLevel);
+                        const permissionUri = this.apiPath + '/teams/' + team.id + '/repos/' + this.org + '/' + repoName;
+                        Log.trace("GitHubAction::setRepoPermission(..) - URI: " + permissionUri);
+                        const permissionOptions = {
+                            method:  'PUT',
+                            uri:     permissionUri,
+                            headers: {
+                                'Authorization': this.gitHubAuthToken,
+                                'User-Agent':    this.gitHubUserName,
+                                'Accept':        'application/json'
+                            },
+                            body:    {
+                                permission: permissionLevel
+                            },
+                            json:    true
+                        };
 
-                                rp(permissionOptions).then(function() {
-                                    Log.info("GitHubAction::setRepoPermission(..) - changed team: " + team.id + " permissions");
-                                }).catch(function(err) {
-                                    Log.error("GitHubAction::setRepoPermission(..) - ERROR: " + err);
-                                    fulfill(false);
-                                });
-                            }
-                        }
-                    });
-                    fulfill(true);
-                } else {
-                    Log.info("GitHubAction::setRepoPermission(..) - repo does not exists; unable to revoke push");
-                    fulfill(false);
+                        await rp(permissionOptions); // TODO: evaluate statusCode from this call
+                        Log.info("GitHubAction::setRepoPermission(..) - changed team: " + team.id + " permissions");
+                    }
                 }
-            }).catch(function(err) {
-                // If we get an error; something went wrong
-                Log.error("GitHubAction::setRepoPermission(..) - ERROR: " + JSON.stringify(err));
-                reject(err);
-            });
-        });
+                return true;
+            } else {
+                Log.info("GitHubAction::setRepoPermission(..) - repo does not exists; unable to revoke push");
+                return false;
+            }
+        } catch (err) {
+            // If we get an error; something went wrong
+            Log.error("GitHubAction::setRepoPermission(..) - ERROR: " + err.message);
+            throw err;
+        }
+    }
+
+    /**
+     * Checks to make sure the repoName or teamName (or both, if specified) are in the database.
+     *
+     * This is like an assertion that should be picked up by tests, although it should never
+     * happen in production (if our suite is any good).
+     *
+     * NOTE: ASYNC FUNCTION!
+     *
+     * @param {string | null} repoName
+     * @param {string | null} teamName
+     * @returns {Promise<boolean>}
+     */
+    public static async checkDatabase(repoName: string | null, teamName: string | null): Promise<boolean> {
+        Log.trace("GitHubActions::checkDatabase( repo:_" + repoName + "_, team:_" + teamName + "_) - start");
+        const dbc = DatabaseController.getInstance();
+        if (repoName !== null) {
+            const repo = await dbc.getRepository(repoName);
+            if (repo === null) {
+                const msg = "Repository: " + repoName +
+                    " does not exist in datastore; make sure you add it before calling this operation";
+                Log.error("GitHubActions::checkDatabase() - repo ERROR: " + msg);
+                throw new Error(msg);
+            } else {
+                // ensure custom property is there
+                if (typeof repo.custom === 'undefined' || repo.custom === null || typeof repo.custom !== 'object') {
+                    const msg = "Repository: " + repoName + " has a non-object .custom property";
+                    Log.error("GitHubActions::checkDatabase() - repo ERROR: " + msg);
+                    throw new Error(msg);
+                }
+            }
+        }
+
+        if (teamName !== null) {
+            const team = await dbc.getTeam(teamName);
+            if (team === null) {
+                const msg = "Team: " + teamName +
+                    " does not exist in datastore; make sure you add it before calling this operation";
+                Log.error("GitHubActions::checkDatabase() - team ERROR: " + msg);
+                throw new Error(msg);
+            } else {
+                // ensure custom property is there
+                if (typeof team.custom === 'undefined' || team.custom === null || typeof team.custom !== 'object') {
+                    const msg = "Team: " + teamName + " has a non-object .custom property";
+                    Log.error("GitHubActions::checkDatabase() - team ERROR: " + msg);
+                    throw new Error(msg);
+                }
+            }
+        }
+        Log.trace("GitHubActions::checkDatabase( repo:_" + repoName + "_, team:_" + teamName + "_) - exists");
+        return true;
+    }
+}
+
+/* istanbul ignore next */
+
+// tslint:disable-next-line
+export class TestGitHubActions implements IGitHubActions {
+
+    public constructor() {
+        Log.info("TestGitHubActions::<init> - start");
+    }
+
+    public async addMembersToTeam(teamName: string, githubTeamId: number, members: string[]): Promise<GitTeamTuple> {
+        Log.info("TestGitHubActions::addMembersToTeam(..)");
+        return {teamName: teamName, githubTeamNumber: githubTeamId};
+    }
+
+    public async addTeamToRepo(teamId: number, repoName: string, permission: string): Promise<GitTeamTuple> {
+        Log.info("TestGitHubActions::addTeamToRepo(..)");
+        return {teamName: 'team_' + repoName, githubTeamNumber: teamId};
+    }
+
+    public async addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
+        Log.info("TestGitHubActions::addWebhook(..)");
+        if (typeof this.webHookState[repoName] === 'undefined') {
+            this.webHookState[repoName] = [];
+        }
+        this.webHookState[repoName].push(webhookEndpoint);
+        return true;
+    }
+
+    private repos: any = {};
+
+    public async createRepo(repoId: string): Promise<string> {
+        Log.info("TestGitHubActions::createRepo( " + repoId + " ) - start");
+        await GitHubActions.checkDatabase(repoId, null);
+
+        if (typeof this.repos[repoId] === 'undefined') {
+            Log.info("TestGitHubActions::createRepo( " + repoId + " ) - created");
+            const c = Config.getInstance();
+            this.repos[repoId] = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/' + repoId;
+        }
+        Log.info("TestGitHubActions::createRepo( " + repoId + " ) - repos: " + JSON.stringify(this.repos));
+        return this.repos[repoId];
+    }
+
+    public async createTeam(teamName: string, permission: string): Promise<{teamName: string; githubTeamNumber: number; URL: string}> {
+        if (typeof this.teams[teamName] === 'undefined') {
+            const c = Config.getInstance();
+            const url = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/teams/' + teamName;
+            this.teams[teamName] = {teamName: teamName, githubTeamNumber: Date.now(), URL: 'teamURL'};
+        }
+        Log.info("TestGitHubActions::createTeam( " + teamName + " ) - created; exists: " +
+            (typeof this.teams[teamName] !== 'undefined') + "; records: " + JSON.stringify(this.teams));
+
+        return this.teams[teamName];
+    }
+
+    public async deleteRepo(repoName: string): Promise<boolean> {
+        Log.info("TestGitHubActions::deleteRepo( " + repoName + " )");
+        // if (repoName === Test.INVALIDREPONAME) {
+        //     return false;
+        // }
+        // const repoExists = await this.repoExists(repoName);
+        // if (repoExists === false){
+        //     Log.info("TestGitHubActions::deleteRepo( " + repoName + " ) - false; does not exist");
+        //     return false;
+        // }
+
+        if (typeof this.repos[repoName] !== 'undefined') {
+            Log.info("TestGitHubActions::deleteRepo( " + repoName + " ) - true; deleted");
+            delete this.repos[repoName];
+            return true;
+        }
+
+        Log.info("TestGitHubActions::deleteRepo( " + repoName + " ) - false; does not exist");
+        return false;
+    }
+
+    private teams: any = {
+        staff: {id: 'staff', teamName: 'staff', githubTeamNumber: '1000'},
+        admin: {id: 'admin', teamName: 'admin', githubTeamNumber: '1001'}
+    };
+
+    public async deleteTeam(teamId: number): Promise<boolean> {
+        Log.info("TestGitHubActions::deleteTeam( " + teamId + " )");
+        for (const teamName of Object.keys(this.teams)) {
+            const team = this.teams[teamName];
+            if (team.githubTeamNumber === teamId) {
+                Log.info("TestGitHubActions::deleteTeam( " + teamId + " ) - deleting team name: " + team.id);
+                delete this.teams[teamName];
+            }
+        }
+        // if (typeof this.teams[teamId] !== 'undefined') {
+        //     delete this.teams[teamId];
+        //     Log.info("TestGitHubActions::deleteTeam( " + teamId + " ); deleted: " + (typeof this.teams[teamId] === 'undefined'));
+        //     return true;
+        // }
+        Log.info("TestGitHubActions::deleteTeam( " + teamId + " ); not deleted");
+        return false;
+    }
+
+    public async getTeamMembers(teamNumber: number): Promise<string[]> {
+        Log.info("TestGitHubActions::getTeamMembers( " + teamNumber + " )");
+        if (teamNumber < 0) {
+            return [];
+        }
+        return [this.Test.USERNAMEGITHUB1, this.Test.USERNAMEGITHUB2, this.Test.ADMIN1.github];
+    }
+
+    public async getTeamNumber(teamName: string): Promise<number> {
+        if (typeof this.teams[teamName] !== 'undefined') {
+            const num = this.teams[teamName].githubTeamNumber;
+            Log.info("TestGitHubActions::getTeamNumber( " + teamName + " ) - returning: " + num);
+            return Number(num);
+        }
+        Log.info("TestGitHubActions::getTeamNumber( " + teamName + " ) - returning: -1; other records: " + JSON.stringify(this.teams));
+        return -1;
+    }
+
+    public async importRepoFS(importRepo: string, studentRepo: string, seedFilePath?: string): Promise<boolean> {
+        Log.info("TestGitHubActions::importRepoFS( " + importRepo + ", ... ) - start");
+
+        return true;
+    }
+
+    public async isOnAdminTeam(userName: string): Promise<boolean> {
+        if (userName === this.Test.ADMIN1.id) {
+            Log.info("TestGitHubActions::isOnAdminTeam( " + userName + " ) - true");
+            return true;
+        }
+        Log.info("TestGitHubActions::isOnAdminTeam( " + userName + " ) - false");
+        return false;
+    }
+
+    public async isOnStaffTeam(userName: string): Promise<boolean> {
+        if (userName === this.Test.STAFF1.id || userName === this.Test.ADMIN1.id) {
+            Log.info("TestGitHubActions::isOnStaffTeam( " + userName + " ) - true");
+            return true;
+        }
+        Log.info("TestGitHubActions::isOnStaffTeam( " + userName + " ) - false");
+        return false;
+    }
+
+    // HACK: can't reference GlobalSpec::Test here (docker limitation); need to move these to common?
+    private Test = {
+        USERNAMEGITHUB1: 'cpscbot',
+        USERNAMEGITHUB2: 'rthse2',
+        USERNAMEGITHUB3: 'ubcbot',
+        REALUSER1:       {id: 'rthse2', csId: 'rthse2', github: 'rthse2'}, // real account for testing users
+        REALUSER2:       {id: "jopika", csId: "jopika", github: "jopika"}, // real account for testing users
+        REALUSER3:       {id: "atest-01", csId: "atest-01", github: "atest-01"}, // real account for testing users
+        USER1:           {id: 'user1id', csId: 'user1id', github: 'user1gh'},
+        USER2:           {id: 'user2id', csId: 'user2id', github: 'user2gh'},
+        USER3:           {id: 'user3id', csId: 'user3id', github: 'user3gh'},
+        USER4:           {id: 'user4id', csId: 'user4id', github: 'user4gh'},
+        ADMIN1:          {id: 'classyadmin', csId: 'classyadmin', github: 'classyadmin'},
+        STAFF1:          {id: 'classystaff', csId: 'classystaff', github: 'classystaff'},
+        TEAMNAME1:       't_d0_user1id_user2id',
+        INVALIDREPONAME: 'InvalidRepoNameShouldNotExist'
+    };
+
+    public async isOnTeam(teamName: string, userName: string): Promise<boolean> {
+        Log.info("TestGitHubActions::isOnTeam( t: " + teamName + ", u: " + userName + " )");
+        return true;
+    }
+
+    public async listPeople(): Promise<Array<{id: number; type: string; url: string; name: string}>> {
+        Log.info("TestGitHubActions::listPeople(..)");
+        const people = [];
+
+        const start = Date.now();
+        people.push({id: start, type: 'student', url: 'URL', name: this.Test.USERNAMEGITHUB1});
+        people.push({id: start - 5, type: 'student', url: 'URL', name: this.Test.USERNAMEGITHUB2});
+        people.push({id: start - 15, type: 'student', url: 'URL', name: this.Test.USERNAMEGITHUB3});
+        people.push({id: start - 15, type: 'student', url: 'URL', name: this.Test.REALUSER1.github});
+        people.push({id: start - 15, type: 'student', url: 'URL', name: this.Test.REALUSER2.github});
+        people.push({id: start - 15, type: 'student', url: 'URL', name: this.Test.REALUSER3.github});
+        people.push({id: start - 25, type: 'student', url: 'URL', name: this.Test.USER1.github});
+        people.push({id: start - 35, type: 'student', url: 'URL', name: this.Test.USER2.github});
+        people.push({id: start - 45, type: 'student', url: 'URL', name: this.Test.USER3.github});
+        people.push({id: start - 55, type: 'student', url: 'URL', name: this.Test.USER4.github});
+
+        return people;
+    }
+
+    public async listRepos(): Promise<Array<{id: number; name: string; url: string}>> {
+        Log.info("TestGitHubActions::listRepos(..)");
+        const ret = [];
+        for (const name of Object.keys(this.repos)) {
+            const repo = this.repos[name];
+            ret.push({id: Date.now(), name: name, url: repo});
+        }
+        Log.info("TestGitHubActions::listRepos(..) - #: " + ret.length + "; content: " + JSON.stringify(ret));
+        return ret;
+    }
+
+    public async listTeams(): Promise<Array<{id: number; name: string}>> {
+        Log.info("TestGitHubActions::listTeams(..)");
+        return [{id: Date.now(), name: this.Test.TEAMNAME1}];
+    }
+
+    private webHookState: any = {};
+
+    public async listWebhooks(repoName: string): Promise<{}> {
+        Log.info("TestGitHubActions::listWebhooks()");
+        if (typeof this.webHookState[repoName] === 'undefined') {
+            return [];
+        }
+        return this.webHookState[repoName];
+    }
+
+    public async repoExists(repoName: string): Promise<boolean> {
+        Log.info("TestGitHubActions::repoExists( " + repoName + " )");
+        // if (repoName === Test.INVALIDREPONAME) {
+        //     return false;
+        // }
+        // return true;
+        if (typeof this.repos[repoName] !== 'undefined') {
+            Log.info("TestGitHubActions::repoExists( " + repoName + " ) - exists");
+            return true;
+        }
+        Log.info("TestGitHubActions::repoExists( " + repoName + " ) - does not exist");
+        return false;
+    }
+
+    public async setRepoPermission(repoName: string, permissionLevel: string): Promise<boolean> {
+        Log.info("TestGitHubActions::setRepoPermission( " + repoName + ", " + permissionLevel + " )");
+        if (repoName === this.Test.INVALIDREPONAME) {
+            return false;
+        }
+        if (permissionLevel === "admin") {
+            return false;
+        }
+        return true;
+    }
+
+    public async writeFileToRepo(repoURL: string, fileName: string, fileContent: string, force?: boolean): Promise<boolean> {
+        Log.info("TestGitHubActions::writeFileToRepo(..)");
+        if (repoURL === 'invalidurl.com') {
+            return false;
+        }
+        return true;
+    }
+
+    public addGithubAuthToken(url: string): string {
+        Log.info("TestGitHubActions::addGithubAuthToken(..)");
+        return url;
+    }
+
+    public setPageSize(size: number): void {
+        Log.info("TestGitHubActions::setPageSize(..)");
+        return;
     }
 
 }

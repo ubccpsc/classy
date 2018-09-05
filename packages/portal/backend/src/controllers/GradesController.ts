@@ -167,36 +167,36 @@ export class GradesController {
 
         // delivId: string; // invariant: deliv grade is associated with
         if (typeof record.delivId === 'undefined') {
-            const msg = 'delivId undefined';
+            const msg = 'delivId missing';
             Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
             return msg;
         }
         // score: number; // grade: < 0 will mean 'N/A' in the UI
         if (typeof record.score === 'undefined') {
-            const msg = 'score undefined';
+            const msg = 'score missing';
             Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
             return msg;
         }
         // comment: string; // simple grades will just have a comment
         if (typeof record.comment === 'undefined') {
-            const msg = 'comment undefined';
+            const msg = 'comment missing';
             Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
             return msg;
         }
         // urlName: string | null; // description to go with the URL (repo if exists)
         if (typeof record.urlName === 'undefined') {
-            const msg = 'urlName undefined';
+            const msg = 'urlName missing';
             Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
             return msg;
         }
         // URL: string | null; // commit URL if known, otherwise repo URL (commit / repo if exists)
         if (typeof record.URL === 'undefined') {
-            const msg = 'URL undefined';
+            const msg = 'URL missing';
             Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
             return msg;
         }
         // timestamp: number; // even if grade < 0 might as well return when the entry was made
-        if (typeof record.timestamp !== 'number') {
+        if (typeof record.timestamp === 'undefined') {
             const msg = 'timestamp missing';
             Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
             return msg;

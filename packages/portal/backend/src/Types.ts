@@ -1,4 +1,5 @@
 import {AutoTestConfig, IAutoTestResult} from "../../../common/types/AutoTestTypes";
+import {AssignmentGrade, AssignmentInfo, AssignmentRepositoryInfo} from "../../../common/types/CS340Types";
 
 /**
  * These types are the storage-specific types used by the backend.
@@ -10,12 +11,6 @@ import {AutoTestConfig, IAutoTestResult} from "../../../common/types/AutoTestTyp
  * This strict separation is to allow us to more easily evolve
  * portal-backend without impacting portal-frontend.
  *
- * On Deliverable:Repository mapping. This is explicitly not recorded.
- * If repositories need to be made for a deliverable, course staff should
- * do this. With AutoTest, students can invoke tests for deliverable
- * against any repository. Of course, if they invoke it against the wrong
- * one they won't do very well, but that is ok. Tracking this just is not
- * worth the complexity.
  */
 
 /**
@@ -61,7 +56,10 @@ export interface Person {
 
     labId: string | null; // null for non-students
 
-    custom: any; // used for anything. in sdmm will track 'custom.sdmmStatus'
+    custom: {
+        sdmmStatus?: string, // SDMM // TODO: make into sdmm.status
+        myProp?: any // PersonControllerSpec
+    };
 }
 
 export interface Auth {
@@ -74,46 +72,93 @@ export interface Deliverable {
     readonly id: string; // primary key; invariant. this is the shortname of the deliverable (e.g., d1)
     URL: string; // links to the public deliverable description
 
-    // if teams and repos will be built for a deliverable, what will they be called:
-    repoPrefix: string | null; // prefix for repo names (e.g., project_ or d1_)
-    teamPrefix: string | null; // prefix for team names (e.g., pTeam_ or d1Team_)
-
     openTimestamp: number;
     closeTimestamp: number;
     gradesReleased: boolean; // whether students can see their grades
 
+    visibleToStudents: boolean; // whether students even see the column
+
+    rubric: any; // captures rubric-specific definitions
+    // custom: any; // {}; not used by the default implementation, but useful for extension (e.g., schemas)
+    custom: {
+        rubric?: any, // CS340REST
+        assignment?: AssignmentInfo // AssignmentController
+        // courseWeight?: any, // AssignmentController // TODO: make into assignment.courseWeight
+        // seedRepoURL?: any, // RubricController // TODO: make into rubric.seedRepoURL
+        // seedRepoPath?: any, // RubricController // TODO: make into rubric.seedRepoPath
+        // mainFilePath?: any // AssignmentController // TODO: make into assignment.mainFilePath
+    };
+
+    shouldAutoTest: boolean; // whether the deliv will use AutoTest
+    autotest: AutoTestConfig;
+
+    // these options are only set if shouldProvision is true
+    shouldProvision: boolean; // whether the deliv is for provisioning at all; if not, the fields below are not needed
+    repoPrefix: string | null; // prefix for repo names (e.g., project_ or d1_)
+    teamPrefix: string | null; // prefix for team names (e.g., pTeam_ or d1Team_)
+    importURL: string | null; // URL that should be cloned for the repos to be provisioned
     teamMinSize: number;
     teamMaxSize: number;
     teamSameLab: boolean;
     teamStudentsForm: boolean;
-
-    visibleToStudents: boolean; // whether students even see the column
-
-    autotest: AutoTestConfig;
-
-    rubric: any; // captures rubric-specific definitions
-    custom: any; // {}; not used by the default implementation, but useful for extension (e.g., schemas)
 }
 
 export interface Team {
-    readonly id: string; // invariant; is the name of the team
-    readonly delivId: string; // invariant; this is the deliverable the team is for
+    readonly id: string; // invariant; the name of the team. must be unique locally and on GitHub
+    /**
+     * The deliverable the team was provisioned for. Does _NOT_ influence what AutoTest can be
+     * run against, but specifies the constraints placed upon the team (e.g., from the Deliverable).
+     */
+    readonly delivId: string; // invariant
 
     URL: string | null; // null when not yet created
     personIds: string[]; // Person.id[] - foreign key
 
-    custom: any;
+    // githubStatus: string; // NONE | CREATED | LINKED
+    custom: {
+        githubAttached?: boolean,
+
+        sdmmd0?: boolean,
+        sdmmd1?: boolean,
+        sdmmd2?: boolean,
+        sdmmd3?: boolean,
+    };
 }
 
 // NOTE: Intentionally not linked to Deliverable (see docs at top of file)
 export interface Repository {
-    readonly id: string; // invariant; is the name of the repo
+    /**
+     * The name of the repo; must be unique locally and on GitHub.
+     */
+    readonly id: string; // invariant
+    /**
+     * The deliverable the repository was provisioned for. This does not modify AutoTest
+     * but is used to track provisioning.
+     */
+    readonly delivId: string; // invariant
 
     URL: string | null; // URL for project in version control system; null if not yet created
     cloneURL: string | null; // git clone URL for project; null if not yet created
     teamIds: string[]; // Team.id[] - foreign key
 
-    custom: any; // {}; not used by default
+    // githubStatus: string; // NONE | CREATED
+
+    custom: { // rather than having custom be .any, this allows courses to make sure they don't clash on their .custom parameters
+        githubCreated?: boolean,
+        githubProvisioned?: boolean,
+
+        // status?: any, // AssignmentController // TODO: make into assignment.status
+        // assignmentId?: any, // AssignmentController // TODO: make into assignment.id
+        // assignedTeams?: any, // AssignmentController // TODO: make into assignment.assignedTeams
+
+        assignmentInfo?: AssignmentRepositoryInfo,
+
+        d0enabled?: boolean, // SDDM // TODO: make sddm.d0enabled
+        d1enabled?: boolean, // SDDM // TODO: make sddm.d1enabled
+        d2enabled?: boolean, // SDDM // TODO: make sddm.d2enabled
+        d3enabled?: boolean  // SDDM // TODO: make sddm.d3enabled
+        sddmD3pr?: boolean, // SDDM // TODO: make sddm.d3pr
+    };
 }
 
 /**
@@ -123,7 +168,9 @@ export interface Repository {
 export interface Course {
     readonly id: string; // invariant; this is the name of the course
     defaultDeliverableId: string | null; // Deliverable.id foreign key
-    custom: object;
+    custom: {
+        status?: string
+    };
 }
 
 export interface Grade {
@@ -138,31 +185,18 @@ export interface Grade {
     urlName: string | null; // name associated with URL (e.g., project name)
     URL: string | null; // link to commit, if appropriate or repoUrl if not
 
-    custom: any; // {}; not used by the default implementation, but useful for extension (e.g., custom grade values)
+    // custom: any; // {}; not used by the default implementation, but useful for extension (e.g., custom grade values)
+    custom: { // rather than having custom be .any, this allows courses to make sure they don't clash on their .custom parameters
+        sdmmStatus?: boolean
+
+        // questions?: any, // AssignmentController // TODO: make into assignment.questions
+        // assignmentID?: any, // AssignmentController // TODO: make into assignment.id
+        // studentID?: any, // AssignmentController // TODO: make into assignment.personId
+        // released?: any, // AssignmentController // TODO: make into assignment.released
+        assignmentGrade?: AssignmentGrade
+    };
 }
 
 export interface Result extends IAutoTestResult { // TODO: define this without this extends. This import is no good!
     people: string[];
 }
-
-/**
- *
- *
- * Types below are not in DB but are projections for sending to the frontend.
- *
- *
- */
-/*
-export interface PersonRecord {
-    person: Person;
-    delivId: string;
-    // org: string;
-    results: ResultSummary[];
-}
-
-export interface ResultSummary {
-    timestamp: number;
-    grade: number;
-    URL: string;
-}
-*/

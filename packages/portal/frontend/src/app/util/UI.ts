@@ -61,7 +61,7 @@ export class UI {
         ons.notification.confirm({message: note, callback});
     }
 
-    public static notificationToast(note: string, time: number=2000) {
+    public static notificationToast(note: string, time: number = 2000) {
         ons.notification.toast({message: note, timeout: time});
     }
 

@@ -187,7 +187,7 @@ export class DatabaseValidator {
                     isValid = false;
 
                     if (Config.getInstance().getProp(ConfigKey.name) === ConfigCourses.sdmm) {
-                        if (typeof team.custom !== null) {
+                        if (team.custom !== null) {
                             if (team.custom.sdmmd0) {
                                 (team as any).delivId = 'd0';
                             }
@@ -500,7 +500,7 @@ export class DatabaseValidator {
 
                         const localOverride = true;
                         if (this.DRY_RUN === false || localOverride) {
-                            // await this.dc.writeRepository(repo);
+                            // await this.dbc.writeRepository(repo);
                             await this.dc.writeResult(newResult);
                         } else {
                             Log.info("\t DatabaseValidator::validateResults() - SDMM result needs updating: " +
@@ -556,7 +556,7 @@ export class DatabaseValidator {
                 Log.info("DatabaseValidator::validateResults() - repo needs updating: " + result);
                 const localOverride = false;
                 if (this.DRY_RUN === false || localOverride) {
-                    // await this.dc.writeRepository(repo);
+                    // await this.dbc.writeRepository(repo);
                     await this.dc.writeResult(result);
                 } else {
                     Log.info("\t DatabaseValidator::validateResults() - result needs updating: " +

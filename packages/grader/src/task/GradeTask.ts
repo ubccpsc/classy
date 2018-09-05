@@ -1,7 +1,7 @@
-import {IDockerContainer} from "../docker/DockerContainer";
-import {Repository} from "../git/Repository";
 import Log from "../../../common/Log";
 import {IContainerInput, IContainerOutput} from "../../../common/types/AutoTestTypes";
+import {IDockerContainer} from "../docker/DockerContainer";
+import {Repository} from "../git/Repository";
 import {Workspace} from "../storage/Workspace";
 
 export class GradeTask {
@@ -21,8 +21,8 @@ export class GradeTask {
     public async execute(): Promise<IContainerOutput> {
         Log.info("GradeTask::execute() - start");
         const out: IContainerOutput = {
-            timestamp: Date.now(),
-            report: {
+            timestamp:          Date.now(),
+            report:             {
                 scoreOverall: 0,
                 scoreCover:   null,
                 scoreTest:    null,
@@ -34,9 +34,9 @@ export class GradeTask {
                 custom:       {}
             },
             postbackOnComplete: false,
-            custom: {},
-            attachments: [],
-            state: "FAIL"
+            custom:             {},
+            attachments:        [],
+            state:              "FAIL"
         };
 
         try {
@@ -44,9 +44,11 @@ export class GradeTask {
 
             Log.trace("GradeTask::execute() - Clone repo " +
                 this.input.pushInfo.cloneURL.match(/\/(.+)\.git/)[0] + " and checkout " +
-                this.input.pushInfo.commitSHA.substring(0,6) + "."
+                this.input.pushInfo.commitSHA.substring(0, 6) + "."
             );
-            const sha = await this.prepareRepo(this.input.pushInfo.cloneURL, `${this.workspace.rootDir}/assn`, this.input.pushInfo.commitSHA);
+            const sha = await this.prepareRepo(this.input.pushInfo.cloneURL,
+                `${this.workspace.rootDir}/assn`,
+                this.input.pushInfo.commitSHA);
 
             if (this.input.pushInfo.commitSHA !== sha) {
                 Log.warn("GradeTask::execute() - Failed to checkout commit. Requested: " +
@@ -82,7 +84,8 @@ export class GradeTask {
                         out.postbackOnComplete = exitCode !== 0;
                         out.state = "SUCCESS";
                     } catch (err) {
-                        Log.error(`GradeWorker::execute() - ERROR Reading grade report file produced be grading container ${this.container.shortId}. ${err}`);
+                        Log.error('GradeWorker::execute() - ERROR Reading grade report file produced be grading container' +
+                            `${this.container.shortId}. ${err}`);
                         out.report.feedback = "Failed to read grade report.";
                         out.state = "INVALID_REPORT";
                     }
@@ -98,7 +101,7 @@ export class GradeTask {
                 }
             }
         } catch (err) {
-            Log.warn(`GradeTask::execute() - ERROR Processing ${this.input.pushInfo.commitSHA.substring(0,6)}. ${err}`);
+            Log.warn(`GradeTask::execute() - ERROR Processing ${this.input.pushInfo.commitSHA.substring(0, 6)}. ${err}`);
         } finally {
             try {
                 Log.trace("GradeTask::execute() - Remove cloned repo.");
@@ -131,7 +134,7 @@ export class GradeTask {
                     Log.trace("GradeTask::runContainer(..) - Container " + container.shortId +
                         " was stopped after exceeding maxExecTime.");
                     this.containerState = "TIMEOUT";
-                    const [exitCode, ] = await container.stop();
+                    const [exitCode] = await container.stop();
                     return exitCode;
                 }
             }, this.input.containerConfig.maxExecTime * 1000);

@@ -1,4 +1,4 @@
-import { CommandResult, IDockerContainerOptions } from "../Types";
+import {CommandResult, IDockerContainerOptions} from "../Types";
 import {Command} from "../util/Command";
 
 /**
@@ -7,6 +7,7 @@ import {Command} from "../util/Command";
 export interface IDockerContainer {
     id: string;
     shortId: string;
+
     /**
      * Creates a container from the image with the specified options.
      *
@@ -88,7 +89,9 @@ export interface IDockerContainer {
 }
 
 export class DockerContainer extends Command implements IDockerContainer {
+    // tslint:disable-next-line
     private readonly _image: string;
+    // tslint:disable-next-line
     private _id: string;
 
     /**
@@ -107,7 +110,7 @@ export class DockerContainer extends Command implements IDockerContainer {
 
     public get shortId(): string {
         if (this._id) {
-            return this._id.substring(0,6);
+            return this._id.substring(0, 6);
         }
     }
 

@@ -4,6 +4,7 @@ import {CS340Controller} from "./controllers/340/CS340Controller";
 
 import {CourseController} from "./controllers/CourseController";
 import {CS310Controller} from "./controllers/cs310/CS310Controller";
+import {GitHubActions} from "./controllers/GitHubActions";
 import {GitHubController, IGitHubController} from "./controllers/GitHubController";
 import {SDMMController} from "./controllers/SDMM/SDMMController";
 import CS340REST from "./server/340/CS340REST";
@@ -39,6 +40,9 @@ export class Factory {
         return new NoCustomRoutes(); // default handler
     }
 
+    // only visible for testing
+    public static controller: CourseController = null;
+
     /**
      *
      * @param {IGitHubController} ghController
@@ -50,23 +54,30 @@ export class Factory {
             name = Factory.getName();
         }
 
+        // Disabled; do not return the cached controller for now
+        // if (Factory.controller !== null) {
+        //     Log.trace("Factory::getCourseController() - returning cached course controller");
+        //     return Factory.controller;
+        // }
+
         if (typeof ghController === 'undefined') {
-            ghController = new GitHubController();
+            ghController = new GitHubController(GitHubActions.getInstance());
         } else {
             // really only for testing
             Log.trace("Factory::getCourseController() - using provided controller");
         }
 
         if (name === 'sdmm' || name === 'secapstonetest') {
-            return new SDMMController(ghController);
+            Factory.controller = new SDMMController(ghController);
         } else if (name === 'cs310' || name === 'classytest') {
-            return new CS310Controller(ghController);
+            Factory.controller = new CS310Controller(ghController);
         } else if (name === 'cs340' || name === 'cpsc340') {
-            return new CS340Controller(ghController);
+            Factory.controller = new CS340Controller(ghController);
         } else {
             Log.error("Factory::getCourseController() - unknown name: " + name);
             throw new Error("Unknown course name: " + name);
         }
+        return Factory.controller;
     }
 
     /**

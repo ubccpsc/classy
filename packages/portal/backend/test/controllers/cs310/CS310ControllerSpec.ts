@@ -1,12 +1,14 @@
 import {expect} from "chai";
 import "mocha";
 
+import Log from "../../../../../common/Log";
 import {CS310Controller} from "../../../src/controllers/cs310/CS310Controller";
 import {DatabaseController} from "../../../src/controllers/DatabaseController";
+import {DeliverablesController} from "../../../src/controllers/DeliverablesController";
 import {TestGitHubController} from "../../../src/controllers/GitHubController";
+import {Test} from "../../GlobalSpec";
 
 import "../../GlobalSpec";
-import {Test} from "../../GlobalSpec";
 
 describe("CS310: CS310Controller", () => {
 
@@ -40,24 +42,27 @@ describe("CS310: CS310Controller", () => {
     });
 
     it("Should be able to compute a team and repo name.", async () => {
-        const db = DatabaseController.getInstance();
-
-        const deliv = await db.getDeliverable(Test.DELIVID0);
-        const p1 = await db.getPerson(Test.USER1.id);
-        const p2 = await db.getPerson(Test.USER2.id);
+        const dbc = DatabaseController.getInstance();
+        const dc = new DeliverablesController();
+        const deliv = await dc.getDeliverable(Test.DELIVID0);
+        const p1 = await dbc.getPerson(Test.USER1.id);
+        const p2 = await dbc.getPerson(Test.USER2.id);
 
         let res = await cc.computeNames(deliv, [p1, p2]);
+        const tExpected = deliv.teamPrefix + '_' + deliv.id + '_' + Test.USER1.github + '_' + Test.USER2.github;
+        const rExpected = deliv.id + '_' + Test.USER1.github + '_' + Test.USER2.github;
 
-        expect(res.teamName).to.equal('t_d0_user1id_user2id');
-        expect(res.repoName).to.equal('d0_user1id_user2id');
+        expect(res.teamName).to.equal(tExpected);
+        expect(res.repoName).to.equal(rExpected);
 
         // make those teams
         const t = await Test.createTeam(res.teamName, deliv.id, []);
-        db.writeTeam(t);
-        const r = await Test.createRepository(res.repoName, res.teamName);
-        db.writeRepository(r);
+        await dbc.writeTeam(t);
 
-        // make sure this fails
+        const r = await Test.createRepository(res.repoName, deliv.id, res.teamName);
+        await dbc.writeRepository(r);
+
+        // try again once the teams / repos exist
         let ex = null;
         res = null;
         try {
@@ -65,8 +70,11 @@ describe("CS310: CS310Controller", () => {
         } catch (err) {
             ex = err;
         }
-        expect(res).to.be.null;
-        expect(ex).to.not.be.null;
+        Log.test("res: " + res + "; ex: " + ex);
+        expect(ex).to.be.null;
+        expect(res).to.not.be.null;
+        expect(res.teamName).to.equal(tExpected);
+        expect(res.repoName).to.equal(rExpected);
     });
 
     it("Should fail to compute a team and repo name if people aren't sepecified.", async () => {

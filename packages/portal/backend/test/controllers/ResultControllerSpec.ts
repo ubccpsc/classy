@@ -17,8 +17,8 @@ describe("ResultController", () => {
         await Test.suiteBefore('ResultController');
 
         // clear stale data (removed; happens in suitebefore)
-        // const dc = DatabaseController.getInstance();
-        // sawait dc.clearData();
+        // const dbc = DatabaseController.getInstance();
+        // sawait dbc.clearData();
 
         // get data ready
         await Test.prepareDeliverables();

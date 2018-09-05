@@ -1,4 +1,4 @@
-import {OnsFabElement} from "onsenui";
+import {OnsFabElement, OnsSwitchElement} from "onsenui";
 import Log from "../../../../../common/Log";
 import {AutoTestConfig} from "../../../../../common/types/AutoTestTypes";
 
@@ -120,6 +120,30 @@ export class AdminDeliverablesTab {
         }
     }
 
+    private updateHiddenBlocks() {
+        const shouldProvision = document.querySelector('#adminEditDeliverablePage-shouldProvision') as OnsSwitchElement;
+        const provisionValue = shouldProvision.checked; // (shouldProvision.checkbox as any).checked;
+        Log.info('AdminView::renderEditDeliverablePage(..)::updateHiddenBocks::shouldProvision; value: ' + provisionValue);
+
+        const provisionList = document.querySelector('#shouldProvisionList') as HTMLElement;
+        if (provisionValue === true) {
+            provisionList.style.display = 'inherit';
+        } else {
+            provisionList.style.display = 'none';
+        }
+
+        const shouldAutoTest = document.querySelector('#adminEditDeliverablePage-shouldAutoTest') as OnsSwitchElement;
+        const autoTestValue = shouldAutoTest.checked; // (shouldAutoTest.checkbox as any).checked;
+        Log.info('AdminView::renderEditDeliverablePage(..)::updateHiddenBlocks::shouldAutoTest; value: ' + autoTestValue);
+
+        const autoTestList = document.querySelector('#shouldAutoTestList') as HTMLElement;
+        if (autoTestValue === true) {
+            autoTestList.style.display = 'inherit';
+        } else {
+            autoTestList.style.display = 'none';
+        }
+    }
+
     public renderEditDeliverablePage(deliv: DeliverableTransport) {
         Log.info('AdminView::renderEditDeliverablePage( ' + JSON.stringify(deliv) + ' ) - start');
         const that = this;
@@ -132,9 +156,41 @@ export class AdminDeliverablesTab {
         } else {
             fab.onclick = function(evt) {
                 Log.info('AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::onClick');
-                that.save();
+                that.save().then(function() {
+                    // worked
+                }).catch(function(err) {
+                    Log.info('AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::onClick - ERROR: ' + err.message);
+                });
             };
         }
+
+        const shouldProvision = document.querySelector('#adminEditDeliverablePage-shouldProvision') as OnsSwitchElement;
+        shouldProvision.onchange = function(evt) {
+            const value = (evt as any).value;
+            Log.info('AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::shouldProvision; change: ' + value);
+            //
+            // const list = document.querySelector('#shouldProvisionList') as HTMLElement;
+            // if (value === true) {
+            //     list.style.display = 'inherit';
+            // } else {
+            //     list.style.display = 'none';
+            // }
+            that.updateHiddenBlocks();
+        };
+
+        const shouldAutoTest = document.querySelector('#adminEditDeliverablePage-shouldAutoTest') as OnsSwitchElement;
+        shouldAutoTest.onchange = function(evt) {
+            const value = (evt as any).value;
+            Log.info('AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::shouldAutoTest; change: ' + value);
+            //
+            // const list = document.querySelector('#shouldAutoTestList') as HTMLElement;
+            // if (value === true) {
+            //     list.style.display = 'inherit';
+            // } else {
+            //     list.style.display = 'none';
+            // }
+            that.updateHiddenBlocks();
+        };
 
         const flatpickrOptions = {
             enableTime:  true,
@@ -160,10 +216,13 @@ export class AdminDeliverablesTab {
             this.setToggle('adminEditDeliverablePage-gradesReleased', false, this.isAdmin);
             this.setToggle('adminEditDeliverablePage-visible', false, this.isAdmin);
 
+            this.setToggle('adminEditDeliverablePage-shouldAutoTest', true, this.isAdmin);
             this.setTextField('adminEditDeliverablePage-atContainerTimeout', '300', this.isAdmin);
             this.setTextField('adminEditDeliverablePage-atStudentDelay', (12 * 60 * 60) + '', this.isAdmin);
             this.setTextField('adminEditDeliverablePage-atCustom', '{}', this.isAdmin);
 
+            this.setToggle('adminEditDeliverablePage-shouldProvision', true, this.isAdmin);
+            this.setTextField('adminEditDeliverablePage-importURL', '', this.isAdmin);
             this.setTextField('adminEditDeliverablePage-repoPrefix', '', this.isAdmin);
             this.setTextField('adminEditDeliverablePage-teamPrefix', '', this.isAdmin);
 
@@ -182,6 +241,8 @@ export class AdminDeliverablesTab {
             flatpickrOptions.defaultDate = new Date(deliv.closeTimestamp);
             this.closePicker = flatpickr("#adminEditDeliverablePage-close", flatpickrOptions);
 
+            this.setToggle('adminEditDeliverablePage-shouldProvision', deliv.shouldProvision, this.isAdmin);
+            this.setTextField('adminEditDeliverablePage-importURL', deliv.importURL, this.isAdmin);
             UI.setDropdownSelected('adminEditDeliverablePage-minTeamSize', deliv.minTeamSize, this.isAdmin);
             UI.setDropdownSelected('adminEditDeliverablePage-maxTeamSize', deliv.maxTeamSize, this.isAdmin);
             this.setToggle('adminEditDeliverablePage-inSameLab', deliv.teamsSameLab, this.isAdmin);
@@ -190,6 +251,7 @@ export class AdminDeliverablesTab {
             this.setToggle('adminEditDeliverablePage-gradesReleased', deliv.gradesReleased, this.isAdmin);
             this.setToggle('adminEditDeliverablePage-visible', deliv.visibleToStudents, this.isAdmin);
 
+            this.setToggle('adminEditDeliverablePage-shouldAutoTest', deliv.shouldAutoTest, this.isAdmin);
             this.setTextField('adminEditDeliverablePage-atDockerName', deliv.autoTest.dockerImage, this.isAdmin);
             this.setTextField('adminEditDeliverablePage-atContainerTimeout', deliv.autoTest.maxExecTime + '', this.isAdmin);
             this.setTextField('adminEditDeliverablePage-atStudentDelay', deliv.autoTest.studentDelay + '', this.isAdmin);
@@ -199,6 +261,8 @@ export class AdminDeliverablesTab {
             this.setTextField('adminEditDeliverablePage-rubric', JSON.stringify(deliv.rubric), this.isAdmin);
             this.setTextField('adminEditDeliverablePage-custom', JSON.stringify(deliv.custom), this.isAdmin);
         }
+
+        that.updateHiddenBlocks();
     }
 
     private setTextField(fieldName: string, textValue: string, editable: boolean) {
@@ -234,6 +298,8 @@ export class AdminDeliverablesTab {
         const openTimestamp = this.openPicker.latestSelectedDateObj.getTime();
         const closeTimestamp = this.closePicker.latestSelectedDateObj.getTime();
 
+        const shouldProvision = UI.getToggleValue('adminEditDeliverablePage-shouldProvision');
+        const importURL = UI.getTextFieldValue('adminEditDeliverablePage-importURL');
         const minTeamSize = Number(UI.getDropdownValue('adminEditDeliverablePage-minTeamSize'));
         const maxTeamSize = Number(UI.getDropdownValue('adminEditDeliverablePage-maxTeamSize'));
         const teamsSameLab = UI.getToggleValue('adminEditDeliverablePage-inSameLab');
@@ -242,6 +308,7 @@ export class AdminDeliverablesTab {
         const gradesReleased = UI.getToggleValue('adminEditDeliverablePage-gradesReleased');
         const visibleToStudents = UI.getToggleValue('adminEditDeliverablePage-visible');
 
+        const shouldAutoTest = UI.getToggleValue('adminEditDeliverablePage-shouldAutoTest');
         const dockerImage = UI.getTextFieldValue('adminEditDeliverablePage-atDockerName');
         const maxExecTime = Number(UI.getTextFieldValue('adminEditDeliverablePage-atContainerTimeout'));
         const studentDelay = Number(UI.getTextFieldValue('adminEditDeliverablePage-atStudentDelay'));
@@ -317,11 +384,14 @@ export class AdminDeliverablesTab {
             closeTimestamp,
             onOpenAction:  '', // TODO: add this
             onCloseAction: '', // TODO: add this
+            shouldAutoTest,
+            importURL,
             minTeamSize,
             maxTeamSize,
             studentsFormTeams,
             teamsSameLab,
             gradesReleased,
+            shouldProvision,
             autoTest:      at,
             repoPrefix,
             teamPrefix,

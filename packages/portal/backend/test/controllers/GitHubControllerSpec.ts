@@ -4,7 +4,8 @@ import "mocha";
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
-import {GitHubActions} from "../../src/controllers/GitHubActions";
+import {DeliverablesController} from "../../src/controllers/DeliverablesController";
+import {GitHubActions, IGitHubActions} from "../../src/controllers/GitHubActions";
 import {GitHubController} from "../../src/controllers/GitHubController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
@@ -24,6 +25,8 @@ describe("GitHubController", () => {
 
     const OLDORG = Config.getInstance().getProp(ConfigKey.org);
 
+    let gha: IGitHubActions;
+
     before(async () => {
         Log.test("GitHubControllerSpec::before() - start; forcing testorg");
         // force testorg so real org does not get deleted or modified
@@ -31,9 +34,11 @@ describe("GitHubController", () => {
 
         await Test.suiteBefore('GitHubController');
 
+        gha = GitHubActions.getInstance(true);
+
         // clear stale data (removed; happens in suitebefore)
-        const dc = DatabaseController.getInstance();
-        // await dc.clearData();
+        const dbc = DatabaseController.getInstance();
+        // await dbc.clearData();
 
         // get data ready
         await Test.prepareDeliverables();
@@ -47,15 +52,18 @@ describe("GitHubController", () => {
 
         // const tc = new TeamController();
         const t1 = await Test.createTeam(Test.TEAMNAME1, Test.DELIVID0, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
-        await dc.writeTeam(t1);
+        await dbc.writeTeam(t1);
         const t2 = await Test.createTeam(Test.TEAMNAME2, Test.DELIVID1, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
-        await dc.writeTeam(t2);
+        await dbc.writeTeam(t2);
         // const t3 = await Test.createTeam(Test.TEAMNAME3, Test.DELIVID2, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
-        // await dc.writeTeam(t3);
+        // await dbc.writeTeam(t3);
+
+        const dc = new DeliverablesController();
+        const deliv = await dc.getDeliverable(Test.DELIVIDPROJ);
 
         const rc = new RepositoryController();
-        await rc.createRepository(Test.REPONAME1, [t1], {});
-        await rc.createRepository(Test.REPONAME2, [t2], {});
+        await rc.createRepository(Test.REPONAME1, deliv, [t1], {});
+        await rc.createRepository(Test.REPONAME2, deliv, [t2], {});
         // await rc.createRepository(Test.REPONAME3, [t3], {});
     });
 
@@ -71,7 +79,7 @@ describe("GitHubController", () => {
         const exec = Test.runSlowTest();
         if (exec === true) {
             Log.test("GitHubController::beforeEach() - running in CI; not skipping");
-            gc = new GitHubController();
+            gc = new GitHubController(GitHubActions.getInstance(true));
         } else {
             Log.test("GitHubController::beforeEach() - skipping (not CI)");
             this.skip();
@@ -82,7 +90,6 @@ describe("GitHubController", () => {
         // not really a test, we just want something to run first we can set timeout on
         Log.test("Clearing prior state");
         try {
-            const gha = new GitHubActions();
             await gha.deleteRepo(Test.REPONAME1);
             await gha.deleteRepo(Test.REPONAME2);
             await gha.deleteRepo(Test.REPONAME3);
@@ -131,9 +138,9 @@ describe("GitHubController", () => {
         const teams = await new TeamController().getAllTeams();
         expect(teams.length).to.be.greaterThan(0);
 
-        const webhook = 'https://devnull.cs.ubc.ca/classyWebhook';
+        // const webhook = 'https://devnull.cs.ubc.ca/classyWebhook';
         const importUrl = 'https://github.com/SECapstone/bootstrap';
-        const provisioned = await gc.provisionRepository(repos[0].id, teams, importUrl, webhook);
+        const provisioned = await gc.provisionRepository(repos[0].id, teams, importUrl, true);
         expect(provisioned).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
 
@@ -144,12 +151,12 @@ describe("GitHubController", () => {
         const teams = await new TeamController().getAllTeams();
         expect(teams.length).to.be.greaterThan(0);
 
-        const webhook = 'https://devnull.cs.ubc.ca/classyWebhook';
+        // const webhook = 'https://devnull.cs.ubc.ca/classyWebhook';
         const importUrl = 'https://github.com/SECapstone/bootstrap';
         let res = null;
         let ex = null;
         try {
-            res = await gc.provisionRepository(repos[0].id, teams, importUrl, webhook);
+            res = await gc.provisionRepository(repos[0].id, teams, importUrl, true);
         } catch (err) {
             ex = err;
         }
@@ -160,7 +167,7 @@ describe("GitHubController", () => {
         ex = null;
         try {
             // no repository object for this repoName
-            res = await gc.provisionRepository('invalidRepo' + Date.now(), teams, importUrl, webhook);
+            res = await gc.provisionRepository('invalidRepo' + Date.now(), teams, importUrl, true);
         } catch (err) {
             ex = err;
         }
@@ -191,6 +198,7 @@ describe("GitHubController", () => {
         let ex = null;
         try {
             // repo already exists
+            Log.test('checking repo that already exists');
             res = await gc.createRepository(repo.id, importURL);
         } catch (err) {
             ex = err;
@@ -202,6 +210,7 @@ describe("GitHubController", () => {
         ex = null;
         try {
             // should fail because Repository object does not exist for this repoName
+            Log.test('checking repo that is not in datastore');
             res = await gc.createRepository('unknownId' + Date.now(), importURL);
         } catch (err) {
             ex = err;
@@ -215,11 +224,12 @@ describe("GitHubController", () => {
         // setup
         await Test.prepareTeams();
         await Test.prepareRepositories();
+        // await Test.deleteStaleRepositories();
         const rc: RepositoryController = new RepositoryController();
         const repo = await rc.getRepository(Test.REPONAME2); // get repo object
 
-        const gha = new GitHubActions();
         await gha.deleteRepo(repo.id); // delete repo from github
+        await gha.deleteRepo(Test.REPONAME2); // delete repo from github
 
         const importURL = 'https://github.com/SECapstone/capstone';
         const success = await gc.createRepository(repo.id, importURL, "AutoTest.md");
@@ -232,13 +242,13 @@ describe("GitHubController", () => {
         const allRepos: Repository[] = await rc.getAllRepos();
         const repoCount: number = allRepos.length;
 
-        let repo = await rc.getRepository(Test.REPONAME1);
+        const repo = await rc.getRepository(Test.REPONAME1);
 
         expect(repoCount).to.be.greaterThan(1);
 
         const tc: TeamController = new TeamController();
         const allTeams: Team[] = await tc.getAllTeams();
-        let team = await tc.getTeam(Test.TEAMNAME1);
+        const team = await tc.getTeam(Test.TEAMNAME1);
         const teamCount: number = allTeams.length;
         Log.info("GithubControllerSpec::ReleasingRepo - repoCount: " + repoCount + " teamcCount: " + teamCount);
         expect(teamCount).to.be.greaterThan(1);
@@ -271,11 +281,18 @@ describe("GitHubController", () => {
         expect(res).to.be.null;
         expect(ex).to.not.be.null;
 
-        const team: any = {id: Test.TEAMNAME3, personIds: [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]};
-        // try to release a repo with a team that doesn't exist
-        res = await gc.releaseRepository(allRepos[1], [team], false);
-        expect(res).to.be.true;
-
+        res = null;
+        ex = null;
+        try {
+            const team: any = {id: Test.TEAMNAME3, personIds: [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]};
+            // try to release a repo with a team that doesn't exist
+            res = await gc.releaseRepository(allRepos[1], [team], false);
+            expect(res).to.be.false;
+        } catch (err) {
+            ex = err;
+        }
+        expect(res).to.be.null;
+        expect(ex).to.not.be.null;
     }).timeout(Test.TIMEOUT);
 
     it("Should fail to create a pull request.", async function() {

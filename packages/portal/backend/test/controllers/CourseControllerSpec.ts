@@ -1,25 +1,25 @@
 import {expect} from "chai";
 import "mocha";
+
 import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {AutoTestGradeTransport, GradeTransport, StudentTransport, TeamTransport} from "../../../../common/types/PortalTypes";
 
 import {CourseController} from "../../src/controllers/CourseController";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
+import {DeliverablesController} from "../../src/controllers/DeliverablesController";
+import {GitHubActions, IGitHubActions} from "../../src/controllers/GitHubActions";
 import {GitHubController} from "../../src/controllers/GitHubController";
-// import {TestGitHubController} from "../../src/controllers/GitHubController";
 import {GradesController} from "../../src/controllers/GradesController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
+import {Factory} from "../../src/Factory";
+import {Person, Repository, Team} from "../../src/Types";
 import {Test} from "../GlobalSpec";
 
 import '../GlobalSpec'; // load first
-// import '../xRunLast/TestDatasetGeneratorSpec'; // load first
 import './GradeControllerSpec'; // load first
-
-export class TestData {
-}
 
 describe("CourseController", () => {
 
@@ -28,28 +28,74 @@ describe("CourseController", () => {
     let tc: TeamController;
     let rc: RepositoryController;
     let pc: PersonController;
-
-    let data: TestData;
+    let dc: DeliverablesController;
+    let gha: IGitHubActions;
 
     before(async () => {
         await Test.suiteBefore('CourseController');
-        await Test.prepareAll();
+        await clearAndPrepareAll();
     });
 
     beforeEach(() => {
-        data = new TestData();
+        gha = GitHubActions.getInstance(true);
+        const ghInstance = new GitHubController(gha);
+        cc = Factory.getCourseController(ghInstance);
 
-        const ghInstance = new GitHubController();
-        cc = new CourseController(ghInstance);
         rc = new RepositoryController();
         gc = new GradesController();
         tc = new TeamController();
         pc = new PersonController();
+        dc = new DeliverablesController();
     });
 
     after(async () => {
         Test.suiteAfter('CourseController');
     });
+
+    async function clearAndPrepareAll(): Promise<void> {
+        // clear objects
+        const dbc = DatabaseController.getInstance();
+        await dbc.clearData();
+
+        // TODO: clear github teams and repositories we need
+
+        await Test.prepareAll();
+    }
+
+    async function clearAndPreparePartial(): Promise<void> {
+        // clear objects
+        const dbc = DatabaseController.getInstance();
+        await dbc.clearData();
+
+        // clear github teams and repositories we will end up provisioning
+        await gha.deleteRepo(Test.REPONAMEREAL);
+        await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
+        await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB3);
+        await gha.deleteRepo(Test.REPONAME1);
+        await gha.deleteRepo(Test.REPONAME2);
+
+        let teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
+        await gha.deleteTeam(teamNum);
+        teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB3);
+        await gha.deleteTeam(teamNum);
+        teamNum = await gha.getTeamNumber(Test.TEAMNAMEREAL);
+        await gha.deleteTeam(teamNum);
+
+        await Test.prepareDeliverables();
+
+        const p1: Person = Test.createPerson(Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, 'student');
+        await dbc.writePerson(p1);
+        const p2 = Test.createPerson(Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, 'student');
+        await dbc.writePerson(p2);
+        const p3 = Test.createPerson(Test.USERNAMEGITHUB3, Test.USERNAMEGITHUB3, Test.USERNAMEGITHUB3, 'student');
+        await dbc.writePerson(p3);
+
+        const d0 = await dbc.getDeliverable(Test.DELIVID0);
+        const names = await cc.computeNames(d0, [p1, p2]);
+
+        const t = await Test.createTeam(names.teamName, Test.DELIVID0, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+        await dbc.writeTeam(t);
+    }
 
     it("Should be able to get the config name.", async () => {
         const res = await CourseController.getName();
@@ -91,7 +137,7 @@ describe("CourseController", () => {
 
         Log.test('teams: ' + JSON.stringify(res));
         const t: TeamTransport = {
-            id:      "TESTteam1",
+            id:      Test.TEAMNAME1,
             delivId: "d0",
             people:  [Test.USER1.id, Test.USER2.id],
             URL:     null
@@ -271,25 +317,173 @@ describe("CourseController", () => {
     it("Should be able to compute a team and repo name.", async () => {
         const db = DatabaseController.getInstance();
 
+        const tExpected = 't_d0_' + Test.USER1.github + '_' + Test.USER2.github;
+        const rExpected = 'd0_' + Test.USER1.github + '_' + Test.USER2.github;
+
+        // prepare
+        const dbc = DatabaseController.getInstance();
+        await dbc.deleteRepository({id: rExpected} as Repository);
+        await dbc.deleteTeam({id: tExpected} as Team);
+
         const deliv = await db.getDeliverable(Test.DELIVID0);
         const p1 = await db.getPerson(Test.USER1.id);
         const p2 = await db.getPerson(Test.USER2.id);
 
         let res = await cc.computeNames(deliv, [p1, p2]);
 
-        expect(res.teamName).to.equal('t_d0_0');
-        expect(res.repoName).to.equal('d0_0');
+        expect(res.teamName).to.equal(tExpected);
+        expect(res.repoName).to.equal(rExpected);
 
         // make those teams
         const t = await Test.createTeam(res.teamName, deliv.id, []);
-        db.writeTeam(t);
-        const r = await Test.createRepository(res.repoName, res.teamName);
-        db.writeRepository(r);
+        await db.writeTeam(t);
+        const r = await Test.createRepository(res.repoName, deliv.id, res.teamName);
+        await db.writeRepository(r);
 
         // make sure the bar has been raised
         res = await cc.computeNames(deliv, [p1, p2]);
-        expect(res.teamName).to.equal('t_d0_1');
-        expect(res.repoName).to.equal('d0_1');
+        expect(res.teamName).to.equal(tExpected);
+        expect(res.repoName).to.equal(rExpected);
     });
 
+    describe("Slow CourseController Tests", () => {
+
+        // before(async function() {
+        //     await clearAndPreparePartial();
+        // });
+
+        beforeEach(function() {
+            const exec = Test.runSlowTest();
+            if (exec) {
+                Log.test("CourseControllerSpec::slowTests - running: " + this.currentTest.title);
+            } else {
+                Log.test("CourseControllerSpec::slowTests - skipping; will run on CI");
+                this.skip();
+            }
+        });
+
+        it("Should provision repos if there are some to do and singles are disabled.", async () => {
+            await clearAndPreparePartial();
+
+            const allRepos = await rc.getAllRepos();
+            expect(allRepos.length).to.equal(0);
+
+            const allTeams = await tc.getAllTeams();
+            expect(allTeams.length).to.equal(1);
+            expect(allTeams[0].URL).to.be.null; // not provisioned yet
+
+            const d0 = await dc.getDeliverable(Test.DELIVID0);
+            const res = await cc.provision(d0, false);
+            Log.test("provisioned: " + JSON.stringify(res));
+            expect(res).to.be.an('array');
+            expect(res.length).to.equal(1);
+
+            const allNewRepos = await rc.getAllRepos();
+            const allNewTeams = await tc.getAllTeams();
+
+            expect(allNewRepos.length).to.equal(1);
+            expect(allNewTeams.length).to.equal(1);
+
+            const teamNum = await gha.getTeamNumber(allNewTeams[0].id);
+            expect(teamNum).to.be.greaterThan(0); // should be provisioned
+
+            const repoExists = await gha.repoExists(allNewRepos[0].id);
+            expect(repoExists).to.be.true; // should be provisioned
+
+            expect(allNewTeams[0].URL).to.not.be.null; // team was used, but repo was only provisioned, not released
+            expect(allNewRepos[0].URL).to.not.be.null;
+        }).timeout(Test.TIMEOUTLONG);
+
+        it("Should release repos.", async () => {
+            // await clearAndPreparePartial();
+            const allRepos = await rc.getAllRepos();
+            expect(allRepos.length).to.equal(1);
+            expect(allRepos[0].URL).to.not.be.null; // provisioned
+
+            const allTeams = await tc.getAllTeams();
+            expect(allTeams.length).to.equal(1);
+            expect(allTeams[0].URL).to.not.be.null; // provisioned
+
+            const d0 = await dc.getDeliverable(Test.DELIVID0);
+            let res = await cc.release(d0);
+
+            Log.test("released: " + JSON.stringify(res));
+            expect(res).to.be.an('array');
+            expect(res.length).to.equal(1);
+
+            const allNewTeams = await tc.getAllTeams();
+            expect(allNewTeams.length).to.equal(1);
+            expect(allNewTeams[0].custom.githubAttached).to.be.true;
+
+            // try again: should not release any more repos
+            res = await cc.release(d0);
+            Log.test("released: " + JSON.stringify(res));
+            expect(res).to.be.an('array');
+            expect(res.length).to.equal(0);
+        }).timeout(Test.TIMEOUTLONG);
+
+        it("Should provision repos if singles are enabled.", async () => {
+            await clearAndPreparePartial();
+
+            const allRepos = await rc.getAllRepos();
+            const allTeams = await tc.getAllTeams();
+
+            expect(allRepos.length).to.equal(0);
+            expect(allTeams.length).to.equal(1);
+            let teamNum = await gha.getTeamNumber(allTeams[0].id);
+            expect(teamNum).to.be.lessThan(0); // should not be provisioned yet
+
+            const d0 = await dc.getDeliverable(Test.DELIVID0);
+            const res = await cc.provision(d0, true);
+            Log.test("provisioned: " + JSON.stringify(res));
+            expect(res).to.be.an('array');
+            expect(res.length).to.equal(2);
+
+            const allNewRepos = await rc.getAllRepos();
+            const allNewTeams = await tc.getAllTeams();
+
+            expect(allNewRepos.length).to.equal(2);
+            expect(allNewTeams.length).to.equal(2);
+
+            teamNum = await gha.getTeamNumber(allNewTeams[0].id);
+            expect(teamNum).to.be.greaterThan(0); // should be provisioned
+
+            teamNum = await gha.getTeamNumber(allNewTeams[1].id);
+            expect(teamNum).to.be.greaterThan(0); // should be provisioned
+
+            let repoExists = await gha.repoExists(allNewRepos[0].id);
+            expect(repoExists).to.be.true; // should be provisioned
+
+            repoExists = await gha.repoExists(allNewRepos[1].id);
+            expect(repoExists).to.be.true; // should be provisioned
+
+            expect(allNewRepos[0].URL).to.not.be.null;
+            expect(allNewRepos[1].URL).to.not.be.null;
+
+            expect(allNewTeams[0].URL).to.not.be.null;
+            expect(allNewTeams[1].URL).to.not.be.null;
+        }).timeout(Test.TIMEOUTLONG * 5);
+
+        it("Should not provision any new repos if nothing has changed.", async () => {
+            // await clearAndPreparePartial();
+
+            const allRepos = await rc.getAllRepos();
+            const allTeams = await tc.getAllTeams();
+
+            expect(allRepos.length).to.equal(2);
+            expect(allTeams.length).to.equal(2);
+
+            const d0 = await dc.getDeliverable(Test.DELIVID0);
+            const res = await cc.provision(d0, true);
+            Log.test("provisioned: " + JSON.stringify(res));
+            expect(res).to.be.an('array');
+            expect(res.length).to.equal(0);
+
+            const allNewRepos = await rc.getAllRepos();
+            const allNewTeams = await tc.getAllTeams();
+
+            expect(allNewRepos.length).to.equal(2);
+            expect(allNewTeams.length).to.equal(2);
+        }).timeout(Test.TIMEOUTLONG * 5);
+    });
 });

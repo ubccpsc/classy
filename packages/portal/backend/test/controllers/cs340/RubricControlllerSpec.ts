@@ -1,39 +1,39 @@
 import {expect} from "chai";
 import "mocha";
 import Config, {ConfigKey} from "../../../../../common/Config";
-import {AssignmentController} from "../../../src/controllers/340/AssignmentController";
-import {GitHubController} from "../../../src/controllers/GitHubController";
-import {DatabaseController} from "../../../src/controllers/DatabaseController";
-import {PersonController} from "../../../src/controllers/PersonController";
-import {TeamController} from "../../../src/controllers/TeamController";
-import {GradesController} from "../../../src/controllers/GradesController";
-import {DeliverablesController} from "../../../src/controllers/DeliverablesController";
-import {RepositoryController} from "../../../src/controllers/RepositoryController";
-import {GitHubActions} from "../../../src/controllers/GitHubActions";
-import {RubricController} from "../../../src/controllers/340/RubricController";
-import {Test} from "../../GlobalSpec";
 import Log from "../../../../../common/Log";
-import {AssignmentInfo, AssignmentRepositoryInfo} from "../../../../../common/types/CS340Types";
+import {AssignmentInfo} from "../../../../../common/types/CS340Types";
+import {AssignmentController} from "../../../src/controllers/340/AssignmentController";
+import {RubricController} from "../../../src/controllers/340/RubricController";
+import {DatabaseController} from "../../../src/controllers/DatabaseController";
+import {DeliverablesController} from "../../../src/controllers/DeliverablesController";
+import {GitHubActions, IGitHubActions} from "../../../src/controllers/GitHubActions";
+import {GitHubController} from "../../../src/controllers/GitHubController";
+import {GradesController} from "../../../src/controllers/GradesController";
+import {PersonController} from "../../../src/controllers/PersonController";
+import {RepositoryController} from "../../../src/controllers/RepositoryController";
+import {TeamController} from "../../../src/controllers/TeamController";
 import {Deliverable} from "../../../src/Types";
+import {Test} from "../../GlobalSpec";
+
 const TIMEOUT = 7500;
 
-let DELAY_SEC = 1000;
-let DELAY_SHORT = 200;
+const DELAY_SEC = 1000;
+const DELAY_SHORT = 200;
 
 const ORIGINAL_ORG = Config.getInstance().getProp(ConfigKey.org);
 
-
 describe("CS340: RubricController", () => {
-    let ac: AssignmentController = new AssignmentController();
-    let gc: GradesController = new GradesController();
-    let tc: TeamController = new TeamController();
-    let rc: RepositoryController = new RepositoryController();
-    let dc: DeliverablesController = new DeliverablesController();
-    let pc: PersonController = new PersonController();
-    let gh: GitHubController = new GitHubController();
-    let gha: GitHubActions;
+    const ac: AssignmentController = new AssignmentController();
+    const gc: GradesController = new GradesController();
+    const tc: TeamController = new TeamController();
+    const rc: RepositoryController = new RepositoryController();
+    const dc: DeliverablesController = new DeliverablesController();
+    const pc: PersonController = new PersonController();
+    const gh: GitHubController = new GitHubController(GitHubActions.getInstance());
+    let gha: IGitHubActions;
     let db: DatabaseController = DatabaseController.getInstance();
-    let rbc: RubricController = new RubricController();
+    const rbc: RubricController = new RubricController();
 
     before(async () => {
         // change org to testing org for safety
@@ -48,7 +48,7 @@ describe("CS340: RubricController", () => {
         // get data ready
         await Test.prepareAll();
 
-        gha = new GitHubActions();
+        gha = GitHubActions.getInstance();
 
         // create assignment Deliverables
         await Test.prepareAssignment();
@@ -65,43 +65,42 @@ describe("CS340: RubricController", () => {
     });
 
     beforeEach(async () => {
-
+        // empty
     });
 
     afterEach(async () => {
-
+        // empty
     });
 
     it("Should not update the rubric when not specifying the main file.", async () => {
-        let success = await rbc.updateRubric(Test.ASSIGNID0);
+        const success = await rbc.updateRubric(Test.ASSIGNID0);
         expect(success).to.be.true;
     });
 
     it("Should be able to generate a rubric for an assignment when specifying the main file.", async () => {
-        let success = await rbc.updateRubric(Test.ASSIGNID1);
+        const success = await rbc.updateRubric(Test.ASSIGNID1);
 
         expect(success).to.be.true;
 
-        let deliverableRecord: Deliverable = await db.getDeliverable(Test.ASSIGNID1);
+        const deliverableRecord: Deliverable = await db.getDeliverable(Test.ASSIGNID1);
 
         expect(deliverableRecord).to.not.be.null;
 
-        let assignmentInfo: AssignmentInfo = deliverableRecord.custom;
+        const assignmentInfo: AssignmentInfo = deliverableRecord.custom.assignment;
 
         expect(assignmentInfo).to.not.be.null;
         expect(typeof assignmentInfo.rubric).to.not.be.equal("undefined");
         expect(assignmentInfo.rubric.questions.length).to.be.greaterThan(0);
-    });
+    }).timeout(Test.TIMEOUT);
 
     it("Should not update if specified a non-assignment.", async () => {
-        let success = await rbc.updateRubric(Test.DELIVID0);
+        const success = await rbc.updateRubric(Test.DELIVID0);
         expect(success).to.be.false;
     });
 
     it("Should not update if specified a non-deliverable.", async () => {
-        let success = await rbc.updateRubric("INVALID_DELIVERABLE");
+        const success = await rbc.updateRubric("INVALID_DELIVERABLE");
         expect(success).to.be.false;
     });
-
 
 });

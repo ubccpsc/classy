@@ -1,7 +1,9 @@
 import Log from "../../../../common/Log";
-import {Person, Repository, Team} from "../Types";
+import {RepositoryTransport} from "../../../../common/types/PortalTypes";
+import {Deliverable, Person, Repository, Team} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
+import {DeliverablesController} from "./DeliverablesController";
 import {TeamController} from "./TeamController";
 
 export class RepositoryController {
@@ -66,7 +68,9 @@ export class RepositoryController {
                 const team = await tc.getTeam(tid);
                 teams.push(team);
             }
-            await this.createRepository(repo.id, teams, repo.custom);
+            const dc = new DeliverablesController();
+            const deliv = await dc.getDeliverable(repo.delivId);
+            await this.createRepository(repo.id, deliv, teams, repo.custom);
         } else {
             // overwrie existing repo
             const customExisting = Object.assign({}, existingRepo.custom); // overwrite with new fields
@@ -77,7 +81,7 @@ export class RepositoryController {
         return await this.db.getRepository(repo.id);
     }
 
-    public async createRepository(name: string, teams: Team[], custom: any): Promise<Repository | null> {
+    public async createRepository(name: string, deliv: Deliverable, teams: Team[], custom: any): Promise<Repository | null> {
         Log.info("RepositoryController::createRepository( " + name + ", .. ) - start");
 
         const existingRepo = await this.getRepository(name);
@@ -90,6 +94,7 @@ export class RepositoryController {
 
             const repo: Repository = {
                 id:       name,
+                delivId:  deliv.id,
                 URL:      null,
                 cloneURL: null,
                 teamIds:  teamIds,
@@ -134,5 +139,18 @@ export class RepositoryController {
             }
         }
         return peopleIds;
+    }
+
+    public static repositoryToTransport(repository: Repository): RepositoryTransport {
+        if (typeof repository === 'undefined' || repository === null) {
+            throw new Error("RepositoryController::repositoryToTransport( ... ) - ERROR: repository not provided.");
+        }
+
+        const repo: RepositoryTransport = {
+            id:  repository.id,
+            URL: repository.URL
+        };
+
+        return repo;
     }
 }

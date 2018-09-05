@@ -142,6 +142,7 @@
 //             } finally {
 //                 expect(result).to.not.be.instanceof(Error);
 //                 expect(result.code).to.be.greaterThan(0);
+// tslint:disable-next-line
 //                 expect(result.output).to.contain(`Error response from daemon: repository fake-image-123 not found: does not exist or no pull access`);
 //             }
 //         });
@@ -251,6 +252,7 @@
 //             } catch (err) {
 //                 result = err;
 //             } finally {
+// tslint:disable-next-line
 //                 expect(result.output).to.equal("line 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\nline 8\nline 9\nline 10\n".repeat(2).trim());
 //             }
 //         });
@@ -378,6 +380,7 @@
 //                 result = err;
 //             } finally {
 //                 expect(result.code).to.be.greaterThan(0);
+// tslint:disable-next-line
 //                 expect(result.output).to.equal("Error response from daemon: No such container: undefined\nError: failed to start containers: undefined");
 //             }
 //         });

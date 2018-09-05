@@ -226,12 +226,45 @@
                         </ons-button>
                     </div>
                     <div class="expandable-content">
-                        Controls meanual repository creation, releasing, and closing of assignments.
+                        Controls manual repository creation, releasing, and closing of assignments.
                     </div>
                 </ons-list-item>
 
+                <div hidden>
+                <ons-list-header>Provision Repositories</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Provision Repositories for Deliverable
+                        <select id="adminProvisionDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                        <ons-button id="adminProvisionButton" modifier="medium">Provision</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Creates the repositories for any provisionable Deliverable using all of the settings specified in the deliverable
+                        page. This is an incremental function; you can release a deliverable several times as teams are formed, or after the
+                        class composition changes. This is a slow action (up to 30 seconds / repository) so do not leave this until the last
+                        second. Cannot be undone, so use this with care.
+                    </div>
+                </ons-list-item>
 
-
+                <ons-list-header>Release Repositories</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Release Repositories for Deliverable
+                        <select id="adminReleaseDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                        <ons-button id="adminReleaseButton" modifier="medium">Release</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Releases any provisoined repositories. This is an incremental function; you can release a deliverable several times
+                        as teams are formed, or after the class composition changes. Cannot be undone, so use this with care.
+                    </div>
+                </ons-list-item>
+                </div>
 
             </ons-list>
         </ons-page>
@@ -260,7 +293,7 @@
             </ons-modal>
 
             <form id="admin-editable-deliverable-form">
-                <ons-list id="admin-editable-deliverable-list" style="padding-bottom: 4.5em;">
+                <ons-list id="admin-editable-deliverable-list">
                     <input type="hidden" id="adminEditDeliverablePage-id"/> <!-- what is this for? -->
 
                     <ons-list-header>Deliverable Options</ons-list-header>
@@ -276,8 +309,7 @@
                             <ons-input class="settingTextInput" id="adminEditDeliverablePage-name"></ons-input>
                         </div>
                         <div class="expandable-content">
-                            Deliverable Id. Cannot be changed. Deliverable Ids must consist of a string of lowercase
-                            letters, [a-z],
+                            Deliverable Id. Cannot be changed. Deliverable Ids must consist of a string of lowercase letters, [a-z],
                             followed by any number.
                         </div>
                     </ons-list-item>
@@ -308,7 +340,8 @@
                             <ons-switch id="adminEditDeliverablePage-visible" modifier="list-item" onclick=""></ons-switch>
                         </div>
                         <div class="expandable-content">
-                            Whether the deliverable is visible to students. For instance, if a deliverable is really just a grading column they do not need to see.
+                            Whether the deliverable is visible to students. For instance, if a deliverable is really just a grading column
+                            they do not need to see.
                         </div>
                     </ons-list-item>
 
@@ -339,13 +372,13 @@
                             <ons-input class="settingTextInput" id="adminEditDeliverablePage-custom"></ons-input>
                         </div>
                         <div class="expandable-content">
-                            This is a JSON object that will be stored along with the deliverable and can be used by
-                            custom course
+                            This is a JSON object that will be stored along with the deliverable and can be used by custom course
                             controllers. It must be valid JSON (or {} if you do not want to pass any custom params).
                         </div>
                     </ons-list-item>
 
-                    <!--TODO: Finish and move this around-->
+
+                    <!--TODO: Beginning of Custom Section-->
                     <ons-list-item>
                         <div class="left settingIcon">
                             <ons-icon icon="fa-cogs"></ons-icon>
@@ -359,8 +392,7 @@
                     </ons-list-item>
                     <!--TODO: End of section-->
 
-
-                    <!--TODO: Finish and move this around-->
+                    <!--TODO: Beginning of Custom Section-->
                     <div style="display: none;" id="adminEditDeliverablePage-assignmentConfig">
                         <ons-list-header>Assignment Configuration</ons-list-header>
                         <ons-list-item expandable>
@@ -436,44 +468,13 @@
                     </div>
                     <!--TODO: End of section-->
 
-                    <ons-list-header>Name prefixes</ons-list-header>
-                    <ons-list-item expandable>
-                        <div class="left settingIcon">
-                            <ons-icon icon="fa-cloud"></ons-icon>
-                        </div>
-                        <div class="center settingLabel">
-                            Repo Prefix
-                        </div>
-                        <div class="right settingRight">
-                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-repoPrefix"></ons-input>
-                        </div>
-                        <div class="expandable-content">
-                            If any repositories are generated as a part of this deliverable, this prefix will be used when naming. Should not be empty; otherwise will revert to '&lt;delivId&gt;'.
-                        </div>
-                    </ons-list-item>
-                    <ons-list-item expandable>
-                        <div class="left settingIcon">
-                            <ons-icon icon="fa-cloud"></ons-icon>
-                        </div>
-                        <div class="center settingLabel">
-                            Team Prefix
-                        </div>
-                        <div class="right settingRight">
-                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-teamPrefix"></ons-input>
-                        </div>
-                        <div class="expandable-content">
-                            If any teams are generated as a part of this deliverable, this prefix will be used when naming. Should not be empty; otherwise will revert to 't_&lt;delivId&gt;'.
-                        </div>
-                    </ons-list-item>
-
                     <ons-list-header>Deliverable Dates</ons-list-header>
                     <ons-list-item style="display: flex;">
                         <div class="left settingIcon">
                             <ons-icon icon="ion-calendar"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            <span
-                                title="The date that AutoTest will begin marking Github Repositories for a Deliverable.">Open</span>
+                            <span title="The date that AutoTest will begin marking Github Repositories for a Deliverable.">Open</span>
                         </div>
                         <div class="right settingRight">
                             <input id="adminEditDeliverablePage-open" class="flatpickr right settingRight"
@@ -489,8 +490,7 @@
                             <ons-icon icon="ion-calendar"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            <span
-                                title="The date that AutoTest will stop marking Github Repositories for a Deliverable.">Close</span>
+                            <span title="The date that AutoTest will stop marking Github Repositories for a Deliverable.">Close</span>
                         </div>
                         <div class="right settingRight">
                             <input id="adminEditDeliverablePage-close" class="flatpickr right settingRight"
@@ -501,7 +501,121 @@
                         </div>
                     </ons-list-item>
 
-                    <ons-list-header>Default Team Options</ons-list-header>
+                    <ons-list-item style="display: flex;">
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-graduation-cap"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="Displays Grades for Deliverable underneath Student Area.">Grades Released</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-switch id="adminEditDeliverablePage-gradesReleased" modifier="list-item" onclick=""></ons-switch>
+                        </div>
+                    </ons-list-item>
+
+                    <!--TODO: Beginning of custom section-->
+                    <div id="adminEditDeliverablePage-assignmentStatus" style="display: none">
+                        <ons-list-item style="display: flex;">
+                            <div class="center settingLabel"><span>Repositories Created:</span></div>
+                            <div class="right settingRight">
+                                <ons-switch disabled id="adminEditDeliverablePage-createdSwitch" modifier="list-item"
+                                            onclick=""></ons-switch>
+                            </div>
+                        </ons-list-item>
+
+                        <ons-list-item style="display: flex;">
+                            <div class="center settingLabel"><span>Repository Read Access:</span></div>
+                            <div class="right settingRight">
+                                <ons-switch disabled id="adminEditDeliverablePage-readSwitch" modifier="list-item"
+                                            onclick=""></ons-switch>
+                            </div>
+                        </ons-list-item>
+
+                        <ons-list-item style="display: flex;">
+                            <div class="center settingLabel"><span>Repository Push Access:</span></div>
+                            <div class="right settingRight">
+                                <ons-switch disabled id="adminEditDeliverablePage-pushSwitch" modifier="list-item"
+                                            onclick=""></ons-switch>
+                            </div>
+                        </ons-list-item>
+
+                        <!--<ons-list-item style="display: flex;">-->
+                        <!--<div class="center settingLabel"><span>Grades Released:</span></div>-->
+                        <!--<div class="right settingRight">-->
+                        <!--<ons-switch id="adminEditDeliverablePage-gradesReleasedSwitch" modifier="list-item"-->
+                        <!--onclick="window.myApp.view.releaseGrades(evt)"></ons-switch>-->
+                        <!--</div>-->
+                        <!--</ons-list-item>-->
+                    </div>
+                    <!--TODO: End of section-->
+
+                    <ons-list-header>Provisioning Options</ons-list-header>
+                    <ons-list-item style="display: flex;" expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-location-arrow"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span>Deliverable will provision repos</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-switch id="adminEditDeliverablePage-shouldProvision" modifier="list-item" onclick=""></ons-switch>
+                        </div>
+                        <div class="expandable-content">
+                            If new repositories will be provisioned for this deliverable, say yes. Otherwise no.
+                        </div>
+                    </ons-list-item>
+                </ons-list>
+                <ons-list id="shouldProvisionList">
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-cloud"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            Import URL
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-importURL"></ons-input>
+                        </div>
+                        <div class="expandable-content">
+                            If any repos are provisioned for this deliverable, where should they be imported from (e.g., the boostrap clone
+                            URL).
+                        </div>
+                    </ons-list-item>
+
+                    <!--<ons-list-header>Name prefixes</ons-list-header>-->
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-cloud"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            Repo Prefix
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-repoPrefix"></ons-input>
+                        </div>
+                        <div class="expandable-content">
+                            If any repositories are generated as a part of this deliverable, this prefix will be used when naming. Should
+                            not be empty; otherwise will revert to '&lt;delivId&gt;'.
+                        </div>
+                    </ons-list-item>
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-cloud"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            Team Prefix
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-teamPrefix"></ons-input>
+                        </div>
+                        <div class="expandable-content">
+                            If any teams are generated as a part of this deliverable, this prefix will be used when naming. Should not be
+                            empty; otherwise will revert to 't_&lt;delivId&gt;'.
+                        </div>
+                    </ons-list-item>
+
+
+                    <!--<ons-list-header>Default Team Options</ons-list-header>-->
                     <ons-list-item style="display: flex;">
                         <div class="left settingIcon">
                             <ons-icon icon="fa-user"></ons-icon>
@@ -547,12 +661,10 @@
                             <ons-icon icon="fa-location-arrow"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            <span
-                                title="Enable if the Students for Team Generation and Student-made Teams must be in the same lab based on the Lab List.">Must Be In Same Lab</span>
+                            <span title="Enable if the Students for Team Generation and Student-made Teams must be in the same lab based on the Lab List.">Must Be In Same Lab</span>
                         </div>
                         <div class="right settingRight">
-                            <ons-switch id="adminEditDeliverablePage-inSameLab" modifier="list-item"
-                                        onclick=""></ons-switch>
+                            <ons-switch id="adminEditDeliverablePage-inSameLab" modifier="list-item" onclick=""></ons-switch>
                         </div>
                     </ons-list-item>
                     <ons-list-item style="display: flex;">
@@ -560,153 +672,115 @@
                             <ons-icon icon="fa-plus-square"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            <span
-                                title="Enable if Students are allowed to create their own team.">Students Make Teams</span>
+                            <span title="Enable if Students are allowed to creat their own team.">Students Make Teams</span>
                         </div>
                         <div class="right settingRight">
-                            <ons-switch id="adminEditDeliverablePage-studentsMakeTeams" modifier="list-item"
-                                        onclick=""></ons-switch>
+                            <ons-switch id="adminEditDeliverablePage-studentsMakeTeams" modifier="list-item" onclick=""></ons-switch>
                         </div>
                     </ons-list-item>
+                </ons-list>
+                <ons-list>
 
-                    <ons-list-header>Grade Options</ons-list-header>
-                    <ons-list-item style="display: flex;">
-                        <div class="left settingIcon">
-                            <ons-icon icon="fa-graduation-cap"></ons-icon>
-                        </div>
-                        <div class="center settingLabel">
-                            <span
-                                title="Displays Grades for Deliverable underneath Student Area.">Grades Released</span>
-                        </div>
-                        <div class="right settingRight">
-                            <ons-switch id="adminEditDeliverablePage-gradesReleased" modifier="list-item"
-                                        onclick=""></ons-switch>
-                        </div>
-                    </ons-list-item>
+                    <ons-list>
+                        <ons-list-header>AutoTest Options</ons-list-header>
+                        <ons-list-item style="display: flex;" expandable>
+                            <div class="left settingIcon">
+                                <ons-icon icon="fa-location-arrow"></ons-icon>
+                            </div>
+                            <div class="center settingLabel">
+                                <span>Deliverable will use AutoTest</span>
+                            </div>
+                            <div class="right settingRight">
+                                <ons-switch id="adminEditDeliverablePage-shouldAutoTest" modifier="list-item" onclick=""></ons-switch>
+                            </div>
+                            <div class="expandable-content">
+                                If AutoTest will be used for this deliverable, say yes. Otherwise no.
+                            </div>
+                        </ons-list-item>
+                    </ons-list>
+                    <ons-list id="shouldAutoTestList" style="padding-bottom: 4.5em;">
+                        <ons-list-item expandable>
+                            <div class="left settingIcon">
+                                <ons-icon icon="fa-cloud"></ons-icon>
+                            </div>
+                            <div class="center settingLabel">
+                                Docker Image Name
+                            </div>
+                            <div class="right settingRight">
+                                <ons-input class="settingTextInput" id="adminEditDeliverablePage-atDockerName"></ons-input>
+                            </div>
+                            <div class="expandable-content">
+                                AutoTest Docker Image name that knows how to execute this deliverable.
+                                It must also know how to execute any regression deliverables, if any are specified.
+                            </div>
+                        </ons-list-item>
 
-                    <ons-list-header id="adminEditDeliverablePage-assignmentStatusHeader" style="display: none">
-                        Assignment Status
-                    </ons-list-header>
+                        <ons-list-item expandable>
+                            <div class="left settingIcon">
+                                <ons-icon icon="md-timer"></ons-icon>
+                            </div>
+                            <div class="center settingLabel">
+                                Container timeout
+                            </div>
+                            <div class="right settingRight">
+                                <ons-input class="settingTextInput" maxLength="6" style="width: 5em;"
+                                           id="adminEditDeliverablePage-atContainerTimeout"></ons-input>
+                            </div>
+                            <div class="expandable-content">
+                                This defines how long the AutoTest container will try to run the student code before it times out. E.g., 300
+                                (5
+                                minutes).
+                            </div>
+                        </ons-list-item>
 
-                    <div id="adminEditDeliverablePage-assignmentStatus" style="display: none">
-                    <ons-list-item style="display: flex;">
-                        <div class="center settingLabel"><span>Repositories Created:</span></div>
-                        <div class="right settingRight">
-                            <ons-switch disabled id="adminEditDeliverablePage-createdSwitch" modifier="list-item"
-                                        onclick=""></ons-switch>
-                        </div>
-                    </ons-list-item>
+                        <ons-list-item expandable>
+                            <div class="left settingIcon">
+                                <ons-icon icon="fa-clock-o"></ons-icon>
+                            </div>
+                            <div class="center settingLabel">
+                                Student Delay
+                            </div>
+                            <div class="right settingRight">
+                                <ons-input class="settingTextInput" id="adminEditDeliverablePage-atStudentDelay" maxLength="6"
+                                           style="width: 5em;"></ons-input>
+                            </div>
+                            <div class="expandable-content">
+                                Delay (in seconds) that students must wait between requesting AutoTest feedback.
+                                E.g., 0 for no feedback limit (not recommended!), 43200 (12 hours), 86400 (24 hours).
+                            </div>
+                        </ons-list-item>
 
-                    <ons-list-item style="display: flex;">
-                        <div class="center settingLabel"><span>Repository Read Access:</span></div>
-                        <div class="right settingRight">
-                            <ons-switch disabled id="adminEditDeliverablePage-readSwitch" modifier="list-item"
-                                        onclick=""></ons-switch>
-                        </div>
-                    </ons-list-item>
+                        <ons-list-item expandable>
+                            <div class="left settingIcon">
+                                <ons-icon icon="fa-retweet"></ons-icon>
+                            </div>
+                            <div class="center settingLabel">
+                                Regression Deliverables
+                            </div>
+                            <div class="right settingRight">
+                                <ons-input class="settingTextInput" id="adminEditDeliverablePage-atRegressionIds"></ons-input>
+                            </div>
+                            <div class="expandable-content">
+                                Comma separated list of deliverableIds that should be run when this container is invoked.
+                            </div>
+                        </ons-list-item>
 
-                    <ons-list-item style="display: flex;">
-                        <div class="center settingLabel"><span>Repository Push Access:</span></div>
-                        <div class="right settingRight">
-                            <ons-switch disabled id="adminEditDeliverablePage-pushSwitch" modifier="list-item"
-                                        onclick=""></ons-switch>
-                        </div>
-                    </ons-list-item>
-
-                    <!--<ons-list-item style="display: flex;">-->
-                        <!--<div class="center settingLabel"><span>Grades Released:</span></div>-->
-                        <!--<div class="right settingRight">-->
-                            <!--<ons-switch id="adminEditDeliverablePage-gradesReleasedSwitch" modifier="list-item"-->
-                                        <!--onclick="window.myApp.view.releaseGrades(evt)"></ons-switch>-->
-                        <!--</div>-->
-                    <!--</ons-list-item>-->
-                    </div>
-
-
-                    <ons-list-header>AutoTest Options</ons-list-header>
-                    <ons-list-item expandable>
-                        <div class="left settingIcon">
-                            <ons-icon icon="fa-cloud"></ons-icon>
-                        </div>
-                        <div class="center settingLabel">
-                            Docker Image Name
-                        </div>
-                        <div class="right settingRight">
-                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-atDockerName"></ons-input>
-                        </div>
-                        <div class="expandable-content">
-                            AutoTest Docker Image name that knows how to execute this deliverable.
-                            It must also know how to execute any regression deliverables, if any are specified.
-                        </div>
-                    </ons-list-item>
-
-                    <ons-list-item expandable>
-                        <div class="left settingIcon">
-                            <ons-icon icon="md-timer"></ons-icon>
-                        </div>
-                        <div class="center settingLabel">
-                            Container timeout
-                        </div>
-                        <div class="right settingRight">
-                            <ons-input class="settingTextInput" maxLength="6" style="width: 5em;"
-                                       id="adminEditDeliverablePage-atContainerTimeout"></ons-input>
-                        </div>
-                        <div class="expandable-content">
-                            This defines how long the AutoTest container will try to run the student code before it
-                            times out. E.g., 300 (5
-                            minutes).
-                        </div>
-                    </ons-list-item>
-
-                    <ons-list-item expandable>
-                        <div class="left settingIcon">
-                            <ons-icon icon="fa-clock-o"></ons-icon>
-                        </div>
-                        <div class="center settingLabel">
-                            Student Delay
-                        </div>
-                        <div class="right settingRight">
-                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-atStudentDelay"
-                                       maxLength="6"
-                                       style="width: 5em;"></ons-input>
-                        </div>
-                        <div class="expandable-content">
-                            Delay (in seconds) that students must wait between requesting AutoTest feedback.
-                            E.g., 0 for no feedback limit (not recommended!), 43200 (12 hours), 86400 (24 hours).
-                        </div>
-                    </ons-list-item>
-
-                    <ons-list-item expandable>
-                        <div class="left settingIcon">
-                            <ons-icon icon="fa-retweet"></ons-icon>
-                        </div>
-                        <div class="center settingLabel">
-                            Regression Deliverables
-                        </div>
-                        <div class="right settingRight">
-                            <ons-input class="settingTextInput"
-                                       id="adminEditDeliverablePage-atRegressionIds"></ons-input>
-                        </div>
-                        <div class="expandable-content">
-                            Comma separated list of deliverableIds that should be run when this container is invoked.
-                        </div>
-                    </ons-list-item>
-
-                    <ons-list-item expandable>
-                        <div class="left settingIcon">
-                            <ons-icon icon="fa-cogs"></ons-icon>
-                        </div>
-                        <div class="center settingLabel">
-                            Custom AutoTest parameters
-                        </div>
-                        <div class="right settingRight">
-                            <ons-input class="settingTextInput" id="adminEditDeliverablePage-atCustom"></ons-input>
-                        </div>
-                        <div class="expandable-content">
-                            This is a JSON object that will be passed to the container when it is invoked.
-                            It must be valid JSON (or {} if you do not want to pass any custom params).
-                        </div>
-                    </ons-list-item>
+                        <ons-list-item expandable>
+                            <div class="left settingIcon">
+                                <ons-icon icon="fa-cogs"></ons-icon>
+                            </div>
+                            <div class="center settingLabel">
+                                Custom AutoTest parameters
+                            </div>
+                            <div class="right settingRight">
+                                <ons-input class="settingTextInput" id="adminEditDeliverablePage-atCustom"></ons-input>
+                            </div>
+                            <div class="expandable-content">
+                                This is a JSON object that will be passed to the container when it is invoked.
+                                It must be valid JSON (or {} if you do not want to pass any custom params).
+                            </div>
+                        </ons-list-item>
+                    </ons-list>
 
                 </ons-list>
             </form>
@@ -716,6 +790,518 @@
             </ons-fab>
 
         </ons-page>
+
+
+        <!--<ons-page id="AdminEditDeliverable2">-->
+
+            <!--<ons-toolbar>-->
+                <!--<div class="center">-->
+                    <!--CPSC 340 Admin Portal-->
+                <!--</div>-->
+                <!--<div class="left">-->
+                    <!--<ons-back-button></ons-back-button>-->
+                <!--</div>-->
+                <!--<div id="adminEditDeliverablePage-header" class="center"></div>-->
+            <!--</ons-toolbar>-->
+
+            <!--<ons-modal id="adminProgress">-->
+                <!--<div style="display:flex; flex-direction:column; align-items: center;">-->
+                    <!--<div id="modalText" style="padding-top: 1em; padding-bottom: 1em;">Data is being retrieved.</div>-->
+                    <!--<ons-progress-circular indeterminate></ons-progress-circular>-->
+                <!--</div>-->
+            <!--</ons-modal>-->
+
+            <!--<form id="admin-editable-deliverable-form">-->
+                <!--<ons-list id="admin-editable-deliverable-list" style="padding-bottom: 4.5em;">-->
+                    <!--<input type="hidden" id="adminEditDeliverablePage-id"/> &lt;!&ndash; what is this for? &ndash;&gt;-->
+
+                    <!--<ons-list-header>Deliverable Options</ons-list-header>-->
+
+                    <!--<ons-list-item expandable>-->
+                        <!--<div class="left settingIcon">-->
+                            <!--<ons-icon icon="fa-tag"></ons-icon>-->
+                        <!--</div>-->
+                        <!--<div class="center settingLabel">-->
+                            <!--Deliverable Id-->
+                        <!--</div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<ons-input class="settingTextInput" id="adminEditDeliverablePage-name"></ons-input>-->
+                        <!--</div>-->
+                        <!--<div class="expandable-content">-->
+                            <!--Deliverable Id. Cannot be changed. Deliverable Ids must consist of a string of lowercase-->
+                            <!--letters, [a-z],-->
+                            <!--followed by any number.-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+
+                    <!--<ons-list-item expandable>-->
+                        <!--<div class="left settingIcon">-->
+                            <!--<ons-icon icon="ion-link"></ons-icon>-->
+                        <!--</div>-->
+                        <!--<div class="center settingLabel">-->
+                            <!--URL-->
+                        <!--</div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<ons-input class="settingTextInput" id="adminEditDeliverablePage-url"></ons-input>-->
+                        <!--</div>-->
+                        <!--<div class="expandable-content">-->
+                            <!--Student-facing URL for the deliverable (usually a link to the deliverable description).-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+
+                    <!--<ons-list-item expandable>-->
+                        <!--<div class="left settingIcon">-->
+                            <!--<ons-icon icon="fa-graduation-cap"></ons-icon>-->
+                        <!--</div>-->
+                        <!--<div class="center settingLabel">-->
+                            <!--<span title="Visible to students.">Visible to students</span>-->
+                        <!--</div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<ons-switch id="adminEditDeliverablePage-visible" modifier="list-item" onclick=""></ons-switch>-->
+                        <!--</div>-->
+                        <!--<div class="expandable-content">-->
+                            <!--Whether the deliverable is visible to students. For instance, if a deliverable is really just a grading column they do not need to see.-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+
+                    <!--<ons-list-item expandable>-->
+                        <!--<div class="left settingIcon">-->
+                            <!--<ons-icon icon="fa-cogs"></ons-icon>-->
+                        <!--</div>-->
+                        <!--<div class="center settingLabel">-->
+                            <!--Rubric parameters-->
+                        <!--</div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<ons-input class="settingTextInput" id="adminEditDeliverablePage-rubric"></ons-input>-->
+                        <!--</div>-->
+                        <!--<div class="expandable-content">-->
+                            <!--This is a JSON object that captures extended rubric values.-->
+                            <!--It must be valid JSON (or {} if you do not want to set additional rubric elements).-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+
+                    <!--<ons-list-item expandable>-->
+                        <!--<div class="left settingIcon">-->
+                            <!--<ons-icon icon="fa-cogs"></ons-icon>-->
+                        <!--</div>-->
+                        <!--<div class="center settingLabel">-->
+                            <!--Custom Deliverable parameters-->
+                        <!--</div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<ons-input class="settingTextInput" id="adminEditDeliverablePage-custom"></ons-input>-->
+                        <!--</div>-->
+                        <!--<div class="expandable-content">-->
+                            <!--This is a JSON object that will be stored along with the deliverable and can be used by-->
+                            <!--custom course-->
+                            <!--controllers. It must be valid JSON (or {} if you do not want to pass any custom params).-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+
+                    <!--&lt;!&ndash;TODO: Finish and move this around&ndash;&gt;-->
+                    <!--<ons-list-item>-->
+                        <!--<div class="left settingIcon">-->
+                            <!--<ons-icon icon="fa-cogs"></ons-icon>-->
+                        <!--</div>-->
+                        <!--<div class="center settingLabel">-->
+                            <!--Is Assignment-->
+                        <!--</div>-->
+                        <!--<div class="right settingLabel">-->
+                            <!--<ons-switch disabled id="adminEditDeliverablePage-isAssignmentSwitch" modifier="list-item"></ons-switch>-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+                    <!--&lt;!&ndash;TODO: End of section&ndash;&gt;-->
+
+
+                    <!--&lt;!&ndash;TODO: Finish and move this around&ndash;&gt;-->
+                    <!--<div style="display: none;" id="adminEditDeliverablePage-assignmentConfig">-->
+                        <!--<ons-list-header>Assignment Configuration</ons-list-header>-->
+                        <!--<ons-list-item expandable>-->
+                            <!--<div class="left settingIcon">-->
+                                <!--<ons-icon icon="fa-cogs"></ons-icon>-->
+                            <!--</div>-->
+                            <!--<div class="center settingLabel">-->
+                                <!--Seed Repo URL-->
+                            <!--</div>-->
+                            <!--<div class="right settingLabel">-->
+                                <!--<ons-input class="settingTextInput" id="adminEditDeliverablePage-seedRepoURL"></ons-input>-->
+                            <!--</div>-->
+                            <!--<div class="expandable-content">-->
+                                <!--The URL that student repositories will seed from.-->
+                            <!--</div>-->
+                        <!--</ons-list-item>-->
+
+                        <!--<ons-list-item expandable>-->
+                            <!--<div class="left settingIcon">-->
+                                <!--<ons-icon icon="fa-cogs"></ons-icon>-->
+                            <!--</div>-->
+                            <!--<div class="center settingLabel">-->
+                                <!--Seed Repo Path (Optional)-->
+                            <!--</div>-->
+                            <!--<div class="right settingLabel">-->
+                                <!--<ons-input class="settingTextInput" id="adminEditDeliverablePage-seedRepoPath"></ons-input>-->
+                            <!--</div>-->
+                            <!--<div class="expandable-content">-->
+                                <!--The path that should be cloned for the repository.-->
+                                <!--The format of this string should be like: "folder/to/files/*".-->
+                                <!--This is optional, if not specified, the repository will be fully cloned.-->
+                            <!--</div>-->
+                        <!--</ons-list-item>-->
+
+                        <!--<ons-list-item expandable>-->
+                            <!--<div class="left settingIcon">-->
+                                <!--<ons-icon icon="fa-cogs"></ons-icon>-->
+                            <!--</div>-->
+                            <!--<div class="center settingLabel">-->
+                                <!--Main File Path (Optional)-->
+                            <!--</div>-->
+                            <!--<div class="right settingLabel">-->
+                                <!--<ons-input class="settingTextInput" id="adminEditDeliverablePage-mainFilePath"></ons-input>-->
+                            <!--</div>-->
+                            <!--<div class="expandable-content">-->
+                                <!--Path to the main file that will be parsed to generate the rubric.-->
+                                <!--Supported file formats: ".tex", ".md", ".ipynb", ".Rmd".-->
+                                <!--This is optional, if not specified, the rubric will not be automatically generated-->
+                            <!--</div>-->
+                        <!--</ons-list-item>-->
+
+                        <!--<ons-list-item expandable>-->
+                            <!--<div class="left settingIcon">-->
+                                <!--<ons-icon icon="fa-cogs"></ons-icon>-->
+                            <!--</div>-->
+                            <!--<div class="center settingLabel">-->
+                                <!--Course Weight-->
+                            <!--</div>-->
+                            <!--<div class="right settingLabel">-->
+                                <!--<ons-input class="settingTextInput" id="adminEditDeliverablePage-courseWeight"></ons-input>-->
+                            <!--</div>-->
+                            <!--<div class="expandable-content">-->
+                                <!--Determines the weight the assignment should be: From 0-1.-->
+                            <!--</div>-->
+                        <!--</ons-list-item>-->
+
+                        <!--&lt;!&ndash;<ons-list-item style="display: none" id="adminEditDeliverablePage-generateButtonSection">&ndash;&gt;-->
+                        <!--<ons-list-item id="adminEditDeliverablePage-generateButtonSection">-->
+                            <!--<ons-button id="adminEditDeliverablePage-generateButton" class="right settingLabel">-->
+                                <!--Generate Assignment Parameters-->
+                            <!--</ons-button>-->
+                        <!--</ons-list-item>-->
+                    <!--</div>-->
+                    <!--&lt;!&ndash;TODO: End of section&ndash;&gt;-->
+
+                    <!--<ons-list-header>Name prefixes</ons-list-header>-->
+                    <!--<ons-list-item expandable>-->
+                        <!--<div class="left settingIcon">-->
+                            <!--<ons-icon icon="fa-cloud"></ons-icon>-->
+                        <!--</div>-->
+                        <!--<div class="center settingLabel">-->
+                            <!--Repo Prefix-->
+                        <!--</div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<ons-input class="settingTextInput" id="adminEditDeliverablePage-repoPrefix"></ons-input>-->
+                        <!--</div>-->
+                        <!--<div class="expandable-content">-->
+                            <!--If any repositories are generated as a part of this deliverable, this prefix will be used when naming. Should not be empty; otherwise will revert to '&lt;delivId&gt;'.-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+                    <!--<ons-list-item expandable>-->
+                        <!--<div class="left settingIcon">-->
+                            <!--<ons-icon icon="fa-cloud"></ons-icon>-->
+                        <!--</div>-->
+                        <!--<div class="center settingLabel">-->
+                            <!--Team Prefix-->
+                        <!--</div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<ons-input class="settingTextInput" id="adminEditDeliverablePage-teamPrefix"></ons-input>-->
+                        <!--</div>-->
+                        <!--<div class="expandable-content">-->
+                            <!--If any teams are generated as a part of this deliverable, this prefix will be used when naming. Should not be empty; otherwise will revert to 't_&lt;delivId&gt;'.-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+
+                    <!--<ons-list-header>Deliverable Dates</ons-list-header>-->
+                    <!--<ons-list-item style="display: flex;">-->
+                        <!--<div class="left settingIcon">-->
+                            <!--<ons-icon icon="ion-calendar"></ons-icon>-->
+                        <!--</div>-->
+                        <!--<div class="center settingLabel">-->
+                            <!--<span-->
+                                <!--title="The date that AutoTest will begin marking Github Repositories for a Deliverable.">Open</span>-->
+                        <!--</div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<input id="adminEditDeliverablePage-open" class="flatpickr right settingRight"-->
+                                   <!--style="text-align: center; margin-left: 1em; margin-right: 1em;"-->
+                                   <!--type="text"-->
+                                   <!--placeholder="Select Date..">-->
+                            <!--</input>-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+
+                    <!--<ons-list-item style="display: flex;">-->
+                        <!--<div class="left settingIcon">-->
+                            <!--<ons-icon icon="ion-calendar"></ons-icon>-->
+                        <!--</div>-->
+                        <!--<div class="center settingLabel">-->
+                            <!--<span-->
+                                <!--title="The date that AutoTest will stop marking Github Repositories for a Deliverable.">Close</span>-->
+                        <!--</div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<input id="adminEditDeliverablePage-close" class="flatpickr right settingRight"-->
+                                   <!--style="text-align: center; margin-left: 1em; margin-right: 1em;"-->
+                                   <!--type="text"-->
+                                   <!--placeholder="Select Date..">-->
+                            <!--</input>-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+
+                    <!--<ons-list-header>Default Team Options</ons-list-header>-->
+                    <!--<ons-list-item style="display: flex;">-->
+                        <!--<div class="left settingIcon">-->
+                            <!--<ons-icon icon="fa-user"></ons-icon>-->
+                        <!--</div>-->
+                        <!--<div class="center settingLabel">-->
+                            <!--<span title="The minimum number of students that are allowed in a team.">Minimum Size</span>-->
+                        <!--</div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<select id="adminEditDeliverablePage-minTeamSize" class="settingSelect">-->
+                                <!--<option value="1">1</option>-->
+                                <!--<option value="2">2</option>-->
+                                <!--<option value="3">3</option>-->
+                                <!--<option value="4">4</option>-->
+                                <!--<option value="5">5</option>-->
+                                <!--<option value="6">6</option>-->
+                                <!--<option value="7">7</option>-->
+                                <!--<option value="8">8</option>-->
+                            <!--</select>-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+                    <!--<ons-list-item style="display: flex;">-->
+                        <!--<div class="left settingIcon">-->
+                            <!--<ons-icon icon="fa-users"></ons-icon>-->
+                        <!--</div>-->
+                        <!--<div class="center settingLabel">-->
+                            <!--<span title="The maximum number of students that are allowed in a Team.">Maximum Size</span>-->
+                        <!--</div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<select id="adminEditDeliverablePage-maxTeamSize" class="settingSelect">-->
+                                <!--<option value="1">1</option>-->
+                                <!--<option value="2">2</option>-->
+                                <!--<option value="3">3</option>-->
+                                <!--<option value="4">4</option>-->
+                                <!--<option value="5">5</option>-->
+                                <!--<option value="6">6</option>-->
+                                <!--<option value="7">7</option>-->
+                                <!--<option value="8">8</option>-->
+                            <!--</select>-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+                    <!--<ons-list-item style="display: flex;">-->
+                        <!--<div class="left settingIcon">-->
+                            <!--<ons-icon icon="fa-location-arrow"></ons-icon>-->
+                        <!--</div>-->
+                        <!--<div class="center settingLabel">-->
+                            <!--<span-->
+                                <!--title="Enable if the Students for Team Generation and Student-made Teams must be in the same lab based on the Lab List.">Must Be In Same Lab</span>-->
+                        <!--</div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<ons-switch id="adminEditDeliverablePage-inSameLab" modifier="list-item"-->
+                                        <!--onclick=""></ons-switch>-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+                    <!--<ons-list-item style="display: flex;">-->
+                        <!--<div class="left settingIcon">-->
+                            <!--<ons-icon icon="fa-plus-square"></ons-icon>-->
+                        <!--</div>-->
+                        <!--<div class="center settingLabel">-->
+                            <!--<span-->
+                                <!--title="Enable if Students are allowed to create their own team.">Students Make Teams</span>-->
+                        <!--</div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<ons-switch id="adminEditDeliverablePage-studentsMakeTeams" modifier="list-item"-->
+                                        <!--onclick=""></ons-switch>-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+
+                    <!--<ons-list-header>Grade Options</ons-list-header>-->
+                    <!--<ons-list-item style="display: flex;">-->
+                        <!--<div class="left settingIcon">-->
+                            <!--<ons-icon icon="fa-graduation-cap"></ons-icon>-->
+                        <!--</div>-->
+                        <!--<div class="center settingLabel">-->
+                            <!--<span-->
+                                <!--title="Displays Grades for Deliverable underneath Student Area.">Grades Released</span>-->
+                        <!--</div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<ons-switch id="adminEditDeliverablePage-gradesReleased" modifier="list-item"-->
+                                        <!--onclick=""></ons-switch>-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+
+                    <!--<ons-list-header id="adminEditDeliverablePage-assignmentStatusHeader" style="display: none">-->
+                        <!--Assignment Status-->
+                    <!--</ons-list-header>-->
+
+                    <!--<div id="adminEditDeliverablePage-assignmentStatus" style="display: none">-->
+                    <!--<ons-list-item style="display: flex;">-->
+                        <!--<div class="center settingLabel"><span>Repositories Created:</span></div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<ons-switch disabled id="adminEditDeliverablePage-createdSwitch" modifier="list-item"-->
+                                        <!--onclick=""></ons-switch>-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+
+                    <!--<ons-list-item style="display: flex;">-->
+                        <!--<div class="center settingLabel"><span>Repository Read Access:</span></div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<ons-switch disabled id="adminEditDeliverablePage-readSwitch" modifier="list-item"-->
+                                        <!--onclick=""></ons-switch>-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+
+                    <!--<ons-list-item style="display: flex;">-->
+                        <!--<div class="center settingLabel"><span>Repository Push Access:</span></div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<ons-switch disabled id="adminEditDeliverablePage-pushSwitch" modifier="list-item"-->
+                                        <!--onclick=""></ons-switch>-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+
+                    <!--&lt;!&ndash;<ons-list-item style="display: flex;">&ndash;&gt;-->
+                        <!--&lt;!&ndash;<div class="center settingLabel"><span>Grades Released:</span></div>&ndash;&gt;-->
+                        <!--&lt;!&ndash;<div class="right settingRight">&ndash;&gt;-->
+                            <!--&lt;!&ndash;<ons-switch id="adminEditDeliverablePage-gradesReleasedSwitch" modifier="list-item"&ndash;&gt;-->
+                                        <!--&lt;!&ndash;onclick="window.myApp.view.releaseGrades(evt)"></ons-switch>&ndash;&gt;-->
+                        <!--&lt;!&ndash;</div>&ndash;&gt;-->
+                    <!--&lt;!&ndash;</ons-list-item>&ndash;&gt;-->
+                    <!--</div>-->
+
+                    <!--<ons-list-header>Provisioning Options</ons-list-header>-->
+                    <!--<ons-list-item style="display: flex;" expandable>-->
+                        <!--<div class="left settingIcon">-->
+                            <!--<ons-icon icon="fa-location-arrow"></ons-icon>-->
+                        <!--</div>-->
+                        <!--<div class="center settingLabel">-->
+                            <!--<span>Deliverable will provision repos</span>-->
+                        <!--</div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<ons-switch id="adminEditDeliverablePage-shouldProvision" modifier="list-item" onclick=""></ons-switch>-->
+                        <!--</div>-->
+                        <!--<div class="expandable-content">-->
+                            <!--If new repositories will be provisioned for this deliverable, say yes. Otherwise no.-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+
+                    <!--<ons-list id="shouldProvisionList">-->
+                        <!--<ons-list-item expandable>-->
+                            <!--<div class="left settingIcon">-->
+                                <!--<ons-icon icon="fa-cloud"></ons-icon>-->
+                            <!--</div>-->
+                            <!--<div class="center settingLabel">-->
+                                <!--Import URL-->
+                            <!--</div>-->
+                            <!--<div class="right settingRight">-->
+                                <!--<ons-input class="settingTextInput" id="adminEditDeliverablePage-importURL"></ons-input>-->
+                            <!--</div>-->
+                            <!--<div class="expandable-content">-->
+                                <!--If any repos are provisioned for this deliverable, where should they be imported from (e.g., the boostrap clone-->
+                                <!--URL).-->
+                            <!--</div>-->
+                        <!--</ons-list-item>-->
+                    <!--</ons-list>-->
+
+
+                    <!--<ons-list-header>AutoTest Options</ons-list-header>-->
+                    <!--<ons-list-item expandable>-->
+                        <!--<div class="left settingIcon">-->
+                            <!--<ons-icon icon="fa-cloud"></ons-icon>-->
+                        <!--</div>-->
+                        <!--<div class="center settingLabel">-->
+                            <!--Docker Image Name-->
+                        <!--</div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<ons-input class="settingTextInput" id="adminEditDeliverablePage-atDockerName"></ons-input>-->
+                        <!--</div>-->
+                        <!--<div class="expandable-content">-->
+                            <!--AutoTest Docker Image name that knows how to execute this deliverable.-->
+                            <!--It must also know how to execute any regression deliverables, if any are specified.-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+
+                    <!--<ons-list-item expandable>-->
+                        <!--<div class="left settingIcon">-->
+                            <!--<ons-icon icon="md-timer"></ons-icon>-->
+                        <!--</div>-->
+                        <!--<div class="center settingLabel">-->
+                            <!--Container timeout-->
+                        <!--</div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<ons-input class="settingTextInput" maxLength="6" style="width: 5em;"-->
+                                       <!--id="adminEditDeliverablePage-atContainerTimeout"></ons-input>-->
+                        <!--</div>-->
+                        <!--<div class="expandable-content">-->
+                            <!--This defines how long the AutoTest container will try to run the student code before it-->
+                            <!--times out. E.g., 300 (5-->
+                            <!--minutes).-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+
+                    <!--<ons-list-item expandable>-->
+                        <!--<div class="left settingIcon">-->
+                            <!--<ons-icon icon="fa-clock-o"></ons-icon>-->
+                        <!--</div>-->
+                        <!--<div class="center settingLabel">-->
+                            <!--Student Delay-->
+                        <!--</div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<ons-input class="settingTextInput" id="adminEditDeliverablePage-atStudentDelay"-->
+                                       <!--maxLength="6"-->
+                                       <!--style="width: 5em;"></ons-input>-->
+                        <!--</div>-->
+                        <!--<div class="expandable-content">-->
+                            <!--Delay (in seconds) that students must wait between requesting AutoTest feedback.-->
+                            <!--E.g., 0 for no feedback limit (not recommended!), 43200 (12 hours), 86400 (24 hours).-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+
+                    <!--<ons-list-item expandable>-->
+                        <!--<div class="left settingIcon">-->
+                            <!--<ons-icon icon="fa-retweet"></ons-icon>-->
+                        <!--</div>-->
+                        <!--<div class="center settingLabel">-->
+                            <!--Regression Deliverables-->
+                        <!--</div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<ons-input class="settingTextInput"-->
+                                       <!--id="adminEditDeliverablePage-atRegressionIds"></ons-input>-->
+                        <!--</div>-->
+                        <!--<div class="expandable-content">-->
+                            <!--Comma separated list of deliverableIds that should be run when this container is invoked.-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+
+                    <!--<ons-list-item expandable>-->
+                        <!--<div class="left settingIcon">-->
+                            <!--<ons-icon icon="fa-cogs"></ons-icon>-->
+                        <!--</div>-->
+                        <!--<div class="center settingLabel">-->
+                            <!--Custom AutoTest parameters-->
+                        <!--</div>-->
+                        <!--<div class="right settingRight">-->
+                            <!--<ons-input class="settingTextInput" id="adminEditDeliverablePage-atCustom"></ons-input>-->
+                        <!--</div>-->
+                        <!--<div class="expandable-content">-->
+                            <!--This is a JSON object that will be passed to the container when it is invoked.-->
+                            <!--It must be valid JSON (or {} if you do not want to pass any custom params).-->
+                        <!--</div>-->
+                    <!--</ons-list-item>-->
+
+                <!--</ons-list>-->
+            <!--</form>-->
+
+            <!--<ons-fab id="adminEditDeliverableSave" position="bottom right">-->
+                <!--<ons-icon icon="md-save"></ons-icon>-->
+            <!--</ons-fab>-->
+
+        <!--</ons-page>-->
     </template>
 
 </ons-page>

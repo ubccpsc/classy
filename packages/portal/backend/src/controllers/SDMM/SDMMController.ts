@@ -1,5 +1,4 @@
 import * as crypto from 'crypto';
-import Config, {ConfigKey} from "../../../../../common/Config";
 
 import Log from "../../../../../common/Log";
 import {GradePayload, Payload, SDMMStatus, StatusPayload} from "../../../../../common/types/SDMMTypes";
@@ -7,6 +6,7 @@ import Util from "../../../../../common/Util";
 import {Deliverable, Grade, Person, Team} from "../../Types";
 
 import {CourseController} from "../CourseController";
+import {DeliverablesController} from '../DeliverablesController';
 import {IGitHubController} from "../GitHubController";
 import {PersonController} from "../PersonController";
 
@@ -72,6 +72,7 @@ export class SDMMController extends CourseController {
 
     public constructor(ghController: IGitHubController) {
         super(ghController);
+        Log.info("SDMMController::<init>");
     }
 
     /**
@@ -81,12 +82,12 @@ export class SDMMController extends CourseController {
      * @param {string[]} peopleIds people order matters; requestor should be peopleIds[0]
      * @returns {Promise<Payload>}
      */
-    public async provision(delivId: string, peopleIds: string[]): Promise<Payload> {
-        Log.info("SDMMController::provision( " + delivId + ", ... ) - start");
+    public async provisionDeliverable(delivId: string, peopleIds: string[]): Promise<Payload> {
+        Log.info("SDMMController::provisionDeliverable( " + delivId + ", ... ) - start");
 
         try {
             if (peopleIds.length < 1) {
-                Log.error("SDMMController::provision(..) - there needs to be at least one person on a repo");
+                Log.error("SDMMController::provisionDeliverable(..) - there needs to be at least one person on a repo");
                 throw new Error("Invalid # of people; contact course staff.");
             }
 
@@ -100,35 +101,36 @@ export class SDMMController extends CourseController {
 
             if (delivId === "d0") {
                 if (peopleIds.length === 1) {
-                    Log.info("SDMMController::provision(..) - provisioning new d0 repo for " + peopleIds[0]);
+                    Log.info("SDMMController::provisionDeliverable(..) - provisioning new d0 repo for " + peopleIds[0]);
                     return await this.provisionD0Repo(peopleIds[0]);
                 } else {
-                    Log.error("SDMMController::provision(..) - d0 repos are only for individuals");
+                    Log.error("SDMMController::provisionDeliverable(..) - d0 repos are only for individuals");
                     throw new Error("D0 for indivduals only; contact course staff.");
                 }
             } else if (delivId === "d1") {
 
                 if (peopleIds.length === 1) {
-                    Log.info("SDMMController::provision(..) - updating existing d0 repo to d1 for " + peopleIds[0]);
+                    Log.info("SDMMController::provisionDeliverable(..) - updating existing d0 repo to d1 for " + peopleIds[0]);
                     return await this.updateIndividualD0toD1(peopleIds[0]);
                 } else if (peopleIds.length === 2) {
-                    Log.info("SDMMController::provision(..) - provisioning new d1 repo for " + JSON.stringify(peopleIds));
+                    Log.info("SDMMController::provisionDeliverable(..) - provisioning new d1 repo for " + JSON.stringify(peopleIds));
                     if (peopleIds[0] !== peopleIds[1]) {
                         return await this.provisionD1Repo(peopleIds);
                     } else {
-                        Log.error("SDMMController::provision(..) - d1 duplicate users");
+                        Log.error("SDMMController::provisionDeliverable(..) - d1 duplicate users");
                         throw new Error("D1 duplicate users; if you wish to work alone, please select 'work individually'.");
                     }
                 } else {
-                    Log.error("SDMMController::provision(..) - d1 can only be performed by single students or pairs of students.");
+                    Log.error("SDMMController::provisionDeliverable(..) - " +
+                        "d1 can only be performed by single students or pairs of students.");
                     throw new Error("D1 can only be performed by single students or pairs of students.");
                 }
             } else {
-                Log.warn("SDMMController::provision(..) - new repo not needed for delivId: " + delivId);
+                Log.warn("SDMMController::provisionDeliverable(..) - new repo not needed for delivId: " + delivId);
                 throw new Error("Repo not needed; contact course staff.");
             }
         } catch (err) {
-            Log.error("SDMMController::provision(..) - ERROR: " + err);
+            Log.error("SDMMController::provisionDeliverable(..) - ERROR: " + err);
             throw new Error(err.message);
         }
     }
@@ -156,10 +158,10 @@ export class SDMMController extends CourseController {
         let myD2: GradePayload = null;
         let myD3: GradePayload = null;
 
-        const d0Grade: Grade = await this.dc.getGrade(personId, 'd0');
-        const d1Grade: Grade = await this.dc.getGrade(personId, 'd1');
-        const d2Grade: Grade = await this.dc.getGrade(personId, 'd2');
-        const d3Grade: Grade = await this.dc.getGrade(personId, 'd3');
+        const d0Grade: Grade = await this.dbc.getGrade(personId, 'd0');
+        const d1Grade: Grade = await this.dbc.getGrade(personId, 'd1');
+        const d2Grade: Grade = await this.dbc.getGrade(personId, 'd2');
+        const d3Grade: Grade = await this.dbc.getGrade(personId, 'd3');
 
         if (d0Grade !== null) {
             myD0 = {
@@ -305,7 +307,7 @@ export class SDMMController extends CourseController {
         const start = Date.now();
 
         try {
-            const person = await this.dc.getPerson(personId);
+            const person = await this.dbc.getPerson(personId);
             if (person === null) {
                 Log.warn("SDMMController::computeStatusString(..) - person null: " + personId);
                 throw new Error('Unknown person: ' + personId);
@@ -352,7 +354,7 @@ export class SDMMController extends CourseController {
             // D0
             if (currentStatus === SDMMStatus[SDMMStatus.D0]) {
                 // if their d0 score >= GRADE_TO_ADVANCE, make them D1UNLOCKED
-                const d0Grade = await this.dc.getGrade(personId, "d0");
+                const d0Grade = await this.dbc.getGrade(personId, "d0");
                 if (d0Grade && d0Grade.score !== null && d0Grade.score >= this.GRADE_TO_ADVANCE) {
                     Log.info("SDMMController::computeStatusString(..) - elevating D0 to D1UNLOCKED");
                     currentStatus = SDMMStatus[SDMMStatus.D1UNLOCKED];
@@ -364,7 +366,7 @@ export class SDMMController extends CourseController {
             // D1UNLOCKED
             if (currentStatus === SDMMStatus[SDMMStatus.D1UNLOCKED]) {
                 // if they have a d1 team, make them D1TEAMSET
-                const teams = await this.dc.getTeamsForPerson(personId);
+                const teams = await this.dbc.getTeamsForPerson(personId);
 
                 let d1team: Team = null;
                 for (const t of teams) {
@@ -410,7 +412,7 @@ export class SDMMController extends CourseController {
                         if (r.custom.d1enabled === true) {
                             // is a project repo
                             r.custom.d2enabled = true;
-                            await this.dc.writeRepository(r);
+                            await this.dbc.writeRepository(r);
                         }
                     }
                     currentStatus = SDMMStatus[SDMMStatus.D2];
@@ -458,7 +460,7 @@ export class SDMMController extends CourseController {
                     if (r.custom.d2enabled === true) {
                         // is a project repo
                         r.custom.d3enabled = true;
-                        await this.dc.writeRepository(r);
+                        await this.dbc.writeRepository(r);
                     }
                 }
                 Log.info("SDMMController::computeStatusString(..) - NOT elevating from D3");
@@ -466,7 +468,7 @@ export class SDMMController extends CourseController {
 
             // let currentStatus = person.custom.sdmmStatus;
             person.custom.sdmmStatus = currentStatus;
-            await this.dc.writePerson(person);
+            await this.dbc.writePerson(person);
 
             Log.info("SDMMController::computeStatusString( " + personId + ' ) - done: ' +
                 currentStatus + '; took: ' + Util.took(start));
@@ -503,7 +505,7 @@ export class SDMMController extends CourseController {
         Log.info("SDMMController::getStatus( " + personId + ' ) - start');
         const start = Date.now();
         try {
-            const person = await this.dc.getPerson(personId);
+            const person = await this.dbc.getPerson(personId);
             if (person === null) {
                 Log.info("SDMMController::checkStatus(..) - ERROR; person null");
                 return null;
@@ -532,8 +534,8 @@ export class SDMMController extends CourseController {
         try {
             const name = personId;
             const person = await this.pc.getPerson(name);
-            // const dc = new DeliverablesController();
-            const deliv = await this.dc.getDeliverable('d0');
+            const dc = new DeliverablesController();
+            const deliv = await dc.getDeliverable('d0');
             const r = await this.computeNames(deliv, [person]);
             const teamName = r.teamName; // SDMMController.getTeamPrefix() + name;
             const repoName = r.repoName; // SDMMController.getProjectPrefix() + teamName;
@@ -557,7 +559,7 @@ export class SDMMController extends CourseController {
                 throw new Error("SDMMController::provisionD0Repo(..) - team already exists: " + teamName);
             }
             const teamCustom = {sdmmd0: true, sdmmd1: false, sdmmd2: false, sdmmd3: false}; // d0 team for now
-            // const deliv = await this.dc.getDeliverable('d0');
+            // const deliv = await this.dbc.getDeliverable('d0');
             const team = await this.tc.createTeam(teamName, deliv, [person], teamCustom);
 
             // create local repo
@@ -567,23 +569,24 @@ export class SDMMController extends CourseController {
                 throw new Error("Failed to provision d0 repo; repository already exists in datastore: " + repoName);
             }
             const repoCustom = {d0enabled: true, d1enabled: false, d2enabled: false, d3enabled: false, sddmD3pr: false}; // d0 repo for now
-            const repo = await this.rc.createRepository(repoName, [team], repoCustom);
+
+            const repo = await this.rc.createRepository(repoName, deliv, [team], repoCustom);
 
             // create remote repo
             const INPUTREPO = "https://github.com/SECapstone/bootstrap";
-            const host = Config.getInstance().getProp(ConfigKey.backendUrl);
-            const WEBHOOKADDR = host + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/portal/githubWebhook';
-            const provisionResult = await this.gh.provisionRepository(repoName, [team], INPUTREPO, WEBHOOKADDR);
+            // const host = Config.getInstance().getProp(ConfigKey.backendUrl);
+            // const WEBHOOKADDR = host + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/portal/githubWebhook';
+            const provisionResult = await this.gh.provisionRepository(repoName, [team], INPUTREPO, true);
 
             if (provisionResult === true) {
                 Log.info("SDMMController::provisionD0Repo(..) - d0 GitHub provisioning successful");
 
                 // update local team and repo with github values
                 repo.URL = await this.gh.getRepositoryUrl(repo);
-                await this.dc.writeRepository(repo); // don't really need to wait, but this is conservative
+                await this.dbc.writeRepository(repo); // don't really need to wait, but this is conservative
 
                 team.URL = await this.gh.getTeamUrl(team);
-                await this.dc.writeTeam(team); // don't really need to wait, but this is conservative
+                await this.dbc.writeTeam(team); // don't really need to wait, but this is conservative
 
                 // create grade entry
                 const grade: GradePayload = {
@@ -604,9 +607,9 @@ export class SDMMController extends CourseController {
                 Log.error("SDMMController::provisionD0Repo(..) - something went wrong provisioning this repo; see logs above.");
 
                 // d0pre people should not have teams
-                const delTeam = await this.dc.deleteTeam(team);
+                const delTeam = await this.dbc.deleteTeam(team);
                 // d0pre people should not have repos
-                const delRepo = await this.dc.deleteRepository(repo);
+                const delRepo = await this.dbc.deleteRepository(repo);
                 Log.info("SDMMController::provisionD0Repo(..) - team removed: " + delTeam + ", repo removed: " + delRepo);
 
                 throw new Error("Error provisioning d0 repo.");
@@ -652,7 +655,7 @@ export class SDMMController extends CourseController {
                 Log.info("SDMMController::updateIndividualD0toD1( " + personId + " ) - correct status: " + personStatus);
             }
 
-            const deliv = await this.dc.getDeliverable('d0'); // since we are upgrading the d0 repo, use this even though this is for d1
+            const deliv = await this.dbc.getDeliverable('d0'); // since we are upgrading the d0 repo, use this even though this is for d1
             const names = await this.computeNames(deliv, [person]);
             const teamName = names.teamName; // SDMMController.getTeamPrefix() + personId;
             const repoName = names.repoName; // SDMMController.getProjectPrefix() + teamName;
@@ -664,13 +667,13 @@ export class SDMMController extends CourseController {
             if (team !== null && repo !== null) {
                 // custom should be {d0enabled: true, d1enabled: true, d2enabled: false, d3enabled: false, sddmD3pr: false};
                 repo.custom.d1enabled = true;
-                await this.dc.writeRepository(repo);
+                await this.dbc.writeRepository(repo);
 
                 // team custom should be {sdmmd0: true, sdmmd1: true, sdmmd2: true, sdmmd3: true};
                 team.custom.sdmmd1 = true;
                 team.custom.sdmmd2 = true;
                 team.custom.sdmmd3 = true;
-                await this.dc.writeTeam(team);
+                await this.dbc.writeTeam(team);
 
                 // create grade entries
                 const newGrade: GradePayload = {
@@ -710,9 +713,9 @@ export class SDMMController extends CourseController {
 
             const people: Person[] = [];
             for (const pid of peopleIds) {
-                const person = await this.dc.getPerson(pid); // make sure the person exists
+                const person = await this.dbc.getPerson(pid); // make sure the person exists
                 if (person !== null) {
-                    const grade = await this.gc.getGrade(pid, "d0"); // make sure they can move on
+                    const grade = await this.gc.getGrade(pid, SDMMController.D0); // make sure they can move on
                     if (grade !== null && grade.score > 59) {
                         people.push(person);
                     } else {
@@ -727,7 +730,8 @@ export class SDMMController extends CourseController {
                 }
             }
 
-            const deliv = await this.dc.getDeliverable('d1');
+            const dc = new DeliverablesController();
+            const deliv = await dc.getDeliverable(SDMMController.D1);
             const names = await this.computeNames(deliv, people);
             const teamName = names.teamName;
             const repoName = names.repoName;
@@ -763,29 +767,29 @@ export class SDMMController extends CourseController {
 
             // create local team
             const teamCustom = {sdmmd0: false, sdmmd1: true, sdmmd2: true, sdmmd3: true}; // configure for project
-            // const deliv = await this.dc.getDeliverable('d1');
+            // const deliv = await this.dbc.getDeliverable('d1');
             const team = await this.tc.createTeam(teamName, deliv, people, teamCustom);
 
             // create local repo
             // const repoName = SDMMController.getProjectPrefix() + teamName;
             const repoCustom = {d0enabled: false, d1enabled: true, d2enabled: true, d3enabled: true, sddmD3pr: false}; // d0 repo for now
-            const repo = await this.rc.createRepository(repoName, [team], repoCustom);
+            const repo = await this.rc.createRepository(repoName, deliv, [team], repoCustom);
 
             // create remote repo
             const INPUTREPO = "https://github.com/SECapstone/bootstrap"; // HARDCODED for SDMM
-            const host = Config.getInstance().getProp(ConfigKey.backendUrl);
-            const WEBHOOKADDR = host + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/portal/githubWebhook';
-            const provisionResult = await this.gh.provisionRepository(repoName, [team], INPUTREPO, WEBHOOKADDR);
+            // const host = Config.getInstance().getProp(ConfigKey.backendUrl);
+            // const WEBHOOKADDR = host + ':' + Config.getInstance().getProp(ConfigKey.backendPort) + '/portal/githubWebhook';
+            const provisionResult = await this.gh.provisionRepository(repoName, [team], INPUTREPO, true);
 
             if (provisionResult === true) {
                 Log.info("SDMMController::provisionD1Repo(..) - d1 github provisioning successful");
 
                 // update local team and repo with github values
                 repo.URL = await this.gh.getRepositoryUrl(repo);
-                await this.dc.writeRepository(repo); // don't really need to wait, but this is conservative
+                await this.dbc.writeRepository(repo); // don't really need to wait, but this is conservative
 
                 team.URL = await this.gh.getTeamUrl(team);
-                await this.dc.writeTeam(team); // don't really need to wait, but this is conservative
+                await this.dbc.writeTeam(team); // don't really need to wait, but this is conservative
 
                 // create grade entries
                 const grade: GradePayload = {

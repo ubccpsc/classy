@@ -32,7 +32,8 @@ export class CS310View extends StudentView {
             // super render complete; do custom work
             return that.fetchData();
         }).then(function() {
-            that.renderTeams(that.teams);
+            return that.renderTeams(that.teams);
+        }).then(function() {
             UI.hideModal();
             Log.info('CS310View::renderPage(..) - prep & render took: ' + UI.took(start));
         }).catch(function(err) {

@@ -13,13 +13,13 @@ import {
     AutoTestResultTransport,
     Payload
 } from "../../../../../common/types/PortalTypes";
-
-import {CourseController} from "../../controllers/CourseController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
+import {GitHubActions} from "../../controllers/GitHubActions";
 import {GitHubController} from "../../controllers/GitHubController";
 import {GradesController} from "../../controllers/GradesController";
 import {PersonController} from "../../controllers/PersonController";
 import {ResultsController} from "../../controllers/ResultsController";
+import {Factory} from "../../Factory";
 
 import IREST from "../IREST";
 
@@ -93,7 +93,7 @@ export class AutoTestRoutes implements IREST {
             const name = Config.getInstance().getProp(ConfigKey.name);
             Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - name: ' + name);
 
-            const cc = new CourseController(new GitHubController());
+            const cc = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
             cc.getCourse().then(function(course) {
                 payload = {success: {defaultDeliverable: course.defaultDeliverableId}};
                 res.send(200, payload);
@@ -122,8 +122,8 @@ export class AutoTestRoutes implements IREST {
             } else {
                 Log.info('AutoTestRouteHandler::atGrade(..) - repoId: ' + gradeRecord.repoId +
                     '; delivId: ' + gradeRecord.delivId + '; body: ' + JSON.stringify(gradeRecord));
-                const sc = new CourseController(new GitHubController());
-                sc.processNewAutoTestGrade(gradeRecord).then(function(success: any) {
+                const cc = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
+                cc.processNewAutoTestGrade(gradeRecord).then(function(success: any) {
                     payload = {success: {success: true}};
                     res.send(200, payload);
                     return next(true);

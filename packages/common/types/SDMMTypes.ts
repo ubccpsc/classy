@@ -22,7 +22,8 @@ export interface StatusPayload {
 }
 
 /**
- * TODO: This type seems fundamentally broken and should be revisited. We just need to make sure that any properties we add to it are things autoTest knows.
+ * TODO: This type seems fundamentally broken and should be revisited.
+ * We just need to make sure that any properties we add to it are things autoTest knows.
  */
 export interface GradePayload {
     // delivId: string; // invariant; foreign key on Deliverable.id
@@ -47,4 +48,3 @@ export enum SDMMStatus {
     D3PRE,
     D3
 }
-

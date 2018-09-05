@@ -1,9 +1,10 @@
-import { CommandResult, IDockerNetworkOptions } from "../Types";
+import {CommandResult, IDockerNetworkOptions} from "../Types";
 import {Command} from "../util/Command";
 
 export interface IDockerNetwork {
     create(name: string, options?: IDockerNetworkOptions): Promise<CommandResult>;
-    remove(): Promise<CommandResult>
+
+    remove(): Promise<CommandResult>;
 }
 
 export class DockerNetwork extends Command implements IDockerNetwork {

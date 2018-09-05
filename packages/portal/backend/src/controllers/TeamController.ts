@@ -50,7 +50,7 @@ export class TeamController {
      * passes through to TeamController::createTeam(..).
      *
      * @param teamId
-     * @param {string} delivId
+     * @param deliv
      * @param people
      * @param adminOverride
      * @returns {Promise<Team | null>}
@@ -58,7 +58,7 @@ export class TeamController {
     public async formTeam(teamId: string, deliv: Deliverable, people: Person[], adminOverride: boolean): Promise<Team | null> {
         Log.info("TeamController::formTeam( ... ) - start");
 
-        // const dc = new DeliverablesController();
+        // const dbc = new DeliverablesController();
         // const pc = new PersonController();
 
         // sanity checking

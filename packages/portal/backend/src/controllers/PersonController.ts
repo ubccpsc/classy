@@ -1,4 +1,3 @@
-import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {StudentTransport} from "../../../../common/types/PortalTypes";
 import Util from "../../../../common/Util";
@@ -72,7 +71,7 @@ export class PersonController {
             Log.trace("PersonController::getgetGitHubPersonPerson( " + githubId + " ) - githubId not yet registered.");
 
             // user not registered but might be admin or staff
-            const gh = new GitHubActions();
+            const gh = GitHubActions.getInstance();
             const isAdmin = await gh.isOnAdminTeam(githubId);
             const isStaff = await gh.isOnStaffTeam(githubId);
 

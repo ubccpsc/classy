@@ -1,12 +1,17 @@
 import Log from "../../../common/Log";
+import {CourseController} from "../src/controllers/CourseController";
 /* istanbul ignore file */
 import {DatabaseController} from "../src/controllers/DatabaseController";
+import {GitHubActions} from "../src/controllers/GitHubActions";
+import {GitHubController} from "../src/controllers/GitHubController";
 import {TeamController} from "../src/controllers/TeamController";
+import {Factory} from "../src/Factory";
 import {Test} from "../test/GlobalSpec";
 
 export class FrontendDatasetGenerator {
 
     private dc: DatabaseController = null;
+    private cc: CourseController = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
 
     constructor() {
         this.dc = DatabaseController.getInstance();
@@ -17,7 +22,7 @@ export class FrontendDatasetGenerator {
         await this.createDeliverables();
         await this.createPeople();
         await this.createTeams();
-        await this.createRepositories();
+        // await this.createRepositories();
         await this.createGrades();
         await this.createResults();
         Log.info("FrontendDatasetGenerator::create() - done");
@@ -39,6 +44,7 @@ export class FrontendDatasetGenerator {
         await this.dc.writeDeliverable(deliv);
 
         deliv = Test.getDeliverable(Test.DELIVIDPROJ);
+        deliv.shouldProvision = true;
         deliv.gradesReleased = true;
         await this.dc.writeDeliverable(deliv);
     }
@@ -63,7 +69,7 @@ export class FrontendDatasetGenerator {
         await this.dc.writePerson(person);
 
         for (let i = 0; i < 50; i++) {
-            person = Test.getPerson('student_' + i);
+            person = Test.getPerson('student-' + i);
             person.kind = 'student';
             await this.dc.writePerson(person);
         }
@@ -75,10 +81,10 @@ export class FrontendDatasetGenerator {
         const tc = new TeamController();
         const delivs = await this.dc.getDeliverables();
 
-        for (let i = 0; i < 200; i++) {
+        for (let i = 0; i < 50; i++) {
             // try i times to make a team
-            const p1 = Test.getPerson('student_' + this.getRandomInt(50));
-            const p2 = Test.getPerson('student_' + this.getRandomInt(50));
+            const p1 = Test.getPerson('student-' + this.getRandomInt(50));
+            const p2 = Test.getPerson('student-' + this.getRandomInt(50));
             if (p1.id !== p2.id) {
 
                 const p1Teams = await tc.getTeamsForPerson(p1);
@@ -86,7 +92,8 @@ export class FrontendDatasetGenerator {
                 let p1Team = null;
                 let p2Team = null;
 
-                const deliv = delivs[this.getRandomInt(delivs.length)];
+                // const deliv = delivs[this.getRandomInt(delivs.length)];
+                const deliv = await this.dc.getDeliverable(Test.DELIVIDPROJ);
 
                 for (const t of p1Teams) {
                     if (t.delivId === deliv.id) {
@@ -100,8 +107,9 @@ export class FrontendDatasetGenerator {
                 }
 
                 if (p1Team === null && p2Team === null) {
+                    const names = await this.cc.computeNames(deliv, [p1, p2]);
                     // both members not on a team
-                    const team = Test.getTeam(deliv.id + '_team' + i, deliv.id, [p1.id, p2.id]);
+                    const team = Test.getTeam(names.teamName, deliv.id, [p1.id, p2.id]);
                     Log.info("FrontendDatasetGenerator::createTeams() - creating team: " + team.id);
                     await this.dc.writeTeam(team);
                 }
@@ -131,7 +139,7 @@ export class FrontendDatasetGenerator {
         // 100 random scores
         const delivnames = [Test.DELIVID0, Test.DELIVID1, Test.DELIVID3];
         for (let i = 0; i < 100; i++) {
-            const user = 'student_' + this.getRandomInt(50);
+            const user = 'student-' + this.getRandomInt(50);
             const deliv = delivnames[this.getRandomInt(3)];
             const score = this.getRandomInt(100);
 
@@ -144,12 +152,14 @@ export class FrontendDatasetGenerator {
         Log.info("FrontendDatasetGenerator::createRepositories() - start");
         // make a repository for each team
 
-        const teams = await this.dc.getTeams();
-        for (const team of teams) {
-            const repoName = team.id;
-            const repo = Test.getRepository(repoName, team.id);
-            await this.dc.writeRepository(repo);
-        }
+        // these will be created by provision
+
+        // const teams = await this.dc.getTeams();
+        // for (const team of teams) {
+        //     const repoName = team.id;
+        //     const repo = Test.getRepository(repoName, Test.DELIVID0, team.id);
+        //     await this.dc.writeRepository(repo);
+        // }
     }
 
     private async createResults(): Promise<void> {

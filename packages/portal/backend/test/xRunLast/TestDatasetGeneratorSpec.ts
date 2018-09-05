@@ -2,6 +2,7 @@ import {expect} from "chai";
 import "mocha";
 
 import Config, {ConfigKey} from "../../../../common/Config";
+import Log from "../../../../common/Log";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 
@@ -11,9 +12,14 @@ import {TeamController} from "../../src/controllers/TeamController";
 import {Auth, Course, Deliverable, Person} from "../../src/Types";
 
 import {Test} from "../GlobalSpec";
+import "../server/SDMMRoutesSpec"; // try to run last
 // const loadFirst = require('../GlobalSpec');
 
-describe.skip('TestDatasetGenerator', function() {
+describe('TestDatasetGenerator', function() {
+
+    before(async function() {
+        // await Test.suiteBefore('TestDatasetGenerator');
+    });
 
     it('Can generate the course object', async function() {
         const dc: DatabaseController = DatabaseController.getInstance();
@@ -128,16 +134,18 @@ describe.skip('TestDatasetGenerator', function() {
             gradesReleased:    false,
             visibleToStudents: true,
 
-            repoPrefix: 'r_',
-            teamPrefix: 't_',
-
+            shouldProvision:  true,
+            repoPrefix:       '',
+            teamPrefix:       't',
+            importURL:        null,
             teamMinSize:      1,
             teamMaxSize:      2,
             teamSameLab:      true,
             teamStudentsForm: true,
             // bootstrapUrl:     '',
 
-            autotest: {
+            shouldAutoTest: true,
+            autotest:       {
                 dockerImage:        'testImage',
                 studentDelay:       60 * 60 * 12, // 12h
                 maxExecTime:        300,
@@ -152,7 +160,7 @@ describe.skip('TestDatasetGenerator', function() {
         for (let i = 0; i < 5; i++) {
             const deliv = JSON.parse(JSON.stringify(d));
             deliv.id = 'd' + i;
-            deliv.repoPrefix = 'd' + i + '_';
+            deliv.repoPrefix = ''; // 'd' + i + '_';
             deliv.openTimestamp = new Date().getTime();
             deliv.closeTimestamp = new Date().getTime();
             try {
@@ -192,18 +200,25 @@ describe.skip('TestDatasetGenerator', function() {
 
         const teams = await tc.getAllTeams();
         const rc: RepositoryController = new RepositoryController();
-
+        const dc = new DeliverablesController();
+        const deliv = await dc.getDeliverable(Test.DELIVID1);
         try {
-            await rc.createRepository(Test.REPONAME1, [teams[0]], {});
+            await rc.createRepository(Test.REPONAME1, deliv, [teams[0]], {});
         } catch (err) {
             // Fail silently, it's fine, the team already exists
         }
 
         try {
-            await rc.createRepository(Test.REPONAME2, [teams[1]], {});
+            await rc.createRepository(Test.REPONAME2, deliv, [teams[1]], {});
         } catch (err) {
             // Fail silently, it's fine, the team already exists
         }
+    });
+
+    it('Run prepareAll at the end', async function() {
+        Log.test("Finishing by preparing all");
+        await Test.prepareAll();
+        Log.test("Finishing by preparing all - done");
     });
 
 });

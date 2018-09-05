@@ -193,6 +193,11 @@ export class AdminView implements IView {
     }
 
     protected handleAdminEditDeliverable(opts: any) {
-        this.deliverablesTab.initEditDeliverablePage(opts); // this will call render
+        // this will call render
+        this.deliverablesTab.initEditDeliverablePage(opts).then(function() {
+            // blank
+        }).catch(function(err) {
+            // blank
+        });
     }
 }

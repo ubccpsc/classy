@@ -31,7 +31,7 @@ export class AuthController {
         if (person !== null) {
             // person exists
             const valid = await this.verifyToken(personId, token);
-            Log.trace("AuthController::isValid( " + personId + ", ... ) - " + valid + "; !null person");
+            Log.trace("AuthController::isValid( " + personId + ", ... ) - valid: " + valid + "; !null person");
             return valid;
         } else {
             // person does not exist
@@ -52,8 +52,8 @@ export class AuthController {
 
                 if (person.kind === null || person.kind === '') {
                     // check github for credentials and cache them
-                    const isStaff = await new GitHubActions().isOnStaffTeam(personId);
-                    const isAdmin = await new GitHubActions().isOnAdminTeam(personId);
+                    const isStaff = await GitHubActions.getInstance().isOnStaffTeam(personId);
+                    const isAdmin = await GitHubActions.getInstance().isOnAdminTeam(personId);
                     Log.trace("AuthController::isPrivileged( " + personId + ", ... ) - " +
                         " caching new credentials; admin: " + isAdmin + "; staff: " + isStaff);
 
@@ -70,7 +70,7 @@ export class AuthController {
                     // else {
                     // shouldn't happen: students shouldn't have null kind
                     // person.kind = 'student';
-                    // await dc.writePerson(person);
+                    // await dbc.writePerson(person);
                     // }
                 }
 

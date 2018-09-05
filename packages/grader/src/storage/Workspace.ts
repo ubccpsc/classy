@@ -1,6 +1,6 @@
-import Log from "../../../common/Log";
 import {exec} from "child_process";
 import * as fs from "fs-extra";
+import Log from "../../../common/Log";
 
 export class Workspace {
     public readonly rootDir: string;
@@ -8,7 +8,7 @@ export class Workspace {
 
     constructor(dir: string, uid: number) {
         this.rootDir = dir;
-        this.owner  = uid;
+        this.owner = uid;
     }
 
     // should try and return something more useful

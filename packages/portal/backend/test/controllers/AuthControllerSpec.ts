@@ -111,7 +111,7 @@ describe("AuthController", () => {
         const dc = DatabaseController.getInstance();
         const pc = new PersonController();
 
-        // await dc.getAuth(personId);
+        // await dbc.getAuth(personId);
         let person = await pc.getPerson(Test.ADMIN1.id);
         expect(person.kind).to.not.be.null;
 
@@ -130,7 +130,7 @@ describe("AuthController", () => {
         const dc = DatabaseController.getInstance();
         const pc = new PersonController();
 
-        // await dc.getAuth(personId);
+        // await dbc.getAuth(personId);
         let person = await pc.getPerson(Test.USER1.id);
         expect(person.kind).to.not.be.null;
 

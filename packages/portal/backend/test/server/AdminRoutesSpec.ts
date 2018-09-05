@@ -5,7 +5,6 @@ import * as request from 'supertest';
 
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
-
 import {
     AutoTestResultPayload,
     CourseTransport,
@@ -13,20 +12,20 @@ import {
     DeliverableTransport,
     DeliverableTransportPayload,
     Payload,
+    ProvisionTransport,
     RepositoryPayload,
     StudentTransportPayload,
     TeamTransportPayload
 } from "../../../../common/types/PortalTypes";
+import Util from "../../../../common/Util";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
+import {GitHubActions} from "../../src/controllers/GitHubActions";
 
 import BackendServer from "../../src/server/BackendServer";
 
 import {Test} from "../GlobalSpec";
 import './AuthRoutesSpec';
-// import restify = require('restify');
-// const request = require('supertest');
-// const loadFirst = require("./AuthRoutesSpec");
 
 describe('Admin Routes', function() {
 
@@ -85,8 +84,6 @@ describe('Admin Routes', function() {
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
         expect(body.success).to.be.an('array');
-        // expect(body.success).to.have.lengthOf(101);
-
         // should confirm body.success objects (at least one)
     }).timeout(Test.TIMEOUT);
 
@@ -158,7 +155,6 @@ describe('Admin Routes', function() {
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
         expect(body.success).to.be.an('array');
-        // expect(body.success).to.have.lengthOf(101);
 
         // should confirm body.success objects (at least one)
     }).timeout(Test.TIMEOUT);
@@ -270,32 +266,6 @@ describe('Admin Routes', function() {
         try {
             const deliv = DeliverablesController.deliverableToTransport(
                 Test.createDeliverable('d' + new Date().getTime()));
-
-            // const deliv: DeliverableTransport = {
-            //     id:                'd' + new Date().getTime(),
-            //     openTimestamp:     new Date().getTime(),
-            //     closeTimestamp:    new Date().getTime(),
-            //     minTeamSize:       1,
-            //     maxTeamSize:       1,
-            //     teamsSameLab:      false,
-            //     studentsFormTeams: false,
-            //     onOpenAction:      '',
-            //     onCloseAction:     '',
-            //     URL:               'url',
-            //     gradesReleased:    false,
-            //     repoPrefix:        'r_',
-            //     teamPrefix:        't_',
-            //     autoTest:          {
-            //         dockerImage:        '',
-            //         maxExecTime:        300,
-            //         studentDelay:       10000,
-            //         regressionDelivIds: [],
-            //         custom:             {}
-            //     },
-            //     visibleToStudents: true,
-            //     rubric:            {},
-            //     custom:            {}
-            // };
             response = await request(app).post(url).send(deliv).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
@@ -317,32 +287,6 @@ describe('Admin Routes', function() {
                 Test.createDeliverable('d' + new Date().getTime()));
             deliv.id = null; // make invalid
 
-            // const deliv: DeliverableTransport = {
-            //     id:                null,
-            //     openTimestamp:     new Date().getTime(),
-            //     closeTimestamp:    new Date().getTime(),
-            //     minTeamSize:       1,
-            //     maxTeamSize:       1,
-            //     teamsSameLab:      false,
-            //     studentsFormTeams: false,
-            //     onOpenAction:      '',
-            //     onCloseAction:     '',
-            //     URL:               'url',
-            //     gradesReleased:    false,
-            //     visibleToStudents: true,
-            //     repoPrefix:        'r_',
-            //     teamPrefix:        't_',
-            //
-            //     autoTest: {
-            //         dockerImage:        '',
-            //         maxExecTime:        300,
-            //         studentDelay:       10000,
-            //         regressionDelivIds: [],
-            //         custom:             {}
-            //     },
-            //     rubric:   {},
-            //     custom:   {}
-            // };
             response = await request(app).post(url).send(deliv).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
@@ -371,32 +315,9 @@ describe('Admin Routes', function() {
         let body: Payload;
         const url = '/portal/admin/deliverable';
         try {
-
             const deliv = DeliverablesController.deliverableToTransport(
                 Test.createDeliverable('d' + new Date().getTime()));
 
-            // const deliv: DeliverableTransport = {
-            //     id:                'd' + new Date().getTime(),
-            //     openTimestamp:     new Date().getTime(),
-            //     closeTimestamp:    new Date().getTime(),
-            //     minTeamSize:       1,
-            //     maxTeamSize:       1,
-            //     teamsSameLab:      false,
-            //     studentsFormTeams: false,
-            //     onOpenAction:      '',
-            //     onCloseAction:     '',
-            //     URL:               'url',
-            //     gradesReleased:    false,
-            //     re
-            //     autoTest: {
-            //         dockerImage:        '',
-            //         maxExecTime:        300,
-            //         studentDelay:       10000,
-            //         regressionDelivIds: [],
-            //         custom:             {}
-            //     },
-            //     custom:   {}
-            // };
             response = await request(app).post(url).send(deliv).set({user: Test.USER1.id, token: token});
             body = response.body;
         } catch (err) {
@@ -423,6 +344,8 @@ describe('Admin Routes', function() {
                 id:                d0.id,
                 openTimestamp:     d0.openTimestamp,
                 closeTimestamp:    d0.closeTimestamp,
+                shouldProvision:   d0.shouldProvision,
+                importURL:         d0.importURL,
                 minTeamSize:       d0.teamMinSize,
                 maxTeamSize:       d0.teamMaxSize,
                 teamsSameLab:      d0.teamSameLab,
@@ -434,6 +357,7 @@ describe('Admin Routes', function() {
                 visibleToStudents: d0.visibleToStudents,
                 URL:               d0.URL,
                 gradesReleased:    d0.gradesReleased,
+                shouldAutoTest:    d0.shouldAutoTest,
                 autoTest:          d0.autotest,
                 rubric:            d0.rubric,
                 custom:            d0.custom
@@ -450,7 +374,6 @@ describe('Admin Routes', function() {
             // send an update
             response = await request(app).post(url).send(deliv).set({user: userName, token: userToken});
             body = response.body;
-
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
@@ -496,31 +419,26 @@ describe('Admin Routes', function() {
         let response = null;
         let body: Payload;
         const url = '/portal/admin/classlist';
-        try {
-            response = await request(app).post(url).attach('classlist', __dirname + '/../data/classlistInvalid.csv').set({
-                user:  userName,
-                token: userToken
-            });
-            body = response.body;
-            Log.test(response.status + " -> " + JSON.stringify(body));
-            expect(response.status).to.equal(400);
-            expect(body.failure).to.not.be.undefined;
-            expect(body.failure.message).to.be.an('string'); // test column missing
 
-            response = await request(app).post(url).attach('classlist', __dirname + '/../data/classlistEmpty.csv').set({
-                user:  userName,
-                token: userToken
-            });
-            body = response.body;
-            Log.test(response.status + " -> " + JSON.stringify(body));
-            expect(response.status).to.equal(400);
-            expect(body.failure).to.not.be.undefined;
-            expect(body.failure.message).to.be.an('string'); // test no records found
+        response = await request(app).post(url).attach('classlist', __dirname + '/../data/classlistInvalid.csv').set({
+            user:  userName,
+            token: userToken
+        });
+        body = response.body;
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.failure).to.not.be.undefined;
+        expect(body.failure.message).to.be.an('string'); // test column missing
 
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-            expect.fail('should not happen');
-        }
+        response = await request(app).post(url).attach('classlist', __dirname + '/../data/classlistEmpty.csv').set({
+            user:  userName,
+            token: userToken
+        });
+        body = response.body;
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.failure).to.not.be.undefined;
+        expect(body.failure.message).to.be.an('string'); // test no records found
     });
 
     it('Should be able to upload an updated classlist', async function() {
@@ -554,7 +472,6 @@ describe('Admin Routes', function() {
         expect(person.githubId).to.not.equal(newPerson.githubId); // should have been updated
         expect(person.labId).to.not.equal(newPerson.labId); // should have been updated
         expect(person.studentNumber).to.equal(newPerson.studentNumber); // should be the same
-
     });
 
     it('Should be able to get the course object', async function() {
@@ -572,7 +489,8 @@ describe('Admin Routes', function() {
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
         expect(body.success).to.be.an('object');
-        // TODO: check its properties
+
+        // TODO: check response properties
     });
 
     it('Should be able to update the course object', async function() {
@@ -580,30 +498,27 @@ describe('Admin Routes', function() {
         let response = null;
         let body: Payload;
         const url = '/portal/admin/course';
-        try {
-            const newId = Date.now() + 'id';
 
-            const course: CourseTransport = {
-                id:                   Config.getInstance().getProp(ConfigKey.testname),
-                defaultDeliverableId: newId,
-                custom:               {}
-            };
-            response = await request(app).post(url).send(course).set({user: userName, token: userToken});
-            body = response.body;
-            Log.test(response.status + " -> " + JSON.stringify(body));
-            expect(response.status).to.equal(200);
-            expect(body.success).to.not.be.undefined;
-            expect(body.success.message).to.be.an('string');
+        const newId = Date.now() + 'id';
 
-            // replace the defaultDeliverableId
-            course.defaultDeliverableId = 'd0';
-            response = await request(app).post(url).send(course).set({user: userName, token: userToken});
-            body = response.body;
-            Log.test(response.status + " -> " + JSON.stringify(body));
-            expect(response.status).to.equal(200);
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-        }
+        const course: CourseTransport = {
+            id:                   Config.getInstance().getProp(ConfigKey.testname),
+            defaultDeliverableId: newId,
+            custom:               {}
+        };
+        response = await request(app).post(url).send(course).set({user: userName, token: userToken});
+        body = response.body;
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.message).to.be.an('string');
+
+        // replace the defaultDeliverableId
+        course.defaultDeliverableId = 'd0';
+        response = await request(app).post(url).send(course).set({user: userName, token: userToken});
+        body = response.body;
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
     });
 
     it('Should not be able to update the course object with invalid settings', async function() {
@@ -611,25 +526,205 @@ describe('Admin Routes', function() {
         let response = null;
         let body: Payload;
         const url = '/portal/admin/course';
-        try {
-            const newId = Date.now() + 'id';
 
-            const course: any = {
-                // id: 'some id', // THIS IS A REQUIRED FIELD
-                defaultDeliverableId: newId,
-                custom:               {}
+        const newId = Date.now() + 'id';
+
+        const course: any = {
+            // id: 'some id', // THIS IS A REQUIRED FIELD
+            defaultDeliverableId: newId,
+            custom:               {}
+        };
+        response = await request(app).post(url).send(course).set({user: userName, token: userToken});
+        body = response.body;
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+        expect(body.failure.message).to.be.an('string');
+    });
+
+    describe("Slow AdminRoute Tests", () => {
+
+        beforeEach(function() {
+            const exec = Test.runSlowTest();
+
+            if (exec) {
+                Log.test("AdminRoutesSpec::slowTests - running: " + this.currentTest.title);
+            } else {
+                Log.test("AdminRoutesSpec::slowTests - skipping; will run on CI");
+                this.skip();
+            }
+        });
+
+        /**
+         * With hybrid tests sometimes we need to make sure the cached TestGitHubActions and
+         * live GitHubActions are consistently cleaned.
+         *
+         * @param {string[]} repoNames
+         * @param {string[]} teamNames
+         * @returns {Promise<void>}
+         */
+        async function clearAll(repoNames: string[], teamNames: string[]): Promise<void> {
+            // somettimes we need to clear resources on both github and the cache
+            Log.test("AdminRoutesSpec::clearAll() - start");
+            const start = Date.now();
+
+            const ghCache = GitHubActions.getInstance(false);
+            const ghReal = GitHubActions.getInstance(true);
+
+            for (const repoName of repoNames) {
+                await ghCache.deleteRepo(repoName);
+                await ghReal.deleteRepo(repoName);
+            }
+
+            for (const teamName of teamNames) {
+                const cacheNum = await ghCache.getTeamNumber(teamName);
+                await ghCache.deleteTeam(cacheNum);
+
+                const realNum = await ghCache.getTeamNumber(teamName);
+                await ghReal.deleteTeam(realNum);
+            }
+
+            Log.test("AdminRoutesSpec::clearAll() - done; took: " + Util.took(start));
+        }
+
+        it('Should be able to provision a deliverable', async function() {
+
+            const dbc = DatabaseController.getInstance();
+            await dbc.clearData();
+
+            await clearAll([Test.REPONAMEREAL], []);
+
+            // const gha = GitHubActions.getInstance();
+            // await gha.deleteRepo(Test.REPONAMEREAL);
+
+            await Test.prepareAllReal(); // create a valid set of users and teams
+
+            let response = null;
+            let body: Payload;
+            const url = '/portal/admin/provision';
+
+            const provision: ProvisionTransport = {
+                delivId:    Test.DELIVID0,
+                formSingle: false
             };
-            response = await request(app).post(url).send(course).set({user: userName, token: userToken});
+            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
             body = response.body;
-            Log.test(response.status + " -> " + JSON.stringify(body));
+            Log.test('first provision: ' + response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(200);
+            expect(body.success).to.not.be.undefined;
+            expect(body.success).to.be.an('array');
+            expect(body.success.length).to.be.greaterThan(0);
+
+            // provision again; should not make anything new
+            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+            body = response.body;
+            Log.test('second provision: ' + response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(200);
+            expect(body.success).to.be.an('array');
+            expect(body.success.length).to.equal(0);
+
+        }).timeout(Test.TIMEOUTLONG);
+
+        it('Should fail to provision a deliverable if invalid options are given', async function() {
+
+            let response = null;
+            let body: Payload;
+            const url = '/portal/admin/provision';
+
+            const provision: ProvisionTransport = {
+                delivId:    Test.DELIVID0,
+                formSingle: false
+            };
+            // bad token
+            response = await request(app).post(url).send(provision).set({user: userName, token: Test.FAKETOKEN});
+            body = response.body;
+            Log.test('bad token: ' + response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(401);
+            expect(body.success).to.be.undefined;
+            expect(body.failure).to.not.be.undefined;
+
+            // invalid deliverable
+            provision.delivId = 'FAKEDELIVERABLE';
+            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+            body = response.body;
+            Log.test('invalid deliverable: ' + response.status + " -> " + JSON.stringify(body));
             expect(response.status).to.equal(400);
             expect(body.success).to.be.undefined;
             expect(body.failure).to.not.be.undefined;
-            expect(body.failure.message).to.be.an('string');
 
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-        }
+            // non-provisioning deliverable
+            provision.delivId = Test.DELIVID1;
+            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+            body = response.body;
+            Log.test('non-provisioning deliverable: ' + response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(400);
+            expect(body.success).to.be.undefined;
+            expect(body.failure).to.not.be.undefined;
+        });
+
+        it('Should be able to release a deliverable', async function() {
+
+            let response = null;
+            let body: Payload;
+            const url = '/portal/admin/release';
+
+            const provision: ProvisionTransport = {
+                delivId:    Test.DELIVID0,
+                formSingle: false
+            };
+            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+            body = response.body;
+            Log.test('first release: ' + response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(200);
+            expect(body.success).to.not.be.undefined;
+            expect(body.success).to.be.an('array');
+            expect(body.success.length).to.be.greaterThan(0);
+
+            // release again; should not release anything new
+            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+            body = response.body;
+            Log.test('second release: ' + response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(200);
+            expect(body.success).to.be.an('array');
+            expect(body.success.length).to.equal(0);
+        }).timeout(Test.TIMEOUTLONG);
+
+        it('Should fail to release a deliverable if invalid options are given', async function() {
+
+            let response = null;
+            let body: Payload;
+            const url = '/portal/admin/release';
+
+            const provision: ProvisionTransport = {
+                delivId:    Test.DELIVID0,
+                formSingle: false
+            };
+            // bad token
+            response = await request(app).post(url).send(provision).set({user: userName, token: Test.FAKETOKEN});
+            body = response.body;
+            Log.test('bad token: ' + response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(401);
+            expect(body.success).to.be.undefined;
+            expect(body.failure).to.not.be.undefined;
+
+            // invalid deliverable
+            provision.delivId = 'FAKEDELIVERABLE';
+            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+            body = response.body;
+            Log.test('invalid deliverable: ' + response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(400);
+            expect(body.success).to.be.undefined;
+            expect(body.failure).to.not.be.undefined;
+
+            // non-provisioning deliverable
+            provision.delivId = Test.DELIVID1;
+            response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
+            body = response.body;
+            Log.test('non-provisioning deliverable: ' + response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(400);
+            expect(body.success).to.be.undefined;
+            expect(body.failure).to.not.be.undefined;
+        });
     });
-
 });

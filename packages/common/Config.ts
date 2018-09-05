@@ -1,13 +1,12 @@
-const dotenv = require('dotenv');
-const result = dotenv.config({path: __dirname + '/../../.env'});
-
+import * as dotenv from 'dotenv';
 import Log, {LogLevel} from "./Log";
+// const dotenv = require('dotenv');
+const result = dotenv.config({path: __dirname + '/../../.env'});
 
 if (result.error) {
     Log.error("Failed to parse .env " + result.error);
-    throw result.error
+    throw result.error;
 }
-
 
 /**
  * Master list of courses supported by Classy. Config.name should
@@ -52,8 +51,6 @@ export enum ConfigKey {
 
     // autotest
     persistDir = "persistDir",
-    // githubOracleToken = "githubOracleToken",
-    // githubOrgToken = "githubOrgToken",
     dockerId = "dockerId",
     workspace = "workspace",
     graderUrl = "graderUrl",
@@ -92,7 +89,6 @@ export default class Config {
                 workspace:  process.env.GRADER_WORKSPACE,
                 postback:   Boolean(process.env.AUTOTEST_POSTBACK),
                 persistDir: process.env.GRADER_PERSIST_DIR,
-
 
                 timeout: Number(process.env.GRADER_TIMEOUT),
                 botName: process.env.GH_BOT_USERNAME,
