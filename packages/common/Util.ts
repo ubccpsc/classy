@@ -13,7 +13,7 @@ export default class Util {
     // // just a useful delay function for when we need to wait for GH to do something
     // // or we want a test to be able to slow itself down
     // public static delay(ms: number): Promise<{}> {
-    //     // Log.info("GitHubActions::delay( " + ms + " ) - start: " + Date.now());
+    //     // Log.info("Util::delay( " + ms + " ) - start: " + Date.now());
     //
     //     const waitComplete = function() {
     //         // blank
@@ -33,7 +33,7 @@ export default class Util {
         // logger.info("GitHubActions::delay( " + ms + ") - start");
         return new Promise(function(resolve) {
             const fire = new Date(new Date().getTime() + ms);
-            Log.info("GitHubAction::delay( " + ms + " ms ) - waiting; will trigger at " + fire.toLocaleTimeString());
+            Log.info("Util::delay( " + ms + " ms ) - waiting; will trigger at " + fire.toLocaleTimeString());
             setTimeout(resolve, ms);
         });
     }

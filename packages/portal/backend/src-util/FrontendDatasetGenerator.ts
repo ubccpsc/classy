@@ -2,6 +2,7 @@ import Log from "../../../common/Log";
 import {CourseController} from "../src/controllers/CourseController";
 /* istanbul ignore file */
 import {DatabaseController} from "../src/controllers/DatabaseController";
+import {GitHubActions} from "../src/controllers/GitHubActions";
 import {GitHubController} from "../src/controllers/GitHubController";
 import {TeamController} from "../src/controllers/TeamController";
 import {Factory} from "../src/Factory";
@@ -10,7 +11,7 @@ import {Test} from "../test/GlobalSpec";
 export class FrontendDatasetGenerator {
 
     private dc: DatabaseController = null;
-    private cc: CourseController = Factory.getCourseController(new GitHubController());
+    private cc: CourseController = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
 
     constructor() {
         this.dc = DatabaseController.getInstance();

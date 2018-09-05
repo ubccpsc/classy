@@ -190,6 +190,11 @@ export class GitHubActions implements IGitHubActions {
 
     public static getInstance(forceReal?: boolean): IGitHubActions {
 
+        const override = false; // Sometimes we will want to run against the full live GitHub suite
+
+        if (override) {
+            forceReal = true;
+        }
         if (typeof forceReal === 'undefined') {
             forceReal = false;
         }

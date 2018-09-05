@@ -541,8 +541,9 @@ export abstract class CourseController implements ICourseController {
      * @returns {Promise<Repository[]>}
      */
     public async provisionRepositories(repos: Repository[], importURL: string): Promise<RepositoryTransport[]> {
-        const ghc = new GitHubController();
         const gha = GitHubActions.getInstance(true);
+        const ghc = new GitHubController(gha);
+
         const config = Config.getInstance();
         const dbc = DatabaseController.getInstance();
 
@@ -630,8 +631,8 @@ export abstract class CourseController implements ICourseController {
     }
 
     private async releaseRepositories(repos: Repository[]): Promise<RepositoryTransport[]> {
-        const ghc = new GitHubController();
         const gha = GitHubActions.getInstance(true);
+        const ghc = new GitHubController(gha);
 
         Log.info("CourseController::releaseRepositories( .. ) - start; # repos: " + repos.length);
         const releasedRepos = [];

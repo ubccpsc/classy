@@ -30,7 +30,7 @@ describe("CS340: RubricController", () => {
     const rc: RepositoryController = new RepositoryController();
     const dc: DeliverablesController = new DeliverablesController();
     const pc: PersonController = new PersonController();
-    const gh: GitHubController = new GitHubController();
+    const gh: GitHubController = new GitHubController(GitHubActions.getInstance());
     let gha: IGitHubActions;
     let db: DatabaseController = DatabaseController.getInstance();
     const rbc: RubricController = new RubricController();
@@ -91,7 +91,7 @@ describe("CS340: RubricController", () => {
         expect(assignmentInfo).to.not.be.null;
         expect(typeof assignmentInfo.rubric).to.not.be.equal("undefined");
         expect(assignmentInfo.rubric.questions.length).to.be.greaterThan(0);
-    });
+    }).timeout(Test.TIMEOUT);
 
     it("Should not update if specified a non-assignment.", async () => {
         const success = await rbc.updateRubric(Test.DELIVID0);

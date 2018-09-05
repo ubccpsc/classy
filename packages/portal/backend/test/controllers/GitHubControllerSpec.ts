@@ -79,7 +79,7 @@ describe("GitHubController", () => {
         const exec = Test.runSlowTest();
         if (exec === true) {
             Log.test("GitHubController::beforeEach() - running in CI; not skipping");
-            gc = new GitHubController();
+            gc = new GitHubController(GitHubActions.getInstance(true));
         } else {
             Log.test("GitHubController::beforeEach() - skipping (not CI)");
             this.skip();

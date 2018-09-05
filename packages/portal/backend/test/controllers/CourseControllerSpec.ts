@@ -37,9 +37,10 @@ describe("CourseController", () => {
     });
 
     beforeEach(() => {
-        const ghInstance = new GitHubController();
-        cc = Factory.getCourseController(new GitHubController());
         gha = GitHubActions.getInstance(true);
+        const ghInstance = new GitHubController(gha);
+        cc = Factory.getCourseController(ghInstance);
+
         rc = new RepositoryController();
         gc = new GradesController();
         tc = new TeamController();

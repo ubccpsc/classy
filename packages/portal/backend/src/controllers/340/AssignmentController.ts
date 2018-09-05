@@ -36,7 +36,7 @@ export class AssignmentController {
     private rc: RepositoryController = new RepositoryController();
     private tc: TeamController = new TeamController();
     private dc: DeliverablesController = new DeliverablesController();
-    private ghc: GitHubController = new GitHubController();
+    private ghc: GitHubController = new GitHubController(GitHubActions.getInstance());
     private pc: PersonController = new PersonController();
     private gha: IGitHubActions = GitHubActions.getInstance();
     private sc: ScheduleController = ScheduleController.getInstance();

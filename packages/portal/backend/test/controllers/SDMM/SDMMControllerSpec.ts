@@ -91,7 +91,7 @@ describe("SDMM: SDMMController", () => {
 
         const ci = process.env.CI;
         if (typeof ci !== 'undefined' && Boolean(ci) === true) {
-            ghInstance = new GitHubController();
+            ghInstance = new GitHubController(GitHubActions.getInstance(true));
         } else {
             ghInstance = new TestGitHubController();
         }

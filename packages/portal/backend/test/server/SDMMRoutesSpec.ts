@@ -27,6 +27,7 @@ describe('SDMM Routes', function() {
     let server: BackendServer = null;
 
     const gha = GitHubActions.getInstance();
+    const ghc = new GitHubController(gha);
 
     const OLDNAME = Config.getInstance().getProp(ConfigKey.name);
     const OLDORG = Config.getInstance().getProp(ConfigKey.org);
@@ -142,8 +143,8 @@ describe('SDMM Routes', function() {
     it('Should respond to a valid status request.', async function() {
         const dc: DatabaseController = DatabaseController.getInstance();
 
-        const ghInstance = new GitHubController();
-        const sc = new SDMMController(ghInstance);
+        // const ghInstance = new GitHubController();
+        const sc = new SDMMController(ghc);
 
         // create some users
         let p = await sc.handleUnknownUser(Test.USERNAMEGITHUB1);

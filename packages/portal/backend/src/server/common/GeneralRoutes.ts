@@ -15,6 +15,7 @@ import {
 
 import {AuthController} from "../../controllers/AuthController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
+import {GitHubActions} from "../../controllers/GitHubActions";
 import {GitHubController} from "../../controllers/GitHubController";
 import {GradesController} from "../../controllers/GradesController";
 import {PersonController} from "../../controllers/PersonController";
@@ -189,7 +190,7 @@ export default class GeneralRoutes implements IREST {
                 throw new Error('Users cannot form teams they are not going to join.');
             }
 
-            const cc = Factory.getCourseController(new GitHubController());
+            const cc = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
             const deliv = await dc.getDeliverable(requestedTeam.delivId);
             const names = await cc.computeNames(deliv, people);
 

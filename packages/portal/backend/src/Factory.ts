@@ -4,6 +4,7 @@ import {CS340Controller} from "./controllers/340/CS340Controller";
 
 import {CourseController} from "./controllers/CourseController";
 import {CS310Controller} from "./controllers/cs310/CS310Controller";
+import {GitHubActions} from "./controllers/GitHubActions";
 import {GitHubController, IGitHubController} from "./controllers/GitHubController";
 import {SDMMController} from "./controllers/SDMM/SDMMController";
 import CS340REST from "./server/340/CS340REST";
@@ -60,7 +61,7 @@ export class Factory {
         // }
 
         if (typeof ghController === 'undefined') {
-            ghController = new GitHubController();
+            ghController = new GitHubController(GitHubActions.getInstance());
         } else {
             // really only for testing
             Log.trace("Factory::getCourseController() - using provided controller");
