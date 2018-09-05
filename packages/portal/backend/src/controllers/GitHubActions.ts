@@ -186,12 +186,14 @@ export class GitHubActions implements IGitHubActions {
     }
 
     public static getInstance(forceReal?: boolean): IGitHubActions {
-        if (typeof forceReal !== 'undefined' && forceReal === true) {
-            return new GitHubActions();
-        } else {
-            // for now
-            return new GitHubActions();
-        }
+        // if (typeof forceReal !== 'undefined' && forceReal === true) {
+        //     return new GitHubActions();
+        // } else {
+        //     // for now
+        //     return new GitHubActions();
+        // }
+        return new GitHubActions();
+        // return new TestGitHubActions();
     }
 
     public setPageSize(size: number) {

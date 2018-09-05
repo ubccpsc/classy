@@ -92,7 +92,7 @@ describe("ClassPortal Service", () => {
             const actual = res.studentDelay;
             expect(actual).to.equal(43200);
         } catch (err) {
-            expect.fail("Should not happen");
+            expect.fail("Should not happen: " + err.message);
         }
     });
 
@@ -102,7 +102,7 @@ describe("ClassPortal Service", () => {
             const actual = res.dockerImage;
             expect(actual).to.equal("testImage");
         } catch (err) {
-            expect.fail("Should not happen");
+            expect.fail("Should not happen: " + err.message);
         }
     });
 

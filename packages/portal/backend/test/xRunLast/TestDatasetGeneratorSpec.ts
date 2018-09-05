@@ -11,9 +11,10 @@ import {TeamController} from "../../src/controllers/TeamController";
 import {Auth, Course, Deliverable, Person} from "../../src/Types";
 
 import {Test} from "../GlobalSpec";
+import "../server/SDMMRoutesSpec"; // try to run last
 // const loadFirst = require('../GlobalSpec');
 
-describe.skip('TestDatasetGenerator', function() {
+describe('TestDatasetGenerator', function() {
 
     it('Can generate the course object', async function() {
         const dc: DatabaseController = DatabaseController.getInstance();
