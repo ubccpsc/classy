@@ -85,26 +85,28 @@ describe("ClassPortal Service", () => {
         }
     });
 
-    it("Should return the test delay in seconds for a course.", async () => {
-        try {
-            const res = await cp.getContainerDetails("d0");
-            expect(res).to.not.be.null;
-            const actual = res.studentDelay;
-            expect(actual).to.equal(43200);
-        } catch (err) {
-            expect.fail("Should not happen: " + err.message);
-        }
-    });
+    // Tested in the backend (AutoTestRouteSpec)
+    // it("Should return the test delay in seconds for a course.", async () => {
+    //     try {
+    //         const res = await cp.getContainerDetails("d0");
+    //         expect(res).to.not.be.null;
+    //         const actual = res.studentDelay;
+    //         expect(actual).to.equal(43200);
+    //     } catch (err) {
+    //         expect.fail("Should not happen: " + err.message);
+    //     }
+    // });
 
-    it("Should return a container id for an existing course.", async () => {
-        try {
-            const res = await cp.getContainerDetails("d0");
-            const actual = res.dockerImage;
-            expect(actual).to.equal("testImage");
-        } catch (err) {
-            expect.fail("Should not happen: " + err.message);
-        }
-    });
+    // Tested in the backend (AutoTestRouteSpec)
+    // it("Should return a container id for an existing course.", async () => {
+    //     try {
+    //         const res = await cp.getContainerDetails("d0");
+    //         const actual = res.dockerImage;
+    //         expect(actual).to.equal("testImage");
+    //     } catch (err) {
+    //         expect.fail("Should not happen: " + err.message);
+    //     }
+    // });
 
     it("Should return a null container id if delivId does not exist.", async () => {
         try {
