@@ -7,7 +7,7 @@ import {AssignmentController} from "../../../src/controllers/340/AssignmentContr
 import {RubricController} from "../../../src/controllers/340/RubricController";
 import {DatabaseController} from "../../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../../src/controllers/DeliverablesController";
-import {GitHubActions} from "../../../src/controllers/GitHubActions";
+import {GitHubActions, IGitHubActions} from "../../../src/controllers/GitHubActions";
 import {GitHubController} from "../../../src/controllers/GitHubController";
 import {GradesController} from "../../../src/controllers/GradesController";
 import {PersonController} from "../../../src/controllers/PersonController";
@@ -31,7 +31,7 @@ describe("CS340: RubricController", () => {
     const dc: DeliverablesController = new DeliverablesController();
     const pc: PersonController = new PersonController();
     const gh: GitHubController = new GitHubController();
-    let gha: GitHubActions;
+    let gha: IGitHubActions;
     let db: DatabaseController = DatabaseController.getInstance();
     const rbc: RubricController = new RubricController();
 
@@ -48,7 +48,7 @@ describe("CS340: RubricController", () => {
         // get data ready
         await Test.prepareAll();
 
-        gha = new GitHubActions();
+        gha = GitHubActions.getInstance();
 
         // create assignment Deliverables
         await Test.prepareAssignment();

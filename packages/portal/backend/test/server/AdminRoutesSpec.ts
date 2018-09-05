@@ -559,7 +559,7 @@ describe('Admin Routes', function() {
 
             const dbc = DatabaseController.getInstance();
             await dbc.clearData();
-            const gha = new GitHubActions();
+            const gha = GitHubActions.getInstance();
             await gha.deleteRepo(Test.REPONAMEREAL);
 
             await Test.prepareAllReal(); // create a valid set of users and teams

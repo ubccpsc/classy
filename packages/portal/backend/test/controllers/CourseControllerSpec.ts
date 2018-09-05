@@ -8,7 +8,7 @@ import {AutoTestGradeTransport, GradeTransport, StudentTransport, TeamTransport}
 import {CourseController} from "../../src/controllers/CourseController";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
-import {GitHubActions} from "../../src/controllers/GitHubActions";
+import {GitHubActions, IGitHubActions} from "../../src/controllers/GitHubActions";
 import {GitHubController} from "../../src/controllers/GitHubController";
 import {GradesController} from "../../src/controllers/GradesController";
 import {PersonController} from "../../src/controllers/PersonController";
@@ -29,6 +29,7 @@ describe("CourseController", () => {
     let rc: RepositoryController;
     let pc: PersonController;
     let dc: DeliverablesController;
+    let gha: IGitHubActions;
 
     before(async () => {
         await Test.suiteBefore('CourseController');
@@ -38,6 +39,7 @@ describe("CourseController", () => {
     beforeEach(() => {
         const ghInstance = new GitHubController();
         cc = Factory.getCourseController(new GitHubController());
+        gha = GitHubActions.getInstance();
         rc = new RepositoryController();
         gc = new GradesController();
         tc = new TeamController();
@@ -65,7 +67,6 @@ describe("CourseController", () => {
         await dbc.clearData();
 
         // clear github teams and repositories we will end up provisioning
-        const gha = new GitHubActions();
         await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
         await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB3);
         await gha.deleteRepo(Test.REPONAME1);
@@ -375,7 +376,6 @@ describe("CourseController", () => {
             expect(allNewRepos.length).to.equal(1);
             expect(allNewTeams.length).to.equal(1);
 
-            const gha = new GitHubActions();
             const teamNum = await gha.getTeamNumber(allNewTeams[0].id);
             expect(teamNum).to.be.greaterThan(0); // should be provisioned
 
@@ -423,7 +423,6 @@ describe("CourseController", () => {
 
             expect(allRepos.length).to.equal(0);
             expect(allTeams.length).to.equal(1);
-            const gha = new GitHubActions();
             let teamNum = await gha.getTeamNumber(allTeams[0].id);
             expect(teamNum).to.be.lessThan(0); // should not be provisioned yet
 

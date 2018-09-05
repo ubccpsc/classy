@@ -76,7 +76,7 @@ export class GitHubController implements IGitHubController {
 
         const startTime = Date.now();
 
-        const gh = new GitHubActions();
+        const gh = GitHubActions.getInstance(true);
 
         Log.trace("GitHubController::createRepository(..) - see if repo already exists");
         const repoVal = await gh.repoExists(repoName);
@@ -152,7 +152,7 @@ export class GitHubController implements IGitHubController {
 
         await this.checkDatabase(repo.id, null);
 
-        const gh = new GitHubActions();
+        const gh = GitHubActions.getInstance(true);
 
         for (const team of teams) {
             if (asCollaborators) {
@@ -215,7 +215,7 @@ export class GitHubController implements IGitHubController {
             // return false;
         }
 
-        const gh = new GitHubActions();
+        const gh = GitHubActions.getInstance(true);
         const repoExists = await gh.repoExists(repoName);
         Log.trace('GitHubController::provisionRepository(..) - repo exists: ' + repoExists);
         if (repoExists === true) {
@@ -385,6 +385,7 @@ export class GitHubController implements IGitHubController {
 }
 
 /* istanbul ignore next */
+
 // tslint:disable-next-line
 export class TestGitHubController implements IGitHubController {
 

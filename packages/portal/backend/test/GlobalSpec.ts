@@ -10,7 +10,7 @@ import Util from "../../../common/Util";
 
 import {DatabaseController} from "../src/controllers/DatabaseController";
 import {DeliverablesController} from "../src/controllers/DeliverablesController";
-import {GitHubActions} from "../src/controllers/GitHubActions";
+import {GitHubActions, IGitHubActions} from "../src/controllers/GitHubActions";
 import {GradesController} from "../src/controllers/GradesController";
 import {PersonController} from "../src/controllers/PersonController";
 import {RepositoryController} from "../src/controllers/RepositoryController";
@@ -518,8 +518,8 @@ export class Test {
      */
     public static runSlowTest() {
         // set to true if you want to run these slow tests locally (they will always run on CI)
-        const override = false; // NOTE: should NOT be commented out when committing
-        // const override = true; // NOTE: should be commented out when committing
+        // const override = false; // NOTE: should NOT be commented out when committing
+        const override = true; // NOTE: should be commented out when committing
 
         const ci = process.env.CI;
         if (override || typeof ci !== 'undefined' && Boolean(ci) === true) {
@@ -536,6 +536,7 @@ export class Test {
     public static readonly TEAMNAME3 = 'TESTteam3';
     public static readonly TEAMNAME4 = 'TESTteam4';
     public static readonly TEAMNAMEREAL = 't_d0_cpscbot_rthse2';
+    public static readonly INVALIDTEAMNAME = "InvalidTeamNameShouldNotExist";
 
     public static readonly USER1 = {id: 'user1id', csId: 'user1id', github: 'user1gh'};
     public static readonly USER2 = {id: 'user2id', csId: 'user2id', github: 'user2gh'};
@@ -572,6 +573,7 @@ export class Test {
     public static readonly REPONAME2 = 'TESTrepo2';
     public static readonly REPONAME3 = 'TESTrepo3';
     public static readonly REPONAMEREAL = 'd0_cpscbot_rthse2';
+    public static readonly INVALIDREPONAME = "InvalidRepoNameShouldNotExist";
 
     public static readonly REALTOKEN = 'realtoken';
     public static readonly FAKETOKEN = 'faketoken';
@@ -749,7 +751,7 @@ export class Test {
 
     public static async deleteStaleRepositories(): Promise<boolean> {
         Log.test('GlobalSpec::deleteStaleRepositories() - start');
-        const gh: GitHubActions = new GitHubActions();
+        const gh: IGitHubActions = GitHubActions.getInstance(true);
         const repos = await gh.listRepos();
 
         const TESTREPONAMES = [
@@ -763,7 +765,8 @@ export class Test {
             "TESTrepo3",
             "a0__rthse2",
             "a0_rthse2",
-            this.REPONAME1
+            this.REPONAME1,
+            this.REPONAMEREAL
         ];
 
         const TESTTEAMNAMES = [
@@ -774,7 +777,8 @@ export class Test {
             "TEST__X__t_TESTteam1",
             "TESTteam1",
             "TESTteam2",
-            "TESTteam3"
+            "TESTteam3",
+            this.TEAMNAMEREAL
         ];
 
         const DELAY_SHORT = 200;
@@ -788,7 +792,7 @@ export class Test {
                 if (repo.name === r) {
                     Log.info('Removing stale repo: ' + repo.name);
                     const val = await gh.deleteRepo(r);
-                    await gh.delay(DELAY_SHORT);
+                    await Util.delay(DELAY_SHORT);
                     // expect(val).to.be.true;
                 }
             }
@@ -828,7 +832,7 @@ export class Test {
                 ) {
                     Log.test("Removing stale team: " + team.name);
                     const val = await gh.deleteTeam(team.id);
-                    await gh.delay(DELAY_SHORT);
+                    await Util.delay(DELAY_SHORT);
                     done = true;
                 }
             }
@@ -836,7 +840,7 @@ export class Test {
                 if (team.name.startsWith(TEAMNAME) === true) {
                     Log.test("Removing stale team: " + team.name);
                     await gh.deleteTeam(team.id);
-                    await gh.delay(DELAY_SHORT);
+                    await Util.delay(DELAY_SHORT);
                 }
             }
         }

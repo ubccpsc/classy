@@ -6,7 +6,7 @@ import {ActionPayload, GradePayload, SDMMStatus} from "../../../../../common/typ
 
 import {DatabaseController} from "../../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../../src/controllers/DeliverablesController";
-import {GitHubActions} from "../../../src/controllers/GitHubActions";
+import {GitHubActions, IGitHubActions} from "../../../src/controllers/GitHubActions";
 import {GitHubController, IGitHubController, TestGitHubController} from "../../../src/controllers/GitHubController";
 import {GradesController} from "../../../src/controllers/GradesController";
 import {PersonController} from "../../../src/controllers/PersonController";
@@ -60,7 +60,8 @@ describe("SDMM: SDMMController", () => {
     let tc: TeamController;
     let rc: RepositoryController;
     let pc: PersonController;
-    let dc: DatabaseController;
+    let dba: DatabaseController;
+    let gha: IGitHubActions;
 
     let data: TestData;
 
@@ -117,12 +118,12 @@ describe("SDMM: SDMMController", () => {
         gc = new GradesController();
         tc = new TeamController();
         pc = new PersonController();
-        dc = DatabaseController.getInstance();
+        dba = DatabaseController.getInstance();
+        gha = GitHubActions.getInstance(true);
     });
 
     it("Should be able to clear stale state", async function() {
         Log.test("Clearing state");
-        const gha = new GitHubActions();
 
         await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB1);
         await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB2);
@@ -176,7 +177,7 @@ describe("SDMM: SDMMController", () => {
         expect(status.status).to.equal("D0PRE");
 
         const person = await pc.getPerson(data.PERSON1.id);
-        const deliv = await dc.getDeliverable('d0');
+        const deliv = await dba.getDeliverable('d0');
         const team = await tc.createTeam(data.TEAMD0, deliv, [person], {sdmmd0: true});
         const repo = await rc.createRepository(data.REPOD0, deliv, [team], {d0enabled: true});
         expect(repo).to.not.be.null;
@@ -219,7 +220,7 @@ describe("SDMM: SDMMController", () => {
         expect(status.status).to.equal("D1UNLOCKED");
 
         const person = await pc.getPerson(data.PERSON1.id);
-        const deliv = await dc.getDeliverable('d1');
+        const deliv = await dba.getDeliverable('d1');
         const team = await tc.createTeam(data.TEAMD1, deliv, [person], {sdmmd1: true});
         expect(team).to.not.be.null;
 
@@ -231,7 +232,7 @@ describe("SDMM: SDMMController", () => {
         let status = await sc.getStatus(data.PERSON1.id);
         expect(status.status).to.equal("D1TEAMSET");
 
-        const deliv = await dc.getDeliverable('d1');
+        const deliv = await dba.getDeliverable('d1');
         const team = await tc.getTeam(data.TEAMD1);
         const repo = await rc.createRepository(data.REPOD1, deliv, [team], {d1enabled: true});
         expect(repo).to.not.be.null;
@@ -642,13 +643,12 @@ describe("SDMM: SDMMController", () => {
     }).timeout(Test.TIMEOUT);
 
     it("Should create a new unknown person.", async () => {
-        const db = DatabaseController.getInstance();
-        const oldPeople = await db.getPeople();
+        const oldPeople = await dba.getPeople();
 
         const res = await sc.handleUnknownUser('unknownPerson' + Date.now());
         expect(res).to.not.be.null;
 
-        const newPepople = await db.getPeople();
+        const newPepople = await dba.getPeople();
         expect(oldPeople.length + 1).to.equal(newPepople.length);
     }).timeout(Test.TIMEOUT);
 
@@ -736,7 +736,6 @@ describe("SDMM: SDMMController", () => {
 
     it("Should be able to clear state after suite is done.", async function() {
         Log.test("Clearing state");
-        const gha = new GitHubActions();
         const dataC = DatabaseController.getInstance();
 
         const repos = await dataC.getRepositories();

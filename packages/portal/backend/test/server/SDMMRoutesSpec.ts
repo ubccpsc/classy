@@ -26,6 +26,8 @@ describe('SDMM Routes', function() {
     let app: restify.Server = null;
     let server: BackendServer = null;
 
+    const gha = GitHubActions.getInstance();
+
     const OLDNAME = Config.getInstance().getProp(ConfigKey.name);
     const OLDORG = Config.getInstance().getProp(ConfigKey.org);
     // const user1id = Test.REALUSER1.github; // sdmm only uses github
@@ -74,7 +76,6 @@ describe('SDMM Routes', function() {
         Log.test('SDMMRoutesSpec::clearGithub() - start');
 
         // clear repos from github
-        const gha = new GitHubActions();
         await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB1);
         await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB2);
         await gha.deleteRepo('TEST__X__p_cpscbot');
@@ -332,7 +333,6 @@ describe('SDMM Routes', function() {
             let response = null;
             const url = '/portal/sdmm/performAction/provisionD1team/somerandmomusernamethatdoesnotexist';
             try {
-                const gha = new GitHubActions();
                 await gha.deleteRepo('secap_' + Test.USERNAMEGITHUB1); // make sure the repo doesn't exist
 
                 const name = Config.getInstance().getProp(ConfigKey.name);

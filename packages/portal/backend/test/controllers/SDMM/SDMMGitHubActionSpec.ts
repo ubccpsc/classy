@@ -6,7 +6,7 @@ import Log from "../../../../../common/Log";
 import {ActionPayload, GradePayload} from "../../../../../common/types/SDMMTypes";
 import Util from "../../../../../common/Util";
 
-import {GitHubActions} from "../../../src/controllers/GitHubActions";
+import {GitHubActions, IGitHubActions} from "../../../src/controllers/GitHubActions";
 import {GitHubController} from "../../../src/controllers/GitHubController";
 import {GradesController} from "../../../src/controllers/GradesController";
 import {SDMMController} from "../../../src/controllers/SDMM/SDMMController";
@@ -19,7 +19,7 @@ import "./SDMMControllerSpec";
 
 describe.skip("SDMM:: SDMMGitHubActions", () => {
 
-    let gh: GitHubActions;
+    let gh: IGitHubActions;
 
     const TIMEOUT = 5000;
 
@@ -40,7 +40,7 @@ describe.skip("SDMM:: SDMMGitHubActions", () => {
     });
 
     beforeEach(function() {
-        gh = new GitHubActions();
+        gh = GitHubActions.getInstance();
     });
 
     const TESTREPONAMES = ["testtest__repo1",

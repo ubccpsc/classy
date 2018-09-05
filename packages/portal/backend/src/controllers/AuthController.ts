@@ -52,8 +52,8 @@ export class AuthController {
 
                 if (person.kind === null || person.kind === '') {
                     // check github for credentials and cache them
-                    const isStaff = await new GitHubActions().isOnStaffTeam(personId);
-                    const isAdmin = await new GitHubActions().isOnAdminTeam(personId);
+                    const isStaff = await GitHubActions.getInstance().isOnStaffTeam(personId);
+                    const isAdmin = await GitHubActions.getInstance().isOnAdminTeam(personId);
                     Log.trace("AuthController::isPrivileged( " + personId + ", ... ) - " +
                         " caching new credentials; admin: " + isAdmin + "; staff: " + isStaff);
 

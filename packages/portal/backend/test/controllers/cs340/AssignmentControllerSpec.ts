@@ -8,7 +8,7 @@ import {AssignmentGrade, AssignmentStatus} from "../../../../../common/types/CS3
 import {AssignmentController} from "../../../src/controllers/340/AssignmentController";
 import {DatabaseController} from "../../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../../src/controllers/DeliverablesController";
-import {GitHubActions} from "../../../src/controllers/GitHubActions";
+import {GitHubActions, IGitHubActions} from "../../../src/controllers/GitHubActions";
 import {GitHubController} from "../../../src/controllers/GitHubController";
 
 import {GradesController} from "../../../src/controllers/GradesController";
@@ -52,8 +52,8 @@ describe("CS340: AssignmentController", () => {
     const dc: DeliverablesController = new DeliverablesController();
     const pc: PersonController = new PersonController();
     const gh: GitHubController = new GitHubController();
-    let gha: GitHubActions;
-    let db: DatabaseController = DatabaseController.getInstance();
+    const gha: IGitHubActions = GitHubActions.getInstance();
+    const db: DatabaseController = DatabaseController.getInstance();
 
     let numberOfStudents: number;
 
@@ -64,7 +64,6 @@ describe("CS340: AssignmentController", () => {
         await Test.suiteBefore('CS340: AssignmentController');
 
         // clear stale data
-        db = DatabaseController.getInstance();
         await db.clearData();
 
         // get data ready
@@ -72,8 +71,6 @@ describe("CS340: AssignmentController", () => {
 
         const peopleList = await pc.getAllPeople();
         numberOfStudents = peopleList.length;
-
-        gha = new GitHubActions();
 
         // create assignment Deliverables
         await Test.prepareAssignment();
@@ -411,7 +408,6 @@ describe("CS340: AssignmentController", () => {
 
         before(async function() {
             Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
-            gha = new GitHubActions();
 
             await db.clearData();
             await resetData();
@@ -633,7 +629,6 @@ describe("CS340: AssignmentController", () => {
     describe("Students adding/dropping course in the middle of the course.", () => {
         before(async function() {
             Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
-            gha = new GitHubActions();
         });
 
         after(async function() {

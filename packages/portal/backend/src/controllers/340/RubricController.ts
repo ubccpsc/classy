@@ -9,7 +9,7 @@ import {
 } from "../../../../../common/types/CS340Types";
 import {Deliverable} from "../../Types";
 import {DatabaseController} from "../DatabaseController";
-import {GitHubActions} from "../GitHubActions";
+import {GitHubActions, IGitHubActions} from "../GitHubActions";
 
 // tslint:disable-next-line
 const tmp = require('tmp-promise');
@@ -22,7 +22,7 @@ export class RubricController {
     // private dbc: DeliverablesController = new DeliverablesController();
     // private ghc: GitHubController = new GitHubController();
     // private pc: PersonController = new PersonController();
-    private gha: GitHubActions = new GitHubActions();
+    private gha: IGitHubActions = GitHubActions.getInstance();
     // private sc: ScheduleController = ScheduleController.getInstance();
     // private ac: AssignmentController = new AssignmentController();
 

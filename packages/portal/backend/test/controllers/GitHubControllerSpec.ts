@@ -5,7 +5,7 @@ import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
-import {GitHubActions} from "../../src/controllers/GitHubActions";
+import {GitHubActions, IGitHubActions} from "../../src/controllers/GitHubActions";
 import {GitHubController} from "../../src/controllers/GitHubController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
@@ -25,12 +25,16 @@ describe("GitHubController", () => {
 
     const OLDORG = Config.getInstance().getProp(ConfigKey.org);
 
+    let gha: IGitHubActions;
+
     before(async () => {
         Log.test("GitHubControllerSpec::before() - start; forcing testorg");
         // force testorg so real org does not get deleted or modified
         Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
 
         await Test.suiteBefore('GitHubController');
+
+        gha = GitHubActions.getInstance(true);
 
         // clear stale data (removed; happens in suitebefore)
         const dbc = DatabaseController.getInstance();
@@ -86,7 +90,7 @@ describe("GitHubController", () => {
         // not really a test, we just want something to run first we can set timeout on
         Log.test("Clearing prior state");
         try {
-            const gha = new GitHubActions();
+            const gha = GitHubActions.getInstance(true);
             await gha.deleteRepo(Test.REPONAME1);
             await gha.deleteRepo(Test.REPONAME2);
             await gha.deleteRepo(Test.REPONAME3);
@@ -225,7 +229,6 @@ describe("GitHubController", () => {
         const rc: RepositoryController = new RepositoryController();
         const repo = await rc.getRepository(Test.REPONAME2); // get repo object
 
-        const gha = new GitHubActions();
         await gha.deleteRepo(repo.id); // delete repo from github
         await gha.deleteRepo(Test.REPONAME2); // delete repo from github
 
