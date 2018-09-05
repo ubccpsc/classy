@@ -14,7 +14,7 @@ import {RubricController} from "../../controllers/340/RubricController";
 import {AuthController} from "../../controllers/AuthController";
 import {DatabaseController} from "../../controllers/DatabaseController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
-import {GitHubActions} from "../../controllers/GitHubActions";
+import {GitHubActions, IGitHubActions} from "../../controllers/GitHubActions";
 import {GradesController} from "../../controllers/GradesController";
 import {PersonController} from "../../controllers/PersonController";
 import {RepositoryController} from "../../controllers/RepositoryController";
@@ -609,7 +609,7 @@ export default class CS340REST implements IREST {
 
         try {
             const pc: PersonController = new PersonController();
-            const gha: GitHubActions = new GitHubActions();
+            const gha: IGitHubActions = GitHubActions.getInstance();
 
             const githubPeoplePromise = gha.listPeople();
             const allPeoplePromise = pc.getAllPeople();

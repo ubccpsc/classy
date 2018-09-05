@@ -11,6 +11,7 @@ import {
     StudentTransport,
     TeamTransport
 } from '../../../../common/types/PortalTypes';
+import Util from "../../../../common/Util";
 import {Course, Deliverable, Grade, Person, Repository, Team} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
@@ -540,8 +541,9 @@ export abstract class CourseController implements ICourseController {
      * @returns {Promise<Repository[]>}
      */
     public async provisionRepositories(repos: Repository[], importURL: string): Promise<RepositoryTransport[]> {
-        const ghc = new GitHubController();
-        const gha = new GitHubActions();
+        const gha = GitHubActions.getInstance(true);
+        const ghc = new GitHubController(gha);
+
         const config = Config.getInstance();
         const dbc = DatabaseController.getInstance();
 
@@ -568,7 +570,7 @@ export abstract class CourseController implements ICourseController {
                         Log.warn("CourseController::provisionRepositories( .. ) - FAILED: " + repo.id + "; URL: " + repo.URL);
                     }
 
-                    await gha.delay(1 * 1000); // after any provisioning wait a bit
+                    await Util.delay(1 * 1000); // after any provisioning wait a bit
                 } else {
                     Log.info("CourseController::provisionRepositories( .. ) - skipped; already provisioned: " +
                         repo.id + "; URL: " + repo.URL);
@@ -629,8 +631,8 @@ export abstract class CourseController implements ICourseController {
     }
 
     private async releaseRepositories(repos: Repository[]): Promise<RepositoryTransport[]> {
-        const ghc = new GitHubController();
-        const gha = new GitHubActions();
+        const gha = GitHubActions.getInstance(true);
+        const ghc = new GitHubController(gha);
 
         Log.info("CourseController::releaseRepositories( .. ) - start; # repos: " + repos.length);
         const releasedRepos = [];
@@ -652,7 +654,7 @@ export abstract class CourseController implements ICourseController {
                         Log.warn("CourseController::releaseRepositories( .. ) - FAILED: " + repo.id);
                     }
 
-                    await gha.delay(2 * 1000); // after any releasing wait a bit
+                    await Util.delay(2 * 1000); // after any releasing wait a bit
                 } else {
                     Log.info("CourseController::releaseRepositories( .. ) - skipped; repo not yet provisioned: " +
                         repo.id + "; URL: " + repo.URL);

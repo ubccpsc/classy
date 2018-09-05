@@ -8,8 +8,7 @@ import {AssignmentGrade, AssignmentStatus} from "../../../../../common/types/CS3
 import {AssignmentController} from "../../../src/controllers/340/AssignmentController";
 import {DatabaseController} from "../../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../../src/controllers/DeliverablesController";
-import {GitHubActions} from "../../../src/controllers/GitHubActions";
-import {GitHubController} from "../../../src/controllers/GitHubController";
+import {GitHubActions, IGitHubActions} from "../../../src/controllers/GitHubActions";
 
 import {GradesController} from "../../../src/controllers/GradesController";
 import {PersonController} from "../../../src/controllers/PersonController";
@@ -39,11 +38,6 @@ const TEST_STUDENT_MAP = [
 
 const ORIGINAL_ORG = Config.getInstance().getProp(ConfigKey.org);
 
-const TIMEOUT = 7500;
-
-const DELAY_SEC = 1000;
-const DELAY_SHORT = 200;
-
 describe("CS340: AssignmentController", () => {
     let ac: AssignmentController = new AssignmentController();
     const gc: GradesController = new GradesController();
@@ -51,9 +45,8 @@ describe("CS340: AssignmentController", () => {
     const rc: RepositoryController = new RepositoryController();
     const dc: DeliverablesController = new DeliverablesController();
     const pc: PersonController = new PersonController();
-    const gh: GitHubController = new GitHubController();
-    let gha: GitHubActions;
-    let db: DatabaseController = DatabaseController.getInstance();
+    const gha: IGitHubActions = GitHubActions.getInstance();
+    const db: DatabaseController = DatabaseController.getInstance();
 
     let numberOfStudents: number;
 
@@ -64,7 +57,6 @@ describe("CS340: AssignmentController", () => {
         await Test.suiteBefore('CS340: AssignmentController');
 
         // clear stale data
-        db = DatabaseController.getInstance();
         await db.clearData();
 
         // get data ready
@@ -72,8 +64,6 @@ describe("CS340: AssignmentController", () => {
 
         const peopleList = await pc.getAllPeople();
         numberOfStudents = peopleList.length;
-
-        gha = new GitHubActions();
 
         // create assignment Deliverables
         await Test.prepareAssignment();
@@ -311,7 +301,7 @@ describe("CS340: AssignmentController", () => {
     it("Should be able to publish all grades, after grades have been updated.", async () => {
         const result = await ac.publishAllGrades(Test.ASSIGNID0);
         expect(result).to.be.true;
-    }).timeout(numberOfStudents * TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Should be able to publish all final grades, after all grades have been inputted", async () => {
         // set the assignment status to released
@@ -326,7 +316,7 @@ describe("CS340: AssignmentController", () => {
         Log.info("Cleaning stale repositories");
         await Test.deleteStaleRepositories();
         Log.info("Cleaned all stale information");
-    }).timeout(5 * TIMEOUT);
+    }).timeout(Test.TIMEOUTLONG);
 
     it("Should be able to create an Assignment Repos.", async function() {
         const exec = Test.runSlowTest();
@@ -387,7 +377,7 @@ describe("CS340: AssignmentController", () => {
         expect(success).to.be.false;
     }).timeout(Test.TIMEOUTLONG);
 
-    it("Should be able to delete Assignment Repo, along with it's records.", async function() {
+    it("Should be able to delete Assignment Repo, along with its records.", async function() {
         const exec = Test.runSlowTest();
 
         if (exec) {
@@ -411,7 +401,6 @@ describe("CS340: AssignmentController", () => {
 
         before(async function() {
             Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
-            gha = new GitHubActions();
 
             await db.clearData();
             await resetData();
@@ -436,7 +425,7 @@ describe("CS340: AssignmentController", () => {
             Log.info("Cleaning stale repositories");
             await Test.deleteStaleRepositories();
             Log.info("Cleaned all stale information");
-        }).timeout(5 * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
 
         it("Should be able to pre-create a team for the assignment.", async function() {
             const delivRecord = await db.getDeliverable(Test.ASSIGNID0);
@@ -462,7 +451,7 @@ describe("CS340: AssignmentController", () => {
             const newGithubRepoCount = newGithubRepoArray.length;
 
             expect(newGithubRepoCount).to.be.greaterThan(oldGithubRepoCount);
-        }).timeout(numberOfStudents * 2 * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
 
         it("Should be able to get the correct assignment status after creating repositories.", async function() {
 
@@ -495,7 +484,7 @@ describe("CS340: AssignmentController", () => {
             expect(success).to.be.true;
 
             // TODO: Verify
-        }).timeout(numberOfStudents * TIMEOUT);
+        }).timeout(Test.TIMEOUTLONG);
 
         it("Should not be able to release all Assignment " +
             "Repositories after releasing once.", async function() {
@@ -633,7 +622,6 @@ describe("CS340: AssignmentController", () => {
     describe("Students adding/dropping course in the middle of the course.", () => {
         before(async function() {
             Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
-            gha = new GitHubActions();
         });
 
         after(async function() {

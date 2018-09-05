@@ -3,6 +3,7 @@ import Log from "../../../../../common/Log";
 
 import {Payload, StatusPayload} from "../../../../../common/types/SDMMTypes";
 import {AuthController} from "../../controllers/AuthController";
+import {GitHubActions} from "../../controllers/GitHubActions";
 import {GitHubController} from "../../controllers/GitHubController";
 import {SDMMController} from "../../controllers/SDMM/SDMMController";
 
@@ -35,7 +36,7 @@ export default class SDMMREST implements IREST {
         const ac = new AuthController();
         ac.isValid(user, token).then(function(isValid) {
             if (isValid === true) {
-                const sc: SDMMController = new SDMMController(new GitHubController());
+                const sc: SDMMController = new SDMMController(new GitHubController(GitHubActions.getInstance()));
                 if (action === 'provisionD0') {
                     sc.provisionDeliverable("d0", [user]).then(function(provisionResult) {
                         Log.trace('SDMMREST::performAction(..) - sending 200; result: ' + JSON.stringify(provisionResult));
@@ -87,7 +88,7 @@ export default class SDMMREST implements IREST {
         const ac = new AuthController();
         ac.isValid(user, token).then(function(isValid) {
             if (isValid) {
-                const sc: SDMMController = new SDMMController(new GitHubController());
+                const sc: SDMMController = new SDMMController(new GitHubController(GitHubActions.getInstance()));
                 sc.getStatus(user).then(function(status: StatusPayload) {
                     Log.info('SDMMREST::getCurrentStatus(..) - sending 200; user: ' + user);
                     Log.trace('SDMMREST::getCurrentStatus(..) - sending 200; user: ' + user + '; status: ' + JSON.stringify(status));

@@ -12,11 +12,12 @@ import {
     SubQuestionGradingRubric
 } from "../../../../../common/types/CS340Types";
 import {GradePayload} from "../../../../../common/types/SDMMTypes";
+import Util from "../../../../../common/Util";
 import {Factory} from "../../Factory";
 import {Deliverable, Grade, Person, Repository, Team} from "../../Types";
 import {DatabaseController} from "../DatabaseController";
 import {DeliverablesController} from "../DeliverablesController";
-import {GitHubActions} from "../GitHubActions";
+import {GitHubActions, IGitHubActions} from "../GitHubActions";
 import {GitHubController, GitTeamTuple} from "../GitHubController";
 import {GradesController} from "../GradesController";
 import {PersonController} from "../PersonController";
@@ -35,9 +36,9 @@ export class AssignmentController {
     private rc: RepositoryController = new RepositoryController();
     private tc: TeamController = new TeamController();
     private dc: DeliverablesController = new DeliverablesController();
-    private ghc: GitHubController = new GitHubController();
+    private ghc: GitHubController = new GitHubController(GitHubActions.getInstance());
     private pc: PersonController = new PersonController();
-    private gha: GitHubActions = new GitHubActions();
+    private gha: IGitHubActions = GitHubActions.getInstance();
     private sc: ScheduleController = ScheduleController.getInstance();
     private rbc: RubricController = new RubricController();
     private cc: CS340Controller = Factory.getCourseController(this.ghc);
@@ -360,7 +361,7 @@ export class AssignmentController {
             let provisionedRepo: Repository;
             if (!repoList.includes(repoName)) {
                 provisionedRepo = await this.createAssignmentRepo(repoName, delivId, [studentTeam]);
-                await this.gha.delay(200);
+                await Util.delay(200);
             } else {
                 continue;
             }

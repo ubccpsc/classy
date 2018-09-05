@@ -7,6 +7,7 @@ import Log from "../../../../common/Log";
 import {Deliverable} from "../Types";
 import {AssignmentController} from "./340/AssignmentController";
 import {DatabaseController} from "./DatabaseController";
+import {GitHubActions} from "./GitHubActions";
 import {GitHubController} from "./GitHubController";
 
 // tslint:disable-next-line
@@ -46,7 +47,7 @@ export class ScheduleController {
 
         const scheduledJob = schedule.scheduleJob(scheduledTime, () => {
             const ac: AssignmentController = new AssignmentController();
-            const ghc: GitHubController = new GitHubController();
+            const ghc: GitHubController = new GitHubController(GitHubActions.getInstance());
 
             ac.initializeAllRepositories(assignId).then((result) => {
                 // remove from taskList
@@ -84,7 +85,7 @@ export class ScheduleController {
 
         const scheduledJob = schedule.scheduleJob(scheduledTime, () => {
             const ac: AssignmentController = new AssignmentController();
-            const ghc: GitHubController = new GitHubController();
+            const ghc: GitHubController = new GitHubController(GitHubActions.getInstance());
 
             ac.publishAllRepositories(assignId).then((result) => {
                 // remove from taskList
@@ -118,7 +119,7 @@ export class ScheduleController {
 
         const scheduledJob = schedule.scheduleJob(scheduledTime, () => {
             const ac: AssignmentController = new AssignmentController();
-            const ghc: GitHubController = new GitHubController();
+            const ghc: GitHubController = new GitHubController(GitHubActions.getInstance());
 
             ac.closeAllRepositories(assignId).then((result) => {
                 // remove from taskList

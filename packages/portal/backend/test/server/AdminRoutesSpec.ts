@@ -17,6 +17,7 @@ import {
     StudentTransportPayload,
     TeamTransportPayload
 } from "../../../../common/types/PortalTypes";
+import Util from "../../../../common/Util";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {GitHubActions} from "../../src/controllers/GitHubActions";
@@ -548,19 +549,54 @@ describe('Admin Routes', function() {
             const exec = Test.runSlowTest();
 
             if (exec) {
-                Log.test("AdminRoutesSpec::slowTests - running");
+                Log.test("AdminRoutesSpec::slowTests - running: " + this.currentTest.title);
             } else {
                 Log.test("AdminRoutesSpec::slowTests - skipping; will run on CI");
                 this.skip();
             }
         });
 
+        /**
+         * With hybrid tests sometimes we need to make sure the cached TestGitHubActions and
+         * live GitHubActions are consistently cleaned.
+         *
+         * @param {string[]} repoNames
+         * @param {string[]} teamNames
+         * @returns {Promise<void>}
+         */
+        async function clearAll(repoNames: string[], teamNames: string[]): Promise<void> {
+            // somettimes we need to clear resources on both github and the cache
+            Log.test("AdminRoutesSpec::clearAll() - start");
+            const start = Date.now();
+
+            const ghCache = GitHubActions.getInstance(false);
+            const ghReal = GitHubActions.getInstance(true);
+
+            for (const repoName of repoNames) {
+                await ghCache.deleteRepo(repoName);
+                await ghReal.deleteRepo(repoName);
+            }
+
+            for (const teamName of teamNames) {
+                const cacheNum = await ghCache.getTeamNumber(teamName);
+                await ghCache.deleteTeam(cacheNum);
+
+                const realNum = await ghCache.getTeamNumber(teamName);
+                await ghReal.deleteTeam(realNum);
+            }
+
+            Log.test("AdminRoutesSpec::clearAll() - done; took: " + Util.took(start));
+        }
+
         it('Should be able to provision a deliverable', async function() {
 
             const dbc = DatabaseController.getInstance();
             await dbc.clearData();
-            const gha = new GitHubActions();
-            await gha.deleteRepo(Test.REPONAMEREAL);
+
+            await clearAll([Test.REPONAMEREAL], []);
+
+            // const gha = GitHubActions.getInstance();
+            // await gha.deleteRepo(Test.REPONAMEREAL);
 
             await Test.prepareAllReal(); // create a valid set of users and teams
 
