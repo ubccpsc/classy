@@ -66,7 +66,7 @@ export interface IGitHubActions {
      * @returns {Promise<{ id: number, type: string, url: string, name: string }[]>}
      * this is just a subset of the return, but it is the subset we actually use
      */
-    listPeople(): Promise<Array<{id: number, type: string, url: string, name: string}>>;
+    listPeople(): Promise<Array<{githubId: string, personNumber: number, url: string}>>;
 
     /**
      * Lists the teams for the current org.
@@ -439,7 +439,7 @@ export class GitHubActions implements IGitHubActions {
      * @returns {Promise<{ id: number, type: string, url: string, name: string }[]>}
      * this is just a subset of the return, but it is the subset we actually use
      */
-    public async listPeople(): Promise<Array<{id: number, type: string, url: string, name: string}>> {
+    public async listPeople(): Promise<Array<{githubId: string, personNumber: number, url: string}>> {
         Log.info("GitHubActions::listPeople(..) - start");
         const start = Date.now();
 
@@ -459,13 +459,12 @@ export class GitHubActions implements IGitHubActions {
 
         const raw: any = await this.handlePagination(options);
 
-        const rows: Array<{id: number, type: string, url: string, name: string}> = [];
+        const rows: Array<{githubId: string, personNumber: number, url: string}> = [];
         for (const entry of raw) {
             const id = entry.id;
-            const type = entry.type;
-            const url = entry.url;
-            const name = entry.login;
-            rows.push({id: id, type: type, url: url, name: name});
+            const url = entry.html_url;
+            const githubId = entry.login;
+            rows.push({githubId: githubId, personNumber: id, url: url});
         }
 
         Log.info("GitHubActions::listPeople(..) - done; # people: " + rows.length + "; took: " + Util.took(start));
@@ -1501,21 +1500,21 @@ export class TestGitHubActions implements IGitHubActions {
         return true;
     }
 
-    public async listPeople(): Promise<Array<{id: number; type: string; url: string; name: string}>> {
+    public async listPeople(): Promise<Array<{githubId: string, personNumber: number, url: string}>> {
         Log.info("TestGitHubActions::listPeople(..)");
         const people = [];
 
         const start = Date.now();
-        people.push({id: start, type: 'student', url: 'URL', name: this.Test.USERNAMEGITHUB1});
-        people.push({id: start - 5, type: 'student', url: 'URL', name: this.Test.USERNAMEGITHUB2});
-        people.push({id: start - 15, type: 'student', url: 'URL', name: this.Test.USERNAMEGITHUB3});
-        people.push({id: start - 15, type: 'student', url: 'URL', name: this.Test.REALUSER1.github});
-        people.push({id: start - 15, type: 'student', url: 'URL', name: this.Test.REALUSER2.github});
-        people.push({id: start - 15, type: 'student', url: 'URL', name: this.Test.REALUSER3.github});
-        people.push({id: start - 25, type: 'student', url: 'URL', name: this.Test.USER1.github});
-        people.push({id: start - 35, type: 'student', url: 'URL', name: this.Test.USER2.github});
-        people.push({id: start - 45, type: 'student', url: 'URL', name: this.Test.USER3.github});
-        people.push({id: start - 55, type: 'student', url: 'URL', name: this.Test.USER4.github});
+        people.push({personNumber: start, url: 'URL', githubId: this.Test.USERNAMEGITHUB1});
+        people.push({personNumber: start - 5, url: 'URL', githubId: this.Test.USERNAMEGITHUB2});
+        people.push({personNumber: start - 15, url: 'URL', githubId: this.Test.USERNAMEGITHUB3});
+        people.push({personNumber: start - 15, url: 'URL', githubId: this.Test.REALUSER1.github});
+        people.push({personNumber: start - 15, url: 'URL', githubId: this.Test.REALUSER2.github});
+        people.push({personNumber: start - 15, url: 'URL', githubId: this.Test.REALUSER3.github});
+        people.push({personNumber: start - 25, url: 'URL', githubId: this.Test.USER1.github});
+        people.push({personNumber: start - 35, url: 'URL', githubId: this.Test.USER2.github});
+        people.push({personNumber: start - 45, url: 'URL', githubId: this.Test.USER3.github});
+        people.push({personNumber: start - 55, url: 'URL', githubId: this.Test.USER4.github});
 
         return people;
     }

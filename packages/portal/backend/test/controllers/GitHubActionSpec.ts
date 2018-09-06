@@ -174,14 +174,14 @@ describe("GitHubActions", () => {
         expect(hooks).to.have.lengthOf(1);
     }).timeout(TIMEOUT);
 
-    it("Should be possible to list the repos in an org.", async function() {
+    it.only("Should be possible to list the repos in an org.", async function() {
         const res = await gh.listRepos();
         Log.test('# repos ' + res.length);
         expect(res).to.be.an('array');
         expect(res.length).to.be.greaterThan(0);
     }).timeout(TIMEOUT);
 
-    it("Should be possible to list people in an org.", async function() {
+    it.only("Should be possible to list people in an org.", async function() {
         // gh.setPageSize(100);
         const res = await gh.listPeople();
         Log.test('# people ' + res.length);
