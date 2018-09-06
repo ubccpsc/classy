@@ -111,7 +111,7 @@ export class AdminTeamsTab {
             if (delivOptions.indexOf(team.delivId) < 0 && team.delivId !== '' && team.delivId !== null) {
                 delivOptions.push(team.delivId);
             }
-            if (delivId === team.delivId && team.people.length > 1) {
+            if (delivId === team.delivId && team.people.length > 0) {
                 st.addRow(row);
                 listContainsStudents = true;
             }
