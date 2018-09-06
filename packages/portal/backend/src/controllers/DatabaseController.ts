@@ -331,8 +331,14 @@ export class DatabaseController {
      *   (await getCollection('users')).find().toArray().then( ... )
      */
     public async getCollection(collectionName: string): Promise<Collection> {
-        const db = await this.open();
-        return db.collection(collectionName);
+        try {
+            const db = await this.open();
+            return db.collection(collectionName);
+        } catch (err) {
+            Log.error("DatabaseController::getCollection( " + collectionName +
+                " ) - Mongo is probably not running; ERROR: " + err.message);
+            process.exit(-1); // this is a fatal failure
+        }
     }
 
     public async clearData(): Promise<void> {

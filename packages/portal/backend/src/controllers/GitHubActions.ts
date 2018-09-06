@@ -1414,11 +1414,6 @@ export class TestGitHubActions implements IGitHubActions {
         return false;
     }
 
-    private teams: any = {
-        staff: {id: 'staff', teamName: 'staff', githubTeamNumber: '1000'},
-        admin: {id: 'admin', teamName: 'admin', githubTeamNumber: '1001'}
-    };
-
     public async deleteTeam(teamId: number): Promise<boolean> {
         Log.info("TestGitHubActions::deleteTeam( " + teamId + " )");
         for (const teamName of Object.keys(this.teams)) {
@@ -1428,11 +1423,7 @@ export class TestGitHubActions implements IGitHubActions {
                 delete this.teams[teamName];
             }
         }
-        // if (typeof this.teams[teamId] !== 'undefined') {
-        //     delete this.teams[teamId];
-        //     Log.info("TestGitHubActions::deleteTeam( " + teamId + " ); deleted: " + (typeof this.teams[teamId] === 'undefined'));
-        //     return true;
-        // }
+
         Log.info("TestGitHubActions::deleteTeam( " + teamId + " ); not deleted");
         return false;
     }
@@ -1532,10 +1523,23 @@ export class TestGitHubActions implements IGitHubActions {
         return ret;
     }
 
+    private teams: any = {
+        staff: {id: 'staff', teamName: 'staff', githubTeamNumber: '1000'},
+        admin: {id: 'admin', teamName: 'admin', githubTeamNumber: '1001'}
+    };
+
     // TODO: use a private teams map to keep track of teams
     public async listTeams(): Promise<Array<{teamName: string, teamNumber: number}>> {
         Log.info("TestGitHubActions::listTeams(..)");
-        return [{teamNumber: Date.now(), teamName: this.Test.TEAMNAME1}];
+        // return [{teamNumber: Date.now(), teamName: this.Test.TEAMNAME1}];
+        const ret = [];
+        for (const name of Object.keys(this.teams)) {
+            const teamNum = this.teams[name].githubTeamNumber;
+            const teamName = this.teams[name].teamName;
+            ret.push({teamNumber: teamNum, teamName: teamName});
+        }
+        Log.info("TestGitHubActions::listTeams(..) - #: " + ret.length + "; content: " + JSON.stringify(ret));
+        return ret;
     }
 
     private webHookState: any = {};

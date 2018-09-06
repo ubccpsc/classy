@@ -447,6 +447,8 @@ describe('Admin Routes', function() {
         let people = await dc.getPeople();
         const peopleLength = people.length;
         const person = await dc.getPerson('rthse2');
+        person.githubId = 'oldGithub';
+        await dc.writePerson(person); // change the github
 
         let response = null;
         let body: Payload;
