@@ -58,7 +58,7 @@ export interface IGitHubActions {
      * This is just a subset of the return, but it is the subset we actually use:
      * @returns {Promise<{ id: number, name: string, url: string }[]>}
      */
-    listRepos(): Promise<Array<{id: number, name: string, url: string}>>;
+    listRepos(): Promise<Array<{repoName: string, repoNumber: number, url: string}>>;
 
     /**
      * Gets all people in an org.
@@ -399,7 +399,7 @@ export class GitHubActions implements IGitHubActions {
      * This is just a subset of the return, but it is the subset we actually use:
      * @returns {Promise<{ id: number, name: string, url: string }[]>}
      */
-    public async listRepos(): Promise<Array<{id: number, name: string, url: string}>> {
+    public async listRepos(): Promise<Array<{repoName: string, repoNumber: number, url: string}>> {
         Log.info("GitHubActions::listRepos(..) - start");
         const start = Date.now();
 
@@ -420,12 +420,12 @@ export class GitHubActions implements IGitHubActions {
 
         const raw: any = await this.handlePagination(options);
 
-        const rows: Array<{id: number, name: string, url: string}> = [];
+        const rows: Array<{repoName: string, repoNumber: number, url: string}> = [];
         for (const entry of raw) {
             const id = entry.id;
             const name = entry.name;
-            const url = entry.url;
-            rows.push({id: id, name: name, url: url});
+            const url = entry.html_url;
+            rows.push({repoName: name, repoNumber: id, url: url});
         }
 
         Log.info("GitHubActions::listRepos(..) - done; # repos: " + rows.length + "; took: " + Util.took(start));
@@ -1519,12 +1519,12 @@ export class TestGitHubActions implements IGitHubActions {
         return people;
     }
 
-    public async listRepos(): Promise<Array<{id: number; name: string; url: string}>> {
+    public async listRepos(): Promise<Array<{repoName: string, repoNumber: number, url: string}>> {
         Log.info("TestGitHubActions::listRepos(..)");
         const ret = [];
         for (const name of Object.keys(this.repos)) {
             const repo = this.repos[name];
-            ret.push({id: Date.now(), name: name, url: repo});
+            ret.push({repoNumber: Date.now(), repoName: name, url: repo});
         }
         Log.info("TestGitHubActions::listRepos(..) - #: " + ret.length + "; content: " + JSON.stringify(ret));
         return ret;

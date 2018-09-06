@@ -350,7 +350,7 @@ describe("GitHubActions", () => {
             const reponame = REPONAME + '_paging-' + i;
             let found = false;
             for (const repo of allRepos) {
-                if (repo.name === reponame) {
+                if (repo.repoName === reponame) {
                     Log.test("Found repo: " + reponame);
                     found = true;
                 }
