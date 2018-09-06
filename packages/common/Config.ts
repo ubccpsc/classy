@@ -27,6 +27,8 @@ export enum ConfigKey {
     testorg = "testorg",
     testname = "testname",
 
+    hostname = "hostname",
+
     // frontendUrl = "frontendUrl",
     backendUrl = "backendUrl",
     // frontendPort = "frontendPort",
@@ -84,6 +86,8 @@ export default class Config {
                 org:      process.env.ORG,
                 testorg:  process.env.ORGTEST,
                 testname: process.env.NAMETEST,
+
+                hostname: process.env.HOSTNAME,
 
                 dockerId:   process.env.GRADER_DOCKER_ID,
                 workspace:  process.env.GRADER_WORKSPACE,

@@ -308,7 +308,7 @@ export class GitHubController implements IGitHubController {
             Log.trace('GitHubController::provisionRepository(..) - team name: ' + staffAdd.teamName);
 
             // add webhooks
-            const host = Config.getInstance().getProp(ConfigKey.backendUrl);
+            const host = Config.getInstance().getProp(ConfigKey.hostname);
             const WEBHOOKADDR = host + '/portal/githubWebhook';
             Log.trace("GitHubController::provisionRepository() - add webhook to: " + WEBHOOKADDR);
             const createHook = await this.gha.addWebhook(repoName, WEBHOOKADDR);
