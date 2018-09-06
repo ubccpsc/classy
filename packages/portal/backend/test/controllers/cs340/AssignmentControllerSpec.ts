@@ -38,7 +38,7 @@ const TEST_STUDENT_MAP = [
 
 const ORIGINAL_ORG = Config.getInstance().getProp(ConfigKey.org);
 
-describe.only("CS340: AssignmentController", () => {
+describe("CS340: AssignmentController", () => {
     let ac: AssignmentController = new AssignmentController();
     const gc: GradesController = new GradesController();
     const tc: TeamController = new TeamController();
