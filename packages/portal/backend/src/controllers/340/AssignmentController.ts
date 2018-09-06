@@ -801,12 +801,17 @@ export class AssignmentController {
         const peopleList = await this.gha.listPeople();
         const personVerification: {[githubID: string]: any} = {};
 
-        // create a map of personID to
+        // create a map of personID
+        let personvVerificationCount = 0;
         for (const person of peopleList) {
             if (typeof personVerification[person.name] === 'undefined') {
                 personVerification[person.name] = person;
+                personvVerificationCount++;
             }
         }
+
+        Log.info("AssignmentController::updateAssignmentStatus(..) - Counted " + personvVerificationCount + " " +
+            "students in the github verification map.");
 
         // verify all students have a repository
         let newStatus = AssignmentStatus.CLOSED;
@@ -814,7 +819,7 @@ export class AssignmentController {
         let studentRepoCount = 0;
         // check each student,
         for (const student of allStudents) {
-            if (typeof personVerification[student.githubId] === 'undefined') {
+            if (typeof personVerification[student.id] === 'undefined') {
                 Log.warn("Skipping student: " + student.id + " as they are missing from Github.");
                 totalStudentCount--;
                 continue;
