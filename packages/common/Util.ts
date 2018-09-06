@@ -31,10 +31,17 @@ export default class Util {
     // or we want a test to be able to slow itself down
     public static delay(ms: number): Promise<{}> {
         // logger.info("GitHubActions::delay( " + ms + ") - start");
+        const start = Date.now();
         return new Promise(function(resolve) {
-            const fire = new Date(new Date().getTime() + ms);
+            const fire = new Date(start + ms);
             Log.info("Util::delay( " + ms + " ms ) - waiting; will trigger at " + fire.toLocaleTimeString());
-            setTimeout(resolve, ms);
+            setTimeout(function() {
+                const actual = Date.now();
+                const took = actual - start;
+                const delta = actual - fire.getTime();
+                Log.info("Util::delay( " + ms + " ms ) - fired; took: " + took + " ms; delay: " + delta + " ms");
+                resolve();
+            }, ms);
         });
     }
 
