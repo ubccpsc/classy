@@ -174,14 +174,14 @@ describe("GitHubActions", () => {
         expect(hooks).to.have.lengthOf(1);
     }).timeout(TIMEOUT);
 
-    it.only("Should be possible to list the repos in an org.", async function() {
+    it("Should be possible to list the repos in an org.", async function() {
         const res = await gh.listRepos();
         Log.test('# repos ' + res.length);
         expect(res).to.be.an('array');
         expect(res.length).to.be.greaterThan(0);
     }).timeout(TIMEOUT);
 
-    it.only("Should be possible to list people in an org.", async function() {
+    it("Should be possible to list people in an org.", async function() {
         // gh.setPageSize(100);
         const res = await gh.listPeople();
         Log.test('# people ' + res.length);
@@ -614,10 +614,10 @@ describe("GitHubActions", () => {
         // expect(repos.length > 0).to.be.true; // test org can be empty
 
         // delete test repos if needed
-        for (const repo of repos as any) {
+        for (const repo of repos) {
             for (const r of TESTREPONAMES) {
-                if (repo.name === r) {
-                    Log.info('Removing stale repo: ' + repo.name);
+                if (repo.repoName === r) {
+                    Log.info('Removing stale repo: ' + repo.repoName);
                     await gh.deleteRepo(r);
                     await Util.delay(DELAY_SHORT);
                     // expect(val).to.be.true;
@@ -627,14 +627,14 @@ describe("GitHubActions", () => {
 
         repos = await gh.listRepos();
         // delete test repos if needed
-        for (const repo of repos as any) {
-            Log.info('Evaluating repo: ' + repo.name);
-            if (repo.name.indexOf('TEST__X__') === 0 || repo.name.startsWith(REPONAME) || repo.name.endsWith("_grades")) {
-                Log.info('Removing stale repo: ' + repo.name);
-                await gh.deleteRepo(repo.name);
+        for (const repo of repos) {
+            Log.info('Evaluating repo: ' + repo.repoName);
+            if (repo.repoName.indexOf('TEST__X__') === 0 || repo.repoName.startsWith(REPONAME) || repo.repoName.endsWith("_grades")) {
+                Log.info('Removing stale repo: ' + repo.repoName);
+                await gh.deleteRepo(repo.repoName);
                 // expect(val).to.be.true;
-                const teamName = repo.name.substr(15);
-                Log.info('Adding stale team name: ' + repo.name);
+                const teamName = repo.repoName.substr(15);
+                Log.info('Adding stale team name: ' + repo.repoName);
                 TESTTEAMNAMES.push(teamName);
             }
         }
@@ -645,21 +645,21 @@ describe("GitHubActions", () => {
         // expect(teams.length > 0).to.be.true; // can have 0 teams
         Log.test('All Teams: ' + JSON.stringify(teams));
         Log.test('Stale Teams: ' + JSON.stringify(TESTTEAMNAMES));
-        for (const team of teams as any) {
+        for (const team of teams) {
             // Log.info('Evaluating team: ' + JSON.stringify(team));
             let done = false;
             for (const t of TESTTEAMNAMES) {
-                if (team.name === t) {
-                    Log.test("Removing stale team: " + team.name);
-                    await gh.deleteTeam(team.id);
+                if (team.teamName === t) {
+                    Log.test("Removing stale team: " + team.teamName);
+                    await gh.deleteTeam(team.teamNumber);
                     await Util.delay(DELAY_SHORT);
                     done = true;
                 }
             }
             if (done === false) {
-                if (team.name.startsWith(TEAMNAME) === true) {
-                    Log.test("Removing stale team: " + team.name);
-                    await gh.deleteTeam(team.id);
+                if (team.teamName.startsWith(TEAMNAME) === true) {
+                    Log.test("Removing stale team: " + team.teamName);
+                    await gh.deleteTeam(team.teamNumber);
                     await Util.delay(DELAY_SHORT);
                 }
             }

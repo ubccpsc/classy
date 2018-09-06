@@ -75,7 +75,7 @@ export interface IGitHubActions {
      *
      * @returns {Promise<{id: number, name: string}[]>}
      */
-    listTeams(): Promise<Array<{id: number, name: string}>>;
+    listTeams(): Promise<Array<{teamName: string, teamNumber: number}>>;
 
     listWebhooks(repoName: string): Promise<{}>;
 
@@ -556,7 +556,7 @@ export class GitHubActions implements IGitHubActions {
      *
      * @returns {Promise<{id: number, name: string}[]>}
      */
-    public async listTeams(): Promise<Array<{id: number, name: string}>> {
+    public async listTeams(): Promise<Array<{teamName: string, teamNumber: number}>> {
         Log.info("GitHubActions::listTeams(..) - start");
         const start = Date.now();
 
@@ -578,11 +578,11 @@ export class GitHubActions implements IGitHubActions {
 
         const teamsRaw: any = await this.handlePagination(options);
 
-        const teams: Array<{id: number, name: string}> = [];
+        const teams: Array<{teamName: string, teamNumber: number}> = [];
         for (const team of teamsRaw) {
-            const id = team.id;
-            const name = team.name;
-            teams.push({id: id, name: name});
+            const teamNumber = team.id;
+            const teamName = team.name;
+            teams.push({teamNumber: teamNumber, teamName: teamName});
         }
 
         Log.info("GitHubActions::listTeams(..) - done; # teams: " + teams.length + "; took: " + Util.took(start));
@@ -788,8 +788,8 @@ export class GitHubActions implements IGitHubActions {
             let teamId = -1;
             const teamList = await this.listTeams();
             for (const team of teamList) {
-                if (team.name === teamName) {
-                    teamId = team.id;
+                if (team.teamName === teamName) {
+                    teamId = team.teamNumber;
                     // Log.info("GitHubAction::getTeamNumber(..) - matched team: " + teamName + "; id: " + teamId);
                 }
             }
@@ -1530,9 +1530,10 @@ export class TestGitHubActions implements IGitHubActions {
         return ret;
     }
 
-    public async listTeams(): Promise<Array<{id: number; name: string}>> {
+    // TODO: use a private teams map to keep track of teams
+    public async listTeams(): Promise<Array<{teamName: string, teamNumber: number}>> {
         Log.info("TestGitHubActions::listTeams(..)");
-        return [{id: Date.now(), name: this.Test.TEAMNAME1}];
+        return [{teamNumber: Date.now(), teamName: this.Test.TEAMNAME1}];
     }
 
     private webHookState: any = {};

@@ -518,8 +518,8 @@ export class Test {
      */
     public static runSlowTest() {
         // set to true if you want to run these slow tests locally (they will always run on CI)
-        // const override = false; // NOTE: should NOT be commented out when committing
-        const override = true; // NOTE: should be commented out when committing
+        const override = false; // NOTE: should NOT be commented out when committing
+        // const override = true; // NOTE: should be commented out when committing
 
         const ci = process.env.CI;
         if (override || typeof ci !== 'undefined' && Boolean(ci) === true) {
