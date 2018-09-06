@@ -819,7 +819,7 @@ export class AssignmentController {
         let studentRepoCount = 0;
         // check each student,
         for (const student of allStudents) {
-            if (typeof personVerification[student.id] === 'undefined') {
+            if (typeof personVerification[student.githubId] === 'undefined') {
                 Log.warn("Skipping student: " + student.id + " as they are missing from Github.");
                 totalStudentCount--;
                 continue;
