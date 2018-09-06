@@ -58,7 +58,7 @@ export interface IGitHubActions {
      * This is just a subset of the return, but it is the subset we actually use:
      * @returns {Promise<{ id: number, name: string, url: string }[]>}
      */
-    listRepos(): Promise<Array<{id: number, name: string, url: string}>>;
+    listRepos(): Promise<Array<{repoName: string, repoNumber: number, url: string}>>;
 
     /**
      * Gets all people in an org.
@@ -66,7 +66,7 @@ export interface IGitHubActions {
      * @returns {Promise<{ id: number, type: string, url: string, name: string }[]>}
      * this is just a subset of the return, but it is the subset we actually use
      */
-    listPeople(): Promise<Array<{id: number, type: string, url: string, name: string}>>;
+    listPeople(): Promise<Array<{githubId: string, personNumber: number, url: string}>>;
 
     /**
      * Lists the teams for the current org.
@@ -75,7 +75,7 @@ export interface IGitHubActions {
      *
      * @returns {Promise<{id: number, name: string}[]>}
      */
-    listTeams(): Promise<Array<{id: number, name: string}>>;
+    listTeams(): Promise<Array<{teamName: string, teamNumber: number}>>;
 
     listWebhooks(repoName: string): Promise<{}>;
 
@@ -319,7 +319,8 @@ export class GitHubActions implements IGitHubActions {
                 return false;
             }
         } catch (err) {
-            Log.error("GitHubAction::deleteRepo(..) - ERROR: " + JSON.stringify(err));
+            // jut warn because 404 throws an error
+            Log.warn("GitHubAction::deleteRepo(..) - ERROR: " + err.message);
             return false;
         }
     }
@@ -388,7 +389,8 @@ export class GitHubActions implements IGitHubActions {
             }
 
         } catch (err) {
-            Log.error("GitHubAction::deleteTeam(..) - failed; ERROR: " + err);
+            // just warn because 404 throws an error like this
+            Log.warn("GitHubAction::deleteTeam(..) - failed; ERROR: " + err.message);
             return false;
         }
     }
@@ -399,7 +401,7 @@ export class GitHubActions implements IGitHubActions {
      * This is just a subset of the return, but it is the subset we actually use:
      * @returns {Promise<{ id: number, name: string, url: string }[]>}
      */
-    public async listRepos(): Promise<Array<{id: number, name: string, url: string}>> {
+    public async listRepos(): Promise<Array<{repoName: string, repoNumber: number, url: string}>> {
         Log.info("GitHubActions::listRepos(..) - start");
         const start = Date.now();
 
@@ -420,12 +422,12 @@ export class GitHubActions implements IGitHubActions {
 
         const raw: any = await this.handlePagination(options);
 
-        const rows: Array<{id: number, name: string, url: string}> = [];
+        const rows: Array<{repoName: string, repoNumber: number, url: string}> = [];
         for (const entry of raw) {
             const id = entry.id;
             const name = entry.name;
-            const url = entry.url;
-            rows.push({id: id, name: name, url: url});
+            const url = entry.html_url;
+            rows.push({repoName: name, repoNumber: id, url: url});
         }
 
         Log.info("GitHubActions::listRepos(..) - done; # repos: " + rows.length + "; took: " + Util.took(start));
@@ -439,7 +441,7 @@ export class GitHubActions implements IGitHubActions {
      * @returns {Promise<{ id: number, type: string, url: string, name: string }[]>}
      * this is just a subset of the return, but it is the subset we actually use
      */
-    public async listPeople(): Promise<Array<{id: number, type: string, url: string, name: string}>> {
+    public async listPeople(): Promise<Array<{githubId: string, personNumber: number, url: string}>> {
         Log.info("GitHubActions::listPeople(..) - start");
         const start = Date.now();
 
@@ -459,13 +461,12 @@ export class GitHubActions implements IGitHubActions {
 
         const raw: any = await this.handlePagination(options);
 
-        const rows: Array<{id: number, type: string, url: string, name: string}> = [];
+        const rows: Array<{githubId: string, personNumber: number, url: string}> = [];
         for (const entry of raw) {
             const id = entry.id;
-            const type = entry.type;
-            const url = entry.url;
-            const name = entry.login;
-            rows.push({id: id, type: type, url: url, name: name});
+            const url = entry.html_url;
+            const githubId = entry.login;
+            rows.push({githubId: githubId, personNumber: id, url: url});
         }
 
         Log.info("GitHubActions::listPeople(..) - done; # people: " + rows.length + "; took: " + Util.took(start));
@@ -557,7 +558,7 @@ export class GitHubActions implements IGitHubActions {
      *
      * @returns {Promise<{id: number, name: string}[]>}
      */
-    public async listTeams(): Promise<Array<{id: number, name: string}>> {
+    public async listTeams(): Promise<Array<{teamName: string, teamNumber: number}>> {
         Log.info("GitHubActions::listTeams(..) - start");
         const start = Date.now();
 
@@ -579,11 +580,11 @@ export class GitHubActions implements IGitHubActions {
 
         const teamsRaw: any = await this.handlePagination(options);
 
-        const teams: Array<{id: number, name: string}> = [];
+        const teams: Array<{teamName: string, teamNumber: number}> = [];
         for (const team of teamsRaw) {
-            const id = team.id;
-            const name = team.name;
-            teams.push({id: id, name: name});
+            const teamNumber = team.id;
+            const teamName = team.name;
+            teams.push({teamNumber: teamNumber, teamName: teamName});
         }
 
         Log.info("GitHubActions::listTeams(..) - done; # teams: " + teams.length + "; took: " + Util.took(start));
@@ -789,8 +790,8 @@ export class GitHubActions implements IGitHubActions {
             let teamId = -1;
             const teamList = await this.listTeams();
             for (const team of teamList) {
-                if (team.name === teamName) {
-                    teamId = team.id;
+                if (team.teamName === teamName) {
+                    teamId = team.teamNumber;
                     // Log.info("GitHubAction::getTeamNumber(..) - matched team: " + teamName + "; id: " + teamId);
                 }
             }
@@ -1501,39 +1502,40 @@ export class TestGitHubActions implements IGitHubActions {
         return true;
     }
 
-    public async listPeople(): Promise<Array<{id: number; type: string; url: string; name: string}>> {
+    public async listPeople(): Promise<Array<{githubId: string, personNumber: number, url: string}>> {
         Log.info("TestGitHubActions::listPeople(..)");
         const people = [];
 
         const start = Date.now();
-        people.push({id: start, type: 'student', url: 'URL', name: this.Test.USERNAMEGITHUB1});
-        people.push({id: start - 5, type: 'student', url: 'URL', name: this.Test.USERNAMEGITHUB2});
-        people.push({id: start - 15, type: 'student', url: 'URL', name: this.Test.USERNAMEGITHUB3});
-        people.push({id: start - 15, type: 'student', url: 'URL', name: this.Test.REALUSER1.github});
-        people.push({id: start - 15, type: 'student', url: 'URL', name: this.Test.REALUSER2.github});
-        people.push({id: start - 15, type: 'student', url: 'URL', name: this.Test.REALUSER3.github});
-        people.push({id: start - 25, type: 'student', url: 'URL', name: this.Test.USER1.github});
-        people.push({id: start - 35, type: 'student', url: 'URL', name: this.Test.USER2.github});
-        people.push({id: start - 45, type: 'student', url: 'URL', name: this.Test.USER3.github});
-        people.push({id: start - 55, type: 'student', url: 'URL', name: this.Test.USER4.github});
+        people.push({personNumber: start, url: 'URL', githubId: this.Test.USERNAMEGITHUB1});
+        people.push({personNumber: start - 5, url: 'URL', githubId: this.Test.USERNAMEGITHUB2});
+        people.push({personNumber: start - 15, url: 'URL', githubId: this.Test.USERNAMEGITHUB3});
+        people.push({personNumber: start - 15, url: 'URL', githubId: this.Test.REALUSER1.github});
+        people.push({personNumber: start - 15, url: 'URL', githubId: this.Test.REALUSER2.github});
+        people.push({personNumber: start - 15, url: 'URL', githubId: this.Test.REALUSER3.github});
+        people.push({personNumber: start - 25, url: 'URL', githubId: this.Test.USER1.github});
+        people.push({personNumber: start - 35, url: 'URL', githubId: this.Test.USER2.github});
+        people.push({personNumber: start - 45, url: 'URL', githubId: this.Test.USER3.github});
+        people.push({personNumber: start - 55, url: 'URL', githubId: this.Test.USER4.github});
 
         return people;
     }
 
-    public async listRepos(): Promise<Array<{id: number; name: string; url: string}>> {
+    public async listRepos(): Promise<Array<{repoName: string, repoNumber: number, url: string}>> {
         Log.info("TestGitHubActions::listRepos(..)");
         const ret = [];
         for (const name of Object.keys(this.repos)) {
             const repo = this.repos[name];
-            ret.push({id: Date.now(), name: name, url: repo});
+            ret.push({repoNumber: Date.now(), repoName: name, url: repo});
         }
         Log.info("TestGitHubActions::listRepos(..) - #: " + ret.length + "; content: " + JSON.stringify(ret));
         return ret;
     }
 
-    public async listTeams(): Promise<Array<{id: number; name: string}>> {
+    // TODO: use a private teams map to keep track of teams
+    public async listTeams(): Promise<Array<{teamName: string, teamNumber: number}>> {
         Log.info("TestGitHubActions::listTeams(..)");
-        return [{id: Date.now(), name: this.Test.TEAMNAME1}];
+        return [{teamNumber: Date.now(), teamName: this.Test.TEAMNAME1}];
     }
 
     private webHookState: any = {};
