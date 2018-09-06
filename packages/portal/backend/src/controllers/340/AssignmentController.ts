@@ -758,6 +758,8 @@ export class AssignmentController {
             }
         }
 
+        Log.info("AssignmentController::updateAssignmentStatus(..) - Counted " + allStudents.length + " students in db");
+
         // build a repository mapping
         const studentRepoMapping: {[studentId: string]: Repository[]} = {};
         const assignInfo: AssignmentInfo = deliv.custom.assignment;
@@ -831,6 +833,7 @@ export class AssignmentController {
                 // if the student has repositories,
                 const studentRepos: Repository[] = studentRepoMapping[student.id];
                 for (const repo of studentRepos) {
+
                     if (typeof repo.custom.assignmentInfo.assignmentId === "undefined") {
                         // a repo is not classified properly
                         Log.error("AssignmentController::updateAssignmentStatus(..) - error: " +
