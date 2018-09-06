@@ -290,8 +290,8 @@ export class AssignmentController {
 
         // create a map of personID to
         for (const person of peopleList) {
-            if (typeof personVerification[person.name] === 'undefined') {
-                personVerification[person.name] = person;
+            if (typeof personVerification[person.githubId] === 'undefined') {
+                personVerification[person.githubId] = person;
             }
         }
         let assignInfo: AssignmentInfo;
@@ -804,8 +804,8 @@ export class AssignmentController {
         // create a map of personID
         let personvVerificationCount = 0;
         for (const person of peopleList) {
-            if (typeof personVerification[person.name] === 'undefined') {
-                personVerification[person.name] = person;
+            if (typeof personVerification[person.githubId] === 'undefined') {
+                personVerification[person.githubId] = person;
                 personvVerificationCount++;
             }
         }
@@ -1189,8 +1189,8 @@ export class AssignmentController {
 
         // create a map of personID to
         for (const person of peopleList) {
-            if (typeof personVerification[person.name] === 'undefined') {
-                personVerification[person.name] = person;
+            if (typeof personVerification[person.githubId] === 'undefined') {
+                personVerification[person.githubId] = person;
             }
         }
 
@@ -1242,8 +1242,8 @@ export class AssignmentController {
 
         // create a map of personID to
         for (const person of peopleList) {
-            if (typeof personVerification[person.name] === 'undefined') {
-                personVerification[person.name] = person;
+            if (typeof personVerification[person.githubId] === 'undefined') {
+                personVerification[person.githubId] = person;
             }
         }
 

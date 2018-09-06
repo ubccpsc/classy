@@ -644,8 +644,8 @@ export default class CS340REST implements IREST {
 
             const personVerification: {[githubID: string]: any} = {};
             for (const githubPerson of githubPeople) {
-                if (typeof personVerification[githubPerson.name] === "undefined") {
-                    personVerification[githubPerson.name] = githubPerson;
+                if (typeof personVerification[githubPerson.githubId] === "undefined") {
+                    personVerification[githubPerson.githubId] = githubPerson;
                 }
             }
 
