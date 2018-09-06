@@ -438,8 +438,14 @@ export abstract class CourseController implements ICourseController {
      * @returns {Promise<RepositoryTransport[]>}
      */
     public async provision(deliv: Deliverable, formSingleTeams: boolean): Promise<RepositoryTransport[]> {
+        Log.info("CourseController::provision( " + deliv.id + ", " + formSingleTeams + " ) - start");
         const allPeople: Person[] = await this.pc.getAllPeople();
         const allTeams: Team[] = await this.tc.getAllTeams();
+
+        if (deliv.teamMaxSize === 1) {
+            formSingleTeams = true;
+            Log.info("CourseController::provision( .. ) - team maxSize 1: formSingleTeams forced to true");
+        }
 
         const delivTeams: Team[] = [];
         for (const team of allTeams) {
