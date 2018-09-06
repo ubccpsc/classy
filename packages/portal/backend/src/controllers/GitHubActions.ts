@@ -319,7 +319,8 @@ export class GitHubActions implements IGitHubActions {
                 return false;
             }
         } catch (err) {
-            Log.error("GitHubAction::deleteRepo(..) - ERROR: " + JSON.stringify(err));
+            // jut warn because 404 throws an error
+            Log.warn("GitHubAction::deleteRepo(..) - ERROR: " + err.message);
             return false;
         }
     }
@@ -388,7 +389,8 @@ export class GitHubActions implements IGitHubActions {
             }
 
         } catch (err) {
-            Log.error("GitHubAction::deleteTeam(..) - failed; ERROR: " + err);
+            // just warn because 404 throws an error like this
+            Log.warn("GitHubAction::deleteTeam(..) - failed; ERROR: " + err.message);
             return false;
         }
     }
