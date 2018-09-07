@@ -23,7 +23,7 @@ export class PersonController {
         if (existingPerson === null) {
             await this.db.writePerson(personPrototype);
 
-            Log.trace("PersonController::createPerson(..) - created");
+            Log.trace("PersonController::createPerson( " + personPrototype.id + " ) - created");
             const person = await this.db.getPerson(personPrototype.id);
             return person;
 
@@ -37,7 +37,7 @@ export class PersonController {
 
             await this.db.writePerson(existingPerson);
 
-            Log.trace("PersonController::createPerson(..) - updated");
+            Log.trace("PersonController::createPerson( " + existingPerson.id + " ) - updated");
             const person = await this.db.getPerson(personPrototype.id);
             return person;
         }

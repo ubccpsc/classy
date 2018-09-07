@@ -273,7 +273,7 @@ export default class AdminRoutes implements IREST {
 
             const parser = parse(options, (err, data) => {
                 if (err) {
-                    const msg = 'Class list parse error: ' + err;
+                    const msg = 'Classlist parse error: ' + err;
                     return AdminRoutes.handleError(400, msg, res, next);
                 } else {
                     Log.info('AdminRoutes::postClasslist(..) - parse successful');
@@ -286,7 +286,7 @@ export default class AdminRoutes implements IREST {
                             typeof row.SNUM !== 'undefined' && typeof row.FIRST !== 'undefined' &&
                             typeof row.LAST !== 'undefined' && typeof row.LAB !== 'undefined') {
                             const p: Person = {
-                                id: row.ACCT, // id is CSID since this cannot be changed
+                                id:            row.ACCT, // id is CSID since this cannot be changed
                                 csId:          row.ACCT,
                                 // github.ugrad wants row.ACCT; github.ubc wants row.CWL
                                 githubId:      row.ACCT,  // TODO: will depend on instance (see above)
@@ -308,21 +308,26 @@ export default class AdminRoutes implements IREST {
 
                     Promise.all(people).then(function() {
                         if (people.length > 0) {
-                            res.send(200, {success: {message: 'Class list upload successful. ' + people.length + ' students processed.'}});
-                            Log.info('AdminRoutes::postClasslist(..) - end');
+                            const payload: Payload = {
+                                success: {
+                                    message: 'Classlist upload successful. ' + people.length + ' students processed.'
+                                }
+                            };
+                            res.send(200, payload);
+                            Log.info('AdminRoutes::postClasslist(..) - done: ' + payload.success.message);
                         } else {
-                            const msg = 'Class list upload not successful; no students were processed from CSV.';
+                            const msg = 'Classlist upload not successful; no students were processed from CSV.';
                             return AdminRoutes.handleError(400, msg, res, next);
                         }
                     }).catch(function(errInner) {
-                        return AdminRoutes.handleError(400, 'Class list upload error: ' + errInner, res, next);
+                        return AdminRoutes.handleError(400, 'Classlist upload error: ' + errInner, res, next);
                     });
                 }
             });
 
             rs.pipe(parser);
         } catch (err) {
-            return AdminRoutes.handleError(400, 'Class list upload unsuccessful. ERROR: ' + err.messge, res, next);
+            return AdminRoutes.handleError(400, 'Classlist upload unsuccessful. ERROR: ' + err.messge, res, next);
         }
     }
 

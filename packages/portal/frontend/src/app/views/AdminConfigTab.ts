@@ -1,6 +1,6 @@
 import {OnsButtonElement} from "onsenui";
 import Log from "../../../../../common/Log";
-import {CourseTransport, CourseTransportPayload, ProvisionTransport} from "../../../../../common/types/PortalTypes";
+import {CourseTransport, CourseTransportPayload, Payload, ProvisionTransport} from "../../../../../common/types/PortalTypes";
 import {Network} from "../util/Network";
 import {UI} from "../util/UI";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
@@ -161,10 +161,10 @@ export class AdminConfigTab {
             };
             const response: Response = await Network.httpPostFile(url, opts, formData);
             if (response.status >= 200 && response.status < 300) {
-                const data = await response.json();
+                const data: Payload = await response.json();
                 UI.hideModal();
                 Log.info('AdminView::uploadClasslist(..) - RESPONSE: ' + JSON.stringify(data));
-                UI.notification('Class list Updated.');
+                UI.notification(data.success.message);
             } else {
                 const reason = await response.json();
                 UI.hideModal();
@@ -234,15 +234,19 @@ export class AdminConfigTab {
             const response = await fetch(url, options);
             const body = await response.json();
 
-            if (typeof body.success !== 'undefined') {
-                Log.info("Repositories provisioned: " + JSON.stringify(body.success));
-                UI.showAlert("Repositories provisioned: " + body.success.length);
-            } else {
-                if (typeof body.failure !== 'undefined') {
-                    UI.showAlert(body.failure.message);
+            if (response.status === 200 || response.status === 400) {
+                if (typeof body.success !== 'undefined') {
+                    Log.info("Repositories provisioned: " + JSON.stringify(body.success));
+                    UI.showAlert("Repositories provisioned: " + body.success.length);
                 } else {
-                    UI.showAlert(body);
+                    if (typeof body.failure !== 'undefined') {
+                        UI.showAlert(body.failure.message);
+                    } else {
+                        UI.showAlert(body);
+                    }
                 }
+            } else {
+                UI.showAlert("Unexpected problem encountered: " + response.statusText);
             }
         }
         Log.trace('AdminView::provisionDeliverablePressed(..) - done; took: ' + UI.took(start));
