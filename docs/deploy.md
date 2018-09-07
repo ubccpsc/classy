@@ -155,21 +155,12 @@ permission with the host (this is done in the docker-compose.yml file).
                  --build-arg USER_UID=$(id -u classy) \
                  --build-arg COURSE=cs310 \
                  --file grade.dockerfile \
-           https://GITHUB_TOKEN@github.ubc.ca/cpsc310/project_oracle.git
+           https://GITHUB_TOKEN@github.ubc.ca/cpsc310/project-oracle.git
     ```
     Note: GITHUB_TOKEN should be substituted with the actual token. The tag should match the image name that is/will be
     set in portal.
 
-3. Build the base image (see issue [#46](https://github.com/ubccpsc/classy/issues/46)).
-    
-    ```bash
-    cd /opt/classy
-    docker build -t classy:base .
-    ```
-    
-    Note: due to the mentioned bug, this needs to be run anytime a change is made to the _common_ package. 
-
-4. Build and start the base system:
+5. Build and start the base system:
 
     ```bash
     cd /opt/classy
@@ -177,7 +168,7 @@ permission with the host (this is done in the docker-compose.yml file).
     docker-compose up --detach
     ```
 
-5. Build and start the extended system (if using autotest).
+6. Build and start the extended system (if using autotest).
     
     ```bash
     cd /opt/classy
