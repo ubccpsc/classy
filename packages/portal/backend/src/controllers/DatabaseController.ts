@@ -2,7 +2,6 @@ import {Collection, Db, MongoClient} from "mongodb";
 import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
 
 import Log from "../../../../common/Log";
-import Util from "../../../../common/Util";
 
 import {Auth, Course, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
 
@@ -40,28 +39,32 @@ export class DatabaseController {
     }
 
     public async getPerson(recordId: string): Promise<Person | null> {
-        Log.info("DatabaseController::getPerson( " + recordId + " ) - start");
-        return await this.readSingleRecord(this.PERSONCOLL, {id: recordId}) as Person;
+        const person = await this.readSingleRecord(this.PERSONCOLL, {id: recordId}) as Person;
+        Log.info("DatabaseController::getPerson( " + recordId + " ) - found: " + (person !== null));
+        return person;
     }
 
     public async getGitHubPerson(recordId: string): Promise<Person | null> {
-        Log.info("DatabaseController::getGitHubPerson( " + recordId + " ) - start");
-        return await this.readSingleRecord(this.PERSONCOLL, {githubId: recordId}) as Person;
+        const person = await this.readSingleRecord(this.PERSONCOLL, {githubId: recordId}) as Person;
+        Log.info("DatabaseController::getGitHubPerson( " + recordId + " ) - found: " + (person !== null));
+        return person;
     }
 
     public async getRepository(recordId: string): Promise<Repository | null> {
-        Log.info("DatabaseController::getRepository( " + recordId + " ) - start");
-        return await this.readSingleRecord(this.REPOCOLL, {id: recordId}) as Repository;
+        const repo = await this.readSingleRecord(this.REPOCOLL, {id: recordId}) as Repository;
+        Log.info("DatabaseController::getRepository( " + recordId + " ) - found: " + (repo !== null));
+        return repo;
     }
 
     public async getTeam(recordId: string): Promise<Team | null> {
-        Log.info("DatabaseController::getTeam( " + recordId + " ) - start");
-        return await this.readSingleRecord(this.TEAMCOLL, {id: recordId}) as Team;
+        const team = await this.readSingleRecord(this.TEAMCOLL, {id: recordId}) as Team;
+        Log.info("DatabaseController::getTeam( " + recordId + " ) - found: " + (team !== null));
+        return team;
     }
 
     public async getAuth(personId: string): Promise<Auth | null> {
-        Log.trace("DatabaseController::getAuthToken( " + personId + " ) - start");
         const auth = await this.readSingleRecord(this.AUTHCOLL, {personId: personId}) as Auth;
+        Log.trace("DatabaseController::getAuthToken( " + personId + " ) - found: " + (auth !== null));
         return auth;
     }
 
@@ -374,16 +377,17 @@ export class DatabaseController {
      */
     private async readSingleRecord(column: string, query: {}): Promise<{} | null> {
         try {
-            Log.trace("DatabaseController::readSingleRecord( " + column + ", " + JSON.stringify(query) + " ) - start");
+            // Log.trace("DatabaseController::readSingleRecord( " + column + ", " + JSON.stringify(query) + " ) - start");
             const start = Date.now();
             const col = await this.getCollection(column);
 
             const records: any[] = await (col as any).find(query).toArray();
             if (records === null || records.length === 0) {
-                Log.trace("DatabaseController::readSingleRecord(..) - done; no records found; took: " + Util.took(start));
+                // Log.trace("DatabaseController::readSingleRecord(..) - done; no records found; took: " + Util.took(start));
                 return null;
             } else {
-                Log.trace("DatabaseController::readSingleRecord(..) - done; # records: " + records.length + "; took: " + Util.took(start));
+                // Log.trace("DatabaseController::readSingleRecord(..) - done; # records: " +
+                // records.length + "; took: " + Util.took(start));
                 const record = records[0];
                 delete record._id; // remove the record id, just so we can't use it
                 return record;
@@ -402,18 +406,18 @@ export class DatabaseController {
      */
     public async readRecords(column: string, query: {}): Promise<any[]> {
         try {
-            Log.trace("DatabaseController::readRecords( " + column + ", " + JSON.stringify(query) + " ) - start");
+            // Log.trace("DatabaseController::readRecords( " + column + ", " + JSON.stringify(query) + " ) - start");
             const start = Date.now();
             const col = await this.getCollection(column);
 
             const records: any[] = await (col as any).find(query).toArray();
             if (records === null || records.length === 0) {
-                Log.trace("DatabaseController::readRecords(..) - done; no records found for: " +
-                    JSON.stringify(query) + " in: " + column + "; took: " + Util.took(start));
+                // Log.trace("DatabaseController::readRecords(..) - done; no records found for: " +
+                //     JSON.stringify(query) + " in: " + column + "; took: " + Util.took(start));
                 return [];
             } else {
-                Log.trace("DatabaseController::readRecords(..) - done; # records: " +
-                    records.length + ". took: " + Util.took(start));
+                // Log.trace("DatabaseController::readRecords(..) - done; # records: " +
+                //     records.length + ". took: " + Util.took(start));
                 for (const r of records) {
                     delete r._id; // remove the record id, just so we can't use it
                 }
