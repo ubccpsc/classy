@@ -27,7 +27,7 @@ services:
             args:
                 - UI_PORT
                 - UID
-            context: https://${COURSE_GH_ORG_TOKEN}@github.ubc.ca/cpsc310/project_oracle.git#frontend-prod
+            context: https://${COURSE_GH_ORG_TOKEN}@github.ubc.ca/cpsc310/project-oracle.git
             dockerfile: ui.dockerfile
         container_name: ${CONTAINER_NAME_UI}
         expose:
