@@ -156,14 +156,15 @@ export class AutoTestRoutes implements IREST {
             return AutoTestRoutes.handleError(400, 'Invalid AutoTest Secret: ' + providedSecret, res, next);
         } else {
             const resultRecord: AutoTestResultTransport = req.body;
-            Log.trace('AutoTestRouteHandler::atPostResult(..) - body: ' + JSON.stringify(resultRecord));
+            // Log.trace('AutoTestRouteHandler::atPostResult(..) - body: ' + JSON.stringify(resultRecord));
 
             const rc = new ResultsController();
             const validResultRecord = rc.validateAutoTestResult(resultRecord);
             if (validResultRecord !== null) {
                 return AutoTestRoutes.handleError(400, 'Invalid Result Record: ' + validResultRecord, res, next);
             } else {
-                Log.warn('AutoTestRouteHandler::atPostResult(..) - valid result && valid secret');
+                Log.info('AutoTestRouteHandler::atPostResult(..) - valid result && valid secret; deliv: ' +
+                    resultRecord.delivId + '; repo: ' + resultRecord.repoId);
                 rc.createResult(resultRecord).then(function(success) {
                     payload = {success: {message: 'Result received'}};
                     res.send(200, payload);
@@ -183,7 +184,7 @@ export class AutoTestRoutes implements IREST {
      * @param next
      */
     public static async atIsStaff(req: any, res: any, next: any) {
-        Log.info('AutoTestRouteHandler::atIsStaff(..) - /isStaff/:githubId - start GET');
+        Log.info('AutoTestRouteHandler::atIsStaff(..) - /isStaff/:githubId - start');
 
         let payload: AutoTestAuthPayload;
 
@@ -193,7 +194,7 @@ export class AutoTestRoutes implements IREST {
         } else {
             const githubId = req.params.githubId;
 
-            Log.info('AutoTestRouteHandler::atIsStaff(..) - personId: ' + githubId);
+            // Log.info('AutoTestRouteHandler::atIsStaff(..) - personId: ' + githubId);
 
             const pc = new PersonController();
             const person = await pc.getGitHubPerson(githubId);
@@ -201,10 +202,13 @@ export class AutoTestRoutes implements IREST {
                 const ac = new AuthController();
                 const priv = await ac.personPriviliged(person);
                 payload = {success: {personId: person.githubId, isStaff: priv.isStaff, isAdmin: priv.isAdmin}};
+                Log.info('AutoTestRouteHandler::atIsStaff(..) - /isStaff/:githubId - result: ' + JSON.stringify(payload));
                 res.send(200, payload);
                 return next(true);
             } else {
                 payload = {success: {personId: githubId, isStaff: false, isAdmin: false}};
+                Log.info('AutoTestRouteHandler::atIsStaff(..) - /isStaff/:githubId - unknown person; result: ' +
+                    JSON.stringify(payload));
                 res.send(200, payload);
                 return next(true);
             }
@@ -222,11 +226,10 @@ export class AutoTestRoutes implements IREST {
         } else {
             const githubId = req.params.githubId;
 
-            Log.info('AutoTestRouteHandler::atPersonId(..) - githubId: ' + githubId);
-
             const pc = new PersonController();
             pc.getGitHubPerson(githubId).then(function(person) {
                 if (person !== null) {
+                    Log.info('AutoTestRouteHandler::atPersonId(..) - personId: ' + person.id + '; githubId: ' + githubId);
                     payload = {success: {personId: person.id}}; // PersonTransportPayload
                     res.send(200, payload);
                     return next(true);

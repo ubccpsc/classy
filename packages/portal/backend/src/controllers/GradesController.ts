@@ -78,7 +78,7 @@ export class GradesController {
      */
     public async createGrade(repoId: string, delivId: string, grade: GradePayload): Promise<boolean> {
         Log.info("GradesController::createGrade( " + repoId + ", " + delivId + ", ... ) - start");
-        Log.trace("GradesController::createGrade(..) - payload: " + JSON.stringify(grade));
+        // Log.trace("GradesController::createGrade(..) - payload: " + JSON.stringify(grade));
 
         // find all people on a repo
         const allPeopleIds: string[] = [];

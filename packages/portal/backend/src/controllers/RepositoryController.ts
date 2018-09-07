@@ -104,13 +104,13 @@ export class RepositoryController {
             await this.db.writeRepository(repo);
             return await this.db.getRepository(repo.id);
         } else {
-            Log.info("RepositoryController::createRepository( " + name + ",.. ) - repository exists: " + JSON.stringify(existingRepo));
+            Log.info("RepositoryController::createRepository( " + name + ", .. ) - repository exists: " + JSON.stringify(existingRepo));
             return await this.db.getRepository(name);
         }
     }
 
     public async createPullRequest(repoId: string, prId: string, custom: any): Promise<Repository | null> {
-        Log.error("RepositoryController::createPullRequest( " + repoId + ", " + prId + ", ... ) -  NOT IMPLEMENTED!!");
+        Log.error("RepositoryController::createPullRequest( " + repoId + ", " + prId + ", .. ) -  NOT IMPLEMENTED!!");
         // TODO: implement PR functionality
 
         // NOTE: this impl is more complex than it needs to be but is erring on the side of caution
@@ -123,7 +123,7 @@ export class RepositoryController {
     }
 
     public async getPeopleForRepo(repoId: string): Promise<string[] | null> {
-        Log.info("RepositoryController::getPeopleForRepo( " + repoId + ",.. ) -  start");
+        Log.info("RepositoryController::getPeopleForRepo( " + repoId + ", .. ) -  start");
 
         const peopleIds: string[] = [];
         const tc = new TeamController();
@@ -143,7 +143,7 @@ export class RepositoryController {
 
     public static repositoryToTransport(repository: Repository): RepositoryTransport {
         if (typeof repository === 'undefined' || repository === null) {
-            throw new Error("RepositoryController::repositoryToTransport( ... ) - ERROR: repository not provided.");
+            throw new Error("RepositoryController::repositoryToTransport( .. ) - ERROR: repository not provided.");
         }
 
         const repo: RepositoryTransport = {

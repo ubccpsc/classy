@@ -177,7 +177,7 @@ export class GitHubActions implements IGitHubActions {
     private dc: DatabaseController = null;
 
     private constructor() {
-        Log.info("GitHubActions::<init> - start");
+        Log.trace("GitHubActions::<init>");
         // NOTE: this is not very controllable; these would be better as params
         this.org = Config.getInstance().getProp(ConfigKey.org);
         this.apiPath = Config.getInstance().getProp(ConfigKey.githubAPI);

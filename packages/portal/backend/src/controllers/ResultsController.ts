@@ -58,7 +58,7 @@ export class ResultsController {
     public validateAutoTestResult(record: IAutoTestResult): string | null {
         // multiple returns is poor, but at least it's quick
 
-        Log.info('ResultsController::validateAutoTestResult(..) - start');
+        // Log.info('ResultsController::validateAutoTestResult(..) - start');
 
         if (typeof record === 'undefined') {
             const msg = 'object undefined';
@@ -179,7 +179,7 @@ export class ResultsController {
     }
 
     public validateGradeReport(report: IGradeReport): string | null {
-        Log.trace('ResultsController::validateGradeReport(..) - input: ' + JSON.stringify(report));
+        // Log.trace('ResultsController::validateGradeReport(..) - input: ' + JSON.stringify(report));
 
         if (typeof report === 'undefined') {
             const msg = 'object undefined';

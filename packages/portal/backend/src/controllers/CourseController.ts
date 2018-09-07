@@ -99,7 +99,7 @@ export abstract class CourseController implements ICourseController {
     protected gh: IGitHubController = null;
 
     constructor(ghController: IGitHubController) {
-        Log.info("CourseController::<init> - start");
+        Log.trace("CourseController::<init>");
         this.gh = ghController;
     }
 

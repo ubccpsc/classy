@@ -267,8 +267,8 @@ export class DatabaseController {
     }
 
     public async writeDeliverable(record: Deliverable): Promise<boolean> {
-        Log.info("DatabaseController::writeDeliverable(..) - start");
-        Log.trace("DatabaseController::writeDeliverable(..) - deliv: " + JSON.stringify(record));
+        // Log.info("DatabaseController::writeDeliverable(..) - start");
+        // Log.trace("DatabaseController::writeDeliverable(..) - deliv: " + JSON.stringify(record));
         const existingDeiverable = await this.getDeliverable(record.id);
         if (existingDeiverable === null) {
             return await this.writeRecord(this.DELIVCOLL, record);
@@ -279,8 +279,8 @@ export class DatabaseController {
     }
 
     public async writeGrade(record: Grade): Promise<boolean> {
-        Log.info("DatabaseController::writeGrade(..) - start");
-        Log.trace("DatabaseController::writeGrade(..) - grade: " + JSON.stringify(record));
+        // Log.info("DatabaseController::writeGrade(..) - start");
+        // Log.trace("DatabaseController::writeGrade(..) - grade: " + JSON.stringify(record));
         const gradeExists = await this.getGrade(record.personId, record.delivId);
         if (gradeExists === null) {
             return await this.writeRecord(this.GRADECOLL, record);
@@ -291,11 +291,11 @@ export class DatabaseController {
     }
 
     public async writeRepository(record: Repository): Promise<boolean> {
-        Log.info("DatabaseController::writeRepository(..) - start");
+        // Log.info("DatabaseController::writeRepository(..) - start");
         if (record.custom === null) {
             record.custom = {}; // make sure this always exists
         }
-        Log.trace("DatabaseController::writeRepository(..) - repo: " + JSON.stringify(record));
+        // Log.trace("DatabaseController::writeRepository(..) - repo: " + JSON.stringify(record));
         const existingRepo = await this.getRepository(record.id);
         if (existingRepo === null) {
             return await this.writeRecord(this.REPOCOLL, record);
@@ -306,13 +306,13 @@ export class DatabaseController {
     }
 
     public async writeRecord(colName: string, record: {}): Promise<boolean> {
-        Log.info("DatabaseController::writeRecord( " + colName + ", ...) - start");
-        Log.trace("DatabaseController::writeRecord(..) - col: " + colName + "; record: " + JSON.stringify(record));
+        Log.info("DatabaseController::writeRecord( " + colName + ", ...) - writing");
+        // Log.trace("DatabaseController::writeRecord(..) - col: " + colName + "; record: " + JSON.stringify(record));
         try {
             const collection = await this.getCollection(colName);
             const copy = Object.assign({}, record);
             await collection.insertOne(copy);
-            Log.trace("DatabaseController::writeRecord(..) - write complete");
+            // Log.trace("DatabaseController::writeRecord(..) - write complete");
             return true;
         } catch (err) {
             Log.error("DatabaseController::writeRecord(..) - ERROR: " + err);
