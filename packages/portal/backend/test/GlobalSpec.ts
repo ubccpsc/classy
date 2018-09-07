@@ -53,6 +53,18 @@ export class Test {
         Log.test("Test::suiteAfter( ... ) - suite: " + suiteName);
     }
 
+    public static testBefore(suite: string, context: any) {
+        Log.test("*****");
+        Log.test(suite + "::beforeEach( " + context.currentTest.title + " )");
+        Log.test("*****");
+    }
+
+    public static testAfter(suite: string, context: any) {
+        Log.test("*****");
+        Log.test(suite + "::afterEach( " + context.currentTest.title + " )");
+        Log.test("*****");
+    }
+
     public static async prepareAll() {
         await Test.preparePeople();
         await Test.prepareAuth();

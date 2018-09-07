@@ -612,7 +612,8 @@ export class GitHubActions implements IGitHubActions {
     }
 
     public async addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
-        Log.info("GitHubAction::addWebhook( " + this.org + ", " + repoName + ", " + webhookEndpoint + " ) - start");
+        Log.info("GitHubAction::addWebhook( " + this.org + ", " + repoName + ", ... ) - start");
+        Log.info("GitHubAction::addWebhook( .. ) - webhook: " + webhookEndpoint);
         const start = Date.now();
 
         // POST /repos/:owner/:repo/hooks

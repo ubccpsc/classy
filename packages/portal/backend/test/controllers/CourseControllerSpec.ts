@@ -21,7 +21,7 @@ import {Test} from "../GlobalSpec";
 import '../GlobalSpec'; // load first
 import './GradeControllerSpec'; // load first
 
-describe("CourseController", () => {
+describe.only("CourseController", () => {
 
     let cc: CourseController;
     let gc: GradesController;
@@ -31,12 +31,14 @@ describe("CourseController", () => {
     let dc: DeliverablesController;
     let gha: IGitHubActions;
 
-    before(async () => {
+    before(async function() {
         await Test.suiteBefore('CourseController');
         await clearAndPrepareAll();
     });
 
-    beforeEach(() => {
+    beforeEach(function() {
+        Test.testBefore("CourseControllerSpec", this);
+
         gha = GitHubActions.getInstance(true);
         const ghInstance = new GitHubController(gha);
         cc = Factory.getCourseController(ghInstance);
@@ -48,7 +50,12 @@ describe("CourseController", () => {
         dc = new DeliverablesController();
     });
 
-    after(async () => {
+    afterEach(function() {
+        Test.testAfter("CourseControllerSpec", this);
+        // Log.test("CourseControllerSpec::beforeEach( " + this.currentTest.title + " )" + this.currentTest.fullTitle());
+    });
+
+    after(async function() {
         Test.suiteAfter('CourseController');
     });
 
@@ -111,12 +118,12 @@ describe("CourseController", () => {
         await dbc.writeTeam(t);
     }
 
-    it("Should be able to get the config name.", async () => {
+    it("Should be able to get the config name.", async function() {
         const res = await CourseController.getName();
         expect(res).to.equal(ConfigCourses.classytest);
     });
 
-    it("Should not be able to get a user that doesn't exist.", async () => {
+    it("Should not be able to get a user that doesn't exist.", async function() {
         const USERNAME = "UNKNOWNUSER" + new Date().getTime();
         const res = await cc.handleUnknownUser(USERNAME);
         expect(res).to.equal(null); // nothing should be returned
@@ -125,7 +132,7 @@ describe("CourseController", () => {
         expect(person).to.equal(null); // should not exist
     });
 
-    it("Should be able to get a list of students.", async () => {
+    it("Should be able to get a list of students.", async function() {
 
         const res = await cc.getStudents();
         expect(res).to.be.an('array');

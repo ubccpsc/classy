@@ -77,7 +77,7 @@ export class GitHubController implements IGitHubController {
         await this.checkDatabase(repoName, null);
 
         const config = Config.getInstance();
-        const host = config.getProp(ConfigKey.backendUrl);
+        const host = config.getProp(ConfigKey.hostname);
         const WEBHOOKADDR = host + '/portal/githubWebhook';
 
         const startTime = Date.now();
