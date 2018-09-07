@@ -277,15 +277,20 @@ export class AdminConfigTab {
             const response = await fetch(url, options);
             const body = await response.json();
 
-            if (typeof body.success !== 'undefined') {
-                UI.showAlert("Repositories released: " + body.success.length);
-                Log.info("Repositories released: " + JSON.stringify(body.success));
-            } else {
-                if (typeof body.failure !== 'undefined') {
-                    UI.showAlert(body.failure.message);
+            if (response.status === 200 || response.status === 400) {
+                if (typeof body.success !== 'undefined') {
+                    UI.showAlert("Repositories released: " + body.success.length);
+                    Log.info("Repositories released: " + JSON.stringify(body.success));
                 } else {
-                    UI.showAlert(body);
+                    if (typeof body.failure !== 'undefined') {
+                        UI.showAlert(body.failure.message);
+                    } else {
+                        UI.showAlert(body);
+                    }
                 }
+            } else {
+                Log.error("Unexpected problem: " + response.statusText);
+                UI.showAlert("Unexpected problem: " + response.statusText);
             }
         }
         Log.trace('AdminView::releaseDeliverablePressed(..) - done; took: ' + UI.took(start));
@@ -303,7 +308,7 @@ export class AdminConfigTab {
 
             const courseOptions: CourseTransport = null;
             const start = Date.now();
-            if (response.status === 200) {
+            if (response.status === 200 || response.status === 400) {
                 Log.trace('AdminCourseTab::getCourse(..) - 200 received for course options');
                 const json: CourseTransportPayload = await response.json();
                 // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
