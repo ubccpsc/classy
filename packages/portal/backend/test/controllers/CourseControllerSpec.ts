@@ -69,14 +69,28 @@ describe("CourseController", () => {
 
         // clear github teams and repositories we will end up provisioning
         await gha.deleteRepo(Test.REPONAMEREAL);
-        await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
+        // await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
+        await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB1);
+        await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB2);
         await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB3);
+
+        await gha.deleteRepo('project_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
+        await gha.deleteRepo('project_' + Test.USERNAMEGITHUB3);
         await gha.deleteRepo(Test.REPONAME1);
         await gha.deleteRepo(Test.REPONAME2);
 
-        let teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
+        // let teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
+        // await gha.deleteTeam(teamNum);
+
+        let teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB1);
+        await gha.deleteTeam(teamNum);
+        teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB2);
         await gha.deleteTeam(teamNum);
         teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB3);
+        await gha.deleteTeam(teamNum);
+        teamNum = await gha.getTeamNumber('t_project_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
+        await gha.deleteTeam(teamNum);
+        teamNum = await gha.getTeamNumber('t_project_' + Test.USERNAMEGITHUB3);
         await gha.deleteTeam(teamNum);
         teamNum = await gha.getTeamNumber(Test.TEAMNAMEREAL);
         await gha.deleteTeam(teamNum);
@@ -90,10 +104,10 @@ describe("CourseController", () => {
         const p3 = Test.createPerson(Test.USERNAMEGITHUB3, Test.USERNAMEGITHUB3, Test.USERNAMEGITHUB3, 'student');
         await dbc.writePerson(p3);
 
-        const d0 = await dbc.getDeliverable(Test.DELIVID0);
-        const names = await cc.computeNames(d0, [p1, p2]);
+        const deliv = await dbc.getDeliverable(Test.DELIVIDPROJ);
+        const names = await cc.computeNames(deliv, [p1, p2]);
 
-        const t = await Test.createTeam(names.teamName, Test.DELIVID0, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+        const t = await Test.createTeam(names.teamName, Test.DELIVIDPROJ, [p1.githubId, p2.githubId]);
         await dbc.writeTeam(t);
     }
 
@@ -372,26 +386,26 @@ describe("CourseController", () => {
             expect(allTeams.length).to.equal(1);
             expect(allTeams[0].URL).to.be.null; // not provisioned yet
 
-            const d0 = await dc.getDeliverable(Test.DELIVID0);
-            const res = await cc.provision(d0, false);
+            const deliv = await dc.getDeliverable(Test.DELIVIDPROJ);
+            const res = await cc.provision(deliv, false);
             Log.test("provisioned: " + JSON.stringify(res));
             expect(res).to.be.an('array');
             expect(res.length).to.equal(1);
 
             const allNewRepos = await rc.getAllRepos();
-            const allNewTeams = await tc.getAllTeams();
-
             expect(allNewRepos.length).to.equal(1);
-            expect(allNewTeams.length).to.equal(1);
-
-            const teamNum = await gha.getTeamNumber(allNewTeams[0].id);
-            expect(teamNum).to.be.greaterThan(0); // should be provisioned
+            expect(allNewRepos[0].URL).to.not.be.null;
 
             const repoExists = await gha.repoExists(allNewRepos[0].id);
             expect(repoExists).to.be.true; // should be provisioned
 
-            expect(allNewTeams[0].URL).to.not.be.null; // team was used, but repo was only provisioned, not released
-            expect(allNewRepos[0].URL).to.not.be.null;
+            const allNewTeams = await tc.getAllTeams();
+            expect(allNewTeams.length).to.equal(1);
+
+            const teamNum = await gha.getTeamNumber(allNewTeams[0].id);
+            expect(teamNum).to.be.greaterThan(0); // should be provisioned
+            expect(allNewTeams[0].URL).to.not.be.null; // should be provisioned
+
         }).timeout(Test.TIMEOUTLONG);
 
         it("Should release repos.", async () => {
@@ -403,11 +417,11 @@ describe("CourseController", () => {
             const allTeams = await tc.getAllTeams();
             expect(allTeams.length).to.equal(1);
             expect(allTeams[0].URL).to.not.be.null; // provisioned
+            expect(allTeams[0].custom.githubAttached).to.be.false;
 
-            const d0 = await dc.getDeliverable(Test.DELIVID0);
-            let res = await cc.release(d0);
-
-            Log.test("released: " + JSON.stringify(res));
+            const deliv = await dc.getDeliverable(Test.DELIVIDPROJ);
+            let res = await cc.release(deliv);
+            Log.test("Released: " + JSON.stringify(res));
             expect(res).to.be.an('array');
             expect(res.length).to.equal(1);
 
@@ -416,8 +430,8 @@ describe("CourseController", () => {
             expect(allNewTeams[0].custom.githubAttached).to.be.true;
 
             // try again: should not release any more repos
-            res = await cc.release(d0);
-            Log.test("released: " + JSON.stringify(res));
+            res = await cc.release(deliv);
+            Log.test("Re-Released: " + JSON.stringify(res));
             expect(res).to.be.an('array');
             expect(res.length).to.equal(0);
         }).timeout(Test.TIMEOUTLONG);
@@ -427,41 +441,40 @@ describe("CourseController", () => {
 
             const allRepos = await rc.getAllRepos();
             const allTeams = await tc.getAllTeams();
-
             expect(allRepos.length).to.equal(0);
-            expect(allTeams.length).to.equal(1);
+            expect(allTeams.length).to.equal(1); // 1x project
+
             let teamNum = await gha.getTeamNumber(allTeams[0].id);
             expect(teamNum).to.be.lessThan(0); // should not be provisioned yet
 
-            const d0 = await dc.getDeliverable(Test.DELIVID0);
-            const res = await cc.provision(d0, true);
+            const deliv = await dc.getDeliverable(Test.DELIVID0);
+            const res = await cc.provision(deliv, true);
             Log.test("provisioned: " + JSON.stringify(res));
             expect(res).to.be.an('array');
-            expect(res.length).to.equal(2);
+            expect(res.length).to.equal(3);
 
             const allNewRepos = await rc.getAllRepos();
             const allNewTeams = await tc.getAllTeams();
+            expect(allNewRepos.length).to.equal(3); // 3x d0
+            expect(allNewTeams.length).to.equal(4); // 3x d0 & 1x project
 
-            expect(allNewRepos.length).to.equal(2);
-            expect(allNewTeams.length).to.equal(2);
+            for (const team of allNewTeams) {
+                if (team.delivId === deliv.id) {
+                    Log.test("Team: " + JSON.stringify(team));
+                    teamNum = await gha.getTeamNumber(team.id);
+                    expect(teamNum).to.be.greaterThan(0); // should be provisioned
+                    expect(team.URL).to.not.be.null;
+                }
+            }
 
-            teamNum = await gha.getTeamNumber(allNewTeams[0].id);
-            expect(teamNum).to.be.greaterThan(0); // should be provisioned
-
-            teamNum = await gha.getTeamNumber(allNewTeams[1].id);
-            expect(teamNum).to.be.greaterThan(0); // should be provisioned
-
-            let repoExists = await gha.repoExists(allNewRepos[0].id);
-            expect(repoExists).to.be.true; // should be provisioned
-
-            repoExists = await gha.repoExists(allNewRepos[1].id);
-            expect(repoExists).to.be.true; // should be provisioned
-
-            expect(allNewRepos[0].URL).to.not.be.null;
-            expect(allNewRepos[1].URL).to.not.be.null;
-
-            expect(allNewTeams[0].URL).to.not.be.null;
-            expect(allNewTeams[1].URL).to.not.be.null;
+            for (const repo of allNewRepos) {
+                if (repo.delivId === deliv.id) {
+                    Log.test("Repo: " + JSON.stringify(repo));
+                    const repoExists = await gha.repoExists(repo.id);
+                    expect(repoExists).to.be.true; // should be provisioned
+                    expect(repo.URL).to.not.be.null;
+                }
+            }
         }).timeout(Test.TIMEOUTLONG * 5);
 
         it("Should not provision any new repos if nothing has changed.", async () => {
@@ -469,21 +482,20 @@ describe("CourseController", () => {
 
             const allRepos = await rc.getAllRepos();
             const allTeams = await tc.getAllTeams();
+            expect(allRepos.length).to.equal(3);
+            expect(allTeams.length).to.equal(4);
 
-            expect(allRepos.length).to.equal(2);
-            expect(allTeams.length).to.equal(2);
-
-            const d0 = await dc.getDeliverable(Test.DELIVID0);
-            const res = await cc.provision(d0, true);
-            Log.test("provisioned: " + JSON.stringify(res));
+            const deliv = await dc.getDeliverable(Test.DELIVID0);
+            const res = await cc.provision(deliv, true);
+            Log.test("Provisioned: " + JSON.stringify(res));
             expect(res).to.be.an('array');
             expect(res.length).to.equal(0);
 
             const allNewRepos = await rc.getAllRepos();
             const allNewTeams = await tc.getAllTeams();
 
-            expect(allNewRepos.length).to.equal(2);
-            expect(allNewTeams.length).to.equal(2);
+            expect(allNewRepos.length).to.equal(3);
+            expect(allNewTeams.length).to.equal(4); // 3x d0 & 1x project
         }).timeout(Test.TIMEOUTLONG * 5);
     });
 });

@@ -101,6 +101,9 @@ export class Test {
         await dc.writeDeliverable(d);
 
         d = Test.createDeliverable(Test.DELIVIDPROJ);
+        d.teamMinSize = 2;
+        d.teamMaxSize = 2;
+        d.shouldProvision = true;
         await dc.writeDeliverable(d);
     }
 
