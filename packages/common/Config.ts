@@ -87,7 +87,7 @@ export default class Config {
                 testorg:  process.env.ORGTEST,
                 testname: process.env.NAMETEST,
 
-                hostname: process.env.PUBLICHOSTNAME,
+                publichostname: process.env.PUBLICHOSTNAME,
 
                 dockerId:   process.env.GRADER_DOCKER_ID,
                 workspace:  process.env.GRADER_WORKSPACE,

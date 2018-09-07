@@ -40,25 +40,25 @@ export class DatabaseController {
 
     public async getPerson(recordId: string): Promise<Person | null> {
         const person = await this.readSingleRecord(this.PERSONCOLL, {id: recordId}) as Person;
-        Log.info("DatabaseController::getPerson( " + recordId + " ) - found: " + (person !== null));
+        Log.trace("DatabaseController::getPerson( " + recordId + " ) - found: " + (person !== null));
         return person;
     }
 
     public async getGitHubPerson(recordId: string): Promise<Person | null> {
         const person = await this.readSingleRecord(this.PERSONCOLL, {githubId: recordId}) as Person;
-        Log.info("DatabaseController::getGitHubPerson( " + recordId + " ) - found: " + (person !== null));
+        Log.trace("DatabaseController::getGitHubPerson( " + recordId + " ) - found: " + (person !== null));
         return person;
     }
 
     public async getRepository(recordId: string): Promise<Repository | null> {
         const repo = await this.readSingleRecord(this.REPOCOLL, {id: recordId}) as Repository;
-        Log.info("DatabaseController::getRepository( " + recordId + " ) - found: " + (repo !== null));
+        Log.trace("DatabaseController::getRepository( " + recordId + " ) - found: " + (repo !== null));
         return repo;
     }
 
     public async getTeam(recordId: string): Promise<Team | null> {
         const team = await this.readSingleRecord(this.TEAMCOLL, {id: recordId}) as Team;
-        Log.info("DatabaseController::getTeam( " + recordId + " ) - found: " + (team !== null));
+        Log.trace("DatabaseController::getTeam( " + recordId + " ) - found: " + (team !== null));
         return team;
     }
 
@@ -69,27 +69,31 @@ export class DatabaseController {
     }
 
     public async getRepositories(): Promise<Repository[]> {
-        Log.info("DatabaseController::getRepositories() - start");
-        return await this.readRecords(this.REPOCOLL, {}) as Repository[];
+        const repos = await this.readRecords(this.REPOCOLL, {}) as Repository[];
+        Log.trace("DatabaseController::getRepositories() - #: " + repos.length);
+        return repos;
     }
 
     public async getCourseRecord(): Promise<Course | null> {
-        Log.info("DatabaseController::getCourseRecord() - start");
-        return await this.readSingleRecord(this.COURSECOLL, {id: Config.getInstance().getProp(ConfigKey.name)}) as Course;
+        const record = await this.readSingleRecord(this.COURSECOLL, {id: Config.getInstance().getProp(ConfigKey.name)}) as Course;
+        Log.trace("DatabaseController::getCourseRecord() - found: " + (record !== null));
+        return record;
     }
 
     public async getTeams(): Promise<Team[]> {
-        Log.info("DatabaseController::getTeams() - start");
-        return await this.readRecords(this.TEAMCOLL, {}) as Team[];
+        const teams = await this.readRecords(this.TEAMCOLL, {}) as Team[];
+        Log.info("DatabaseController::getTeams() - #: " + teams.length);
+        return teams;
     }
 
     public async getResults(): Promise<Result[]> {
-        Log.info("DatabaseController::getResult() - start");
-        return await this.readRecords(this.RESULTCOLL, {}) as Result[];
+        const results = await this.readRecords(this.RESULTCOLL, {}) as Result[];
+        Log.info("DatabaseController::getResult() - #: " + results.length);
+        return results;
     }
 
     public async getTeamsForPerson(personId: string): Promise<Team[]> {
-        Log.info("DatabaseController::getTeams() - start");
+        Log.info("DatabaseController::getTeamsForPerson() - start");
         const teams = await this.readRecords(this.TEAMCOLL, {});
         const myTeams = [];
         for (const t of teams as Team[]) {
@@ -133,18 +137,21 @@ export class DatabaseController {
     }
 
     public async getPeople(): Promise<Person[]> {
-        Log.info("DatabaseController::getPeople() - start");
-        return await this.readRecords(this.PERSONCOLL, {}) as Person[];
+        const people = await this.readRecords(this.PERSONCOLL, {}) as Person[];
+        Log.info("DatabaseController::getPeople() - #: " + people.length);
+        return people;
     }
 
     public async getDeliverables(): Promise<Deliverable[]> {
-        Log.info("DatabaseController::getDeliverables() - start");
-        return await this.readRecords(this.DELIVCOLL, {}) as Deliverable[];
+        const delivs = await this.readRecords(this.DELIVCOLL, {}) as Deliverable[];
+        Log.info("DatabaseController::getDeliverables() - #: " + delivs.length);
+        return delivs;
     }
 
     public async getDeliverable(id: string): Promise<Deliverable> {
-        Log.info("DatabaseController::getDeliverable() - start");
-        return await this.readSingleRecord(this.DELIVCOLL, {id: id}) as Deliverable;
+        const deliv = await this.readSingleRecord(this.DELIVCOLL, {id: id}) as Deliverable;
+        Log.info("DatabaseController::getDeliverable() - found: " + (deliv !== null));
+        return deliv;
     }
 
     public async getGrades(): Promise<Grade[]> {
