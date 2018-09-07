@@ -13,6 +13,7 @@ import {
     AutoTestResultTransport,
     Payload
 } from "../../../../../common/types/PortalTypes";
+import {AuthController} from "../../controllers/AuthController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GitHubActions} from "../../controllers/GitHubActions";
 import {GitHubController} from "../../controllers/GitHubController";
@@ -175,13 +176,13 @@ export class AutoTestRoutes implements IREST {
     }
 
     /**
-     * TODO: this needs to be implemented.
+     * Returns whether a githubId is an admin/staff.
      *
      * @param req
      * @param res
      * @param next
      */
-    public static atIsStaff(req: any, res: any, next: any) {
+    public static async atIsStaff(req: any, res: any, next: any) {
         Log.info('AutoTestRouteHandler::atIsStaff(..) - /isStaff/:githubId - start GET');
 
         let payload: AutoTestAuthPayload;
@@ -194,9 +195,12 @@ export class AutoTestRoutes implements IREST {
 
             Log.info('AutoTestRouteHandler::atIsStaff(..) - personId: ' + githubId);
 
-            // TODO: this is just a dummy implementation
-            if (githubId === 'rtholmes' || githubId === 'nickbradley') {
-                payload = {success: {personId: githubId, isStaff: true, isAdmin: true}};
+            const pc = new PersonController();
+            const person = await pc.getGitHubPerson(githubId);
+            if (person !== null) {
+                const ac = new AuthController();
+                const priv = await ac.personPriviliged(person);
+                payload = {success: {personId: person.githubId, isStaff: priv.isStaff, isAdmin: priv.isAdmin}};
                 res.send(200, payload);
                 return next(true);
             } else {
