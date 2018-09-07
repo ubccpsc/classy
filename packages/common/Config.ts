@@ -148,8 +148,10 @@ export default class Config {
 
     public getProp(prop: ConfigKey): any {
         if (typeof this.config[prop] === "undefined") {
+            Log.error("Config::getProp(...) - property is undefined; you probably want this in your config file.");
             Log.error("Config::getProp( " + prop + " ) - property is undefined; you probably want this in your config file.");
         } else if (this.config[prop] === null) {
+            Log.error("Config::getProp(...) - property is null.");
             Log.error("Config::getProp( " + prop + " ) - property is null");
         } else {
             return this.config[prop];
