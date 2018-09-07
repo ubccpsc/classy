@@ -21,7 +21,7 @@ import {Test} from "../GlobalSpec";
 import '../GlobalSpec'; // load first
 import './GradeControllerSpec'; // load first
 
-describe.only("CourseController", () => {
+describe("CourseController", () => {
 
     let cc: CourseController;
     let gc: GradesController;

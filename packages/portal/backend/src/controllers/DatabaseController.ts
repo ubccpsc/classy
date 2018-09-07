@@ -40,43 +40,43 @@ export class DatabaseController {
 
     public async getPerson(recordId: string): Promise<Person | null> {
         const person = await this.readSingleRecord(this.PERSONCOLL, {id: recordId}) as Person;
-        Log.trace("DatabaseController::getPerson( " + recordId + " ) - found: " + (person !== null));
+        Log.info("DatabaseController::getPerson( " + recordId + " ) - found: " + (person !== null));
         return person;
     }
 
     public async getGitHubPerson(recordId: string): Promise<Person | null> {
         const person = await this.readSingleRecord(this.PERSONCOLL, {githubId: recordId}) as Person;
-        Log.trace("DatabaseController::getGitHubPerson( " + recordId + " ) - found: " + (person !== null));
+        Log.info("DatabaseController::getGitHubPerson( " + recordId + " ) - found: " + (person !== null));
         return person;
     }
 
     public async getRepository(recordId: string): Promise<Repository | null> {
         const repo = await this.readSingleRecord(this.REPOCOLL, {id: recordId}) as Repository;
-        Log.trace("DatabaseController::getRepository( " + recordId + " ) - found: " + (repo !== null));
+        Log.info("DatabaseController::getRepository( " + recordId + " ) - found: " + (repo !== null));
         return repo;
     }
 
     public async getTeam(recordId: string): Promise<Team | null> {
         const team = await this.readSingleRecord(this.TEAMCOLL, {id: recordId}) as Team;
-        Log.trace("DatabaseController::getTeam( " + recordId + " ) - found: " + (team !== null));
+        Log.info("DatabaseController::getTeam( " + recordId + " ) - found: " + (team !== null));
         return team;
     }
 
     public async getAuth(personId: string): Promise<Auth | null> {
         const auth = await this.readSingleRecord(this.AUTHCOLL, {personId: personId}) as Auth;
-        Log.trace("DatabaseController::getAuthToken( " + personId + " ) - found: " + (auth !== null));
+        Log.info("DatabaseController::getAuthToken( " + personId + " ) - found: " + (auth !== null));
         return auth;
     }
 
     public async getRepositories(): Promise<Repository[]> {
         const repos = await this.readRecords(this.REPOCOLL, {}) as Repository[];
-        Log.trace("DatabaseController::getRepositories() - #: " + repos.length);
+        Log.info("DatabaseController::getRepositories() - #: " + repos.length);
         return repos;
     }
 
     public async getCourseRecord(): Promise<Course | null> {
         const record = await this.readSingleRecord(this.COURSECOLL, {id: Config.getInstance().getProp(ConfigKey.name)}) as Course;
-        Log.trace("DatabaseController::getCourseRecord() - found: " + (record !== null));
+        Log.info("DatabaseController::getCourseRecord() - found: " + (record !== null));
         return record;
     }
 
@@ -155,21 +155,23 @@ export class DatabaseController {
     }
 
     public async getGrades(): Promise<Grade[]> {
-        Log.info("DatabaseController::getGrades() - start");
-        return await this.readRecords(this.GRADECOLL, {}) as Grade[];
+        const grades = await this.readRecords(this.GRADECOLL, {}) as Grade[];
+        Log.info("DatabaseController::getGrades() - #: " + grades.length);
+        return grades;
     }
 
     public async getGrade(personId: string, delivId: string): Promise<Grade | null> {
-        Log.info("DatabaseController::getGrade( " + personId + ", " + delivId + " ) - start");
         const grade = await this.readSingleRecord(this.GRADECOLL, {personId: personId, delivId: delivId}) as Grade;
         if (grade !== null) {
-            Log.info("DatabaseController::getGrade( " + personId + ", " + delivId + " ) - grade: " + grade.score);
+            Log.trace("DatabaseController::getGrade( " + personId + ", " + delivId + " ) - grade: " + grade.score);
+        } else {
+            Log.trace("DatabaseController::getGrade( " + personId + ", " + delivId + " ) - not found");
         }
         return grade;
     }
 
     public async writePerson(record: Person): Promise<boolean> {
-        Log.info("DatabaseController::writePerson(..) - start");
+        // Log.info("DatabaseController::writePerson(..) - start");
         const existingPerson = await this.getPerson(record.id);
         if (existingPerson === null) {
             return await this.writeRecord(this.PERSONCOLL, record);
@@ -180,7 +182,7 @@ export class DatabaseController {
     }
 
     public async writeTeam(record: Team): Promise<boolean> {
-        Log.info("DatabaseController::writeTeam(..) - start");
+        // Log.info("DatabaseController::writeTeam(..) - start");
         const existingTeam = await this.getTeam(record.id);
         if (existingTeam === null) {
             return await this.writeRecord(this.TEAMCOLL, record);
@@ -191,7 +193,7 @@ export class DatabaseController {
     }
 
     public async writeCourseRecord(record: Course): Promise<boolean> {
-        Log.info("DatabaseController::writeCourseRecord(..) - start");
+        // Log.info("DatabaseController::writeCourseRecord(..) - start");
         const existingRecord = await this.getCourseRecord();
         if (existingRecord === null) {
             return await this.writeRecord(this.COURSECOLL, record);
@@ -304,7 +306,7 @@ export class DatabaseController {
     }
 
     public async writeRecord(colName: string, record: {}): Promise<boolean> {
-        Log.trace("DatabaseController::writeRecord( " + colName + ", ...) - start");
+        Log.info("DatabaseController::writeRecord( " + colName + ", ...) - start");
         Log.trace("DatabaseController::writeRecord(..) - col: " + colName + "; record: " + JSON.stringify(record));
         try {
             const collection = await this.getCollection(colName);
@@ -319,7 +321,7 @@ export class DatabaseController {
     }
 
     public async updateRecord(colName: string, query: {}, record: {}): Promise<boolean> {
-        Log.trace("DatabaseController::updateRecord( " + colName + ", ...) - start");
+        Log.info("DatabaseController::updateRecord( " + colName + ", ...) - start");
         Log.trace("DatabaseController::updateRecord(..) - colName: " + colName + "; record: " + JSON.stringify(record));
         try {
             const collection = await this.getCollection(colName);
