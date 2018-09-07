@@ -27,7 +27,7 @@ export enum ConfigKey {
     testorg = "testorg",
     testname = "testname",
 
-    hostname = "hostname",
+    publichostname = "publichostname",
 
     // frontendUrl = "frontendUrl",
     backendUrl = "backendUrl",

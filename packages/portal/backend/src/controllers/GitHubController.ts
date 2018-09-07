@@ -77,7 +77,7 @@ export class GitHubController implements IGitHubController {
         await this.checkDatabase(repoName, null);
 
         const config = Config.getInstance();
-        const host = config.getProp(ConfigKey.hostname);
+        const host = config.getProp(ConfigKey.publichostname);
         const WEBHOOKADDR = host + '/portal/githubWebhook';
 
         const startTime = Date.now();
@@ -308,7 +308,7 @@ export class GitHubController implements IGitHubController {
             Log.trace('GitHubController::provisionRepository(..) - team name: ' + staffAdd.teamName);
 
             // add webhooks
-            const host = Config.getInstance().getProp(ConfigKey.hostname);
+            const host = Config.getInstance().getProp(ConfigKey.publichostname);
             const WEBHOOKADDR = host + '/portal/githubWebhook';
             Log.trace("GitHubController::provisionRepository() - add webhook to: " + WEBHOOKADDR);
             const createHook = await this.gha.addWebhook(repoName, WEBHOOKADDR);
