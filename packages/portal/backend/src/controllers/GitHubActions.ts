@@ -2,12 +2,12 @@ import * as rp from "request-promise-native";
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
-// import {Test} from "../../test/GlobalSpec";
 import {DatabaseController} from "./DatabaseController";
 import {GitTeamTuple} from "./GitHubController";
 
 // tslint:disable-next-line
 const tmp = require('tmp-promise');
+tmp.setGracefulCleanup(); // cleanup files when done
 
 export interface IGitHubActions {
 
@@ -198,7 +198,9 @@ export class GitHubActions implements IGitHubActions {
 
     public static getInstance(forceReal?: boolean): IGitHubActions {
 
-        const override = false; // Sometimes we will want to run against the full live GitHub suite
+        // Sometimes we will want to run against the full live GitHub suite
+        // const override = true; // NOTE: should be commented out for commits; runs full GitHub suite
+        const override = false; // NOTE: should NOT be commented out for commits
 
         if (override) {
             forceReal = true;
@@ -919,8 +921,7 @@ export class GitHubActions implements IGitHubActions {
         }
 
         const exec = require('child-process-promise').exec;
-        const tempDir = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
-        const tempPath = tempDir.path;
+        const cloneTempDir = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
         const authedStudentRepo = addGithubAuthToken(studentRepo);
         const authedImportRepo = addGithubAuthToken(importRepo);
         // this was just a github-dev testing issue; we might need to consider using per-org import test targets or something
@@ -929,13 +930,10 @@ export class GitHubActions implements IGitHubActions {
         // }
 
         if (seedFilePath) {
-            const tempDir2 = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
-            const tempPath2 = tempDir2.path;
-            // First clone to a temporary directory
-            // then move only the required files
-            // then proceed as normal
-            return cloneRepo(tempPath2).then(() => {
-                return moveFiles(tempPath2, seedFilePath, tempPath)
+            const seedTempDir = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
+            // First clone to a temporary directory, then move only the required files
+            return cloneRepo(seedTempDir.path).then(() => {
+                return moveFiles(seedTempDir.path, seedFilePath, cloneTempDir.path)
                     .then(() => {
                         return enterRepoPath();
                     }).then(() => {
@@ -950,16 +948,18 @@ export class GitHubActions implements IGitHubActions {
                         return pushToNewRepo();
                     }).then(() => {
                         Log.info('GitHubAction::cloneRepo() seedPath - done; took: ' + Util.took(start));
-                        // tempDir.setGracefulCleanup(); // clean temp
-                        // tempDir2.setGracefulCleanup(); // clean temp
+                        seedTempDir.cleanup();
+                        cloneTempDir.cleanup();
                         return Promise.resolve(true); // made it cleanly
                     }).catch((err: any) => {
                         Log.error('GitHubAction::cloneRepo() seedPath - ERROR: ' + err);
+                        seedTempDir.cleanup();
+                        cloneTempDir.cleanup();
                         return Promise.reject(err);
                     });
             });
         } else {
-            return cloneRepo(tempPath).then(() => {
+            return cloneRepo(cloneTempDir.path).then(() => {
                 return enterRepoPath()
                     .then(() => {
                         return removeGitDir();
@@ -973,10 +973,11 @@ export class GitHubActions implements IGitHubActions {
                         return pushToNewRepo();
                     }).then(() => {
                         Log.info('GitHubAction::cloneRepo() - done; took: ' + Util.took(start));
-                        // tempDir.setGracefulCleanup(); // clean temp
+                        cloneTempDir.cleanup();
                         return Promise.resolve(true); // made it cleanly
                     }).catch((err: any) => {
                         Log.error('GitHubAction::cloneRepo() - ERROR: ' + err);
+                        cloneTempDir.cleanup();
                         return Promise.reject(err);
                     });
             });
@@ -988,58 +989,58 @@ export class GitHubActions implements IGitHubActions {
             return exec(`cp -r ${originPath}/${filesLocation} ${destPath}`)
                 .then(function(result: any) {
                     Log.info('GitHubActions::importRepoFS(..)::moveFiles(..) - done');
-                    Log.trace('GitHubActions::importRepoFS(..)::moveFiles(..) - stdout: ' + result.stdout);
+                    that.reportStdOut(result.stdout, 'GitHubActions::importRepoFS(..)::moveFiles(..)');
                     that.reportStdErr(result.stderr, 'importRepoFS(..)::moveFiles(..)');
                 });
         }
 
         function cloneRepo(repoPath: string) {
             Log.info('GitHubActions::importRepoFS(..)::cloneRepo() - cloning: ' + importRepo);
-            return exec(`git clone ${authedImportRepo} ${repoPath}`)
+            return exec(`git clone -q ${authedImportRepo} ${repoPath}`)
                 .then(function(result: any) {
-                    Log.info('GitHubActions::importRepoFS(..)::cloneRepo() - done:');
-                    Log.trace('GitHubActions::importRepoFS(..)::cloneRepo() - stdout: ' + result.stdout);
+                    Log.info('GitHubActions::importRepoFS(..)::cloneRepo() - done');
+                    that.reportStdOut(result.stdout, 'GitHubActions::importRepoFS(..)::cloneRepo()');
                     that.reportStdErr(result.stderr, 'importRepoFS(..)::cloneRepo()');
                 });
         }
 
         function enterRepoPath() {
-            Log.info('GitHubActions::importRepoFS(..)::enterRepoPath() - entering: ' + tempPath);
-            return exec(`cd ${tempPath}`)
+            Log.info('GitHubActions::importRepoFS(..)::enterRepoPath() - entering: ' + cloneTempDir.path);
+            return exec(`cd ${cloneTempDir.path}`)
                 .then(function(result: any) {
-                    Log.info('GitHubActions::importRepoFS(..)::enterRepoPath() - done:');
-                    Log.trace('GitHubActions::importRepoFS(..)::enterRepoPath() - stdout: ' + result.stdout);
+                    Log.info('GitHubActions::importRepoFS(..)::enterRepoPath() - done');
+                    that.reportStdOut(result.stdout, 'GitHubActions::importRepoFS(..)::enterRepoPath()');
                     that.reportStdErr(result.stderr, 'importRepoFS(..)::enterRepoPath()');
                 });
         }
 
         function removeGitDir() {
             Log.info('GitHubActions::importRepoFS(..)::removeGitDir() - removing .git from cloned repo');
-            return exec(`cd ${tempPath} && rm -rf .git`)
+            return exec(`cd ${cloneTempDir.path} && rm -rf .git`)
                 .then(function(result: any) {
-                    Log.info('GitHubActions::importRepoFS(..)::removeGitDir() - done:');
-                    Log.trace('GitHubActions::importRepoFS(..)::removeGitDir() - stdout: ' + result.stdout);
+                    Log.info('GitHubActions::importRepoFS(..)::removeGitDir() - done');
+                    that.reportStdOut(result.stdout, 'GitHubActions::importRepoFS(..)::removeGitDir()');
                     that.reportStdErr(result.stderr, 'importRepoFS(..)::removeGitDir()');
                 });
         }
 
         function initGitDir() {
             Log.info('GitHubActions::importRepoFS(..)::initGitDir() - start');
-            return exec(`cd ${tempPath} && git init`)
+            return exec(`cd ${cloneTempDir.path} && git init -q`)
                 .then(function(result: any) {
-                    Log.info('GitHubActions::importRepoFS(..)::initGitDir() - done:');
-                    Log.trace('GitHubActions::importRepoFS(..)::initGitDir() - stdout: ' + result.stdout);
+                    Log.info('GitHubActions::importRepoFS(..)::initGitDir() - done');
+                    that.reportStdOut(result.stdout, 'GitHubActions::importRepoFS(..)::initGitDir()');
                     that.reportStdErr(result.stderr, 'importRepoFS(..)::initGitDir()');
                 });
         }
 
         function changeGitRemote() {
             Log.info('GitHubActions::importRepoFS(..)::changeGitRemote() - start');
-            const command = `cd ${tempPath} && git remote add origin ${authedStudentRepo}.git && git fetch --all`;
+            const command = `cd ${cloneTempDir.path} && git remote add origin ${authedStudentRepo}.git && git fetch --all -q`;
             return exec(command)
                 .then(function(result: any) {
-                    Log.info('GitHubActions::importRepoFS(..)::changeGitRemote() - done:');
-                    Log.trace('GitHubActions::importRepoFS(..)::changeGitRemote() - stdout: ' + result.stdout);
+                    Log.info('GitHubActions::importRepoFS(..)::changeGitRemote() - done');
+                    that.reportStdOut(result.stdout, 'GitHubActions::importRepoFS(..)::changeGitRemote()');
                     that.reportStdErr(result.stderr, 'importRepoFS(..)::changeGitRemote()');
                 });
         }
@@ -1047,22 +1048,22 @@ export class GitHubActions implements IGitHubActions {
         function addFilesToRepo() {
             Log.info('GitHubActions::importRepoFS(..)::addFilesToRepo() - start');
             // tslint:disable-next-line
-            const command = `cd ${tempPath} && git config user.email "classy@cs.ubc.ca" && git config user.name "classy" && git add . && git commit -m "Starter files"`;
+            const command = `cd ${cloneTempDir.path} && git config user.email "classy@cs.ubc.ca" && git config user.name "classy" && git add . && git commit -q -m "Starter files"`;
             return exec(command)
                 .then(function(result: any) {
-                    Log.info('GitHubActions::importRepoFS(..)::addFilesToRepo() - done:');
-                    Log.trace('GitHubActions::importRepoFS(..)::addFilesToRepo() - stdout: ' + result.stdout);
+                    Log.info('GitHubActions::importRepoFS(..)::addFilesToRepo() - done');
+                    that.reportStdOut(result.stdout, 'GitHubActions::importRepoFS(..)::addFilesToRepo()');
                     that.reportStdErr(result.stderr, 'importRepoFS(..)::addFilesToRepo()');
                 });
         }
 
         function pushToNewRepo() {
             Log.info('GitHubActions::importRepoFS(..)::pushToNewRepo() - start');
-            const command = `cd ${tempPath} && git push origin master`;
+            const command = `cd ${cloneTempDir.path} && git push -q origin master`;
             return exec(command)
                 .then(function(result: any) {
-                    Log.info('GitHubActions::importRepoFS(..)::pushToNewRepo() - done: ');
-                    Log.trace('GitHubActions::importRepoFS(..)::pushToNewRepo() - stdout: ' + result.stdout);
+                    Log.info('GitHubActions::importRepoFS(..)::pushToNewRepo() - done');
+                    that.reportStdOut(result.stdout, 'GitHubActions::importRepoFS(..)::pushToNewRepo()');
                     that.reportStdErr(result.stderr, 'importRepoFS(..)::pushToNewRepo()');
                 });
         }
@@ -1073,7 +1074,7 @@ export class GitHubActions implements IGitHubActions {
         //     const command = `rm -rf ${tempPath}`;
         //     return exec(command)
         //         .then(function(result: any) {
-        //             Log.info('GitHubActions::importRepoFS(..)::removeTempPath() - done: ');
+        //             Log.info('GitHubActions::importRepoFS(..)::removeTempPath() - done ');
         //             Log.trace('GitHubActions::importRepoFS(..)::removeTempPath() - stdout: ' + result.stdout);
         //             that.reportStdErr(result.stderr, 'importRepoFS(..)::removeTempPath()');
         //         });
@@ -1088,9 +1089,15 @@ export class GitHubActions implements IGitHubActions {
         return url.slice(0, startAppend) + authKey + url.slice(startAppend);
     }
 
+    private reportStdOut(stdout: any, prefix: string) {
+        if (stdout) {
+            Log.warn('GitHubActions::stdOut(..) - ' + prefix + ': ' + stdout);
+        }
+    }
+
     private reportStdErr(stderr: any, prefix: string) {
         if (stderr) {
-            Log.warn('GitHubActions::reportStdErr - ' + prefix + ': ' + stderr);
+            Log.warn('GitHubActions::stdErr(..) - ' + prefix + ': ' + stderr);
         }
     }
 
@@ -1147,10 +1154,10 @@ export class GitHubActions implements IGitHubActions {
 
         function cloneRepo(repoPath: string) {
             Log.info('GitHubActions::writeFileToRepo(..)::cloneRepo() - cloning: ' + repoURL);
-            return exec(`git clone ${authedRepo} ${repoPath}`)
+            return exec(`git clone -q ${authedRepo} ${repoPath}`)
                 .then(function(result: any) {
-                    Log.info('GitHubActions::writeFileToRepo(..)::cloneRepo() - done:');
-                    Log.trace('GitHubActions::writeFileToRepo(..)::cloneRepo() - stdout: ' + result.stdout);
+                    Log.info('GitHubActions::writeFileToRepo(..)::cloneRepo() - done');
+                    that.reportStdOut(result.stdout, 'GitHubActions::writeFileToRepo(..)::cloneRepo()');
                     // if (result.stderr) {
                     //     Log.warn('GitHubActions::writeFileToRepo(..)::cloneRepo() - stderr: ' + result.stderr);
                     // }
@@ -1162,11 +1169,8 @@ export class GitHubActions implements IGitHubActions {
             Log.info('GitHubActions::writeFileToRepo(..)::enterRepoPath() - entering: ' + tempPath);
             return exec(`cd ${tempPath}`)
                 .then(function(result: any) {
-                    Log.info('GitHubActions::writeFileToRepo(..)::enterRepoPath() - done:');
-                    Log.trace('GitHubActions::writeFileToRepo(..)::enterRepoPath() - stdout: ' + result.stdout);
-                    // if (result.stderr) {
-                    //     Log.warn('GitHubActions::writeFileToRepo(..)::enterRepoPath() - stderr: ' + result.stderr);
-                    // }
+                    Log.info('GitHubActions::writeFileToRepo(..)::enterRepoPath() - done');
+                    that.reportStdOut(result.stdout, 'GitHubActions::writeFileToRepo(..)::enterRepoPath()');
                     that.reportStdErr(result.stderr, 'writeFileToRepo(..)::enterRepoPath()');
                 });
         }
@@ -1175,11 +1179,8 @@ export class GitHubActions implements IGitHubActions {
             Log.info('GitHubActions::writeFileToRepo(..)::createNewFileForce() - writing: ' + fileName);
             return exec(`cd ${tempPath} && if [ -f ${fileName} ]; then rm ${fileName};  fi; echo '${fileContent}' >> ${fileName};`)
                 .then(function(result: any) {
-                    Log.info('GitHubActions::writeFileToRepo(..)::createNewFileForce() - done:');
-                    Log.trace('GitHubActions::writeFileToRepo(..)::createNewFileForce() - stdout: ' + result.stdout);
-                    // if (result.stderr) {
-                    //     Log.warn('GitHubActions::writeFileToRepo(..)::createNewFileForce() - stderr: ' + result.stderr);
-                    // }
+                    Log.info('GitHubActions::writeFileToRepo(..)::createNewFileForce() - done');
+                    that.reportStdOut(result.stdout, 'GitHubActions::writeFileToRepo(..)::createNewFileForce()');
                     that.reportStdErr(result.stderr, 'writeFileToRepo(..)::createNewFileForce()');
                 });
         }
@@ -1188,11 +1189,8 @@ export class GitHubActions implements IGitHubActions {
             Log.info('GitHubActions::writeFileToRepo(..)::createNewFile() - writing: ' + fileName);
             return exec(`cd ${tempPath} && if [ ! -f ${fileName} ]; then echo \"${fileContent}\" >> ${fileName};fi`)
                 .then(function(result: any) {
-                    Log.info('GitHubActions::writeFileToRepo(..)::createNewFile() - done:');
-                    Log.trace('GitHubActions::writeFileToRepo(..)::createNewFile() - stdout: ' + result.stdout);
-                    // if (result.stderr) {
-                    //     Log.warn('GitHubActions::writeFileToRepo(..)::createNewFile() - stderr: ' + result.stderr);
-                    // }
+                    Log.info('GitHubActions::writeFileToRepo(..)::createNewFile() - done');
+                    that.reportStdOut(result.stdout, 'GitHubActions::writeFileToRepo(..)::createNewFile()');
                     that.reportStdErr(result.stderr, 'writeFileToRepo(..)::createNewFile()');
                 });
         }
@@ -1202,39 +1200,30 @@ export class GitHubActions implements IGitHubActions {
             const command = `cd ${tempPath} && git add ${fileName}`;
             return exec(command)
                 .then(function(result: any) {
-                    Log.info('GitHubActions::writeFileToRepo(..)::addFilesToRepo() - done:');
-                    Log.trace('GitHubActions::writeFileToRepo(..)::addFilesToRepo() - stdout: ' + result.stdout);
-                    // if (result.stderr) {
-                    //     Log.warn('GitHubActions::writeFileToRepo(..)::addFilesToRepo() - stderr: ' + result.stderr);
-                    // }
+                    Log.info('GitHubActions::writeFileToRepo(..)::addFilesToRepo() - done');
+                    that.reportStdOut(result.stdout, 'GitHubActions::writeFileToRepo(..)::addFilesToRepo()');
                     that.reportStdErr(result.stderr, 'writeFileToRepo(..)::addFilesToRepo()');
                 });
         }
 
         function commitFilesToRepo() {
             Log.info('GitHubActions::writeFileToRepo(..)::commitFilesToRepo() - start');
-            const command = `cd ${tempPath} && git commit -m "Update ${fileName}"`;
+            const command = `cd ${tempPath} && git commit -q -m "Update ${fileName}"`;
             return exec(command)
                 .then(function(result: any) {
-                    Log.info('GitHubActions::writeFileToRepo(..)::commitFilesToRepo() - done:');
-                    Log.trace('GitHubActions::writeFileToRepo(..)::commitFilesToRepo() - stdout: ' + result.stdout);
-                    // if (result.stderr) {
-                    //     Log.warn('GitHubActions::writeFileToRepo(..)::commitFilesToRepo() - stderr: ' + result.stderr);
-                    // }
+                    Log.info('GitHubActions::writeFileToRepo(..)::commitFilesToRepo() - done');
+                    that.reportStdOut(result.stdout, 'GitHubActions::writeFileToRepo(..)::commitFilesToRepo()');
                     that.reportStdErr(result.stderr, 'writeFileToRepo(..)::commitFilesToRepo()');
                 });
         }
 
         function pushToRepo() {
             Log.info('GitHubActions::writeFileToRepo(..)::pushToRepo() - start');
-            const command = `cd ${tempPath} && git push`;
+            const command = `cd ${tempPath} && git push -q`;
             return exec(command)
                 .then(function(result: any) {
-                    Log.info('GitHubActions::writeFileToRepo(..)::pushToNewRepo() - done: ');
-                    Log.trace('GitHubActions::writeFileToRepo(..)::pushToNewRepo() - stdout: ' + result.stdout);
-                    // if (result.stderr) {
-                    //     Log.warn('GitHubActions::writeFileToRepo(..)::pushToNewRepo() - stderr: ' + result.stderr);
-                    // }
+                    Log.info('GitHubActions::writeFileToRepo(..)::pushToNewRepo() - done');
+                    that.reportStdOut(result.stdout, 'GitHubActions::writeFileToRepo(..)::pushToNewRepo()');
                     that.reportStdErr(result.stderr, 'writeFileToRepo(..)::pushToNewRepo()');
                 });
         }
