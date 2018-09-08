@@ -127,7 +127,7 @@ permission with the host (this is done in the docker-compose.yml file).
    match the values set in the .env file (configured in the next section).
    
     ```bash
-    echo '0 4 * * * root docker exec db mongodump --user MONGO_INITDB_ROOT_USERNAME --password MONGO_INITDB_ROOT_PASSWORD --gzip --archive > /var/opt/classy/backups/classydb.$(date +\%Y\%m\%dT\%H\%M\%S).gz' | sudo tee /etc/cron.d/backup-classy-db
+    echo '0 4 * * * root docker exec db mongodump --username MONGO_INITDB_ROOT_USERNAME --password MONGO_INITDB_ROOT_PASSWORD --gzip --archive > /var/opt/classy/backups/classydb.$(date +\%Y\%m\%dT\%H\%M\%S).gz' | sudo tee /etc/cron.d/backup-classy-db
     ```
     
     **Restore:** To restore a backup you can use `cat BACKUP_NAME | docker exec -i db mongorestore --gzip --archive`.
