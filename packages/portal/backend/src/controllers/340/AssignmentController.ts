@@ -307,7 +307,7 @@ export class AssignmentController {
                 }
             }
         }
-        
+
         // we use student list membership rather than org membership because students
         // do not get dropped from org when they drop the course (LDAP removes them from the team)
         const peopleList = await this.gha.listTeamMembers("students");
