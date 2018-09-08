@@ -842,17 +842,26 @@ export class GitHubActions implements IGitHubActions {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent':    this.gitHubUserName,
                     'Accept':        'application/json'
-                }
+                },
+                resolveWithFullResponse: true,
+                json:                    true
             };
 
-            // NOTE: not sure how this will respond to paging if there are lots of members on the team
-            const body = await rp(options);
+            const teamMembersRaw: any = await this.handlePagination(options);
 
-            const resp = JSON.parse(body);
             const ids: string[] = [];
-            for (const result of resp) {
-                ids.push(result.login);
+            for (const teamMember of teamMembersRaw) {
+                ids.push(teamMember.login);
             }
+
+            // NOTE: not sure how this will respond to paging if there are lots of members on the team
+            // const body = await rp(options);
+            //
+            // const resp = JSON.parse(body);
+            // const ids: string[] = [];
+            // for (const result of resp) {
+            //     ids.push(result.login);
+            // }
 
             Log.info("GitHubAction::getTeamMembers(..) - success; # results: " + ids.length + "; took: " + Util.took(start));
 
