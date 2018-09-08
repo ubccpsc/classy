@@ -950,8 +950,8 @@ export class GitHubActions implements IGitHubActions {
                         return pushToNewRepo();
                     }).then(() => {
                         Log.info('GitHubAction::cloneRepo() seedPath - done; took: ' + Util.took(start));
-                        tempDir.setGracefulCleanup(); // clean temp
-                        tempDir2.setGracefulCleanup(); // clean temp
+                        // tempDir.setGracefulCleanup(); // clean temp
+                        // tempDir2.setGracefulCleanup(); // clean temp
                         return Promise.resolve(true); // made it cleanly
                     }).catch((err: any) => {
                         Log.error('GitHubAction::cloneRepo() seedPath - ERROR: ' + err);
@@ -973,7 +973,7 @@ export class GitHubActions implements IGitHubActions {
                         return pushToNewRepo();
                     }).then(() => {
                         Log.info('GitHubAction::cloneRepo() - done; took: ' + Util.took(start));
-                        tempDir.setGracefulCleanup(); // clean temp
+                        // tempDir.setGracefulCleanup(); // clean temp
                         return Promise.resolve(true); // made it cleanly
                     }).catch((err: any) => {
                         Log.error('GitHubAction::cloneRepo() - ERROR: ' + err);
