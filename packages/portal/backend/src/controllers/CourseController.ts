@@ -641,6 +641,8 @@ export abstract class CourseController implements ICourseController {
         const ghc = new GitHubController(gha);
 
         Log.info("CourseController::releaseRepositories( .. ) - start; # repos: " + repos.length);
+        const start = Date.now();
+
         const releasedRepos = [];
         for (const repo of repos) {
             try {
@@ -675,6 +677,9 @@ export abstract class CourseController implements ICourseController {
         for (const repo of releasedRepos) {
             releasedRepositoryTransport.push(RepositoryController.repositoryToTransport(repo));
         }
+        Log.info("CourseController::releaseRepositories( .. ) - complete; # released: " +
+            releasedRepositoryTransport.length + "; took: " + Util.took(start));
+
         return releasedRepositoryTransport;
     }
 

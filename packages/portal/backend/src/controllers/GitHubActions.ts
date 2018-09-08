@@ -494,7 +494,7 @@ export class GitHubActions implements IGitHubActions {
 
             const fullResponse = await rp(rpOptions as any); // rpOptions is the right type already
 
-            Log.trace("GitHubActions::handlePagination(..) - after initial request");
+            // Log.trace("GitHubActions::handlePagination(..) - after initial request");
 
             let raw: any[] = [];
             const paginationPromises: any[] = [];
@@ -504,15 +504,15 @@ export class GitHubActions implements IGitHubActions {
 
                 let lastPage: number = -1;
                 const linkText = fullResponse.headers.link;
-                Log.trace('GitHubActions::handlePagination(..) - linkText: ' + linkText);
+                // Log.trace('GitHubActions::handlePagination(..) - linkText: ' + linkText);
                 const linkParts = linkText.split(',');
                 for (const p of linkParts) {
                     const pparts = p.split(';');
                     if (pparts[1].indexOf('last')) {
                         const pText = pparts[0].split('&page=')[1];
-                        Log.trace('GitHubActions::handlePagination(..) - last page pText:_' + pText + '_; p: ' + p);
+                        // Log.trace('GitHubActions::handlePagination(..) - last page pText:_' + pText + '_; p: ' + p);
                         lastPage = pText.match(/\d+/)[0];
-                        Log.trace('GitHubActions::handlePagination(..) - last page: ' + lastPage);
+                        // Log.trace('GitHubActions::handlePagination(..) - last page: ' + lastPage);
                     }
                 }
 
@@ -521,33 +521,33 @@ export class GitHubActions implements IGitHubActions {
                     const pparts = p.split(';');
                     if (pparts[1].indexOf('next')) {
                         let pText = pparts[0].split('&page=')[0].trim();
-                        Log.trace('GitHubActions::handlePagination(..) - pt: ' + pText);
+                        // Log.trace('GitHubActions::handlePagination(..) - pt: ' + pText);
                         pText = pText.substring(1);
                         pText = pText + "&page=";
                         pageBase = pText;
-                        Log.trace('GitHubActions::handlePagination(..) - page base: ' + pageBase);
+                        // Log.trace('GitHubActions::handlePagination(..) - page base: ' + pageBase);
                     }
                 }
 
-                Log.trace("GitHubActions::handlePagination(..) - handling pagination; # pages: " + lastPage);
+                // Log.trace("GitHubActions::handlePagination(..) - handling pagination; # pages: " + lastPage);
                 for (let i = 2; i <= lastPage; i++) {
                     const pageUri = pageBase + i;
-                    Log.trace('GitHubActions::handlePagination(..) - page to request: ' + pageUri);
+                    // Log.trace('GitHubActions::handlePagination(..) - page to request: ' + pageUri);
                     (rpOptions as any).uri = pageUri; // not sure why this is needed
                     // NOTE: this needs to be slowed down to prevent DNS problems (issuing 10+ concurrent dns requests can be problematic)
                     await Util.delay(100);
                     paginationPromises.push(rp(rpOptions as any));
                 }
             } else {
-                Log.trace("GitHubActions::handlePagination(..) - single page");
+                // Log.trace("GitHubActions::handlePagination(..) - single page");
                 raw = fullResponse.body;
                 // don't put anything on the paginationPromise if it isn't paginated
             }
 
-            Log.trace("GitHubActions::handlePagination(..) - requesting all");
+            // Log.trace("GitHubActions::handlePagination(..) - requesting all");
             // this block won't do anything if we just did the raw thing above (aka no pagination)
             const bodies: any[] = await Promise.all(paginationPromises);
-            Log.trace("GitHubActions::handlePagination(..) - requests complete");
+            // Log.trace("GitHubActions::handlePagination(..) - requests complete");
 
             for (const body of bodies) {
                 raw = raw.concat(body.body);
@@ -569,7 +569,7 @@ export class GitHubActions implements IGitHubActions {
      * @returns {Promise<{id: number, name: string}[]>}
      */
     public async listTeams(): Promise<Array<{teamName: string, teamNumber: number}>> {
-        Log.info("GitHubActions::listTeams(..) - start");
+        // Log.info("GitHubActions::listTeams(..) - start");
         const start = Date.now();
 
         // per_page max is 100; 10 is useful for testing pagination though
