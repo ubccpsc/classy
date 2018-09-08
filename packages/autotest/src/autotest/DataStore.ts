@@ -100,7 +100,7 @@ export class MongoDataStore implements IDataStore {
 
     public async getSingleRecord(column: string, query: {} | null): Promise<{} | null> {
         try {
-            Log.trace("MongoDataStore::getSingleRecord(..) - start");
+            // Log.trace("MongoDataStore::getSingleRecord(..) - start");
             const start = Date.now();
             const col = await this.getCollection(column);
             if (query === null) {
@@ -111,10 +111,12 @@ export class MongoDataStore implements IDataStore {
             // }
             const records: any[] = await col.find(query).toArray() as any;
             if (records === null || records.length === 0) {
-                Log.trace("MongoDataStore::getSingleRecord(..) - done; no records found; took: " + Util.took(start));
+                Log.trace("MongoDataStore::getSingleRecord( " + column + ", " + JSON.stringify(query) +
+                    " ) - done; no records found; took: " + Util.took(start));
                 return null;
             } else {
-                Log.trace("MongoDataStore::getSingleRecord(..) - done; # records: " + records.length + "; took: " + Util.took(start));
+                Log.trace("MongoDataStore::getSingleRecord( " + column + ", " + JSON.stringify(query) +
+                    " ) - done; # records: " + records.length + "; took: " + Util.took(start));
                 const record = records[0];
                 delete record._id; // remove the record id, just so we can't use it
                 return record;
@@ -194,7 +196,7 @@ export class MongoDataStore implements IDataStore {
     }
 
     public async getCommentRecord(commitURL: string, delivId: string): Promise<ICommentEvent | null> {
-        Log.trace("MongoDataStore::getCommentRecord(..) - start");
+        // Log.trace("MongoDataStore::getCommentRecord(..) - start");
         try {
             const start = Date.now();
             const res = await this.getSingleRecord(this.COMMENTCOLL, {commitURL: commitURL});
@@ -362,7 +364,7 @@ export class MongoDataStore implements IDataStore {
      * @returns {Promise<Db>}
      */
     private async open(): Promise<Db> {
-        Log.trace("MongoDataStore::open() - start");
+        // Log.trace("MongoDataStore::open() - start");
         if (this.db === null) {
             const dbName = Config.getInstance().getProp(ConfigKey.name);
             Log.info("MongoDataStore::open() - db null; making new connection to: " + dbName);
@@ -372,7 +374,7 @@ export class MongoDataStore implements IDataStore {
 
             Log.info("MongoDataStore::open() - db null; new connection made");
         }
-        Log.trace("MongoDataStore::open() - returning db");
+        // Log.trace("MongoDataStore::open() - returning db");
         return this.db;
     }
 

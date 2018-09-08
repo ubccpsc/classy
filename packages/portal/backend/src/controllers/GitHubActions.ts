@@ -77,6 +77,14 @@ export interface IGitHubActions {
      */
     listTeams(): Promise<Array<{teamName: string, teamNumber: number}>>;
 
+    /**
+     * Lists the Github IDs of members for a teamName (e.g. students).
+     *
+     * @param {string} teamName
+     * @returns {Promise<string[]>}
+     */
+    listTeamMembers(teamName: string): Promise<string[]>;
+
     listWebhooks(repoName: string): Promise<{}>;
 
     addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean>;
@@ -888,6 +896,15 @@ export class GitHubActions implements IGitHubActions {
         return false;
     }
 
+    public async listTeamMembers(teamName: string): Promise<string[]> {
+        const gh = this;
+
+        const teamNumber = await gh.getTeamNumber(teamName);
+        const teamMembers = await gh.getTeamMembers(teamNumber);
+
+        return teamMembers;
+    }
+
     public async importRepoFS(importRepo: string, studentRepo: string, seedFilePath?: string): Promise<boolean> {
         Log.info('GitHubAction::importRepoFS( ' + importRepo + ', ' + studentRepo + ' ) - start');
         const that = this;
@@ -933,6 +950,8 @@ export class GitHubActions implements IGitHubActions {
                         return pushToNewRepo();
                     }).then(() => {
                         Log.info('GitHubAction::cloneRepo() seedPath - done; took: ' + Util.took(start));
+                        // tempDir.setGracefulCleanup(); // clean temp
+                        // tempDir2.setGracefulCleanup(); // clean temp
                         return Promise.resolve(true); // made it cleanly
                     }).catch((err: any) => {
                         Log.error('GitHubAction::cloneRepo() seedPath - ERROR: ' + err);
@@ -954,6 +973,7 @@ export class GitHubActions implements IGitHubActions {
                         return pushToNewRepo();
                     }).then(() => {
                         Log.info('GitHubAction::cloneRepo() - done; took: ' + Util.took(start));
+                        // tempDir.setGracefulCleanup(); // clean temp
                         return Promise.resolve(true); // made it cleanly
                     }).catch((err: any) => {
                         Log.error('GitHubAction::cloneRepo() - ERROR: ' + err);
@@ -1046,6 +1066,18 @@ export class GitHubActions implements IGitHubActions {
                     that.reportStdErr(result.stderr, 'importRepoFS(..)::pushToNewRepo()');
                 });
         }
+
+        // not used and not tested; trying graceful cleanup instead
+        // function removeTempPath() {
+        //     Log.info('GitHubActions::importRepoFS(..)::removeTempPath() - start');
+        //     const command = `rm -rf ${tempPath}`;
+        //     return exec(command)
+        //         .then(function(result: any) {
+        //             Log.info('GitHubActions::importRepoFS(..)::removeTempPath() - done: ');
+        //             Log.trace('GitHubActions::importRepoFS(..)::removeTempPath() - stdout: ' + result.stdout);
+        //             that.reportStdErr(result.stderr, 'importRepoFS(..)::removeTempPath()');
+        //         });
+        // }
     }
 
     public addGithubAuthToken(url: string) {
@@ -1492,6 +1524,28 @@ export class TestGitHubActions implements IGitHubActions {
     public async isOnTeam(teamName: string, userName: string): Promise<boolean> {
         Log.info("TestGitHubActions::isOnTeam( t: " + teamName + ", u: " + userName + " )");
         return true;
+    }
+
+    public async listTeamMembers(teamName: string): Promise<string[]> {
+        Log.info("TestGitHubActions::listTeamMembers( "+ teamName +" )");
+
+        const db: DatabaseController = DatabaseController.getInstance();
+
+        const teamRecord = await db.getTeam(teamName);
+        if(teamRecord === null) {
+            const teamMembers: string[] = [];
+
+            const allPeople = await db.getPeople();
+            for(const person of allPeople) {
+                teamMembers.push(person.githubId);
+            }
+
+            return teamMembers;
+        } else {
+            return teamRecord.personIds;
+        }
+
+
     }
 
     public async listPeople(): Promise<Array<{githubId: string, personNumber: number, url: string}>> {

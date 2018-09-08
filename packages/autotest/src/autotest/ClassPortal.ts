@@ -178,7 +178,7 @@ export class ClassPortal implements IClassPortal {
         };
         Log.info("ClassPortal::getContainerId(..) - Sending request to " + url);
         try {
-            const res = await rp(url, opts); // .then(function(res) {
+            const res = await rp(url, opts);
             Log.trace("ClassPortal::getContainerId( " + delivId + " ) - success; payload: " + res);
             const json: AutoTestConfigPayload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
@@ -209,8 +209,8 @@ export class ClassPortal implements IClassPortal {
 
             Log.info("ClassPortal::sendGrade(..) - Sending request to " + url);
             Log.info("ClassPortal::sendGrade(..) - payload: " + JSON.stringify(grade));
-            const res = await rp(url, opts); // .then(function(res) {
-            Log.trace("ClassPortal::sendGrade() - sent; returned payload: " + res);
+            const res = await rp(url, opts);
+
             const json = res;
             if (typeof json.success !== 'undefined') {
                 Log.info("ClassPortal::sendGrade(..) - successfully received");
@@ -247,7 +247,7 @@ export class ClassPortal implements IClassPortal {
             Log.trace("ClassPortal::sendResult() - sent; returned payload: " + res);
             const json = res;
             if (typeof json.success !== 'undefined') {
-                Log.error("ClassPortal::sendResult(..) - successfully received");
+                Log.info("ClassPortal::sendResult(..) - successfully received");
                 return json;
             } else {
                 Log.error("ClassPortal::sendResult(..) - ERROR; not successfully received:  " + JSON.stringify(json));

@@ -636,7 +636,9 @@ export default class CS340REST implements IREST {
             const pc: PersonController = new PersonController();
             const gha: IGitHubActions = GitHubActions.getInstance();
 
-            const githubPeoplePromise = gha.listPeople();
+            // we use student list membership rather than org membership because students
+            // do not get dropped from org when they drop the course (LDAP removes them from the team)
+            const githubPeoplePromise = gha.listTeamMembers("students");
             const allPeoplePromise = pc.getAllPeople();
 
             const githubPeople = await githubPeoplePromise;
@@ -644,10 +646,24 @@ export default class CS340REST implements IREST {
 
             const personVerification: {[githubID: string]: any} = {};
             for (const githubPerson of githubPeople) {
-                if (typeof personVerification[githubPerson.githubId] === "undefined") {
-                    personVerification[githubPerson.githubId] = githubPerson;
+                if (typeof personVerification[githubPerson] === "undefined") {
+                    personVerification[githubPerson] = githubPerson;
                 }
             }
+
+            // const githubPeoplePromise = gha.listPeople();
+            //
+            // const allPeoplePromise = pc.getAllPeople();
+            //
+            // const githubPeople = await githubPeoplePromise;
+            // const allPeople = await allPeoplePromise;
+            //
+            // const personVerification: {[githubID: string]: any} = {};
+            // for (const githubPerson of githubPeople) {
+            //     if (typeof personVerification[githubPerson.githubId] === "undefined") {
+            //         personVerification[githubPerson.githubId] = githubPerson;
+            //     }
+            // }
 
             const filteredPerson: StudentTransport[] = [];
 

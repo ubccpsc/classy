@@ -27,6 +27,9 @@ import {TeamController} from "../TeamController";
 import {CS340Controller} from "./CS340Controller";
 import {RubricController} from "./RubricController";
 
+// If true, repositories that already exist will be taken over by Classy when creating the assignment
+const AGGRESSIVE_TAKEOVER = true;
+
 /*
  * Definition of controller object
  */
@@ -209,21 +212,41 @@ export class AssignmentController {
         const seedPath = assignInfo.seedRepoPath;
         // const mainFilePath = assignInfo.mainFilePath;
 
-        // attempt to provision the repository
-        let provisionAttempt: boolean;
-        try {
-            if (seedPath.trim() === "" || seedPath.trim() === "*" || seedPath.trim() === "/*") {
-                provisionAttempt = await this.ghc.createRepository(repoName, seedURL);
-            } else {
-                provisionAttempt = await this.ghc.createRepository(repoName, seedURL, seedPath.trim());
+        // flag to track if we should provision a repository or skip
+        let attemptProvision: boolean = true;
+
+        // if we are aggressively taking over repositories
+        if (AGGRESSIVE_TAKEOVER) {
+            Log.info("AssignmentCOntroller::createAssignmentRepo(..) - Aggressive Takeover; Checking if repo exists");
+            // check if the repository exists already
+            const repoExists = await this.gha.repoExists(repoName);
+            if (repoExists) {
+                Log.info("AssignmentController::createAssignmentRepo(..) - Repository: " + repoName + " already exists," +
+                    " skipping repository creation.");
+                attemptProvision = false; // do not bother provisioning
             }
-        } catch (err) {
-            Log.error("AssignmentController::createAssignmentRepo(..) - Error: " + err);
         }
 
-        if (!provisionAttempt) {
-            Log.error("AssignmentController::createAssignmentRepo(..) - error: unable to create repository");
-            return null;
+        // if we are going to attempt provisioning, do so, otherwise skip the provisioning and just keep going
+        if (attemptProvision) {
+            Log.info("AssignmentController::createAssignmentRepo(..) - Attempting to provision repository");
+            // flag to track the success of a provisioning
+            let provisionSuccess: boolean;
+            // attempt to provision the repository
+            try {
+                if (seedPath.trim() === "" || seedPath.trim() === "*" || seedPath.trim() === "/*") {
+                    provisionSuccess = await this.ghc.createRepository(repoName, seedURL);
+                } else {
+                    provisionSuccess = await this.ghc.createRepository(repoName, seedURL, seedPath.trim());
+                }
+            } catch (err) {
+                Log.error("AssignmentController::createAssignmentRepo(..) - Error: " + err);
+            }
+
+            if (!provisionSuccess) {
+                Log.error("AssignmentController::createAssignmentRepo(..) - error: unable to create repository");
+                return null;
+            }
         }
 
         // record the url
@@ -285,16 +308,32 @@ export class AssignmentController {
             }
         }
 
-        const peopleList = await this.gha.listPeople();
+
+        // we use student list membership rather than org membership because students
+        // do not get dropped from org when they drop the course (LDAP removes them from the team)
+        const peopleList = await this.gha.listTeamMembers("students");
+
         const personVerification: {[githubID: string]: any} = {};
 
         // create a map of personID to
         for (const person of peopleList) {
-            if (typeof personVerification[person.githubId] === 'undefined') {
-                personVerification[person.githubId] = person;
+            if (typeof personVerification[person] === 'undefined') {
+                personVerification[person] = person;
             }
         }
         let assignInfo: AssignmentInfo;
+
+        // const peopleList = await this.gha.listPeople();
+        //
+        // const personVerification: {[githubID: string]: any} = {};
+        //
+        // // create a map of personID to
+        // for (const person of peopleList) {
+        //     if (typeof personVerification[person.githubId] === 'undefined') {
+        //         personVerification[person.githubId] = person;
+        //     }
+        // }
+        // let assignInfo: AssignmentInfo;
 
         for (const student of allStudents) {
             // verify student is a person in the org, if not, skip it (DATABASE INCONSISTENCY!?)
@@ -797,18 +836,32 @@ export class AssignmentController {
             }
         }
 
+        // we use student list membership rather than org membership because students
+        // do not get dropped from org when they drop the course (LDAP removes them from the team)
         // database to github verification
-        const peopleList = await this.gha.listPeople();
+        const peopleList = await this.gha.listTeamMembers("students");
         const personVerification: {[githubID: string]: any} = {};
 
         // create a map of personID
         let personvVerificationCount = 0;
         for (const person of peopleList) {
-            if (typeof personVerification[person.githubId] === 'undefined') {
-                personVerification[person.githubId] = person;
+            if (typeof personVerification[person] === 'undefined') {
+                personVerification[person] = person;
                 personvVerificationCount++;
             }
         }
+
+        // const peopleList = await this.gha.listPeople();
+        // const personVerification: {[githubID: string]: any} = {};
+        //
+        // // create a map of personID
+        // let personvVerificationCount = 0;
+        // for (const person of peopleList) {
+        //     if (typeof personVerification[person.githubId] === 'undefined') {
+        //         personVerification[person.githubId] = person;
+        //         personvVerificationCount++;
+        //     }
+        // }
 
         Log.info("AssignmentController::updateAssignmentStatus(..) - Counted " + personvVerificationCount + " " +
             "students in the github verification map.");
@@ -1183,16 +1236,29 @@ export class AssignmentController {
             }
         }
 
+        // we use student list membership rather than org membership because students
+        // do not get dropped from org when they drop the course (LDAP removes them from the team)
         // verification
-        const peopleList = await this.gha.listPeople();
+        const peopleList = await this.gha.listTeamMembers("students");
+        // const peopleList = await this.gha.listPeople();
         const personVerification: {[githubID: string]: any} = {};
 
         // create a map of personID to
         for (const person of peopleList) {
-            if (typeof personVerification[person.githubId] === 'undefined') {
-                personVerification[person.githubId] = person;
+            if (typeof personVerification[person] === 'undefined') {
+                personVerification[person] = person;
             }
         }
+
+        // const peopleList = await this.gha.listPeople();
+        // const personVerification: {[githubID: string]: any} = {};
+        //
+        // // create a map of personID to
+        // for (const person of peopleList) {
+        //     if (typeof personVerification[person.githubId] === 'undefined') {
+        //         personVerification[person.githubId] = person;
+        //     }
+        // }
 
         // for every student, publish their grade
         let totalSuccess = true;
@@ -1236,16 +1302,30 @@ export class AssignmentController {
             }
         }
 
+        // we use student list membership rather than org membership because students
+        // do not get dropped from org when they drop the course (LDAP removes them from the team)
         // verification
-        const peopleList = await this.gha.listPeople();
+        const peopleList = await this.gha.listTeamMembers("students");
+
         const personVerification: {[githubID: string]: any} = {};
 
         // create a map of personID to
         for (const person of peopleList) {
-            if (typeof personVerification[person.githubId] === 'undefined') {
-                personVerification[person.githubId] = person;
+            if (typeof personVerification[person] === 'undefined') {
+                personVerification[person] = person;
             }
         }
+
+        // const peopleList = await this.gha.listPeople();
+        //
+        // const personVerification: {[githubID: string]: any} = {};
+        //
+        // // create a map of personID to
+        // for (const person of peopleList) {
+        //     if (typeof personVerification[person.githubId] === 'undefined') {
+        //         personVerification[person.githubId] = person;
+        //     }
+        // }
 
         // for every student, publish their grade
         let totalSuccess = true;
