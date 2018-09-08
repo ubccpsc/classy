@@ -834,7 +834,7 @@ export class GitHubActions implements IGitHubActions {
         Log.info("GitHubAction::getTeamMembers( " + teamNumber + " ) - start");
         const start = Date.now();
         try {
-            const uri = this.apiPath + '/teams/' + teamNumber + '/members';
+            const uri = this.apiPath + '/teams/' + teamNumber + '/members?per_page=' + this.pageSize;
             const options = {
                 method:  'GET',
                 uri:     uri,
