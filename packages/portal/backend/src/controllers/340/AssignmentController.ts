@@ -308,16 +308,32 @@ export class AssignmentController {
             }
         }
 
-        const peopleList = await this.gha.listPeople();
+
+        // we use student list membership rather than org membership because students
+        // do not get dropped from org when they drop the course (LDAP removes them from the team)
+        const peopleList = await this.gha.listTeamMembers("students");
+
         const personVerification: {[githubID: string]: any} = {};
 
         // create a map of personID to
         for (const person of peopleList) {
-            if (typeof personVerification[person.githubId] === 'undefined') {
-                personVerification[person.githubId] = person;
+            if (typeof personVerification[person] === 'undefined') {
+                personVerification[person] = person;
             }
         }
         let assignInfo: AssignmentInfo;
+
+        // const peopleList = await this.gha.listPeople();
+        //
+        // const personVerification: {[githubID: string]: any} = {};
+        //
+        // // create a map of personID to
+        // for (const person of peopleList) {
+        //     if (typeof personVerification[person.githubId] === 'undefined') {
+        //         personVerification[person.githubId] = person;
+        //     }
+        // }
+        // let assignInfo: AssignmentInfo;
 
         for (const student of allStudents) {
             // verify student is a person in the org, if not, skip it (DATABASE INCONSISTENCY!?)
@@ -820,18 +836,32 @@ export class AssignmentController {
             }
         }
 
+        // we use student list membership rather than org membership because students
+        // do not get dropped from org when they drop the course (LDAP removes them from the team)
         // database to github verification
-        const peopleList = await this.gha.listPeople();
+        const peopleList = await this.gha.listTeamMembers("students");
         const personVerification: {[githubID: string]: any} = {};
 
         // create a map of personID
         let personvVerificationCount = 0;
         for (const person of peopleList) {
-            if (typeof personVerification[person.githubId] === 'undefined') {
-                personVerification[person.githubId] = person;
+            if (typeof personVerification[person] === 'undefined') {
+                personVerification[person] = person;
                 personvVerificationCount++;
             }
         }
+
+        // const peopleList = await this.gha.listPeople();
+        // const personVerification: {[githubID: string]: any} = {};
+        //
+        // // create a map of personID
+        // let personvVerificationCount = 0;
+        // for (const person of peopleList) {
+        //     if (typeof personVerification[person.githubId] === 'undefined') {
+        //         personVerification[person.githubId] = person;
+        //         personvVerificationCount++;
+        //     }
+        // }
 
         Log.info("AssignmentController::updateAssignmentStatus(..) - Counted " + personvVerificationCount + " " +
             "students in the github verification map.");
@@ -1206,16 +1236,29 @@ export class AssignmentController {
             }
         }
 
+        // we use student list membership rather than org membership because students
+        // do not get dropped from org when they drop the course (LDAP removes them from the team)
         // verification
-        const peopleList = await this.gha.listPeople();
+        const peopleList = await this.gha.listTeamMembers("students");
+        // const peopleList = await this.gha.listPeople();
         const personVerification: {[githubID: string]: any} = {};
 
         // create a map of personID to
         for (const person of peopleList) {
-            if (typeof personVerification[person.githubId] === 'undefined') {
-                personVerification[person.githubId] = person;
+            if (typeof personVerification[person] === 'undefined') {
+                personVerification[person] = person;
             }
         }
+
+        // const peopleList = await this.gha.listPeople();
+        // const personVerification: {[githubID: string]: any} = {};
+        //
+        // // create a map of personID to
+        // for (const person of peopleList) {
+        //     if (typeof personVerification[person.githubId] === 'undefined') {
+        //         personVerification[person.githubId] = person;
+        //     }
+        // }
 
         // for every student, publish their grade
         let totalSuccess = true;
@@ -1259,16 +1302,30 @@ export class AssignmentController {
             }
         }
 
+        // we use student list membership rather than org membership because students
+        // do not get dropped from org when they drop the course (LDAP removes them from the team)
         // verification
-        const peopleList = await this.gha.listPeople();
+        const peopleList = await this.gha.listTeamMembers("students");
+
         const personVerification: {[githubID: string]: any} = {};
 
         // create a map of personID to
         for (const person of peopleList) {
-            if (typeof personVerification[person.githubId] === 'undefined') {
-                personVerification[person.githubId] = person;
+            if (typeof personVerification[person] === 'undefined') {
+                personVerification[person] = person;
             }
         }
+
+        // const peopleList = await this.gha.listPeople();
+        //
+        // const personVerification: {[githubID: string]: any} = {};
+        //
+        // // create a map of personID to
+        // for (const person of peopleList) {
+        //     if (typeof personVerification[person.githubId] === 'undefined') {
+        //         personVerification[person.githubId] = person;
+        //     }
+        // }
 
         // for every student, publish their grade
         let totalSuccess = true;
