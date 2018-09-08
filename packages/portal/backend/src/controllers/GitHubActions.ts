@@ -1527,16 +1527,16 @@ export class TestGitHubActions implements IGitHubActions {
     }
 
     public async listTeamMembers(teamName: string): Promise<string[]> {
-        Log.info("TestGitHubActions::listTeamMembers( "+ teamName +" )");
+        Log.info("TestGitHubActions::listTeamMembers( " + teamName + " )");
 
         const db: DatabaseController = DatabaseController.getInstance();
 
         const teamRecord = await db.getTeam(teamName);
-        if(teamRecord === null) {
+        if (teamRecord === null) {
             const teamMembers: string[] = [];
 
             const allPeople = await db.getPeople();
-            for(const person of allPeople) {
+            for (const person of allPeople) {
                 teamMembers.push(person.githubId);
             }
 
@@ -1544,8 +1544,6 @@ export class TestGitHubActions implements IGitHubActions {
         } else {
             return teamRecord.personIds;
         }
-
-
     }
 
     public async listPeople(): Promise<Array<{githubId: string, personNumber: number, url: string}>> {
