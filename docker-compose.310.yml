@@ -32,6 +32,6 @@ services:
         container_name: ${CONTAINER_NAME_UI}
         expose:
             - ${UI_PORT}
-        restart: no
+        restart: always
         user: "${UID}"
 
