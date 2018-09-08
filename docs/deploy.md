@@ -123,10 +123,11 @@ permission with the host (this is done in the docker-compose.yml file).
     docker network rm test_net
     ```
 
-7. Add a cron job to backup the database daily at 0400.
+7. Add a cron job to backup the database daily at 0400. MONGO_INITDB_ROOT_USERNAME and MONGO_INITDB_ROOT_PASSWORD should
+   match the values set in the .env file (configured in the next section).
    
     ```bash
-    echo '0 4 * * * root docker exec db mongodump --gzip --archive > /var/opt/classy/backups/classydb.$(date +\%Y\%m\%dT\%H\%M\%S).gz' | sudo tee /etc/cron.d/backup-classy-db
+    echo '0 4 * * * root docker exec db mongodump --username MONGO_INITDB_ROOT_USERNAME --password MONGO_INITDB_ROOT_PASSWORD --gzip --archive > /var/opt/classy/backups/classydb.$(date +\%Y\%m\%dT\%H\%M\%S).gz' | sudo tee /etc/cron.d/backup-classy-db
     ```
     
     **Restore:** To restore a backup you can use `cat BACKUP_NAME | docker exec -i db mongorestore --gzip --archive`.
