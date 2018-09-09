@@ -7,6 +7,8 @@ import {
     GradeTransport,
     GradeTransportPayload,
     Payload,
+    RepositoryPayload,
+    RepositoryTransport,
     StudentTransport,
     TeamFormationTransport,
     TeamTransport,
@@ -19,6 +21,7 @@ import {GitHubActions} from "../../controllers/GitHubActions";
 import {GitHubController} from "../../controllers/GitHubController";
 import {GradesController} from "../../controllers/GradesController";
 import {PersonController} from "../../controllers/PersonController";
+import {RepositoryController} from "../../controllers/RepositoryController";
 import {TeamController} from "../../controllers/TeamController";
 import {Factory} from "../../Factory";
 import {Person} from "../../Types";
@@ -42,6 +45,9 @@ export default class GeneralRoutes implements IREST {
 
         // used by students to get their teams
         server.get('/portal/teams', GeneralRoutes.getTeams);
+
+        // used by students to get their repos
+        server.get('/portal/repos', GeneralRoutes.getRepos);
 
         // used by students to create their teams
         server.post('/portal/team', GeneralRoutes.postTeam);
@@ -133,6 +139,24 @@ export default class GeneralRoutes implements IREST {
             return next(false);
         }).catch(function(err) {
             Log.info('GeneralRoutes::getTeams(..) - ERROR: ' + err.message); // intentionally info
+            const payload: Payload = {failure: {message: err.message, shouldLogout: false}};
+            res.send(400, payload);
+            return next(false);
+        });
+    }
+
+    public static getRepos(req: any, res: any, next: any) {
+        Log.info('GeneralRoutes::getRepos(..) - start');
+
+        const user = req.headers.user;
+        const token = req.headers.token;
+
+        GeneralRoutes.performGetRepos(user, token).then(function(repos) {
+            const payload: RepositoryPayload = {success: repos};
+            res.send(200, payload);
+            return next(false);
+        }).catch(function(err) {
+            Log.info('GeneralRoutes::getRepos(..) - ERROR: ' + err.message); // intentionally info
             const payload: Payload = {failure: {message: err.message, shouldLogout: false}};
             res.send(400, payload);
             return next(false);
@@ -247,6 +271,35 @@ export default class GeneralRoutes implements IREST {
                     teamTrans.push(tc.teamToTransport(team));
                 }
                 return teamTrans;
+            }
+        }
+    }
+
+    private static async performGetRepos(user: string, token: string): Promise<RepositoryTransport[]> {
+        const ac = new AuthController();
+        const isValid = await ac.isValid(user, token);
+        if (isValid === false) {
+            Log.error('GeneralRoutes::performGetRepos(..) - isValid === false');
+            throw new Error("Invalid credentials");
+        } else {
+            const pc = new PersonController();
+            const person = await pc.getPerson(user);
+            if (person === null) {
+                Log.warn('GeneralRoutes::performGetRepos(..) - person === null');
+                throw new Error('Unknown person');
+            } else {
+                const rc = new RepositoryController();
+                const repos = await rc.getReposForPerson(person);
+                Log.trace('GeneralRoutes::performGetRepos(..) - repos: ' + repos);
+                const repoTrans: RepositoryTransport[] = [];
+                for (const repo of repos) {
+                    if (repo.URL !== null) {
+                        // null URLs are Repository objects that have been created locally but not on GitHub
+                        // TODO: should probably consider repo.custom.githubCreated
+                        repoTrans.push(RepositoryController.repositoryToTransport(repo));
+                    }
+                }
+                return repoTrans;
             }
         }
     }

@@ -237,6 +237,7 @@ export interface RepositoryPayload {
 export interface RepositoryTransport {
     id: string;
     URL: string;
+    delivId: string;
 }
 
 export interface AutoTestResultPayload {

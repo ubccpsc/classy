@@ -221,8 +221,9 @@ export default class CS340REST implements IREST {
         for (const repo of repositories) {
             if (repo.teamIds.includes(teamid)) {
                 const result: RepositoryTransport = {
-                    id:  repo.id,
-                    URL: repo.URL
+                    id:      repo.id,
+                    URL:     repo.URL,
+                    delivId: repo.delivId
                 };
                 res.send(200, {response: result});
                 return next();

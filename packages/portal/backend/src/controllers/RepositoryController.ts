@@ -147,8 +147,9 @@ export class RepositoryController {
         }
 
         const repo: RepositoryTransport = {
-            id:  repository.id,
-            URL: repository.URL
+            id:      repository.id,
+            URL:     repository.URL,
+            delivId: repository.delivId
         };
 
         return repo;

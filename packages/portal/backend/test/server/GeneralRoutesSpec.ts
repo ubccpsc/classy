@@ -7,6 +7,7 @@ import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {ConfigTransportPayload, Payload, TeamFormationTransport} from "../../../../common/types/PortalTypes";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
+import {RepositoryController} from "../../src/controllers/RepositoryController";
 import BackendServer from "../../src/server/BackendServer";
 
 import {Test} from "../GlobalSpec";
@@ -292,7 +293,7 @@ describe('General Routes', function() {
     });
 
     // good form
-    it('Should not be able to form a valid team.', async function() {
+    it('Should be able to form a valid team.', async function() {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
@@ -310,8 +311,8 @@ describe('General Routes', function() {
             };
             // this is invalid because the person is already on a d0 team
             response = await request(app).post(url).send(teamReq).set('user', auth.personId).set('token', auth.token);
-            Log.test('Response received');
             body = response.body;
+            Log.test('Response received: ' + body);
         } catch (err) {
             Log.test('ERROR: ' + err);
         }
@@ -321,6 +322,110 @@ describe('General Routes', function() {
         expect(body.failure).to.be.undefined;
         expect(body.success).to.not.be.undefined;
         expect(body.success[0].id).to.be.an("string");
+    });
+
+    it('Should be able to get get the repos for a user.', async function() {
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        // get user
+        const auth = await dc.getAuth(Test.USER1.id);
+        expect(auth).to.not.be.null;
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/repos';
+        let ex = null;
+        try {
+            Log.test('Making request');
+            response = await request(app).get(url).set('user', auth.personId).set('token', auth.token);
+            body = response.body;
+            Log.test('First response received: ' + body);
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+            ex = err;
+        }
+
+        // there should be no repos
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(ex).to.be.null;
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.length).to.equal(0);
+
+        // create a team, but don't release it
+        const deliv = await dc.getDeliverable(Test.DELIVIDPROJ);
+        const team = await dc.getTeam('t_project_user1gh_user1gh');
+        const rc = new RepositoryController();
+        const repo = await rc.createRepository('t_project_user1gh_user1gh', deliv, [team], {});
+
+        ex = null;
+        try {
+            Log.test('Making request');
+            response = await request(app).get(url).set('user', auth.personId).set('token', auth.token);
+            body = response.body;
+            Log.test('Second response received: ' + body);
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+            ex = err;
+        }
+
+        // there should be no repos
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(ex).to.be.null;
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.length).to.equal(0);
+
+        // now simulate the repo being released
+        repo.URL = 'https://provisioned!';
+        await dc.writeRepository(repo);
+
+        ex = null;
+        try {
+            Log.test('Making request');
+            response = await request(app).get(url).set('user', auth.personId).set('token', auth.token);
+            body = response.body;
+            Log.test('Third response received: ' + body);
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+            ex = err;
+        }
+
+        // there should be one repos
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(ex).to.be.null;
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.length).to.equal(1);
+    });
+
+    it('Should not be able to get get the repos with an invalid token.', async function() {
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        // get user
+        const auth = await dc.getAuth(Test.USER1.id);
+        expect(auth).to.not.be.null;
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/repos';
+        let ex = null;
+        try {
+            Log.test('Making request');
+            response = await request(app).get(url).set('user', auth.personId).set('token', Test.FAKETOKEN);
+            body = response.body;
+            Log.test('First response received: ' + body);
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+            ex = err;
+        }
+
+        // there should be an error
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(ex).to.be.null;
+        expect(body.failure.message).to.be.an('string');
     });
 
 });

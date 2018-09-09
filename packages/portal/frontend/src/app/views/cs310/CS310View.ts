@@ -30,41 +30,92 @@ export class CS310View extends StudentView {
         UI.showModal("Fetching data.");
         super.render().then(function() {
             // super render complete; do custom work
-            return that.fetchData();
+            return that.renderStudentPage();
         }).then(function() {
-            return that.renderTeams(that.teams);
-        }).then(function() {
-            UI.hideModal();
             Log.info('CS310View::renderPage(..) - prep & render took: ' + UI.took(start));
+            UI.hideModal();
         }).catch(function(err) {
             Log.error('CS310View::renderPage() - ERROR: ' + err);
             UI.hideModal();
         });
     }
 
-    private async fetchData(): Promise<void> {
+    private async renderStudentPage(): Promise<void> {
         UI.showModal('Fetching Data');
-        this.teams = null;
+        try {
+            // grades done in StudentView
+            // repos done in StudentView
 
-        const url = this.remote + '/portal/teams';
-        const response = await fetch(url, super.getOptions());
-        if (response.status === 200) {
-            Log.trace('CS310View::fetchData(..) - teams 200 received');
-            const json = await response.json();
-            Log.trace('CS310View::fetchData(..) - teams payload: ' + JSON.stringify(json));
-            if (typeof json.success !== 'undefined') {
-                Log.trace('CS310View::fetchData(..) - teams success: ' + json.success);
-                this.teams = json.success as TeamTransport[];
-            } else {
-                Log.trace('CS310View::fetchData(..) - teams ERROR: ' + json.failure.message);
-                UI.showError(json.failure);
-            }
-        } else {
-            Log.trace('CS310View::fetchData(..) - teams !200 received');
+            // teams
+            const teams = await this.fetchTeamData();
+            this.teams = teams;
+            await this.renderTeams(teams);
+
+            Log.info('CS310View::renderStudentPage(..) - done');
+        } catch (err) {
+            Log.error('Error encountered: ' + err.message);
         }
-
         UI.hideModal();
         return;
+    }
+
+    // private async fetchData(endpoint: string): Promise<any> {
+    //     const url = this.remote + endpoint;
+    //     const response = await fetch(url, super.getOptions());
+    //     if (response.status === 200) {
+    //         Log.trace('CS310View::fetchData( ' + endpoint + ' ) - 200 received');
+    //         const json = await response.json();
+    //         Log.trace('CS310View::fetchData( ' + endpoint + ' ) - payload: ' + JSON.stringify(json));
+    //         if (typeof json.success !== 'undefined') {
+    //             Log.trace('CS310View::fetchData( ' + endpoint + ' ) - success: ' + json.success);
+    //             return json.success;
+    //         } else {
+    //             Log.trace('CS310View::fetchData( ' + endpoint + ' ) - ERROR: ' + json.failure.message);
+    //             throw new Error(json.failure.message);
+    //             // UI.showError(json.failure);
+    //         }
+    //     } else {
+    //         Log.trace('CS310View::fetchData( ' + endpoint + ' ) - teams !200 received');
+    //     }
+    //
+    //     UI.hideModal();
+    //     return [];
+    // }
+
+    private async fetchTeamData(): Promise<TeamTransport[]> {
+
+        // this.teams = null;
+
+        // const url = this.remote + '/portal/teams';
+        // const response = await fetch(url, super.getOptions());
+        // if (response.status === 200) {
+        //     Log.trace('CS310View::fetchTeamData(..) - teams 200 received');
+        //     const json = await response.json();
+        //     Log.trace('CS310View::fetchTeamData(..) - teams payload: ' + JSON.stringify(json));
+        //     if (typeof json.success !== 'undefined') {
+        //         Log.trace('CS310View::fetchTeamData(..) - teams success: ' + json.success);
+        //         return json.success as TeamTransport[];
+        //     } else {
+        //         Log.trace('CS310View::fetchTeamData(..) - teams ERROR: ' + json.failure.message);
+        //         UI.showError(json.failure);
+        //     }
+        // } else {
+        //     Log.trace('CS310View::fetchTeamData(..) - teams !200 received');
+        // }
+        try {
+            this.teams = null;
+            let data: TeamTransport[] = await this.fetchData('/portal/teams');
+            if (data === null) {
+                data = [];
+            }
+            this.teams = data;
+            return data;
+        } catch (err) {
+            Log.error('CS310View::fetchTeamData(..)' + err.message);
+            this.teams = [];
+            return [];
+        }
+
     }
 
     private async renderTeams(teams: TeamTransport[]): Promise<void> {
@@ -118,7 +169,7 @@ export class CS310View extends StudentView {
             } else {
                 tName.innerHTML = team.id;
             }
-            pName.innerHTML = JSON.stringify(team.people);
+            pName.innerHTML = team.people[0]; // JSON.stringify(team.people);
         }
     }
 

@@ -272,8 +272,9 @@ export abstract class CourseController implements ICourseController {
         const repos: RepositoryTransport[] = [];
         for (const repo of allRepos) {
             const repoTransport: RepositoryTransport = {
-                id:  repo.id,
-                URL: repo.URL
+                id:      repo.id,
+                URL:     repo.URL,
+                delivId: repo.delivId
             };
             repos.push(repoTransport);
         }

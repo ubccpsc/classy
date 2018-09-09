@@ -32,7 +32,7 @@ export class CS340View extends StudentView {
         UI.showModal("Fetching data.");
         super.render().then(function() {
             // super render complete; do custom work
-            return that.fetchData();
+            return that.fetchData340();
         }).then(function() {
             // that.renderTeams(that.teams);
             return that.renderDeliverables();
@@ -45,40 +45,40 @@ export class CS340View extends StudentView {
         });
     }
 
-    private async fetchData(): Promise<void> {
+    private async fetchData340(): Promise<void> {
         UI.showModal('Fetching Data');
         this.teams = null;
 
         const teamUrl = this.remote + '/portal/teams';
         const teamResponse = await fetch(teamUrl, super.getOptions());
         if (teamResponse.status === 200) {
-            Log.trace('CS340View::fetchData(..) - teams 200 received');
+            Log.trace('CS340View::fetchData340(..) - teams 200 received');
             const teamJson = await teamResponse.json();
-            Log.trace('CS340View::fetchData(..) - teams payload: ' + JSON.stringify(teamJson));
+            Log.trace('CS340View::fetchData340(..) - teams payload: ' + JSON.stringify(teamJson));
             if (typeof teamJson.success !== 'undefined') {
-                Log.trace('CS340View::fetchData(..) - teams success: ' + teamJson.success);
+                Log.trace('CS340View::fetchData340(..) - teams success: ' + teamJson.success);
                 this.teams = teamJson.success as TeamTransport[];
             } else {
-                Log.trace('CS340View::fetchData(..) - teams ERROR: ' + teamJson.failure.message);
+                Log.trace('CS340View::fetchData340(..) - teams ERROR: ' + teamJson.failure.message);
                 UI.showError(teamJson.failure);
             }
         } else {
-            Log.trace('CS340View::fetchData(..) - teams !200 received');
+            Log.trace('CS340View::fetchData340(..) - teams !200 received');
         }
 
         const delivUrl = this.remote + "/portal/cs340/getAllDelivInfo";
         const delivResponse = await fetch(delivUrl, super.getOptions());
 
         if (delivResponse.status === 200) {
-            Log.trace('CS340View::fetchData(..) - received deliverables');
+            Log.trace('CS340View::fetchData340(..) - received deliverables');
             const delivJson = await delivResponse.json();
             if (typeof delivJson.response !== "undefined") {
                 this.deliverables = delivJson.response;
             } else {
-                Log.trace("CS340View::fetchData(..) - deliverable error: " + delivJson.error);
+                Log.trace("CS340View::fetchData340(..) - deliverable error: " + delivJson.error);
             }
         } else {
-            Log.trace('CS340View::fetchData(..) - deliverables !200 received');
+            Log.trace('CS340View::fetchData340(..) - deliverables !200 received');
         }
 
         UI.hideModal();

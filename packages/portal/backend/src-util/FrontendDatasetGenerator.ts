@@ -46,6 +46,8 @@ export class FrontendDatasetGenerator {
         deliv = Test.getDeliverable(Test.DELIVIDPROJ);
         deliv.shouldProvision = true;
         deliv.gradesReleased = true;
+        deliv.repoPrefix = '';
+        deliv.teamPrefix = 'team';
         await this.dc.writeDeliverable(deliv);
     }
 
