@@ -56,4 +56,12 @@ export default class Util {
         return ret;
     }
 
+
+    static truncateNumber(num: number, digits: number): Number {
+        if (typeof num === 'undefined' || num === null) {
+            return 0;
+        }
+
+        return Number(Number(num).toFixed(digits));
+    }
 }

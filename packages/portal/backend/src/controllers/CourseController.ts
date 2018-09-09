@@ -342,13 +342,13 @@ export abstract class CourseController implements ICourseController {
                 if (typeof result.output !== 'undefined' && typeof result.output.report !== 'undefined') {
                     const report = result.output.report;
                     if (typeof report.scoreOverall !== 'undefined') {
-                        scoreOverall = Number(report.scoreOverall.toFixed(0));
+                        scoreOverall = Util.truncateNumber(report.scoreOverall, 0);
                     }
                     if (typeof report.scoreTest !== 'undefined') {
-                        scoreTest = Number(report.scoreTest.toFixed(0));
+                        scoreTest = Util.truncateNumber(report.scoreTest, 0);
                     }
                     if (typeof report.scoreCover !== 'undefined') {
-                        scoreCover = Number(report.scoreCover.toFixed(0));
+                        scoreCover = Util.truncateNumber(report.scoreCover, 0);
                     }
 
                     if (typeof report.passNames !== 'undefined') {
