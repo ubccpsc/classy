@@ -230,11 +230,10 @@ export class AdminConfigTab {
                 "Please make sure this operation completes before you provision again or release these repos.");
 
             Log.trace('AdminView::provisionDeliverablePressed(..) - POSTing to: ' + url);
-
             const response = await fetch(url, options);
-            const body = await response.json();
 
             if (response.status === 200 || response.status === 400) {
+                const body = await response.json();
                 if (typeof body.success !== 'undefined') {
                     Log.info("Repositories provisioned: " + JSON.stringify(body.success));
                     UI.showAlert("Repositories provisioned: " + body.success.length);
@@ -273,11 +272,10 @@ export class AdminConfigTab {
             options.body = JSON.stringify(provision); // TODO: handle formSingle correctly
 
             Log.trace('AdminView::releaseDeliverablePressed(..) - POSTing to: ' + url);
-
             const response = await fetch(url, options);
-            const body = await response.json();
 
             if (response.status === 200 || response.status === 400) {
+                const body = await response.json();
                 if (typeof body.success !== 'undefined') {
                     UI.showAlert("Repositories released: " + body.success.length);
                     Log.info("Repositories released: " + JSON.stringify(body.success));

@@ -75,8 +75,19 @@ export class CS310View extends StudentView {
         UI.hideSection('studentSelectPartnerDiv');
         UI.hideSection('studentPartnerDiv');
 
-        // 310 only has one team so we don't need to check to see if it's the right one
-        if (teams.length < 1) {
+        // skip this all for now; we will redeploy when teams can be formed
+        if (Date.now() > 0) {
+            return;
+        }
+
+        let projectTeam = null;
+        for (const team of teams) {
+            if (team.delivId === "project") {
+                projectTeam = team;
+            }
+        }
+
+        if (projectTeam === null) {
             // no team yet
 
             const button = document.querySelector('#studentSelectPartnerButton') as OnsButtonElement;
@@ -116,7 +127,7 @@ export class CS310View extends StudentView {
         const otherId = UI.getTextFieldValue('studentSelectPartnerText');
         const myGithubId = this.getStudent().githubId;
         const payload: TeamFormationTransport = {
-            delivId:   'proj', // only one team in cs310 (and it is always called project)
+            delivId:   'project', // only one team in cs310 (and it is always called project)
             githubIds: [myGithubId, otherId]
         };
         const url = this.remote + '/portal/team';

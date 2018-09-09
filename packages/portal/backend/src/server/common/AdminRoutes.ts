@@ -286,10 +286,10 @@ export default class AdminRoutes implements IREST {
                             typeof row.SNUM !== 'undefined' && typeof row.FIRST !== 'undefined' &&
                             typeof row.LAST !== 'undefined' && typeof row.LAB !== 'undefined') {
                             const p: Person = {
-                                id:            row.ACCT, // id is CSID since this cannot be changed
-                                csId:          row.ACCT,
+                                id:            row.ACCT.toLowerCase(), // id is CSID since this cannot be changed
+                                csId:          row.ACCT.toLowerCase(),
                                 // github.ugrad wants row.ACCT; github.ubc wants row.CWL
-                                githubId:      row.ACCT,  // TODO: will depend on instance (see above)
+                                githubId:      row.ACCT.toLowerCase(),  // TODO: will depend on instance (see above)
                                 studentNumber: row.SNUM,
                                 fName:         row.FIRST,
                                 lName:         row.LAST,

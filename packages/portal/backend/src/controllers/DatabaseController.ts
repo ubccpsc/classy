@@ -136,6 +136,15 @@ export class DatabaseController {
         return records;
     }
 
+    // case issues will be harder to fix than this
+    // private fixPersonCase(person: Person): Person {
+    //     if (person !== null) {
+    //         (person as any).id = person.id.toLowerCase(); // always force id to be lowercase
+    //         person.githubId = person.githubId.toLowerCase(); // always force id to be lowercase
+    //     }
+    //     return person;
+    // }
+
     public async getPeople(): Promise<Person[]> {
         const people = await this.readRecords(this.PERSONCOLL, {}) as Person[];
         Log.info("DatabaseController::getPeople() - #: " + people.length);

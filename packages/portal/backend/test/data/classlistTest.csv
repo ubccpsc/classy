@@ -1,5 +1,5 @@
 ACCT,SNUM,CWL,LAST,FIRST,LAB
-atest-01,22992922,atest-01cwl,AadsfasFirstTest,AasdfLastTest,L2J
-atest-02,48483222,atest-02cwl,BasdfFirstTest,BasdfLastTest,
-atest-03,29394944,atest-03cwl,CasdfasFirstTest,CasdfLastTest,L2A
-atest-04,39292932,atest-04cwl,DasdfFirstTest,DasdfLastTest,L2A
+Atest-01,22992922,Atest-01,AadsfasFirstTest,AasdfLastTest,L2J
+Atest-02,48483222,Atest-02,BasdfFirstTest,BasdfLastTest,
+Atest-03,29394944,Atest-03,CasdfasFirstTest,CasdfLastTest,L2A
+Atest-04,39292932,Atest-04,DasdfFirstTest,DasdfLastTest,L2A
