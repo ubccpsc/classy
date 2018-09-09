@@ -87,7 +87,9 @@ export class DatabaseController {
     }
 
     public async getResults(): Promise<Result[]> {
-        const results = await this.readRecords(this.RESULTCOLL, {}) as Result[];
+        const query = {};
+        const latestFirst = {"input.pushInfo.timestamp": -1}; // most recent first
+        const results = await this.readRecords(this.RESULTCOLL, query, latestFirst) as Result[];
         Log.info("DatabaseController::getResult() - #: " + results.length);
         return results;
     }
@@ -420,15 +422,22 @@ export class DatabaseController {
      *
      * @param {string} column
      * @param {{}} query send {} if all results for that column are wanted
+     * * @param {{}} sort? send only if a specific ordering is required
      * @returns {Promise<any[]>} An array of objects
      */
-    public async readRecords(column: string, query: {}): Promise<any[]> {
+    public async readRecords(column: string, query: {}, sort?: {}): Promise<any[]> {
         try {
             // Log.trace("DatabaseController::readRecords( " + column + ", " + JSON.stringify(query) + " ) - start");
             const start = Date.now();
             const col = await this.getCollection(column);
 
-            const records: any[] = await (col as any).find(query).toArray();
+            let records: any[];
+            if (typeof sort === 'undefined') {
+                records = await (col as any).find(query).toArray();
+            } else {
+                records = await (col as any).find(query).sort(sort).toArray();
+            }
+
             if (records === null || records.length === 0) {
                 // Log.trace("DatabaseController::readRecords(..) - done; no records found for: " +
                 //     JSON.stringify(query) + " in: " + column + "; took: " + Util.took(start));
