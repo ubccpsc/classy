@@ -57,11 +57,16 @@ export default class Util {
     }
 
 
-    static truncateNumber(num: number, digits: number): Number {
-        if (typeof num === 'undefined' || num === null) {
+    static truncateNumber(num: number, digits: number): number {
+        try {
+            if (typeof num === 'undefined' || num === null) {
+                return 0;
+            }
+            return Number(Number(num).toFixed(digits)) + 0;
+        } catch (err) {
+            Log.error("Util::truncateNumber(..) - ERROR: " + err.message);
+            Log.error("Util::truncateNumber( " + num + ", " + digits + " ) - ERROR: " + err.message);
             return 0;
         }
-
-        return Number(Number(num).toFixed(digits));
     }
 }
