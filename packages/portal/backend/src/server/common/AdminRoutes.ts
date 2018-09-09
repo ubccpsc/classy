@@ -47,7 +47,9 @@ export default class AdminRoutes implements IREST {
         server.get('/portal/admin/teams', AdminRoutes.isPrivileged, AdminRoutes.getTeams);
         server.get('/portal/admin/repositories', AdminRoutes.isPrivileged, AdminRoutes.getRepositories);
         server.get('/portal/admin/grades', AdminRoutes.isPrivileged, AdminRoutes.getGrades);
+
         server.get('/portal/admin/results/:delivId/:repoId', AdminRoutes.isPrivileged, AdminRoutes.getResults); // result summaries
+        server.get('/portal/admin/result/:delivId/:repoId', AdminRoutes.isPrivileged, AdminRoutes.getResult); // result stdio
         server.get('/portal/admin/dashboard/:delivId/:repoId', AdminRoutes.isPrivileged, AdminRoutes.getDashboard); // detailed results
 
         // admin-only functions
@@ -208,6 +210,33 @@ export default class AdminRoutes implements IREST {
             return next();
         }).catch(function(err) {
             return AdminRoutes.handleError(400, 'Unable to retrieve results. ERROR: ' + err.message, res, next);
+        });
+    }
+
+    /**
+     * Returns a AutoTestResultPayload.
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
+    private static getResult(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::getResult(..) - start');
+        const cc = Factory.getCourseController(AdminRoutes.ghc);
+
+        // if these params are missing the client will get 404 since they are part of the path
+        const delivId = req.params.delivId;
+        const repoId = req.params.repoId;
+        const sha = req.params.sha;
+
+        // handled by preceeding action in chain above (see registerRoutes)
+        cc.getResult(delivId, repoId, sha).then(function(stdio) {
+            Log.trace('AdminRoutes::getResult(..) - in then');
+            const payload: Payload = {success: 'something something'};
+            res.send(payload);
+            return next();
+        }).catch(function(err) {
+            return AdminRoutes.handleError(400, 'Unable to retrieve result. ERROR: ' + err.message, res, next);
         });
     }
 

@@ -419,6 +419,20 @@ export abstract class CourseController implements ICourseController {
     }
 
     /**
+     * Gets the stdio associated with a tuple.
+     *
+     * @param delivId
+     * @param repoId
+     * @param sha
+     * @returns {Promise<AutoTestGradeTransport[]>}
+     */
+    public async getResult(delivId: string, repoId: string, sha: string): Promise<{}> {
+        Log.info("CourseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - start");
+
+        return Promise.resolve({contents: 'stdio dude'});
+    }
+
+    /**
      * Gets the results associated with the course.
      * @param reqDelivId ('any' for *)
      * @param reqRepoId ('any' for *)

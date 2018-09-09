@@ -121,7 +121,7 @@ export class AdminDashboardTab {
             },
             {
                 id:          'testScore',
-                text:        'Test Score',
+                text:        'Test%',
                 sortable:    true,
                 defaultSort: false,
                 sortDown:    true,
@@ -129,7 +129,7 @@ export class AdminDashboardTab {
             },
             {
                 id:          'coverScore',
-                text:        'Cover Score',
+                text:        'Cover%',
                 sortable:    true,
                 defaultSort: false,
                 sortDown:    true,
