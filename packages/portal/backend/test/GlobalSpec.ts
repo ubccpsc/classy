@@ -706,6 +706,25 @@ export class Test {
         const projectURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
         const commitURL = projectURL + '/commits/FOOOSHA';
+
+        const names = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+        const passNames = [];
+        const failNames = [];
+        const errorNames = [];
+        const skipNames = [];
+        for (const n of names) {
+            const res = this.getRandomInt(3);
+            if (res === 0) {
+                passNames.push(n);
+            } else if (res === 1) {
+                failNames.push(n);
+            } else if (res === 2) {
+                skipNames.push(n);
+            } else {
+                errorNames.push(n);
+            }
+        }
+
         const output: IContainerOutput = {
             // commitURL:          commitURL,
             timestamp:          ts,
@@ -713,10 +732,10 @@ export class Test {
                 scoreOverall: score,
                 scoreTest:    Math.random() * 100,
                 scoreCover:   Math.random() * 100,
-                passNames:    [],
-                failNames:    [],
-                errorNames:   [],
-                skipNames:    [],
+                passNames:    passNames,
+                failNames:    failNames,
+                errorNames:   errorNames,
+                skipNames:    skipNames,
                 custom:       {},
                 feedback:     'feedback'
             },

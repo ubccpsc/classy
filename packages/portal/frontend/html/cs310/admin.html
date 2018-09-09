@@ -25,10 +25,10 @@
 
         <ons-tab id="AdminResultTab" page="results.html" label="Results" icon="ion-android-checkmark-circle">
         </ons-tab>
-        <!--
-                <ons-tab id="AdminDashboardTab" page="dashboard.html" label="Dash" icon="ion-ios-speedometer-outline">
-                </ons-tab>
-        -->
+
+        <ons-tab id="AdminDashboardTab" page="dashboard.html" label="Dash" icon="ion-ios-speedometer-outline">
+        </ons-tab>
+
         <ons-tab id="AdminConfigTab" page="config.html" label="Config" icon="ion-ios-gear">
         </ons-tab>
     </ons-tabbar>
@@ -133,12 +133,28 @@
     <template id="dashboard.html">
         <ons-page id="AdminDashboard">
             <ons-list id="AdminDashboardList">
+                <!--<div style="text-align:center; padding: 1em;">-->
+                <!--Select Deliverable:-->
+                <!--<select id="dashboardListSelect" style="margin-left: 1em;">-->
+                <!--<option value="''">-None-</option>-->
+                <!--</select></div>-->
+                <!--<ons-list-header>Dashboard</ons-list-header>-->
+                <!--<div id="dashboardListTable" style="width:100%;"></div>-->
+                <!--<div id="dashboardListTableNone" class="noResultsRow">-->
+                <!--No Results-->
+                <!--</div>-->
                 <div style="text-align:center; padding: 1em;">
-                    Select Deliverable:
-                    <select id="dashboardListSelect" style="margin-left: 1em;">
-                        <option value="''">-None-</option>
-                    </select></div>
-                <ons-list-header>Dashboard</ons-list-header>
+                    Deliverable:
+                    <select id="dashboardDelivSelect" style="margin-left: 1em;">
+                        <option value="any">-All-</option>
+                    </select>
+                    Repo:
+                    <select id="dashboardRepoSelect" style="margin-left: 1em;">
+                        <option value="any">-All-</option>
+                    </select>
+                    <button id="dashboardUpdateButton">Update</button>
+                </div>
+                <ons-list-header>Results</ons-list-header>
                 <div id="dashboardListTable" style="width:100%;"></div>
                 <div id="dashboardListTableNone" class="noResultsRow">
                     No Results

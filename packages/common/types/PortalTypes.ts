@@ -255,6 +255,11 @@ export interface AutoTestResultSummaryPayload {
     failure?: FailurePayload; // only set if defined
 }
 
+export interface AutoTestDashboardPayload {
+    success?: AutoTestDashboardTransport[]; // only set if defined
+    failure?: FailurePayload; // only set if defined
+}
+
 export interface AutoTestResultSummaryTransport {
     repoId: string;
     repoURL: string;
@@ -266,4 +271,12 @@ export interface AutoTestResultSummaryTransport {
     scoreOverall: number | null; // null if state !== 'SUCCESS'
     scoreCover: number | null; // null if state !== 'SUCCESS'
     scoreTests: number | null; // null if state !== 'SUCCESS'
+}
+
+// extends the result summary data
+export interface AutoTestDashboardTransport extends AutoTestResultSummaryTransport {
+    testPass: string[];
+    testFail: string[];
+    testSkip: string[];
+    testError: string[];
 }

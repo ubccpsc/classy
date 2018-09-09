@@ -14,6 +14,7 @@ import Log from "../../../../../common/Log";
 import {UI} from "../util/UI";
 
 import {AdminConfigTab} from "./AdminConfigTab";
+import {AdminDashboardTab} from "./AdminDashboardTab";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminGradesTab} from "./AdminGradesTab";
 import {AdminResultsTab} from "./AdminResultsTab";
@@ -44,6 +45,7 @@ export class AdminView implements IView {
     protected teamsTab: AdminTeamsTab;
     protected gradesTab: AdminGradesTab;
     protected resultsTab: AdminResultsTab;
+    protected dashTab: AdminDashboardTab;
     protected configTab: AdminConfigTab;
 
     constructor(remoteUrl: string, tabs: AdminTabs) {
@@ -57,6 +59,7 @@ export class AdminView implements IView {
         this.teamsTab = new AdminTeamsTab(remoteUrl);
         this.gradesTab = new AdminGradesTab(remoteUrl);
         this.resultsTab = new AdminResultsTab(remoteUrl);
+        this.dashTab = new AdminDashboardTab(remoteUrl);
         this.configTab = new AdminConfigTab(remoteUrl, this.isAdmin);
     }
 
@@ -190,6 +193,12 @@ export class AdminView implements IView {
     protected async handleAdminResults(opts: any): Promise<void> {
         Log.info('AdminView::handleResults(..) - start');
         return this.resultsTab.init(opts);
+    }
+
+    // called by reflection in renderPage
+    protected async handleAdminDashboard(opts: any): Promise<void> {
+        Log.info('AdminView::handleDashboard(..) - start');
+        return this.dashTab.init(opts);
     }
 
     protected handleAdminEditDeliverable(opts: any) {

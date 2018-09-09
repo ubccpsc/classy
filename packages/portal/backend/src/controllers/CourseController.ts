@@ -1,6 +1,7 @@
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {
+    AutoTestDashboardTransport,
     AutoTestGradeTransport,
     AutoTestResultSummaryTransport,
     CourseTransport,
@@ -12,7 +13,7 @@ import {
     TeamTransport
 } from '../../../../common/types/PortalTypes';
 import Util from "../../../../common/Util";
-import {Course, Deliverable, Grade, Person, Repository, Team} from "../Types";
+import {Course, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
 import {DeliverablesController} from "./DeliverablesController";
@@ -314,12 +315,87 @@ export abstract class CourseController implements ICourseController {
      * @param reqRepoId ('any' for *)
      * @returns {Promise<AutoTestGradeTransport[]>}
      */
-    public async getResults(reqDelivId: string, reqRepoId: string): Promise<AutoTestResultSummaryTransport[]> {
-        Log.info("CourseController::getResults( " + reqDelivId + ", " + reqRepoId + " ) - start");
-        const NUM_RESULTS = 1000; // max # of records
+    public async getDashboard(reqDelivId: string, reqRepoId: string): Promise<AutoTestDashboardTransport[]> {
+        Log.info("CourseController::getDashboard( " + reqDelivId + ", " + reqRepoId + " ) - start");
+        const NUM_RESULTS = 20; // max # of records
 
+        const results: AutoTestDashboardTransport[] = [];
+        const allResults = await this.matchResults(reqDelivId, reqRepoId);
+        for (const result of allResults) {
+            // const repo = await rc.getRepository(result.repoId); // this happens a lot and ends up being too slow
+
+            const repoId = result.input.pushInfo.repoId;
+            if (results.length <= NUM_RESULTS) {
+
+                const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
+                    Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
+
+                let scoreOverall = null;
+                let scoreCover = null;
+                let scoreTest = null;
+
+                let testPass: string[] = [];
+                let testFail: string[] = [];
+                let testSkip: string[] = [];
+                let testError: string[] = [];
+
+                if (typeof result.output !== 'undefined' && typeof result.output.report !== 'undefined') {
+                    const report = result.output.report;
+                    if (typeof report.scoreOverall !== 'undefined') {
+                        scoreOverall = Number(report.scoreOverall.toFixed(0));
+                    }
+                    if (typeof report.scoreTest !== 'undefined') {
+                        scoreTest = Number(report.scoreTest.toFixed(0));
+                    }
+                    if (typeof report.scoreCover !== 'undefined') {
+                        scoreCover = Number(report.scoreCover.toFixed(0));
+                    }
+
+                    if (typeof report.passNames !== 'undefined') {
+                        testPass = report.passNames;
+                    }
+                    if (typeof report.failNames !== 'undefined') {
+                        testFail = report.failNames;
+                    }
+                    if (typeof report.skipNames !== 'undefined') {
+                        testSkip = report.skipNames;
+                    }
+                    if (typeof report.errorNames !== 'undefined') {
+                        testError = report.errorNames;
+                    }
+                }
+
+                const resultTrans: AutoTestDashboardTransport = {
+                    repoId:       repoId,
+                    repoURL:      repoURL,
+                    delivId:      result.delivId,
+                    state:        result.output.state,
+                    timestamp:    result.output.timestamp,
+                    commitSHA:    result.input.pushInfo.commitSHA,
+                    commitURL:    result.input.pushInfo.commitURL,
+                    scoreOverall: scoreOverall,
+                    scoreCover:   scoreCover,
+                    scoreTests:   scoreTest,
+
+                    testPass:  testPass,
+                    testFail:  testFail,
+                    testError: testError,
+                    testSkip:  testSkip
+                };
+                results.push(resultTrans);
+            } else {
+                // result does not match filter
+            }
+        }
+        Log.trace("CourseController::getDashboard(..) - # results: " + results.length);
+        return results;
+    }
+
+    public async matchResults(reqDelivId: string, reqRepoId: string): Promise<Result[]> {
         const allResults = await this.resC.getAllResults();
-        const results: AutoTestResultSummaryTransport[] = [];
+        const NUM_RESULTS = 1000;
+
+        const results: Result[] = [];
         for (const result of allResults) {
             // const repo = await rc.getRepository(result.repoId); // this happens a lot and ends up being too slow
             const delivId = result.delivId;
@@ -328,8 +404,38 @@ export abstract class CourseController implements ICourseController {
             if ((reqDelivId === 'any' || delivId === reqDelivId) &&
                 (reqRepoId === 'any' || repoId === reqRepoId) &&
                 results.length <= NUM_RESULTS) {
+
+                results.push(result);
+
+            } else {
+                // result does not match filter
+            }
+        }
+        Log.trace("CourseController::matchResults(..) - # results: " + results.length);
+        return results;
+    }
+
+    /**
+     * Gets the results associated with the course.
+     * @param reqDelivId ('any' for *)
+     * @param reqRepoId ('any' for *)
+     * @returns {Promise<AutoTestGradeTransport[]>}
+     */
+    public async getResults(reqDelivId: string, reqRepoId: string): Promise<AutoTestResultSummaryTransport[]> {
+        Log.info("CourseController::getResults( " + reqDelivId + ", " + reqRepoId + " ) - start");
+        const NUM_RESULTS = 1000; // max # of records
+
+        const results: AutoTestResultSummaryTransport[] = [];
+        const allResults = await this.matchResults(reqDelivId, reqRepoId);
+        for (const result of allResults) {
+            // const repo = await rc.getRepository(result.repoId); // this happens a lot and ends up being too slow
+
+            const repoId = result.input.pushInfo.repoId;
+            if (results.length <= NUM_RESULTS) {
+
                 const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
                     Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
+
                 let scoreOverall = null;
                 let scoreCover = null;
                 let scoreTest = null;

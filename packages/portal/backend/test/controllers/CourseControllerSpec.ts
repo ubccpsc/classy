@@ -21,7 +21,7 @@ import {Test} from "../GlobalSpec";
 import '../GlobalSpec'; // load first
 import './GradeControllerSpec'; // load first
 
-describe("CourseController", () => {
+describe.only("CourseController", () => {
 
     let cc: CourseController;
     let gc: GradesController;
@@ -196,6 +196,25 @@ describe("CourseController", () => {
 
     it("Should be able to get a list of results without wildcards.", async () => {
         const res = await cc.getResults(Test.DELIVID0, Test.REPONAME1);
+        expect(res).to.be.an('array');
+        expect(res.length).to.equal(10);
+    });
+
+    it("Should be able to get a list of dashboard results with partial wildcards.", async () => {
+        // doesn't really work with the result tuples we have...
+        const res = await cc.getDashboard('any', Test.REPONAME1);
+        expect(res).to.be.an('array');
+        expect(res.length).to.equal(10);
+    });
+
+    it("Should be able to get a list of dashboard results  with wildcards.", async () => {
+        const res = await cc.getDashboard('any', 'any');
+        expect(res).to.be.an('array');
+        expect(res.length).to.equal(20);
+    });
+
+    it("Should be able to get a list of dashboard results  without wildcards.", async () => {
+        const res = await cc.getDashboard(Test.DELIVID0, Test.REPONAME1);
         expect(res).to.be.an('array');
         expect(res.length).to.equal(10);
     });
