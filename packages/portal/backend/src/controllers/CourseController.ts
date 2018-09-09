@@ -317,13 +317,16 @@ export abstract class CourseController implements ICourseController {
      */
     public async getDashboard(reqDelivId: string, reqRepoId: string): Promise<AutoTestDashboardTransport[]> {
         Log.info("CourseController::getDashboard( " + reqDelivId + ", " + reqRepoId + " ) - start");
-        const NUM_RESULTS = 20; // max # of records
+        const NUM_RESULTS = 500; // max # of records
+
+        // TODO: return one result per team (if reqRepoId === any)
+        // TODO: return all results for a team (for the right deliverable) if reqRepoId === any
+
+        // const reposSeen: string[] = []; // use this for one-result-per-team
 
         const results: AutoTestDashboardTransport[] = [];
         const allResults = await this.matchResults(reqDelivId, reqRepoId);
         for (const result of allResults) {
-            // const repo = await rc.getRepository(result.repoId); // this happens a lot and ends up being too slow
-
             const repoId = result.input.pushInfo.repoId;
             if (results.length <= NUM_RESULTS) {
 
