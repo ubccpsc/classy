@@ -39,11 +39,6 @@ export abstract class AutoTest implements IAutoTest {
     private standardQueue = new Queue('standard', 2);
     private expressQueue = new Queue('express', 1);
 
-    // these could be arrays if we wanted a thread pool model
-    // private regressionExecution: IContainerInput | null = null;
-    // private standardExecution: IContainerInput | null = null;
-    // private expresssExecution: IContainerInput | null = null;
-
     // noinspection TypeScriptAbstractClassConstructorCanBeMadeProtected
     constructor(dataStore: IDataStore, classPortal: IClassPortal) {
         this.dataStore = dataStore;
@@ -289,20 +284,6 @@ export abstract class AutoTest implements IAutoTest {
             this.expressQueue.clearExecution(commitURL, delivId);
             this.standardQueue.clearExecution(commitURL, delivId);
             this.regressionQueue.clearExecution(commitURL, delivId);
-
-            // if (this.expresssExecution !== null && this.expresssExecution.pushInfo.commitURL === data.commitURL) {
-            //     Log.trace("AutoTest::handleExecutionComplete(..) - clearing express slot");
-            //     this.expresssExecution = null;
-            // }
-            // if (this.standardExecution !== null && this.standardExecution.pushInfo.commitURL === data.commitURL) {
-            //     Log.trace("AutoTest::handleExecutionComplete(..) - clearing standard slot");
-            //     this.standardExecution = null;
-            // }
-            //
-            // if (this.regressionExecution !== null && this.regressionExecution.pushInfo.commitURL === data.commitURL) {
-            //     Log.trace("AutoTest::handleExecutionComplete(..) - clearing regression slot");
-            //     this.regressionExecution = null;
-            // }
 
             // execution done, advance the clock
             this.tick();
