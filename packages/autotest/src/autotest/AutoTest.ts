@@ -271,8 +271,10 @@ export abstract class AutoTest implements IAutoTest {
                 return;
             }
 
-            Log.info("AutoTest::handleExecutionComplete(..) - start; delivId: " + data.delivId +
-                "; repoId: " + data.repoId + "; commit: " + data.commitSHA);
+            Log.info("AutoTest::handleExecutionComplete(..) - start" +
+                ": delivId: " + data.delivId + "; repoId: " + data.repoId +
+                "; took (waiting + execution): " + Util.tookHuman(data.input.pushInfo.timestamp) +
+                "; commit: " + data.commitSHA);
 
             try {
                 const resultPayload = await this.classPortal.sendResult(data);
@@ -296,7 +298,7 @@ export abstract class AutoTest implements IAutoTest {
 
             // execution done, advance the clock
             this.tick();
-            Log.info("AutoTest::handleExecutionComplete(..) - done; took: " + Util.took(start));
+            Log.info("AutoTest::handleExecutionComplete(..) - done; final processing took: " + Util.took(start));
         } catch (err) {
             Log.error("AutoTest::handleExecutionComplete(..) - ERROR: " + err.message);
         }

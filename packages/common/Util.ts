@@ -10,6 +10,22 @@ export default class Util {
         return Date.now() - start + " ms";
     }
 
+    public static tookHuman(start: number): string {
+        const delta = Math.floor((Date.now() - start) / 1000); // convert to seconds
+        const hours = Math.floor(delta / 3600);
+        const minutes = Math.floor((delta - (hours * 3600)) / 60);
+        const seconds = Math.floor(delta - (hours * 3600) - (minutes * 60));
+        let msg = "";
+        if (hours > 0) {
+            msg = hours + " hours and " + minutes + " minutes"; // seconds don't matter if we're over an hour
+        } else if (minutes > 0) {
+            msg = minutes + " minutes and " + seconds + " second";
+        } else {
+            msg = delta + " seconds";
+        }
+        return msg;
+    }
+
     // // just a useful delay function for when we need to wait for GH to do something
     // // or we want a test to be able to slow itself down
     // public static delay(ms: number): Promise<{}> {
