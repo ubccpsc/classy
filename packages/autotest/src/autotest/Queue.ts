@@ -105,8 +105,8 @@ export class Queue {
                     const lenBefore = this.slots.length;
                     this.slots.splice(i, 1);
                     const lenAfter = this.slots.length;
-                    Log.info('Queue::clearExecution( .., ' + delivId + ' ) - cleared; # before: ' +
-                        lenBefore + '; # after: ' + lenAfter + '; commitURL: ' + commitURL);
+                    Log.info('Queue::clearExecution( .., ' + delivId + ' ) - ' + this.getName() +
+                        ' cleared; # before: ' + lenBefore + '; # after: ' + lenAfter + '; commitURL: ' + commitURL);
                     removed = true;
                 }
             }
