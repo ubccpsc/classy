@@ -137,4 +137,8 @@ export class Queue {
         return input;
     }
 
+    public numRunning(): number {
+        return this.slots.length;
+    }
+
 }

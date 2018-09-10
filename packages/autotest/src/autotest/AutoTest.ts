@@ -56,8 +56,10 @@ export abstract class AutoTest implements IAutoTest {
 
     public tick() {
         try {
-            Log.info("AutoTest::tick(..) - start; queues - #std: " + this.standardQueue.length() +
-                "; #exp: " + this.expressQueue.length() + "; #reg: " + this.regressionQueue.length());
+            Log.info("AutoTest::tick(..) - start; " +
+                "standard - #wait: " + this.standardQueue.length() + ", #run: " + this.standardQueue.numRunning() + "; " +
+                "express - #wait: " + this.expressQueue.length() + ", #run: " + this.expressQueue.numRunning() + "; " +
+                "regression - #wait: " + this.regressionQueue.length() + ", #run: " + this.regressionQueue.numRunning() + ".");
 
             let updated = false;
             const that = this;
@@ -89,31 +91,37 @@ export abstract class AutoTest implements IAutoTest {
                 return false;
             };
 
-            Log.test("Queue::tick(..) - handle express");
             // express
+            // Log.trace("Queue::tick(..) - handle express");
             tickQueue(this.expressQueue);
             // express -> standard
             promoteQueue(this.expressQueue, this.standardQueue);
             // express -> regression
             promoteQueue(this.expressQueue, this.regressionQueue);
 
-            Log.test("Queue::tick(..) - handle standard");
             // standard
+            // Log.trace("Queue::tick(..) - handle standard");
             tickQueue(this.standardQueue);
             // standard -> regression
             promoteQueue(this.standardQueue, this.regressionQueue);
 
-            Log.test("Queue::tick(..) - handle regression");
             // regression
+            // Log.trace("Queue::tick(..) - handle regression");
             tickQueue(this.regressionQueue);
 
-            if (updated === false) {
-                if (this.standardQueue.length() === 0 && this.expressQueue.length() === 0 && this.regressionQueue.length() === 0) {
-                    Log.info("AutoTest::tick(..) - queues empty; no new jobs started");
-                } else {
-                    Log.info("AutoTest::tick(..) - execution slots busy; no new jobs started");
-                }
+            // if (updated === false) {
+            if (this.standardQueue.length() === 0 && this.standardQueue.numRunning() === 0 &&
+                this.expressQueue.length() === 0 && this.expressQueue.numRunning() === 0 &&
+                this.regressionQueue.length() === 0 && this.regressionQueue.numRunning() === 0) {
+                Log.info("AutoTest::tick(..) - done: queues empty and idle; no new jobs started.");
+            } else {
+                // Log.info("AutoTest::tick(..) - done - execution slots busy; no new jobs started");
+                Log.info("AutoTest::tick(..) - done: " +
+                    "standard - #wait: " + this.standardQueue.length() + ", #run: " + this.standardQueue.numRunning() + "; " +
+                    "express - #wait: " + this.expressQueue.length() + ", #run: " + this.expressQueue.numRunning() + "; " +
+                    "regression - #wait: " + this.regressionQueue.length() + ", #run: " + this.regressionQueue.numRunning() + ".");
             }
+            // }
         } catch (err) {
             Log.error("AutoTest::tick() - ERROR: " + err.message);
         }
