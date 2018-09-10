@@ -185,7 +185,7 @@ export class AdminDashboardTab {
                 // {value: '?', html: '<a href="http://refugeeks.com/wp-content/uploads/2014/04/501-Not-Implemented-600x480.jpg">?</a>'},
                 {
                     value: '',
-                    html:  '<a style="cursor: pointer; cursor: hand;" onclick= that.newWindow = window.open(\'text/plain\');' +
+                    html:  '<a style="cursor: pointer; cursor: hand;"' +
                            clickTarget + '><ons-icon icon="ion-ios-help-outline"</ons-icon></a>'
                 },
                 {value: result.repoId, html: '<a href="' + result.repoURL + '">' + result.repoId + '</a>'},
@@ -216,14 +216,15 @@ export class AdminDashboardTab {
     public async getDetails(path: string): Promise<void> {
         const url = this.remote + path;
         Log.info('AdminDashboardTab::getDetails( .. ) - url: ' + url);
-
         try {
+            const newWindow = window.open('text/plain');
+
             const options = AdminView.getOptions();
             const response = await fetch(url, options);
             if (response.status === 200) {
                 let data = await response.text();
                 Log.info('AdminDashboardTab::getDetails( .. ) - text length: ' + data.length);
-                // const newWindow = window.open('text/plain');
+
                 data = data.replace(/&/g, "&amp;");
                 data = data.replace(/</g, "&lt;");
                 data = data.replace(/>/g, "&gt;");
