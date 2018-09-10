@@ -101,7 +101,7 @@ export class ClassPortal implements IClassPortal {
                 }
             };
 
-            const res = await rp(url, opts); // .then(function(res) {
+            const res = await rp(url, opts);
             Log.trace("ClassPortal::isStaff( " + userName + " ) - success; payload: " + res);
             const json: AutoTestAuthPayload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {

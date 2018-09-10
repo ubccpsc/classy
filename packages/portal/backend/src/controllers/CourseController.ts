@@ -1,3 +1,5 @@
+import * as rp from "request-promise-native";
+
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {
@@ -426,10 +428,19 @@ export abstract class CourseController implements ICourseController {
      * @param sha
      * @returns {Promise<AutoTestGradeTransport[]>}
      */
-    public async getResult(delivId: string, repoId: string, sha: string): Promise<{}> {
+    public async getResult(delivId: string, repoId: string, sha: string): Promise<string> {
         Log.info("CourseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - start");
 
-        return Promise.resolve({contents: 'stdio dude'});
+        // portal/result/<FULL_COMMIT_SHA>-<DELIV_ID>/<FILENAME>
+        // http://grader/randomStringInEnv/commitSHA-dX
+
+        const secret = Config.getInstance().getProp(ConfigKey.autotestSecret);
+
+        const url = 'http://grader/' + secret + '/' + sha + '-' + delivId;
+        Log.info("CourseController::getResult( .. ) - URL: " + url);
+        const res = await rp(url);
+        Log.info("CourseController::getResult( .. ) - done; body: " + res);
+        return res;
     }
 
     /**

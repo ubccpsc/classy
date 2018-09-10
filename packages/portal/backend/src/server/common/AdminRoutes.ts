@@ -49,7 +49,7 @@ export default class AdminRoutes implements IREST {
         server.get('/portal/admin/grades', AdminRoutes.isPrivileged, AdminRoutes.getGrades);
 
         server.get('/portal/admin/results/:delivId/:repoId', AdminRoutes.isPrivileged, AdminRoutes.getResults); // result summaries
-        server.get('/portal/admin/result/:delivId/:repoId', AdminRoutes.isPrivileged, AdminRoutes.getResult); // result stdio
+        server.get('/portal/admin/result/:delivId/:repoId/:sha', AdminRoutes.isPrivileged, AdminRoutes.getResult); // result stdio
         server.get('/portal/admin/dashboard/:delivId/:repoId', AdminRoutes.isPrivileged, AdminRoutes.getDashboard); // detailed results
 
         // admin-only functions
@@ -230,10 +230,9 @@ export default class AdminRoutes implements IREST {
         const sha = req.params.sha;
 
         // handled by preceeding action in chain above (see registerRoutes)
-        cc.getResult(delivId, repoId, sha).then(function(stdio) {
-            Log.trace('AdminRoutes::getResult(..) - in then');
-            const payload: Payload = {success: 'something something'};
-            res.send(payload);
+        cc.getResult(delivId, repoId, sha).then(function(stdio: string) {
+            Log.trace('AdminRoutes::getResult(..) - in then; data length: ' + stdio.length);
+            res.send(200, stdio); // return as text rather than json
             return next();
         }).catch(function(err) {
             return AdminRoutes.handleError(400, 'Unable to retrieve result. ERROR: ' + err.message, res, next);

@@ -174,12 +174,19 @@ export class AdminDashboardTab {
             const date = new Date(ts);
             const mom = moment(date);
             const tsString = mom.format("MM/DD[@]HH:mm");
-            // const tsString = new Date(ts).toLocaleDateString() + ' @ ' + new Date(ts).toLocaleTimeString();
 
             const dashRow = this.generateHistogram(result);
 
+            const stdioURL = '/portal/admin/result/' + result.delivId + '/' + result.repoId + '/' + result.commitSHA;
+            const clickTarget = "myApp.view.dashTab.getDetails('" + stdioURL + "');";
+
             const row: TableCell[] = [
-                {value: '?', html: '<a href="http://refugeeks.com/wp-content/uploads/2014/04/501-Not-Implemented-600x480.jpg">?</a>'},
+                // {value: '?', html: '<a href="http://refugeeks.com/wp-content/uploads/2014/04/501-Not-Implemented-600x480.jpg">?</a>'},
+                {
+                    value: '',
+                    html:  '<a style="cursor: pointer; cursor: hand;" onclick=' +
+                           clickTarget + '><ons-icon icon="ion-ios-help-outline"</ons-icon></a>'
+                },
                 {value: result.repoId, html: '<a href="' + result.repoURL + '">' + result.repoId + '</a>'},
                 {value: result.delivId, html: result.delivId},
                 {value: result.scoreOverall, html: result.scoreOverall + ''},
@@ -201,6 +208,25 @@ export class AdminDashboardTab {
             UI.showSection('dashboardListTable');
             UI.hideSection('dashboardListTableNone');
         }
+    }
+
+    public async getDetails(path: string): Promise<void> {
+        const url = this.remote + path;
+        Log.info('AdminDashboardTab::getDetails( .. ) - url: ' + url);
+
+        const options = AdminView.getOptions();
+        const response = await fetch(url, options);
+        let data = await response.text();
+        Log.info('AdminDashboardTab::getDetails( .. ) - text length: ' + data.length);
+
+        const newWindow = window.open('text/plain');
+        data = data.replace(/&/g, "&amp;");
+        data = data.replace(/</g, "&lt;");
+        data = data.replace(/>/g, "&gt;");
+        data = data.replace(/"/g, "&quot;");
+        data = data.replace(/'/g, "&#039;");
+        data = data.replace(/\n/g, "<br/>");
+        newWindow.document.write(data);
     }
 
     private generateHistogram(row: AutoTestDashboardTransport): string {
