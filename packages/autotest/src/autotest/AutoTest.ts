@@ -66,6 +66,8 @@ export abstract class AutoTest implements IAutoTest {
 
             const schedule = function(queue: Queue): boolean {
                 const info: IContainerInput = queue.scheduleNext();
+                Log.info("AutoTest::tick(..) - starting job on: " + queue.getName() + "; deliv: " +
+                    info.delivId + '; repo: ' + info.pushInfo.repoId + '; sha: ' + info.pushInfo.commitSHA);
                 // noinspection JSIgnoredPromiseFromCall
                 // tslint:disable-next-line
                 that.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
@@ -75,7 +77,6 @@ export abstract class AutoTest implements IAutoTest {
 
             const tickQueue = function(queue: Queue): boolean {
                 if (queue.length() > 0 && queue.hasCapacity() === true) {
-                    Log.info("AutoTest::tick(..) - " + queue.getName() + " - scheduling next");
                     return schedule(queue);
                 }
                 return false;
