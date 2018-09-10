@@ -216,7 +216,7 @@ export class AdminDashboardTab {
         Log.info('AdminDashboardTab::getDetails( .. ) - url: ' + url);
         try {
             const newWindow = window.open('text/plain');
-            newWindow.document.write('Fetching data from server.');
+            // newWindow.document.write('Fetching data from server.');
 
             const options = AdminView.getOptions();
             const response = await fetch(url, options);
@@ -230,6 +230,7 @@ export class AdminDashboardTab {
                 data = data.replace(/"/g, "&quot;");
                 data = data.replace(/'/g, "&#039;");
                 data = data.replace(/\n/g, "<br/>");
+
                 newWindow.document.write(data);
             } else if (response.status === 400) {
                 const data = await response.json();
