@@ -93,7 +93,7 @@ jobs:
       - run:
             command: git config --global user.email "CI@test.com" && git config --global user.name "CI Test Name"
             name: Configure local git
-            when: always
+            when: on_success
 
       - run:
             command: |
@@ -103,12 +103,12 @@ jobs:
             name: Running backend tests
             environment:
               MOCHA_FILE: testOutput/backend/test/test-results.xml
-            when: always
+            when: on_success
 
       - run:
             command: cd packages/portal/backend && ./node_modules/junit-viewer/bin/junit-viewer --results=../../../testOutput/backend/test/test-results.xml --save=../../../testOutput/backend/test/index.html
             name: Converting backend test results to HTML
-            when: always
+            when: on_success
 
       - run:
             command: |
@@ -118,17 +118,17 @@ jobs:
             name: Running autotest tests
             environment:
               MOCHA_FILE: testOutput/autotest/test/test-results.xml
-            when: always
+            when: on_success
 
       - run:
             command: cd packages/autotest && ./node_modules/junit-viewer/bin/junit-viewer --results=../../testOutput/autotest/test/test-results.xml --save=../../testOutput/autotest/test/index.html
             name: Converting backend test results to HTML
-            when: always
+            when: on_success
 
       - run:
             command: cd packages/portal/backend && yarn coveralls
             name: Running backend coveralls
-            when: always
+            when: on_success
 
 # coveralls doesn't integrate coverage
 # so this overwrites the backend coverage (which we care about more)
@@ -141,7 +141,7 @@ jobs:
       - run:
             command: cd packages/portal/backend && yarn codecov
             name: Running backend codecov
-            when: always
+            when: on_success
 
       - store_test_results:
           path: testOutput

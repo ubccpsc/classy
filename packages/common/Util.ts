@@ -56,8 +56,7 @@ export default class Util {
         return ret;
     }
 
-
-    static truncateNumber(num: number, digits: number): number {
+    public static truncateNumber(num: number, digits: number): number {
         try {
             if (typeof num === 'undefined' || num === null) {
                 return 0;
