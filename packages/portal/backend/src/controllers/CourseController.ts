@@ -434,9 +434,10 @@ export abstract class CourseController implements ICourseController {
         // portal/result/<FULL_COMMIT_SHA>-<DELIV_ID>/<FILENAME>
         // http://grader/randomStringInEnv/commitSHA-dX
 
-        const secret = Config.getInstance().getProp(ConfigKey.autotestSecret);
+        const host = Config.getInstance().getProp(ConfigKey.graderUrl);
+        const port = Config.getInstance().getProp(ConfigKey.graderPort);
 
-        const url = 'http://grader/' + secret + '/' + sha + '-' + delivId;
+        const url = host + ':' + port + '/' + sha + '-' + delivId;
         Log.info("CourseController::getResult( .. ) - URL: " + url);
         const res = await rp(url);
         Log.info("CourseController::getResult( .. ) - done; body: " + res);
