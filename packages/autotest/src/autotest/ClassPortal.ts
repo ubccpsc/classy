@@ -274,7 +274,7 @@ export class ClassPortal implements IClassPortal {
             Log.trace("ClassPortal::getResult() - sent; returned payload: " + res);
             const json: AutoTestResultPayload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
-                Log.error("ClassPortal::getResult(..) - successfully received");
+                Log.info("ClassPortal::getResult(..) - successfully received");
                 const success = json.success as AutoTestResultTransport[];
                 if (success.length > 0) {
                     return success[0];
