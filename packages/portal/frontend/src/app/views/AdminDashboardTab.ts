@@ -69,6 +69,7 @@ export class AdminDashboardTab {
 
     private render(delivs: DeliverableTransport[], repos: RepositoryTransport[], results: AutoTestDashboardTransport[]): void {
         Log.trace("AdminDashboardTab::render(..) - start");
+        const that = this;
 
         let delivNames: string[] = [];
         for (const deliv of delivs) {
@@ -184,7 +185,7 @@ export class AdminDashboardTab {
                 // {value: '?', html: '<a href="http://refugeeks.com/wp-content/uploads/2014/04/501-Not-Implemented-600x480.jpg">?</a>'},
                 {
                     value: '',
-                    html:  '<a style="cursor: pointer; cursor: hand;" onclick=' +
+                    html:  '<a style="cursor: pointer; cursor: hand;" onclick= that.newWindow = window.open(\'text/plain\');' +
                            clickTarget + '><ons-icon icon="ion-ios-help-outline"</ons-icon></a>'
                 },
                 {value: result.repoId, html: '<a href="' + result.repoURL + '">' + result.repoId + '</a>'},
@@ -210,6 +211,8 @@ export class AdminDashboardTab {
         }
     }
 
+    private newWindow: Window = null;
+
     public async getDetails(path: string): Promise<void> {
         const url = this.remote + path;
         Log.info('AdminDashboardTab::getDetails( .. ) - url: ' + url);
@@ -220,15 +223,14 @@ export class AdminDashboardTab {
             if (response.status === 200) {
                 let data = await response.text();
                 Log.info('AdminDashboardTab::getDetails( .. ) - text length: ' + data.length);
-
-                const newWindow = window.open('text/plain');
+                // const newWindow = window.open('text/plain');
                 data = data.replace(/&/g, "&amp;");
                 data = data.replace(/</g, "&lt;");
                 data = data.replace(/>/g, "&gt;");
                 data = data.replace(/"/g, "&quot;");
                 data = data.replace(/'/g, "&#039;");
                 data = data.replace(/\n/g, "<br/>");
-                newWindow.document.write(data);
+                this.newWindow.document.write(data);
             } else if (response.status === 400) {
                 const data = await response.json();
                 UI.showError("Error retrieving stdio: " + data.failure.message);
