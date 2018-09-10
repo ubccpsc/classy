@@ -214,19 +214,32 @@ export class AdminDashboardTab {
         const url = this.remote + path;
         Log.info('AdminDashboardTab::getDetails( .. ) - url: ' + url);
 
-        const options = AdminView.getOptions();
-        const response = await fetch(url, options);
-        let data = await response.text();
-        Log.info('AdminDashboardTab::getDetails( .. ) - text length: ' + data.length);
+        try {
+            const options = AdminView.getOptions();
+            const response = await fetch(url, options);
+            if (response.status === 200) {
+                let data = await response.text();
+                Log.info('AdminDashboardTab::getDetails( .. ) - text length: ' + data.length);
 
-        const newWindow = window.open('text/plain');
-        data = data.replace(/&/g, "&amp;");
-        data = data.replace(/</g, "&lt;");
-        data = data.replace(/>/g, "&gt;");
-        data = data.replace(/"/g, "&quot;");
-        data = data.replace(/'/g, "&#039;");
-        data = data.replace(/\n/g, "<br/>");
-        newWindow.document.write(data);
+                const newWindow = window.open('text/plain');
+                data = data.replace(/&/g, "&amp;");
+                data = data.replace(/</g, "&lt;");
+                data = data.replace(/>/g, "&gt;");
+                data = data.replace(/"/g, "&quot;");
+                data = data.replace(/'/g, "&#039;");
+                data = data.replace(/\n/g, "<br/>");
+                newWindow.document.write(data);
+            } else if (response.status === 400) {
+                const data = await response.json();
+                UI.showError("Error retrieving stdio: " + data.failure.message);
+            } else {
+                const data = await response.text();
+                UI.showError("Error retrieving stdio: " + data);
+            }
+        } catch (err) {
+            Log.info('AdminDashboardTab::getDetails( .. ) - ERROR: ' + err.message);
+            UI.showError("Error retrieving stdio: " + err.message);
+        }
     }
 
     private generateHistogram(row: AutoTestDashboardTransport): string {
