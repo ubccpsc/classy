@@ -172,8 +172,12 @@ describe("GitHubAutoTest", () => {
             timestamp:    1234567891
         };
 
+        await Util.delay(100);
+
         expect(allData.comments.length).to.equal(0);
         await at.handleCommentEvent(ce);
+
+        await Util.delay(100);
         allData = await data.getAllData();
         expect(allData.comments.length).to.equal(1);
 

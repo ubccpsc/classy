@@ -13,12 +13,12 @@ describe("Queue", () => {
 
     before(function() {
         Log.test("QueueSpec::before");
-        q = new Queue();
+        q = new Queue('test', 1);
     });
 
     after(function() {
         Log.test("QueueSpec::after");
-        q = new Queue();
+        q = new Queue('test', 1);
     });
 
     it("Should work when empty.", () => {

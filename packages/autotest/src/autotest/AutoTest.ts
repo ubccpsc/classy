@@ -35,14 +35,14 @@ export abstract class AutoTest implements IAutoTest {
     protected readonly dataStore: IDataStore;
     protected readonly classPortal: IClassPortal = null;
 
-    private regressionQueue = new Queue();
-    private standardQueue = new Queue();
-    private expressQueue = new Queue();
+    private regressionQueue = new Queue('regression', 1);
+    private standardQueue = new Queue('standard', 2);
+    private expressQueue = new Queue('express', 1);
 
     // these could be arrays if we wanted a thread pool model
-    private regressionExecution: IContainerInput | null = null;
-    private standardExecution: IContainerInput | null = null;
-    private expresssExecution: IContainerInput | null = null;
+    // private regressionExecution: IContainerInput | null = null;
+    // private standardExecution: IContainerInput | null = null;
+    // private expresssExecution: IContainerInput | null = null;
 
     // noinspection TypeScriptAbstractClassConstructorCanBeMadeProtected
     constructor(dataStore: IDataStore, classPortal: IClassPortal) {
@@ -65,46 +65,55 @@ export abstract class AutoTest implements IAutoTest {
                 "; #exp: " + this.expressQueue.length() + "; #reg: " + this.regressionQueue.length());
 
             let updated = false;
-            if (this.standardExecution === null && this.standardQueue.length() > 0) {
-                const info = this.standardQueue.pop();
-                if (info !== null) {
-                    updated = true;
-                    Log.info("AutoTest::tick(..) - standard queue clear; launching new job - commit: " +
-                        info.pushInfo.commitSHA);
-                    this.standardExecution = info;
-                    // noinspection JSIgnoredPromiseFromCall
-                    // tslint:disable-next-line
-                    this.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
-                }
-            }
+            const that = this;
 
-            if (this.expresssExecution === null && this.expressQueue.length() > 0) {
+            const schedule = function(queue: Queue): boolean {
+                const info: IContainerInput = queue.scheduleNext();
+                // noinspection JSIgnoredPromiseFromCall
+                // tslint:disable-next-line
+                that.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
+                updated = true;
+                return true;
+            };
 
-                const info = this.expressQueue.pop();
-                if (info !== null) {
-                    updated = true;
-                    Log.info("AutoTest::tick(..) - express queue clear; launching new job - commit: " + info.pushInfo.commitSHA);
-                    this.expresssExecution = info;
-                    // noinspection JSIgnoredPromiseFromCall
-                    // tslint:disable-next-line
-                    this.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
+            const tickQueue = function(queue: Queue): boolean {
+                if (queue.length() > 0 && queue.hasCapacity() === true) {
+                    Log.info("AutoTest::tick(..) - " + queue.getName() + " - scheduling next");
+                    return schedule(queue);
                 }
-            }
+                return false;
+            };
 
-            if (this.regressionExecution === null && this.regressionQueue.length() > 0) {
-                const info = this.regressionQueue.pop();
-                if (info !== null) {
-                    updated = true;
-                    Log.info("AutoTest::tick(..) - regression queue clear; launching new job - commit: " + info.pushInfo.commitSHA);
-                    this.regressionExecution = info;
-                    // noinspection JSIgnoredPromiseFromCall
-                    // tslint:disable-next-line
-                    this.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
+            const promoteQueue = function(fromQueue: Queue, toQueue: Queue): boolean {
+                if (fromQueue.length() > 0 && toQueue.hasCapacity()) {
+                    Log.info("AutoTest::tick(..) - promoting: " + fromQueue.getName() + " -> " + toQueue.getName());
+                    const info: IContainerInput = fromQueue.pop();
+                    toQueue.pushFirst(info);
+                    return schedule(toQueue);
                 }
-            }
+                return false;
+            };
+
+            Log.test("Queue::tick(..) - handle express");
+            // express
+            tickQueue(this.expressQueue);
+            // express -> standard
+            promoteQueue(this.expressQueue, this.standardQueue);
+            // express -> regression
+            promoteQueue(this.expressQueue, this.regressionQueue);
+
+            Log.test("Queue::tick(..) - handle standard");
+            // standard
+            tickQueue(this.standardQueue);
+            // standard -> regression
+            promoteQueue(this.standardQueue, this.regressionQueue);
+
+            Log.test("Queue::tick(..) - handle regression");
+            // regression
+            tickQueue(this.regressionQueue);
 
             if (updated === false) {
-                if (this.standardExecution === null && this.expresssExecution === null && this.regressionExecution === null) {
+                if (this.standardQueue.length() === 0 && this.expressQueue.length() === 0 && this.regressionQueue.length() === 0) {
                     Log.info("AutoTest::tick(..) - queues empty; no new jobs started");
                 } else {
                     Log.info("AutoTest::tick(..) - execution slots busy; no new jobs started");
@@ -136,22 +145,18 @@ export abstract class AutoTest implements IAutoTest {
      */
     protected isCommitExecuting(commitURL: string, delivId: string): boolean {
         try {
-            if (this.standardExecution !== null) {
-                if (this.standardExecution.pushInfo.commitURL === commitURL && this.standardExecution.delivId === delivId) {
-                    return true;
-                }
-            }
-            if (this.expresssExecution !== null) {
-                if (this.expresssExecution.pushInfo.commitURL === commitURL && this.expresssExecution.delivId === delivId) {
-                    return true;
-                }
+            if (this.standardQueue.isCommitExecuting(commitURL, delivId) === true) {
+                return true;
             }
 
-            if (this.regressionExecution !== null) {
-                if (this.regressionExecution.pushInfo.commitURL === commitURL && this.regressionExecution.delivId === delivId) {
-                    return true;
-                }
+            if (this.expressQueue.isCommitExecuting(commitURL, delivId) === true) {
+                return true;
             }
+
+            if (this.regressionQueue.isCommitExecuting(commitURL, delivId) === true) {
+                return true;
+            }
+
             return false;
         } catch (err) {
             Log.error("AutoTest::isCommitExecuting() - ERROR: " + err);
@@ -279,19 +284,25 @@ export abstract class AutoTest implements IAutoTest {
             }
 
             // when done clear the execution slot and schedule the next
-            if (this.expresssExecution !== null && this.expresssExecution.pushInfo.commitURL === data.commitURL) {
-                Log.trace("AutoTest::handleExecutionComplete(..) - clearing express slot");
-                this.expresssExecution = null;
-            }
-            if (this.standardExecution !== null && this.standardExecution.pushInfo.commitURL === data.commitURL) {
-                Log.trace("AutoTest::handleExecutionComplete(..) - clearing standard slot");
-                this.standardExecution = null;
-            }
+            const commitURL = data.commitURL;
+            const delivId = data.delivId;
+            this.expressQueue.clearExecution(commitURL, delivId);
+            this.standardQueue.clearExecution(commitURL, delivId);
+            this.regressionQueue.clearExecution(commitURL, delivId);
 
-            if (this.regressionExecution !== null && this.regressionExecution.pushInfo.commitURL === data.commitURL) {
-                Log.trace("AutoTest::handleExecutionComplete(..) - clearing regression slot");
-                this.regressionExecution = null;
-            }
+            // if (this.expresssExecution !== null && this.expresssExecution.pushInfo.commitURL === data.commitURL) {
+            //     Log.trace("AutoTest::handleExecutionComplete(..) - clearing express slot");
+            //     this.expresssExecution = null;
+            // }
+            // if (this.standardExecution !== null && this.standardExecution.pushInfo.commitURL === data.commitURL) {
+            //     Log.trace("AutoTest::handleExecutionComplete(..) - clearing standard slot");
+            //     this.standardExecution = null;
+            // }
+            //
+            // if (this.regressionExecution !== null && this.regressionExecution.pushInfo.commitURL === data.commitURL) {
+            //     Log.trace("AutoTest::handleExecutionComplete(..) - clearing regression slot");
+            //     this.regressionExecution = null;
+            // }
 
             // execution done, advance the clock
             this.tick();
