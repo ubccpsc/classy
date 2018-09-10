@@ -437,7 +437,7 @@ export abstract class CourseController implements ICourseController {
         const host = Config.getInstance().getProp(ConfigKey.graderUrl);
         const port = Config.getInstance().getProp(ConfigKey.graderPort);
 
-        const url = host + ':' + port + '/' + sha + '-' + delivId;
+        const url = host + ':' + port + '/' + sha + '-' + delivId + '/stdio.txt';
         Log.info("CourseController::getResult( .. ) - URL: " + url);
         const res = await rp(url);
         Log.info("CourseController::getResult( .. ) - done; body: " + res);
