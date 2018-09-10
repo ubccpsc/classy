@@ -229,7 +229,7 @@ export class AdminDashboardTab {
                 data = data.replace(/>/g, "&gt;");
                 data = data.replace(/"/g, "&quot;");
                 data = data.replace(/'/g, "&#039;");
-                data = data.replace(/\n/g, "<br/>");
+                data = data.replace(/\\n/g, "<br/>");
 
                 newWindow.document.write(data);
             } else if (response.status === 400) {
