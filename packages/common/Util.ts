@@ -10,19 +10,58 @@ export default class Util {
         return Date.now() - start + " ms";
     }
 
-    public static tookHuman(start: number): string {
-        const delta = Math.floor((Date.now() - start) / 1000); // convert to seconds
+    public static tookHuman(start: number, end?: number): string {
+        if (typeof end === 'undefined') {
+            end = Date.now();
+        }
+        const delta = Math.floor((end - start) / 1000); // convert to seconds
         const hours = Math.floor(delta / 3600);
         const minutes = Math.floor((delta - (hours * 3600)) / 60);
         const seconds = Math.floor(delta - (hours * 3600) - (minutes * 60));
+
         let msg = "";
-        if (hours > 0) {
-            msg = hours + " hours and " + minutes + " minutes"; // seconds don't matter if we're over an hour
-        } else if (minutes > 0) {
-            msg = minutes + " minutes and " + seconds + " second";
-        } else {
-            msg = delta + " seconds";
+        if (hours > 1) {
+            msg = hours + " hours"; // and " + minutes + " minutes";
+        } else if (hours === 1) {
+            msg = hours + " hour"; // and " + minutes + " minutes";
         }
+
+        if (hours > 0) {
+            // won't have seconds
+            if (minutes === 1) {
+                msg = msg + " and 1 minute";
+            } else {
+                msg = msg + " and " + minutes + " minutes";
+            }
+        } else {
+            /// will have eseconds
+            if (minutes === 1) {
+                msg = "1 minute";
+            } else {
+                msg = minutes + " minutes";
+            }
+        }
+
+        if (hours < 1) {
+            if (minutes > 0) {
+                if (seconds === 0) {
+                    // say nothing
+                } else if (seconds === 1) {
+                    msg = msg + " and 1 second"
+                } else {
+                    msg = msg + " and " + seconds + " seconds";
+                }
+            } else {
+                if (seconds === 0) {
+                    // say nothing
+                } else if (seconds === 1) {
+                    msg = "1 second";
+                } else {
+                    msg = seconds + " seconds";
+                }
+            }
+        }
+
         return msg;
     }
 

@@ -284,11 +284,13 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                         const delta = Math.floor((nextTimeslot - reqTimestamp) / 1000); // convert to seconds
                         const hours = Math.floor(delta / 3600);
                         const minutes = Math.floor((delta - (hours * 3600)) / 60);
+                        const seconds = Math.floor(delta - (hours * 3600) - (minutes * 60));
+
                         let msg = "";
                         if (hours > 0) {
-                            msg = hours + " hours and " + minutes + " minutes";
+                            msg = hours + " hours and " + minutes + " minutes"; // seconds don't matter if we're over an hour
                         } else if (minutes > 0) {
-                            msg = minutes + " minutes";
+                            msg = minutes + " minutes and " + seconds + " second";
                         } else {
                             msg = delta + " seconds";
                         }
