@@ -25,10 +25,10 @@
 
         <ons-tab id="AdminResultTab" page="results.html" label="Results" icon="ion-android-checkmark-circle">
         </ons-tab>
-        <!--
-                <ons-tab id="AdminDashboardTab" page="dashboard.html" label="Dash" icon="ion-ios-speedometer-outline">
-                </ons-tab>
-        -->
+
+        <ons-tab id="AdminDashboardTab" page="dashboard.html" label="Dash" icon="ion-ios-speedometer-outline">
+        </ons-tab>
+
         <ons-tab id="AdminConfigTab" page="config.html" label="Config" icon="ion-ios-gear">
         </ons-tab>
     </ons-tabbar>
@@ -133,12 +133,28 @@
     <template id="dashboard.html">
         <ons-page id="AdminDashboard">
             <ons-list id="AdminDashboardList">
+                <!--<div style="text-align:center; padding: 1em;">-->
+                <!--Select Deliverable:-->
+                <!--<select id="dashboardListSelect" style="margin-left: 1em;">-->
+                <!--<option value="''">-None-</option>-->
+                <!--</select></div>-->
+                <!--<ons-list-header>Dashboard</ons-list-header>-->
+                <!--<div id="dashboardListTable" style="width:100%;"></div>-->
+                <!--<div id="dashboardListTableNone" class="noResultsRow">-->
+                <!--No Results-->
+                <!--</div>-->
                 <div style="text-align:center; padding: 1em;">
-                    Select Deliverable:
-                    <select id="dashboardListSelect" style="margin-left: 1em;">
-                        <option value="''">-None-</option>
-                    </select></div>
-                <ons-list-header>Dashboard</ons-list-header>
+                    Deliverable:
+                    <select id="dashboardDelivSelect" style="margin-left: 1em;">
+                        <option value="any">-All-</option>
+                    </select>
+                    Repo:
+                    <select id="dashboardRepoSelect" style="margin-left: 1em;">
+                        <option value="any">-All-</option>
+                    </select>
+                    <button id="dashboardUpdateButton">Update</button>
+                </div>
+                <ons-list-header>Results</ons-list-header>
                 <div id="dashboardListTable" style="width:100%;"></div>
                 <div id="dashboardListTableNone" class="noResultsRow">
                     No Results
@@ -190,41 +206,42 @@
                         automatically, just leave this blank.
                     </div>
                 </ons-list-item>
+                <!--
+                                <ons-list-header>Provision Repositories</ons-list-header>
+                                <ons-list-item expandable>
+                                    <div class="left settingIcon">
+                                        <ons-icon icon="fa-cogs"></ons-icon>
+                                    </div>
+                                    <div class="center">
+                                        Provision Repositories for Deliverable
+                                        <select id="adminProvisionDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                                        <ons-button id="adminProvisionButton" modifier="medium">Provision</ons-button>
+                                    </div>
+                                    <div class="expandable-content">
+                                        Creates the repositories for any provisionable Deliverable using all of the settings specified in the deliverable
+                                        page. This is an incremental function; you can release a deliverable several times as teams are formed, or after the
+                                        class composition changes. It will also provision deliverables for all staff members who have previously logged into
+                                        Classy (e.g., so they can see what the students see). This is a slow action (up to 30 seconds / repository) so do
+                                        not leave this until the last second. Cannot be undone, so use this with care.
+                                    </div>
+                                </ons-list-item>
 
-                <ons-list-header>Provision Repositories</ons-list-header>
-                <ons-list-item expandable>
-                    <div class="left settingIcon">
-                        <ons-icon icon="fa-cogs"></ons-icon>
-                    </div>
-                    <div class="center">
-                        Provision Repositories for Deliverable
-                        <select id="adminProvisionDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
-                        <ons-button id="adminProvisionButton" modifier="medium">Provision</ons-button>
-                    </div>
-                    <div class="expandable-content">
-                        Creates the repositories for any provisionable Deliverable using all of the settings specified in the deliverable
-                        page. This is an incremental function; you can release a deliverable several times as teams are formed, or after the
-                        class composition changes. This is a slow action (up to 30 seconds / repository) so do not leave this until the last
-                        second. Cannot be undone, so use this with care.
-                    </div>
-                </ons-list-item>
-
-                <ons-list-header>Release Repositories</ons-list-header>
-                <ons-list-item expandable>
-                    <div class="left settingIcon">
-                        <ons-icon icon="fa-cogs"></ons-icon>
-                    </div>
-                    <div class="center">
-                        Release Repositories for Deliverable
-                        <select id="adminReleaseDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
-                        <ons-button id="adminReleaseButton" modifier="medium">Release</ons-button>
-                    </div>
-                    <div class="expandable-content">
-                        Releases any provisoined repositories. This is an incremental function; you can release a deliverable several times
-                        as teams are formed, or after the class composition changes. Cannot be undone, so use this with care.
-                    </div>
-                </ons-list-item>
-
+                                <ons-list-header>Release Repositories</ons-list-header>
+                                <ons-list-item expandable>
+                                    <div class="left settingIcon">
+                                        <ons-icon icon="fa-cogs"></ons-icon>
+                                    </div>
+                                    <div class="center">
+                                        Release Repositories for Deliverable
+                                        <select id="adminReleaseDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                                        <ons-button id="adminReleaseButton" modifier="medium">Release</ons-button>
+                                    </div>
+                                    <div class="expandable-content">
+                                        Releases any provisoined repositories. This is an incremental function; you can release a deliverable several times
+                                        as teams are formed, or after the class composition changes. Cannot be undone, so use this with care.
+                                    </div>
+                                </ons-list-item>
+                -->
             </ons-list>
         </ons-page>
     </template>
