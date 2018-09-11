@@ -47,7 +47,7 @@ export default class Util {
                 if (seconds === 0) {
                     // say nothing
                 } else if (seconds === 1) {
-                    msg = msg + " and 1 second"
+                    msg = msg + " and 1 second";
                 } else {
                     msg = msg + " and " + seconds + " seconds";
                 }
