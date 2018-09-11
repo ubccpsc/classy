@@ -243,11 +243,10 @@ export class MongoDataStore implements IDataStore {
     }
 
     public async saveFeedbackGivenRecord(info: IFeedbackGiven): Promise<void> {
-        Log.trace("MongoDataStore::saveFeedbackGivenRecord(..) - start");
         try {
-            const start = Date.now();
             await this.saveRecord(this.FEEDBACKCOLL, info);
-            Log.trace("MongoDataStore::saveFeedbackGivenRecord(..) - done; took: " + Util.took(start));
+            Log.trace("MongoDataStore::saveFeedbackGivenRecord(..) - done; delivId: " +
+                info.delivId + "; user: " + info.personId + "; commit: " + info.commitURL);
         } catch (err) {
             Log.error("MongoDataStore::saveFeedbackGivenRecord(..) - ERROR: " + err);
         }
@@ -255,12 +254,11 @@ export class MongoDataStore implements IDataStore {
     }
 
     public async getLatestFeedbackGivenRecord(delivId: string, userName: string): Promise<IFeedbackGiven | null> {
-        Log.trace("MongoDataStore::getLatestFeedbackGivenRecord(..) - start");
         try {
-            const start = Date.now();
             const res = await this.getRecords(this.FEEDBACKCOLL, {delivId: delivId, personId: userName});
             if (res === null) {
-                Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - record not found");
+                Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - record not found for deliv: " +
+                    delivId + "; user: " + userName);
                 return null;
             } else {
                 // pick the most recent
@@ -269,8 +267,8 @@ export class MongoDataStore implements IDataStore {
                     // Log.trace("MongoDataStore::getLatestFeedbackGivenRecord(..) - found; took: " + Util.took(start));
                     ret = o;
                 }));
-                Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - found; date: " +
-                    new Date(ret.timestamp) + "; took: " + Util.took(start));
+                Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - found for deliv: " +
+                    delivId + "; user: " + userName + "; date: " + new Date(ret.timestamp));
                 return ret;
             }
         } catch (err) {
@@ -280,14 +278,12 @@ export class MongoDataStore implements IDataStore {
     }
 
     public async getFeedbackGivenRecordForCommit(commitURL: string, userName: string): Promise<IFeedbackGiven | null> {
-        Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - start");
         try {
-            const start = Date.now();
             const res = await this.getSingleRecord(this.FEEDBACKCOLL, {commitURL: commitURL});
             if (res === null) {
                 Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - record not found for: " + commitURL);
             } else {
-                Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - found; took: " + Util.took(start));
+                Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - found for: " + commitURL);
             }
             return res as any;
         } catch (err) {
