@@ -66,24 +66,17 @@ export class GitHubUtil {
             const message = payload.comment.body;
             const delivId = GitHubUtil.parseDeliverableFromComment(message);
 
-            // that.isRequest = payload.comment.body.toLowerCase().includes(this.config.getMentionTag());
-            // that.isProcessed = true;
             const botName = "@" + Config.getInstance().getProp(ConfigKey.botName).toLowerCase();
             const botMentioned: boolean = message.toLowerCase().indexOf(botName) >= 0;
 
             const repoId = payload.repository.name;
 
-            const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can't add requests to a past comment
+            // const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can't add requests to a past comment
+            const timestamp = Date.now(); // set timestamp to the time the commit was made
 
-            const cp = new ClassPortal();
             // need to get this from portal backend (this is a gitHubId, not a personId)
+            const cp = new ClassPortal();
             const personResponse = await cp.getPersonId(requestor);
-
-            // this is ok: if delivId is null, just pass it along
-            // if (delivId === null) {
-            //     Log.warn("GitHubUtil::processComment() - no deliverable specified");
-            //     return null;
-            // }
 
             const commentEvent: ICommentEvent = {
                 delivId,
@@ -146,7 +139,9 @@ export class GitHubUtil {
 
             const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
 
-            const timestamp = payload.repository.pushed_at * 1000;
+            // this gives the timestamp of the last commit (which could be forged), not the time of the push
+            // const timestamp = payload.repository.pushed_at * 1000;
+            const timestamp = Date.now(); // it does not matter when the work was done, what matters is when it was submitted
 
             const delivIdTrans = await portal.getDefaultDeliverableId();
 
@@ -157,12 +152,10 @@ export class GitHubUtil {
 
             const pushEvent: IPushEvent = {
                 delivId: delivIdTrans.defaultDeliverable,
-                // branch,
                 repoId:  repo,
                 cloneURL,
                 commitSHA,
                 commitURL,
-                // projectURL,
                 postbackURL,
                 timestamp
             };
