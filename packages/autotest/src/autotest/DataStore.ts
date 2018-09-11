@@ -85,13 +85,13 @@ export class MongoDataStore implements IDataStore {
 
     public async saveRecord(column: string, record: any): Promise<void> {
         try {
-            Log.trace("MongoDataStore::saveRecord( " + column + ", ...) - start");
-            const start = Date.now();
+            // Log.trace("MongoDataStore::saveRecord( " + column + ", ...) - start");
+            // const start = Date.now();
             const collection = await this.getCollection(column);
             // be extra safe not to mutate existing record (we were seeing _id being added by mongo)
             const copy = Object.assign({}, record);
             await collection.insertOne(copy);
-            Log.trace("MongoDataStore::saveRecord( " + column + ", ...) - done; took: " + Util.took(start));
+            // Log.trace("MongoDataStore::saveRecord( " + column + ", ...) - done; took: " + Util.took(start));
         } catch (err) {
             Log.error("MongoDataStore::saveRecord(..) - ERROR: " + err);
         }
