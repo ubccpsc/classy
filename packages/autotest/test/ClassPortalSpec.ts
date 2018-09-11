@@ -259,7 +259,7 @@ describe("ClassPortal Service", () => {
     });
 
     it("Should be able to get a result.", async () => {
-        const actual = await cp.getResult('d0', 'repo0');
+        const actual = await cp.getResult('d0', 'repo0', 'TODO_FIND_RIGHT_SHA');
         Log.test("Actual: " + JSON.stringify(actual));
 
         expect(actual).to.not.be.null;
@@ -268,7 +268,7 @@ describe("ClassPortal Service", () => {
     });
 
     it("Should not get a result that does not exist.", async () => {
-        const actual = await cp.getResult('d_' + Date.now(), 'repo0');
+        const actual = await cp.getResult('d_' + Date.now(), 'repo0', 'INVALID_SHA_' + Date.now());
         Log.test("Actual: " + JSON.stringify(actual));
 
         expect(actual).to.be.null;

@@ -62,6 +62,8 @@ export class GitHubUtil {
 
             const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
 
+            // NEXT: need cloneURL
+            
             const requestor = String(payload.comment.user.login); // .toLowerCase();
             const message = payload.comment.body;
             const delivId = GitHubUtil.parseDeliverableFromComment(message);
@@ -76,7 +78,7 @@ export class GitHubUtil {
 
             // need to get this from portal backend (this is a gitHubId, not a personId)
             const cp = new ClassPortal();
-            const personResponse = await cp.getPersonId(requestor);
+            const personResponse = await cp.getPersonId(requestor); // NOTE: this returns Person.id, id, not Person.gitHubId!
 
             const commentEvent: ICommentEvent = {
                 delivId,
