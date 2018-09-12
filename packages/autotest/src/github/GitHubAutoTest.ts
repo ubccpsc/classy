@@ -151,7 +151,13 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             // STUDENT: need to guard this if they shouldn't be getting feeback yet
             Log.info("GitHubAutoTest::processComment(..) - result already exists; handling");
             await this.postToGitHub({url: info.postbackURL, message: res.output.report.feedback});
-            await this.saveFeedbackGiven(info.delivId, info.personId, info.timestamp, info.commitURL);
+            if (res.output.postbackOnComplete === false) {
+                Log.info("GitHubAutoTest::processComment(..) - result already exists; feedback request logged");
+                await this.saveFeedbackGiven(info.delivId, info.personId, info.timestamp, info.commitURL);
+            } else {
+                // postbackOnComplete should only be true for lint / compile errors
+                Log.info("GitHubAutoTest::processComment(..) - result already exists; feedback request skipped");
+            }
             await this.saveCommentInfo(info);
         } else {
             // not yet processed
@@ -255,7 +261,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
     protected async processExecution(data: IAutoTestResult): Promise<void> {
         try {
-            const pushRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId);
+            const feedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId);
             if (data.output.postbackOnComplete === true) {
                 // do this first, doesn't count against quota
                 Log.info("GitHubAutoTest::processExecution(..) - postback: true");
@@ -263,11 +269,11 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 // NOTE: if the feedback was requested for this build it shouldn't count
                 // since we're not calling saveFeedback this is right
                 // but if we replay the commit comments, we would see it there, so be careful
-            } else if (pushRequested !== null) {
+            } else if (feedbackRequested !== null) {
                 // feedback has been previously requested
                 Log.info("GitHubAutoTest::processExecution(..) - feedback requested");
                 await this.postToGitHub({url: data.input.pushInfo.postbackURL, message: data.output.report.feedback});
-                await this.saveFeedbackGiven(data.input.delivId, pushRequested.personId, pushRequested.timestamp, data.commitURL);
+                await this.saveFeedbackGiven(data.input.delivId, feedbackRequested.personId, feedbackRequested.timestamp, data.commitURL);
             } else {
                 // do nothing
                 Log.info("GitHubAutoTest::processExecution(..) - commit not requested - no feedback given; commit: " + data.commitSHA);
