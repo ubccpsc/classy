@@ -202,6 +202,28 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         }
     }
 
+    /**
+     *
+     * NOTE: This description is from an older version of this method.
+     *
+     * Handles comment events from Github.
+     *
+     * Persists the event only if the feedback cannot be given right away and should be given when ready.
+     *
+     * Be careful though: if we give the warning we don't want to post back later!
+     *
+     * If build has not finished; let it finish, comments will appear in handleExecutionComplete:
+     *  0) leave it alone if it is currently executing
+     *  1) move it to the express que if faster
+     *  2) leave it on the standard queue if faster
+     *  3) comment will be remembered so results are automatically posted (if within quota or from TA)
+     *
+     * If build is finished:
+     *  * post back results if previously requested
+     *  * post back results if requested by TA
+     *  * post back results if rate limiting check passes (and record fedback given)
+     *  * post back warning if rate limiting check fails
+     */
     public async handleCommentEvent(info: CommitTarget): Promise<boolean> {
         const start = Date.now();
 
@@ -230,144 +252,6 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             }
         }
     }
-
-    /**
-     * Handles comment events from Github.
-     *
-     * Persists the event only if the feedback cannot be given right away and should be given when ready.
-     *
-     * Be careful though: if we give the warning we don't want to post back later!
-     *
-     * If build has not finished; let it finish, comments will appear in handleExecutionComplete:
-     *  0) leave it alone if it is currently executing
-     *  1) move it to the express que if faster
-     *  2) leave it on the standard queue if faster
-     *  3) comment will be remembered so results are automatically posted (if within quota or from TA)
-     *
-     * If build is finished:
-     *  * post back results if previously requested
-     *  * post back results if requested by TA
-     *  * post back results if rate limiting check passes (and record fedback given)
-     *  * post back warning if rate limiting check fails
-     *
-     * TODO: need to think a bit harder about which comment events should be saved and which should be dropped
-     *
-     * @param info
-     */
-    // public async handleCommentEventOLD(info: CommitTarget): Promise<boolean> {
-    //     try {
-    //         const start = Date.now();
-    //
-    //         if (typeof info === "undefined" || info === null) {
-    //             Log.info("GitHubAutoTest::handleCommentEvent(..) - info not provided; skipping.");
-    //             return false;
-    //         }
-    //
-    //         Log.info("GitHubAutoTest::handleCommentEvent(..) - start; commit: " + info.commitSHA + "; user: " + info.personId);
-    //
-    //         if (info.personId === Config.getInstance().getProp(ConfigKey.botName)) {
-    //             Log.info("GitHubAutoTest::handleCommentEvent(..) - ignored, comment made by AutoBot");
-    //             return true;
-    //         }
-    //
-    //         if (info.botMentioned === false) {
-    //             Log.info("GitHubAutoTest::handleCommentEvent(..) - ignored, bot not mentioned");
-    //             return true;
-    //         }
-    //
-    //         // update info record
-    //         const delivId = info.delivId;
-    //
-    //         if (delivId === null) {
-    //             // no deliverable, give warning and abort
-    //             const msg = "Please specify a deliverable so AutoTest knows what to run against (e.g., #d0).";
-    //             await this.postToGitHub({url: info.postbackURL, message: msg});
-    //             return true;
-    //         }
-    //
-    //         // front load the async operations, even if it means we do some operations unnecessarily; thse could be done in parallel
-    //         const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(info.personId); // async
-    //         const requestFeedbackDelay: string | null = await this.requestFeedbackDelay(delivId, info.personId, info.timestamp);
-    //         // students often request grades they have previously 'paid' for
-    //         const hasBeenRequestedBefore: IFeedbackGiven =
-    //             await this.dataStore.getFeedbackGivenRecordForCommit(info.commitURL, info.personId);
-    //         const res: AutoTestResultTransport = await this.classPortal.getResult(delivId, info.repoId, info.commitSHA);
-    //         const isCurrentlyRunning: boolean = this.isCommitExecuting(info.commitURL, delivId);
-    //         Log.trace("GitHubAutoTest::handleCommentEvent(..) - isStaff: " + isStaff + "; delay: " +
-    //             requestFeedbackDelay + "; res: " + res + "; running?: " + isCurrentlyRunning);
-    //
-    //         let shouldPost = false; // should the result be given
-    //         if (isStaff !== null && (isStaff.isAdmin === true || isStaff.isStaff === true)) {
-    //             // always respond for staff
-    //             shouldPost = true;
-    //         } else {
-    //             if (requestFeedbackDelay === null) {
-    //                 // respond if they have not been given feedback before
-    //                 shouldPost = true;
-    //             } else {
-    //                 // students have been given feedback within the time window
-    //                 if (hasBeenRequestedBefore === null) {
-    //                     // but the feedback was on another commit
-    //                     shouldPost = false;
-    //                     const msg = "You must wait " + requestFeedbackDelay + " before requesting feedback.";
-    //                     await this.postToGitHub({url: info.postbackURL, message: msg});
-    //                 } else {
-    //                     // they have been given feedback within the window, but on this commit.
-    //                     // so we might as well give it to them. asking for this doesn't make sense,
-    //                     // but happens with remarkable frequency, so just give them their results back again
-    //                     shouldPost = true;
-    //                 }
-    //             }
-    //         }
-    //
-    //         if (res !== null && res.commitSHA === info.commitSHA) {
-    //             // execution has been completed so there is feedback ready to give
-    //             Log.trace("GitHubAutoTest::handleCommentEvent(..) - commit: " + info.commitSHA + "; execution complete");
-    //             // true if staff, requested before, or over feedback delay interval
-    //             if (shouldPost === true) {
-    //                 await this.postToGitHub({url: info.postbackURL, message: res.output.report.feedback});
-    //                 await this.saveFeedbackGiven(delivId, info.personId, info.timestamp, info.commitURL);
-    //                 await this.saveCommentInfo(info); // user or TA; only for analytics since feedback has been given
-    //             }
-    //         } else {
-    //             // execution not yet complete
-    //             Log.info("GitHubAutoTest::handleCommentEvent(..) - commit: " + info.commitSHA + "; execution not yet complete");
-    //             if (shouldPost === true) {
-    //                 // NOTE: it _should_ be on the standard queue here, but if it isn't, could we add it, just to be safe?
-    //                 const onQueue = this.isOnQueue(info.commitURL, info.delivId);
-    //                 let msg = "This commit is still queued for processing against " + delivId + ".";
-    //                 msg += " Your results will be posted here as soon as they are ready.";
-    //                 if (onQueue === false) {
-    //                     const pe = await this.dataStore.getPushRecord(info.commitURL);
-    //                     if (pe !== null) {
-    //                         Log.info("GitHubAutoTest::handleCommentEvent(..) - commit: " + info.commitSHA +
-    //                             "; - element not on queue; adding.");
-    //                         await this.handlePushEvent(pe, info.delivId);
-    //                     } else {
-    //                         Log.warn("GitHubAutoTest::handleCommentEvent(..) - commit: " + info.commitSHA +
-    //                             "; - element not on queue; cannot find push event.");
-    //                         msg = "This commit is has not been queued; please make and push a new commit.";
-    //                     }
-    //                 }
-    //                 await this.saveCommentInfo(info); // whether TA or staff
-    //                 await this.postToGitHub({url: info.postbackURL, message: msg});
-    //             } else {
-    //                 // should we do something if shouldPost is false?
-    //             }
-    //
-    //             this.promoteIfNeeded(info);
-    //         }
-    //
-    //         // everything is ready; run the clock
-    //         this.tick();
-    //
-    //         Log.info("GitHubAutoTest::handleCommentEvent(..) - done; commit: " + info.commitSHA + "; took: " + Util.took(start));
-    //         return true;
-    //     } catch (err) {
-    //         Log.error("GitHubAutoTestTest::handleCommentEvent(..) - ERROR: " + err.message);
-    //         throw err;
-    //     }
-    // }
 
     protected async processExecution(data: IAutoTestResult): Promise<void> {
         try {
