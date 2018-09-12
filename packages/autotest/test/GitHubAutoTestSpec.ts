@@ -4,7 +4,7 @@ import "mocha";
 import Config, {ConfigKey} from "../../common/Config";
 
 import Log from "../../common/Log";
-import {CommitTarget, IFeedbackGiven, IPushEvent} from "../../common/types/AutoTestTypes";
+import {CommitTarget, IFeedbackGiven} from "../../common/types/AutoTestTypes";
 import Util from "../../common/Util";
 
 import {IClassPortal} from "../src/autotest/ClassPortal";
@@ -22,7 +22,7 @@ describe("GitHubAutoTest", () => {
 
     Config.getInstance();
 
-    let pushes: IPushEvent[];
+    let pushes: CommitTarget[];
     let data: MockDataStore;
     let portal: IClassPortal;
     let gh: GitHubService;
@@ -81,7 +81,7 @@ describe("GitHubAutoTest", () => {
     it("Should be able to receive multiple pushes.", async () => {
         expect(at).not.to.equal(null);
 
-        const pe: IPushEvent = pushes[0];
+        const pe: CommitTarget = pushes[0];
         let allData = await data.getAllData();
         expect(allData.pushes.length).to.equal(0);
         await at.handlePushEvent(pe);
@@ -174,7 +174,7 @@ describe("GitHubAutoTest", () => {
     it("Should be able to receive a comment event.", async () => {
         expect(at).not.to.equal(null);
 
-        const pe: IPushEvent = pushes[0];
+        const pe: CommitTarget = pushes[0];
         const ce: CommitTarget = {
             botMentioned: false,
             commitSHA:    pe.commitSHA,
@@ -200,7 +200,7 @@ describe("GitHubAutoTest", () => {
     it("Should be able to use a comment event to start the express queue.", async () => {
         expect(at).not.to.equal(null);
 
-        const pe: IPushEvent = pushes[0];
+        const pe: CommitTarget = pushes[0];
         let allData = await data.getAllData();
         expect(allData.pushes.length).to.equal(0);
         await at.handlePushEvent(pe);
@@ -475,7 +475,7 @@ describe("GitHubAutoTest", () => {
     it("Should be able to invoke a container.", async () => {
         expect(at).not.to.equal(null);
 
-        const pe: IPushEvent = pushes[0];
+        const pe: CommitTarget = pushes[0];
         pe.postbackURL = 'do it here';
         let allData = await data.getAllData();
         expect(allData.pushes.length).to.equal(0);

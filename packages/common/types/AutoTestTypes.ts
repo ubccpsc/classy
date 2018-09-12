@@ -22,17 +22,17 @@ export interface CommitTarget {
 /**
  * Pertinent properties from GitHub push webhook events.
  */
-export interface IPushEvent extends CommitTarget {
-    // cloneURL: string; // used by the Grader service
-}
-
-/**
- * Pertinent properties from GitHub comment webhook events.
- */
-export interface ICommentEvent extends CommitTarget {
-    // personId: string; // NOTE: this is received as a github id!
-    // botMentioned: boolean; // was the bot mentioned (e.g., can ignore comments that don't mention the bot)
-}
+// export interface IPushEvent extends CommitTarget {
+//     // cloneURL: string; // used by the Grader service
+// }
+//
+// /**
+//  * Pertinent properties from GitHub comment webhook events.
+//  */
+// export interface ICommentEvent extends CommitTarget {
+//     // personId: string; // NOTE: this is received as a github id!
+//     // botMentioned: boolean; // was the bot mentioned (e.g., can ignore comments that don't mention the bot)
+// }
 
 export interface IFeedbackGiven {
     personId: string;

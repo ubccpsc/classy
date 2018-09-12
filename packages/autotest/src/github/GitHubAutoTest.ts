@@ -1,14 +1,7 @@
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
-import {
-    CommitTarget,
-    IAutoTestResult,
-    ICommentEvent,
-    IContainerInput,
-    IFeedbackGiven,
-    IPushEvent
-} from "../../../common/types/AutoTestTypes";
+import {CommitTarget, IAutoTestResult, IContainerInput, IFeedbackGiven} from "../../../common/types/AutoTestTypes";
 import {AutoTestAuthTransport, AutoTestConfigTransport, AutoTestResultTransport} from "../../../common/types/PortalTypes";
 import Util from "../../../common/Util";
 import {AutoTest} from "../autotest/AutoTest";
@@ -24,7 +17,7 @@ export interface IGitHubTestManager {
      *
      * @param {IPushEvent} push
      */
-    handlePushEvent(push: IPushEvent): void;
+    handlePushEvent(push: CommitTarget): void;
 
     /**
      * Handle a comment event from GitHub. Will promote job to
@@ -33,7 +26,7 @@ export interface IGitHubTestManager {
      *
      * @param {ICommentEvent} comment
      */
-    handleCommentEvent(comment: ICommentEvent): void;
+    handleCommentEvent(comment: CommitTarget): void;
 }
 
 export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
@@ -54,7 +47,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      * @param info
      * @param delivId
      */
-    public async handlePushEvent(info: IPushEvent, delivId?: string): Promise<boolean> {
+    public async handlePushEvent(info: CommitTarget, delivId?: string): Promise<boolean> {
         try {
             if (typeof info === "undefined" || info === null) {
                 Log.info("GitHubAutoTest::handlePushEvent(..) - info not provided; skipping.");
@@ -91,7 +84,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      * @param {ICommentEvent} info
      * @returns {boolean} true if the preconditions are met; false otherwise
      */
-    private async checkCommentPreconditions(info: ICommentEvent): Promise<boolean> {
+    private async checkCommentPreconditions(info: CommitTarget): Promise<boolean> {
         if (typeof info === "undefined" || info === null) {
             Log.info("GitHubAutoTest::handleCommentEvent(..) - info not provided; skipping.");
             return false;
@@ -149,7 +142,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         Log.info("GitHubAutoTest::schedule(..) - scheduling completed for: " + info.commitURL);
     }
 
-    protected async processComment(info: ICommentEvent, res: AutoTestResultTransport): Promise<void> {
+    protected async processComment(info: CommitTarget, res: AutoTestResultTransport): Promise<void> {
         Log.info("GitHubAutoTest::processComment(..) - handling request for user: " +
             info.personId + " for commit: " + info.commitURL);
 
@@ -190,7 +183,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         return;
     }
 
-    protected async handleCommentStudent(info: ICommentEvent, res: AutoTestResultTransport): Promise<void> {
+    protected async handleCommentStudent(info: CommitTarget, res: AutoTestResultTransport): Promise<void> {
         Log.info("GitHubAutoTest::handleCommentStudent(..) - handling student request for user: " +
             info.personId + " for commit: " + info.commitURL);
 
@@ -212,7 +205,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         }
     }
 
-    public async handleCommentEvent(info: ICommentEvent): Promise<boolean> {
+    public async handleCommentEvent(info: CommitTarget): Promise<boolean> {
         const start = Date.now();
 
         const preconditionsMet = await this.checkCommentPreconditions(info);
@@ -266,7 +259,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      *
      * @param info
      */
-    public async handleCommentEventOLD(info: ICommentEvent): Promise<boolean> {
+    public async handleCommentEventOLD(info: CommitTarget): Promise<boolean> {
         try {
             const start = Date.now();
 
@@ -383,7 +376,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
     protected async processExecution(data: IAutoTestResult): Promise<void> {
         try {
-            const pushRequested: ICommentEvent = await this.getRequestor(data.commitURL, data.input.delivId);
+            const pushRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId);
             if (data.output.postbackOnComplete === true) {
                 // do this first, doesn't count against quota
                 Log.info("GitHubAutoTest::processExecution(..) - postback: true");
@@ -461,7 +454,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      *
      * @param {IContainerInput} info
      */
-    private async savePushInfo(info: IPushEvent) {
+    private async savePushInfo(info: CommitTarget) {
         try {
             Log.trace("GitHubAutoTest::savePushInfo(..) - commit: " + info.commitSHA);
             await this.dataStore.savePush(info);
@@ -473,9 +466,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     /**
      * Saves commentInfo in its own table in the database, in case we need to refer to it later
      *
-     * @param {ICommentEvent} info
+     * @param {CommitTarget} info
      */
-    private async saveCommentInfo(info: ICommentEvent) {
+    private async saveCommentInfo(info: CommitTarget) {
         try {
             Log.trace("GitHubAutoTest::saveCommentInfo(..) - commit: " + info.commitSHA);
             await this.dataStore.saveComment(info);
@@ -543,9 +536,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      * @param commitURL
      * @param delivId
      */
-    private async getRequestor(commitURL: string, delivId: string): Promise<ICommentEvent | null> {
+    private async getRequestor(commitURL: string, delivId: string): Promise<CommitTarget | null> {
         try {
-            const record: ICommentEvent = await this.dataStore.getCommentRecord(commitURL, delivId);
+            const record: CommitTarget = await this.dataStore.getCommentRecord(commitURL, delivId);
             if (record !== null) {
                 return record;
             }

@@ -3,7 +3,7 @@ import Config, {ConfigKey} from "../../../common/Config";
 
 import Log from "../../../common/Log";
 
-import {IAutoTestResult, ICommentEvent, IFeedbackGiven, IPushEvent} from "../../../common/types/AutoTestTypes";
+import {CommitTarget, IAutoTestResult, IFeedbackGiven} from "../../../common/types/AutoTestTypes";
 import Util from "../../../common/Util";
 
 export interface IDataStore {
@@ -11,7 +11,7 @@ export interface IDataStore {
     /**
      * Gets the push event record for a given commitURL
      */
-    getPushRecord(commitURL: string): Promise<IPushEvent | null>;
+    getPushRecord(commitURL: string): Promise<CommitTarget | null>;
 
     /**
      * Saves push event (to its own table).
@@ -21,7 +21,7 @@ export interface IDataStore {
      *
      * @param info
      */
-    savePush(info: IPushEvent): Promise<void>;
+    savePush(info: CommitTarget): Promise<void>;
 
     /**
      * Saves comment event (to its own table).
@@ -32,9 +32,9 @@ export interface IDataStore {
      *
      * @param info
      */
-    saveComment(info: ICommentEvent): Promise<void>;
+    saveComment(info: CommitTarget): Promise<void>;
 
-    getCommentRecord(commitURL: string, delivId: string): Promise<ICommentEvent | null>;
+    getCommentRecord(commitURL: string, delivId: string): Promise<CommitTarget | null>;
 
     // DO NOT DO THIS HERE: Classy should validate/save these records
     // saveOutputRecord(outputInfo: IAutoTestResult): Promise<void>;
@@ -52,7 +52,7 @@ export interface IDataStore {
      *
      * @returns {Promise<{records: ICommitRecord[]; comments: ICommentEvent[]; pushes: IPushEvent[]; feedback: IFeedbackGiven[]}>}
      */
-    getAllData(): Promise<{records: IAutoTestResult[], comments: ICommentEvent[], pushes: IPushEvent[], feedback: IFeedbackGiven[]}>;
+    getAllData(): Promise<{records: IAutoTestResult[], comments: CommitTarget[], pushes: CommitTarget[], feedback: IFeedbackGiven[]}>;
 
     /**
      * Debugging only:
@@ -154,7 +154,7 @@ export class MongoDataStore implements IDataStore {
     /**
      * Gets the push event record for a given commitURL
      */
-    public async getPushRecord(commitURL: string): Promise<IPushEvent | null> {
+    public async getPushRecord(commitURL: string): Promise<CommitTarget | null> {
         Log.trace("MongoDataStore::getPushRecord(..) - start");
         try {
             const start = Date.now();
@@ -171,7 +171,7 @@ export class MongoDataStore implements IDataStore {
         return null;
     }
 
-    public async savePush(info: IPushEvent): Promise<void> {
+    public async savePush(info: CommitTarget): Promise<void> {
         Log.trace("MongoDataStore::savePush(..) - start; push: " + JSON.stringify(info));
         const start = Date.now();
         try {
@@ -183,7 +183,7 @@ export class MongoDataStore implements IDataStore {
         return;
     }
 
-    public async saveComment(info: ICommentEvent): Promise<void> {
+    public async saveComment(info: CommitTarget): Promise<void> {
         Log.trace("MongoDataStore::saveComment(..) - start");
         try {
             const start = Date.now();
@@ -195,7 +195,7 @@ export class MongoDataStore implements IDataStore {
         return;
     }
 
-    public async getCommentRecord(commitURL: string, delivId: string): Promise<ICommentEvent | null> {
+    public async getCommentRecord(commitURL: string, delivId: string): Promise<CommitTarget | null> {
         // Log.trace("MongoDataStore::getCommentRecord(..) - start");
         try {
             const start = Date.now();
@@ -294,21 +294,21 @@ export class MongoDataStore implements IDataStore {
 
     public async getAllData(): Promise<{
         records: IAutoTestResult[],
-        comments: ICommentEvent[],
-        pushes: IPushEvent[],
+        comments: CommitTarget[],
+        pushes: CommitTarget[],
         feedback: IFeedbackGiven[]
     }> {
         Log.trace("MongoDataStore::getAllData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
         let col: any = null;
 
         col = await this.getCollection(this.PUSHCOLL);
-        const pushes: IPushEvent[] = await col.find({}).toArray() as any;
+        const pushes: CommitTarget[] = await col.find({}).toArray() as any;
         for (const p of pushes as any) {
             delete p._id;
         }
 
         col = await this.getCollection(this.COMMENTCOLL);
-        const comments: ICommentEvent[] = await col.find({}).toArray() as any;
+        const comments: CommitTarget[] = await col.find({}).toArray() as any;
         for (const c of comments as any) {
             delete c._id;
         }
