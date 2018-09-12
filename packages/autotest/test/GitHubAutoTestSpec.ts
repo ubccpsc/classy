@@ -237,13 +237,15 @@ describe("GitHubAutoTest", () => {
     function stubDependencies() {
         gitHubMessages = [];
         at["postToGitHub"] = function(message: IGitHubMessage): Promise<boolean> {
+            Log.test("stubbed postToGitHub(..) - message: " + JSON.stringify(message));
+            Log.test(gitHubMessages.length + '');
             if (message !== null && typeof message.message !== 'undefined') {
                 gitHubMessages.push(message);
             } else {
-                Log.test("invalid postToGitHub arg: " + message);
+                Log.test("stubbed postToGitHub(..) - invalid arg: " + message);
                 return Promise.resolve(false);
             }
-
+            Log.test(gitHubMessages.length + '');
             return Promise.resolve(true);
         };
     }
@@ -255,7 +257,6 @@ describe("GitHubAutoTest", () => {
         // start fresh
         await data.clearData();
         stubDependencies();
-        // gh.messages = [];
 
         // SETUP: add a push with no output records
         // await data.savePush(inputRecordA);
@@ -267,8 +268,9 @@ describe("GitHubAutoTest", () => {
         // TEST: send a comment
         await at.handleCommentEvent(TestData.commentRecordUserA);
         allData = await data.getAllData();
+
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
-        expect(gitHubMessages[0].message).to.equal("This commit is has not been queued; please make and push a new commit.");
+        expect(gitHubMessages[0].message).to.equal("This commit has been queued for processing against d1. Your results will be posted here as soon as they are ready.");
         expect(allData.comments.length).to.equal(1); // comment event should not have been saved
     });
 

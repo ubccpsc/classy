@@ -146,6 +146,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         const input: IContainerInput = {delivId: info.delivId, pushInfo: info, containerConfig: containerConfig};
         this.addToStandardQueue(input);
         this.tick();
+        Log.info("GitHubAutoTest::schedule(..) - scheduling completed for: " + info.commitURL);
     }
 
     protected async processComment(info: ICommentEvent, res: AutoTestResultTransport): Promise<void> {
@@ -207,11 +208,11 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             return;
         } else {
             Log.info("GitHubAutoTest::handleCommentStudent(..) - process request for: " + info.commitURL);
-            this.processComment(info, res);
+            await this.processComment(info, res);
         }
     }
 
-    public async handleCommentEventNEW(info: ICommentEvent): Promise<boolean> {
+    public async handleCommentEvent(info: ICommentEvent): Promise<boolean> {
         const start = Date.now();
 
         const preconditionsMet = await this.checkCommentPreconditions(info);
@@ -265,7 +266,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      *
      * @param info
      */
-    public async handleCommentEvent(info: ICommentEvent): Promise<boolean> {
+    public async handleCommentEventOLD(info: ICommentEvent): Promise<boolean> {
         try {
             const start = Date.now();
 
