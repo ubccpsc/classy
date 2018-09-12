@@ -7,7 +7,10 @@ export interface CommitTarget {
     delivId: string; // TODO: remove this from here? it's already in IContainerInput
     repoId: string;
 
-    // TODO: add cloneURL
+    botMentioned: boolean; // true if explicitly mentioned
+    personId: string | null; // string is Person.id if explicily invoked, null otherwise
+
+    cloneURL: string;
 
     commitSHA: string;
     commitURL: string;
@@ -20,15 +23,15 @@ export interface CommitTarget {
  * Pertinent properties from GitHub push webhook events.
  */
 export interface IPushEvent extends CommitTarget {
-    cloneURL: string; // used by the Grader service
+    // cloneURL: string; // used by the Grader service
 }
 
 /**
  * Pertinent properties from GitHub comment webhook events.
  */
 export interface ICommentEvent extends CommitTarget {
-    personId: string; // NOTE: this is received as a github id!
-    botMentioned: boolean; // was the bot mentioned (e.g., can ignore comments that don't mention the bot)
+    // personId: string; // NOTE: this is received as a github id!
+    // botMentioned: boolean; // was the bot mentioned (e.g., can ignore comments that don't mention the bot)
 }
 
 export interface IFeedbackGiven {
@@ -75,7 +78,7 @@ export interface IAutoTestResult {
 export interface IContainerInput {
     delivId: string; // Specifies what delivId the Grader should execute against.
     // TODO: rename to target: ICommitTarget
-    pushInfo: IPushEvent; // Details about the push event that led to this request.
+    pushInfo: CommitTarget; // Details about the push event that led to this request.
     containerConfig: AutoTestConfig; // Container configuration details.
 }
 

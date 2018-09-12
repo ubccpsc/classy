@@ -262,7 +262,7 @@ export class ClassPortal implements IClassPortal {
     }
 
     public async getResult(delivId: string, repoId: string, sha: string): Promise<AutoTestResultTransport | null> {
-        Log.info("ClassPortal::getResut( " + delivId + ", " + repoId + " ) - start");
+        Log.info("ClassPortal::getResut( " + delivId + ", " + repoId + ", " + sha + " ) - start");
         const url = this.host + ":" + this.port + "/portal/at/result/" + delivId + "/" + repoId + "/" + sha;
         try {
             const opts: rp.RequestPromiseOptions = {

@@ -1,40 +1,43 @@
-import {IAutoTestResult, ICommentEvent, IContainerInput, IFeedbackGiven, IPushEvent} from "../../common/types/AutoTestTypes";
+import {CommitTarget, IAutoTestResult, IContainerInput, IFeedbackGiven} from "../../common/types/AutoTestTypes";
 
 export class TestData {
-    public static readonly pushEventA: IPushEvent = {
-        // "branch":      "master",
-        cloneURL:    "",
-        commitSHA:   "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
-        commitURL:   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
-        // "projectURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/",
-        postbackURL: "EMPTY",
-        repoId:      "d0_team999",
-        timestamp:   1516472872288,
-        delivId:     "d0"
+    public static readonly pushEventA: CommitTarget = {
+        cloneURL:     "",
+        commitSHA:    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
+        commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
+        postbackURL:  "EMPTY",
+        repoId:       "d0_team999",
+        timestamp:    1516472872288,
+        botMentioned: false,
+        personId:     null,
+        delivId:      "d0"
     };
 
-    public static readonly pushEventB: IPushEvent = {
+    public static readonly pushEventB: CommitTarget = {
         // "branch":      "master",
-        cloneURL:    "",
-        commitSHA:   "eventb0918b872997de4c4d2baf4c263f8d4c6dc2",
-        commitURL:   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/eventb0918b872997de4c4d2baf4c263f8d4c6dc2",
-        // "projectURL":  "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/",
-        postbackURL: "EMPTY",
-        repoId:      "d0_team999",
-        timestamp:   1516992872288,
-        delivId:     "d0"
+        cloneURL:     "",
+        commitSHA:    "eventb0918b872997de4c4d2baf4c263f8d4c6dc2",
+        commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/eventb0918b872997de4c4d2baf4c263f8d4c6dc2",
+        postbackURL:  "EMPTY",
+        repoId:       "d0_team999",
+        timestamp:    1516992872288,
+        botMentioned: false,
+        personId:     null,
+        delivId:      "d0"
     };
 
-    public static readonly pushEventPostback: IPushEvent = {
+    public static readonly pushEventPostback: CommitTarget = {
         // "branch":      "master",
-        cloneURL:    "",
-        commitSHA:   "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
-        commitURL:   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
+        cloneURL:     "",
+        commitSHA:    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
+        commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         // "projectURL": "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/",
-        postbackURL: "POSTBACK",
-        repoId:      "d0_team999",
-        timestamp:   1516472872288,
-        delivId:     "d0"
+        postbackURL:  "POSTBACK",
+        repoId:       "d0_team999",
+        timestamp:    1516472872288,
+        botMentioned: false,
+        personId:     null,
+        delivId:      "d0"
     };
 
     public static readonly inputRecordA: IContainerInput = {
@@ -61,7 +64,7 @@ export class TestData {
         pushInfo:        TestData.pushEventB
     };
 
-    public static readonly commentRecordUserA: ICommentEvent = {
+    public static readonly commentRecordUserA: CommitTarget = {
         botMentioned: true,
         commitSHA:    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
@@ -69,10 +72,11 @@ export class TestData {
         repoId:       "d0_team999",
         delivId:      "d1",
         postbackURL:  "EMPTY",
+        cloneURL:     "https://cloneURL",
         timestamp:    1516472873288
     };
 
-    public static readonly commentRecordUserATooSoon: ICommentEvent = {
+    public static readonly commentRecordUserATooSoon: CommitTarget = {
         botMentioned: true,
         commitSHA:    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
@@ -80,10 +84,11 @@ export class TestData {
         repoId:       "d0_team999",
         delivId:      "d1",
         postbackURL:  "EMPTY",
+        cloneURL:     "https://cloneURL",
         timestamp:    1516523258762
     };
 
-    public static readonly commentRecordStaffA: ICommentEvent = {
+    public static readonly commentRecordStaffA: CommitTarget = {
         botMentioned: true,
         commitSHA:    "abe1b0918b872997de4c4d2baf4c263f8d4staff",
         commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4staff",
@@ -91,6 +96,7 @@ export class TestData {
         repoId:       "d0_team999",
         delivId:      "d1",
         postbackURL:  "EMPTY",
+        cloneURL:     "https://cloneURL",
         timestamp:    1516472874288
     };
 

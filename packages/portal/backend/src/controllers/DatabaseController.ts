@@ -503,8 +503,23 @@ export class DatabaseController {
         }
     }
 
-    public async getResult(delivId: string, repoId: string): Promise<Result> {
-        Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + " ) - start");
-        return await this.readSingleRecord(this.RESULTCOLL, {delivId: delivId, repoId: repoId}) as Result;
+    public async getResult(delivId: string, repoId: string, sha: string): Promise<Result> {
+
+        const results = await this.readRecords(this.RESULTCOLL, {delivId: delivId, repoId: repoId}) as Result[];
+        let result = null;
+        for (const res of results) {
+            if (res.commitSHA === sha) {
+                // NOTE: there could be multiple, but we're just getting the last
+                result = res;
+            }
+        }
+
+        if (result !== null) {
+            Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - found: " + JSON.stringify(result));
+        } else {
+            Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - not found");
+        }
+
+        return result;
     }
 }

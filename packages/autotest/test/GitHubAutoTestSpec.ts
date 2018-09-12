@@ -4,7 +4,7 @@ import "mocha";
 import Config, {ConfigKey} from "../../common/Config";
 
 import Log from "../../common/Log";
-import {ICommentEvent, IFeedbackGiven, IPushEvent} from "../../common/types/AutoTestTypes";
+import {CommitTarget, IFeedbackGiven, IPushEvent} from "../../common/types/AutoTestTypes";
 import Util from "../../common/Util";
 
 import {IClassPortal} from "../src/autotest/ClassPortal";
@@ -18,7 +18,7 @@ import "./GlobalSpec"; // load first
 import {TestData} from "./TestData";
 
 /* tslint:disable:max-line-length */
-describe.only("GitHubAutoTest", () => {
+describe("GitHubAutoTest", () => {
 
     Config.getInstance();
 
@@ -129,7 +129,7 @@ describe.only("GitHubAutoTest", () => {
     });
 
     it("Check comment preconditions fail appropriately", async () => {
-        let info: ICommentEvent;
+        let info: CommitTarget;
         let meetsPreconditions: boolean;
 
         info = null;
@@ -148,7 +148,8 @@ describe.only("GitHubAutoTest", () => {
             commitSHA:    'SHA',
             commitURL:    'https://URL',
             postbackURL:  'https://postback',
-            timestamp:    Date.now()
+            timestamp:    Date.now(),
+            cloneURL:     "https://cloneURL"
         };
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
@@ -174,7 +175,7 @@ describe.only("GitHubAutoTest", () => {
         expect(at).not.to.equal(null);
 
         const pe: IPushEvent = pushes[0];
-        const ce: ICommentEvent = {
+        const ce: CommitTarget = {
             botMentioned: false,
             commitSHA:    pe.commitSHA,
             commitURL:    pe.commitURL,
@@ -183,7 +184,8 @@ describe.only("GitHubAutoTest", () => {
             // org:           "310",
             delivId:      "d0",
             postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
-            timestamp:    1234567891
+            timestamp:    1234567891,
+            cloneURL:     "https://cloneURL"
         };
 
         let allData = await data.getAllData();
@@ -205,7 +207,7 @@ describe.only("GitHubAutoTest", () => {
         await at.handlePushEvent(pushes[1]);
         await at.handlePushEvent(pushes[2]);
 
-        const ce: ICommentEvent = {
+        const ce: CommitTarget = {
             botMentioned: true,
             commitSHA:    pushes[2].commitSHA,
             commitURL:    pushes[2].commitURL,
@@ -213,7 +215,8 @@ describe.only("GitHubAutoTest", () => {
             delivId:      "d0",
             repoId:       "d1_project9999",
             postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/cbe1b0918b872997de4c4d2baf4c263f8d4c6dc2/comments",
-            timestamp:    1234567891
+            timestamp:    1234567891,
+            cloneURL:     "https://cloneURL"
         };
 
         await Util.delay(100);

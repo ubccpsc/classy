@@ -1,7 +1,7 @@
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
-import {ICommentEvent, IPushEvent} from "../../../common/types/AutoTestTypes";
+import {CommitTarget, ICommentEvent, IPushEvent} from "../../../common/types/AutoTestTypes";
 import {ClassPortal, IClassPortal} from "../autotest/ClassPortal";
 
 /**
@@ -54,7 +54,7 @@ export class GitHubUtil {
      * @param payload
      * @returns {ICommentEvent}
      */
-    public static async processComment(payload: any): Promise<ICommentEvent> {
+    public static async processComment(payload: any): Promise<CommitTarget> {
         try {
             const commitSHA = payload.comment.commit_id;
             let commitURL = payload.comment.html_url;  // this is the comment Url
@@ -63,7 +63,7 @@ export class GitHubUtil {
             const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
 
             // NEXT: need cloneURL
-            
+            const cloneURL = String(payload.repository.clone_url);
             const requestor = String(payload.comment.user.login); // .toLowerCase();
             const message = payload.comment.body;
             const delivId = GitHubUtil.parseDeliverableFromComment(message);
@@ -80,13 +80,14 @@ export class GitHubUtil {
             const cp = new ClassPortal();
             const personResponse = await cp.getPersonId(requestor); // NOTE: this returns Person.id, id, not Person.gitHubId!
 
-            const commentEvent: ICommentEvent = {
+            const commentEvent: CommitTarget = {
                 delivId,
                 repoId,
                 botMentioned,
                 commitSHA,
                 commitURL,
                 postbackURL,
+                cloneURL,
                 personId: personResponse.personId,
                 timestamp
             };
@@ -107,7 +108,7 @@ export class GitHubUtil {
      * @param payload
      * @returns {IPushEvent}
      */
-    public static async processPush(payload: any, portal: IClassPortal): Promise<IPushEvent | null> {
+    public static async processPush(payload: any, portal: IClassPortal): Promise<CommitTarget | null> {
         try {
             // const team = GitHubUtil.getTeamOrProject(payload.repository.name);
             const repo = payload.repository.name;
@@ -152,9 +153,11 @@ export class GitHubUtil {
                 return null;
             }
 
-            const pushEvent: IPushEvent = {
-                delivId: delivIdTrans.defaultDeliverable,
-                repoId:  repo,
+            const pushEvent: CommitTarget = {
+                delivId:      delivIdTrans.defaultDeliverable,
+                repoId:       repo,
+                botMentioned: false, // not explicitly invoked
+                personId:     null, // not explicitly invoked
                 cloneURL,
                 commitSHA,
                 commitURL,

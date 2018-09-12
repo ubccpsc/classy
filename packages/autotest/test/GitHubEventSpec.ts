@@ -4,7 +4,7 @@ import "mocha";
 
 import Config from "../../common/Config";
 import Log from "../../common/Log";
-import {ICommentEvent, IPushEvent} from "../../common/types/AutoTestTypes";
+import {CommitTarget} from "../../common/types/AutoTestTypes";
 import {PersonController} from "../../portal/backend/src/controllers/PersonController";
 import BackendServer from "../../portal/backend/src/server/BackendServer";
 import {Person} from "../../portal/backend/src/Types";
@@ -70,14 +70,16 @@ describe("GitHub Event Parser", () => {
         const actual = await GitHubUtil.processPush(JSON.parse(content), new MockClassPortal());
         // Log.test(JSON.stringify(actual));
 
-        const expected: IPushEvent = {
-            delivId:     "d1",
-            repoId:      "d1_project9999",
-            cloneURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git",
-            commitSHA:   "bbe3980fff47b7d6a921e9f89c6727bea639589c",
-            commitURL:   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/bbe3980fff47b7d6a921e9f89c6727bea639589c",
-            postbackURL: "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments",
-            timestamp:   1516324553000
+        const expected: CommitTarget = {
+            delivId:      "d1",
+            repoId:       "d1_project9999",
+            cloneURL:     "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git",
+            commitSHA:    "bbe3980fff47b7d6a921e9f89c6727bea639589c",
+            commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/bbe3980fff47b7d6a921e9f89c6727bea639589c",
+            postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments",
+            timestamp:    1516324553000,
+            botMentioned: false,
+            personId:     null
         };
         delete expected.timestamp;
         delete actual.timestamp;
@@ -88,14 +90,16 @@ describe("GitHub Event Parser", () => {
         const content = readFile("push_create-new-branch.json");
         const actual = await  GitHubUtil.processPush(JSON.parse(content), new MockClassPortal());
 
-        const expected: IPushEvent = {
-            delivId:     "d1",
-            cloneURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git",
-            commitSHA:   "6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
-            commitURL:   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
-            postbackURL: "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/6da86d2bdfe8fec9120b60e8d7b71c66077489b6/comments",
-            repoId:      "d1_project9999",
-            timestamp:   1516322017000
+        const expected: CommitTarget = {
+            delivId:      "d1",
+            cloneURL:     "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git",
+            commitSHA:    "6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
+            commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
+            postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/6da86d2bdfe8fec9120b60e8d7b71c66077489b6/comments",
+            repoId:       "d1_project9999",
+            timestamp:    1516322017000,
+            botMentioned: false,
+            personId:     null
         };
         delete expected.timestamp;
         delete actual.timestamp;
@@ -114,14 +118,16 @@ describe("GitHub Event Parser", () => {
         const content = readFile("push_other-branch.json");
         const actual = await GitHubUtil.processPush(JSON.parse(content), new MockClassPortal());
 
-        const expected: IPushEvent = {
-            delivId:     "d1",
-            commitSHA:   "d5f2203cfa1ae43a45932511ce39b2368f1c72ed",
-            cloneURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git",
-            commitURL:   "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/d5f2203cfa1ae43a45932511ce39b2368f1c72ed",
-            postbackURL: "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
-            repoId:      "d1_project9999",
-            timestamp:   1516324487000
+        const expected: CommitTarget = {
+            delivId:      "d1",
+            commitSHA:    "d5f2203cfa1ae43a45932511ce39b2368f1c72ed",
+            cloneURL:     "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git",
+            commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/d5f2203cfa1ae43a45932511ce39b2368f1c72ed",
+            postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
+            repoId:       "d1_project9999",
+            timestamp:    1516324487000,
+            botMentioned: false,
+            personId:     null
         };
 
         delete expected.timestamp;
@@ -134,7 +140,7 @@ describe("GitHub Event Parser", () => {
         const actual = await GitHubUtil.processComment(JSON.parse(content));
         Log.test(JSON.stringify(actual));
 
-        const expected: ICommentEvent = {
+        const expected: CommitTarget = {
             botMentioned: true,
             commitSHA:    "bbe3980fff47b7d6a921e9f89c6727bea639589c",
             commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/bbe3980fff47b7d6a921e9f89c6727bea639589c",
@@ -142,7 +148,8 @@ describe("GitHub Event Parser", () => {
             repoId:       "d1_project9999",
             postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments",
             timestamp:    1516324753000,
-            personId:     GITHUBID
+            personId:     GITHUBID,
+            cloneURL:     'https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git'
         };
 
         delete expected.timestamp;
@@ -155,7 +162,7 @@ describe("GitHub Event Parser", () => {
         const actual = await GitHubUtil.processComment(JSON.parse(content));
         Log.test(JSON.stringify(actual));
 
-        const expected: ICommentEvent = {
+        const expected: CommitTarget = {
             botMentioned: true,
             commitSHA:    "bbe3980fff47b7d6a921e9f89c6727bea639589c",
             commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/bbe3980fff47b7d6a921e9f89c6727bea639589c",
@@ -163,7 +170,8 @@ describe("GitHub Event Parser", () => {
             personId:     GITHUBID,
             repoId:       "d1_project9999",
             delivId:      "d7",
-            timestamp:    1516324833000
+            timestamp:    1516324833000,
+            cloneURL:     'https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git'
         };
 
         delete expected.timestamp;
@@ -176,7 +184,7 @@ describe("GitHub Event Parser", () => {
         const actual = await GitHubUtil.processComment(JSON.parse(content));
         Log.test(JSON.stringify(actual));
 
-        const expected: ICommentEvent = {
+        const expected: CommitTarget = {
             botMentioned: false,
             commitSHA:    "6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
             commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
@@ -184,7 +192,8 @@ describe("GitHub Event Parser", () => {
             personId:     GITHUBID,
             repoId:       "d1_project9999",
             delivId:      null,
-            timestamp:    1516320674000
+            timestamp:    1516320674000,
+            cloneURL:     'https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git'
         };
 
         delete expected.timestamp;
@@ -197,7 +206,7 @@ describe("GitHub Event Parser", () => {
         const actual = await GitHubUtil.processComment(JSON.parse(content));
         Log.test(JSON.stringify(actual));
 
-        const expected: ICommentEvent = {
+        const expected: CommitTarget = {
             botMentioned: true,
             commitSHA:    "d5f2203cfa1ae43a45932511ce39b2368f1c72ed",
             commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/d5f2203cfa1ae43a45932511ce39b2368f1c72ed",
@@ -205,7 +214,8 @@ describe("GitHub Event Parser", () => {
             personId:     GITHUBID,
             repoId:       "d1_project9999",
             delivId:      "d7",
-            timestamp:    1516324931000
+            timestamp:    1516324931000,
+            cloneURL:     "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git"
         };
 
         delete expected.timestamp;

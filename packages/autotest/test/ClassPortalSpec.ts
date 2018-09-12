@@ -208,6 +208,9 @@ describe("ClassPortal Service", () => {
                 commitSHA: 'sha',
                 commitURL: commitURL,
 
+                botMentioned: false,
+                personId:     null,
+
                 // projectURL:  projectURL,
                 postbackURL: 'postbackURL',
                 timestamp:   ts
@@ -259,7 +262,10 @@ describe("ClassPortal Service", () => {
     });
 
     it("Should be able to get a result.", async () => {
-        const actual = await cp.getResult('d0', 'repo0', 'TODO_FIND_RIGHT_SHA');
+        const proto = getResult('d0', 'repo0', 50);
+        const sha = proto.commitSHA;
+
+        const actual = await cp.getResult('d0', 'repo0', sha);
         Log.test("Actual: " + JSON.stringify(actual));
 
         expect(actual).to.not.be.null;

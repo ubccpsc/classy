@@ -755,6 +755,9 @@ export class Test {
                 commitSHA: 'sha',
                 commitURL: commitURL,
 
+                botMentioned: false,
+                personId:     null,
+
                 // projectURL:  projectURL,
                 postbackURL: 'postbackURL',
                 timestamp:   ts

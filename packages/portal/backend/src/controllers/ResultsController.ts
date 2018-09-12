@@ -42,10 +42,10 @@ export class ResultsController {
         return outcome;
     }
 
-    public async getResult(delivId: string, repoId: string): Promise<IAutoTestResult | null> {
-        Log.info("ResultsController::getResult( " + delivId + ", " + repoId + " ) - start");
+    public async getResult(delivId: string, repoId: string, sha: string): Promise<IAutoTestResult | null> {
+        Log.info("ResultsController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - start");
 
-        const outcome = await DatabaseController.getInstance().getResult(delivId, repoId);
+        const outcome = await DatabaseController.getInstance().getResult(delivId, repoId, sha);
         return outcome;
     }
 
