@@ -286,7 +286,7 @@ export class AdminDashboardTab {
 
         let str = '<span><table style="height: 20px;">';
         str += '<tr>';
-
+        str += '<td style="width: 4em">' + all.length + '</td>';
         for (const a of annotated) {
             str += '<td class="dashResultCell" style="width: 5px; height: 20px; background: ' + a.colour + '" title="' + a.name + '"></td>';
         }
