@@ -191,7 +191,7 @@ describe("CourseController", () => {
     it("Should be able to get a list of results with wildcards.", async () => {
         const res = await cc.getResults('any', 'any');
         expect(res).to.be.an('array');
-        expect(res.length).to.be.lessThan(20); // just the first result for each
+        expect(res.length).to.equal(20);
     });
 
     it("Should be able to get a list of results without wildcards.", async () => {
@@ -210,7 +210,7 @@ describe("CourseController", () => {
     it("Should be able to get a list of dashboard results  with wildcards.", async () => {
         const res = await cc.getDashboard('any', 'any');
         expect(res).to.be.an('array');
-        expect(res.length).to.equal(20);
+        expect(res.length).to.be.lessThan(20);
     });
 
     it("Should be able to get a list of dashboard results  without wildcards.", async () => {

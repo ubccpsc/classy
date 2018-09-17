@@ -321,11 +321,7 @@ export abstract class CourseController implements ICourseController {
         Log.info("CourseController::getDashboard( " + reqDelivId + ", " + reqRepoId + " ) - start");
         const NUM_RESULTS = 500; // max # of records
 
-        // TODO: return one result per team (if reqRepoId === any)
-        // TODO: return all results for a team (for the right deliverable) if reqRepoId === any
-
-        // const reposSeen: string[] = []; // use this for one-result-per-team
-
+        const repoIds: string[] = [];
         const results: AutoTestDashboardTransport[] = [];
         const allResults = await this.matchResults(reqDelivId, reqRepoId);
         for (const result of allResults) {
@@ -387,7 +383,11 @@ export abstract class CourseController implements ICourseController {
                     testError: testError,
                     testSkip:  testSkip
                 };
-                results.push(resultTrans);
+                // just return the first result for a repo, unless they are specified
+                if (reqRepoId !== 'any' || repoIds.indexOf(repoId) < 0) {
+                    results.push(resultTrans);
+                    repoIds.push(repoId);
+                }
             } else {
                 // result does not match filter
             }
@@ -454,7 +454,6 @@ export abstract class CourseController implements ICourseController {
         Log.info("CourseController::getResults( " + reqDelivId + ", " + reqRepoId + " ) - start");
         const NUM_RESULTS = 1000; // max # of records
 
-        const repoIds: string[] = [];
         const results: AutoTestResultSummaryTransport[] = [];
         const allResults = await this.matchResults(reqDelivId, reqRepoId);
         for (const result of allResults) {
@@ -495,11 +494,8 @@ export abstract class CourseController implements ICourseController {
                     scoreCover:   scoreCover,
                     scoreTests:   scoreTest
                 };
-                // just return the first result for a repo, unless they are specified
-                if (reqRepoId !== 'any' || repoIds.indexOf(repoId) < 0) {
-                    results.push(resultTrans);
-                    repoIds.push(repoId);
-                }
+
+                results.push(resultTrans);
             } else {
                 // result does not match filter
             }
