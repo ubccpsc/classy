@@ -1,5 +1,5 @@
 import Log from "../../../../common/Log";
-import {DeliverableTransport} from "../../../../common/types/PortalTypes";
+import {AutoTestConfigTransport, DeliverableTransport} from "../../../../common/types/PortalTypes";
 import {Deliverable} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
@@ -82,6 +82,10 @@ export class DeliverablesController {
     }
 
     public static deliverableToTransport(deliv: Deliverable): DeliverableTransport {
+        const at = deliv.autotest as AutoTestConfigTransport; // really AutoTestConfig
+        at.openTimestamp = deliv.openTimestamp;
+        at.closeTimestamp = deliv.closeTimestamp;
+
         const trans: DeliverableTransport = {
             id:  deliv.id,
             URL: deliv.URL,
@@ -106,7 +110,7 @@ export class DeliverablesController {
             visibleToStudents: deliv.visibleToStudents,
 
             shouldAutoTest: deliv.shouldAutoTest,
-            autoTest:       deliv.autotest,
+            autoTest:       at,
             rubric:         deliv.rubric,
             custom:         deliv.custom
         };

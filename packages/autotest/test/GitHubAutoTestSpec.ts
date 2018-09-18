@@ -28,6 +28,10 @@ describe("GitHubAutoTest", () => {
     let gh: GitHubService;
     let at: GitHubAutoTest;
 
+    const TS_IN = new Date(2018, 3, 3).getTime();
+    const TS_BEFORE = new Date(2017, 12, 12).getTime();
+    const TS_AFTER = new Date(2018, 12, 12).getTime();
+
     // now: 1516559187579
     // now -10h: 1516523258762
     // now - 24h: 1516472872288
@@ -37,6 +41,10 @@ describe("GitHubAutoTest", () => {
 
         pushes = fs.readJSONSync(__dirname + "/githubAutoTestData/pushes.json");
 
+        let i = 0;
+        for (const push of pushes) {
+            push.timestamp = TS_IN + i++ * 1000;
+        }
         data = new MockDataStore();
         await data.clearData();
 
@@ -148,7 +156,7 @@ describe("GitHubAutoTest", () => {
             commitSHA:    'SHA',
             commitURL:    'https://URL',
             postbackURL:  'https://postback',
-            timestamp:    Date.now(),
+            timestamp:    new Date(2018, 2, 1).getTime(),
             cloneURL:     "https://cloneURL"
         };
         meetsPreconditions = await at["checkCommentPreconditions"](info);
@@ -158,6 +166,17 @@ describe("GitHubAutoTest", () => {
         info.delivId = null;
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
+        info.delivId = 'd1';
+
+        info.timestamp = new Date(2017, 12, 1).getTime(); // not open yet
+        meetsPreconditions = await at["checkCommentPreconditions"](info);
+        expect(meetsPreconditions).to.be.false;
+        info.timestamp = new Date(2018, 2, 1).getTime();
+
+        info.timestamp = new Date(2018, 12, 1).getTime(); // closed
+        meetsPreconditions = await at["checkCommentPreconditions"](info);
+        expect(meetsPreconditions).to.be.false;
+        info.timestamp = new Date(2018, 2, 1).getTime();
 
         // TODO: try an invalid delivId
 
@@ -215,7 +234,7 @@ describe("GitHubAutoTest", () => {
             delivId:      "d0",
             repoId:       "d1_project9999",
             postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/cbe1b0918b872997de4c4d2baf4c263f8d4c6dc2/comments",
-            timestamp:    1234567891,
+            timestamp:    TS_IN,
             cloneURL:     "https://cloneURL"
         };
 
@@ -266,6 +285,7 @@ describe("GitHubAutoTest", () => {
         Log.test("Setup complete");
 
         // TEST: send a comment
+        TestData.commentRecordUserA.timestamp = TS_IN;
         await at.handleCommentEvent(TestData.commentRecordUserA);
         allData = await data.getAllData();
 

@@ -104,19 +104,38 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         // update info record
         const delivId = info.delivId;
-
-        if (delivId === null) {
+        const deliv = await this.classPortal.getContainerDetails(delivId);
+        if (delivId === null || deliv === null) {
+            Log.warn("GitHubAutoTest::handleCommentEvent(..) - ignored, unknown delivId: " + delivId);
             // no deliverable, give warning and abort
             const msg = "Please specify a deliverable so AutoTest knows what to run against (e.g., #d0).";
             await this.postToGitHub({url: info.postbackURL, message: msg});
             return false;
         }
 
-        // TODO: invalid delivId
-
         // TODO: invalid personId
 
         // TODO: invalid repoId
+
+        // staff can override open/close
+        const auth = await this.classPortal.isStaff(info.personId);
+        if (auth !== null || (auth.isAdmin !== true && auth.isStaff !== true)) {
+            if (deliv.openTimestamp > info.timestamp) {
+                Log.warn("GitHubAutoTest::handleCommentEvent(..) - ignored, deliv not open yet");
+                // not open yet
+                const msg = "This deliverable is not yet open for grading.";
+                await this.postToGitHub({url: info.postbackURL, message: msg});
+                return false;
+            }
+
+            if (deliv.closeTimestamp < info.timestamp) {
+                Log.warn("GitHubAutoTest::handleCommentEvent(..) - ignored, deliv closed");
+                // closed
+                const msg = "This deliverable is closed to grading.";
+                await this.postToGitHub({url: info.postbackURL, message: msg});
+                return false;
+            }
+        }
 
         return true;
     }
