@@ -397,12 +397,16 @@ export abstract class AutoTest implements IAutoTest {
                         urlName: repoId, // could be a short SHA, but this seems better
                         URL:     commitURL,
 
-                        comment: output.report.feedback,
+                        comment: '', // output.report.feedback,   // this only makes sense if we can render markdown
                         timestamp,
                         custom:  {}
                     };
 
-                    await this.classPortal.sendGrade(gradePayload); // this is just the Grade record, not the Report record
+                    if (output.postbackOnComplete === false) {
+                        await this.classPortal.sendGrade(gradePayload); // this is just the Grade record, not the Report record
+                    } else {
+                        // grade not sent; if postback is true we must have compile / lint problem
+                    }
                 } catch (err) {
                     Log.warn("AutoTest::invokeContainer(..) - ERROR for commit: " + input.pushInfo.commitSHA +
                         "; ERROR sending grade: " + err);
