@@ -11,7 +11,7 @@ export class CS310Controller extends CourseController {
     private readonly PROJD2 = 'd2';
     private readonly PROJD3 = 'd3';
     private readonly PROJD4 = 'd4';
-    private readonly PROJ = 'proj';
+    private readonly PROJ = 'proj';  // TECHDEBT: 310; should be 'project'
 
     public constructor(ghController: IGitHubController) {
         super(ghController);
@@ -35,7 +35,21 @@ export class CS310Controller extends CourseController {
      */
     public async handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean> {
         // just use the default implementation
-        const updateGrade = await super.handleNewAutoTestGradeDefault(deliv, newGrade, existingGrade);
+        let updateGrade = await super.handleNewAutoTestGradeDefault(deliv, newGrade, existingGrade);
+        Log.info("CS310Controller::handleNewAutoTestGrade(..) - pId: " + newGrade.personId +
+            "; delivId: " + deliv.id + "; higher? " + updateGrade);
+
+        if (deliv.gradesReleased === true) {
+            // drop updates if grades have been released
+            // could use closeTimetamp, but this lets us run the deliverables for the whole term
+            // once the grades have been released
+
+            Log.info("CS310Controller::handleNewAutoTestGrade(..) - pId: " + newGrade.personId +
+                "; delivId: " + deliv.id + "; grades released - not saving");
+
+            updateGrade = false;
+        }
+
         if (updateGrade === true) {
             // consider updating overall project grade here?
             const personId = newGrade.personId;

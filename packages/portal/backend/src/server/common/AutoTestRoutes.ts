@@ -4,10 +4,10 @@ import * as restify from 'restify';
 import Config, {ConfigKey} from "../../../../../common/Config";
 import Log from "../../../../../common/Log";
 import {IAutoTestResult} from "../../../../../common/types/AutoTestTypes";
-
 import {
     AutoTestAuthPayload,
     AutoTestConfigPayload,
+    AutoTestConfigTransport,
     AutoTestDefaultDeliverablePayload,
     AutoTestGradeTransport,
     AutoTestResultPayload,
@@ -71,7 +71,16 @@ export class AutoTestRoutes implements IREST {
             const dc = new DeliverablesController();
             dc.getDeliverable(delivId).then(function(deliv) {
                 if (deliv !== null) {
-                    payload = {success: deliv.autotest};
+                    const at: AutoTestConfigTransport = {
+                        dockerImage:        deliv.autotest.dockerImage,
+                        studentDelay:       deliv.autotest.studentDelay,
+                        maxExecTime:        deliv.autotest.maxExecTime,
+                        regressionDelivIds: deliv.autotest.regressionDelivIds,
+                        custom:             deliv.autotest.custom,
+                        openTimestamp:      deliv.openTimestamp,
+                        closeTimestamp:     deliv.closeTimestamp
+                    };
+                    payload = {success: at};
                     res.send(200, payload);
                     return next(true);
                 } else {

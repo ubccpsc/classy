@@ -195,6 +195,10 @@ export interface AutoTestConfigTransport {
      * A custom JSON object that will be passed to the container. Can be {}.
      */
     custom: object;
+
+    openTimestamp: number;
+
+    closeTimestamp: number;
 }
 
 export interface AutoTestAuthPayload {

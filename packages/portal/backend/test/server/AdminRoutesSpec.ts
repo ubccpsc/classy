@@ -6,6 +6,7 @@ import * as request from 'supertest';
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {
+    AutoTestConfigTransport,
     AutoTestResultPayload,
     CourseTransport,
     CourseTransportPayload,
@@ -376,6 +377,9 @@ describe('Admin Routes', function() {
         try {
             const originalDelivs = await dc.getAllDeliverables();
             const d0 = originalDelivs[0];
+            const at = d0.autotest as AutoTestConfigTransport;
+            at.openTimestamp = d0.openTimestamp;
+            at.closeTimestamp = d0.closeTimestamp;
 
             const deliv: DeliverableTransport = {
                 id:                d0.id,
@@ -395,7 +399,7 @@ describe('Admin Routes', function() {
                 URL:               d0.URL,
                 gradesReleased:    d0.gradesReleased,
                 shouldAutoTest:    d0.shouldAutoTest,
-                autoTest:          d0.autotest,
+                autoTest:          at,
                 rubric:            d0.rubric,
                 custom:            d0.custom
             };

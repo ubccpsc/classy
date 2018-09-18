@@ -1,14 +1,10 @@
-// import Scheduler from "node-schedule"
-//
-//
-//
+// this is terrible, but we don't have effective tests for this code yet
+/* istanbul ignore file */
 
 import Log from "../../../../common/Log";
 import {Deliverable} from "../Types";
 import {AssignmentController} from "./340/AssignmentController";
 import {DatabaseController} from "./DatabaseController";
-import {GitHubActions} from "./GitHubActions";
-import {GitHubController} from "./GitHubController";
 
 // tslint:disable-next-line
 const schedule = require('node-schedule');
@@ -16,7 +12,6 @@ const schedule = require('node-schedule');
 // This exists so we can potentially add more information to the task
 export interface Task {
     scheduledTask: any;
-    // time: string
 }
 
 // TAKE THE DELIVERABLE AND MAP IT TO THE ACTION
@@ -47,7 +42,6 @@ export class ScheduleController {
 
         const scheduledJob = schedule.scheduleJob(scheduledTime, () => {
             const ac: AssignmentController = new AssignmentController();
-            const ghc: GitHubController = new GitHubController(GitHubActions.getInstance());
 
             ac.initializeAllRepositories(assignId).then((result) => {
                 // remove from taskList
@@ -85,7 +79,6 @@ export class ScheduleController {
 
         const scheduledJob = schedule.scheduleJob(scheduledTime, () => {
             const ac: AssignmentController = new AssignmentController();
-            const ghc: GitHubController = new GitHubController(GitHubActions.getInstance());
 
             ac.publishAllRepositories(assignId).then((result) => {
                 // remove from taskList
@@ -119,7 +112,6 @@ export class ScheduleController {
 
         const scheduledJob = schedule.scheduleJob(scheduledTime, () => {
             const ac: AssignmentController = new AssignmentController();
-            const ghc: GitHubController = new GitHubController(GitHubActions.getInstance());
 
             ac.closeAllRepositories(assignId).then((result) => {
                 // remove from taskList
