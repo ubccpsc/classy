@@ -74,26 +74,32 @@ export default class Server {
                     async (req: restify.Request, res: restify.Response, next: restify.Next) => {
                         try {
                             req.socket.setTimeout(0);  // don't close the connection
+                            const id = req.params.id;
+                            const input: IContainerInput = req.body;
+                            const uid: number = Number(process.env.UID);
+                            const token: string = process.env.GH_BOT_TOKEN.replace("token ", "");
 
-                            const output: IContainerOutput = {
-                                timestamp:          Date.now(),
-                                report:             {
-                                    scoreOverall: 0,
-                                    scoreCover:   null,
-                                    scoreTest:    null,
-                                    feedback:     "D0 submission deadline has passed. AutoBot is now disabled.",
-                                    passNames:    [],
-                                    skipNames:    [],
-                                    failNames:    [],
-                                    errorNames:   [],
-                                    custom:       {}
-                                },
-                                postbackOnComplete: false,
-                                custom:             {},
-                                attachments:        [],
-                                state:              "FAIL"
+                            // Add parameters to create the grading container. We'll be lazy and use the custom field.
+                            input.containerConfig.custom = {
+                                "--env":      [
+                                    `ASSIGNMENT=${input.delivId}`,
+                                    `USER_UID=${uid}`
+                                ],
+                                "--volume":   [
+                                    `${process.env.GRADER_HOST_DIR}/${id}/assn:/assn`,
+                                    `${process.env.GRADER_HOST_DIR}/${id}/output:/output`
+                                ],
+                                "--network":  process.env.DOCKER_NET,
+                                "--add-host": process.env.HOSTS_ALLOW
                             };
 
+                            // Inject the GitHub token into the cloneURL so we can clone the repo.
+                            input.pushInfo.cloneURL = input.pushInfo.cloneURL.replace("://", `://${token}@`);
+
+                            const workspace: Workspace = new Workspace(process.env.GRADER_PERSIST_DIR + "/" + id, uid);
+                            const container: IDockerContainer = new DockerContainer(input.containerConfig.dockerImage);
+                            const repo: Repository = new Repository();
+                            const output: IContainerOutput = await new GradeTask(input, workspace, container, repo).execute();
                             res.json(200, output);
                         } catch (err) {
                             Log.error("Failed to handle grading task: " + err);
@@ -102,45 +108,6 @@ export default class Server {
 
                         next();
                     });
-
-                // this.rest.put("/task/grade/:id", restify.plugins.bodyParser(),
-                //     async (req: restify.Request, res: restify.Response, next: restify.Next) => {
-                //         try {
-                //             req.socket.setTimeout(0);  // don't close the connection
-                //             const id = req.params.id;
-                //             const input: IContainerInput = req.body;
-                //             const uid: number = Number(process.env.UID);
-                //             const token: string = process.env.GH_BOT_TOKEN.replace("token ", "");
-                //
-                //             // Add parameters to create the grading container. We'll be lazy and use the custom field.
-                //             input.containerConfig.custom = {
-                //                 "--env":      [
-                //                     `ASSIGNMENT=${input.delivId}`,
-                //                     `USER_UID=${uid}`
-                //                 ],
-                //                 "--volume":   [
-                //                     `${process.env.GRADER_HOST_DIR}/${id}/assn:/assn`,
-                //                     `${process.env.GRADER_HOST_DIR}/${id}/output:/output`
-                //                 ],
-                //                 "--network":  process.env.DOCKER_NET,
-                //                 "--add-host": process.env.HOSTS_ALLOW
-                //             };
-                //
-                //             // Inject the GitHub token into the cloneURL so we can clone the repo.
-                //             input.pushInfo.cloneURL = input.pushInfo.cloneURL.replace("://", `://${token}@`);
-                //
-                //             const workspace: Workspace = new Workspace(process.env.GRADER_PERSIST_DIR + "/" + id, uid);
-                //             const container: IDockerContainer = new DockerContainer(input.containerConfig.dockerImage);
-                //             const repo: Repository = new Repository();
-                //             const output: IContainerOutput = await new GradeTask(input, workspace, container, repo).execute();
-                //             res.json(200, output);
-                //         } catch (err) {
-                //             Log.error("Failed to handle grading task: " + err);
-                //             res.json(400, err);
-                //         }
-                //
-                //         next();
-                //     });
 
             } catch (err) {
                 Log.error("Server::start() - ERROR: " + err);
