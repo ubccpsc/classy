@@ -3,7 +3,7 @@ import * as fs from "fs-extra";
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 
-import {IAutoTestResult, ICommentEvent, IFeedbackGiven, IPushEvent} from "../../../../common/types/AutoTestTypes";
+import {CommitTarget, IAutoTestResult, IFeedbackGiven} from "../../../../common/types/AutoTestTypes";
 import Util from "../../../../common/Util";
 import {IDataStore} from "../DataStore";
 
@@ -50,12 +50,12 @@ export class MockDataStore implements IDataStore {
     /**
      * Gets the push event record for a given commitURL
      */
-    public async getPushRecord(commitURL: string): Promise<IPushEvent | null> {
+    public async getPushRecord(commitURL: string): Promise<CommitTarget | null> {
         // Log.info("MockDataStore::getPushRecord(..) - start");
         try {
             const start = Date.now();
             // read
-            const outRecords: IPushEvent[] = await fs.readJSON(this.PUSH_PATH);
+            const outRecords: CommitTarget[] = await fs.readJSON(this.PUSH_PATH);
 
             // find and return
             for (const record of outRecords) {
@@ -73,7 +73,7 @@ export class MockDataStore implements IDataStore {
         return null;
     }
 
-    public async savePush(info: IPushEvent): Promise<void> {
+    public async savePush(info: CommitTarget): Promise<void> {
         // Log.info("MockDataStore::savePush(..) - start");
         try {
             const start = Date.now();
@@ -90,7 +90,7 @@ export class MockDataStore implements IDataStore {
         }
     }
 
-    public async saveComment(info: ICommentEvent): Promise<void> {
+    public async saveComment(info: CommitTarget): Promise<void> {
         // Log.info("MockDataStore::saveComment(..) - start");
         try {
             const start = Date.now();
@@ -108,12 +108,12 @@ export class MockDataStore implements IDataStore {
         }
     }
 
-    public async getCommentRecord(commitURL: string, delivId: string): Promise<ICommentEvent | null> {
+    public async getCommentRecord(commitURL: string, delivId: string): Promise<CommitTarget | null> {
         // Log.info("MockDataStore::getCommentRecord(..) - start");
         try {
             const start = Date.now();
             // read
-            const outRecords: ICommentEvent[] = await fs.readJSON(this.COMMENT_PATH);
+            const outRecords: CommitTarget[] = await fs.readJSON(this.COMMENT_PATH);
 
             // find and return
             for (const record of outRecords) {
@@ -244,8 +244,8 @@ export class MockDataStore implements IDataStore {
 
     public async getAllData(): Promise<{
         records: IAutoTestResult[],
-        comments: ICommentEvent[],
-        pushes: IPushEvent[],
+        comments: CommitTarget[],
+        pushes: CommitTarget[],
         feedback: IFeedbackGiven[]
     }> {
         Log.info("MockDataStore::getAllData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
@@ -254,9 +254,9 @@ export class MockDataStore implements IDataStore {
             Log.info("MockDataStore::getAllData() - before records");
             const records: IAutoTestResult[] = await fs.readJSON(this.RECORD_PATH);
             Log.info("MockDataStore::getAllData() - before comments");
-            const comments: ICommentEvent[] = await fs.readJSON(this.COMMENT_PATH);
+            const comments: CommitTarget[] = await fs.readJSON(this.COMMENT_PATH);
             Log.info("MockDataStore::getAllData() - before pushes");
-            const pushes: IPushEvent[] = await fs.readJSON(this.PUSH_PATH);
+            const pushes: CommitTarget[] = await fs.readJSON(this.PUSH_PATH);
             Log.info("MockDataStore::getAllData() - before feedback");
             const feedback: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
             Log.info("MockDataStore::getAllData() - after all reading");

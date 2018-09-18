@@ -3,7 +3,7 @@ import * as rp from "request-promise-native";
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
-import {IAutoTestResult, ICommentEvent, IContainerInput, IContainerOutput} from "../../../common/types/AutoTestTypes";
+import {CommitTarget, IAutoTestResult, IContainerInput, IContainerOutput} from "../../../common/types/AutoTestTypes";
 import {AutoTestGradeTransport} from "../../../common/types/PortalTypes";
 import Util from "../../../common/Util";
 import {IClassPortal} from "./ClassPortal";
@@ -201,7 +201,7 @@ export abstract class AutoTest implements IAutoTest {
      *
      * @param {ICommentEvent} info
      */
-    protected promoteIfNeeded(info: ICommentEvent): void {
+    protected promoteIfNeeded(info: CommitTarget): void {
         try {
             Log.trace("AutoTest::promoteIfNeeded() - start");
 

@@ -3,6 +3,7 @@ import * as restify from 'restify';
 
 import Config, {ConfigKey} from "../../../../../common/Config";
 import Log from "../../../../../common/Log";
+import {IAutoTestResult} from "../../../../../common/types/AutoTestTypes";
 
 import {
     AutoTestAuthPayload,
@@ -40,7 +41,7 @@ export class AutoTestRoutes implements IREST {
         server.post('/portal/at/grade/', AutoTestRoutes.atGrade);
 
         server.post('/portal/at/result/', AutoTestRoutes.atPostResult);
-        server.get('/portal/at/result/:delivId/:repoId', AutoTestRoutes.atGetResult);
+        server.get('/portal/at/result/:delivId/:repoId/:sha', AutoTestRoutes.atGetResult);
 
         server.post('/portal/githubWebhook', AutoTestRoutes.githubWebhook); // forward GitHub Webhooks to AutoTest
 
@@ -164,7 +165,7 @@ export class AutoTestRoutes implements IREST {
                 return AutoTestRoutes.handleError(400, 'Invalid Result Record: ' + validResultRecord, res, next);
             } else {
                 Log.info('AutoTestRouteHandler::atPostResult(..) - valid result && valid secret; deliv: ' +
-                    resultRecord.delivId + '; repo: ' + resultRecord.repoId);
+                    resultRecord.delivId + '; repo: ' + resultRecord.repoId + "; sha: " + resultRecord.commitSHA);
                 rc.createResult(resultRecord).then(function(success) {
                     payload = {success: {message: 'Result received'}};
                     res.send(200, payload);
@@ -286,11 +287,12 @@ export class AutoTestRoutes implements IREST {
         } else {
             const delivId = req.params.delivId;
             const repoId = req.params.repoId;
+            const sha = req.params.sha;
 
-            Log.info('AutoTestRouteHandler::atGetResult(..) - delivId: ' + delivId + '; repoId: ' + repoId);
+            Log.info('AutoTestRouteHandler::atGetResult(..) - delivId: ' + delivId + '; repoId: ' + repoId + '; sha: ' + sha);
 
             const rc = new ResultsController();
-            rc.getResult(delivId, repoId).then(function(result) {
+            rc.getResult(delivId, repoId, sha).then(function(result: IAutoTestResult) {
                 payload = {success: [result]};
                 res.send(200, payload);
                 return next(true);
