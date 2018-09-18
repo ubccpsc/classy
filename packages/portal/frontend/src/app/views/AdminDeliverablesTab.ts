@@ -1,8 +1,7 @@
 import {OnsFabElement, OnsSwitchElement} from "onsenui";
 import Log from "../../../../../common/Log";
-import {AutoTestConfig} from "../../../../../common/types/AutoTestTypes";
 
-import {DeliverableTransport, DeliverableTransportPayload} from "../../../../../common/types/PortalTypes";
+import {AutoTestConfigTransport, DeliverableTransport, DeliverableTransportPayload} from "../../../../../common/types/PortalTypes";
 
 import {UI} from "../util/UI";
 import {AdminView} from "./AdminView";
@@ -368,12 +367,14 @@ export class AdminDeliverablesTab {
             }
         }
 
-        const at: AutoTestConfig = {
+        const at: AutoTestConfigTransport = {
             dockerImage,
             maxExecTime,
             studentDelay,
             regressionDelivIds,
-            custom: atCustom
+            custom: atCustom,
+            openTimestamp,
+            closeTimestamp
         };
 
         const deliv: DeliverableTransport = {
