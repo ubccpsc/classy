@@ -24,12 +24,12 @@ export default class RouteHandler {
                 const data = new MongoDataStore();
                 const portal = new EdXClassPortal();
                 const gh = new GitHubService();
-                RouteHandler.autoTest = new GitHubAutoTest(data, portal, gh);
+                RouteHandler.autoTest = new GitHubAutoTest(data, portal);
             } else {
                 const data = new MongoDataStore();
                 const portal = new ClassPortal();
                 const gh = new GitHubService();
-                RouteHandler.autoTest = new GitHubAutoTest(data, portal, gh);
+                RouteHandler.autoTest = new GitHubAutoTest(data, portal);
             }
         }
         return RouteHandler.autoTest;

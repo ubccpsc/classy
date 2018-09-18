@@ -79,9 +79,10 @@ export interface IClassPortal {
      *
      * @param {string} delivId
      * @param {string} repoId
+     * @param {string} sha
      * @returns {Promise<AutoTestResultTransport | null>}
      */
-    getResult(delivId: string, repoId: string): Promise<AutoTestResultTransport | null>;
+    getResult(delivId: string, repoId: string, sha: string): Promise<AutoTestResultTransport | null>;
 }
 
 export class ClassPortal implements IClassPortal {
@@ -260,9 +261,9 @@ export class ClassPortal implements IClassPortal {
         }
     }
 
-    public async getResult(delivId: string, repoId: string): Promise<AutoTestResultTransport | null> {
-        Log.info("ClassPortal::getResut( " + delivId + ", " + repoId + " ) - start");
-        const url = this.host + ":" + this.port + "/portal/at/result/" + delivId + "/" + repoId;
+    public async getResult(delivId: string, repoId: string, sha: string): Promise<AutoTestResultTransport | null> {
+        Log.info("ClassPortal::getResut( " + delivId + ", " + repoId + ", " + sha + " ) - start");
+        const url = this.host + ":" + this.port + "/portal/at/result/" + delivId + "/" + repoId + "/" + sha;
         try {
             const opts: rp.RequestPromiseOptions = {
                 rejectUnauthorized: false,
@@ -270,11 +271,11 @@ export class ClassPortal implements IClassPortal {
                 headers:            {token: Config.getInstance().getProp(ConfigKey.autotestSecret)}
             };
             Log.info("ClassPortal::getResult(..) - Requesting result from: " + url);
-            const res = await rp(url, opts); // .then(function(res) {
+            const res = await rp(url, opts);
             Log.trace("ClassPortal::getResult() - sent; returned payload: " + res);
             const json: AutoTestResultPayload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
-                Log.info("ClassPortal::getResult(..) - successfully received");
+                Log.info("ClassPortal::getResult(..) - successfully received; length: " + json.success.length);
                 const success = json.success as AutoTestResultTransport[];
                 if (success.length > 0) {
                     return success[0];

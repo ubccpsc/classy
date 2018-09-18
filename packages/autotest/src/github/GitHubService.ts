@@ -28,7 +28,7 @@ export interface IGitHubService {
 export class GitHubService implements IGitHubService {
 
     // this array is only to make testing easier
-    public messages: IGitHubMessage[] = [];
+    // public messages: IGitHubMessage[] = [];
 
     public postMarkdownToGithub(message: IGitHubMessage): Promise<boolean> {
         return new Promise<boolean>((fulfill, reject) => {
@@ -79,7 +79,7 @@ export class GitHubService implements IGitHubService {
 
                 } else {
                     Log.trace("GitHubService::postMarkdownToGithub(..) - send skipped (config.postback === false)");
-                    this.messages.push(message);
+                    // this.messages.push(message);
                     fulfill(true);
                 }
             } catch (err) {

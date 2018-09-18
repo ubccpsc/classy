@@ -1,14 +1,14 @@
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
-import {IAutoTestResult, ICommentEvent, IContainerInput, IFeedbackGiven, IPushEvent} from "../../../common/types/AutoTestTypes";
+import {CommitTarget, IAutoTestResult, IContainerInput, IFeedbackGiven} from "../../../common/types/AutoTestTypes";
 import {AutoTestAuthTransport, AutoTestConfigTransport, AutoTestResultTransport} from "../../../common/types/PortalTypes";
 import Util from "../../../common/Util";
 import {AutoTest} from "../autotest/AutoTest";
 
 import {IClassPortal} from "../autotest/ClassPortal";
 import {IDataStore} from "../autotest/DataStore";
-import {IGitHubService} from "./GitHubService";
+import {GitHubService, IGitHubMessage} from "./GitHubService";
 
 export interface IGitHubTestManager {
 
@@ -17,7 +17,7 @@ export interface IGitHubTestManager {
      *
      * @param {IPushEvent} push
      */
-    handlePushEvent(push: IPushEvent): void;
+    handlePushEvent(push: CommitTarget): void;
 
     /**
      * Handle a comment event from GitHub. Will promote job to
@@ -26,16 +26,16 @@ export interface IGitHubTestManager {
      *
      * @param {ICommentEvent} comment
      */
-    handleCommentEvent(comment: ICommentEvent): void;
+    handleCommentEvent(comment: CommitTarget): void;
 }
 
 export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
-    private github: IGitHubService = null;
+    // private github: IGitHubService = null;
 
-    constructor(dataStore: IDataStore, portal: IClassPortal, github: IGitHubService) {
+    constructor(dataStore: IDataStore, portal: IClassPortal) {
         super(dataStore, portal);
-        this.github = github;
+        // this.github = github;
     }
 
     /**
@@ -47,7 +47,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      * @param info
      * @param delivId
      */
-    public async handlePushEvent(info: IPushEvent, delivId?: string): Promise<boolean> {
+    public async handlePushEvent(info: CommitTarget, delivId?: string): Promise<boolean> {
         try {
             if (typeof info === "undefined" || info === null) {
                 Log.info("GitHubAutoTest::handlePushEvent(..) - info not provided; skipping.");
@@ -80,6 +80,138 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     }
 
     /**
+     *
+     * @param {ICommentEvent} info
+     * @returns {boolean} true if the preconditions are met; false otherwise
+     */
+    private async checkCommentPreconditions(info: CommitTarget): Promise<boolean> {
+        if (typeof info === "undefined" || info === null) {
+            Log.info("GitHubAutoTest::handleCommentEvent(..) - info not provided; skipping.");
+            return false;
+        }
+
+        Log.info("GitHubAutoTest::handleCommentEvent(..) - start; commit: " + info.commitSHA + "; user: " + info.personId);
+
+        if (info.personId === Config.getInstance().getProp(ConfigKey.botName)) {
+            Log.info("GitHubAutoTest::handleCommentEvent(..) - ignored, comment made by AutoBot");
+            return false;
+        }
+
+        if (info.botMentioned === false) {
+            Log.info("GitHubAutoTest::handleCommentEvent(..) - ignored, bot not mentioned");
+            return false;
+        }
+
+        // update info record
+        const delivId = info.delivId;
+
+        if (delivId === null) {
+            // no deliverable, give warning and abort
+            const msg = "Please specify a deliverable so AutoTest knows what to run against (e.g., #d0).";
+            await this.postToGitHub({url: info.postbackURL, message: msg});
+            return false;
+        }
+
+        // TODO: invalid delivId
+
+        // TODO: invalid personId
+
+        // TODO: invalid repoId
+
+        return true;
+    }
+
+    /**
+     * Function exists so it can be replaced by tests as needed.
+     *
+     * @param {IGitHubMessage} message
+     * @returns {Promise<boolean>}
+     */
+    protected async postToGitHub(message: IGitHubMessage): Promise<boolean> {
+        Log.info("GitHubAutoTest::postToGitHub(..) - posting message to: " + message.url);
+        const gh = new GitHubService();
+        return await gh.postMarkdownToGithub(message);
+    }
+
+    protected async schedule(info: CommitTarget): Promise<void> {
+        Log.info("GitHubAutoTest::schedule(..) - scheduling for: " + info.commitURL);
+        const containerConfig = await this.getContainerConfig(info.delivId);
+        const input: IContainerInput = {delivId: info.delivId, pushInfo: info, containerConfig: containerConfig};
+        this.addToStandardQueue(input);
+        this.tick();
+        Log.info("GitHubAutoTest::schedule(..) - scheduling completed for: " + info.commitURL);
+    }
+
+    protected async processComment(info: CommitTarget, res: AutoTestResultTransport): Promise<void> {
+        Log.info("GitHubAutoTest::processComment(..) - handling request for user: " +
+            info.personId + " for commit: " + info.commitURL);
+
+        if (res !== null) {
+            // previously processed
+            // STUDENT: need to guard this if they shouldn't be getting feeback yet
+            Log.info("GitHubAutoTest::processComment(..) - result already exists; handling");
+            await this.postToGitHub({url: info.postbackURL, message: res.output.report.feedback});
+            if (res.output.postbackOnComplete === false) {
+                Log.info("GitHubAutoTest::processComment(..) - result already exists; feedback request logged");
+                await this.saveFeedbackGiven(info.delivId, info.personId, info.timestamp, info.commitURL);
+            } else {
+                // postbackOnComplete should only be true for lint / compile errors
+                Log.info("GitHubAutoTest::processComment(..) - result already exists; feedback request skipped");
+            }
+            await this.saveCommentInfo(info);
+        } else {
+            // not yet processed
+            const onQueue = this.isOnQueue(info.commitURL, info.delivId);
+            let msg = '';
+            if (onQueue === true) {
+                msg = "This commit is still queued for processing against " + info.delivId + ".";
+                msg += " Your results will be posted here as soon as they are ready.";
+                // TODO: promote to head of express queue
+            } else {
+                const pe = await this.dataStore.getPushRecord(info.commitURL);
+                if (pe === null) {
+                    Log.warn("GitHubAutoTest::processComment(..) - push event was not present; adding now. URL: " + info.commitURL);
+                    // store this pushevent for consistency in case we need it for anything else later
+                    await this.dataStore.savePush(info); // NEXT: add cloneURL to commentEvent (should be in github payload)
+                }
+                // NOTE: we aren't considering the pushEvent anymore?
+                msg = "This commit has been queued for processing against " + info.delivId + ".";
+                msg += " Your results will be posted here as soon as they are ready.";
+                // STUDENT: need to guard this
+                await this.schedule(info);
+            }
+            await this.saveCommentInfo(info); // whether TA or staff
+            await this.postToGitHub({url: info.postbackURL, message: msg});
+
+            // jump to head of express queue
+            this.promoteIfNeeded(info);
+        }
+        return;
+    }
+
+    protected async handleCommentStudent(info: CommitTarget, res: AutoTestResultTransport): Promise<void> {
+        Log.info("GitHubAutoTest::handleCommentStudent(..) - handling student request for user: " +
+            info.personId + " for commit: " + info.commitURL);
+
+        const feedbackDelay: string | null = await this.requestFeedbackDelay(info.delivId, info.personId, info.timestamp);
+        const previousRequest: IFeedbackGiven = await this.dataStore.getFeedbackGivenRecordForCommit(info.commitURL, info.personId);
+
+        if (previousRequest === null && feedbackDelay !== null) {
+            Log.info("GitHubAutoTest::handleCommentStudent(..) - too early; wait: " + feedbackDelay + " for: " + info.commitURL);
+            // NOPE, not yet (this is the most common case; feedback requested without time constraints)
+            const msg = "You must wait " + feedbackDelay + " before requesting feedback.";
+            await this.postToGitHub({url: info.postbackURL, message: msg});
+        } else {
+            Log.info("GitHubAutoTest::handleCommentStudent(..) - process request for: " + info.commitURL);
+            // either requested before, or no time limitations, either way it should be processed
+            await this.processComment(info, res);
+        }
+    }
+
+    /**
+     *
+     * NOTE: This description is from an older version of this method.
+     *
      * Handles comment events from Github.
      *
      * Persists the event only if the feedback cannot be given right away and should be given when ready.
@@ -97,141 +229,51 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      *  * post back results if requested by TA
      *  * post back results if rate limiting check passes (and record fedback given)
      *  * post back warning if rate limiting check fails
-     *
-     * TODO: need to think a bit harder about which comment events should be saved and which should be dropped
-     *
-     * @param info
      */
-    public async handleCommentEvent(info: ICommentEvent): Promise<boolean> {
-        try {
-            const start = Date.now();
+    public async handleCommentEvent(info: CommitTarget): Promise<boolean> {
+        const start = Date.now();
 
-            if (typeof info === "undefined" || info === null) {
-                Log.info("GitHubAutoTest::handleCommentEvent(..) - info not provided; skipping.");
-                return false;
-            }
+        // sanity check; this keeps the rest of the code much simpler
+        const preconditionsMet = await this.checkCommentPreconditions(info);
+        if (preconditionsMet === false) {
+            Log.info("GitHubAutoTest::handleCommentEvent(..) - preconditions not met; not processing comment further.");
+            return false;
+        }
 
-            Log.info("GitHubAutoTest::handleCommentEvent(..) - start; commit: " + info.commitSHA + "; user: " + info.personId);
+        const isCurrentlyRunning: boolean = this.isCommitExecuting(info.commitURL, info.delivId);
+        if (isCurrentlyRunning === true) {
+            // common case: the commit is already running, provide status and let it finish
+            let msg = "This commit is still queued for processing against " + info.delivId + ".";
+            msg += " Your results will be posted here as soon as they are ready.";
 
-            if (info.personId === Config.getInstance().getProp(ConfigKey.botName)) {
-                Log.info("GitHubAutoTest::handleCommentEvent(..) - ignored, comment made by AutoBot");
-                return true;
-            }
-
-            if (info.botMentioned === false) {
-                Log.info("GitHubAutoTest::handleCommentEvent(..) - ignored, bot not mentioned");
-                return true;
-            }
-
-            // update info record
-            const delivId = info.delivId;
-
-            if (delivId === null) {
-                // no deliverable, give warning and abort
-                const msg = "Please specify a deliverable so AutoTest knows what to run against (e.g., #d0).";
-                await this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
-                return true;
-            }
-
-            // front load the async operations, even if it means we do some operations unnecessarily; thse could be done in parallel
-            const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(info.personId); // async
-            const requestFeedbackDelay: string | null = await this.requestFeedbackDelay(delivId, info.personId, info.timestamp);
-            // students often request grades they have previously 'paid' for
-            const hasBeenRequestedBefore: IFeedbackGiven =
-                await this.dataStore.getFeedbackGivenRecordForCommit(info.commitURL, info.personId);
-            const res: AutoTestResultTransport = await this.classPortal.getResult(delivId, info.repoId);
-            const isCurrentlyRunning: boolean = this.isCommitExecuting(info.commitURL, delivId);
-            Log.trace("GitHubAutoTest::handleCommentEvent(..) - isStaff: " + isStaff + "; delay: " +
-                requestFeedbackDelay + "; res: " + res + "; running?: " + isCurrentlyRunning);
-
-            let shouldPost = false; // should the result be given
-            if (isStaff !== null && (isStaff.isAdmin === true || isStaff.isStaff === true)) {
-                // always respond for staff
-                shouldPost = true;
+            await this.saveCommentInfo(info); // whether TA or staff
+            await this.postToGitHub({url: info.postbackURL, message: msg});
+        } else {
+            const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(info.personId);
+            const res: AutoTestResultTransport = await this.classPortal.getResult(info.delivId, info.repoId, info.commitSHA);
+            if (isStaff !== null && (isStaff.isStaff === true || isStaff.isAdmin === true)) {
+                await this.processComment(info, res);
             } else {
-                if (requestFeedbackDelay === null) {
-                    // respond if they have not been given feedback before
-                    shouldPost = true;
-                } else {
-                    // students have been given feedback within the time window
-                    if (hasBeenRequestedBefore === null) {
-                        // but the feedback was on another commit
-                        shouldPost = false;
-                        const msg = "You must wait " + requestFeedbackDelay + " before requesting feedback.";
-                        await this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
-                    } else {
-                        // they have been given feedback within the window, but on this commit.
-                        // so we might as well give it to them. asking for this doesn't make sense,
-                        // but happens with remarkable frequency, so just give them their results back again
-                        shouldPost = true;
-                    }
-                }
+                await this.handleCommentStudent(info, res);
             }
-
-            if (res !== null && res.commitSHA === info.commitSHA) {
-                // execution has been completed so there is feedback ready to give
-                Log.trace("GitHubAutoTest::handleCommentEvent(..) - commit: " + info.commitSHA + "; execution complete");
-                // true if staff, requested before, or over feedback delay interval
-                if (shouldPost === true) {
-                    await this.github.postMarkdownToGithub({url: info.postbackURL, message: res.output.report.feedback});
-                    await this.saveFeedbackGiven(delivId, info.personId, info.timestamp, info.commitURL);
-                    await this.saveCommentInfo(info); // user or TA; only for analytics since feedback has been given
-                }
-            } else {
-                // execution not yet complete
-                Log.info("GitHubAutoTest::handleCommentEvent(..) - commit: " + info.commitSHA + "; execution not yet complete");
-                if (shouldPost === true) {
-                    // NOTE: it _should_ be on the standard queue here, but if it isn't, could we add it, just to be safe?
-                    const onQueue = this.isOnQueue(info.commitURL, info.delivId);
-                    let msg = "This commit is still queued for processing against " + delivId + ".";
-                    msg += " Your results will be posted here as soon as they are ready.";
-                    if (onQueue === false) {
-                        const pe = await this.dataStore.getPushRecord(info.commitURL);
-                        if (pe !== null) {
-                            Log.info("GitHubAutoTest::handleCommentEvent(..) - commit: " + info.commitSHA +
-                                "; - element not on queue; adding.");
-                            await this.handlePushEvent(pe, info.delivId);
-                        } else {
-                            Log.warn("GitHubAutoTest::handleCommentEvent(..) - commit: " + info.commitSHA +
-                                "; - element not on queue; cannot find push event.");
-                            msg = "This commit is has not been queued; please make and push a new commit.";
-                        }
-                    }
-                    await this.saveCommentInfo(info); // whether TA or staff
-                    await this.github.postMarkdownToGithub({url: info.postbackURL, message: msg});
-                } else {
-                    // should we do something if shouldPost is false?
-                }
-
-                this.promoteIfNeeded(info);
-            }
-
-            // everything is ready; run the clock
-            this.tick();
-
-            Log.info("GitHubAutoTest::handleCommentEvent(..) - done; commit: " + info.commitSHA + "; took: " + Util.took(start));
-            return true;
-        } catch (err) {
-            Log.error("GitHubAutoTestTest::handleCommentEvent(..) - ERROR: " + err.message);
-            throw err;
         }
     }
 
     protected async processExecution(data: IAutoTestResult): Promise<void> {
         try {
-            const pushRequested: ICommentEvent = await this.getRequestor(data.commitURL, data.input.delivId);
+            const feedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId);
             if (data.output.postbackOnComplete === true) {
                 // do this first, doesn't count against quota
                 Log.info("GitHubAutoTest::processExecution(..) - postback: true");
-                await this.github.postMarkdownToGithub({url: data.input.pushInfo.postbackURL, message: data.output.report.feedback});
+                await this.postToGitHub({url: data.input.pushInfo.postbackURL, message: data.output.report.feedback});
                 // NOTE: if the feedback was requested for this build it shouldn't count
                 // since we're not calling saveFeedback this is right
                 // but if we replay the commit comments, we would see it there, so be careful
-            } else if (pushRequested !== null) {
+            } else if (feedbackRequested !== null) {
                 // feedback has been previously requested
                 Log.info("GitHubAutoTest::processExecution(..) - feedback requested");
-                await this.github.postMarkdownToGithub({url: data.input.pushInfo.postbackURL, message: data.output.report.feedback});
-                await this.saveFeedbackGiven(data.input.delivId, pushRequested.personId, pushRequested.timestamp, data.commitURL);
+                await this.postToGitHub({url: data.input.pushInfo.postbackURL, message: data.output.report.feedback});
+                await this.saveFeedbackGiven(data.input.delivId, feedbackRequested.personId, feedbackRequested.timestamp, data.commitURL);
             } else {
                 // do nothing
                 Log.info("GitHubAutoTest::processExecution(..) - commit not requested - no feedback given; commit: " + data.commitSHA);
@@ -297,7 +339,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      *
      * @param {IContainerInput} info
      */
-    private async savePushInfo(info: IPushEvent) {
+    private async savePushInfo(info: CommitTarget) {
         try {
             Log.trace("GitHubAutoTest::savePushInfo(..) - commit: " + info.commitSHA);
             await this.dataStore.savePush(info);
@@ -309,9 +351,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     /**
      * Saves commentInfo in its own table in the database, in case we need to refer to it later
      *
-     * @param {ICommentEvent} info
+     * @param {CommitTarget} info
      */
-    private async saveCommentInfo(info: ICommentEvent) {
+    private async saveCommentInfo(info: CommitTarget) {
         try {
             Log.trace("GitHubAutoTest::saveCommentInfo(..) - commit: " + info.commitSHA);
             await this.dataStore.saveComment(info);
@@ -379,9 +421,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      * @param commitURL
      * @param delivId
      */
-    private async getRequestor(commitURL: string, delivId: string): Promise<ICommentEvent | null> {
+    private async getRequestor(commitURL: string, delivId: string): Promise<CommitTarget | null> {
         try {
-            const record: ICommentEvent = await this.dataStore.getCommentRecord(commitURL, delivId);
+            const record: CommitTarget = await this.dataStore.getCommentRecord(commitURL, delivId);
             if (record !== null) {
                 return record;
             }

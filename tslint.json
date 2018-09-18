@@ -13,6 +13,7 @@
     "interface-name": [false, "never-prefix"],
     "only-arrow-functions": false,
     "object-literal-sort-keys": false,
-    "no-floating-promises": true
+    "no-floating-promises": true,
+    "no-string-literal": false
   }
 }
