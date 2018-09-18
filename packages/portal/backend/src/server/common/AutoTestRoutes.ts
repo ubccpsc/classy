@@ -79,7 +79,7 @@ export class AutoTestRoutes implements IREST {
                         custom:             deliv.autotest.custom,
                         openTimestamp:      deliv.openTimestamp,
                         closeTimestamp:     deliv.closeTimestamp
-                    }
+                    };
                     payload = {success: at};
                     res.send(200, payload);
                     return next(true);
