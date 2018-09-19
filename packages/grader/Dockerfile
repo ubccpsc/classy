@@ -12,7 +12,7 @@ COPY package.json tsconfig.json ./
 COPY packages/common ./packages/common
 COPY packages/grader ./packages/grader
 
-RUN yarn install --pure-lockfile --non-interactive \
+RUN yarn install --pure-lockfile --non-interactive --ignore-scripts \
  && yarn tsc --sourceMap false \
  && chmod -R a+r /app
 
