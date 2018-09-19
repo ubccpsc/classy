@@ -257,7 +257,7 @@ describe('General Routes', function() {
         expect(response.status).to.equal(400);
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
-        expect(body.failure.message).to.equal('Team not created; some members are already on existing teams for this deliverable.');
+        expect(body.failure.message).to.equal('User is already on a team for this deliverable ( user1id is on t_d0_user1id_user2id ).');
     });
 
     // bad form (forming for someone else)

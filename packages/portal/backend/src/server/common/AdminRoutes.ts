@@ -15,6 +15,8 @@ import {
     RepositoryPayload,
     RepositoryTransport,
     StudentTransportPayload,
+    TeamFormationTransport,
+    TeamTransport,
     TeamTransportPayload
 } from '../../../../../common/types/PortalTypes';
 
@@ -24,6 +26,7 @@ import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GitHubActions} from "../../controllers/GitHubActions";
 import {GitHubController} from "../../controllers/GitHubController";
 import {PersonController} from "../../controllers/PersonController";
+import {TeamController} from "../../controllers/TeamController";
 import {Factory} from "../../Factory";
 
 import {Person} from "../../Types";
@@ -55,10 +58,12 @@ export default class AdminRoutes implements IREST {
         // admin-only functions
         server.post('/portal/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
         server.post('/portal/admin/deliverable', AdminRoutes.isAdmin, AdminRoutes.postDeliverable);
+        server.post('/portal/admin/team', AdminRoutes.isAdmin, AdminRoutes.postTeam);
         server.post('/portal/admin/course', AdminRoutes.isAdmin, AdminRoutes.postCourse);
         server.post('/portal/admin/provision', AdminRoutes.isAdmin, AdminRoutes.postProvision);
         server.post('/portal/admin/release', AdminRoutes.isAdmin, AdminRoutes.postRelease);
-        // TODO: unrelease
+
+        // TODO: unrelease repos
 
         // staff-only functions
         // NOTHING
@@ -539,4 +544,76 @@ export default class AdminRoutes implements IREST {
         // should never get here unless something goes wrong
         throw new Error("Release unsuccessful.");
     }
+
+    public static postTeam(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::postTeam(..) - start');
+
+        // handled by isAdmin in the route chain
+        // const user = req.headers.user;
+        // const token = req.headers.token;
+
+        const teamTrans: TeamFormationTransport = req.params;
+        AdminRoutes.performPostTeam(teamTrans).then(function(team) {
+            Log.info('AdminRoutes::postTeam(..) - done; team: ' + JSON.stringify(team));
+            const payload: TeamTransportPayload = {success: [team]}; // really shouldn't be an array, but it beats having another type
+            res.send(200, payload);
+            return next(true);
+        }).catch(function(err) {
+            Log.info('AdminRoutes::postTeam(..) - ERROR: ' + err.message); // intentionally info
+            const payload: Payload = {failure: {message: err.message, shouldLogout: false}};
+            res.send(400, payload);
+            return next(false);
+        });
+    }
+
+    private static async performPostTeam(requestedTeam: TeamFormationTransport): Promise<TeamTransport> {
+
+        Log.info("AdminRoutes::performPostTeam( .. ) - Team: " + JSON.stringify(requestedTeam));
+        const tc = new TeamController();
+        const dc = new DeliverablesController();
+        const pc = new PersonController();
+
+        const deliv = await dc.getDeliverable(requestedTeam.delivId);
+        if (deliv === null) {
+            throw new Error("Team not created; Deliverable does not exist: " + requestedTeam.delivId);
+        }
+        // NOTE: this isn't great because it largely duplicates what is in GeneralRoutes::performPostTeam
+
+        // make sure the ids exist
+        const people: Person[] = [];
+        for (const pId of requestedTeam.githubIds) {
+            const p = await pc.getGitHubPerson(pId); // students will provide github ids // getPerson(pId);
+            if (p !== null) {
+                people.push(p);
+            } else {
+                throw new Error("Team not created; GitHub id not associated with student registered in course: " + pId);
+            }
+        }
+
+        // make sure all users aren't already on teams
+        for (const person of people) {
+            const teams = await tc.getTeamsForPerson(person);
+            for (const aTeam of teams) {
+                if (aTeam.delivId === requestedTeam.delivId) {
+                    throw new Error('User is already on a team for this deliverable ( ' + person.id + ' is on ' + aTeam.id + ' ).');
+                }
+            }
+        }
+
+        const cc = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
+        const names = await cc.computeNames(deliv, people);
+
+        const team = await tc.formTeam(names.teamName, deliv, people, true);
+
+        const teamTrans: TeamTransport = {
+            id:      team.id,
+            delivId: team.delivId,
+            people:  team.personIds,
+            URL:     team.URL
+        };
+
+        Log.info('AdminRoutes::performPostTeam(..) - team created: ' + team.id);
+        return teamTrans;
+    }
+
 }

@@ -16,6 +16,7 @@ import {
     ProvisionTransport,
     RepositoryPayload,
     StudentTransportPayload,
+    TeamFormationTransport,
     TeamTransportPayload
 } from "../../../../common/types/PortalTypes";
 import Util from "../../../../common/Util";
@@ -769,5 +770,89 @@ describe('Admin Routes', function() {
             expect(body.success).to.be.undefined;
             expect(body.failure).to.not.be.undefined;
         });
+    });
+
+    it('Should be able to create a team for a deliverable.', async function() {
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/admin/team';
+        let ex = null;
+        try {
+            // create 2 people in an individual deliverable (should be allowed for admin)
+            const team: TeamFormationTransport = {
+                delivId:   Test.DELIVID0,
+                githubIds: [Test.USER5.github, Test.USER6.github]
+            };
+
+            response = await request(app).post(url).send(team).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(ex).to.be.null;
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success).to.be.an('array');
+        expect(body.success.length).to.equal(1);
+    });
+
+    it('Should fail to create a team for a deliverable if something is invalid.', async function() {
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/admin/team';
+        let ex = null;
+        const team: TeamFormationTransport = {
+            delivId:   Test.DELIVID0,
+            githubIds: [Test.USER5.github, Test.USER6.github]
+        };
+        try {
+            // already on team
+            response = await request(app).post(url).send(team).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(ex).to.be.null;
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+
+        try {
+            // invalid deliv
+            team.delivId = 'INVALIDDELIVID' + Date.now();
+            response = await request(app).post(url).send(team).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(ex).to.be.null;
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+
+        try {
+            // invalid user
+            team.delivId = Test.DELIVID0;
+            team.githubIds = ['INVALIDUSERNAME' + Date.now()];
+            response = await request(app).post(url).send(team).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(ex).to.be.null;
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+
     });
 });

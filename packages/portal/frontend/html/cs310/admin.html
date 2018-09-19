@@ -192,6 +192,25 @@
                     </div>
                 </ons-list-item>
 
+                <ons-list-header>Manually Create Team</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Deliverable
+                        <select id="adminTeamDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                        <ons-input class="settingTextInput" id="adminTeamText"></ons-input>
+                        <ons-button id="adminSubmitTeam" modifier="medium">Create Team</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Manually creates a team for a deliverable. A comma-separated list of IDs (CSID or CWL, depending on what your course
+                        is using) is provided in the text box. This does the same thing as if the students created the team themselves
+                        but overrides the team size limits (e.g., there can be more or fewer students than the deliverable requires).
+                        Students must still NOT already be on teams that exist for that deliverable.
+                    </div>
+                </ons-list-item>
+
                 <ons-list-header>Set Default Deliverable (AutoTest Only)</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">

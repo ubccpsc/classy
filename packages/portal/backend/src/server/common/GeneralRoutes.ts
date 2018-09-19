@@ -214,6 +214,16 @@ export default class GeneralRoutes implements IREST {
                 throw new Error('Users cannot form teams they are not going to join.');
             }
 
+            // make sure all users aren't already on teams
+            for (const person of people) {
+                const teams = await tc.getTeamsForPerson(person);
+                for (const aTeam of teams) {
+                    if (aTeam.delivId === requestedTeam.delivId) {
+                        throw new Error('User is already on a team for this deliverable ( ' + person.id + ' is on ' + aTeam.id + ' ).');
+                    }
+                }
+            }
+
             const cc = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
             const deliv = await dc.getDeliverable(requestedTeam.delivId);
             const names = await cc.computeNames(deliv, people);

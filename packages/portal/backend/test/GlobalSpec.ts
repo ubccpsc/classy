@@ -145,6 +145,14 @@ export class Test {
         p.labId = 'l2c';
         await dc.writePerson(p);
 
+        p = Test.createPerson(Test.USER5.id, Test.USER5.csId, Test.USER5.github, 'student');
+        p.labId = 'l2d';
+        await dc.writePerson(p);
+
+        p = Test.createPerson(Test.USER6.id, Test.USER6.csId, Test.USER6.github, 'student');
+        p.labId = 'l2d';
+        await dc.writePerson(p);
+
         // staff person (this username should be on the 'staff' team, but not the 'admin' team in the github org)
         p = Test.createPerson(Test.STAFF1.id, Test.STAFF1.csId, Test.STAFF1.github, null);
         await dc.writePerson(p);
@@ -557,6 +565,8 @@ export class Test {
     public static readonly USER2 = {id: 'user2id', csId: 'user2id', github: 'user2gh'};
     public static readonly USER3 = {id: 'user3id', csId: 'user3id', github: 'user3gh'};
     public static readonly USER4 = {id: 'user4id', csId: 'user4id', github: 'user4gh'};
+    public static readonly USER5 = {id: 'user5id', csId: 'user5id', github: 'user5gh'};
+    public static readonly USER6 = {id: 'user6id', csId: 'user6id', github: 'user6gh'};
 
     public static readonly INVALIDUSER1 = {id: 'invalidUser1id', csId: 'invalidUser1id', github: 'invalidUser1gh'};
 
