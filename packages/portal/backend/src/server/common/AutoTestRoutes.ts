@@ -124,24 +124,29 @@ export class AutoTestRoutes implements IREST {
         if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
             return AutoTestRoutes.handleError(400, 'Invalid AutoTest Secret: ' + providedSecret, res, next);
         } else {
-            const gradeRecord: AutoTestGradeTransport = req.body; // turn into json?
+            const gradeRecord: AutoTestGradeTransport = req.body;
 
-            const gc: GradesController = new GradesController();
-            const validGradeRecord = gc.validateAutoTestGrade(gradeRecord);
-            if (validGradeRecord !== null) {
-                return AutoTestRoutes.handleError(400, 'Invalid Grade Record: ' + validGradeRecord, res, next);
-            } else {
-                Log.info('AutoTestRouteHandler::atGrade(..) - repoId: ' + gradeRecord.repoId +
-                    '; delivId: ' + gradeRecord.delivId + '; body: ' + JSON.stringify(gradeRecord));
-                const cc = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
-                cc.processNewAutoTestGrade(gradeRecord).then(function(success: any) {
-                    payload = {success: {success: true}};
-                    res.send(200, payload);
-                    return next(true);
-                }).catch(function(err) {
-                    return AutoTestRoutes.handleError(400, 'Failed to receive grade; ERROR: ' + err.message, res, next);
-                });
-            }
+            AutoTestRoutes.performPostGrade(gradeRecord).then(function(success: any) {
+                payload = {success: {success: true}};
+                res.send(200, payload);
+                return next(true);
+            }).catch(function(err) {
+                return AutoTestRoutes.handleError(400, 'Failed to receive grade; ERROR: ' + err.message, res, next);
+            });
+        }
+    }
+
+    private static async performPostGrade(grade: AutoTestGradeTransport): Promise<boolean> {
+        const gc: GradesController = new GradesController();
+        const validGradeRecord = gc.validateAutoTestGrade(grade);
+        if (validGradeRecord !== null) {
+            throw new Error('Invalid Grade Record: ' + validGradeRecord);
+        } else {
+            Log.info('AutoTestRouteHandler::atGrade(..) - repoId: ' + grade.repoId +
+                '; delivId: ' + grade.delivId + '; body: ' + JSON.stringify(grade));
+            const cc = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
+            const success = await cc.processNewAutoTestGrade(grade);
+            return success;
         }
     }
 
@@ -167,15 +172,13 @@ export class AutoTestRoutes implements IREST {
         } else {
             const resultRecord: AutoTestResultTransport = req.body;
             // Log.trace('AutoTestRouteHandler::atPostResult(..) - body: ' + JSON.stringify(resultRecord));
-
-            this.performPostResult(resultRecord).then(function() {
+            AutoTestRoutes.performPostResult(resultRecord).then(function() {
                 payload = {success: {message: 'Result received'}};
                 res.send(200, payload);
                 return next(true);
             }).catch(function(err) {
                 return AutoTestRoutes.handleError(400, 'Error processing result: ' + err.message, res, next);
             });
-
         }
     }
 
