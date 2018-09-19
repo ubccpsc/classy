@@ -82,15 +82,15 @@ export default class Server {
                             // Add parameters to create the grading container. We'll be lazy and use the custom field.
                             input.containerConfig.custom = {
                                 "--env":      [
-                                    `ASSIGNMENT=${input.delivId}`,
-                                    `USER_UID=${uid}`
+                                    `ASSIGNMENT=${input.delivId}`
                                 ],
                                 "--volume":   [
                                     `${process.env.GRADER_HOST_DIR}/${id}/assn:/assn`,
                                     `${process.env.GRADER_HOST_DIR}/${id}/output:/output`
                                 ],
                                 "--network":  process.env.DOCKER_NET,
-                                "--add-host": process.env.HOSTS_ALLOW
+                                "--add-host": process.env.HOSTS_ALLOW,
+                                "--user": uid
                             };
 
                             // Inject the GitHub token into the cloneURL so we can clone the repo.
