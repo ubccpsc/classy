@@ -64,9 +64,14 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
             if (delivId !== null) {
                 const containerConfig = await this.getContainerConfig(delivId);
-                const input: IContainerInput = {delivId, pushInfo: info, containerConfig: containerConfig};
-                this.addToStandardQueue(input);
-                this.tick();
+                if (containerConfig !== null) {
+                    const input: IContainerInput = {delivId, pushInfo: info, containerConfig: containerConfig};
+                    this.addToStandardQueue(input);
+                    this.tick();
+                } else {
+                    Log.warn("GitHubAutoTest::handlePushEvent(..) - commit: " + info.commitSHA +
+                        " - No container info for delivId: " + delivId + "; push ignored.");
+                }
             } else {
                 // no active deliverable, ignore this push event (don't push an error either)
                 Log.warn("GitHubAutoTest::handlePushEvent(..) - commit: " + info.commitSHA + " - No active deliverable; push ignored.");
@@ -155,10 +160,15 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     protected async schedule(info: CommitTarget): Promise<void> {
         Log.info("GitHubAutoTest::schedule(..) - scheduling for: " + info.commitURL);
         const containerConfig = await this.getContainerConfig(info.delivId);
-        const input: IContainerInput = {delivId: info.delivId, pushInfo: info, containerConfig: containerConfig};
-        this.addToStandardQueue(input);
-        this.tick();
-        Log.info("GitHubAutoTest::schedule(..) - scheduling completed for: " + info.commitURL);
+        if (containerConfig !== null) {
+            const input: IContainerInput = {delivId: info.delivId, pushInfo: info, containerConfig: containerConfig};
+            this.addToStandardQueue(input);
+            this.tick();
+            Log.info("GitHubAutoTest::schedule(..) - scheduling completed for: " + info.commitURL);
+        } else {
+            Log.info("GitHubAutoTest::schedule(..) - scheduling skipped for: " + info.commitURL +
+                "; no container configuration for: " + info.delivId);
+        }
     }
 
     protected async processComment(info: CommitTarget, res: AutoTestResultTransport): Promise<void> {
