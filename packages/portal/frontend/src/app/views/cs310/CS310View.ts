@@ -161,7 +161,7 @@ export class CS310View extends StudentView {
             UI.showSection('studentPartnerDiv');
 
             const tName = document.getElementById('studentPartnerTeamName');
-            const pName = document.getElementById('studentPartnerTeammates');
+            // const pName = document.getElementById('studentPartnerTeammates');
             const team = projectTeam;
 
             // if (team.URL !== null) {
@@ -169,7 +169,7 @@ export class CS310View extends StudentView {
             // } else {
             tName.innerHTML = team.id;
             // }
-            pName.innerHTML = team.people[0]; // JSON.stringify(team.people);
+            // pName.innerHTML = team.people[0]; // JSON.stringify(team.people);
         }
     }
 
