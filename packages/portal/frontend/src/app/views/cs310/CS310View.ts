@@ -162,13 +162,13 @@ export class CS310View extends StudentView {
 
             const tName = document.getElementById('studentPartnerTeamName');
             const pName = document.getElementById('studentPartnerTeammates');
-            const team = this.teams[0];
+            const team = projectTeam;
 
-            if (team.URL !== null) {
-                tName.innerHTML = '<a href="' + team.URL + '">' + team.id + '</a>';
-            } else {
-                tName.innerHTML = team.id;
-            }
+            // if (team.URL !== null) {
+            //     tName.innerHTML = '<a href="' + team.URL + '">' + team.id + '</a>';
+            // } else {
+            tName.innerHTML = team.id;
+            // }
             pName.innerHTML = team.people[0]; // JSON.stringify(team.people);
         }
     }
