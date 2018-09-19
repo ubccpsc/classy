@@ -84,6 +84,16 @@ export class AdminConfigTab {
             });
         };
 
+        (document.querySelector('#adminCreateTeamButton') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminView::handleAdminConfig(..) - create team pressed');
+
+            that.createTeamPressed().then(function() {
+                // worked
+            }).catch(function(err) {
+                Log.info('AdminView::handleAdminConfig(..) - create team pressed; ERROR: ' + err.message);
+            });
+        };
+
         UI.showModal("Retriving config / deliverable details.");
 
         this.course = await AdminConfigTab.getCourse(this.remote);
