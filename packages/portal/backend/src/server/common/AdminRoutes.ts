@@ -579,9 +579,17 @@ export default class AdminRoutes implements IREST {
         }
         // NOTE: this isn't great because it largely duplicates what is in GeneralRoutes::performPostTeam
 
+        // remove duplicate names
+        const nameIds = requestedTeam.githubIds.filter(function(item, pos, self) {
+            return self.indexOf(item) === pos;
+        });
+        if (nameIds.length !== requestedTeam.githubIds.length) {
+            throw new Error("Team not created; duplicate team members specified.");
+        }
+
         // make sure the ids exist
         const people: Person[] = [];
-        for (const pId of requestedTeam.githubIds) {
+        for (const pId of nameIds) {
             const p = await pc.getGitHubPerson(pId); // students will provide github ids // getPerson(pId);
             if (p !== null) {
                 people.push(p);

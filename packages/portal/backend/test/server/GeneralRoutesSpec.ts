@@ -258,6 +258,27 @@ describe('General Routes', function() {
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
         expect(body.failure.message).to.equal('User is already on a team for this deliverable ( user1id is on t_d0_user1id_user2id ).');
+
+        try {
+            Log.test('Making request');
+            const teamReq: TeamFormationTransport = {
+                delivId:   Test.DELIVIDPROJ,
+                githubIds: [Test.USER5.github, Test.USER5.github]
+            };
+            // this is invalid because the person id is used more than once
+            response = await request(app).post(url).send(teamReq).set('user', auth.personId).set('token', auth.token);
+            Log.test('Response received');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+        expect(body.failure.message).to.equal("Team not created; duplicate team members specified.");
+
     });
 
     // bad form (forming for someone else)
@@ -307,7 +328,7 @@ describe('General Routes', function() {
             Log.test('Making request');
             const teamReq: TeamFormationTransport = {
                 delivId:   Test.DELIVIDPROJ,
-                githubIds: [Test.USER1.github, Test.USER1.github]
+                githubIds: [Test.USER1.github, Test.USER2.github]
             };
             // this is invalid because the person is already on a d0 team
             response = await request(app).post(url).send(teamReq).set('user', auth.personId).set('token', auth.token);
@@ -354,9 +375,9 @@ describe('General Routes', function() {
 
         // create a team, but don't release it
         const deliv = await dc.getDeliverable(Test.DELIVIDPROJ);
-        const team = await dc.getTeam('t_project_user1gh_user1gh');
+        const team = await dc.getTeam('t_project_user1gh_user2gh');
         const rc = new RepositoryController();
-        const repo = await rc.createRepository('t_project_user1gh_user1gh', deliv, [team], {});
+        const repo = await rc.createRepository('t_project_user1gh_user2gh', deliv, [team], {});
 
         ex = null;
         try {
