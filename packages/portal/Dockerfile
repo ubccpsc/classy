@@ -13,7 +13,7 @@ COPY package.json tsconfig.json .env ./
 COPY packages/common ./packages/common
 COPY packages/portal ./packages/portal
 
-RUN yarn install --pure-lockfile --non-interactive \
+RUN yarn install --pure-lockfile --non-interactive --ignore-scripts \
  && yarn tsc --sourceMap false \
  && cd packages/portal/frontend && yarn webpack \
  && chmod -R a+r /app \

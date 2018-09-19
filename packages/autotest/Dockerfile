@@ -8,7 +8,7 @@ COPY package.json tsconfig.json ./
 COPY packages/common ./packages/common
 COPY packages/autotest ./packages/autotest
 
-RUN yarn install --pure-lockfile --non-interactive \
+RUN yarn install --pure-lockfile --non-interactive --ignore-scripts \
  && yarn tsc --sourceMap false \
  && chmod -R a+r /app
 
