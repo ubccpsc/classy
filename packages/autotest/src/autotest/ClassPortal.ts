@@ -245,7 +245,7 @@ export class ClassPortal implements IClassPortal {
             Log.info("ClassPortal::sendResult(..) - Sending request to " + url + ' for repoId: ' +
                 result.repoId + '; delivId: ' + result.delivId + '; SHA: ' + result.input.pushInfo.commitSHA);
             const res = await rp(url, opts);
-            Log.trace("ClassPortal::sendResult() - sent; returned payload: " + res);
+            Log.trace("ClassPortal::sendResult() - sent; returned payload: " + JSON.stringify(res));
             const json = res;
             if (typeof json.success !== 'undefined') {
                 Log.info("ClassPortal::sendResult(..) - successfully received");

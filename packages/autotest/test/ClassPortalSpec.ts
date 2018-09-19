@@ -9,15 +9,13 @@ import {DatabaseController} from "../../portal/backend/src/controllers/DatabaseC
 import BackendServer from "../../portal/backend/src/server/BackendServer";
 import {Course} from "../../portal/backend/src/Types";
 import {ClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
-// const loadFirst = require('./GlobalSpec');
+
 import "./GlobalSpec";
 
 describe("ClassPortal Service", () => {
     Config.getInstance();
 
     let cp: IClassPortal;
-    // const classId = "secapstone";
-    // const CURRENT_DEFAULT_DELIV = "d2";
 
     let backend: BackendServer = null;
     before(async function() {
@@ -137,7 +135,7 @@ describe("ClassPortal Service", () => {
 
     it("Should be able to send a valid grade.", async () => {
         const grade: AutoTestGradeTransport = {
-            repoId:    'repo1',
+            repoId:    'TESTrepo1',
             repoURL:   'https://repo1',
             delivId:   'd0',
             score:     60,
@@ -151,6 +149,7 @@ describe("ClassPortal Service", () => {
         Log.test("Actual: " + JSON.stringify(actual));
 
         expect(actual.success).to.not.be.undefined;
+        expect(actual.failure).to.be.undefined;
     });
 
     it("Should fail to send an invalid grade.", async () => {
@@ -179,7 +178,6 @@ describe("ClassPortal Service", () => {
             Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
         const commitURL = projectURL + '/commits/FOOOSHA';
         const output: IContainerOutput = {
-            // commitURL:          commitURL,
             timestamp:          ts,
             report:             {
                 scoreOverall: score,
@@ -228,7 +226,6 @@ describe("ClassPortal Service", () => {
         const result: IAutoTestResult = {
             delivId:   delivId,
             repoId:    repoId,
-            // timestamp: ts,
             commitURL: commitURL,
             commitSHA: 'SHA',
             input:     input,
@@ -241,7 +238,7 @@ describe("ClassPortal Service", () => {
     it("Should be able to send a valid result.", async () => {
 
         // function getResult(delivId: string, repoId: string, score:number) {
-        const result = getResult('d0', 'repo0', 50);
+        const result = getResult('d0', 'TESTrepo1', 50);
         const actual = await cp.sendResult(result);
         Log.test("Actual: " + JSON.stringify(actual));
 
@@ -251,7 +248,7 @@ describe("ClassPortal Service", () => {
     it("Should not be able to send an invalid result.", async () => {
 
         // function getResult(delivId: string, repoId: string, score:number) {
-        const result = getResult('d0', 'repo0', 50);
+        const result = getResult('d0', 'TESTrepo1', 50);
         delete result.delivId; // REQUIRED field
         const actual = await cp.sendResult(result);
         Log.test("Actual: " + JSON.stringify(actual));
@@ -262,15 +259,15 @@ describe("ClassPortal Service", () => {
     });
 
     it("Should be able to get a result.", async () => {
-        const proto = getResult('d0', 'repo0', 50);
+        const proto = getResult('d0', 'TESTrepo1', 50);
         const sha = proto.commitSHA;
 
-        const actual = await cp.getResult('d0', 'repo0', sha);
+        const actual = await cp.getResult(proto.delivId, proto.repoId, proto.commitSHA);
         Log.test("Actual: " + JSON.stringify(actual));
 
         expect(actual).to.not.be.null;
         expect(actual.delivId).to.equal('d0');
-        expect(actual.repoId).to.equal('repo0');
+        expect(actual.repoId).to.equal('TESTrepo1');
     });
 
     it("Should not get a result that does not exist.", async () => {

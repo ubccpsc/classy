@@ -127,8 +127,12 @@ export class AutoTestRoutes implements IREST {
             const gradeRecord: AutoTestGradeTransport = req.body;
 
             AutoTestRoutes.performPostGrade(gradeRecord).then(function(success: any) {
-                payload = {success: {success: true}};
-                res.send(200, payload);
+                if (success === true) {
+                    payload = {success: {success: true}};
+                    res.send(200, payload);
+                } else {
+                    return AutoTestRoutes.handleError(400, 'Failed to receive grade.', res, next);
+                }
                 return next(true);
             }).catch(function(err) {
                 return AutoTestRoutes.handleError(400, 'Failed to receive grade; ERROR: ' + err.message, res, next);
@@ -318,7 +322,11 @@ export class AutoTestRoutes implements IREST {
 
             const rc = new ResultsController();
             rc.getResult(delivId, repoId, sha).then(function(result: IAutoTestResult) {
-                payload = {success: [result]};
+                if (result !== null) {
+                    payload = {success: [result]};
+                } else {
+                    payload = {success: []};
+                }
                 res.send(200, payload);
                 return next(true);
             }).catch(function(err) {
