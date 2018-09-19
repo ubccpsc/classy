@@ -121,7 +121,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         const auth = await this.classPortal.isStaff(info.personId);
         if (auth !== null || (auth.isAdmin !== true && auth.isStaff !== true)) {
             if (deliv.openTimestamp > info.timestamp) {
-                Log.warn("GitHubAutoTest::handleCommentEvent(..) - ignored, deliv not open yet");
+                Log.warn("GitHubAutoTest::handleCommentEvent(..) - ignored, deliverable not yet open to AutoTest.");
                 // not open yet
                 const msg = "This deliverable is not yet open for grading.";
                 await this.postToGitHub({url: info.postbackURL, message: msg});
@@ -129,7 +129,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             }
 
             if (deliv.closeTimestamp < info.timestamp) {
-                Log.warn("GitHubAutoTest::handleCommentEvent(..) - ignored, deliv closed");
+                Log.warn("GitHubAutoTest::handleCommentEvent(..) - ignored, deliverable closed to AutoTest.");
                 // closed
                 const msg = "This deliverable is closed to grading.";
                 await this.postToGitHub({url: info.postbackURL, message: msg});

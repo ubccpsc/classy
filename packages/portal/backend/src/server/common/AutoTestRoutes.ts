@@ -168,20 +168,33 @@ export class AutoTestRoutes implements IREST {
             const resultRecord: AutoTestResultTransport = req.body;
             // Log.trace('AutoTestRouteHandler::atPostResult(..) - body: ' + JSON.stringify(resultRecord));
 
-            const rc = new ResultsController();
-            const validResultRecord = rc.validateAutoTestResult(resultRecord);
-            if (validResultRecord !== null) {
-                return AutoTestRoutes.handleError(400, 'Invalid Result Record: ' + validResultRecord, res, next);
+            this.performPostResult(resultRecord).then(function() {
+                payload = {success: {message: 'Result received'}};
+                res.send(200, payload);
+                return next(true);
+            }).catch(function(err) {
+                return AutoTestRoutes.handleError(400, 'Error processing result: ' + err.message, res, next);
+            });
+
+        }
+    }
+
+    private static async performPostResult(result: AutoTestResultTransport): Promise<boolean> {
+        const rc = new ResultsController();
+        const validResultRecord = rc.validateAutoTestResult(result);
+        if (validResultRecord !== null) {
+            throw new Error('Invalid Result Record: ' + validResultRecord);
+        } else {
+            Log.info('AutoTestRouteHandler::performPostResult(..) - valid result && valid secret; deliv: ' +
+                result.delivId + '; repo: ' + result.repoId + "; sha: " + result.commitSHA);
+            const dc = new DeliverablesController();
+            const deliv = await dc.getDeliverable(result.delivId);
+            if (deliv !== null && result.input.pushInfo.timestamp < deliv.closeTimestamp && deliv.gradesReleased === false) {
+                const success = await rc.createResult(result);
+                return success;
             } else {
-                Log.info('AutoTestRouteHandler::atPostResult(..) - valid result && valid secret; deliv: ' +
-                    resultRecord.delivId + '; repo: ' + resultRecord.repoId + "; sha: " + resultRecord.commitSHA);
-                rc.createResult(resultRecord).then(function(success) {
-                    payload = {success: {message: 'Result received'}};
-                    res.send(200, payload);
-                    return next(true);
-                }).catch(function(err) {
-                    return AutoTestRoutes.handleError(400, 'Error processing result: ' + err.message, res, next);
-                });
+                Log.info('AutoTestRouteHandler::performPostResult(..) - not accepting new results for delivId: ' + result.delivId);
+                return false;
             }
         }
     }

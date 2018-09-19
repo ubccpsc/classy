@@ -41,6 +41,25 @@ describe("CS310: CS310Controller", () => {
         expect(oldPeople.length).to.equal(newPepople.length);
     });
 
+    it("Should be able to compute a team and repo name w/ stable ordering.", async () => {
+        const dbc = DatabaseController.getInstance();
+        const dc = new DeliverablesController();
+        const deliv = await dc.getDeliverable(Test.DELIVID0);
+        const p1 = await dbc.getPerson(Test.USER1.id);
+        const p2 = await dbc.getPerson(Test.USER2.id);
+
+        let res = await cc.computeNames(deliv, [p1, p2]);
+        const tExpected = deliv.teamPrefix + '_' + deliv.id + '_' + Test.USER1.github + '_' + Test.USER2.github;
+        const rExpected = deliv.id + '_' + Test.USER1.github + '_' + Test.USER2.github;
+
+        expect(res.teamName).to.equal(tExpected);
+        expect(res.repoName).to.equal(rExpected);
+
+        res = await cc.computeNames(deliv, [p2, p1]); // reverse people names
+        expect(res.teamName).to.equal(tExpected);
+        expect(res.repoName).to.equal(rExpected);
+    });
+
     it("Should be able to compute a team and repo name.", async () => {
         const dbc = DatabaseController.getInstance();
         const dc = new DeliverablesController();

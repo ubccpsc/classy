@@ -39,6 +39,8 @@ export class CS310Controller extends CourseController {
         Log.info("CS310Controller::handleNewAutoTestGrade(..) - pId: " + newGrade.personId +
             "; delivId: " + deliv.id + "; higher? " + updateGrade);
 
+        // handlenewAutoTestGradeDefault checks deliverable deadline
+        // but after grades are released the deadline might be extended, so this allows for that
         if (deliv.gradesReleased === true) {
             // drop updates if grades have been released
             // could use closeTimetamp, but this lets us run the deliverables for the whole term
@@ -119,6 +121,12 @@ export class CS310Controller extends CourseController {
         if (people.length < 1) {
             throw new Error("CS310Controller::computeNames( ... ) - must provide people");
         }
+
+        // sort people alph by their id
+        people = people.sort(function compare(p1: Person, p2: Person) {
+                return p1.id.localeCompare(p2.id);
+            }
+        );
 
         let postfix = '';
         for (const person of people) {

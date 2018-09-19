@@ -16,18 +16,6 @@ export class ResultsController {
         return results;
     }
 
-    // TODO: need to be able to get subsets of results
-    /*
-    public async getGrade(personId: string, delivId: string): Promise<Grade | null> {
-        Log.info("GradesController::getGrade( " + personId + ", " + delivId + " ) - start");
-
-        let grade = await this.db.getGrade(personId, delivId);
-        return grade;
-    }
-    */
-
-    // TODO: need to be able to associate a result row with a person or team?
-    // rc.createResult(resultRecord.delivId, resultRecord.repoId, resultRecord.input, resultRecord.output).then(function (success) {÷
     public async createResult(record: IAutoTestResult): Promise<boolean> {
         Log.info("ResultsController::createResult(..) - start");
         Log.trace("GradesController::createResult(..) - payload: " + JSON.stringify(record));
