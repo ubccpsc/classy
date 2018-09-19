@@ -127,9 +127,9 @@ export class CS310View extends StudentView {
         UI.hideSection('studentPartnerDiv');
 
         // skip this all for now; we will redeploy when teams can be formed
-        if (Date.now() > 0) {
-            return;
-        }
+        // if (Date.now() > 0) {
+        //     return;
+        // }
 
         let projectTeam = null;
         for (const team of teams) {
