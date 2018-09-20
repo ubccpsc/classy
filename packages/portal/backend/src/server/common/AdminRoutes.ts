@@ -520,6 +520,7 @@ export default class AdminRoutes implements IREST {
             res.send(200, payload);
             return next(true);
         }).catch(function(err) {
+            Log.exception(err);
             return AdminRoutes.handleError(400, 'Unable to release repos: ' + err.message, res, next);
         });
     }
