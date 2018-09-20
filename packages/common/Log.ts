@@ -70,7 +70,7 @@ export default class Log {
     }
 
     public static exception(err: Error): void {
-        console.error(`<E> ${new Date().toLocaleString()}: ${err}`);
+        console.error(`<E> ${new Date().toLocaleString()}: `, err);
     }
 
     public static test(msg: string): void {
