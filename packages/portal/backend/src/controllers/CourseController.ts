@@ -586,9 +586,10 @@ export abstract class CourseController implements ICourseController {
 
         const delivTeams: Team[] = [];
         for (const team of allTeams) {
-            if (team !== null || deliv !== null || team.id === null || deliv.id === null) {
+            if (team === null || deliv === null || team.id === null || deliv.id === null) {
                 // seeing this during 310 provisioning, need to figure this out
-                Log.error("CourseController::provision( .. ) - ERROR! null team: " + team + " or deliv: " + deliv);
+                Log.error("CourseController::provision( .. ) - ERROR! null team: " +
+                    JSON.stringify(team) + " or deliv: " + JSON.stringify(deliv));
             } else {
                 if (team.delivId === deliv.id) {
                     Log.trace("CourseController::provision( .. ) - adding team: " + team.id + " to delivTeams");
@@ -752,9 +753,15 @@ export abstract class CourseController implements ICourseController {
 
         const delivTeams: Team[] = [];
         for (const team of allTeams) {
-            if (team.delivId === deliv.id) {
-                Log.trace("adding team: " + team.id + " to delivTeams");
-                delivTeams.push(team);
+            if (team === null || deliv === null || team.id === null || deliv.id === null) {
+                // seeing this during 310 provisioning, need to figure this out
+                Log.error("CourseController::release( .. ) - ERROR! null team: " +
+                    JSON.stringify(team) + " or deliv: " + JSON.stringify(deliv));
+            } else {
+                if (team.delivId === deliv.id) {
+                    Log.trace("CourseController::release(..) - adding team: " + team.id + " to delivTeams");
+                    delivTeams.push(team);
+                }
             }
         }
 
