@@ -777,10 +777,12 @@ export abstract class CourseController implements ICourseController {
                     }
                     const names = await this.computeNames(deliv, people);
                     const repo = await this.dbc.getRepository(names.repoName);
-                    if (repo !== null) {
+                    if (repo !== null && typeof repo.custom.githubProvisioned !== 'undefined' && repo.custom.githubProvisioned === true) {
+                        // repo exists and has been provisioned: this is important as teams may have formed that have not been provisioned
+                        // aka only release provisioned repos
                         reposToRelease.push(repo);
                     } else {
-                        Log.info("CourseController::release( " + deliv.id + " ) - null repo for name: " + JSON.stringify(names));
+                        Log.info("CourseController::release( " + deliv.id + " ) - repo not provisioned yet: " + JSON.stringify(names));
                     }
                 } else {
                     Log.info("CourseController::release( " + deliv.id + " ) - skipping team: " + team.id + "; already attached");
