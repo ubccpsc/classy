@@ -777,7 +777,11 @@ export abstract class CourseController implements ICourseController {
                     }
                     const names = await this.computeNames(deliv, people);
                     const repo = await this.dbc.getRepository(names.repoName);
-                    reposToRelease.push(repo);
+                    if (repo !== null) {
+                        reposToRelease.push(repo);
+                    } else {
+                        Log.info("CourseController::release( " + deliv.id + " ) - null repo for name: " + JSON.stringify(names));
+                    }
                 } else {
                     Log.info("CourseController::release( " + deliv.id + " ) - skipping team: " + team.id + "; already attached");
                 }
