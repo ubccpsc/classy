@@ -29,7 +29,7 @@ import BackendServer from "../../src/server/BackendServer";
 import {Test} from "../GlobalSpec";
 import './AuthRoutesSpec';
 
-describe('Admin Routes', function() {
+describe.only('Admin Routes', function() {
 
     // const TIMEOUT = 5000;
 
@@ -854,5 +854,173 @@ describe('Admin Routes', function() {
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
 
+    });
+
+    it('Should be able to delete a deliverable', async function() {
+        const url = '/portal/admin/deliverable/' + Test.DELIVID0;
+        let response = null;
+        let body: Payload;
+        let ex = null;
+        try {
+            response = await request(app).del(url).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.message).to.be.an('string');
+        expect(ex).to.be.null;
+    });
+
+    it('Should fail to delete a deliverable if appropriate', async function() {
+        const url = '/portal/admin/deliverable/';
+        let response = null;
+        let body: Payload;
+        let ex = null;
+        try {
+            // delivId doesn't exist
+            response = await request(app).del(url + Date.now()).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+        expect(ex).to.be.null;
+
+        response = null;
+        body = null;
+        ex = null;
+        try {
+            // token is invalid
+            response = await request(app).del(url + Test.DELIVIDPROJ).set({user: userName, token: Test.FAKETOKEN});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(401);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+        expect(ex).to.be.null;
+    });
+
+    it('Should be able to delete a repository', async function() {
+        const url = '/portal/admin/repository/' + Test.REPONAME1;
+        let response = null;
+        let body: Payload;
+        let ex = null;
+        try {
+            response = await request(app).del(url).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.message).to.be.an('string');
+        expect(ex).to.be.null;
+    });
+
+    it('Should fail to delete a repository if appropriate', async function() {
+        const url = '/portal/admin/repository/';
+        let response = null;
+        let body: Payload;
+        let ex = null;
+        try {
+            // delivId doesn't exist
+            response = await request(app).del(url + Date.now()).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+        expect(ex).to.be.null;
+
+        response = null;
+        body = null;
+        ex = null;
+        try {
+            // token is invalid
+            response = await request(app).del(url + Test.REPONAME1).set({user: userName, token: Test.FAKETOKEN});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(401);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+        expect(ex).to.be.null;
+    });
+
+    it('Should be able to delete a team', async function() {
+        const url = '/portal/admin/team/' + Test.TEAMNAME1;
+        let response = null;
+        let body: Payload;
+        let ex = null;
+        try {
+            response = await request(app).del(url).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.message).to.be.an('string');
+        expect(ex).to.be.null;
+    });
+
+    it('Should fail to delete a team if appropriate', async function() {
+        const url = '/portal/admin/team/';
+        let response = null;
+        let body: Payload;
+        let ex = null;
+        try {
+            // delivId doesn't exist
+            response = await request(app).del(url + Date.now()).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+        expect(ex).to.be.null;
+
+        response = null;
+        body = null;
+        ex = null;
+        try {
+            // token is invalid
+            response = await request(app).del(url + Test.TEAMNAME1).set({user: userName, token: Test.FAKETOKEN});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(401);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+        expect(ex).to.be.null;
     });
 });
