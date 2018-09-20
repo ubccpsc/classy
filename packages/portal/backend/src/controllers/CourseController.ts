@@ -768,17 +768,22 @@ export abstract class CourseController implements ICourseController {
         Log.info("CourseController::release( " + deliv.id + " ) - # deliv teams: " + delivTeams.length);
         const reposToRelease: Repository[] = [];
         for (const team of delivTeams) {
-            if (typeof team.custom.githubAttached === 'undefined' || team.custom.githubAttached === false) {
-                // if the team
-                const people: Person[] = [];
-                for (const pId of team.personIds) {
-                    people.push(await this.dbc.getPerson(pId));
+            try {
+                if (typeof team.custom.githubAttached === 'undefined' || team.custom.githubAttached === false) {
+                    // if the team
+                    const people: Person[] = [];
+                    for (const pId of team.personIds) {
+                        people.push(await this.dbc.getPerson(pId));
+                    }
+                    const names = await this.computeNames(deliv, people);
+                    const repo = await this.dbc.getRepository(names.repoName);
+                    reposToRelease.push(repo);
+                } else {
+                    Log.info("CourseController::release( " + deliv.id + " ) - skipping team: " + team.id + "; already attached");
                 }
-                const names = await this.computeNames(deliv, people);
-                const repo = await this.dbc.getRepository(names.repoName);
-                reposToRelease.push(repo);
-            } else {
-                Log.info("CourseController::release( " + deliv.id + " ) - skipping team: " + team.id + "; already attached");
+            } catch (err) {
+                Log.error("CourseController::release( .. ) - ERROR: " + err.message);
+                Log.exception(err);
             }
         }
 
