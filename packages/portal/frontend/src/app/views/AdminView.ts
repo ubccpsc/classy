@@ -10,6 +10,7 @@
  */
 
 import Log from "../../../../../common/Log";
+import {Factory} from "../Factory";
 
 import {UI} from "../util/UI";
 
@@ -208,5 +209,14 @@ export class AdminView implements IView {
         }).catch(function(err) {
             // blank
         });
+    }
+
+    public pushPage(pageName: string, opts: {}) {
+        Log.info("AdminView::pushPage( " + pageName + ", ... ) - start");
+        if (typeof opts !== 'object') {
+            opts = {};
+        }
+        const prefix = Factory.getInstance().getHTMLPrefix();
+        UI.pushPage(prefix + '/' + pageName, opts);
     }
 }

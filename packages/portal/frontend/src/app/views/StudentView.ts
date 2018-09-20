@@ -1,6 +1,7 @@
 import Log from "../../../../../common/Log";
 
 import {GradeTransport, RepositoryTransport, StudentTransport} from "../../../../../common/types/PortalTypes";
+import {Factory} from "../Factory";
 
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 import {UI} from "../util/UI";
@@ -216,6 +217,15 @@ export abstract class StudentView implements IView {
             }
         };
         return options;
+    }
+
+    public pushPage(pageName: string, opts: {}) {
+        Log.info("StudentView::pushPage( " + pageName + ", ... ) - start");
+        if (typeof opts !== 'object') {
+            opts = {};
+        }
+        const prefix = Factory.getInstance().getHTMLPrefix();
+        UI.pushPage(prefix + '/' + pageName, opts);
     }
 
 }
