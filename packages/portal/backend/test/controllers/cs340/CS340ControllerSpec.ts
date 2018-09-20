@@ -12,7 +12,7 @@ import {TeamController} from "../../../src/controllers/TeamController";
 import "../../GlobalSpec";
 import {Test} from "../../GlobalSpec";
 
-describe("CS340: CS340Controller", () => {
+describe.skip("CS340: CS340Controller", () => {
     let cc: CS340Controller = null;
     const pc: PersonController = new PersonController();
     const dc: DeliverablesController = new DeliverablesController();

@@ -84,7 +84,7 @@ export class AutoTestRoutes implements IREST {
                     res.send(200, payload);
                     return next(true);
                 } else {
-                    return AutoTestRoutes.handleError(400, 'Could not retrieve container details.', res, next);
+                    return AutoTestRoutes.handleError(400, 'Could not retrieve container details for delivId: ' + delivId, res, next);
                 }
             }).catch(function(err) {
                 return AutoTestRoutes.handleError(400, 'Could not retrieve container details.', res, next);
