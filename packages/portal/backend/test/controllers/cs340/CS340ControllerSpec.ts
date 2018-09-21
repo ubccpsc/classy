@@ -11,6 +11,7 @@ import {PersonController} from "../../../src/controllers/PersonController";
 import {TeamController} from "../../../src/controllers/TeamController";
 import "../../GlobalSpec";
 import {Test} from "../../GlobalSpec";
+import {CS340Test} from "./CS340Test";
 
 describe.only("CS340: CS340Controller", () => {
     let cc: CS340Controller = null;
@@ -29,10 +30,10 @@ describe.only("CS340: CS340Controller", () => {
 
         // get data ready
         await Test.prepareAll();
-        await Test.prepareAssignment();
-        await Test.prepareAssignment2();
-        await Test.prepareAssignmentTeam();
-        await Test.prepareAssignmentTeam2();
+        await CS340Test.prepareAssignment();
+        await CS340Test.prepareAssignment2();
+        await CS340Test.prepareAssignmentTeam();
+        await CS340Test.prepareAssignmentTeam2();
     });
 
     after(async () => {

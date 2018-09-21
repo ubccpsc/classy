@@ -6,6 +6,7 @@ import {ScheduleController, Task} from "../../src/controllers/ScheduleController
 import {Test} from "../GlobalSpec";
 // const loadFirst = require('../GlobalSpec');
 import '../GlobalSpec';
+import {CS340Test} from "./cs340/CS340Test";
 
 describe.only("ScheduleController", () => {
     // const TIMEOUT = 10000;
@@ -23,9 +24,9 @@ describe.only("ScheduleController", () => {
         await db.clearData();
 
         await Test.prepareAll();
-        await Test.prepareAssignment();
-        await Test.prepareAssignment2();
-        await Test.prepareAssignmentTeam2();
+        await CS340Test.prepareAssignment();
+        await CS340Test.prepareAssignment2();
+        await CS340Test.prepareAssignmentTeam2();
     });
 
     after(async () => {

@@ -9,6 +9,7 @@ import Log from "../../../../../common/Log";
 import {DatabaseController} from "../../../src/controllers/DatabaseController";
 import {PersonController} from "../../../src/controllers/PersonController";
 import BackendServer from "../../../src/server/BackendServer";
+import {CS340Test} from "../../controllers/cs340/CS340Test";
 import {Test} from "../../GlobalSpec";
 
 import '../../GlobalSpec';
@@ -46,10 +47,10 @@ describe.skip("CS340: Routes", () => {
 
         // get data ready
         await Test.prepareAll();
-        await Test.prepareAssignment();
-        await Test.prepareAssignment2();
-        await Test.prepareAssignmentTeam();
-        await Test.prepareAssignmentTeam2();
+        await CS340Test.prepareAssignment();
+        await CS340Test.prepareAssignment2();
+        await CS340Test.prepareAssignmentTeam();
+        await CS340Test.prepareAssignmentTeam2();
 
         Config.getInstance().setProp(ConfigKey.name, 'cs340');
         Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
