@@ -25,7 +25,9 @@ describe("GitHubController", () => {
 
     let gha: IGitHubActions;
 
-    before(async () => {
+    before(async function() {
+        this.timeout(Test.TIMEOUTLONG);
+
         Log.test("GitHubControllerSpec::before() - start; forcing testorg");
         // force testorg so real org does not get deleted or modified
         Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
@@ -33,15 +35,16 @@ describe("GitHubController", () => {
         await Test.suiteBefore('GitHubController');
 
         gha = GitHubActions.getInstance(true);
-
-        // clear stale data (removed; happens in suitebefore)
-        const dbc = DatabaseController.getInstance();
-        // await dbc.clearData();
+        await gha.deleteTeamByName(Test.TEAMNAME1);
+        await gha.deleteTeamByName(Test.TEAMNAME2);
+        await gha.deleteRepo(Test.REPONAME1);
+        await gha.deleteRepo(Test.REPONAME2);
 
         // get data ready
         await Test.prepareDeliverables();
 
         // redo with real github people
+        const dbc = DatabaseController.getInstance();
         const pc = new PersonController();
         let p = Test.createPerson(Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, 'student');
         await pc.writePerson(p);
@@ -72,16 +75,24 @@ describe("GitHubController", () => {
     });
 
     beforeEach(function() {
+        Log.test('GitHubController::BeforeEach - ***');
         Log.test('GitHubController::BeforeEach - "' + (this as any).currentTest.title + '"');
+        Log.test('GitHubController::BeforeEach - ***');
 
         const exec = Test.runSlowTest();
         if (exec === true) {
-            Log.test("GitHubController::beforeEach() - running in CI; not skipping");
+            Log.test("GitHubController::BeforeEach() - running in CI; not skipping");
             gc = new GitHubController(GitHubActions.getInstance(true));
         } else {
-            Log.test("GitHubController::beforeEach() - skipping (not CI)");
+            Log.test("GitHubController::BeforeEach() - skipping (not CI)");
             this.skip();
         }
+    });
+
+    afterEach(function() {
+        Log.test('GitHubController::AfterEach - ***');
+        Log.test('GitHubController::AfterEach - "' + (this as any).currentTest.title + '"');
+        Log.test('GitHubController::AfterEach - ***');
     });
 
     it("Should be able to clear out prior state", async function() {
