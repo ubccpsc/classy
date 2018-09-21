@@ -200,7 +200,8 @@ export class AutoTestRoutes implements IREST {
                 const success = await rc.createResult(result);
                 return success;
             } else {
-                Log.info('AutoTestRouteHandler::performPostResult(..) - not accepting new results for delivId: ' + result.delivId);
+                Log.info('AutoTestRouteHandler::performPostResult(..) - not accepting new results for delivId: ' + result.delivId +
+                    '; deadline: ' + new Date(deliv.closeTimestamp) + "; result ts: " + new Date(result.input.pushInfo.timestamp));
                 return false;
             }
         }

@@ -124,7 +124,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         // staff can override open/close
         const auth = await this.classPortal.isStaff(info.personId);
-        if (auth !== null || (auth.isAdmin !== true && auth.isStaff !== true)) {
+        if (auth !== null && (auth.isAdmin === true || auth.isStaff === true)) {
+            Log.trace("GitHubAutoTest::handleCommentEvent(..) - admin request; ignoring openTimestamp and closeTimestamp");
+        } else {
             if (deliv.openTimestamp > info.timestamp) {
                 Log.warn("GitHubAutoTest::handleCommentEvent(..) - ignored, deliverable not yet open to AutoTest.");
                 // not open yet
@@ -141,7 +143,6 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 return false;
             }
         }
-
         return true;
     }
 
@@ -177,17 +178,16 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         if (res !== null) {
             // previously processed
-            // STUDENT: need to guard this if they shouldn't be getting feeback yet
             Log.info("GitHubAutoTest::processComment(..) - result already exists; handling");
             await this.postToGitHub({url: info.postbackURL, message: res.output.report.feedback});
+            await this.saveCommentInfo(info);
             if (res.output.postbackOnComplete === false) {
                 Log.info("GitHubAutoTest::processComment(..) - result already exists; feedback request logged");
                 await this.saveFeedbackGiven(info.delivId, info.personId, info.timestamp, info.commitURL);
             } else {
-                // postbackOnComplete should only be true for lint / compile errors
+                // postbackOnComplete should only be true for lint / compile errors; don't saveFeedback (charge) for these
                 Log.info("GitHubAutoTest::processComment(..) - result already exists; feedback request skipped");
             }
-            await this.saveCommentInfo(info);
         } else {
             // not yet processed
             const onQueue = this.isOnQueue(info.commitURL, info.delivId);

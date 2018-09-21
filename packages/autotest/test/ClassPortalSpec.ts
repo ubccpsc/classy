@@ -236,9 +236,9 @@ describe("ClassPortal Service", () => {
     }
 
     it("Should be able to send a valid result.", async () => {
-
-        // function getResult(delivId: string, repoId: string, score:number) {
         const result = getResult('d0', 'TESTrepo1', 50);
+        // timestamp needs to be hardcoded to when the deliverable is open for new results
+        result.input.pushInfo.timestamp = new Date(Date.UTC(2017, 3, 1, 1, 1)).getTime();
         const actual = await cp.sendResult(result);
         Log.test("Actual: " + JSON.stringify(actual));
 
@@ -246,8 +246,6 @@ describe("ClassPortal Service", () => {
     });
 
     it("Should not be able to send an invalid result.", async () => {
-
-        // function getResult(delivId: string, repoId: string, score:number) {
         const result = getResult('d0', 'TESTrepo1', 50);
         delete result.delivId; // REQUIRED field
         const actual = await cp.sendResult(result);

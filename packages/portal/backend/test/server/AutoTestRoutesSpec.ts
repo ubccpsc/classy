@@ -133,21 +133,7 @@ describe('AutoTest Routes', function() {
 
         let response = null;
         const url = '/portal/at/result/';
-
-        // public static getResult(delivId: string, repoId: string, people: string[], score: number): Result {
         const body = Test.createResult(Test.DELIVID0, Test.REPONAME1, [Test.USER1.id], 50);
-        // const body = { // : IAutoTestResult
-        //     delivId:   Test.DELIVID0,
-        //     repoId:    Test.REPONAME1,
-        //     timestamp: 0,
-        //     commitURL: 'url',
-        //     commitSHA: 'sha',
-        //     input:     {
-        //         delivId:  Test.DELIVID0,
-        //         pushInfo: {} // should not be empty
-        //     },
-        //     output:    {}
-        // }; // TODO: this should send a real result
 
         try {
             response = await request(app).post(url).send(body).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
@@ -157,7 +143,6 @@ describe('AutoTest Routes', function() {
         Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(200);
         expect(response.body.success).to.not.be.undefined;
-        // expect(response.body.success).to.equal(true);
     }).timeout(TIMEOUT);
 
     it('Should reject an invalid result payload', async function() {
