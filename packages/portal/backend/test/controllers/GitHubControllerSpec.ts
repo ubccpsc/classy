@@ -220,7 +220,7 @@ describe("GitHubController", () => {
 
     }).timeout(Test.TIMEOUTLONG);
 
-    it.skip("Should be able to create a repo with a custom path.", async function() {
+    it("Should be able to create a repo with a custom path.", async function() {
         // NOTE: this test is unreliable and needs to be fundamentally fixed
         this.skip();
 
