@@ -1,6 +1,8 @@
 <ons-page id="adminDelete.html">
     <ons-toolbar>
-        <div class="left"><ons-back-button>Admin</ons-back-button></div>
+        <div class="left">
+            <ons-back-button>Admin</ons-back-button>
+        </div>
         <div class="center">Delete Objects: DANGER!</div>
         <div id='indexLogin' class="right">
             <ons-toolbar-button onclick="myApp.logout();">
@@ -10,6 +12,51 @@
         </div>
     </ons-toolbar>
     <ons-list>
-        <div>content</div>
+        <ons-list-header>EULA</ons-list-header>
+        <ons-list-item>Note: These are all unrecoverable actions. Like seriously. Don't screw up.</ons-list-item>
+        <ons-list-header>Delete Deliverable</ons-list-header>
+        <ons-list-item expandable>
+            <div class="left settingIcon">
+                <ons-icon icon="fa-cogs"></ons-icon>
+            </div>
+            <div class="center">
+                Deliverable Name:
+                <ons-input class="settingTextInput" style="margin-right: 1em" id="adminDeleteDeliverableText"></ons-input>
+                <ons-button id="adminDeleteDeliverableButton" modifier="medium">Delete Deliverable</ons-button>
+            </div>
+            <div class="expandable-content">
+                NOT WIRED UP. More warnings
+            </div>
+        </ons-list-item>
+
+        <ons-list-header>Delete Team</ons-list-header>
+        <ons-list-item expandable>
+            <div class="left settingIcon">
+                <ons-icon icon="fa-cogs"></ons-icon>
+            </div>
+            <div class="center">
+                Team Name:
+                <ons-input class="settingTextInput" style="margin-right: 1em" id="adminDeleteTeamText"></ons-input>
+                <ons-button id="adminDeleteTeamButton" modifier="medium">Delete Team</ons-button>
+            </div>
+            <div class="expandable-content">
+                NOT WIRED UP. More warnings
+            </div>
+        </ons-list-item>
+
+        <ons-list-header>Delete Repository</ons-list-header>
+        <ons-list-item expandable>
+            <div class="left settingIcon">
+                <ons-icon icon="fa-cogs"></ons-icon>
+            </div>
+            <div class="center">
+                Repository Name:
+                <ons-input class="settingTextInput" style="margin-right: 1em" id="adminDeleteRepositoryText"></ons-input>
+                <ons-button id="adminDeleteRepositoryButton" modifier="medium">Delete Repository</ons-button>
+            </div>
+            <div class="expandable-content">
+                NOT WIRED UP. More warnings
+            </div>
+        </ons-list-item>
     </ons-list>
 </ons-page>

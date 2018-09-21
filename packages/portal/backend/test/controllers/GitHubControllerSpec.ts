@@ -221,7 +221,9 @@ describe("GitHubController", () => {
     }).timeout(Test.TIMEOUTLONG);
 
     it("Should be able to create a repo with a custom path.", async function() {
+        Log.test("Custom setup start");
         // setup
+        await gha.deleteTeamByName(Test.TEAMNAME1); // delete team
         await Test.prepareTeams();
         await Test.prepareRepositories();
         // await Test.deleteStaleRepositories();
@@ -230,9 +232,11 @@ describe("GitHubController", () => {
 
         await gha.deleteRepo(repo.id); // delete repo from github
         await gha.deleteRepo(Test.REPONAME2); // delete repo from github
+        Log.test("Custom setup done");
 
         const importURL = 'https://github.com/SECapstone/capstone';
         const success = await gc.createRepository(repo.id, importURL, "AutoTest.md");
+        Log.test("Custom test done: " + success);
         expect(success).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
 
