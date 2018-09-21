@@ -15,8 +15,6 @@ import {Repository, Team} from "../../src/Types";
 import {Test} from "../GlobalSpec";
 import '../GlobalSpec';
 import './TeamControllerSpec';
-// const loadFirst = require('../GlobalSpec');
-// const rFirst = require('./TeamControllerSpec');
 
 describe("GitHubController", () => {
     // TODO: investigate skipping this way: https://stackoverflow.com/a/41908943 (and turning them on/off with an env flag)
@@ -87,24 +85,15 @@ describe("GitHubController", () => {
     });
 
     it("Should be able to clear out prior state", async function() {
-        // not really a test, we just want something to run first we can set timeout on
+        // not really a test, we just want something to run first we can set timeout on (cannot add timeout to before)
         Log.test("Clearing prior state");
         try {
             await gha.deleteRepo(Test.REPONAME1);
             await gha.deleteRepo(Test.REPONAME2);
             await gha.deleteRepo(Test.REPONAME3);
-            let teamNum = await gha.getTeamNumber(Test.TEAMNAME1);
-            if (teamNum > 0) {
-                await gha.deleteTeam(teamNum);
-            }
-            teamNum = await gha.getTeamNumber(Test.TEAMNAME2);
-            if (teamNum > 0) {
-                await gha.deleteTeam(teamNum);
-            }
-            teamNum = await gha.getTeamNumber(Test.TEAMNAME3);
-            if (teamNum > 0) {
-                await gha.deleteTeam(teamNum);
-            }
+            await gha.deleteTeamByName(Test.TEAMNAME1);
+            await gha.deleteTeamByName(Test.TEAMNAME2);
+            await gha.deleteTeamByName(Test.TEAMNAME3);
         } catch (err) {
             Log.test("Could not clear state: " + err);
         }
