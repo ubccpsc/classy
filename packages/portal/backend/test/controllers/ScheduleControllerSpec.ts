@@ -8,7 +8,7 @@ import {Test} from "../GlobalSpec";
 import '../GlobalSpec';
 import {CS340Test} from "./cs340/CS340Test";
 
-describe.only("ScheduleController", () => {
+describe("ScheduleController", () => {
     // const TIMEOUT = 10000;
 
     const sc: ScheduleController = ScheduleController.getInstance();

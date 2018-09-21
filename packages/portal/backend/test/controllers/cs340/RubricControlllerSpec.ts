@@ -17,14 +17,9 @@ import {Deliverable} from "../../../src/Types";
 import {Test} from "../../GlobalSpec";
 import {CS340Test} from "./CS340Test";
 
-const TIMEOUT = 7500;
-
-const DELAY_SEC = 1000;
-const DELAY_SHORT = 200;
-
 const ORIGINAL_ORG = Config.getInstance().getProp(ConfigKey.org);
 
-describe.only("CS340: RubricController", () => {
+describe("CS340: RubricController", () => {
     const ac: AssignmentController = new AssignmentController();
     const gc: GradesController = new GradesController();
     const tc: TeamController = new TeamController();

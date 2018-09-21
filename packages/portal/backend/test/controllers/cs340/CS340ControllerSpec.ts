@@ -13,7 +13,7 @@ import "../../GlobalSpec";
 import {Test} from "../../GlobalSpec";
 import {CS340Test} from "./CS340Test";
 
-describe.only("CS340: CS340Controller", () => {
+describe("CS340: CS340Controller", () => {
     let cc: CS340Controller = null;
     const pc: PersonController = new PersonController();
     const dc: DeliverablesController = new DeliverablesController();

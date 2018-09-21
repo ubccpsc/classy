@@ -4,7 +4,6 @@ import "mocha";
 import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {IContainerInput, IContainerOutput} from "../../../common/types/AutoTestTypes";
-import {AssignmentGradingRubric, AssignmentInfo, AssignmentStatus} from "../../../common/types/CS340Types";
 import {GradePayload} from "../../../common/types/SDMMTypes";
 import Util from "../../../common/Util";
 
@@ -360,11 +359,6 @@ export class Test {
         };
         return p;
     }
-
-
-    // public static testBefore() {
-    //     // Log.test('Test::testBefore( ... ) - test: ' + testObj.currentTest.title);
-    // }
 
     /**
      * Determines whether slow tests should be executed. They will _always_ run on CI, but
