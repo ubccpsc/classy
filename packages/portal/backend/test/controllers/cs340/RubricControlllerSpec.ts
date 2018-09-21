@@ -23,7 +23,7 @@ const DELAY_SHORT = 200;
 
 const ORIGINAL_ORG = Config.getInstance().getProp(ConfigKey.org);
 
-describe.skip("CS340: RubricController", () => {
+describe.only("CS340: RubricController", () => {
     const ac: AssignmentController = new AssignmentController();
     const gc: GradesController = new GradesController();
     const tc: TeamController = new TeamController();

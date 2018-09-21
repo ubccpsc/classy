@@ -7,8 +7,8 @@ import {Test} from "../GlobalSpec";
 // const loadFirst = require('../GlobalSpec');
 import '../GlobalSpec';
 
-describe("ScheduleController", () => {
-    const TIMEOUT = 10000;
+describe.only("ScheduleController", () => {
+    // const TIMEOUT = 10000;
 
     const sc: ScheduleController = ScheduleController.getInstance();
 

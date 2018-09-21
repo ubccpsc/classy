@@ -20,9 +20,6 @@ import {Test} from "../../GlobalSpec";
 import '../../GlobalSpec';
 import '../GradeControllerSpec';
 
-// const loadFirst = require('../../GlobalSpec');
-// const dFirst = require('../GradeControllerSpec');
-
 const TEST_ORG = "CPSC340";
 const TEST_STUDENT_ID_0 = "student0";
 const TEST_STUDENT_ID_1 = "student1";
@@ -38,7 +35,7 @@ const TEST_STUDENT_MAP = [
 
 const ORIGINAL_ORG = Config.getInstance().getProp(ConfigKey.org);
 
-describe.skip("CS340: AssignmentController", () => {
+describe.only("CS340: AssignmentController", () => {
     let ac: AssignmentController = new AssignmentController();
     const gc: GradesController = new GradesController();
     const tc: TeamController = new TeamController();

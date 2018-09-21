@@ -878,20 +878,21 @@ export class Test {
             for (const team of teams) {
                 // Log.info('Evaluating team: ' + JSON.stringify(team));
                 let done = false;
-                for (const t of TESTTEAMNAMES) {
-                    if (team.teamName === t ||
-                        team.teamName.startsWith(Test.ASSIGNID0 + "_")
-                    ) {
-                        Log.test("Removing stale team: " + team.teamName);
-                        const val = await gh.deleteTeam(team.teamNumber);
-                        await Util.delay(DELAY_SHORT);
-                        done = true;
-                    }
+                // for (const t of TESTTEAMNAMES) {
+                //     if (team.teamName === t ||
+                if (team.teamName.startsWith(Test.ASSIGNID0 + "_")) {
+                    Log.test("Removing stale team: " + team.teamName);
+                    // const val = await gh.deleteTeam(team.teamNumber);
+                    await gh.deleteTeamByName(team.teamName);
+                    await Util.delay(DELAY_SHORT);
+                    done = true;
                 }
+                // }
                 if (done === false) {
                     if (team.teamName.startsWith(TEAMNAME) === true) {
                         Log.test("Removing stale team: " + team.teamName);
-                        await gh.deleteTeam(team.teamNumber);
+                        // await gh.deleteTeam(team.teamNumber);
+                        await gh.deleteTeamByName(team.teamName);
                         await Util.delay(DELAY_SHORT);
                     }
                 }

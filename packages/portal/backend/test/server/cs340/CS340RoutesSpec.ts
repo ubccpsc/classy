@@ -21,7 +21,7 @@ const REPONAME = getProjectPrefix() + Test.ASSIGNID0;
 const adminUserName = Test.ADMIN1.id;
 let adminUserToken: string;
 
-describe.skip("CS340: Routes", () => {
+describe.only("CS340: Routes", () => {
     let app: restify.Server = null;
     let server: BackendServer = null;
 
@@ -31,8 +31,9 @@ describe.skip("CS340: Routes", () => {
 
     let numberOfStudents: number;
 
-    before(async () => {
+    before(async function() {
         Log.test("CS340Routes::before - start");
+        this.timeout(Test.TIMEOUTLONG);
 
         // set testing env
         Config.getInstance().setProp(ConfigKey.name, ConfigCourses.classytest); // force testing env
@@ -69,6 +70,8 @@ describe.skip("CS340: Routes", () => {
         // make sure there are some normal student tokens
         await db.writeAuth({personId: Test.USER1.id, token: Test.REALTOKEN}); // create an auth record
 
+        await Test.deleteStaleRepositories();
+
         return server.start().then(function() {
             Log.test('CS340Routes::before - server started');
             // Log.test('orgName: ' + Test.ORGNAME);
@@ -82,22 +85,24 @@ describe.skip("CS340: Routes", () => {
 
     after(async function() {
         Log.test('CS340Routes::after - start');
+        this.timeout(Test.TIMEOUTLONG);
 
         Config.getInstance().setProp(ConfigKey.name, OLDNAME);
         Config.getInstance().setProp(ConfigKey.org, OLDORG);
 
         await server.stop();
         await Test.suiteAfter('CS340Routes');
+        await Test.deleteStaleRepositories();
     });
 
     beforeEach(async function() {
         Log.test("Start");
     });
 
-    it("Clean up stale repos.", async function() {
-        Log.test("Cleaning up stale repositories...");
-        await Test.deleteStaleRepositories();
-    }).timeout(Test.TIMEOUTLONG);
+    // it("Clean up stale repos.", async function() {
+    //     Log.test("Cleaning up stale repositories...");
+    //     await Test.deleteStaleRepositories();
+    // }).timeout(Test.TIMEOUTLONG);
 
     it("Should be able to get all deliverables.", async function() {
         let response = null;
@@ -649,10 +654,10 @@ describe.skip("CS340: Routes", () => {
         expect(response.body.response).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
 
-    it("Clean up stale repos.", async function() {
-        Log.test("Cleaning up stale repositories...");
-        await Test.deleteStaleRepositories();
-    }).timeout(Test.TIMEOUTLONG);
+    // it("Clean up stale repos.", async function() {
+    //     Log.test("Cleaning up stale repositories...");
+    //     await Test.deleteStaleRepositories();
+    // }).timeout(Test.TIMEOUTLONG);
 
     it("Should be able to publish final grades of all students using the API.", async function() {
         let response = null;
