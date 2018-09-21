@@ -21,11 +21,12 @@
             </div>
             <div class="center">
                 Deliverable Name:
-                <ons-input class="settingTextInput" style="margin-right: 1em" id="adminDeleteDeliverableText"></ons-input>
+                <ons-input class="settingTextInput" style="margin-right: 1em; margin-left: 1em;"
+                           id="adminDeleteDeliverableText"></ons-input>
                 <ons-button id="adminDeleteDeliverableButton" modifier="medium">Delete Deliverable</ons-button>
             </div>
             <div class="expandable-content">
-                NOT WIRED UP. More warnings
+                NOT WIRED UP. Will delete local object. Will not delete grades or results associated with deliverable.
             </div>
         </ons-list-item>
 
@@ -36,11 +37,12 @@
             </div>
             <div class="center">
                 Team Name:
-                <ons-input class="settingTextInput" style="margin-right: 1em" id="adminDeleteTeamText"></ons-input>
+                <ons-input class="settingTextInput" style="margin-right: 1em; margin-left: 1em;" id="adminDeleteTeamText"></ons-input>
                 <ons-button id="adminDeleteTeamButton" modifier="medium">Delete Team</ons-button>
             </div>
             <div class="expandable-content">
-                NOT WIRED UP. More warnings
+                NOT WIRED UP. Will delete team object and associated GitHub team, if it exists. Will not delete grades or results associated
+                with the team.
             </div>
         </ons-list-item>
 
@@ -51,11 +53,12 @@
             </div>
             <div class="center">
                 Repository Name:
-                <ons-input class="settingTextInput" style="margin-right: 1em" id="adminDeleteRepositoryText"></ons-input>
+                <ons-input class="settingTextInput" style="margin-right: 1em; margin-left: 1em;" id="adminDeleteRepositoryText"></ons-input>
                 <ons-button id="adminDeleteRepositoryButton" modifier="medium">Delete Repository</ons-button>
             </div>
             <div class="expandable-content">
-                NOT WIRED UP. More warnings
+                NOT WIRED UP. Will delete repository object and associated GitHub repository, if it exists. Will not delete grades or
+                results associated with the repository.
             </div>
         </ons-list-item>
     </ons-list>
