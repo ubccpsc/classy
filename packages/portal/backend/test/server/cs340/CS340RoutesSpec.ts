@@ -21,7 +21,7 @@ const REPONAME = getProjectPrefix() + Test.ASSIGNID0;
 const adminUserName = Test.ADMIN1.id;
 let adminUserToken: string;
 
-describe.only("CS340: Routes", () => {
+describe.skip("CS340: Routes", () => {
     let app: restify.Server = null;
     let server: BackendServer = null;
 
