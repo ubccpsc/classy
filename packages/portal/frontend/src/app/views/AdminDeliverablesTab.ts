@@ -79,7 +79,11 @@ export class AdminDeliverablesTab extends AdminPage {
             elem.setAttribute('delivId', deliv.id);
             elem.onclick = function(evt: any) {
                 const delivId = evt.currentTarget.getAttribute('delivId');
-                UI.pushPage('editDeliverable.html', {delivId: delivId});
+                UI.pushPage('editDeliverable.html', {delivId: delivId}).then(function() {
+                    // success
+                }).catch(function(err) {
+                    Log.error("UI::pushPage(..) - ERROR: " + err.message);
+                });
             };
             deliverableList.appendChild(elem);
         }
@@ -93,7 +97,11 @@ export class AdminDeliverablesTab extends AdminPage {
         createDeliverable.innerText = 'Create New Deliverable';
 
         createDeliverable.onclick = function() {
-            UI.pushPage('editDeliverable.html', {delivId: null});
+            UI.pushPage('editDeliverable.html', {delivId: null}).then(function() {
+                // success
+            }).catch(function(err) {
+                Log.error("UI::pushPage(..) - ERROR: " + err.message);
+            });
         };
 
         const li = document.createElement('ons-list-item');

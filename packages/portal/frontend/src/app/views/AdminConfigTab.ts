@@ -96,7 +96,11 @@ export class AdminConfigTab extends AdminPage {
 
             that.pushPage('adminDelete.html', {}).then(function() {
                 const deletePage = new AdminDeletePage(that.remote);
-                deletePage.init({});
+                deletePage.init({}).then(function() {
+                    // success
+                }).catch(function(err) {
+                    // error
+                });
             }).catch(function(err) {
                 Log.error("AdminConfigTab - adminDelete ERROR: " + err.message);
             });

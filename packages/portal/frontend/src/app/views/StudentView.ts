@@ -225,7 +225,11 @@ export abstract class StudentView implements IView {
             opts = {};
         }
         const prefix = Factory.getInstance().getHTMLPrefix();
-        UI.pushPage(prefix + '/' + pageName, opts);
+        UI.pushPage(prefix + '/' + pageName, opts).then(function() {
+            // success
+        }).catch(function(err) {
+            Log.error("UI::pushPage(..) - ERROR: " + err.message);
+        });
     }
 
 }
