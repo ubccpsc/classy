@@ -64,9 +64,14 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
             if (delivId !== null) {
                 const containerConfig = await this.getContainerConfig(delivId);
-                const input: IContainerInput = {delivId, pushInfo: info, containerConfig: containerConfig};
-                this.addToStandardQueue(input);
-                this.tick();
+                if (containerConfig !== null) {
+                    const input: IContainerInput = {delivId, pushInfo: info, containerConfig: containerConfig};
+                    this.addToStandardQueue(input);
+                    this.tick();
+                } else {
+                    Log.warn("GitHubAutoTest::handlePushEvent(..) - commit: " + info.commitSHA +
+                        " - No container info for delivId: " + delivId + "; push ignored.");
+                }
             } else {
                 // no active deliverable, ignore this push event (don't push an error either)
                 Log.warn("GitHubAutoTest::handlePushEvent(..) - commit: " + info.commitSHA + " - No active deliverable; push ignored.");
@@ -119,7 +124,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         // staff can override open/close
         const auth = await this.classPortal.isStaff(info.personId);
-        if (auth !== null || (auth.isAdmin !== true && auth.isStaff !== true)) {
+        if (auth !== null && (auth.isAdmin === true || auth.isStaff === true)) {
+            Log.trace("GitHubAutoTest::handleCommentEvent(..) - admin request; ignoring openTimestamp and closeTimestamp");
+        } else {
             if (deliv.openTimestamp > info.timestamp) {
                 Log.warn("GitHubAutoTest::handleCommentEvent(..) - ignored, deliverable not yet open to AutoTest.");
                 // not open yet
@@ -136,7 +143,6 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 return false;
             }
         }
-
         return true;
     }
 
@@ -155,10 +161,15 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     protected async schedule(info: CommitTarget): Promise<void> {
         Log.info("GitHubAutoTest::schedule(..) - scheduling for: " + info.commitURL);
         const containerConfig = await this.getContainerConfig(info.delivId);
-        const input: IContainerInput = {delivId: info.delivId, pushInfo: info, containerConfig: containerConfig};
-        this.addToStandardQueue(input);
-        this.tick();
-        Log.info("GitHubAutoTest::schedule(..) - scheduling completed for: " + info.commitURL);
+        if (containerConfig !== null) {
+            const input: IContainerInput = {delivId: info.delivId, pushInfo: info, containerConfig: containerConfig};
+            this.addToStandardQueue(input);
+            this.tick();
+            Log.info("GitHubAutoTest::schedule(..) - scheduling completed for: " + info.commitURL);
+        } else {
+            Log.info("GitHubAutoTest::schedule(..) - scheduling skipped for: " + info.commitURL +
+                "; no container configuration for: " + info.delivId);
+        }
     }
 
     protected async processComment(info: CommitTarget, res: AutoTestResultTransport): Promise<void> {
@@ -167,17 +178,16 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         if (res !== null) {
             // previously processed
-            // STUDENT: need to guard this if they shouldn't be getting feeback yet
             Log.info("GitHubAutoTest::processComment(..) - result already exists; handling");
             await this.postToGitHub({url: info.postbackURL, message: res.output.report.feedback});
+            await this.saveCommentInfo(info);
             if (res.output.postbackOnComplete === false) {
                 Log.info("GitHubAutoTest::processComment(..) - result already exists; feedback request logged");
                 await this.saveFeedbackGiven(info.delivId, info.personId, info.timestamp, info.commitURL);
             } else {
-                // postbackOnComplete should only be true for lint / compile errors
+                // postbackOnComplete should only be true for lint / compile errors; don't saveFeedback (charge) for these
                 Log.info("GitHubAutoTest::processComment(..) - result already exists; feedback request skipped");
             }
-            await this.saveCommentInfo(info);
         } else {
             // not yet processed
             const onQueue = this.isOnQueue(info.commitURL, info.delivId);

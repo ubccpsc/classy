@@ -65,11 +65,11 @@ describe("SDMM: SDMMController", () => {
 
     let data: TestData;
 
-    // let OLD_ORG: string | null = null;
-
     let ghInstance: IGitHubController;
-    before(async () => {
+
+    before(async function() {
         await Test.suiteBefore('SDMMController');
+        this.timeout(Test.TIMEOUTLONG);
 
         // only bootstrap the database with deliverables
         await Test.prepareDeliverables();
@@ -101,13 +101,74 @@ describe("SDMM: SDMMController", () => {
         await sc.handleUnknownUser(data.PERSON2.githubId); // provision user
         await sc.handleUnknownUser(data.PERSON3.githubId); // provision user
         await sc.handleUnknownUser(data.PERSON4.githubId); // provision user
+
+        Log.test("Clearing state");
+        gha = GitHubActions.getInstance(true);
+
+        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB1);
+        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB2);
+        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB3);
+        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB4);
+
+        const teams = ['TEST__X__t_' + Test.USERNAMEGITHUB1,
+            'TEST__X__t_' + Test.USERNAMEGITHUB2,
+            'TEST__X__t_' + Test.USERNAMEGITHUB3,
+            'TEST__X__t_' + Test.USERNAMEGITHUB4];
+
+        for (const tName of teams) {
+            // const teamNum = await gha.getTeamNumber(tName);
+            // if (teamNum > 0) {
+            //     await gha.deleteTeam(teamNum);
+            // }
+            await gha.deleteTeamByName(tName);
+        }
+        Log.test("State cleared");
     });
 
-    after(async () => {
+    after(async function() {
+        this.timeout(Test.TIMEOUTLONG);
+
         Test.suiteAfter('SDMMController');
         // Force SDMM tests to run in an SDMM org
         Log.test("SDMMControllerSpec::after()");
         // Config.getInstance().setProp(ConfigKey.org, OLD_ORG);
+
+        Log.test("Clearing state");
+        const dataC = DatabaseController.getInstance();
+
+        const repos = await dataC.getRepositories();
+        for (const repo of repos) {
+            if (repo.id.startsWith('TEST__X__p_')) {
+                await gha.deleteRepo(repo.id);
+            }
+        }
+
+        const teams = await dataC.getTeams();
+        for (const team of teams) {
+            const teamNum = await gha.getTeamNumber(team.id);
+            if (teamNum > 0 && team.id.startsWith('TEST__X__t_')) {
+                await gha.deleteTeam(teamNum);
+            }
+        }
+
+        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB1);
+        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB2);
+        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB3);
+        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB4);
+
+        const teamNames = ['TEST__X__t_' + Test.USERNAMEGITHUB1,
+            'TEST__X__t_' + Test.USERNAMEGITHUB2,
+            'TEST__X__t_' + Test.USERNAMEGITHUB3,
+            'TEST__X__t_' + Test.USERNAMEGITHUB4];
+
+        for (const tName of teamNames) {
+            // const teamNum = await gha.getTeamNumber(tName);
+            // if (teamNum > 0) {
+            //     await gha.deleteTeam(teamNum);
+            // }
+            await gha.deleteTeamByName(tName);
+        }
+        Log.test("State cleared");
     });
 
     beforeEach(() => {
@@ -121,28 +182,6 @@ describe("SDMM: SDMMController", () => {
         dba = DatabaseController.getInstance();
         gha = GitHubActions.getInstance(true);
     });
-
-    it("Should be able to clear stale state", async function() {
-        Log.test("Clearing state");
-
-        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB1);
-        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB2);
-        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB3);
-        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB4);
-
-        const teams = ['TEST__X__t_' + Test.USERNAMEGITHUB1,
-            'TEST__X__t_' + Test.USERNAMEGITHUB2,
-            'TEST__X__t_' + Test.USERNAMEGITHUB3,
-            'TEST__X__t_' + Test.USERNAMEGITHUB4];
-
-        for (const tName of teams) {
-            const teamNum = await gha.getTeamNumber(tName);
-            if (teamNum > 0) {
-                await gha.deleteTeam(teamNum);
-            }
-        }
-        Log.test("State cleared");
-    }).timeout(Test.TIMEOUTLONG);
 
     it("Should not be able to get a status for an invalid user.", async () => {
         let status = null;
@@ -733,43 +772,5 @@ describe("SDMM: SDMMController", () => {
         save = await sc.handleNewAutoTestGrade(deliv, grade, existingGrade);
         expect(save).to.be.true;
     }).timeout(Test.TIMEOUT);
-
-    it("Should be able to clear state after suite is done.", async function() {
-        Log.test("Clearing state");
-        const dataC = DatabaseController.getInstance();
-
-        const repos = await dataC.getRepositories();
-        for (const repo of repos) {
-            if (repo.id.startsWith('TEST__X__p_')) {
-                await gha.deleteRepo(repo.id);
-            }
-        }
-
-        const teams = await dataC.getTeams();
-        for (const team of teams) {
-            const teamNum = await gha.getTeamNumber(team.id);
-            if (teamNum > 0 && team.id.startsWith('TEST__X__t_')) {
-                await gha.deleteTeam(teamNum);
-            }
-        }
-
-        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB1);
-        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB2);
-        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB3);
-        await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB4);
-
-        const teamNames = ['TEST__X__t_' + Test.USERNAMEGITHUB1,
-            'TEST__X__t_' + Test.USERNAMEGITHUB2,
-            'TEST__X__t_' + Test.USERNAMEGITHUB3,
-            'TEST__X__t_' + Test.USERNAMEGITHUB4];
-
-        for (const tName of teamNames) {
-            const teamNum = await gha.getTeamNumber(tName);
-            if (teamNum > 0) {
-                await gha.deleteTeam(teamNum);
-            }
-        }
-        Log.test("State cleared");
-    }).timeout(Test.TIMEOUTLONG);
 
 });

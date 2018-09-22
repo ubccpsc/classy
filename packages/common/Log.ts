@@ -69,6 +69,10 @@ export default class Log {
         }
     }
 
+    public static exception(err: Error): void {
+        console.error(`<E> ${new Date().toLocaleString()}: `, err);
+    }
+
     public static test(msg: string): void {
         if (Log.Level <= LogLevel.TEST) {
             console.log(`<X> ${new Date().toLocaleString()}: ${msg}`);

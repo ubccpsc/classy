@@ -15,11 +15,7 @@ import {RepositoryController} from "../../../src/controllers/RepositoryControlle
 import {TeamController} from "../../../src/controllers/TeamController";
 import {Deliverable} from "../../../src/Types";
 import {Test} from "../../GlobalSpec";
-
-const TIMEOUT = 7500;
-
-const DELAY_SEC = 1000;
-const DELAY_SHORT = 200;
+import {CS340Test} from "./CS340Test";
 
 const ORIGINAL_ORG = Config.getInstance().getProp(ConfigKey.org);
 
@@ -51,8 +47,8 @@ describe("CS340: RubricController", () => {
         gha = GitHubActions.getInstance();
 
         // create assignment Deliverables
-        await Test.prepareAssignment();
-        await Test.prepareAssignment2();
+        await CS340Test.prepareAssignment();
+        await CS340Test.prepareAssignment2();
 
         // Log.info("Successfully created new Assignment Deliverable for testing");
     });

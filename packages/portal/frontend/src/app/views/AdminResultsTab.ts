@@ -29,13 +29,20 @@ export class AdminResultsTab {
     public async init(opts: any): Promise<void> {
         Log.info('AdminResultsTab::init(..) - start');
         const that = this;
+
         // NOTE: this could consider if studentListTable has children, and if they do, don't refresh
         document.getElementById('resultsListTable').innerHTML = ''; // clear target
 
         UI.showModal('Retrieving results.');
+        const course = await AdminView.getCourse(this.remote);
+        if (this.delivValue === null) {
+            this.delivValue = course.defaultDeliverableId;
+            // ugly way to set the default the first time the page is rendered
+            UI.setDropdownOptions('resultsDelivSelect', [this.delivValue], this.delivValue);
+        }
         const delivs = await AdminDeliverablesTab.getDeliverables(this.remote); // for select
         const repos = await AdminResultsTab.getRepositories(this.remote); // for select
-        const results = await this.performQueries(); // AdminResultsTab.getResults(this.remote);
+        const results = await this.performQueries();
         UI.hideModal();
 
         const fab = document.querySelector('#resultsUpdateButton') as OnsButtonElement;
@@ -62,12 +69,15 @@ export class AdminResultsTab {
         if (repo === '-Any-') {
             repo = 'any';
         }
+
         this.delivValue = deliv;
         this.repoValue = repo;
-        return await AdminResultsTab.getResults(this.remote, deliv, repo);
+        return await AdminResultsTab.getResults(this.remote, this.delivValue, this.repoValue);
     }
 
-    private render(delivs: DeliverableTransport[], repos: RepositoryTransport[], results: AutoTestResultSummaryTransport[]): void {
+    private render(delivs: DeliverableTransport[],
+                   repos: RepositoryTransport[],
+                   results: AutoTestResultSummaryTransport[]): void {
         Log.trace("AdminResultsTab::render(..) - start");
 
         let delivNames: string[] = [];

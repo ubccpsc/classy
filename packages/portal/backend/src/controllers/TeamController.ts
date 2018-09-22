@@ -58,23 +58,21 @@ export class TeamController {
     public async formTeam(teamId: string, deliv: Deliverable, people: Person[], adminOverride: boolean): Promise<Team | null> {
         Log.info("TeamController::formTeam( ... ) - start");
 
-        // const dbc = new DeliverablesController();
-        // const pc = new PersonController();
-
         // sanity checking
         if (deliv === null) {
             throw new Error("Team not created; deliverable does not exist.");
         }
-        if (deliv.teamStudentsForm === false || adminOverride) {
+        if (deliv.teamStudentsForm === false && !adminOverride) {
             throw new Error("Team not created; students cannot form their own teams for this deliverable.");
         }
+
         if (people.indexOf(null) >= 0) {
             throw new Error("Team not created; some students not members of the course.");
         }
-        if (people.length > deliv.teamMaxSize || adminOverride) {
+        if (people.length > deliv.teamMaxSize && !adminOverride) {
             throw new Error("Team not created; too many team members specified for this deliverable.");
         }
-        if (people.length < deliv.teamMinSize || adminOverride) {
+        if (people.length < deliv.teamMinSize && !adminOverride) {
             throw new Error("Team not created; too few team members specified for this deliverable.");
         }
 

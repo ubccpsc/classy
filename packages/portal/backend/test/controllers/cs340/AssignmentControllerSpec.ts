@@ -19,9 +19,7 @@ import {Deliverable, Grade, Repository, Team} from "../../../src/Types";
 import {Test} from "../../GlobalSpec";
 import '../../GlobalSpec';
 import '../GradeControllerSpec';
-
-// const loadFirst = require('../../GlobalSpec');
-// const dFirst = require('../GradeControllerSpec');
+import {CS340Test} from "./CS340Test";
 
 const TEST_ORG = "CPSC340";
 const TEST_STUDENT_ID_0 = "student0";
@@ -38,7 +36,7 @@ const TEST_STUDENT_MAP = [
 
 const ORIGINAL_ORG = Config.getInstance().getProp(ConfigKey.org);
 
-describe("CS340: AssignmentController", () => {
+describe.skip("CS340: AssignmentController", () => {
     let ac: AssignmentController = new AssignmentController();
     const gc: GradesController = new GradesController();
     const tc: TeamController = new TeamController();
@@ -66,8 +64,8 @@ describe("CS340: AssignmentController", () => {
         numberOfStudents = peopleList.length;
 
         // create assignment Deliverables
-        await Test.prepareAssignment();
-        await Test.prepareAssignmentTeam();
+        await CS340Test.prepareAssignment();
+        await CS340Test.prepareAssignmentTeam();
 
         // Log.info("Successfully created new Assignment Deliverable for testing");
         it("Clean stale repositories", async function() {
@@ -755,8 +753,8 @@ async function resetData() {
 
     await Test.preparePeople();
     await Test.prepareAuth();
-    await Test.prepareAssignment();
-    await Test.prepareAssignment2();
+    await CS340Test.prepareAssignment();
+    await CS340Test.prepareAssignment2();
 }
 
 function getProjectPrefix(): string {

@@ -185,7 +185,7 @@ export class ClassPortal implements IClassPortal {
             if (typeof json.success !== 'undefined') {
                 return json.success;
             } else {
-                Log.error("ClassPortal::getContainerId(..) - ERROR: " + JSON.stringify(json));
+                Log.warn("ClassPortal::getContainerId(..) - ERROR: " + JSON.stringify(json));
                 return null;
             }
         } catch (err) {

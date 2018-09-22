@@ -586,12 +586,18 @@ export abstract class CourseController implements ICourseController {
 
         const delivTeams: Team[] = [];
         for (const team of allTeams) {
-            if (team.delivId === deliv.id) {
-                Log.trace("adding team: " + team.id + " to delivTeams");
-                delivTeams.push(team);
+            if (team === null || deliv === null || team.id === null || deliv.id === null) {
+                // seeing this during 310 provisioning, need to figure this out
+                Log.error("CourseController::provision( .. ) - ERROR! null team: " +
+                    JSON.stringify(team) + " or deliv: " + JSON.stringify(deliv));
+            } else {
+                if (team.delivId === deliv.id) {
+                    Log.trace("CourseController::provision( .. ) - adding team: " + team.id + " to delivTeams");
+                    delivTeams.push(team);
+                }
             }
         }
-        Log.trace("# deliv teams: " + delivTeams.length + "; total people: " + allPeople.length);
+        Log.trace("CourseController::provision( .. ) - # deliv teams: " + delivTeams.length + "; total people: " + allPeople.length);
 
         // remove any people who are already on teams
         for (const team of delivTeams) {
@@ -607,7 +613,7 @@ export abstract class CourseController implements ICourseController {
             }
         }
 
-        Log.trace("# people not on teams: " + allPeople.length);
+        Log.trace("CourseController::provision( .. ) - # people not on teams: " + allPeople.length);
 
         if (formSingleTeams === true) {
             // now create teams for individuals
@@ -619,14 +625,14 @@ export abstract class CourseController implements ICourseController {
             }
         }
 
-        Log.trace("# delivTeams after individual teams added: " + delivTeams.length);
+        Log.trace("CourseController::provision( .. ) - # delivTeams after individual teams added: " + delivTeams.length);
 
         const reposToProvision: Repository[] = [];
         // now process the teams to create their repos
         for (const delivTeam of delivTeams) {
             // if (team.URL === null) { // this would be faster, but we are being more conservative here
 
-            Log.trace('delivTeam: ' + delivTeam.id);
+            Log.trace('CourseController::provision( .. ) - preparing to provision team: ' + delivTeam.id);
 
             const people: Person[] = [];
             for (const pId of delivTeam.personIds) {
@@ -634,7 +640,8 @@ export abstract class CourseController implements ICourseController {
             }
             const names = await this.computeNames(deliv, people);
 
-            Log.trace('delivTeam: ' + delivTeam.id + '; computed team: ' + names.teamName + '; computed repo: ' + names.repoName);
+            Log.trace('CourseController::provision( .. ) - delivTeam: ' + delivTeam.id +
+                '; computed team: ' + names.teamName + '; computed repo: ' + names.repoName);
 
             const team = await this.tc.getTeam(names.teamName);
             let repo = await this.rc.getRepository(names.repoName);
@@ -664,7 +671,7 @@ export abstract class CourseController implements ICourseController {
             }
         }
 
-        Log.trace("# repos to provision: " + reposToProvision.length);
+        Log.trace("CourseController::provision( .. ) - # repos to provision: " + reposToProvision.length);
 
         const provisionedRepos = await this.provisionRepositories(reposToProvision, deliv.importURL);
         return provisionedRepos; // only returns provisioned this time; should it return all of them?
@@ -746,26 +753,43 @@ export abstract class CourseController implements ICourseController {
 
         const delivTeams: Team[] = [];
         for (const team of allTeams) {
-            if (team.delivId === deliv.id) {
-                Log.trace("adding team: " + team.id + " to delivTeams");
-                delivTeams.push(team);
+            if (team === null || deliv === null || team.id === null || deliv.id === null) {
+                // seeing this during 310 provisioning, need to figure this out
+                Log.error("CourseController::release( .. ) - ERROR! null team: " +
+                    JSON.stringify(team) + " or deliv: " + JSON.stringify(deliv));
+            } else {
+                if (team.delivId === deliv.id) {
+                    Log.trace("CourseController::release(..) - adding team: " + team.id + " to delivTeams");
+                    delivTeams.push(team);
+                }
             }
         }
 
         Log.info("CourseController::release( " + deliv.id + " ) - # deliv teams: " + delivTeams.length);
         const reposToRelease: Repository[] = [];
         for (const team of delivTeams) {
-            if (typeof team.custom.githubAttached === 'undefined' || team.custom.githubAttached === false) {
-                // if the team
-                const people: Person[] = [];
-                for (const pId of team.personIds) {
-                    people.push(await this.dbc.getPerson(pId));
+            try {
+                if (typeof team.custom.githubAttached === 'undefined' || team.custom.githubAttached === false) {
+                    // if the team
+                    const people: Person[] = [];
+                    for (const pId of team.personIds) {
+                        people.push(await this.dbc.getPerson(pId));
+                    }
+                    const names = await this.computeNames(deliv, people);
+                    const repo = await this.dbc.getRepository(names.repoName);
+                    if (repo !== null && typeof repo.custom.githubProvisioned !== 'undefined' && repo.custom.githubProvisioned === true) {
+                        // repo exists and has been provisioned: this is important as teams may have formed that have not been provisioned
+                        // aka only release provisioned repos
+                        reposToRelease.push(repo);
+                    } else {
+                        Log.info("CourseController::release( " + deliv.id + " ) - repo not provisioned yet: " + JSON.stringify(names));
+                    }
+                } else {
+                    Log.info("CourseController::release( " + deliv.id + " ) - skipping team: " + team.id + "; already attached");
                 }
-                const names = await this.computeNames(deliv, people);
-                const repo = await this.dbc.getRepository(names.repoName);
-                reposToRelease.push(repo);
-            } else {
-                Log.info("CourseController::release( " + deliv.id + " ) - skipping team: " + team.id + "; already attached");
+            } catch (err) {
+                Log.error("CourseController::release( .. ) - ERROR: " + err.message);
+                Log.exception(err);
             }
         }
 

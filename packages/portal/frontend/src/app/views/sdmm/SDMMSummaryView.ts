@@ -534,4 +534,14 @@ export class SDMMSummaryView implements IView {
         Log.trace('App::sdmmSelectChanged()');
         this.updateState(); // stick to dropdown for debugging
     }
+
+    public pushPage(pageName: string, opts: {}) {
+        // Log.info("AdminView::pushPage( " + pageName + ", ... ) - start");
+        // if (typeof opts !== 'object') {
+        //     opts = {};
+        // }
+        // const prefix = Factory.getInstance().getHTMLPrefix();
+        // UI.pushPage(prefix + '/' + pageName, opts);
+        // not used
+    }
 }

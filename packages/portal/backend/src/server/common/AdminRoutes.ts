@@ -15,15 +15,19 @@ import {
     RepositoryPayload,
     RepositoryTransport,
     StudentTransportPayload,
+    TeamFormationTransport,
+    TeamTransport,
     TeamTransportPayload
 } from '../../../../../common/types/PortalTypes';
 
 import {AuthController} from "../../controllers/AuthController";
 import {CourseController} from "../../controllers/CourseController";
+import {DatabaseController} from "../../controllers/DatabaseController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GitHubActions} from "../../controllers/GitHubActions";
 import {GitHubController} from "../../controllers/GitHubController";
 import {PersonController} from "../../controllers/PersonController";
+import {TeamController} from "../../controllers/TeamController";
 import {Factory} from "../../Factory";
 
 import {Person} from "../../Types";
@@ -55,10 +59,15 @@ export default class AdminRoutes implements IREST {
         // admin-only functions
         server.post('/portal/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
         server.post('/portal/admin/deliverable', AdminRoutes.isAdmin, AdminRoutes.postDeliverable);
+        server.post('/portal/admin/team', AdminRoutes.isAdmin, AdminRoutes.postTeam);
         server.post('/portal/admin/course', AdminRoutes.isAdmin, AdminRoutes.postCourse);
         server.post('/portal/admin/provision', AdminRoutes.isAdmin, AdminRoutes.postProvision);
         server.post('/portal/admin/release', AdminRoutes.isAdmin, AdminRoutes.postRelease);
-        // TODO: unrelease
+        server.del('/portal/admin/deliverable/:delivId', AdminRoutes.isAdmin, AdminRoutes.deleteDeliverable);
+        server.del('/portal/admin/repository/:repoId', AdminRoutes.isAdmin, AdminRoutes.deleteRepository);
+        server.del('/portal/admin/team/:teamId', AdminRoutes.isAdmin, AdminRoutes.deleteTeam);
+
+        // TODO: unrelease repos
 
         // staff-only functions
         // NOTHING
@@ -236,6 +245,108 @@ export default class AdminRoutes implements IREST {
             return next();
         }).catch(function(err) {
             return AdminRoutes.handleError(400, 'Unable to retrieve result. ERROR: ' + err.message, res, next);
+        });
+    }
+
+    /**
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
+    private static deleteDeliverable(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::deleteDeliverable(..) - start');
+        const cc = Factory.getCourseController(AdminRoutes.ghc);
+
+        // isAdmin prehandler verifies that only valid users can do this
+
+        // if these params are missing the client will get 404 since they are part of the path
+        const delivId = req.params.delivId;
+
+        const dbc = DatabaseController.getInstance();
+        dbc.getDeliverable(delivId).then(function(deliv) {
+            if (deliv !== null) {
+                return dbc.deleteDeliverable(deliv);
+            } else {
+                throw new Error("Unknown deliverable: " + delivId);
+            }
+        }).then(function(success) {
+            Log.trace('AdminRoutes::deleteDeliverable(..) - done; success: ' + success);
+            const payload: Payload = {success: {message: 'Deliverable deleted.'}};
+            res.send(200, payload); // return as text rather than json
+            return next();
+        }).catch(function(err) {
+            return AdminRoutes.handleError(400, 'Unable to delete deliverable. ' + err.message, res, next);
+        });
+    }
+
+    /**
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
+    private static deleteRepository(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::deleteRepository(..) - start');
+        const cc = Factory.getCourseController(AdminRoutes.ghc);
+
+        // isAdmin prehandler verifies that only valid users can do this
+
+        // if these params are missing the client will get 404 since they are part of the path
+        const repoId = req.params.repoId;
+
+        const dbc = DatabaseController.getInstance();
+        dbc.getRepository(repoId).then(function(repo) {
+            if (repo !== null) {
+                return dbc.deleteRepository(repo);
+            } else {
+                throw new Error("Unknown repository: " + repoId);
+            }
+        }).then(function(success) {
+            // also delete it on github, if it exists
+            return GitHubActions.getInstance().deleteRepo(repoId);
+        }).then(function(success) {
+            Log.trace('AdminRoutes::deleteRepository(..) - done; success: ' + success);
+            const payload: Payload = {success: {message: 'Repository deleted.'}};
+            res.send(200, payload); // return as text rather than json
+            return next();
+        }).catch(function(err) {
+            return AdminRoutes.handleError(400, 'Unable to delete repository. ' + err.message, res, next);
+        });
+    }
+
+    /**
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
+    private static deleteTeam(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::deleteTeam(..) - start');
+        const cc = Factory.getCourseController(AdminRoutes.ghc);
+
+        // isAdmin prehandler verifies that only valid users can do this
+
+        // if these params are missing the client will get 404 since they are part of the path
+        const teamId = req.params.teamId;
+
+        const dbc = DatabaseController.getInstance();
+        dbc.getTeam(teamId).then(function(team) {
+            if (team !== null) {
+                return dbc.deleteTeam(team);
+            } else {
+                throw new Error("Unknown team: " + teamId);
+            }
+        }).then(function(success) {
+            // also delete it on github, if it exists
+            return GitHubActions.getInstance().deleteTeamByName(teamId);
+        }).then(function(success) {
+            Log.trace('AdminRoutes::deleteTeam(..) - done; success: ' + success);
+            const payload: Payload = {success: {message: 'Team deleted.'}};
+            res.send(200, payload); // return as text rather than json
+            return next();
+        }).catch(function(err) {
+            return AdminRoutes.handleError(400, 'Unable to delete team. ' + err.message, res, next);
         });
     }
 
@@ -515,6 +626,7 @@ export default class AdminRoutes implements IREST {
             res.send(200, payload);
             return next(true);
         }).catch(function(err) {
+            Log.exception(err);
             return AdminRoutes.handleError(400, 'Unable to release repos: ' + err.message, res, next);
         });
     }
@@ -539,4 +651,84 @@ export default class AdminRoutes implements IREST {
         // should never get here unless something goes wrong
         throw new Error("Release unsuccessful.");
     }
+
+    public static postTeam(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::postTeam(..) - start');
+
+        // handled by isAdmin in the route chain
+        // const user = req.headers.user;
+        // const token = req.headers.token;
+
+        const teamTrans: TeamFormationTransport = req.params;
+        AdminRoutes.performPostTeam(teamTrans).then(function(team) {
+            Log.info('AdminRoutes::postTeam(..) - done; team: ' + JSON.stringify(team));
+            const payload: TeamTransportPayload = {success: [team]}; // really shouldn't be an array, but it beats having another type
+            res.send(200, payload);
+            return next(true);
+        }).catch(function(err) {
+            Log.info('AdminRoutes::postTeam(..) - ERROR: ' + err.message); // intentionally info
+            const payload: Payload = {failure: {message: err.message, shouldLogout: false}};
+            res.send(400, payload);
+            return next(false);
+        });
+    }
+
+    private static async performPostTeam(requestedTeam: TeamFormationTransport): Promise<TeamTransport> {
+
+        Log.info("AdminRoutes::performPostTeam( .. ) - Team: " + JSON.stringify(requestedTeam));
+        const tc = new TeamController();
+        const dc = new DeliverablesController();
+        const pc = new PersonController();
+
+        const deliv = await dc.getDeliverable(requestedTeam.delivId);
+        if (deliv === null) {
+            throw new Error("Team not created; Deliverable does not exist: " + requestedTeam.delivId);
+        }
+        // NOTE: this isn't great because it largely duplicates what is in GeneralRoutes::performPostTeam
+
+        // remove duplicate names
+        const nameIds = requestedTeam.githubIds.filter(function(item, pos, self) {
+            return self.indexOf(item) === pos;
+        });
+        if (nameIds.length !== requestedTeam.githubIds.length) {
+            throw new Error("Team not created; duplicate team members specified.");
+        }
+
+        // make sure the ids exist
+        const people: Person[] = [];
+        for (const pId of nameIds) {
+            const p = await pc.getGitHubPerson(pId); // students will provide github ids // getPerson(pId);
+            if (p !== null) {
+                people.push(p);
+            } else {
+                throw new Error("Team not created; GitHub id not associated with student registered in course: " + pId);
+            }
+        }
+
+        // make sure all users aren't already on teams
+        for (const person of people) {
+            const teams = await tc.getTeamsForPerson(person);
+            for (const aTeam of teams) {
+                if (aTeam.delivId === requestedTeam.delivId) {
+                    throw new Error('User is already on a team for this deliverable ( ' + person.id + ' is on ' + aTeam.id + ' ).');
+                }
+            }
+        }
+
+        const cc = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
+        const names = await cc.computeNames(deliv, people);
+
+        const team = await tc.formTeam(names.teamName, deliv, people, true);
+
+        const teamTrans: TeamTransport = {
+            id:      team.id,
+            delivId: team.delivId,
+            people:  team.personIds,
+            URL:     team.URL
+        };
+
+        Log.info('AdminRoutes::performPostTeam(..) - team created: ' + team.id);
+        return teamTrans;
+    }
+
 }

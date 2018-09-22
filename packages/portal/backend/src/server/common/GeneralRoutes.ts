@@ -184,6 +184,7 @@ export default class GeneralRoutes implements IREST {
     }
 
     private static async performPostTeam(user: string, token: string, requestedTeam: TeamFormationTransport): Promise<TeamTransport> {
+        Log.trace('GeneralRoutes::performPostTeam(..) - team: ' + JSON.stringify(requestedTeam));
         const ac = new AuthController();
         const isValid = await ac.isValid(user, token);
         if (isValid === false) {
@@ -194,9 +195,17 @@ export default class GeneralRoutes implements IREST {
             const dc = new DeliverablesController();
             const pc = new PersonController();
 
+            // remove duplicate names
+            const nameIds = requestedTeam.githubIds.filter(function(item, pos, self) {
+                return self.indexOf(item) === pos;
+            });
+            if (nameIds.length !== requestedTeam.githubIds.length) {
+                throw new Error("Team not created; duplicate team members specified.");
+            }
+
             const people: Person[] = [];
             let requestor = null;
-            for (const pId of requestedTeam.githubIds) {
+            for (const pId of nameIds) {
                 const p = await pc.getGitHubPerson(pId); // students will provide github ids // getPerson(pId);
                 if (p !== null) {
                     people.push(p);
@@ -212,6 +221,16 @@ export default class GeneralRoutes implements IREST {
             // we have to do this here because the TeamController does not actually know who made the request
             if (requestor === null) {
                 throw new Error('Users cannot form teams they are not going to join.');
+            }
+
+            // make sure all users aren't already on teams
+            for (const person of people) {
+                const teams = await tc.getTeamsForPerson(person);
+                for (const aTeam of teams) {
+                    if (aTeam.delivId === requestedTeam.delivId) {
+                        throw new Error('User is already on a team for this deliverable ( ' + person.id + ' is on ' + aTeam.id + ' ).');
+                    }
+                }
             }
 
             const cc = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
@@ -284,6 +303,9 @@ export default class GeneralRoutes implements IREST {
         } else {
             const pc = new PersonController();
             const person = await pc.getPerson(user);
+            // if (person === null) {
+            //     person = await pc.getGitHubPerson(user);
+            // }
             if (person === null) {
                 Log.warn('GeneralRoutes::performGetRepos(..) - person === null');
                 throw new Error('Unknown person');

@@ -6,7 +6,6 @@ import Log from "../../../../common/Log";
 import {Auth, Course, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
 
 export class DatabaseController {
-
     /**
      * Returns the current controller; shares Mongo connections.
      *
@@ -244,6 +243,14 @@ export class DatabaseController {
         if (record !== null) {
             Log.info("DatabaseController::deleteRepository( " + record.id + " ) - start");
             return await this.deleteRecord(this.REPOCOLL, {id: record.id});
+        }
+        return false;
+    }
+
+    public async deleteDeliverable(record: Deliverable): Promise<boolean> {
+        if (record !== null) {
+            Log.info("DatabaseController::deleteDeliverable( " + record.id + " ) - start");
+            return await this.deleteRecord(this.DELIVCOLL, {id: record.id});
         }
         return false;
     }

@@ -127,9 +127,9 @@ export class CS310View extends StudentView {
         UI.hideSection('studentPartnerDiv');
 
         // skip this all for now; we will redeploy when teams can be formed
-        if (Date.now() > 0) {
-            return;
-        }
+        // if (Date.now() > 0) {
+        //     return;
+        // }
 
         let projectTeam = null;
         for (const team of teams) {
@@ -161,15 +161,15 @@ export class CS310View extends StudentView {
             UI.showSection('studentPartnerDiv');
 
             const tName = document.getElementById('studentPartnerTeamName');
-            const pName = document.getElementById('studentPartnerTeammates');
-            const team = this.teams[0];
+            // const pName = document.getElementById('studentPartnerTeammates');
+            const team = projectTeam;
 
-            if (team.URL !== null) {
-                tName.innerHTML = '<a href="' + team.URL + '">' + team.id + '</a>';
-            } else {
-                tName.innerHTML = team.id;
-            }
-            pName.innerHTML = team.people[0]; // JSON.stringify(team.people);
+            // if (team.URL !== null) {
+            //     tName.innerHTML = '<a href="' + team.URL + '">' + team.id + '</a>';
+            // } else {
+            tName.innerHTML = team.id;
+            // }
+            // pName.innerHTML = team.people[0]; // JSON.stringify(team.people);
         }
     }
 

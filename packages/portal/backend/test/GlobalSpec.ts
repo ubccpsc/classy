@@ -4,7 +4,6 @@ import "mocha";
 import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {IContainerInput, IContainerOutput} from "../../../common/types/AutoTestTypes";
-import {AssignmentGradingRubric, AssignmentInfo, AssignmentStatus} from "../../../common/types/CS340Types";
 import {GradePayload} from "../../../common/types/SDMMTypes";
 import Util from "../../../common/Util";
 
@@ -143,6 +142,14 @@ export class Test {
 
         p = Test.createPerson(Test.USER4.id, Test.USER4.csId, Test.USER4.github, 'student');
         p.labId = 'l2c';
+        await dc.writePerson(p);
+
+        p = Test.createPerson(Test.USER5.id, Test.USER5.csId, Test.USER5.github, 'student');
+        p.labId = 'l2d';
+        await dc.writePerson(p);
+
+        p = Test.createPerson(Test.USER6.id, Test.USER6.csId, Test.USER6.github, 'student');
+        p.labId = 'l2d';
         await dc.writePerson(p);
 
         // staff person (this username should be on the 'staff' team, but not the 'admin' team in the github org)
@@ -353,176 +360,6 @@ export class Test {
         return p;
     }
 
-    public static async prepareAssignment() {
-        const dc: DeliverablesController = new DeliverablesController();
-
-        const newAssignmentStatus: AssignmentStatus = AssignmentStatus.INACTIVE;
-
-        const newAssignmentGradingRubric: AssignmentGradingRubric = {
-            name:      Test.ASSIGNID0,
-            comment:   "test assignment",
-            questions: [
-                {
-                    name:         "question 1",
-                    comment:      "",
-                    subQuestions: [
-                        {
-                            name:      "rubric",
-                            comment:   "rubric question",
-                            outOf:     5,
-                            weight:    0.25,
-                            modifiers: null
-                        }
-                    ]
-                },
-                {
-                    name:         "question 2",
-                    comment:      "",
-                    subQuestions: [
-                        {
-                            name:      "code quality",
-                            comment:   "",
-                            outOf:     6,
-                            weight:    0.5,
-                            modifiers: null
-                        }
-                    ]
-                }
-            ]
-        };
-
-        const newAssignmentInfo: AssignmentInfo = {
-            seedRepoURL:  "https://github.com/SECapstone/capstone",
-            seedRepoPath: "",
-            mainFilePath: "",
-            courseWeight: 0.5,
-            status:       newAssignmentStatus,
-            rubric:       newAssignmentGradingRubric,
-            repositories: []
-        };
-
-        const openDate: Date = new Date();
-        openDate.setHours(openDate.getHours() + 4);
-
-        const closeDate: Date = new Date();
-        closeDate.setDate(closeDate.getDate() + 4);
-
-        const openNumber: number = Date.parse(openDate.toISOString());
-        const closeNumber: number = Date.parse(closeDate.toISOString());
-
-        const newDeliv: Deliverable = {
-            id:                Test.ASSIGNID0,
-            URL:               "",
-            repoPrefix:        Test.ASSIGNID0 + "_",
-            openTimestamp:     openNumber,
-            closeTimestamp:    closeNumber,
-            gradesReleased:    false,
-            shouldProvision:   true,
-            importURL:         null,
-            teamMinSize:       1,
-            teamMaxSize:       1,
-            teamSameLab:       false,
-            teamStudentsForm:  false,
-            teamPrefix:        Test.ASSIGNID0 + "_",
-            shouldAutoTest:    true,
-            autotest:          {
-                dockerImage:        'testImage',
-                studentDelay:       60 * 60 * 12, // 12h
-                maxExecTime:        300,
-                regressionDelivIds: [],
-                custom:             {}
-            },
-            visibleToStudents: true,
-
-            rubric: {},
-            custom: {
-                assignment: newAssignmentInfo
-            }
-        };
-
-        // const newDelivSuccess =
-        await dc.saveDeliverable(newDeliv);
-
-        // await this.createTeam(this.ASSIGNTEAMNAME0, Test.ASSIGNID0, [Test.REALUSER1.id]);
-    }
-
-    public static async prepareAssignmentTeam() {
-        await this.createTeam(this.ASSIGNTEAMNAME0, Test.ASSIGNID0, [Test.REALUSER1.id]);
-    }
-
-    public static async prepareAssignmentTeam2() {
-        await this.createTeam(Test.ASSIGNTEAMNAME1, Test.ASSIGNID1, [Test.REALUSER1.id]);
-    }
-
-    public static async prepareAssignment2() {
-        const dc: DeliverablesController = new DeliverablesController();
-
-        const newAssignmentStatus: AssignmentStatus = AssignmentStatus.INACTIVE;
-
-        const newAssignmentGradingRubric: AssignmentGradingRubric = {
-            name:      Test.ASSIGNID1,
-            comment:   "test assignment2",
-            questions: []
-        };
-
-        const newAssignmentInfo: AssignmentInfo = {
-            seedRepoURL:  "https://github.com/CPSC340/test_repository",
-            seedRepoPath: "labs/lab2/*",
-            mainFilePath: "labs/lab2/a2.tex",
-            courseWeight: 0.5,
-            status:       newAssignmentStatus,
-            rubric:       newAssignmentGradingRubric,
-            repositories: []
-        };
-
-        const openDate: Date = new Date();
-        openDate.setHours(openDate.getHours() + 4);
-
-        const closeDate: Date = new Date();
-        closeDate.setDate(closeDate.getDate() + 4);
-
-        const openNumber: number = Date.parse(openDate.toISOString());
-        const closeNumber: number = Date.parse(closeDate.toISOString());
-
-        const newDeliv: Deliverable = {
-            id:                Test.ASSIGNID1,
-            URL:               "",
-            repoPrefix:        "",
-            visibleToStudents: false,
-            rubric:            {},
-            openTimestamp:     openNumber,
-            closeTimestamp:    closeNumber,
-            gradesReleased:    false,
-            shouldProvision:   true,
-            importURL:         null,
-            teamMinSize:       1,
-            teamMaxSize:       1,
-            teamSameLab:       false,
-            teamStudentsForm:  false,
-            teamPrefix:        "",
-            shouldAutoTest:    true,
-            autotest:          {
-                dockerImage:        'testImage',
-                studentDelay:       60 * 60 * 12, // 12h
-                maxExecTime:        300,
-                regressionDelivIds: [],
-                custom:             {}
-            },
-            custom:            {
-                assignment: newAssignmentInfo
-            }
-        };
-
-        // const newDelivSuccess =
-        await dc.saveDeliverable(newDeliv);
-
-        // await this.createTeam(Test.ASSIGNTEAMNAME1, Test.ASSIGNID1, [Test.REALUSER1.id]);
-    }
-
-    // public static testBefore() {
-    //     // Log.test('Test::testBefore( ... ) - test: ' + testObj.currentTest.title);
-    // }
-
     /**
      * Determines whether slow tests should be executed. They will _always_ run on CI, but
      * you can also set override = true to execute them locally. This is important if you
@@ -557,6 +394,8 @@ export class Test {
     public static readonly USER2 = {id: 'user2id', csId: 'user2id', github: 'user2gh'};
     public static readonly USER3 = {id: 'user3id', csId: 'user3id', github: 'user3gh'};
     public static readonly USER4 = {id: 'user4id', csId: 'user4id', github: 'user4gh'};
+    public static readonly USER5 = {id: 'user5id', csId: 'user5id', github: 'user5gh'};
+    public static readonly USER6 = {id: 'user6id', csId: 'user6id', github: 'user6gh'};
 
     public static readonly INVALIDUSER1 = {id: 'invalidUser1id', csId: 'invalidUser1id', github: 'invalidUser1gh'};
 
@@ -868,20 +707,21 @@ export class Test {
             for (const team of teams) {
                 // Log.info('Evaluating team: ' + JSON.stringify(team));
                 let done = false;
-                for (const t of TESTTEAMNAMES) {
-                    if (team.teamName === t ||
-                        team.teamName.startsWith(Test.ASSIGNID0 + "_")
-                    ) {
-                        Log.test("Removing stale team: " + team.teamName);
-                        const val = await gh.deleteTeam(team.teamNumber);
-                        await Util.delay(DELAY_SHORT);
-                        done = true;
-                    }
+                // for (const t of TESTTEAMNAMES) {
+                //     if (team.teamName === t ||
+                if (team.teamName.startsWith(Test.ASSIGNID0 + "_")) {
+                    Log.test("Removing stale team: " + team.teamName);
+                    // const val = await gh.deleteTeam(team.teamNumber);
+                    await gh.deleteTeamByName(team.teamName);
+                    await Util.delay(DELAY_SHORT);
+                    done = true;
                 }
+                // }
                 if (done === false) {
                     if (team.teamName.startsWith(TEAMNAME) === true) {
                         Log.test("Removing stale team: " + team.teamName);
-                        await gh.deleteTeam(team.teamNumber);
+                        // await gh.deleteTeam(team.teamNumber);
+                        await gh.deleteTeamByName(team.teamName);
                         await Util.delay(DELAY_SHORT);
                     }
                 }

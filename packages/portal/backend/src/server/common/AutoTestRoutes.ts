@@ -84,7 +84,7 @@ export class AutoTestRoutes implements IREST {
                     res.send(200, payload);
                     return next(true);
                 } else {
-                    return AutoTestRoutes.handleError(400, 'Could not retrieve container details.', res, next);
+                    return AutoTestRoutes.handleError(400, 'Could not retrieve container details for delivId: ' + delivId, res, next);
                 }
             }).catch(function(err) {
                 return AutoTestRoutes.handleError(400, 'Could not retrieve container details.', res, next);
@@ -200,7 +200,8 @@ export class AutoTestRoutes implements IREST {
                 const success = await rc.createResult(result);
                 return success;
             } else {
-                Log.info('AutoTestRouteHandler::performPostResult(..) - not accepting new results for delivId: ' + result.delivId);
+                Log.info('AutoTestRouteHandler::performPostResult(..) - not accepting new results for delivId: ' + result.delivId +
+                    '; deadline: ' + new Date(deliv.closeTimestamp) + "; result ts: " + new Date(result.input.pushInfo.timestamp));
                 return false;
             }
         }

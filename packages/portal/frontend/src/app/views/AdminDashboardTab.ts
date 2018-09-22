@@ -33,6 +33,12 @@ export class AdminDashboardTab {
         document.getElementById('dashboardListTable').innerHTML = ''; // clear target
 
         UI.showModal('Retrieving results.');
+        const course = await AdminView.getCourse(this.remote);
+        if (this.delivValue === null) {
+            this.delivValue = course.defaultDeliverableId;
+            // ugly way to set the default the first time the page is rendered
+            UI.setDropdownOptions('dashboardDelivSelect', [this.delivValue], this.delivValue);
+        }
         const delivs = await AdminDeliverablesTab.getDeliverables(this.remote); // for select
         const repos = await AdminResultsTab.getRepositories(this.remote); // for select
         const results = await this.performQueries();

@@ -53,6 +53,13 @@ export interface IGitHubActions {
     deleteTeam(teamId: number): Promise<boolean>;
 
     /**
+     * Deletes a team.
+     *
+     * @param teamName
+     */
+    deleteTeamByName(teamName: string): Promise<boolean>;
+
+    /**
      *
      * Gets all repos in an org.
      * This is just a subset of the return, but it is the subset we actually use:
@@ -364,6 +371,15 @@ export class GitHubActions implements IGitHubActions {
             Log.trace("GitHubAction::repoExists( " + repoName + " ) - false; took: " + Util.took(start));
             return false;
         }
+    }
+
+    public async deleteTeamByName(teamName: string): Promise<boolean> {
+        Log.info("GitHubAction::deleteTeamByName( " + this.org + ", " + teamName + " ) - start");
+        const teamNum = await this.getTeamNumber(teamName);
+        if (teamNum >= 0) {
+            return await this.deleteTeam(teamNum);
+        }
+        return false;
     }
 
     /**
@@ -836,9 +852,9 @@ export class GitHubActions implements IGitHubActions {
         try {
             const uri = this.apiPath + '/teams/' + teamNumber + '/members?per_page=' + this.pageSize;
             const options = {
-                method:  'GET',
-                uri:     uri,
-                headers: {
+                method:                  'GET',
+                uri:                     uri,
+                headers:                 {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent':    this.gitHubUserName,
                     'Accept':        'application/json'
@@ -1445,6 +1461,16 @@ export class TestGitHubActions implements IGitHubActions {
         return false;
     }
 
+    public async deleteTeamByName(teamName: string): Promise<boolean> {
+        for (const name of Object.keys(this.teams)) {
+            if (name === teamName) {
+                delete this.teams[teamName];
+                return true;
+            }
+        }
+        return false;
+    }
+
     public async deleteTeam(teamId: number): Promise<boolean> {
         Log.info("TestGitHubActions::deleteTeam( " + teamId + " )");
         for (const teamName of Object.keys(this.teams)) {
@@ -1452,6 +1478,7 @@ export class TestGitHubActions implements IGitHubActions {
             if (team.githubTeamNumber === teamId) {
                 Log.info("TestGitHubActions::deleteTeam( " + teamId + " ) - deleting team name: " + team.id);
                 delete this.teams[teamName];
+                return true;
             }
         }
 

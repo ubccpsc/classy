@@ -10,6 +10,8 @@
  */
 
 import Log from "../../../../../common/Log";
+import {CourseTransport, CourseTransportPayload} from "../../../../../common/types/PortalTypes";
+import {Factory} from "../Factory";
 
 import {UI} from "../util/UI";
 
@@ -208,5 +210,48 @@ export class AdminView implements IView {
         }).catch(function(err) {
             // blank
         });
+    }
+
+    public pushPage(pageName: string, opts: {}) {
+        Log.info("AdminView::pushPage( " + pageName + ", ... ) - start");
+        if (typeof opts !== 'object') {
+            opts = {};
+        }
+        const prefix = Factory.getInstance().getHTMLPrefix();
+        UI.pushPage(prefix + '/' + pageName, opts);
+    }
+
+    public static async getCourse(remote: string): Promise<CourseTransport> {
+        try {
+            // UI.showModal('Retrieving config.');
+
+            // get class options
+            const options = AdminView.getOptions();
+            const url = remote + '/portal/admin/course';
+            const response = await fetch(url, options);
+            // UI.hideModal();
+
+            const courseOptions: CourseTransport = null;
+            const start = Date.now();
+            if (response.status === 200 || response.status === 400) {
+                Log.trace('AdminView::getCourse(..) - 200 received for course options');
+                const json: CourseTransportPayload = await response.json();
+                // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
+                if (typeof json.success !== 'undefined') {
+                    Log.trace('AdminView::getCourse(..)  - worked; took: ' + UI.took(start));
+                    return json.success;
+                } else {
+                    Log.trace('AdminView::getCourse(..)  - ERROR: ' + json.failure.message);
+                    AdminView.showError(json.failure); // FailurePayload
+                }
+            } else {
+                Log.trace('AdminView::getCourse(..)  - !200 received: ' + response.status);
+                const text = await response.text();
+                AdminView.showError(text);
+            }
+        } catch (err) {
+            AdminView.showError("Getting config failed: " + err.message);
+        }
+        return null;
     }
 }
