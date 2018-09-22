@@ -196,7 +196,11 @@ export class AutoTestRoutes implements IREST {
                 result.delivId + '; repo: ' + result.repoId + "; sha: " + result.commitSHA);
             const dc = new DeliverablesController();
             const deliv = await dc.getDeliverable(result.delivId);
-            if (deliv !== null && result.input.pushInfo.timestamp < deliv.closeTimestamp && deliv.gradesReleased === false) {
+            // if results should only be saved during the marking range, use the first line; otherwise the second
+            // if (deliv !== null && result.input.pushInfo.timestamp < deliv.closeTimestamp && deliv.gradesReleased === false) {
+            // saving results is always open, but saving grades (in performPostGrades) probably won't be
+            // NOTE: this allows AutoTest to request the cached results for later access which won't be possible if saving is prohibited
+            if (deliv !== null) {
                 const success = await rc.createResult(result);
                 return success;
             } else {

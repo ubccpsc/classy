@@ -25,14 +25,6 @@ export class DeliverablesController {
     public async saveDeliverable(deliv: Deliverable): Promise<Deliverable | null> {
         Log.info("DeliverableController::saveDeliverable( " + JSON.stringify(deliv) + " ) - start");
 
-        // enforce deliverable prefix constraints
-        // if (deliv.teamPrefix === '') {
-        //     deliv.teamPrefix = 't_' + deliv.id;
-        // }
-        // if (deliv.repoPrefix === '') {
-        //     deliv.repoPrefix = deliv.id;
-        // }
-
         // enforce minimum time constraints; the AutoTest infrastructure is resource constrained
         // this prevents students from hammering against the service and causing it to become overloaded
         const allStudents = await this.db.getPeople();
@@ -43,8 +35,10 @@ export class DeliverablesController {
 
         const MIN_DELAY_MULTIPLIER = 2; // number of minutes-per-student the platform can withstand (2-10 are reasonable values)
         const minDelay = (numStudents * MIN_DELAY_MULTIPLIER) * 60; // minimum delay in seconds
-        if (deliv.autotest.studentDelay < minDelay) {
-            deliv.autotest.studentDelay = minDelay;
+        if (minDelay < 12 * 60 * 60) { // only use this formula if the delay is less than N hours
+            if (deliv.autotest.studentDelay < minDelay) {
+                deliv.autotest.studentDelay = minDelay;
+            }
         }
 
         await this.db.writeDeliverable(deliv); // let this handle the update
