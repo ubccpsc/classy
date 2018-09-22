@@ -81,7 +81,11 @@ export class App {
                 // Log.trace('App::init()::init - page: ' + pageName);
                 if (pageName === 'index') {
                     Log.trace('App::init()::init - index detected; pushing real target');
-                    UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/landing.html');
+                    UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/landing.html').then(function() {
+                        // success
+                    }).catch(function(err) {
+                        Log.error("UI::pushPage(..) - ERROR: " + err.message);
+                    });
                     return;
                 }
 
@@ -155,7 +159,11 @@ export class App {
             // TODO: Feels like this needs some kind of guard?
             // Loads the landing page, but I wouldn't want this to happen more than the first login
             Log.trace('App::init()::init - loading initial index');
-            UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/landing.html');
+            UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/landing.html').then(function() {
+                // success
+            }).catch(function(err) {
+                Log.error("UI::pushPage(..) - ERROR: " + err.message);
+            });
 
             fulfill({}); // resolve the promise so it's not just hanging there
         });
@@ -167,7 +175,11 @@ export class App {
     }
 
     public pushPage(page: string, opts?: any) {
-        UI.pushPage(page, opts);
+        UI.pushPage(page, opts).then(function() {
+            // success
+        }).catch(function(err) {
+            Log.error("UI::pushPage(..) - ERROR: " + err.message);
+        });
     }
 
     /**
@@ -425,15 +437,27 @@ export class App {
                 Log.trace("App::handleMainPageClick(..) - admin");
                 // if we're admin, keep the logging on
                 Log.Level = LogLevel.TRACE;
-                UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/admin.html', params);
+                UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/admin.html', params).then(function() {
+                    // success
+                }).catch(function(err) {
+                    Log.error("UI::pushPage(..) - ERROR: " + err.message);
+                });
             } else {
                 Log.trace("App::handleMainPageClick(..) - student");
-                UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/student.html', params);
+                UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/student.html', params).then(function() {
+                    // success
+                }).catch(function(err) {
+                    Log.error("UI::pushPage(..) - ERROR: " + err.message);
+                });
             }
         } else {
             // push to login page
             Log.info("App::handleMainPageClick(..) - not authorized");
-            UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/login.html', params);
+            UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/login.html', params).then(function() {
+                // success
+            }).catch(function(err) {
+                Log.error("UI::pushPage(..) - ERROR: " + err.message);
+            });
         }
     }
 
@@ -482,7 +506,11 @@ export class App {
         Log.trace("App::logout() - start");
 
         await this.clearCredentials();
-        UI.pushPage("index.html");
+        UI.pushPage("index.html").then(function() {
+            // success
+        }).catch(function(err) {
+            Log.error("UI::pushPage(..) - ERROR: " + err.message);
+        });
     }
 
     private toggleLoginButton() {

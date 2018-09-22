@@ -4,18 +4,20 @@ import {CourseTransport, StudentTransport, TeamTransport, TeamTransportPayload} 
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 
 import {UI} from "../util/UI";
+import {AdminPage} from "./AdminPage";
 import {AdminStudentsTab} from "./AdminStudentsTab";
 import {AdminView} from "./AdminView";
 
-export class AdminTeamsTab {
+export class AdminTeamsTab extends AdminPage {
 
-    private readonly remote: string; // url to backend
+    // private readonly remote: string; // url to backend
     private teams: TeamTransport[];
     private students: StudentTransport[];
     private course: CourseTransport;
 
     constructor(remote: string) {
-        this.remote = remote;
+        super(remote);
+        // this.remote = remote;
     }
 
     // called by reflection in renderPage

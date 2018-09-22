@@ -12,17 +12,19 @@ import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 
 import {UI} from "../util/UI";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
+import {AdminPage} from "./AdminPage";
 import {AdminResultsTab} from "./AdminResultsTab";
 import {AdminView} from "./AdminView";
 
-export class AdminDashboardTab {
+export class AdminDashboardTab extends AdminPage {
 
-    private readonly remote: string; // url to backend
+    // private readonly remote: string; // url to backend
     private delivValue: string | null = null;
     private repoValue: string | null = null;
 
     constructor(remote: string) {
-        this.remote = remote;
+        // this.remote = remote;
+        super(remote);
     }
 
     // called by reflection in renderPage
@@ -100,7 +102,7 @@ export class AdminDashboardTab {
                 sortable:    false,
                 defaultSort: false,
                 sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id:          'repoId',
@@ -108,7 +110,7 @@ export class AdminDashboardTab {
                 sortable:    true,
                 defaultSort: false,
                 sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: left;'
             },
             {
                 id:          'delivId',
@@ -116,7 +118,7 @@ export class AdminDashboardTab {
                 sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown:    false, // Whether the column should initially sort descending or ascending.
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id:          'score',
@@ -124,31 +126,31 @@ export class AdminDashboardTab {
                 sortable:    true,
                 defaultSort: false,
                 sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id:          'testScore',
-                text:        'Test%',
+                text:        'Test %',
                 sortable:    true,
                 defaultSort: false,
                 sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id:          'coverScore',
-                text:        'Cover%',
+                text:        'Cover %',
                 sortable:    true,
                 defaultSort: false,
                 sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
-                id:          'timstamp',
+                id:          'timestamp',
                 text:        'Timestamp',
                 sortable:    true,
                 defaultSort: true,
                 sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id:          'results',
@@ -292,7 +294,7 @@ export class AdminDashboardTab {
 
         let str = '<span><table style="height: 20px;">';
         str += '<tr>';
-        str += '<td style="width: 4em">' + all.length + '</td>';
+        str += '<td style="width: 2em; text-align: center;">' + all.length + '</td>';
         for (const a of annotated) {
             str += '<td class="dashResultCell" style="width: 5px; height: 20px; background: ' + a.colour + '" title="' + a.name + '"></td>';
         }
@@ -329,35 +331,4 @@ export class AdminDashboardTab {
 
         return [];
     }
-
-    // public static async getRepositories(remote: string): Promise<RepositoryTransport[]> {
-    //     Log.info("AdminDashboardTab::getRepositories( .. ) - start");
-    //
-    //     try {
-    //         const start = Date.now();
-    //         const url = remote + '/portal/admin/repositories';
-    //         const options = AdminView.getOptions();
-    //         const response = await fetch(url, options);
-    //
-    //         if (response.status === 200) {
-    //             Log.trace('AdminDashboardTab::getRepositories(..) - 200 received');
-    //             const json: RepositoryPayload = await response.json();
-    //             // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
-    //             if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-    //                 Log.trace('AdminDashboardTab::getRepositories(..)  - worked; took: ' + UI.took(start));
-    //                 return json.success;
-    //             } else {
-    //                 Log.trace('AdminDashboardTab::getRepositories(..)  - ERROR: ' + json.failure.message);
-    //                 AdminView.showError(json.failure); // FailurePayload
-    //             }
-    //         } else {
-    //             Log.trace('AdminDashboardTab::getRepositories(..)  - !200 received: ' + response.status);
-    //             const text = await response.text();
-    //             AdminView.showError(text);
-    //         }
-    //     } catch (err) {
-    //         AdminView.showError("Getting results failed: " + err.message);
-    //     }
-    //     return [];
-    // }
 }

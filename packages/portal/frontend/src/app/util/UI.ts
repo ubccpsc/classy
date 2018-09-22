@@ -19,7 +19,7 @@ export class UI {
     /**
      * Onsen convenience functions
      */
-    public static pushPage(pageId: string, options?: any): any {
+    public static pushPage(pageId: string, options?: any): Promise<void> {
         if (typeof options === 'undefined') {
             options = {};
         }
@@ -61,7 +61,8 @@ export class UI {
         ons.notification.confirm({message: note, callback});
     }
 
-    public static notificationToast(note: string, time: number = 2000) {
+    // TODO: look at this in future: https://codepen.io/frankdiox/pen/rwaGVr
+    public static notificationToast(note: string, time: number = 5000) {
         ons.notification.toast({message: note, timeout: time});
     }
 

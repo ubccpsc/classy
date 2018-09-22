@@ -4,6 +4,7 @@ import Log from "../../../../../common/Log";
 import {AutoTestConfigTransport, DeliverableTransport, DeliverableTransportPayload} from "../../../../../common/types/PortalTypes";
 
 import {UI} from "../util/UI";
+import {AdminPage} from "./AdminPage";
 import {AdminView} from "./AdminView";
 
 // import flatpickr from "flatpickr";
@@ -16,15 +17,16 @@ declare var flatpickr: any;
  * being until more explicit tab sub-helpers are actually a thing.
  *
  */
-export class AdminDeliverablesTab {
+export class AdminDeliverablesTab extends AdminPage {
 
-    private readonly remote: string; // url to backend
+    // private readonly remote: string; // url to backend
     private isAdmin: boolean;
     private openPicker: any; // flatpickr;
     private closePicker: any; // flatpickr;
 
     constructor(remote: string, isAdmin: boolean) {
-        this.remote = remote;
+        super(remote);
+        // this.remote = remote;
         this.isAdmin = isAdmin;
     }
 
@@ -77,7 +79,11 @@ export class AdminDeliverablesTab {
             elem.setAttribute('delivId', deliv.id);
             elem.onclick = function(evt: any) {
                 const delivId = evt.currentTarget.getAttribute('delivId');
-                UI.pushPage('editDeliverable.html', {delivId: delivId});
+                UI.pushPage('editDeliverable.html', {delivId: delivId}).then(function() {
+                    // success
+                }).catch(function(err) {
+                    Log.error("UI::pushPage(..) - ERROR: " + err.message);
+                });
             };
             deliverableList.appendChild(elem);
         }
@@ -91,7 +97,11 @@ export class AdminDeliverablesTab {
         createDeliverable.innerText = 'Create New Deliverable';
 
         createDeliverable.onclick = function() {
-            UI.pushPage('editDeliverable.html', {delivId: null});
+            UI.pushPage('editDeliverable.html', {delivId: null}).then(function() {
+                // success
+            }).catch(function(err) {
+                Log.error("UI::pushPage(..) - ERROR: " + err.message);
+            });
         };
 
         const li = document.createElement('ons-list-item');

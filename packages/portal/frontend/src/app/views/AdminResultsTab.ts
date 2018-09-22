@@ -13,16 +13,18 @@ import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 
 import {UI} from "../util/UI";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
+import {AdminPage} from "./AdminPage";
 import {AdminView} from "./AdminView";
 
-export class AdminResultsTab {
+export class AdminResultsTab extends AdminPage {
 
-    private readonly remote: string; // url to backend
+    // private readonly remote: string; // url to backend
     private delivValue: string | null = null;
     private repoValue: string | null = null;
 
     constructor(remote: string) {
-        this.remote = remote;
+        // this.remote = remote;
+        super(remote);
     }
 
     // called by reflection in renderPage
@@ -103,7 +105,7 @@ export class AdminResultsTab {
                 sortable:    true,
                 defaultSort: false,
                 sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: left;'
             },
             {
                 id:          'delivId',
@@ -111,7 +113,7 @@ export class AdminResultsTab {
                 sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown:    false, // Whether the column should initially sort descending or ascending.
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id:          'score',
@@ -119,7 +121,7 @@ export class AdminResultsTab {
                 sortable:    true,
                 defaultSort: false,
                 sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id:          'state',
@@ -127,7 +129,7 @@ export class AdminResultsTab {
                 sortable:    true,
                 defaultSort: false,
                 sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id:          'timstamp',
@@ -135,7 +137,7 @@ export class AdminResultsTab {
                 sortable:    true,
                 defaultSort: true,
                 sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
             }
         ];
 
