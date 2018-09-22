@@ -13,22 +13,14 @@ services:
         depends_on:
             - reference_ui
     geolocation:
-        build:
-            args:
-                - GEO_PORT
-            context: https://${COURSE_GH_ORG_TOKEN}@github.ubc.ca/cpsc310/cpsc310geocoder.git
+        image: cpsc310geocoder
         container_name: ${CONTAINER_NAME_GEO}
         ports:
             - ${GEO_PORT}:${GEO_PORT}
         restart: always
         user: "${UID}"
     reference_ui:
-        build:
-            args:
-                - UI_PORT
-                - UID
-            context: https://${COURSE_GH_ORG_TOKEN}@github.ubc.ca/cpsc310/project-oracle.git
-            dockerfile: ui.dockerfile
+        image: cpsc310reference_ui
         container_name: ${CONTAINER_NAME_UI}
         expose:
             - ${UI_PORT}

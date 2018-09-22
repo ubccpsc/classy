@@ -153,13 +153,26 @@ permission with the host (this is done in the docker-compose.yml file).
 
     ```bash
     docker build --tag cpsc310image \
-                 --build-arg USER_UID=$(id -u classy) \
-                 --build-arg COURSE=cs310 \
                  --file grade.dockerfile \
-           https://GITHUB_TOKEN@github.ubc.ca/cpsc310/project-oracle.git
+           https://GITHUB_TOKEN@github.ubc.ca/cpsc310/project-resources.git
     ```
     Note: GITHUB_TOKEN should be substituted with the actual token. The tag should match the image name that is/will be
     set in portal.
+    
+3. Build the reference UI docker image.
+
+    ```bash
+    docker build --tag cpsc310reference_ui \
+                 --file ui.dockerfile \
+           https://GITHUB_TOKEN@github.ubc.ca/cpsc310/project-resources.git
+    ```
+
+4. Build the geocoder docker image.
+
+    ```bash
+    docker build --tag cpsc310geocoder \
+           https://GITHUB_TOKEN@github.ubc.ca/cpsc310/project-resources.git#:geocoder
+    ```
 
 5. Build and start the base system:
 
