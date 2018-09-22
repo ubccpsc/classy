@@ -1,6 +1,6 @@
 import Log from "../../../../../common/Log";
 
-import {StudentTransport, TeamTransport, TeamTransportPayload} from "../../../../../common/types/PortalTypes";
+import {CourseTransport, StudentTransport, TeamTransport, TeamTransportPayload} from "../../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 
 import {UI} from "../util/UI";
@@ -12,6 +12,7 @@ export class AdminTeamsTab {
     private readonly remote: string; // url to backend
     private teams: TeamTransport[];
     private students: StudentTransport[];
+    private course: CourseTransport;
 
     constructor(remote: string) {
         this.remote = remote;
@@ -28,11 +29,17 @@ export class AdminTeamsTab {
         this.students = null;
         this.teams = null;
 
+        UI.showModal('Retrieving teams.');
+        this.course = await AdminView.getCourse(this.remote);
+
         if (typeof opts.delivId === 'undefined') {
-            opts.delivId = '-None-';
+            if (this.course.defaultDeliverableId !== null) {
+                opts.delivId = this.course.defaultDeliverableId;
+            } else {
+                opts.delivId = '-None-';
+            }
         }
 
-        UI.showModal('Retrieving teams.');
         this.teams = await AdminTeamsTab.getTeams(this.remote);
         this.renderTeams(this.teams, opts.delivId);
 
