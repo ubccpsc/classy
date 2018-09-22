@@ -105,7 +105,7 @@ export class AdminResultsTab extends AdminPage {
                 sortable:    true,
                 defaultSort: false,
                 sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: left;'
             },
             {
                 id:          'delivId',
@@ -113,7 +113,7 @@ export class AdminResultsTab extends AdminPage {
                 sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown:    false, // Whether the column should initially sort descending or ascending.
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id:          'score',
@@ -121,7 +121,7 @@ export class AdminResultsTab extends AdminPage {
                 sortable:    true,
                 defaultSort: false,
                 sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id:          'state',
@@ -129,7 +129,7 @@ export class AdminResultsTab extends AdminPage {
                 sortable:    true,
                 defaultSort: false,
                 sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id:          'timstamp',
@@ -137,7 +137,7 @@ export class AdminResultsTab extends AdminPage {
                 sortable:    true,
                 defaultSort: true,
                 sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
             }
         ];
 

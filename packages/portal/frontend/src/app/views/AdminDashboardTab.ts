@@ -102,7 +102,7 @@ export class AdminDashboardTab extends AdminPage {
                 sortable:    false,
                 defaultSort: false,
                 sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id:          'repoId',
@@ -110,7 +110,7 @@ export class AdminDashboardTab extends AdminPage {
                 sortable:    true,
                 defaultSort: false,
                 sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: left;'
             },
             {
                 id:          'delivId',
@@ -118,7 +118,7 @@ export class AdminDashboardTab extends AdminPage {
                 sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown:    false, // Whether the column should initially sort descending or ascending.
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id:          'score',
@@ -126,31 +126,31 @@ export class AdminDashboardTab extends AdminPage {
                 sortable:    true,
                 defaultSort: false,
                 sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id:          'testScore',
-                text:        'Test%',
+                text:        'Test %',
                 sortable:    true,
                 defaultSort: false,
                 sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id:          'coverScore',
-                text:        'Cover%',
+                text:        'Cover %',
                 sortable:    true,
                 defaultSort: false,
                 sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
-                id:          'timstamp',
+                id:          'timestamp',
                 text:        'Timestamp',
                 sortable:    true,
                 defaultSort: true,
                 sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id:          'results',
@@ -294,7 +294,7 @@ export class AdminDashboardTab extends AdminPage {
 
         let str = '<span><table style="height: 20px;">';
         str += '<tr>';
-        str += '<td style="width: 4em">' + all.length + '</td>';
+        str += '<td style="width: 2em; text-align: center;">' + all.length + '</td>';
         for (const a of annotated) {
             str += '<td class="dashResultCell" style="width: 5px; height: 20px; background: ' + a.colour + '" title="' + a.name + '"></td>';
         }
