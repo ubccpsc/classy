@@ -13,16 +13,18 @@ import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 
 import {UI} from "../util/UI";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
+import {AdminPage} from "./AdminPage";
 import {AdminView} from "./AdminView";
 
-export class AdminResultsTab {
+export class AdminResultsTab extends AdminPage {
 
-    private readonly remote: string; // url to backend
+    // private readonly remote: string; // url to backend
     private delivValue: string | null = null;
     private repoValue: string | null = null;
 
     constructor(remote: string) {
-        this.remote = remote;
+        // this.remote = remote;
+        super(remote);
     }
 
     // called by reflection in renderPage

@@ -4,18 +4,20 @@ import {CourseTransport, Payload, ProvisionTransport, TeamFormationTransport} fr
 import {Network} from "../util/Network";
 import {UI} from "../util/UI";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
+import {AdminPage} from "./AdminPage";
 import {AdminView} from "./AdminView";
 
-export class AdminConfigTab {
+export class AdminConfigTab extends AdminPage {
 
-    private readonly remote: string; // url to backend
+    // private readonly remote: string; // url to backend
     private isAdmin: boolean;
 
     private deliverablesPage: AdminDeliverablesTab = null;
     private course: CourseTransport = null;
 
     constructor(remote: string, isAdmin: boolean) {
-        this.remote = remote;
+        super(remote);
+        // this.remote = remote;
         this.isAdmin = isAdmin;
         this.deliverablesPage = new AdminDeliverablesTab(remote, isAdmin);
     }

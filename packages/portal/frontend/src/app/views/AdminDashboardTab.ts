@@ -12,17 +12,19 @@ import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 
 import {UI} from "../util/UI";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
+import {AdminPage} from "./AdminPage";
 import {AdminResultsTab} from "./AdminResultsTab";
 import {AdminView} from "./AdminView";
 
-export class AdminDashboardTab {
+export class AdminDashboardTab extends AdminPage {
 
-    private readonly remote: string; // url to backend
+    // private readonly remote: string; // url to backend
     private delivValue: string | null = null;
     private repoValue: string | null = null;
 
     constructor(remote: string) {
-        this.remote = remote;
+        // this.remote = remote;
+        super(remote);
     }
 
     // called by reflection in renderPage
@@ -329,35 +331,4 @@ export class AdminDashboardTab {
 
         return [];
     }
-
-    // public static async getRepositories(remote: string): Promise<RepositoryTransport[]> {
-    //     Log.info("AdminDashboardTab::getRepositories( .. ) - start");
-    //
-    //     try {
-    //         const start = Date.now();
-    //         const url = remote + '/portal/admin/repositories';
-    //         const options = AdminView.getOptions();
-    //         const response = await fetch(url, options);
-    //
-    //         if (response.status === 200) {
-    //             Log.trace('AdminDashboardTab::getRepositories(..) - 200 received');
-    //             const json: RepositoryPayload = await response.json();
-    //             // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
-    //             if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-    //                 Log.trace('AdminDashboardTab::getRepositories(..)  - worked; took: ' + UI.took(start));
-    //                 return json.success;
-    //             } else {
-    //                 Log.trace('AdminDashboardTab::getRepositories(..)  - ERROR: ' + json.failure.message);
-    //                 AdminView.showError(json.failure); // FailurePayload
-    //             }
-    //         } else {
-    //             Log.trace('AdminDashboardTab::getRepositories(..)  - !200 received: ' + response.status);
-    //             const text = await response.text();
-    //             AdminView.showError(text);
-    //         }
-    //     } catch (err) {
-    //         AdminView.showError("Getting results failed: " + err.message);
-    //     }
-    //     return [];
-    // }
 }
