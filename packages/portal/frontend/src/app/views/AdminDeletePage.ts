@@ -2,6 +2,7 @@ import {OnsButtonElement} from "onsenui";
 import Log from "../../../../../common/Log";
 import {UI} from "../util/UI";
 import {AdminPage} from "./AdminPage";
+import {AdminView} from "./AdminView";
 
 export class AdminDeletePage extends AdminPage {
 
@@ -61,20 +62,37 @@ export class AdminDeletePage extends AdminPage {
 
     private async deleteDeliverable(delivId: string): Promise<boolean> {
         Log.info("AdminDeletePage::deleteDeliverable( " + delivId + " ) - start");
-        UI.notificationToast("Deliverable deleted: " + delivId);
-        return Promise.resolve(true);
+        const url = this.remote + '/portal/admin/deliverable/' + delivId;
+        return await this.performDelete(url);
     }
 
     private async deleteTeam(teamId: string): Promise<boolean> {
         Log.info("AdminDeletePage::deleteTeam( " + teamId + " ) - start");
-        UI.notificationToast("Team deleted: " + teamId);
-        return Promise.resolve(true);
+
+        const url = this.remote + '/portal/admin/team/' + teamId;
+        return await this.performDelete(url);
     }
 
     private async deleteRepository(repositoryId: string): Promise<boolean> {
         Log.info("AdminDeletePage::deleteRepository( " + repositoryId + " ) - start");
-        UI.notificationToast("Repository deleted: " + repositoryId);
-        return Promise.resolve(true);
+        const url = this.remote + '/portal/admin/repository/' + repositoryId;
+        return await this.performDelete(url);
+    }
+
+    private async performDelete(url: string): Promise<boolean> {
+        const options: any = AdminView.getOptions();
+        options.method = 'delete';
+
+        const response = await fetch(url, options);
+        const body = await response.json();
+        if (typeof body.success !== 'undefined') {
+            UI.notificationToast(body.success.message);
+            return true;
+        } else {
+            Log.error("Delete ERROR: " + body.failure.message);
+            UI.showError(body.failure.message);
+            return false;
+        }
     }
 
 }

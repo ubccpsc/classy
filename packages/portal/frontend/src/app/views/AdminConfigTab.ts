@@ -3,6 +3,7 @@ import Log from "../../../../../common/Log";
 import {CourseTransport, Payload, ProvisionTransport, TeamFormationTransport} from "../../../../../common/types/PortalTypes";
 import {Network} from "../util/Network";
 import {UI} from "../util/UI";
+import {AdminDeletePage} from "./AdminDeletePage";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminPage} from "./AdminPage";
 import {AdminView} from "./AdminView";
@@ -29,14 +30,14 @@ export class AdminConfigTab extends AdminPage {
 
     // called by reflection in renderPage
     public async init(opts: any): Promise<void> {
-        Log.info('AdminDeliverablesTab::init(..) - start');
+        Log.info('AdminConfigTab::init(..) - start');
         const that = this;
         // Can init frame here if needed
 
         await this.deliverablesPage.init(opts);
 
         (document.querySelector('#adminSubmitClasslist') as OnsButtonElement).onclick = function(evt) {
-            Log.info('AdminView::handleAdminConfig(..) - upload pressed');
+            Log.info('AdminConfigTab::handleAdminConfig(..) - upload pressed');
             evt.stopPropagation(); // prevents list item expansion
 
             const fileInput = document.querySelector('#adminClasslistFile') as HTMLInputElement;
@@ -45,48 +46,59 @@ export class AdminConfigTab extends AdminPage {
                 that.uploadClasslist(fileInput.files).then(function() {
                     // done
                 }).catch(function(err) {
-                    Log.error('AdminView::handleAdminConfig(..) - upload pressed ERROR: ' + err.message);
+                    Log.error('AdminConfigTab::handleAdminConfig(..) - upload pressed ERROR: ' + err.message);
                 });
             }
         };
 
         (document.querySelector('#adminSubmitDefaultDeliverable') as OnsButtonElement).onclick = function(evt) {
-            Log.info('AdminView::handleAdminConfig(..) - default deliverable pressed');
+            Log.info('AdminConfigTab::handleAdminConfig(..) - default deliverable pressed');
 
             that.defaultDeliverablePressed().then(function() {
                 // worked
             }).catch(function(err) {
-                Log.info('AdminView::handleAdminConfig(..) - default deliverable pressed; ERROR: ' + err.message);
+                Log.info('AdminConfigTab::handleAdminConfig(..) - default deliverable pressed; ERROR: ' + err.message);
             });
         };
 
         (document.querySelector('#adminProvisionButton') as OnsButtonElement).onclick = function(evt) {
-            Log.info('AdminView::handleAdminConfig(..) - provision deliverable pressed');
+            Log.info('AdminConfigTab::handleAdminConfig(..) - provision deliverable pressed');
 
             that.provisionDeliverablePressed().then(function() {
                 // worked
             }).catch(function(err) {
-                Log.info('AdminView::handleAdminConfig(..) - provision deliverable pressed; ERROR: ' + err.message);
+                Log.info('AdminConfigTab::handleAdminConfig(..) - provision deliverable pressed; ERROR: ' + err.message);
             });
         };
 
         (document.querySelector('#adminReleaseButton') as OnsButtonElement).onclick = function(evt) {
-            Log.info('AdminView::handleAdminConfig(..) - release deliverable pressed');
+            Log.info('AdminConfigTab::handleAdminConfig(..) - release deliverable pressed');
 
             that.releaseDeliverablePressed().then(function() {
                 // worked
             }).catch(function(err) {
-                Log.info('AdminView::handleAdminConfig(..) - release deliverable pressed; ERROR: ' + err.message);
+                Log.info('AdminConfigTab::handleAdminConfig(..) - release deliverable pressed; ERROR: ' + err.message);
             });
         };
 
         (document.querySelector('#adminCreateTeamButton') as OnsButtonElement).onclick = function(evt) {
-            Log.info('AdminView::handleAdminConfig(..) - create team pressed');
+            Log.info('AdminConfigTab::handleAdminConfig(..) - create team pressed');
 
             that.createTeamPressed().then(function() {
                 // worked
             }).catch(function(err) {
-                Log.info('AdminView::handleAdminConfig(..) - create team pressed; ERROR: ' + err.message);
+                Log.info('AdminConfigTab::handleAdminConfig(..) - create team pressed; ERROR: ' + err.message);
+            });
+        };
+
+        (document.querySelector('#adminDeletePageButton') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminConfigTab::handleAdminConfig(..) - delete page pressed');
+
+            that.pushPage('adminDelete.html', {}).then(function() {
+                const deletePage = new AdminDeletePage(that.remote);
+                deletePage.init({});
+            }).catch(function(err) {
+                Log.error("AdminConfigTab - adminDelete ERROR: " + err.message);
             });
         };
 
@@ -148,7 +160,7 @@ export class AdminConfigTab extends AdminPage {
 
     private validateClasslistSpecified(fileInput: HTMLInputElement) {
         if (fileInput.value.length > 0) {
-            Log.trace('AdminView::validateClasslistSpecified() - validation passed');
+            Log.trace('AdminConfigTab::validateClasslistSpecified() - validation passed');
             return true;
         } else {
             UI.notification('You must select a ClassList CSV before you click "Upload".');
@@ -157,7 +169,7 @@ export class AdminConfigTab extends AdminPage {
     }
 
     public async uploadClasslist(fileList: FileList) {
-        Log.info('AdminView::uploadClasslist(..) - start');
+        Log.info('AdminConfigTab::uploadClasslist(..) - start');
         const url = this.remote + '/portal/admin/classlist';
 
         UI.showModal('Uploading classlist.');
@@ -177,7 +189,7 @@ export class AdminConfigTab extends AdminPage {
             if (response.status >= 200 && response.status < 300) {
                 const data: Payload = await response.json();
                 UI.hideModal();
-                Log.info('AdminView::uploadClasslist(..) - RESPONSE: ' + JSON.stringify(data));
+                Log.info('AdminConfigTab::uploadClasslist(..) - RESPONSE: ' + JSON.stringify(data));
                 UI.notification(data.success.message);
             } else {
                 const reason = await response.json();
@@ -192,15 +204,15 @@ export class AdminConfigTab extends AdminPage {
             }
         } catch (err) {
             UI.hideModal();
-            Log.error('AdminView::uploadClasslist(..) - ERROR: ' + err.message);
+            Log.error('AdminConfigTab::uploadClasslist(..) - ERROR: ' + err.message);
             AdminView.showError(err);
         }
 
-        Log.trace('AdminView::uploadClasslist(..) - end');
+        Log.trace('AdminConfigTab::uploadClasslist(..) - end');
     }
 
     private async createTeamPressed(): Promise<void> {
-        Log.trace('AdminView::createTeamPressed(..) - start');
+        Log.trace('AdminConfigTab::createTeamPressed(..) - start');
         const delivDropdown = document.querySelector('#adminTeamDeliverableSelect') as HTMLSelectElement;
         const delivId = delivDropdown.value;
 
@@ -217,7 +229,7 @@ export class AdminConfigTab extends AdminPage {
             githubIds: nameList
         };
 
-        Log.trace('AdminView::createTeamPressed(..) - body: ' + JSON.stringify(team));
+        Log.trace('AdminConfigTab::createTeamPressed(..) - body: ' + JSON.stringify(team));
 
         options.body = JSON.stringify(team);
 
@@ -232,13 +244,13 @@ export class AdminConfigTab extends AdminPage {
     }
 
     private async defaultDeliverablePressed(): Promise<void> {
-        Log.trace('AdminView::defaultDeliverablePressed(..) - start');
+        Log.trace('AdminConfigTab::defaultDeliverablePressed(..) - start');
         const delivDropdown = document.querySelector('#adminDefaultDeliverableSelect') as HTMLSelectElement;
         const value = delivDropdown.value;
 
         this.course.defaultDeliverableId = value; // update with new value
 
-        Log.trace('AdminView::defaultDeliverablePressed(..) - value: ' + value);
+        Log.trace('AdminConfigTab::defaultDeliverablePressed(..) - value: ' + value);
 
         const url = this.remote + '/portal/admin/course';
         const options: any = AdminView.getOptions();
@@ -256,11 +268,11 @@ export class AdminConfigTab extends AdminPage {
     }
 
     private async provisionDeliverablePressed(): Promise<void> {
-        Log.trace('AdminView::provisionDeliverablePressed(..) - start');
+        Log.trace('AdminConfigTab::provisionDeliverablePressed(..) - start');
         const start = Date.now();
         const delivDropdown = document.querySelector('#adminProvisionDeliverableSelect') as HTMLSelectElement;
         const value = delivDropdown.value;
-        Log.trace('AdminView::provisionDeliverablePressed(..) - value: ' + value);
+        Log.trace('AdminConfigTab::provisionDeliverablePressed(..) - value: ' + value);
 
         if (value !== null && value !== 'null') {
             const url = this.remote + '/portal/admin/provision';
@@ -275,7 +287,7 @@ export class AdminConfigTab extends AdminPage {
                 "(and teams, although they will not be added to the repos until you release). " +
                 "Please make sure this operation completes before you provision again or release these repos.");
 
-            Log.trace('AdminView::provisionDeliverablePressed(..) - POSTing to: ' + url);
+            Log.trace('AdminConfigTab::provisionDeliverablePressed(..) - POSTing to: ' + url);
             const response = await fetch(url, options);
 
             if (response.status === 200 || response.status === 400) {
@@ -294,15 +306,15 @@ export class AdminConfigTab extends AdminPage {
                 UI.showAlert("Unexpected problem encountered: " + response.statusText);
             }
         }
-        Log.trace('AdminView::provisionDeliverablePressed(..) - done; took: ' + UI.took(start));
+        Log.trace('AdminConfigTab::provisionDeliverablePressed(..) - done; took: ' + UI.took(start));
     }
 
     private async releaseDeliverablePressed(): Promise<void> {
-        Log.trace('AdminView::releaseDeliverablePressed(..) - start');
+        Log.trace('AdminConfigTab::releaseDeliverablePressed(..) - start');
         const start = Date.now();
         const delivDropdown = document.querySelector('#adminReleaseDeliverableSelect') as HTMLSelectElement;
         const value = delivDropdown.value;
-        Log.trace('AdminView::releaseDeliverablePressed(..) - value: ' + value);
+        Log.trace('AdminConfigTab::releaseDeliverablePressed(..) - value: ' + value);
 
         if (value !== null && value !== 'null') {
             const url = this.remote + '/portal/admin/release';
@@ -317,7 +329,7 @@ export class AdminConfigTab extends AdminPage {
             const provision: ProvisionTransport = {delivId: value, formSingle: false};
             options.body = JSON.stringify(provision); // TODO: handle formSingle correctly
 
-            Log.trace('AdminView::releaseDeliverablePressed(..) - POSTing to: ' + url);
+            Log.trace('AdminConfigTab::releaseDeliverablePressed(..) - POSTing to: ' + url);
             const response = await fetch(url, options);
 
             if (response.status === 200 || response.status === 400) {
@@ -337,7 +349,7 @@ export class AdminConfigTab extends AdminPage {
                 UI.showAlert("Unexpected problem: " + response.statusText);
             }
         }
-        Log.trace('AdminView::releaseDeliverablePressed(..) - done; took: ' + UI.took(start));
+        Log.trace('AdminConfigTab::releaseDeliverablePressed(..) - done; took: ' + UI.took(start));
     }
 
 }

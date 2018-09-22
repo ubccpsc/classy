@@ -330,6 +330,9 @@ export default class AdminRoutes implements IREST {
         // if these params are missing the client will get 404 since they are part of the path
         const teamId = req.params.teamId;
 
+        let deletedObj = false;
+        let deletedGithub = false;
+
         const dbc = DatabaseController.getInstance();
         dbc.getTeam(teamId).then(function(team) {
             if (team !== null) {
@@ -339,10 +342,20 @@ export default class AdminRoutes implements IREST {
             }
         }).then(function(success) {
             // also delete it on github, if it exists
+            if (success === true) {
+                deletedObj = true;
+            }
             return GitHubActions.getInstance().deleteTeamByName(teamId);
         }).then(function(success) {
             Log.trace('AdminRoutes::deleteTeam(..) - done; success: ' + success);
-            const payload: Payload = {success: {message: 'Team deleted.'}};
+            if (success === true) {
+                deletedGithub = true;
+            }
+            const payload: Payload = {
+                success: {
+                    message: 'Team ' + teamId + ' deleted; object: ' + deletedObj + '; GitHub: ' + deletedGithub
+                }
+            };
             res.send(200, payload); // return as text rather than json
             return next();
         }).catch(function(err) {

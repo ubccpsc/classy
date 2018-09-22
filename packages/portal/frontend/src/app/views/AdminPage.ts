@@ -23,12 +23,12 @@ export abstract class AdminPage implements IView {
         Log.info("AdminPate::renderPage( " + pageName + ", ... ) - default implementation");
     }
 
-    public pushPage(pageName: string, opts: {}): void {
+    public pushPage(pageName: string, opts: {}): Promise<void> {
         Log.info("AdminPage::pushPage( " + pageName + ", ... ) - start");
         if (typeof opts !== 'object') {
             opts = {};
         }
         const prefix = Factory.getInstance().getHTMLPrefix();
-        UI.pushPage(prefix + '/' + pageName, opts);
+        return UI.pushPage(prefix + '/' + pageName, opts);
     }
 }

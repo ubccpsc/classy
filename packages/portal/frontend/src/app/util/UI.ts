@@ -19,7 +19,7 @@ export class UI {
     /**
      * Onsen convenience functions
      */
-    public static pushPage(pageId: string, options?: any): any {
+    public static pushPage(pageId: string, options?: any): Promise<void> {
         if (typeof options === 'undefined') {
             options = {};
         }
