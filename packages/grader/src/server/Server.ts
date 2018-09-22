@@ -82,7 +82,8 @@ export default class Server {
                             // Add parameters to create the grading container. We'll be lazy and use the custom field.
                             input.containerConfig.custom = {
                                 "--env":      [
-                                    `ASSIGNMENT=${input.delivId}`
+                                    `ASSIGNMENT=${input.delivId}`,
+                                    `USER_UID=${uid}`
                                 ],
                                 "--volume":   [
                                     `${process.env.GRADER_HOST_DIR}/${id}/assn:/assn`,
