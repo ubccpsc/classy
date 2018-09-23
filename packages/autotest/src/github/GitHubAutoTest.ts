@@ -159,7 +159,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     }
 
     protected async schedule(info: CommitTarget): Promise<void> {
-        Log.info("GitHubAutoTest::schedule(..) - scheduling for: " + info.commitURL);
+        Log.info("GitHubAutoTest::schedule(..) - scheduling for: " + info.personId + "; SHA: " + info.commitURL);
         const containerConfig = await this.getContainerConfig(info.delivId);
         if (containerConfig !== null) {
             const input: IContainerInput = {delivId: info.delivId, pushInfo: info, containerConfig: containerConfig};
@@ -178,17 +178,22 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         if (res !== null) {
             // previously processed
-            Log.info("GitHubAutoTest::processComment(..) - result already exists; handling");
+            Log.info("GitHubAutoTest::processComment(..) - result already exists; handling for: " +
+                info.personId + "; SHA: " + info.commitSHA);
             await this.postToGitHub({url: info.postbackURL, message: res.output.report.feedback});
             await this.saveCommentInfo(info);
             if (res.output.postbackOnComplete === false) {
-                Log.info("GitHubAutoTest::processComment(..) - result already exists; feedback request logged");
+                Log.info("GitHubAutoTest::processComment(..) - result already exists; feedback request logged for: " +
+                    info.personId + "; SHA: " + info.commitSHA);
                 await this.saveFeedbackGiven(info.delivId, info.personId, info.timestamp, info.commitURL);
             } else {
                 // postbackOnComplete should only be true for lint / compile errors; don't saveFeedback (charge) for these
-                Log.info("GitHubAutoTest::processComment(..) - result already exists; feedback request skipped");
+                Log.info("GitHubAutoTest::processComment(..) - result already exists; feedback request skipped for: " +
+                    info.personId + "; SHA: " + info.commitSHA);
             }
         } else {
+            Log.info("GitHubAutoTest::processComment(..) - result not yet done; handling for: " +
+                info.personId + "; SHA: " + info.commitSHA);
             // not yet processed
             const onQueue = this.isOnQueue(info.commitURL, info.delivId);
             let msg = '';
@@ -199,7 +204,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             } else {
                 const pe = await this.dataStore.getPushRecord(info.commitURL);
                 if (pe === null) {
-                    Log.warn("GitHubAutoTest::processComment(..) - push event was not present; adding now. URL: " + info.commitURL);
+                    Log.warn("GitHubAutoTest::processComment(..) - push event was not present; adding now. URL: " +
+                        info.commitURL + "; for: " + info.personId + "; SHA: " + info.commitSHA);
                     // store this pushevent for consistency in case we need it for anything else later
                     await this.dataStore.savePush(info); // NEXT: add cloneURL to commentEvent (should be in github payload)
                 }
@@ -226,12 +232,13 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         const previousRequest: IFeedbackGiven = await this.dataStore.getFeedbackGivenRecordForCommit(info.commitURL, info.personId);
 
         if (previousRequest === null && feedbackDelay !== null) {
-            Log.info("GitHubAutoTest::handleCommentStudent(..) - too early; wait: " + feedbackDelay + " for: " + info.commitURL);
+            Log.info("GitHubAutoTest::handleCommentStudent(..) - too early; wait: " + feedbackDelay + " for: " + info.personId +
+                "; SHA: " + info.commitURL);
             // NOPE, not yet (this is the most common case; feedback requested without time constraints)
             const msg = "You must wait " + feedbackDelay + " before requesting feedback.";
             await this.postToGitHub({url: info.postbackURL, message: msg});
         } else {
-            Log.info("GitHubAutoTest::handleCommentStudent(..) - process request for: " + info.commitURL);
+            Log.info("GitHubAutoTest::handleCommentStudent(..) - not too early; for: " + info.personId + "; SHA: " + info.commitURL);
             // either requested before, or no time limitations, either way it should be processed
             await this.processComment(info, res);
         }
@@ -262,6 +269,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     public async handleCommentEvent(info: CommitTarget): Promise<boolean> {
         const start = Date.now();
 
+        Log.info("GitHubAutoTest::handleCommentEvent(..) - start; for: " +
+            info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA);
+
         // sanity check; this keeps the rest of the code much simpler
         const preconditionsMet = await this.checkCommentPreconditions(info);
         if (preconditionsMet === false) {
@@ -271,6 +281,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         const isCurrentlyRunning: boolean = this.isCommitExecuting(info.commitURL, info.delivId);
         if (isCurrentlyRunning === true) {
+            Log.info("GitHubAutoTest::handleCommentEvent(..) - currentlyRunning ; for: " +
+                info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA);
+
             // common case: the commit is already running, provide status and let it finish
             let msg = "This commit is still queued for processing against " + info.delivId + ".";
             msg += " Your results will be posted here as soon as they are ready.";
@@ -281,8 +294,12 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(info.personId);
             const res: AutoTestResultTransport = await this.classPortal.getResult(info.delivId, info.repoId, info.commitSHA);
             if (isStaff !== null && (isStaff.isStaff === true || isStaff.isAdmin === true)) {
+                Log.info("GitHubAutoTest::handleCommentEvent(..) - handleAdmin; for: " +
+                    info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA);
                 await this.processComment(info, res);
             } else {
+                Log.info("GitHubAutoTest::handleCommentEvent(..) - handleStudent; for: " +
+                    info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA);
                 await this.handleCommentStudent(info, res);
             }
         }
@@ -384,7 +401,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      */
     private async saveCommentInfo(info: CommitTarget) {
         try {
-            Log.trace("GitHubAutoTest::saveCommentInfo(..) - commit: " + info.commitSHA);
+            Log.trace("GitHubAutoTest::saveCommentInfo(..) - for: " + info.personId + "; SHA: " + info.commitSHA);
             await this.dataStore.saveComment(info);
         } catch (err) {
             Log.error("GitHubAutoTest::saveCommentInfo(..) - ERROR: " + err);
