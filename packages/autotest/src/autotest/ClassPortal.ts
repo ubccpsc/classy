@@ -94,7 +94,7 @@ export class ClassPortal implements IClassPortal {
 
         try {
             const url = this.host + ":" + this.port + "/portal/at/isStaff/" + userName;
-            Log.info("ClassPortal::isStaff(..) - Sending request to " + url);
+            Log.info("ClassPortal::isStaff(..) - requesting from: " + url);
             const opts: rp.RequestPromiseOptions = {
                 rejectUnauthorized: false,
                 headers:            {
@@ -122,7 +122,7 @@ export class ClassPortal implements IClassPortal {
         // const NO_ACCESS = {personId: userName, isStaff: false, isAdmin: false}; // if error, give no credentials
         const url = this.host + ":" + this.port + "/portal/at/personId/" + githubId;
         try {
-            Log.info("ClassPortal::personId(..) - Sending request to " + url);
+            Log.info("ClassPortal::personId(..) - requesting from: " + url);
             const opts: rp.RequestPromiseOptions = {
                 rejectUnauthorized: false,
                 headers:            {
@@ -153,7 +153,7 @@ export class ClassPortal implements IClassPortal {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
             }
         };
-        Log.info("ClassPortal::getDefaultDeliverableId(..) - Sending request to " + url);
+        Log.info("ClassPortal::getDefaultDeliverableId(..) - requesting from: " + url);
         try {
             const res = await rp(url, opts); // .then(function(res) {
             Log.trace("ClassPortal::getDefaultDeliverableId() - success; payload: " + res);
@@ -177,10 +177,10 @@ export class ClassPortal implements IClassPortal {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
             }
         };
-        Log.info("ClassPortal::getContainerDetails(..) - Sending request to " + url);
+        Log.info("ClassPortal::getContainerDetails(..) - requesting from: " + url);
         try {
             const res = await rp(url, opts);
-            Log.trace("ClassPortal::getContainerDetails( " + delivId + " ) - success"); // payload: " + res);
+            Log.trace("ClassPortal::getContainerDetails( " + delivId + " ) - success; payload: " + res);
             const json: AutoTestConfigPayload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
                 return json.success;
@@ -208,16 +208,16 @@ export class ClassPortal implements IClassPortal {
                 json:               true
             };
 
-            Log.info("ClassPortal::sendGrade(..) - Sending request to " + url);
-            Log.info("ClassPortal::sendGrade(..) - payload: " + JSON.stringify(grade));
+            Log.info("ClassPortal::sendGrade(..) - requesting from: " + url);
+            Log.trace("ClassPortal::sendGrade(..) - payload: " + JSON.stringify(grade));
             const res = await rp(url, opts);
 
             const json = res;
             if (typeof json.success !== 'undefined') {
-                Log.info("ClassPortal::sendGrade(..) - successfully received");
+                Log.info("ClassPortal::sendGrade(..) - grade accepted");
                 return json;
             } else {
-                Log.error("ClassPortal::sendGrade(..) - ERROR; not successfully received:  " + JSON.stringify(json));
+                Log.error("ClassPortal::sendGrade(..) - ERROR; grade not accepted:  " + JSON.stringify(json));
                 return json;
             }
         } catch (err) {
@@ -242,16 +242,16 @@ export class ClassPortal implements IClassPortal {
                 json:               true
             };
 
-            Log.info("ClassPortal::sendResult(..) - Sending request to " + url + ' for repoId: ' +
+            Log.info("ClassPortal::sendResult(..) - sending to: " + url + ' for repoId: ' +
                 result.repoId + '; delivId: ' + result.delivId + '; SHA: ' + result.input.pushInfo.commitSHA);
             const res = await rp(url, opts);
             Log.trace("ClassPortal::sendResult() - sent; returned payload: " + JSON.stringify(res));
             const json = res;
             if (typeof json.success !== 'undefined') {
-                Log.info("ClassPortal::sendResult(..) - successfully received");
+                Log.info("ClassPortal::sendResult(..) - result accepted");
                 return json;
             } else {
-                Log.error("ClassPortal::sendResult(..) - ERROR; not successfully received:  " + JSON.stringify(json));
+                Log.error("ClassPortal::sendResult(..) - ERROR; result not acccepted:  " + JSON.stringify(json));
                 return json;
             }
         } catch (err) {
@@ -270,12 +270,12 @@ export class ClassPortal implements IClassPortal {
                 method:             'get',
                 headers:            {token: Config.getInstance().getProp(ConfigKey.autotestSecret)}
             };
-            Log.info("ClassPortal::getResult(..) - Requesting result from: " + url);
+            Log.info("ClassPortal::getResult(..) - requesting from: " + url);
             const res = await rp(url, opts);
             // Log.trace("ClassPortal::getResult() - sent; returned payload: " + res);
             const json: AutoTestResultPayload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
-                Log.info("ClassPortal::getResult(..) - successfully received; length: " + json.success.length);
+                Log.info("ClassPortal::getResult(..) - result received; length: " + json.success.length);
                 const success = json.success as AutoTestResultTransport[];
                 if (success.length > 0) {
                     return success[0];
@@ -283,13 +283,11 @@ export class ClassPortal implements IClassPortal {
                     return null;
                 }
             } else {
-                Log.error("ClassPortal::getResult(..) - ERROR; not successfully received:  " + JSON.stringify(json));
+                Log.error("ClassPortal::getResult(..) - ERROR; result not received:  " + JSON.stringify(json));
                 return null;
             }
         } catch (err) {
             Log.error("ClassPortal::getResult(..) - ERROR; url: " + url + "; ERROR: " + err);
-            // const pay: Payload = {failure: {message: err.message, shouldLogout: false}};
-            // return pay;
             return null;
         }
     }
