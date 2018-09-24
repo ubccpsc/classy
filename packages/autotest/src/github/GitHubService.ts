@@ -33,8 +33,17 @@ export class GitHubService implements IGitHubService {
     public postMarkdownToGithub(message: IGitHubMessage): Promise<boolean> {
         return new Promise<boolean>((fulfill, reject) => {
             try {
+                // find a better short string for logging
+                let messageToPrint = message.message;
+                if (messageToPrint.indexOf('\n') > 0) {
+                    messageToPrint = messageToPrint.substr(0, messageToPrint.indexOf('\n'));
+                }
+                if (messageToPrint.length > 80) {
+                    messageToPrint = messageToPrint.substr(0, 80) + "...";
+                }
+
                 Log.info("GitHubService::postMarkdownToGithub(..) - Posting markdown to url: " +
-                    message.url + "; message: " + message.message);
+                    message.url + "; message: " + messageToPrint);
 
                 if (typeof message.url === "undefined" || message.url === null) {
                     Log.error("GitHubService::postMarkdownToGithub(..)  - message.url is required");
@@ -66,8 +75,7 @@ export class GitHubService implements IGitHubService {
 
                 if (Config.getInstance().getProp(ConfigKey.postback) === true) {
 
-                    Log.trace("GitHubService::postMarkdownToGithub(..) - request: " + JSON.stringify(options, null, 2));
-                    // const url = host + '/' + path;
+                    // Log.trace("GitHubService::postMarkdownToGithub(..) - request: " + JSON.stringify(options, null, 2));
                     const url = message.url; // this url comes from postbackURL which uses the right API format
                     return rp(url, options).then(function(res) {
                         Log.trace("GitHubService::postMarkdownToGithub(..) - success"); // : " + res);
@@ -79,7 +87,6 @@ export class GitHubService implements IGitHubService {
 
                 } else {
                     Log.trace("GitHubService::postMarkdownToGithub(..) - send skipped (config.postback === false)");
-                    // this.messages.push(message);
                     fulfill(true);
                 }
             } catch (err) {

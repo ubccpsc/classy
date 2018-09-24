@@ -177,19 +177,19 @@ export class ClassPortal implements IClassPortal {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
             }
         };
-        Log.info("ClassPortal::getContainerId(..) - Sending request to " + url);
+        Log.info("ClassPortal::getContainerDetails(..) - Sending request to " + url);
         try {
             const res = await rp(url, opts);
-            Log.trace("ClassPortal::getContainerId( " + delivId + " ) - success; payload: " + res);
+            Log.trace("ClassPortal::getContainerDetails( " + delivId + " ) - success"); // payload: " + res);
             const json: AutoTestConfigPayload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
                 return json.success;
             } else {
-                Log.warn("ClassPortal::getContainerId(..) - ERROR: " + JSON.stringify(json));
+                Log.warn("ClassPortal::getContainerDetails(..) - ERROR: " + JSON.stringify(json));
                 return null;
             }
         } catch (err) {
-            Log.error("ClassPortal::getContainerId(..) - ERROR; url: " + url + "; ERROR: " + err);
+            Log.error("ClassPortal::getContainerDetails(..) - ERROR; url: " + url + "; ERROR: " + err);
             return null;
         }
     }
@@ -272,7 +272,7 @@ export class ClassPortal implements IClassPortal {
             };
             Log.info("ClassPortal::getResult(..) - Requesting result from: " + url);
             const res = await rp(url, opts);
-            Log.trace("ClassPortal::getResult() - sent; returned payload: " + res);
+            // Log.trace("ClassPortal::getResult() - sent; returned payload: " + res);
             const json: AutoTestResultPayload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
                 Log.info("ClassPortal::getResult(..) - successfully received; length: " + json.success.length);

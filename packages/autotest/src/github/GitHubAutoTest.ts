@@ -2,7 +2,12 @@ import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
 import {CommitTarget, IAutoTestResult, IContainerInput, IFeedbackGiven} from "../../../common/types/AutoTestTypes";
-import {AutoTestAuthTransport, AutoTestConfigTransport, AutoTestResultTransport} from "../../../common/types/PortalTypes";
+import {
+    AutoTestAuthTransport,
+    AutoTestConfigTransport,
+    AutoTestDefaultDeliverableTransport,
+    AutoTestResultTransport
+} from "../../../common/types/PortalTypes";
 import Util from "../../../common/Util";
 import {AutoTest} from "../autotest/AutoTest";
 
@@ -426,10 +431,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     private async getDelivId(): Promise<string | null> {
         Log.trace("GitHubAutoTest::getDelivId() - start");
         try {
-            const str = await this.classPortal.getDefaultDeliverableId();
-            Log.trace("GitHubAutoTest::getDelivId() - RESPONSE: " + str);
-            if (str !== null && typeof str.defaultDeliverable !== "undefined") {
-                return str.defaultDeliverable;
+            const delivTransport: AutoTestDefaultDeliverableTransport = await this.classPortal.getDefaultDeliverableId();
+            Log.trace("GitHubAutoTest::getDelivId() - response: " + JSON.stringify(delivTransport));
+            if (delivTransport !== null && typeof delivTransport.defaultDeliverable !== "undefined") {
+                return delivTransport.defaultDeliverable;
             }
         } catch (err) {
             Log.error("GitHubAutoTest::getDelivId() - ERROR: " + err);

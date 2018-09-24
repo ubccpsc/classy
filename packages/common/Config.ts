@@ -135,10 +135,21 @@ export default class Config {
 
             // this is not a great place for this
             // but at least it should happen near the start of any execution
-            Log.info("Log::<init>");
+            Log.info("Config - Log::<init>");
             const ci = process.env.CI;
             if (typeof ci !== 'undefined' && Boolean(ci) === true) {
+                Log.info("Config - Log::<init> - CI detected; changing to INFO");
                 Log.Level = LogLevel.INFO; // change to INFO from TRACE if on CI
+            } else {
+                Log.info("Config - Log::<init> - CI NOT detected");
+            }
+
+            const hostname = this.config.publichostname;
+            if (hostname.indexOf("://localhost") < 0) {
+                Log.info("Config - Log::<init> - Prod detected; changing to INFO");
+                Log.Level = LogLevel.INFO;
+            } else {
+                Log.info("Config - Log::<init> - Prod NOT detected");
             }
 
         } catch (err) {
