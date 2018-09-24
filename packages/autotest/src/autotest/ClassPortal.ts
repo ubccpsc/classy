@@ -153,7 +153,7 @@ export class ClassPortal implements IClassPortal {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
             }
         };
-        Log.info("ClassPortal::getDefaultDeliverableId(..) - requesting from: " + url);
+        Log.trace("ClassPortal::getDefaultDeliverableId(..) - requesting from: " + url);
         try {
             const res = await rp(url, opts); // .then(function(res) {
             Log.trace("ClassPortal::getDefaultDeliverableId() - success; payload: " + res);
@@ -177,7 +177,7 @@ export class ClassPortal implements IClassPortal {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
             }
         };
-        Log.info("ClassPortal::getContainerDetails(..) - requesting from: " + url);
+        Log.trace("ClassPortal::getContainerDetails(..) - requesting from: " + url);
         try {
             const res = await rp(url, opts);
             Log.trace("ClassPortal::getContainerDetails( " + delivId + " ) - success; payload: " + res);

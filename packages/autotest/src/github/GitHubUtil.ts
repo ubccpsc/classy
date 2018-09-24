@@ -94,8 +94,8 @@ export class GitHubUtil {
             Log.trace("GitHubUtil::processComment(..) - handling: " + JSON.stringify(commentEvent));
             return commentEvent;
         } catch (err) {
-            Log.info("GitHubUtil::processComment(..) - ERROR parsing: " + err);
-            Log.info("GitHubUtil::processComment(..) - ERROR payload: " + JSON.stringify(payload));
+            Log.error("GitHubUtil::processComment(..) - ERROR parsing: " + err);
+            Log.error("GitHubUtil::processComment(..) - ERROR payload: " + JSON.stringify(payload, null, 2));
             return null;
         }
     }
@@ -167,8 +167,8 @@ export class GitHubUtil {
             Log.trace("GitHubUtil::processPush(..) - handling: " + pushEvent);
             return pushEvent;
         } catch (err) {
-            Log.info("GitHubUtil::processPush(..) - ERROR parsing: " + err);
-            Log.info("GitHubUtil::processPush(..) - ERROR payload: " + JSON.stringify(payload));
+            Log.error("GitHubUtil::processPush(..) - ERROR parsing: " + err);
+            Log.error("GitHubUtil::processPush(..) - ERROR payload: " + JSON.stringify(payload, null, 2));
             return null;
         }
     }

@@ -313,7 +313,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             if (data.output.postbackOnComplete === true) {
                 // do this first, doesn't count against quota
                 Log.info("GitHubAutoTest::processExecution(..) - postback: true; deliv: " +
-                    data.delivId + "; repo: " + data.repoId + "; sha: " + data.commitSHA);
+                    data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA);
                 await this.postToGitHub({url: data.input.pushInfo.postbackURL, message: data.output.report.feedback});
                 // NOTE: if the feedback was requested for this build it shouldn't count
                 // since we're not calling saveFeedback this is right
@@ -321,13 +321,13 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             } else if (feedbackRequested !== null) {
                 // feedback has been previously requested
                 Log.info("GitHubAutoTest::processExecution(..) - feedback requested; deliv: " +
-                    data.delivId + "; repo: " + data.repoId + "; sha: " + data.commitSHA + '; for: ' + feedbackRequested.personId);
+                    data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA + '; for: ' + feedbackRequested.personId);
                 await this.postToGitHub({url: data.input.pushInfo.postbackURL, message: data.output.report.feedback});
                 await this.saveFeedbackGiven(data.input.delivId, feedbackRequested.personId, feedbackRequested.timestamp, data.commitURL);
             } else {
                 // do nothing
                 Log.info("GitHubAutoTest::processExecution(..) - commit not requested - no feedback given;  deliv: " +
-                    data.delivId + "; repo: " + data.repoId + "; sha: " + data.commitSHA);
+                    data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA);
             }
         } catch (err) {
             Log.info("GitHubAutoTest::processExecution(..) - ERROR: " + err);

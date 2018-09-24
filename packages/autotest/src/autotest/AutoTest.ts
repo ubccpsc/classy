@@ -67,7 +67,7 @@ export abstract class AutoTest implements IAutoTest {
             const schedule = function(queue: Queue): boolean {
                 const info: IContainerInput = queue.scheduleNext();
                 Log.info("AutoTest::tick(..) - starting job on: " + queue.getName() + "; deliv: " +
-                    info.delivId + '; repo: ' + info.pushInfo.repoId + '; sha: ' + info.pushInfo.commitSHA);
+                    info.delivId + '; repo: ' + info.pushInfo.repoId + '; SHA: ' + info.pushInfo.commitSHA);
                 // noinspection JSIgnoredPromiseFromCall
                 // tslint:disable-next-line
                 that.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
@@ -274,7 +274,7 @@ export abstract class AutoTest implements IAutoTest {
             Log.info("AutoTest::handleExecutionComplete(..) - start" +
                 ": delivId: " + data.delivId + "; repoId: " + data.repoId +
                 "; took (waiting + execution): " + Util.tookHuman(data.input.pushInfo.timestamp) +
-                "; commit: " + data.commitSHA);
+                "; SHA: " + data.commitSHA);
 
             try {
                 const resultPayload = await this.classPortal.sendResult(data);
@@ -313,7 +313,7 @@ export abstract class AutoTest implements IAutoTest {
      */
     private async invokeContainer(input: IContainerInput) {
         try {
-            Log.info("AutoTest::invokeContainer(..) - start; delivId: " + input.delivId + "; commit: " + input.pushInfo.commitSHA);
+            Log.info("AutoTest::invokeContainer(..) - start; delivId: " + input.delivId + "; SHA: " + input.pushInfo.commitSHA);
             Log.trace("AutoTest::invokeContainer(..) - input: " + JSON.stringify(input, null, 2));
             const start = Date.now();
 
@@ -366,7 +366,7 @@ export abstract class AutoTest implements IAutoTest {
                 try {
                     output = await rp(gradeServiceOpts);
                 } catch (err) {
-                    Log.warn("AutoTest::invokeContainer(..) - ERROR for commit: " +
+                    Log.warn("AutoTest::invokeContainer(..) - ERROR for SHA: " +
                         input.pushInfo.commitSHA + "; ERROR with grading service: " + err);
                 }
 
@@ -409,7 +409,7 @@ export abstract class AutoTest implements IAutoTest {
                         // grade not sent; if postback is true we must have compile / lint problem
                     }
                 } catch (err) {
-                    Log.warn("AutoTest::invokeContainer(..) - ERROR for commit: " + input.pushInfo.commitSHA +
+                    Log.warn("AutoTest::invokeContainer(..) - ERROR for SHA: " + input.pushInfo.commitSHA +
                         "; ERROR sending grade: " + err);
                 }
             } else {
@@ -419,11 +419,10 @@ export abstract class AutoTest implements IAutoTest {
             }
 
             Log.info("AutoTest::invokeContainer(..) - complete; delivId: " + input.delivId +
-                "; commit: " + input.pushInfo.commitSHA + "; took: " + Util.tookHuman(start));
+                "; SHA: " + input.pushInfo.commitSHA + "; took: " + Util.tookHuman(start));
             await this.handleExecutionComplete(record);
-            // Log.info("AutoTest::invokeContainer(..) - done; commit: " + input.pushInfo.commitSHA + "; took: " + Util.took(start));
         } catch (err) {
-            Log.error("AutoTest::invokeContainer(..) - ERROR for commit: " + input.pushInfo.commitSHA + "; ERROR: " + err);
+            Log.error("AutoTest::invokeContainer(..) - ERROR for SHA: " + input.pushInfo.commitSHA + "; ERROR: " + err);
         }
     }
 }
