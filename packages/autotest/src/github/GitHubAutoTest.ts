@@ -132,6 +132,25 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         if (auth !== null && (auth.isAdmin === true || auth.isStaff === true)) {
             Log.trace("GitHubAutoTest::handleCommentEvent(..) - admin request; ignoring openTimestamp and closeTimestamp");
         } else {
+            // check special flags
+            if (typeof info.flags !== 'undefined') {
+                if (info.flags.indexOf("#force") > 0) {
+                    Log.warn("GitHubAutoTest::handleCommentEvent(..) - ignored, student use of #force.");
+                    const msg = "Only admins can use the #force flag.";
+                    delete info.flags;
+                    await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+                    return false;
+                }
+                if (info.flags.indexOf("#silent") > 0) {
+                    Log.warn("GitHubAutoTest::handleCommentEvent(..) - ignored, student use of #silent.");
+                    const msg = "Only admins can use the #silent flag.";
+                    delete info.flags;
+                    await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+                    return false;
+                }
+            }
+
+            // check timestamps
             if (deliv.openTimestamp > info.timestamp) {
                 Log.warn("GitHubAutoTest::handleCommentEvent(..) - ignored, deliverable not yet open to AutoTest.");
                 // not open yet
