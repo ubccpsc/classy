@@ -351,10 +351,12 @@ export class MongoDataStore implements IDataStore {
     private async open(): Promise<Db> {
         // Log.trace("MongoDataStore::open() - start");
         if (this.db === null) {
-            const dbName = Config.getInstance().getProp(ConfigKey.name);
+            const dbName = Config.getInstance().getProp(ConfigKey.name).trim(); // make sure there are no extra spaces in config
+            const dbHost = Config.getInstance().getProp(ConfigKey.mongoUrl).trim(); // make sure there are no extra spaces in config
+
             Log.info("MongoDataStore::open() - db null; making new connection to: " + dbName);
 
-            const client = await MongoClient.connect(Config.getInstance().getProp(ConfigKey.mongoUrl)); // 'mongodb://localhost:27017'
+            const client = await MongoClient.connect(dbHost);
             this.db = await client.db(dbName);
 
             Log.info("MongoDataStore::open() - db null; new connection made");
