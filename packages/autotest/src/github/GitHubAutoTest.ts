@@ -245,6 +245,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         } else {
             Log.info("GitHubAutoTest::handleCommentStudent(..) - not too early; for: " + info.personId + "; SHA: " + info.commitURL);
             // either requested before, or no time limitations, either way it should be processed
+            // processComment will take of whether this is already in progress, etc.
             await this.processComment(info, res);
         }
     }
@@ -288,30 +289,32 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             return false;
         }
 
-        const isCurrentlyRunning: boolean = this.isCommitExecuting(info.commitURL, info.delivId);
-        if (isCurrentlyRunning === true) {
-            Log.info("GitHubAutoTest::handleCommentEvent(..) - currentlyRunning ; for: " +
+        // NOTE: this was a huge bug; if you requested quickly, while the thing was executing
+        // you could get unlimited requests
+        // const isCurrentlyRunning: boolean = this.isCommitExecuting(info.commitURL, info.delivId);
+        // if (isCurrentlyRunning === true) {
+        //     Log.info("GitHubAutoTest::handleCommentEvent(..) - currentlyRunning ; for: " +
+        //         info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA);
+        //
+        //     // common case: the commit is already running, provide status and let it finish
+        //     let msg = "This commit is still queued for processing against " + info.delivId + ".";
+        //     msg += " Your results will be posted here as soon as they are ready.";
+        //
+        //     await this.saveCommentInfo(info); // whether TA or staff
+        //     await this.postToGitHub({url: info.postbackURL, message: msg});
+        // } else {
+        const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(info.personId);
+        const res: AutoTestResultTransport = await this.classPortal.getResult(info.delivId, info.repoId, info.commitSHA);
+        if (isStaff !== null && (isStaff.isStaff === true || isStaff.isAdmin === true)) {
+            Log.info("GitHubAutoTest::handleCommentEvent(..) - handleAdmin; for: " +
                 info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA);
-
-            // common case: the commit is already running, provide status and let it finish
-            let msg = "This commit is still queued for processing against " + info.delivId + ".";
-            msg += " Your results will be posted here as soon as they are ready.";
-
-            await this.saveCommentInfo(info); // whether TA or staff
-            await this.postToGitHub({url: info.postbackURL, message: msg});
+            await this.processComment(info, res);
         } else {
-            const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(info.personId);
-            const res: AutoTestResultTransport = await this.classPortal.getResult(info.delivId, info.repoId, info.commitSHA);
-            if (isStaff !== null && (isStaff.isStaff === true || isStaff.isAdmin === true)) {
-                Log.info("GitHubAutoTest::handleCommentEvent(..) - handleAdmin; for: " +
-                    info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA);
-                await this.processComment(info, res);
-            } else {
-                Log.info("GitHubAutoTest::handleCommentEvent(..) - handleStudent; for: " +
-                    info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA);
-                await this.handleCommentStudent(info, res);
-            }
+            Log.info("GitHubAutoTest::handleCommentEvent(..) - handleStudent; for: " +
+                info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA);
+            await this.handleCommentStudent(info, res);
         }
+        // }
     }
 
     protected async processExecution(data: IAutoTestResult): Promise<void> {
