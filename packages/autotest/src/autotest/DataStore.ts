@@ -45,7 +45,7 @@ export interface IDataStore {
 
     getLatestFeedbackGivenRecord(delivId: string, userName: string): Promise<IFeedbackGiven | null>;
 
-    getFeedbackGivenRecordForCommit(commitURL: string, userName: string): Promise<IFeedbackGiven | null>; // TODO: should this have delivId?
+    getFeedbackGivenRecordForCommit(commitURL: string, delivId: string, userName: string): Promise<IFeedbackGiven | null>;
 
     /**
      * Debugging / testing only, should not be commonly used.
@@ -277,13 +277,15 @@ export class MongoDataStore implements IDataStore {
         return null;
     }
 
-    public async getFeedbackGivenRecordForCommit(commitURL: string, userName: string): Promise<IFeedbackGiven | null> {
+    public async getFeedbackGivenRecordForCommit(commitURL: string, delivId: string, userName: string): Promise<IFeedbackGiven | null> {
         try {
-            const res = await this.getSingleRecord(this.FEEDBACKCOLL, {commitURL: commitURL});
+            const res = await this.getSingleRecord(this.FEEDBACKCOLL, {delivId: delivId, commitURL: commitURL});
             if (res === null) {
-                Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - record not found for: " + commitURL);
+                Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit( " + delivId + ", " + userName +
+                    " ) - record not found for: " + commitURL);
             } else {
-                Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - found for: " + commitURL);
+                Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit( " + delivId + ", " + userName +
+                    " ) - found for: " + commitURL);
             }
             return res as any;
         } catch (err) {

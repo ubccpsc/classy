@@ -219,14 +219,15 @@ export class MockDataStore implements IDataStore {
 
     }
 
-    public async getFeedbackGivenRecordForCommit(commitURL: string, userName: string): Promise<IFeedbackGiven | null> {
+    public async getFeedbackGivenRecordForCommit(commitURL: string, delivId: string, userName: string): Promise<IFeedbackGiven | null> {
         // Log.trace("MockDataStore::getFeedbackGivenRecordForCommit(..) - start");
         let ret: IFeedbackGiven | null = null;
         try {
             const start = Date.now();
             const records: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
             for (const feedback of records) {
-                if (feedback !== null && feedback.commitURL === commitURL && feedback.personId === userName) {
+                if (feedback !== null && feedback.commitURL === commitURL &&
+                    feedback.personId === userName && feedback.delivId === delivId) {
                     Log.info("MockDataStore::getFeedbackGivenRecordForCommit(..) - found; took: " + Util.took(start));
                     ret = feedback;
                     break;

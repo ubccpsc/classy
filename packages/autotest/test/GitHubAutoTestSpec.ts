@@ -130,10 +130,15 @@ describe("GitHubAutoTest", () => {
     it("Should gracefully fail with bad comments.", async () => {
         expect(at).not.to.equal(null);
 
-        let res = await at.handleCommentEvent(null);
-        expect(res).to.be.false;
-        res = await at.handleCommentEvent(undefined);
-        expect(res).to.be.false;
+        let res = null;
+        let ex = null;
+        try {
+            res = await at.handleCommentEvent(null);
+        } catch (err) {
+            ex = err;
+        }
+        expect(res).to.be.null;
+        expect(ex).to.not.be.null;
     });
 
     it("Check comment preconditions fail appropriately", async () => {

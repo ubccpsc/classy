@@ -175,7 +175,8 @@ describe("MongoStore", () => {
         await ds.saveFeedbackGivenRecord(TestData.feedbackRecordA);
 
         // TEST
-        const actual = await ds.getFeedbackGivenRecordForCommit(TestData.feedbackRecordA.commitURL, TestData.feedbackRecordA.personId);
+        const actual = await ds.getFeedbackGivenRecordForCommit(TestData.feedbackRecordA.commitURL,
+            TestData.feedbackRecordA.delivId, TestData.feedbackRecordA.personId);
 
         // VERIFY
         expect(actual).to.not.be.null;
@@ -202,7 +203,8 @@ describe("MongoStore", () => {
         await ds.saveFeedbackGivenRecord(TestData.feedbackRecordA);
 
         // TEST
-        const actual = await ds.getFeedbackGivenRecordForCommit(TestData.feedbackRecordB.commitURL, TestData.feedbackRecordB.personId);
+        const actual = await ds.getFeedbackGivenRecordForCommit(TestData.feedbackRecordB.commitURL,
+            TestData.feedbackRecordB.delivId, TestData.feedbackRecordB.personId);
 
         // VERIFY
         expect(actual).to.be.null;

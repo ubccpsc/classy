@@ -229,11 +229,16 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             info.personId + " for commit: " + info.commitURL);
 
         const feedbackDelay: string | null = await this.requestFeedbackDelay(info.delivId, info.personId, info.timestamp);
-        const previousRequest: IFeedbackGiven = await this.dataStore.getFeedbackGivenRecordForCommit(info.commitURL, info.personId);
+        const previousRequest: IFeedbackGiven = await this.dataStore.getFeedbackGivenRecordForCommit(
+            info.commitURL, info.delivId, info.personId);
+
+        Log.info("GitHubAutoTest::handleCommentStudent(..) - handling student request for user: " +
+            info.personId + " for commit: " + info.commitURL + "; null previous: " + (previousRequest === null) +
+            "; null delay: " + (feedbackDelay === null));
 
         if (previousRequest === null && feedbackDelay !== null) {
-            Log.info("GitHubAutoTest::handleCommentStudent(..) - too early; wait: " + feedbackDelay + " for: " + info.personId +
-                "; SHA: " + info.commitURL);
+            Log.info("GitHubAutoTest::handleCommentStudent(..) - too early; wait: " +
+                feedbackDelay + " for: " + info.personId + "; SHA: " + info.commitURL);
             // NOPE, not yet (this is the most common case; feedback requested without time constraints)
             const msg = "You must wait " + feedbackDelay + " before requesting feedback.";
             await this.postToGitHub({url: info.postbackURL, message: msg});
@@ -268,6 +273,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      */
     public async handleCommentEvent(info: CommitTarget): Promise<boolean> {
         const start = Date.now();
+
+        if (typeof info === 'undefined' || info === null) {
+            throw new Error("GitHubAutoTest::handleCommentEvent( .. ) - info is null");
+        }
 
         Log.info("GitHubAutoTest::handleCommentEvent(..) - start; for: " +
             info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA);
