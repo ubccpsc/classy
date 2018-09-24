@@ -208,13 +208,14 @@ export class ClassPortal implements IClassPortal {
                 json:               true
             };
 
-            Log.info("ClassPortal::sendGrade(..) - requesting from: " + url);
+            Log.info("ClassPortal::sendGrade(..) - sending to: " + url + '; delivId: ' + grade.delivId +
+                '; repo: ' + grade.repoId + '; url: ' + grade.URL);
             Log.trace("ClassPortal::sendGrade(..) - payload: " + JSON.stringify(grade));
             const res = await rp(url, opts);
 
             const json = res;
             if (typeof json.success !== 'undefined') {
-                Log.info("ClassPortal::sendGrade(..) - grade accepted");
+                Log.info("ClassPortal::sendGrade(..) - grade accepted; url: " + grade.URL);
                 return json;
             } else {
                 Log.error("ClassPortal::sendGrade(..) - ERROR; grade not accepted:  " + JSON.stringify(json));
@@ -242,13 +243,13 @@ export class ClassPortal implements IClassPortal {
                 json:               true
             };
 
-            Log.info("ClassPortal::sendResult(..) - sending to: " + url + ' for repoId: ' +
-                result.repoId + '; delivId: ' + result.delivId + '; SHA: ' + result.input.pushInfo.commitSHA);
+            Log.info("ClassPortal::sendResult(..) - sending to: " + url + ' for delivId: ' + result.delivId +
+                '; repoId: ' + result.repoId + '; SHA: ' + result.input.pushInfo.commitSHA);
             const res = await rp(url, opts);
             Log.trace("ClassPortal::sendResult() - sent; returned payload: " + JSON.stringify(res));
             const json = res;
             if (typeof json.success !== 'undefined') {
-                Log.info("ClassPortal::sendResult(..) - result accepted");
+                Log.info("ClassPortal::sendResult(..) - result accepted; SHA: " + result.input.pushInfo.commitSHA);
                 return json;
             } else {
                 Log.error("ClassPortal::sendResult(..) - ERROR; result not acccepted:  " + JSON.stringify(json));
