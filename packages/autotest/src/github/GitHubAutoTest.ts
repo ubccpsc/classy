@@ -132,6 +132,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         if (auth !== null && (auth.isAdmin === true || auth.isStaff === true)) {
             Log.info("GitHubAutoTest::checkCommentPreconditions(..) - admin request; ignoring openTimestamp and closeTimestamp");
         } else {
+
+            Log.info("GitHubAutoTest::checkCommentPreconditions(..) - !admin; info: " + JSON.stringify(info, null, 2));
+
             // check special flags
             if (typeof info.flags !== 'undefined') {
                 if (info.flags.indexOf("#force") > 0) {
@@ -168,7 +171,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             }
         }
 
-        Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - valid comment; preconditions accepted");
+        Log.info("GitHubAutoTest::checkCommentPreconditions(..) - valid comment; preconditions accepted");
         return true;
     }
 

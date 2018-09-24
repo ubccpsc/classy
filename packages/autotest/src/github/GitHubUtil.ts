@@ -87,6 +87,7 @@ export class GitHubUtil {
             // need to get this from portal backend (this is a gitHubId, not a personId)
             const cp = new ClassPortal();
             const personResponse = await cp.getPersonId(requestor); // NOTE: this returns Person.id, id, not Person.gitHubId!
+            const personId = personResponse.personId;
 
             const commentEvent: CommitTarget = {
                 delivId,
@@ -96,11 +97,11 @@ export class GitHubUtil {
                 commitURL,
                 postbackURL,
                 cloneURL,
-                personId: personResponse.personId,
+                personId,
                 timestamp,
                 flags
             };
-            Log.trace("GitHubUtil::processComment(..) - handling: " + JSON.stringify(commentEvent));
+            Log.info("GitHubUtil::processComment(..) - handling: " + JSON.stringify(commentEvent, null, 2));
             return commentEvent;
         } catch (err) {
             Log.error("GitHubUtil::processComment(..) - ERROR parsing: " + err);
