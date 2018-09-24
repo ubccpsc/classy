@@ -208,7 +208,7 @@ export class ClassPortal implements IClassPortal {
                 json:               true
             };
 
-            Log.info("ClassPortal::sendGrade(..) - sending to: " + url + '; delivId: ' + grade.delivId +
+            Log.trace("ClassPortal::sendGrade(..) - sending to: " + url + '; delivId: ' + grade.delivId +
                 '; repo: ' + grade.repoId + '; url: ' + grade.URL);
             Log.trace("ClassPortal::sendGrade(..) - payload: " + JSON.stringify(grade));
             const res = await rp(url, opts);
@@ -243,7 +243,7 @@ export class ClassPortal implements IClassPortal {
                 json:               true
             };
 
-            Log.info("ClassPortal::sendResult(..) - sending to: " + url + ' for delivId: ' + result.delivId +
+            Log.trace("ClassPortal::sendResult(..) - sending to: " + url + ' for delivId: ' + result.delivId +
                 '; repoId: ' + result.repoId + '; SHA: ' + result.input.pushInfo.commitSHA);
             const res = await rp(url, opts);
             Log.trace("ClassPortal::sendResult() - sent; returned payload: " + JSON.stringify(res));

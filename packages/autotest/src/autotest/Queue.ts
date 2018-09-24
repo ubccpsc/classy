@@ -105,7 +105,7 @@ export class Queue {
                     const lenBefore = this.slots.length;
                     this.slots.splice(i, 1);
                     const lenAfter = this.slots.length;
-                    Log.info('Queue::clearExecution( .., ' + delivId + ' ) - ' + this.getName() +
+                    Log.trace('Queue::clearExecution( .., ' + delivId + ' ) - ' + this.getName() +
                         ' cleared; # before: ' + lenBefore + '; # after: ' + lenAfter + '; commitURL: ' + commitURL);
                     removed = true;
                 }
@@ -121,7 +121,7 @@ export class Queue {
      */
     public hasCapacity(): boolean {
         const hasCapacity = this.slots.length < this.numSlots;
-        Log.info("Queue::hasCapacity() - " + this.getName() + "; capacity: " + hasCapacity);
+        Log.trace("Queue::hasCapacity() - " + this.getName() + "; capacity: " + hasCapacity);
         return hasCapacity;
     }
 

@@ -298,7 +298,8 @@ export abstract class AutoTest implements IAutoTest {
 
             // execution done, advance the clock
             this.tick();
-            Log.info("AutoTest::handleExecutionComplete(..) - done; final processing took: " + Util.took(start));
+            Log.info("AutoTest::handleExecutionComplete(..) - done; SHA: " + data.commitSHA +
+                "; final processing took: " + Util.took(start));
         } catch (err) {
             Log.error("AutoTest::handleExecutionComplete(..) - ERROR: " + err.message);
         }
@@ -418,7 +419,7 @@ export abstract class AutoTest implements IAutoTest {
             }
 
             Log.info("AutoTest::invokeContainer(..) - complete; delivId: " + input.delivId +
-                "; commit: " + input.pushInfo.commitSHA + "; took: " + Util.took(start));
+                "; commit: " + input.pushInfo.commitSHA + "; took: " + Util.tookHuman(start));
             await this.handleExecutionComplete(record);
             // Log.info("AutoTest::invokeContainer(..) - done; commit: " + input.pushInfo.commitSHA + "; took: " + Util.took(start));
         } catch (err) {
