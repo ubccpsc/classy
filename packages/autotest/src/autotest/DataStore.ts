@@ -184,7 +184,8 @@ export class MongoDataStore implements IDataStore {
     }
 
     public async saveComment(info: CommitTarget): Promise<void> {
-        Log.trace("MongoDataStore::saveComment(..) - start");
+        Log.info("MongoDataStore::saveComment(..) - start; delivId: " +
+            info.delivId + "; repo: " + info.repoId + "; url: " + info.commitURL);
         try {
             const start = Date.now();
             await this.saveRecord(this.COMMENTCOLL, info);
@@ -196,10 +197,10 @@ export class MongoDataStore implements IDataStore {
     }
 
     public async getCommentRecord(commitURL: string, delivId: string): Promise<CommitTarget | null> {
-        // Log.trace("MongoDataStore::getCommentRecord(..) - start");
+        Log.trace("MongoDataStore::getCommentRecord(..) - start; delivId: " + delivId + "; url: " + commitURL);
         try {
             const start = Date.now();
-            const res = await this.getSingleRecord(this.COMMENTCOLL, {commitURL: commitURL});
+            const res = await this.getSingleRecord(this.COMMENTCOLL, {delivId: delivId, commitURL: commitURL});
             if (res === null) {
                 Log.trace("MongoDataStore::getCommentRecord(..) - record not found for: " + commitURL);
             } else {
@@ -212,35 +213,23 @@ export class MongoDataStore implements IDataStore {
         return null;
     }
 
-    // public async saveOutputRecord(outputInfo: IAutoTestResult): Promise<void> {
-    //     Log.trace("MongoDataStore::saveOutputRecord(..) - start");
+    // public async getOutputRecord(commitURL: string, delivId: string): Promise<IAutoTestResult | null> {
+    //     Log.trace("MongoDataStore::getOutputRecord(..) - start");
     //     try {
     //         const start = Date.now();
-    //         await this.saveRecord(this.OUTPUTCOLL, outputInfo);
-    //         Log.trace("MongoDataStore::saveOutputRecord(..) - done; took: " + Util.took(start));
+    //
+    //         const res = await this.getSingleRecord(this.OUTPUTCOLL, {"commitURL": commitURL, "input.delivId": delivId});
+    //         if (res === null) {
+    //             Log.trace("MongoDataStore::getOutputRecord(..) - record not found for: " + commitURL);
+    //         } else {
+    //             Log.trace("MongoDataStore::getOutputRecord(..) - found; took: " + Util.took(start));
+    //         }
+    //         return res as any;
     //     } catch (err) {
-    //         Log.error("MongoDataStore::saveOutputRecord(..) - ERROR: " + err);
+    //         Log.error("MongoDataStore::getOutputRecord(..) - ERROR: " + err);
     //     }
-    //     return;
+    //     return null;
     // }
-
-    public async getOutputRecord(commitURL: string, delivId: string): Promise<IAutoTestResult | null> {
-        Log.trace("MongoDataStore::getOutputRecord(..) - start");
-        try {
-            const start = Date.now();
-
-            const res = await this.getSingleRecord(this.OUTPUTCOLL, {"commitURL": commitURL, "input.delivId": delivId});
-            if (res === null) {
-                Log.trace("MongoDataStore::getOutputRecord(..) - record not found for: " + commitURL);
-            } else {
-                Log.trace("MongoDataStore::getOutputRecord(..) - found; took: " + Util.took(start));
-            }
-            return res as any;
-        } catch (err) {
-            Log.error("MongoDataStore::getOutputRecord(..) - ERROR: " + err);
-        }
-        return null;
-    }
 
     public async saveFeedbackGivenRecord(info: IFeedbackGiven): Promise<void> {
         try {
@@ -301,9 +290,8 @@ export class MongoDataStore implements IDataStore {
         feedback: IFeedbackGiven[]
     }> {
         Log.trace("MongoDataStore::getAllData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
-        let col: any = null;
 
-        col = await this.getCollection(this.PUSHCOLL);
+        let col = await this.getCollection(this.PUSHCOLL);
         const pushes: CommitTarget[] = await col.find({}).toArray() as any;
         for (const p of pushes as any) {
             delete p._id;
@@ -334,8 +322,7 @@ export class MongoDataStore implements IDataStore {
         Log.warn("MongoDataStore::clearData() - start (WARNING: ONLY USE THIS FOR DEBUGGING!)");
         if (Config.getInstance().getProp(ConfigKey.name) === Config.getInstance().getProp(ConfigKey.testname)) {
 
-            let col: any = null;
-            col = await this.getCollection(this.PUSHCOLL);
+            let col = await this.getCollection(this.PUSHCOLL);
             await col.deleteMany({});
 
             col = await this.getCollection(this.COMMENTCOLL);
