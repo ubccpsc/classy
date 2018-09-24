@@ -101,7 +101,7 @@ export class GitHubUtil {
                 timestamp,
                 flags
             };
-            Log.info("GitHubUtil::processComment(..) - handling: " + JSON.stringify(commentEvent, null, 2));
+            // Log.trace("GitHubUtil::processComment(..) - handling: " + JSON.stringify(commentEvent, null, 2));
             return commentEvent;
         } catch (err) {
             Log.error("GitHubUtil::processComment(..) - ERROR parsing: " + err);

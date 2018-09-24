@@ -133,18 +133,18 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             Log.info("GitHubAutoTest::checkCommentPreconditions(..) - admin request; ignoring openTimestamp and closeTimestamp");
         } else {
 
-            Log.info("GitHubAutoTest::checkCommentPreconditions(..) - !admin; info: " + JSON.stringify(info, null, 2));
+            // Log.trace("GitHubAutoTest::checkCommentPreconditions(..) - !admin; info: " + JSON.stringify(info, null, 2));
 
             // check special flags
             if (typeof info.flags !== 'undefined') {
-                if (info.flags.indexOf("#force") > 0) {
+                if (info.flags.indexOf("#force") >= 0) {
                     Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, student use of #force.");
                     const msg = "Only admins can use the #force flag.";
                     delete info.flags;
                     await this.postToGitHub(info, {url: info.postbackURL, message: msg});
                     return false;
                 }
-                if (info.flags.indexOf("#silent") > 0) {
+                if (info.flags.indexOf("#silent") >= 0) {
                     Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, student use of #silent.");
                     const msg = "Only admins can use the #silent flag.";
                     delete info.flags;
