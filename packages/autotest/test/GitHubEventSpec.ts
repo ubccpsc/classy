@@ -149,7 +149,8 @@ describe("GitHub Event Parser", () => {
             postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments",
             timestamp:    1516324753000,
             personId:     GITHUBID,
-            cloneURL:     'https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git'
+            cloneURL:     'https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git',
+            flags:        []
         };
 
         delete expected.timestamp;
@@ -171,7 +172,8 @@ describe("GitHub Event Parser", () => {
             repoId:       "d1_project9999",
             delivId:      "d7",
             timestamp:    1516324833000,
-            cloneURL:     'https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git'
+            cloneURL:     'https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git',
+            flags:        []
         };
 
         delete expected.timestamp;
@@ -193,7 +195,8 @@ describe("GitHub Event Parser", () => {
             repoId:       "d1_project9999",
             delivId:      null,
             timestamp:    1516320674000,
-            cloneURL:     'https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git'
+            cloneURL:     'https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git',
+            flags:        []
         };
 
         delete expected.timestamp;
@@ -215,7 +218,8 @@ describe("GitHub Event Parser", () => {
             repoId:       "d1_project9999",
             delivId:      "d7",
             timestamp:    1516324931000,
-            cloneURL:     "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git"
+            cloneURL:     "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git",
+            flags:        []
         };
 
         delete expected.timestamp;

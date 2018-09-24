@@ -260,14 +260,18 @@ describe("GitHubAutoTest", () => {
 
     function stubDependencies() {
         gitHubMessages = [];
-        at["postToGitHub"] = function(message: IGitHubMessage): Promise<boolean> {
+        at["postToGitHub"] = function(info: CommitTarget, message: IGitHubMessage): Promise<boolean> {
             Log.test("stubbed postToGitHub(..) - message: " + JSON.stringify(message));
             Log.test(gitHubMessages.length + '');
-            if (message !== null && typeof message.message !== 'undefined') {
-                gitHubMessages.push(message);
+            if (typeof info.flags === 'undefined' || info.flags.indexOf("#silent") < 0) {
+                if (message !== null && typeof message.message !== 'undefined') {
+                    gitHubMessages.push(message);
+                } else {
+                    Log.test("stubbed postToGitHub(..) - invalid arg: " + message);
+                    return Promise.resolve(false);
+                }
             } else {
-                Log.test("stubbed postToGitHub(..) - invalid arg: " + message);
-                return Promise.resolve(false);
+                Log.test("stubbed postToGitHub(..) - #silent");
             }
             Log.test(gitHubMessages.length + '');
             return Promise.resolve(true);

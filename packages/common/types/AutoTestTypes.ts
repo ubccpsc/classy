@@ -17,6 +17,8 @@ export interface CommitTarget {
 
     postbackURL: string; // where to send postback results
     timestamp: number; // timestamp of push event
+
+    flags?: string[]; // other flags for the commit (e.g., #slient, #force)
 }
 
 /**

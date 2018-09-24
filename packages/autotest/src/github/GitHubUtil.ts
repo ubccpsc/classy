@@ -66,7 +66,15 @@ export class GitHubUtil {
             const cloneURL = String(payload.repository.clone_url);
             const requestor = String(payload.comment.user.login); // .toLowerCase();
             const message = payload.comment.body;
+
             const delivId = GitHubUtil.parseDeliverableFromComment(message);
+            const flags: string[] = [];
+            if (GitHubUtil.parseForceFromComment(message) === true) {
+                flags.push("#force");
+            }
+            if (GitHubUtil.parseSilentFromComment(message) === true) {
+                flags.push("#silent");
+            }
 
             const botName = "@" + Config.getInstance().getProp(ConfigKey.botName).toLowerCase();
             const botMentioned: boolean = message.toLowerCase().indexOf(botName) >= 0;
@@ -89,7 +97,8 @@ export class GitHubUtil {
                 postbackURL,
                 cloneURL,
                 personId: personResponse.personId,
-                timestamp
+                timestamp,
+                flags
             };
             Log.trace("GitHubUtil::processComment(..) - handling: " + JSON.stringify(commentEvent));
             return commentEvent;
