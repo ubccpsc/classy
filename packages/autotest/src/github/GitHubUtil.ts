@@ -120,10 +120,11 @@ export class GitHubUtil {
      */
     public static async processPush(payload: any, portal: IClassPortal): Promise<CommitTarget | null> {
         try {
-            // const team = GitHubUtil.getTeamOrProject(payload.repository.name);
+            Log.info("GitHubUtil::processPush(..) - start");
             const repo = payload.repository.name;
             const projectURL = payload.repository.html_url;
             const cloneURL = payload.repository.clone_url;
+            Log.info("GitHubUtil::processPush(..) - repo: " + repo + "; projectURL: " + projectURL);
 
             if (payload.deleted === true && payload.head_commit === null) {
                 // commit deleted a branch, do nothing
@@ -132,24 +133,27 @@ export class GitHubUtil {
             }
 
             // head commit is sometimes null on new branches
-            const headCommitURL = payload.head_commit === null ?
-                payload.repository.html_url + "/tree/" + String(payload.ref).replace("refs/heads/", "") :
-                payload.head_commit.url;
+            // const headCommitURL = payload.head_commit === null ?
+            //     payload.repository.html_url + "/tree/" + String(payload.ref).replace("refs/heads/", "") :
+            //     payload.head_commit.url;
 
-            const commitURL = headCommitURL;
-
-            const branch = payload.ref;
+            // const commitURL = headCommitURL;
+            let commitURL = '';
+            // const branch = payload.ref;
             let commitSHA = "";
 
             if (typeof payload.commits !== "undefined" && payload.commits.length > 0) {
-                Log.info("GitHubUtil::processPush(..) - regular push; URL: " + headCommitURL);
-                commitSHA = payload.commits[0].id;
+                commitSHA = payload.commits[payload.commits.length - 1].id;
+                commitURL = payload.commits[payload.commits.length - 1].url;
+                Log.info("GitHubUtil::processPush(..) - regular push; # commits: " + payload.commits.length + "; URL: " + commitURL);
             } else {
                 // use this one when creating a new branch (may not have any commits)
-                Log.info("GitHubUtil::processPush(..) - branch added; URL: " + headCommitURL);
                 commitSHA = payload.head_commit.id;
+                commitURL = payload.head_commit.url;
+                Log.info("GitHubUtil::processPush(..) - branch added; URL: " + commitURL);
             }
 
+            Log.info("GitHubUtil::processPush(..) - sha: " + commitSHA + "; commitURL: " + commitURL);
             const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
 
             // this gives the timestamp of the last commit (which could be forged), not the time of the push
@@ -174,7 +178,7 @@ export class GitHubUtil {
                 postbackURL,
                 timestamp
             };
-            Log.trace("GitHubUtil::processPush(..) - handling: " + pushEvent);
+            Log.info("GitHubUtil::processPush(..) - handling: " + pushEvent);
             return pushEvent;
         } catch (err) {
             Log.error("GitHubUtil::processPush(..) - ERROR parsing: " + err);

@@ -60,7 +60,8 @@ export default class RouteHandler {
                 if (commitEvent !== null) {
                     res.json(200, commitEvent); // report back our interpretation of the hook
                 } else {
-                    handleError("Error handling webhook; event: " + githubEvent + "; body: " + JSON.stringify(body, null, 2));
+                    // handleError("Error handling webhook; event: " + githubEvent + "; body: " + JSON.stringify(body, null, 2));
+                    handleError("Webhook not handled (if branch was deleted this is normal)");
                 }
             }).catch(function(err) {
                 Log.error("RouteHandler::postGithubHook() - ERROR: " + err);
