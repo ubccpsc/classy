@@ -128,19 +128,12 @@ export class GitHubUtil {
 
             if (payload.deleted === true && payload.head_commit === null) {
                 // commit deleted a branch, do nothing
-                Log.info("GitHubUtil::processPush(..) - branch removed; URL: " + projectURL);
+                Log.info("GitHubUtil::processPush(..) - branch removed; no further processing - URL: " + projectURL);
                 return null;
             }
 
-            // head commit is sometimes null on new branches
-            // const headCommitURL = payload.head_commit === null ?
-            //     payload.repository.html_url + "/tree/" + String(payload.ref).replace("refs/heads/", "") :
-            //     payload.head_commit.url;
-
-            // const commitURL = headCommitURL;
             let commitURL = '';
-            // const branch = payload.ref;
-            let commitSHA = "";
+            let commitSHA = '';
 
             if (typeof payload.commits !== "undefined" && payload.commits.length > 0) {
                 commitSHA = payload.commits[payload.commits.length - 1].id;
@@ -171,14 +164,14 @@ export class GitHubUtil {
                 delivId:      delivIdTrans.defaultDeliverable,
                 repoId:       repo,
                 botMentioned: false, // not explicitly invoked
-                personId:     null, // not explicitly invoked
+                personId:     null, // not explicitly requested
                 cloneURL,
                 commitSHA,
                 commitURL,
                 postbackURL,
                 timestamp
             };
-            Log.info("GitHubUtil::processPush(..) - handling: " + pushEvent);
+            Log.info("GitHubUtil::processPush(..) - done; pushEvent: " + pushEvent);
             return pushEvent;
         } catch (err) {
             Log.error("GitHubUtil::processPush(..) - ERROR parsing: " + err);
