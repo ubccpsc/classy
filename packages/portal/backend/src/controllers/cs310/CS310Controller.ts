@@ -53,7 +53,6 @@ export class CS310Controller extends CourseController {
         }
 
         if (updateGrade === true) {
-            // consider updating overall project grade here?
             const personId = newGrade.personId;
 
             let d0Score = await this.getScore(this.PROJD0, personId);
@@ -79,7 +78,9 @@ export class CS310Controller extends CourseController {
             if (deliv.id === this.PROJD4) {
                 d4Score = newGrade.score;
             }
-            const projectScore = (d0Score + d1Score + d2Score + d3Score + d4Score) / 4; // 25% of project score each
+            let projectScore = (d0Score + d1Score + d2Score + d3Score + d4Score) / 4; // 25% of project score each
+            projectScore = Number(projectScore.toFixed(2));
+
             const pGrade: Grade = {
                 personId:  personId,
                 delivId:   this.PROJ,
