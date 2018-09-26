@@ -167,6 +167,7 @@ export class App {
 
             fulfill({}); // resolve the promise so it's not just hanging there
         });
+
     }
 
     public getAdminController(org: string) {
