@@ -1,26 +1,27 @@
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
+import {AutoTestResult, ContainerOutput} from "../../../../common/types/AutoTestTypes";
+import {ContainerInput, GradeReport} from "../../../../common/types/ContainerTypes";
 
-import {IAutoTestResult, IContainerInput, IContainerOutput, IGradeReport} from "../../../../common/types/AutoTestTypes";
 import Util from "../../../../common/Util";
 
 interface IGrader {
-    execute(): Promise<IAutoTestResult>;
+    execute(): Promise<AutoTestResult>;
 }
 
 export class MockGrader implements IGrader {
-    private input: IContainerInput;
+    private input: ContainerInput;
 
     /**
      * I have no idea what this class should look like
      */
-    constructor(input: IContainerInput) {
+    constructor(input: ContainerInput) {
         this.input = input;
     }
 
-    public async execute(): Promise<IAutoTestResult> {
+    public async execute(): Promise<AutoTestResult> {
         try {
-            Log.info("MockGrader::execute() - start; commitSHA: " + this.input.pushInfo.commitSHA);
+            Log.info("MockGrader::execute() - start; commitSHA: " + this.input.target.commitSHA);
             // const oracleToken = Config.getInstance().getProp(ConfigKey.githubOracleToken);
             // const dockerId = Config.getInstance().getProp(ConfigKey.dockerId);
             // const workspace = Config.getInstance().getProp(ConfigKey.workspace);
@@ -32,7 +33,7 @@ export class MockGrader implements IGrader {
             }
             await Util.timeout(timeout); // simulate the container taking longer than the rest of the process
 
-            const gradeReport: IGradeReport = {
+            const gradeReport: GradeReport = {
                 scoreOverall: 50,
                 scoreTest:    50,
                 scoreCover:   50,
@@ -44,7 +45,7 @@ export class MockGrader implements IGrader {
                 feedback:     "Test execution complete."
             };
 
-            const out: IContainerOutput = {
+            const out: ContainerOutput = {
                 // commitURL:          this.input.pushInfo.commitURL,
                 timestamp:          Date.now(),
                 report:             gradeReport,
@@ -56,22 +57,22 @@ export class MockGrader implements IGrader {
             };
 
             // just a hack to test postback events
-            if (this.input.pushInfo.postbackURL === "POSTBACK") {
+            if (this.input.target.postbackURL === "POSTBACK") {
                 out.postbackOnComplete = true;
                 out.report.feedback = "Build Problem Encountered.";
             }
 
-            const ret: IAutoTestResult = {
+            const ret: AutoTestResult = {
                 delivId:   this.input.delivId,
-                repoId:    this.input.pushInfo.repoId,
+                repoId:    this.input.target.repoId,
                 // timestamp: this.input.pushInfo.timestamp,
-                commitURL: this.input.pushInfo.commitURL,
-                commitSHA: this.input.pushInfo.commitSHA,
+                commitURL: this.input.target.commitURL,
+                commitSHA: this.input.target.commitSHA,
                 input:     this.input,
                 output:    out
             };
 
-            Log.info("MockGrader::execute() - execution complete; commit: " + this.input.pushInfo.commitSHA);
+            Log.info("MockGrader::execute() - execution complete; commit: " + this.input.target.commitSHA);
             return ret;
 
         } catch (err) {

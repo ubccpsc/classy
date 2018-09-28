@@ -3,7 +3,8 @@ import "mocha";
 
 import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
-import {IAutoTestResult, IContainerInput, IContainerOutput} from "../../common/types/AutoTestTypes";
+import {AutoTestResult, ContainerOutput} from "../../common/types/AutoTestTypes";
+import {ContainerInput} from "../../common/types/ContainerTypes";
 import {AutoTestGradeTransport} from "../../common/types/PortalTypes";
 import {DatabaseController} from "../../portal/backend/src/controllers/DatabaseController";
 import BackendServer from "../../portal/backend/src/server/BackendServer";
@@ -177,7 +178,7 @@ describe("ClassPortal Service", () => {
         const projectURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
         const commitURL = projectURL + '/commits/FOOOSHA';
-        const output: IContainerOutput = {
+        const output: ContainerOutput = {
             timestamp:          ts,
             report:             {
                 scoreOverall: score,
@@ -196,8 +197,8 @@ describe("ClassPortal Service", () => {
             state:              'SUCCESS' // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
         };
 
-        const input: IContainerInput = {
-            pushInfo:        {
+        const input: ContainerInput = {
+            target:          {
                 delivId: delivId,
                 repoId:  repoId,
 
@@ -223,7 +224,7 @@ describe("ClassPortal Service", () => {
             delivId:         delivId
         };
 
-        const result: IAutoTestResult = {
+        const result: AutoTestResult = {
             delivId:   delivId,
             repoId:    repoId,
             commitURL: commitURL,
@@ -238,7 +239,7 @@ describe("ClassPortal Service", () => {
     it("Should be able to send a valid result.", async () => {
         const result = getResult('d0', 'TESTrepo1', 50);
         // timestamp needs to be hardcoded to when the deliverable is open for new results
-        result.input.pushInfo.timestamp = new Date(Date.UTC(2017, 3, 1, 1, 1)).getTime();
+        result.input.target.timestamp = new Date(Date.UTC(2017, 3, 1, 1, 1)).getTime();
         const actual = await cp.sendResult(result);
         Log.test("Actual: " + JSON.stringify(actual));
 

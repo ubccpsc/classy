@@ -2,7 +2,7 @@ import * as rp from "request-promise-native";
 
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
-import {IAutoTestResult} from "../../../common/types/AutoTestTypes";
+import {AutoTestResult} from "../../../common/types/AutoTestTypes";
 import {
     AutoTestAuthPayload,
     AutoTestAuthTransport,
@@ -72,7 +72,7 @@ export interface IClassPortal {
      * @param {IAutoTestResult} result
      * @returns {Promise<Payload>}
      */
-    sendResult(result: IAutoTestResult): Promise<Payload>;
+    sendResult(result: AutoTestResult): Promise<Payload>;
 
     /**
      * Get result for a given delivId / repoId pair. Will return null if a result does not exist.
@@ -228,7 +228,7 @@ export class ClassPortal implements IClassPortal {
         }
     }
 
-    public async sendResult(result: IAutoTestResult): Promise<Payload> { // really just a mechanism to report more verbose errors
+    public async sendResult(result: AutoTestResult): Promise<Payload> { // really just a mechanism to report more verbose errors
         const url = this.host + ":" + this.port + "/portal/at/result/";
 
         try {
@@ -244,12 +244,12 @@ export class ClassPortal implements IClassPortal {
             };
 
             Log.trace("ClassPortal::sendResult(..) - sending to: " + url + ' for delivId: ' + result.delivId +
-                '; repoId: ' + result.repoId + '; SHA: ' + result.input.pushInfo.commitSHA);
+                '; repoId: ' + result.repoId + '; SHA: ' + result.input.target.commitSHA);
             const res = await rp(url, opts);
             Log.trace("ClassPortal::sendResult() - sent; returned payload: " + JSON.stringify(res));
             const json = res;
             if (typeof json.success !== 'undefined') {
-                Log.info("ClassPortal::sendResult(..) - result accepted; SHA: " + result.input.pushInfo.commitSHA);
+                Log.info("ClassPortal::sendResult(..) - result accepted; SHA: " + result.input.target.commitSHA);
                 return json;
             } else {
                 Log.error("ClassPortal::sendResult(..) - ERROR; result not acccepted:  " + JSON.stringify(json));

@@ -1,7 +1,8 @@
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
+import {AutoTestResult, IFeedbackGiven} from "../../../common/types/AutoTestTypes";
+import {CommitTarget, ContainerInput} from "../../../common/types/ContainerTypes";
 
-import {CommitTarget, IAutoTestResult, IContainerInput, IFeedbackGiven} from "../../../common/types/AutoTestTypes";
 import {
     AutoTestAuthTransport,
     AutoTestConfigTransport,
@@ -70,7 +71,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             if (delivId !== null) {
                 const containerConfig = await this.getContainerConfig(delivId);
                 if (containerConfig !== null) {
-                    const input: IContainerInput = {delivId, pushInfo: info, containerConfig: containerConfig};
+                    const input: ContainerInput = {delivId, target: info, containerConfig: containerConfig};
                     this.addToStandardQueue(input);
                     this.tick();
                 } else {
@@ -195,7 +196,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         Log.info("GitHubAutoTest::schedule(..) - scheduling for: " + info.personId + "; SHA: " + info.commitURL);
         const containerConfig = await this.getContainerConfig(info.delivId);
         if (containerConfig !== null) {
-            const input: IContainerInput = {delivId: info.delivId, pushInfo: info, containerConfig: containerConfig};
+            const input: ContainerInput = {delivId: info.delivId, target: info, containerConfig: containerConfig};
             this.addToStandardQueue(input);
             this.tick();
             Log.info("GitHubAutoTest::schedule(..) - scheduling completed for: " + info.commitURL);
@@ -347,14 +348,14 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         }
     }
 
-    protected async processExecution(data: IAutoTestResult): Promise<void> {
+    protected async processExecution(data: AutoTestResult): Promise<void> {
         try {
             const feedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId);
             if (data.output.postbackOnComplete === true) {
                 // do this first, doesn't count against quota
                 Log.info("GitHubAutoTest::processExecution(..) - postback: true; deliv: " +
                     data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA);
-                await this.postToGitHub(data.input.pushInfo, {url: data.input.pushInfo.postbackURL, message: data.output.report.feedback});
+                await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: data.output.report.feedback});
                 // NOTE: if the feedback was requested for this build it shouldn't count
                 // since we're not calling saveFeedback this is right
                 // but if we replay the commit comments, we would see it there, so be careful
@@ -362,7 +363,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 // feedback has been previously requested
                 Log.info("GitHubAutoTest::processExecution(..) - feedback requested; deliv: " +
                     data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA + '; for: ' + feedbackRequested.personId);
-                await this.postToGitHub(data.input.pushInfo, {url: data.input.pushInfo.postbackURL, message: data.output.report.feedback});
+                await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: data.output.report.feedback});
                 await this.saveFeedbackGiven(data.input.delivId, feedbackRequested.personId, feedbackRequested.timestamp, data.commitURL);
             } else {
                 // do nothing

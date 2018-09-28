@@ -1,4 +1,5 @@
-import {CommitTarget, IAutoTestResult, IContainerInput, IFeedbackGiven} from "../../common/types/AutoTestTypes";
+import {AutoTestResult, IFeedbackGiven} from "../../common/types/AutoTestTypes";
+import {CommitTarget, ContainerInput} from "../../common/types/ContainerTypes";
 
 export class TestData {
     public static readonly pushEventA: CommitTarget = {
@@ -40,7 +41,7 @@ export class TestData {
         delivId:      "d0"
     };
 
-    public static readonly inputRecordA: IContainerInput = {
+    public static readonly inputRecordA: ContainerInput = {
         delivId:         "d0",
         containerConfig: {
             dockerImage:        "imageName",
@@ -49,10 +50,10 @@ export class TestData {
             regressionDelivIds: [],
             custom:             {}
         },
-        pushInfo:        TestData.pushEventA
+        target:          TestData.pushEventA
     };
 
-    public static readonly inputRecordB: IContainerInput = {
+    public static readonly inputRecordB: ContainerInput = {
         delivId:         "d0",
         containerConfig: {
             dockerImage:        "imageName",
@@ -61,7 +62,7 @@ export class TestData {
             regressionDelivIds: [],
             custom:             {}
         },
-        pushInfo:        TestData.pushEventB
+        target:          TestData.pushEventB
     };
 
     public static readonly commentRecordUserA: CommitTarget = {
@@ -116,9 +117,9 @@ export class TestData {
         commitURL: TestData.commentRecordUserA.commitURL
     };
 
-    public static readonly outputRecordA: IAutoTestResult = {
+    public static readonly outputRecordA: AutoTestResult = {
         delivId:   TestData.inputRecordA.delivId,
-        repoId:    TestData.inputRecordA.pushInfo.repoId,
+        repoId:    TestData.inputRecordA.target.repoId,
         // "timestamp": TestData.inputRecordA.pushInfo.timestamp,
         commitURL: "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         commitSHA: "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
@@ -144,9 +145,9 @@ export class TestData {
         }
     };
 
-    public static readonly outputRecordB: IAutoTestResult = {
+    public static readonly outputRecordB: AutoTestResult = {
         delivId:   TestData.inputRecordB.delivId,
-        repoId:    TestData.inputRecordB.pushInfo.repoId,
+        repoId:    TestData.inputRecordB.target.repoId,
         // "timestamp": TestData.inputRecordB.pushInfo.timestamp,
         commitURL: "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4staff",
         commitSHA: "abe1b0918b872997de4c4d2baf4c263f8d4staff",
