@@ -3,7 +3,7 @@ import * as restify from 'restify';
 
 import Config, {ConfigKey} from "../../../../../common/Config";
 import Log from "../../../../../common/Log";
-import {IAutoTestResult} from "../../../../../common/types/AutoTestTypes";
+import {AutoTestResult} from "../../../../../common/types/AutoTestTypes";
 import {
     AutoTestAuthPayload,
     AutoTestConfigPayload,
@@ -205,7 +205,7 @@ export class AutoTestRoutes implements IREST {
                 return success;
             } else {
                 Log.info('AutoTestRouteHandler::performPostResult(..) - not accepting new results for delivId: ' + result.delivId +
-                    '; deadline: ' + new Date(deliv.closeTimestamp) + "; result ts: " + new Date(result.input.pushInfo.timestamp));
+                    '; deadline: ' + new Date(deliv.closeTimestamp) + "; result ts: " + new Date(result.input.target.timestamp));
                 return false;
             }
         }
@@ -326,7 +326,7 @@ export class AutoTestRoutes implements IREST {
             Log.info('AutoTestRouteHandler::atGetResult(..) - delivId: ' + delivId + '; repoId: ' + repoId + '; sha: ' + sha);
 
             const rc = new ResultsController();
-            rc.getResult(delivId, repoId, sha).then(function(result: IAutoTestResult) {
+            rc.getResult(delivId, repoId, sha).then(function(result: AutoTestResult) {
                 if (result !== null) {
                     payload = {success: [result]};
                 } else {

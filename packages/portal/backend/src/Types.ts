@@ -1,4 +1,5 @@
-import {AutoTestConfig, IAutoTestResult} from "../../../common/types/AutoTestTypes";
+import {AutoTestResult} from "../../../common/types/AutoTestTypes";
+import {AutoTestConfig} from "../../../common/types/ContainerTypes";
 import {AssignmentGrade, AssignmentInfo, AssignmentRepositoryInfo} from "../../../common/types/CS340Types";
 
 /**
@@ -197,6 +198,6 @@ export interface Grade {
     };
 }
 
-export interface Result extends IAutoTestResult { // TODO: define this without this extends. This import is no good!
+export interface Result extends AutoTestResult { // TODO: define this without this extends. This import is no good!
     people: string[];
 }

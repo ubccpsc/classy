@@ -3,7 +3,8 @@ import "mocha";
 
 import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
-import {IContainerInput, IContainerOutput} from "../../../common/types/AutoTestTypes";
+import {ContainerOutput} from "../../../common/types/AutoTestTypes";
+import {ContainerInput} from "../../../common/types/ContainerTypes";
 import {GradePayload} from "../../../common/types/SDMMTypes";
 import Util from "../../../common/Util";
 
@@ -564,7 +565,7 @@ export class Test {
             }
         }
 
-        const output: IContainerOutput = {
+        const output: ContainerOutput = {
             // commitURL:          commitURL,
             timestamp:          ts,
             report:             {
@@ -584,8 +585,8 @@ export class Test {
             state:              'SUCCESS' // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
         };
 
-        const input: IContainerInput = {
-            pushInfo:        {
+        const input: ContainerInput = {
+            target:        {
                 delivId: delivId,
                 repoId:  repoId,
 

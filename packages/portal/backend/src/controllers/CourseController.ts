@@ -325,7 +325,7 @@ export abstract class CourseController implements ICourseController {
         const results: AutoTestDashboardTransport[] = [];
         const allResults = await this.matchResults(reqDelivId, reqRepoId);
         for (const result of allResults) {
-            const repoId = result.input.pushInfo.repoId;
+            const repoId = result.input.target.repoId;
             if (results.length <= NUM_RESULTS) {
 
                 const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
@@ -372,8 +372,8 @@ export abstract class CourseController implements ICourseController {
                     delivId:      result.delivId,
                     state:        result.output.state,
                     timestamp:    result.output.timestamp,
-                    commitSHA:    result.input.pushInfo.commitSHA,
-                    commitURL:    result.input.pushInfo.commitURL,
+                    commitSHA:    result.input.target.commitSHA,
+                    commitURL:    result.input.target.commitURL,
                     scoreOverall: scoreOverall,
                     scoreCover:   scoreCover,
                     scoreTests:   scoreTest,
@@ -404,7 +404,7 @@ export abstract class CourseController implements ICourseController {
         for (const result of allResults) {
             // const repo = await rc.getRepository(result.repoId); // this happens a lot and ends up being too slow
             const delivId = result.delivId;
-            const repoId = result.input.pushInfo.repoId;
+            const repoId = result.input.target.repoId;
 
             if ((reqDelivId === 'any' || delivId === reqDelivId) &&
                 (reqRepoId === 'any' || repoId === reqRepoId) &&
@@ -459,7 +459,7 @@ export abstract class CourseController implements ICourseController {
         for (const result of allResults) {
             // const repo = await rc.getRepository(result.repoId); // this happens a lot and ends up being too slow
 
-            const repoId = result.input.pushInfo.repoId;
+            const repoId = result.input.target.repoId;
             if (results.length <= NUM_RESULTS) {
 
                 const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
@@ -488,8 +488,8 @@ export abstract class CourseController implements ICourseController {
                     delivId:      result.delivId,
                     state:        result.output.state,
                     timestamp:    result.output.timestamp,
-                    commitSHA:    result.input.pushInfo.commitSHA,
-                    commitURL:    result.input.pushInfo.commitURL,
+                    commitSHA:    result.input.target.commitSHA,
+                    commitURL:    result.input.target.commitURL,
                     scoreOverall: scoreOverall,
                     scoreCover:   scoreCover,
                     scoreTests:   scoreTest
