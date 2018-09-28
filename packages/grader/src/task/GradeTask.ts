@@ -78,8 +78,9 @@ export class GradeTask {
                     out.state = "TIMEOUT";
                 } else {
                     try {
+                        const shouldPostback: boolean = exitCode !== 0;
                         out.report = await this.workspace.readJson("output/report.json");
-                        out.postbackOnComplete = exitCode !== 0;
+                        out.postbackOnComplete = shouldPostback;
                         out.state = "SUCCESS";
                     } catch (err) {
                         Log.error('GradeWorker::execute() - ERROR Reading grade report file produced be grading container' +
