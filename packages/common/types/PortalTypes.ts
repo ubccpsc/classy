@@ -5,7 +5,7 @@
  *
  * All fields should be primitives.
  */
-import {IAutoTestResult} from "./AutoTestTypes";
+import {AutoTestResult} from "./AutoTestTypes";
 
 export interface FailurePayload {
     message: string;
@@ -250,7 +250,7 @@ export interface AutoTestResultPayload {
 }
 
 /* tslint:disable-next-line */ // This will get properties eventually
-export interface AutoTestResultTransport extends IAutoTestResult {
+export interface AutoTestResultTransport extends AutoTestResult {
     // NOTE: this extends should go away, but is easiest right now
 }
 
