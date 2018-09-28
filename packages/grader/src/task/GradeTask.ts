@@ -33,7 +33,7 @@ export class GradeTask {
                 errorNames:   [],
                 custom:       {}
             },
-            postbackOnComplete: false,
+            postbackOnComplete: true,
             custom:             {},
             attachments:        [],
             state:              "FAIL"
@@ -75,11 +75,9 @@ export class GradeTask {
 
                 if (this.containerState === "TIMEOUT") {
                     out.report.feedback = "Container did not complete in the allotted time.";
-                    out.postbackOnComplete = true;
                     out.state = "TIMEOUT";
                 } else {
                     try {
-                        // TODO Verify that the report is actually valid
                         out.report = await this.workspace.readJson("output/report.json");
                         out.postbackOnComplete = exitCode !== 0;
                         out.state = "SUCCESS";
