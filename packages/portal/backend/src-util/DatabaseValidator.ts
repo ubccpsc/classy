@@ -489,6 +489,7 @@ export class DatabaseValidator {
                             skipNames:    [],
                             failNames:    [],
                             errorNames:   [],
+                            state:        null,
                             custom:       {}
                         };
                     }

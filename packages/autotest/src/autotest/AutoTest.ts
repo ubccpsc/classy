@@ -2,8 +2,14 @@ import * as rp from "request-promise-native";
 
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
-import {AutoTestResult, ContainerOutput} from "../../../common/types/AutoTestTypes";
-import {CommitTarget, ContainerInput} from "../../../common/types/ContainerTypes";
+import {AutoTestResult} from "../../../common/types/AutoTestTypes";
+import {
+    CommitTarget,
+    ContainerInput,
+    ContainerOutput,
+    ContainerState,
+    GradeState
+} from "../../../common/types/ContainerTypes";
 
 import {AutoTestGradeTransport} from "../../../common/types/PortalTypes";
 import Util from "../../../common/Util";
@@ -357,12 +363,13 @@ export abstract class AutoTest implements IAutoTest {
                         skipNames:    [],
                         failNames:    [],
                         errorNames:   [],
+                        state:        GradeState.FAIL,
                         custom:       {}
                     },
                     postbackOnComplete: false, // NOTE: should this be true? Crash(y) failures should probably be reported.
                     custom:             {},
                     attachments:        [],
-                    state:              "FAIL"
+                    state:              ContainerState.FAIL
                 };
                 try {
                     output = await rp(gradeServiceOpts);

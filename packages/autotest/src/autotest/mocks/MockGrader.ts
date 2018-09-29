@@ -1,7 +1,13 @@
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
-import {AutoTestResult, ContainerOutput} from "../../../../common/types/AutoTestTypes";
-import {ContainerInput, GradeReport} from "../../../../common/types/ContainerTypes";
+import {AutoTestResult} from "../../../../common/types/AutoTestTypes";
+import {
+    ContainerInput,
+    ContainerOutput,
+    ContainerState,
+    GradeReport,
+    GradeState
+} from "../../../../common/types/ContainerTypes";
 
 import Util from "../../../../common/Util";
 
@@ -42,7 +48,8 @@ export class MockGrader implements IGrader {
                 errorNames:   [],
                 skipNames:    [],
                 custom:       {},
-                feedback:     "Test execution complete."
+                feedback:     "Test execution complete.",
+                state:        GradeState.SUCCESS
             };
 
             const out: ContainerOutput = {
@@ -53,7 +60,7 @@ export class MockGrader implements IGrader {
                 postbackOnComplete: false,
                 custom:             {},
                 attachments:        [],
-                state:              "SUCCESS" // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
+                state:              ContainerState.SUCCESS
             };
 
             // just a hack to test postback events

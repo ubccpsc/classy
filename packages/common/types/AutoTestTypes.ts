@@ -1,36 +1,10 @@
-import {ContainerInput, GradeReport} from "./ContainerTypes";
-
-/**
- * Pertinent properties from GitHub push webhook events.
- */
-// export interface IPushEvent extends CommitTarget {
-//     // cloneURL: string; // used by the Grader service
-// }
-//
-// /**
-//  * Pertinent properties from GitHub comment webhook events.
-//  */
-// export interface ICommentEvent extends CommitTarget {
-//     // personId: string; // NOTE: this is received as a github id!
-//     // botMentioned: boolean; // was the bot mentioned (e.g., can ignore comments that don't mention the bot)
-// }
+import {ContainerInput, ContainerOutput} from "./ContainerTypes";
 
 export interface IFeedbackGiven {
     personId: string;
     delivId: string;
     timestamp: number;
     commitURL: string; // for information only
-}
-
-/**
- * Description of attachments that are saved in files on disk. This
- * helps minimize database size making it easier to backup and much
- * quicker to search and traverse (especially over the network).
- */
-export interface IAttachment {
-    name: string; // file identifier attachment (e.g., stdio.txt)
-    path: string; // path to file (including name)
-    content_type: string;
 }
 
 /**
@@ -63,16 +37,4 @@ export interface AutoTestResult {
 
     input: ContainerInput; // Prepared by AutoTest service
     output: ContainerOutput; // Returned by the Grader service
-}
-
-/**
- * Primary data structure that is returned by a Grader.
- */
-export interface ContainerOutput {
-    timestamp: number; // time when complete
-    report: GradeReport;
-    postbackOnComplete: boolean;
-    attachments: IAttachment[];
-    state: string; // SUCCESS, FAIL, TIMEOUT, INVALID_REPORT, LINT, COMPILE // TODO: move to GradeReport
-    custom: {};
 }

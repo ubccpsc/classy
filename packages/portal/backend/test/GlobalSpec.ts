@@ -3,8 +3,7 @@ import "mocha";
 
 import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
-import {ContainerOutput} from "../../../common/types/AutoTestTypes";
-import {ContainerInput} from "../../../common/types/ContainerTypes";
+import {ContainerInput, ContainerOutput, ContainerState, GradeState} from "../../../common/types/ContainerTypes";
 import {GradePayload} from "../../../common/types/SDMMTypes";
 import Util from "../../../common/Util";
 
@@ -577,12 +576,13 @@ export class Test {
                 errorNames:   errorNames,
                 skipNames:    skipNames,
                 custom:       {},
-                feedback:     'feedback'
+                feedback:     'feedback',
+                state:        GradeState.SUCCESS
             },
             postbackOnComplete: true,
             custom:             {},
             attachments:        [],
-            state:              'SUCCESS' // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
+            state:              ContainerState.SUCCESS
         };
 
         const input: ContainerInput = {

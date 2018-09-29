@@ -3,8 +3,8 @@ import "mocha";
 
 import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
-import {AutoTestResult, ContainerOutput} from "../../common/types/AutoTestTypes";
-import {ContainerInput} from "../../common/types/ContainerTypes";
+import {AutoTestResult} from "../../common/types/AutoTestTypes";
+import {ContainerInput, ContainerOutput, ContainerState, GradeState} from "../../common/types/ContainerTypes";
 import {AutoTestGradeTransport} from "../../common/types/PortalTypes";
 import {DatabaseController} from "../../portal/backend/src/controllers/DatabaseController";
 import BackendServer from "../../portal/backend/src/server/BackendServer";
@@ -189,12 +189,13 @@ describe("ClassPortal Service", () => {
                 errorNames:   [],
                 skipNames:    [],
                 custom:       {},
-                feedback:     'feedback'
+                feedback:     'feedback',
+                state:        GradeState.SUCCESS
             },
             postbackOnComplete: true,
             custom:             {},
             attachments:        [],
-            state:              'SUCCESS' // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
+            state:              ContainerState.SUCCESS
         };
 
         const input: ContainerInput = {

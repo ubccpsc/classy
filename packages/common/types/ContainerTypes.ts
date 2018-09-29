@@ -1,10 +1,44 @@
 /**
+ * The state of the grading container after it has run. Set by the Grader
+ * service.
+ */
+export enum ContainerState {
+    SUCCESS = "SUCCESS",
+    FAIL = "FAIL",
+    TIMEOUT = "TIMEOUT",
+    NO_REPORT = "NO_REPORT" // Container did not write report.json file
+}
+
+/**
+ * The grading code running in the container can set the state to provide
+ * additional information to AutoTest.
+ */
+export enum GradeState {
+    SUCCESS = "SUCCESS",
+    FAIL = "FAIL",
+    COMPILE_ERROR = "COMPILE_ERROR",
+    LINT_ERROR = "LINT_ERROR"
+}
+
+/**
  * Primary data structure that the course container is invoked with.
  */
 export interface ContainerInput {
     delivId: string; // Specifies what delivId the Grader should execute against.
     target: CommitTarget; // Details about the push event that led to this request.
     containerConfig: AutoTestConfig; // Container configuration details.
+}
+
+/**
+ * Primary data structure that is returned by a Grader.
+ */
+export interface ContainerOutput {
+    timestamp: number; // time when complete
+    report: GradeReport;
+    postbackOnComplete: boolean;
+    attachments: Attachment[];
+    state: ContainerState;
+    custom: {};
 }
 
 export interface CommitTarget {
@@ -62,10 +96,24 @@ export interface GradeReport {
     // to return to the user.
     feedback: string;
 
+    // Report the grading status inside the container.
+    state: GradeState;
+
     // Enables custom values to be returned to the UI layer.
     // PLEASE: do not store large objects in here or it will
     // significantly impact the performance of the dashboard.
     // Use attachments instead for large bits of data you wish
     // to persist.
     custom: {};
+}
+
+/**
+ * Description of attachments that are saved in files on disk. This
+ * helps minimize database size making it easier to backup and much
+ * quicker to search and traverse (especially over the network).
+ */
+export interface Attachment {
+    name: string; // file identifier attachment (e.g., stdio.txt)
+    path: string; // path to file (including name)
+    content_type: string;
 }
