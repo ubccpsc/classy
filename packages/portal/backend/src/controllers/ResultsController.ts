@@ -131,8 +131,8 @@ export class ResultsController {
             return msg;
         }
 
-        if (typeof record.output.attachments === 'undefined' || !Array.isArray(record.output.attachments)) {
-            const msg = 'output.attachments missing or not an array';
+        if (typeof record.output.executionId === 'undefined' || typeof record.output.executionId !== 'string') {
+            const msg = 'output.executionId missing or not a string';
             Log.error('ResultsController::validateAutoTestResult(..) - ERROR: ' + msg);
             return msg;
         }
@@ -236,6 +236,17 @@ export class ResultsController {
             return msg;
         }
 
+        if (typeof report.attachments === 'undefined' || !Array.isArray(report.attachments)) {
+            const msg = 'output.report.attachments missing or not an array';
+            Log.error('ResultsController::validateGradeReport(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        if (typeof report.state === 'undefined' || typeof report.state !== 'string') {
+            const msg = 'output.report.state missing or not a string';
+            Log.error('ResultsController::validateGradeReport(..) - ERROR: ' + msg);
+            return msg;
+        }
         Log.info('ResultsController::validateGradeReport(..) - done; report is valid');
         return null; // everything is good
     }

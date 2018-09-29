@@ -21,12 +21,13 @@ describe("GradeTask", function() {
             failNames:    [],
             errorNames:   [],
             custom:       {},
-            state:        GradeState.SUCCESS
+            state:        GradeState.SUCCESS,
+            attachments:  [],
         },
         postbackOnComplete: false,
         custom:             {},
-        attachments:        [],
-        state:              ContainerState.SUCCESS
+        state:              ContainerState.SUCCESS,
+        executionId:        null
     };
 
     function isValid(output: ContainerOutput) {

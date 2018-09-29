@@ -49,7 +49,8 @@ export class MockGrader implements IGrader {
                 skipNames:    [],
                 custom:       {},
                 feedback:     "Test execution complete.",
-                state:        GradeState.SUCCESS
+                state:        GradeState.SUCCESS,
+                attachments:  []
             };
 
             const out: ContainerOutput = {
@@ -59,8 +60,8 @@ export class MockGrader implements IGrader {
                 // feedback:           "Test execution complete.",
                 postbackOnComplete: false,
                 custom:             {},
-                attachments:        [],
-                state:              ContainerState.SUCCESS
+                state:              ContainerState.SUCCESS,
+                executionId:        null
             };
 
             // just a hack to test postback events

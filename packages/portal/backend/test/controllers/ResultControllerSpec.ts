@@ -169,7 +169,7 @@ describe("ResultController", () => {
             commitURL: 'url',
             commitSHA: 'sha',
             input:     {delivId: 'd0', target: {}},
-            output:    {timestamp: Date.now(), postbackOnComplete: false, attachments: []}
+            output:    {timestamp: Date.now(), postbackOnComplete: false, executionId: ""}
         }as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
@@ -181,7 +181,7 @@ describe("ResultController", () => {
             commitURL: 'url',
             commitSHA: 'sha',
             input:     {delivId: 'd0', target: {}},
-            output:    {timestamp: Date.now(), postbackOnComplete: false, attachments: [], state: 'SUCCESS'}
+            output:    {timestamp: Date.now(), postbackOnComplete: false, executionId: "", state: 'SUCCESS'}
         }as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
@@ -193,7 +193,7 @@ describe("ResultController", () => {
             commitURL: 'url',
             commitSHA: 'sha',
             input:     {delivId: 'd0', target: {}},
-            output:    {timestamp: Date.now(), postbackOnComplete: false, attachments: [], state: 'SUCCESS', custom: {}}
+            output:    {timestamp: Date.now(), postbackOnComplete: false, executionId: "", state: 'SUCCESS', custom: {}}
         }as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
@@ -205,7 +205,7 @@ describe("ResultController", () => {
             commitURL: 'url',
             commitSHA: 'sha',
             input:     {delivId: 'd0', target: {}},
-            output:    {timestamp: Date.now(), postbackOnComplete: false, attachments: [], state: 'SUCCESS', custom: {}, report: {}}
+            output:    {timestamp: Date.now(), postbackOnComplete: false, executionId: "", state: 'SUCCESS', custom: {}, report: {}}
         }as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;

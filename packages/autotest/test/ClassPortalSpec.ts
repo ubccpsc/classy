@@ -190,12 +190,13 @@ describe("ClassPortal Service", () => {
                 skipNames:    [],
                 custom:       {},
                 feedback:     'feedback',
-                state:        GradeState.SUCCESS
+                state:        GradeState.SUCCESS,
+                attachments:  []
             },
             postbackOnComplete: true,
             custom:             {},
-            attachments:        [],
-            state:              ContainerState.SUCCESS
+            state:              ContainerState.SUCCESS,
+            executionId:        null
         };
 
         const input: ContainerInput = {

@@ -490,7 +490,8 @@ export class DatabaseValidator {
                             failNames:    [],
                             errorNames:   [],
                             state:        null,
-                            custom:       {}
+                            custom:       {},
+                            attachments:  []
                         };
                     }
 

@@ -136,13 +136,14 @@ export class TestData {
                 skipNames:    [],
                 custom:       [],
                 feedback:     "Test Feedback",
-                state:        GradeState.SUCCESS
+                state:        GradeState.SUCCESS,
+                attachments:        []
             },
             // "feedback":           "Test Feedback",
             postbackOnComplete: false,
             custom:             {},
-            attachments:        [],
-            state:              ContainerState.SUCCESS
+            state:              ContainerState.SUCCESS,
+            executionId:        null
         }
     };
 
@@ -165,13 +166,14 @@ export class TestData {
                 skipNames:    [],
                 custom:       [],
                 feedback:     "Test Feedback",
-                state:        GradeState.SUCCESS
+                state:        GradeState.SUCCESS,
+                attachments:  []
             },
             // "feedback":           "Test Feedback",
             postbackOnComplete: false,
             custom:             {},
-            attachments:        [],
-            state:              ContainerState.SUCCESS
+            state:              ContainerState.SUCCESS,
+            executionId:        null
         }
     };
 }

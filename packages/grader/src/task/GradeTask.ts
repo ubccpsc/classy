@@ -32,12 +32,13 @@ export class GradeTask {
                 failNames:    [],
                 errorNames:   [],
                 state:        GradeState.FAIL,
+                attachments:  [],
                 custom:       {}
             },
             postbackOnComplete: true,
             custom:             {},
-            attachments:        [],
-            state:              ContainerState.FAIL
+            state:              ContainerState.FAIL,
+            executionId:        null
         };
 
         try {

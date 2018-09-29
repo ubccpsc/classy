@@ -36,9 +36,10 @@ export interface ContainerOutput {
     timestamp: number; // time when complete
     report: GradeReport;
     postbackOnComplete: boolean;
-    attachments: Attachment[];
     state: ContainerState;
     custom: {};
+    // Used to retrieve attachments for the particular grading run.
+    executionId: string;
 }
 
 export interface CommitTarget {
@@ -98,6 +99,13 @@ export interface GradeReport {
 
     // Report the grading status inside the container.
     state: GradeState;
+
+    // The container can list files it generates here. Paths will be relative
+    // to the container's mounted output directory; use ContainerOutput::executionId
+    // to construct the URL path to retrieve the attachment from the Grader
+    // service. Note: The Grader service may append additional attachments
+    // after the container completes (e.g. stdio.txt).
+    attachments: Attachment[];
 
     // Enables custom values to be returned to the UI layer.
     // PLEASE: do not store large objects in here or it will

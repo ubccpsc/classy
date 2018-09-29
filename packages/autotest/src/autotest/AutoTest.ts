@@ -364,12 +364,14 @@ export abstract class AutoTest implements IAutoTest {
                         failNames:    [],
                         errorNames:   [],
                         state:        GradeState.FAIL,
-                        custom:       {}
+                        custom:       {},
+                        attachments:  [],
+
                     },
                     postbackOnComplete: false, // NOTE: should this be true? Crash(y) failures should probably be reported.
                     custom:             {},
-                    attachments:        [],
-                    state:              ContainerState.FAIL
+                    state:              ContainerState.FAIL,
+                    executionId:        null
                 };
                 try {
                     output = await rp(gradeServiceOpts);
