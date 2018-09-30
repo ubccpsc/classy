@@ -583,7 +583,7 @@ export class Test {
             postbackOnComplete: true,
             custom:             {},
             state:              ContainerState.SUCCESS,
-            executionId:        null
+            executionId:        ""
         };
 
         const input: ContainerInput = {
