@@ -38,7 +38,7 @@ export class GradeTask {
             postbackOnComplete: true,
             custom:             {},
             state:              ContainerState.FAIL,
-            executionId:        null
+            executionId:        ""
         };
 
         try {

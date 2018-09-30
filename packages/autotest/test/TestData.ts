@@ -143,7 +143,7 @@ export class TestData {
             postbackOnComplete: false,
             custom:             {},
             state:              ContainerState.SUCCESS,
-            executionId:        null
+            executionId:        ""
         }
     };
 
@@ -173,7 +173,7 @@ export class TestData {
             postbackOnComplete: false,
             custom:             {},
             state:              ContainerState.SUCCESS,
-            executionId:        null
+            executionId:        ""
         }
     };
 }

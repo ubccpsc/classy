@@ -27,7 +27,7 @@ describe("GradeTask", function() {
         postbackOnComplete: false,
         custom:             {},
         state:              ContainerState.SUCCESS,
-        executionId:        null
+        executionId:        ""
     };
 
     function isValid(output: ContainerOutput) {
