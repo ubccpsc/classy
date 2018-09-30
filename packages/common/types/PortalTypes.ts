@@ -272,9 +272,9 @@ export interface AutoTestResultSummaryTransport {
     timestamp: number;
     commitSHA: string;
     commitURL: string;
-    scoreOverall: number | null; // null if state !== 'SUCCESS'
-    scoreCover: number | null; // null if state !== 'SUCCESS'
-    scoreTests: number | null; // null if state !== 'SUCCESS'
+    scoreOverall: number | null; // null if result !== 'SUCCESS'
+    scoreCover: number | null; // null if result !== 'SUCCESS'
+    scoreTests: number | null; // null if result !== 'SUCCESS'
 }
 
 // extends the result summary data

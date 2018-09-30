@@ -170,7 +170,7 @@ export class AdminDashboardTab extends AdminPage {
             // repoId
             // repoURL
             // delivId
-            // state
+            // result
             // timestamp
             // commitSHA
             // commitURL

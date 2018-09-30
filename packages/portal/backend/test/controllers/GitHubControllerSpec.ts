@@ -95,9 +95,9 @@ describe("GitHubController", () => {
         Log.test('GitHubController::AfterEach - ***');
     });
 
-    it("Should be able to clear out prior state", async function() {
+    it("Should be able to clear out prior result", async function() {
         // not really a test, we just want something to run first we can set timeout on (cannot add timeout to before)
-        Log.test("Clearing prior state");
+        Log.test("Clearing prior result");
         try {
             await gha.deleteRepo(Test.REPONAME1);
             await gha.deleteRepo(Test.REPONAME2);
@@ -106,9 +106,9 @@ describe("GitHubController", () => {
             await gha.deleteTeamByName(Test.TEAMNAME2);
             await gha.deleteTeamByName(Test.TEAMNAME3);
         } catch (err) {
-            Log.test("Could not clear state: " + err);
+            Log.test("Could not clear result: " + err);
         }
-        Log.test("Prior state cleared");
+        Log.test("Prior result cleared");
     }).timeout(Test.TIMEOUTLONG);
 
     it("Should be able to get a team url for a valid team.", async () => {

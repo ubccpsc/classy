@@ -102,7 +102,7 @@ describe("SDMM: SDMMController", () => {
         await sc.handleUnknownUser(data.PERSON3.githubId); // provision user
         await sc.handleUnknownUser(data.PERSON4.githubId); // provision user
 
-        Log.test("Clearing state");
+        Log.test("Clearing result");
         gha = GitHubActions.getInstance(true);
 
         await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB1);
@@ -133,7 +133,7 @@ describe("SDMM: SDMMController", () => {
         Log.test("SDMMControllerSpec::after()");
         // Config.getInstance().setProp(ConfigKey.org, OLD_ORG);
 
-        Log.test("Clearing state");
+        Log.test("Clearing result");
         const dataC = DatabaseController.getInstance();
 
         const repos = await dataC.getRepositories();

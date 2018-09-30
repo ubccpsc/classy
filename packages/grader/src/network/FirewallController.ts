@@ -68,7 +68,7 @@ export class FirewallController extends Command implements IFirewallController {
                     args.push("-m");
                     break;
                 case "state":
-                    args.push("--state");
+                    args.push("--result");
                     break;
                 default:
                     invalidArg = true;

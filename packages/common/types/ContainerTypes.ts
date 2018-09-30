@@ -1,5 +1,5 @@
 /**
- * The state of the grading container after it has run. Set by the Grader
+ * The result of the grading container after it has run. Set by the Grader
  * service.
  */
 export enum ContainerState {
@@ -7,17 +7,6 @@ export enum ContainerState {
     FAIL = "FAIL",
     TIMEOUT = "TIMEOUT",
     NO_REPORT = "NO_REPORT" // Container did not write report.json file
-}
-
-/**
- * The grading code running in the container can set the state to provide
- * additional information to AutoTest.
- */
-export enum GradeState {
-    SUCCESS = "SUCCESS",
-    FAIL = "FAIL",
-    COMPILE_ERROR = "COMPILE_ERROR",
-    LINT_ERROR = "LINT_ERROR"
 }
 
 /**
@@ -81,6 +70,14 @@ export interface AutoTestConfig {
  * Primary data structure that the course container returns.
  */
 export interface GradeReport {
+    // This is the text of the feedback (in markdown) that the container wants
+    // to return to the user.
+    feedback: string;
+
+    // Report the grading status inside the container.
+    // SUCCESS, FAIL_COMPILE, FAIL_LINT
+    result: string;
+
     scoreOverall: number; // must be set
     scoreTest: number | null; // null means not valid for this report
     scoreCover: number | null; // null means not valid for this report
@@ -92,13 +89,6 @@ export interface GradeReport {
     failNames: string[];
     errorNames: string[];
     skipNames: string[];
-
-    // This is the text of the feedback (in markdown) that the container wants
-    // to return to the user.
-    feedback: string;
-
-    // Report the grading status inside the container.
-    state: GradeState;
 
     // The container can list files it generates here. Paths will be relative
     // to the container's mounted output directory; use ContainerOutput::executionId

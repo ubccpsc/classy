@@ -1,5 +1,5 @@
 import {AutoTestResult, IFeedbackGiven} from "../../common/types/AutoTestTypes";
-import {CommitTarget, ContainerInput, ContainerState, GradeState} from "../../common/types/ContainerTypes";
+import {CommitTarget, ContainerInput, ContainerState} from "../../common/types/ContainerTypes";
 
 export class TestData {
     public static readonly pushEventA: CommitTarget = {
@@ -136,7 +136,7 @@ export class TestData {
                 skipNames:    [],
                 custom:       [],
                 feedback:     "Test Feedback",
-                state:        GradeState.SUCCESS,
+                result:        "SUCCESS",
                 attachments:        []
             },
             // "feedback":           "Test Feedback",
@@ -166,7 +166,7 @@ export class TestData {
                 skipNames:    [],
                 custom:       [],
                 feedback:     "Test Feedback",
-                state:        GradeState.SUCCESS,
+                result:       "SUCCESS",
                 attachments:  []
             },
             // "feedback":           "Test Feedback",

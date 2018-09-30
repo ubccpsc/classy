@@ -7,8 +7,7 @@ import {
     CommitTarget,
     ContainerInput,
     ContainerOutput,
-    ContainerState,
-    GradeState
+    ContainerState
 } from "../../../common/types/ContainerTypes";
 
 import {AutoTestGradeTransport} from "../../../common/types/PortalTypes";
@@ -363,7 +362,7 @@ export abstract class AutoTest implements IAutoTest {
                         skipNames:    [],
                         failNames:    [],
                         errorNames:   [],
-                        state:        GradeState.FAIL,
+                        result:       "FAIL",
                         custom:       {},
                         attachments:  [],
 

@@ -117,7 +117,7 @@ describe('SDMM Routes', function() {
         Log.test('SDMMRoutesSpec::clearGithub() - done');
     }
 
-    it('Should be possible to clear stale state.', async function() {
+    it('Should be possible to clear stale result.', async function() {
         await clearGithub();
     }).timeout(Test.TIMEOUTLONG);
 
@@ -542,7 +542,7 @@ describe('SDMM Routes', function() {
         //     // expect(response.body.failure.message).to.equal('Error provisioning d0 repo.');
         // }).timeout(1000 * 10);
 
-        it('Should be possible to clear stale state.', async function() {
+        it('Should be possible to clear stale result.', async function() {
             await clearGithub();
         }).timeout(Test.TIMEOUTLONG);
 

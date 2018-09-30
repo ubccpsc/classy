@@ -5,8 +5,7 @@ import {
     ContainerInput,
     ContainerOutput,
     ContainerState,
-    GradeReport,
-    GradeState
+    GradeReport
 } from "../../../../common/types/ContainerTypes";
 
 import Util from "../../../../common/Util";
@@ -49,7 +48,7 @@ export class MockGrader implements IGrader {
                 skipNames:    [],
                 custom:       {},
                 feedback:     "Test execution complete.",
-                state:        GradeState.SUCCESS,
+                result:        "SUCCESS",
                 attachments:  []
             };
 

@@ -1,5 +1,5 @@
 import {expect} from "chai";
-import {ContainerOutput, ContainerState, GradeState} from "../../common/types/ContainerTypes";
+import {ContainerOutput, ContainerState} from "../../common/types/ContainerTypes";
 
 // class ContainerMock implements IDockerContainer {
 //     public id: string;
@@ -21,7 +21,7 @@ describe("GradeTask", function() {
             failNames:    [],
             errorNames:   [],
             custom:       {},
-            state:        GradeState.SUCCESS,
+            result:       "SUCCESS",
             attachments:  [],
         },
         postbackOnComplete: false,

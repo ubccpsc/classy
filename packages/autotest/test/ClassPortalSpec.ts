@@ -4,7 +4,7 @@ import "mocha";
 import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
 import {AutoTestResult} from "../../common/types/AutoTestTypes";
-import {ContainerInput, ContainerOutput, ContainerState, GradeState} from "../../common/types/ContainerTypes";
+import {ContainerInput, ContainerOutput, ContainerState} from "../../common/types/ContainerTypes";
 import {AutoTestGradeTransport} from "../../common/types/PortalTypes";
 import {DatabaseController} from "../../portal/backend/src/controllers/DatabaseController";
 import BackendServer from "../../portal/backend/src/server/BackendServer";
@@ -190,7 +190,7 @@ describe("ClassPortal Service", () => {
                 skipNames:    [],
                 custom:       {},
                 feedback:     'feedback',
-                state:        GradeState.SUCCESS,
+                result:        "SUCCESS",
                 attachments:  []
             },
             postbackOnComplete: true,

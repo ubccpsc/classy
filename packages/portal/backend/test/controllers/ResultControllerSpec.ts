@@ -317,6 +317,37 @@ describe("ResultController", () => {
         expect(valid).to.not.be.null;
         expect(valid).to.be.an('string');
 
+        data = {
+            scoreOverall: 12,
+            scoreTest:    22,
+            scoreCover:   33,
+            passNames:    ['pass'],
+            failNames:    ['fail'],
+            errorNames:   ['error'],
+            skipNames:    ['skip'],
+            feedback:     'feedback',
+            result:       'SUCCESS'
+        } as GradeReport;
+        valid = await rc.validateGradeReport(data);
+        expect(valid).to.not.be.null;
+        expect(valid).to.be.an('string');
+
+        data = {
+            scoreOverall: 12,
+            scoreTest:    22,
+            scoreCover:   33,
+            passNames:    ['pass'],
+            failNames:    ['fail'],
+            errorNames:   ['error'],
+            skipNames:    ['skip'],
+            feedback:     'feedback',
+            result:       'SUCCESS',
+            attachments:  []
+        } as GradeReport;
+        valid = await rc.validateGradeReport(data);
+        expect(valid).to.not.be.null;
+        expect(valid).to.be.an('string');
+
         // valid record!
         data = {
             scoreOverall: 12,
@@ -327,6 +358,8 @@ describe("ResultController", () => {
             errorNames:   ['error'],
             skipNames:    ['skip'],
             feedback:     'feedback',
+            result:       'SUCCESS',
+            attachments:  [],
             custom:       {}
         } as GradeReport;
         valid = await rc.validateGradeReport(data);

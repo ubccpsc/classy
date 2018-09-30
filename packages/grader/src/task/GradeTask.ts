@@ -1,5 +1,5 @@
 import Log from "../../../common/Log";
-import {ContainerInput, ContainerOutput, ContainerState, GradeState} from "../../../common/types/ContainerTypes";
+import {ContainerInput, ContainerOutput, ContainerState} from "../../../common/types/ContainerTypes";
 import {IDockerContainer} from "../docker/DockerContainer";
 import {Repository} from "../git/Repository";
 import {Workspace} from "../storage/Workspace";
@@ -31,7 +31,7 @@ export class GradeTask {
                 skipNames:    [],
                 failNames:    [],
                 errorNames:   [],
-                state:        GradeState.FAIL,
+                result:       "FAIL",
                 attachments:  [],
                 custom:       {}
             },

@@ -3,7 +3,7 @@ import "mocha";
 
 import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
-import {ContainerInput, ContainerOutput, ContainerState, GradeState} from "../../../common/types/ContainerTypes";
+import {ContainerInput, ContainerOutput, ContainerState} from "../../../common/types/ContainerTypes";
 import {GradePayload} from "../../../common/types/SDMMTypes";
 import Util from "../../../common/Util";
 
@@ -577,7 +577,7 @@ export class Test {
                 skipNames:    skipNames,
                 custom:       {},
                 feedback:     'feedback',
-                state:        GradeState.SUCCESS,
+                result:       'SUCCESS',
                 attachments:        []
             },
             postbackOnComplete: true,

@@ -138,7 +138,7 @@ export class ResultsController {
         }
 
         if (typeof record.output.state === 'undefined' || typeof record.output.state !== 'string') {
-            const msg = 'output.state missing or not a string';
+            const msg = 'output.result missing or not a string';
             Log.error('ResultsController::validateAutoTestResult(..) - ERROR: ' + msg);
             return msg;
         }
@@ -242,8 +242,8 @@ export class ResultsController {
             return msg;
         }
 
-        if (typeof report.state === 'undefined' || typeof report.state !== 'string') {
-            const msg = 'output.report.state missing or not a string';
+        if (typeof report.result === 'undefined' || typeof report.result !== 'string') {
+            const msg = 'output.report.result missing or not a string';
             Log.error('ResultsController::validateGradeReport(..) - ERROR: ' + msg);
             return msg;
         }
