@@ -15,7 +15,7 @@ import {PersonController} from "../../src/controllers/PersonController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
 import {Factory} from "../../src/Factory";
-import {Person, Repository, Team} from "../../src/Types";
+import {Person, PersonKind, Repository, Team} from "../../src/Types";
 import {Test} from "../GlobalSpec";
 
 import '../GlobalSpec'; // load first
@@ -104,11 +104,11 @@ describe("CourseController", () => {
 
         await Test.prepareDeliverables();
 
-        const p1: Person = Test.createPerson(Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, 'student');
+        const p1: Person = Test.createPerson(Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, PersonKind.STUDENT);
         await dbc.writePerson(p1);
-        const p2 = Test.createPerson(Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, 'student');
+        const p2 = Test.createPerson(Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, PersonKind.STUDENT);
         await dbc.writePerson(p2);
-        const p3 = Test.createPerson(Test.USERNAMEGITHUB3, Test.USERNAMEGITHUB3, Test.USERNAMEGITHUB3, 'student');
+        const p3 = Test.createPerson(Test.USERNAMEGITHUB3, Test.USERNAMEGITHUB3, Test.USERNAMEGITHUB3, PersonKind.STUDENT);
         await dbc.writePerson(p3);
 
         const deliv = await dbc.getDeliverable(Test.DELIVIDPROJ);

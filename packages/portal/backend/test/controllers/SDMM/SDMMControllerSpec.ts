@@ -13,7 +13,7 @@ import {PersonController} from "../../../src/controllers/PersonController";
 import {RepositoryController} from "../../../src/controllers/RepositoryController";
 import {SDMMController} from "../../../src/controllers/SDMM/SDMMController";
 import {TeamController} from "../../../src/controllers/TeamController";
-import {Person} from "../../../src/Types";
+import {Person, PersonKind} from "../../../src/Types";
 
 import {Test} from "../../GlobalSpec";
 import '../../GlobalSpec'; // load first
@@ -43,10 +43,10 @@ export class TestData {
     public PERSON4: Person = null;
 
     constructor() {
-        this.PERSON1 = Test.createPerson(Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, 'student');
-        this.PERSON2 = Test.createPerson(Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, 'student');
-        this.PERSON3 = Test.createPerson(Test.USERNAMEGITHUB3, Test.USERNAMEGITHUB3, Test.USERNAMEGITHUB3, 'student');
-        this.PERSON4 = Test.createPerson(Test.USERNAMEGITHUB4, Test.USERNAMEGITHUB4, Test.USERNAMEGITHUB4, 'student');
+        this.PERSON1 = Test.createPerson(Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, PersonKind.STUDENT);
+        this.PERSON2 = Test.createPerson(Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, PersonKind.STUDENT);
+        this.PERSON3 = Test.createPerson(Test.USERNAMEGITHUB3, Test.USERNAMEGITHUB3, Test.USERNAMEGITHUB3, PersonKind.STUDENT);
+        this.PERSON4 = Test.createPerson(Test.USERNAMEGITHUB4, Test.USERNAMEGITHUB4, Test.USERNAMEGITHUB4, PersonKind.STUDENT);
     }
 }
 

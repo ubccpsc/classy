@@ -30,7 +30,7 @@ import {PersonController} from "../../controllers/PersonController";
 import {TeamController} from "../../controllers/TeamController";
 import {Factory} from "../../Factory";
 
-import {Person} from "../../Types";
+import {Person, PersonKind} from "../../Types";
 
 import IREST from "../IREST";
 
@@ -472,7 +472,7 @@ export default class AdminRoutes implements IREST {
                                 fName:         row.FIRST,
                                 lName:         row.LAST,
 
-                                kind:   'student',
+                                kind:   PersonKind.STUDENT,
                                 URL:    null,
                                 labId:  row.LAB,
                                 custom: {}

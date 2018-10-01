@@ -52,7 +52,7 @@ export interface Person {
 
     readonly fName: string;
     readonly lName: string;
-    kind: string | null; // student, staff, admin (staff / admin taken from GitHub if kind is null)
+    kind: PersonKind | null; // student, staff, admin (staff / admin taken from GitHub if kind is null)
     URL: string | null; // usually the person's GitHub profile URL; null when not yet validated
 
     labId: string | null; // null for non-students
@@ -61,6 +61,18 @@ export interface Person {
         sdmmStatus?: string, // SDMM // TODO: make into sdmm.status
         myProp?: any // PersonControllerSpec
     };
+}
+
+/**
+ * These are the kinds of Person. Using an enum for greater type checking flexibility.
+ */
+export enum PersonKind {
+    NONE = "",
+    STUDENT = "student",
+    WITHDRAWN = "withdrawn", // typically a student who has left the class
+    ADMINSTAFF = "adminstaff",
+    ADMIN = "admin",
+    STAFF = "staff"
 }
 
 export interface Auth {

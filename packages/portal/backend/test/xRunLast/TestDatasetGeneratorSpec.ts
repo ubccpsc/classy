@@ -9,7 +9,7 @@ import {DeliverablesController} from "../../src/controllers/DeliverablesControll
 import {PersonController} from "../../src/controllers/PersonController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
-import {Auth, Course, Deliverable, Person} from "../../src/Types";
+import {Auth, Course, Deliverable, Person, PersonKind} from "../../src/Types";
 
 import {Test} from "../GlobalSpec";
 import "../server/SDMMRoutesSpec"; // try to run last
@@ -69,7 +69,7 @@ describe('TestDatasetGenerator', function() {
 
             fName: 'adminFirst',
             lName: 'adminLast',
-            kind:  'student',
+            kind:  PersonKind.STUDENT,
             URL:   null,
 
             labId: null,
@@ -94,7 +94,7 @@ describe('TestDatasetGenerator', function() {
 
                 fName: pid + 'first',
                 lName: pid + 'last',
-                kind:  'student',
+                kind:  PersonKind.STUDENT,
                 URL:   null,
 
                 labId: 'l1a',
