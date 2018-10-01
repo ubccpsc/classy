@@ -166,11 +166,11 @@ export interface Repository {
 
         assignmentInfo?: AssignmentRepositoryInfo,
 
-        d0enabled?: boolean, // SDDM // TODO: make sddm.d0enabled
-        d1enabled?: boolean, // SDDM // TODO: make sddm.d1enabled
-        d2enabled?: boolean, // SDDM // TODO: make sddm.d2enabled
-        d3enabled?: boolean  // SDDM // TODO: make sddm.d3enabled
-        sddmD3pr?: boolean, // SDDM // TODO: make sddm.d3pr
+        d0enabled?: boolean, // SDMM // TODO: make sdmm.d0enabled
+        d1enabled?: boolean, // SDMM // TODO: make sdmm.d1enabled
+        d2enabled?: boolean, // SDMM // TODO: make sdmm.d2enabled
+        d3enabled?: boolean  // SDMM // TODO: make sdmm.d3enabled
+        sddmD3pr?: boolean, // SDMM // TODO: make sdmm.d3pr
     };
 }
 

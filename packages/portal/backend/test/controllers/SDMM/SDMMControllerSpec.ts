@@ -29,13 +29,7 @@ export class TestData {
     public REPOD0 = "sddmd0repotest";
     public REPOD1 = "sddmd1repotest";
 
-    // public USER = Test.USERNAMEGITHUB1; // "sddmdusertest";
-
     public PRNAME = "prd3id";
-
-    // public u1 = "sddmU1";
-    // public u2 = "sddmU2";
-    // public u3 = "sddmU3";
 
     public PERSON1: Person = null;
     public PERSON2: Person = null;

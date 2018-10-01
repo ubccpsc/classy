@@ -1,5 +1,5 @@
 /**
- * This is the main student page for the SDDM.
+ * This is the main student page for the SDMM.
  *
  * Other courses should _not_ modify this but instead build their own
  * student views, as they need for their own courses.
@@ -61,21 +61,21 @@ export class SDMMSummaryView implements IView {
             "This dialog will clear as soon as the operation is complete.");
 
         const url = this.remote + '/portal/sdmm/performAction/provisionD0';
-        Log.info('SDDM::createD0Repository( ' + url + ' ) - start');
+        Log.info('SDMMSummaryView::createD0Repository( ' + url + ' ) - start');
 
         const options: any = this.getOptions();
         options.method = 'post';
         const response = await fetch(url, options);
         UI.hideModal();
         if (response.status === 200) {
-            Log.trace('SDDM::createD0Repository(..) - 200 received');
+            Log.trace('SDMMSummaryView::createD0Repository(..) - 200 received');
             const json = await response.json();
 
             this.longAction(2000, "D0 Repository created");
 
             this.checkStatus();
         } else {
-            Log.trace('SDDM::createD0Repository(..) - !200 received; status: ' + response.status);
+            Log.trace('SDMMSummaryView::createD0Repository(..) - !200 received; status: ' + response.status);
             const json = await response.json();
             this.showError(json);
         }
@@ -91,7 +91,7 @@ export class SDMMSummaryView implements IView {
         Log.info("SDMMSummaryView::createD1Individual() - start");
 
         const url = this.remote + '/portal/sdmm/performAction/provisionD1individual';
-        Log.info('SDDM::createD1Individual( ' + url + ' ) - start');
+        Log.info('SDMMSummaryView::createD1Individual( ' + url + ' ) - start');
 
         UI.showModal("Provisioning D1 Repository.<br/>This can take up to 5 minutes.<br/>" +
             "This dialog will clear as soon as the operation is complete.");
@@ -101,7 +101,7 @@ export class SDMMSummaryView implements IView {
         const response = await fetch(url, options);
         UI.hideModal();
         if (response.status === 200) {
-            Log.trace('SDDM::createD1Individual(..) - 200 received');
+            Log.trace('SDMMSummaryView::createD1Individual(..) - 200 received');
             const json = await response.json();
 
             this.longAction(2000, "D1 Repository created");
@@ -109,7 +109,7 @@ export class SDMMSummaryView implements IView {
 
             this.checkStatus();
         } else {
-            Log.trace('SDDM::createD1Individual(..) - !200 received; status: ' + response.status);
+            Log.trace('SDMMSummaryView::createD1Individual(..) - !200 received; status: ' + response.status);
             const json = await response.json();
             this.showError(json);
         }
@@ -126,21 +126,21 @@ export class SDMMSummaryView implements IView {
 
         const url = this.remote + '/portal/sdmm/performAction/provisionD1team/' + partnerName;
         // TODO: actually provide team members!!!
-        Log.info('SDDM::createD1Team( ' + url + ' ) - start');
+        Log.info('SDMMSummaryView::createD1Team( ' + url + ' ) - start');
 
         const options: any = this.getOptions();
         options.method = 'post';
         const response = await fetch(url, options);
         UI.hideModal();
         if (response.status === 200) {
-            Log.trace('SDDM::createD1Team(..) - 200 received');
+            Log.trace('SDMMSummaryView::createD1Team(..) - 200 received');
             const json = await response.json();
 
             this.longAction(2000, "D1 Repository created");
 
             this.checkStatus();
         } else {
-            Log.trace('SDDM::createD1Team(..) - !200 received; status: ' + response.status);
+            Log.trace('SDMMSummaryView::createD1Team(..) - !200 received; status: ' + response.status);
             const json = await response.json();
             this.showError(json);
         }
@@ -161,8 +161,8 @@ export class SDMMSummaryView implements IView {
         } else {
             value = status.status;
             if (value === null) {
-                Log.warn('SDDMSummaryView::updateState(..) - null value');
-                Log.warn('SDDMSummaryView::updateState(..) - status: ' + JSON.stringify(status));
+                Log.warn('SDMMSummaryView::updateState(..) - null value');
+                Log.warn('SDMMSummaryView::updateState(..) - status: ' + JSON.stringify(status));
             }
         }
 
@@ -280,21 +280,21 @@ export class SDMMSummaryView implements IView {
     // }
 
     public async fetchStatus(url: string): Promise<void> {
-        Log.info('SDDM::fetchStatus( ' + url + ' ) - start');
+        Log.info('SDMMSummaryView::fetchStatus( ' + url + ' ) - start');
 
         const options = this.getOptions();
         const response = await fetch(url, options);
         UI.hideModal();
         if (response.status === 200) {
-            Log.trace('SDDM::fetchStatus(..) - 200 received');
+            Log.trace('SDMMSummaryView::fetchStatus(..) - 200 received');
             const json = await response.json();
-            // Log.trace('SDDM::fetchStatus(..) - payload: ' + JSON.stringify(json));
-            Log.trace('SDDM::fetchStatus(..) - status: ' + json.success.status);
+            // Log.trace('SDMM::fetchStatus(..) - payload: ' + JSON.stringify(json));
+            Log.trace('SDMMSummaryView::fetchStatus(..) - status: ' + json.success.status);
             this.updateState(json.success); // StatusPayload
         } else {
-            Log.trace('SDDM::fetchStatus(..) - !200 received: ' + response.status);
+            Log.trace('SDMMSummaryView::fetchStatus(..) - !200 received: ' + response.status);
             const json = await response.json();
-            Log.trace('SDDM::fetchStatus(..) - ERROR: ' + json.failure.message);
+            Log.trace('SDMMSummaryView::fetchStatus(..) - ERROR: ' + json.failure.message);
             this.showError(json.failure); // FailurePayload
 
         }
@@ -302,7 +302,7 @@ export class SDMMSummaryView implements IView {
     }
 
     public showError(failure: any) { // FailurePayload
-        Log.error("SDDM::showError(..) - failure: " + JSON.stringify(failure));
+        Log.error("SDMMSummaryView::showError(..) - failure: " + JSON.stringify(failure));
         if (typeof failure === 'string') {
             UI.showAlert(failure);
         } else if (typeof failure.failure !== 'undefined') {
@@ -344,7 +344,7 @@ export class SDMMSummaryView implements IView {
     }
 
     private showStatusD0(status: StatusPayload) {
-        Log.trace('SDDMSV::showStatusD0(..) - start: ' + JSON.stringify(status));
+        Log.trace('SDMMSummaryView::showStatusD0(..) - start: ' + JSON.stringify(status));
         // <ons-icon icon="fa-times-circle"></ons-icon> <!-- fa-check-circle -->
         try {
 
@@ -361,7 +361,7 @@ export class SDMMSummaryView implements IView {
             }
 
         } catch (err) {
-            Log.trace('SDDMSV::showStatusD0(..) - ERROR: ' + err);
+            Log.trace('SDMMSummaryView::showStatusD0(..) - ERROR: ' + err);
         }
     }
 
@@ -394,7 +394,7 @@ export class SDMMSummaryView implements IView {
     }
 
     private showStatusD1(status: any | undefined) {
-        Log.info("SDDM::showStatusD1(..) - start: " + JSON.stringify(status));
+        Log.info("SDMMSummaryView::showStatusD1(..) - start: " + JSON.stringify(status));
         try {
 
             this.show([
@@ -419,12 +419,12 @@ export class SDMMSummaryView implements IView {
             }
 
         } catch (err) {
-            Log.info("SDDM::showStatusD1(..) - ERROR: " + err);
+            Log.info("SDMMSummaryView::showStatusD1(..) - ERROR: " + err);
         }
     }
 
     private showStatusD2(status: any | undefined) {
-        Log.trace("SDDM::showStatusD2(..) - start: " + JSON.stringify(status));
+        Log.trace("SDMMSummaryView::showStatusD2(..) - start: " + JSON.stringify(status));
         try {
 
             this.show([
@@ -455,12 +455,12 @@ export class SDMMSummaryView implements IView {
                 row.style.display = 'none';
             }
         } catch (err) {
-            Log.info("SDDM::showStatusD2(..) - ERROR: " + err);
+            Log.info("SDMMSummaryView::showStatusD2(..) - ERROR: " + err);
         }
     }
 
     private showStatusD3(status: any | undefined) {
-        Log.trace("SDDM::showStatusD3(..) - start: " + JSON.stringify(status));
+        Log.trace("SDMMSummaryView::showStatusD3(..) - start: " + JSON.stringify(status));
         try {
 
             this.show([
@@ -499,31 +499,31 @@ export class SDMMSummaryView implements IView {
             }
 
         } catch (err) {
-            Log.info("SDDM::showStatusD2(..) - ERROR: " + err);
+            Log.info("SDMMSummaryView::showStatusD2(..) - ERROR: " + err);
         }
     }
 
     public d1TeamDialog() {
-        Log.info("SDDM::d1TeamDialog()");
+        Log.info("SDMMSummaryView::d1TeamDialog()");
         UI.showD1TeamDialog();
     }
 
     public d1TeamCancel() {
-        Log.info("SDDM::d1TeamCancel()");
+        Log.info("SDMMSummaryView::d1TeamCancel()");
         UI.hideD1TeamDialog();
     }
 
     public d1TeamForm() {
-        Log.info("SDDM::d1TeamForm()");
+        Log.info("SDMMSummaryView::d1TeamForm()");
         const partnerInput: any = document.getElementById('d1partnerInput');
         let partnerUser = partnerInput.value;
         partnerUser = partnerUser.trim();
-        Log.info("SDDM::d1TeamForm() - partner name: " + partnerUser);
+        Log.info("SDMMSummaryView::d1TeamForm() - partner name: " + partnerUser);
         UI.hideD1TeamDialog();
         this.createD1Team(partnerUser).then(function() {
-            Log.trace("SDDM::d1TeamForm() - done");
+            Log.trace("SDMMSummaryView::d1TeamForm() - done");
         }).catch(function(err) {
-            Log.trace("SDDM::d1TeamForm() - failed; ERROR: " + err.message);
+            Log.trace("SDMMSummaryView::d1TeamForm() - failed; ERROR: " + err.message);
         });
     }
 
