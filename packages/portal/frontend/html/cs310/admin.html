@@ -245,7 +245,7 @@
                     </div>
                 </ons-list-item>
 
-                <ons-list-header>Provision Repositories</ons-list-header>
+                <ons-list-header>Manage Repositories</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
                         <ons-icon icon="fa-cogs"></ons-icon>
@@ -264,22 +264,36 @@
                     </div>
                 </ons-list-item>
 
-                <ons-list-header>Release Repositories</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
                         <ons-icon icon="fa-cogs"></ons-icon>
                     </div>
                     <div class="center">
-                        Release Repositories for Deliverable
+                        Enable write access for deliverable repositories
                         <select id="adminReleaseDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
                         <ons-button id="adminReleaseButton" modifier="medium">Release</ons-button>
                     </div>
                     <div class="expandable-content">
-                        Releases any provisoined repositories. This is an incremental function; you can release a deliverable several times
-                        as teams are formed, or after the class composition changes. Cannot be undone, so use this with care.
+                        Releases any provisoined repositories so students can make commits to their repositories. This is an incremental
+                        function; you can release a deliverable several times as teams are formed, or after the class composition changes.
                     </div>
                 </ons-list-item>
 
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        NOT IMPLEMENTED: Disable write access for deliverable repositories
+                        <select id="adminUnReleaseDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                        <ons-button id="adminUnReleaseButton" modifier="medium">Unrelease</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Unreleases any repositories that are currently released. This effectively detaches students from their
+                        repositories for that deliverable so they are unable to make any additional changes. To 'undo' this you can
+                        release repositories (above) to add the students back to their repositories.
+                    </div>
+                </ons-list-item>
 
                 <ons-list-header>Delete Objects: DANGER!</ons-list-header>
                 <ons-list-item>
