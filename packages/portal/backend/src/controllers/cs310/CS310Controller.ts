@@ -35,7 +35,7 @@ export class CS310Controller extends CourseController {
      */
     public async handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean> {
         // just use the default implementation
-        let updateGrade = await super.handleNewAutoTestGradeDefault(deliv, newGrade, existingGrade);
+        let updateGrade = await super.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
         Log.info("CS310Controller::handleNewAutoTestGrade(..) - pId: " + newGrade.personId +
             "; delivId: " + deliv.id + "; higher? " + updateGrade);
 

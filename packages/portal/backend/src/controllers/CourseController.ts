@@ -106,7 +106,7 @@ export abstract class CourseController implements ICourseController {
         this.gh = ghController;
     }
 
-    public abstract async handleUnknownUser(githubUsername: string): Promise<Person | null>;
+    // public abstract async handleUnknownUser(githubUsername: string): Promise<Person | null>;
 
     /**
      * This endpoint just lets subclasses change the behaviour for when users are unknown.
@@ -117,12 +117,12 @@ export abstract class CourseController implements ICourseController {
      * @param {string} githubUsername
      * @returns {Promise<Person | null>}
      */
-    public async handleUnknownUserDefault(githubUsername: string): Promise<Person | null> {
+    public async handleUnknownUser(githubUsername: string): Promise<Person | null> {
         Log.warn("CourseController::handleUnknownUser( " + githubUsername + " ) - person unknown; returning null");
         return null;
     }
 
-    public abstract handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean>;
+    // public abstract handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean>;
 
     /**
      * Default behaviour is that if the deadline has not passed, and the grade is higher, accept it.
@@ -132,7 +132,7 @@ export abstract class CourseController implements ICourseController {
      * @param {Grade} existingGrade
      * @returns {boolean}
      */
-    public handleNewAutoTestGradeDefault(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean> {
+    public handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean> {
         Log.info("CourseController:handleNewAutoTestGrade( " + deliv.id + ", " +
             newGrade.personId + ", " + newGrade.score + ", ... ) - start");
         if ((existingGrade === null || newGrade.score > existingGrade.score) && newGrade.timestamp < deliv.closeTimestamp) {
@@ -846,24 +846,38 @@ export abstract class CourseController implements ICourseController {
 
     public abstract computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}>;
 
-    // /**
-    //  * This is a method that subtypes can call from computeNames if they do not want to implement it themselves.
-    //  *
-    //  * @param {Deliverable} deliv
-    //  * @param {Person[]} people
-    //  * @returns {Promise<{teamName: string | null; repoName: string | null}>}
-    //  */
-    // public async computeNamesDefault(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}> {
+    // NOTE: the default implementation is currently broken; do not use it.
+    /**
+     * This is a method that subtypes can call from computeNames if they do not want to implement it themselves.
+     *
+     * @param {Deliverable} deliv
+     * @param {Person[]} people
+     * @returns {Promise<{teamName: string | null; repoName: string | null}>}
+     */
+    // public async computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}> {
     //     Log.info("CourseController::computeNames(..) - start; # people: " + people.length);
-    //     const repos = await this.dbc.getRepositories();
     //
     //     // TODO: this code has a fatal flaw; if the team/repo exists already for the specified people,
     //     // it is correct to return those.
     //
+    //     let repoPrefix = '';
+    //     if (deliv.repoPrefix.length > 0) {
+    //         repoPrefix = deliv.repoPrefix;
+    //     } else {
+    //         repoPrefix = deliv.id;
+    //     }
+    //
+    //     let teamPrefix = '';
+    //     if (deliv.teamPrefix.length > 0) {
+    //         teamPrefix = deliv.teamPrefix;
+    //     } else {
+    //         teamPrefix = deliv.id;
+    //     }
     //     // the repo name and the team name should be the same, so just use the repo name
+    //     const repos = await this.dbc.getRepositories();
     //     let repoCount = 0;
     //     for (const repo of repos) {
-    //         if (repo.id.startsWith(deliv.repoPrefix)) {
+    //         if (repo.id.startsWith(repoPrefix)) {
     //             repoCount++;
     //         }
     //     }
@@ -872,8 +886,8 @@ export abstract class CourseController implements ICourseController {
     //
     //     let ready = false;
     //     while (!ready) {
-    //         repoName = deliv.repoPrefix + '_' + repoCount;
-    //         teamName = deliv.teamPrefix + '_' + repoCount;
+    //         repoName = repoPrefix + '_' + repoCount;
+    //         teamName = teamPrefix + '_' + repoCount;
     //         const r = await this.dbc.getRepository(repoName);
     //         const t = await this.dbc.getTeam(teamName);
     //         if (r === null && t === null) {
