@@ -4,9 +4,9 @@ import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 
 import {DatabaseController} from "../../src/controllers/DatabaseController";
+import {PersonKind} from "../../src/Types";
 
 import '../GlobalSpec';
-import {PersonKind} from "../../src/Types";
 import {Test} from "../GlobalSpec";
 
 /**

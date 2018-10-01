@@ -15,7 +15,7 @@ import {
     TeamTransport
 } from '../../../../common/types/PortalTypes';
 import Util from "../../../../common/Util";
-import {Course, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
+import {Course, Deliverable, Grade, Person, PersonKind, Repository, Result, Team} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
 import {DeliverablesController} from "./DeliverablesController";
@@ -228,7 +228,7 @@ export abstract class CourseController implements ICourseController {
         const people = await this.pc.getAllPeople();
         const students: StudentTransport[] = [];
         for (const person of people) {
-            if (person.kind === 'student') {
+            if (person.kind === PersonKind.STUDENT) {
                 const studentTransport = {
                     id:         person.id,
                     firstName:  person.fName,

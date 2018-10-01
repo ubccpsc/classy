@@ -44,7 +44,7 @@ export class AuthController {
     public async personPriviliged(person: Person): Promise<{isAdmin: boolean, isStaff: boolean}> {
 
         const personId = person.id;
-        if (person.kind === null || person.kind === '') {
+        if (person.kind === null || person.kind === PersonKind.NONE) {
             // check github for credentials and cache them
             const isStaff = await GitHubActions.getInstance().isOnStaffTeam(personId);
             const isAdmin = await GitHubActions.getInstance().isOnAdminTeam(personId);
