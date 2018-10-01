@@ -48,7 +48,7 @@ export class AuthController {
             // check github for credentials and cache them
             const isStaff = await GitHubActions.getInstance().isOnStaffTeam(personId);
             const isAdmin = await GitHubActions.getInstance().isOnAdminTeam(personId);
-            Log.trace("AuthController::isPrivileged( " + personId + ", ... ) - " +
+            Log.trace("AuthController::personPriviliged( " + personId + ", ... ) - " +
                 " caching new credentials; admin: " + isAdmin + "; staff: " + isStaff);
 
             const dc = DatabaseController.getInstance();
@@ -70,6 +70,9 @@ export class AuthController {
             // }
         }
 
+        Log.trace("AuthController::personPriviliged( " + personId + ", ... ) - " +
+            " cached kind: " + person.kind);
+
         if (person.kind === PersonKind.STUDENT) {
             return {isAdmin: false, isStaff: false};
         } else if (person.kind === PersonKind.ADMIN) {
@@ -79,7 +82,7 @@ export class AuthController {
         } else if (person.kind === PersonKind.ADMINSTAFF) {
             return {isAdmin: true, isStaff: true};
         } else {
-            Log.error("AuthController::isPrivileged( " + personId + ", ... ) - unknown kind: " + person.kind);
+            Log.error("AuthController::personPriviliged( " + personId + ", ... ) - unknown kind: " + person.kind);
             return {isAdmin: false, isStaff: false};
         }
     }

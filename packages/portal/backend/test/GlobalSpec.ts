@@ -83,7 +83,7 @@ export class Test {
         await dbc.writePerson(person);
         person = await Test.createPerson(Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, PersonKind.STUDENT);
         await dbc.writePerson(person);
-        person = await Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.id, Test.ADMIN1.id, PersonKind.STUDENT);
+        person = await Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.id, Test.ADMIN1.id, PersonKind.ADMINSTAFF);
         await dbc.writePerson(person);
 
         await Test.prepareAuth(); // adds admin token (and user1 which is not real)

@@ -31,8 +31,6 @@ import './AuthRoutesSpec';
 
 describe('Admin Routes', function() {
 
-    // const TIMEOUT = 5000;
-
     let app: restify.Server = null;
     let server: BackendServer = null;
 
