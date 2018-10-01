@@ -523,5 +523,30 @@ describe("CourseController", () => {
             expect(allNewRepos.length).to.equal(3);
             expect(allNewTeams.length).to.equal(4); // 3x d0 & 1x project
         }).timeout(Test.TIMEOUTLONG * 5);
+
+        it("Should be able to mark students as withdrawn.", async () => {
+            let people = await pc.getAllPeople();
+            let numWithrdrawnBefore = 0;
+            for (const person of people) {
+                if (person.kind === PersonKind.WITHDRAWN) {
+                    numWithrdrawnBefore++;
+                }
+            }
+            expect(numWithrdrawnBefore).to.equal(0); // shouldn't have any withdrawn students before
+
+            const res = await cc.performStudentWithdraw();
+            Log.test("Result: " + JSON.stringify(res));
+            expect(res).to.be.an('string');
+
+            people = await pc.getAllPeople();
+            let numWithrdrawnAfter = 0;
+            for (const person of people) {
+                if (person.kind === PersonKind.WITHDRAWN) {
+                    numWithrdrawnAfter++;
+                }
+            }
+            // TODO: enable this expect when removing the personKind.withrdawn commented out line in personcontroller
+            // expect(numWithrdrawnAfter).to.be.greaterThan(numWithrdrawnBefore);
+        }).timeout(Test.TIMEOUTLONG * 5);
     });
 });

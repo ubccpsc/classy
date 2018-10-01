@@ -445,6 +445,29 @@ export abstract class CourseController implements ICourseController {
     }
 
     /**
+     * Gets the list of GitHub ids associated with the 'students' team on GitHub
+     * and marks them as PersonKind.WITHDRAWN. Does nothing if the students team
+     * does not exist or is empty.
+     *
+     * @returns {Promise<string>} A message summarizing the outcome of the operation.
+     */
+    public async performStudentWithdraw(): Promise<string> {
+        Log.info("CourseController::performStudentWithdraw() - start");
+        const gha = GitHubActions.getInstance(true);
+        const teamNum = await gha.getTeamNumber('students');
+        const registeredGithubIds = await gha.getTeamMembers(teamNum);
+
+        if (registeredGithubIds.length > 0) {
+            const pc = new PersonController();
+            const msg = await pc.markStudentsWithdrawn(registeredGithubIds);
+            Log.info("CourseController::performStudentWithdraw() - done; msg: " + msg);
+            return msg;
+        } else {
+            throw new Error("No students specified in the 'students' team on GitHub; operation aborted.");
+        }
+    }
+
+    /**
      * Gets the results associated with the course.
      * @param reqDelivId ('any' for *)
      * @param reqRepoId ('any' for *)

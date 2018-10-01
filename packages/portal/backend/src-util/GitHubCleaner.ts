@@ -35,7 +35,7 @@ export class GitHubCleaner {
     private async cleanTeams(): Promise<void> {
         Log.info("GitHubCleaner::cleanTeams() - start");
 
-        const TEAMS_TO_KEEP = ['admin', 'staff', 'testrunners'];
+        const TEAMS_TO_KEEP = ['admin', 'staff', 'testrunners', 'students'];
 
         const teams = await this.gha.listTeams();
         const teamsToRemove = [];

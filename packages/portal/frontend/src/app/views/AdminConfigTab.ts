@@ -38,7 +38,7 @@ export class AdminConfigTab extends AdminPage {
 
         (document.querySelector('#adminSubmitClasslist') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - upload pressed');
-            evt.stopPropagation(); // prevents list item expansion
+            evt.preventDefault();
 
             const fileInput = document.querySelector('#adminClasslistFile') as HTMLInputElement;
             const isValid: boolean = that.validateClasslistSpecified(fileInput);
@@ -53,6 +53,7 @@ export class AdminConfigTab extends AdminPage {
 
         (document.querySelector('#adminSubmitDefaultDeliverable') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - default deliverable pressed');
+            evt.preventDefault();
 
             that.defaultDeliverablePressed().then(function() {
                 // worked
@@ -63,6 +64,7 @@ export class AdminConfigTab extends AdminPage {
 
         (document.querySelector('#adminProvisionButton') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - provision deliverable pressed');
+            evt.preventDefault();
 
             that.provisionDeliverablePressed().then(function() {
                 // worked
@@ -73,6 +75,7 @@ export class AdminConfigTab extends AdminPage {
 
         (document.querySelector('#adminReleaseButton') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - release deliverable pressed');
+            evt.preventDefault();
 
             that.releaseDeliverablePressed().then(function() {
                 // worked
@@ -83,6 +86,7 @@ export class AdminConfigTab extends AdminPage {
 
         (document.querySelector('#adminCreateTeamButton') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - create team pressed');
+            evt.preventDefault();
 
             that.createTeamPressed().then(function() {
                 // worked
@@ -93,6 +97,7 @@ export class AdminConfigTab extends AdminPage {
 
         (document.querySelector('#adminDeletePageButton') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - delete page pressed');
+            evt.preventDefault();
 
             that.pushPage('adminDelete.html', {}).then(function() {
                 const deletePage = new AdminDeletePage(that.remote);
@@ -103,6 +108,17 @@ export class AdminConfigTab extends AdminPage {
                 });
             }).catch(function(err) {
                 Log.error("AdminConfigTab - adminDelete ERROR: " + err.message);
+            });
+        };
+
+        (document.querySelector('#adminPerformWithdrawButton') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminConfigTab::handleAdminConfig(..) - perform withdraw pressed');
+            evt.preventDefault();
+
+            that.performWithdraw().then(function() {
+                // worked
+            }).catch(function(err) {
+                Log.info('AdminConfigTab::handleAdminConfig(..) - perform withdraw pressed; ERROR: ' + err.message);
             });
         };
 
@@ -242,6 +258,27 @@ export class AdminConfigTab extends AdminPage {
 
         if (typeof body.success !== 'undefined') {
             UI.showErrorToast("Team created successfully: " + body.success[0].id);
+        } else {
+            UI.showAlert(body.failure.message);
+        }
+    }
+
+    private async performWithdraw(): Promise<void> {
+        Log.trace('AdminConfigTab::performWithdraw(..) - start');
+
+        const url = this.remote + '/portal/admin/withdraw';
+        const options: any = AdminView.getOptions();
+        options.method = 'post';
+
+        Log.trace('AdminConfigTab::performWithdraw(..)');
+
+        options.body = JSON.stringify({}); // no params
+
+        const response = await fetch(url, options);
+        const body = await response.json();
+
+        if (typeof body.success !== 'undefined') {
+            UI.notificationToast("Withrdaw marking successful: " + body.success, 5000);
         } else {
             UI.showAlert(body.failure.message);
         }
