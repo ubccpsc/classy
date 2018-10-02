@@ -1,3 +1,4 @@
+import * as dns from 'dns';
 import * as rp from "request-promise-native";
 import * as restify from 'restify';
 
@@ -14,6 +15,7 @@ import {
     AutoTestResultTransport,
     Payload
 } from "../../../../../common/types/PortalTypes";
+import Util from '../../../../../common/Util';
 import {AuthController} from "../../controllers/AuthController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GitHubActions} from "../../controllers/GitHubActions";
@@ -286,28 +288,56 @@ export class AutoTestRoutes implements IREST {
      * @param next
      */
     public static githubWebhook(req: any, res: any, next: any) {
-        Log.info('AutoTestRouteHandler::githubWebhook(..) - start');
-        const webhookBody: any = req.body;
+        try {
+            const start = Date.now();
+            const config = Config.getInstance();
+            const remoteAddr = req.connection.remoteAddress;
+            Log.info('AutoTestRouteHandler::githubWebhook(..) - start; from: ' + remoteAddr);
+            const webhookBody: any = req.body;
 
-        // TODO: is there any way to verify this actually came from GitHub?
+            dns.lookup(config.getProp(ConfigKey.githubAPI), (err, hostname) => {
 
-        const atHost = Config.getInstance().getProp(ConfigKey.autotestUrl);
-        const url = atHost + ':' + Config.getInstance().getProp(ConfigKey.autotestPort) + '/githubWebhook';
-        const options = {
-            uri:     url,
-            method:  'POST',
-            json:    true,
-            headers: req.headers, // use GitHub's headers
-            body:    webhookBody
-        };
+                let expectedIp = null;
+                if (err) {
+                    Log.error('AutoTestRouteHandler::githubWebhook(..) - ERROR: ' + err);
+                    return AutoTestRoutes.handleError(400, 'Error processing webhook: ' + err, res, next);
+                } else {
+                    expectedIp = hostname;
+                }
 
-        return rp(options).then(function(succ) {
-            Log.info('AutoTestRouteHandler::githubWebhook(..) - success: ' + JSON.stringify(succ));
-            res.send(200, succ); // send interpretation back to GitHub
-            next();
-        }).catch(function(err) {
-            return AutoTestRoutes.handleError(400, 'Error processing webhook: ' + err.message, res, next);
-        });
+                Log.info('AutoTestRouteHandler::githubWebhook(..) - request from: ' + remoteAddr +
+                    '; expexcted: ' + expectedIp + '; took: ' + Util.took(start));
+
+                if (expectedIp !== null && remoteAddr.indexOf(expectedIp) >= 0) {
+                    Log.info('AutoTestRouteHandler::githubWebhook(..) - accepted: ' + remoteAddr + '; expexcted: ' + expectedIp);
+
+                    const atHost = config.getProp(ConfigKey.autotestUrl);
+                    const url = atHost + ':' + config.getProp(ConfigKey.autotestPort) + '/githubWebhook';
+                    const options = {
+                        uri:     url,
+                        method:  'POST',
+                        json:    true,
+                        headers: req.headers, // use GitHub's headers
+                        body:    webhookBody
+                    };
+
+                    return rp(options).then(function(succ) {
+                        Log.info('AutoTestRouteHandler::githubWebhook(..) - success: ' + JSON.stringify(succ));
+                        res.send(200, succ); // send interpretation back to GitHub
+                        next();
+                    }).catch(function(errCatch) {
+                        return AutoTestRoutes.handleError(400, 'Error processing webhook: ' + errCatch.message, res, next);
+                    });
+
+                } else {
+                    const msg = remoteAddr + ' !== ' + expectedIp;
+                    Log.error('AutoTestRouteHandler::githubWebhook(..) - IP rejected: ' + msg);
+                    return AutoTestRoutes.handleError(400, 'Error processing webhook; request not from expected host: ' + msg, res, next);
+                }
+            });
+        } catch (err) {
+            return AutoTestRoutes.handleError(400, 'Outer error processing webhook: ' + err.message, res, next);
+        }
     }
 
     public static atGetResult(req: any, res: any, next: any) {

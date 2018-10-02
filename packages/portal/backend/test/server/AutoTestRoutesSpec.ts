@@ -6,7 +6,6 @@ import * as request from "supertest";
 
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
-
 import {
     AutoTestAuthPayload,
     AutoTestConfigPayload,
@@ -456,5 +455,23 @@ describe('AutoTest Routes', function() {
         const text = response.text;
         expect(text.indexOf('ECONNREFUSED')).to.be.greaterThan(0); // at least make sure it fails for the right reason
     });
+
+    // only for debugging webhook code; will always fail IP check
+    // it('Should be able to receive a webhook event', async function() {
+    //
+    //     let response = null;
+    //     let body: Payload = {};
+    //     const url = '/portal/githubWebhook';
+    //     try {
+    //         response = await request(app).post(url).send(body);
+    //         body = response.body;
+    //     } catch (err) {
+    //         Log.test('ERROR: ' + err);
+    //     }
+    //     Log.test(response.status + " -> " + JSON.stringify(body));
+    //     expect(response.status).to.equal(401);
+    //     expect(body.failure).to.not.be.undefined;
+    //     expect(body.failure.message).to.be.an('string');
+    // });
 
 });
