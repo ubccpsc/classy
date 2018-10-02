@@ -1,4 +1,5 @@
 import {expect} from "chai";
+import * as fs from "fs-extra";
 import "mocha";
 import * as restify from "restify";
 import * as request from "supertest";
@@ -9,8 +10,7 @@ import {
     AutoTestAuthPayload,
     AutoTestConfigPayload,
     AutoTestDefaultDeliverablePayload,
-    AutoTestGradeTransport,
-    Payload
+    AutoTestGradeTransport
 } from "../../../../common/types/PortalTypes";
 
 import {DatabaseController} from "../../src/controllers/DatabaseController";
@@ -436,44 +436,42 @@ describe('AutoTest Routes', function() {
         expect(response.body.failure.message).to.be.a('string');
     });
 
-    // it('Should be able to receive a Webhook event from GitHub.', async function() {
-    //     // NOTE: this is a terrible tests; without the service running we get nothing
-    //     let response = null;
-    //     const body = fs.readJSONSync(__dirname + "/../../../../autotest/test/githubEvents/push_master-branch.json"); // __dirname
+    it('Should be able to receive a Webhook event from GitHub.', async function() {
+        // NOTE: this is a terrible tests; without the service running we get nothing
+        let response = null;
+        const body = fs.readJSONSync(__dirname + "/../../../../autotest/test/githubEvents/push_master-branch.json"); // __dirname
+
+        const url = '/portal/githubWebhook';
+        try {
+            response = await request(app)
+                .post(url).send(body)
+                .set('Accept', 'application/json')
+                .set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(response.body));
+        expect(response.status).to.equal(400); // really should be 200, but AutoTest isn't running so it will return this error
+        const text = response.text;
+        expect(text.indexOf('ECONNREFUSED')).to.be.greaterThan(0); // at least make sure it fails for the right reason
+    });
+
+    // only for debugging webhook code; will always fail IP check
+    // it('Should be able to receive a webhook event', async function() {
     //
+    //     let response = null;
+    //     let body: Payload = {};
     //     const url = '/portal/githubWebhook';
     //     try {
-    //         response = await request(app)
-    //             .post(url).send(body)
-    //             .set('Accept', 'application/json')
-    //             .set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
+    //         response = await request(app).post(url).send(body);
+    //         body = response.body;
     //     } catch (err) {
     //         Log.test('ERROR: ' + err);
     //     }
-    //     Log.test(response.status + " -> " + JSON.stringify(response.body));
-    //     expect(response.status).to.equal(400); // really should be 200, but AutoTest isn't running so it will return this error
-    //     const text = response.text;
-    //     expect(text.indexOf('ECONNREFUSED')).to.be.greaterThan(0); // at least make sure it fails for the right reason
+    //     Log.test(response.status + " -> " + JSON.stringify(body));
+    //     expect(response.status).to.equal(401);
+    //     expect(body.failure).to.not.be.undefined;
+    //     expect(body.failure.message).to.be.an('string');
     // });
-
-    it('Should be able to receive a webhook event, but will fail due to API mismatch', async function() {
-
-        let response = null;
-        let body: Payload = {};
-        const url = '/portal/githubWebhook';
-        let ex = null;
-        try {
-            response = await request(app).post(url).send(body);
-            body = response.body;
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-            ex = err;
-        }
-        Log.test(response.status + " -> " + JSON.stringify(body));
-        expect(response.status).to.equal(400);
-        expect(body.failure).to.not.be.undefined;
-        expect(body.failure.message).to.be.an('string');
-        expect(body.failure.message).to.contain('request not from expected host');
-    });
 
 });
