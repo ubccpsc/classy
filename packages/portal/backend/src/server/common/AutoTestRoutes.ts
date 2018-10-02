@@ -1,7 +1,6 @@
 import * as dns from 'dns';
 import * as rp from "request-promise-native";
 import * as restify from 'restify';
-import * as util from 'util';
 
 import Config, {ConfigKey} from "../../../../../common/Config";
 import Log from "../../../../../common/Log";
@@ -296,9 +295,16 @@ export class AutoTestRoutes implements IREST {
             Log.info('AutoTestRouteHandler::githubWebhook(..) - start; from: ' + remoteAddr);
             const webhookBody: any = req.body;
 
-            const lookupAsync = util.promisify(dns.lookup);
-            lookupAsync(config.getProp(ConfigKey.githubAPI)).then(function(hostname) {
-                const expectedIp = hostname.address;
+            dns.lookup(config.getProp(ConfigKey.githubAPI), (err, hostname) => {
+
+                let expectedIp = null;
+                if (err) {
+                    Log.error('AutoTestRouteHandler::githubWebhook(..) - ERROR: ' + err);
+                    return AutoTestRoutes.handleError(400, 'Error processing webhook: ' + err, res, next);
+                } else {
+                    expectedIp = hostname;
+                }
+
                 Log.info('AutoTestRouteHandler::githubWebhook(..) - request from: ' + remoteAddr +
                     '; expexcted: ' + expectedIp + '; took: ' + Util.took(start));
 
@@ -322,17 +328,15 @@ export class AutoTestRoutes implements IREST {
                     }).catch(function(errCatch) {
                         return AutoTestRoutes.handleError(400, 'Error processing webhook: ' + errCatch.message, res, next);
                     });
+
                 } else {
                     const msg = remoteAddr + ' !== ' + expectedIp;
                     Log.error('AutoTestRouteHandler::githubWebhook(..) - IP rejected: ' + msg);
                     return AutoTestRoutes.handleError(400, 'Error processing webhook; request not from expected host: ' + msg, res, next);
                 }
-            }).catch(function(err) {
-                throw err;
             });
         } catch (err) {
-            Log.error('AutoTestRouteHandler::githubWebhook(..) - ERROR: ' + err.message);
-            return AutoTestRoutes.handleError(400, 'Error processing webhook; ERROR: ' + err.message, res, next);
+            return AutoTestRoutes.handleError(400, 'Outer error processing webhook: ' + err.message, res, next);
         }
     }
 
