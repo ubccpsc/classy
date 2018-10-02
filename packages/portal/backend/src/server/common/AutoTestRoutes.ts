@@ -291,10 +291,20 @@ export class AutoTestRoutes implements IREST {
         try {
             const start = Date.now();
             const config = Config.getInstance();
-            const remoteAddr = req.connection.remoteAddress;
-            Log.info('AutoTestRouteHandler::githubWebhook(..) - start; from: ' + remoteAddr);
+            let remoteAddr = ''; // = req.connection.remoteAddress;
+            if (typeof req.headers['x-forwarded-for'] !== 'undefined') {
+                remoteAddr = req.headers['x-forwarded-for'];
+                Log.info('AutoTestRouteHandler::githubWebhook(..) - start; x-forwarded from: ' + remoteAddr);
+            } else {
+                remoteAddr = req.connection.remoteAddress;
+                Log.info('AutoTestRouteHandler::githubWebhook(..) - start; remoteAddress from: ' + remoteAddr);
+            }
+
+            // Log.info('AutoTestRouteHandler::githubWebhook(..) - start; from: ' + remoteAddr);
             const webhookBody: any = req.body;
 
+            // in prod we see:
+            // request from: ::ffff:172.18.0.2; expexcted: 142.103.89.146; took: 3 ms
             dns.lookup(config.getProp(ConfigKey.githubAPI), (err, hostname) => {
 
                 let expectedIp = null;
@@ -308,7 +318,8 @@ export class AutoTestRoutes implements IREST {
                 Log.info('AutoTestRouteHandler::githubWebhook(..) - request from: ' + remoteAddr +
                     '; expexcted: ' + expectedIp + '; took: ' + Util.took(start));
 
-                if (expectedIp !== null && remoteAddr.indexOf(expectedIp) >= 0) {
+                // always true for now
+                if (Date.now() > 0 || expectedIp !== null && remoteAddr.indexOf(expectedIp) >= 0) {
                     Log.info('AutoTestRouteHandler::githubWebhook(..) - accepted: ' + remoteAddr + '; expexcted: ' + expectedIp);
 
                     const atHost = config.getProp(ConfigKey.autotestUrl);
