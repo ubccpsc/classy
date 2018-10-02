@@ -522,7 +522,7 @@ export class DatabaseController {
         }
 
         if (result !== null) {
-            Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - found: " + JSON.stringify(result));
+            Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - found");
         } else {
             Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - not found");
         }
