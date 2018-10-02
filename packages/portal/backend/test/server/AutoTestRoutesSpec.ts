@@ -474,10 +474,12 @@ describe('AutoTest Routes', function() {
         expect(response.status).to.equal(400);
         expect(body.failure).to.not.be.undefined;
         expect(body.failure.message).to.be.an('string');
-        // it should be this:
-        // expect(body.failure.message).to.contain('request not from expected host');
-        // but sometimes looks like this:
-        // expect(body.failure.message).to.contain('getaddrinfo ENOTFOUND');
+
+        // awkward: or check (so offline tests can still pass)
+        const msg = body.failure.message;
+        const index0 = msg.indexOf('request not from expected host');
+        const index1 = msg.indexOf('getaddrinfo ENOTFOUND');
+        expect(index0 >= 0 || index1 >= 0).to.be.true;
     });
 
 });

@@ -279,78 +279,6 @@ export class AutoTestRoutes implements IREST {
         }
     }
 
-    /**
-     * This route forwards GitHub webhooks from the public-facing backend to AutoTest's
-     * endpoint (which can be internal and protected).
-     *
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static githubWebhook(req: any, res: any, next: any) {
-        try {
-            const start = Date.now();
-            const config = Config.getInstance();
-            let remoteAddr = ''; // = req.connection.remoteAddress;
-            if (typeof req.headers['x-forwarded-for'] !== 'undefined') {
-                remoteAddr = req.headers['x-forwarded-for'];
-                Log.info('AutoTestRouteHandler::githubWebhook(..) - start; x-forwarded from: ' + remoteAddr);
-            } else {
-                remoteAddr = req.connection.remoteAddress;
-                Log.info('AutoTestRouteHandler::githubWebhook(..) - start; remoteAddress from: ' + remoteAddr);
-            }
-
-            // Log.info('AutoTestRouteHandler::githubWebhook(..) - start; from: ' + remoteAddr);
-            const webhookBody: any = req.body;
-
-            // in prod we see:
-            // request from: ::ffff:172.18.0.2; expexcted: 142.103.89.146; took: 3 ms
-            dns.lookup(config.getProp(ConfigKey.githubAPI), (err, hostname) => {
-
-                let expectedIp = null;
-                if (err) {
-                    Log.error('AutoTestRouteHandler::githubWebhook(..) - ERROR: ' + err);
-                    return AutoTestRoutes.handleError(400, 'Error processing webhook: ' + err, res, next);
-                } else {
-                    expectedIp = hostname;
-                }
-
-                Log.info('AutoTestRouteHandler::githubWebhook(..) - request from: ' + remoteAddr +
-                    '; expexcted: ' + expectedIp + '; took: ' + Util.took(start));
-
-                // always true for now
-                if (Date.now() > 0 || expectedIp !== null && remoteAddr.indexOf(expectedIp) >= 0) {
-                    Log.info('AutoTestRouteHandler::githubWebhook(..) - accepted: ' + remoteAddr + '; expexcted: ' + expectedIp);
-
-                    const atHost = config.getProp(ConfigKey.autotestUrl);
-                    const url = atHost + ':' + config.getProp(ConfigKey.autotestPort) + '/githubWebhook';
-                    const options = {
-                        uri:     url,
-                        method:  'POST',
-                        json:    true,
-                        headers: req.headers, // use GitHub's headers
-                        body:    webhookBody
-                    };
-
-                    return rp(options).then(function(succ) {
-                        Log.info('AutoTestRouteHandler::githubWebhook(..) - success: ' + JSON.stringify(succ));
-                        res.send(200, succ); // send interpretation back to GitHub
-                        next();
-                    }).catch(function(errCatch) {
-                        return AutoTestRoutes.handleError(400, 'Error processing webhook: ' + errCatch.message, res, next);
-                    });
-
-                } else {
-                    const msg = remoteAddr + ' !== ' + expectedIp;
-                    Log.error('AutoTestRouteHandler::githubWebhook(..) - IP rejected: ' + msg);
-                    return AutoTestRoutes.handleError(400, 'Error processing webhook; request not from expected host: ' + msg, res, next);
-                }
-            });
-        } catch (err) {
-            return AutoTestRoutes.handleError(400, 'Outer error processing webhook: ' + err.message, res, next);
-        }
-    }
-
     public static atGetResult(req: any, res: any, next: any) {
         Log.info('AutoTestRouteHandler::atGetResult(..) - /at/result/:delivId/:repoId - start GET');
 
@@ -379,5 +307,100 @@ export class AutoTestRoutes implements IREST {
                 return AutoTestRoutes.handleError(400, 'Error retrieving result record: ' + err.message, res, next);
             });
         }
+    }
+
+    /**
+     * This route forwards GitHub webhooks from the public-facing backend to AutoTest's
+     * endpoint (which is internal and protected).
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
+    public static githubWebhook(req: any, res: any, next: any) {
+        Log.info('AutoTestRouteHandler::githubWebhook(..) - start');
+        AutoTestRoutes.handleWebhook(req).then(function(succ) {
+            Log.info('AutoTestRouteHandler::githubWebhook(..) - succes');
+            res.send(200, succ);
+        }).catch(function(err) {
+            Log.error('AutoTestRouteHandler::githubWebhook(..) - ERROR: ' + err.message);
+            return AutoTestRoutes.handleError(400, 'Error processing webhook: ' + err.message, res, next);
+        });
+    }
+
+    /**
+     * Forwards Webhook to AutoTest if it is from a valid host. Returns the processed body to GitHub
+     * so we can debug the contents in GitHub's webhook view, if needed.
+     *
+     * @param req
+     * @returns {Promise<{}>}
+     */
+    private static async handleWebhook(req: any): Promise<{}> {
+        const config = Config.getInstance();
+
+        const atHost = config.getProp(ConfigKey.autotestUrl);
+        const url = atHost + ':' + config.getProp(ConfigKey.autotestPort) + '/githubWebhook';
+        const options = {
+            uri:     url,
+            method:  'POST',
+            json:    true,
+            headers: req.headers, // use GitHub's headers
+            body:    req.body
+        };
+
+        const isValid: boolean = await AutoTestRoutes.isFromGitHub(req);
+        if (isValid === true) {
+            const success = await rp(options);
+            Log.info('AutoTestRouteHandler::handleWebhook(..) - success: ' + JSON.stringify(success));
+            return success;
+        } else {
+            throw new Error("Webhook event did not originate from GitHub");
+        }
+    }
+
+    /**
+     * Helper function to check that a given request is from GitHub; this is a low-cost way to 'authenticate'
+     * that a webhook at least originated on the right host.
+     *
+     * While 'remoteAddress' would be the right way to get the IP of the request, this turns out to be incorrect
+     * becuase the Docker router actually forwards this result with an internal IP.
+     *
+     * @param req
+     * @returns {Promise<boolean>}
+     */
+    private static isFromGitHub(req: any): Promise<boolean> {
+        return new Promise(function(fulfill, reject) {
+            const config = Config.getInstance();
+            const start = Date.now();
+
+            let remoteAddr = '';
+            if (typeof req.headers['x-forwarded-for'] !== 'undefined') {
+                // docker frontend will report .remoteAddress as internal (e.g., ::ffff:172.18.0.2) so we should use forwarded-for
+                remoteAddr = req.headers['x-forwarded-for'];
+                Log.info('AutoTestRouteHandler::isFromGitHub(..) - start; x-forwarded from: ' + remoteAddr);
+            } else {
+                remoteAddr = req.connection.remoteAddress;
+                Log.info('AutoTestRouteHandler::isFromGitHub(..) - start; remoteAddress from: ' + remoteAddr);
+            }
+
+            dns.lookup(config.getProp(ConfigKey.githubAPI), (err, expectedAddr) => {
+                if (err) {
+                    Log.error('AutoTestRouteHandler::isFromGitHub(..) - ERROR: ' + err);
+                    reject(err);
+                }
+
+                // use indexOf here because address sometimes reports like: ::ffff:172.18.0.2
+                if (Date.now() > 0 || expectedAddr !== null && remoteAddr.indexOf(expectedAddr) >= 0) { // TODO: remove always true
+                    Log.info('AutoTestRouteHandler::isFromGitHub(..) - accepted: ' +
+                        remoteAddr + '; expected: ' + expectedAddr + '; took: ' + Util.took(start));
+                    fulfill(true);
+                } else {
+                    const msg = 'Webhook did not originate from GitHub; request addr: ' +
+                        remoteAddr + ' !== expected addr: ' + expectedAddr;
+                    Log.error('AutoTestRouteHandler::isFromGitHub(..) - rejected: ' + msg);
+                    reject(new Error(msg));
+                }
+            });
+        });
     }
 }
