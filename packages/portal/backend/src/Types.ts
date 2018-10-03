@@ -173,6 +173,15 @@ export interface Course {
     };
 }
 
+export interface AuditEvent {
+    label: string;
+    timestamp: number;
+    personId: string;
+    before: object | null;
+    after: object | null;
+    custom: object; // enables easier querying
+}
+
 export interface Grade {
     // this should be the personId associated with the repo, not a staff who invoked it!
     readonly personId: string; // Person.id; grades are really on repos, but we only care about them by person

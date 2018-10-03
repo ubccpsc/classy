@@ -184,6 +184,7 @@ export abstract class CourseController implements ICourseController {
                 const shouldSave = await this.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
 
                 if (shouldSave === true) {
+                    await this.dbc.writeAudit('GRADE', 'AutoTest', existingGrade, newGrade, {repoId: grade.repoId});
                     await this.gc.saveGrade(newGrade);
                 }
             }
