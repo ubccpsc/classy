@@ -317,6 +317,8 @@ export class DatabaseController {
         let finalLabel = label + '_';
         if (before === null) {
             finalLabel = finalLabel + 'CREATE';
+        } else if (after === null) {
+            finalLabel = finalLabel + 'DELETE';
         } else {
             finalLabel = finalLabel + 'UPDATE';
         }

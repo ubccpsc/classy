@@ -266,6 +266,7 @@ export default class AdminRoutes implements IREST {
         const dbc = DatabaseController.getInstance();
         dbc.getDeliverable(delivId).then(function(deliv) {
             if (deliv !== null) {
+                // TODO: Audit
                 return dbc.deleteDeliverable(deliv);
             } else {
                 throw new Error("Unknown deliverable: " + delivId);
@@ -298,6 +299,7 @@ export default class AdminRoutes implements IREST {
         const dbc = DatabaseController.getInstance();
         dbc.getRepository(repoId).then(function(repo) {
             if (repo !== null) {
+                // TODO: Audit
                 return dbc.deleteRepository(repo);
             } else {
                 throw new Error("Unknown repository: " + repoId);
@@ -336,6 +338,7 @@ export default class AdminRoutes implements IREST {
         const dbc = DatabaseController.getInstance();
         dbc.getTeam(teamId).then(function(team) {
             if (team !== null) {
+                // TODO: Audit
                 return dbc.deleteTeam(team);
             } else {
                 throw new Error("Unknown team: " + teamId);
@@ -438,6 +441,8 @@ export default class AdminRoutes implements IREST {
 
         // handled by preceeding action in chain above (see registerRoutes)
 
+        // TODO: Audit
+
         try {
             const files = req.files;
             const classlist = files.classlist;
@@ -531,6 +536,7 @@ export default class AdminRoutes implements IREST {
         const result = dc.validateDeliverableTransport(delivTrans);
         if (result === null) {
             const deliv = DeliverablesController.transportToDeliverable(delivTrans);
+            // TODO: Audit
             const saveSucceeded = await dc.saveDeliverable(deliv);
             if (saveSucceeded !== null) {
                 // worked (would have returned a Deliverable)
@@ -583,6 +589,7 @@ export default class AdminRoutes implements IREST {
         const result = CourseController.validateCourseTransport(courseTrans);
         if (result === null) {
             const saveSucceeded = await cc.saveCourse(courseTrans);
+            // TODO: Audit
             if (saveSucceeded !== null) {
                 Log.info('AdminRoutes::handlePostCourse() - done');
                 return true;
@@ -598,6 +605,7 @@ export default class AdminRoutes implements IREST {
 
         const provisionTrans: ProvisionTransport = req.params;
         Log.info('AdminRoutes::postProvision() - body: ' + provisionTrans);
+        // TODO: Audit
         AdminRoutes.handleProvision(provisionTrans).then(function(success) {
             payload = {success: success};
             res.send(200, payload);
@@ -634,6 +642,7 @@ export default class AdminRoutes implements IREST {
 
         const provisionTrans: ProvisionTransport = req.params;
         Log.info('AdminRoutes::postRelease() - body: ' + provisionTrans);
+        // TODO: Audit
         AdminRoutes.handleRelease(provisionTrans).then(function(success) {
             payload = {success: success};
             res.send(200, payload);
@@ -692,7 +701,7 @@ export default class AdminRoutes implements IREST {
         const tc = new TeamController();
         const dc = new DeliverablesController();
         const pc = new PersonController();
-
+        
         const deliv = await dc.getDeliverable(requestedTeam.delivId);
         if (deliv === null) {
             throw new Error("Team not created; Deliverable does not exist: " + requestedTeam.delivId);
