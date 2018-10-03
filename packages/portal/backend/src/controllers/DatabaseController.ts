@@ -2,6 +2,7 @@ import {Collection, Db, MongoClient} from "mongodb";
 import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
 
 import Log from "../../../../common/Log";
+import Util from "../../../../common/Util";
 
 import {AuditEvent, AuditLabel, Auth, Course, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
 
@@ -313,15 +314,15 @@ export class DatabaseController {
         try {
             // Log.info("DatabaseController::writeAudit(..) - start");
             Log.info("DatabaseController::writeAudit( " + label + ", " + personId + ", hasBefore: " +
-                (before !== null) + ", hasAfter: " + (after !== null) + " ) - start");
+                !Util.isEmpty(before) + ", hasAfter: " + !Util.isEmpty(after) + " ) - start");
 
             let finalLabel = label + '_';
-            if (before === null && after === null) {
+            if (Util.isEmpty(before) === true && Util.isEmpty(after) === true) {
                 // is an action, no postfix
                 finalLabel = label;
-            } else if (before === null) {
+            } else if (Util.isEmpty(before) === true) {
                 finalLabel = finalLabel + 'CREATE';
-            } else if (after === null) {
+            } else if (Util.isEmpty(after) === true) {
                 finalLabel = finalLabel + 'DELETE';
             } else {
                 finalLabel = finalLabel + 'UPDATE';
