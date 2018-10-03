@@ -261,17 +261,10 @@ export default class AdminRoutes implements IREST {
         // isAdmin prehandler verifies that only valid users can do this
 
         // if these params are missing the client will get 404 since they are part of the path
+        const user = req.params.user;
         const delivId = req.params.delivId;
 
-        const dbc = DatabaseController.getInstance();
-        dbc.getDeliverable(delivId).then(function(deliv) {
-            if (deliv !== null) {
-                // TODO: Audit
-                return dbc.deleteDeliverable(deliv);
-            } else {
-                throw new Error("Unknown deliverable: " + delivId);
-            }
-        }).then(function(success) {
+        AdminRoutes.handleDeleteDeliverable(user, delivId).then(function(success) {
             Log.trace('AdminRoutes::deleteDeliverable(..) - done; success: ' + success);
             const payload: Payload = {success: {message: 'Deliverable deleted.'}};
             res.send(200, payload); // return as text rather than json
@@ -279,6 +272,20 @@ export default class AdminRoutes implements IREST {
         }).catch(function(err) {
             return AdminRoutes.handleError(400, 'Unable to delete deliverable. ' + err.message, res, next);
         });
+    }
+
+    private static async handleDeleteDeliverable(personId: string, delivId: string): Promise<boolean> {
+        const dbc = DatabaseController.getInstance();
+        const deliv = await dbc.getDeliverable(delivId);
+        if (deliv !== null) {
+            const worked = await dbc.deleteDeliverable(deliv);
+            if (worked === true) {
+                dbc.writeAudit(AuditLabel.DELIVERABLE, personId, deliv, null, {});
+            }
+            return worked;
+        } else {
+            throw new Error("Unknown deliverable: " + delivId);
+        }
     }
 
     /**
@@ -289,25 +296,14 @@ export default class AdminRoutes implements IREST {
      */
     private static deleteRepository(req: any, res: any, next: any) {
         Log.info('AdminRoutes::deleteRepository(..) - start');
-        const cc = Factory.getCourseController(AdminRoutes.ghc);
 
         // isAdmin prehandler verifies that only valid users can do this
 
         // if these params are missing the client will get 404 since they are part of the path
         const repoId = req.params.repoId;
+        const userId = req.params.userId;
 
-        const dbc = DatabaseController.getInstance();
-        dbc.getRepository(repoId).then(function(repo) {
-            if (repo !== null) {
-                // TODO: Audit
-                return dbc.deleteRepository(repo);
-            } else {
-                throw new Error("Unknown repository: " + repoId);
-            }
-        }).then(function(success) {
-            // also delete it on github, if it exists
-            return GitHubActions.getInstance().deleteRepo(repoId);
-        }).then(function(success) {
+        AdminRoutes.handleDeleteRepository(userId, repoId).then(function(success) {
             Log.trace('AdminRoutes::deleteRepository(..) - done; success: ' + success);
             const payload: Payload = {success: {message: 'Repository deleted.'}};
             res.send(200, payload); // return as text rather than json
@@ -315,6 +311,21 @@ export default class AdminRoutes implements IREST {
         }).catch(function(err) {
             return AdminRoutes.handleError(400, 'Unable to delete repository. ' + err.message, res, next);
         });
+    }
+
+    private static async handleDeleteRepository(personId: string, repoId: string): Promise<boolean> {
+        const dbc = DatabaseController.getInstance();
+        let worked = false;
+        const repo = await dbc.getRepository(repoId);
+        if (repo !== null) {
+            worked = await dbc.deleteRepository(repo);
+            await dbc.writeAudit(AuditLabel.REPOSITORY, personId, repo, null, {});
+        } else {
+            throw new Error("Unknown repository: " + repoId);
+        }
+
+        await GitHubActions.getInstance().deleteRepo(repoId);
+        return worked;
     }
 
     /**
@@ -325,38 +336,19 @@ export default class AdminRoutes implements IREST {
      */
     private static deleteTeam(req: any, res: any, next: any) {
         Log.info('AdminRoutes::deleteTeam(..) - start');
-        const cc = Factory.getCourseController(AdminRoutes.ghc);
 
         // isAdmin prehandler verifies that only valid users can do this
 
         // if these params are missing the client will get 404 since they are part of the path
         const teamId = req.params.teamId;
+        const user = req.params.user;
 
-        let deletedObj = false;
-        let deletedGithub = false;
-
-        const dbc = DatabaseController.getInstance();
-        dbc.getTeam(teamId).then(function(team) {
-            if (team !== null) {
-                // TODO: Audit
-                return dbc.deleteTeam(team);
-            } else {
-                throw new Error("Unknown team: " + teamId);
-            }
-        }).then(function(success) {
-            // also delete it on github, if it exists
-            if (success === true) {
-                deletedObj = true;
-            }
-            return GitHubActions.getInstance().deleteTeamByName(teamId);
-        }).then(function(success) {
+        AdminRoutes.handleDeleteTeam(user, teamId).then(function(success) {
             Log.trace('AdminRoutes::deleteTeam(..) - done; success: ' + success);
-            if (success === true) {
-                deletedGithub = true;
-            }
+
             const payload: Payload = {
                 success: {
-                    message: 'Team ' + teamId + ' deleted; object: ' + deletedObj + '; GitHub: ' + deletedGithub
+                    message: 'Team ' + teamId + ' deleted; object: ' + success.deletedObject + '; GitHub: ' + success.deletedGithub
                 }
             };
             res.send(200, payload); // return as text rather than json
@@ -364,6 +356,24 @@ export default class AdminRoutes implements IREST {
         }).catch(function(err) {
             return AdminRoutes.handleError(400, 'Unable to delete team. ' + err.message, res, next);
         });
+    }
+
+    private static async handleDeleteTeam(personId: string, teamId: string): Promise<{deletedObject: boolean, deletedGithub: boolean}> {
+        const dbc = DatabaseController.getInstance();
+        let worked = false;
+
+        const team = await dbc.getTeam(teamId);
+        if (team !== null) {
+            worked = await dbc.deleteTeam(team);
+            if (worked === true) {
+                await dbc.writeAudit(AuditLabel.TEAM, personId, team, null, {});
+            }
+        } else {
+            throw new Error("Unknown team: " + teamId);
+        }
+
+        const deletedGithub = await GitHubActions.getInstance().deleteTeamByName(teamId);
+        return {deletedObject: worked, deletedGithub: deletedGithub};
     }
 
     /**
