@@ -479,7 +479,8 @@ describe('AutoTest Routes', function() {
         const msg = body.failure.message;
         const index0 = msg.indexOf('request not from expected host');
         const index1 = msg.indexOf('getaddrinfo ENOTFOUND');
-        expect(index0 >= 0 || index1 >= 0).to.be.true;
+        const index2 = msg.indexOf('connect ECONNREFUSED');
+        expect(index0 >= 0 || index1 >= 0 || index2 >= 0).to.be.true;
     });
 
 });
