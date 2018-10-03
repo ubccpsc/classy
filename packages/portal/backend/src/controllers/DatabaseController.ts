@@ -313,7 +313,7 @@ export class DatabaseController {
         try {
             // Log.info("DatabaseController::writeAudit(..) - start");
             Log.info("DatabaseController::writeAudit( " + label + ", " + personId + ", hasBefore: " +
-                (before === null) + ", hasAfter: " + (after === null) + " ) - start");
+                (before !== null) + ", hasAfter: " + (after !== null) + " ) - start");
 
             let finalLabel = label + '_';
             if (before === null && after === null) {
