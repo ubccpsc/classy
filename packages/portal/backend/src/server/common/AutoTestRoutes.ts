@@ -390,7 +390,7 @@ export class AutoTestRoutes implements IREST {
                 }
 
                 // use indexOf here because address sometimes reports like: ::ffff:172.18.0.2
-                if (Date.now() > 0 || expectedAddr !== null && remoteAddr.indexOf(expectedAddr) >= 0) { // TODO: remove always true
+                if (expectedAddr !== null && remoteAddr.indexOf(expectedAddr) >= 0) {
                     Log.info('AutoTestRouteHandler::isWebhookFromGitHub(..) - accepted; provided: ' +
                         remoteAddr + '; expected: ' + expectedAddr + '; took: ' + Util.took(start));
                     fulfill(true);
