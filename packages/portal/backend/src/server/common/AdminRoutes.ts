@@ -519,10 +519,11 @@ export default class AdminRoutes implements IREST {
         let payload: Payload;
 
         // isValid handled by preceeding action in chain above (see registerRoutes)
+        const user = req.params.user;
 
         const delivTrans: DeliverableTransport = req.params;
         Log.info('AdminRoutes::postDeliverable() - body: ' + delivTrans);
-        AdminRoutes.handlePostDeliverable(delivTrans).then(function(success) {
+        AdminRoutes.handlePostDeliverable(user, delivTrans).then(function(success) {
             Log.info('AdminRoutes::postDeliverable() - done');
             payload = {success: {message: 'Deliverable saved successfully'}};
             res.send(200, payload);
@@ -531,15 +532,18 @@ export default class AdminRoutes implements IREST {
         });
     }
 
-    private static async handlePostDeliverable(delivTrans: DeliverableTransport): Promise<boolean> {
+    private static async handlePostDeliverable(personId: string, delivTrans: DeliverableTransport): Promise<boolean> {
         const dc = new DeliverablesController();
         const result = dc.validateDeliverableTransport(delivTrans);
         if (result === null) {
             const deliv = DeliverablesController.transportToDeliverable(delivTrans);
-            // TODO: Audit
+
+            const existingDeliv = await dc.getDeliverable(deliv.id);
             const saveSucceeded = await dc.saveDeliverable(deliv);
             if (saveSucceeded !== null) {
                 // worked (would have returned a Deliverable)
+                const dbc = DatabaseController.getInstance();
+                await dbc.writeAudit(AuditLabel.DELIVERABLE, personId, existingDeliv, deliv, {});
                 return true;
             }
         }
