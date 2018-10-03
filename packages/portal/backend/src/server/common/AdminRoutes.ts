@@ -280,7 +280,7 @@ export default class AdminRoutes implements IREST {
         if (deliv !== null) {
             const worked = await dbc.deleteDeliverable(deliv);
             if (worked === true) {
-                dbc.writeAudit(AuditLabel.DELIVERABLE, personId, deliv, null, {});
+                await dbc.writeAudit(AuditLabel.DELIVERABLE, personId, deliv, null, {});
             }
             return worked;
         } else {
