@@ -174,6 +174,7 @@ export interface Course {
 }
 
 export enum AuditLabel {
+    COURSE = 'Course',
     DELIVERABLE = 'Deliverable',
     TEAM_ADMIN = 'TeamAdmin', // Created / updated by admin
     TEAM_STUDENT = 'TeamStudent', // Created / updated by student

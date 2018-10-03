@@ -577,9 +577,11 @@ export default class AdminRoutes implements IREST {
         Log.info('AdminRoutes::postCourse(..) - start');
         let payload: Payload;
 
+        const user = req.params.user;
+
         const courseTrans: CourseTransport = req.params;
         Log.info('AdminRoutes::postCourse() - body: ' + courseTrans);
-        AdminRoutes.handlePostCourse(courseTrans).then(function(success) {
+        AdminRoutes.handlePostCourse(user, courseTrans).then(function(success) {
             payload = {success: {message: 'Course object saved successfully'}};
             res.send(200, payload);
             return next(true);
@@ -588,14 +590,16 @@ export default class AdminRoutes implements IREST {
         });
     }
 
-    private static async handlePostCourse(courseTrans: CourseTransport): Promise<boolean> {
+    private static async handlePostCourse(personId: string, courseTrans: CourseTransport): Promise<boolean> {
         const cc = Factory.getCourseController(AdminRoutes.ghc);
         const result = CourseController.validateCourseTransport(courseTrans);
         if (result === null) {
+            const existingCourse = await cc.getCourse();
             const saveSucceeded = await cc.saveCourse(courseTrans);
-            // TODO: Audit
-            if (saveSucceeded !== null) {
+            if (saveSucceeded === true) {
                 Log.info('AdminRoutes::handlePostCourse() - done');
+                const dbc = DatabaseController.getInstance();
+                await dbc.writeAudit(AuditLabel.COURSE, personId, existingCourse, courseTrans, {});
                 return true;
             }
         }
@@ -610,7 +614,6 @@ export default class AdminRoutes implements IREST {
 
         const provisionTrans: ProvisionTransport = req.params;
         Log.info('AdminRoutes::postProvision() - body: ' + provisionTrans);
-        // TODO: Audit
         AdminRoutes.handleProvision(user, provisionTrans).then(function(success) {
             payload = {success: success};
             res.send(200, payload);
