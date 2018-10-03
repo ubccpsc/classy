@@ -3,7 +3,7 @@ import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
 
 import Log from "../../../../common/Log";
 
-import {AuditEvent, Auth, Course, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
+import {AuditEvent, AuditLabel, Auth, Course, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
 
 export class DatabaseController {
     /**
@@ -309,28 +309,37 @@ export class DatabaseController {
         }
     }
 
-    public async writeAudit(label: string, personId: string, before: any, after: any, custom: any): Promise<boolean> {
-        // Log.info("DatabaseController::writeAudit(..) - start");
-        Log.info("DatabaseController::writeAudit( " + label + ", " + personId + ", hasBefore: " +
-            (before === null) + ", hasAfter: " + (after === null) + " ) - start");
+    public async writeAudit(label: AuditLabel, personId: string, before: any, after: any, custom: any): Promise<boolean> {
+        try {
+            // Log.info("DatabaseController::writeAudit(..) - start");
+            Log.info("DatabaseController::writeAudit( " + label + ", " + personId + ", hasBefore: " +
+                (before === null) + ", hasAfter: " + (after === null) + " ) - start");
 
-        let finalLabel = label + '_';
-        if (before === null) {
-            finalLabel = finalLabel + 'CREATE';
-        } else if (after === null) {
-            finalLabel = finalLabel + 'DELETE';
-        } else {
-            finalLabel = finalLabel + 'UPDATE';
+            let finalLabel = label + '_';
+            if (before === null && after === null) {
+                // is an action, no postfix
+                finalLabel = label;
+            } else if (before === null) {
+                finalLabel = finalLabel + 'CREATE';
+            } else if (after === null) {
+                finalLabel = finalLabel + 'DELETE';
+            } else {
+                finalLabel = finalLabel + 'UPDATE';
+            }
+            const auditRecord: AuditEvent = {
+                label:     finalLabel,
+                timestamp: Date.now(),
+                personId:  personId,
+                before:    before,
+                after:     after,
+                custom:    custom
+            };
+            return await this.writeRecord(this.AUDITCOLL, auditRecord);
+        } catch (err) {
+            // never want this to mess with whatever called it; eat all errors
+            Log.error("DatabaseController::writeAudit(..) - ERROR: " + err.message);
+            return false;
         }
-        const auditRecord: AuditEvent = {
-            label:     finalLabel,
-            timestamp: Date.now(),
-            personId:  personId,
-            before:    before,
-            after:     after,
-            custom:    custom
-        };
-        return await this.writeRecord(this.AUDITCOLL, auditRecord);
     }
 
     public async writeRepository(record: Repository): Promise<boolean> {

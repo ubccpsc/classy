@@ -15,7 +15,7 @@ import {
     TeamTransport
 } from '../../../../common/types/PortalTypes';
 import Util from "../../../../common/Util";
-import {Course, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
+import {AuditLabel, Course, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
 import {DeliverablesController} from "./DeliverablesController";
@@ -184,7 +184,8 @@ export abstract class CourseController implements ICourseController {
                 const shouldSave = await this.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
 
                 if (shouldSave === true) {
-                    await this.dbc.writeAudit('GRADE', 'AutoTest', existingGrade, newGrade, {repoId: grade.repoId});
+                    await this.dbc.writeAudit(AuditLabel.GRADE_AUTOTEST, 'AutoTest',
+                        existingGrade, newGrade, {repoId: grade.repoId});
                     await this.gc.saveGrade(newGrade);
                 }
             }

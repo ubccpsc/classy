@@ -30,7 +30,7 @@ import {PersonController} from "../../controllers/PersonController";
 import {TeamController} from "../../controllers/TeamController";
 import {Factory} from "../../Factory";
 
-import {Person} from "../../Types";
+import {AuditLabel, Person} from "../../Types";
 
 import IREST from "../IREST";
 
@@ -602,11 +602,12 @@ export default class AdminRoutes implements IREST {
     private static postProvision(req: any, res: any, next: any) {
         Log.info('AdminRoutes::postProvision(..) - start');
         let payload: Payload;
+        const user = req.headers.user;
 
         const provisionTrans: ProvisionTransport = req.params;
         Log.info('AdminRoutes::postProvision() - body: ' + provisionTrans);
         // TODO: Audit
-        AdminRoutes.handleProvision(provisionTrans).then(function(success) {
+        AdminRoutes.handleProvision(user, provisionTrans).then(function(success) {
             payload = {success: success};
             res.send(200, payload);
             return next(true);
@@ -615,7 +616,7 @@ export default class AdminRoutes implements IREST {
         });
     }
 
-    private static async handleProvision(provisionTrans: ProvisionTransport): Promise<RepositoryTransport[]> {
+    private static async handleProvision(personId: string, provisionTrans: ProvisionTransport): Promise<RepositoryTransport[]> {
         const cc = Factory.getCourseController(AdminRoutes.ghc);
         const result = CourseController.validateProvisionTransport(provisionTrans);
 
@@ -625,6 +626,8 @@ export default class AdminRoutes implements IREST {
             const dc = new DeliverablesController();
             const deliv = await dc.getDeliverable(provisionTrans.delivId);
             if (deliv !== null && deliv.shouldProvision === true) {
+                const dbc = DatabaseController.getInstance();
+                await dbc.writeAudit(AuditLabel.REPO_PROVISION, personId, {}, {}, provisionTrans);
                 const provisionSucceeded = await cc.provision(deliv, provisionTrans.formSingle);
                 Log.info('AdminRoutes::handleProvision() - success; # results: ' + provisionSucceeded.length);
                 return provisionSucceeded;
@@ -640,10 +643,10 @@ export default class AdminRoutes implements IREST {
         Log.info('AdminRoutes::postRelease(..) - start');
         let payload: Payload;
 
+        const user = req.headers.user;
         const provisionTrans: ProvisionTransport = req.params;
         Log.info('AdminRoutes::postRelease() - body: ' + provisionTrans);
-        // TODO: Audit
-        AdminRoutes.handleRelease(provisionTrans).then(function(success) {
+        AdminRoutes.handleRelease(user, provisionTrans).then(function(success) {
             payload = {success: success};
             res.send(200, payload);
             return next(true);
@@ -653,21 +656,24 @@ export default class AdminRoutes implements IREST {
         });
     }
 
-    private static async handleRelease(provisionTrans: ProvisionTransport): Promise<RepositoryTransport[]> {
+    private static async handleRelease(personId: string, releaseTrans: ProvisionTransport): Promise<RepositoryTransport[]> {
         const cc = Factory.getCourseController(AdminRoutes.ghc);
-        const result = CourseController.validateProvisionTransport(provisionTrans);
+        const result = CourseController.validateProvisionTransport(releaseTrans);
 
         // TODO: if course is SDMM, always fail
 
         if (result === null) {
             const dc = new DeliverablesController();
-            const deliv = await dc.getDeliverable(provisionTrans.delivId);
+            const deliv = await dc.getDeliverable(releaseTrans.delivId);
             if (deliv !== null && deliv.shouldProvision === true) {
+                const dbc = DatabaseController.getInstance();
+                await dbc.writeAudit(AuditLabel.REPO_RELEASE, personId, {}, {}, releaseTrans);
+
                 const releaseSucceeded = await cc.release(deliv);
                 Log.info('AdminRoutes::handleRelease() - success; # results: ' + releaseSucceeded.length);
                 return releaseSucceeded;
             } else {
-                throw new Error("Release unsuccessful, cannot release: " + provisionTrans.delivId);
+                throw new Error("Release unsuccessful, cannot release: " + releaseTrans.delivId);
             }
         }
         // should never get here unless something goes wrong
@@ -678,11 +684,11 @@ export default class AdminRoutes implements IREST {
         Log.info('AdminRoutes::postTeam(..) - start');
 
         // handled by isAdmin in the route chain
-        // const user = req.headers.user;
+        const user = req.headers.user;
         // const token = req.headers.token;
 
         const teamTrans: TeamFormationTransport = req.params;
-        AdminRoutes.performPostTeam(teamTrans).then(function(team) {
+        AdminRoutes.performPostTeam(user, teamTrans).then(function(team) {
             Log.info('AdminRoutes::postTeam(..) - done; team: ' + JSON.stringify(team));
             const payload: TeamTransportPayload = {success: [team]}; // really shouldn't be an array, but it beats having another type
             res.send(200, payload);
@@ -695,13 +701,13 @@ export default class AdminRoutes implements IREST {
         });
     }
 
-    private static async performPostTeam(requestedTeam: TeamFormationTransport): Promise<TeamTransport> {
+    private static async performPostTeam(personId: string, requestedTeam: TeamFormationTransport): Promise<TeamTransport> {
 
         Log.info("AdminRoutes::performPostTeam( .. ) - Team: " + JSON.stringify(requestedTeam));
         const tc = new TeamController();
         const dc = new DeliverablesController();
         const pc = new PersonController();
-        
+
         const deliv = await dc.getDeliverable(requestedTeam.delivId);
         if (deliv === null) {
             throw new Error("Team not created; Deliverable does not exist: " + requestedTeam.delivId);
@@ -739,8 +745,10 @@ export default class AdminRoutes implements IREST {
 
         const cc = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
         const names = await cc.computeNames(deliv, people);
-
         const team = await tc.formTeam(names.teamName, deliv, people, true);
+
+        const dbc = DatabaseController.getInstance();
+        await dbc.writeAudit(AuditLabel.TEAM_ADMIN, personId, null, team, {});
 
         const teamTrans: TeamTransport = {
             id:      team.id,
