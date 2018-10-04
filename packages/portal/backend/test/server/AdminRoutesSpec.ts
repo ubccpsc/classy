@@ -29,7 +29,7 @@ import BackendServer from "../../src/server/BackendServer";
 import {Test} from "../GlobalSpec";
 import './AuthRoutesSpec';
 
-describe('Admin Routes', function() {
+describe.only('Admin Routes', function() {
 
     // const TIMEOUT = 5000;
 
@@ -454,6 +454,7 @@ describe('Admin Routes', function() {
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
         expect(body.success.message).to.be.an('string');
+        expect(body.success.message).to.contain('5 students');
     });
 
     it('Should fail to upload bad classlists', async function() {
@@ -481,6 +482,7 @@ describe('Admin Routes', function() {
         expect(response.status).to.equal(400);
         expect(body.failure).to.not.be.undefined;
         expect(body.failure.message).to.be.an('string'); // test no records found
+        expect(body.failure.message).to.contain('no students');
     });
 
     it('Should be able to upload an updated classlist', async function() {
@@ -509,6 +511,7 @@ describe('Admin Routes', function() {
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
         expect(body.success.message).to.be.an('string');
+        expect(body.success.message).to.contain('5 students processed'); // capture how many changed?
 
         people = await dc.getPeople();
         expect(peopleLength).to.equal(people.length); // no new people should have been added

@@ -183,7 +183,9 @@ export enum AuditLabel {
     GRADE_ADMIN = 'GradeAdmin',
     GRADE_AUTOTEST = 'GradeAutotest',
     REPO_PROVISION = 'RepositoryProvision',
-    REPO_RELEASE = 'RepositoryRelease'
+    REPO_RELEASE = 'RepositoryRelease',
+    CLASSLIST_UPLOAD = 'Classlist_Upload',
+    CLASSLIST_PRUNE = 'Classlist_Prune'
 }
 
 export interface AuditEvent {
