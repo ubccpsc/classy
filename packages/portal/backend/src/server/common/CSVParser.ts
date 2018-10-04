@@ -3,8 +3,10 @@ import * as fs from 'fs';
 import Log from '../../../../../common/Log';
 
 import {DatabaseController} from "../../controllers/DatabaseController";
+import {DeliverablesController} from "../../controllers/DeliverablesController";
+import {GradesController} from "../../controllers/GradesController";
 import {PersonController} from "../../controllers/PersonController";
-import {AuditLabel, Person} from "../../Types";
+import {AuditLabel, Grade, Person} from "../../Types";
 
 export class CSVParser {
 
@@ -45,8 +47,10 @@ export class CSVParser {
         });
     }
 
-    public async parseClasslist(personId: string, path: string): Promise<Person[]> {
+    public async processClasslist(personId: string, path: string): Promise<Person[]> {
         try {
+            Log.info('CSVParser::processClasslist(..) - start');
+
             const data = await this.parsePath(path);
             const pc = new PersonController();
 
@@ -72,7 +76,7 @@ export class CSVParser {
                     };
                     peoplePromises.push(pc.createPerson(p));
                 } else {
-                    Log.info('CSVParser::parseClasslist(..) - column missing from: ' + JSON.stringify(row));
+                    Log.info('CSVParser::processClasslist(..) - column missing from: ' + JSON.stringify(row));
                     peoplePromises.push(Promise.reject('Required column missing'));
                 }
             }
@@ -85,8 +89,58 @@ export class CSVParser {
 
             return people;
         } catch (err) {
-            Log.info('CSVParser::parseClasslist(..) - ERROR: ' + err.message);
+            Log.error('CSVParser::processClasslist(..) - ERROR: ' + err.message);
             throw new Error('Classlist upload error: ' + err.message);
+        }
+    }
+
+    public async processGrades(personId: string, delivId: string, path: string): Promise<boolean[]> {
+        try {
+            Log.error('CSVParser::processGrades(..) - start');
+
+            const data = await this.parsePath(path);
+
+            const dc = new DeliverablesController();
+            const deliv = await dc.getDeliverable(delivId);
+            if (deliv === null) {
+                throw new Error("Unknown deliverable: " + delivId);
+            }
+
+            const gc = new GradesController();
+            const gradePromises: Array<Promise<boolean>> = [];
+            for (const row of data) {
+                // Log.trace('grade row: ' + JSON.stringify(row));
+                if (typeof row.CSID !== 'undefined' &&
+                    typeof row.GRADE !== 'undefined' &&
+                    typeof row.COMMENT !== 'undefined') {
+
+                    const g: Grade = {
+                        personId:  row.CSID, // TODO: will depend on instance (see above)
+                        delivId:   delivId,
+                        score:     Number(row.GRADE),
+                        comment:   row.COMMENT,
+                        timestamp: Date.now(),
+                        urlName:   'CSV Upload',
+                        URL:       null,
+                        custom:    {}
+                    };
+                    gradePromises.push(gc.saveGrade(g));
+                } else {
+                    Log.info('CSVParser::processGrades(..) - column missing from: ' + JSON.stringify(row));
+                    gradePromises.push(Promise.reject('Required column missing'));
+                }
+            }
+
+            const grades = await Promise.all(gradePromises);
+
+            // audit
+            const dbc = DatabaseController.getInstance();
+            await dbc.writeAudit(AuditLabel.GRADE_UPLOAD, personId, {}, {}, {numGrades: grades.length});
+
+            return grades;
+        } catch (err) {
+            Log.error('CSVParser::processGrades(..) - ERROR: ' + err.message);
+            throw new Error('Grade upload error: ' + err.message);
         }
     }
 

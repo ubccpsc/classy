@@ -455,7 +455,7 @@ export default class AdminRoutes implements IREST {
             const path = req.files.classlist.path; // this is brittle, but if it fails it will just trigger the exception
 
             const csvParser = new CSVParser();
-            csvParser.parseClasslist(user, path).then(function(people) {
+            csvParser.processClasslist(user, path).then(function(people) {
                 if (people.length > 0) {
                     const payload: Payload = {
                         success: {

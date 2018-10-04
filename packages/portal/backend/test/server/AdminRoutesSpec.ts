@@ -29,7 +29,7 @@ import BackendServer from "../../src/server/BackendServer";
 import {Test} from "../GlobalSpec";
 import './AuthRoutesSpec';
 
-describe.only('Admin Routes', function() {
+describe('Admin Routes', function() {
 
     // const TIMEOUT = 5000;
 
