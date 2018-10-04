@@ -57,6 +57,7 @@ export default class AdminRoutes implements IREST {
 
         // admin-only functions
         server.post('/portal/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
+        server.post('/portal/admin/grades/:delivId', AdminRoutes.isAdmin, AdminRoutes.postGrades);
         server.post('/portal/admin/deliverable', AdminRoutes.isAdmin, AdminRoutes.postDeliverable);
         server.post('/portal/admin/team', AdminRoutes.isAdmin, AdminRoutes.postTeam);
         server.post('/portal/admin/course', AdminRoutes.isAdmin, AdminRoutes.postCourse);
@@ -473,6 +474,38 @@ export default class AdminRoutes implements IREST {
             });
         } catch (err) {
             return AdminRoutes.handleError(400, 'Classlist upload unsuccessful. ERROR: ' + err.messge, res, next);
+        }
+    }
+
+    private static postGrades(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::postGrades(..) - start');
+
+        // authentication handled by preceeding action in chain above (see registerRoutes)
+
+        try {
+            const user = req.params.user;
+            const delivId = req.params.delivId;
+            const path = req.files.gradelist.path; // this is brittle, but if it fails it will just trigger the exception
+
+            const csvParser = new CSVParser();
+            csvParser.processGrades(user, delivId, path).then(function(grades) {
+                if (grades.length > 0) {
+                    const payload: Payload = {
+                        success: {
+                            message: 'Grades upload successful. ' + grades.length + ' grades processed.'
+                        }
+                    };
+                    res.send(200, payload);
+                    Log.info('AdminRoutes::postGrades(..) - done: ' + payload.success.message);
+                } else {
+                    const msg = 'Grades upload not successful; no grades were processed from CSV.';
+                    return AdminRoutes.handleError(400, msg, res, next);
+                }
+            }).catch(function(err) {
+                return AdminRoutes.handleError(400, 'Grades upload unsuccessful. ERROR: ' + err.messge, res, next);
+            });
+        } catch (err) {
+            return AdminRoutes.handleError(400, 'Graes upload unsuccessful. ERROR: ' + err.messge, res, next);
         }
     }
 

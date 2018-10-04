@@ -29,7 +29,7 @@ import BackendServer from "../../src/server/BackendServer";
 import {Test} from "../GlobalSpec";
 import './AuthRoutesSpec';
 
-describe('Admin Routes', function() {
+describe.only('Admin Routes', function() {
 
     // const TIMEOUT = 5000;
 
@@ -519,6 +519,57 @@ describe('Admin Routes', function() {
         expect(person.githubId).to.not.equal(newPerson.githubId); // should have been updated
         expect(person.labId).to.not.equal(newPerson.labId); // should have been updated
         expect(person.studentNumber).to.equal(newPerson.studentNumber); // should be the same
+    });
+
+    it('Should be able to upload a new grades', async function() {
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/admin/grades/' + Test.DELIVID1;
+        try {
+            response = await request(app).post(url).attach('gradelist', __dirname + '/../data/gradesValid.csv').set({
+                user:  userName,
+                token: userToken
+            });
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+            expect.fail('should not happen');
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.message).to.be.an('string');
+        expect(body.success.message).to.contain('3 grades');
+    });
+
+    it('Should fail to upload a bad grades list', async function() {
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/admin/grades/' + Test.DELIVID1;
+
+        response = await request(app).post(url).attach('gradelist', __dirname + '/../data/gradesInvalid.csv').set({
+            user:  userName,
+            token: userToken
+        });
+        body = response.body;
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.failure).to.not.be.undefined;
+        expect(body.failure.message).to.be.an('string'); // test column missing
+        expect(body.failure.message).to.contain('foo');
+
+        response = await request(app).post(url).attach('gradelist', __dirname + '/../data/gradesEmpty.csv').set({
+            user:  userName,
+            token: userToken
+        });
+        body = response.body;
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400);
+        expect(body.failure).to.not.be.undefined;
+        expect(body.failure.message).to.be.an('string'); // test no records found
+        expect(body.failure.message).to.contain('no grades');
     });
 
     it('Should be able to get the course object', async function() {

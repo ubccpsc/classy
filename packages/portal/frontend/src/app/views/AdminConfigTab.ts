@@ -37,16 +37,34 @@ export class AdminConfigTab extends AdminPage {
         await this.deliverablesPage.init(opts);
 
         (document.querySelector('#adminSubmitClasslist') as OnsButtonElement).onclick = function(evt) {
-            Log.info('AdminConfigTab::handleAdminConfig(..) - upload pressed');
+            Log.info('AdminConfigTab::handleAdminConfig(..) - upload classlist pressed');
             evt.stopPropagation(); // prevents list item expansion
 
             const fileInput = document.querySelector('#adminClasslistFile') as HTMLInputElement;
-            const isValid: boolean = that.validateClasslistSpecified(fileInput);
+            const isValid: boolean = that.validateFileSpecified(fileInput);
             if (isValid === true) {
                 that.uploadClasslist(fileInput.files).then(function() {
                     // done
                 }).catch(function(err) {
-                    Log.error('AdminConfigTab::handleAdminConfig(..) - upload pressed ERROR: ' + err.message);
+                    Log.error('AdminConfigTab::handleAdminConfig(..) - upload classlist pressed ERROR: ' + err.message);
+                });
+            }
+        };
+
+        (document.querySelector('#adminSubmitGradeCSV') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminConfigTab::handleAdminConfig(..) - upload grades pressed');
+            evt.stopPropagation(); // prevents list item expansion
+
+            const fileInput = document.querySelector('#adminGradeCSV') as HTMLInputElement;
+            const isValid: boolean = that.validateFileSpecified(fileInput);
+            if (isValid === true) {
+
+                const delivDropdown = document.querySelector('#adminGradeDeliverableSelect') as HTMLSelectElement;
+                const delivId = delivDropdown.value;
+                that.uploadGrades(fileInput.files, delivId).then(function() {
+                    // done
+                }).catch(function(err) {
+                    Log.error('AdminConfigTab::handleAdminConfig(..) - upload grades pressed ERROR: ' + err.message);
                 });
             }
         };
@@ -111,6 +129,7 @@ export class AdminConfigTab extends AdminPage {
         this.course = await AdminView.getCourse(this.remote);
 
         const deliverables = await AdminDeliverablesTab.getDeliverables(this.remote);
+        const gradesDeliverableDropdown = document.querySelector('#adminGradeDeliverableSelect') as HTMLSelectElement;
         const defaultDeliverableDropdown = document.querySelector('#adminDefaultDeliverableSelect') as HTMLSelectElement;
         const provisionDropdown = document.querySelector('#adminProvisionDeliverableSelect') as HTMLSelectElement;
         const releaseDropdown = document.querySelector('#adminReleaseDeliverableSelect') as HTMLSelectElement;
@@ -119,6 +138,7 @@ export class AdminConfigTab extends AdminPage {
         const defaultDeliverableOptions = ['--Not Set--'];
         const provisionOptions = ['--Select--'];
         const releaseOptions = ['--Select--'];
+        const gradesOptions = ['--Select--'];
 
         for (const deliv of deliverables) {
             if (deliv.shouldAutoTest === true) {
@@ -129,6 +149,7 @@ export class AdminConfigTab extends AdminPage {
                 // can only provision or release deliverables that are provisionable
                 provisionOptions.push(deliv.id);
                 releaseOptions.push(deliv.id);
+                gradesOptions.push(deliv.id);
             }
         }
 
@@ -136,6 +157,7 @@ export class AdminConfigTab extends AdminPage {
         this.populateDelivSelect(provisionOptions, teamDropdown); // can only create teams on provisionable deliverables
         this.populateDelivSelect(provisionOptions, provisionDropdown);
         this.populateDelivSelect(releaseOptions, releaseDropdown);
+        this.populateDelivSelect(gradesOptions, gradesDeliverableDropdown);
 
         // set default deliverable, if it exists
         for (const o of (defaultDeliverableDropdown as any).children) {
@@ -162,12 +184,12 @@ export class AdminConfigTab extends AdminPage {
         }
     }
 
-    private validateClasslistSpecified(fileInput: HTMLInputElement) {
+    private validateFileSpecified(fileInput: HTMLInputElement) {
         if (fileInput.value.length > 0) {
-            Log.trace('AdminConfigTab::validateClasslistSpecified() - validation passed');
+            Log.trace('AdminConfigTab::validateFileSpecified() - validation passed');
             return true;
         } else {
-            UI.notification('You must select a ClassList CSV before you click "Upload".');
+            UI.notification('You must select a CSV before you click "Upload".');
             return false;
         }
     }
@@ -213,6 +235,49 @@ export class AdminConfigTab extends AdminPage {
         }
 
         Log.trace('AdminConfigTab::uploadClasslist(..) - end');
+    }
+
+    public async uploadGrades(fileList: FileList, delivId: string) {
+        Log.info('AdminConfigTab::uploadGrades(..) - start');
+        const url = this.remote + '/portal/admin/grades/' + delivId;
+
+        UI.showModal('Uploading grades.');
+
+        try {
+            const formData = new FormData();
+            formData.append('gradelist', fileList[0]); // The CSV is fileList[0]
+
+            const opts = {
+                headers: {
+                    // 'Content-Type': 'application/json', // violates CORS; leave commented out
+                    user:  localStorage.user,
+                    token: localStorage.token
+                }
+            };
+            const response: Response = await Network.httpPostFile(url, opts, formData);
+            if (response.status >= 200 && response.status < 300) {
+                const data: Payload = await response.json();
+                UI.hideModal();
+                Log.info('AdminConfigTab::uploadGrades(..) - RESPONSE: ' + JSON.stringify(data));
+                UI.notification(data.success.message);
+            } else {
+                const reason = await response.json();
+                UI.hideModal();
+                if (typeof reason.failure && typeof reason.failure.message) {
+                    UI.notification('There was an issue uploading your grade CSV. ' +
+                        'Please ensure the CSV file includes all required columns. <br/>Details: ' + reason.failure.message);
+                } else {
+                    UI.notification('There was an issue uploading your grade CSV. ' +
+                        'Please ensure the CSV file includes all required columns.');
+                }
+            }
+        } catch (err) {
+            UI.hideModal();
+            Log.error('AdminConfigTab::uploadGrades(..) - ERROR: ' + err.message);
+            AdminView.showError(err);
+        }
+
+        Log.trace('AdminConfigTab::uploadGrades(..) - end');
     }
 
     private async createTeamPressed(): Promise<void> {

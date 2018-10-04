@@ -192,6 +192,26 @@
                     </div>
                 </ons-list-item>
 
+                <ons-list-header>Upload Grades</ons-list-header>
+
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Deliverable
+                        <select id="adminGradeDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                        Select Grade CSV <input id="adminGradeCSV" style="padding-left: 1em" type="file"/>
+                        <ons-button id="adminSubmitGradeCSV" modifier="medium">Upload Grades</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        The CSV must have a header row that contains the following columns:
+
+                        <pre>CSID,GRADE,COMMENT</pre>
+                        This will overwrite any grade that exist for that the students listed in the CSV. This cannot be undone.
+                    </div>
+                </ons-list-item>
+
                 <ons-list-header>Manually Create Team</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
@@ -266,7 +286,8 @@
 
                 <ons-list-header>Delete Objects: DANGER!</ons-list-header>
                 <ons-list-item>
-                    <ons-button id="adminDeletePageButton" >Go to deletion page</ons-button> <!-- onclick="myApp.view.pushPage('adminDelete.html',{});" -->
+                    <ons-button id="adminDeletePageButton">Go to deletion page</ons-button>
+                    <!-- onclick="myApp.view.pushPage('adminDelete.html',{});" -->
                 </ons-list-item>
 
             </ons-list>

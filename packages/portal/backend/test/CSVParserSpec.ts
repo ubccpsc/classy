@@ -87,6 +87,20 @@ describe('CSVParser', function() {
         expect(grade.score).to.equal(19);
     });
 
+    it('Should not be able to process grades for an invalid deliverable', async function() {
+        let rows = null;
+        let ex = null;
+        try {
+            const path = __dirname + '/data/gradesValid.csv';
+            const csv = new CSVParser();
+            rows = await csv.processGrades(Test.ADMIN1.id, 'invalidDeliverableId', path);
+        } catch (err) {
+            ex = err;
+        }
+        expect(rows).to.be.null;
+        expect(ex).to.not.be.null;
+    });
+
     it('Should not be able to process an invalid grade sheet', async function() {
         let rows = null;
         let ex = null;
