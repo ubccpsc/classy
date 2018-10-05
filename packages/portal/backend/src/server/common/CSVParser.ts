@@ -96,7 +96,7 @@ export class CSVParser {
 
     public async processGrades(personId: string, delivId: string, path: string): Promise<boolean[]> {
         try {
-            Log.error('CSVParser::processGrades(..) - start');
+            Log.info('CSVParser::processGrades(..) - start');
 
             const data = await this.parsePath(path);
 
@@ -126,8 +126,9 @@ export class CSVParser {
                     };
                     gradePromises.push(gc.saveGrade(g));
                 } else {
-                    Log.info('CSVParser::processGrades(..) - column missing from: ' + JSON.stringify(row));
-                    gradePromises.push(Promise.reject('Required column missing'));
+                    const msg = 'Required column missing';
+                    Log.error('CSVParser::processGrades(..) - column missing from: ' + JSON.stringify(row));
+                    throw new Error(msg);
                 }
             }
 

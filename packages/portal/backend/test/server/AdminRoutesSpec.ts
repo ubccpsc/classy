@@ -29,7 +29,7 @@ import BackendServer from "../../src/server/BackendServer";
 import {Test} from "../GlobalSpec";
 import './AuthRoutesSpec';
 
-describe.only('Admin Routes', function() {
+describe('Admin Routes', function() {
 
     // const TIMEOUT = 5000;
 
@@ -558,7 +558,7 @@ describe.only('Admin Routes', function() {
         expect(response.status).to.equal(400);
         expect(body.failure).to.not.be.undefined;
         expect(body.failure.message).to.be.an('string'); // test column missing
-        expect(body.failure.message).to.contain('foo');
+        expect(body.failure.message).to.contain('column missing');
 
         response = await request(app).post(url).attach('gradelist', __dirname + '/../data/gradesEmpty.csv').set({
             user:  userName,

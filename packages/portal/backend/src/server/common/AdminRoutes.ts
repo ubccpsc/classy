@@ -469,11 +469,11 @@ export default class AdminRoutes implements IREST {
                     const msg = 'Classlist upload not successful; no students were processed from CSV.';
                     return AdminRoutes.handleError(400, msg, res, next);
                 }
-            }).catch(function(err) {
-                return AdminRoutes.handleError(400, 'Classlist upload unsuccessful. ERROR: ' + err.messge, res, next);
+            }).catch(function(err: Error) {
+                return AdminRoutes.handleError(400, 'Classlist upload unsuccessful. ERROR: ' + err.message, res, next);
             });
         } catch (err) {
-            return AdminRoutes.handleError(400, 'Classlist upload unsuccessful. ERROR: ' + err.messge, res, next);
+            return AdminRoutes.handleError(400, 'Classlist upload unsuccessful. ERROR: ' + err.message, res, next);
         }
     }
 
@@ -501,11 +501,11 @@ export default class AdminRoutes implements IREST {
                     const msg = 'Grades upload not successful; no grades were processed from CSV.';
                     return AdminRoutes.handleError(400, msg, res, next);
                 }
-            }).catch(function(err) {
-                return AdminRoutes.handleError(400, 'Grades upload unsuccessful. ERROR: ' + err.messge, res, next);
+            }).catch(function(err: Error) {
+                return AdminRoutes.handleError(400, 'Grades upload unsuccessful. ERROR: ' + err.message, res, next);
             });
         } catch (err) {
-            return AdminRoutes.handleError(400, 'Graes upload unsuccessful. ERROR: ' + err.messge, res, next);
+            return AdminRoutes.handleError(400, 'Graes upload unsuccessful. ERROR: ' + err.message, res, next);
         }
     }
 
