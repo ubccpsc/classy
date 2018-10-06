@@ -371,7 +371,8 @@ export class SDMMSummaryView implements IView {
             return;
         }
 
-        const icon = row.children[0].children[0];
+        const icon = row.getElementsByClassName('left').children[0];
+        // const icon = row.children[0].children[0];
         if (grade.score >= 60) {
             icon.setAttribute('icon', 'fa-check-circle');
         } else {
@@ -379,18 +380,18 @@ export class SDMMSummaryView implements IView {
         }
 
         // set title:
+        const details = row.getElementsByClassName('center')[0];
         if (grade.score > 0) {
-            row.children[1].children[0].innerHTML = 'Grade: ' + grade.score.toFixed(1) + ' %';
-            row.children[1].children[1].innerHTML = '<a href="' + grade.URL + '">Source Commit</a>&nbsp;&nbsp;' +
+            details.children[0].innerHTML = 'Grade: ' + grade.score.toFixed(1) + ' %';
+            details.children[1].innerHTML = '<a href="' + grade.URL + '">Source Commit</a>&nbsp;&nbsp;' +
                 'Timestamp: ' + new Date(grade.timestamp).toLocaleTimeString();
         } else {
-            row.children[1].children[0].innerHTML = 'Grade: N/A';
-            row.children[1].children[1].innerHTML = '<a href="' + grade.URL + '">Source Repository</a>&nbsp;&nbsp;' +
+            details.children[0].innerHTML = 'Grade: N/A';
+            details.children[1].innerHTML = '<a href="' + grade.URL + '">Source Repository</a>&nbsp;&nbsp;' +
                 'Timestamp: ' + new Date(grade.timestamp).toLocaleTimeString();
         }
 
         // set subrow
-
     }
 
     private showStatusD1(status: any | undefined) {
