@@ -46,15 +46,9 @@ export class GradeTask {
                 this.input.pushInfo.cloneURL.match(/\/(.+)\.git/)[0] + " and checkout " +
                 this.input.pushInfo.commitSHA.substring(0, 6) + "."
             );
-            const sha = await this.prepareRepo(this.input.pushInfo.cloneURL,
+            await this.prepareRepo(this.input.pushInfo.cloneURL,
                 `${this.workspace.rootDir}/assn`,
                 this.input.pushInfo.commitSHA);
-
-            if (this.input.pushInfo.commitSHA !== sha) {
-                Log.warn("GradeTask::execute() - Failed to checkout commit. Requested: " +
-                    this.input.pushInfo.commitSHA + " Actual: " + sha + ". Continuing to grade but results will likely" +
-                    "be wrong.");
-            }
 
             // Change the permissions so that the grading container can read the files.
             await this.workspace.chown();
@@ -63,9 +57,9 @@ export class GradeTask {
             try {
                 await this.container.create(this.input.containerConfig.custom);
 
-                Log.trace("GradeTask::execute() - Start grading container " + this.container.shortId);
+                Log.info("GradeTask::execute() - Start grading container " + this.container.shortId);
                 const exitCode = await this.runContainer(this.container);
-                Log.trace("GradeTask::execute() - Container " + this.container.shortId + " exited with code " +
+                Log.info("GradeTask::execute() - Container " + this.container.shortId + " exited with code " +
                     exitCode + ".");
 
                 Log.trace("GradeTask::execute() - Write log for container " + this.container.shortId + " to " +
@@ -93,7 +87,7 @@ export class GradeTask {
                 Log.error(`GradeTask::execute() - ERROR Running grading container. ${err}`);
             } finally {
                 try {
-                    Log.trace("GradeTask::execute() - Remove container " + this.container.should);
+                    Log.trace("GradeTask::execute() - Remove container " + this.container.shortId);
                     await this.container.remove();
                 } catch (err) {
                     Log.warn("GradeTask::execute() - Failed to remove container " + this.container.shortId + ". " + err);
