@@ -100,7 +100,7 @@ export default class Server {
                             const workspace: Workspace = new Workspace(process.env.GRADER_PERSIST_DIR + "/" + id, uid);
                             const container: IDockerContainer = new DockerContainer(input.containerConfig.dockerImage);
                             const repo: Repository = new Repository();
-                            const output: ContainerOutput = await new GradeTask(input, workspace, container, repo).execute();
+                            const output: ContainerOutput = await new GradeTask(id, input, workspace, container, repo).execute();
                             res.json(200, output);
                         } catch (err) {
                             Log.error("Failed to handle grading task: " + err);
