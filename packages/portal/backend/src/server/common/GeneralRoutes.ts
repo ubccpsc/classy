@@ -16,6 +16,7 @@ import {
 } from "../../../../../common/types/PortalTypes";
 
 import {AuthController} from "../../controllers/AuthController";
+import {DatabaseController} from "../../controllers/DatabaseController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GitHubActions} from "../../controllers/GitHubActions";
 import {GitHubController} from "../../controllers/GitHubController";
@@ -24,7 +25,7 @@ import {PersonController} from "../../controllers/PersonController";
 import {RepositoryController} from "../../controllers/RepositoryController";
 import {TeamController} from "../../controllers/TeamController";
 import {Factory} from "../../Factory";
-import {Person} from "../../Types";
+import {AuditLabel, Person} from "../../Types";
 
 import IREST from "../IREST";
 
@@ -238,6 +239,9 @@ export default class GeneralRoutes implements IREST {
             const names = await cc.computeNames(deliv, people);
 
             const team = await tc.formTeam(names.teamName, deliv, people, false);
+
+            const dbc = DatabaseController.getInstance();
+            await dbc.writeAudit(AuditLabel.TEAM_STUDENT, user, {}, team, {});
 
             const teamTrans: TeamTransport = {
                 id:      team.id,

@@ -154,6 +154,7 @@ export class GradesController {
 
     public async saveGrade(grade: Grade): Promise<boolean> {
         Log.info("GradesController::saveGrade( ... ) - start");
+        // grade.score = Number(grade.score);
         return await this.db.writeGrade(grade);
     }
 

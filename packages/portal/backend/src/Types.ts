@@ -186,6 +186,31 @@ export interface Course {
     };
 }
 
+export enum AuditLabel {
+    COURSE = 'Course',
+    DELIVERABLE = 'Deliverable',
+    REPOSITORY = 'Repository',
+    TEAM = 'TEAM',
+    TEAM_ADMIN = 'TeamAdmin', // Created / updated by admin
+    TEAM_STUDENT = 'TeamStudent', // Created / updated by student
+    GRADE_ADMIN = 'GradeAdmin',
+    GRADE_UPLOAD = 'Grade_Upload',
+    GRADE_AUTOTEST = 'GradeAutotest',
+    REPO_PROVISION = 'RepositoryProvision',
+    REPO_RELEASE = 'RepositoryRelease',
+    CLASSLIST_UPLOAD = 'Classlist_Upload',
+    CLASSLIST_PRUNE = 'Classlist_Prune'
+}
+
+export interface AuditEvent {
+    label: string;
+    timestamp: number;
+    personId: string;
+    before: object | null;
+    after: object | null;
+    custom: object; // enables easier querying
+}
+
 export interface Grade {
     // this should be the personId associated with the repo, not a staff who invoked it!
     readonly personId: string; // Person.id; grades are really on repos, but we only care about them by person

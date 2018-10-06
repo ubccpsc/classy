@@ -123,4 +123,11 @@ export default class Util {
             return 0;
         }
     }
+
+    public static isEmpty(obj: any): boolean {
+        if (typeof obj === 'undefined' || obj === null) {
+            return true;
+        }
+        return Object.keys(obj).length === 0 && obj.constructor === Object;
+    }
 }

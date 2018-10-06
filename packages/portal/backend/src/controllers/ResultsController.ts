@@ -47,7 +47,7 @@ export class ResultsController {
     public validateAutoTestResult(record: AutoTestResult): string | null {
         // multiple returns is poor, but at least it's quick
 
-        Log.info('ResultsController::validateAutoTestResult(..) - result: ' + JSON.stringify(record));
+        Log.trace('ResultsController::validateAutoTestResult(..) - result: ' + JSON.stringify(record));
 
         if (typeof record === 'undefined') {
             const msg = 'object undefined';
