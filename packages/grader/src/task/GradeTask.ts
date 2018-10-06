@@ -57,9 +57,9 @@ export class GradeTask {
             try {
                 await this.container.create(this.input.containerConfig.custom);
 
-                Log.trace("GradeTask::execute() - Start grading container " + this.container.shortId);
+                Log.info("GradeTask::execute() - Start grading container " + this.container.shortId);
                 const exitCode = await this.runContainer(this.container);
-                Log.trace("GradeTask::execute() - Container " + this.container.shortId + " exited with code " +
+                Log.info("GradeTask::execute() - Container " + this.container.shortId + " exited with code " +
                     exitCode + ".");
 
                 Log.trace("GradeTask::execute() - Write log for container " + this.container.shortId + " to " +
