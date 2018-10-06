@@ -5,13 +5,15 @@ import {Repository} from "../git/Repository";
 import {Workspace} from "../storage/Workspace";
 
 export class GradeTask {
+    private readonly id: string;
     private readonly input: ContainerInput;
     private readonly workspace: Workspace;
     private readonly container: IDockerContainer;
     private readonly repo: Repository;
     private containerState: string;
 
-    constructor(input: ContainerInput, workspace: Workspace, container: IDockerContainer, repo: Repository) {
+    constructor(id: string, input: ContainerInput, workspace: Workspace, container: IDockerContainer, repo: Repository) {
+        this.id = id;
         this.input = input;
         this.workspace = workspace;
         this.container = container;
@@ -38,7 +40,7 @@ export class GradeTask {
             postbackOnComplete: true,
             custom:             {},
             state:              ContainerState.FAIL,
-            executionId:        ""
+            executionId:        this.id
         };
 
         try {
