@@ -371,7 +371,7 @@ export class SDMMSummaryView implements IView {
             return;
         }
 
-        const icon = row.getElementsByClassName('left').children[0];
+        const icon = row.getElementsByClassName('left')[0].children[0];
         // const icon = row.children[0].children[0];
         if (grade.score >= 60) {
             icon.setAttribute('icon', 'fa-check-circle');
