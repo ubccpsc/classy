@@ -87,7 +87,7 @@ export class GradeTask {
                 Log.error(`GradeTask::execute() - ERROR Running grading container. ${err}`);
             } finally {
                 try {
-                    Log.trace("GradeTask::execute() - Remove container " + this.container.should);
+                    Log.trace("GradeTask::execute() - Remove container " + this.container.shortId);
                     await this.container.remove();
                 } catch (err) {
                     Log.warn("GradeTask::execute() - Failed to remove container " + this.container.shortId + ". " + err);
