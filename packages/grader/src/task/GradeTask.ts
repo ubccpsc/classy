@@ -46,15 +46,9 @@ export class GradeTask {
                 this.input.pushInfo.cloneURL.match(/\/(.+)\.git/)[0] + " and checkout " +
                 this.input.pushInfo.commitSHA.substring(0, 6) + "."
             );
-            const sha = await this.prepareRepo(this.input.pushInfo.cloneURL,
+            await this.prepareRepo(this.input.pushInfo.cloneURL,
                 `${this.workspace.rootDir}/assn`,
                 this.input.pushInfo.commitSHA);
-
-            if (this.input.pushInfo.commitSHA !== sha) {
-                Log.warn("GradeTask::execute() - Failed to checkout commit. Requested: " +
-                    this.input.pushInfo.commitSHA + " Actual: " + sha + ". Continuing to grade but results will likely" +
-                    "be wrong.");
-            }
 
             // Change the permissions so that the grading container can read the files.
             await this.workspace.chown();
