@@ -32,13 +32,20 @@ packages/portal/frontend/**/*.map
 
 .circleci/
 
+# Webstorm
+**/.idea
+
 # MacOS
 **/.DS_Store
 
 # Env
 **/.env
+**/.env*
 
 # Misc
 ssl/
 /data/
 .rsyncexclude
+testOutput/
+packages/autotest/testOutput/
+packages/autotest/test/data/
