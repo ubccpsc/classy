@@ -18,8 +18,14 @@
     "engines": {
         "node": ">= 8.9 < 9"
     },
+    "devDependencies": {
+        "@types/eventsource": "1.0.2",
+        "@types/chai-http": "3.0.5",
+        "chai-http": "4.2.0"
+    },
     "dependencies": {
         "dotenv": "4.0.0",
+        "eventsource": "1.0.7",
         "fs-extra": "5.0.0",
         "jszip": "3.1.5",
         "mongodb": "^3.0.2",
