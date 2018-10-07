@@ -1,5 +1,3 @@
-import {ContainerOutput} from "../../../common/types/ContainerTypes";
-
 export interface ObservablePromise<T> extends Promise<T> {
     isFulfilled: boolean;
     isRejected: boolean;
