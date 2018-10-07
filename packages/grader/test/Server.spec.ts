@@ -120,7 +120,7 @@ describe("Task Endpoint", async function() {
                 res = err;
             } finally {
                 expect(res).to.have.status(404);
-                expect(res).to.haveOwnProperty("body").equal("id -1 not found.");
+                expect(res).to.haveOwnProperty("body").equal("Error: id -1 not found.");
             }
         });
     });
