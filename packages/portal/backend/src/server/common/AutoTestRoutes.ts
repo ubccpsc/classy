@@ -386,7 +386,7 @@ export class AutoTestRoutes implements IREST {
             const ghAPI = config.getProp(ConfigKey.githubAPI);
             if (ghAPI.indexOf('github.com') > 0) {
                 Log.info('AutoTestRouteHandler::isWebhookFromGitHub(..) - accepted; host is github.com');
-                return true;
+                fulfill(true);
             }
 
             dns.lookup(ghAPI, (err, expectedAddr) => {
