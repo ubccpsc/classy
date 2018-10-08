@@ -1,8 +1,8 @@
 import Log from "../../../common/Log";
 import {ContainerInput, ContainerOutput, ContainerState} from "../../../common/types/ContainerTypes";
-import {IDockerContainer} from "../docker/DockerContainer";
-import {Repository} from "../git/Repository";
-import {Workspace} from "../storage/Workspace";
+import {IDockerContainer} from "./docker/DockerContainer";
+import {Repository} from "./git/Repository";
+import {Workspace} from "./storage/Workspace";
 
 export class GradeTask {
     private readonly id: string;

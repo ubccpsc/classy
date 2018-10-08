@@ -1,6 +1,6 @@
 import {exec} from "child_process";
-import {CommandResult, IDockerImageProperties} from "../Types";
-import {Command} from "../util/Command";
+import {CommandResult, IDockerImageProperties} from "../../Types";
+import {Command} from "../../util/Command";
 
 /* Simple wrapper for managing Docker images. */
 export interface IDockerImage {

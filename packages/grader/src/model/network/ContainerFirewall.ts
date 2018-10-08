@@ -1,4 +1,4 @@
-import {IFirewallRule} from "../Types";
+import {IFirewallRule} from "../../Types";
 import {IFirewallController} from "./FirewallController";
 
 // wrapper for FirewallController that maintains the container's chain result

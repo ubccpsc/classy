@@ -1,5 +1,5 @@
-import {CommandResult, IDockerNetworkOptions} from "../Types";
-import {Command} from "../util/Command";
+import {CommandResult, IDockerNetworkOptions} from "../../Types";
+import {Command} from "../../util/Command";
 
 export interface IDockerNetwork {
     create(name: string, options?: IDockerNetworkOptions): Promise<CommandResult>;

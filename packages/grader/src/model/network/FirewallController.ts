@@ -1,5 +1,5 @@
-import {CommandResult, IFirewallRule} from "../Types";
-import { Command } from "../util/Command";
+import {CommandResult, IFirewallRule} from "../../Types";
+import { Command } from "../../util/Command";
 
 export interface IFirewallController {
     appendRule(rule: IFirewallRule): Promise<CommandResult>;

@@ -1,8 +1,8 @@
 import {ContainerInput, ContainerOutput} from "../../../common/types/ContainerTypes";
-import {DockerContainer, IDockerContainer} from "../docker/DockerContainer";
-import {Repository} from "../git/Repository";
+import {DockerContainer, IDockerContainer} from "../model/docker/DockerContainer";
+import {Repository} from "../model/git/Repository";
 import {GradeTask} from "../model/GradeTask";
-import {Workspace} from "../storage/Workspace";
+import {Workspace} from "../model/storage/Workspace";
 
 interface Tasks {
     [id: string]: {
