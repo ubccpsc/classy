@@ -11,14 +11,30 @@ export class TaskRoute {
         this.taskController = new TaskController();
     }
 
-    public getTaskAttachments(req: restify.Request, res: restify.Response, next: restify.Next) {
+    public async getTaskAttachments(req: restify.Request, res: restify.Response, next: restify.Next) {
         try {
             const id = req.params.id;
-            const path = req.params.path;
+            const filePath = req.params["*"];
             const basePath = this.taskController.getAttachmentBasePath(id);
-            fs.createReadStream(basePath + "/" + path).pipe(res);
+            const path = basePath + "/" + filePath;
+            // await fs.access(path);
+
+            // fs.createReadStream(basePath + "/" + path).pipe(res).on("end", res.end);
+            const rs = fs.createReadStream(path);
+            rs.on("error", (err) => {
+                if (err.code === "ENOENT") {
+                    // File doesn't exist
+                    res.send(404, err.message);
+                } else {
+                    // problem while trying to read the file
+                    res.send(500, err.message);
+                }
+            });
+            rs.pipe(res);
+            // res.send(200, rs);
         } catch (err) {
-            res.send(404, "Attachment not found");
+            // task id not found
+            res.send(404, err.message);
         }
 
         next();
@@ -30,7 +46,7 @@ export class TaskRoute {
             const id: string = req.params.id;
             resultPromise = this.taskController.getResult(id);
         } catch (err) {
-            return res.send(404, err);
+            return res.send(404, err.message);
         }
 
         req.on("close", res.end);
@@ -68,7 +84,7 @@ export class TaskRoute {
             };
             res.json(201, result);
         } catch (err) {
-            res.json(500, err.toString());
+            res.json(500, err.message);
         }
 
         next();

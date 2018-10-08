@@ -62,7 +62,7 @@ export class TaskController {
 
     public getResult(id: string): Promise<ContainerOutput> {
         if (!this.tasks.hasOwnProperty(id)) {
-            throw new Error("id " + id + " not found.");
+            throw new Error("id " + id + " not found");
         }
 
         return this.tasks[id].result;

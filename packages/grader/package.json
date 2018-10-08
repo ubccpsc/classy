@@ -19,6 +19,7 @@
         "node": ">= 8.9 < 9"
     },
     "devDependencies": {
+        "@types/restify": "7.2.5",
         "@types/eventsource": "1.0.2",
         "@types/chai-http": "3.0.5",
         "chai-http": "4.2.0"
@@ -31,7 +32,7 @@
         "mongodb": "^3.0.2",
         "request": "^2.83.0",
         "request-promise-native": "^1.0.5",
-        "restify": "^6.3.4"
+        "restify": "7.2.1"
     },
     "scripts": {
         "build": "tsc",

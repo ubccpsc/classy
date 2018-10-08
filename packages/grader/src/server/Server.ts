@@ -17,7 +17,7 @@ export default class Server {
 
     private registerRoutes(): void {
         this.rest.get("/task/:id/notify", this.taskRoute.getTaskEvents.bind(this.taskRoute));
-        this.rest.get("/task/:id/attachment/:path", this.taskRoute.getTaskAttachments.bind(this.taskRoute));
+        this.rest.get("/task/:id/attachment/*", this.taskRoute.getTaskAttachments.bind(this.taskRoute));
         this.rest.post("/task", restify.plugins.bodyParser(), this.taskRoute.postTask.bind(this.taskRoute));
     }
 
