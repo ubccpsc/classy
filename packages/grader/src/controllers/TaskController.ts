@@ -28,7 +28,7 @@ export class TaskController {
         input.containerConfig.custom = {
             "--env":      [
                 `ASSIGNMENT=${input.delivId}`,
-                `USER_UID=${uid}`
+                `USER_UID=${uid}`  // this is for backwards compatibility with SDMM
             ],
             "--volume":   [
                 `${process.env.GRADER_HOST_DIR}/${id}/assn:/assn`,
@@ -43,9 +43,7 @@ export class TaskController {
         input.target.cloneURL = input.target.cloneURL.replace("://", `://${token}@`);
 
         const workspace: Workspace = new Workspace(process.env.GRADER_PERSIST_DIR + "/" + id, uid);
-        const container: IDockerContainer = new DockerContainer(input.containerConfig.dockerImage);
-        const repo: GitRepository = new GitRepository();
-        const result = new GradeTask(id, input, workspace, container, repo).execute();
+        const result = new GradeTask(id, input, workspace).execute();
 
         this.tasks[id] = {
             start: new Date(),

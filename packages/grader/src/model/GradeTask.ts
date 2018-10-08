@@ -1,6 +1,6 @@
 import Log from "../../../common/Log";
 import {ContainerInput, ContainerOutput, ContainerState} from "../../../common/types/ContainerTypes";
-import {IDockerContainer} from "./DockerContainer";
+import {DockerContainer, IDockerContainer} from "./DockerContainer";
 import {GitRepository} from "./GitRepository";
 import {Workspace} from "./Workspace";
 
@@ -12,12 +12,12 @@ export class GradeTask {
     private readonly repo: GitRepository;
     private containerState: string;
 
-    constructor(id: string, input: ContainerInput, workspace: Workspace, container: IDockerContainer, repo: GitRepository) {
+    constructor(id: string, input: ContainerInput, workspace: Workspace) {
         this.id = id;
         this.input = input;
         this.workspace = workspace;
-        this.container = container;
-        this.repo = repo;
+        this.container = new DockerContainer(input.containerConfig.dockerImage);
+        this.repo = new GitRepository();
     }
 
     public async execute(): Promise<ContainerOutput> {
