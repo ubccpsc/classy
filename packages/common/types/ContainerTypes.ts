@@ -28,7 +28,7 @@ export interface ContainerOutput {
     state: ContainerState;
     custom: {};
     // Used to retrieve attachments for the particular grading run.
-    executionId: string;
+    graderTaskId: string;
 }
 
 export interface CommitTarget {
@@ -91,7 +91,7 @@ export interface GradeReport {
     skipNames: string[];
 
     // The container can list files it generates here. Paths will be relative
-    // to the container's mounted output directory; use ContainerOutput::executionId
+    // to the container's mounted output directory; use ContainerOutput::graderTaskId
     // to construct the URL path to retrieve the attachment from the Grader
     // service. Note: The Grader service may append additional attachments
     // after the container completes (e.g. stdio.txt).

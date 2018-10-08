@@ -196,7 +196,7 @@ describe("ClassPortal Service", () => {
             postbackOnComplete: true,
             custom:             {},
             state:              ContainerState.SUCCESS,
-            executionId:        ""
+            graderTaskId:        ""
         };
 
         const input: ContainerInput = {

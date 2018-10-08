@@ -40,7 +40,7 @@ export class GradeTask {
             postbackOnComplete: true,
             custom:             {},
             state:              ContainerState.FAIL,
-            executionId:        this.id
+            graderTaskId:        this.id
         };
 
         try {
