@@ -1,5 +1,5 @@
-import {CommandResult, IDockerContainerOptions} from "../../Types";
-import {Command} from "../../util/Command";
+import {CommandResult, IDockerContainerOptions} from "../Types";
+import {Command} from "./Command";
 
 /**
  * Simple wrapper for Docker's container management commands with some basic extensions.

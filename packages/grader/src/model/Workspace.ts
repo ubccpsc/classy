@@ -1,6 +1,6 @@
 import {exec} from "child_process";
 import * as fs from "fs-extra";
-import Log from "../../../../common/Log";
+import Log from "../../../common/Log";
 
 export class Workspace {
     public readonly rootDir: string;

@@ -1,8 +1,8 @@
 import {ContainerInput, ContainerOutput} from "../../../common/types/ContainerTypes";
-import {DockerContainer, IDockerContainer} from "../model/docker/DockerContainer";
-import {Repository} from "../model/git/Repository";
+import {DockerContainer, IDockerContainer} from "../model/DockerContainer";
+import {GitRepository} from "../model/GitRepository";
 import {GradeTask} from "../model/GradeTask";
-import {Workspace} from "../model/storage/Workspace";
+import {Workspace} from "../model/Workspace";
 
 interface Tasks {
     [id: string]: {
@@ -44,7 +44,7 @@ export class TaskController {
 
         const workspace: Workspace = new Workspace(process.env.GRADER_PERSIST_DIR + "/" + id, uid);
         const container: IDockerContainer = new DockerContainer(input.containerConfig.dockerImage);
-        const repo: Repository = new Repository();
+        const repo: GitRepository = new GitRepository();
         const result = new GradeTask(id, input, workspace, container, repo).execute();
 
         this.tasks[id] = {

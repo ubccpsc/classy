@@ -1,18 +1,18 @@
 import Log from "../../../common/Log";
 import {ContainerInput, ContainerOutput, ContainerState} from "../../../common/types/ContainerTypes";
-import {IDockerContainer} from "./docker/DockerContainer";
-import {Repository} from "./git/Repository";
-import {Workspace} from "./storage/Workspace";
+import {IDockerContainer} from "./DockerContainer";
+import {GitRepository} from "./GitRepository";
+import {Workspace} from "./Workspace";
 
 export class GradeTask {
     private readonly id: string;
     private readonly input: ContainerInput;
     private readonly workspace: Workspace;
     private readonly container: IDockerContainer;
-    private readonly repo: Repository;
+    private readonly repo: GitRepository;
     private containerState: string;
 
-    constructor(id: string, input: ContainerInput, workspace: Workspace, container: IDockerContainer, repo: Repository) {
+    constructor(id: string, input: ContainerInput, workspace: Workspace, container: IDockerContainer, repo: GitRepository) {
         this.id = id;
         this.input = input;
         this.workspace = workspace;
