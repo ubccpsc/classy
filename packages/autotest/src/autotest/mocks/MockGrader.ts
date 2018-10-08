@@ -60,7 +60,7 @@ export class MockGrader implements IGrader {
                 postbackOnComplete: false,
                 custom:             {},
                 state:              ContainerState.SUCCESS,
-                executionId:        ""
+                graderTaskId:        ""
             };
 
             // just a hack to test postback events

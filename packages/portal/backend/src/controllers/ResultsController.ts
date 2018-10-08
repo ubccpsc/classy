@@ -131,8 +131,8 @@ export class ResultsController {
             return msg;
         }
 
-        if (typeof record.output.executionId === 'undefined' || typeof record.output.executionId !== 'string') {
-            const msg = 'output.executionId missing or not a string';
+        if (typeof record.output.graderTaskId === 'undefined' || typeof record.output.graderTaskId !== 'string') {
+            const msg = 'output.graderTaskId missing or not a string';
             Log.error('ResultsController::validateAutoTestResult(..) - ERROR: ' + msg);
             return msg;
         }

@@ -370,7 +370,7 @@ export abstract class AutoTest implements IAutoTest {
                     postbackOnComplete: false, // NOTE: should this be true? Crash(y) failures should probably be reported.
                     custom:             {},
                     state:              ContainerState.FAIL,
-                    executionId:        ""
+                    graderTaskId:        ""
                 };
                 try {
                     output = await rp(gradeServiceOpts);
