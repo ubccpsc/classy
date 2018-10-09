@@ -6,7 +6,7 @@ import {DatabaseController} from "../../controllers/DatabaseController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GradesController} from "../../controllers/GradesController";
 import {PersonController} from "../../controllers/PersonController";
-import {AuditLabel, Grade, Person} from "../../Types";
+import {AuditLabel, Grade, Person, PersonKind} from "../../Types";
 
 export class CSVParser {
 
@@ -69,7 +69,7 @@ export class CSVParser {
                         fName:         row.FIRST,
                         lName:         row.LAST,
 
-                        kind:   'student',
+                        kind:   PersonKind.STUDENT,
                         URL:    null,
                         labId:  row.LAB,
                         custom: {}

@@ -67,11 +67,13 @@ export class CS340Controller extends CourseController {
     }
 
     public async handleUnknownUser(githubUsername: string): Promise<Person | null> {
-        return super.handleUnknownUserDefault(githubUsername);
+        Log.info('CS340Controller::handleUnknownUser( ' + githubUsername + ' ) - using default CourseController impl');
+        return super.handleUnknownUser(githubUsername);
     }
 
     public handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean> {
-        return super.handleNewAutoTestGradeDefault(deliv, newGrade, existingGrade);
+        Log.info('CS340Controller::handleNewAutoTestGrade( ... ) - using default CourseController impl');
+        return super.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
     }
 
 }

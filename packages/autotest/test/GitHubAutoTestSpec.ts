@@ -4,7 +4,8 @@ import "mocha";
 import Config, {ConfigKey} from "../../common/Config";
 
 import Log from "../../common/Log";
-import {CommitTarget, IFeedbackGiven} from "../../common/types/AutoTestTypes";
+import {IFeedbackGiven} from "../../common/types/AutoTestTypes";
+import {CommitTarget} from "../../common/types/ContainerTypes";
 import Util from "../../common/Util";
 
 import {IClassPortal} from "../src/autotest/ClassPortal";
@@ -481,7 +482,7 @@ describe("GitHubAutoTest", () => {
             personId:  "cs310test"
         };
 
-        await data.savePush(TestData.inputRecordA.pushInfo);
+        await data.savePush(TestData.inputRecordA.target);
 
         await data.saveFeedbackGivenRecord(fg);
         let allData = await data.getAllData();

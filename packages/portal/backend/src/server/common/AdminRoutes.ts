@@ -50,10 +50,9 @@ export default class AdminRoutes implements IREST {
         server.get('/portal/admin/teams', AdminRoutes.isPrivileged, AdminRoutes.getTeams);
         server.get('/portal/admin/repositories', AdminRoutes.isPrivileged, AdminRoutes.getRepositories);
         server.get('/portal/admin/grades', AdminRoutes.isPrivileged, AdminRoutes.getGrades);
-
+        server.get('/portal/admin/dashboard/:delivId/:repoId', AdminRoutes.isPrivileged, AdminRoutes.getDashboard); // detailed results
         server.get('/portal/admin/results/:delivId/:repoId', AdminRoutes.isPrivileged, AdminRoutes.getResults); // result summaries
         server.get('/portal/admin/result/:delivId/:repoId/:sha', AdminRoutes.isPrivileged, AdminRoutes.getResult); // result stdio
-        server.get('/portal/admin/dashboard/:delivId/:repoId', AdminRoutes.isPrivileged, AdminRoutes.getDashboard); // detailed results
 
         // admin-only functions
         server.post('/portal/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
@@ -63,6 +62,7 @@ export default class AdminRoutes implements IREST {
         server.post('/portal/admin/course', AdminRoutes.isAdmin, AdminRoutes.postCourse);
         server.post('/portal/admin/provision', AdminRoutes.isAdmin, AdminRoutes.postProvision);
         server.post('/portal/admin/release', AdminRoutes.isAdmin, AdminRoutes.postRelease);
+        server.post('/portal/admin/withdraw', AdminRoutes.isAdmin, AdminRoutes.postWithdraw);
         server.del('/portal/admin/deliverable/:delivId', AdminRoutes.isAdmin, AdminRoutes.deleteDeliverable);
         server.del('/portal/admin/repository/:repoId', AdminRoutes.isAdmin, AdminRoutes.deleteRepository);
         server.del('/portal/admin/team/:teamId', AdminRoutes.isAdmin, AdminRoutes.deleteTeam);
@@ -452,6 +452,7 @@ export default class AdminRoutes implements IREST {
         // authentication handled by preceeding action in chain above (see registerRoutes)
 
         try {
+
             const user = req.params.user;
             const path = req.files.classlist.path; // this is brittle, but if it fails it will just trigger the exception
 
@@ -680,6 +681,29 @@ export default class AdminRoutes implements IREST {
         }
         // should never get here unless something goes wrong
         throw new Error("Release unsuccessful.");
+    }
+
+    public static postWithdraw(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::postWithdraw(..) - start');
+
+        // handled by isAdmin in the route chain
+        // const user = req.headers.user;
+        // const token = req.headers.token;
+
+        // no params
+
+        const cc = Factory.getCourseController(AdminRoutes.ghc);
+        cc.performStudentWithdraw().then(function(msg) {
+            Log.info('AdminRoutes::postWithdraw(..) - done; msg: ' + msg);
+            const payload: Payload = {success: msg}; // really shouldn't be an array, but it beats having another type
+            res.send(200, payload);
+            return next(true);
+        }).catch(function(err) {
+            Log.info('AdminRoutes::postWithdraw(..) - ERROR: ' + err.message); // intentionally info
+            const payload: Payload = {failure: {message: err.message, shouldLogout: false}};
+            res.send(400, payload);
+            return next(false);
+        });
     }
 
     public static postTeam(req: any, res: any, next: any) {

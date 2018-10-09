@@ -4,6 +4,7 @@ import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 
 import {DatabaseController} from "../../src/controllers/DatabaseController";
+import {PersonKind} from "../../src/Types";
 
 import '../GlobalSpec';
 import {Test} from "../GlobalSpec";
@@ -218,7 +219,7 @@ describe("DatabaseController", () => {
 
     // write new person
     it("Should be able to write a person.", async () => {
-        const record = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, 'student');
+        const record = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, PersonKind.STUDENT);
         const res = await dc.writePerson(record);
         expect(res).to.be.true;
     });
@@ -248,7 +249,7 @@ describe("DatabaseController", () => {
     // update person
     it("Should be able to update a person.", async () => {
         // get the person in there
-        const record = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, 'student');
+        const record = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, PersonKind.STUDENT);
         await dc.writePerson(record);
 
         let res = await dc.getPerson(Test.USER1.id);
@@ -272,7 +273,7 @@ describe("DatabaseController", () => {
     // write new team
     it("Should be able to write a team.", async () => {
         // prep
-        const p2 = Test.createPerson(Test.USER2.id, Test.USER2.csId, Test.USER2.github, 'student');
+        const p2 = Test.createPerson(Test.USER2.id, Test.USER2.csId, Test.USER2.github, PersonKind.STUDENT);
         let res = await dc.writePerson(p2);
         expect(res).to.be.true;
 

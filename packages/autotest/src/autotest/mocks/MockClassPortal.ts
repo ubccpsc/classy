@@ -1,6 +1,6 @@
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
-import {IAutoTestResult} from "../../../../common/types/AutoTestTypes";
+import {AutoTestResult} from "../../../../common/types/AutoTestTypes";
 import {
     AutoTestAuthTransport,
     AutoTestConfigTransport,
@@ -71,7 +71,7 @@ export class MockClassPortal implements IClassPortal {
         }
     }
 
-    public async sendResult(result: IAutoTestResult): Promise<Payload> {
+    public async sendResult(result: AutoTestResult): Promise<Payload> {
         Log.info("MockClassPortal::sendResult(..) - start");
         const name = Config.getInstance().getProp(ConfigKey.name);
         const testname = Config.getInstance().getProp(ConfigKey.testname);

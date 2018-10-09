@@ -13,7 +13,7 @@ import {PersonController} from "../../../src/controllers/PersonController";
 import {RepositoryController} from "../../../src/controllers/RepositoryController";
 import {SDMMController} from "../../../src/controllers/SDMM/SDMMController";
 import {TeamController} from "../../../src/controllers/TeamController";
-import {Person} from "../../../src/Types";
+import {Person, PersonKind} from "../../../src/Types";
 
 import {Test} from "../../GlobalSpec";
 import '../../GlobalSpec'; // load first
@@ -29,13 +29,7 @@ export class TestData {
     public REPOD0 = "sddmd0repotest";
     public REPOD1 = "sddmd1repotest";
 
-    // public USER = Test.USERNAMEGITHUB1; // "sddmdusertest";
-
     public PRNAME = "prd3id";
-
-    // public u1 = "sddmU1";
-    // public u2 = "sddmU2";
-    // public u3 = "sddmU3";
 
     public PERSON1: Person = null;
     public PERSON2: Person = null;
@@ -43,10 +37,10 @@ export class TestData {
     public PERSON4: Person = null;
 
     constructor() {
-        this.PERSON1 = Test.createPerson(Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, 'student');
-        this.PERSON2 = Test.createPerson(Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, 'student');
-        this.PERSON3 = Test.createPerson(Test.USERNAMEGITHUB3, Test.USERNAMEGITHUB3, Test.USERNAMEGITHUB3, 'student');
-        this.PERSON4 = Test.createPerson(Test.USERNAMEGITHUB4, Test.USERNAMEGITHUB4, Test.USERNAMEGITHUB4, 'student');
+        this.PERSON1 = Test.createPerson(Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, PersonKind.STUDENT);
+        this.PERSON2 = Test.createPerson(Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, PersonKind.STUDENT);
+        this.PERSON3 = Test.createPerson(Test.USERNAMEGITHUB3, Test.USERNAMEGITHUB3, Test.USERNAMEGITHUB3, PersonKind.STUDENT);
+        this.PERSON4 = Test.createPerson(Test.USERNAMEGITHUB4, Test.USERNAMEGITHUB4, Test.USERNAMEGITHUB4, PersonKind.STUDENT);
     }
 }
 
@@ -102,7 +96,7 @@ describe("SDMM: SDMMController", () => {
         await sc.handleUnknownUser(data.PERSON3.githubId); // provision user
         await sc.handleUnknownUser(data.PERSON4.githubId); // provision user
 
-        Log.test("Clearing state");
+        Log.test("Clearing result");
         gha = GitHubActions.getInstance(true);
 
         await gha.deleteRepo('TEST__X__p_TEST__X__t_' + Test.USERNAMEGITHUB1);
@@ -133,7 +127,7 @@ describe("SDMM: SDMMController", () => {
         Log.test("SDMMControllerSpec::after()");
         // Config.getInstance().setProp(ConfigKey.org, OLD_ORG);
 
-        Log.test("Clearing state");
+        Log.test("Clearing result");
         const dataC = DatabaseController.getInstance();
 
         const repos = await dataC.getRepositories();

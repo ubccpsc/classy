@@ -3,7 +3,8 @@ import * as fs from "fs-extra";
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 
-import {CommitTarget, IAutoTestResult, IFeedbackGiven} from "../../../../common/types/AutoTestTypes";
+import {AutoTestResult, IFeedbackGiven} from "../../../../common/types/AutoTestTypes";
+import {CommitTarget} from "../../../../common/types/ContainerTypes";
 import Util from "../../../../common/Util";
 import {IDataStore} from "../DataStore";
 
@@ -132,7 +133,7 @@ export class MockDataStore implements IDataStore {
         return null;
     }
 
-    public async saveResult(outputInfo: IAutoTestResult): Promise<void> {
+    public async saveResult(outputInfo: AutoTestResult): Promise<void> {
         Log.info("MockDataStore::saveResult(..) - start");
         try {
             const start = Date.now();
@@ -149,13 +150,13 @@ export class MockDataStore implements IDataStore {
         }
     }
 
-    public async getResult(delivId: string, repoId: string): Promise<IAutoTestResult | null> {
+    public async getResult(delivId: string, repoId: string): Promise<AutoTestResult | null> {
         Log.info("MockDataStore::getResult(..) - start");
         try {
             const start = Date.now();
 
             // read
-            const outRecords: IAutoTestResult[] = await fs.readJSON(this.RECORD_PATH);
+            const outRecords: AutoTestResult[] = await fs.readJSON(this.RECORD_PATH);
             Log.info("MockDataStore::getResult(..) - # records: " + outRecords.length);
             // find and return
             for (const record of outRecords) {
@@ -244,7 +245,7 @@ export class MockDataStore implements IDataStore {
     }
 
     public async getAllData(): Promise<{
-        records: IAutoTestResult[],
+        records: AutoTestResult[],
         comments: CommitTarget[],
         pushes: CommitTarget[],
         feedback: IFeedbackGiven[]
@@ -253,7 +254,7 @@ export class MockDataStore implements IDataStore {
 
         try {
             Log.info("MockDataStore::getAllData() - before records");
-            const records: IAutoTestResult[] = await fs.readJSON(this.RECORD_PATH);
+            const records: AutoTestResult[] = await fs.readJSON(this.RECORD_PATH);
             Log.info("MockDataStore::getAllData() - before comments");
             const comments: CommitTarget[] = await fs.readJSON(this.COMMENT_PATH);
             Log.info("MockDataStore::getAllData() - before pushes");

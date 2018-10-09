@@ -14,7 +14,7 @@ import {
 import {GradePayload} from "../../../../../common/types/SDMMTypes";
 import Util from "../../../../../common/Util";
 import {Factory} from "../../Factory";
-import {Deliverable, Grade, Person, Repository, Team} from "../../Types";
+import {Deliverable, Grade, Person, PersonKind, Repository, Team} from "../../Types";
 import {DatabaseController} from "../DatabaseController";
 import {DeliverablesController} from "../DeliverablesController";
 import {GitHubActions, IGitHubActions} from "../GitHubActions";
@@ -290,7 +290,7 @@ export class AssignmentController {
         const allPeople: Person[] = await this.pc.getAllPeople();
         const allStudents: Person[] = [];
         for (const person of allPeople) {
-            if (person.kind === "student") {
+            if (person.kind === PersonKind.STUDENT) {
                 allStudents.push(person);
             }
         }
@@ -791,7 +791,7 @@ export class AssignmentController {
         const allPeople: Person[] = await this.pc.getAllPeople();
         const allStudents: Person[] = [];
         for (const person of allPeople) {
-            if (person.kind === "student") {
+            if (person.kind === PersonKind.STUDENT) {
                 allStudents.push(person);
             }
         }
@@ -1230,7 +1230,7 @@ export class AssignmentController {
         const allPeople: Person[] = await this.pc.getAllPeople();
         const allStudents: Person[] = [];
         for (const person of allPeople) {
-            if (person.kind === 'student') {
+            if (person.kind === PersonKind.STUDENT) {
                 allStudents.push(person);
             }
         }
@@ -1296,7 +1296,7 @@ export class AssignmentController {
         const allPeople: Person[] = await this.pc.getAllPeople();
         const allStudents: Person[] = [];
         for (const person of allPeople) {
-            if (person.kind === 'student') {
+            if (person.kind === PersonKind.STUDENT) {
                 allStudents.push(person);
             }
         }

@@ -46,10 +46,10 @@ describe("Queue", () => {
         res = q.push(TestData.inputRecordA);
         expect(res).to.equal(1);
 
-        res = q.indexOf(TestData.inputRecordA.pushInfo.commitURL);
+        res = q.indexOf(TestData.inputRecordA.target.commitURL);
         expect(res).to.equal(0);
 
-        res = q.remove(TestData.inputRecordA.pushInfo.commitURL);
+        res = q.remove(TestData.inputRecordA.target.commitURL);
         expect(res).to.not.be.null;
         expect(q.length()).to.equal(0);
     });

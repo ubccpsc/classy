@@ -3,7 +3,7 @@ import "mocha";
 
 import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
-import {IContainerInput, IContainerOutput} from "../../../common/types/AutoTestTypes";
+import {ContainerInput, ContainerOutput, ContainerState} from "../../../common/types/ContainerTypes";
 import {GradePayload} from "../../../common/types/SDMMTypes";
 import Util from "../../../common/Util";
 
@@ -14,7 +14,7 @@ import {GradesController} from "../src/controllers/GradesController";
 import {PersonController} from "../src/controllers/PersonController";
 import {RepositoryController} from "../src/controllers/RepositoryController";
 import {TeamController} from "../src/controllers/TeamController";
-import {Auth, Course, Deliverable, Grade, Person, Repository, Result, Team} from "../src/Types";
+import {Auth, Course, Deliverable, Grade, Person, PersonKind, Repository, Result, Team} from "../src/Types";
 
 if (typeof it === 'function') {
     // only if we're running in mocha
@@ -79,11 +79,11 @@ export class Test {
 
         await Test.prepareDeliverables();
 
-        let person = await Test.createPerson(Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, 'student');
+        let person = await Test.createPerson(Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, PersonKind.STUDENT);
         await dbc.writePerson(person);
-        person = await Test.createPerson(Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, 'student');
+        person = await Test.createPerson(Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, PersonKind.STUDENT);
         await dbc.writePerson(person);
-        person = await Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.id, Test.ADMIN1.id, 'adminstaff');
+        person = await Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.id, Test.ADMIN1.id, PersonKind.ADMINSTAFF);
         await dbc.writePerson(person);
 
         await Test.prepareAuth(); // adds admin token (and user1 which is not real)
@@ -122,33 +122,33 @@ export class Test {
         Log.test("Test::preparePeople() - start");
         const dc = DatabaseController.getInstance();
 
-        let p = Test.createPerson(Test.REALUSER1.id, Test.REALUSER1.csId, Test.REALUSER1.github, 'student');
+        let p = Test.createPerson(Test.REALUSER1.id, Test.REALUSER1.csId, Test.REALUSER1.github, PersonKind.STUDENT);
         await dc.writePerson(p);
 
-        p = Test.createPerson(Test.REALUSER2.id, Test.REALUSER2.csId, Test.REALUSER2.github, 'student');
+        p = Test.createPerson(Test.REALUSER2.id, Test.REALUSER2.csId, Test.REALUSER2.github, PersonKind.STUDENT);
         await dc.writePerson(p);
 
-        p = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, 'student');
+        p = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, PersonKind.STUDENT);
         p.labId = 'l1a';
         await dc.writePerson(p);
 
-        p = Test.createPerson(Test.USER2.id, Test.USER2.csId, Test.USER2.github, 'student');
+        p = Test.createPerson(Test.USER2.id, Test.USER2.csId, Test.USER2.github, PersonKind.STUDENT);
         p.labId = 'l1a';
         await dc.writePerson(p);
 
-        p = Test.createPerson(Test.USER3.id, Test.USER3.csId, Test.USER3.github, 'student');
+        p = Test.createPerson(Test.USER3.id, Test.USER3.csId, Test.USER3.github, PersonKind.STUDENT);
         p.labId = 'l1a';
         await dc.writePerson(p);
 
-        p = Test.createPerson(Test.USER4.id, Test.USER4.csId, Test.USER4.github, 'student');
+        p = Test.createPerson(Test.USER4.id, Test.USER4.csId, Test.USER4.github, PersonKind.STUDENT);
         p.labId = 'l2c';
         await dc.writePerson(p);
 
-        p = Test.createPerson(Test.USER5.id, Test.USER5.csId, Test.USER5.github, 'student');
+        p = Test.createPerson(Test.USER5.id, Test.USER5.csId, Test.USER5.github, PersonKind.STUDENT);
         p.labId = 'l2d';
         await dc.writePerson(p);
 
-        p = Test.createPerson(Test.USER6.id, Test.USER6.csId, Test.USER6.github, 'student');
+        p = Test.createPerson(Test.USER6.id, Test.USER6.csId, Test.USER6.github, PersonKind.STUDENT);
         p.labId = 'l2d';
         await dc.writePerson(p);
 
@@ -341,7 +341,7 @@ export class Test {
         return grade;
     }
 
-    public static createPerson(id: string, csId: string, githubId: string, kind: string | null): Person {
+    public static createPerson(id: string, csId: string, githubId: string, kind: PersonKind | null): Person {
         const p: Person = {
             id:            id,
             csId:          csId,
@@ -564,7 +564,7 @@ export class Test {
             }
         }
 
-        const output: IContainerOutput = {
+        const output: ContainerOutput = {
             // commitURL:          commitURL,
             timestamp:          ts,
             report:             {
@@ -576,16 +576,18 @@ export class Test {
                 errorNames:   errorNames,
                 skipNames:    skipNames,
                 custom:       {},
-                feedback:     'feedback'
+                feedback:     'feedback',
+                result:       'SUCCESS',
+                attachments:  []
             },
             postbackOnComplete: true,
             custom:             {},
-            attachments:        [],
-            state:              'SUCCESS' // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
+            state:              ContainerState.SUCCESS,
+            graderTaskId:        ""
         };
 
-        const input: IContainerInput = {
-            pushInfo:        {
+        const input: ContainerInput = {
+            target:          {
                 delivId: delivId,
                 repoId:  repoId,
 

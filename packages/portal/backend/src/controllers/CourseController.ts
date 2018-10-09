@@ -15,7 +15,7 @@ import {
     TeamTransport
 } from '../../../../common/types/PortalTypes';
 import Util from "../../../../common/Util";
-import {AuditLabel, Course, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
+import {AuditLabel, Course, Deliverable, Grade, Person, PersonKind, Repository, Result, Team} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
 import {DeliverablesController} from "./DeliverablesController";
@@ -106,7 +106,7 @@ export abstract class CourseController implements ICourseController {
         this.gh = ghController;
     }
 
-    public abstract async handleUnknownUser(githubUsername: string): Promise<Person | null>;
+    // public abstract async handleUnknownUser(githubUsername: string): Promise<Person | null>;
 
     /**
      * This endpoint just lets subclasses change the behaviour for when users are unknown.
@@ -117,12 +117,12 @@ export abstract class CourseController implements ICourseController {
      * @param {string} githubUsername
      * @returns {Promise<Person | null>}
      */
-    public async handleUnknownUserDefault(githubUsername: string): Promise<Person | null> {
+    public async handleUnknownUser(githubUsername: string): Promise<Person | null> {
         Log.warn("CourseController::handleUnknownUser( " + githubUsername + " ) - person unknown; returning null");
         return null;
     }
 
-    public abstract handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean>;
+    // public abstract handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean>;
 
     /**
      * Default behaviour is that if the deadline has not passed, and the grade is higher, accept it.
@@ -132,7 +132,7 @@ export abstract class CourseController implements ICourseController {
      * @param {Grade} existingGrade
      * @returns {boolean}
      */
-    public handleNewAutoTestGradeDefault(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean> {
+    public handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean> {
         Log.info("CourseController:handleNewAutoTestGrade( " + deliv.id + ", " +
             newGrade.personId + ", " + newGrade.score + ", ... ) - start");
         if ((existingGrade === null || newGrade.score > existingGrade.score) && newGrade.timestamp < deliv.closeTimestamp) {
@@ -230,7 +230,7 @@ export abstract class CourseController implements ICourseController {
         const people = await this.pc.getAllPeople();
         const students: StudentTransport[] = [];
         for (const person of people) {
-            if (person.kind === 'student') {
+            if (person.kind === PersonKind.STUDENT) {
                 const studentTransport = {
                     id:         person.id,
                     firstName:  person.fName,
@@ -327,7 +327,7 @@ export abstract class CourseController implements ICourseController {
         const results: AutoTestDashboardTransport[] = [];
         const allResults = await this.matchResults(reqDelivId, reqRepoId);
         for (const result of allResults) {
-            const repoId = result.input.pushInfo.repoId;
+            const repoId = result.input.target.repoId;
             if (results.length <= NUM_RESULTS) {
 
                 const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
@@ -374,8 +374,8 @@ export abstract class CourseController implements ICourseController {
                     delivId:      result.delivId,
                     state:        result.output.state,
                     timestamp:    result.output.timestamp,
-                    commitSHA:    result.input.pushInfo.commitSHA,
-                    commitURL:    result.input.pushInfo.commitURL,
+                    commitSHA:    result.input.target.commitSHA,
+                    commitURL:    result.input.target.commitURL,
                     scoreOverall: scoreOverall,
                     scoreCover:   scoreCover,
                     scoreTests:   scoreTest,
@@ -406,7 +406,7 @@ export abstract class CourseController implements ICourseController {
         for (const result of allResults) {
             // const repo = await rc.getRepository(result.repoId); // this happens a lot and ends up being too slow
             const delivId = result.delivId;
-            const repoId = result.input.pushInfo.repoId;
+            const repoId = result.input.target.repoId;
 
             if ((reqDelivId === 'any' || delivId === reqDelivId) &&
                 (reqRepoId === 'any' || repoId === reqRepoId) &&
@@ -447,6 +447,29 @@ export abstract class CourseController implements ICourseController {
     }
 
     /**
+     * Gets the list of GitHub ids associated with the 'students' team on GitHub
+     * and marks them as PersonKind.WITHDRAWN. Does nothing if the students team
+     * does not exist or is empty.
+     *
+     * @returns {Promise<string>} A message summarizing the outcome of the operation.
+     */
+    public async performStudentWithdraw(): Promise<string> {
+        Log.info("CourseController::performStudentWithdraw() - start");
+        const gha = GitHubActions.getInstance(true);
+        const teamNum = await gha.getTeamNumber('students');
+        const registeredGithubIds = await gha.getTeamMembers(teamNum);
+
+        if (registeredGithubIds.length > 0) {
+            const pc = new PersonController();
+            const msg = await pc.markStudentsWithdrawn(registeredGithubIds);
+            Log.info("CourseController::performStudentWithdraw() - done; msg: " + msg);
+            return msg;
+        } else {
+            throw new Error("No students specified in the 'students' team on GitHub; operation aborted.");
+        }
+    }
+
+    /**
      * Gets the results associated with the course.
      * @param reqDelivId ('any' for *)
      * @param reqRepoId ('any' for *)
@@ -461,7 +484,7 @@ export abstract class CourseController implements ICourseController {
         for (const result of allResults) {
             // const repo = await rc.getRepository(result.repoId); // this happens a lot and ends up being too slow
 
-            const repoId = result.input.pushInfo.repoId;
+            const repoId = result.input.target.repoId;
             if (results.length <= NUM_RESULTS) {
 
                 const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
@@ -490,8 +513,8 @@ export abstract class CourseController implements ICourseController {
                     delivId:      result.delivId,
                     state:        result.output.state,
                     timestamp:    result.output.timestamp,
-                    commitSHA:    result.input.pushInfo.commitSHA,
-                    commitURL:    result.input.pushInfo.commitURL,
+                    commitSHA:    result.input.target.commitSHA,
+                    commitURL:    result.input.target.commitURL,
                     scoreOverall: scoreOverall,
                     scoreCover:   scoreCover,
                     scoreTests:   scoreTest
@@ -848,24 +871,38 @@ export abstract class CourseController implements ICourseController {
 
     public abstract computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}>;
 
-    // /**
-    //  * This is a method that subtypes can call from computeNames if they do not want to implement it themselves.
-    //  *
-    //  * @param {Deliverable} deliv
-    //  * @param {Person[]} people
-    //  * @returns {Promise<{teamName: string | null; repoName: string | null}>}
-    //  */
-    // public async computeNamesDefault(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}> {
+    // NOTE: the default implementation is currently broken; do not use it.
+    /**
+     * This is a method that subtypes can call from computeNames if they do not want to implement it themselves.
+     *
+     * @param {Deliverable} deliv
+     * @param {Person[]} people
+     * @returns {Promise<{teamName: string | null; repoName: string | null}>}
+     */
+    // public async computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}> {
     //     Log.info("CourseController::computeNames(..) - start; # people: " + people.length);
-    //     const repos = await this.dbc.getRepositories();
     //
     //     // TODO: this code has a fatal flaw; if the team/repo exists already for the specified people,
     //     // it is correct to return those.
     //
+    //     let repoPrefix = '';
+    //     if (deliv.repoPrefix.length > 0) {
+    //         repoPrefix = deliv.repoPrefix;
+    //     } else {
+    //         repoPrefix = deliv.id;
+    //     }
+    //
+    //     let teamPrefix = '';
+    //     if (deliv.teamPrefix.length > 0) {
+    //         teamPrefix = deliv.teamPrefix;
+    //     } else {
+    //         teamPrefix = deliv.id;
+    //     }
     //     // the repo name and the team name should be the same, so just use the repo name
+    //     const repos = await this.dbc.getRepositories();
     //     let repoCount = 0;
     //     for (const repo of repos) {
-    //         if (repo.id.startsWith(deliv.repoPrefix)) {
+    //         if (repo.id.startsWith(repoPrefix)) {
     //             repoCount++;
     //         }
     //     }
@@ -874,8 +911,8 @@ export abstract class CourseController implements ICourseController {
     //
     //     let ready = false;
     //     while (!ready) {
-    //         repoName = deliv.repoPrefix + '_' + repoCount;
-    //         teamName = deliv.teamPrefix + '_' + repoCount;
+    //         repoName = repoPrefix + '_' + repoCount;
+    //         teamName = teamPrefix + '_' + repoCount;
     //         const r = await this.dbc.getRepository(repoName);
     //         const t = await this.dbc.getTeam(teamName);
     //         if (r === null && t === null) {
