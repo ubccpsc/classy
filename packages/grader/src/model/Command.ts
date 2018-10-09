@@ -7,18 +7,20 @@ export interface ICommand {
 }
 
 export class Command implements ICommand {
-    private cmdName: string;
+    // Assign spawn to a member variable so we can substitute a mock when testing
+    private readonly spawn: (command: string, args: string[], options: SpawnOptions) => ChildProcess;
+    private readonly cmdName: string;
 
     constructor(name: string) {
         this.cmdName = name;
+        this.spawn = spawn;
     }
 
     public async executeCommand(args: string[], options: SpawnOptions = {}): Promise<CommandResult> {
         Log.trace(`Command::executeCommand(..) -> ${this.cmdName} ${args.join(" ")}`);
         return new Promise<CommandResult>((resolve, reject) => {
             let output: Buffer = Buffer.allocUnsafe(0);
-            // options["uid"] = 0;
-            const cmd: ChildProcess = spawn(this.cmdName, args, options);
+            const cmd: ChildProcess = this.spawn(this.cmdName, args, options);
             cmd.on(`error`, (err) => {
                 reject(err);
             });

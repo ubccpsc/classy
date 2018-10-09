@@ -40,7 +40,7 @@ export class GradeTask {
             postbackOnComplete: true,
             custom:             {},
             state:              ContainerState.FAIL,
-            graderTaskId:        this.id
+            graderTaskId:       this.id
         };
 
         try {
@@ -82,7 +82,7 @@ export class GradeTask {
                         out.postbackOnComplete = shouldPostback;
                         out.state = ContainerState.SUCCESS;
                     } catch (err) {
-                        Log.error('GradeWorker::execute() - ERROR Reading grade report file produced be grading container' +
+                        Log.error("GradeWorker::execute() - ERROR Reading grade report file produced by grading container " +
                             `${this.container.shortId}. ${err}`);
                         out.report.feedback = "Failed to read grade report.";
                         out.state = ContainerState.NO_REPORT;
@@ -125,22 +125,26 @@ export class GradeTask {
         await container.start();
 
         // Set a timer to kill the container if it doesn't finish in the allotted time
-        let didFinish = false;
+        let timer: any;
         if (this.input.containerConfig.maxExecTime > 0) {
-            setTimeout(async () => {
-                if (!didFinish) {
-                    Log.trace("GradeTask::runContainer(..) - Container " + container.shortId +
-                        " was stopped after exceeding maxExecTime.");
-                    this.containerState = "TIMEOUT";
-                    const [exitCode] = await container.stop();
-                    return exitCode;
-                }
+            timer = setTimeout(async () => {
+                Log.trace("GradeTask::runContainer(..) - Container " + container.shortId +
+                    " was stopped after exceeding maxExecTime.");
+                this.containerState = "TIMEOUT";
+                const [exitCode] = await container.stop();
+                return exitCode;
             }, this.input.containerConfig.maxExecTime * 1000);
         }
 
-        // cmdOut is the exit code from the container
-        const [, cmdOut] = await container.wait();
-        didFinish = true;
+        let cmdOut: string;
+        try {
+            // cmdOut is the exit code from the container
+            [, cmdOut] = await container.wait();
+        } catch (err) {
+            throw err;
+        } finally {
+            clearTimeout(timer);
+        }
         return Number(cmdOut);
     }
 }

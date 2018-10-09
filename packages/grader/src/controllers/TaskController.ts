@@ -1,6 +1,4 @@
 import {ContainerInput, ContainerOutput} from "../../../common/types/ContainerTypes";
-import {DockerContainer, IDockerContainer} from "../model/DockerContainer";
-import {GitRepository} from "../model/GitRepository";
 import {GradeTask} from "../model/GradeTask";
 import {Workspace} from "../model/Workspace";
 
