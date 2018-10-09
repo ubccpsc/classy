@@ -22,7 +22,8 @@
         "@types/restify": "7.2.5",
         "@types/eventsource": "1.0.2",
         "@types/chai-http": "3.0.5",
-        "chai-http": "4.2.0"
+        "chai-http": "4.2.0",
+        "mock-spawn": "0.2.6"
     },
     "dependencies": {
         "dotenv": "4.0.0",
