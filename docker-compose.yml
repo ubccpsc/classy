@@ -33,6 +33,7 @@ services:
         restart: always
         user: "${UID}"
     db:
+        command: --quiet
         container_name: ${CONTAINER_NAME_DATABASE}
         environment:
           - MONGO_INITDB_ROOT_USERNAME
