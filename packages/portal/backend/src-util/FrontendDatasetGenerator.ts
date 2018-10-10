@@ -6,6 +6,7 @@ import {GitHubActions} from "../src/controllers/GitHubActions";
 import {GitHubController} from "../src/controllers/GitHubController";
 import {TeamController} from "../src/controllers/TeamController";
 import {Factory} from "../src/Factory";
+import {PersonKind} from "../src/Types";
 import {Test} from "../test/GlobalSpec";
 
 export class FrontendDatasetGenerator {
@@ -59,20 +60,20 @@ export class FrontendDatasetGenerator {
         await this.dc.writePerson(person);
 
         person = Test.getPerson(Test.USER1.id);
-        person.kind = 'student';
+        person.kind = PersonKind.STUDENT;
         await this.dc.writePerson(person);
 
         person = Test.getPerson(Test.USER2.id);
-        person.kind = 'student';
+        person.kind = PersonKind.STUDENT;
         await this.dc.writePerson(person);
 
         person = Test.getPerson(Test.USER3.id);
-        person.kind = 'student';
+        person.kind = PersonKind.STUDENT;
         await this.dc.writePerson(person);
 
         for (let i = 0; i < 50; i++) {
             person = Test.getPerson('student-' + i);
-            person.kind = 'student';
+            person.kind = PersonKind.STUDENT;
             await this.dc.writePerson(person);
         }
     }

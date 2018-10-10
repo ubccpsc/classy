@@ -1,5 +1,5 @@
 import {expect} from "chai";
-import {IContainerOutput} from "../../common/types/AutoTestTypes";
+import {ContainerOutput, ContainerState} from "../../common/types/ContainerTypes";
 
 // class ContainerMock implements IDockerContainer {
 //     public id: string;
@@ -9,7 +9,7 @@ import {IContainerOutput} from "../../common/types/AutoTestTypes";
 
 // The most important requirement is that the GradeTask should ALWAYS produce a valid IContainerOutput record.
 describe("GradeTask", function() {
-    const sampleOutput: IContainerOutput = {
+    const sampleOutput: ContainerOutput = {
         timestamp:          Date.now(),
         report:             {
             scoreOverall: 0,
@@ -20,15 +20,17 @@ describe("GradeTask", function() {
             skipNames:    [],
             failNames:    [],
             errorNames:   [],
-            custom:       {}
+            custom:       {},
+            result:       "SUCCESS",
+            attachments:  [],
         },
         postbackOnComplete: false,
         custom:             {},
-        attachments:        [],
-        state:              "FAIL"
+        state:              ContainerState.SUCCESS,
+        graderTaskId:        ""
     };
 
-    function isValid(output: IContainerOutput) {
+    function isValid(output: ContainerOutput) {
         return expect(output).to.be.an("object").that.has.all.keys(sampleOutput);
     }
 

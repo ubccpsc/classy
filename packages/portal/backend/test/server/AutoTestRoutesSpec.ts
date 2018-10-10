@@ -459,7 +459,7 @@ describe('AutoTest Routes', function() {
     });
 
     // only for debugging webhook code; will always fail IP check
-    it('Should be able to receive a webhook event, but it will always fail because of IP mismatch', async function() {
+    it.skip('Should be able to receive a webhook event, but it will always fail because of IP mismatch', async function() {
 
         let response = null;
         let body: Payload = {};
@@ -477,9 +477,9 @@ describe('AutoTest Routes', function() {
 
         // awkward: or check (so offline tests can still pass)
         const msg = body.failure.message;
-        const index0 = msg.indexOf('request not from expected host');
-        const index1 = msg.indexOf('getaddrinfo ENOTFOUND');
-        const index2 = msg.indexOf('connect ECONNREFUSED');
+        const index0 = msg.indexOf('127.0.0.1 !== expected addr'); // local testing
+        const index1 = msg.indexOf('getaddrinfo ENOTFOUND'); // unknown
+        const index2 = msg.indexOf('connect ECONNREFUSED'); // offline testing
         expect(index0 >= 0 || index1 >= 0 || index2 >= 0).to.be.true;
     });
 

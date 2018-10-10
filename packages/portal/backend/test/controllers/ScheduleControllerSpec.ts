@@ -14,7 +14,7 @@ describe("ScheduleController", () => {
     const sc: ScheduleController = ScheduleController.getInstance();
 
     before(async () => {
-        // do something before
+        // do something  before
         // TODO: prep the database
         Log.test("ScheduleController::before - start");
 

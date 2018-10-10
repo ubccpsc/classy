@@ -14,7 +14,7 @@ import {GradesController} from "../../../src/controllers/GradesController";
 import {PersonController} from "../../../src/controllers/PersonController";
 import {RepositoryController} from "../../../src/controllers/RepositoryController";
 import {TeamController} from "../../../src/controllers/TeamController";
-import {Deliverable, Grade, Repository, Team} from "../../../src/Types";
+import {Deliverable, Grade, PersonKind, Repository, Team} from "../../../src/Types";
 
 import {Test} from "../../GlobalSpec";
 import '../../GlobalSpec';
@@ -657,7 +657,7 @@ describe.skip("CS340: AssignmentController", () => {
             const totalStudentCount = assignStatus.totalStudents;
             const studentReposCount = assignStatus.studentRepos;
 
-            const p = Test.createPerson(Test.REALUSER3.id, Test.REALUSER3.csId, Test.REALUSER3.github, "student");
+            const p = Test.createPerson(Test.REALUSER3.id, Test.REALUSER3.csId, Test.REALUSER3.github, PersonKind.STUDENT);
             await db.writePerson(p);
 
             const newAssignStatus: {
@@ -711,7 +711,7 @@ describe.skip("CS340: AssignmentController", () => {
             expect(assignStatus.assignmentStatus).to.equal(AssignmentStatus.RELEASED);
             expect(assignStatus.totalStudents).to.equal(assignStatus.studentRepos);
 
-            const p = Test.createPerson(Test.REALUSER3.id, Test.REALUSER3.csId, Test.REALUSER3.github, "student");
+            const p = Test.createPerson(Test.REALUSER3.id, Test.REALUSER3.csId, Test.REALUSER3.github, PersonKind.STUDENT);
             await db.writePerson(p);
 
             const assignStatus2: {

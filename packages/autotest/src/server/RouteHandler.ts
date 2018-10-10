@@ -2,7 +2,7 @@ import * as restify from "restify";
 import Config, {ConfigKey} from "../../../common/Config";
 
 import Log from "../../../common/Log";
-import {CommitTarget} from "../../../common/types/AutoTestTypes";
+import {CommitTarget} from "../../../common/types/ContainerTypes";
 import Util from "../../../common/Util";
 
 import {AutoTest} from "../autotest/AutoTest";

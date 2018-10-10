@@ -377,7 +377,7 @@ export class CS340View extends StudentView {
         // }
 
         public showError(failure: any) { // FailurePayload
-            Log.error("SDDM::showError(..) - failure: " + JSON.stringify(failure));
+            Log.error("SDMM::showError(..) - failure: " + JSON.stringify(failure));
             if (typeof failure === 'string') {
                 UI.showAlert(failure);
             } else if (typeof failure.failure !== 'undefined') {

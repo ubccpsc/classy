@@ -4,7 +4,7 @@ import * as restify from 'restify';
 
 import Config, {ConfigKey} from "../../../../../common/Config";
 import Log from "../../../../../common/Log";
-import {IAutoTestResult} from "../../../../../common/types/AutoTestTypes";
+import {AutoTestResult} from "../../../../../common/types/AutoTestTypes";
 import {
     AutoTestAuthPayload,
     AutoTestConfigPayload,
@@ -207,7 +207,7 @@ export class AutoTestRoutes implements IREST {
                 return success;
             } else {
                 Log.info('AutoTestRouteHandler::performPostResult(..) - not accepting new results for delivId: ' + result.delivId +
-                    '; deadline: ' + new Date(deliv.closeTimestamp) + "; result ts: " + new Date(result.input.pushInfo.timestamp));
+                    '; deadline: ' + new Date(deliv.closeTimestamp) + "; result ts: " + new Date(result.input.target.timestamp));
                 return false;
             }
         }
@@ -295,7 +295,7 @@ export class AutoTestRoutes implements IREST {
             Log.info('AutoTestRouteHandler::atGetResult(..) - delivId: ' + delivId + '; repoId: ' + repoId + '; sha: ' + sha);
 
             const rc = new ResultsController();
-            rc.getResult(delivId, repoId, sha).then(function(result: IAutoTestResult) {
+            rc.getResult(delivId, repoId, sha).then(function(result: AutoTestResult) {
                 if (result !== null) {
                     payload = {success: [result]};
                 } else {
@@ -383,14 +383,20 @@ export class AutoTestRoutes implements IREST {
                 Log.trace('AutoTestRouteHandler::isWebhookFromGitHub(..) - start; remoteAddress from: ' + remoteAddr);
             }
 
-            dns.lookup(config.getProp(ConfigKey.githubAPI), (err, expectedAddr) => {
+            const ghAPI = config.getProp(ConfigKey.githubAPI);
+            if (ghAPI.indexOf('github.com') > 0) {
+                Log.info('AutoTestRouteHandler::isWebhookFromGitHub(..) - accepted; host is github.com');
+                fulfill(true);
+            }
+
+            dns.lookup(ghAPI, (err, expectedAddr) => {
                 if (err) {
                     Log.error('AutoTestRouteHandler::isWebhookFromGitHub(..) - ERROR: ' + err);
                     reject(err);
                 }
 
                 // use indexOf here because address sometimes reports like: ::ffff:172.18.0.2
-                if (Date.now() > 0 || expectedAddr !== null && remoteAddr.indexOf(expectedAddr) >= 0) { // TODO: remove always true
+                if (expectedAddr !== null && remoteAddr.indexOf(expectedAddr) >= 0) {
                     Log.info('AutoTestRouteHandler::isWebhookFromGitHub(..) - accepted; provided: ' +
                         remoteAddr + '; expected: ' + expectedAddr + '; took: ' + Util.took(start));
                     fulfill(true);

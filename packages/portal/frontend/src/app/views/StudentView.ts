@@ -181,9 +181,9 @@ export abstract class StudentView implements IView {
                     sortDown:    false, // Whether the column should initially sort descending or ascending.
                     style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
                 }
-                // could be state in the future (provisioned | detached)
+                // could be result in the future (provisioned | detached)
                 // {
-                //     id:          'state',
+                //     id:          'result',
                 //     text:        'State',
                 //     sortable:    false,
                 //     defaultSort: false,

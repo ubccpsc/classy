@@ -69,7 +69,7 @@ export class App {
             document.addEventListener('init', function(event) {
                 const page = event.target as OnsPageElement;
 
-                // update login button state
+                // update login button result
                 that.toggleLoginButton();
 
                 const pageName = page.id;
@@ -145,7 +145,7 @@ export class App {
                 }
                 Log.trace('App::init()::show - page: ' + pageName + '; validated: ' + validated + '; event: ' + JSON.stringify(event));
 
-                // update login button state
+                // update login button result
                 that.toggleLoginButton();
 
                 if (that.view !== null) {

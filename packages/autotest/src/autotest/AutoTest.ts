@@ -2,8 +2,14 @@ import * as rp from "request-promise-native";
 
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
+import {AutoTestResult} from "../../../common/types/AutoTestTypes";
+import {
+    CommitTarget,
+    ContainerInput,
+    ContainerOutput,
+    ContainerState
+} from "../../../common/types/ContainerTypes";
 
-import {CommitTarget, IAutoTestResult, IContainerInput, IContainerOutput} from "../../../common/types/AutoTestTypes";
 import {AutoTestGradeTransport} from "../../../common/types/PortalTypes";
 import Util from "../../../common/Util";
 import {IClassPortal} from "./ClassPortal";
@@ -17,7 +23,7 @@ export interface IAutoTest {
      *
      * @param {IContainerInput} element
      */
-    addToStandardQueue(element: IContainerInput): void;
+    addToStandardQueue(element: ContainerInput): void;
 
     // NOTE: add this when we support regression queues
     // addToRegressionQueue(element: IContainerInput): void;
@@ -45,8 +51,8 @@ export abstract class AutoTest implements IAutoTest {
         this.classPortal = classPortal;
     }
 
-    public addToStandardQueue(input: IContainerInput): void {
-        Log.info("AutoTest::addToStandardQueue(..) - start; commit: " + input.pushInfo.commitSHA);
+    public addToStandardQueue(input: ContainerInput): void {
+        Log.info("AutoTest::addToStandardQueue(..) - start; commit: " + input.target.commitSHA);
         try {
             this.standardQueue.push(input);
         } catch (err) {
@@ -65,9 +71,9 @@ export abstract class AutoTest implements IAutoTest {
             const that = this;
 
             const schedule = function(queue: Queue): boolean {
-                const info: IContainerInput = queue.scheduleNext();
+                const info: ContainerInput = queue.scheduleNext();
                 Log.info("AutoTest::tick(..) - starting job on: " + queue.getName() + "; deliv: " +
-                    info.delivId + '; repo: ' + info.pushInfo.repoId + '; SHA: ' + info.pushInfo.commitSHA);
+                    info.delivId + '; repo: ' + info.target.repoId + '; SHA: ' + info.target.commitSHA);
                 // noinspection JSIgnoredPromiseFromCall
                 // tslint:disable-next-line
                 that.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
@@ -85,7 +91,7 @@ export abstract class AutoTest implements IAutoTest {
             const promoteQueue = function(fromQueue: Queue, toQueue: Queue): boolean {
                 if (fromQueue.length() > 0 && toQueue.hasCapacity()) {
                     Log.info("AutoTest::tick(..) - promoting: " + fromQueue.getName() + " -> " + toQueue.getName());
-                    const info: IContainerInput = fromQueue.pop();
+                    const info: ContainerInput = fromQueue.pop();
                     toQueue.pushFirst(info);
                     return schedule(toQueue);
                 }
@@ -139,7 +145,7 @@ export abstract class AutoTest implements IAutoTest {
      * @param {IAutoTestResult} data
      * @returns {Promise<void>}
      */
-    protected abstract processExecution(data: IAutoTestResult): Promise<void>;
+    protected abstract processExecution(data: AutoTestResult): Promise<void>;
 
     /**
      * Returns whether the commitURL is currently executing the given deliverable.
@@ -254,7 +260,7 @@ export abstract class AutoTest implements IAutoTest {
      *
      * @param data
      */
-    private async handleExecutionComplete(data: IAutoTestResult): Promise<void> {
+    private async handleExecutionComplete(data: AutoTestResult): Promise<void> {
         try {
             const start = Date.now();
 
@@ -273,7 +279,7 @@ export abstract class AutoTest implements IAutoTest {
 
             Log.info("AutoTest::handleExecutionComplete(..) - start" +
                 ": delivId: " + data.delivId + "; repoId: " + data.repoId +
-                "; took (waiting + execution): " + Util.tookHuman(data.input.pushInfo.timestamp) +
+                "; took (waiting + execution): " + Util.tookHuman(data.input.target.timestamp) +
                 "; SHA: " + data.commitSHA);
 
             try {
@@ -311,15 +317,15 @@ export abstract class AutoTest implements IAutoTest {
      *
      * @param input
      */
-    private async invokeContainer(input: IContainerInput) {
+    private async invokeContainer(input: ContainerInput) {
         try {
-            Log.info("AutoTest::invokeContainer(..) - start; delivId: " + input.delivId + "; SHA: " + input.pushInfo.commitSHA);
+            Log.info("AutoTest::invokeContainer(..) - start; delivId: " + input.delivId + "; SHA: " + input.target.commitSHA);
             Log.trace("AutoTest::invokeContainer(..) - input: " + JSON.stringify(input, null, 2));
             const start = Date.now();
 
-            let record: IAutoTestResult = null;
+            let record: AutoTestResult = null;
             let isProd = true;
-            if (input.pushInfo.postbackURL === "EMPTY" || input.pushInfo.postbackURL === "POSTBACK") {
+            if (input.target.postbackURL === "EMPTY" || input.target.postbackURL === "POSTBACK") {
                 Log.warn("AutoTest::invokeContainer(..) - execution skipped; !isProd");
                 isProd = false; // EMPTY and POSTBACK used by test environment
             }
@@ -327,12 +333,12 @@ export abstract class AutoTest implements IAutoTest {
                 const graderUrl: string = Config.getInstance().getProp(ConfigKey.graderUrl);
                 const graderPort: number = Config.getInstance().getProp(ConfigKey.graderPort);
 
-                const commitSHA: string = input.pushInfo.commitSHA;
-                const commitURL: string = input.pushInfo.commitURL;
+                const commitSHA: string = input.target.commitSHA;
+                const commitURL: string = input.target.commitURL;
 
-                const timestamp: number = input.pushInfo.timestamp;
+                const timestamp: number = input.target.timestamp;
                 const delivId: string = input.delivId;
-                const repoId: string = input.pushInfo.repoId;
+                const repoId: string = input.target.repoId;
                 const id: string = `${commitSHA}-${delivId}`;
                 const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
                     Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
@@ -345,7 +351,7 @@ export abstract class AutoTest implements IAutoTest {
                     timeout: 360000  // enough time that the container will have timed out
                 };
 
-                let output: IContainerOutput = { // NOTE: This is only populated in case the rp line below fails
+                let output: ContainerOutput = { // NOTE: This is only populated in case the rp line below fails
                     timestamp:          Date.now(), // this is the done timestamp
                     report:             {
                         scoreOverall: 0,
@@ -356,18 +362,21 @@ export abstract class AutoTest implements IAutoTest {
                         skipNames:    [],
                         failNames:    [],
                         errorNames:   [],
-                        custom:       {}
+                        result:       "FAIL",
+                        custom:       {},
+                        attachments:  [],
+
                     },
                     postbackOnComplete: false, // NOTE: should this be true? Crash(y) failures should probably be reported.
                     custom:             {},
-                    attachments:        [],
-                    state:              "FAIL"
+                    state:              ContainerState.FAIL,
+                    graderTaskId:        ""
                 };
                 try {
                     output = await rp(gradeServiceOpts);
                 } catch (err) {
                     Log.warn("AutoTest::invokeContainer(..) - ERROR for SHA: " +
-                        input.pushInfo.commitSHA + "; ERROR with grading service: " + err);
+                        input.target.commitSHA + "; ERROR with grading service: " + err);
                 }
 
                 Log.trace("AutoTest::invokeContainer(..) - output: " + JSON.stringify(output, null, 2));
@@ -409,7 +418,7 @@ export abstract class AutoTest implements IAutoTest {
                         // grade not sent; if postback is true we must have compile / lint problem
                     }
                 } catch (err) {
-                    Log.warn("AutoTest::invokeContainer(..) - ERROR for SHA: " + input.pushInfo.commitSHA +
+                    Log.warn("AutoTest::invokeContainer(..) - ERROR for SHA: " + input.target.commitSHA +
                         "; ERROR sending grade: " + err);
                 }
             } else {
@@ -419,10 +428,10 @@ export abstract class AutoTest implements IAutoTest {
             }
 
             Log.info("AutoTest::invokeContainer(..) - complete; delivId: " + input.delivId +
-                "; SHA: " + input.pushInfo.commitSHA + "; took: " + Util.tookHuman(start));
+                "; SHA: " + input.target.commitSHA + "; took: " + Util.tookHuman(start));
             await this.handleExecutionComplete(record);
         } catch (err) {
-            Log.error("AutoTest::invokeContainer(..) - ERROR for SHA: " + input.pushInfo.commitSHA + "; ERROR: " + err);
+            Log.error("AutoTest::invokeContainer(..) - ERROR for SHA: " + input.target.commitSHA + "; ERROR: " + err);
         }
     }
 }

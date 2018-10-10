@@ -149,7 +149,7 @@ export class AdminResultsTab extends AdminPage {
             // repoId
             // repoURL
             // delivId
-            // state
+            // result
             // timestamp
             // commitSHA
             // commitURL

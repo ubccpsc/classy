@@ -2,8 +2,9 @@ import {Collection, Db, MongoClient} from "mongodb";
 import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
 
 import Log from "../../../../common/Log";
+import Util from "../../../../common/Util";
 
-import {Auth, Course, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
+import {AuditEvent, AuditLabel, Auth, Course, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
 
 export class DatabaseController {
     /**
@@ -29,6 +30,7 @@ export class DatabaseController {
     private readonly DELIVCOLL = 'deliverables';
     private readonly REPOCOLL = 'repositories';
     private readonly AUTHCOLL = 'auth';
+    private readonly AUDITCOLL = 'audit';
 
     /**
      * use getInstance() instead.
@@ -90,6 +92,12 @@ export class DatabaseController {
         const latestFirst = {"input.pushInfo.timestamp": -1}; // most recent first
         const results = await this.readRecords(this.RESULTCOLL, query, latestFirst) as Result[];
         Log.info("DatabaseController::getResult() - #: " + results.length);
+        for (const result of results) {
+            if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
+                // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
+                result.input.target = (result.input as any).pushInfo;
+            }
+        }
         return results;
     }
 
@@ -308,6 +316,39 @@ export class DatabaseController {
         }
     }
 
+    public async writeAudit(label: AuditLabel, personId: string, before: any, after: any, custom: any): Promise<boolean> {
+        try {
+            // Log.info("DatabaseController::writeAudit(..) - start");
+            Log.info("DatabaseController::writeAudit( " + label + ", " + personId + ", hasBefore: " +
+                !Util.isEmpty(before) + ", hasAfter: " + !Util.isEmpty(after) + " ) - start");
+
+            let finalLabel = label + '_';
+            if (Util.isEmpty(before) === true && Util.isEmpty(after) === true) {
+                // is an action, no postfix
+                finalLabel = label;
+            } else if (Util.isEmpty(before) === true) {
+                finalLabel = finalLabel + 'CREATE';
+            } else if (Util.isEmpty(after) === true) {
+                finalLabel = finalLabel + 'DELETE';
+            } else {
+                finalLabel = finalLabel + 'UPDATE';
+            }
+            const auditRecord: AuditEvent = {
+                label:     finalLabel,
+                timestamp: Date.now(),
+                personId:  personId,
+                before:    before,
+                after:     after,
+                custom:    custom
+            };
+            return await this.writeRecord(this.AUDITCOLL, auditRecord);
+        } catch (err) {
+            // never want this to mess with whatever called it; eat all errors
+            Log.error("DatabaseController::writeAudit(..) - ERROR: " + err.message);
+            return false;
+        }
+    }
+
     public async writeRepository(record: Repository): Promise<boolean> {
         // Log.info("DatabaseController::writeRepository(..) - start");
         if (record.custom === null) {
@@ -382,7 +423,7 @@ export class DatabaseController {
             // This prevents us from running the tests in production by accident and wiping the database
 
             const cols = [this.PERSONCOLL, this.GRADECOLL, this.RESULTCOLL, this.TEAMCOLL,
-                this.DELIVCOLL, this.REPOCOLL, this.AUTHCOLL, this.COURSECOLL];
+                this.DELIVCOLL, this.REPOCOLL, this.AUTHCOLL, this.COURSECOLL, this.AUDITCOLL];
 
             for (const col of cols) {
                 Log.info("DatabaseController::clearData() - removing data for collection: " + col);
@@ -522,11 +563,14 @@ export class DatabaseController {
         }
 
         if (result !== null) {
-            Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - found");
+            Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - found: " + JSON.stringify(result));
+            if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
+                // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
+                result.input.target = (result.input as any).pushInfo;
+            }
         } else {
             Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - not found");
         }
-
         return result;
     }
 }

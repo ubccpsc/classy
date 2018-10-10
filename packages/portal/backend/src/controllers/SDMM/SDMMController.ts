@@ -250,7 +250,7 @@ export class SDMMController extends CourseController {
             custom: {}
         };
 
-        newPerson.custom.sdmmStatus = 'd0pre'; // new users always start in d0pre state
+        newPerson.custom.sdmmStatus = 'd0pre'; // new users always start in d0pre result
 
         const pc = new PersonController();
         newPerson = await pc.createPerson(newPerson);

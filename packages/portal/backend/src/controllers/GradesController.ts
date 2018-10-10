@@ -3,7 +3,8 @@ import Log from "../../../../common/Log";
 
 import {AutoTestGradeTransport, GradeTransport} from "../../../../common/types/PortalTypes";
 import {GradePayload} from "../../../../common/types/SDMMTypes";
-import {Grade} from "../Types";
+import Util from "../../../../common/Util";
+import {Grade, PersonKind} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
 import {DeliverablesController} from "./DeliverablesController";
@@ -15,9 +16,24 @@ export class GradesController {
 
     public async getAllGrades(): Promise<Grade[]> {
         Log.info("GradesController::getAllGrades() - start");
+        const start = Date.now();
 
         const grades = await this.db.getGrades();
-        return grades;
+        const pc = new PersonController();
+
+        const returnGrades = [];
+        for (const grade of grades) {
+            const person = await pc.getPerson(grade.personId);
+            if (person !== null && person.kind === PersonKind.STUDENT) {
+                // only return student grades
+                returnGrades.push(grade);
+            } else {
+                Log.info("GradesController::getAllGrades() - not returning grade for: " + grade.personId + "; kind: " + person.kind);
+            }
+        }
+        Log.info("GradesController::getAllGrades() - done; # all: " + grades.length +
+            "; # returned: " + returnGrades.length + "; took: " + Util.took(start));
+        return returnGrades;
     }
 
     public async getGrade(personId: string, delivId: string): Promise<Grade | null> {
@@ -138,6 +154,7 @@ export class GradesController {
 
     public async saveGrade(grade: Grade): Promise<boolean> {
         Log.info("GradesController::saveGrade( ... ) - start");
+        // grade.score = Number(grade.score);
         return await this.db.writeGrade(grade);
     }
 

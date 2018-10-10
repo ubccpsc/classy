@@ -10,7 +10,7 @@ import {GitHubController} from "../../src/controllers/GitHubController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
-import {Repository, Team} from "../../src/Types";
+import {PersonKind, Repository, Team} from "../../src/Types";
 
 import {Test} from "../GlobalSpec";
 import '../GlobalSpec';
@@ -46,9 +46,9 @@ describe("GitHubController", () => {
         // redo with real github people
         const dbc = DatabaseController.getInstance();
         const pc = new PersonController();
-        let p = Test.createPerson(Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, 'student');
+        let p = Test.createPerson(Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, PersonKind.STUDENT);
         await pc.writePerson(p);
-        p = Test.createPerson(Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, 'student');
+        p = Test.createPerson(Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, PersonKind.STUDENT);
         await pc.writePerson(p);
 
         // const tc = new TeamController();
@@ -95,9 +95,9 @@ describe("GitHubController", () => {
         Log.test('GitHubController::AfterEach - ***');
     });
 
-    it("Should be able to clear out prior state", async function() {
+    it("Should be able to clear out prior result", async function() {
         // not really a test, we just want something to run first we can set timeout on (cannot add timeout to before)
-        Log.test("Clearing prior state");
+        Log.test("Clearing prior result");
         try {
             await gha.deleteRepo(Test.REPONAME1);
             await gha.deleteRepo(Test.REPONAME2);
@@ -106,9 +106,9 @@ describe("GitHubController", () => {
             await gha.deleteTeamByName(Test.TEAMNAME2);
             await gha.deleteTeamByName(Test.TEAMNAME3);
         } catch (err) {
-            Log.test("Could not clear state: " + err);
+            Log.test("Could not clear result: " + err);
         }
-        Log.test("Prior state cleared");
+        Log.test("Prior result cleared");
     }).timeout(Test.TIMEOUTLONG);
 
     it("Should be able to get a team url for a valid team.", async () => {

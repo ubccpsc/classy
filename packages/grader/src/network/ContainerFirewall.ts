@@ -1,7 +1,7 @@
 import {IFirewallRule} from "../Types";
 import {IFirewallController} from "./FirewallController";
 
-// wrapper for FirewallController that maintains the container's chain state
+// wrapper for FirewallController that maintains the container's chain result
 export interface IContainerFirewall {
     unblock(host: string, port?: number): Promise<void>;
 

@@ -2,8 +2,9 @@ import {Collection, Db, MongoClient} from "mongodb";
 import Config, {ConfigKey} from "../../../common/Config";
 
 import Log from "../../../common/Log";
+import {AutoTestResult, IFeedbackGiven} from "../../../common/types/AutoTestTypes";
+import {CommitTarget} from "../../../common/types/ContainerTypes";
 
-import {CommitTarget, IAutoTestResult, IFeedbackGiven} from "../../../common/types/AutoTestTypes";
 import Util from "../../../common/Util";
 
 export interface IDataStore {
@@ -52,7 +53,7 @@ export interface IDataStore {
      *
      * @returns {Promise<{records: ICommitRecord[]; comments: ICommentEvent[]; pushes: IPushEvent[]; feedback: IFeedbackGiven[]}>}
      */
-    getAllData(): Promise<{records: IAutoTestResult[], comments: CommitTarget[], pushes: CommitTarget[], feedback: IFeedbackGiven[]}>;
+    getAllData(): Promise<{records: AutoTestResult[], comments: CommitTarget[], pushes: CommitTarget[], feedback: IFeedbackGiven[]}>;
 
     /**
      * Debugging only:
@@ -284,7 +285,7 @@ export class MongoDataStore implements IDataStore {
     }
 
     public async getAllData(): Promise<{
-        records: IAutoTestResult[],
+        records: AutoTestResult[],
         comments: CommitTarget[],
         pushes: CommitTarget[],
         feedback: IFeedbackGiven[]
@@ -304,7 +305,7 @@ export class MongoDataStore implements IDataStore {
         }
 
         col = await this.getCollection(this.OUTPUTCOLL);
-        const records: IAutoTestResult[] = await col.find({}).toArray() as any;
+        const records: AutoTestResult[] = await col.find({}).toArray() as any;
         for (const r of records as any) {
             delete r._id;
         }

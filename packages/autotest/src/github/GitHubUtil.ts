@@ -1,7 +1,7 @@
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
-import {CommitTarget} from "../../../common/types/AutoTestTypes";
+import {CommitTarget} from "../../../common/types/ContainerTypes";
 import {ClassPortal, IClassPortal} from "../autotest/ClassPortal";
 
 /**

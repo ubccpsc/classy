@@ -4,7 +4,7 @@ import "mocha";
 
 import Config from "../../common/Config";
 import Log from "../../common/Log";
-import {CommitTarget} from "../../common/types/AutoTestTypes";
+import {CommitTarget} from "../../common/types/ContainerTypes";
 import {PersonController} from "../../portal/backend/src/controllers/PersonController";
 import BackendServer from "../../portal/backend/src/server/BackendServer";
 import {Person} from "../../portal/backend/src/Types";

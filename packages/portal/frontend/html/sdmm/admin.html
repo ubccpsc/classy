@@ -98,7 +98,9 @@
     <template id="grades.html">
         <ons-page id="AdminGrades">
             <ons-list id="AdminGradesList">
-                <ons-list-header>Grade Overview</ons-list-header>
+                <ons-list-header>Grade Summary</ons-list-header>
+                <div id="gradesSummaryTable" style="width:100%;"></div>
+                <ons-list-header>Deliverable Grades</ons-list-header>
                 <div id="gradesListTable" style="width:100%;"></div>
                 <div id="gradesListTableNone" class="noResultsRow">
                     No Results
@@ -169,7 +171,7 @@
                 <ons-list-header id="adminConfigDeliverablesHeader">Deliverables</ons-list-header>
             </ons-list>
             <ons-list>
-                <ons-list-header>Upload Classlist</ons-list-header>
+                <ons-list-header>Manage Class List</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
                         <ons-icon icon="fa-cogs"></ons-icon>
@@ -190,6 +192,62 @@
                     </div>
                 </ons-list-item>
 
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Synchronize class list
+                        <ons-button id="adminPerformWithdrawButton" modifier="medium" style="margin-left: 1em">Mark withdrawn students
+                        </ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        As students drop the class they will be taken out of the 'students' group on GitHub by a LDAP query. This action
+                        just marks students not present in this list as withdrawn. It does not delete any teams, repos, grades, or results
+                        although the grades view will not return grades for students who are withdrawn (e.g., so the course statistics are
+                        correct). NOTE: you still need to manually upload the classlist.csv if you want to update lab sections, etc.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-header>Upload Grades</ons-list-header>
+
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Deliverable
+                        <select id="adminGradeDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                        Select Grade CSV <input id="adminGradeCSV" style="padding-left: 1em" type="file"/>
+                        <ons-button id="adminSubmitGradeCSV" modifier="medium">Upload Grades</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        The CSV must have a header row that contains the following columns:
+
+                        <pre>CSID,GRADE,COMMENT</pre>
+                        This will overwrite any grade that exist for that the students listed in the CSV. This cannot be undone.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-header>Manually Create Team</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Deliverable
+                        <select id="adminTeamDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                        <ons-input class="settingTextInput" style="margin-right: 1em" id="adminTeamText"></ons-input>
+                        <ons-button id="adminCreateTeamButton" modifier="medium">Create Team</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Manually creates a team for a deliverable. A comma-separated list of IDs (CSID or CWL, depending on what your course
+                        is using) is provided in the text box. This does the same thing as if the students created the team themselves
+                        but overrides the team size limits (e.g., there can be more or fewer students than the deliverable requires).
+                        Students must still NOT already be on teams that exist for that deliverable.
+                    </div>
+                </ons-list-item>
+
                 <ons-list-header>Set Default Deliverable (AutoTest Only)</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
@@ -206,42 +264,63 @@
                         automatically, just leave this blank.
                     </div>
                 </ons-list-item>
-                <!--
-                                <ons-list-header>Provision Repositories</ons-list-header>
-                                <ons-list-item expandable>
-                                    <div class="left settingIcon">
-                                        <ons-icon icon="fa-cogs"></ons-icon>
-                                    </div>
-                                    <div class="center">
-                                        Provision Repositories for Deliverable
-                                        <select id="adminProvisionDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
-                                        <ons-button id="adminProvisionButton" modifier="medium">Provision</ons-button>
-                                    </div>
-                                    <div class="expandable-content">
-                                        Creates the repositories for any provisionable Deliverable using all of the settings specified in the deliverable
-                                        page. This is an incremental function; you can release a deliverable several times as teams are formed, or after the
-                                        class composition changes. It will also provision deliverables for all staff members who have previously logged into
-                                        Classy (e.g., so they can see what the students see). This is a slow action (up to 30 seconds / repository) so do
-                                        not leave this until the last second. Cannot be undone, so use this with care.
-                                    </div>
-                                </ons-list-item>
 
-                                <ons-list-header>Release Repositories</ons-list-header>
-                                <ons-list-item expandable>
-                                    <div class="left settingIcon">
-                                        <ons-icon icon="fa-cogs"></ons-icon>
-                                    </div>
-                                    <div class="center">
-                                        Release Repositories for Deliverable
-                                        <select id="adminReleaseDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
-                                        <ons-button id="adminReleaseButton" modifier="medium">Release</ons-button>
-                                    </div>
-                                    <div class="expandable-content">
-                                        Releases any provisoined repositories. This is an incremental function; you can release a deliverable several times
-                                        as teams are formed, or after the class composition changes. Cannot be undone, so use this with care.
-                                    </div>
-                                </ons-list-item>
-                -->
+                <ons-list-header>Manage Repositories</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Provision Repositories for Deliverable
+                        <select id="adminProvisionDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                        <ons-button id="adminProvisionButton" modifier="medium">Provision</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Creates the repositories for any provisionable Deliverable using all of the settings specified in the deliverable
+                        page. This is an incremental function; you can release a deliverable several times as teams are formed, or after the
+                        class composition changes. It will also provision deliverables for all staff members who have previously logged into
+                        Classy (e.g., so they can see what the students see). This is a slow action (up to 30 seconds / repository) so do
+                        not leave this until the last second. Cannot be undone, so use this with care.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Enable write access for deliverable repositories
+                        <select id="adminReleaseDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                        <ons-button id="adminReleaseButton" modifier="medium">Release</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Releases any provisoined repositories so students can make commits to their repositories. This is an incremental
+                        function; you can release a deliverable several times as teams are formed, or after the class composition changes.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        NOT IMPLEMENTED: Disable write access for deliverable repositories
+                        <select id="adminUnReleaseDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                        <ons-button id="adminUnReleaseButton" modifier="medium">Unrelease</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Unreleases any repositories that are currently released. This effectively detaches students from their
+                        repositories for that deliverable so they are unable to make any additional changes. To 'undo' this you can
+                        release repositories (above) to add the students back to their repositories.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-header>Delete Objects: DANGER!</ons-list-header>
+                <ons-list-item>
+                    <ons-button id="adminDeletePageButton">Go to deletion page</ons-button>
+                    <!-- onclick="myApp.view.pushPage('adminDelete.html',{});" -->
+                </ons-list-item>
+
             </ons-list>
         </ons-page>
     </template>

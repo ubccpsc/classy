@@ -1,5 +1,5 @@
 import Log from "../../../../common/Log";
-import {Person} from "../Types";
+import {Person, PersonKind} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
 import {GitHubActions} from "./GitHubActions";
@@ -44,23 +44,23 @@ export class AuthController {
     public async personPriviliged(person: Person): Promise<{isAdmin: boolean, isStaff: boolean}> {
 
         const personId = person.id;
-        if (person.kind === null || person.kind === '') {
+        if (person.kind === null || person.kind === PersonKind.NONE) {
             // check github for credentials and cache them
             const isStaff = await GitHubActions.getInstance().isOnStaffTeam(personId);
             const isAdmin = await GitHubActions.getInstance().isOnAdminTeam(personId);
-            Log.trace("AuthController::isPrivileged( " + personId + ", ... ) - " +
+            Log.trace("AuthController::personPriviliged( " + personId + ", ... ) - " +
                 " caching new credentials; admin: " + isAdmin + "; staff: " + isStaff);
 
             const dc = DatabaseController.getInstance();
 
             if (isStaff === true && isAdmin === true) {
-                person.kind = 'adminstaff';
+                person.kind = PersonKind.ADMINSTAFF;
                 await dc.writePerson(person);
             } else if (isStaff === true) {
-                person.kind = 'staff';
+                person.kind = PersonKind.STAFF;
                 await dc.writePerson(person);
             } else if (isAdmin === true) {
-                person.kind = 'admin';
+                person.kind = PersonKind.ADMIN;
                 await dc.writePerson(person);
             }
             // else {
@@ -70,16 +70,19 @@ export class AuthController {
             // }
         }
 
-        if (person.kind === 'student') {
+        Log.trace("AuthController::personPriviliged( " + personId + ", ... ) - " +
+            " cached kind: " + person.kind);
+
+        if (person.kind === PersonKind.STUDENT) {
             return {isAdmin: false, isStaff: false};
-        } else if (person.kind === 'admin') {
+        } else if (person.kind === PersonKind.ADMIN) {
             return {isAdmin: true, isStaff: false};
-        } else if (person.kind === 'staff') {
+        } else if (person.kind === PersonKind.STAFF) {
             return {isAdmin: false, isStaff: true};
-        } else if (person.kind === 'adminstaff') {
+        } else if (person.kind === PersonKind.ADMINSTAFF) {
             return {isAdmin: true, isStaff: true};
         } else {
-            Log.error("AuthController::isPrivileged( " + personId + ", ... ) - unknown kind: " + person.kind);
+            Log.error("AuthController::personPriviliged( " + personId + ", ... ) - unknown kind: " + person.kind);
             return {isAdmin: false, isStaff: false};
         }
     }

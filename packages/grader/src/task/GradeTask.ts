@@ -1,60 +1,59 @@
 import Log from "../../../common/Log";
-import {IContainerInput, IContainerOutput} from "../../../common/types/AutoTestTypes";
+import {ContainerInput, ContainerOutput, ContainerState} from "../../../common/types/ContainerTypes";
 import {IDockerContainer} from "../docker/DockerContainer";
 import {Repository} from "../git/Repository";
 import {Workspace} from "../storage/Workspace";
 
 export class GradeTask {
-    private readonly input: IContainerInput;
+    private readonly id: string;
+    private readonly input: ContainerInput;
     private readonly workspace: Workspace;
     private readonly container: IDockerContainer;
     private readonly repo: Repository;
     private containerState: string;
 
-    constructor(input: IContainerInput, workspace: Workspace, container: IDockerContainer, repo: Repository) {
+    constructor(id: string, input: ContainerInput, workspace: Workspace, container: IDockerContainer, repo: Repository) {
+        this.id = id;
         this.input = input;
         this.workspace = workspace;
         this.container = container;
         this.repo = repo;
     }
 
-    public async execute(): Promise<IContainerOutput> {
+    public async execute(): Promise<ContainerOutput> {
         Log.info("GradeTask::execute() - start");
-        const out: IContainerOutput = {
+        const out: ContainerOutput = {
             timestamp:          Date.now(),
             report:             {
                 scoreOverall: 0,
                 scoreCover:   null,
                 scoreTest:    null,
-                feedback:     'Internal error: The grading service failed to handle the request.',
+                feedback:     "Internal error: The grading service failed to handle the request.",
                 passNames:    [],
                 skipNames:    [],
                 failNames:    [],
                 errorNames:   [],
+                result:       "FAIL",
+                attachments:  [],
                 custom:       {}
             },
             postbackOnComplete: true,
             custom:             {},
-            attachments:        [],
-            state:              "FAIL"
+            state:              ContainerState.FAIL,
+            graderTaskId:        this.id
         };
 
         try {
             await this.workspace.mkdir("output");
 
             Log.trace("GradeTask::execute() - Clone repo " +
-                this.input.pushInfo.cloneURL.match(/\/(.+)\.git/)[0] + " and checkout " +
-                this.input.pushInfo.commitSHA.substring(0, 6) + "."
+                this.input.target.cloneURL.match(/\/(.+)\.git/)[0] + " and checkout " +
+                this.input.target.commitSHA.substring(0, 6) + "."
             );
-            const sha = await this.prepareRepo(this.input.pushInfo.cloneURL,
-                `${this.workspace.rootDir}/assn`,
-                this.input.pushInfo.commitSHA);
 
-            if (this.input.pushInfo.commitSHA !== sha) {
-                Log.warn("GradeTask::execute() - Failed to checkout commit. Requested: " +
-                    this.input.pushInfo.commitSHA + " Actual: " + sha + ". Continuing to grade but results will likely" +
-                    "be wrong.");
-            }
+            await this.prepareRepo(this.input.target.cloneURL,
+                `${this.workspace.rootDir}/assn`,
+                this.input.target.commitSHA);
 
             // Change the permissions so that the grading container can read the files.
             await this.workspace.chown();
@@ -63,9 +62,9 @@ export class GradeTask {
             try {
                 await this.container.create(this.input.containerConfig.custom);
 
-                Log.trace("GradeTask::execute() - Start grading container " + this.container.shortId);
+                Log.info("GradeTask::execute() - Start grading container " + this.container.shortId);
                 const exitCode = await this.runContainer(this.container);
-                Log.trace("GradeTask::execute() - Container " + this.container.shortId + " exited with code " +
+                Log.info("GradeTask::execute() - Container " + this.container.shortId + " exited with code " +
                     exitCode + ".");
 
                 Log.trace("GradeTask::execute() - Write log for container " + this.container.shortId + " to " +
@@ -75,32 +74,32 @@ export class GradeTask {
 
                 if (this.containerState === "TIMEOUT") {
                     out.report.feedback = "Container did not complete in the allotted time.";
-                    out.state = "TIMEOUT";
+                    out.state = ContainerState.TIMEOUT;
                 } else {
                     try {
                         const shouldPostback: boolean = exitCode !== 0;
                         out.report = await this.workspace.readJson("output/report.json");
                         out.postbackOnComplete = shouldPostback;
-                        out.state = "SUCCESS";
+                        out.state = ContainerState.SUCCESS;
                     } catch (err) {
                         Log.error('GradeWorker::execute() - ERROR Reading grade report file produced be grading container' +
                             `${this.container.shortId}. ${err}`);
                         out.report.feedback = "Failed to read grade report.";
-                        out.state = "INVALID_REPORT";
+                        out.state = ContainerState.NO_REPORT;
                     }
                 }
             } catch (err) {
                 Log.error(`GradeTask::execute() - ERROR Running grading container. ${err}`);
             } finally {
                 try {
-                    Log.trace("GradeTask::execute() - Remove container " + this.container.should);
+                    Log.trace("GradeTask::execute() - Remove container " + this.container.shortId);
                     await this.container.remove();
                 } catch (err) {
                     Log.warn("GradeTask::execute() - Failed to remove container " + this.container.shortId + ". " + err);
                 }
             }
         } catch (err) {
-            Log.warn(`GradeTask::execute() - ERROR Processing ${this.input.pushInfo.commitSHA.substring(0, 6)}. ${err}`);
+            Log.warn(`GradeTask::execute() - ERROR Processing ${this.input.target.commitSHA.substring(0, 6)}. ${err}`);
         } finally {
             try {
                 Log.trace("GradeTask::execute() - Remove cloned repo.");
