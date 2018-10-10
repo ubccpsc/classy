@@ -54,8 +54,6 @@ export class Repository {
                 if (error) {
                     reject(error);
                 }
-                // tslint:disable-next-line
-                console.log("GIT CLONE", stdout, stderr);
                 resolve();
             });
         });

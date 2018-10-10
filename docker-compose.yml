@@ -59,6 +59,7 @@ services:
             - GRADER_PORT
             - DOCKER_NET=${GRADE_NET_NAME}
             - HOSTS_ALLOW
+            - LOG_LEVEL
         expose:
             - ${GRADER_PORT}
         networks:
