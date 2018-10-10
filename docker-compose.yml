@@ -103,9 +103,6 @@ services:
                 - SSL_KEY_PATH
                 - CONTAINER_NAME_PORTAL
                 - BACKEND_PORT
-                - CONTAINER_NAME_GRADER
-                - GRADER_PORT
-                - RAND_ENDPOINT
             context: ./
             dockerfile: ./packages/proxy/Dockerfile
         container_name: ${CONTAINER_NAME_ROUTER}
