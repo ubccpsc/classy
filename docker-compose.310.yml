@@ -23,7 +23,7 @@ services:
         image: cpsc310reference_ui
         container_name: ${CONTAINER_NAME_UI}
         environment:
-            - PLATFROM
+            - PLATFORM
         expose:
             - ${UI_PORT}
         restart: always
