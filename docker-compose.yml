@@ -61,6 +61,7 @@ services:
             - DOCKER_NET=${GRADE_NET_NAME}
             - HOSTS_ALLOW
             - LOG_LEVEL
+            - PLATFORM
         expose:
             - ${GRADER_PORT}
         networks:
