@@ -22,7 +22,7 @@ services:
     reference_ui:
         image: cpsc310reference_ui
         container_name: ${CONTAINER_NAME_UI}
-	    environment:
+        environment:
             - PLATFROM
         expose:
             - ${UI_PORT}
