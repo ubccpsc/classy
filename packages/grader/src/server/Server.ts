@@ -78,11 +78,17 @@ export default class Server {
                             const input: ContainerInput = req.body;
                             const uid: number = Number(process.env.UID);
                             const token: string = process.env.GH_BOT_TOKEN.replace("token ", "");
+                            const custom: any = input.containerConfig.custom;
+                            let feedbackMode: string = "public";
+                            if (custom.container && custom.container.feedbackMode) {
+                                feedbackMode = custom.container.feedbackMode;
+                            }
 
                             // Add parameters to create the grading container. We'll be lazy and use the custom field.
                             input.containerConfig.custom = {
                                 "--env":      [
                                     `ASSIGNMENT=${input.delivId}`,
+                                    `FEEDBACK_MODE=${feedbackMode}`,
                                     `USER_UID=${uid}`
                                 ],
                                 "--volume":   [
