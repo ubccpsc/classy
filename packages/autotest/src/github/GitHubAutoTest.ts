@@ -214,7 +214,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             // previously processed
             Log.info("GitHubAutoTest::processComment(..) - result already exists; handling for: " +
                 info.personId + "; SHA: " + info.commitSHA);
-            await this.postToGitHub(info, {url: info.postbackURL, message: res.output.report.feedback});
+            const msg = await this.classPortal.formatFeedback(res.output.report);
+            await this.postToGitHub(info, {url: info.postbackURL, message: msg});
             await this.saveCommentInfo(info);
             if (res.output.postbackOnComplete === false) {
                 Log.info("GitHubAutoTest::processComment(..) - result already exists; feedback request logged for: " +
@@ -355,7 +356,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 // do this first, doesn't count against quota
                 Log.info("GitHubAutoTest::processExecution(..) - postback: true; deliv: " +
                     data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA);
-                await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: data.output.report.feedback});
+                const msg = await this.classPortal.formatFeedback(data.output.report);
+                await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
                 // NOTE: if the feedback was requested for this build it shouldn't count
                 // since we're not calling saveFeedback this is right
                 // but if we replay the commit comments, we would see it there, so be careful
@@ -363,7 +365,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 // feedback has been previously requested
                 Log.info("GitHubAutoTest::processExecution(..) - feedback requested; deliv: " +
                     data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA + '; for: ' + feedbackRequested.personId);
-                await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: data.output.report.feedback});
+                const msg = await this.classPortal.formatFeedback(data.output.report);
+                await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
                 await this.saveFeedbackGiven(data.input.delivId, feedbackRequested.personId, feedbackRequested.timestamp, data.commitURL);
             } else {
                 // do nothing
