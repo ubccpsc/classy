@@ -150,10 +150,14 @@ export class PersonController {
                 if (registeredGithubIds.indexOf(person.githubId) >= 0) {
                     // student is registered, do nothing
                 } else {
+                    if (person.labId !== 'W') {
+                        numWithdrawn++;
+                    }
                     // student is not registered; mark as withdrawn
                     // person.kind = PersonKind.WITHDRAWN; // NOTE: this is commented out for testing
+                    person.labId = 'W'; // mark without changing person kind
                     Log.info("PersonController::markStudentsWithdrawn( .. ) - marking " + person.id + " as withdrawn");
-                    numWithdrawn++;
+
                     await this.writePerson(person);
                 }
             }
