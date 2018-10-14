@@ -111,7 +111,7 @@ export class AdminGradesTab extends AdminPage {
                     if (grade.personId === student.id) {
                         if (grade.delivId === deliv.id) {
                             let score = '';
-                            if (grade.score !== null && grade.score > 0) {
+                            if (grade.score !== null && grade.score >= 0) {
                                 score = grade.score + '';
                             }
                             if (score !== '') {
