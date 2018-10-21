@@ -11,7 +11,7 @@ export class ResultsController {
     private db: DatabaseController = DatabaseController.getInstance();
 
     public async getAllResults(): Promise<Result[]> {
-        Log.info("ResultsController::getAllResults() - start");
+        Log.trace("ResultsController::getAllResults() - start");
 
         const results = await this.db.getResults();
 
