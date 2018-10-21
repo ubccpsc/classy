@@ -89,7 +89,8 @@ export class DatabaseController {
 
     public async getResults(): Promise<Result[]> {
         const query = {};
-        const latestFirst = {"input.pushInfo.timestamp": -1}; // most recent first
+        // const latestFirst = {"input.pushInfo.timestamp": -1}; // most recent first
+        const latestFirst = {"input.target.timestamp": -1}; // most recent first
         const results = await this.readRecords(this.RESULTCOLL, query, latestFirst) as Result[];
         Log.info("DatabaseController::getResult() - #: " + results.length);
         for (const result of results) {
