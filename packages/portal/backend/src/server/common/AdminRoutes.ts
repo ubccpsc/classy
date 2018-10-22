@@ -1,4 +1,5 @@
 import * as restify from 'restify';
+import * as cookie from 'cookie';
 
 import Log from "../../../../../common/Log";
 import {
@@ -115,8 +116,24 @@ export default class AdminRoutes implements IREST {
     private static isAdmin(req: any, res: any, next: any) {
         Log.info('AdminRoutes::isAdmin(..) - start');
 
-        const user = req.headers.user;
-        const token = req.headers.token;
+        let user = req.headers.user;
+        let token = req.headers.token;
+
+        // fallback to getting token from cookies
+        if (!user || !token && req.headers.cookies) {
+            // the following snippet is a tiny modification based on a snippet in App.validateCredentials()
+            // https://github.com/ubccpsc/classy/blob/bbe1d564f21d828101935892103b51453ed7863f/packages/portal/frontend/src/app/App.ts#L200
+            const tokenString = cookie.parse(req.headers.cookies)['token'];
+            if (tokenString !== null) {
+                const tokenParts = tokenString.split('__'); // Firefox doesn't like multiple tokens
+                if (tokenParts.length === 1) {
+                    token = tokenParts[0];
+                } else if (tokenParts.length === 2) {
+                    token = tokenParts[0];
+                    user = tokenParts[1];
+                }
+            }
+        }
 
         const ac = new AuthController();
         ac.isPrivileged(user, token).then(function(priv) {
