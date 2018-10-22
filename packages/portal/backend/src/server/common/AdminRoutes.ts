@@ -121,10 +121,10 @@ export default class AdminRoutes implements IREST {
 
         // fallback to getting token from cookies
         // this is useful for providing links in for attachments, but also might become the default in the future
-        if ((typeof user === 'undefined' || typeof token === 'undefined') && typeof req.headers.cookies !== 'undefined') {
+        if ((typeof user === 'undefined' || typeof token === 'undefined') && typeof req.headers.cookie !== 'undefined') {
             // the following snippet is a tiny modification based on a snippet in App.validateCredentials()
             // https://github.com/ubccpsc/classy/blob/bbe1d564f21d828101935892103b51453ed7863f/packages/portal/frontend/src/app/App.ts#L200
-            const tokenString = cookie.parse(req.headers.cookies)['token'];
+            const tokenString = cookie.parse(req.headers.cookie)['token'];
             if (tokenString !== null) {
                 const tokenParts = tokenString.split('__'); // Firefox doesn't like multiple tokens
                 if (tokenParts.length === 1) {
