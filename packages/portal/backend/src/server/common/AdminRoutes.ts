@@ -1,5 +1,5 @@
-import * as restify from 'restify';
 import * as cookie from 'cookie';
+import * as restify from 'restify';
 
 import Log from "../../../../../common/Log";
 import {
@@ -120,7 +120,8 @@ export default class AdminRoutes implements IREST {
         let token = req.headers.token;
 
         // fallback to getting token from cookies
-        if (!user || !token && req.headers.cookies) {
+        // this is useful for providing links in for attachments, but also might become the default in the future
+        if ((typeof user === 'undefined' || typeof token === 'undefined') && typeof req.headers.cookies !== 'undefined') {
             // the following snippet is a tiny modification based on a snippet in App.validateCredentials()
             // https://github.com/ubccpsc/classy/blob/bbe1d564f21d828101935892103b51453ed7863f/packages/portal/frontend/src/app/App.ts#L200
             const tokenString = cookie.parse(req.headers.cookies)['token'];
@@ -132,7 +133,13 @@ export default class AdminRoutes implements IREST {
                     token = tokenParts[0];
                     user = tokenParts[1];
                 }
+                Log.info('AdminRoutes::isAdmin(..) - from cookies; user: ' + user + '; token: ' + token);
             }
+        }
+
+        if (typeof user === 'undefined' || typeof token === 'undefined') {
+            Log.warn('AdminRoutes::isAdmin(..) - undefined user or token; user not admin.');
+            return AdminRoutes.handleError(401, 'Authorization credentials error; user not admin.', res, next);
         }
 
         const ac = new AuthController();
