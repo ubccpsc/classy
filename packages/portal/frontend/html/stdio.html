@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Classy - stdio Viewer</title>
+
+    <!-- Onsen !-->
+    <link rel="stylesheet" href="https://unpkg.com/onsenui/css/onsenui.css">
+    <link rel="stylesheet" href="https://unpkg.com/onsenui/css/onsen-css-components.min.css">
+    <script src="https://unpkg.com/onsenui/js/onsenui.min.js"></script>
+
+    <!-- flatpickr (date picker) script and style -->
+    <!--
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    -->
+
+    <!-- Local caching for offline testing -->
+    <!--
+        <link rel="stylesheet" href="res/onsenui.css">
+        <link rel="stylesheet" href="res/onsen-css-components.min.css">
+        <script src="res/onsenui.min.js"></script>
+    -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<ons-page id="stdioPage">
+    <ons-toolbar>
+        <div class="center" id="headerTitle">stdio Viewer</div>
+    </ons-toolbar>
+    <div style="height: 100%; display:flex; align-items:center; justify-content: center;">
+        <div id="stdioViewer">Loading...</div>
+    </div>
+</ons-page>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.1/ace.js"></script>
+<script>
+$(function() {
+    var HOST = 'https://cs310.ugrad.cs.ubc.ca'; // non-'/' for local testing
+    HOST = '/'; // set to '/' in production
+
+    function getUrlVars() {
+        // This function is from
+        // https://html-online.com/articles/get-url-parameters-javascript/
+        var vars = {};
+        var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+            vars[key] = value;
+        });
+        return vars;
+    }
+
+    function loadStdio(delivId, repoId, sha) {
+        $.ajax({
+            url: HOST + '/portal/admin/result/' + delivId + '/' + repoId + '/' + sha
+        })
+        .done(function(stdio) {
+            editor.setValue(stdio);
+            editor.clearSelection();
+            // editor.gotoLine(findAutotestStartLine(body) + 1);
+        })
+        .fail(function() {
+            alert("error");
+        })
+    }
+
+    function highlightKeywords(keywords) {
+        // modified based on https://stackoverflow.com/a/43757653/2361752 {
+        ace.define('ace/mode/custom', [], function(require, exports, module) {
+            var oop = require("ace/lib/oop");
+            var TextMode = require("ace/mode/text").Mode;
+            var Tokenizer = require("ace/tokenizer").Tokenizer;
+            var CustomHighlightRules = require("ace/mode/custom_highlight_rules").CustomHighlightRules;
+            var Mode = function() {
+                this.HighlightRules = CustomHighlightRules;
+            };
+            oop.inherits(Mode, TextMode);
+            (function() {
+            }).call(Mode.prototype);
+            exports.Mode = Mode;
+        });
+
+        ace.define('ace/mode/custom_highlight_rules', [], function(require, exports, module) {
+            var oop = require("ace/lib/oop");
+            var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
+            var CustomHighlightRules = function() {
+                var keywordMapper = this.createKeywordMapper({
+                    "variable.language": "beforeEach",
+                    "keyword":
+                        keywords.join('|').replace(' ', '|'),
+                    "constant.language":
+                        ""
+                }, "text", true);
+                this.$rules = {
+                    "start": [            
+                        {
+                            regex: "\\w+\\b",
+                            token: keywordMapper
+                        },
+                    ]
+                };
+                this.normalizeRules()
+            };
+            oop.inherits(CustomHighlightRules, TextHighlightRules);
+            exports.CustomHighlightRules = CustomHighlightRules;
+        });
+        // } modified based on https://stackoverflow.com/a/43757653/2361752
+        editor.session.setMode("ace/mode/custom");
+    }
+
+    function loadNotPassingTestNames(delivId, repoId, sha) {
+        $.ajax({
+            url: HOST + '/portal/admin/dashboard/' + delivId + '/' + repoId,
+            dataType: 'json'
+        })
+        .done(function(json) {
+            var commit = json['success']
+                .find(function(o) { return o['commitSHA'] == sha;} );
+            var notPassingTestNames = commit['testFail']
+                .concat(commit['testSkip'])
+                .map(function(description) { return description.split(':')[0]; });
+            highlightKeywords(notPassingTestNames);
+        })
+    }
+
+    var params = getUrlVars();
+    var delivId = params['delivId'];
+    var repoId = params['repoId'];
+    var sha = params['sha'];
+
+    // set title
+    $('#headerTitle').text('stdio - ' + repoId + ' - ' + sha);
+
+    // init ace editor
+    var editor = ace.edit("stdioViewer");
+    editor.setTheme("ace/theme/monokai");
+    editor.setReadOnly(true);
+
+    // asyncs
+    loadStdio(delivId, repoId, sha);
+    loadNotPassingTestNames(delivId, repoId, sha);
+});
+</script>
+
+</body>
+
+</html>
+
+
+
