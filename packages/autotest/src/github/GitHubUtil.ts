@@ -104,9 +104,9 @@ export class GitHubUtil {
 
             let msg = message;
             if (msg.length > 40) {
-                msg = msg.substr(0, 40);
+                msg = msg.substr(0, 40) + "...";
             }
-            Log.info("GitHubUtil.processComment(..) - delivId: " + delivId + "; repoId: " +
+            Log.info("GitHubUtil.processComment(..) - who: " + requestor + "; repoId: " +
                 repoId + "; botMentioned: " + botMentioned + "; message: " + msg);
 
             // Log.trace("GitHubUtil::processComment(..) - handling: " + JSON.stringify(commentEvent, null, 2));
