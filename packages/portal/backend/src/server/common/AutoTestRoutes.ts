@@ -386,25 +386,25 @@ export class AutoTestRoutes implements IREST {
             const ghAPI = config.getProp(ConfigKey.githubAPI);
             if (ghAPI.indexOf('github.com') > 0) {
                 Log.info('AutoTestRouteHandler::isWebhookFromGitHub(..) - accepted; host is github.com');
-                fulfill(true);
+                return fulfill(true);
             }
 
             dns.lookup(ghAPI, (err, expectedAddr) => {
                 if (err) {
                     Log.error('AutoTestRouteHandler::isWebhookFromGitHub(..) - ERROR: ' + err);
-                    reject(err);
+                    return reject(err);
                 }
 
                 // use indexOf here because address sometimes reports like: ::ffff:172.18.0.2
                 if (expectedAddr !== null && remoteAddr.indexOf(expectedAddr) >= 0) {
                     Log.info('AutoTestRouteHandler::isWebhookFromGitHub(..) - accepted; provided: ' +
                         remoteAddr + '; expected: ' + expectedAddr + '; took: ' + Util.took(start));
-                    fulfill(true);
+                    return fulfill(true);
                 } else {
                     const msg = 'Webhook did not originate from GitHub; request addr: ' +
                         remoteAddr + ' !== expected addr: ' + expectedAddr;
                     Log.error('AutoTestRouteHandler::isWebhookFromGitHub(..) - rejected: ' + msg);
-                    reject(new Error(msg));
+                    return reject(new Error(msg));
                 }
             });
         });
