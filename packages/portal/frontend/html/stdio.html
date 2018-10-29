@@ -39,8 +39,9 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.1/ace.js"></script>
 <script>
 $(function() {
-    var HOST = 'https://cs310.ugrad.cs.ubc.ca'; // non-'/' for local testing
-    HOST = '/'; // set to '/' in production
+    // HOST: set to '/' in production, 
+    //       non-'/' for local testing, e.g. 'https://cs310.ugrad.cs.ubc.ca'
+    var HOST = '/';
 
     function getUrlVars() {
         // This function is from
