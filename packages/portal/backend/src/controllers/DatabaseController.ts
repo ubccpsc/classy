@@ -574,4 +574,10 @@ export class DatabaseController {
         }
         return result;
     }
+
+    public async getResultFromURL(commitURL: string): Promise<Result> {
+        const result = await this.readSingleRecord(this.RESULTCOLL, {commitURL: commitURL}) as Result;
+
+        return result;
+    }
 }

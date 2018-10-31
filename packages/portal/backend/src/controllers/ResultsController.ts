@@ -37,6 +37,17 @@ export class ResultsController {
         return results;
     }
 
+    /**
+     * Gets the result from a commitURL.
+     *
+     * @param {string} url
+     * @returns {Result}
+     */
+    public async getResultFromURL(url: string): Promise<Result | null> {
+        const result = await this.db.getResultFromURL(url);
+        return result;
+    }
+
     public async createResult(record: AutoTestResult): Promise<boolean> {
         Log.info("ResultsController::createResult(..) - start");
         Log.trace("GradesController::createResult(..) - payload: " + JSON.stringify(record));
