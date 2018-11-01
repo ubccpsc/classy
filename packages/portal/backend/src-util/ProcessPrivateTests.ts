@@ -1,9 +1,11 @@
 import Log, {LogLevel} from "../../../common/Log";
 import Util from "../../../common/Util";
+
 import {DatabaseController} from "../src/controllers/DatabaseController";
 import {GitHubActions} from "../src/controllers/GitHubActions";
 import {GradesController} from "../src/controllers/GradesController";
 import {ResultsController} from "../src/controllers/ResultsController";
+
 import {Grade} from "../src/Types";
 
 export class ProcessPrivateTests {
@@ -12,11 +14,12 @@ export class ProcessPrivateTests {
     private DRY_RUN = true;
 
     constructor() {
-        Log.trace("ProcessPrivateTests::<init> - start");
+        Log.info("ProcessPrivateTests::<init> - start");
         this.dc = DatabaseController.getInstance();
     }
 
     public async process(): Promise<void> {
+        Log.info("ProcessPrivateTests::process() - start");
 
         const gha = GitHubActions.getInstance(true);
         const gradesC = new GradesController();
@@ -34,18 +37,14 @@ export class ProcessPrivateTests {
         // console.log('csid, pubScore, coverScore, privScore, finalScore');
         for (const grade of grades) {
             const url = grade.URL;
-            // Log.info("Considering URL: " + url);
-            // Log.info("\tFull Grade: " + JSON.stringify(grade));
-            const id = grade.personId;
+
             const result = await resultsC.getResultFromURL(url);
-            // Log.info("\tFull Result: " + JSON.stringify(result));
             const scorePub = Number(result.output.report.scoreTest);
             const scoreCover = Number(result.output.report.scoreCover);
             const scorePriv = Number((result.output.report.custom as any).private.scoreTest);
 
             let finalScore = (((scorePub * .75) + (scorePriv * .25)) * .8) + (scoreCover * .2);
             finalScore = Number(finalScore.toFixed(2));
-            // Log.info("\tPub Test: " + score + "; Priv test: " + privScore);
 
             // tslint:disable-next-line
             // console.log(id + ", " + scorePub + ', ' + scoreCover + ', ' + scorePriv + ', ' + finalScore);
@@ -92,6 +91,7 @@ export class ProcessPrivateTests {
                 Log.info("Dry run grade update for: " + newGrade.personId);
             }
         }
+        Log.info("ProcessPrivateTests::process() - done");
     }
 }
 
