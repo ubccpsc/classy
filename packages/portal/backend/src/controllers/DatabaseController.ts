@@ -41,7 +41,7 @@ export class DatabaseController {
 
     public async getPerson(recordId: string): Promise<Person | null> {
         const person = await this.readSingleRecord(this.PERSONCOLL, {id: recordId}) as Person;
-        Log.info("DatabaseController::getPerson( " + recordId + " ) - found: " + (person !== null));
+        Log.trace("DatabaseController::getPerson( " + recordId + " ) - found: " + (person !== null));
         return person;
     }
 
