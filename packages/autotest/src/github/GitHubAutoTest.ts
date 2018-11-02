@@ -352,11 +352,13 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     protected async processExecution(data: AutoTestResult): Promise<void> {
         try {
             const feedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId);
+            const containerConfig: any = await this.getContainerConfig(data.input.delivId);
+            const feedbackMode: string = containerConfig.custom.feedbackMode;
             if (data.output.postbackOnComplete === true) {
                 // do this first, doesn't count against quota
                 Log.info("GitHubAutoTest::processExecution(..) - postback: true; deliv: " +
                     data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA);
-                const msg = await this.classPortal.formatFeedback(data.output.report);
+                const msg = await this.classPortal.formatFeedback(data.output.report, feedbackMode);
                 await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
                 // NOTE: if the feedback was requested for this build it shouldn't count
                 // since we're not calling saveFeedback this is right
@@ -365,7 +367,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 // feedback has been previously requested
                 Log.info("GitHubAutoTest::processExecution(..) - feedback requested; deliv: " +
                     data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA + '; for: ' + feedbackRequested.personId);
-                const msg = await this.classPortal.formatFeedback(data.output.report);
+                const msg = await this.classPortal.formatFeedback(data.output.report, feedbackMode);
                 await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
                 await this.saveFeedbackGiven(data.input.delivId, feedbackRequested.personId, feedbackRequested.timestamp, data.commitURL);
             } else {
