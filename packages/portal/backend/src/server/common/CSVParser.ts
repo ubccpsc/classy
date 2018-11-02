@@ -101,6 +101,7 @@ export class CSVParser {
             const data = await this.parsePath(path);
 
             const dc = new DeliverablesController();
+            const pc = new PersonController();
             const deliv = await dc.getDeliverable(delivId);
             if (deliv === null) {
                 throw new Error("Unknown deliverable: " + delivId);
@@ -114,8 +115,9 @@ export class CSVParser {
                     typeof row.GRADE !== 'undefined' &&
                     typeof row.COMMENT !== 'undefined') {
 
+                    const personGrade = row.CSID; // TODO: will depend on instance (see above)
                     const g: Grade = {
-                        personId:  row.CSID, // TODO: will depend on instance (see above)
+                        personId:  personGrade,
                         delivId:   delivId,
                         score:     Number(row.GRADE),
                         comment:   row.COMMENT,
@@ -124,7 +126,14 @@ export class CSVParser {
                         URL:       null,
                         custom:    {}
                     };
-                    gradePromises.push(gc.saveGrade(g));
+
+                    const person = pc.getPerson(personGrade);
+                    if (person !== null) {
+                        gradePromises.push(gc.saveGrade(g));
+                    } else {
+                        Log.warn('CSVParser::processGrades(..) - record ignored for: ' + personGrade + '; unknown personId');
+                    }
+
                 } else {
                     const msg = 'Required column missing';
                     Log.error('CSVParser::processGrades(..) - column missing from: ' + JSON.stringify(row));
