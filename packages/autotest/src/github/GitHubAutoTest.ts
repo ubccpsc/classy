@@ -376,7 +376,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA);
             }
         } catch (err) {
-            Log.info("GitHubAutoTest::processExecution(..) - ERROR: " + err);
+            Log.error("GitHubAutoTest::processExecution(..) - ERROR: " + err);
             return; // do not let errors escape
         }
     }
