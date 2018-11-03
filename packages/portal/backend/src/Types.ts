@@ -193,8 +193,7 @@ export enum AuditLabel {
     TEAM = 'TEAM',
     TEAM_ADMIN = 'TeamAdmin', // Created / updated by admin
     TEAM_STUDENT = 'TeamStudent', // Created / updated by student
-    GRADE_ADMIN = 'GradeAdmin',
-    GRADE_UPLOAD = 'Grade_Upload',
+    GRADE_ADMIN = 'GradeAdmin', // Created / updated by admin
     GRADE_CHANGE = 'Grade_Change',
     GRADE_AUTOTEST = 'GradeAutotest',
     REPO_PROVISION = 'RepositoryProvision',

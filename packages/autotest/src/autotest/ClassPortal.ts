@@ -243,6 +243,8 @@ export class ClassPortal implements IClassPortal {
     public async formatFeedback(gradeRecord: GradeReport, feedbackMode?: string): Promise<string | null> {
         Log.info("ClassPortal::formatFeedback(..) - start; feedbackMode: " + feedbackMode);
         try {
+            // TODO: this could actually be sent to the frontend for consideration in the course-specific classy controller
+
             let feedback: string = gradeRecord.feedback;
 
             let altFeedback: string = "";

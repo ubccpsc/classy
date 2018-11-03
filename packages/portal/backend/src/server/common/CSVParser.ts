@@ -145,7 +145,7 @@ export class CSVParser {
 
             // audit
             const dbc = DatabaseController.getInstance();
-            await dbc.writeAudit(AuditLabel.GRADE_UPLOAD, personId, {}, {}, {numGrades: grades.length});
+            await dbc.writeAudit(AuditLabel.GRADE_ADMIN, personId, {}, {}, {numGrades: grades.length});
 
             return grades;
         } catch (err) {

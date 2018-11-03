@@ -106,8 +106,6 @@ export abstract class CourseController implements ICourseController {
         this.gh = ghController;
     }
 
-    // public abstract async handleUnknownUser(githubUsername: string): Promise<Person | null>;
-
     /**
      * This endpoint just lets subclasses change the behaviour for when users are unknown.
      *
@@ -121,8 +119,6 @@ export abstract class CourseController implements ICourseController {
         Log.warn("CourseController::handleUnknownUser( " + githubUsername + " ) - person unknown; returning null");
         return null;
     }
-
-    // public abstract handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean>;
 
     /**
      * Default behaviour is that if the deadline has not passed, and the grade is higher, accept it.
@@ -433,6 +429,9 @@ export abstract class CourseController implements ICourseController {
      */
     public async getResult(delivId: string, repoId: string, sha: string): Promise<string> {
         Log.info("CourseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - start");
+
+        // TODO: this should be expanded to getAttachement where an attachment id and sha are provided as args
+        // we can then pull the path from the result.attachments field
 
         // portal/result/<FULL_COMMIT_SHA>-<DELIV_ID>/<FILENAME>
         // http://grader/randomStringInEnv/commitSHA-dX
