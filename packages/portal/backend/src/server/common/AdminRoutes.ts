@@ -52,6 +52,8 @@ export default class AdminRoutes implements IREST {
         server.get('/portal/admin/repositories', AdminRoutes.isPrivileged, AdminRoutes.getRepositories);
         server.get('/portal/admin/grades', AdminRoutes.isPrivileged, AdminRoutes.getGrades);
         server.get('/portal/admin/dashboard/:delivId/:repoId', AdminRoutes.isPrivileged, AdminRoutes.getDashboard); // detailed results
+        server.get('/portal/admin/export/dashboard/:delivId/:repoId',
+            AdminRoutes.isPrivileged, AdminRoutes.getDashboardAll); // no num limit
         server.get('/portal/admin/results/:delivId/:repoId', AdminRoutes.isPrivileged, AdminRoutes.getResults); // result summaries
         server.get('/portal/admin/result/:delivId/:repoId/:sha', AdminRoutes.isPrivileged, AdminRoutes.getResult); // result stdio
 
@@ -427,6 +429,32 @@ export default class AdminRoutes implements IREST {
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getDashboard(delivId, repoId).then(function(results) {
             Log.trace('AdminRoutes::getDashboard(..) - in then; # results: ' + results.length);
+            const payload: AutoTestResultSummaryPayload = {success: results};
+            res.send(payload);
+            return next();
+        }).catch(function(err) {
+            return AdminRoutes.handleError(400, 'Unable to retrieve dashboard. ERROR: ' + err.message, res, next);
+        });
+    }
+
+    /**
+     * Returns a AutoTestResultPayload.
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
+    private static getDashboardAll(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::getDashboardAll(..) - start');
+        const cc = Factory.getCourseController(AdminRoutes.ghc);
+
+        // if these params are missing the client will get 404 since they are part of the path
+        const delivId = req.params.delivId;
+        const repoId = req.params.repoId;
+
+        // handled by preceeding action in chain above (see registerRoutes)
+        cc.getDashboard(delivId, repoId, Number.MAX_SAFE_INTEGER).then(function(results) {
+            Log.trace('AdminRoutes::getDashboardAll(..) - in then; # results: ' + results.length);
             const payload: AutoTestResultSummaryPayload = {success: results};
             res.send(payload);
             return next();

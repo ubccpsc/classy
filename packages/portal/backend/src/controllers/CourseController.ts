@@ -313,12 +313,13 @@ export abstract class CourseController implements ICourseController {
      * Gets the results associated with the course.
      * @param reqDelivId ('any' for *)
      * @param reqRepoId ('any' for *)
+     * @param maxNumResults (optional, default 500)
      * @returns {Promise<AutoTestGradeTransport[]>}
      */
-    public async getDashboard(reqDelivId: string, reqRepoId: string): Promise<AutoTestDashboardTransport[]> {
-        Log.info("CourseController::getDashboard( " + reqDelivId + ", " + reqRepoId + " ) - start");
+    public async getDashboard(reqDelivId: string, reqRepoId: string, maxNumResults?: number): Promise<AutoTestDashboardTransport[]> {
+        Log.info("CourseController::getDashboard( " + reqDelivId + ", " + reqRepoId + ", " + maxNumResults + " ) - start");
         const start = Date.now();
-        const NUM_RESULTS = 500; // max # of records
+        const NUM_RESULTS = maxNumResults ? maxNumResults : 500; // max # of records
 
         const repoIds: string[] = [];
         const results: AutoTestDashboardTransport[] = [];
