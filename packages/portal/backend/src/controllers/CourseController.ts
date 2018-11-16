@@ -326,7 +326,7 @@ export abstract class CourseController implements ICourseController {
         const allResults = await this.matchResults(reqDelivId, reqRepoId);
         for (const result of allResults) {
             const repoId = result.input.target.repoId;
-            if (results.length <= NUM_RESULTS) {
+            if (results.length < NUM_RESULTS) {
 
                 const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
                     Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
