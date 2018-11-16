@@ -131,7 +131,7 @@ export abstract class CourseController implements ICourseController {
     public handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean> {
         Log.info("CourseController:handleNewAutoTestGrade( " + deliv.id + ", " +
             newGrade.personId + ", " + newGrade.score + ", ... ) - start");
-        if ((existingGrade === null || newGrade.score > existingGrade.score) && newGrade.timestamp < deliv.closeTimestamp) {
+        if ((existingGrade === null || newGrade.score >= existingGrade.score) && newGrade.timestamp <= deliv.closeTimestamp) {
             Log.trace("CourseController:handleNewAutoTestGrade( " + deliv.id + ", " +
                 newGrade.personId + ", " + newGrade.score + ", ... ) - returning true");
             return Promise.resolve(true);
