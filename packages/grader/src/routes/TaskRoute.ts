@@ -42,14 +42,11 @@ export class TaskRoute {
     }
 
     public async getTaskEvents(req: restify.Request, res: restify.Response, next: restify.Next) {
-        Log.info("TaskRoute::getTaskEvents(..) - start; params: " + JSON.stringify(req.params));
         let resultPromise: Promise<ContainerOutput>;
-        let id: string;
         try {
-            id = req.params.id;
+            const id: string = req.params.id;
             resultPromise = this.taskController.getResult(id);
         } catch (err) {
-            Log.error("TaskRoute::getTaskEvents(..) - ERROR Getting result for " + id + ": " + err.message);
             return res.send(404, err.message);
         }
 
@@ -60,17 +57,15 @@ export class TaskRoute {
             "Cache-Control": "no-cache"
         });
 
-        let body: string;
         try {
             const result = await resultPromise;
             // Set the event id to 1 since we only ever emit a single event.
-            body = new ServerSentEvent(1, "done", JSON.stringify(result)).toString();
-        } catch (err) {
-            body = new ServerSentEvent(1, "error", err).toString();
-            Log.error("TaskRoute::getTaskEvent(..) - ERROR An error was raised during execution of task " + id + ": " + err.message);
-        } finally {
-            Log.trace("TaskRoute::getTaskEvent(..) - Sending response: " + body);
+            const body: string = new ServerSentEvent(1, "done", JSON.stringify(result)).toString();
             res.write(body);
+        } catch (err) {
+            const body: string = new ServerSentEvent(1, "error", err).toString();
+            res.write(body);
+        } finally {
             res.write("\n\n");
             res.end();
         }

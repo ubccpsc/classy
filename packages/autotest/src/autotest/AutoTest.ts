@@ -373,28 +373,9 @@ export abstract class AutoTest implements IAutoTest {
                     state:              ContainerState.FAIL,
                     graderTaskId:        ""
                 };
+
                 try {
-                    const res = await rp(gradeServiceOpts);
-                    const taskId = res.id;
-                    const notifyUrl = res.notify_url;
-                    Log.trace("AutoTest::invokeContainer(..) - Registering notification listener for " + notifyUrl);
-                    const es = new EventSource(notifyUrl);
-                    output = await new Promise<ContainerOutput>((resolve, reject) => {
-                        es.addEventListener("message", (e: any) => {
-                            Log.info("AutoTest::invokeContainer(..) - Grader notification received (task " + taskId + "): " + e.data);
-                            resolve(e.data);
-                        });
-                        es.addEventListener("open", (e) => {
-                            Log.info("AutoTest::invokeContainer(..) - Listening for Grader Notifications for task: " + taskId + ".");
-                            // do nothing
-                        });
-                        es.addEventListener("error", (e) => {
-                            Log.error("AutoTest::invokeContainer(..) - Grader notification error (task " + taskId + "): "
-                                + JSON.stringify(e));
-                            // do nothing
-                            reject(JSON.stringify(e));
-                        });
-                    });
+                    output = await this.sendGradeTask(gradeServiceOpts);
                 } catch (err) {
                     Log.warn("AutoTest::invokeContainer(..) - ERROR for SHA: " +
                         input.target.commitSHA + "; ERROR with grading service: " + err);
@@ -454,5 +435,38 @@ export abstract class AutoTest implements IAutoTest {
         } catch (err) {
             Log.error("AutoTest::invokeContainer(..) - ERROR for SHA: " + input.target.commitSHA + "; ERROR: " + err);
         }
+    }
+
+    private async sendGradeTask(gradeServiceOpts: rp.OptionsWithUrl): Promise<ContainerOutput> {
+        let output: ContainerOutput;
+        let taskId: string;
+        let notifyUrl: string;
+
+        try {
+            const taskResponse = await rp(gradeServiceOpts);
+            taskId = taskResponse.id;
+            notifyUrl = taskResponse.notify_url;
+        } catch (err) {
+            Log.error(`AutoTest::sendGradeTask(..) - ERROR Submitting grading task: ${err}`);
+            throw err;
+        }
+
+        let eventSource: EventSource;
+        try {
+            eventSource = new EventSource(notifyUrl);
+            const event: any = await new Promise((resolve, reject) => {
+                eventSource.addEventListener("done", resolve);
+                eventSource.onerror = reject;
+            });
+
+            output = JSON.parse(event.data);
+        } catch (err) {
+            Log.error(`AutoTest::sendGradeTask(..) - ERROR Requesting notification of task ${taskId} status: ${err}`);
+            throw err;
+        } finally {
+            eventSource.close();
+        }
+
+        return output;
     }
 }
