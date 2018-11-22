@@ -81,7 +81,7 @@ export class TaskRoute {
             const result = {
                 id,
                 notify_url: `${me}/task/${id}/notify`,
-                attachments_url: `${me}/task/${id}/attachments/{+name}`
+                attachments_url: `${me}/task/${id}/attachments`
             };
             res.json(201, result);
         } catch (err) {

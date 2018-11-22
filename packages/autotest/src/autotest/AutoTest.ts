@@ -441,11 +441,13 @@ export abstract class AutoTest implements IAutoTest {
         let output: ContainerOutput;
         let taskId: string;
         let notifyUrl: string;
+        let attachmentUrl: string;
 
         try {
             const taskResponse = await rp(gradeServiceOpts);
             taskId = taskResponse.id;
             notifyUrl = taskResponse.notify_url;
+            attachmentUrl = taskResponse.attachments_url;
         } catch (err) {
             Log.error(`AutoTest::sendGradeTask(..) - ERROR Submitting grading task: ${err}`);
             throw err;
@@ -460,6 +462,7 @@ export abstract class AutoTest implements IAutoTest {
             });
 
             output = JSON.parse(event.data);
+            (output.custom as any)["attachmentsBaseURL"] = attachmentUrl;
         } catch (err) {
             Log.error(`AutoTest::sendGradeTask(..) - ERROR Requesting notification of task ${taskId} status: ${err}`);
             throw err;
