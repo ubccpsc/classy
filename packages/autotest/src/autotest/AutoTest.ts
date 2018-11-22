@@ -374,8 +374,11 @@ export abstract class AutoTest implements IAutoTest {
                     graderTaskId:        ""
                 };
                 try {
-                    const taskId = await rp(gradeServiceOpts);
-                    const es = new EventSource(`${graderUrl}:${graderPort}/task/${taskId}/notify`);
+                    const res = await rp(gradeServiceOpts);
+                    const taskId = res.id;
+                    const notifyUrl = res.notify_url;
+                    Log.trace("AutoTest::invokeContainer(..) - Registering notification listener for " + notifyUrl);
+                    const es = new EventSource(notifyUrl);
                     output = await new Promise<ContainerOutput>((resolve, reject) => {
                         es.addEventListener("message", (e: any) => {
                             Log.info("AutoTest::invokeContainer(..) - Grader notification received (task " + taskId + "): " + e.data);
@@ -386,8 +389,10 @@ export abstract class AutoTest implements IAutoTest {
                             // do nothing
                         });
                         es.addEventListener("error", (e) => {
-                            Log.error("AutoTest::invokeContainer(..) - Grader notification error (task " + taskId + "): " + e);
+                            Log.error("AutoTest::invokeContainer(..) - Grader notification error (task " + taskId + "): "
+                                + JSON.stringify(e));
                             // do nothing
+                            reject(JSON.stringify(e));
                         });
                     });
                 } catch (err) {
