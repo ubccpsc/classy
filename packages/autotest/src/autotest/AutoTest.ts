@@ -1,3 +1,4 @@
+import * as EventSource from "eventsource";
 import * as rp from "request-promise-native";
 
 import Config, {ConfigKey} from "../../../common/Config";
@@ -344,11 +345,11 @@ export abstract class AutoTest implements IAutoTest {
                     Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
 
                 const gradeServiceOpts: rp.OptionsWithUrl = {
-                    method:  "PUT",
-                    url:     `${graderUrl}:${graderPort}/task/grade/${id}`,
+                    method:  "POST",
+                    url:     `${graderUrl}:${graderPort}/task`,
                     body:    input,
                     json:    true, // Automatically stringifies the body to JSON,
-                    timeout: 360000  // enough time that the container will have timed out
+                    // timeout: 360000  // enough time that the container will have timed out
                 };
 
                 let output: ContainerOutput = { // NOTE: This is only populated in case the rp line below fails
@@ -373,7 +374,22 @@ export abstract class AutoTest implements IAutoTest {
                     graderTaskId:        ""
                 };
                 try {
-                    output = await rp(gradeServiceOpts);
+                    const taskId = await rp(gradeServiceOpts);
+                    const es = new EventSource(`${graderUrl}:${graderPort}/task/${taskId}/notify`);
+                    output = await new Promise<ContainerOutput>((resolve, reject) => {
+                        es.addEventListener("message", (e: any) => {
+                            Log.info("AutoTest::invokeContainer(..) - Grader notification received (task " + taskId + "): " + e.data);
+                            resolve(e.data);
+                        });
+                        es.addEventListener("open", (e) => {
+                            Log.info("AutoTest::invokeContainer(..) - Listening for Grader Notifications for task: " + taskId + ".");
+                            // do nothing
+                        });
+                        es.addEventListener("error", (e) => {
+                            Log.error("AutoTest::invokeContainer(..) - Grader notification error (task " + taskId + "): " + e);
+                            // do nothing
+                        });
+                    });
                 } catch (err) {
                     Log.warn("AutoTest::invokeContainer(..) - ERROR for SHA: " +
                         input.target.commitSHA + "; ERROR with grading service: " + err);
