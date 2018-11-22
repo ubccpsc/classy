@@ -1,4 +1,4 @@
-import {ContainerInput, ContainerOutput} from "../../../common/types/ContainerTypes";
+import {ContainerInput, ContainerOutput, ContainerState} from "../../../common/types/ContainerTypes";
 import {GradeTask} from "../model/GradeTask";
 import {Workspace} from "../model/Workspace";
 
@@ -25,8 +25,7 @@ export class TaskController {
         // Add parameters to create the grading container. We'll be lazy and use the custom field.
         input.containerConfig.custom = {
             "--env":      [
-                `ASSIGNMENT=${input.delivId}`,
-                `USER_UID=${uid}`  // this is for backwards compatibility with SDMM
+                `ASSIGNMENT=${input.delivId}`
             ],
             "--volume":   [
                 `${process.env.GRADER_HOST_DIR}/${id}/assn:/assn`,

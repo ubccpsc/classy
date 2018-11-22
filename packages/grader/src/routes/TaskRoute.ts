@@ -1,6 +1,5 @@
 import * as fs from "fs-extra";
 import * as restify from "restify";
-import Log from "../../../common/Log";
 import {ContainerInput, ContainerOutput} from "../../../common/types/ContainerTypes";
 import {TaskController} from "../controllers/TaskController";
 import {ServerSentEvent} from "../model/ServerSentEvent";
@@ -18,9 +17,7 @@ export class TaskRoute {
             const filePath = req.params["*"];
             const basePath = this.taskController.getAttachmentBasePath(id);
             const path = basePath + "/" + filePath;
-            // await fs.access(path);
 
-            // fs.createReadStream(basePath + "/" + path).pipe(res).on("end", res.end);
             const rs = fs.createReadStream(path);
             rs.on("error", (err) => {
                 if (err.code === "ENOENT") {
@@ -31,8 +28,10 @@ export class TaskRoute {
                     res.send(500, err.message);
                 }
             });
+            rs.on("end", () => {
+               rs.close();
+            });
             rs.pipe(res);
-            // res.send(200, rs);
         } catch (err) {
             // task id not found
             res.send(404, err.message);

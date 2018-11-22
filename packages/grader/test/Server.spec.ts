@@ -8,6 +8,10 @@ import {Attachment, ContainerOutput} from "../../common/types/ContainerTypes";
 import {TaskController} from "../src/controllers/TaskController";
 import Server from "../src/server/Server";
 
+// The restify onerror event is registered each time the server is started. This causes an EventEmitter memory leak warning.
+// For testing, we can just ignore it.
+// process.on('warning', e => console.warn(e.stack));
+
 chai.use(chaiHttp);
 describe("Task Endpoint", async function() {
     const port: number = 4321;
