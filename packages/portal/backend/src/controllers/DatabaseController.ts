@@ -41,7 +41,7 @@ export class DatabaseController {
 
     public async getPerson(recordId: string): Promise<Person | null> {
         const person = await this.readSingleRecord(this.PERSONCOLL, {id: recordId}) as Person;
-        Log.info("DatabaseController::getPerson( " + recordId + " ) - found: " + (person !== null));
+        Log.trace("DatabaseController::getPerson( " + recordId + " ) - found: " + (person !== null));
         return person;
     }
 
@@ -89,7 +89,8 @@ export class DatabaseController {
 
     public async getResults(): Promise<Result[]> {
         const query = {};
-        const latestFirst = {"input.pushInfo.timestamp": -1}; // most recent first
+        // const latestFirst = {"input.pushInfo.timestamp": -1}; // most recent first
+        const latestFirst = {"input.target.timestamp": -1}; // most recent first
         const results = await this.readRecords(this.RESULTCOLL, query, latestFirst) as Result[];
         Log.info("DatabaseController::getResult() - #: " + results.length);
         for (const result of results) {
@@ -571,6 +572,12 @@ export class DatabaseController {
         } else {
             Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - not found");
         }
+        return result;
+    }
+
+    public async getResultFromURL(commitURL: string): Promise<Result> {
+        const result = await this.readSingleRecord(this.RESULTCOLL, {commitURL: commitURL}) as Result;
+
         return result;
     }
 }

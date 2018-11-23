@@ -3,6 +3,7 @@ import * as rp from "request-promise-native";
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {AutoTestResult} from "../../../common/types/AutoTestTypes";
+import {GradeReport} from "../../../common/types/ContainerTypes";
 import {
     AutoTestAuthPayload,
     AutoTestAuthTransport,
@@ -83,6 +84,16 @@ export interface IClassPortal {
      * @returns {Promise<AutoTestResultTransport | null>}
      */
     getResult(delivId: string, repoId: string, sha: string): Promise<AutoTestResultTransport | null>;
+
+    /**
+     * Converts a grade report into the feedback returned by the container. The default implementation
+     * on portal just returns gradeRecord.feedback but courses are free to adjust this as needed using
+     * their CourseController class.
+     *
+     * @param {GradeReport} gradeRecord
+     * @returns {Promise<Payload>}
+     */
+    formatFeedback(gradeRecord: GradeReport): Promise<string | null>;
 }
 
 export class ClassPortal implements IClassPortal {
@@ -226,6 +237,11 @@ export class ClassPortal implements IClassPortal {
             const pay: Payload = {failure: {message: err.message, shouldLogout: false}};
             return pay;
         }
+    }
+
+    public async formatFeedback(gradeRecord: GradeReport): Promise<string | null> {
+        // const payload: Payload = {success: {message: gradeRecord.feedback}};
+        return gradeRecord.feedback;
     }
 
     public async sendResult(result: AutoTestResult): Promise<Payload> { // really just a mechanism to report more verbose errors

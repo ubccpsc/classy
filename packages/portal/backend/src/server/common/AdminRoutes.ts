@@ -1,3 +1,4 @@
+import * as cookie from 'cookie';
 import * as restify from 'restify';
 
 import Log from "../../../../../common/Log";
@@ -79,6 +80,31 @@ export default class AdminRoutes implements IREST {
         return next(false);
     }
 
+    private static processAuth(req: any): {user: string, token: string} {
+        let user = req.headers.user;
+        let token = req.headers.token;
+
+        // fallback to getting token from cookies
+        // this is useful for providing links in for attachments, but also might become the default in the future
+        if ((typeof user === 'undefined' || typeof token === 'undefined') && typeof req.headers.cookie !== 'undefined') {
+            // the following snippet is a tiny modification based on a snippet in App.validateCredentials()
+            // https://github.com/ubccpsc/classy/blob/bbe1d564f21d828101935892103b51453ed7863f/packages/portal/frontend/src/app/App.ts#L200
+            const tokenString = cookie.parse(req.headers.cookie)['token'];
+            if (tokenString !== null) {
+                const tokenParts = tokenString.split('__'); // Firefox doesn't like multiple tokens
+                if (tokenParts.length === 1) {
+                    token = tokenParts[0];
+                } else if (tokenParts.length === 2) {
+                    token = tokenParts[0];
+                    user = tokenParts[1];
+                }
+                Log.info('AdminRoutes::processAuth(..) - from cookies; user: ' + user + '; token: ' + token);
+            }
+        }
+
+        return {user, token};
+    }
+
     /**
      * Handler that succeeds if the user is privileged (admin || staff).
      *
@@ -89,8 +115,9 @@ export default class AdminRoutes implements IREST {
     private static isPrivileged(req: any, res: any, next: any) {
         Log.info('AdminRoutes::isPrivileged(..) - start');
 
-        const user = req.headers.user;
-        const token = req.headers.token;
+        const auth = AdminRoutes.processAuth(req);
+        const user = auth.user;
+        const token = auth.token;
 
         const ac = new AuthController();
         ac.isPrivileged(user, token).then(function(priv) {
@@ -115,8 +142,14 @@ export default class AdminRoutes implements IREST {
     private static isAdmin(req: any, res: any, next: any) {
         Log.info('AdminRoutes::isAdmin(..) - start');
 
-        const user = req.headers.user;
-        const token = req.headers.token;
+        const auth = AdminRoutes.processAuth(req);
+        const user = auth.user;
+        const token = auth.token;
+
+        if (typeof user === 'undefined' || typeof token === 'undefined') {
+            Log.warn('AdminRoutes::isAdmin(..) - undefined user or token; user not admin.');
+            return AdminRoutes.handleError(401, 'Authorization credentials error; user not admin.', res, next);
+        }
 
         const ac = new AuthController();
         ac.isPrivileged(user, token).then(function(priv) {

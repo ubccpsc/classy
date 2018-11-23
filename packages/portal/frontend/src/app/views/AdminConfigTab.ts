@@ -155,6 +155,7 @@ export class AdminConfigTab extends AdminPage {
         const provisionOptions = ['--Select--'];
         const releaseOptions = ['--Select--'];
         const gradesOptions = ['--Select--'];
+        const allDeliverables = ['--Select--'];
 
         for (const deliv of deliverables) {
             if (deliv.shouldAutoTest === true) {
@@ -167,13 +168,14 @@ export class AdminConfigTab extends AdminPage {
                 releaseOptions.push(deliv.id);
                 gradesOptions.push(deliv.id);
             }
+            allDeliverables.push(deliv.id);
         }
 
         this.populateDelivSelect(defaultDeliverableOptions, defaultDeliverableDropdown);
         this.populateDelivSelect(provisionOptions, teamDropdown); // can only create teams on provisionable deliverables
         this.populateDelivSelect(provisionOptions, provisionDropdown);
         this.populateDelivSelect(releaseOptions, releaseDropdown);
-        this.populateDelivSelect(gradesOptions, gradesDeliverableDropdown);
+        this.populateDelivSelect(allDeliverables, gradesDeliverableDropdown);
 
         // set default deliverable, if it exists
         for (const o of (defaultDeliverableDropdown as any).children) {

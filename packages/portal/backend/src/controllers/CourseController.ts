@@ -321,6 +321,7 @@ export abstract class CourseController implements ICourseController {
      */
     public async getDashboard(reqDelivId: string, reqRepoId: string): Promise<AutoTestDashboardTransport[]> {
         Log.info("CourseController::getDashboard( " + reqDelivId + ", " + reqRepoId + " ) - start");
+        const start = Date.now();
         const NUM_RESULTS = 500; // max # of records
 
         const repoIds: string[] = [];
@@ -394,7 +395,7 @@ export abstract class CourseController implements ICourseController {
                 // result does not match filter
             }
         }
-        Log.trace("CourseController::getDashboard(..) - # results: " + results.length);
+        Log.info("CourseController::getDashboard(..) - # results: " + results.length + "; took: " + Util.took(start));
         return results;
     }
 
@@ -477,6 +478,7 @@ export abstract class CourseController implements ICourseController {
      */
     public async getResults(reqDelivId: string, reqRepoId: string): Promise<AutoTestResultSummaryTransport[]> {
         Log.info("CourseController::getResults( " + reqDelivId + ", " + reqRepoId + " ) - start");
+        const start = Date.now();
         const NUM_RESULTS = 1000; // max # of records
 
         const results: AutoTestResultSummaryTransport[] = [];
@@ -525,7 +527,7 @@ export abstract class CourseController implements ICourseController {
                 // result does not match filter
             }
         }
-        Log.trace("CourseController::getResults(..) - # results: " + results.length);
+        Log.info("CourseController::getResults(..) - # results: " + results.length + "; took: " + Util.took(start));
         return results;
     }
 

@@ -43,7 +43,7 @@ export default class RouteHandler {
     public static postGithubHook(req: restify.Request, res: restify.Response, next: restify.Next) {
         const start = Date.now();
         const githubEvent: string = req.header("X-GitHub-Event");
-        Log.info("RoutHandler::postGithubHook(..) - start; handling event: " + githubEvent);
+        Log.info("RouteHandler::postGithubHook(..) - start; handling event: " + githubEvent);
         const body = req.body;
 
         const handleError = function(msg: string) {

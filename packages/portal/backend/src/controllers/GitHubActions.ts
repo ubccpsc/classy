@@ -177,6 +177,15 @@ export interface IGitHubActions {
      * @returns {Promise<boolean>}
      */
     setRepoPermission(repoName: string, permissionLevel: string): Promise<boolean>;
+
+    /**
+     * Makes a comment on a commit.
+     *
+     * @param {string} url
+     * @param {string} message any text would work, but markdown is best
+     * @returns {Promise<boolean>}
+     */
+    makeComment(url: string, message: string): Promise<boolean>;
 }
 
 export class GitHubActions implements IGitHubActions {
@@ -1383,6 +1392,74 @@ export class GitHubActions implements IGitHubActions {
         Log.trace("GitHubActions::checkDatabase( repo:_" + repoName + "_, team:_" + teamName + "_) - exists");
         return true;
     }
+
+    public makeComment(url: string, message: string): Promise<boolean> {
+        return new Promise<boolean>((fulfill, reject) => {
+            try {
+                // find a better short string for logging
+                let messageToPrint = message;
+                if (messageToPrint.indexOf('\n') > 0) {
+                    messageToPrint = messageToPrint.substr(0, messageToPrint.indexOf('\n'));
+                }
+                if (messageToPrint.length > 80) {
+                    messageToPrint = messageToPrint.substr(0, 80) + "...";
+                }
+
+                Log.info("GitHubActions::makeComment(..) - Posting markdown to url: " +
+                    url + "; message: " + messageToPrint);
+
+                if (typeof url === "undefined" || url === null) {
+                    Log.error("GitHubActions::makeComment(..)  - message.url is required");
+                    reject(false);
+                }
+
+                if (typeof message === "undefined" || message === null || message.length < 1) {
+                    Log.error("GitHubActions::makeComment(..)  - message.message is required");
+                    reject(false);
+                }
+
+                /*
+                const org = Config.getInstance().getProp(ConfigKey.org);
+                const hostLength = message.url.indexOf(org);
+                const path = 'repos/' + message.url.substr(hostLength);
+                const host = Config.getInstance().getProp(ConfigKey.githubAPI);
+                */
+
+                const body: string = JSON.stringify({body: message});
+                const options: any = {
+                    method:  "POST",
+                    headers: {
+                        "Content-Type":  "application/json",
+                        "User-Agent":    "UBC-AutoTest",
+                        "Authorization": Config.getInstance().getProp(ConfigKey.githubBotToken)
+                    },
+                    body:    body
+                };
+
+                Log.trace("GitHubService::postMarkdownToGithub(..) - url: " + url);
+
+                if (Config.getInstance().getProp(ConfigKey.postback) === true) {
+
+                    // Log.trace("GitHubService::postMarkdownToGithub(..) - request: " + JSON.stringify(options, null, 2));
+                    // const url = url; // this url comes from postbackURL which uses the right API format
+                    return rp(url, options).then(function(res) {
+                        Log.trace("GitHubService::postMarkdownToGithub(..) - success"); // : " + res);
+                        fulfill(true);
+                    }).catch(function(err) {
+                        Log.error("GitHubService::postMarkdownToGithub(..) - ERROR: " + err);
+                        reject(false);
+                    });
+
+                } else {
+                    Log.trace("GitHubService::postMarkdownToGithub(..) - send skipped (config.postback === false)");
+                    fulfill(true);
+                }
+            } catch (err) {
+                Log.error("GitHubService::postMarkdownToGithub(..) - ERROR: " + err);
+                reject(false);
+            }
+        });
+    }
 }
 
 /* istanbul ignore next */
@@ -1670,6 +1747,11 @@ export class TestGitHubActions implements IGitHubActions {
 
     public setPageSize(size: number): void {
         Log.info("TestGitHubActions::setPageSize(..)");
+        return;
+    }
+
+    public makeComment(url: string, message: string): Promise<boolean> {
+        Log.info("TestGitHubActions::makeComment(..)");
         return;
     }
 

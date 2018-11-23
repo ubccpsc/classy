@@ -1,6 +1,7 @@
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {AutoTestResult} from "../../../../common/types/AutoTestTypes";
+import {GradeReport} from "../../../../common/types/ContainerTypes";
 import {
     AutoTestAuthTransport,
     AutoTestConfigTransport,
@@ -47,7 +48,8 @@ export class MockClassPortal implements IClassPortal {
         const testname = Config.getInstance().getProp(ConfigKey.testname);
         if (name === testname) { // 310
             const delay = 6 * 60 * 60; // 6 hours in seconds
-            return {dockerImage:    "310container",
+            return {
+                dockerImage:        "310container",
                 studentDelay:       delay,
                 maxExecTime:        300,
                 regressionDelivIds: [],
@@ -93,6 +95,10 @@ export class MockClassPortal implements IClassPortal {
 
     public async getPersonId(userName: string): Promise<AutoTestPersonIdTransport | null> {
         return Promise.resolve({personId: userName});
+    }
+
+    public async formatFeedback(gradeRecord: GradeReport): Promise<string | null> {
+        return Promise.resolve(gradeRecord.feedback);
     }
 
 }

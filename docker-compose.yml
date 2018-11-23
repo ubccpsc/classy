@@ -33,6 +33,7 @@ services:
         restart: always
         user: "${UID}"
     db:
+        command: --quiet
         container_name: ${CONTAINER_NAME_DATABASE}
         environment:
           - MONGO_INITDB_ROOT_USERNAME
@@ -59,6 +60,8 @@ services:
             - GRADER_PORT
             - DOCKER_NET=${GRADE_NET_NAME}
             - HOSTS_ALLOW
+            - LOG_LEVEL
+            - PLATFORM
         expose:
             - ${GRADER_PORT}
         networks:
@@ -101,9 +104,6 @@ services:
                 - SSL_KEY_PATH
                 - CONTAINER_NAME_PORTAL
                 - BACKEND_PORT
-                - CONTAINER_NAME_GRADER
-                - GRADER_PORT
-                - RAND_ENDPOINT
             context: ./
             dockerfile: ./packages/proxy/Dockerfile
         container_name: ${CONTAINER_NAME_ROUTER}
