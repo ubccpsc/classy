@@ -106,8 +106,6 @@ export abstract class CourseController implements ICourseController {
         this.gh = ghController;
     }
 
-    // public abstract async handleUnknownUser(githubUsername: string): Promise<Person | null>;
-
     /**
      * This endpoint just lets subclasses change the behaviour for when users are unknown.
      *
@@ -122,8 +120,6 @@ export abstract class CourseController implements ICourseController {
         return null;
     }
 
-    // public abstract handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean>;
-
     /**
      * Default behaviour is that if the deadline has not passed, and the grade is higher, accept it.
      *
@@ -135,7 +131,7 @@ export abstract class CourseController implements ICourseController {
     public handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean> {
         Log.info("CourseController:handleNewAutoTestGrade( " + deliv.id + ", " +
             newGrade.personId + ", " + newGrade.score + ", ... ) - start");
-        if ((existingGrade === null || newGrade.score > existingGrade.score) && newGrade.timestamp < deliv.closeTimestamp) {
+        if ((existingGrade === null || newGrade.score >= existingGrade.score) && newGrade.timestamp <= deliv.closeTimestamp) {
             Log.trace("CourseController:handleNewAutoTestGrade( " + deliv.id + ", " +
                 newGrade.personId + ", " + newGrade.score + ", ... ) - returning true");
             return Promise.resolve(true);
@@ -317,19 +313,20 @@ export abstract class CourseController implements ICourseController {
      * Gets the results associated with the course.
      * @param reqDelivId ('any' for *)
      * @param reqRepoId ('any' for *)
+     * @param maxNumResults (optional, default 500)
      * @returns {Promise<AutoTestGradeTransport[]>}
      */
-    public async getDashboard(reqDelivId: string, reqRepoId: string): Promise<AutoTestDashboardTransport[]> {
-        Log.info("CourseController::getDashboard( " + reqDelivId + ", " + reqRepoId + " ) - start");
+    public async getDashboard(reqDelivId: string, reqRepoId: string, maxNumResults?: number): Promise<AutoTestDashboardTransport[]> {
+        Log.info("CourseController::getDashboard( " + reqDelivId + ", " + reqRepoId + ", " + maxNumResults + " ) - start");
         const start = Date.now();
-        const NUM_RESULTS = 500; // max # of records
+        const NUM_RESULTS = maxNumResults ? maxNumResults : 500; // max # of records
 
         const repoIds: string[] = [];
         const results: AutoTestDashboardTransport[] = [];
         const allResults = await this.matchResults(reqDelivId, reqRepoId);
         for (const result of allResults) {
             const repoId = result.input.target.repoId;
-            if (results.length <= NUM_RESULTS) {
+            if (results.length < NUM_RESULTS) {
 
                 const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
                     Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
@@ -433,6 +430,9 @@ export abstract class CourseController implements ICourseController {
      */
     public async getResult(delivId: string, repoId: string, sha: string): Promise<string> {
         Log.info("CourseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - start");
+
+        // TODO: this should be expanded to getAttachement where an attachment id and sha are provided as args
+        // we can then pull the path from the result.attachments field
 
         // portal/result/<FULL_COMMIT_SHA>-<DELIV_ID>/<FILENAME>
         // http://grader/randomStringInEnv/commitSHA-dX

@@ -91,9 +91,10 @@ export interface IClassPortal {
      * their CourseController class.
      *
      * @param {GradeReport} gradeRecord
+     * @param {string} feedbackMode
      * @returns {Promise<Payload>}
      */
-    formatFeedback(gradeRecord: GradeReport): Promise<string | null>;
+    formatFeedback(gradeRecord: GradeReport, feedbackMode?: string): Promise<string | null>;
 }
 
 export class ClassPortal implements IClassPortal {
@@ -239,9 +240,28 @@ export class ClassPortal implements IClassPortal {
         }
     }
 
-    public async formatFeedback(gradeRecord: GradeReport): Promise<string | null> {
-        // const payload: Payload = {success: {message: gradeRecord.feedback}};
-        return gradeRecord.feedback;
+    public async formatFeedback(gradeRecord: GradeReport, feedbackMode?: string): Promise<string | null> {
+        Log.info("ClassPortal::formatFeedback(..) - start; feedbackMode: " + feedbackMode);
+        try {
+            // TODO: this could actually be sent to the frontend for consideration in the course-specific classy controller
+
+            let feedback: string = gradeRecord.feedback;
+
+            let altFeedback: string = "";
+            if (typeof feedbackMode === "string" && feedbackMode !== "default") {
+                altFeedback = (gradeRecord.custom as any)[feedbackMode].feedback;
+
+                if (typeof altFeedback === "string") {
+                    Log.info("ClassPortal::formatFeedback(..) - using altFeedback");
+                    feedback = altFeedback;
+                }
+            }
+
+            return feedback;
+        } catch (err) {
+            Log.error("ClassPortal::formatFeedback(..) - ERROR; message: " + err.message);
+            return null;
+        }
     }
 
     public async sendResult(result: AutoTestResult): Promise<Payload> { // really just a mechanism to report more verbose errors

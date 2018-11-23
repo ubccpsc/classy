@@ -186,15 +186,14 @@ export class AdminDashboardTab extends AdminPage {
 
             const dashRow = this.generateHistogram(result);
 
-            const stdioURL = '/portal/admin/result/' + result.delivId + '/' + result.repoId + '/' + result.commitSHA;
-            const clickTarget = "myApp.view.dashTab.getDetails('" + stdioURL + "');";
+            const stdioViewerURL = '/stdio.html?delivId=' + result.delivId + '&repoId=' + result.repoId + '&sha=' + result.commitSHA;
 
             const row: TableCell[] = [
                 // {value: '?', html: '<a href="http://refugeeks.com/wp-content/uploads/2014/04/501-Not-Implemented-600x480.jpg">?</a>'},
                 {
                     value: '',
-                    html:  '<a style="cursor: pointer; cursor: hand;" onclick="' +
-                           clickTarget + '"><ons-icon icon="ion-ios-help-outline"</ons-icon></a>'
+                    html:  '<a style="cursor: pointer; cursor: hand;" target="_blank" href="' +
+                           stdioViewerURL + '"><ons-icon icon="ion-ios-help-outline"</ons-icon></a>'
                 },
                 {value: result.repoId, html: '<a href="' + result.repoURL + '">' + result.repoId + '</a>'},
                 {value: result.delivId, html: result.delivId},
@@ -216,40 +215,6 @@ export class AdminDashboardTab extends AdminPage {
         } else {
             UI.showSection('dashboardListTable');
             UI.hideSection('dashboardListTableNone');
-        }
-    }
-
-    public async getDetails(path: string): Promise<void> {
-        const url = this.remote + path;
-        Log.info('AdminDashboardTab::getDetails( .. ) - url: ' + url);
-        try {
-            const newWindow = window.open('text/plain');
-            // newWindow.document.write('Fetching data from server.');
-
-            const options = AdminView.getOptions();
-            const response = await fetch(url, options);
-            if (response.status === 200) {
-                let data = await response.text();
-                Log.info('AdminDashboardTab::getDetails( .. ) - text length: ' + data.length);
-
-                data = data.replace(/&/g, "&amp;");
-                data = data.replace(/</g, "&lt;");
-                data = data.replace(/>/g, "&gt;");
-                data = data.replace(/"/g, "&quot;");
-                data = data.replace(/'/g, "&#039;");
-                data = data.replace(/\\n/g, "<br/>");
-
-                newWindow.document.write(data);
-            } else if (response.status === 400) {
-                const data = await response.json();
-                UI.showError("Error retrieving stdio: " + data.failure.message);
-            } else {
-                const data = await response.text();
-                UI.showError("Error retrieving stdio: " + data);
-            }
-        } catch (err) {
-            Log.info('AdminDashboardTab::getDetails( .. ) - ERROR: ' + err.message);
-            UI.showError("Error retrieving stdio: " + err.message);
         }
     }
 

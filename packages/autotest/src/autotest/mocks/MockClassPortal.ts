@@ -97,7 +97,7 @@ export class MockClassPortal implements IClassPortal {
         return Promise.resolve({personId: userName});
     }
 
-    public async formatFeedback(gradeRecord: GradeReport): Promise<string | null> {
+    public async formatFeedback(gradeRecord: GradeReport, feedbackMode?: string): Promise<string | null> {
         return Promise.resolve(gradeRecord.feedback);
     }
 

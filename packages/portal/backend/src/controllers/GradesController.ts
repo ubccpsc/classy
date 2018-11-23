@@ -28,7 +28,12 @@ export class GradesController {
                 // only return student grades
                 returnGrades.push(grade);
             } else {
-                Log.info("GradesController::getAllGrades() - not returning grade for: " + grade.personId + "; kind: " + person.kind);
+                if (grade !== null && person !== null) {
+                    Log.info("GradesController::getAllGrades() - not returning grade for: " + grade.personId + "; kind: " + person.kind);
+                } else {
+                    Log.warn("GradesController::getAllGrades() - null; not returning grade: " +
+                        JSON.stringify(grade) + "; person: " + JSON.stringify(person));
+                }
             }
         }
         Log.info("GradesController::getAllGrades() - done; # all: " + grades.length +

@@ -73,7 +73,7 @@ export class GradeTask {
                 await this.workspace.writeFile("stdio.txt", log);
 
                 if (this.containerState === "TIMEOUT") {
-                    out.report.feedback = "Container did not complete in the allotted time.";
+                    out.report.feedback = "Container did not complete for `" + this.input.delivId + "` in the allotted time.";
                     out.state = ContainerState.TIMEOUT;
                 } else {
                     try {

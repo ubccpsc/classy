@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Classy - Container Output Viewer</title>
+
+    <!-- Onsen !-->
+    <link rel="stylesheet" href="https://unpkg.com/onsenui/css/onsenui.css">
+    <link rel="stylesheet" href="https://unpkg.com/onsenui/css/onsen-css-components.min.css">
+    <script src="https://unpkg.com/onsenui/js/onsenui.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<ons-page id="stdioPage">
+    <ons-toolbar>
+        <div class="center" id="headerTitle">Container Output Viewer</div>
+    </ons-toolbar>
+    <div style="height: 100%; display:flex; align-items:center; justify-content: center;">
+        <div id="stdioViewer">Loading...</div>
+    </div>
+</ons-page>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.1/ace.js"></script>
+<script>
+    window.addEventListener("load", function () {
+        // HOST: set to '/' in production,
+        //       non-'/' for local testing, e.g. 'https://cs310.ugrad.cs.ubc.ca'
+
+        var HOST = location.href.substring(0, location.href.indexOf('stdio.html'));
+
+        // HEADERS: set to {} in production
+        //          { user: , token: } for local testing
+        var HEADERS = {};
+
+        function getHTTP(url, headers, onsuccess, onerror) {
+            var request = new XMLHttpRequest();
+            request.open('GET', url, true);
+
+            var headerKeys = Object.keys(headers);
+            for (var i = 0; i < headerKeys.length; ++i) {
+                var header = headerKeys[i];
+                var value = headers[header];
+                request.setRequestHeader(header, value);
+            }
+
+            request.onload = function () {
+                if (request.status >= 200 && request.status < 400) {
+                    onsuccess(request.responseText);
+                } else {
+                    onerror("Request failed, status: " + request.status)
+                }
+            };
+
+            request.onerror = onerror;
+
+            request.send();
+        }
+
+        function getUrlVars() {
+            // This function is from
+            // https://html-online.com/articles/get-url-parameters-javascript/
+            var vars = {};
+            var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
+                vars[key] = value;
+            });
+            return vars;
+        }
+
+        function loadStdio(delivId, repoId, sha) {
+            var url = HOST + 'portal/admin/result/' + delivId + '/' + repoId + '/' + sha;
+            getHTTP(url, HEADERS, function (stdio) {
+                editor.setValue(JSON.parse(stdio));
+                editor.clearSelection();
+            }, function (error) {
+                if (typeof error !== 'string') {
+                    error = 'The request failed, possibly due to unauthorization.';
+                }
+                alert(error);
+            });
+        }
+
+        function highlightKeywords(keywords) {
+            // modified based on https://stackoverflow.com/a/43757653/2361752 {
+            ace.define('ace/mode/custom', [], function (require, exports, module) {
+                var oop = require("ace/lib/oop");
+                var TextMode = require("ace/mode/text").Mode;
+                var Tokenizer = require("ace/tokenizer").Tokenizer;
+                var CustomHighlightRules = require("ace/mode/custom_highlight_rules").CustomHighlightRules;
+                var Mode = function () {
+                    this.HighlightRules = CustomHighlightRules;
+                };
+                oop.inherits(Mode, TextMode);
+                (function () {
+                }).call(Mode.prototype);
+                exports.Mode = Mode;
+            });
+
+            ace.define('ace/mode/custom_highlight_rules', [], function (require, exports, module) {
+                var oop = require("ace/lib/oop");
+                var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
+                var CustomHighlightRules = function () {
+                    var keywordMapper = this.createKeywordMapper({
+                        "variable.language": "beforeEach",
+                        "keyword":
+                            keywords.join('|').replace(' ', '|'),
+                        "constant.language":
+                            ""
+                    }, "text", true);
+                    this.$rules = {
+                        "start": [
+                            {
+                                regex: "\\w+\\b",
+                                token: keywordMapper
+                            },
+                        ]
+                    };
+                    this.normalizeRules()
+                };
+                oop.inherits(CustomHighlightRules, TextHighlightRules);
+                exports.CustomHighlightRules = CustomHighlightRules;
+            });
+            // } modified based on https://stackoverflow.com/a/43757653/2361752
+            editor.session.setMode("ace/mode/custom");
+        }
+
+        function loadNotPassingTestNames(delivId, repoId, sha) {
+            var url = HOST + '/portal/admin/dashboard/' + delivId + '/' + repoId;
+            getHTTP(url, HEADERS, function (data) {
+                json = JSON.parse(data);
+                var commit = json['success']
+                    .find(function (o) {
+                        return o['commitSHA'] == sha;
+                    });
+                var notPassingTestNames = commit['testFail']
+                    .concat(commit['testSkip'])
+                    .map(function (description) {
+                        return description.split(':')[0];
+                    });
+                highlightKeywords(notPassingTestNames);
+            }, function (error) {
+                // no need to show alert, just log is enough
+                // since not all courses need to have highlighting
+                console.log(error);
+            });
+        }
+
+        var params = getUrlVars();
+        var delivId = params['delivId'];
+        var repoId = params['repoId'];
+        var sha = params['sha'];
+
+        // set title
+        document.getElementById('headerTitle').innerText = 'stdio - ' + repoId + ' - ' + sha;
+
+        // init ace editor
+        var editor = ace.edit("stdioViewer");
+        editor.setTheme("ace/theme/monokai");
+        editor.setReadOnly(true);
+
+        // asyncs
+        loadStdio(delivId, repoId, sha);
+        loadNotPassingTestNames(delivId, repoId, sha);
+    });
+</script>
+
+</body>
+
+</html>
+
+
+

@@ -6,7 +6,7 @@ import {GitHubActions} from "../src/controllers/GitHubActions";
 import {GradesController} from "../src/controllers/GradesController";
 import {ResultsController} from "../src/controllers/ResultsController";
 
-import {Grade} from "../src/Types";
+import {AuditLabel, Grade} from "../src/Types";
 
 export class ProcessPrivateTests {
 
@@ -24,6 +24,7 @@ export class ProcessPrivateTests {
         const gha = GitHubActions.getInstance(true);
         const gradesC = new GradesController();
         const resultsC = new ResultsController();
+        const dbc = DatabaseController.getInstance();
 
         const allGrades = await gradesC.getAllGrades();
         const grades = [];
@@ -51,7 +52,9 @@ export class ProcessPrivateTests {
 
             const msg = "### D2 Results \n\n* ***Final Score:*** " + finalScore + "\n * Public test score: " + scorePub +
                 "\n * Private test score: " + scorePriv + "\n * Coverage score: " + scoreCover +
-                "\n\n Private test details available by calling the bot on `d2` for a _new_ commit once it is re-enabled.\n";
+                "\n\n Private test details available by calling the bot on `d2` for a _new_ commit once it is re-enabled." +
+                "\n\n Note: if this is an earlier commit than you expected, " +
+                "it is because it has a higer (or equivalent) score to the later commit.";
 
             // test URL
             // let u = 'https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/d0_r5t0b/commit/6cfd47be38b320c741b0613f2d0f7d958e35f2c6';
@@ -71,7 +74,11 @@ export class ProcessPrivateTests {
             // append /comments
             u = u + '/comments';
 
-            if (this.DRY_RUN === false) {
+            const TEST_USER = 'XXXXX';
+
+            if (this.DRY_RUN === false || grade.personId === TEST_USER) {
+                // NOTE: prints once per person ON THE TEAM
+                // TODO: maintain a map of URLS and don't post to an URL that has already been updated
                 await gha.makeComment(u, msg);
             } else {
                 Log.info("Dry run comment to: " + u);
@@ -85,8 +92,9 @@ export class ProcessPrivateTests {
             newGrade.score = finalScore;
 
             // publish grade
-            if (this.DRY_RUN === false) {
+            if (this.DRY_RUN === false || grade.personId === TEST_USER) {
                 await gradesC.saveGrade(newGrade);
+                await dbc.writeAudit(AuditLabel.GRADE_CHANGE, 'ProcessPrivateTest', grade, newGrade, {});
             } else {
                 Log.info("Dry run grade update for: " + newGrade.personId);
             }

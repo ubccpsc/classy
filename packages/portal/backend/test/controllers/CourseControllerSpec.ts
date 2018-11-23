@@ -219,6 +219,12 @@ describe("CourseController", () => {
         expect(res.length).to.equal(10);
     });
 
+    it("Should be able to get a list of dashboard results  without wildcards, with max result number set.", async () => {
+        const res = await cc.getDashboard(Test.DELIVID0, Test.REPONAME1, 5);
+        expect(res).to.be.an('array');
+        expect(res.length).to.equal(5);
+    });
+
     it("Should be able to get a list of results with partial wildcards.", async () => {
         // doesn't really work with the result tuples we have...
         const res = await cc.getResults('any', Test.REPONAME1);

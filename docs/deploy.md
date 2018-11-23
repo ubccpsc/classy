@@ -199,6 +199,17 @@ You should now be able to open portal in your web browser by navigating to the h
 <https://classy.cs.ubc.ca>). The system should also be able to receive commit and comment events from GitHub and process
 them accordingly.
 
+AutoTest stores the output of each run on disk and, depending on the size of the output, can cause space issues.
+You can apply the following cron job (as root) that will archive (and then remove) runs more than a week old.
+Adapt as needed: this will run every Wednesday at 0300 and archive runs older than 7 days (based on last modified time);
+all runs are stored together in a single compressed tarball called `runs-TIMESTAMP.tar.gz` under `/cs/portal-backup/cs310.ugrad.cs.ubc.ca/classy`.
+
+```bash
+echo '0 3 * * WED root cd /var/opt/classy/runs && find . ! -path . -type d -mtime +7 -print0 | tar -czvf /cs/portal-backup/cs310.ugrad.cs.ubc.ca/classy/runs-$(date +\%Y\%m\%dT\%H\%M\%S).tar.gz --remove-files --null -T  -' | tee /etc/cron.d/archive-classy-runs
+```
+
+You can list the contents of the tarball using `tar -tvf FILENAME.tar.gz`.
+
 ### Updating Classy on SDMM
 
 To deploy an update:
