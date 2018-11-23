@@ -305,13 +305,25 @@
                     </div>
                     <div class="center">
                         NOT IMPLEMENTED: Disable write access for deliverable repositories
-                        <select id="adminUnReleaseDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
-                        <ons-button id="adminUnReleaseButton" modifier="medium">Unrelease</ons-button>
+                        <select id="adminReadOnlyDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                        <ons-button id="adminReadOnlyButton" modifier="medium">Disable write access</ons-button>
                     </div>
                     <div class="expandable-content">
-                        Unreleases any repositories that are currently released. This effectively detaches students from their
-                        repositories for that deliverable so they are unable to make any additional changes. To 'undo' this you can
-                        release repositories (above) to add the students back to their repositories.
+                        Sets any repositories to be read only so students can no longer make changes.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        NOT IMPLEMENTED: Enable write access for deliverable repositories
+                        <select id="adminReadWriteDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                        <ons-button id="adminReadWriteButton" modifier="medium">Enable write access</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Sets any repositories to be writeable so students make changes.
                     </div>
                 </ons-list-item>
 
