@@ -73,6 +73,7 @@
             getHTTP(url, HEADERS, function (stdio) {
                 editor.setValue(JSON.parse(stdio));
                 editor.clearSelection();
+                editor.focus(); // manually set the focus so that CMD/CTRL+F will search within the stdio
             }, function (error) {
                 if (typeof error !== 'string') {
                     error = 'The request failed, possibly due to unauthorization.';
