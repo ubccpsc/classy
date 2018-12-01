@@ -221,12 +221,22 @@ export interface AutoTestDefaultDeliverablePayload {
     failure?: FailurePayload; // only set if defined
 }
 
+export interface AutoTestConfigurationPayload {
+    success?: AutoTestConfigurationTransport; // only set if defined
+    failure?: FailurePayload; // only set if defined
+}
+
 /**
  * AutoTest configuration details.
  * Requested per-deliverable.
  */
 export interface AutoTestDefaultDeliverableTransport {
     defaultDeliverable: string;
+}
+
+export interface AutoTestConfigurationTransport {
+    defaultDeliverable: string;
+    deliverableIds: string[];
 }
 
 export interface AutoTestPersonIdTransport {

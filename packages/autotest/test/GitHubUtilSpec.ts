@@ -22,17 +22,20 @@ describe("GitHubUtil", () => {
     it("Should be able to correctly parse deliv ids from a commit comment.", () => {
         let actual = '';
 
-        actual = GitHubUtil.parseDeliverableFromComment("@ubcbot #d1");
+        actual = GitHubUtil.parseDeliverableFromComment("@ubcbot #d1", ["d1", "d2", "project"]);
         expect(actual).to.equal("d1");
 
-        actual = GitHubUtil.parseDeliverableFromComment("@ubcbot d1");
+        actual = GitHubUtil.parseDeliverableFromComment("@ubcbot d1", ["d1", "d2", "project"]);
         expect(actual).to.be.null;
 
-        actual = GitHubUtil.parseDeliverableFromComment("@ubcbot #d101");
+        actual = GitHubUtil.parseDeliverableFromComment("@ubcbot #d101", ["d101", "d2", "project"]);
         expect(actual).to.equal("d101");
 
-        actual = GitHubUtil.parseDeliverableFromComment("@ubcbot #a1");
+        actual = GitHubUtil.parseDeliverableFromComment("@ubcbot #a1", ["d1", "d2", "project"]);
         expect(actual).to.be.null;
+
+        actual = GitHubUtil.parseDeliverableFromComment("@ubcbot #a1", ["d1", "d2", "project", "a1"]);
+        expect(actual).to.equal("a1");
     });
 
     it("Should be able to correctly parse #silent from a commit comment.", () => {
