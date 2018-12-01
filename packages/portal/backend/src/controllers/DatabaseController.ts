@@ -530,6 +530,15 @@ export class DatabaseController {
                 const client = await MongoClient.connect(dbHost);
                 this.db = await client.db(dbName);
 
+                // create indexes if they don't exist (idempotent operation; even if index exists this is ok)
+                // https://stackoverflow.com/a/35020346
+
+                // results needs a timestamp index because it gets to be too long to iterate through all records (32MB result limit)
+                const coll = await this.getCollection(this.RESULTCOLL);
+                await coll.createIndex({
+                    "input.target.timestamp": -1
+                }, {name: "ts"});
+
                 Log.info("DatabaseController::open() - db null; new connection made");
             }
             // Log.trace("DatabaseController::open() - returning db");
