@@ -9,12 +9,12 @@ import {
     AutoTestAuthTransport,
     AutoTestConfigPayload,
     AutoTestConfigTransport,
-    AutoTestConfigurationPayload,
-    AutoTestConfigurationTransport,
     AutoTestGradeTransport,
     AutoTestPersonIdTransport,
     AutoTestResultPayload,
     AutoTestResultTransport,
+    ClassyConfigurationPayload,
+    ClassyConfigurationTransport,
     Payload
 } from "../../../common/types/PortalTypes";
 
@@ -34,7 +34,7 @@ export interface IClassPortal {
      * GET /portal/admin/getDefaultDeliverable
      *
      */
-    getConfiguration(): Promise<AutoTestConfigurationTransport | null>;
+    getConfiguration(): Promise<ClassyConfigurationTransport | null>;
 
     /**
      * Returns whether the username is privileged on the course.
@@ -157,7 +157,7 @@ export class ClassPortal implements IClassPortal {
         }
     }
 
-    public async getConfiguration(): Promise<AutoTestConfigurationTransport | null> {
+    public async getConfiguration(): Promise<ClassyConfigurationTransport | null> {
 
         const url = this.host + ":" + this.port + "/portal/at";
         const opts: rp.RequestPromiseOptions = {
@@ -169,7 +169,7 @@ export class ClassPortal implements IClassPortal {
         try {
             const res = await rp(url, opts); // .then(function(res) {
             Log.trace("ClassPortal::getDefaultDeliverableId() - success; payload: " + res);
-            const json: AutoTestConfigurationPayload = JSON.parse(res);
+            const json: ClassyConfigurationPayload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
                 return json.success;
             } else {

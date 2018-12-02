@@ -9,10 +9,10 @@ import {
     AutoTestAuthPayload,
     AutoTestConfigPayload,
     AutoTestConfigTransport,
-    AutoTestConfigurationPayload,
     AutoTestGradeTransport,
     AutoTestResultPayload,
     AutoTestResultTransport,
+    ClassyConfigurationPayload,
     Payload
 } from "../../../../../common/types/PortalTypes";
 import Util from '../../../../../common/Util';
@@ -98,7 +98,7 @@ export class AutoTestRoutes implements IREST {
     public static atConfiguration(req: any, res: any, next: any) {
         Log.info('AutoTestRouteHandler::atConfiguration(..) - /at - start GET');
 
-        let payload: AutoTestConfigurationPayload;
+        let payload: ClassyConfigurationPayload;
         const providedSecret = req.headers.token;
         if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
             return AutoTestRoutes.handleError(400, 'Invalid AutoTest Secret: ' + providedSecret, res, next);

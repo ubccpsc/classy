@@ -9,8 +9,8 @@ import Log from "../../../../common/Log";
 import {
     AutoTestAuthPayload,
     AutoTestConfigPayload,
-    AutoTestConfigurationPayload,
     AutoTestGradeTransport,
+    ClassyConfigurationPayload,
     Payload
 } from "../../../../common/types/PortalTypes";
 
@@ -81,7 +81,7 @@ describe('AutoTest Routes', function() {
     it('Should respond to a valid backend detail request', async function() {
 
         let response = null;
-        let body: AutoTestConfigurationPayload;
+        let body: ClassyConfigurationPayload;
         const url = '/portal/at';
         try {
             response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));

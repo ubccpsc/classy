@@ -6,8 +6,8 @@ import {CommitTarget, ContainerInput} from "../../../common/types/ContainerTypes
 import {
     AutoTestAuthTransport,
     AutoTestConfigTransport,
-    AutoTestConfigurationTransport,
-    AutoTestResultTransport
+    AutoTestResultTransport,
+    ClassyConfigurationTransport
 } from "../../../common/types/PortalTypes";
 import Util from "../../../common/Util";
 import {AutoTest} from "../autotest/AutoTest";
@@ -465,7 +465,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     private async getDelivId(): Promise<string | null> {
         Log.trace("GitHubAutoTest::getDelivId() - start");
         try {
-            const config: AutoTestConfigurationTransport = await this.classPortal.getConfiguration();
+            const config: ClassyConfigurationTransport = await this.classPortal.getConfiguration();
             Log.trace("GitHubAutoTest::getDelivId() - response: " + JSON.stringify(config));
             if (config !== null && typeof config.defaultDeliverable !== "undefined") {
                 return config.defaultDeliverable;

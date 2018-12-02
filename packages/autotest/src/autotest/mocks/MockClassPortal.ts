@@ -5,10 +5,10 @@ import {GradeReport} from "../../../../common/types/ContainerTypes";
 import {
     AutoTestAuthTransport,
     AutoTestConfigTransport,
-    AutoTestConfigurationTransport,
     AutoTestGradeTransport,
     AutoTestPersonIdTransport,
     AutoTestResultTransport,
+    ClassyConfigurationTransport,
     Payload
 } from "../../../../common/types/PortalTypes";
 import {IClassPortal} from "../ClassPortal";
@@ -31,7 +31,7 @@ export class MockClassPortal implements IClassPortal {
         return {personId: userName, isStaff: false, isAdmin: false};
     }
 
-    public async getConfiguration(): Promise<AutoTestConfigurationTransport | null> {
+    public async getConfiguration(): Promise<ClassyConfigurationTransport | null> {
         Log.info("MockClassPortal::getDefaultDeliverableId(..) - start");
         const name = Config.getInstance().getProp(ConfigKey.name);
         const testname = Config.getInstance().getProp(ConfigKey.testname);
