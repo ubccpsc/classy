@@ -79,9 +79,19 @@ export class ProcessPrivateTests {
                     Log.warn("pub: " + scorePub.toFixed(0) + "; priv: " + scorePriv.toFixed(0) + "; url: " + url);
                 }
                 finalScore = Number(finalScore.toFixed(2));
-                msg = "### D3 Results \n\n Final D3 results will be visible in the Classy grades view once they are released. " +
+                msg = "### D3 Results \n\n Final D3 results will be visible to the Classy grades view once they are released. " +
                     "\n\n Note: if you do not think this is the right commit, please fill out the project late grade request form " +
-                    "by November 14 @ 0800; we will finalize all project grades that day.";
+                    "by December 14 @ 0800; we will finalize all project grades that day.";
+
+            } else if (this.DELIVID === 'd4') {
+                // 50% private tests
+                // finalScore = (((scorePub * .5) + (scorePriv * .5)) * .8) + (scoreCover * .2);
+                // Log.info("pub: " + scorePub.toFixed(0) + "; priv: " + scorePriv.toFixed(0));
+                // if ((scorePub - scorePriv) > 20) {
+                //     Log.warn("pub: " + scorePub.toFixed(0) + "; priv: " + scorePriv.toFixed(0) + "; url: " + url);
+                // }
+                // finalScore = Number(finalScore.toFixed(2));
+                msg = "@autobot #d4 #silent D4 results will be posted in the Classy grades view once they are released.";
             } else {
                 // instead of an error, put your one-off code here if you have some
                 Log.error("ProcessPrivateTests::process() - unknown delivId: " + this.DELIVID);
