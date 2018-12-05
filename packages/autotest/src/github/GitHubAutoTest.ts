@@ -104,8 +104,13 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         Log.info("GitHubAutoTest::checkCommentPreconditions(..) - for: " + info.personId + "; commit: " + info.commitSHA);
 
         if (info.personId === Config.getInstance().getProp(ConfigKey.botName)) {
-            Log.info("GitHubAutoTest::checkCommentPreconditions(..) - ignored, comment made by AutoBot");
-            return false;
+
+            if (info.flags.indexOf("#force") >= 0) {
+                Log.info("GitHubAutoTest::checkCommentPreconditions(..) - AutoBot post, but with #force");
+            } else {
+                Log.info("GitHubAutoTest::checkCommentPreconditions(..) - ignored, comment made by AutoBot");
+                return false;
+            }
         }
 
         if (info.botMentioned === false) {
