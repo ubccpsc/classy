@@ -1,3 +1,4 @@
+import Config, {ConfigKey} from "../../../common/Config";
 import Log, {LogLevel} from "../../../common/Log";
 import Util from "../../../common/Util";
 
@@ -21,6 +22,7 @@ export class InvokeAutoTest {
 
     private dc: DatabaseController;
     private DRY_RUN = true;
+    private INVISIBLE = true; // if invisible initiate request with webhook instead of comment
 
     constructor() {
         Log.info("InvokeAutoTest::<init> - start");
@@ -30,6 +32,7 @@ export class InvokeAutoTest {
     public async process(): Promise<void> {
         Log.info("InvokeAutoTest::process() - start");
 
+        const c = Config.getInstance();
         const gha = GitHubActions.getInstance(true);
         const gradesC = new GradesController();
 
@@ -75,10 +78,20 @@ export class InvokeAutoTest {
             // append /comments
             u = u + '/comments';
 
-            const TEST_USER = 'w8j0b'; // 'r5t0b';
+            const TEST_USER = 'w8j0b'; // 'w8j0b'; // 'r5t0b';
             if (this.DRY_RUN === false || grade.personId === TEST_USER) {
                 if (msg !== null) {
-                    await gha.makeComment(u, msg);
+                    if (this.INVISIBLE === true) {
+                        const URL = grade.URL;
+                        const org = c.getProp(ConfigKey.org) + '/';
+                        // this is brittle; should probably have a better way to extract this from a grade record
+                        const projectId = URL.substring(URL.lastIndexOf(org) + org.length, URL.lastIndexOf('/commit/'));
+                        const sha = URL.substring(URL.lastIndexOf('/commit/') + 8);
+                        Log.info("project: " + projectId + '; sha: ' + sha + '; URL: ' + URL);
+                        await gha.simulateWebookComment(projectId, sha, msg);
+                    } else {
+                        await gha.makeComment(u, msg);
+                    }
                 }
             } else {
                 Log.info("Dry run comment to: " + u + "; msg: " + msg);

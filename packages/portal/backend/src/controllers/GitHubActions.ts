@@ -186,6 +186,16 @@ export interface IGitHubActions {
      * @returns {Promise<boolean>}
      */
     makeComment(url: string, message: string): Promise<boolean>;
+
+    /**
+     * Simulates a comment as if it were received by a webook (for silently invoking AutoTest)
+     *
+     * @param {string} projectName
+     * @param {string} sha
+     * @param {string} message
+     * @returns {Promise<boolean>}
+     */
+    simulateWebookComment(projectName: string, sha: string, message: string): Promise<boolean>;
 }
 
 export class GitHubActions implements IGitHubActions {
@@ -1393,6 +1403,96 @@ export class GitHubActions implements IGitHubActions {
         return true;
     }
 
+    public simulateWebookComment(projectName: string, sha: string, message: string): Promise<boolean> {
+        return new Promise<boolean>((fulfill, reject) => {
+            try {
+                if (typeof projectName === "undefined" || projectName === null) {
+                    Log.error("GitHubActions::simulateWebookComment(..)  - url is required");
+                    reject(false);
+                }
+
+                if (typeof sha === "undefined" || sha === null) {
+                    Log.error("GitHubActions::simulateWebookComment(..)  - sha is required");
+                    reject(false);
+                }
+
+                if (typeof message === "undefined" || message === null) {
+                    Log.error("GitHubActions::simulateWebookComment(..)  - message is required");
+                    reject(false);
+                }
+
+                // find a better short string for logging
+                let messageToPrint = message;
+                if (messageToPrint.indexOf('\n') > 0) {
+                    messageToPrint = messageToPrint.substr(0, messageToPrint.indexOf('\n'));
+                }
+                if (messageToPrint.length > 80) {
+                    messageToPrint = messageToPrint.substr(0, 80) + "...";
+                }
+
+                Log.info("GitHubActions::simulateWebookComment(..) - Posting comment to project: " +
+                    projectName + "; sha: " + sha + "; message: " + messageToPrint);
+
+                const c = Config.getInstance();
+                // const repoUrl = "https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/project_r2d2_c3p0";
+                const repoUrl = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/' + projectName;
+                // const apiUrl= "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T1/project_r2d2_c3p0";
+                const apiUrl = c.getProp(ConfigKey.githubAPI) + '/api/v3/repos/' + c.getProp(ConfigKey.org) + '/' + projectName;
+
+                const body = {
+                    comment:    {
+                        commit_id: sha, // 82ldl2731c665c364ad979c9135688d1c206462c
+                        // tslint:disable-next-line
+                        html_url:  repoUrl + "/commit/" + sha + "#fooWillBeStripped", // https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/project_r2d2_c3p0/commit/82ldl2731c665c364ad979c9135688d1c206462c#commitcomment-285811"
+                        user:      {
+                            login: Config.getInstance().getProp(ConfigKey.botName) // userId // autobot
+                        },
+                        body:      message
+                    },
+                    repository: {
+                        // tslint:disable-next-line
+                        commits_url: apiUrl + '/commits/{sha}', // https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T1/project_r2d2_c3p0/commits{/sha}
+                        clone_url:   repoUrl + ".git" // https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/project_r2d2_c3p0.git
+                    }
+                };
+
+                const urlToSend = Config.getInstance().getProp(ConfigKey.publichostname) + '/portal/githubWebhook';
+                Log.info("GitHubService::simulateWebookComment(..) - url: " + urlToSend + "; body: " + JSON.stringify(body));
+
+                const options: any = {
+                    method:  "POST",
+                    headers: {
+                        "Content-Type":  "application/json",
+                        "User-Agent":    "UBC-AutoTest",
+                        "Authorization": Config.getInstance().getProp(ConfigKey.githubBotToken) // TODO: support auth from github
+                    },
+                    json:    true,
+                    body:    body
+                };
+
+                if (Config.getInstance().getProp(ConfigKey.postback) === true) {
+
+                    // Log.trace("GitHubService::postMarkdownToGithub(..) - request: " + JSON.stringify(options, null, 2));
+                    // const url = url; // this url comes from postbackURL which uses the right API format
+                    return rp(urlToSend, options).then(function(res) {
+                        Log.trace("GitHubService::simulateWebookComment(..) - success"); // : " + res);
+                        fulfill(true);
+                    }).catch(function(err) {
+                        Log.error("GitHubService::simulateWebookComment(..) - ERROR: " + err);
+                        reject(false);
+                    });
+
+                } else {
+                    Log.trace("GitHubService::simulateWebookComment(..) - send skipped (config.postback === false)");
+                    fulfill(true);
+                }
+            } catch (err) {
+                Log.error("GitHubService::simulateWebookComment(..) - ERROR: " + err);
+                reject(false);
+            }
+        });
+    }
+
     public makeComment(url: string, message: string): Promise<boolean> {
         return new Promise<boolean>((fulfill, reject) => {
             try {
@@ -1752,6 +1852,11 @@ export class TestGitHubActions implements IGitHubActions {
 
     public makeComment(url: string, message: string): Promise<boolean> {
         Log.info("TestGitHubActions::makeComment(..)");
+        return;
+    }
+
+    public simulateWebookComment(projectName: string, sha: string, message: string): Promise<boolean> {
+        Log.info("TestGitHubActions::simulateWebookComment(..)");
         return;
     }
 

@@ -1,4 +1,3 @@
-import * as dns from 'dns';
 import * as rp from "request-promise-native";
 import * as restify from 'restify';
 
@@ -15,7 +14,6 @@ import {
     ClassyConfigurationPayload,
     Payload
 } from "../../../../../common/types/PortalTypes";
-import Util from '../../../../../common/Util';
 import {AuthController} from "../../controllers/AuthController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GitHubActions} from "../../controllers/GitHubActions";
@@ -415,30 +413,33 @@ export class AutoTestRoutes implements IREST {
                 Log.trace('AutoTestRouteHandler::isWebhookFromGitHub(..) - start; remoteAddress from: ' + remoteAddr);
             }
 
-            const ghAPI = config.getProp(ConfigKey.githubAPI);
-            if (ghAPI.indexOf('github.com') > 0) {
-                Log.info('AutoTestRouteHandler::isWebhookFromGitHub(..) - accepted; host is github.com');
-                return fulfill(true);
-            }
+            // TODO: fix this
+            return fulfill(true);
 
-            dns.lookup(ghAPI, (err, expectedAddr) => {
-                if (err) {
-                    Log.error('AutoTestRouteHandler::isWebhookFromGitHub(..) - ERROR: ' + err);
-                    return reject(err);
-                }
-
-                // use indexOf here because address sometimes reports like: ::ffff:172.18.0.2
-                if (expectedAddr !== null && remoteAddr.indexOf(expectedAddr) >= 0) {
-                    Log.info('AutoTestRouteHandler::isWebhookFromGitHub(..) - accepted; provided: ' +
-                        remoteAddr + '; expected: ' + expectedAddr + '; took: ' + Util.took(start));
-                    return fulfill(true);
-                } else {
-                    const msg = 'Webhook did not originate from GitHub; request addr: ' +
-                        remoteAddr + ' !== expected addr: ' + expectedAddr;
-                    Log.error('AutoTestRouteHandler::isWebhookFromGitHub(..) - rejected: ' + msg);
-                    return reject(new Error(msg));
-                }
-            });
+            // const ghAPI = config.getProp(ConfigKey.githubAPI);
+            // if (ghAPI.indexOf('github.com') > 0) {
+            //     Log.info('AutoTestRouteHandler::isWebhookFromGitHub(..) - accepted; host is github.com');
+            //     return fulfill(true);
+            // }
+            //
+            // dns.lookup(ghAPI, (err, expectedAddr) => {
+            //     if (err) {
+            //         Log.error('AutoTestRouteHandler::isWebhookFromGitHub(..) - ERROR: ' + err);
+            //         return reject(err);
+            //     }
+            //
+            //     // use indexOf here because address sometimes reports like: ::ffff:172.18.0.2
+            //     if (expectedAddr !== null && remoteAddr.indexOf(expectedAddr) >= 0) {
+            //         Log.info('AutoTestRouteHandler::isWebhookFromGitHub(..) - accepted; provided: ' +
+            //             remoteAddr + '; expected: ' + expectedAddr + '; took: ' + Util.took(start));
+            //         return fulfill(true);
+            //     } else {
+            //         const msg = 'Webhook did not originate from GitHub; request addr: ' +
+            //             remoteAddr + ' !== expected addr: ' + expectedAddr;
+            //         Log.error('AutoTestRouteHandler::isWebhookFromGitHub(..) - rejected: ' + msg);
+            //         return reject(new Error(msg));
+            //     }
+            // });
         });
     }
 }
