@@ -28,13 +28,13 @@ export class InvokeAutoTest {
      * NOTE: this is ignored for the TEST_USER user.
      * @type {boolean}
      */
-    private DRY_RUN = false;
+    private DRY_RUN = true;
 
     /**
-     * Username to ignore DRY_RUN for (aka usually a TA or course repo for testing)
+     * Usernames to ignore DRY_RUN for (aka usually a TA or course repo for testing)
      * @type {string}
      */
-    private TEST_USER = 'XXXX'; // 'w8j0b'; // 'r5t0b';
+    private TEST_USERS: string[] = ['w8j0b', 'l7m1b']; // ['w8j0b', 'r5t0b'];
 
     /**
      * Invoke Autotest invisibly (aka by faking a webhook) or visibly (by making a public comment).
@@ -88,12 +88,14 @@ export class InvokeAutoTest {
                 //     "\n\n Note: if you do not think this is the right commit, please fill out the project late grade request form " +
                 //     "by December 14 @ 0800; we will finalize all project grades that day.";
 
+                msg = "@autobot #d4 #force #silent.";
+
                 // msg = "@autobot #d1 #force #silent.";
 
-                msg = "@autobot #d2 #force #silent.";
+                // msg = "@autobot #d2 #force #silent.";
             }
 
-            if (this.DRY_RUN === false || grade.personId === this.TEST_USER) {
+            if (this.DRY_RUN === false || this.TEST_USERS.indexOf(grade.personId) >= 0) {
                 if (msg !== null) {
                     if (this.INVISIBLE === true) {
                         const org = c.getProp(ConfigKey.org) + '/';
