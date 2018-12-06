@@ -21,7 +21,7 @@ import {Grade} from "../src/Types";
 export class InvokeAutoTest {
 
     private dc: DatabaseController;
-    private DRY_RUN = false;
+    private DRY_RUN = true;
     private INVISIBLE = true; // if invisible initiate request with webhook instead of comment
 
     constructor() {
@@ -55,9 +55,12 @@ export class InvokeAutoTest {
                 Log.info("InvokeAutoTest::process() - processing result: " + url);
                 alreadyProcessed.push(url);
 
-                msg = "@autobot #d4 #force #silent. D4 results will be posted to the Classy grades view once they are released. " +
-                    "\n\n Note: if you do not think this is the right commit, please fill out the project late grade request form " +
-                    "by December 14 @ 0800; we will finalize all project grades that day.";
+                // msg = "@autobot #d4 #force #silent. D4 results will be posted to the Classy grades view once they are released. " +
+                //     "\n\n Note: if you do not think this is the right commit, please fill out the project late grade request form " +
+                //     "by December 14 @ 0800; we will finalize all project grades that day.";
+
+                // msg = "@autobot #d1 #force #silent.";
+                msg = "@autobot #d2 #force #silent.";
             }
 
             // test URL
