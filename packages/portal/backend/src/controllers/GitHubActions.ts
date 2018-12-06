@@ -1451,8 +1451,9 @@ export class GitHubActions implements IGitHubActions {
                     },
                     repository: {
                         // tslint:disable-next-line
-                        commits_url: apiUrl + '/commits/{sha}', // https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T1/project_r2d2_c3p0/commits{/sha}
-                        clone_url:   repoUrl + ".git" // https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/project_r2d2_c3p0.git
+                        commits_url: apiUrl + '/commits{/sha}', // https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T1/project_r2d2_c3p0/commits{/sha}
+                        clone_url:   repoUrl + ".git", // https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/project_r2d2_c3p0.git
+                        name:        projectName
                     }
                 };
 
@@ -1462,9 +1463,10 @@ export class GitHubActions implements IGitHubActions {
                 const options: any = {
                     method:  "POST",
                     headers: {
-                        "Content-Type":  "application/json",
-                        "User-Agent":    "UBC-AutoTest",
-                        "Authorization": Config.getInstance().getProp(ConfigKey.githubBotToken) // TODO: support auth from github
+                        "Content-Type":   "application/json",
+                        "User-Agent":     "UBC-AutoTest",
+                        "X-GitHub-Event": "commit_comment",
+                        "Authorization":  Config.getInstance().getProp(ConfigKey.githubBotToken) // TODO: support auth from github
                     },
                     json:    true,
                     body:    body

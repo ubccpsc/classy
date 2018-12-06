@@ -21,7 +21,7 @@ import {Grade} from "../src/Types";
 export class InvokeAutoTest {
 
     private dc: DatabaseController;
-    private DRY_RUN = true;
+    private DRY_RUN = false;
     private INVISIBLE = true; // if invisible initiate request with webhook instead of comment
 
     constructor() {
@@ -78,7 +78,7 @@ export class InvokeAutoTest {
             // append /comments
             u = u + '/comments';
 
-            const TEST_USER = 'w8j0b'; // 'w8j0b'; // 'r5t0b';
+            const TEST_USER = 'XXXX'; // 'w8j0b'; // 'r5t0b';
             if (this.DRY_RUN === false || grade.personId === TEST_USER) {
                 if (msg !== null) {
                     if (this.INVISIBLE === true) {
