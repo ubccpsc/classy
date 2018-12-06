@@ -8,10 +8,22 @@ import {ResultsController} from "../src/controllers/ResultsController";
 
 import {AuditLabel, Grade} from "../src/Types";
 
+/**
+ * To run this locally you need to have a .env configured with the production values
+ * and a ssh tunnel configured to the server you want the database to come from.
+ *
+ * 1) Get on the VPN
+ * 2) Make sure you don't have a local mongo instance running
+ * 3) Ensure your .env corresponds to the production values
+ * 4) ssh user@host -L 27017:127.0.0.1:27017
+ * 5) Run this script
+ */
 export class ProcessPrivateTests {
 
     private dc: DatabaseController;
     private DRY_RUN = true;
+
+    private readonly DELIVID: string = 'd3';
 
     constructor() {
         Log.info("ProcessPrivateTests::<init> - start");
@@ -29,11 +41,13 @@ export class ProcessPrivateTests {
         const allGrades = await gradesC.getAllGrades();
         const grades = [];
         for (const grade of allGrades as Grade[]) {
-            if (grade.delivId === 'd2') {
+            if (grade.delivId === this.DELIVID) {
                 grades.push(grade);
             }
         }
 
+        const alreadyProcessed: string[] = [];
+        const values: Array<{pub: number, priv: number}> = [];
         // tslint:disable-next-line
         // console.log('csid, pubScore, coverScore, privScore, finalScore');
         for (const grade of grades) {
@@ -44,17 +58,44 @@ export class ProcessPrivateTests {
             const scoreCover = Number(result.output.report.scoreCover);
             const scorePriv = Number((result.output.report.custom as any).private.scoreTest);
 
-            let finalScore = (((scorePub * .75) + (scorePriv * .25)) * .8) + (scoreCover * .2);
-            finalScore = Number(finalScore.toFixed(2));
+            values.push({pub: scorePub, priv: scorePriv});
 
-            // tslint:disable-next-line
-            // console.log(id + ", " + scorePub + ', ' + scoreCover + ', ' + scorePriv + ', ' + finalScore);
+            let finalScore = 0;
+            let msg = '';
+            if (this.DELIVID === 'd2') {
+                // 25% private tests
+                finalScore = (((scorePub * .75) + (scorePriv * .25)) * .8) + (scoreCover * .2);
+                finalScore = Number(finalScore.toFixed(2));
+                msg = "### D2 Results \n\n* ***Final Score:*** " + finalScore + "\n * Public test score: " + scorePub +
+                    "\n * Private test score: " + scorePriv + "\n * Coverage score: " + scoreCover +
+                    "\n\n Private test details available by calling the bot on `d2` for a _new_ commit once it is re-enabled." +
+                    "\n\n Note: if this is an earlier commit than you expected, " +
+                    "it is because it has a higer (or equivalent) score to the later commit.";
+            } else if (this.DELIVID === 'd3') {
+                // 50% private tests
+                finalScore = (((scorePub * .5) + (scorePriv * .5)) * .8) + (scoreCover * .2);
+                Log.info("pub: " + scorePub.toFixed(0) + "; priv: " + scorePriv.toFixed(0));
+                if ((scorePub - scorePriv) > 20) {
+                    Log.warn("pub: " + scorePub.toFixed(0) + "; priv: " + scorePriv.toFixed(0) + "; url: " + url);
+                }
+                finalScore = Number(finalScore.toFixed(2));
+                msg = "### D3 Results \n\n Final D3 results will be visible to the Classy grades view once they are released. " +
+                    "\n\n Note: if you do not think this is the right commit, please fill out the project late grade request form " +
+                    "by December 14 @ 0800; we will finalize all project grades that day.";
 
-            const msg = "### D2 Results \n\n* ***Final Score:*** " + finalScore + "\n * Public test score: " + scorePub +
-                "\n * Private test score: " + scorePriv + "\n * Coverage score: " + scoreCover +
-                "\n\n Private test details available by calling the bot on `d2` for a _new_ commit once it is re-enabled." +
-                "\n\n Note: if this is an earlier commit than you expected, " +
-                "it is because it has a higer (or equivalent) score to the later commit.";
+            } else if (this.DELIVID === 'd4') {
+                // 50% private tests
+                // finalScore = (((scorePub * .5) + (scorePriv * .5)) * .8) + (scoreCover * .2);
+                // Log.info("pub: " + scorePub.toFixed(0) + "; priv: " + scorePriv.toFixed(0));
+                // if ((scorePub - scorePriv) > 20) {
+                //     Log.warn("pub: " + scorePub.toFixed(0) + "; priv: " + scorePriv.toFixed(0) + "; url: " + url);
+                // }
+                // finalScore = Number(finalScore.toFixed(2));
+                msg = "@autobot #d4 #silent D4 results will be posted in the Classy grades view once they are released.";
+            } else {
+                // instead of an error, put your one-off code here if you have some
+                Log.error("ProcessPrivateTests::process() - unknown delivId: " + this.DELIVID);
+            }
 
             // test URL
             // let u = 'https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/d0_r5t0b/commit/6cfd47be38b320c741b0613f2d0f7d958e35f2c6';
@@ -74,16 +115,6 @@ export class ProcessPrivateTests {
             // append /comments
             u = u + '/comments';
 
-            const TEST_USER = 'XXXXX';
-
-            if (this.DRY_RUN === false || grade.personId === TEST_USER) {
-                // NOTE: prints once per person ON THE TEAM
-                // TODO: maintain a map of URLS and don't post to an URL that has already been updated
-                await gha.makeComment(u, msg);
-            } else {
-                Log.info("Dry run comment to: " + u);
-            }
-
             const newGrade: Grade = JSON.parse(JSON.stringify(grade)); // Object.assign is a shallow copy which doesn't work here
             (newGrade.custom as any).publicGrade = grade;
             newGrade.timestamp = Date.now();
@@ -92,19 +123,33 @@ export class ProcessPrivateTests {
             newGrade.score = finalScore;
 
             // publish grade
-            if (this.DRY_RUN === false || grade.personId === TEST_USER) {
-                await gradesC.saveGrade(newGrade);
-                await dbc.writeAudit(AuditLabel.GRADE_CHANGE, 'ProcessPrivateTest', grade, newGrade, {});
+
+            if (alreadyProcessed.indexOf(url) >= 0) {
+                Log.info("ProcessPrivateTests::process() - skipping result; already handled: " + url);
             } else {
-                Log.info("Dry run grade update for: " + newGrade.personId);
+                Log.info("ProcessPrivateTests::process() - processing result: " + url);
+                alreadyProcessed.push(url);
+
+                const TEST_USER = 'XXXXX';
+                if (this.DRY_RUN === false || grade.personId === TEST_USER) {
+                    await gha.makeComment(u, msg);
+                    await gradesC.saveGrade(newGrade);
+                    await dbc.writeAudit(AuditLabel.GRADE_CHANGE, 'ProcessPrivateTest', grade, newGrade, {});
+                } else {
+                    Log.info("Dry run comment to: " + u + "; msg: " + msg);
+                    Log.info("Dry run grade update for: " + newGrade.personId);
+                }
             }
+        }
+        Log.info("ProcessPrivateTests::process() - values:");
+        for (const value of values) {
+            // tslint:disable-next-line
+            console.log(value.pub + ", " + value.priv);
         }
         Log.info("ProcessPrivateTests::process() - done");
     }
 }
 
-// going to need to do this first:
-// ssh rtholmes@cs310.ugrad.cs.ubc.ca -L 27017:127.0.0.1:27017
 const ppt = new ProcessPrivateTests();
 const start = Date.now();
 Log.Level = LogLevel.INFO;

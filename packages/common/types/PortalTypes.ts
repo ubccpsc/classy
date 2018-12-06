@@ -216,17 +216,27 @@ export interface AutoTestAuthTransport {
     isAdmin: boolean;
 }
 
-export interface AutoTestDefaultDeliverablePayload {
-    success?: AutoTestDefaultDeliverableTransport; // only set if defined
+// export interface AutoTestDefaultDeliverablePayload {
+//     success?: AutoTestDefaultDeliverableTransport; // only set if defined
+//     failure?: FailurePayload; // only set if defined
+// }
+
+export interface ClassyConfigurationPayload {
+    success?: ClassyConfigurationTransport; // only set if defined
     failure?: FailurePayload; // only set if defined
 }
 
-/**
- * AutoTest configuration details.
- * Requested per-deliverable.
- */
-export interface AutoTestDefaultDeliverableTransport {
+// /**
+//  * AutoTest configuration details.
+//  * Requested per-deliverable.
+//  */
+// export interface AutoTestDefaultDeliverableTransport {
+//     defaultDeliverable: string;
+// }
+
+export interface ClassyConfigurationTransport {
     defaultDeliverable: string;
+    deliverableIds: string[];
 }
 
 export interface AutoTestPersonIdTransport {

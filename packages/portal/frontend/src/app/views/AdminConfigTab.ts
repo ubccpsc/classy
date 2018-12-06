@@ -102,6 +102,28 @@ export class AdminConfigTab extends AdminPage {
             });
         };
 
+        (document.querySelector('#adminReadWriteButton') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminConfigTab::handleAdminConfig(..) - read/write deliverable pressed');
+            evt.preventDefault();
+
+            that.repoEnableWritePressed().then(function() {
+                // worked
+            }).catch(function(err) {
+                Log.info('AdminConfigTab::handleAdminConfig(..) - read/write deliverable pressed; ERROR: ' + err.message);
+            });
+        };
+
+        (document.querySelector('#adminReadOnlyButton') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminConfigTab::handleAdminConfig(..) - read only deliverable pressed');
+            evt.preventDefault();
+
+            that.repoDisableWritePressed().then(function() {
+                // worked
+            }).catch(function(err) {
+                Log.info('AdminConfigTab::handleAdminConfig(..) - read only deliverable pressed; ERROR: ' + err.message);
+            });
+        };
+
         (document.querySelector('#adminCreateTeamButton') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - create team pressed');
             evt.preventDefault();
@@ -151,11 +173,17 @@ export class AdminConfigTab extends AdminPage {
         const releaseDropdown = document.querySelector('#adminReleaseDeliverableSelect') as HTMLSelectElement;
         const teamDropdown = document.querySelector('#adminTeamDeliverableSelect') as HTMLSelectElement;
 
+        const repoReadDropdown = document.querySelector('#adminReadOnlyDeliverableSelect') as HTMLSelectElement;
+        const repoReadWriteDropdown = document.querySelector('#adminReadWriteDeliverableSelect') as HTMLSelectElement;
+
         const defaultDeliverableOptions = ['--Not Set--'];
         const provisionOptions = ['--Select--'];
         const releaseOptions = ['--Select--'];
         const gradesOptions = ['--Select--'];
         const allDeliverables = ['--Select--'];
+
+        const repoReadOptions = ['--Select--'];
+        const repoWriteOptions = ['--Select--'];
 
         for (const deliv of deliverables) {
             if (deliv.shouldAutoTest === true) {
@@ -167,6 +195,8 @@ export class AdminConfigTab extends AdminPage {
                 provisionOptions.push(deliv.id);
                 releaseOptions.push(deliv.id);
                 gradesOptions.push(deliv.id);
+                repoReadOptions.push(deliv.id);
+                repoWriteOptions.push(deliv.id);
             }
             allDeliverables.push(deliv.id);
         }
@@ -176,6 +206,8 @@ export class AdminConfigTab extends AdminPage {
         this.populateDelivSelect(provisionOptions, provisionDropdown);
         this.populateDelivSelect(releaseOptions, releaseDropdown);
         this.populateDelivSelect(allDeliverables, gradesDeliverableDropdown);
+        this.populateDelivSelect(repoReadOptions, repoReadDropdown);
+        this.populateDelivSelect(repoWriteOptions, repoReadWriteDropdown);
 
         // set default deliverable, if it exists
         for (const o of (defaultDeliverableDropdown as any).children) {
@@ -415,6 +447,14 @@ export class AdminConfigTab extends AdminPage {
             }
         }
         Log.trace('AdminConfigTab::provisionDeliverablePressed(..) - done; took: ' + UI.took(start));
+    }
+
+    private async repoEnableWritePressed(): Promise<void> {
+        Log.trace('AdminConfigTab::repoEnableWritePressed(..) - start');
+    }
+
+    private async repoDisableWritePressed(): Promise<void> {
+        Log.trace('AdminConfigTab::repoDisableWritePressed(..) - start');
     }
 
     private async releaseDeliverablePressed(): Promise<void> {

@@ -127,7 +127,7 @@ describe("ClassPortal Service", () => {
         await db.writeCourseRecord(course);
 
         // test
-        const actual = await cp.getDefaultDeliverableId();
+        const actual = await cp.getConfiguration();
         Log.test("Actual: " + JSON.stringify(actual));
 
         expect(actual.defaultDeliverable).to.equal('d0');

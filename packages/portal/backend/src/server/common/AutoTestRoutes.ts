@@ -1,4 +1,3 @@
-import * as dns from 'dns';
 import * as rp from "request-promise-native";
 import * as restify from 'restify';
 
@@ -9,13 +8,12 @@ import {
     AutoTestAuthPayload,
     AutoTestConfigPayload,
     AutoTestConfigTransport,
-    AutoTestDefaultDeliverablePayload,
     AutoTestGradeTransport,
     AutoTestResultPayload,
     AutoTestResultTransport,
+    ClassyConfigurationPayload,
     Payload
 } from "../../../../../common/types/PortalTypes";
-import Util from '../../../../../common/Util';
 import {AuthController} from "../../controllers/AuthController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GitHubActions} from "../../controllers/GitHubActions";
@@ -35,7 +33,8 @@ export class AutoTestRoutes implements IREST {
     public registerRoutes(server: restify.Server) {
         Log.info('AutoTestRouteHandler::registerRoutes() - start');
 
-        server.get('/portal/at/defaultDeliverable', AutoTestRoutes.atDefaultDeliverable);
+        server.get('/portal/at', AutoTestRoutes.atConfiguration); // deprecates defaultDeliverable endpoint
+        // server.get('/portal/at/defaultDeliverable', AutoTestRoutes.atDefaultDeliverable);
         server.get('/portal/at/isStaff/:githubId', AutoTestRoutes.atIsStaff);
         server.get('/portal/at/personId/:githubId', AutoTestRoutes.atPersonId);
         server.get('/portal/at/container/:delivId', AutoTestRoutes.atContainerDetails);
@@ -94,28 +93,59 @@ export class AutoTestRoutes implements IREST {
         }
     }
 
-    public static atDefaultDeliverable(req: any, res: any, next: any) {
-        Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - /defaultDeliverable/:name - start GET');
+    public static atConfiguration(req: any, res: any, next: any) {
+        Log.info('AutoTestRouteHandler::atConfiguration(..) - /at - start GET');
 
-        let payload: AutoTestDefaultDeliverablePayload;
+        let payload: ClassyConfigurationPayload;
         const providedSecret = req.headers.token;
         if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
             return AutoTestRoutes.handleError(400, 'Invalid AutoTest Secret: ' + providedSecret, res, next);
         } else {
 
             const name = Config.getInstance().getProp(ConfigKey.name);
-            Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - name: ' + name);
+            Log.info('AutoTestRouteHandler::atConfiguration(..) - name: ' + name);
 
             const cc = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
+            let defaultDeliverable: string | null = null;
             cc.getCourse().then(function(course) {
-                payload = {success: {defaultDeliverable: course.defaultDeliverableId}};
+                defaultDeliverable = course.defaultDeliverableId;
+                return cc.getDeliverables();
+            }).then(function(deliverables) {
+                const delivIds = [];
+                for (const deliv of deliverables) {
+                    delivIds.push(deliv.id);
+                }
+                payload = {success: {defaultDeliverable: defaultDeliverable, deliverableIds: delivIds}};
                 res.send(200, payload);
                 return next(true);
             }).catch(function(err) {
-                return AutoTestRoutes.handleError(400, 'No default deliverable found. ', res, next);
+                return AutoTestRoutes.handleError(400, 'Error retrieving backend configuration.', res, next);
             });
         }
     }
+
+    // public static atDefaultDeliverable(req: any, res: any, next: any) {
+    //     Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - /defaultDeliverable/:name - start GET');
+    //
+    //     let payload: AutoTestDefaultDeliverablePayload;
+    //     const providedSecret = req.headers.token;
+    //     if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
+    //         return AutoTestRoutes.handleError(400, 'Invalid AutoTest Secret: ' + providedSecret, res, next);
+    //     } else {
+    //
+    //         const name = Config.getInstance().getProp(ConfigKey.name);
+    //         Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - name: ' + name);
+    //
+    //         const cc = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
+    //         cc.getCourse().then(function(course) {
+    //             payload = {success: {defaultDeliverable: course.defaultDeliverableId}};
+    //             res.send(200, payload);
+    //             return next(true);
+    //         }).catch(function(err) {
+    //             return AutoTestRoutes.handleError(400, 'No default deliverable found. ', res, next);
+    //         });
+    //     }
+    // }
 
     public static atGrade(req: any, res: any, next: any) {
         Log.info('AutoTestRouteHandler::atGrade(..) - start');
@@ -383,30 +413,33 @@ export class AutoTestRoutes implements IREST {
                 Log.trace('AutoTestRouteHandler::isWebhookFromGitHub(..) - start; remoteAddress from: ' + remoteAddr);
             }
 
-            const ghAPI = config.getProp(ConfigKey.githubAPI);
-            if (ghAPI.indexOf('github.com') > 0) {
-                Log.info('AutoTestRouteHandler::isWebhookFromGitHub(..) - accepted; host is github.com');
-                return fulfill(true);
-            }
+            // TODO: fix this
+            return fulfill(true);
 
-            dns.lookup(ghAPI, (err, expectedAddr) => {
-                if (err) {
-                    Log.error('AutoTestRouteHandler::isWebhookFromGitHub(..) - ERROR: ' + err);
-                    return reject(err);
-                }
-
-                // use indexOf here because address sometimes reports like: ::ffff:172.18.0.2
-                if (expectedAddr !== null && remoteAddr.indexOf(expectedAddr) >= 0) {
-                    Log.info('AutoTestRouteHandler::isWebhookFromGitHub(..) - accepted; provided: ' +
-                        remoteAddr + '; expected: ' + expectedAddr + '; took: ' + Util.took(start));
-                    return fulfill(true);
-                } else {
-                    const msg = 'Webhook did not originate from GitHub; request addr: ' +
-                        remoteAddr + ' !== expected addr: ' + expectedAddr;
-                    Log.error('AutoTestRouteHandler::isWebhookFromGitHub(..) - rejected: ' + msg);
-                    return reject(new Error(msg));
-                }
-            });
+            // const ghAPI = config.getProp(ConfigKey.githubAPI);
+            // if (ghAPI.indexOf('github.com') > 0) {
+            //     Log.info('AutoTestRouteHandler::isWebhookFromGitHub(..) - accepted; host is github.com');
+            //     return fulfill(true);
+            // }
+            //
+            // dns.lookup(ghAPI, (err, expectedAddr) => {
+            //     if (err) {
+            //         Log.error('AutoTestRouteHandler::isWebhookFromGitHub(..) - ERROR: ' + err);
+            //         return reject(err);
+            //     }
+            //
+            //     // use indexOf here because address sometimes reports like: ::ffff:172.18.0.2
+            //     if (expectedAddr !== null && remoteAddr.indexOf(expectedAddr) >= 0) {
+            //         Log.info('AutoTestRouteHandler::isWebhookFromGitHub(..) - accepted; provided: ' +
+            //             remoteAddr + '; expected: ' + expectedAddr + '; took: ' + Util.took(start));
+            //         return fulfill(true);
+            //     } else {
+            //         const msg = 'Webhook did not originate from GitHub; request addr: ' +
+            //             remoteAddr + ' !== expected addr: ' + expectedAddr;
+            //         Log.error('AutoTestRouteHandler::isWebhookFromGitHub(..) - rejected: ' + msg);
+            //         return reject(new Error(msg));
+            //     }
+            // });
         });
     }
 }

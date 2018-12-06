@@ -9,12 +9,12 @@ import {
     AutoTestAuthTransport,
     AutoTestConfigPayload,
     AutoTestConfigTransport,
-    AutoTestDefaultDeliverablePayload,
-    AutoTestDefaultDeliverableTransport,
     AutoTestGradeTransport,
     AutoTestPersonIdTransport,
     AutoTestResultPayload,
     AutoTestResultTransport,
+    ClassyConfigurationPayload,
+    ClassyConfigurationTransport,
     Payload
 } from "../../../common/types/PortalTypes";
 
@@ -34,7 +34,7 @@ export interface IClassPortal {
      * GET /portal/admin/getDefaultDeliverable
      *
      */
-    getDefaultDeliverableId(): Promise<AutoTestDefaultDeliverableTransport | null>;
+    getConfiguration(): Promise<ClassyConfigurationTransport | null>;
 
     /**
      * Returns whether the username is privileged on the course.
@@ -157,9 +157,9 @@ export class ClassPortal implements IClassPortal {
         }
     }
 
-    public async getDefaultDeliverableId(): Promise<AutoTestDefaultDeliverableTransport | null> {
+    public async getConfiguration(): Promise<ClassyConfigurationTransport | null> {
 
-        const url = this.host + ":" + this.port + "/portal/at/defaultDeliverable";
+        const url = this.host + ":" + this.port + "/portal/at";
         const opts: rp.RequestPromiseOptions = {
             rejectUnauthorized: false, headers: {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
@@ -169,7 +169,7 @@ export class ClassPortal implements IClassPortal {
         try {
             const res = await rp(url, opts); // .then(function(res) {
             Log.trace("ClassPortal::getDefaultDeliverableId() - success; payload: " + res);
-            const json: AutoTestDefaultDeliverablePayload = JSON.parse(res);
+            const json: ClassyConfigurationPayload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
                 return json.success;
             } else {

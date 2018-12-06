@@ -871,6 +871,16 @@ export abstract class CourseController implements ICourseController {
         return releasedRepositoryTransport;
     }
 
+    public async makeReposReadOnly(deliv: Deliverable): Promise<RepositoryTransport[]> {
+        Log.info("CourseController::makeReposReadOnly( " + deliv.id + " ) - start");
+        return [];
+    }
+
+    public async makeReposWriteable(deliv: Deliverable): Promise<RepositoryTransport[]> {
+        Log.info("CourseController::makeReposReadOnly( " + deliv.id + " ) - start");
+        return [];
+    }
+
     public abstract computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}>;
 
     // NOTE: the default implementation is currently broken; do not use it.

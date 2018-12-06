@@ -4,12 +4,7 @@ import * as rp from "request-promise-native";
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {AutoTestResult} from "../../../common/types/AutoTestTypes";
-import {
-    CommitTarget,
-    ContainerInput,
-    ContainerOutput,
-    ContainerState
-} from "../../../common/types/ContainerTypes";
+import {CommitTarget, ContainerInput, ContainerOutput, ContainerState} from "../../../common/types/ContainerTypes";
 
 import {AutoTestGradeTransport} from "../../../common/types/PortalTypes";
 import Util from "../../../common/Util";
@@ -349,7 +344,6 @@ export abstract class AutoTest implements IAutoTest {
                     url:     `${graderUrl}:${graderPort}/task`,
                     body:    input,
                     json:    true, // Automatically stringifies the body to JSON,
-                    // timeout: 360000  // enough time that the container will have timed out
                 };
 
                 let output: ContainerOutput = { // NOTE: This is only populated in case the rp line below fails
@@ -365,13 +359,13 @@ export abstract class AutoTest implements IAutoTest {
                         errorNames:   [],
                         result:       "FAIL",
                         custom:       {},
-                        attachments:  [],
+                        attachments:  []
 
                     },
                     postbackOnComplete: false, // NOTE: should this be true? Crash(y) failures should probably be reported.
                     custom:             {},
                     state:              ContainerState.FAIL,
-                    graderTaskId:        ""
+                    graderTaskId:       ""
                 };
 
                 try {

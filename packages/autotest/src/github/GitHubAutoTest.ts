@@ -6,8 +6,8 @@ import {CommitTarget, ContainerInput} from "../../../common/types/ContainerTypes
 import {
     AutoTestAuthTransport,
     AutoTestConfigTransport,
-    AutoTestDefaultDeliverableTransport,
-    AutoTestResultTransport
+    AutoTestResultTransport,
+    ClassyConfigurationTransport
 } from "../../../common/types/PortalTypes";
 import Util from "../../../common/Util";
 import {AutoTest} from "../autotest/AutoTest";
@@ -104,8 +104,13 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         Log.info("GitHubAutoTest::checkCommentPreconditions(..) - for: " + info.personId + "; commit: " + info.commitSHA);
 
         if (info.personId === Config.getInstance().getProp(ConfigKey.botName)) {
-            Log.info("GitHubAutoTest::checkCommentPreconditions(..) - ignored, comment made by AutoBot");
-            return false;
+
+            if (typeof info.flags !== 'undefined' && info.flags.indexOf("#force") >= 0) {
+                Log.info("GitHubAutoTest::checkCommentPreconditions(..) - AutoBot post, but with #force");
+            } else {
+                Log.info("GitHubAutoTest::checkCommentPreconditions(..) - ignored, comment made by AutoBot");
+                return false;
+            }
         }
 
         if (info.botMentioned === false) {
@@ -465,10 +470,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     private async getDelivId(): Promise<string | null> {
         Log.trace("GitHubAutoTest::getDelivId() - start");
         try {
-            const delivTransport: AutoTestDefaultDeliverableTransport = await this.classPortal.getDefaultDeliverableId();
-            Log.trace("GitHubAutoTest::getDelivId() - response: " + JSON.stringify(delivTransport));
-            if (delivTransport !== null && typeof delivTransport.defaultDeliverable !== "undefined") {
-                return delivTransport.defaultDeliverable;
+            const config: ClassyConfigurationTransport = await this.classPortal.getConfiguration();
+            Log.trace("GitHubAutoTest::getDelivId() - response: " + JSON.stringify(config));
+            if (config !== null && typeof config.defaultDeliverable !== "undefined") {
+                return config.defaultDeliverable;
             }
         } catch (err) {
             Log.error("GitHubAutoTest::getDelivId() - ERROR: " + err);
