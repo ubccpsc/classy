@@ -12,7 +12,7 @@ import BackendServer from "../../src/server/BackendServer";
 
 import {Test} from "../GlobalSpec";
 
-describe('General Routes', function() {
+describe.only('General Routes', function() {
 
     let app: restify.Server = null;
 
@@ -173,6 +173,33 @@ describe('General Routes', function() {
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
         expect(body.failure.message).to.equal('Invalid credentials');
+    });
+
+    it.only('Should be able to get get a resource.', async function() {
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        // get user
+        const auth = await dc.getAuth(Test.USER1.id);
+        expect(auth).to.not.be.null;
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/resource/GUID/SHA/bar/baz.txt';
+        try {
+            Log.test('Making request');
+            response = await request(app).get(url).set('user', auth.personId).set('token', auth.token);
+            Log.test('Response received');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.length).to.equal(2);
+        expect(body.success[0].delivId).to.equal(Test.DELIVID0);
+        expect(body.success[0].id).to.equal(Test.TEAMNAME1);
     });
 
     it('Should be able to get get the teams for a user.', async function() {

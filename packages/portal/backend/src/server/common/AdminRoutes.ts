@@ -82,7 +82,7 @@ export default class AdminRoutes implements IREST {
         return next(false);
     }
 
-    private static processAuth(req: any): {user: string, token: string} {
+    public static processAuth(req: any): {user: string, token: string} {
         let user = req.headers.user;
         let token = req.headers.token;
 

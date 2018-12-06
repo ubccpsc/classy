@@ -28,6 +28,7 @@ import {Factory} from "../../Factory";
 import {AuditLabel, Person} from "../../Types";
 
 import IREST from "../IREST";
+import AdminRoutes from "./AdminRoutes";
 
 export default class GeneralRoutes implements IREST {
 
@@ -52,6 +53,9 @@ export default class GeneralRoutes implements IREST {
 
         // used by students to create their teams
         server.post('/portal/team', GeneralRoutes.postTeam);
+
+        // server.get('/portal/resource/:path', GeneralRoutes.getResource);
+        server.get('/portal/resource/.*', GeneralRoutes.getResource);
     }
 
     public static getConfig(req: any, res: any, next: any) {
@@ -144,6 +148,47 @@ export default class GeneralRoutes implements IREST {
             res.send(400, payload);
             return next(false);
         });
+    }
+
+    public static getResource(req: any, res: any, next: any) {
+        Log.info('GeneralRoutes::getResource(..) - start');
+
+        const auth = AdminRoutes.processAuth(req);
+        // const user = req.headers.user;
+        // const token = req.headers.token;
+        // const params = req.params;
+        const path = req.url.substring(16);
+
+        // right now this means requests _must_ be by an authorized user (admin, staff, or student)
+        if (typeof auth.user === 'undefined' || typeof auth.token === 'undefined') {
+            Log.warn('GeneralRoutes::isAdmin(..) - undefined user or token');
+            return GeneralRoutes.handleError(401, 'Authorization error; unknown user/token.', res, next);
+        }
+
+        Log.info('GeneralRoutes::getResource(..) - user: ' + auth.user + '; token: ' + auth.token + '; path: ' + path);
+
+        GeneralRoutes.performGetResource(auth, path).then(function(resource: any) {
+            res.send(200, resource); // return as text rather than json
+            return next();
+        }).catch(function(err) {
+            Log.info('GeneralRoutes::getResource(..) - ERROR: ' + err.message); // intentionally info
+            return GeneralRoutes.handleError(400, 'Problem encountered getting resource: ' + err.message, res, next);
+        });
+    }
+
+    public static performGetResource(auth: {user: string, token: string}, path: string): Promise<any> {
+        Log.info("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - start");
+
+        const host = Config.getInstance().getProp(ConfigKey.graderUrl);
+        const port = Config.getInstance().getProp(ConfigKey.graderPort);
+
+        // const url = host + ':' + port + '/' + sha + '-' + delivId + '/stdio.txt';
+        // Log.info("CourseController::getResult( .. ) - URL: " + url);
+        // const res = await rp(url);
+        // Log.info("CourseController::getResult( .. ) - done; body: " + res);
+        // return res;
+
+        return Promise.resolve('content');
     }
 
     public static getRepos(req: any, res: any, next: any) {
@@ -328,5 +373,11 @@ export default class GeneralRoutes implements IREST {
                 return repoTrans;
             }
         }
+    }
+
+    public static handleError(code: number, msg: string, res: any, next: any) {
+        Log.error('GeneralRoutes::handleError(..) - ERROR: ' + msg);
+        res.send(code, {failure: {message: msg, shouldLogout: false}});
+        return next(false);
     }
 }
