@@ -564,6 +564,8 @@ export class Test {
             }
         }
 
+        const sha = 'sha' + Date.now() + (Math.random() * 1000) + (Math.random() * 1000) + (Math.random() * 1000);
+
         const output: ContainerOutput = {
             // commitURL:          commitURL,
             timestamp:          ts,
@@ -583,7 +585,7 @@ export class Test {
             postbackOnComplete: true,
             custom:             {},
             state:              ContainerState.SUCCESS,
-            graderTaskId:        ""
+            graderTaskId:       ""
         };
 
         const input: ContainerInput = {
@@ -593,7 +595,7 @@ export class Test {
 
                 // branch:    'master',
                 cloneURL:  'cloneURL',
-                commitSHA: 'sha',
+                commitSHA: sha,
                 commitURL: commitURL,
 
                 botMentioned: false,
@@ -618,7 +620,7 @@ export class Test {
             repoId:    repoId,
             // timestamp: ts,
             commitURL: commitURL,
-            commitSHA: 'SHA',
+            commitSHA: sha,
             input:     input,
             output:    output,
             people:    people

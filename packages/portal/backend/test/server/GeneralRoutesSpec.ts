@@ -12,7 +12,7 @@ import BackendServer from "../../src/server/BackendServer";
 
 import {Test} from "../GlobalSpec";
 
-describe.only('General Routes', function() {
+describe('General Routes', function() {
 
     let app: restify.Server = null;
 
