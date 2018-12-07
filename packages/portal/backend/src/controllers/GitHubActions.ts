@@ -1430,7 +1430,7 @@ export class GitHubActions implements IGitHubActions {
                     messageToPrint = messageToPrint.substr(0, 80) + "...";
                 }
 
-                Log.info("GitHubActions::simulateWebookComment(..) - Posting comment to project: " +
+                Log.info("GitHubActions::simulateWebookComment(..) - Simulating comment to project: " +
                     projectName + "; sha: " + sha + "; message: " + messageToPrint);
 
                 const c = Config.getInstance();

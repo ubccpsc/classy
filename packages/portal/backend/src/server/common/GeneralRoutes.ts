@@ -1,3 +1,4 @@
+import * as rp from "request-promise-native";
 import * as restify from "restify";
 
 import Config, {ConfigKey} from '../../../../../common/Config';
@@ -176,19 +177,31 @@ export default class GeneralRoutes implements IREST {
         });
     }
 
-    public static performGetResource(auth: {user: string, token: string}, path: string): Promise<any> {
+    public static async performGetResource(auth: {user: string, token: string}, path: string): Promise<any> {
         Log.info("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - start");
 
         const host = Config.getInstance().getProp(ConfigKey.graderUrl);
         const port = Config.getInstance().getProp(ConfigKey.graderPort);
+        const uri = host + ':' + port + '/resource';
 
-        // const url = host + ':' + port + '/' + sha + '-' + delivId + '/stdio.txt';
-        // Log.info("CourseController::getResult( .. ) - URL: " + url);
-        // const res = await rp(url);
-        // Log.info("CourseController::getResult( .. ) - done; body: " + res);
-        // return res;
+        const options = {
+            uri:     uri,
+            method:  'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'User-Agent':   'Portal',
+                'user':         auth.user, // NOTE: can change to a different representation
+                'token':        auth.token, // NOTE: can change to a different representation
+                'path':         path // NOTE: can change to a different representation
+            }
+        };
 
-        return Promise.resolve('content');
+        Log.info("CourseController::performGetResource( .. ) - URL: " + uri + "; options: " + JSON.stringify(options));
+        // if user/token does not have access to resource request should return 401
+        // if resource does not exist, request should return 404
+        const res = await rp(options);
+        Log.info("CourseController::performGetResource( .. ) - done; body: " + res);
+        return res;
     }
 
     public static getRepos(req: any, res: any, next: any) {

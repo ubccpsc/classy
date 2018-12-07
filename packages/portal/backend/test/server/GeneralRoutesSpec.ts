@@ -175,7 +175,7 @@ describe.only('General Routes', function() {
         expect(body.failure.message).to.equal('Invalid credentials');
     });
 
-    it.only('Should be able to get get a resource.', async function() {
+    it('Should not be able to get get a resource you are not permitted for.', async function() {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
@@ -184,7 +184,53 @@ describe.only('General Routes', function() {
 
         let response = null;
         let body: Payload;
-        const url = '/portal/resource/GUID/SHA/bar/baz.txt';
+        const url = '/portal/resource/GUID/SHA/bar/baz.txt'; // TODO: make this a real url for an admin-only resource
+        try {
+            Log.test('Making request');
+            response = await request(app).get(url).set('user', auth.personId).set('token', auth.token);
+            Log.test('Response received');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(401);
+    });
+
+    it('Should not be able to get get a resource that does not exist.', async function() {
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        // get user
+        const auth = await dc.getAuth(Test.USER1.id);
+        expect(auth).to.not.be.null;
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/resource/INVALID/PATH/NONEXISTENT/FILE.txt';
+        try {
+            Log.test('Making request');
+            response = await request(app).get(url).set('user', auth.personId).set('token', auth.token);
+            Log.test('Response received');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(404);
+    });
+
+    it('Should be able to get get a student resource.', async function() {
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        // get user
+        const auth = await dc.getAuth(Test.USER1.id);
+        expect(auth).to.not.be.null;
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/resource/GUID/SHA/bar/baz.txt'; // TODO: make this a real url
         try {
             Log.test('Making request');
             response = await request(app).get(url).set('user', auth.personId).set('token', auth.token);
@@ -196,10 +242,31 @@ describe.only('General Routes', function() {
 
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
-        expect(body.success).to.not.be.undefined;
-        expect(body.success.length).to.equal(2);
-        expect(body.success[0].delivId).to.equal(Test.DELIVID0);
-        expect(body.success[0].id).to.equal(Test.TEAMNAME1);
+        // TODO: expect something about body
+    });
+
+    it('Should be able to get get an admin resource.', async function() {
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        // get user
+        const auth = await dc.getAuth(Test.ADMIN1.id);
+        expect(auth).to.not.be.null;
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/resource/GUID/SHA/bar/admin.txt'; // TODO: make this a real url an admin can access
+        try {
+            Log.test('Making request');
+            response = await request(app).get(url).set('user', auth.personId).set('token', auth.token);
+            Log.test('Response received');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        // TODO: expect something about body
     });
 
     it('Should be able to get get the teams for a user.', async function() {
