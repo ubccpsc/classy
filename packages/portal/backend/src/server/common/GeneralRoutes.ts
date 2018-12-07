@@ -30,6 +30,7 @@ import {AuditLabel, Person} from "../../Types";
 
 import IREST from "../IREST";
 import AdminRoutes from "./AdminRoutes";
+import {AuthRoutes} from "./AuthRoutes";
 
 export default class GeneralRoutes implements IREST {
 
@@ -172,8 +173,13 @@ export default class GeneralRoutes implements IREST {
             res.send(200, resource); // return as text rather than json
             return next();
         }).catch(function(err) {
-            Log.info('GeneralRoutes::getResource(..) - ERROR: ' + err.message); // intentionally info
-            return GeneralRoutes.handleError(400, 'Problem encountered getting resource: ' + err.message, res, next);
+            Log.error('GeneralRoutes::getResource(..) - ERROR: ' + err);
+            if (err.message === "401") {
+                return GeneralRoutes.handleError(401, 'Authorization error; unknown user/token.', res, next);
+            } else {
+                Log.info('GeneralRoutes::getResource(..) - ERROR: ' + err.message); // intentionally info
+                return GeneralRoutes.handleError(400, 'Problem encountered getting resource: ' + err.message, res, next);
+            }
         });
     }
 
@@ -182,22 +188,57 @@ export default class GeneralRoutes implements IREST {
 
         const host = Config.getInstance().getProp(ConfigKey.graderUrl);
         const port = Config.getInstance().getProp(ConfigKey.graderPort);
-        const uri = host + ':' + port + '/resource';
+        const uri = host + ':' + port + '/resource/' + path;
 
         const options = {
-            uri:     uri,
-            method:  'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'User-Agent':   'Portal',
-                'user':         auth.user, // NOTE: can change to a different representation
-                'token':        auth.token, // NOTE: can change to a different representation
-                'path':         path // NOTE: can change to a different representation
-            }
+            uri:    uri,
+            method: 'GET'
+            // headers: {
+            //     'Content-Type': 'application/json',
+            //     'User-Agent':   'Portal',
+            //     'user':         auth.user, // NOTE: can change to a different representation
+            //     'token':        auth.token, // NOTE: can change to a different representation
+            //     'path':         path // NOTE: can change to a different representation
+            // }
         };
 
-        Log.info("CourseController::performGetResource( .. ) - URL: " + uri + "; options: " + JSON.stringify(options));
         // if user/token does not have access to resource request should return 401
+        try {
+            const priv = await AuthRoutes.performGetCredentials(auth.user, auth.token);
+
+            let proceed = false;
+            if (path.indexOf('/student/') >= 0) {
+                Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - student resource; is valid");
+                // works for everyone (performGetCredentials would have thrown exception if not a valid user)
+                proceed = true;
+            } else if (path.indexOf('/admin/') >= 0) {
+
+                // works for admin only
+                if (priv.isAdmin === true) {
+                    Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - admin resource; is valid");
+                    proceed = true;
+                } else {
+                    Log.warn("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - admin resource; NOT valid");
+                }
+            } else if (path.indexOf('/staff/') >= 0) {
+                Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - staff resource");
+                // works for admin and staff
+                if (priv.isAdmin === true || priv.isStaff === true) {
+                    Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - staff resource; is valid");
+                    proceed = true;
+                } else {
+                    Log.warn("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - staff resource; NOT valid");
+                }
+            }
+            if (proceed === false) {
+                // internal throw not great, but gets us into the same path as invalid student from
+                throw new Error("401");
+            }
+        } catch (err) {
+            throw new Error("401");
+        }
+
+        Log.info("CourseController::performGetResource( .. ) - URL: " + uri + "; options: " + JSON.stringify(options));
         // if resource does not exist, request should return 404
         const res = await rp(options);
         Log.info("CourseController::performGetResource( .. ) - done; body: " + res);
