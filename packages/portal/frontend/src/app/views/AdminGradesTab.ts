@@ -293,6 +293,7 @@ export class AdminGradesTab extends AdminPage {
 
         const inBin = function(list: number[], lower: number, upper: number): number {
             const total = list.reduce(function(accumulator, currentValue) {
+                currentValue = Math.round(currentValue);
                 if (currentValue >= lower && currentValue <= upper) {
                     accumulator++;
                 }
