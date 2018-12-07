@@ -36,7 +36,7 @@ export class MockClassPortal implements IClassPortal {
         const name = Config.getInstance().getProp(ConfigKey.name);
         const testname = Config.getInstance().getProp(ConfigKey.testname);
         if (name === testname) {
-            return {defaultDeliverable: "d1", deliverableIds: ["d1"]};
+            return {defaultDeliverable: "d1", deliverableIds: ["d1", "d4"]};
         }
         Log.error('MockClassPortal::getDefaultDeliverableId() - MockClassPortal should not be used with: ' + name);
         return null;

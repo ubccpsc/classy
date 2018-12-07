@@ -5,9 +5,10 @@ import "mocha";
 import Config from "../../common/Config";
 import Log from "../../common/Log";
 import {CommitTarget} from "../../common/types/ContainerTypes";
+import {DeliverablesController} from "../../portal/backend/src/controllers/DeliverablesController";
 import {PersonController} from "../../portal/backend/src/controllers/PersonController";
 import BackendServer from "../../portal/backend/src/server/BackendServer";
-import {Person} from "../../portal/backend/src/Types";
+import {Deliverable, Person} from "../../portal/backend/src/Types";
 import {MockClassPortal} from "../src/autotest/mocks/MockClassPortal";
 
 import {GitHubUtil} from "../src/github/GitHubUtil";
@@ -46,6 +47,43 @@ describe("GitHub Event Parser", () => {
         };
         // person needs to exist so we can do GitHubId <-> PersonId mapping
         await pc.createPerson(p);
+
+        // deliverable needs to exist so we can match it in the comment parser
+        const dc = new DeliverablesController();
+
+        const deliv: Deliverable = {
+            id: 'd4',
+
+            URL:            'http://NOTSET',
+            openTimestamp:  new Date(1400000000000).getTime(),
+            closeTimestamp: new Date(1500000000000).getTime(),
+            gradesReleased: false,
+
+            shouldProvision:  true,
+            importURL:        'https://github.com/classytest/PostTestDoNotDelete.git', // TODO: create ImportTestDoNotDelete
+            teamMinSize:      2,
+            teamMaxSize:      2,
+            teamSameLab:      true,
+            teamStudentsForm: true,
+            teamPrefix:       't',
+            repoPrefix:       '',
+
+            visibleToStudents: true,
+
+            shouldAutoTest: true,
+            autotest:       {
+                dockerImage:        'testImage',
+                studentDelay:       60 * 60 * 12, // 12h
+                maxExecTime:        300,
+                regressionDelivIds: [],
+                custom:             {}
+            },
+
+            rubric: {},
+            custom: {}
+        };
+
+        await dc.saveDeliverable(deliv);
 
         Log.test("GitHubEventParserSpec::before() - done");
     });

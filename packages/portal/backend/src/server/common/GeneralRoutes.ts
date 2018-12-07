@@ -238,7 +238,7 @@ export default class GeneralRoutes implements IREST {
             throw new Error("401");
         }
 
-        Log.info("CourseController::performGetResource( .. ) - URL: " + uri + "; options: " + JSON.stringify(options));
+        Log.info("CourseController::performGetResource( .. ) - valid request; passing through to: " + uri);
         // if resource does not exist, request should return 404
         const res = await rp(options);
         Log.info("CourseController::performGetResource( .. ) - done; body: " + res);

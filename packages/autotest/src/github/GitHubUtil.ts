@@ -23,7 +23,9 @@ export class GitHubUtil {
         const regexp = /(\s|^)\#\w\w+\b/gm;
         const matches = message.match(regexp);
 
-        Log.info("parseDeliverableFromComment(..) - matches: " + JSON.stringify(matches) + " for msg: " + message);
+        Log.info("parseDeliverableFromComment(..) - ids: " + JSON.stringify(delivIds) +
+            "; matches: " + JSON.stringify(matches) + " for msg: " + message);
+
         let parsedDelivId = null;
         if (matches) {
             for (const delivId of delivIds) {
@@ -75,6 +77,7 @@ export class GitHubUtil {
      */
     public static async processComment(payload: any): Promise<CommitTarget> {
         try {
+            Log.trace("GitHubUtil::processComment(..) - start");
             const commitSHA = payload.comment.commit_id;
             let commitURL = payload.comment.html_url;  // this is the comment Url
             commitURL = commitURL.substr(0, commitURL.lastIndexOf("#")); // strip off the comment reference
