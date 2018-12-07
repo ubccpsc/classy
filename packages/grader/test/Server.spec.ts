@@ -40,6 +40,21 @@ describe("Task Endpoint", async function() {
             }
         }
 
+        class TaskControllerSlowMock extends TaskController {
+            public delay: number;
+            constructor(delay: number) {
+                super();
+                this.delay = delay;
+            }
+            public getResult(id: string): Promise<ContainerOutput> {
+                return new Promise<any>((resolve) => {
+                    setTimeout(function() {
+                        resolve({});
+                    }, this.delay);
+                });
+            }
+        }
+
         before(function() {
             // @ts-ignore
             restify["taskRoute"]["taskController"] = new TaskControllerMock();
@@ -103,6 +118,30 @@ describe("Task Endpoint", async function() {
             } finally {
                 expect(res).to.have.status(404);
                 expect(res).to.haveOwnProperty("body").equal("id -1 not found");
+            }
+        });
+        it("Should keep connection open during long running tasks", async function() {
+            // change the default request timeout to 20s
+            // must be greater than the heartbeat time to ensure that it is working
+            const shortTimeout = 20000;
+            restify["rest"].server.setTimeout(shortTimeout);
+            const delay = 2 * shortTimeout;
+            this.timeout(delay + 500);
+            // @ts-ignore
+            restify["taskRoute"]["taskController"] = new TaskControllerSlowMock(delay);
+            const eventSource = new EventSource(url + "/task/1/notify");
+            let event: any;
+            try {
+                event = await new Promise((resolve, reject) => {
+                    eventSource.addEventListener("done", resolve);
+                    eventSource.onerror = reject;
+                });
+            } catch (err) {
+                event = err;
+            } finally {
+                // Clean up--required for mocha to end the tests
+                eventSource.close();
+                expect(event).to.haveOwnProperty("data").equal("{}");
             }
         });
     });

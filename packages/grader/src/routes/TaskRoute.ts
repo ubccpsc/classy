@@ -49,7 +49,15 @@ export class TaskRoute {
             return res.send(404, err.message);
         }
 
-        req.on("close", res.end);
+        // Heartbeat
+        const heartbeat = setInterval(function() {
+            res.write("\n");
+        }, 15000);
+
+        req.on("close", function() {
+            clearInterval(heartbeat);
+        });
+
         res.writeHead(200, {
             "Connection": "keep-alive",
             "Content-Type": "text/event-stream",
@@ -66,7 +74,6 @@ export class TaskRoute {
             res.write(body);
         } finally {
             res.write("\n\n");
-            res.end();
         }
 
         next();
