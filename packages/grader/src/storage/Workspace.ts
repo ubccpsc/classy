@@ -25,7 +25,10 @@ export class Workspace {
         });
     }
 
-    // return absolute path
+    public async empty(): Promise<void> {
+        return fs.emptyDir(this.rootDir);
+    }
+
     public async mkdir(relPath: string): Promise<void> {
         return fs.mkdirp(this.rootDir + "/" + relPath);
     }
