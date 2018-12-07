@@ -44,6 +44,7 @@ export class GradeTask {
         };
 
         try {
+            await this.workspace.empty();
             await this.workspace.mkdir("output");
 
             Log.trace("GradeTask::execute() - Clone repo " +
