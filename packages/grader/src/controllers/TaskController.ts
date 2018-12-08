@@ -1,20 +1,28 @@
-import {ContainerInput, ContainerOutput, ContainerState} from "../../../common/types/ContainerTypes";
+import {ContainerInput, ContainerOutput} from "../../../common/types/ContainerTypes";
 import {GradeTask} from "../model/GradeTask";
+import {ObservableTaskMap} from "../model/ObservableTaskMap";
+import {TaskStatus} from "../model/Task";
 import {Workspace} from "../model/Workspace";
 
-interface Tasks {
-    [id: string]: {
-        start: Date;
-        result: Promise<ContainerOutput>;
-        workspace: Workspace;
-    };
+export interface TaskEvent {
+    id: string;
+    event: TaskStatus;
+    body: any;
+}
+
+interface Task {
+    duration: number;  // milliseconds
+    start: Date;
+    status: TaskStatus;
+    result: Promise<ContainerOutput>;
+    workspace: Workspace;
 }
 
 export class TaskController {
-    private readonly tasks: Tasks;
+    protected readonly tasks: ObservableTaskMap;
 
-    constructor() {
-        this.tasks = {};
+    constructor(tasks: ObservableTaskMap) {
+        this.tasks = tasks;
     }
 
     public create(input: ContainerInput): string {
@@ -40,26 +48,54 @@ export class TaskController {
         input.target.cloneURL = input.target.cloneURL.replace("://", `://${token}@`);
 
         const workspace: Workspace = new Workspace(process.env.GRADER_PERSIST_DIR + "/" + id, uid);
-        const result = new GradeTask(id, input, workspace).execute();
+        const gradeTask: GradeTask = new GradeTask(id, input, workspace);
+        const result = gradeTask.execute();
 
-        this.tasks[id] = {
-            start: new Date(),
-            result: result,
-            workspace
-        };
+        this.tasks.set(id, gradeTask);
+        gradeTask.on("change", (status: TaskStatus) => {
+            this.tasks.emit("change", {id, status});
+        });
+        //
+        // const statusListener = gradeTask.statusEmitter;
+        //
+        // this.tasks[id] = {
+        //     duration: 0,
+        //     start: new Date(),
+        //     status: gradeTask.status,
+        //     result,
+        //     workspace
+        // };
+        //
+        // statusListener.on("change", async (newStatus: TaskStatus) => {
+        //     const task = this.tasks[id];
+        //     task.status = newStatus;
+        //     task.duration = new Date().getTime() - task.start.getTime();
+        //
+        //     const event: TaskEvent = {
+        //         id,
+        //         event: newStatus,
+        //         body: null
+        //     };
+        //
+        //     if (newStatus === TaskStatus.Done || newStatus === TaskStatus.Failed) {
+        //         event.body = await result;
+        //     }
+        //
+        //     this.emitter.emit("change", event);
+        // });
 
         return id;
     }
 
-    public getAttachmentBasePath(id: string): string {
-        return this.tasks[id].workspace.rootDir;
-    }
-
-    public getResult(id: string): Promise<ContainerOutput> {
-        if (!this.tasks.hasOwnProperty(id)) {
+    public getTask(id: string): GradeTask {
+        if (!this.tasks.has(id)) {
             throw new Error("id " + id + " not found");
         }
 
-        return this.tasks[id].result;
+        return this.tasks.get(id);
+    }
+
+    public getAttachmentBasePath(id: string): string {
+        return this.getTask(id).workspace.rootDir;
     }
 }

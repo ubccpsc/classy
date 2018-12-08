@@ -1,14 +1,23 @@
+import {EventEmitter} from "events";
 import * as fs from "fs-extra";
 import * as restify from "restify";
-import {ContainerInput, ContainerOutput} from "../../../common/types/ContainerTypes";
-import {TaskController} from "../controllers/TaskController";
+import {ContainerInput} from "../../../common/types/ContainerTypes";
+import {TaskController, TaskEvent} from "../controllers/TaskController";
+import {GradeTask} from "../model/GradeTask";
+import {ObservableTaskMap} from "../model/ObservableTaskMap";
 import {ServerSentEvent} from "../model/ServerSentEvent";
+import {TaskStatus} from "../model/Task";
 
 export class TaskRoute {
+    protected readonly tasks: ObservableTaskMap;
     private readonly taskController: TaskController;
+    private notifyCounter: number;
+    public heartbeatInterval: number = 15000; // milliseconds
 
     constructor() {
-        this.taskController = new TaskController();
+        this.notifyCounter = 0;
+        this.tasks = new ObservableTaskMap();
+        this.taskController = new TaskController(this.tasks);  // TODO shouldn't be a class prop.
     }
 
     public async getTaskAttachments(req: restify.Request, res: restify.Response, next: restify.Next) {
@@ -41,40 +50,54 @@ export class TaskRoute {
     }
 
     public async getTaskEvents(req: restify.Request, res: restify.Response, next: restify.Next) {
-        let resultPromise: Promise<ContainerOutput>;
-        try {
-            const id: string = req.params.id;
-            resultPromise = this.taskController.getResult(id);
-        } catch (err) {
-            return res.send(404, err.message);
-        }
-
-        // Heartbeat
-        const heartbeat = setInterval(function() {
-            res.write("\n");
-        }, 15000);
-
-        req.on("close", function() {
-            clearInterval(heartbeat);
-        });
-
         res.writeHead(200, {
             "Connection": "keep-alive",
             "Content-Type": "text/event-stream",
             "Cache-Control": "no-cache"
         });
 
-        try {
-            const result = await resultPromise;
-            // Set the event id to 1 since we only ever emit a single event.
-            const body: string = new ServerSentEvent(1, "done", JSON.stringify(result)).toString();
-            res.write(body);
-        } catch (err) {
-            const body: string = new ServerSentEvent(1, "error", err).toString();
-            res.write(body);
-        } finally {
-            res.write("\n\n");
-        }
+        // While this wastes a TCP trip, we don't know when the first notification will be sent so we should acknowledge
+        // the request immediately.
+        res.flushHeaders();
+
+        // Heartbeat
+        const heartbeat = setInterval(function() {
+            res.write("\n");
+        }, this.heartbeatInterval);
+        const sendNotification = (event: {id: string, status: string}) => {
+            if (event.status === TaskStatus.Done || event.status === TaskStatus.Failed) {
+                this.notifyCounter++;
+                const task: GradeTask = this.tasks.get(event.id);
+                const dataStr: string = JSON.stringify({
+                    taskId: event.id,
+                    body: task.executionOutput
+                });
+                const body: string = new ServerSentEvent(this.notifyCounter, event.status, dataStr).toString();
+                res.write(body);
+                res.write("\n\n");
+            }
+        };
+
+        this.tasks.on("change", sendNotification.bind(this));
+        // this.taskController.emitter.on("change", (data: TaskEvent) => {
+        //
+        //         if (data.event === TaskStatus.Done || data.event === TaskStatus.Failed) {
+        //             this.notifyCounter++;
+        //             const dataStr: string = JSON.stringify({
+        //                 taskId: data.id,
+        //                 body: data.body
+        //             });
+        //             const body: string = new ServerSentEvent(this.notifyCounter, data.event, dataStr).toString();
+        //             res.write(body);
+        //             res.write("\n\n");
+        //         }
+        // });
+
+        // Clear heartbeat and listener
+        req.on("close", () => {
+            clearInterval(heartbeat);
+            this.tasks.removeListener("change", sendNotification);
+        });
 
         next();
     }
@@ -86,7 +109,6 @@ export class TaskRoute {
             const me: string = req.isSecure() ? "https" : "http" + "://" + req.headers.host;
             const result = {
                 id,
-                notify_url: `${me}/task/${id}/notify`,
                 attachments_url: `${me}/task/${id}/attachments`
             };
             res.json(201, result);
@@ -95,5 +117,18 @@ export class TaskRoute {
         }
 
         next();
+    }
+
+    private sendNotification(data: TaskEvent) {
+        if (data.event === TaskStatus.Done || data.event === TaskStatus.Failed) {
+            this.notifyCounter++;
+            const dataStr: string = JSON.stringify({
+                taskId: data.id,
+                body: data.body
+            });
+            const body: string = new ServerSentEvent(this.notifyCounter, data.event, dataStr).toString();
+            // res.write(body);
+            // res.write("\n\n");
+        }
     }
 }

@@ -4,8 +4,11 @@ import chai = require("chai");
 import chaiHttp = require("chai-http");
 import * as EventSource from "eventsource";
 import * as fs from "fs-extra";
-import {Attachment, ContainerOutput} from "../../common/types/ContainerTypes";
-import {TaskController} from "../src/controllers/TaskController";
+import * as http from "http";
+import {Attachment, ContainerInput, ContainerOutput} from "../../common/types/ContainerTypes";
+import {TaskController, TaskEvent} from "../src/controllers/TaskController";
+import {GradeTask} from "../src/model/GradeTask";
+import {Task, TaskStatus} from "../src/model/Task";
 import Server from "../src/server/Server";
 
 // The restify onerror event is registered each time the server is started. This causes an EventEmitter memory leak warning.
@@ -17,12 +20,6 @@ describe("Task Endpoint", async function() {
     const port: number = 4321;
     const url: string = `http://127.0.0.1:${port}`;
     const restify = new Server("GraderTest");
-    const resultThrowsNoId = (id: string) => {
-        throw new Error("id " + id + " not found");
-    };
-    const resultPromiseRejects = (id: string) => {
-        return Promise.reject("Exception from GradeTask.execute()");
-    };
 
     beforeEach(async function() {
         await restify.start(port);
@@ -32,40 +29,128 @@ describe("Task Endpoint", async function() {
         await restify.stop();
     });
 
-    describe("/GET task/:id/notify", async function() {
-        class TaskControllerMock extends TaskController {
-            public getResult(id: string): Promise<ContainerOutput> {
-                // @ts-ignore
-                return Promise.resolve({});
+    describe("/GET task/notify", async function() {
+        class GradeTaskMock extends GradeTask {
+            constructor(id: string) {
+                super(id, null, null);
+            }
+
+            public async execute(): Promise<ContainerOutput> {
+                this.status = TaskStatus.Created;
+
+                setTimeout(() => {
+                    this.status = TaskStatus.Running;
+                }, 10);
+
+                setTimeout(() => {
+                    this.status = TaskStatus.Done;
+                }, 40);
+                return null;
             }
         }
 
-        class TaskControllerSlowMock extends TaskController {
+        class TaskControllerMock extends TaskController {
+            constructor() {
+                super(restify["taskRoute"]["tasks"]);
+            }
+
+            public create(input: ContainerInput): string {
+                const id = "1";
+                const task = new GradeTaskMock(id);
+                restify["taskRoute"]["tasks"].set(id, task);
+                const result = task.execute();
+
+                task.on("change", (status: TaskStatus) => {
+                    this.tasks.emit("change", {id, status});
+                });
+
+                return id;
+            }
+        }
+
+        // Use the same event message for every test (set in the TaskControllerMock constructor)
+        const expectedData: string = JSON.stringify({taskId: "1", body: {}});
+
+        // class TaskControllerMock extends TaskController {
+        //     public task: Task;
+        //     constructor() {
+        //         super();
+        //         this.task = new Task();
+        //         this.task.statusEmitter.on("change", (status) => {
+        //             const event: TaskEvent = {
+        //                 id: "1",
+        //                 event: status,
+        //                 body: {}
+        //             };
+        //             this.emitter.emit("change", event);
+        //         });
+        //
+        //     }
+        //
+        //     public create(input: ContainerInput): string {
+        //         this.task.status = TaskStatus.Created;
+        //
+        //         setTimeout(() => {
+        //             this.task.status = TaskStatus.Running;
+        //         }, 10);
+        //
+        //         setTimeout(() => {
+        //             this.task.status = TaskStatus.Done;
+        //         }, 40);
+        //
+        //         return "";
+        //     }
+        // }
+
+        class TaskControllerFailEvent extends TaskControllerMock {
+            public create(input: ContainerInput): string {
+                // this.task.status = TaskStatus.Created;
+                //
+                // setTimeout(() => {
+                //     this.task.status = TaskStatus.Running;
+                // }, 10);
+                //
+                // setTimeout(() => {
+                //     this.task.status = TaskStatus.Failed;
+                // }, 40);
+
+                return "";
+            }
+        }
+
+        class TaskControllerSlowMock extends TaskControllerMock {
             public delay: number;
             constructor(delay: number) {
                 super();
                 this.delay = delay;
             }
-            public getResult(id: string): Promise<ContainerOutput> {
-                return new Promise<any>((resolve) => {
-                    setTimeout(function() {
-                        resolve({});
-                    }, this.delay);
-                });
+
+            public create(input: ContainerInput): string {
+                // this.task.status = TaskStatus.Created;
+                //
+                // setTimeout(() => {
+                //     this.task.status = TaskStatus.Running;
+                // }, 10);
+                //
+                // setTimeout(() => {
+                //     this.task.status = TaskStatus.Done;
+                // }, this.delay);
+
+                return "";
             }
         }
-
-        before(function() {
-            // @ts-ignore
-            restify["taskRoute"]["taskController"] = new TaskControllerMock();
-
-        });
 
         it("Should respond with status 200 and content-type = text/event-stream", async function() {
             let res: any;
 
             try {
-                res = await chai.request(url).get("/task/0/notify");
+                res = await new Promise((resolve) => {
+                    const client: http.ClientRequest = http.get(url + "/task/notify", (resp) => {
+                        // Don't want to wait for anymore events so close the connection (this lets the server close)
+                        client.abort();
+                        resolve(resp);
+                    });
+                });
             } catch (err) {
                 res = err;
             } finally {
@@ -73,12 +158,22 @@ describe("Task Endpoint", async function() {
                 expect(res).to.have.header("Content-Type", "text/event-stream");
             }
         });
-        it("Should emit done event and close once container is finished executing", async function() {
-            const eventSource = new EventSource(url + "/task/1/notify");
+        it("Should notify that a task is DONE", async function() {
+            // @ts-ignore
+            restify["taskRoute"]["taskController"] = new TaskControllerMock();
+
+            const eventSource = new EventSource(url + "/task/notify");
+            eventSource.onopen = () => {
+                restify["taskRoute"]["taskController"].create(null);
+                // const id = "1";
+                // const task = new GradeTaskMock(id);
+                // restify["taskRoute"]["tasks"].set(id, task);
+                // const result = task.execute();
+            };
             let event: any;
             try {
                 event = await new Promise((resolve, reject) => {
-                    eventSource.addEventListener("done", resolve);
+                    eventSource.addEventListener(TaskStatus.Done, resolve);
                     eventSource.onerror = reject;
                 });
             } catch (err) {
@@ -86,54 +181,49 @@ describe("Task Endpoint", async function() {
             } finally {
                 // Clean up--required for mocha to end the tests
                 eventSource.close();
-                expect(event).to.haveOwnProperty("data").equal("{}");
+                expect(event).to.haveOwnProperty("data").equal(expectedData);
             }
         });
-        it("Should emit error event and close when the ContainerOutput promise rejects", async function() {
-            restify["taskRoute"]["taskController"].getResult = resultPromiseRejects;
+        it("Should notify that a task is FAILED", async function() {
+            // @ts-ignore
+            restify["taskRoute"]["taskController"] = new TaskControllerFailEvent();
 
-            const eventSource = new EventSource(url + "/task/1/notify");
+            const eventSource = new EventSource(url + "/task/notify");
+            eventSource.onopen = () => {
+                restify["taskRoute"]["taskController"].create(null);
+            };
             let event: any;
             try {
                 event = await new Promise((resolve, reject) => {
-                    eventSource.addEventListener("done", resolve);
+                    eventSource.addEventListener(TaskStatus.Failed, resolve);
                     eventSource.onerror = reject;
                 });
             } catch (err) {
                 event = err;
             } finally {
                 eventSource.close();
-                expect(event).to.haveOwnProperty("data").equal("Exception from GradeTask.execute()");
-            }
-        });
-        it("Should respond with status 404 when id doesn't exist", async function() {
-            restify["taskRoute"]["taskController"].getResult = resultThrowsNoId;
-
-            let res: any;
-
-            try {
-                res = await chai.request(url).get("/task/-1/notify");
-            } catch (err) {
-                res = err;
-            } finally {
-                expect(res).to.have.status(404);
-                expect(res).to.haveOwnProperty("body").equal("id -1 not found");
+                // Doesn't actually matter what the value is, just want to check that the eventListener works
+                expect(event).to.haveOwnProperty("data").equal(expectedData);
             }
         });
         it("Should keep connection open during long running tasks", async function() {
-            // change the default request timeout to 20s
-            // must be greater than the heartbeat time to ensure that it is working
-            const shortTimeout = 20000;
-            restify["rest"].server.setTimeout(shortTimeout);
-            const delay = 2 * shortTimeout;
-            this.timeout(delay + 500);
+            const heartbeatInterval = 150;
+            const connectionTimeout = heartbeatInterval + 50; // just needs to be bigger than the heartbeatInterval
+            const responseDelay = 2 * connectionTimeout; // make sure the connection would be killed if no heartbeats
+
+            restify["taskRoute"].heartbeatInterval = 150;
+            restify["rest"].server.setTimeout(connectionTimeout);
             // @ts-ignore
-            restify["taskRoute"]["taskController"] = new TaskControllerSlowMock(delay);
-            const eventSource = new EventSource(url + "/task/1/notify");
+            restify["taskRoute"]["taskController"] = new TaskControllerSlowMock(responseDelay);
+
+            const eventSource = new EventSource(url + "/task/notify");
+            eventSource.onopen = () => {
+                restify["taskRoute"]["taskController"].create(null);
+            };
             let event: any;
             try {
                 event = await new Promise((resolve, reject) => {
-                    eventSource.addEventListener("done", resolve);
+                    eventSource.addEventListener(TaskStatus.Done, resolve);
                     eventSource.onerror = reject;
                 });
             } catch (err) {
@@ -141,7 +231,9 @@ describe("Task Endpoint", async function() {
             } finally {
                 // Clean up--required for mocha to end the tests
                 eventSource.close();
-                expect(event).to.haveOwnProperty("data").equal("{}");
+                // Doesn't actually matter what the value is, just want to check that heartbeat keeps the connection
+                // alive
+                expect(event).to.haveOwnProperty("data").equal(expectedData);
             }
         });
     });
@@ -225,20 +317,20 @@ describe("Task Endpoint", async function() {
                 expect(res).to.have.haveOwnProperty("text").equal(content);
             }
         });
-        it("Should respond with status 404 when the id doesn't exist", async function() {
-            restify["taskRoute"]["taskController"].getResult = resultThrowsNoId;
-
-            let res: any;
-
-            try {
-                res = await chai.request(url).get("/task/-1/notify");
-            } catch (err) {
-                res = err;
-            } finally {
-                expect(res).to.have.status(404);
-                expect(res).to.haveOwnProperty("body").equal("id -1 not found");
-            }
-        });
+        // it("Should respond with status 404 when the id doesn't exist", async function() {
+        //     restify["taskRoute"]["taskController"].getResult = resultThrowsNoId;
+        //
+        //     let res: any;
+        //
+        //     try {
+        //         res = await chai.request(url).get("/task/-1/notify");
+        //     } catch (err) {
+        //         res = err;
+        //     } finally {
+        //         expect(res).to.have.status(404);
+        //         expect(res).to.haveOwnProperty("body").equal("id -1 not found");
+        //     }
+        // });
         it("Should respond with status 404 when the file doesn't exist", async function() {
             let res: any;
 

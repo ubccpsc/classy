@@ -1,23 +1,43 @@
+import {EventEmitter} from "events";
 import Log from "../../../common/Log";
 import {ContainerInput, ContainerOutput, ContainerState} from "../../../common/types/ContainerTypes";
 import {DockerContainer, IDockerContainer} from "./DockerContainer";
 import {GitRepository} from "./GitRepository";
 import {Workspace} from "./Workspace";
 
-export class GradeTask {
+export enum TaskStatus {
+    Created = "CREATED",
+    Running = "RUNNING",
+    Done = "DONE",
+    Failed = "FAILED"
+}
+
+export class GradeTask extends EventEmitter {
     private readonly id: string;
     private readonly input: ContainerInput;
-    private readonly workspace: Workspace;
+    public readonly workspace: Workspace;
     private readonly container: IDockerContainer;
     private readonly repo: GitRepository;
     private containerState: string;
+    private taskStatus: TaskStatus;
+    public executionOutput: ContainerOutput;
 
     constructor(id: string, input: ContainerInput, workspace: Workspace) {
+        super();
         this.id = id;
         this.input = input;
         this.workspace = workspace;
-        this.container = new DockerContainer(input.containerConfig.dockerImage);
-        this.repo = new GitRepository();
+        this.container = null; // new DockerContainer(input.containerConfig.dockerImage);
+        this.repo = null; // new GitRepository();
+    }
+
+    public get status(): TaskStatus {
+        return this.taskStatus;
+    }
+
+    public set status(status: TaskStatus) {
+        this.taskStatus = status;
+        this.emit("change", status);
     }
 
     public async execute(): Promise<ContainerOutput> {
@@ -61,6 +81,7 @@ export class GradeTask {
             Log.trace("GradeTask::execute() - Create grading container.");
             try {
                 await this.container.create(this.input.containerConfig.custom);
+                this.status = TaskStatus.Created;
 
                 Log.info("GradeTask::execute() - Start grading container " + this.container.shortId);
                 const exitCode = await this.runContainer(this.container);
@@ -90,6 +111,7 @@ export class GradeTask {
                 }
             } catch (err) {
                 Log.error(`GradeTask::execute() - ERROR Running grading container. ${err}`);
+                this.status = TaskStatus.Failed;
             } finally {
                 try {
                     Log.trace("GradeTask::execute() - Remove container " + this.container.shortId);
@@ -123,6 +145,7 @@ export class GradeTask {
 
     protected async runContainer(container: IDockerContainer): Promise<number> {
         await container.start();
+        this.status = TaskStatus.Running;
 
         // Set a timer to kill the container if it doesn't finish in the allotted time
         let timer: any;
@@ -140,6 +163,7 @@ export class GradeTask {
         try {
             // cmdOut is the exit code from the container
             [, cmdOut] = await container.wait();
+            this.status = TaskStatus.Done;
         } catch (err) {
             throw err;
         } finally {
