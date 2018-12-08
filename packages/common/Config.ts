@@ -93,9 +93,9 @@ export default class Config {
                 publichostname: process.env.PUBLICHOSTNAME,
 
                 dockerId:   process.env.GRADER_DOCKER_ID,
-                hostDir:  process.env.GRADER_HOST_DIR,
+                hostDir:  process.env.HOST_DIR,
                 postback:   Boolean(process.env.AUTOTEST_POSTBACK),
-                persistDir: process.env.GRADER_PERSIST_DIR,
+                persistDir: process.env.PERSIST_DIR,
                 dockerUid: Number(process.env.UID),
                 dockerNet: process.env.DOCKER_NET,
                 hostsAllow: process.env.HOSTS_ALLOW,
