@@ -54,7 +54,10 @@ export enum ConfigKey {
     // autotest
     persistDir = "persistDir",
     dockerId = "dockerId",
-    workspace = "workspace",
+    hostDir = "hostDir",
+    dockerUid = "dockerUid",
+    dockerNet = "dockerNet",
+    hostsAllow = "hostsAllow",
     graderUrl = "graderUrl",
     graderPort = "graderPort",
     classPortalHost = "classPortalHost",
@@ -90,9 +93,12 @@ export default class Config {
                 publichostname: process.env.PUBLICHOSTNAME,
 
                 dockerId:   process.env.GRADER_DOCKER_ID,
-                workspace:  process.env.GRADER_WORKSPACE,
+                hostDir:  process.env.GRADER_HOST_DIR,
                 postback:   Boolean(process.env.AUTOTEST_POSTBACK),
                 persistDir: process.env.GRADER_PERSIST_DIR,
+                dockerUid: Number(process.env.UID),
+                dockerNet: process.env.DOCKER_NET,
+                hostsAllow: process.env.HOSTS_ALLOW,
 
                 timeout: Number(process.env.GRADER_TIMEOUT),
                 botName: process.env.GH_BOT_USERNAME,
@@ -129,8 +135,6 @@ export default class Config {
                 // kind:               process.env.KIND, // REMOVE
                 // githubOrgToken:     process.env.GH_BOT_TOKEN,
                 // githubOracleToken:  process.env.GH_ORG_TOKEN,
-                graderUrl:  process.env.GRADER_URL,
-                graderPort: process.env.GRADER_PORT
             };
 
             // this is not a great place for this

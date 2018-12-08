@@ -1,12 +1,11 @@
-import * as rp from "request-promise-native";
-
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {AutoTestResult} from "../../../common/types/AutoTestTypes";
 import {CommitTarget, ContainerInput, ContainerOutput, ContainerState} from "../../../common/types/ContainerTypes";
-
 import {AutoTestGradeTransport} from "../../../common/types/PortalTypes";
 import Util from "../../../common/Util";
+import {GradeTask} from "../container/GradeTask";
+import {Workspace} from "../container/Workspace";
 import {IClassPortal} from "./ClassPortal";
 import {IDataStore} from "./DataStore";
 import {MockGrader} from "./mocks/MockGrader";
@@ -325,9 +324,6 @@ export abstract class AutoTest implements IAutoTest {
                 isProd = false; // EMPTY and POSTBACK used by test environment
             }
             if (isProd === true) {
-                const graderUrl: string = Config.getInstance().getProp(ConfigKey.graderUrl);
-                const graderPort: number = Config.getInstance().getProp(ConfigKey.graderPort);
-
                 const commitSHA: string = input.target.commitSHA;
                 const commitURL: string = input.target.commitURL;
 
@@ -338,57 +334,48 @@ export abstract class AutoTest implements IAutoTest {
                 const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
                     Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
 
-                const gradeServiceOpts: rp.OptionsWithUrl = {
-                    method:  "PUT",
-                    url:     `${graderUrl}:${graderPort}/task/grade/${id}`,
-                    body:    input,
-                    json:    true, // Automatically stringifies the body to JSON,
-                    timeout: 910 * 1000 // enough time that the container will have timed out
+                const uid: number = Config.getInstance().getProp(ConfigKey.dockerUid);
+                const token: string = Config.getInstance().getProp(ConfigKey.githubBotToken).replace("token ", "");
+                const assnDir: string = `${Config.getInstance().getProp(ConfigKey.hostDir)}/${id}/assn`;
+                const outputDir: string = `${Config.getInstance().getProp(ConfigKey.hostDir)}/${id}/output`;
+                const workspaceDir: string = Config.getInstance().getProp(ConfigKey.persistDir) + "/" + id;
+
+                // Add parameters to create the grading container. We'll be lazy and use the custom field.
+                input.containerConfig.custom = {
+                    "--env": [
+                        `ASSIGNMENT=${delivId}`
+                    ],
+                    "--volume": [
+                        `${assnDir}:/assn`,
+                        `${outputDir}:/output`
+                    ],
+                    "--network": Config.getInstance().getProp(ConfigKey.dockerNet),
+                    "--add-host": Config.getInstance().getProp(ConfigKey.hostsAllow),
+                    "--user": uid
                 };
 
-                let output: ContainerOutput = { // NOTE: This is only populated in case the rp line below fails
-                    timestamp:          Date.now(), // this is the done timestamp
-                    report:             {
-                        scoreOverall: 0,
-                        scoreCover:   null,
-                        scoreTest:    null,
-                        feedback:     'Internal error: The grading service failed to handle the request.',
-                        passNames:    [],
-                        skipNames:    [],
-                        failNames:    [],
-                        errorNames:   [],
-                        result:       "FAIL",
-                        custom:       {},
-                        attachments:  []
+                // Inject the GitHub token into the cloneURL so we can clone the repo.
+                input.target.cloneURL = input.target.cloneURL.replace("://", `://${token}@`);
 
-                    },
-                    postbackOnComplete: false, // NOTE: should this be true? Crash(y) failures should probably be reported.
-                    custom:             {},
-                    state:              ContainerState.FAIL,
-                    graderTaskId:       ""
-                };
                 try {
-                    output = await rp(gradeServiceOpts);
-                } catch (err) {
-                    Log.warn("AutoTest::invokeContainer(..) - ERROR for SHA: " +
-                        input.target.commitSHA + "; ERROR with grading service: " + err);
-                }
+                    const workspace: Workspace = new Workspace(workspaceDir, uid);
+                    const output = await new GradeTask(id, input, workspace).execute();
 
-                Log.trace("AutoTest::invokeContainer(..) - output: " + JSON.stringify(output, null, 2));
+                    Log.trace("AutoTest::invokeContainer(..) - output: " + JSON.stringify(output, null, 2));
 
-                record = {
-                    delivId,
-                    repoId,
-                    commitURL,
-                    commitSHA,
-                    input,
-                    output
-                };
+                    record = {
+                        delivId,
+                        repoId,
+                        commitURL,
+                        commitSHA,
+                        input,
+                        output
+                    };
 
-                // POST the grade to Class Portal
-                // NOTE: it is ok for for this to be here, but the backend should consider
-                // whether or not to honour it (e.g., based on course config or deadlines)
-                try {
+                    // POST the grade to Class Portal
+                    // NOTE: it is ok for for this to be here, but the backend should consider
+                    // whether or not to honour it (e.g., based on course config or deadlines)
+
                     let score = -1;
                     if (output.report !== null && typeof output.report.scoreOverall !== "undefined") {
                         score = output.report.scoreOverall;
@@ -400,11 +387,11 @@ export abstract class AutoTest implements IAutoTest {
                         score,
 
                         urlName: repoId, // could be a short SHA, but this seems better
-                        URL:     commitURL,
+                        URL: commitURL,
 
                         comment: '', // output.report.feedback,   // this only makes sense if we can render markdown
                         timestamp,
-                        custom:  {}
+                        custom: {}
                     };
 
                     if (output.postbackOnComplete === false) {
