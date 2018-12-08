@@ -5,7 +5,8 @@ import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {AutoTestGradeTransport, GradeTransport, StudentTransport, TeamTransport} from "../../../../common/types/PortalTypes";
 
-import {CourseController} from "../../src/controllers/CourseController";
+import {AdminController} from "../../src/controllers/AdminController";
+import {ICourseController} from "../../src/controllers/CourseController";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {GitHubActions, IGitHubActions} from "../../src/controllers/GitHubActions";
@@ -21,9 +22,10 @@ import {Test} from "../GlobalSpec";
 import '../GlobalSpec'; // load first
 import './GradeControllerSpec'; // load first
 
-describe("CourseController", () => {
+describe("AdminController", () => {
 
-    let cc: CourseController;
+    let ac: AdminController;
+    let cc: ICourseController;
     let gc: GradesController;
     let tc: TeamController;
     let rc: RepositoryController;
@@ -41,6 +43,8 @@ describe("CourseController", () => {
 
         gha = GitHubActions.getInstance(true);
         const ghInstance = new GitHubController(gha);
+
+        ac = new AdminController(ghInstance);
         cc = Factory.getCourseController(ghInstance);
 
         rc = new RepositoryController();
@@ -119,7 +123,7 @@ describe("CourseController", () => {
     }
 
     it("Should be able to get the config name.", async function() {
-        const res = await CourseController.getName();
+        const res = await AdminController.getName();
         expect(res).to.equal(ConfigCourses.classytest);
     });
 
@@ -134,7 +138,7 @@ describe("CourseController", () => {
 
     it("Should be able to get a list of students.", async function() {
 
-        const res = await cc.getStudents();
+        const res = await ac.getStudents();
         expect(res).to.be.an('array');
         expect(res.length).to.be.greaterThan(0);
 
@@ -152,7 +156,7 @@ describe("CourseController", () => {
     });
 
     it("Should be able to get a list of teams.", async () => {
-        const res = await cc.getTeams();
+        const res = await ac.getTeams();
         expect(res).to.be.an('array');
         expect(res.length).to.be.greaterThan(0);
 
@@ -167,7 +171,7 @@ describe("CourseController", () => {
     });
 
     it("Should be able to get a list of grades.", async () => {
-        const res = await cc.getGrades();
+        const res = await ac.getGrades();
         expect(res).to.be.an('array');
         expect(res.length).to.be.greaterThan(0);
 
@@ -189,51 +193,51 @@ describe("CourseController", () => {
     });
 
     it("Should be able to get a list of results with wildcards.", async () => {
-        const res = await cc.getResults('any', 'any');
+        const res = await ac.getResults('any', 'any');
         expect(res).to.be.an('array');
         expect(res.length).to.equal(20);
     });
 
     it("Should be able to get a list of results without wildcards.", async () => {
-        const res = await cc.getResults(Test.DELIVID0, Test.REPONAME1);
+        const res = await ac.getResults(Test.DELIVID0, Test.REPONAME1);
         expect(res).to.be.an('array');
         expect(res.length).to.equal(10);
     });
 
     it("Should be able to get a list of dashboard results with partial wildcards.", async () => {
         // doesn't really work with the result tuples we have...
-        const res = await cc.getDashboard('any', Test.REPONAME1);
+        const res = await ac.getDashboard('any', Test.REPONAME1);
         expect(res).to.be.an('array');
         expect(res.length).to.equal(10);
     });
 
     it("Should be able to get a list of dashboard results  with wildcards.", async () => {
-        const res = await cc.getDashboard('any', 'any');
+        const res = await ac.getDashboard('any', 'any');
         expect(res).to.be.an('array');
         expect(res.length).to.be.lessThan(20);
     });
 
     it("Should be able to get a list of dashboard results  without wildcards.", async () => {
-        const res = await cc.getDashboard(Test.DELIVID0, Test.REPONAME1);
+        const res = await ac.getDashboard(Test.DELIVID0, Test.REPONAME1);
         expect(res).to.be.an('array');
         expect(res.length).to.equal(10);
     });
 
     it("Should be able to get a list of dashboard results  without wildcards, with max result number set.", async () => {
-        const res = await cc.getDashboard(Test.DELIVID0, Test.REPONAME1, 5);
+        const res = await ac.getDashboard(Test.DELIVID0, Test.REPONAME1, 5);
         expect(res).to.be.an('array');
         expect(res.length).to.equal(5);
     });
 
     it("Should be able to get a list of results with partial wildcards.", async () => {
         // doesn't really work with the result tuples we have...
-        const res = await cc.getResults('any', Test.REPONAME1);
+        const res = await ac.getResults('any', Test.REPONAME1);
         expect(res).to.be.an('array');
         expect(res.length).to.equal(10);
     });
 
     it("Should be able to get a list of repositories.", async () => {
-        const res = await cc.getRepositories();
+        const res = await ac.getRepositories();
 
         // Log.test(JSON.stringify(res));
         expect(res).to.be.an('array');
@@ -244,7 +248,7 @@ describe("CourseController", () => {
 
     it("Should be able to get a list of deliverables.", async () => {
 
-        const res = await cc.getDeliverables();
+        const res = await ac.getDeliverables();
         expect(res).to.be.an('array');
         expect(res.length).to.be.greaterThan(0);
 
@@ -283,7 +287,7 @@ describe("CourseController", () => {
             repoURL: 'repoUrl'
         };
 
-        const res = await cc.processNewAutoTestGrade(grade);
+        const res = await ac.processNewAutoTestGrade(grade);
         expect(res).to.be.an('boolean');
         expect(res).to.be.true;
     });
@@ -306,13 +310,13 @@ describe("CourseController", () => {
             repoURL: 'repoUrl'
         };
 
-        const res = await cc.processNewAutoTestGrade(grade);
+        const res = await ac.processNewAutoTestGrade(grade);
         expect(res).to.be.an('boolean');
         expect(res).to.be.false;
     });
 
     it("Should be able to get the course object.", async () => {
-        const res = await cc.getCourse();
+        const res = await ac.getCourse();
 
         expect(res).to.be.an('object');
         expect(res.id).to.be.an('string');
@@ -322,27 +326,27 @@ describe("CourseController", () => {
 
     it("Should be able to update the course object.", async () => {
         const NEWID = Date.now() + 'id';
-        const res = await cc.getCourse();
+        const res = await ac.getCourse();
         expect(res.defaultDeliverableId).to.not.equal(NEWID);
 
         res.defaultDeliverableId = NEWID;
         (res.custom as any).fooProperty = 'asdfasdf';
-        await cc.saveCourse(res);
+        await ac.saveCourse(res);
 
-        const newRes = await cc.getCourse();
+        const newRes = await ac.getCourse();
         expect(newRes.defaultDeliverableId).to.equal(NEWID);
         expect((newRes.custom as any).fooProperty).to.equal('asdfasdf');
 
         // reset course id
         res.defaultDeliverableId = null;
         delete (res.custom as any).fooProperty;
-        await cc.saveCourse(res);
+        await ac.saveCourse(res);
     });
 
     it("Should not be able to validate an invalid course object.", function() {
         let res = null;
         try {
-            CourseController.validateCourseTransport(null);
+            AdminController.validateCourseTransport(null);
             res = 'NOT THROWN';
         } catch (err) {
             res = 'THROW CAUGHT';
@@ -350,12 +354,12 @@ describe("CourseController", () => {
         expect(res).to.equal('THROW CAUGHT');
 
         let course: any = {id: 'foo'};
-        res = CourseController.validateCourseTransport(course);
+        res = AdminController.validateCourseTransport(course);
         expect(res).to.not.be.null;
         expect(res).to.be.an('string');
 
         course = {id: 'foo', defaultDeliverableId: 'bar'};
-        res = CourseController.validateCourseTransport(course);
+        res = AdminController.validateCourseTransport(course);
         expect(res).to.not.be.null;
         expect(res).to.be.an('string');
     });
@@ -419,7 +423,7 @@ describe("CourseController", () => {
             expect(allTeams[0].URL).to.be.null; // not provisioned yet
 
             const deliv = await dc.getDeliverable(Test.DELIVIDPROJ);
-            const res = await cc.provision(deliv, false);
+            const res = await ac.provision(deliv, false);
             Log.test("provisioned: " + JSON.stringify(res));
             expect(res).to.be.an('array');
             expect(res.length).to.equal(1);
@@ -452,7 +456,7 @@ describe("CourseController", () => {
             expect(allTeams[0].custom.githubAttached).to.be.false;
 
             const deliv = await dc.getDeliverable(Test.DELIVIDPROJ);
-            let res = await cc.release(deliv);
+            let res = await ac.release(deliv);
             Log.test("Released: " + JSON.stringify(res));
             expect(res).to.be.an('array');
             expect(res.length).to.equal(1);
@@ -462,7 +466,7 @@ describe("CourseController", () => {
             expect(allNewTeams[0].custom.githubAttached).to.be.true;
 
             // try again: should not release any more repos
-            res = await cc.release(deliv);
+            res = await ac.release(deliv);
             Log.test("Re-Released: " + JSON.stringify(res));
             expect(res).to.be.an('array');
             expect(res.length).to.equal(0);
@@ -480,7 +484,7 @@ describe("CourseController", () => {
             expect(teamNum).to.be.lessThan(0); // should not be provisioned yet
 
             const deliv = await dc.getDeliverable(Test.DELIVID0);
-            const res = await cc.provision(deliv, true);
+            const res = await ac.provision(deliv, true);
             Log.test("provisioned: " + JSON.stringify(res));
             expect(res).to.be.an('array');
             expect(res.length).to.equal(3);
@@ -518,7 +522,7 @@ describe("CourseController", () => {
             expect(allTeams.length).to.equal(4);
 
             const deliv = await dc.getDeliverable(Test.DELIVID0);
-            const res = await cc.provision(deliv, true);
+            const res = await ac.provision(deliv, true);
             Log.test("Provisioned: " + JSON.stringify(res));
             expect(res).to.be.an('array');
             expect(res.length).to.equal(0);
@@ -540,7 +544,7 @@ describe("CourseController", () => {
             }
             expect(numWithrdrawnBefore).to.equal(0); // shouldn't have any withdrawn students before
 
-            const res = await cc.performStudentWithdraw();
+            const res = await ac.performStudentWithdraw();
             Log.test("Result: " + JSON.stringify(res));
             expect(res).to.be.an('string');
 

@@ -7,7 +7,7 @@ import {ResultsController} from "../../src/controllers/ResultsController";
 import {Test} from "../GlobalSpec";
 
 import '../GlobalSpec'; // load first
-import './CourseControllerSpec'; // make sure it runs before github controller (which should be last of the controllers)
+import './AdminControllerSpec'; // make sure it runs before github controller (which should be last of the controllers)
 
 describe("ResultController", () => {
 

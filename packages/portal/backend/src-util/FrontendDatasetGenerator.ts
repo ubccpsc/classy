@@ -1,5 +1,5 @@
 import Log from "../../../common/Log";
-import {CourseController} from "../src/controllers/CourseController";
+import {AdminController} from "../src/controllers/AdminController";
 /* istanbul ignore file */
 import {DatabaseController} from "../src/controllers/DatabaseController";
 import {GitHubActions} from "../src/controllers/GitHubActions";
@@ -12,7 +12,8 @@ import {Test} from "../test/GlobalSpec";
 export class FrontendDatasetGenerator {
 
     private dc: DatabaseController = null;
-    private cc: CourseController = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
+    private ghc = new GitHubController(GitHubActions.getInstance());
+    private cc: AdminController = new AdminController(this.ghc);
 
     constructor() {
         this.dc = DatabaseController.getInstance();
@@ -110,7 +111,7 @@ export class FrontendDatasetGenerator {
                 }
 
                 if (p1Team === null && p2Team === null) {
-                    const names = await this.cc.computeNames(deliv, [p1, p2]);
+                    const names = await Factory.getCourseController(this.ghc).computeNames(deliv, [p1, p2]);
                     // both members not on a team
                     const team = Test.getTeam(names.teamName, deliv.id, [p1.id, p2.id]);
                     Log.info("FrontendDatasetGenerator::createTeams() - creating team: " + team.id);

@@ -4,7 +4,6 @@ import Log from "../../../../../common/Log";
 import {GradePayload, Payload, SDMMStatus, StatusPayload} from "../../../../../common/types/SDMMTypes";
 import Util from "../../../../../common/Util";
 import {Deliverable, Grade, Person, Team} from "../../Types";
-
 import {CourseController} from "../CourseController";
 import {DeliverablesController} from '../DeliverablesController';
 import {IGitHubController} from "../GitHubController";

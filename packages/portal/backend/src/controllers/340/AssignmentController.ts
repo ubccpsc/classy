@@ -15,6 +15,7 @@ import {GradePayload} from "../../../../../common/types/SDMMTypes";
 import Util from "../../../../../common/Util";
 import {Factory} from "../../Factory";
 import {Deliverable, Grade, Person, PersonKind, Repository, Team} from "../../Types";
+import {ICourseController} from "../CourseController";
 import {DatabaseController} from "../DatabaseController";
 import {DeliverablesController} from "../DeliverablesController";
 import {GitHubActions, IGitHubActions} from "../GitHubActions";
@@ -44,7 +45,7 @@ export class AssignmentController {
     private gha: IGitHubActions = GitHubActions.getInstance();
     private sc: ScheduleController = ScheduleController.getInstance();
     private rbc: RubricController = new RubricController();
-    private cc: CS340Controller = Factory.getCourseController(this.ghc);
+    private cc: ICourseController = Factory.getCourseController(this.ghc);
 
     /**
      * Gets the assignment grade for the personId and assignmentId

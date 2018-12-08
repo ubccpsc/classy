@@ -14,6 +14,7 @@ import {
     ClassyConfigurationPayload,
     Payload
 } from "../../../../../common/types/PortalTypes";
+import {AdminController} from "../../controllers/AdminController";
 import {AuthController} from "../../controllers/AuthController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GitHubActions} from "../../controllers/GitHubActions";
@@ -21,7 +22,6 @@ import {GitHubController} from "../../controllers/GitHubController";
 import {GradesController} from "../../controllers/GradesController";
 import {PersonController} from "../../controllers/PersonController";
 import {ResultsController} from "../../controllers/ResultsController";
-import {Factory} from "../../Factory";
 
 import IREST from "../IREST";
 
@@ -105,7 +105,7 @@ export class AutoTestRoutes implements IREST {
             const name = Config.getInstance().getProp(ConfigKey.name);
             Log.info('AutoTestRouteHandler::atConfiguration(..) - name: ' + name);
 
-            const cc = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
+            const cc = new AdminController(new GitHubController(GitHubActions.getInstance()));
             let defaultDeliverable: string | null = null;
             cc.getCourse().then(function(course) {
                 defaultDeliverable = course.defaultDeliverableId;
@@ -180,7 +180,7 @@ export class AutoTestRoutes implements IREST {
         } else {
             Log.info('AutoTestRouteHandler::atGrade(..) - repoId: ' + grade.repoId +
                 '; delivId: ' + grade.delivId + '; body: ' + JSON.stringify(grade));
-            const cc = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
+            const cc = new AdminController(new GitHubController(GitHubActions.getInstance()));
             const success = await cc.processNewAutoTestGrade(grade);
             return success;
         }

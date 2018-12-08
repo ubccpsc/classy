@@ -2,7 +2,8 @@ import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {CS340Controller} from "./controllers/340/CS340Controller";
 
-import {CourseController} from "./controllers/CourseController";
+import {AdminController} from "./controllers/AdminController";
+import {ICourseController} from "./controllers/CourseController";
 import {CS310Controller} from "./controllers/cs310/CS310Controller";
 import {GitHubActions} from "./controllers/GitHubActions";
 import {GitHubController, IGitHubController} from "./controllers/GitHubController";
@@ -41,15 +42,15 @@ export class Factory {
     }
 
     // only visible for testing
-    public static controller: CourseController = null;
+    public static controller: ICourseController = null;
 
     /**
      *
      * @param {IGitHubController} ghController
      * @param {string} name? optional name (for testing or overriding the default; usually not needed)
-     * @returns {CourseController}
+     * @returns {AdminController}
      */
-    public static getCourseController(ghController?: IGitHubController, name?: string): CourseController {
+    public static getCourseController(ghController?: IGitHubController, name?: string): ICourseController {
         if (typeof name === 'undefined') {
             name = Factory.getName();
         }

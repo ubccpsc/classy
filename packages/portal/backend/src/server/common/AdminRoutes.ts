@@ -18,9 +18,9 @@ import {
     TeamTransport,
     TeamTransportPayload
 } from '../../../../../common/types/PortalTypes';
+import {AdminController} from "../../controllers/AdminController";
 
 import {AuthController} from "../../controllers/AuthController";
-import {CourseController} from "../../controllers/CourseController";
 import {DatabaseController} from "../../controllers/DatabaseController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GitHubActions} from "../../controllers/GitHubActions";
@@ -182,7 +182,7 @@ export default class AdminRoutes implements IREST {
         //     return next(false);
         // };
 
-        const cc = Factory.getCourseController(AdminRoutes.ghc);
+        const cc = new AdminController(AdminRoutes.ghc);
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getStudents().then(function(students) {
             Log.trace('AdminRoutes::getStudents(..) - in then; # students: ' + students.length);
@@ -204,7 +204,7 @@ export default class AdminRoutes implements IREST {
     private static getTeams(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getTeams(..) - start');
 
-        const cc = Factory.getCourseController(AdminRoutes.ghc);
+        const cc = new AdminController(AdminRoutes.ghc);
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getTeams().then(function(teams) {
             Log.trace('AdminRoutes::getTeams(..) - in then; # teams: ' + teams.length);
@@ -219,7 +219,7 @@ export default class AdminRoutes implements IREST {
     private static getRepositories(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getRepositories(..) - start');
 
-        const cc = Factory.getCourseController(AdminRoutes.ghc);
+        const cc = new AdminController(AdminRoutes.ghc);
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getRepositories().then(function(repos) {
             Log.trace('AdminRoutes::getRepositories(..) - in then; # repos: ' + repos.length);
@@ -240,7 +240,7 @@ export default class AdminRoutes implements IREST {
      */
     private static getResults(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getResults(..) - start');
-        const cc = Factory.getCourseController(AdminRoutes.ghc);
+        const cc = new AdminController(AdminRoutes.ghc);
 
         // if these params are missing the client will get 404 since they are part of the path
         const delivId = req.params.delivId;
@@ -266,7 +266,7 @@ export default class AdminRoutes implements IREST {
      */
     private static getResult(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getResult(..) - start');
-        const cc = Factory.getCourseController(AdminRoutes.ghc);
+        const cc = new AdminController(AdminRoutes.ghc);
 
         // if these params are missing the client will get 404 since they are part of the path
         const delivId = req.params.delivId;
@@ -420,7 +420,7 @@ export default class AdminRoutes implements IREST {
      */
     private static getDashboard(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getDashboard(..) - start');
-        const cc = Factory.getCourseController(AdminRoutes.ghc);
+        const cc = new AdminController(AdminRoutes.ghc);
 
         // if these params are missing the client will get 404 since they are part of the path
         const delivId = req.params.delivId;
@@ -446,7 +446,7 @@ export default class AdminRoutes implements IREST {
      */
     private static getDashboardAll(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getDashboardAll(..) - start');
-        const cc = Factory.getCourseController(AdminRoutes.ghc);
+        const cc = new AdminController(AdminRoutes.ghc);
 
         // if these params are missing the client will get 404 since they are part of the path
         const delivId = req.params.delivId;
@@ -472,8 +472,8 @@ export default class AdminRoutes implements IREST {
      */
     private static getGrades(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getGrades(..) - start');
+        const cc = new AdminController(AdminRoutes.ghc);
 
-        const cc = Factory.getCourseController(AdminRoutes.ghc);
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getGrades().then(function(grades) {
             Log.trace('AdminRoutes::getGrades(..) - in then; # teams: ' + grades.length);
@@ -494,8 +494,8 @@ export default class AdminRoutes implements IREST {
      */
     private static getDeliverables(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getDeliverables(..) - start');
+        const cc = new AdminController(AdminRoutes.ghc);
 
-        const cc = Factory.getCourseController(AdminRoutes.ghc);
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getDeliverables().then(function(delivs) {
             Log.trace('AdminRoutes::getDeliverables(..) - in then; # deliverables: ' + delivs.length);
@@ -617,8 +617,8 @@ export default class AdminRoutes implements IREST {
      */
     private static getCourse(req: any, res: any, next: any) {
         Log.info('AdminRoutes::getCourse(..) - start');
+        const cc = new AdminController(AdminRoutes.ghc);
 
-        const cc = Factory.getCourseController(AdminRoutes.ghc);
         cc.getCourse().then(function(course) {
             Log.trace('AdminRoutes::getCourse(..) - in then');
 
@@ -648,8 +648,8 @@ export default class AdminRoutes implements IREST {
     }
 
     private static async handlePostCourse(personId: string, courseTrans: CourseTransport): Promise<boolean> {
-        const cc = Factory.getCourseController(AdminRoutes.ghc);
-        const result = CourseController.validateCourseTransport(courseTrans);
+        const cc = new AdminController(AdminRoutes.ghc);
+        const result = AdminController.validateCourseTransport(courseTrans);
         if (result === null) {
             const existingCourse = await cc.getCourse();
             const saveSucceeded = await cc.saveCourse(courseTrans);
@@ -681,8 +681,8 @@ export default class AdminRoutes implements IREST {
     }
 
     private static async handleProvision(personId: string, provisionTrans: ProvisionTransport): Promise<RepositoryTransport[]> {
-        const cc = Factory.getCourseController(AdminRoutes.ghc);
-        const result = CourseController.validateProvisionTransport(provisionTrans);
+        const cc = new AdminController(AdminRoutes.ghc);
+        const result = AdminController.validateProvisionTransport(provisionTrans);
 
         // TODO: if course is SDMM, always fail
 
@@ -721,8 +721,8 @@ export default class AdminRoutes implements IREST {
     }
 
     private static async handleRelease(personId: string, releaseTrans: ProvisionTransport): Promise<RepositoryTransport[]> {
-        const cc = Factory.getCourseController(AdminRoutes.ghc);
-        const result = CourseController.validateProvisionTransport(releaseTrans);
+        const cc = new AdminController(AdminRoutes.ghc);
+        const result = AdminController.validateProvisionTransport(releaseTrans);
 
         // TODO: if course is SDMM, always fail
 
@@ -746,6 +746,7 @@ export default class AdminRoutes implements IREST {
 
     public static postWithdraw(req: any, res: any, next: any) {
         Log.info('AdminRoutes::postWithdraw(..) - start');
+        const cc = new AdminController(AdminRoutes.ghc);
 
         // handled by isAdmin in the route chain
         // const user = req.headers.user;
@@ -753,7 +754,6 @@ export default class AdminRoutes implements IREST {
 
         // no params
 
-        const cc = Factory.getCourseController(AdminRoutes.ghc);
         cc.performStudentWithdraw().then(function(msg) {
             Log.info('AdminRoutes::postWithdraw(..) - done; msg: ' + msg);
             const payload: Payload = {success: msg}; // really shouldn't be an array, but it beats having another type
