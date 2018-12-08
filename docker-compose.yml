@@ -26,7 +26,6 @@ services:
         container_name: ${CONTAINER_NAME_AUTOTEST}
         depends_on:
             - db
-            - grader
         env_file: .env
         expose:
             - ${AUTOTEST_PORT}
