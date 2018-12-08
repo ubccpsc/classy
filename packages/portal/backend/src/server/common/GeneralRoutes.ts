@@ -186,6 +186,8 @@ export default class GeneralRoutes implements IREST {
     public static async performGetResource(auth: {user: string, token: string}, path: string): Promise<any> {
         Log.info("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - start");
 
+        // TODO This no longer works since there is no Grader service but I didn't see the endpoint being used at all
+        // Will leave it until we see unexpected behaviour
         const host = Config.getInstance().getProp(ConfigKey.graderUrl);
         const port = Config.getInstance().getProp(ConfigKey.graderPort);
         const uri = host + ':' + port + '/resource/' + path;

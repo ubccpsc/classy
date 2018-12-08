@@ -1,10 +1,9 @@
+import * as fs from "fs-extra";
 import * as restify from "restify";
 import Config, {ConfigKey} from "../../../common/Config";
-
 import Log from "../../../common/Log";
 import {CommitTarget} from "../../../common/types/ContainerTypes";
 import Util from "../../../common/Util";
-
 import {AutoTest} from "../autotest/AutoTest";
 import {ClassPortal} from "../autotest/ClassPortal";
 import {MongoDataStore} from "../autotest/DataStore";
@@ -90,6 +89,38 @@ export default class RouteHandler {
             default:
                 Log.error("RouteHandler::handleWebhook() - Unhandled GitHub event: " + event);
                 throw new Error("Unhandled GitHub hook event: " + event);
+        }
+    }
+
+    public static getStdio(req: restify.Request, res: restify.Response, next: restify.Next) {
+        const providedSecret = req.headers.token;
+        if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
+            const msg = 'Invalid AutoTest Secret: ' + providedSecret;
+            Log.error('AutoTestRoutes::handleError(..) - ERROR: ' + msg);
+            res.send(400, {failure: {message: msg, shouldLogout: false}});
+            return next(false);
+        } else {
+            try {
+                const rs = fs.createReadStream(req.path());
+                rs.on("error", (err: any) => {
+                    if (err.code === "ENOENT") {
+                        // File doesn't exist
+                        res.send(404, err.message);
+                    } else {
+                        // problem while trying to read the file
+                        res.send(500, err.message);
+                    }
+                });
+                rs.on("end", () => {
+                    rs.close();
+                });
+                rs.pipe(res);
+            } catch (err) {
+                // stdio not found
+                res.send(404, err.message);
+            }
+
+            next();
         }
     }
 }

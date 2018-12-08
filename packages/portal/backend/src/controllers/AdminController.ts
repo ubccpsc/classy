@@ -355,12 +355,19 @@ export class AdminController {
         // portal/result/<FULL_COMMIT_SHA>-<DELIV_ID>/<FILENAME>
         // http://grader/randomStringInEnv/commitSHA-dX
 
-        const host = Config.getInstance().getProp(ConfigKey.graderUrl);
-        const port = Config.getInstance().getProp(ConfigKey.graderPort);
+        const host = Config.getInstance().getProp(ConfigKey.autotestUrl);
+        const port = Config.getInstance().getProp(ConfigKey.autotestPort);
+
+        const opts: rp.RequestPromiseOptions = {
+            rejectUnauthorized: false,
+            headers: {
+                token: Config.getInstance().getProp(ConfigKey.autotestSecret)
+            }
+        };
 
         const url = host + ':' + port + '/' + sha + '-' + delivId + '/stdio.txt';
         Log.info("AdminController::getResult( .. ) - URL: " + url);
-        const res = await rp(url);
+        const res = await rp(url, opts);
         Log.info("AdminController::getResult( .. ) - done; body: " + res);
         return res;
     }

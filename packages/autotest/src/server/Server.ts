@@ -74,6 +74,9 @@ export default class Server {
                 // GitHub Webhook endpoint
                 that.rest.post("/githubWebhook", restify.plugins.bodyParser(), RouteHandler.postGithubHook);
 
+                // Stdio endpoint
+                that.rest.get("/:id/stdio.txt", restify.plugins.bodyParser(), RouteHandler.getStdio);
+
                 that.rest.listen(that.port, function() {
                     Log.info("Server::start() - restify listening: " + that.rest.url);
                     fulfill(true);
