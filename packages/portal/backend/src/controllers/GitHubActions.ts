@@ -404,6 +404,8 @@ export class GitHubActions implements IGitHubActions {
     /**
      * Deletes a team from GitHub. Does _NOT_ modify the Team object in the database.
      *
+     * NOTE: if you're deleting the 'admin', 'staff', or 'students' teams, you're doing something terribly wrong.
+     *
      * @param teamId
      */
     public async deleteTeam(teamId: number): Promise<boolean> {

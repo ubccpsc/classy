@@ -90,9 +90,9 @@ describe('SDMM Routes', function() {
         }
 
         const teams = await dataC.getTeams();
-        const tc = new TeamController(gha);
+        // const tc = new TeamController(gha);
         for (const team of teams) {
-            const teamNum = await tc.getTeamNumber(team.id);
+            const teamNum = await gha.getTeamNumber(team.id); // uses GHA instead of TC because GH instances might be stale
             if (teamNum > 0 && team.id.startsWith('TEST__X__t_')) {
                 await gha.deleteTeam(teamNum);
             }
@@ -109,7 +109,7 @@ describe('SDMM Routes', function() {
             'TEST__X__t_' + Test.USERNAMEGITHUB4];
 
         for (const tName of teamNames) {
-            const teamNum = await tc.getTeamNumber(tName);
+            const teamNum = await gha.getTeamNumber(tName); // uses GHA instead of TC because GH instances might be stale
             if (teamNum > 0) {
                 await gha.deleteTeam(teamNum);
             }
