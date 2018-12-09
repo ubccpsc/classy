@@ -122,7 +122,8 @@ describe("DatabaseController", () => {
 
     it("Should be able to get a list of teams when there are none.", async () => {
         const teams = await dc.getTeams();
-        expectEmptyArray(teams);
+        expect(teams).to.have.lengthOf(3); // default teams: 'admin', 'staff', 'students'
+        // expectEmptyArray(teams);
     });
 
     it("Should be able to get a list of people when there are none.", async () => {

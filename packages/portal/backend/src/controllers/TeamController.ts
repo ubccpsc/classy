@@ -70,6 +70,8 @@ export class TeamController {
             return null;
         }
 
+        // TODO: verify that the number is right? would only be a single GH request to get the team w/ number and check the name
+
         if (typeof team.githubId === 'undefined' || team.githubId === null) {
             // teamId not known; get it & store it
             let teamNum: number | null = await this.gha.getTeamNumber(team.id);

@@ -93,17 +93,18 @@ describe("AdminController", () => {
         // let teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
         // await gha.deleteTeam(teamNum);
 
-        let teamNum = await tc.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB1);
+        // NOTE: using GHA instead of TC because we really want to clear out GitHub
+        let teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB1);
         await gha.deleteTeam(teamNum);
-        teamNum = await tc.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB2);
+        teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB2);
         await gha.deleteTeam(teamNum);
-        teamNum = await tc.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB3);
+        teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB3);
         await gha.deleteTeam(teamNum);
-        teamNum = await tc.getTeamNumber('t_project_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
+        teamNum = await gha.getTeamNumber('t_project_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
         await gha.deleteTeam(teamNum);
-        teamNum = await tc.getTeamNumber('t_project_' + Test.USERNAMEGITHUB3);
+        teamNum = await  gha.getTeamNumber('t_project_' + Test.USERNAMEGITHUB3);
         await gha.deleteTeam(teamNum);
-        teamNum = await tc.getTeamNumber(Test.TEAMNAMEREAL);
+        teamNum = await gha.getTeamNumber(Test.TEAMNAMEREAL);
         await gha.deleteTeam(teamNum);
 
         await Test.prepareDeliverables();
@@ -480,7 +481,7 @@ describe("AdminController", () => {
             expect(allRepos.length).to.equal(0);
             expect(allTeams.length).to.equal(1); // 1x project
 
-            let teamNum = await tc.getTeamNumber(allTeams[0].id);
+            let teamNum = await gha.getTeamNumber(allTeams[0].id); // using GHA not TC because we want to check github
             expect(teamNum).to.be.lessThan(0); // should not be provisioned yet
 
             const deliv = await dc.getDeliverable(Test.DELIVID0);
