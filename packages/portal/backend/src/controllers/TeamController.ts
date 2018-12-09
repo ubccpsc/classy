@@ -19,11 +19,29 @@ export class TeamController {
         }
     }
 
+    /**
+     * Returns all student teams.
+     *
+     * Special teams are _not_ returned.
+     *
+     * @returns {Promise<Team[]>}
+     */
     public async getAllTeams(): Promise<Team[]> {
         Log.info("TeamController::getAllTeams() - start");
 
         const teams = await this.db.getTeams();
-        return teams;
+        // remove special teams
+
+        const teamsToReturn = [];
+        for (const team of teams) {
+            if (team.id === 'admin' || team.id === 'staff' || team.id === 'students') {
+                // do not include
+            } else {
+                teamsToReturn.push(team);
+            }
+        }
+
+        return teamsToReturn;
     }
 
     public async getTeam(name: string): Promise<Team | null> {
@@ -36,8 +54,7 @@ export class TeamController {
     /**
      * Gets the GitHub team number.
      *
-     * Returns null if the team exists in the database, but not on GitHub.
-     * Throws if 'name' does not refer to a team in the database.
+     * Returns null if the does not exist on GitHub.
      *
      * @param {string} name
      * @returns {Promise<number | null>}
@@ -48,7 +65,9 @@ export class TeamController {
         const team = await this.db.getTeam(name);
 
         if (team === null) {
-            throw new Error("TeamController::getTeamNumber( " + name + " ) - team does not exist in database");
+            // throw new Error("TeamController::getTeamNumber( " + name + " ) - team does not exist in database");
+            Log.warn("TeamController::getTeamNumber( " + name + " ) - team does not exist in database");
+            return null;
         }
 
         if (typeof team.githubId === 'undefined' || team.githubId === null) {

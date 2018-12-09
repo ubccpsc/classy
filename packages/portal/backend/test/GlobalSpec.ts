@@ -41,6 +41,10 @@ export class Test {
     public static readonly TIMEOUT = 1000 * 10;
     public static readonly TIMEOUTLONG = 1000 * 300; // 5 minutes
 
+    // set to true if you want to run these slow tests locally (they will always run on CI)
+    // public static OVERRIDE = true; // NOTE: should be commented out when committing
+    public static OVERRIDE = false; // NOTE: should NOT be commented out when committing
+
     public static async suiteBefore(suiteName: string) {
         Log.test("Test::suiteBefore( ... ) - suite: " + suiteName);
 
@@ -369,12 +373,9 @@ export class Test {
      * @returns {boolean}
      */
     public static runSlowTest() {
-        // set to true if you want to run these slow tests locally (they will always run on CI)
-        const override = false; // NOTE: should NOT be commented out when committing
-        // const override = true; // NOTE: should be commented out when committing
 
         const ci = process.env.CI;
-        if (override || typeof ci !== 'undefined' && Boolean(ci) === true) {
+        if (Test.OVERRIDE || typeof ci !== 'undefined' && Boolean(ci) === true) {
             Log.test("Test::runSlowTest() - running in CI or overriden; not skipping");
             return true;
         } else {

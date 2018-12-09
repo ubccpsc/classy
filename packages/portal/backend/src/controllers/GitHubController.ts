@@ -304,7 +304,7 @@ export class GitHubController implements IGitHubController {
             }
 
             Log.trace("GitHubController::provisionRepository() - add staff team to repo");
-            const staffTeamNumber = await this.tc.getTeamNumber('staff');
+            const staffTeamNumber = await this.gha.getTeamNumber('staff');
             Log.trace('GitHubController::provisionRepository(..) - staffTeamNumber: ' + staffTeamNumber);
             const staffAdd = await this.gha.addTeamToRepo(staffTeamNumber, repoName, 'admin');
             Log.trace('GitHubController::provisionRepository(..) - team name: ' + staffAdd.teamName);

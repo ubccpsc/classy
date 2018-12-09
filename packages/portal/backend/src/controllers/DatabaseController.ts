@@ -444,6 +444,9 @@ export class DatabaseController {
                 await collection.deleteMany({});
             }
             Log.info("DatabaseController::clearData() - data removed");
+
+            await this.initDatabase();
+            Log.info("DatabaseController::clearData() - database reset with initial objects");
         } else {
             throw new Error("DatabaseController::clearData() - can only be called on test configurations");
         }
