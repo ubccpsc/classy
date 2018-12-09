@@ -508,6 +508,7 @@ export class Test {
         const team: Team = {
             id:        teamId,
             delivId:   delivId,
+            githubId:  null,
             // URL:       Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             //            Config.getInstance().getProp(ConfigKey.org) + '/teams/' + teamId,
             URL:       null,

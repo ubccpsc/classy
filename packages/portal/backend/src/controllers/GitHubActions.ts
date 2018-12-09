@@ -412,6 +412,10 @@ export class GitHubActions implements IGitHubActions {
             const start = Date.now();
             Log.info("GitHubAction::deleteTeam( " + this.org + ", " + teamId + " ) - start");
 
+            if (teamId === null) {
+                throw new Error("GitHubAction::deleteTeam( nulll ) - null team requested");
+            }
+
             const uri = this.apiPath + '/teams/' + teamId;
             const options = {
                 method:  'DELETE',
@@ -830,6 +834,8 @@ export class GitHubActions implements IGitHubActions {
      */
     public async getTeamNumber(teamName: string): Promise<number> {
 
+        // TODO: verify all usages of this; probably should use TeamController::getTeamNumber
+
         Log.info("GitHubAction::getTeamNumber( " + teamName + " ) - start");
         const start = Date.now();
         try {
@@ -867,6 +873,11 @@ export class GitHubActions implements IGitHubActions {
     public async getTeamMembers(teamNumber: number): Promise<string[]> {
 
         Log.info("GitHubAction::getTeamMembers( " + teamNumber + " ) - start");
+
+        if (teamNumber === null) {
+            throw new Error("GitHubAction::getTeamMembers( nulll ) - null team requested");
+        }
+
         const start = Date.now();
         try {
             const uri = this.apiPath + '/teams/' + teamNumber + '/members?per_page=' + this.pageSize;

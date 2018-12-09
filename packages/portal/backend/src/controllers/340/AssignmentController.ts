@@ -25,7 +25,6 @@ import {PersonController} from "../PersonController";
 import {RepositoryController} from "../RepositoryController";
 import {ScheduleController} from "../ScheduleController";
 import {TeamController} from "../TeamController";
-import {CS340Controller} from "./CS340Controller";
 import {RubricController} from "./RubricController";
 
 // If true, repositories that already exist will be taken over by Classy when creating the assignment
@@ -1169,6 +1168,7 @@ export class AssignmentController {
         const team: Team = {
             id:        teamName,
             delivId:   delivId,
+            githubId:  null,
             URL:       null,
             personIds: [studentRecord.id],
             custom:    {}

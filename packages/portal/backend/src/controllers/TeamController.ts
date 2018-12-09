@@ -4,6 +4,7 @@ import {TeamTransport} from "../../../../common/types/PortalTypes";
 import {Deliverable, Person, Team} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
+import {GitHubActions} from "./GitHubActions";
 
 export class TeamController {
 
@@ -20,6 +21,46 @@ export class TeamController {
         Log.info("TeamController::getAllTeams( " + name + " ) - start");
 
         const team = await this.db.getTeam(name);
+        return team;
+    }
+
+    /**
+     * Gets the GitHub team number.
+     *
+     * Returns null if the team exists in the database, but not on GitHub.
+     * Throws if 'name' does not refer to a team in the database.
+     *
+     * @param {string} name
+     * @returns {Promise<number | null>}
+     */
+    public async getTeamNumber(name: string): Promise<number | null> {
+        Log.info("TeamController::getTeamNumber( " + name + " ) - start");
+
+        const team = await this.db.getTeam(name);
+
+        if (team === null) {
+            throw new Error("TeamController::getTeamNumber( " + name + " ) - team does not exist in database");
+        }
+
+        if (typeof team.githubId === 'undefined' || team.githubId === null) {
+            // teamId not known; get it & store it
+            const gha = GitHubActions.getInstance();
+            let teamNum: number | null = await gha.getTeamNumber(team.id);
+            if (teamNum < 0) {
+                Log.warn("TeamController::getTeamNumber( " + name + " ) - team does not exist on GitHub; setting null.");
+                teamNum = null;
+            }
+            team.githubId = teamNum;
+            await this.saveTeam(team);
+        }
+
+        return team.githubId;
+    }
+
+    public async saveTeam(team: Team): Promise<Team> {
+        Log.info("TeamController::saveTeam(..) - start");
+        const dc = DatabaseController.getInstance();
+        await dc.writeTeam(team);
         return team;
     }
 
@@ -138,6 +179,7 @@ export class TeamController {
             const team: Team = {
                 id:        name,
                 delivId:   deliv.id,
+                githubId:  null,
                 URL:       null,
                 personIds: peopleIds,
                 custom:    custom
