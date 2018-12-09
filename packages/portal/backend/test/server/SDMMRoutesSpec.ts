@@ -90,8 +90,9 @@ describe('SDMM Routes', function() {
         }
 
         const teams = await dataC.getTeams();
+        const tc = new TeamController(gha);
         for (const team of teams) {
-            const teamNum = await gha.getTeamNumber(team.id);
+            const teamNum = await tc.getTeamNumber(team.id);
             if (teamNum > 0 && team.id.startsWith('TEST__X__t_')) {
                 await gha.deleteTeam(teamNum);
             }
@@ -108,7 +109,7 @@ describe('SDMM Routes', function() {
             'TEST__X__t_' + Test.USERNAMEGITHUB4];
 
         for (const tName of teamNames) {
-            const teamNum = await gha.getTeamNumber(tName);
+            const teamNum = await tc.getTeamNumber(tName);
             if (teamNum > 0) {
                 await gha.deleteTeam(teamNum);
             }

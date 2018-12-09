@@ -4,11 +4,20 @@ import {TeamTransport} from "../../../../common/types/PortalTypes";
 import {Deliverable, Person, Team} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
-import {GitHubActions} from "./GitHubActions";
+import {GitHubActions, IGitHubActions} from "./GitHubActions";
 
 export class TeamController {
 
     private db: DatabaseController = DatabaseController.getInstance();
+    private gha: IGitHubActions;
+
+    constructor(gha?: IGitHubActions) {
+        if (typeof gha === 'undefined') {
+            this.gha = GitHubActions.getInstance();
+        } else {
+            this.gha = gha;
+        }
+    }
 
     public async getAllTeams(): Promise<Team[]> {
         Log.info("TeamController::getAllTeams() - start");
@@ -44,8 +53,7 @@ export class TeamController {
 
         if (typeof team.githubId === 'undefined' || team.githubId === null) {
             // teamId not known; get it & store it
-            const gha = GitHubActions.getInstance();
-            let teamNum: number | null = await gha.getTeamNumber(team.id);
+            let teamNum: number | null = await this.gha.getTeamNumber(team.id);
             if (teamNum < 0) {
                 Log.warn("TeamController::getTeamNumber( " + name + " ) - team does not exist on GitHub; setting null.");
                 teamNum = null;

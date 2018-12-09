@@ -402,7 +402,7 @@ export class GitHubActions implements IGitHubActions {
     }
 
     /**
-     * Deletes a team.
+     * Deletes a team from GitHub. Does _NOT_ modify the Team object in the database.
      *
      * @param teamId
      */
@@ -413,7 +413,7 @@ export class GitHubActions implements IGitHubActions {
             Log.info("GitHubAction::deleteTeam( " + this.org + ", " + teamId + " ) - start");
 
             if (teamId === null) {
-                throw new Error("GitHubAction::deleteTeam( nulll ) - null team requested");
+                throw new Error("GitHubAction::deleteTeam( null ) - null team requested");
             }
 
             const uri = this.apiPath + '/teams/' + teamId;
@@ -829,13 +829,12 @@ export class GitHubActions implements IGitHubActions {
      *
      * Returns -1 if the team does not exist.
      *
+     * NOTE: most clients will want to use TeamController::getTeamNumber instead.
+     *
      * @param {string} teamName
      * @returns {Promise<number>}
      */
     public async getTeamNumber(teamName: string): Promise<number> {
-
-        // TODO: verify all usages of this; probably should use TeamController::getTeamNumber
-
         Log.info("GitHubAction::getTeamNumber( " + teamName + " ) - start");
         const start = Date.now();
         try {
@@ -844,7 +843,6 @@ export class GitHubActions implements IGitHubActions {
             for (const team of teamList) {
                 if (team.teamName === teamName) {
                     teamId = team.teamNumber;
-                    // Log.info("GitHubAction::getTeamNumber(..) - matched team: " + teamName + "; id: " + teamId);
                 }
             }
 

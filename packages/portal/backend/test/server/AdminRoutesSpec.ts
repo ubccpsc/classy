@@ -23,6 +23,7 @@ import Util from "../../../../common/Util";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {GitHubActions} from "../../src/controllers/GitHubActions";
+import {TeamController} from "../../src/controllers/TeamController";
 
 import BackendServer from "../../src/server/BackendServer";
 
@@ -704,6 +705,8 @@ describe('Admin Routes', function() {
 
             const ghCache = GitHubActions.getInstance(false);
             const ghReal = GitHubActions.getInstance(true);
+            const tcCache = new TeamController(ghCache);
+            const tcReal = new TeamController(ghReal);
 
             for (const repoName of repoNames) {
                 await ghCache.deleteRepo(repoName);
@@ -711,10 +714,10 @@ describe('Admin Routes', function() {
             }
 
             for (const teamName of teamNames) {
-                const cacheNum = await ghCache.getTeamNumber(teamName);
+                const cacheNum = await tcCache.getTeamNumber(teamName); // ghCache.getTeamNumber(teamName);
                 await ghCache.deleteTeam(cacheNum);
 
-                const realNum = await ghCache.getTeamNumber(teamName);
+                const realNum = await tcReal.getTeamNumber(teamName); // ghCache.getTeamNumber(teamName);
                 await ghReal.deleteTeam(realNum);
             }
 

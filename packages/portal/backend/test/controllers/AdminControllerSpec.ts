@@ -93,17 +93,17 @@ describe("AdminController", () => {
         // let teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
         // await gha.deleteTeam(teamNum);
 
-        let teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB1);
+        let teamNum = await tc.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB1);
         await gha.deleteTeam(teamNum);
-        teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB2);
+        teamNum = await tc.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB2);
         await gha.deleteTeam(teamNum);
-        teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB3);
+        teamNum = await tc.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB3);
         await gha.deleteTeam(teamNum);
-        teamNum = await gha.getTeamNumber('t_project_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
+        teamNum = await tc.getTeamNumber('t_project_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
         await gha.deleteTeam(teamNum);
-        teamNum = await gha.getTeamNumber('t_project_' + Test.USERNAMEGITHUB3);
+        teamNum = await tc.getTeamNumber('t_project_' + Test.USERNAMEGITHUB3);
         await gha.deleteTeam(teamNum);
-        teamNum = await gha.getTeamNumber(Test.TEAMNAMEREAL);
+        teamNum = await tc.getTeamNumber(Test.TEAMNAMEREAL);
         await gha.deleteTeam(teamNum);
 
         await Test.prepareDeliverables();
@@ -438,7 +438,7 @@ describe("AdminController", () => {
             const allNewTeams = await tc.getAllTeams();
             expect(allNewTeams.length).to.equal(1);
 
-            const teamNum = await gha.getTeamNumber(allNewTeams[0].id);
+            const teamNum = await tc.getTeamNumber(allNewTeams[0].id);
             expect(teamNum).to.be.greaterThan(0); // should be provisioned
             expect(allNewTeams[0].URL).to.not.be.null; // should be provisioned
 
@@ -480,7 +480,7 @@ describe("AdminController", () => {
             expect(allRepos.length).to.equal(0);
             expect(allTeams.length).to.equal(1); // 1x project
 
-            let teamNum = await gha.getTeamNumber(allTeams[0].id);
+            let teamNum = await tc.getTeamNumber(allTeams[0].id);
             expect(teamNum).to.be.lessThan(0); // should not be provisioned yet
 
             const deliv = await dc.getDeliverable(Test.DELIVID0);
@@ -497,7 +497,7 @@ describe("AdminController", () => {
             for (const team of allNewTeams) {
                 if (team.delivId === deliv.id) {
                     Log.test("Team: " + JSON.stringify(team));
-                    teamNum = await gha.getTeamNumber(team.id);
+                    teamNum = await tc.getTeamNumber(team.id);
                     expect(teamNum).to.be.greaterThan(0); // should be provisioned
                     expect(team.URL).to.not.be.null;
                 }

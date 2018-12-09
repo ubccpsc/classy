@@ -139,7 +139,7 @@ describe("SDMM: SDMMController", () => {
 
         const teams = await dataC.getTeams();
         for (const team of teams) {
-            const teamNum = await gha.getTeamNumber(team.id);
+            const teamNum = await tc.getTeamNumber(team.id);
             if (teamNum > 0 && team.id.startsWith('TEST__X__t_')) {
                 await gha.deleteTeam(teamNum);
             }
