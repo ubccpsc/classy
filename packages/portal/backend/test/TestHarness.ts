@@ -1,7 +1,4 @@
-// import {expect} from "chai";
-// import "mocha";
-
-import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
+import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {ContainerInput, ContainerOutput, ContainerState} from "../../../common/types/ContainerTypes";
 import {GradePayload} from "../../../common/types/SDMMTypes";
@@ -14,16 +11,13 @@ import {GradesController} from "../src/controllers/GradesController";
 import {PersonController} from "../src/controllers/PersonController";
 import {RepositoryController} from "../src/controllers/RepositoryController";
 import {TeamController} from "../src/controllers/TeamController";
+import {Factory} from "../src/Factory";
 import {Auth, Course, Deliverable, Grade, Person, PersonKind, Repository, Result, Team} from "../src/Types";
 
 export class Test {
 
     public static readonly TIMEOUT = 1000 * 10;
     public static readonly TIMEOUTLONG = 1000 * 300; // 5 minutes
-
-    // set to true if you want to run these slow tests locally (they will always run on CI)
-    // public static OVERRIDE = true; // NOTE: should be commented out when committing
-    public static OVERRIDE = false; // NOTE: should NOT be commented out when committing
 
     public static async suiteBefore(suiteName: string) {
         Log.test("Test::suiteBefore( ... ) - suite: " + suiteName);
@@ -362,7 +356,7 @@ export class Test {
     public static runSlowTest() {
 
         const ci = process.env.CI;
-        if (Test.OVERRIDE || typeof ci !== 'undefined' && Boolean(ci) === true) {
+        if (Factory.OVERRIDE || typeof ci !== 'undefined' && Boolean(ci) === true) {
             Log.test("Test::runSlowTest() - running in CI or overriden; not skipping");
             return true;
         } else {

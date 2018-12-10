@@ -3,7 +3,7 @@ import * as rp from "request-promise-native";
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
-import {Test} from "../../test/TestHarness";
+import {Factory} from "../Factory";
 
 import {DatabaseController} from "./DatabaseController";
 import {GitTeamTuple} from "./GitHubController";
@@ -231,7 +231,7 @@ export class GitHubActions implements IGitHubActions {
         // const override = true; // NOTE: should be commented out for commits; runs full GitHub suite
         // const override = true; // NOTE: should NOT be commented out for commits
 
-        if (Test.OVERRIDE === true) { // poor form to have a dependency into test code here
+        if (Factory.OVERRIDE === true) { // poor form to have a dependency into test code here
             Log.trace("GitHubActions::getInstance(..) - forcing real (OVERRIDE == true)");
             forceReal = true;
         }
