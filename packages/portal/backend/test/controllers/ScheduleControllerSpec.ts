@@ -3,9 +3,9 @@ import "mocha";
 import Log from "../../../../common/Log";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {ScheduleController, Task} from "../../src/controllers/ScheduleController";
-import {Test} from "../GlobalSpec";
-// const loadFirst = require('../GlobalSpec');
+
 import '../GlobalSpec';
+import {Test} from "../TestHarness";
 import {CS340Test} from "./cs340/CS340Test";
 
 describe("ScheduleController", () => {

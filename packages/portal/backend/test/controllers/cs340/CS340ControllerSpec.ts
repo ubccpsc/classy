@@ -9,8 +9,9 @@ import {DeliverablesController} from "../../../src/controllers/DeliverablesContr
 import {TestGitHubController} from "../../../src/controllers/GitHubController";
 import {PersonController} from "../../../src/controllers/PersonController";
 import {TeamController} from "../../../src/controllers/TeamController";
+
 import "../../GlobalSpec";
-import {Test} from "../../GlobalSpec";
+import {Test} from "../../TestHarness";
 import {CS340Test} from "./CS340Test";
 
 describe("CS340: CS340Controller", () => {

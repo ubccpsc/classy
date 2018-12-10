@@ -6,7 +6,7 @@ import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {Deliverable} from "../../src/Types";
 
-import {Test} from "../GlobalSpec";
+import {Test} from "../TestHarness";
 
 import "../GlobalSpec";
 import "./DatabaseControllerSpec"; // run first

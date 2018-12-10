@@ -10,9 +10,9 @@ import {DatabaseController} from "../../../src/controllers/DatabaseController";
 import {PersonController} from "../../../src/controllers/PersonController";
 import BackendServer from "../../../src/server/BackendServer";
 import {CS340Test} from "../../controllers/cs340/CS340Test";
-import {Test} from "../../GlobalSpec";
 
 import '../../GlobalSpec';
+import {Test} from "../../TestHarness";
 
 // tslint:disable-next-line
 const https = require('https');

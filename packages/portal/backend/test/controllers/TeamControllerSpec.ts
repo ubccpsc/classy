@@ -7,7 +7,7 @@ import {PersonController} from "../../src/controllers/PersonController";
 import {TeamController} from "../../src/controllers/TeamController";
 import '../GlobalSpec';
 
-import {Test} from "../GlobalSpec";
+import {Test} from "../TestHarness";
 // import '../GlobalSpec';
 import './PersonControllerSpec';
 // const loadFirst = require("../GlobalSpec");

@@ -15,8 +15,8 @@ import {SDMMController} from "../../../src/controllers/SDMM/SDMMController";
 import {TeamController} from "../../../src/controllers/TeamController";
 import {Person, PersonKind} from "../../../src/Types";
 
-import {Test} from "../../GlobalSpec";
 import '../../GlobalSpec'; // load first
+import {Test} from "../../TestHarness";
 import '../GradeControllerSpec'; // load first
 
 export class TestData {

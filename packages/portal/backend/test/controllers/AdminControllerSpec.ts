@@ -17,9 +17,9 @@ import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
 import {Factory} from "../../src/Factory";
 import {Person, PersonKind, Repository, Team} from "../../src/Types";
-import {Test} from "../GlobalSpec";
 
 import '../GlobalSpec'; // load first
+import {Test} from "../TestHarness";
 import './GradeControllerSpec'; // load first
 
 describe("AdminController", () => {

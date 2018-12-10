@@ -12,9 +12,8 @@ import {PersonController} from "../../src/controllers/PersonController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
 
-import {Test} from "../GlobalSpec";
 import '../GlobalSpec';
-// const loadFirst = require('../GlobalSpec');
+import {Test} from "../TestHarness";
 
 describe("GitHubActions", () => {
 

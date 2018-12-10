@@ -7,7 +7,7 @@ import {GitHubController} from "../src/controllers/GitHubController";
 import {TeamController} from "../src/controllers/TeamController";
 import {Factory} from "../src/Factory";
 import {PersonKind} from "../src/Types";
-import {Test} from "../test/GlobalSpec";
+import {Test} from "../test/TestHarness";
 
 export class FrontendDatasetGenerator {
 

@@ -15,8 +15,9 @@ import {TeamController} from "../../src/controllers/TeamController";
 
 import BackendServer from "../../src/server/BackendServer";
 import {Grade} from "../../src/Types";
-import {Test} from "../GlobalSpec";
+
 import '../GlobalSpec';
+import {Test} from "../TestHarness";
 
 // NOTE: skipped for now because the infrastructure spins up classytest
 // which means the right routes aren't being started in the backend

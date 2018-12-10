@@ -3,7 +3,7 @@ import * as rp from "request-promise-native";
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
-import {Test} from "../../test/GlobalSpec";
+import {Test} from "../../test/TestHarness";
 
 import {DatabaseController} from "./DatabaseController";
 import {GitTeamTuple} from "./GitHubController";

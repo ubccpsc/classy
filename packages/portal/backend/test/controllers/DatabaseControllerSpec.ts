@@ -7,7 +7,7 @@ import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {PersonKind} from "../../src/Types";
 
 import '../GlobalSpec';
-import {Test} from "../GlobalSpec";
+import {Test} from "../TestHarness";
 
 /**
  * This suite seems like a lot of boilerplate, but is crucial to make sure the

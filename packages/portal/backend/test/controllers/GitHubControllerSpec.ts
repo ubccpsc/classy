@@ -12,8 +12,8 @@ import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
 import {PersonKind, Repository, Team} from "../../src/Types";
 
-import {Test} from "../GlobalSpec";
 import '../GlobalSpec';
+import {Test} from "../TestHarness";
 import './TeamControllerSpec';
 
 describe("GitHubController", () => {

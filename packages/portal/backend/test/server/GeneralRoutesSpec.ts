@@ -10,7 +10,7 @@ import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import BackendServer from "../../src/server/BackendServer";
 
-import {Test} from "../GlobalSpec";
+import {Test} from "../TestHarness";
 
 describe('General Routes', function() {
 
