@@ -143,14 +143,6 @@ export class AdminController {
     public async getStudents(): Promise<StudentTransport[]> {
         const people = await this.pc.getAllPeople();
 
-        for (const person of people) {
-            if (person.kind === null) {
-                Log.info("fixing null person kind for: " + person.id);
-                person.kind = PersonKind.STUDENT;
-                await this.pc.writePerson(person);
-            }
-        }
-
         const students: StudentTransport[] = [];
         for (const person of people) {
             if (person.kind === PersonKind.STUDENT || person.kind === null) { // null should be set on first login
