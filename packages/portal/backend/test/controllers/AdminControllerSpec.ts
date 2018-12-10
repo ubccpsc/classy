@@ -196,7 +196,7 @@ describe("AdminController", () => {
     it("Should be able to get a list of results with wildcards.", async () => {
         const res = await ac.getResults('any', 'any');
         expect(res).to.be.an('array');
-        expect(res.length).to.equal(20);
+        expect(res.length).to.equal(19);
     });
 
     it("Should be able to get a list of results without wildcards.", async () => {

@@ -253,17 +253,24 @@ export class Test {
     }
 
     public static async prepareResults(): Promise<void> {
+        Log.test("Test::prepareResults() - start");
         // NOTE: see FrontendDatasetGenerator for ideas
         const dc = DatabaseController.getInstance();
 
         const tuples = [];
         tuples.push({team: await dc.getTeam(Test.TEAMNAME1), repo: await dc.getRepository(Test.REPONAME1)});
         tuples.push({team: await dc.getTeam(Test.TEAMNAME2), repo: await dc.getRepository(Test.REPONAME2)});
+
+        // create the first one (used in autotest tests)
+        let result = Test.createResult(tuples[0].team.delivId, tuples[0].repo.id, tuples[0].team.personIds,
+            Test.getRandomInt(100), 'sha');
+        await dc.writeResult(result);
+
         for (const tuple of tuples) {
-            for (let i = 0; i < 10; i++) {
+            for (let i = 1; i < 10; i++) {
                 const score = Test.getRandomInt(100);
 
-                const result = Test.createResult(tuple.team.delivId, tuple.repo.id, tuple.team.personIds, score);
+                result = Test.createResult(tuple.team.delivId, tuple.repo.id, tuple.team.personIds, score);
                 await dc.writeResult(result);
             }
         }
@@ -541,7 +548,7 @@ export class Test {
         return out;
     }
 
-    public static createResult(delivId: string, repoId: string, people: string[], score: number): Result {
+    public static createResult(delivId: string, repoId: string, people: string[], score: number, sha?: string): Result {
 
         const ts = Date.now() - Math.random() * 1000 * 600;
         const projectURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
@@ -566,7 +573,9 @@ export class Test {
             }
         }
 
-        const sha = 'sha' + Date.now() + (Math.random() * 1000) + (Math.random() * 1000) + (Math.random() * 1000);
+        if (typeof sha === 'undefined') {
+            sha = 'sha' + Date.now() + (Math.random() * 1000) + (Math.random() * 1000) + (Math.random() * 1000);
+        }
 
         const output: ContainerOutput = {
             // commitURL:          commitURL,
