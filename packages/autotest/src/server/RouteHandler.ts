@@ -92,7 +92,9 @@ export default class RouteHandler {
         }
     }
 
-    public static getStdio(req: restify.Request, res: restify.Response, next: restify.Next) {
+    public static getResource(req: restify.Request, res: restify.Response, next: restify.Next) {
+        const path = Config.getInstance().getProp(ConfigKey.hostDir) + "/" + req.params.name;
+        Log.info("RouteHandler::getResource(..) - start; fetching resource: " + path);
         const providedSecret = req.headers.token;
         if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
             const msg = 'Invalid AutoTest Secret: ' + providedSecret;
@@ -101,7 +103,7 @@ export default class RouteHandler {
             return next(false);
         } else {
             try {
-                const rs = fs.createReadStream(req.path());
+                const rs = fs.createReadStream(path);
                 rs.on("error", (err: any) => {
                     if (err.code === "ENOENT") {
                         // File doesn't exist

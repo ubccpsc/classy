@@ -159,7 +159,7 @@ export default class GeneralRoutes implements IREST {
         // const user = req.headers.user;
         // const token = req.headers.token;
         // const params = req.params;
-        const path = req.url.substring(16);
+        const path = req.getPath();
 
         // right now this means requests _must_ be by an authorized user (admin, staff, or student)
         if (typeof auth.user === 'undefined' || typeof auth.token === 'undefined') {
@@ -186,10 +186,8 @@ export default class GeneralRoutes implements IREST {
     public static async performGetResource(auth: {user: string, token: string}, path: string): Promise<any> {
         Log.info("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - start");
 
-        // TODO This no longer works since there is no Grader service but I didn't see the endpoint being used at all
-        // Will leave it until we see unexpected behaviour
-        const host = Config.getInstance().getProp(ConfigKey.graderUrl);
-        const port = Config.getInstance().getProp(ConfigKey.graderPort);
+        const host = Config.getInstance().getProp(ConfigKey.autotestUrl);
+        const port = Config.getInstance().getProp(ConfigKey.autotestPort);
         const uri = host + ':' + port + '/resource/' + path;
 
         const options = {
