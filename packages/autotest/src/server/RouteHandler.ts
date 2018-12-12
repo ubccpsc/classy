@@ -93,7 +93,7 @@ export default class RouteHandler {
     }
 
     public static getResource(req: restify.Request, res: restify.Response, next: restify.Next) {
-        const path = Config.getInstance().getProp(ConfigKey.hostDir) + "/" + req.params.name;
+        const path = Config.getInstance().getProp(ConfigKey.hostDir) + "/" + req.url.split("/resource/")[1];
         Log.info("RouteHandler::getResource(..) - start; fetching resource: " + path);
         const providedSecret = req.headers.token;
         if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
