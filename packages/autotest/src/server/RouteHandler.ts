@@ -95,34 +95,22 @@ export default class RouteHandler {
     public static getResource(req: restify.Request, res: restify.Response, next: restify.Next) {
         const path = Config.getInstance().getProp(ConfigKey.hostDir) + "/" + req.url.split("/resource/")[1];
         Log.info("RouteHandler::getResource(..) - start; fetching resource: " + path);
-        const providedSecret = req.headers.token;
-        if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
-            const msg = 'Invalid AutoTest Secret: ' + providedSecret;
-            Log.error('AutoTestRoutes::handleError(..) - ERROR: ' + msg);
-            res.send(400, {failure: {message: msg, shouldLogout: false}});
-            return next(false);
-        } else {
-            try {
-                const rs = fs.createReadStream(path);
-                rs.on("error", (err: any) => {
-                    if (err.code === "ENOENT") {
-                        // File doesn't exist
-                        res.send(404, err.message);
-                    } else {
-                        // problem while trying to read the file
-                        res.send(500, err.message);
-                    }
-                });
-                rs.on("end", () => {
-                    rs.close();
-                });
-                rs.pipe(res);
-            } catch (err) {
-                // stdio not found
-                res.send(404, err.message);
-            }
 
-            next();
-        }
+        const rs = fs.createReadStream(path);
+        rs.on("error", (err: any) => {
+            if (err.code === "ENOENT") {
+                Log.error("RouteHandler::getResource(..) - ERROR Requested resource does not exist: " + path);
+                res.send(404, err.message);
+            } else {
+                Log.error("RouteHandler::getResource(..) - ERROR Reading requested resource: " + path);
+                res.send(500, err.message);
+            }
+        });
+        rs.on("end", () => {
+            rs.close();
+        });
+        rs.pipe(res);
+
+        next();
     }
 }
