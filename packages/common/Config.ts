@@ -29,9 +29,7 @@ export enum ConfigKey {
 
     publichostname = "publichostname",
 
-    // frontendUrl = "frontendUrl",
     backendUrl = "backendUrl",
-    // frontendPort = "frontendPort",
     backendPort = "backendPort",
 
     mongoUrl = "mongoUrl",
@@ -53,15 +51,10 @@ export enum ConfigKey {
 
     // autotest
     persistDir = "persistDir",
-    dockerId = "dockerId",
     hostDir = "hostDir",
     dockerUid = "dockerUid",
     dockerNet = "dockerNet",
     hostsAllow = "hostsAllow",
-    graderUrl = "graderUrl",
-    graderPort = "graderPort",
-    classPortalHost = "classPortalHost",
-    classPortalPort = "classPortalPort",
     timeout = "timeout",
     botName = "botName",
     postback = "postback",
@@ -92,7 +85,6 @@ export default class Config {
 
                 publichostname: process.env.PUBLICHOSTNAME,
 
-                dockerId:   process.env.GRADER_DOCKER_ID,
                 hostDir:  process.env.HOST_DIR,
                 postback:   Boolean(process.env.AUTOTEST_POSTBACK),
                 persistDir: process.env.PERSIST_DIR,
@@ -105,13 +97,9 @@ export default class Config {
 
                 sslCertPath:     process.env.SSL_CERT_PATH,
                 sslKeyPath:      process.env.SSL_KEY_PATH,
-                classPortalHost: process.env.BACKEND_URL,
-                classPortalPort: process.env.BACKEND_PORT,
 
                 mongoUrl: process.env.DB_URL,
 
-                frontendPort: process.env.FRONTEND_PORT,
-                frontendUrl:  process.env.FRONTEND_URL,
                 backendPort:  process.env.BACKEND_PORT,
                 backendUrl:   process.env.BACKEND_URL,
 
@@ -125,16 +113,6 @@ export default class Config {
                 autotestUrl:    process.env.AUTOTEST_URL,
                 autotestPort:   process.env.AUTOTEST_PORT,
                 autotestSecret: process.env.AUTOTEST_SECRET,
-
-                // Not used?
-                // sslIntCert: process.env.SSL_INT_CERT,
-                // adminUser:  process.env.ADMIN_USER,
-                // oracleRepo: process.env.ORACLE_REPO,
-
-                // Can remove?
-                // kind:               process.env.KIND, // REMOVE
-                // githubOrgToken:     process.env.GH_BOT_TOKEN,
-                // githubOracleToken:  process.env.GH_ORG_TOKEN,
             };
 
             // this is not a great place for this
