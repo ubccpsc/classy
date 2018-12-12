@@ -37,7 +37,7 @@ services:
                 ipv4_address: 172.28.2.0
         volumes:
             - "/var/run/docker.sock:/var/run/docker.sock"
-            - "${HOST_DIR}:/runs"
+            - "${HOST_DIR}:${PERSIST_DIR}"
         privileged: true
     db:
         command: --quiet

@@ -93,8 +93,7 @@ export default class RouteHandler {
     }
 
     public static getResource(req: restify.Request, res: restify.Response, next: restify.Next) {
-        // "runs" corresponds to the mounted directory specified in the docker-compose.yml file
-        const path = "/runs/" + req.url.split("/resource/")[1];
+        const path = Config.getInstance().getProp(ConfigKey.persistDir) + "/" + req.url.split("/resource/")[1];
         Log.info("RouteHandler::getResource(..) - start; fetching resource: " + path);
 
         const rs = fs.createReadStream(path);
