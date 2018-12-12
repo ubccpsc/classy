@@ -337,7 +337,7 @@ export abstract class AutoTest implements IAutoTest {
                 const uid: number = Config.getInstance().getProp(ConfigKey.dockerUid);
                 const token: string = Config.getInstance().getProp(ConfigKey.githubBotToken).replace("token ", "");
                 const assnDir: string = `${Config.getInstance().getProp(ConfigKey.hostDir)}/${id}/assn`;
-                const outputDir: string = `${Config.getInstance().getProp(ConfigKey.hostDir)}/${id}/output`;
+                const outputDir: string = `${Config.getInstance().getProp(ConfigKey.hostDir)}/${id}`;
                 const workspaceDir: string = Config.getInstance().getProp(ConfigKey.persistDir) + "/" + id;
 
                 // Add parameters to create the grading container. We'll be lazy and use the custom field.
