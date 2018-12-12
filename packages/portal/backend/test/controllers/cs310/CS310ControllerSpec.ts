@@ -6,9 +6,9 @@ import {CS310Controller} from "../../../src/controllers/cs310/CS310Controller";
 import {DatabaseController} from "../../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../../src/controllers/DeliverablesController";
 import {TestGitHubController} from "../../../src/controllers/GitHubController";
-import {Test} from "../../GlobalSpec";
 
 import "../../GlobalSpec";
+import {Test} from "../../TestHarness";
 
 describe("CS310: CS310Controller", () => {
 

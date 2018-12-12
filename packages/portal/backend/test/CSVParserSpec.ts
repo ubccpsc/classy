@@ -5,8 +5,8 @@ import Log from "../../../common/Log";
 import {GradesController} from "../src/controllers/GradesController";
 import {CSVParser} from "../src/server/common/CSVParser";
 
-import {Test} from './GlobalSpec';
 import "./GlobalSpec";
+import {Test} from './TestHarness';
 
 describe('CSVParser', function() {
 

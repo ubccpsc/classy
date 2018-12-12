@@ -2,6 +2,7 @@ import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import Util from "../../../common/Util";
 import {GitHubActions} from "../src/controllers/GitHubActions";
+import {TeamController} from "../src/controllers/TeamController";
 
 /**
  * This is an executable for munging GitHub orgs. You almost certainly do not use it.
@@ -12,6 +13,8 @@ import {GitHubActions} from "../src/controllers/GitHubActions";
 export class GitHubCleaner {
 
     private gha = GitHubActions.getInstance(true);
+    private tc = new TeamController();
+
     private DRY_RUN = true;
 
     constructor() {
@@ -52,7 +55,7 @@ export class GitHubCleaner {
             Log.info("GitHubCleaner::cleanTeams() - DRY_RUN === false");
             for (const team of teamsToRemove) {
                 Log.info("GitHubCleaner::cleanTeams() - removing: " + team.teamName);
-                const teamNum = await this.gha.getTeamNumber(team.teamName);
+                const teamNum = await this.tc.getTeamNumber(team.teamName); // await this.gha.getTeamNumber(team.teamName);
                 await this.gha.deleteTeam(teamNum);
                 Log.info("GitHubCleaner::cleanTeams() - done removing: " + team.teamName);
             }

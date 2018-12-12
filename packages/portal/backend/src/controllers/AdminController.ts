@@ -142,9 +142,10 @@ export class AdminController {
      */
     public async getStudents(): Promise<StudentTransport[]> {
         const people = await this.pc.getAllPeople();
+
         const students: StudentTransport[] = [];
         for (const person of people) {
-            if (person.kind === PersonKind.STUDENT) {
+            if (person.kind === PersonKind.STUDENT || person.kind === null) { // null should be set on first login
                 const studentTransport = {
                     id:         person.id,
                     firstName:  person.fName,
@@ -382,7 +383,8 @@ export class AdminController {
     public async performStudentWithdraw(): Promise<string> {
         Log.info("AdminController::performStudentWithdraw() - start");
         const gha = GitHubActions.getInstance(true);
-        const teamNum = await gha.getTeamNumber('students');
+        const tc = new TeamController();
+        const teamNum = await tc.getTeamNumber('students'); // await gha.getTeamNumber('students');
         const registeredGithubIds = await gha.getTeamMembers(teamNum);
 
         if (registeredGithubIds.length > 0) {

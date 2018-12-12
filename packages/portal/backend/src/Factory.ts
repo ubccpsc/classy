@@ -17,6 +17,14 @@ import SDMMREST from "./server/SDMM/SDMMREST";
 export class Factory {
 
     /**
+     * This is a test variable, but can't be hosted in a test/ file because it breaks the Docker build process.
+     *
+     * Set to true if you want to run these slow tests locally (they will always run on CI):
+     */
+        // public static OVERRIDE = true; // NOTE: should be commented out when committing
+    public static OVERRIDE = false; // NOTE: should NOT be commented out when committing
+
+    /**
      * Returns a custom route handler for a course. This will be used to configure
      * Restify with any custom routes required for the course backend. Only one
      * custom handler is permitted per instance.

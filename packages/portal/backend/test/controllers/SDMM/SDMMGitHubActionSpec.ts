@@ -11,10 +11,8 @@ import {GitHubController} from "../../../src/controllers/GitHubController";
 import {GradesController} from "../../../src/controllers/GradesController";
 import {SDMMController} from "../../../src/controllers/SDMM/SDMMController";
 
-import {Test} from "../../GlobalSpec";
-// const loadFirst = require('../../GlobalSpec');
 import "../../GlobalSpec";
-// const rFirst = require('./SDMMControllerSpec'); // so we go last
+import {Test} from "../../TestHarness";
 import "./SDMMControllerSpec";
 
 describe.skip("SDMM:: SDMMGitHubActions", () => {

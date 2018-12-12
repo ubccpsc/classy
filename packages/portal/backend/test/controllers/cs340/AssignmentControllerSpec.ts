@@ -16,8 +16,8 @@ import {RepositoryController} from "../../../src/controllers/RepositoryControlle
 import {TeamController} from "../../../src/controllers/TeamController";
 import {Deliverable, Grade, PersonKind, Repository, Team} from "../../../src/Types";
 
-import {Test} from "../../GlobalSpec";
 import '../../GlobalSpec';
+import {Test} from "../../TestHarness";
 import '../GradeControllerSpec';
 import {CS340Test} from "./CS340Test";
 

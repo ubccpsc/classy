@@ -15,6 +15,9 @@ export class DatabaseController {
     public static getInstance() {
         if (DatabaseController.instance === null) {
             DatabaseController.instance = new DatabaseController();
+
+            // verify that any mandatory objects that are in the db
+            // not great to do this on
         }
         return DatabaseController.instance;
     }
@@ -441,6 +444,9 @@ export class DatabaseController {
                 await collection.deleteMany({});
             }
             Log.info("DatabaseController::clearData() - data removed");
+
+            await this.initDatabase();
+            Log.info("DatabaseController::clearData() - database reset with initial objects");
         } else {
             throw new Error("DatabaseController::clearData() - can only be called on test configurations");
         }
@@ -535,18 +541,11 @@ export class DatabaseController {
                 // _ are to help diagnose whitespace in dbname/mongoUrl
                 Log.info("DatabaseController::open() - db null; making new connection to: _" + dbName + "_ on: _" + dbHost + "_");
 
-                // 'mongodb://localhost:27017'
                 const client = await MongoClient.connect(dbHost);
                 this.db = await client.db(dbName);
 
-                // create indexes if they don't exist (idempotent operation; even if index exists this is ok)
-                // https://stackoverflow.com/a/35020346
-
-                // results needs a timestamp index because it gets to be too long to iterate through all records (32MB result limit)
-                const coll = await this.getCollection(this.RESULTCOLL);
-                await coll.createIndex({
-                    "input.target.timestamp": -1
-                }, {name: "ts"});
+                // ensure required records / indexes exist
+                await this.initDatabase();
 
                 Log.info("DatabaseController::open() - db null; new connection made");
             }
@@ -556,6 +555,70 @@ export class DatabaseController {
             Log.error("DatabaseController::open() - ERROR: " + err);
             Log.error("DatabaseController::open() - ERROR: Host probably does not have a database configured " +
                 "and running (see README.md if this is a test instance).");
+        }
+    }
+
+    /**
+     * Collect any actions that need to happen when a database is first opened.
+     *
+     * This can include objects or indexes that must be created.
+     */
+    private async initDatabase() {
+
+        if (this.db === null) {
+            throw new Error("DatabaseController::initDatabase() cannot be called before db is set");
+        }
+
+        // create indexes if they don't exist (idempotent operation; even if index exists this is ok)
+        // https://stackoverflow.com/a/35020346
+
+        // results needs a timestamp index because it gets to be too long to iterate through all records (32MB result limit)
+        const coll = await this.getCollection(this.RESULTCOLL);
+        await coll.createIndex({
+            "input.target.timestamp": -1
+        }, {name: "ts"});
+
+        // Make sure required Team objects exist.
+        // Cannot use TeamController because this would cause an infinite loop since
+        // TeamController uses this code to get the database instance.
+        let teamName = 'admin';
+        let team = await this.getTeam(teamName);
+        if (team === null) {
+            const newTeam: Team = {
+                id:        teamName,
+                delivId:   null, // null for special teams
+                githubId:  null, // to be filled in later
+                URL:       null, // to be filled in later
+                personIds: [], // empty for special teams
+                custom:    {}
+            };
+            await this.writeTeam(newTeam);
+        }
+        teamName = 'staff';
+        team = await this.getTeam(teamName);
+        if (team === null) {
+            const newTeam: Team = {
+                id:        teamName,
+                delivId:   null, // null for special teams
+                githubId:  null, // to be filled in later
+                URL:       null, // to be filled in later
+                personIds: [], // empty for special teams
+                custom:    {}
+            };
+            await this.writeTeam(newTeam);
+        }
+        teamName = 'students';
+        team = await this.getTeam(teamName);
+        if (team === null) {
+            const newTeam: Team = {
+                id:        teamName,
+                delivId:   null, // null for special teams
+                githubId:  null, // to be filled in later
+                URL:       null, // to be filled in later
+                personIds: [], // empty for special teams
+                custom:    {}
+            };
+            await this.writeTeam(newTeam);
         }
     }
 

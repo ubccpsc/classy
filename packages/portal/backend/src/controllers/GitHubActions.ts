@@ -1,7 +1,10 @@
 import * as rp from "request-promise-native";
+
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
+import {Factory} from "../Factory";
+
 import {DatabaseController} from "./DatabaseController";
 import {GitTeamTuple} from "./GitHubController";
 
@@ -226,9 +229,10 @@ export class GitHubActions implements IGitHubActions {
 
         // Sometimes we will want to run against the full live GitHub suite
         // const override = true; // NOTE: should be commented out for commits; runs full GitHub suite
-        const override = false; // NOTE: should NOT be commented out for commits
+        // const override = true; // NOTE: should NOT be commented out for commits
 
-        if (override) {
+        if (Factory.OVERRIDE === true) { // poor form to have a dependency into test code here
+            Log.trace("GitHubActions::getInstance(..) - forcing real (OVERRIDE == true)");
             forceReal = true;
         }
         if (typeof forceReal === 'undefined') {
@@ -402,7 +406,9 @@ export class GitHubActions implements IGitHubActions {
     }
 
     /**
-     * Deletes a team.
+     * Deletes a team from GitHub. Does _NOT_ modify the Team object in the database.
+     *
+     * NOTE: if you're deleting the 'admin', 'staff', or 'students' teams, you're doing something terribly wrong.
      *
      * @param teamId
      */
@@ -411,6 +417,10 @@ export class GitHubActions implements IGitHubActions {
         try {
             const start = Date.now();
             Log.info("GitHubAction::deleteTeam( " + this.org + ", " + teamId + " ) - start");
+
+            if (teamId === null) {
+                throw new Error("GitHubAction::deleteTeam( null ) - null team requested");
+            }
 
             const uri = this.apiPath + '/teams/' + teamId;
             const options = {
@@ -825,11 +835,12 @@ export class GitHubActions implements IGitHubActions {
      *
      * Returns -1 if the team does not exist.
      *
+     * NOTE: most clients will want to use TeamController::getTeamNumber instead.
+     *
      * @param {string} teamName
      * @returns {Promise<number>}
      */
     public async getTeamNumber(teamName: string): Promise<number> {
-
         Log.info("GitHubAction::getTeamNumber( " + teamName + " ) - start");
         const start = Date.now();
         try {
@@ -838,7 +849,6 @@ export class GitHubActions implements IGitHubActions {
             for (const team of teamList) {
                 if (team.teamName === teamName) {
                     teamId = team.teamNumber;
-                    // Log.info("GitHubAction::getTeamNumber(..) - matched team: " + teamName + "; id: " + teamId);
                 }
             }
 
@@ -867,6 +877,11 @@ export class GitHubActions implements IGitHubActions {
     public async getTeamMembers(teamNumber: number): Promise<string[]> {
 
         Log.info("GitHubAction::getTeamMembers( " + teamNumber + " ) - start");
+
+        if (teamNumber === null) {
+            throw new Error("GitHubAction::getTeamMembers( nulll ) - null team requested");
+        }
+
         const start = Date.now();
         try {
             const uri = this.apiPath + '/teams/' + teamNumber + '/members?per_page=' + this.pageSize;

@@ -4,8 +4,8 @@ import "mocha";
 import {PersonController} from "../../src/controllers/PersonController";
 import {Person, PersonKind} from "../../src/Types";
 
-import {Test} from "../GlobalSpec";
 import '../GlobalSpec';
+import {Test} from "../TestHarness";
 import './DeliverablesControllerSpec';
 
 describe("PersonController", () => {

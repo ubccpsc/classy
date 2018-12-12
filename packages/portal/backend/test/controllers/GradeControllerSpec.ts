@@ -7,11 +7,9 @@ import {GradePayload} from "../../../../common/types/SDMMTypes";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {GradesController} from "../../src/controllers/GradesController";
 
-import {Test} from "../GlobalSpec";
 import '../GlobalSpec';
+import {Test} from "../TestHarness";
 import './RepositoryControllerSpec';
-// const loadFirst = require('../GlobalSpec');
-// const rFirst = require('./RepositoryControllerSpec');
 
 describe("GradeController", () => {
 

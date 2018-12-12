@@ -4,22 +4,92 @@ import {TeamTransport} from "../../../../common/types/PortalTypes";
 import {Deliverable, Person, Team} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
+import {GitHubActions, IGitHubActions} from "./GitHubActions";
 
 export class TeamController {
 
     private db: DatabaseController = DatabaseController.getInstance();
+    private gha: IGitHubActions;
 
+    constructor(gha?: IGitHubActions) {
+        if (typeof gha === 'undefined') {
+            this.gha = GitHubActions.getInstance();
+        } else {
+            this.gha = gha;
+        }
+    }
+
+    /**
+     * Returns all student teams.
+     *
+     * Special teams are _not_ returned.
+     *
+     * @returns {Promise<Team[]>}
+     */
     public async getAllTeams(): Promise<Team[]> {
         Log.info("TeamController::getAllTeams() - start");
 
         const teams = await this.db.getTeams();
-        return teams;
+        // remove special teams
+
+        const teamsToReturn = [];
+        for (const team of teams) {
+            if (team.id === 'admin' || team.id === 'staff' || team.id === 'students') {
+                // do not include
+            } else {
+                teamsToReturn.push(team);
+            }
+        }
+
+        return teamsToReturn;
     }
 
     public async getTeam(name: string): Promise<Team | null> {
         Log.info("TeamController::getAllTeams( " + name + " ) - start");
 
         const team = await this.db.getTeam(name);
+        return team;
+    }
+
+    /**
+     * Gets the GitHub team number.
+     *
+     * Returns null if the does not exist on GitHub.
+     *
+     * @param {string} name
+     * @returns {Promise<number | null>}
+     */
+    public async getTeamNumber(name: string): Promise<number | null> {
+        Log.info("TeamController::getTeamNumber( " + name + " ) - start");
+
+        const team = await this.db.getTeam(name);
+
+        if (team === null) {
+            // throw new Error("TeamController::getTeamNumber( " + name + " ) - team does not exist in database");
+            Log.warn("TeamController::getTeamNumber( " + name + " ) - team does not exist in database");
+            return null;
+        }
+
+        // TODO: verify that the number is right? would only be a single GH request to get the team w/ number and check the name
+
+        if (typeof team.githubId === 'undefined' || team.githubId === null) {
+            // teamId not known; get it & store it
+            let teamNum: number | null = await this.gha.getTeamNumber(team.id);
+            if (teamNum < 0) {
+                Log.warn("TeamController::getTeamNumber( " + name + " ) - team does not exist on GitHub; setting null.");
+                teamNum = null;
+            }
+            team.githubId = teamNum;
+            await this.saveTeam(team);
+        }
+
+        return team.githubId;
+    }
+
+    public async saveTeam(team: Team): Promise<Team> {
+        Log.info("TeamController::saveTeam(..) - start");
+        const dc = DatabaseController.getInstance();
+        await dc.writeTeam(team);
         return team;
     }
 
@@ -138,6 +208,7 @@ export class TeamController {
             const team: Team = {
                 id:        name,
                 delivId:   deliv.id,
+                githubId:  null,
                 URL:       null,
                 personIds: peopleIds,
                 custom:    custom

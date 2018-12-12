@@ -7,7 +7,7 @@ import {PersonController} from "../../src/controllers/PersonController";
 import {Auth} from "../../src/Types";
 
 import '../GlobalSpec';
-import {Test} from "../GlobalSpec";
+import {Test} from "../TestHarness";
 import './PersonControllerSpec';
 
 describe("AuthController", () => {

@@ -230,7 +230,7 @@ describe("ClassPortal Service", () => {
             delivId:   delivId,
             repoId:    repoId,
             commitURL: commitURL,
-            commitSHA: 'SHA',
+            commitSHA: 'sha',
             input:     input,
             output:    output
         };

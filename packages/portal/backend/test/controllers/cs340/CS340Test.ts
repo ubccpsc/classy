@@ -1,7 +1,8 @@
 import {AssignmentGradingRubric, AssignmentInfo, AssignmentStatus} from "../../../../../common/types/CS340Types";
 import {DeliverablesController} from "../../../src/controllers/DeliverablesController";
 import {Deliverable} from "../../../src/Types";
-import {Test} from "../../GlobalSpec";
+
+import {Test} from "../../TestHarness";
 
 export class CS340Test {
     public static async prepareAssignment() {

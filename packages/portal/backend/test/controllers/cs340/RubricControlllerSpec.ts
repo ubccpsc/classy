@@ -14,7 +14,8 @@ import {PersonController} from "../../../src/controllers/PersonController";
 import {RepositoryController} from "../../../src/controllers/RepositoryController";
 import {TeamController} from "../../../src/controllers/TeamController";
 import {Deliverable} from "../../../src/Types";
-import {Test} from "../../GlobalSpec";
+
+import {Test} from "../../TestHarness";
 import {CS340Test} from "./CS340Test";
 
 const ORIGINAL_ORG = Config.getInstance().getProp(ConfigKey.org);

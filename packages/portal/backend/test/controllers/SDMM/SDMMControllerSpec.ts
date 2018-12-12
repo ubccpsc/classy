@@ -15,8 +15,8 @@ import {SDMMController} from "../../../src/controllers/SDMM/SDMMController";
 import {TeamController} from "../../../src/controllers/TeamController";
 import {Person, PersonKind} from "../../../src/Types";
 
-import {Test} from "../../GlobalSpec";
 import '../../GlobalSpec'; // load first
+import {Test} from "../../TestHarness";
 import '../GradeControllerSpec'; // load first
 
 export class TestData {
@@ -139,7 +139,7 @@ describe("SDMM: SDMMController", () => {
 
         const teams = await dataC.getTeams();
         for (const team of teams) {
-            const teamNum = await gha.getTeamNumber(team.id);
+            const teamNum = await tc.getTeamNumber(team.id);
             if (teamNum > 0 && team.id.startsWith('TEST__X__t_')) {
                 await gha.deleteTeam(teamNum);
             }

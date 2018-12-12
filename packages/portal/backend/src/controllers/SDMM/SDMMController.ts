@@ -243,7 +243,7 @@ export class SDMMController extends CourseController {
 
             fName:  '',
             lName:  '',
-            kind:   null,
+            kind:   null, // not student so we can upgrade new users to admins easier (in AuthController)
             URL:    'https://github.com/' + githubUsername, // HARDCODE
             labId:  'UNKNOWN',
             custom: {}
