@@ -93,7 +93,7 @@ export default class RouteHandler {
     }
 
     public static getResource(req: restify.Request, res: restify.Response, next: restify.Next) {
-        const path = Config.getInstance().getProp(ConfigKey.hostDir) + "/" + req.url.split("/resource/")[1];
+        const path = Config.getInstance().getProp(ConfigKey.persistDir) + "/" + req.url.split("/resource/")[1];
         Log.info("RouteHandler::getResource(..) - start; fetching resource: " + path);
 
         const rs = fs.createReadStream(path);
