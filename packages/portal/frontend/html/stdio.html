@@ -69,7 +69,7 @@
         }
 
         function loadStdio(delivId, repoId, sha) {
-            var url = HOST + 'portal/admin/result/' + delivId + '/' + repoId + '/' + sha;
+            var url = HOST + 'portal/resource/' + sha + '-' + delivId + '/staff/stdio.txt';
             getHTTP(url, HEADERS, function (stdio) {
                 editor.setValue(JSON.parse(stdio));
                 editor.clearSelection();
