@@ -343,7 +343,8 @@ export abstract class AutoTest implements IAutoTest {
                 // Add parameters to create the grading container. We'll be lazy and use the custom field.
                 input.containerConfig.custom = {
                     "--env": [
-                        `ASSIGNMENT=${delivId}`
+                        `ASSIGNMENT=${delivId}`,
+                        `EXEC_ID=${id}`
                     ],
                     "--volume": [
                         `${assnDir}:/assn`,
