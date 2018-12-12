@@ -72,7 +72,8 @@ export class GradeTask {
                 Log.trace("GradeTask::execute() - Write log for container " + this.container.shortId + " to " +
                     this.workspace + "/" + "stdio.txt");
                 const [, log] = await this.container.logs();
-                await this.workspace.writeFile("stdio.txt", log);
+                await this.workspace.mkdir("output/staff");
+                await this.workspace.writeFile("output/staff/stdio.txt", log);
 
                 if (this.containerState === "TIMEOUT") {
                     out.report.feedback = "Container did not complete for `" + this.input.delivId + "` in the allotted time.";
@@ -80,7 +81,7 @@ export class GradeTask {
                 } else {
                     try {
                         const shouldPostback: boolean = exitCode !== 0;
-                        out.report = await this.workspace.readJson("output/report.json");
+                        out.report = await this.workspace.readJson("output/staff/report.json");
                         out.postbackOnComplete = shouldPostback;
                         out.state = ContainerState.SUCCESS;
                     } catch (err) {
