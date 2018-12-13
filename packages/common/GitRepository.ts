@@ -29,10 +29,11 @@ interface Repository {
  * Wrapper for some git commands.
  */
 export class GitRepository extends Command implements Repository {
-    private path: string;
+    private readonly path: string;
 
-    constructor() {
+    constructor(dir: string) {
         super("git");
+        this.path = path.resolve(dir);
     }
 
     public async checkout(commit: string): Promise<CommandResult> {
@@ -40,8 +41,7 @@ export class GitRepository extends Command implements Repository {
         return await this.executeCommand(args, {cwd: this.path});
     }
 
-    public async clone(url: string, dir: string): Promise<CommandResult> {
-        this.path = path.resolve(dir);
+    public async clone(url: string): Promise<CommandResult> {
         const args: string[] = ["clone", url, this.path];
         return await this.executeCommand(args, {env: {GIT_TERMINAL_PROMPT: 0}});
     }

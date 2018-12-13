@@ -1,5 +1,5 @@
 import {ChildProcess, spawn, SpawnOptions} from "child_process";
-import Log from "../../../common/Log";
+import Log from "./Log";
 
 export type CommandResult = [number, any];
 
