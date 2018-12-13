@@ -159,7 +159,7 @@ export default class GeneralRoutes implements IREST {
         // const user = req.headers.user;
         // const token = req.headers.token;
         // const params = req.params;
-        const path = req.url.substring(16);
+        const path = req.url.substring(16);  // this strips off the route prefix (i.e., /portal/resource)
 
         // right now this means requests _must_ be by an authorized user (admin, staff, or student)
         if (typeof auth.user === 'undefined' || typeof auth.token === 'undefined') {
@@ -186,9 +186,9 @@ export default class GeneralRoutes implements IREST {
     public static async performGetResource(auth: {user: string, token: string}, path: string): Promise<any> {
         Log.info("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - start");
 
-        const host = Config.getInstance().getProp(ConfigKey.graderUrl);
-        const port = Config.getInstance().getProp(ConfigKey.graderPort);
-        const uri = host + ':' + port + '/resource/' + path;
+        const host = Config.getInstance().getProp(ConfigKey.autotestUrl);
+        const port = Config.getInstance().getProp(ConfigKey.autotestPort);
+        const uri = host + ':' + port + '/resource' + path;
 
         const options = {
             uri:    uri,

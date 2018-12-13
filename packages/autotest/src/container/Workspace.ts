@@ -44,4 +44,8 @@ export class Workspace {
     public async writeFile(filename: string, content: any): Promise<void> {
         return fs.writeFile(this.rootDir + "/" + filename, content);
     }
+
+    public toString(): string {
+        return this.rootDir;
+    }
 }

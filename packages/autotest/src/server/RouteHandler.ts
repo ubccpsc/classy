@@ -1,10 +1,9 @@
+import * as fs from "fs-extra";
 import * as restify from "restify";
 import Config, {ConfigKey} from "../../../common/Config";
-
 import Log from "../../../common/Log";
 import {CommitTarget} from "../../../common/types/ContainerTypes";
 import Util from "../../../common/Util";
-
 import {AutoTest} from "../autotest/AutoTest";
 import {ClassPortal} from "../autotest/ClassPortal";
 import {MongoDataStore} from "../autotest/DataStore";
@@ -91,5 +90,27 @@ export default class RouteHandler {
                 Log.error("RouteHandler::handleWebhook() - Unhandled GitHub event: " + event);
                 throw new Error("Unhandled GitHub hook event: " + event);
         }
+    }
+
+    public static getResource(req: restify.Request, res: restify.Response, next: restify.Next) {
+        const path = Config.getInstance().getProp(ConfigKey.persistDir) + "/" + req.url.split("/resource/")[1];
+        Log.info("RouteHandler::getResource(..) - start; fetching resource: " + path);
+
+        const rs = fs.createReadStream(path);
+        rs.on("error", (err: any) => {
+            if (err.code === "ENOENT") {
+                Log.error("RouteHandler::getResource(..) - ERROR Requested resource does not exist: " + path);
+                res.send(404, err.message);
+            } else {
+                Log.error("RouteHandler::getResource(..) - ERROR Reading requested resource: " + path);
+                res.send(500, err.message);
+            }
+        });
+        rs.on("end", () => {
+            rs.close();
+        });
+        rs.pipe(res);
+
+        next();
     }
 }

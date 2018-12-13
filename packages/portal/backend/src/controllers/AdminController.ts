@@ -340,33 +340,6 @@ export class AdminController {
     }
 
     /**
-     * Gets the stdio associated with a tuple.
-     *
-     * @param delivId
-     * @param repoId
-     * @param sha
-     * @returns {Promise<AutoTestGradeTransport[]>}
-     */
-    public async getResult(delivId: string, repoId: string, sha: string): Promise<string> {
-        Log.info("AdminController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - start");
-
-        // TODO: this should be expanded to getAttachement where an attachment id and sha are provided as args
-        // we can then pull the path from the result.attachments field
-
-        // portal/result/<FULL_COMMIT_SHA>-<DELIV_ID>/<FILENAME>
-        // http://grader/randomStringInEnv/commitSHA-dX
-
-        const host = Config.getInstance().getProp(ConfigKey.graderUrl);
-        const port = Config.getInstance().getProp(ConfigKey.graderPort);
-
-        const url = host + ':' + port + '/' + sha + '-' + delivId + '/stdio.txt';
-        Log.info("AdminController::getResult( .. ) - URL: " + url);
-        const res = await rp(url);
-        Log.info("AdminController::getResult( .. ) - done; body: " + res);
-        return res;
-    }
-
-    /**
      * Gets the list of GitHub ids associated with the 'students' team on GitHub
      * and marks them as PersonKind.WITHDRAWN. Does nothing if the students team
      * does not exist or is empty.

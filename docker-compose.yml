@@ -26,12 +26,19 @@ services:
         container_name: ${CONTAINER_NAME_AUTOTEST}
         depends_on:
             - db
-            - grader
         env_file: .env
         expose:
             - ${AUTOTEST_PORT}
         restart: always
-        user: "${UID}"
+        user: "0"  # Run as root; needs permission to interact with docker service
+        networks:
+            default:
+            grader:
+                ipv4_address: 172.28.2.0
+        volumes:
+            - "/var/run/docker.sock:/var/run/docker.sock"
+            - "${HOST_DIR}:${PERSIST_DIR}"
+        privileged: true
     db:
         command: --quiet
         container_name: ${CONTAINER_NAME_DATABASE}
@@ -45,35 +52,6 @@ services:
         user: "${UID}"
         volumes:
             - /var/opt/classy/db:/data/db
-    grader:
-        build:
-            context: ./
-            dockerfile: ./packages/grader/Dockerfile
-        container_name: ${CONTAINER_NAME_GRADER}
-        # DO NOT PASS THE ENTIRE ENVIRONMENT FILE
-        # Students could log the token values
-        environment:
-            - GH_BOT_TOKEN  # Only access student repos not oracle
-            - UID
-            - GRADER_HOST_DIR
-            - GRADER_PERSIST_DIR
-            - GRADER_PORT
-            - DOCKER_NET=${GRADE_NET_NAME}
-            - HOSTS_ALLOW
-            - LOG_LEVEL
-            - PLATFORM
-        expose:
-            - ${GRADER_PORT}
-        networks:
-            default:
-            grader:
-                ipv4_address: 172.28.2.0
-        restart: always
-        user: "0"  # Run as root; needs permission to interact with docker service
-        volumes:
-            - "/var/run/docker.sock:/var/run/docker.sock"
-            - "${GRADER_HOST_DIR}:${GRADER_PERSIST_DIR}"
-        privileged: true
     portal:
         build:
             args:

@@ -1,23 +1,24 @@
+import {EventEmitter} from "events";
 import Log from "../../../common/Log";
 import {ContainerInput, ContainerOutput, ContainerState} from "../../../common/types/ContainerTypes";
-import {IDockerContainer} from "../docker/DockerContainer";
-import {Repository} from "../git/Repository";
-import {Workspace} from "../storage/Workspace";
+import {DockerContainer, IDockerContainer} from "./DockerContainer";
+import {GitRepository} from "./GitRepository";
+import {Workspace} from "./Workspace";
 
 export class GradeTask {
     private readonly id: string;
     private readonly input: ContainerInput;
     private readonly workspace: Workspace;
     private readonly container: IDockerContainer;
-    private readonly repo: Repository;
+    private readonly repo: GitRepository;
     private containerState: string;
 
-    constructor(id: string, input: ContainerInput, workspace: Workspace, container: IDockerContainer, repo: Repository) {
+    constructor(id: string, input: ContainerInput, workspace: Workspace) {
         this.id = id;
         this.input = input;
         this.workspace = workspace;
-        this.container = container;
-        this.repo = repo;
+        this.container = new DockerContainer(input.containerConfig.dockerImage);
+        this.repo = new GitRepository();
     }
 
     public async execute(): Promise<ContainerOutput> {
@@ -45,7 +46,11 @@ export class GradeTask {
 
         try {
             await this.workspace.empty();
-            await this.workspace.mkdir("output");
+            await Promise.all([
+                this.workspace.mkdir("staff"),
+                this.workspace.mkdir("student"),
+                this.workspace.mkdir("admin")
+            ]);
 
             Log.trace("GradeTask::execute() - Clone repo " +
                 this.input.target.cloneURL.match(/\/(.+)\.git/)[0] + " and checkout " +
@@ -71,7 +76,8 @@ export class GradeTask {
                 Log.trace("GradeTask::execute() - Write log for container " + this.container.shortId + " to " +
                     this.workspace + "/" + "stdio.txt");
                 const [, log] = await this.container.logs();
-                await this.workspace.writeFile("stdio.txt", log);
+                await this.workspace.mkdir("staff");  // in case the container deleted the directory
+                await this.workspace.writeFile("staff/stdio.txt", log);
 
                 if (this.containerState === "TIMEOUT") {
                     out.report.feedback = "Container did not complete for `" + this.input.delivId + "` in the allotted time.";
@@ -79,11 +85,11 @@ export class GradeTask {
                 } else {
                     try {
                         const shouldPostback: boolean = exitCode !== 0;
-                        out.report = await this.workspace.readJson("output/report.json");
+                        out.report = await this.workspace.readJson("staff/report.json");
                         out.postbackOnComplete = shouldPostback;
                         out.state = ContainerState.SUCCESS;
                     } catch (err) {
-                        Log.error('GradeWorker::execute() - ERROR Reading grade report file produced be grading container' +
+                        Log.error("GradeWorker::execute() - ERROR Reading grade report file produced by grading container " +
                             `${this.container.shortId}. ${err}`);
                         out.report.feedback = "Failed to read grade report.";
                         out.state = ContainerState.NO_REPORT;
@@ -126,22 +132,26 @@ export class GradeTask {
         await container.start();
 
         // Set a timer to kill the container if it doesn't finish in the allotted time
-        let didFinish = false;
+        let timer: any;
         if (this.input.containerConfig.maxExecTime > 0) {
-            setTimeout(async () => {
-                if (!didFinish) {
-                    Log.trace("GradeTask::runContainer(..) - Container " + container.shortId +
-                        " was stopped after exceeding maxExecTime.");
-                    this.containerState = "TIMEOUT";
-                    const [exitCode] = await container.stop();
-                    return exitCode;
-                }
+            timer = setTimeout(async () => {
+                Log.trace("GradeTask::runContainer(..) - Container " + container.shortId +
+                    " was stopped after exceeding maxExecTime.");
+                this.containerState = "TIMEOUT";
+                const [exitCode] = await container.stop();
+                return exitCode;
             }, this.input.containerConfig.maxExecTime * 1000);
         }
 
-        // cmdOut is the exit code from the container
-        const [, cmdOut] = await container.wait();
-        didFinish = true;
+        let cmdOut: string;
+        try {
+            // cmdOut is the exit code from the container
+            [, cmdOut] = await container.wait();
+        } catch (err) {
+            throw err;
+        } finally {
+            clearTimeout(timer);
+        }
         return Number(cmdOut);
     }
 }

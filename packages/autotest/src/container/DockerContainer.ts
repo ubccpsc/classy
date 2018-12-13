@@ -1,5 +1,10 @@
-import {CommandResult, IDockerContainerOptions} from "../Types";
-import {Command} from "../util/Command";
+import {Command, CommandResult} from "./Command";
+
+// A subset of the Docker container run options.
+// https://docs.docker.com/engine/reference/commandline/create/#options
+export interface IDockerContainerOptions {
+    [name: string]: string | string[];
+}
 
 /**
  * Simple wrapper for Docker's container management commands with some basic extensions.
