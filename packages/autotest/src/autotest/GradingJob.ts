@@ -41,7 +41,7 @@ export class GradingJob {
                 postbackOnComplete: true,
                 custom:             {},
                 state:              ContainerState.FAIL,
-                graderTaskId:       null
+                graderTaskId:       this.id
             }
         };
     }
