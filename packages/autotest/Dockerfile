@@ -1,6 +1,6 @@
 FROM node:8-alpine
 
-RUN apk add --no-cache docker git
+RUN apk add --no-cache git
 
 WORKDIR /app
 

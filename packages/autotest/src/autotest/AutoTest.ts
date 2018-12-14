@@ -1,14 +1,13 @@
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {AutoTestResult} from "../../../common/types/AutoTestTypes";
-import {CommitTarget, ContainerInput, ContainerOutput, ContainerState} from "../../../common/types/ContainerTypes";
+import {CommitTarget, ContainerInput} from "../../../common/types/ContainerTypes";
 import {AutoTestGradeTransport} from "../../../common/types/PortalTypes";
 import Util from "../../../common/Util";
-import {GradeTask} from "../container/GradeTask";
-import {Workspace} from "../container/Workspace";
 import {IClassPortal} from "./ClassPortal";
 import {IDataStore} from "./DataStore";
-import {MockGrader} from "./mocks/MockGrader";
+import {GradingJob} from "./GradingJob";
+import {MockGradingJob} from "./mocks/MockGradingJob";
 import {Queue} from "./Queue";
 
 export interface IAutoTest {
@@ -68,9 +67,19 @@ export abstract class AutoTest implements IAutoTest {
                 const info: ContainerInput = queue.scheduleNext();
                 Log.info("AutoTest::tick(..) - starting job on: " + queue.getName() + "; deliv: " +
                     info.delivId + '; repo: ' + info.target.repoId + '; SHA: ' + info.target.commitSHA);
+
+                let gradingJob: GradingJob;
+                // Use mocked GradingJob if testing; EMPTY and POSTBACK used by test environment
+                if (info.target.postbackURL === "EMPTY" || info.target.postbackURL === "POSTBACK") {
+                    Log.warn("AutoTest::tick(..) - Running grading job in test mode.");
+                    gradingJob = new MockGradingJob(info);
+                } else {
+                    gradingJob = new GradingJob(info);
+                }
+
                 // noinspection JSIgnoredPromiseFromCall
                 // tslint:disable-next-line
-                that.invokeContainer(info); // NOTE: not awaiting on purpose (let it finish in the background)!
+                that.handleTick(gradingJob); // NOTE: not awaiting on purpose (let it finish in the background)!
                 updated = true;
                 return true;
             };
@@ -305,116 +314,42 @@ export abstract class AutoTest implements IAutoTest {
         }
     }
 
-    /**
-     * Starts the container for the commit.
-     *
-     *
-     * @param input
-     */
-    private async invokeContainer(input: ContainerInput) {
+    private async handleTick(job: GradingJob) {
+        const start = Date.now();
+        const input = job.input;
+
+        Log.info("AutoTest::handleTick(..) - start; delivId: " + input.delivId + "; SHA: " + input.target.commitSHA);
+        Log.trace("AutoTest::handleTick(..) - input: " + JSON.stringify(input, null, 2));
+
         try {
-            Log.info("AutoTest::invokeContainer(..) - start; delivId: " + input.delivId + "; SHA: " + input.target.commitSHA);
-            Log.trace("AutoTest::invokeContainer(..) - input: " + JSON.stringify(input, null, 2));
-            const start = Date.now();
+            await job.prepare();
+            const record = await job.run();
 
-            let record: AutoTestResult = null;
-            let isProd = true;
-            if (input.target.postbackURL === "EMPTY" || input.target.postbackURL === "POSTBACK") {
-                Log.warn("AutoTest::invokeContainer(..) - execution skipped; !isProd");
-                isProd = false; // EMPTY and POSTBACK used by test environment
+            let score = -1;
+            if (record.output.report !== null && typeof record.output.report.scoreOverall !== "undefined") {
+                score = record.output.report.scoreOverall;
             }
-            if (isProd === true) {
-                const commitSHA: string = input.target.commitSHA;
-                const commitURL: string = input.target.commitURL;
+            const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
+            const org = Config.getInstance().getProp(ConfigKey.org);
+            const repoId = input.target.repoId;
+            const gradePayload: AutoTestGradeTransport = {
+                delivId: input.delivId,
+                repoId,
+                repoURL: `${githubHost}/${org}/${repoId}`,
+                score,
+                urlName: repoId,
+                URL: input.target.commitURL,
+                comment: '',
+                timestamp: input.target.timestamp,
+                custom: {}
+            };
 
-                const timestamp: number = input.target.timestamp;
-                const delivId: string = input.delivId;
-                const repoId: string = input.target.repoId;
-                const id: string = `${commitSHA}-${delivId}`;
-                const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
-                    Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
-
-                const uid: number = Config.getInstance().getProp(ConfigKey.dockerUid);
-                const token: string = Config.getInstance().getProp(ConfigKey.githubBotToken).replace("token ", "");
-                const assnDir: string = `${Config.getInstance().getProp(ConfigKey.hostDir)}/${id}/assn`;
-                const outputDir: string = `${Config.getInstance().getProp(ConfigKey.hostDir)}/${id}`;
-                const workspaceDir: string = Config.getInstance().getProp(ConfigKey.persistDir) + "/" + id;
-
-                // Add parameters to create the grading container. We'll be lazy and use the custom field.
-                input.containerConfig.custom = {
-                    "--env": [
-                        `ASSIGNMENT=${delivId}`,
-                        `EXEC_ID=${id}`
-                    ],
-                    "--volume": [
-                        `${assnDir}:/assn`,
-                        `${outputDir}:/output`
-                    ],
-                    "--network": Config.getInstance().getProp(ConfigKey.dockerNet),
-                    "--add-host": Config.getInstance().getProp(ConfigKey.hostsAllow),
-                    "--user": uid
-                };
-
-                // Inject the GitHub token into the cloneURL so we can clone the repo.
-                input.target.cloneURL = input.target.cloneURL.replace("://", `://${token}@`);
-
-                try {
-                    const workspace: Workspace = new Workspace(workspaceDir, uid);
-                    const output = await new GradeTask(id, input, workspace).execute();
-
-                    Log.trace("AutoTest::invokeContainer(..) - output: " + JSON.stringify(output, null, 2));
-
-                    record = {
-                        delivId,
-                        repoId,
-                        commitURL,
-                        commitSHA,
-                        input,
-                        output
-                    };
-
-                    // POST the grade to Class Portal
-                    // NOTE: it is ok for for this to be here, but the backend should consider
-                    // whether or not to honour it (e.g., based on course config or deadlines)
-
-                    let score = -1;
-                    if (output.report !== null && typeof output.report.scoreOverall !== "undefined") {
-                        score = output.report.scoreOverall;
-                    }
-                    const gradePayload: AutoTestGradeTransport = {
-                        delivId,
-                        repoId,
-                        repoURL,
-                        score,
-
-                        urlName: repoId, // could be a short SHA, but this seems better
-                        URL: commitURL,
-
-                        comment: '', // output.report.feedback,   // this only makes sense if we can render markdown
-                        timestamp,
-                        custom: {}
-                    };
-
-                    if (output.postbackOnComplete === false) {
-                        await this.classPortal.sendGrade(gradePayload); // this is just the Grade record, not the Report record
-                    } else {
-                        // grade not sent; if postback is true we must have compile / lint problem
-                    }
-                } catch (err) {
-                    Log.warn("AutoTest::invokeContainer(..) - ERROR for SHA: " + input.target.commitSHA +
-                        "; ERROR sending grade: " + err);
-                }
-            } else {
-                Log.info("AutoTest::invokeContainer(..) - TEST CONFIG: Running MockGrader");
-                const grader = new MockGrader(input);
-                record = await grader.execute();
-            }
-
-            Log.info("AutoTest::invokeContainer(..) - complete; delivId: " + input.delivId +
-                "; SHA: " + input.target.commitSHA + "; took: " + Util.tookHuman(start));
+            await this.classPortal.sendGrade(gradePayload);
             await this.handleExecutionComplete(record);
+            Log.info("AutoTest::handleTick(..) - complete; delivId: " + input.delivId +
+                "; SHA: " + input.target.commitSHA + "; took: " + Util.tookHuman(start));
         } catch (err) {
-            Log.error("AutoTest::invokeContainer(..) - ERROR for SHA: " + input.target.commitSHA + "; ERROR: " + err);
+            Log.error("AutoTest::handleTick(..) - ERROR for SHA: " + input.target.commitSHA + "; ERROR: " + err);
         }
     }
 }

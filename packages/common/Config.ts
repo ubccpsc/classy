@@ -88,7 +88,7 @@ export default class Config {
                 hostDir:  process.env.HOST_DIR,
                 postback:   Boolean(process.env.AUTOTEST_POSTBACK),
                 persistDir: process.env.PERSIST_DIR,
-                dockerUid: Number(process.env.UID),
+                dockerUid: process.env.UID,
                 dockerNet: process.env.GRADE_NET_NAME,
                 hostsAllow: process.env.HOSTS_ALLOW,
 
