@@ -7,6 +7,7 @@ import Util from "../../../common/Util";
 import {IClassPortal} from "./ClassPortal";
 import {IDataStore} from "./DataStore";
 import {GradingJob} from "./GradingJob";
+import {MockGradingJob} from "./mocks/MockGradingJob";
 import {Queue} from "./Queue";
 
 export interface IAutoTest {
@@ -66,10 +67,19 @@ export abstract class AutoTest implements IAutoTest {
                 const info: ContainerInput = queue.scheduleNext();
                 Log.info("AutoTest::tick(..) - starting job on: " + queue.getName() + "; deliv: " +
                     info.delivId + '; repo: ' + info.target.repoId + '; SHA: ' + info.target.commitSHA);
-                // TODO @nickbradley This is where you would pass in a mock GradingJob for testing
+
+                let gradingJob: GradingJob;
+                // Use mocked GradingJob if testing; EMPTY and POSTBACK used by test environment
+                if (info.target.postbackURL === "EMPTY" || info.target.postbackURL === "POSTBACK") {
+                    Log.warn("AutoTest::tick(..) - Running grading job in test mode.");
+                    gradingJob = new MockGradingJob(info);
+                } else {
+                    gradingJob = new GradingJob(info);
+                }
+
                 // noinspection JSIgnoredPromiseFromCall
                 // tslint:disable-next-line
-                that.handleTick(new GradingJob(info)); // NOTE: not awaiting on purpose (let it finish in the background)!
+                that.handleTick(gradingJob); // NOTE: not awaiting on purpose (let it finish in the background)!
                 updated = true;
                 return true;
             };

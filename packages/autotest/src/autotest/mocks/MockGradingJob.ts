@@ -1,30 +1,21 @@
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {AutoTestResult} from "../../../../common/types/AutoTestTypes";
-import {
-    ContainerInput,
-    ContainerOutput,
-    ContainerState,
-    GradeReport
-} from "../../../../common/types/ContainerTypes";
-
+import {ContainerInput, ContainerOutput, ContainerState, GradeReport} from "../../../../common/types/ContainerTypes";
 import Util from "../../../../common/Util";
+import {GradingJob} from "../GradingJob";
 
-interface IGrader {
-    execute(): Promise<AutoTestResult>;
-}
+export class MockGradingJob extends GradingJob {
 
-export class MockGrader implements IGrader {
-    private input: ContainerInput;
-
-    /**
-     * I have no idea what this class should look like
-     */
     constructor(input: ContainerInput) {
-        this.input = input;
+        super(input);
     }
 
-    public async execute(): Promise<AutoTestResult> {
+    public async prepare(): Promise<void> {
+        return;
+    }
+
+    public async run(): Promise<AutoTestResult> {
         try {
             Log.info("MockGrader::execute() - start; commitSHA: " + this.input.target.commitSHA);
             // const oracleToken = Config.getInstance().getProp(ConfigKey.githubOracleToken);
