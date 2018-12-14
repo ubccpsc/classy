@@ -335,7 +335,7 @@ export abstract class AutoTest implements IAutoTest {
             const gradePayload: AutoTestGradeTransport = {
                 delivId: input.delivId,
                 repoId,
-                repoURL: `${githubHost}/${org}/${input.target.repoId}`,
+                repoURL: `${githubHost}/${org}/${repoId}`,
                 score,
                 urlName: repoId,
                 URL: input.target.commitURL,
@@ -344,13 +344,10 @@ export abstract class AutoTest implements IAutoTest {
                 custom: {}
             };
 
-            if (record.output.postbackOnComplete === false) {
-                await this.classPortal.sendGrade(gradePayload); // this is just the Grade record, not the Report record
-            }
-
+            await this.classPortal.sendGrade(gradePayload);
+            await this.handleExecutionComplete(record);
             Log.info("AutoTest::handleTick(..) - complete; delivId: " + input.delivId +
                 "; SHA: " + input.target.commitSHA + "; took: " + Util.tookHuman(start));
-            await this.handleExecutionComplete(record);
         } catch (err) {
             Log.error("AutoTest::handleTick(..) - ERROR for SHA: " + input.target.commitSHA + "; ERROR: " + err);
         }
