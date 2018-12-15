@@ -1,5 +1,6 @@
 import * as Docker from "dockerode";
 import * as fs from "fs-extra";
+import {URL} from "url";
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {AutoTestResult} from "../../../common/types/AutoTestTypes";
