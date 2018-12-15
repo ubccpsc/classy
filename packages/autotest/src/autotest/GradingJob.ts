@@ -72,8 +72,7 @@ export class GradingJob {
         });
     }
 
-    public async run(): Promise<AutoTestResult> {
-        const docker = new Docker();
+    public async run(docker: Docker): Promise<AutoTestResult> {
         const hostDir = Config.getInstance().getProp(ConfigKey.hostDir) + "/" + this.id;
         const container = await docker.createContainer({
             User: Config.getInstance().getProp(ConfigKey.dockerUid),

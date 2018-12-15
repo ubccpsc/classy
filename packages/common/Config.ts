@@ -55,6 +55,7 @@ export enum ConfigKey {
     dockerUid = "dockerUid",
     dockerNet = "dockerNet",
     hostsAllow = "hostsAllow",
+    dockerHost = "dockerHost",
     timeout = "timeout",
     botName = "botName",
     postback = "postback",
@@ -91,6 +92,7 @@ export default class Config {
                 dockerUid: process.env.UID,
                 dockerNet: process.env.GRADE_NET_NAME,
                 hostsAllow: process.env.HOSTS_ALLOW,
+                dockerHost: process.env.DOCKER_HOST,
 
                 timeout: Number(process.env.GRADER_TIMEOUT),
                 botName: process.env.GH_BOT_USERNAME,

@@ -1,3 +1,5 @@
+import * as Docker from "dockerode";
+import * as fs from "fs-extra";
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {AutoTestResult} from "../../../common/types/AutoTestTypes";
@@ -37,11 +39,25 @@ export abstract class AutoTest implements IAutoTest {
     private regressionQueue = new Queue('regression', 1);
     private standardQueue = new Queue('standard', 2);
     private expressQueue = new Queue('express', 1);
+    private readonly docker: Docker;
 
     // noinspection TypeScriptAbstractClassConstructorCanBeMadeProtected
     constructor(dataStore: IDataStore, classPortal: IClassPortal) {
         this.dataStore = dataStore;
         this.classPortal = classPortal;
+
+        const dockerHost = new URL(Config.getInstance().getProp(ConfigKey.dockerHost));
+        if (dockerHost.protocol === "tcp") {
+            this.docker = new Docker({
+                host: dockerHost.hostname,
+                port: dockerHost.port,
+                cert: fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslCertPath)),
+                key: fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslKeyPath)),
+                version: "v1.30"
+        });
+        } else {
+            this.docker = new Docker();
+        }
     }
 
     public addToStandardQueue(input: ContainerInput): void {
@@ -323,7 +339,7 @@ export abstract class AutoTest implements IAutoTest {
 
         try {
             await job.prepare();
-            const record = await job.run();
+            const record = await job.run(this.docker);
 
             let score = -1;
             if (record.output.report !== null && typeof record.output.report.scoreOverall !== "undefined") {
