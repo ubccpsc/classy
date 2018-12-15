@@ -47,17 +47,23 @@ export abstract class AutoTest implements IAutoTest {
         this.dataStore = dataStore;
         this.classPortal = classPortal;
 
-        const dockerHost = new URL(Config.getInstance().getProp(ConfigKey.dockerHost));
-        if (dockerHost.protocol === "tcp") {
-            this.docker = new Docker({
-                host: dockerHost.hostname,
-                port: dockerHost.port,
-                cert: fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslCertPath)),
-                key: fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslKeyPath)),
-                version: "v1.30"
-        });
+        if (Config.getInstance().getProp(ConfigKey.name) === "classytest") {
+            // Running tests; don't need to connect to the Docker daemon
+            this.docker = null;
         } else {
-            this.docker = new Docker();
+            const dockerHost = Config.getInstance().getProp(ConfigKey.dockerHost);
+            if (dockerHost.startsWith("https") || dockerHost.startsWith("http") || dockerHost.startsWith("tcp")) {
+                const dockerUrl = new URL(dockerHost);
+                this.docker = new Docker({
+                    host: dockerUrl.hostname,
+                    port: dockerUrl.port,
+                    cert: fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslCertPath)),
+                    key: fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslKeyPath)),
+                    version: "v1.30"
+                });
+            } else {
+                this.docker = new Docker();
+            }
         }
     }
 
