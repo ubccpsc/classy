@@ -48,7 +48,10 @@ export abstract class AutoTest implements IAutoTest {
         this.classPortal = classPortal;
 
         const dockerHost = new URL(Config.getInstance().getProp(ConfigKey.dockerHost));
-        if (dockerHost.protocol === "tcp") {
+        if (Config.getInstance().getProp(ConfigKey.name) === "classytest") {
+            // Running tests; don't need to connect to the Docker daemon
+            this.docker = null;
+        } else if (dockerHost.protocol === "tcp") {
             this.docker = new Docker({
                 host: dockerHost.hostname,
                 port: dockerHost.port,
