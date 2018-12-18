@@ -44,21 +44,33 @@ The following software should be installed on the host before attempting to depl
     set -e
     
     # Stop Classy so that port 80 and 443 can be used by certbot
-    /usr/local/bin/docker-compose stop
+    cd /opt/classy
+    /usr/local/bin/docker-compose stop || true
     EOF
     
-    cat <<- EOF > /etc/letsencrypt/renewal-hooks/deploy/start-classy.sh
+    cat <<- EOF > /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
     #!/bin/sh
     set -e
     
-    # Copies the latest certificates to Classy and then starts it.
+    # Copies the latest certificates to Classy
+    mkdir -p /opt/classy/ssl
+    \cp -Hf /etc/letsencrypt/live/$(hostname)/* /opt/classy/ssl/
+    chown -R --reference=/opt/classy /opt/classy/ssl
+    chmod -R 0050 /opt/classy/ssl
+    EOF
+    
+    cat <<- EOF > /etc/letsencrypt/renewal-hooks/post/start-classy.sh
+    #!/bin/sh
+    set -e
+    
+    # Restart classy
     cd /opt/classy
-    mkdir -p ssl
-    \cp -Hf /etc/letsencrypt/live/$(hostname)/* ssl/
-    chmod -R 0400 ssl
-    chown -R --reference=/opt/classy ssl
     /usr/local/bin/docker-compose up --detach
     EOF
+    
+    chmod +x /etc/letsencrypt/renewal-hooks/pre/stop-classy.sh
+    chmod +x /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
+    chmod +x /etc/letsencrypt/renewal-hooks/post/start-classy.sh
     ```
     
     **SECURITY WARNING:** Possession of the certificate is equivalent to having root access on the host since the Docker
