@@ -107,7 +107,7 @@ export class GradingJob {
         } else {
             try {
                 const shouldPostback: boolean = exitCode !== 0;
-                out.report = await fs.readJson(this.path + "staff/report.json");
+                out.report = await fs.readJson(this.path + "/staff/report.json");
                 out.postbackOnComplete = shouldPostback;
                 out.state = ContainerState.SUCCESS;
             } catch (err) {

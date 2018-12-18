@@ -77,7 +77,7 @@ export class CSVParser {
                     peoplePromises.push(pc.createPerson(p));
                 } else {
                     Log.info('CSVParser::processClasslist(..) - column missing from: ' + JSON.stringify(row));
-                    peoplePromises.push(Promise.reject('Required column missing'));
+                    peoplePromises.push(Promise.reject('Required column missing (required: ACCT, CWL, SNUM, FIRST, LAST, LAB).'));
                 }
             }
 
@@ -135,7 +135,7 @@ export class CSVParser {
                     }
 
                 } else {
-                    const msg = 'Required column missing';
+                    const msg = 'Required column missing (required: CSID, GRADE, COMMENT).';
                     Log.error('CSVParser::processGrades(..) - column missing from: ' + JSON.stringify(row));
                     throw new Error(msg);
                 }
