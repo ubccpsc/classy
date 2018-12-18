@@ -15,7 +15,7 @@ export class MockGradingJob extends GradingJob {
         return;
     }
 
-    public async run(): Promise<AutoTestResult> {
+    public async run(docker: any): Promise<AutoTestResult> {
         try {
             Log.info("MockGrader::execute() - start; commitSHA: " + this.input.target.commitSHA);
             // const oracleToken = Config.getInstance().getProp(ConfigKey.githubOracleToken);

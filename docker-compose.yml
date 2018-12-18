@@ -16,6 +16,8 @@
 # - Services specified here can be extended (and additional services can be added) by creating additional
 #   docker-compose.yml files. See https://docs.docker.com/compose/extends/#example-use-case.
 
+# NOTE: Do not change the service names. They are used to refer to the service throughout the codebase in http requests.
+
 version: "3.5"
 
 services:
@@ -23,25 +25,19 @@ services:
         build:
             context: ./
             dockerfile: ./packages/autotest/Dockerfile
-        container_name: ${CONTAINER_NAME_AUTOTEST}
         depends_on:
             - db
         env_file: .env
         expose:
             - ${AUTOTEST_PORT}
         restart: always
-        user: "0"  # Run as root; needs permission to interact with docker service
-        networks:
-            default:
-            grader:
-                ipv4_address: 172.28.2.0
+        user: "${UID}"
         volumes:
-            - "/var/run/docker.sock:/var/run/docker.sock"
             - "${HOST_DIR}:${PERSIST_DIR}"
-        privileged: true
+            - "${HOST_SSL_CERT_PATH}:${SSL_CERT_PATH}"
+            - "${HOST_SSL_KEY_PATH}:${SSL_KEY_PATH}"
     db:
         command: --quiet
-        container_name: ${CONTAINER_NAME_DATABASE}
         environment:
           - MONGO_INITDB_ROOT_USERNAME
           - MONGO_INITDB_ROOT_PASSWORD
@@ -59,7 +55,6 @@ services:
                 - GH_BOT_EMAIL
             context: ./
             dockerfile: ./packages/portal/Dockerfile
-        container_name: ${CONTAINER_NAME_PORTAL}
         depends_on:
             - db
             - autotest
@@ -80,11 +75,9 @@ services:
                 - UID
                 - SSL_CERT_PATH
                 - SSL_KEY_PATH
-                - CONTAINER_NAME_PORTAL
                 - BACKEND_PORT
             context: ./
             dockerfile: ./packages/proxy/Dockerfile
-        container_name: ${CONTAINER_NAME_ROUTER}
         depends_on:
             - portal
         ports:
@@ -95,15 +88,3 @@ services:
         volumes:
             - "${HOST_SSL_CERT_PATH}:${SSL_CERT_PATH}"
             - "${HOST_SSL_KEY_PATH}:${SSL_KEY_PATH}"
-
-# Run grading containers in a subnet to make it easy to block all traffic using iptables.
-networks:
-    grader:
-        driver: bridge
-        driver_opts:
-            ip-range: "172.28.5.0/24"
-            gateway: "172.28.5.254"
-        ipam:
-            config:
-                - subnet: "172.28.0.0/16"
-        name: ${GRADE_NET_NAME}

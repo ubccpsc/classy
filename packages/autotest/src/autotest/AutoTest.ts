@@ -1,3 +1,6 @@
+import * as Docker from "dockerode";
+import * as fs from "fs-extra";
+import {URL} from "url";
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {AutoTestResult} from "../../../common/types/AutoTestTypes";
@@ -37,11 +40,32 @@ export abstract class AutoTest implements IAutoTest {
     private regressionQueue = new Queue('regression', 1);
     private standardQueue = new Queue('standard', 2);
     private expressQueue = new Queue('express', 1);
+    private readonly docker: Docker;
 
     // noinspection TypeScriptAbstractClassConstructorCanBeMadeProtected
     constructor(dataStore: IDataStore, classPortal: IClassPortal) {
         this.dataStore = dataStore;
         this.classPortal = classPortal;
+
+        if (Config.getInstance().getProp(ConfigKey.name) === "classytest") {
+            // Running tests; don't need to connect to the Docker daemon
+            this.docker = null;
+        } else {
+            const dockerHost = Config.getInstance().getProp(ConfigKey.dockerHost);
+            if (dockerHost !== null && (dockerHost.startsWith("https") || dockerHost.startsWith("http") || dockerHost.startsWith("tcp"))) {
+                const dockerUrl = new URL(dockerHost);
+                this.docker = new Docker({
+                    host: dockerUrl.hostname,
+                    port: dockerUrl.port,
+                    ca: fs.readFileSync("/etc/ssl/certs/ca-certificates.crt"),
+                    cert: fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslCertPath)),
+                    key: fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslKeyPath)),
+                    version: "v1.30"
+                });
+            } else {
+                this.docker = new Docker();
+            }
+        }
     }
 
     public addToStandardQueue(input: ContainerInput): void {
@@ -317,13 +341,14 @@ export abstract class AutoTest implements IAutoTest {
     private async handleTick(job: GradingJob) {
         const start = Date.now();
         const input = job.input;
+        let record = job.record;
 
         Log.info("AutoTest::handleTick(..) - start; delivId: " + input.delivId + "; SHA: " + input.target.commitSHA);
         Log.trace("AutoTest::handleTick(..) - input: " + JSON.stringify(input, null, 2));
 
         try {
             await job.prepare();
-            const record = await job.run();
+            record = await job.run(this.docker);
 
             let score = -1;
             if (record.output.report !== null && typeof record.output.report.scoreOverall !== "undefined") {
@@ -345,11 +370,12 @@ export abstract class AutoTest implements IAutoTest {
             };
 
             await this.classPortal.sendGrade(gradePayload);
+        } catch (err) {
+            Log.error("AutoTest::handleTick(..) - ERROR for SHA: " + input.target.commitSHA + "; ERROR: " + err);
+        } finally {
             await this.handleExecutionComplete(record);
             Log.info("AutoTest::handleTick(..) - complete; delivId: " + input.delivId +
                 "; SHA: " + input.target.commitSHA + "; took: " + Util.tookHuman(start));
-        } catch (err) {
-            Log.error("AutoTest::handleTick(..) - ERROR for SHA: " + input.target.commitSHA + "; ERROR: " + err);
         }
     }
 }
