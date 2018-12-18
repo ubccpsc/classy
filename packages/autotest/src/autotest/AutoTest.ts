@@ -52,11 +52,12 @@ export abstract class AutoTest implements IAutoTest {
             this.docker = null;
         } else {
             const dockerHost = Config.getInstance().getProp(ConfigKey.dockerHost);
-            if (dockerHost.startsWith("https") || dockerHost.startsWith("http") || dockerHost.startsWith("tcp")) {
+            if (dockerHost !== null && (dockerHost.startsWith("https") || dockerHost.startsWith("http") || dockerHost.startsWith("tcp"))) {
                 const dockerUrl = new URL(dockerHost);
                 this.docker = new Docker({
                     host: dockerUrl.hostname,
                     port: dockerUrl.port,
+                    ca: fs.readFileSync("/etc/ssl/certs/ca-certificates.crt"),
                     cert: fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslCertPath)),
                     key: fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslKeyPath)),
                     version: "v1.30"
@@ -340,13 +341,14 @@ export abstract class AutoTest implements IAutoTest {
     private async handleTick(job: GradingJob) {
         const start = Date.now();
         const input = job.input;
+        let record = job.record;
 
         Log.info("AutoTest::handleTick(..) - start; delivId: " + input.delivId + "; SHA: " + input.target.commitSHA);
         Log.trace("AutoTest::handleTick(..) - input: " + JSON.stringify(input, null, 2));
 
         try {
             await job.prepare();
-            const record = await job.run(this.docker);
+            record = await job.run(this.docker);
 
             let score = -1;
             if (record.output.report !== null && typeof record.output.report.scoreOverall !== "undefined") {
@@ -368,11 +370,12 @@ export abstract class AutoTest implements IAutoTest {
             };
 
             await this.classPortal.sendGrade(gradePayload);
+        } catch (err) {
+            Log.error("AutoTest::handleTick(..) - ERROR for SHA: " + input.target.commitSHA + "; ERROR: " + err);
+        } finally {
             await this.handleExecutionComplete(record);
             Log.info("AutoTest::handleTick(..) - complete; delivId: " + input.delivId +
                 "; SHA: " + input.target.commitSHA + "; took: " + Util.tookHuman(start));
-        } catch (err) {
-            Log.error("AutoTest::handleTick(..) - ERROR for SHA: " + input.target.commitSHA + "; ERROR: " + err);
         }
     }
 }
