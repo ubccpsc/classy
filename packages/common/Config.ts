@@ -52,7 +52,7 @@ export enum ConfigKey {
     // autotest
     persistDir = "persistDir",
     hostDir = "hostDir",
-    dockerUid = "dockerUid",
+    dockerUser = "dockerUser",
     hostsAllow = "hostsAllow",
     dockerHost = "dockerHost",
     timeout = "timeout",
@@ -88,7 +88,7 @@ export default class Config {
                 hostDir:  process.env.HOST_DIR,
                 postback:   Boolean(process.env.AUTOTEST_POSTBACK),
                 persistDir: process.env.PERSIST_DIR,
-                dockerUid: process.env.UID,
+                dockerUser: process.env.USER,
                 hostsAllow: process.env.HOSTS_ALLOW,
                 dockerHost: process.env.DOCKER_HOST_URL,
 
