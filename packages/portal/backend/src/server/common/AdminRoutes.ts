@@ -34,6 +34,8 @@ import {AuditLabel, Person} from "../../Types";
 import IREST from "../IREST";
 import {CSVParser} from "./CSVParser";
 
+import * as Docker from "dockerode";
+
 export default class AdminRoutes implements IREST {
 
     private static ghc = new GitHubController(GitHubActions.getInstance());
@@ -68,6 +70,8 @@ export default class AdminRoutes implements IREST {
         server.del('/portal/admin/deliverable/:delivId', AdminRoutes.isAdmin, AdminRoutes.deleteDeliverable);
         server.del('/portal/admin/repository/:repoId', AdminRoutes.isAdmin, AdminRoutes.deleteRepository);
         server.del('/portal/admin/team/:teamId', AdminRoutes.isAdmin, AdminRoutes.deleteTeam);
+
+        server.get('portal/admin/images', AdminRoutes.isAdmin, AdminRoutes.getDockerImages);
 
         // TODO: unrelease repos
 
@@ -819,6 +823,15 @@ export default class AdminRoutes implements IREST {
 
         Log.info('AdminRoutes::performPostTeam(..) - team created: ' + team.id);
         return teamTrans;
+    }
+
+    public static async getDockerImages(req: restify.Request, res: restify.Response, next: restify.Next) {
+        // TODO @nickbradley handle Docker creation properly!
+        const docker = new Docker();
+        const images = await docker.listImages();
+        res.send(200, images);
+
+        return next();
     }
 
 }
