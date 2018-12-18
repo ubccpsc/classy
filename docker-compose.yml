@@ -30,15 +30,11 @@ services:
         expose:
             - ${AUTOTEST_PORT}
         restart: always
-        user: "0"  # Run as root; needs permission to interact with docker service
-        networks:
-            default:
-            grader:
-                ipv4_address: 172.28.2.0
+        user: "${UID}"
         volumes:
-            - "/var/run/docker.sock:/var/run/docker.sock"
             - "${HOST_DIR}:${PERSIST_DIR}"
-        privileged: true
+            - "${HOST_SSL_CERT_PATH}:${SSL_CERT_PATH}"
+            - "${HOST_SSL_KEY_PATH}:${SSL_KEY_PATH}"
     db:
         command: --quiet
         container_name: ${CONTAINER_NAME_DATABASE}
