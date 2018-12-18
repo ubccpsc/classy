@@ -60,7 +60,7 @@ export class GradingJob {
         await repo.checkout(this.input.target.commitSHA);
 
         // Change the permissions so that the grading container can read the files.
-        const user = Config.getInstance().getProp(ConfigKey.dockerUser);
+        const user = Config.getInstance().getProp(ConfigKey.dockerUid);
         await new Promise<void>((resolve, reject) => {
             exec(`chown -R ${user} ${this.path}`, (error) => {
                 if (error) {
@@ -75,7 +75,7 @@ export class GradingJob {
     public async run(docker: Docker): Promise<AutoTestResult> {
         const hostDir = Config.getInstance().getProp(ConfigKey.hostDir) + "/" + this.id;
         const container = await docker.createContainer({
-            User: Config.getInstance().getProp(ConfigKey.dockerUser),
+            User: Config.getInstance().getProp(ConfigKey.dockerUid),
             Image: this.input.containerConfig.dockerImage,
             Env: [
                 `ASSIGNMENT=${this.input.delivId}`,

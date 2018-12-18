@@ -31,7 +31,7 @@ services:
         expose:
             - ${AUTOTEST_PORT}
         restart: always
-        user: "${USER}"
+        user: "${UID}"
         volumes:
             - "${HOST_DIR}:${PERSIST_DIR}"
             - "${HOST_SSL_CERT_PATH}:${SSL_CERT_PATH}"
@@ -45,7 +45,7 @@ services:
             - "27017:27017"
         image: mongo:3-jessie
         restart: always
-        user: "${USER}"
+        user: "${UID}"
         volumes:
             - /var/opt/classy/db:/data/db
     portal:
@@ -65,14 +65,14 @@ services:
         ports:
             - 5000:${BACKEND_PORT}
         restart: always
-        user: "${USER}"
+        user: "${UID}"
         volumes:
             - "${HOST_SSL_CERT_PATH}:${SSL_CERT_PATH}"
             - "${HOST_SSL_KEY_PATH}:${SSL_KEY_PATH}"
     proxy:
         build:
             args:
-                - UID=${USER}
+                - UID
                 - SSL_CERT_PATH
                 - SSL_KEY_PATH
                 - BACKEND_PORT
@@ -84,7 +84,7 @@ services:
             - "80:8080"
             - "443:8443"
         restart: always
-        user: "${USER}"
+        user: "${UID}"
         volumes:
             - "${HOST_SSL_CERT_PATH}:${SSL_CERT_PATH}"
             - "${HOST_SSL_KEY_PATH}:${SSL_KEY_PATH}"
