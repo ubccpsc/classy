@@ -90,7 +90,7 @@ export class GradingJob {
                 ExtraHosts: [
                     Config.getInstance().getProp(ConfigKey.hostsAllow)
                 ],
-                NetworkMode: Config.getInstance().getProp(ConfigKey.dockerNet),
+                NetworkMode: "grading_net",
             }
         });
 

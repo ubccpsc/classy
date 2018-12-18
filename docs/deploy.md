@@ -190,6 +190,8 @@ The following software should be installed on the host before attempting to depl
 
     ```bash
     cd /opt/classy
+    # Create a subnet that the grading containers will attach to. This makes it easier to set up firewall rules (above).
+    docker network create --attachable --ip-range "172.28.5.0/24" --gateway "172.28.5.254" --subnet "172.28.0.0/16" grading_net
     docker-compose build
     docker-compose up --detach
     ```

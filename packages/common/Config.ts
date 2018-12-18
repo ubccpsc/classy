@@ -53,7 +53,6 @@ export enum ConfigKey {
     persistDir = "persistDir",
     hostDir = "hostDir",
     dockerUid = "dockerUid",
-    dockerNet = "dockerNet",
     hostsAllow = "hostsAllow",
     dockerHost = "dockerHost",
     timeout = "timeout",
@@ -90,7 +89,6 @@ export default class Config {
                 postback:   Boolean(process.env.AUTOTEST_POSTBACK),
                 persistDir: process.env.PERSIST_DIR,
                 dockerUid: process.env.UID,
-                dockerNet: process.env.GRADE_NET_NAME,
                 hostsAllow: process.env.HOSTS_ALLOW,
                 dockerHost: process.env.DOCKER_HOST_URL,
 
