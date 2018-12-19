@@ -1,4 +1,4 @@
-import {OnsFabElement, OnsSwitchElement} from "onsenui";
+import {OnsBackButtonElement, OnsButtonElement, OnsFabElement, OnsRadioElement, OnsSwitchElement} from "onsenui";
 import Log from "../../../../../common/Log";
 
 import {AutoTestConfigTransport, DeliverableTransport, DeliverableTransportPayload} from "../../../../../common/types/PortalTypes";
@@ -209,6 +209,8 @@ export class AdminDeliverablesTab extends AdminPage {
             defaultDate: new Date()
         };
 
+        let selectedDockerImage: string;
+
         if (deliv === null) {
             // new deliverable, set defaults
 
@@ -261,7 +263,7 @@ export class AdminDeliverablesTab extends AdminPage {
             this.setToggle('adminEditDeliverablePage-visible', deliv.visibleToStudents, this.isAdmin);
 
             this.setToggle('adminEditDeliverablePage-shouldAutoTest', deliv.shouldAutoTest, this.isAdmin);
-            this.setTextField('adminEditDeliverablePage-atDockerName', deliv.autoTest.dockerImage, this.isAdmin);
+            // this.setTextField('adminEditDeliverablePage-atDockerName', deliv.autoTest.dockerImage, this.isAdmin);
             this.setTextField('adminEditDeliverablePage-atContainerTimeout', deliv.autoTest.maxExecTime + '', this.isAdmin);
             this.setTextField('adminEditDeliverablePage-atStudentDelay', deliv.autoTest.studentDelay + '', this.isAdmin);
             this.setTextField('adminEditDeliverablePage-atRegressionIds', deliv.autoTest.regressionDelivIds.toString(), this.isAdmin);
@@ -269,9 +271,62 @@ export class AdminDeliverablesTab extends AdminPage {
 
             this.setTextField('adminEditDeliverablePage-rubric', JSON.stringify(deliv.rubric), this.isAdmin);
             this.setTextField('adminEditDeliverablePage-custom', JSON.stringify(deliv.custom), this.isAdmin);
+
+            selectedDockerImage = deliv.autoTest.dockerImage;
         }
 
         that.updateHiddenBlocks();
+
+        // This would be set when we build a new image on the Create New Image page
+        // We want to make sure we set the newly created image as selected
+        const newImageSha = UI.getCurrentPage().data.sha;
+        if (newImageSha) {
+            selectedDockerImage = newImageSha;
+        }
+        this.getDockerImages().then(function(images) {
+            that.bindImagesToTable(images, document.querySelector("#docker-image-list"), selectedDockerImage);
+        }).catch(function(err) {
+            UI.showErrorToast("Docker images: " + err);
+        });
+
+        (document.querySelector('#btnNewImage') as OnsButtonElement).onclick = function() {
+            UI.pushPage('createDockerImage.html'). then(function() {
+                let imageSha: string;
+                (document.querySelector("#create-docker-image-back") as OnsBackButtonElement).onClick = function() {
+                    UI.popPage({data: {sha: imageSha}});
+                };
+
+                (document.querySelector("#build-image-form") as HTMLFormElement).onsubmit = function() {
+                    const contextInput: HTMLInputElement = document.querySelector("#docker-image-context-input");
+                    const tagInput: HTMLInputElement = document.querySelector("#docker-image-tag-input");
+                    const submit: HTMLButtonElement = document.querySelector("#build-image-button");
+                    const outputArea: HTMLDivElement = document.querySelector("#docker-image-build-output");
+
+                    const context = contextInput.value;
+                    const tag = 'grader' + (tagInput.value ? ':' + tagInput.value : '');
+
+                    contextInput.disabled = true;
+                    tagInput.disabled = true;
+                    submit.disabled = true;
+
+                    UI.showModal();
+
+                    that.buildDockerImage(context, tag, outputArea).then(function(sha: string) {
+                        imageSha = sha;
+                        UI.hideModal();
+                    }).catch(async function(err: Error) {
+                        await UI.showAlert(err.message);
+                        contextInput.disabled = false;
+                        tagInput.disabled = false;
+                        submit.disabled = false;
+                        UI.hideModal();
+                    });
+                    return false;
+                };
+            }).catch(function(err) {
+                Log.error("UI::pushPage(..) - ERROR: " + err.message);
+            });
+        };
     }
 
     private setTextField(fieldName: string, textValue: string, editable: boolean) {
@@ -318,7 +373,7 @@ export class AdminDeliverablesTab extends AdminPage {
         const visibleToStudents = UI.getToggleValue('adminEditDeliverablePage-visible');
 
         const shouldAutoTest = UI.getToggleValue('adminEditDeliverablePage-shouldAutoTest');
-        const dockerImage = UI.getTextFieldValue('adminEditDeliverablePage-atDockerName');
+        const dockerImage = this.readDockerImage('docker-image');
         const maxExecTime = Number(UI.getTextFieldValue('adminEditDeliverablePage-atContainerTimeout'));
         const studentDelay = Number(UI.getTextFieldValue('adminEditDeliverablePage-atStudentDelay'));
 
@@ -429,6 +484,16 @@ export class AdminDeliverablesTab extends AdminPage {
         }
     }
 
+    private readDockerImage(fieldName: string): string {
+        const checkedRadio: OnsRadioElement = document.querySelector('input[name="' + fieldName + '"]:checked');
+        if (!checkedRadio) {
+            return null;
+        }
+        const label = document.querySelector('label[for=' + checkedRadio.id + ']');
+        const sha = label.firstElementChild.firstElementChild.innerHTML;
+        return sha;
+    }
+
     public static async getDeliverables(remote: string): Promise<DeliverableTransport[]> {
         try {
             Log.info("AdminDeliverablesTab::getDeliverables( .. ) - start");
@@ -458,5 +523,98 @@ export class AdminDeliverablesTab extends AdminPage {
             AdminView.showError("Getting deliverables failed: " + err.message);
         }
         return [];
+    }
+
+    private async buildDockerImage(context: string, tag: string, output: HTMLDivElement): Promise<string> {
+        try {
+            Log.info("AdminDeliverablesTab::buildDockerImage( .. ) - start");
+            const headers = AdminView.getOptions().headers;
+            const remote = this.remote;
+            return new Promise<string>(function(resolve, reject) {
+                const xhr = new XMLHttpRequest();
+                let lines: string[] = [];
+                let lastIndex = 0;
+                xhr.onprogress = function() {
+                    const currIndex = xhr.responseText.length;
+                    if (lastIndex === currIndex) {
+                        return;
+                    }
+                    const chunk = xhr.responseText.substring(lastIndex, currIndex);
+                    lastIndex = currIndex;
+
+                    const chunkLines = chunk.split("\n").filter((s) => s !== "").map((s) => JSON.parse(s).stream.trim());
+                    output.innerText += chunkLines.join("\n");
+                    lines = lines.concat(chunkLines);
+                };
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === XMLHttpRequest.DONE) {
+                        if (xhr.status === 200) {
+                            const sha = lines[lines.length - 2].replace("Successfully built ", "");
+                            // const tag = lines[lines.length - 1].replace("Successfully tagged ", "");
+                            resolve(sha);
+                        } else {
+                            reject(xhr.responseText);
+                        }
+                    }
+                };
+                xhr.open('POST', remote + '/portal/admin/image');
+                for (const [header, value] of Object.entries(headers)) {
+                    xhr.setRequestHeader(header, value);
+                }
+                xhr.send(JSON.stringify({remote: context, tag: tag}));
+            });
+        } catch (err) {
+            AdminView.showError("An error occurred making request: " + err.message);
+        }
+    }
+
+    private async getDockerImages(): Promise<any[]> {
+        Log.info("AdminDeliverablesTab::getDockerImages( .. ) - start");
+        const start = Date.now();
+        const options = AdminView.getOptions();
+        const url = this.remote + '/portal/admin/images';
+        const response = await fetch(url, options);
+
+        if (response.status === 200) {
+            Log.trace('AdminDeliverablesTab::getDockerImages(..) - 200 received');
+            const json = await response.json();
+            if (Array.isArray(json)) {
+                Log.trace('AdminDeliverablesTab::getDockerImages(..)  - worked; took: ' + UI.took(start));
+                return json;
+            } else {
+                Log.trace('AdminDeliverablesTab::getDockerImages(..)  - ERROR Expected array; got ' + json);
+                throw new Error('Invalid response body format');
+            }
+        } else {
+            Log.trace('AdminDeliverablesTab::getDockerImages(..)  - !200 received: ' + response.status);
+            throw await response.text();
+        }
+    }
+
+    private bindImagesToTable(images: any[], table: Element, selected?: string): void {
+        const frag = document.createDocumentFragment();
+        let idxId = 1;
+        for (const image of images) {
+            const id = image.Id.substring(7, 19); // Strip off "sha256:" and show first 12 characters
+            const tag = image.RepoTags; // [image.RepoTags.length - 1]; // Only use the last assigned tag
+            const created = new Date(image.Created * 1000); // Convert the Unix timestamp in seconds to milliseconds
+            const e = document.createRange().createContextualFragment(`
+                <ons-list-item tappable>
+                    <label class="left">
+                        <ons-radio name="docker-image" input-id="radio-${idxId}" ${selected === id ? "checked" : ""}></ons-radio>
+                    </label>
+                    <label for="radio-${idxId}" class="center">
+                        <ons-row>
+                            <ons-col>${id}</ons-col>
+                            <ons-col>${tag}</ons-col>
+                            <ons-col>${created}</ons-col>
+                        </ons-row>
+                    </label>
+                </ons-list-item>
+                `);
+            frag.appendChild(e);
+            idxId++;
+        }
+        table.insertBefore(frag, table.lastChild);
     }
 }

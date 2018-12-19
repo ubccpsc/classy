@@ -36,19 +36,6 @@ export class AdminConfigTab extends AdminPage {
 
         await this.deliverablesPage.init(opts);
 
-        const images = await this.getImageList();
-        that.bindImagesToTable(images, document.querySelector("#docker-image-list"));
-
-        (document.querySelector('#btnNewImage') as OnsButtonElement).onclick = function(evt) {
-            const nav = document.querySelector('#dockerConfigManager');
-            nav.pushPage('createDockerImage.html');
-            nav.addEventListener("postpop", function(event) {
-                const sha = document.querySelector('#dockerConfigManager').topPage.data.sha;
-                getImageList(sha);
-
-            });
-        };
-
         (document.querySelector('#adminSubmitClasslist') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - upload classlist pressed');
             evt.stopPropagation(); // prevents list item expansion
@@ -173,35 +160,6 @@ export class AdminConfigTab extends AdminPage {
             }).catch(function(err) {
                 Log.info('AdminConfigTab::handleAdminConfig(..) - perform withdraw pressed; ERROR: ' + err.message);
             });
-        };
-
-        (document.querySelector("#build-image-form") as OnsButtonElement).onclick = function(evt) {
-            const modal = document.querySelector('ons-modal');
-            const contextInput = document.querySelector("#docker-image-context-input");
-            const tagInput = document.querySelector("#docker-image-tag-input");
-            const submit = document.querySelector("#build-image-button");
-            const outputArea = document.querySelector("#docker-image-build-output");
-
-            const context = contextInput.value;
-            const tag = tagInput.value;
-
-            contextInput.disabled = true;
-            tagInput.disabled = true;
-            submit.disabled = true;
-
-            modal.show();
-
-            that.buildImage(context, tag, outputArea).then(function(sha) {
-                document.querySelector("#create-docker-image-back").options = {data: {sha}};
-                modal.hide();
-            }).catch(function(err) {
-                // ons.notification.alert(err);
-                contextInput.disabled = false;
-                tagInput.disabled = false;
-                submit.disabled = false;
-                modal.hide();
-            });
-            return false;
         };
 
         UI.showModal("Retriving config / deliverable details.");
@@ -542,86 +500,4 @@ export class AdminConfigTab extends AdminPage {
         Log.trace('AdminConfigTab::releaseDeliverablePressed(..) - done; took: ' + UI.took(start));
     }
 
-    private async buildImage(context: string, tag: string, output: Element): Promise<string> {
-        return new Promise<string>(function(resolve, reject) {
-            let lines: string[] = [];
-            let lastIndex = 0;
-            const httpRequest = new XMLHttpRequest();
-            httpRequest.onprogress = function() {
-                const currIndex = httpRequest.responseText.length;
-                if (lastIndex === currIndex) {
-                    return;
-                }
-                const chunk = httpRequest.responseText.substring(lastIndex, currIndex);
-                lastIndex = currIndex;
-
-                const chunkLines = chunk.split("\n").filter((s) => s !== "").map((s) => JSON.parse(s).stream.trim());
-                output.innerText += chunkLines.join("\n");
-                lines = lines.concat(chunkLines);
-            };
-            httpRequest.onreadystatechange = function() {
-                if (httpRequest.readyState === XMLHttpRequest.DONE) {
-                    if (httpRequest.status === 200) {
-                        const sha = lines[lines.length - 2].replace("Successfully built ", "");
-                        // const tag = lines[lines.length - 1].replace("Successfully tagged ", "");
-                        resolve(sha);
-                    } else {
-                        reject('There was a problem with the request: ' + httpRequest.status);
-                    }
-                }
-            };
-            httpRequest.open('POST', '/image');
-            httpRequest.send(JSON.stringify({remote: context, tag: tag}));
-        });
-    }
-
-    private async getImageList(): Promise<any[]> {
-        return new Promise(function(resolve, reject) {
-            const httpRequest = new XMLHttpRequest();
-            httpRequest.onreadystatechange = function() {
-                if (httpRequest.readyState === XMLHttpRequest.DONE) {
-                    if (httpRequest.status === 200) {
-                        let images: any[];
-                        try {
-                            images = JSON.parse(httpRequest.responseText);
-                            resolve(images);
-                        } catch (err) {
-                            reject(err);
-                        }
-                    } else {
-                        reject('There was a problem with the request: ' + httpRequest.status);
-                    }
-                }
-            };
-            httpRequest.open('GET', '/portal/admin/images');
-            httpRequest.send();
-        });
-    }
-
-    private bindImagesToTable(images: any[], table: Element, selected?: string): void {
-        const frag = document.createDocumentFragment();
-        let idxId = 1;
-        for (const image of images) {
-            const id = image.Id.substring(7, 19); // Strip off "sha256:" and show first 12 characters
-            const tag = image.RepoTags[image.RepoTags.length - 1]; // Only use the last assigned tag
-            const created = new Date(image.Created * 1000); // Convert the Unix timestamp in seconds to milliseconds
-            const e = document.createRange().createContextualFragment(`
-                <ons-list-item tappable>
-                    <label class="left">
-                        <ons-radio name="color" input-id="radio-${idxId}" ${selected === id ? "checked" : ""}></ons-radio>
-                    </label>
-                    <label for="radio-${idxId}" class="center">
-                        <ons-row>
-                            <ons-col>${id}</ons-col>
-                            <ons-col>${tag}</ons-col>
-                            <ons-col>${created}</ons-col>
-                        </ons-row>
-                    </label>
-                </ons-list-item>
-                `);
-            frag.appendChild(e);
-            idxId++;
-        }
-        table.insertBefore(frag, table.lastChild);
-    }
 }

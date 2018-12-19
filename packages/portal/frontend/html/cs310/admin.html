@@ -713,7 +713,7 @@
                                 <ons-list id="docker-image-list">
                                     <ons-list-item>
                                         <label class="left">
-                                            <ons-radio name="color" input-id="radio-0" disabled style=""></ons-radio>
+                                            <ons-radio name="docker-image" input-id="radio-0" disabled style=""></ons-radio>
                                         </label>
                                         <label for="radio-0" class="center">
                                             <ons-row>
@@ -831,17 +831,17 @@
                 </div>
             </ons-modal>
 
-            <form id="build-image-form">
+            <form id="build-image-form" >
                 <ons-list>
                     <ons-list-item expandable>
                         <div class="left settingIcon">
-                            <ons-icon icon="fa-cogs"></ons-icon>
+                            <ons-icon icon="fa-github"></ons-icon>
                         </div>
                         <div class="center settingLabel">
                             GitHub URL
                         </div>
                         <div class="right settingRight">
-                            <ons-input class="settingTextInput" id="docker-image-context-input" required></ons-input>
+                            <ons-input class="settingTextInput" id="docker-image-context-input" type="url" required></ons-input>
                         </div>
                         <div class="expandable-content">
                             See <a href="https://docs.docker.com/engine/reference/commandline/build/#git-repositories">docker build</a> documentation for details about how to construct the URL.
@@ -850,16 +850,16 @@
 
                     <ons-list-item expandable>
                         <div class="left settingIcon">
-                            <ons-icon icon="fa-cogs"></ons-icon>
+                            <ons-icon icon="fa-tag"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            Tag
+                            Version
                         </div>
                         <div class="right settingRight">
-                            <ons-input class="settingTextInput" id="docker-image-tag-input" required></ons-input>
+                            <ons-input class="settingTextInput" id="docker-image-tag-input"></ons-input>
                         </div>
                         <div class="expandable-content">
-                            Give the image a meaningful name.
+                            Optional. You can include the Git revision (commit or tag) for traceability.
                         </div>
                     </ons-list-item>
 
