@@ -151,10 +151,14 @@ export default class RouteHandler {
 
     public static async postDockerImage(req: restify.Request, res: restify.Response, next: restify.Next) {
         const docker = RouteHandler.getDocker();
+        const token = Config.getInstance().getProp(ConfigKey.githubDockerToken);
         try {
             const body = req.body;
-            const remote = body.remote;
             const t = body.tag;
+            let remote = body.remote;
+            if (token) {
+                remote = remote.replace("https://", "https://" + token + "@");
+            }
             const stream = await docker.buildImage(null, {remote, t});
             stream.on("error", (err: Error) => {
                 Log.error("Error building image. " + err.message);
