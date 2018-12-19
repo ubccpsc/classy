@@ -67,12 +67,9 @@ export default class AdminRoutes implements IREST {
         server.post('/portal/admin/provision', AdminRoutes.isAdmin, AdminRoutes.postProvision);
         server.post('/portal/admin/release', AdminRoutes.isAdmin, AdminRoutes.postRelease);
         server.post('/portal/admin/withdraw', AdminRoutes.isAdmin, AdminRoutes.postWithdraw);
-        server.post('/portal/admin/image', AdminRoutes.isAdmin, AdminRoutes.postDockerImage);
         server.del('/portal/admin/deliverable/:delivId', AdminRoutes.isAdmin, AdminRoutes.deleteDeliverable);
         server.del('/portal/admin/repository/:repoId', AdminRoutes.isAdmin, AdminRoutes.deleteRepository);
         server.del('/portal/admin/team/:teamId', AdminRoutes.isAdmin, AdminRoutes.deleteTeam);
-
-        server.get('portal/admin/images', AdminRoutes.isAdmin, AdminRoutes.getDockerImages);
 
         // TODO: unrelease repos
 
@@ -824,37 +821,5 @@ export default class AdminRoutes implements IREST {
 
         Log.info('AdminRoutes::performPostTeam(..) - team created: ' + team.id);
         return teamTrans;
-    }
-
-    public static async getDockerImages(req: restify.Request, res: restify.Response, next: restify.Next) {
-        // TODO @nickbradley handle Docker creation properly!
-        const docker = new Docker();
-        const images = await docker.listImages();
-        res.send(200, images);
-
-        return next();
-    }
-
-    public static async postDockerImage(req: restify.Request, res: restify.Response, next: restify.Next) {
-        // TODO @nickbradley handle Docker creation properly!
-        const docker = new Docker();
-        try {
-            const body = req.body;
-            const remote = body.remote;
-            const t = body.tag;
-            const stream = await docker.buildImage(null, {remote, t});
-            stream.on("error", (err: Error) => {
-                Log.error("Error building image. " + err.message);
-                res.send(500, "Error building image. " + err.message);
-            });
-            stream.on("end", () => {
-                Log.info("Finished building image.");
-            });
-            stream.pipe(res);
-        } catch (err) {
-            res.send(err.statusCode, err.message);
-        }
-
-        return next();
     }
 }

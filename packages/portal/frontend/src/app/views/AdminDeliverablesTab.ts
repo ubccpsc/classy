@@ -557,7 +557,7 @@ export class AdminDeliverablesTab extends AdminPage {
                         }
                     }
                 };
-                xhr.open('POST', remote + '/portal/admin/image');
+                xhr.open('POST', remote + '/portal/at/docker/image');
                 for (const [header, value] of Object.entries(headers)) {
                     xhr.setRequestHeader(header, value);
                 }
@@ -572,7 +572,7 @@ export class AdminDeliverablesTab extends AdminPage {
         Log.info("AdminDeliverablesTab::getDockerImages( .. ) - start");
         const start = Date.now();
         const options = AdminView.getOptions();
-        const url = this.remote + '/portal/admin/images';
+        const url = this.remote + '/portal/at/docker/images';
         const response = await fetch(url, options);
 
         if (response.status === 200) {
