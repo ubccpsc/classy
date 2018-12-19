@@ -34,8 +34,6 @@ import {AuditLabel, Person} from "../../Types";
 import IREST from "../IREST";
 import {CSVParser} from "./CSVParser";
 
-import * as Docker from "dockerode";
-
 export default class AdminRoutes implements IREST {
 
     private static ghc = new GitHubController(GitHubActions.getInstance());
