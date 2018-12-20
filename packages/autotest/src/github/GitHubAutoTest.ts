@@ -1,3 +1,4 @@
+import * as Docker from "dockerode";
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {AutoTestResult, IFeedbackGiven} from "../../../common/types/AutoTestTypes";
@@ -11,8 +12,6 @@ import {
 } from "../../../common/types/PortalTypes";
 import Util from "../../../common/Util";
 import {AutoTest} from "../autotest/AutoTest";
-
-import * as Docker from "dockerode";
 import {IClassPortal} from "../autotest/ClassPortal";
 import {IDataStore} from "../autotest/DataStore";
 import {GitHubService, IGitHubMessage} from "./GitHubService";
@@ -169,7 +168,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 return false;
             }
 
-            if (deliv.closeTimestamp < info.timestamp) {
+            // late is ok if lateAutoTest is true
+            if (deliv.closeTimestamp < info.timestamp || deliv.lateAutoTest === false) {
                 Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, deliverable closed to AutoTest.");
                 // closed
                 const msg = "This deliverable is closed to grading.";

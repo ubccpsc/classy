@@ -200,6 +200,11 @@ export interface AutoTestConfigTransport {
     openTimestamp: number;
 
     closeTimestamp: number;
+
+    /**
+     * Whether AutoTest can be invoked after the closeTimestamp has passed
+     */
+    lateAutoTest: boolean;
 }
 
 export interface AutoTestAuthPayload {

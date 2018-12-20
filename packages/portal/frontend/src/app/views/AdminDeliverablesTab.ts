@@ -453,7 +453,8 @@ export class AdminDeliverablesTab extends AdminPage {
             regressionDelivIds,
             custom: atCustom,
             openTimestamp,
-            closeTimestamp
+            closeTimestamp,
+            lateAutoTest
         };
 
         const deliv: DeliverableTransport = {
