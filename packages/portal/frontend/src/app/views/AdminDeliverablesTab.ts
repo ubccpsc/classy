@@ -6,7 +6,7 @@ import {AutoTestConfigTransport, DeliverableTransport, DeliverableTransportPaylo
 import {UI} from "../util/UI";
 import {AdminPage} from "./AdminPage";
 import {AdminView} from "./AdminView";
-import {DockerImage, DockerListImageView} from "./DockerListImageView";
+import {DockerListImageView} from "./DockerListImageView";
 
 // import flatpickr from "flatpickr";
 declare var flatpickr: any;
@@ -227,6 +227,7 @@ export class AdminDeliverablesTab extends AdminPage {
 
             this.setToggle('adminEditDeliverablePage-gradesReleased', false, this.isAdmin);
             this.setToggle('adminEditDeliverablePage-visible', false, this.isAdmin);
+            this.setToggle('adminEditDeliverablePage-lateAutoTest', false, this.isAdmin);
 
             this.setToggle('adminEditDeliverablePage-shouldAutoTest', true, this.isAdmin);
             this.setTextField('adminEditDeliverablePage-atContainerTimeout', '300', this.isAdmin);
@@ -252,6 +253,7 @@ export class AdminDeliverablesTab extends AdminPage {
             this.openPicker = flatpickr("#adminEditDeliverablePage-open", flatpickrOptions);
             flatpickrOptions.defaultDate = new Date(deliv.closeTimestamp);
             this.closePicker = flatpickr("#adminEditDeliverablePage-close", flatpickrOptions);
+            this.setToggle('adminEditDeliverablePage-lateAutoTest', deliv.lateAutoTest, this.isAdmin);
 
             this.setToggle('adminEditDeliverablePage-shouldProvision', deliv.shouldProvision, this.isAdmin);
             this.setTextField('adminEditDeliverablePage-importURL', deliv.importURL, this.isAdmin);
@@ -286,7 +288,7 @@ export class AdminDeliverablesTab extends AdminPage {
         }
         const list = document.querySelector("#docker-image-list");
         const dataSource = {
-            url: this.remote + '/portal/at/docker/images?filters=' + JSON.stringify({reference: ['grader']}),
+            url:     this.remote + '/portal/at/docker/images?filters=' + JSON.stringify({reference: ['grader']}),
             options: AdminView.getOptions()
         };
         const state = {
@@ -382,6 +384,7 @@ export class AdminDeliverablesTab extends AdminPage {
 
         const gradesReleased = UI.getToggleValue('adminEditDeliverablePage-gradesReleased');
         const visibleToStudents = UI.getToggleValue('adminEditDeliverablePage-visible');
+        const lateAutoTest = UI.getToggleValue('adminEditDeliverablePage-lateAutoTest');
 
         const shouldAutoTest = UI.getToggleValue('adminEditDeliverablePage-shouldAutoTest');
         const dockerImage = this.readDockerImage('docker-image');
@@ -450,7 +453,8 @@ export class AdminDeliverablesTab extends AdminPage {
             regressionDelivIds,
             custom: atCustom,
             openTimestamp,
-            closeTimestamp
+            closeTimestamp,
+            lateAutoTest
         };
 
         const deliv: DeliverableTransport = {
@@ -461,6 +465,7 @@ export class AdminDeliverablesTab extends AdminPage {
             closeTimestamp,
             onOpenAction:  '', // TODO: add this
             onCloseAction: '', // TODO: add this
+            lateAutoTest,
             shouldAutoTest,
             importURL,
             minTeamSize,

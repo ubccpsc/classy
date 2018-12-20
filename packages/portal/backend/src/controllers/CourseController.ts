@@ -1,26 +1,9 @@
-import * as rp from "request-promise-native";
-
-import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
-import {
-    AutoTestDashboardTransport,
-    AutoTestGradeTransport,
-    AutoTestResultSummaryTransport,
-    CourseTransport,
-    DeliverableTransport,
-    GradeTransport,
-    ProvisionTransport,
-    RepositoryTransport,
-    StudentTransport,
-    TeamTransport
-} from '../../../../common/types/PortalTypes';
-import Util from "../../../../common/Util";
-import {AuditLabel, Course, Deliverable, Grade, Person, PersonKind, Repository, Result, Team} from "../Types";
+import {ProvisionTransport} from '../../../../common/types/PortalTypes';
+import {Deliverable, Grade, Person} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
-import {DeliverablesController} from "./DeliverablesController";
-import {GitHubActions} from "./GitHubActions";
-import {GitHubController, IGitHubController} from "./GitHubController";
+import {IGitHubController} from "./GitHubController";
 import {GradesController} from "./GradesController";
 import {PersonController} from "./PersonController";
 import {RepositoryController} from "./RepositoryController";
@@ -76,7 +59,10 @@ export interface ICourseController {
     computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}>;
 }
 
-export abstract class CourseController implements ICourseController {
+/**
+ * This is a default course controller for courses that do not want to do anything unusual.
+ */
+export class CourseController implements ICourseController {
 
     protected dbc = DatabaseController.getInstance();
     protected pc = new PersonController();
@@ -117,7 +103,11 @@ export abstract class CourseController implements ICourseController {
     public handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean> {
         Log.info("CourseController::handleNewAutoTestGrade( " + deliv.id + ", " +
             newGrade.personId + ", " + newGrade.score + ", ... ) - start");
-        if ((existingGrade === null || newGrade.score >= existingGrade.score) && newGrade.timestamp <= deliv.closeTimestamp) {
+
+        const gradeIsLarger = (existingGrade === null || newGrade.score >= existingGrade.score);
+        const gradeBeforeDeadline = newGrade.timestamp <= deliv.closeTimestamp;
+
+        if (gradeIsLarger === true && gradeBeforeDeadline === true) {
             Log.trace("CourseController::handleNewAutoTestGrade( " + deliv.id + ", " +
                 newGrade.personId + ", " + newGrade.score + ", ... ) - returning true");
             return Promise.resolve(true);
@@ -128,7 +118,50 @@ export abstract class CourseController implements ICourseController {
         }
     }
 
-    public abstract computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}>;
+    public async computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}> {
+        Log.info('CourseController::computeNames( ' + deliv.id + ', ... ) - start');
+
+        if (people.length < 1) {
+            throw new Error("CourseController::computeNames( ... ) - must provide people");
+        }
+
+        // sort people alph by their id
+        people = people.sort(function compare(p1: Person, p2: Person) {
+                return p1.id.localeCompare(p2.id);
+            }
+        );
+
+        let postfix = '';
+        for (const person of people) {
+            postfix = postfix + '_' + person.githubId;
+        }
+
+        let tName = '';
+        if (deliv.teamPrefix.length > 0) {
+            tName = deliv.teamPrefix + '_' + deliv.id + postfix;
+        } else {
+            tName = deliv.id + postfix;
+        }
+
+        let rName = '';
+        if (deliv.repoPrefix.length > 0) {
+            rName = deliv.repoPrefix + '_' + deliv.id + postfix;
+        } else {
+            rName = deliv.id + postfix;
+        }
+
+        const db = DatabaseController.getInstance();
+        const team = await db.getTeam(tName);
+        const repo = await db.getRepository(rName);
+
+        if (team === null && repo === null) {
+            Log.info('CourseController::computeNames( ... ) - done; t: ' + tName + ', r: ' + rName);
+            return {teamName: tName, repoName: rName};
+        } else {
+            // TODO: should really verify that the existing teams contain the right people already
+            return {teamName: tName, repoName: rName};
+        }
+    }
 
     // NOTE: the default implementation is currently broken; do not use it.
     /**

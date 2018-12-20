@@ -83,7 +83,8 @@ export class AutoTestRoutes implements IREST {
                         regressionDelivIds: deliv.autotest.regressionDelivIds,
                         custom:             deliv.autotest.custom,
                         openTimestamp:      deliv.openTimestamp,
-                        closeTimestamp:     deliv.closeTimestamp
+                        closeTimestamp:     deliv.closeTimestamp,
+                        lateAutoTest:       deliv.lateAutoTest
                     };
                     payload = {success: at};
                     res.send(200, payload);
@@ -454,14 +455,14 @@ export class AutoTestRoutes implements IREST {
             const atHost = config.getProp(ConfigKey.autotestUrl);
             const url = atHost + ':' + config.getProp(ConfigKey.autotestPort) + req.href().replace("/portal/at", "");
             const options = {
-                uri:     url,
-                method:  'GET',
-                json:    true
+                uri:    url,
+                method: 'GET',
+                json:   true
             };
             const githubId = req.headers.user;
             const pc = new PersonController();
             const person = await pc.getGitHubPerson(githubId);
-            const privileges =  await new AuthController().personPriviliged(person);
+            const privileges = await new AuthController().personPriviliged(person);
             if (privileges.isAdmin) {
                 try {
                     const atResponse = await rp(options);
@@ -485,15 +486,15 @@ export class AutoTestRoutes implements IREST {
             const atHost = config.getProp(ConfigKey.autotestUrl);
             const url = atHost + ':' + config.getProp(ConfigKey.autotestPort) + '/docker/image';
             const options = {
-                uri:     url,
-                method:  'POST',
-                json:    true,
-                body: req.body
+                uri:    url,
+                method: 'POST',
+                json:   true,
+                body:   req.body
             };
             const githubId = req.headers.user;
             const pc = new PersonController();
             const person = await pc.getGitHubPerson(githubId);
-            const privileges =  await new AuthController().personPriviliged(person);
+            const privileges = await new AuthController().personPriviliged(person);
             if (privileges.isAdmin) {
                 try {
                     // Use native request library. See https://github.com/request/request-promise#api-in-detail.

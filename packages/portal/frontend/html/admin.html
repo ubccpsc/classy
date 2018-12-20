@@ -261,7 +261,7 @@
                     <div class="expandable-content">
                         Setting the default deliverable is only required for AutoTest. This lets the container know what tests
                         to run by default when a push is made. If you are not using AutoTest or do not want any tests to be run
-                        automatically, just leave this blank.
+                        automatically after a student push, just leave this blank.
                     </div>
                 </ons-list-item>
 
@@ -277,10 +277,11 @@
                     </div>
                     <div class="expandable-content">
                         Creates the repositories for any provisionable Deliverable using all of the settings specified in the deliverable
-                        page. This is an incremental function; you can release a deliverable several times as teams are formed, or after the
-                        class composition changes. It will also provision deliverables for all staff members who have previously logged into
-                        Classy (e.g., so they can see what the students see). This is a slow action (up to 30 seconds / repository) so do
-                        not leave this until the last second. Cannot be undone, so use this with care.
+                        page. This is an incremental function; you can provision a deliverable several times as teams are formed, or after
+                        the class composition changes. It will also provision deliverables for all staff members who have previously logged
+                        into Classy (e.g., so they can see what the students see). This is a slow action (up to 30 seconds / repository) so
+                        do not leave this until the last second, and make sure multiple of these requests are not running concurrently.
+                        Cannot be undone, so use this with care.
                     </div>
                 </ons-list-item>
 
@@ -377,8 +378,9 @@
                             <ons-input class="settingTextInput" id="adminEditDeliverablePage-name"></ons-input>
                         </div>
                         <div class="expandable-content">
-                            Deliverable Id. Cannot be changed. Deliverable Ids must consist of a string of lowercase letters, [a-z],
-                            followed by any number.
+                            Deliverable Id. <b>Cannot be changed.</b> Deliverable Ids must consist of only letters and numbers; no
+                            punctuation and
+                            no spaces are permitted.
                         </div>
                     </ons-list-item>
 
@@ -399,7 +401,7 @@
 
                     <ons-list-item expandable>
                         <div class="left settingIcon">
-                            <ons-icon icon="fa-graduation-cap"></ons-icon>
+                            <ons-icon icon="fa-eye"></ons-icon>
                         </div>
                         <div class="center settingLabel">
                             <span title="Visible to students.">Visible to students</span>
@@ -408,8 +410,24 @@
                             <ons-switch id="adminEditDeliverablePage-visible" modifier="list-item" onclick=""></ons-switch>
                         </div>
                         <div class="expandable-content">
-                            Whether the deliverable is visible to students. For instance, if a deliverable is really just a grading column
-                            they do not need to see.
+                            Whether the deliverable is visible to students in their grading sheet (independent from whether the grade has
+                            been released). This is useful for maintaining grade entries the students do not need to see.
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item style="display: flex;" expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-graduation-cap"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            <span title="Displays Grades in student grade view.">Grades Released</span>
+                        </div>
+                        <div class="right settingRight">
+                            <ons-switch id="adminEditDeliverablePage-gradesReleased" modifier="list-item" onclick=""></ons-switch>
+                        </div>
+                        <div class="expandable-content">
+                            Releases the grades to the students. This will make the value on the admin grading table visible on the student
+                            grade table.
                         </div>
                     </ons-list-item>
 
@@ -426,6 +444,7 @@
                         <div class="expandable-content">
                             This is a JSON object that captures extended rubric values.
                             It must be valid JSON (or {} if you do not want to set additional rubric elements).
+                            This should usually be just {}.
                         </div>
                     </ons-list-item>
 
@@ -434,7 +453,7 @@
                             <ons-icon icon="fa-cogs"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            Custom Deliverable parameters
+                            Custom deliverable parameters
                         </div>
                         <div class="right settingRight">
                             <ons-input class="settingTextInput" id="adminEditDeliverablePage-custom"></ons-input>
@@ -442,6 +461,7 @@
                         <div class="expandable-content">
                             This is a JSON object that will be stored along with the deliverable and can be used by custom course
                             controllers. It must be valid JSON (or {} if you do not want to pass any custom params).
+                            This should usually be just {}.
                         </div>
                     </ons-list-item>
 
@@ -486,9 +506,8 @@
                     </ons-list-item>
                     -->
 
-
                     <ons-list-header>Deliverable Dates</ons-list-header>
-                    <ons-list-item style="display: flex;">
+                    <ons-list-item style="display: flex;" expandable>
                         <div class="left settingIcon">
                             <ons-icon icon="ion-calendar"></ons-icon>
                         </div>
@@ -502,9 +521,12 @@
                                    placeholder="Select Date..">
                             </input>
                         </div>
+                        <div class="expandable-content">
+                            Students cannot invoke AutoTest prior to this date, although staff can.
+                        </div>
                     </ons-list-item>
 
-                    <ons-list-item style="display: flex;">
+                    <ons-list-item style="display: flex;" expandable>
                         <div class="left settingIcon">
                             <ons-icon icon="ion-calendar"></ons-icon>
                         </div>
@@ -518,17 +540,28 @@
                                    placeholder="Select Date..">
                             </input>
                         </div>
+                        <div class="expandable-content">
+                            Students cannot invoke AutoTest after to this date for grading, although they can invoke it without updating
+                            their grades with the option below.
+                        </div>
                     </ons-list-item>
 
-                    <ons-list-item style="display: flex;">
+                    <ons-list-item style="display: flex;" expandable>
                         <div class="left settingIcon">
-                            <ons-icon icon="fa-graduation-cap"></ons-icon>
+                            <ons-icon icon="fa-exchange-alt"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            <span title="Displays Grades for Deliverable underneath Student Area.">Grades Released</span>
+                            <span title="Allow invoking AutoTest after deadline">Allow late AutoTest</span>
                         </div>
                         <div class="right settingRight">
-                            <ons-switch id="adminEditDeliverablePage-gradesReleased" modifier="list-item" onclick=""></ons-switch>
+                            <ons-switch id="adminEditDeliverablePage-lateAutoTest" modifier="list-item" onclick=""></ons-switch>
+                        </div>
+                        <div class="expandable-content">
+                            This can be used to let the students run AutoTest <b>after</b> the close date has passed. By defauot this would
+                            NOT
+                            allow grades to be updated, but this is at the discretion of your custom course controller. It is customary for
+                            this to be false until a day or two after the close date has happened so students requesting grades on late
+                            deliverables are aware that the deadline has passed and is being enforced.
                         </div>
                     </ons-list-item>
 
@@ -568,7 +601,7 @@
                     <!--<ons-list-header>Name prefixes</ons-list-header>-->
                     <ons-list-item expandable>
                         <div class="left settingIcon">
-                            <ons-icon icon="fa-cloud"></ons-icon>
+                            <ons-icon icon="fa-autoprefixer"></ons-icon>
                         </div>
                         <div class="center settingLabel">
                             Repo Prefix
@@ -577,13 +610,13 @@
                             <ons-input class="settingTextInput" id="adminEditDeliverablePage-repoPrefix"></ons-input>
                         </div>
                         <div class="expandable-content">
-                            If any repositories are generated as a part of this deliverable, this prefix will be used when naming. Should
-                            not be empty; otherwise will revert to '&lt;delivId&gt;'.
+                            If any repositories are generated as a part of this deliverable, this prefix will be used when naming. Will
+                            default to '&lt;delivId&gt;_' if empty.
                         </div>
                     </ons-list-item>
                     <ons-list-item expandable>
                         <div class="left settingIcon">
-                            <ons-icon icon="fa-cloud"></ons-icon>
+                            <ons-icon icon="fa-autoprefixer"></ons-icon>
                         </div>
                         <div class="center settingLabel">
                             Team Prefix
@@ -592,19 +625,18 @@
                             <ons-input class="settingTextInput" id="adminEditDeliverablePage-teamPrefix"></ons-input>
                         </div>
                         <div class="expandable-content">
-                            If any teams are generated as a part of this deliverable, this prefix will be used when naming. Should not be
-                            empty; otherwise will revert to 't_&lt;delivId&gt;'.
+                            If any teams are generated as a part of this deliverable, this prefix will be used when naming. Will revert to '&lt;delivId&gt;_'
+                            if empty.
                         </div>
                     </ons-list-item>
 
-
                     <!--<ons-list-header>Default Team Options</ons-list-header>-->
-                    <ons-list-item style="display: flex;">
+                    <ons-list-item style="display: flex;" expandable>
                         <div class="left settingIcon">
                             <ons-icon icon="fa-user"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            <span title="The minimum number of students that are allowed in a team.">Minimum Size</span>
+                            <span>Minimum Size</span>
                         </div>
                         <div class="right settingRight">
                             <select id="adminEditDeliverablePage-minTeamSize" class="settingSelect">
@@ -618,13 +650,16 @@
                                 <option value="8">8</option>
                             </select>
                         </div>
+                        <div class="expandable-content">
+                            The minimum number of students that are allowed on student-formed team.
+                        </div>
                     </ons-list-item>
-                    <ons-list-item style="display: flex;">
+                    <ons-list-item style="display: flex;" expandable>
                         <div class="left settingIcon">
                             <ons-icon icon="fa-users"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            <span title="The maximum number of students that are allowed in a Team.">Maximum Size</span>
+                            <span>Maximum Size</span>
                         </div>
                         <div class="right settingRight">
                             <select id="adminEditDeliverablePage-maxTeamSize" class="settingSelect">
@@ -638,27 +673,36 @@
                                 <option value="8">8</option>
                             </select>
                         </div>
+                        <div class="expandable-content">
+                            The maximum number of students that are allowed on a student-formed team.
+                        </div>
                     </ons-list-item>
-                    <ons-list-item style="display: flex;">
+                    <ons-list-item style="display: flex;" expandable>
                         <div class="left settingIcon">
                             <ons-icon icon="fa-location-arrow"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            <span title="Enable if the Students for Team Generation and Student-made Teams must be in the same lab based on the Lab List.">Must Be In Same Lab</span>
+                            <span>Must Be In Same Lab</span>
                         </div>
                         <div class="right settingRight">
                             <ons-switch id="adminEditDeliverablePage-inSameLab" modifier="list-item" onclick=""></ons-switch>
                         </div>
+                        <div class="expandable-content">
+                            Enable if the Students for Team Generation and Student-made Teams must be in the same lab based on the Lab List.
+                        </div>
                     </ons-list-item>
-                    <ons-list-item style="display: flex;">
+                    <ons-list-item style="display: flex;" expandable>
                         <div class="left settingIcon">
                             <ons-icon icon="fa-plus-square"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            <span title="Enable if Students are allowed to creat their own team.">Students Make Teams</span>
+                            <span>Students Make Teams</span>
                         </div>
                         <div class="right settingRight">
                             <ons-switch id="adminEditDeliverablePage-studentsMakeTeams" modifier="list-item" onclick=""></ons-switch>
+                        </div>
+                        <div class="expandable-content">
+                            Enable if Students are allowed to create their own teams for this deliverable.
                         </div>
                     </ons-list-item>
                 </ons-list>
@@ -683,19 +727,19 @@
                     </ons-list>
                     <ons-list id="shouldAutoTestList" style="padding-bottom: 4.5em;">
                         <!--<ons-list-item expandable>-->
-                            <!--<div class="left settingIcon">-->
-                                <!--<ons-icon icon="fa-cloud"></ons-icon>-->
-                            <!--</div>-->
-                            <!--<div class="center settingLabel">-->
-                                <!--Docker Image Name-->
-                            <!--</div>-->
-                            <!--<div class="right settingRight">-->
-                                <!--<ons-input class="settingTextInput" id="adminEditDeliverablePage-atDockerName"></ons-input>-->
-                            <!--</div>-->
-                            <!--<div class="expandable-content">-->
-                                <!--AutoTest Docker Image name that knows how to execute this deliverable.-->
-                                <!--It must also know how to execute any regression deliverables, if any are specified.-->
-                            <!--</div>-->
+                        <!--<div class="left settingIcon">-->
+                        <!--<ons-icon icon="fa-cloud"></ons-icon>-->
+                        <!--</div>-->
+                        <!--<div class="center settingLabel">-->
+                        <!--Docker Image Name-->
+                        <!--</div>-->
+                        <!--<div class="right settingRight">-->
+                        <!--<ons-input class="settingTextInput" id="adminEditDeliverablePage-atDockerName"></ons-input>-->
+                        <!--</div>-->
+                        <!--<div class="expandable-content">-->
+                        <!--AutoTest Docker Image name that knows how to execute this deliverable.-->
+                        <!--It must also know how to execute any regression deliverables, if any are specified.-->
+                        <!--</div>-->
                         <!--</ons-list-item>-->
 
 
@@ -735,8 +779,6 @@
                                 </ons-list-item>
                             </div>
                         </ons-list-item>
-
-
 
 
                         <ons-list-item expandable>
@@ -826,12 +868,13 @@
             <ons-modal direction="up">
                 <div style="text-align: center">
                     <p>
-                        <ons-icon icon="md-spinner" size="28px" spin></ons-icon> Building...
+                        <ons-icon icon="md-spinner" size="28px" spin></ons-icon>
+                        Building...
                     </p>
                 </div>
             </ons-modal>
 
-            <form id="build-image-form" >
+            <form id="build-image-form">
                 <ons-list>
                     <ons-list-item expandable>
                         <div class="left settingIcon">
@@ -844,7 +887,9 @@
                             <ons-input class="settingTextInput" id="docker-image-context-input" type="url" required></ons-input>
                         </div>
                         <div class="expandable-content">
-                            See <a href="https://docs.docker.com/engine/reference/commandline/build/#git-repositories">docker build</a> documentation for details about how to construct the URL. The URL should start with "https://". If the repository is public, set GH_DOCKER_TOKEN in the .env. Do not include the token in the URL.
+                            See <a href="https://docs.docker.com/engine/reference/commandline/build/#git-repositories">docker build</a>
+                            documentation for details about how to construct the URL. The URL should start with "https://". If the
+                            repository is public, set GH_DOCKER_TOKEN in the .env. Do not include the token in the URL.
                         </div>
                     </ons-list-item>
 

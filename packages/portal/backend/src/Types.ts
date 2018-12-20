@@ -102,6 +102,7 @@ export interface Deliverable {
         // mainFilePath?: any // AssignmentController // TODO: make into assignment.mainFilePath
     };
 
+    lateAutoTest: boolean; // whether the deliv can be executed after the deadline
     shouldAutoTest: boolean; // whether the deliv will use AutoTest
     autotest: AutoTestConfig;
 

@@ -91,6 +91,7 @@ export interface DeliverableTransport {
     onCloseAction: string; // will change to something else
     URL: string; // student-facing description
     gradesReleased: boolean;
+    lateAutoTest: boolean;
 
     shouldAutoTest: boolean;
     autoTest: AutoTestConfigTransport; // autoTest options
@@ -199,6 +200,11 @@ export interface AutoTestConfigTransport {
     openTimestamp: number;
 
     closeTimestamp: number;
+
+    /**
+     * Whether AutoTest can be invoked after the closeTimestamp has passed
+     */
+    lateAutoTest: boolean;
 }
 
 export interface AutoTestAuthPayload {

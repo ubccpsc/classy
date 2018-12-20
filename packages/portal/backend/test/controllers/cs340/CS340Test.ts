@@ -76,6 +76,7 @@ export class CS340Test {
             teamSameLab:       false,
             teamStudentsForm:  false,
             teamPrefix:        Test.ASSIGNID0 + "_",
+            lateAutoTest:      false,
             shouldAutoTest:    true,
             autotest:          {
                 dockerImage:        'testImage',
@@ -152,6 +153,7 @@ export class CS340Test {
             teamSameLab:       false,
             teamStudentsForm:  false,
             teamPrefix:        "",
+            lateAutoTest:      false,
             shouldAutoTest:    true,
             autotest:          {
                 dockerImage:        'testImage',
