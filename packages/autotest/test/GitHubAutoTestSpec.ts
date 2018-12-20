@@ -62,7 +62,7 @@ describe("GitHubAutoTest", () => {
         await data.clearData();
 
         // create a new AutoTest every test (allows us to mess with methods and make sure they are called)
-        at = new GitHubAutoTest(data, portal); // , gh);
+        at = new GitHubAutoTest(data, portal, null); // , gh);
     });
 
     afterEach(async function() {

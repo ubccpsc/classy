@@ -210,6 +210,16 @@
     "@types/node" "*"
     "@types/tough-cookie" "*"
 
+"@types/request@2.48.1":
+  version "2.48.1"
+  resolved "https://registry.yarnpkg.com/@types/request/-/request-2.48.1.tgz#e402d691aa6670fbbff1957b15f1270230ab42fa"
+  integrity sha512-ZgEZ1TiD+KGA9LiAAPPJL68Id2UWfeSO62ijSXZjFJArVV+2pKcsVHmrcu+1oiE3q6eDGiFiSolRc4JHoerBBg==
+  dependencies:
+    "@types/caseless" "*"
+    "@types/form-data" "*"
+    "@types/node" "*"
+    "@types/tough-cookie" "*"
+
 "@types/restify@^5.0.7":
   version "5.0.7"
   resolved "https://registry.yarnpkg.com/@types/restify/-/restify-5.0.7.tgz#09b736ad96af04814f9501b7b50e84dabcd77228"

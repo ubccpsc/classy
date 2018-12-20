@@ -36,36 +36,17 @@ export interface IAutoTest {
 export abstract class AutoTest implements IAutoTest {
     protected readonly dataStore: IDataStore;
     protected readonly classPortal: IClassPortal = null;
+    protected readonly docker: Docker;
 
     private regressionQueue = new Queue('regression', 1);
     private standardQueue = new Queue('standard', 2);
     private expressQueue = new Queue('express', 1);
-    private readonly docker: Docker;
 
     // noinspection TypeScriptAbstractClassConstructorCanBeMadeProtected
-    constructor(dataStore: IDataStore, classPortal: IClassPortal) {
+    constructor(dataStore: IDataStore, classPortal: IClassPortal, docker: Docker) {
         this.dataStore = dataStore;
         this.classPortal = classPortal;
-
-        if (Config.getInstance().getProp(ConfigKey.name) === "classytest") {
-            // Running tests; don't need to connect to the Docker daemon
-            this.docker = null;
-        } else {
-            const dockerHost = Config.getInstance().getProp(ConfigKey.dockerHost);
-            if (dockerHost !== null && (dockerHost.startsWith("https") || dockerHost.startsWith("http") || dockerHost.startsWith("tcp"))) {
-                const dockerUrl = new URL(dockerHost);
-                this.docker = new Docker({
-                    host: dockerUrl.hostname,
-                    port: dockerUrl.port,
-                    ca: fs.readFileSync("/etc/ssl/certs/ca-certificates.crt"),
-                    cert: fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslCertPath)),
-                    key: fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslKeyPath)),
-                    version: "v1.30"
-                });
-            } else {
-                this.docker = new Docker();
-            }
-        }
+        this.docker = docker;
     }
 
     public addToStandardQueue(input: ContainerInput): void {

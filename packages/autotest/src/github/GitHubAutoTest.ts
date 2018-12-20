@@ -12,6 +12,7 @@ import {
 import Util from "../../../common/Util";
 import {AutoTest} from "../autotest/AutoTest";
 
+import * as Docker from "dockerode";
 import {IClassPortal} from "../autotest/ClassPortal";
 import {IDataStore} from "../autotest/DataStore";
 import {GitHubService, IGitHubMessage} from "./GitHubService";
@@ -39,8 +40,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
     // private github: IGitHubService = null;
 
-    constructor(dataStore: IDataStore, portal: IClassPortal) {
-        super(dataStore, portal);
+    constructor(dataStore: IDataStore, portal: IClassPortal, docker: Docker) {
+        super(dataStore, portal, docker);
         // this.github = github;
     }
 

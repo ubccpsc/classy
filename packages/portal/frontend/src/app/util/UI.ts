@@ -44,10 +44,10 @@ export class UI {
         }
     }
 
-    public static popPage() {
+    public static popPage(options?: any) {
         const nav = document.querySelector('#myNavigator') as any; // as ons.OnsNavigatorElement;
         if (nav !== null) {
-            nav.popPage();
+            nav.popPage(options);
         } else {
             Log.error('UI::popPage(..) - WARN: nav is null');
         }
@@ -137,12 +137,12 @@ export class UI {
     public static showError(failure: any) { // FailurePayload
         Log.error("UI::showError(..) - failure: " + JSON.stringify(failure));
         if (typeof failure === 'string') {
-            UI.showAlert(failure);
+            return UI.showAlert(failure);
         } else if (typeof failure.failure !== 'undefined') {
-            UI.showAlert(failure.failure.message);
+            return UI.showAlert(failure.failure.message);
         } else {
             Log.error("Unknown message: " + JSON.stringify(failure));
-            UI.showAlert("Action unsuccessful.");
+            return UI.showAlert("Action unsuccessful.");
         }
     }
 
@@ -261,7 +261,7 @@ export class UI {
     }
 
     public static showAlert(message: string) {
-        ons.notification.alert(message);
+        return ons.notification.alert(message);
     }
 
     // SDMM: move

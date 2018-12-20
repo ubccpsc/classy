@@ -37,7 +37,7 @@ export enum ConfigKey {
     githubAPI = "githubAPI",
     githubBotName = "githubBotName",
     githubBotToken = "githubBotToken",
-
+    githubDockerToken = "githubDockerToken",
     githubClientId = "githubClientId",
     githubClientSecret = "githubClientSecret",
     githubHost = "githubHost",
@@ -109,6 +109,7 @@ export default class Config {
                 githubBotToken:     process.env.GH_BOT_TOKEN,
                 githubClientId:     process.env.GH_CLIENT_ID,
                 githubClientSecret: process.env.GH_CLIENT_SECRET,
+                githubDockerToken:  process.env.GH_DOCKER_TOKEN,
 
                 autotestUrl:    process.env.AUTOTEST_URL,
                 autotestPort:   process.env.AUTOTEST_PORT,

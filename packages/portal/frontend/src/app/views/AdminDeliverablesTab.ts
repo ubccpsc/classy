@@ -1,4 +1,4 @@
-import {OnsFabElement, OnsSwitchElement} from "onsenui";
+import {OnsBackButtonElement, OnsButtonElement, OnsFabElement, OnsRadioElement, OnsSwitchElement} from "onsenui";
 import Log from "../../../../../common/Log";
 
 import {AutoTestConfigTransport, DeliverableTransport, DeliverableTransportPayload} from "../../../../../common/types/PortalTypes";
@@ -6,6 +6,7 @@ import {AutoTestConfigTransport, DeliverableTransport, DeliverableTransportPaylo
 import {UI} from "../util/UI";
 import {AdminPage} from "./AdminPage";
 import {AdminView} from "./AdminView";
+import {DockerImage, DockerListImageView} from "./DockerListImageView";
 
 // import flatpickr from "flatpickr";
 declare var flatpickr: any;
@@ -209,6 +210,8 @@ export class AdminDeliverablesTab extends AdminPage {
             defaultDate: new Date()
         };
 
+        let selectedDockerImage: string;
+
         if (deliv === null) {
             // new deliverable, set defaults
 
@@ -261,7 +264,7 @@ export class AdminDeliverablesTab extends AdminPage {
             this.setToggle('adminEditDeliverablePage-visible', deliv.visibleToStudents, this.isAdmin);
 
             this.setToggle('adminEditDeliverablePage-shouldAutoTest', deliv.shouldAutoTest, this.isAdmin);
-            this.setTextField('adminEditDeliverablePage-atDockerName', deliv.autoTest.dockerImage, this.isAdmin);
+            // this.setTextField('adminEditDeliverablePage-atDockerName', deliv.autoTest.dockerImage, this.isAdmin);
             this.setTextField('adminEditDeliverablePage-atContainerTimeout', deliv.autoTest.maxExecTime + '', this.isAdmin);
             this.setTextField('adminEditDeliverablePage-atStudentDelay', deliv.autoTest.studentDelay + '', this.isAdmin);
             this.setTextField('adminEditDeliverablePage-atRegressionIds', deliv.autoTest.regressionDelivIds.toString(), this.isAdmin);
@@ -269,9 +272,72 @@ export class AdminDeliverablesTab extends AdminPage {
 
             this.setTextField('adminEditDeliverablePage-rubric', JSON.stringify(deliv.rubric), this.isAdmin);
             this.setTextField('adminEditDeliverablePage-custom', JSON.stringify(deliv.custom), this.isAdmin);
+
+            selectedDockerImage = deliv.autoTest.dockerImage;
         }
 
         that.updateHiddenBlocks();
+
+        // This would be set when we build a new image on the Create New Image page
+        // We want to make sure we set the newly created image as selected
+        const newImageSha = UI.getCurrentPage().data.sha;
+        if (newImageSha) {
+            selectedDockerImage = newImageSha;
+        }
+        const list = document.querySelector("#docker-image-list");
+        const dataSource = {
+            url: this.remote + '/portal/at/docker/images?filters=' + JSON.stringify({reference: ['grader']}),
+            options: AdminView.getOptions()
+        };
+        const state = {
+            checkedItemId: selectedDockerImage
+        };
+        new DockerListImageView(list).bind(dataSource, state).catch(function(err: Error) {
+            UI.showErrorToast("Docker images: " + err);
+        });
+
+        (document.querySelector('#btnNewImage') as OnsButtonElement).onclick = function() {
+            UI.pushPage('createDockerImage.html').then(function() {
+                let imageSha: string;
+                (document.querySelector("#create-docker-image-back") as OnsBackButtonElement).onClick = function() {
+                    UI.popPage({data: {sha: imageSha}});
+                };
+
+                (document.querySelector("#build-image-form") as HTMLFormElement).onsubmit = function() {
+                    const contextInput: HTMLInputElement = document.querySelector("#docker-image-context-input");
+                    const tagInput: HTMLInputElement = document.querySelector("#docker-image-tag-input");
+                    const fileInput: HTMLInputElement = document.querySelector("#docker-image-file-input");
+                    const submit: HTMLButtonElement = document.querySelector("#build-image-button");
+                    const outputArea: HTMLDivElement = document.querySelector("#docker-image-build-output");
+
+                    const context = contextInput.value;
+                    const tag = 'grader' + (tagInput.value ? ':' + tagInput.value : '');
+                    const file = fileInput.value;
+
+                    contextInput.disabled = true;
+                    tagInput.disabled = true;
+                    fileInput.disabled = true;
+                    submit.disabled = true;
+
+                    UI.showModal();
+
+                    that.buildDockerImage(context, tag, file, outputArea).then(function(sha: string) {
+                        imageSha = sha;
+                        UI.hideModal();
+                    }).catch(async function(err: Error) {
+                        await UI.showAlert(err.message);
+                        contextInput.disabled = false;
+                        tagInput.disabled = false;
+                        fileInput.disabled = false;
+                        submit.disabled = false;
+                        UI.hideModal();
+                    });
+                    return false;
+                };
+            }).catch(function(err) {
+                Log.error("UI::pushPage(..) - ERROR: " + err.message);
+            });
+        };
     }
 
     private setTextField(fieldName: string, textValue: string, editable: boolean) {
@@ -318,7 +384,7 @@ export class AdminDeliverablesTab extends AdminPage {
         const visibleToStudents = UI.getToggleValue('adminEditDeliverablePage-visible');
 
         const shouldAutoTest = UI.getToggleValue('adminEditDeliverablePage-shouldAutoTest');
-        const dockerImage = UI.getTextFieldValue('adminEditDeliverablePage-atDockerName');
+        const dockerImage = this.readDockerImage('docker-image');
         const maxExecTime = Number(UI.getTextFieldValue('adminEditDeliverablePage-atContainerTimeout'));
         const studentDelay = Number(UI.getTextFieldValue('adminEditDeliverablePage-atStudentDelay'));
 
@@ -429,6 +495,16 @@ export class AdminDeliverablesTab extends AdminPage {
         }
     }
 
+    private readDockerImage(fieldName: string): string {
+        const checkedRadio: OnsRadioElement = document.querySelector('input[name="' + fieldName + '"]:checked');
+        if (!checkedRadio) {
+            return null;
+        }
+        const label = document.querySelector('label[for=' + checkedRadio.id + ']');
+        const sha = label.firstElementChild.firstElementChild.innerHTML;
+        return sha;
+    }
+
     public static async getDeliverables(remote: string): Promise<DeliverableTransport[]> {
         try {
             Log.info("AdminDeliverablesTab::getDeliverables( .. ) - start");
@@ -458,5 +534,67 @@ export class AdminDeliverablesTab extends AdminPage {
             AdminView.showError("Getting deliverables failed: " + err.message);
         }
         return [];
+    }
+
+    private async buildDockerImage(context: string, tag: string, file: string, output: HTMLDivElement): Promise<string> {
+        try {
+            Log.info("AdminDeliverablesTab::buildDockerImage( .. ) - start");
+            const headers = AdminView.getOptions().headers;
+            const remote = this.remote;
+            return new Promise<string>(function(resolve, reject) {
+                const xhr = new XMLHttpRequest();
+                let lines: string[] = [];
+                let lastIndex = 0;
+                xhr.onprogress = function() {
+                    try {
+                        const currIndex = xhr.responseText.length;
+                        if (lastIndex === currIndex) {
+                            return;
+                        }
+                        const chunk = xhr.responseText.substring(lastIndex, currIndex);
+                        lastIndex = currIndex;
+
+                        const chunkLines = chunk.split("\n")
+                            .filter((s) => s !== "")
+                            .map((s) => JSON.parse(s))
+                            .filter((s) => s.hasOwnProperty("stream"))
+                            .map((s) => s.stream.trim());
+                        output.innerText += chunkLines.join("\n");
+                        output.scrollTop = output.scrollHeight;
+                        lines = lines.concat(chunkLines);
+                    } catch (err) {
+                        Log.warn("AdminDeliverablesTab::buildDockerImage(..) - ERROR Processing build output log stream. " + err);
+                    }
+                };
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === XMLHttpRequest.DONE) {
+                        if (xhr.status === 200) {
+                            if (lines.length > 2 && lines[lines.length - 2].startsWith("Successfully built")) {
+                                const sha = lines[lines.length - 2].replace("Successfully built ", "");
+                                // const tag = lines[lines.length - 1].replace("Successfully tagged ", "");
+                                resolve(sha);
+                            } else {
+                                reject(new Error("Failed to read image SHA from build log. " +
+                                    "If the image was built successfully, you can manually select it on the previous screen."));
+                            }
+                        } else {
+                            reject(new Error(xhr.responseText));
+                        }
+                    }
+                };
+
+                try {
+                    xhr.open('POST', remote + '/portal/at/docker/image');
+                    for (const [header, value] of Object.entries(headers)) {
+                        xhr.setRequestHeader(header, value);
+                    }
+                    xhr.send(JSON.stringify({remote: context, tag: tag, file: file}));
+                } catch (err) {
+                    Log.warn("AdminDeliverablesTab::buildDockerImage(..) - ERROR With request: " + err);
+                }
+            });
+        } catch (err) {
+            AdminView.showError("An error occurred making request: " + err.message);
+        }
     }
 }

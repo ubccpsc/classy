@@ -820,5 +820,4 @@ export default class AdminRoutes implements IREST {
         Log.info('AdminRoutes::performPostTeam(..) - team created: ' + team.id);
         return teamTrans;
     }
-
 }

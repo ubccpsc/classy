@@ -1,3 +1,4 @@
+import * as request from "request";
 import * as rp from "request-promise-native";
 import * as restify from 'restify';
 
@@ -48,6 +49,9 @@ export class AutoTestRoutes implements IREST {
 
         // >SDMM HACK< This is a hack to allow current webhooks on EdX to continue to function
         server.post('/githubWebhook', AutoTestRoutes.githubWebhook); // forward GitHub Webhooks to AutoTest
+
+        server.get('/portal/at/docker/images', AutoTestRoutes.getDockerImages);
+        server.post('/portal/at/docker/image', AutoTestRoutes.postDockerImage);
     }
 
     public static handleError(code: number, msg: string, res: any, next: any) {
@@ -441,5 +445,68 @@ export class AutoTestRoutes implements IREST {
             //     }
             // });
         });
+    }
+
+    public static async getDockerImages(req: any, res: any, next: any) {
+        try {
+            const config = Config.getInstance();
+
+            const atHost = config.getProp(ConfigKey.autotestUrl);
+            const url = atHost + ':' + config.getProp(ConfigKey.autotestPort) + req.href().replace("/portal/at", "");
+            const options = {
+                uri:     url,
+                method:  'GET',
+                json:    true
+            };
+            const githubId = req.headers.user;
+            const pc = new PersonController();
+            const person = await pc.getGitHubPerson(githubId);
+            const privileges =  await new AuthController().personPriviliged(person);
+            if (privileges.isAdmin) {
+                try {
+                    const atResponse = await rp(options);
+                    res.send(200, atResponse);
+                } catch (err) {
+                    Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Sending request to AutoTest service. " + err);
+                }
+            } else {
+                res.send(401);
+            }
+        } catch (err) {
+            res.send(400);
+        }
+        return next();
+    }
+
+    public static async postDockerImage(req: any, res: any, next: any) {
+        try {
+            const config = Config.getInstance();
+
+            const atHost = config.getProp(ConfigKey.autotestUrl);
+            const url = atHost + ':' + config.getProp(ConfigKey.autotestPort) + '/docker/image';
+            const options = {
+                uri:     url,
+                method:  'POST',
+                json:    true,
+                body: req.body
+            };
+            const githubId = req.headers.user;
+            const pc = new PersonController();
+            const person = await pc.getGitHubPerson(githubId);
+            const privileges =  await new AuthController().personPriviliged(person);
+            if (privileges.isAdmin) {
+                try {
+                    // Use native request library. See https://github.com/request/request-promise#api-in-detail.
+                    request(options).pipe(res);
+                } catch (err) {
+                    Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Sending request to AutoTest service. " + err);
+                }
+            } else {
+                res.send(401);
+            }
+        } catch (err) {
+            res.send(400);
+        }
+        return next();
     }
 }

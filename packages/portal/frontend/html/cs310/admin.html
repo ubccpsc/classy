@@ -682,6 +682,23 @@
                         </ons-list-item>
                     </ons-list>
                     <ons-list id="shouldAutoTestList" style="padding-bottom: 4.5em;">
+                        <!--<ons-list-item expandable>-->
+                            <!--<div class="left settingIcon">-->
+                                <!--<ons-icon icon="fa-cloud"></ons-icon>-->
+                            <!--</div>-->
+                            <!--<div class="center settingLabel">-->
+                                <!--Docker Image Name-->
+                            <!--</div>-->
+                            <!--<div class="right settingRight">-->
+                                <!--<ons-input class="settingTextInput" id="adminEditDeliverablePage-atDockerName"></ons-input>-->
+                            <!--</div>-->
+                            <!--<div class="expandable-content">-->
+                                <!--AutoTest Docker Image name that knows how to execute this deliverable.-->
+                                <!--It must also know how to execute any regression deliverables, if any are specified.-->
+                            <!--</div>-->
+                        <!--</ons-list-item>-->
+
+
                         <ons-list-item expandable>
                             <div class="left settingIcon">
                                 <ons-icon icon="fa-cloud"></ons-icon>
@@ -689,14 +706,38 @@
                             <div class="center settingLabel">
                                 Docker Image Name
                             </div>
-                            <div class="right settingRight">
-                                <ons-input class="settingTextInput" id="adminEditDeliverablePage-atDockerName"></ons-input>
-                            </div>
+                            <!--<div class="right settingRight expandable-content">-->
+                            <!--<ons-input class="settingTextInput" id="adminEditDeliverablePage-atDockerName" value="None:None" disabled></ons-input>-->
+                            <!--</div>-->
                             <div class="expandable-content">
-                                AutoTest Docker Image name that knows how to execute this deliverable.
-                                It must also know how to execute any regression deliverables, if any are specified.
+                                <ons-list id="docker-image-list">
+                                    <ons-list-item>
+                                        <label class="left">
+                                            <ons-radio name="docker-image" input-id="radio-0" disabled style=""></ons-radio>
+                                        </label>
+                                        <label for="radio-0" class="center">
+                                            <ons-row>
+                                                <ons-col>SHA</ons-col>
+                                                <ons-col>Tag</ons-col>
+                                                <ons-col>Created</ons-col>
+                                            </ons-row>
+                                        </label>
+                                    </ons-list-item>
+                                </ons-list>
+
+
+                                <ons-list-item class="list-item" id="docker-image-create">
+                                    <div class="center list-item__center">
+                                        <ons-button id="btnNewImage" modifier="large" class="button--large button">Create New
+                                            Image
+                                        </ons-button>
+                                    </div>
+                                </ons-list-item>
                             </div>
                         </ons-list-item>
+
+
+
 
                         <ons-list-item expandable>
                             <div class="left settingIcon">
@@ -774,5 +815,80 @@
 
         </ons-page>
     </template>
+
+
+    <template id="createDockerImage.html">
+        <ons-page id="create-docker-image-page">
+            <div class="left">
+                <ons-back-button id="create-docker-image-back">Back</ons-back-button>
+            </div>
+
+            <ons-modal direction="up">
+                <div style="text-align: center">
+                    <p>
+                        <ons-icon icon="md-spinner" size="28px" spin></ons-icon> Building...
+                    </p>
+                </div>
+            </ons-modal>
+
+            <form id="build-image-form" >
+                <ons-list>
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-github"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            GitHub URL
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input class="settingTextInput" id="docker-image-context-input" type="url" required></ons-input>
+                        </div>
+                        <div class="expandable-content">
+                            See <a href="https://docs.docker.com/engine/reference/commandline/build/#git-repositories">docker build</a> documentation for details about how to construct the URL. The URL should start with "https://". If the repository is public, set GH_DOCKER_TOKEN in the .env. Do not include the token in the URL.
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-tag"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            Version
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input class="settingTextInput" id="docker-image-tag-input"></ons-input>
+                        </div>
+                        <div class="expandable-content">
+                            Optional. You can include the Git revision (commit or tag) for traceability.
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-file-alt"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            Dockerfile name
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input class="settingTextInput" id="docker-image-file-input"></ons-input>
+                        </div>
+                        <div class="expandable-content">
+                            Optional. Specify the name of your Dockerfile if it is different from "Dockerfile".
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item class="list-item" id="docker-image-create">
+                        <div class="center list-item__center">
+                            <button id="build-image-button" class="button--large button" type="submit">Build Image</button>
+                        </div>
+                    </ons-list-item>
+                </ons-list>
+            </form>
+
+            <div id="docker-image-build-output"></div>
+        </ons-page>
+    </template>
+
 
 </ons-page>
