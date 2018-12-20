@@ -32,7 +32,7 @@ services:
         expose:
             - ${AUTOTEST_PORT}
         restart: always
-        user: "${UID}:${cut -d: -f3 < <(getent group docker)}"
+        user: "${UID}:${GID}"
         volumes:
             - "${HOST_DIR}:${PERSIST_DIR}"
             - "/var/run/docker.sock:/var/run/docker.sock"
