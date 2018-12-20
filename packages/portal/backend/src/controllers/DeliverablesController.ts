@@ -95,6 +95,7 @@ export class DeliverablesController {
             openTimestamp:  deliv.openTimestamp,
             closeTimestamp: deliv.closeTimestamp,
 
+            lateAutoTest:      deliv.lateAutoTest,
             shouldProvision:   deliv.shouldProvision,
             minTeamSize:       deliv.teamMinSize,
             maxTeamSize:       deliv.teamMaxSize,
@@ -126,6 +127,7 @@ export class DeliverablesController {
             closeTimestamp: trans.closeTimestamp,
             gradesReleased: trans.gradesReleased,
 
+            lateAutoTest:     trans.lateAutoTest,
             shouldProvision:  trans.shouldProvision,
             teamMinSize:      trans.minTeamSize,
             teamMaxSize:      trans.maxTeamSize,

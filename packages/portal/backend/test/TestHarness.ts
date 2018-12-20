@@ -295,9 +295,9 @@ export class Test {
             repoPrefix:       '',
 
             visibleToStudents: true,
-
-            shouldAutoTest: true,
-            autotest:       {
+            lateAutoTest:      false,
+            shouldAutoTest:    true,
+            autotest:          {
                 dockerImage:        'testImage',
                 studentDelay:       60 * 60 * 12, // 12h
                 maxExecTime:        300,
@@ -435,6 +435,7 @@ export class Test {
             teamPrefix:        'team',
             repoPrefix:        '',
             // bootstrapUrl:     '',
+            lateAutoTest:      false,
             shouldAutoTest:    true,
             autotest:          {
                 dockerImage:        'testImage',

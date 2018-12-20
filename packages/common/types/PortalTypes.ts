@@ -91,6 +91,7 @@ export interface DeliverableTransport {
     onCloseAction: string; // will change to something else
     URL: string; // student-facing description
     gradesReleased: boolean;
+    lateAutoTest: boolean;
 
     shouldAutoTest: boolean;
     autoTest: AutoTestConfigTransport; // autoTest options

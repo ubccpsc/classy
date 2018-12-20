@@ -143,6 +143,7 @@ describe('TestDatasetGenerator', function() {
             teamStudentsForm: true,
             // bootstrapUrl:     '',
 
+            lateAutoTest:   false,
             shouldAutoTest: true,
             autotest:       {
                 dockerImage:        'testImage',
