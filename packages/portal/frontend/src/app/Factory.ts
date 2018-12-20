@@ -129,7 +129,6 @@ export class Factory {
      *   - landing.html - This is the main course-specific landing page
      *   - login.html - This is the login page
      *   - student.html - This is the main student landing page
-     *   - admin.html - This is the main admin landing page
      *
      * @returns {string}
      */

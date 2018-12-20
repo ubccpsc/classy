@@ -67,6 +67,7 @@ export class CS340AdminView extends AdminView {
             }
         }
 
+        // TODO: probably want admin.html, not cs340/admin.html
         if (optsObject !== null && typeof optsObject.page !== 'undefined' && optsObject.page === "cs340/admin.html") {
             Log.info("CS340AdminView::renderPage(..) - initial load; checking scheduler");
             this.verifyScheduledJobs(null).then(function(result) {
