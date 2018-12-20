@@ -154,12 +154,10 @@ export default class RouteHandler {
         const token = Config.getInstance().getProp(ConfigKey.githubDockerToken);
         try {
             const body = req.body;
-            const t = body.tag;
-            let remote = body.remote;
-            if (token) {
-                remote = remote.replace("https://", "https://" + token + "@");
-            }
-            const stream = await docker.buildImage(null, {remote, t});
+            const remote = token ? body.remote.replace("https://", "https://" + token + "@") : body.remote;
+            const tag = body.tag;
+            const file = body.file;
+            const stream = await docker.buildImage(null, {remote, t: tag, dockerfile: file});
             stream.on("error", (err: Error) => {
                 Log.error("Error building image. " + err.message);
                 res.send(500, "Error building image. " + err.message);
@@ -169,6 +167,7 @@ export default class RouteHandler {
             });
             stream.pipe(res);
         } catch (err) {
+            Log.error("RouteHandler::postDockerImage(..) - ERROR Building docker image: " + err.message);
             res.send(err.statusCode, err.message);
         }
 

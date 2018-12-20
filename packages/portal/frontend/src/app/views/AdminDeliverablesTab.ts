@@ -299,11 +299,13 @@ export class AdminDeliverablesTab extends AdminPage {
                 (document.querySelector("#build-image-form") as HTMLFormElement).onsubmit = function() {
                     const contextInput: HTMLInputElement = document.querySelector("#docker-image-context-input");
                     const tagInput: HTMLInputElement = document.querySelector("#docker-image-tag-input");
+                    const fileInput: HTMLInputElement = document.querySelector("#docker-image-file-input");
                     const submit: HTMLButtonElement = document.querySelector("#build-image-button");
                     const outputArea: HTMLDivElement = document.querySelector("#docker-image-build-output");
 
                     const context = contextInput.value;
                     const tag = 'grader' + (tagInput.value ? ':' + tagInput.value : '');
+                    const file = fileInput.value;
 
                     contextInput.disabled = true;
                     tagInput.disabled = true;
@@ -311,7 +313,7 @@ export class AdminDeliverablesTab extends AdminPage {
 
                     UI.showModal();
 
-                    that.buildDockerImage(context, tag, outputArea).then(function(sha: string) {
+                    that.buildDockerImage(context, tag, file, outputArea).then(function(sha: string) {
                         imageSha = sha;
                         UI.hideModal();
                     }).catch(async function(err: Error) {
@@ -525,7 +527,7 @@ export class AdminDeliverablesTab extends AdminPage {
         return [];
     }
 
-    private async buildDockerImage(context: string, tag: string, output: HTMLDivElement): Promise<string> {
+    private async buildDockerImage(context: string, tag: string, file: string, output: HTMLDivElement): Promise<string> {
         try {
             Log.info("AdminDeliverablesTab::buildDockerImage( .. ) - start");
             const headers = AdminView.getOptions().headers;
@@ -535,16 +537,21 @@ export class AdminDeliverablesTab extends AdminPage {
                 let lines: string[] = [];
                 let lastIndex = 0;
                 xhr.onprogress = function() {
-                    const currIndex = xhr.responseText.length;
-                    if (lastIndex === currIndex) {
-                        return;
-                    }
-                    const chunk = xhr.responseText.substring(lastIndex, currIndex);
-                    lastIndex = currIndex;
+                    try {
+                        const currIndex = xhr.responseText.length;
+                        if (lastIndex === currIndex) {
+                            return;
+                        }
+                        const chunk = xhr.responseText.substring(lastIndex, currIndex);
+                        lastIndex = currIndex;
 
-                    const chunkLines = chunk.split("\n").filter((s) => s !== "").map((s) => JSON.parse(s).stream.trim());
-                    output.innerText += chunkLines.join("\n");
-                    lines = lines.concat(chunkLines);
+                        const chunkLines = chunk.split("\n").filter((s) => s !== "").map((s) => JSON.parse(s).stream.trim());
+                        output.innerText += chunkLines.join("\n");
+                        output.scrollTop = output.scrollHeight;
+                        lines = lines.concat(chunkLines);
+                    } catch (err) {
+                        Log.warn("AdminDeliverablesTab::buildDockerImage(..) - ERROR Processing build output log stream.");
+                    }
                 };
                 xhr.onreadystatechange = function() {
                     if (xhr.readyState === XMLHttpRequest.DONE) {
@@ -553,15 +560,20 @@ export class AdminDeliverablesTab extends AdminPage {
                             // const tag = lines[lines.length - 1].replace("Successfully tagged ", "");
                             resolve(sha);
                         } else {
-                            reject(xhr.responseText);
+                            reject(new Error(xhr.responseText));
                         }
                     }
                 };
-                xhr.open('POST', remote + '/portal/at/docker/image');
-                for (const [header, value] of Object.entries(headers)) {
-                    xhr.setRequestHeader(header, value);
+
+                try {
+                    xhr.open('POST', remote + '/portal/at/docker/image');
+                    for (const [header, value] of Object.entries(headers)) {
+                        xhr.setRequestHeader(header, value);
+                    }
+                    xhr.send(JSON.stringify({remote: context, tag: tag, file: file}));
+                } catch (err) {
+                    Log.warn("AdminDeliverablesTab::buildDockerImage(..) - ERROR With request: " + err);
                 }
-                xhr.send(JSON.stringify({remote: context, tag: tag}));
             });
         } catch (err) {
             AdminView.showError("An error occurred making request: " + err.message);

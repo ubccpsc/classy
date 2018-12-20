@@ -863,6 +863,21 @@
                         </div>
                     </ons-list-item>
 
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-file-alt"></ons-icon>
+                        </div>
+                        <div class="center settingLabel">
+                            Dockerfile name
+                        </div>
+                        <div class="right settingRight">
+                            <ons-input class="settingTextInput" id="docker-image-file-input"></ons-input>
+                        </div>
+                        <div class="expandable-content">
+                            Optional. Specify the name of your Dockerfile if it is different from "Dockerfile".
+                        </div>
+                    </ons-list-item>
+
                     <ons-list-item class="list-item" id="docker-image-create">
                         <div class="center list-item__center">
                             <button id="build-image-button" class="button--large button" type="submit">Build Image</button>
