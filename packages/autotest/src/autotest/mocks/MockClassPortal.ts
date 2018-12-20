@@ -56,7 +56,7 @@ export class MockClassPortal implements IClassPortal {
                 custom:             {},
                 openTimestamp:      new Date(2018, 1, 1).getTime(),
                 closeTimestamp:     new Date(2018, 6, 1).getTime(),
-                lateAutoTest:       false
+                lateAutoTest:       true
             };
         }
         Log.error('MockClassPortal::getContainerDetails() - MockClassPortal should not be used with: ' + name);
