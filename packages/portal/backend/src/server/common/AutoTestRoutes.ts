@@ -452,7 +452,7 @@ export class AutoTestRoutes implements IREST {
             const config = Config.getInstance();
 
             const atHost = config.getProp(ConfigKey.autotestUrl);
-            const url = atHost + ':' + config.getProp(ConfigKey.autotestPort) + '/docker/images';
+            const url = atHost + ':' + config.getProp(ConfigKey.autotestPort) + req.href().replace("/portal/at", "");
             const options = {
                 uri:     url,
                 method:  'GET',

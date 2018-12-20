@@ -283,9 +283,9 @@ export class AdminDeliverablesTab extends AdminPage {
         if (newImageSha) {
             selectedDockerImage = newImageSha;
         }
-        this.getDockerImages().then(function(images) {
+        this.getDockerImages({reference: ['grader']}).then(function(images) {
             that.bindImagesToTable(images, document.querySelector("#docker-image-list"), selectedDockerImage);
-        }).catch(function(err) {
+        }).catch(function(err: Error) {
             UI.showErrorToast("Docker images: " + err);
         });
 
@@ -309,6 +309,7 @@ export class AdminDeliverablesTab extends AdminPage {
 
                     contextInput.disabled = true;
                     tagInput.disabled = true;
+                    fileInput.disabled = true;
                     submit.disabled = true;
 
                     UI.showModal();
@@ -320,6 +321,7 @@ export class AdminDeliverablesTab extends AdminPage {
                         await UI.showAlert(err.message);
                         contextInput.disabled = false;
                         tagInput.disabled = false;
+                        fileInput.disabled = false;
                         submit.disabled = false;
                         UI.hideModal();
                     });
@@ -545,20 +547,29 @@ export class AdminDeliverablesTab extends AdminPage {
                         const chunk = xhr.responseText.substring(lastIndex, currIndex);
                         lastIndex = currIndex;
 
-                        const chunkLines = chunk.split("\n").filter((s) => s !== "").map((s) => JSON.parse(s).stream.trim());
+                        const chunkLines = chunk.split("\n")
+                            .filter((s) => s !== "")
+                            .map((s) => JSON.parse(s))
+                            .filter((s) => s.hasOwnProperty("stream"))
+                            .map((s) => s.stream.trim());
                         output.innerText += chunkLines.join("\n");
                         output.scrollTop = output.scrollHeight;
                         lines = lines.concat(chunkLines);
                     } catch (err) {
-                        Log.warn("AdminDeliverablesTab::buildDockerImage(..) - ERROR Processing build output log stream.");
+                        Log.warn("AdminDeliverablesTab::buildDockerImage(..) - ERROR Processing build output log stream. " + err);
                     }
                 };
                 xhr.onreadystatechange = function() {
                     if (xhr.readyState === XMLHttpRequest.DONE) {
                         if (xhr.status === 200) {
-                            const sha = lines[lines.length - 2].replace("Successfully built ", "");
-                            // const tag = lines[lines.length - 1].replace("Successfully tagged ", "");
-                            resolve(sha);
+                            if (lines.length > 2 && lines[lines.length - 2].startsWith("Successfully built")) {
+                                const sha = lines[lines.length - 2].replace("Successfully built ", "");
+                                // const tag = lines[lines.length - 1].replace("Successfully tagged ", "");
+                                resolve(sha);
+                            } else {
+                                reject(new Error("Failed to read image SHA from build log. " +
+                                    "If the image was built successfully, you can manually select it on the previous screen."));
+                            }
                         } else {
                             reject(new Error(xhr.responseText));
                         }
@@ -580,11 +591,11 @@ export class AdminDeliverablesTab extends AdminPage {
         }
     }
 
-    private async getDockerImages(): Promise<any[]> {
+    private async getDockerImages(filters?: {[key: string]: string[]}): Promise<any[]> {
         Log.info("AdminDeliverablesTab::getDockerImages( .. ) - start");
         const start = Date.now();
         const options = AdminView.getOptions();
-        const url = this.remote + '/portal/at/docker/images';
+        const url = this.remote + '/portal/at/docker/images' + (filters ? '?filters=' + JSON.stringify(filters) : '');
         const response = await fetch(url, options);
 
         if (response.status === 200) {
@@ -604,6 +615,19 @@ export class AdminDeliverablesTab extends AdminPage {
     }
 
     private bindImagesToTable(images: any[], table: Element, selected?: string): void {
+        // // Clear the table (expect the header and button)
+        // // for (let i = 1; i < table.childNodes.length - 1; i++) {
+        // //     table.removeChild(table.children[i]);
+        // // }
+        // let seenHeader = false;
+        // while (table.childNodes.length > 2) {
+        //     if (!seenHeader) {
+        //         seenHeader = true;
+        //         continue;
+        //     }
+        //     table.removeChild(table.lastChild);
+        // }
+
         const frag = document.createDocumentFragment();
         let idxId = 1;
         for (const image of images) {
@@ -634,6 +658,7 @@ export class AdminDeliverablesTab extends AdminPage {
             frag.appendChild(e);
             idxId++;
         }
-        table.insertBefore(frag, table.lastChild);
+        table.appendChild(frag);
+        // table.insertBefore(frag, table.lastChild);
     }
 }

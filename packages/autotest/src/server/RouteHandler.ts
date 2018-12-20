@@ -142,9 +142,25 @@ export default class RouteHandler {
     }
 
     public static async getDockerImages(req: restify.Request, res: restify.Response, next: restify.Next) {
-        const docker = RouteHandler.getDocker();
-        const images = await docker.listImages();
-        res.send(200, images);
+        try {
+            const docker = RouteHandler.getDocker();
+            const filtersStr = req.query.filters;
+            const options: any = {};
+            if (filtersStr) {
+                options["filters"] = JSON.parse(filtersStr);
+            }
+            Log.trace("RouteHandler::getDockerImages(..) - Calling Docker listImages(..) with options: " + JSON.stringify(options));
+            const images = await docker.listImages(options);
+            res.send(200, images);
+        } catch (err) {
+            Log.error("RouteHandler::getDockerImages(..) - ERROR Retrieving docker images: " + err.message);
+            if (err.statusCode) {
+                // Error from Docker daemon
+                res.send(err.statusCode, err.message);
+            } else {
+                res.send(400, err.message);
+            }
+        }
 
         return next();
     }
