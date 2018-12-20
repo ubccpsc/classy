@@ -54,7 +54,6 @@ export enum ConfigKey {
     hostDir = "hostDir",
     dockerUid = "dockerUid",
     hostsAllow = "hostsAllow",
-    dockerHost = "dockerHost",
     timeout = "timeout",
     botName = "botName",
     postback = "postback",
@@ -90,7 +89,6 @@ export default class Config {
                 persistDir: process.env.PERSIST_DIR,
                 dockerUid: process.env.UID,
                 hostsAllow: process.env.HOSTS_ALLOW,
-                dockerHost: process.env.DOCKER_HOST_URL,
 
                 timeout: Number(process.env.GRADER_TIMEOUT),
                 botName: process.env.GH_BOT_USERNAME,
