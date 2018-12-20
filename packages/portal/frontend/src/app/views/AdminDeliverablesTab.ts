@@ -6,6 +6,7 @@ import {AutoTestConfigTransport, DeliverableTransport, DeliverableTransportPaylo
 import {UI} from "../util/UI";
 import {AdminPage} from "./AdminPage";
 import {AdminView} from "./AdminView";
+import {DockerImage, DockerListImageView} from "./DockerListImageView";
 
 // import flatpickr from "flatpickr";
 declare var flatpickr: any;
@@ -283,14 +284,20 @@ export class AdminDeliverablesTab extends AdminPage {
         if (newImageSha) {
             selectedDockerImage = newImageSha;
         }
-        this.getDockerImages({reference: ['grader']}).then(function(images) {
-            that.bindImagesToTable(images, document.querySelector("#docker-image-list"), selectedDockerImage);
-        }).catch(function(err: Error) {
+        const list = document.querySelector("#docker-image-list");
+        const dataSource = {
+            url: this.remote + '/portal/at/docker/images?filters=' + JSON.stringify({reference: ['grader']}),
+            options: AdminView.getOptions()
+        };
+        const state = {
+            checkedItemId: selectedDockerImage
+        };
+        new DockerListImageView(list).bind(dataSource, state).catch(function(err: Error) {
             UI.showErrorToast("Docker images: " + err);
         });
 
         (document.querySelector('#btnNewImage') as OnsButtonElement).onclick = function() {
-            UI.pushPage('createDockerImage.html'). then(function() {
+            UI.pushPage('createDockerImage.html').then(function() {
                 let imageSha: string;
                 (document.querySelector("#create-docker-image-back") as OnsBackButtonElement).onClick = function() {
                     UI.popPage({data: {sha: imageSha}});
@@ -589,76 +596,5 @@ export class AdminDeliverablesTab extends AdminPage {
         } catch (err) {
             AdminView.showError("An error occurred making request: " + err.message);
         }
-    }
-
-    private async getDockerImages(filters?: {[key: string]: string[]}): Promise<any[]> {
-        Log.info("AdminDeliverablesTab::getDockerImages( .. ) - start");
-        const start = Date.now();
-        const options = AdminView.getOptions();
-        const url = this.remote + '/portal/at/docker/images' + (filters ? '?filters=' + JSON.stringify(filters) : '');
-        const response = await fetch(url, options);
-
-        if (response.status === 200) {
-            Log.trace('AdminDeliverablesTab::getDockerImages(..) - 200 received');
-            const json = await response.json();
-            if (Array.isArray(json)) {
-                Log.trace('AdminDeliverablesTab::getDockerImages(..)  - worked; took: ' + UI.took(start));
-                return json;
-            } else {
-                Log.trace('AdminDeliverablesTab::getDockerImages(..)  - ERROR Expected array; got ' + json);
-                throw new Error('Invalid response body format');
-            }
-        } else {
-            Log.trace('AdminDeliverablesTab::getDockerImages(..)  - !200 received: ' + response.status);
-            throw await response.text();
-        }
-    }
-
-    private bindImagesToTable(images: any[], table: Element, selected?: string): void {
-        // // Clear the table (expect the header and button)
-        // // for (let i = 1; i < table.childNodes.length - 1; i++) {
-        // //     table.removeChild(table.children[i]);
-        // // }
-        // let seenHeader = false;
-        // while (table.childNodes.length > 2) {
-        //     if (!seenHeader) {
-        //         seenHeader = true;
-        //         continue;
-        //     }
-        //     table.removeChild(table.lastChild);
-        // }
-
-        const frag = document.createDocumentFragment();
-        let idxId = 1;
-        for (const image of images) {
-            const id = image.Id.substring(7, 19); // Strip off "sha256:" and show first 12 characters
-            const tag = image.RepoTags[0]; // Only use the first tag (they are sorted alphabetically)
-            const created = new Date(image.Created * 1000); // Convert the Unix timestamp in seconds to milliseconds
-
-            // NOTE: Assuming that there is only a "grader"
-            if (!tag.startsWith("grader")) {
-                // Only show grading containers in the output
-                continue;
-            }
-
-            const e = document.createRange().createContextualFragment(`
-                <ons-list-item tappable>
-                    <label class="left">
-                        <ons-radio name="docker-image" input-id="radio-${idxId}" ${selected === id ? "checked" : ""}></ons-radio>
-                    </label>
-                    <label for="radio-${idxId}" class="center">
-                        <ons-row>
-                            <ons-col>${id}</ons-col>
-                            <ons-col>${tag}</ons-col>
-                            <ons-col>${created}</ons-col>
-                        </ons-row>
-                    </label>
-                </ons-list-item>
-                `);
-            frag.appendChild(e);
-            idxId++;
-        }
-        table.appendChild(frag);
-        // table.insertBefore(frag, table.lastChild);
     }
 }
