@@ -608,8 +608,15 @@ export class AdminDeliverablesTab extends AdminPage {
         let idxId = 1;
         for (const image of images) {
             const id = image.Id.substring(7, 19); // Strip off "sha256:" and show first 12 characters
-            const tag = image.RepoTags; // [image.RepoTags.length - 1]; // Only use the last assigned tag
+            const tag = image.RepoTags[0]; // Only use the first tag (they are sorted alphabetically)
             const created = new Date(image.Created * 1000); // Convert the Unix timestamp in seconds to milliseconds
+
+            // NOTE: Assuming that there is only a "grader"
+            if (!tag.startsWith("grader")) {
+                // Only show grading containers in the output
+                continue;
+            }
+
             const e = document.createRange().createContextualFragment(`
                 <ons-list-item tappable>
                     <label class="left">
