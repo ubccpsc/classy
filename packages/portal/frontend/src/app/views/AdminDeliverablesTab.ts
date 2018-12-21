@@ -563,29 +563,26 @@ export class AdminDeliverablesTab extends AdminPage {
                             .filter((s) => s !== "")
                             .map((s) => JSON.parse(s))
                             .filter((s) => s.hasOwnProperty("stream"))
-                            .map((s) => s.stream.trim());
-                        output.innerText += chunkLines.join("\n");
-                        output.scrollTop = output.scrollHeight;
+                            .map((s) => s.stream);
+                        output.innerText += chunkLines.join("");
+                        output.scrollIntoView(false);
                         lines = lines.concat(chunkLines);
                     } catch (err) {
                         Log.warn("AdminDeliverablesTab::buildDockerImage(..) - ERROR Processing build output log stream. " + err);
                     }
                 };
-                xhr.onreadystatechange = function() {
-                    if (xhr.readyState === XMLHttpRequest.DONE) {
-                        if (xhr.status === 200) {
-                            if (lines.length > 2 && lines[lines.length - 2].startsWith("Successfully built")) {
-                                const sha = lines[lines.length - 2].replace("Successfully built ", "");
-                                // const tag = lines[lines.length - 1].replace("Successfully tagged ", "");
-                                resolve(sha);
-                            } else {
-                                reject(new Error("Failed to read image SHA from build log. " +
-                                    "If the image was built successfully, you can manually select it on the previous screen."));
-                            }
-                        } else {
-                            reject(new Error(xhr.responseText));
-                        }
+                xhr.onload = function() {
+                    if (lines.length > 2 && lines[lines.length - 2].startsWith("Successfully built")) {
+                        const sha = lines[lines.length - 2].replace("Successfully built ", "").trim();
+                        // const tag = lines[lines.length - 1].replace("Successfully tagged ", "");
+                        resolve(sha);
+                    } else {
+                        reject(new Error("Failed to read image SHA from build log. " +
+                            "If the image was built successfully, you can manually select it on the previous screen."));
                     }
+                };
+                xhr.onerror = function() {
+                    reject(new Error(xhr.responseText));
                 };
 
                 try {
