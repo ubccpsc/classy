@@ -1,7 +1,6 @@
 import * as Docker from "dockerode";
 import * as fs from "fs-extra";
 import * as restify from "restify";
-import {URL} from "url";
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {CommitTarget} from "../../../common/types/ContainerTypes";
@@ -23,21 +22,8 @@ export default class RouteHandler {
                 // Running tests; don't need to connect to the Docker daemon
                 this.docker = null;
             } else {
-                const dockerHost = Config.getInstance().getProp(ConfigKey.dockerHost) || "";
-                if (dockerHost.startsWith("https") || dockerHost.startsWith("http") || dockerHost.startsWith("tcp")) {
-                    const dockerUrl = new URL(dockerHost);
-                    RouteHandler.docker = new Docker({
-                        host: dockerUrl.hostname,
-                        port: dockerUrl.port,
-                        ca: fs.readFileSync("/etc/ssl/certs/ca-certificates.crt"),
-                        cert: fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslCertPath)),
-                        key: fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslKeyPath)),
-                        version: "v1.30"
-                    });
-                } else {
-                    Log.info("RouteHandler::getDocker() - Defaulting to Docker socket.");
-                    RouteHandler.docker = new Docker();
-                }
+                // Connect to the Docker socket using defaults
+                RouteHandler.docker = new Docker();
             }
         }
 

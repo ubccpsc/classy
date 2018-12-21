@@ -32,95 +32,61 @@ The following software should be installed on the host before attempting to depl
     **NOTE:** Make sure you logout and back in to see the new user and group.
 
 2. Use `certbot` to get SSL certificates for the host from Let's Encrypt:
-
-    ```bash
-    sudo certbot certonly --standalone -d $(hostname)
-    ```
     
-    Then create the following pre-renewal and deploy hooks:
-    ```bash
-    cat <<- EOF > /etc/letsencrypt/renewal-hooks/pre/stop-classy.sh
-    #!/bin/sh
-    set -e
+    1. Create a certbot deploy hook that will run when new certificates are obtained:
+        ```bash
+        cat <<- EOF > /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
+        #!/bin/sh
+        set -e
+        
+        # Copies the latest certificates to Classy
+        mkdir -p /opt/classy/ssl
+        \cp -Hf /etc/letsencrypt/live/$(hostname)/* /opt/classy/ssl/
+        chown -R --reference=/opt/classy /opt/classy/ssl
+        chmod -R 0050 /opt/classy/ssl
+        EOF
+            
+        chmod +x /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
+        ```
     
-    # Stop Classy so that port 80 and 443 can be used by certbot
-    cd /opt/classy
-    /usr/local/bin/docker-compose stop || true
-    EOF
+    2. Get the initial certificates:
+        ```bash
+        sudo certbot certonly --standalone -d $(hostname) --agree-tos -m user@example.com --no-eff-email -n
+         ```   
+        
+        Confirm that there are certificates in /etc/letsencrypt/live/$(hostname) (e.g. *.pem files). The deploy hook should
+        have copied the certificate files to /opt/classy/ssl. If not, manually run
+        `sudo /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh` (this only needs to be done once).
     
-    cat <<- EOF > /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
-    #!/bin/sh
-    set -e
+    3. Configure pre- and post-renewal hooks to automatically start and stop Classy when it is time to renew:
+        ```bash
+        cat <<- EOF > /etc/letsencrypt/renewal-hooks/pre/stop-classy.sh
+        #!/bin/sh
+        set -e
+        
+        # Stop Classy so that port 80 and 443 can be used by certbot
+        cd /opt/classy
+        /usr/local/bin/docker-compose stop || true
+        EOF    
+        
+        cat <<- EOF > /etc/letsencrypt/renewal-hooks/post/start-classy.sh
+        #!/bin/sh
+        set -e
+        
+        # Restart classy
+        cd /opt/classy
+        /usr/local/bin/docker-compose up --detach
+        EOF
+        
+        chmod +x /etc/letsencrypt/renewal-hooks/pre/stop-classy.sh
+        chmod +x /etc/letsencrypt/renewal-hooks/post/start-classy.sh
+        ```
+        
+        Classy needs to be stopped so that port 80 isn't bound when certbot attempts to renew the certificates. It
+        would need to be restarted in all cases to mount the new certificates. Note: the deploy hook should also run on
+        successfully renewal copy the latest version of the certificates to `/opt/classy/ssl` before restarting Classy.
     
-    # Copies the latest certificates to Classy
-    mkdir -p /opt/classy/ssl
-    \cp -Hf /etc/letsencrypt/live/$(hostname)/* /opt/classy/ssl/
-    chown -R --reference=/opt/classy /opt/classy/ssl
-    chmod -R 0050 /opt/classy/ssl
-    EOF
-    
-    cat <<- EOF > /etc/letsencrypt/renewal-hooks/post/start-classy.sh
-    #!/bin/sh
-    set -e
-    
-    # Restart classy
-    cd /opt/classy
-    /usr/local/bin/docker-compose up --detach
-    EOF
-    
-    chmod +x /etc/letsencrypt/renewal-hooks/pre/stop-classy.sh
-    chmod +x /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
-    chmod +x /etc/letsencrypt/renewal-hooks/post/start-classy.sh
-    ```
-    
-    **SECURITY WARNING:** Possession of the certificate is equivalent to having root access on the host since the Docker
-    daemon will be configured to accept TCP connections from clients presenting that certificate.
-    
-    **NOTE:** This Let's Encrypt certificate is used for all services requiring a certificate on the host. This includes
-    the Classy service and the Docker daemon.
-
-3. Configure the Docker daemon to allow HTTPS (TCP+TLS) access:
-
-    ```bash
-    cat <<- EOF > /etc/docker/daemon.json
-    {
-      "tls": true,
-      "tlscert": "/etc/letsencrypt/live/$(hostname)/fullchain.pem",
-      "tlskey": "/etc/letsencrypt/live/$(hostname)/privkey.pem",
-      "hosts": ["unix:///var/run/docker.sock", "tcp://$(hostname):2376"]                                                                          
-    }
-    EOF
-    systemctl restart docker
-    ```
-    
-    To verify the configuration, check that following two versions of the `docker version` command complete successfully:
-    ```bash
-    # (1) Using the default socket (only accessible to root)
-    docker version
-    
-    # (2) Using TCP (accessible to ANY user with the appropriate certificate)
-    docker --host=tcp://$(hostname):2376 \
-           --tlsverify=1 \
-           --tlscacert=/etc/letsencrypt/live/$(hostname)/fullchain.pem \
-           --tlscert=/etc/letsencrypt/live/$(hostname)/fullchain.pem \
-           --tlskey=/etc/letsencrypt/live/$(hostname)/privkey.pem \
-           version
-    ```
-    
-    (For reference) Check that the docker client inside a container can access the daemon on host (Note: this basically
-    runs the same command as (2) above except by using env vars and mounting the certs into the default search location--see 
-    https://docs.docker.com/engine/security/https/#secure-by-default):
-    ```bash
-    docker run --rm \
-               --env DOCKER_HOST=tcp://$(hostname):2376 \
-               --env DOCKER_TLS_VERIFY=1 \
-               --volume $(readlink -f /etc/letsencrypt/live/$(hostname)/fullchain.pem):/root/.docker/ca.pem \
-               --volume $(readlink -f /etc/letsencrypt/live/$(hostname)/fullchain.pem):/root/.docker/cert.pem \
-               --volume $(readlink -f /etc/letsencrypt/live/$(hostname)/privkey.pem):/root/.docker/key.pem \
-               docker version
-    ```
-
-4. Add the firewall rules to block unwanted traffic (if using autotest).
+3. Add the firewall rules to block unwanted traffic (if using autotest).
 
     ```bash
     # These two rules will block all traffic coming FROM the subnet (i.e. grading container)
@@ -148,7 +114,7 @@ The following software should be installed on the host before attempting to depl
       added to grading container.
     - These rules **must always be applied** (i.e. they should persist across reboots).
 
-5. Test the system. To ensure the firewall rules are working as expected we can run some simple commands from a container
+4. Test the system. To ensure the firewall rules are working as expected we can run some simple commands from a container
    connected to the subnet.
    
     ```bash
@@ -176,25 +142,26 @@ The following software should be installed on the host before attempting to depl
 
     ```bash
     git clone https://github.com/ubccpsc/classy.git ~/classy
-    sudo cp -r ~/classy /opt && rm -rf ~/classy
-    sudo chown classy:classy /opt/classy
-    sudo chmod g+rwx,o-rwx /opt/classy
+    sudo -i  # stay as root for remainder of this Classy Configuration section 
+    cp -r ~/classy /opt && rm -rf ~/classy
+    cp /opt/classy/.env.sample /opt/classy/.env
+    chown -Rh classy:classy /opt/classy
+    find /opt/classy -type d -exec chmod 770 {} \;
+    find /opt/classy -type f -exec chmod 660 {} \;
  
-    # Set GRADER_HOST_DIR to /var/opt/classy/runs
-    # Set database storage to /var/opt/classy/db
-    sudo mkdir /var/opt/classy
-    sudo mkdir /var/opt/classy/backups  # for database backups
-    sudo mkdir /var/opt/classy/db  # for database storage
-    sudo mkdir /var/opt/classy/runs  # for grading container output
-    sudo chown -R classy:classy /var/opt/classy
-    sudo chmod -R g+rwx,o-rwx /var/opt/classy
+    mkdir /var/opt/classy
+    mkdir /var/opt/classy/backups  # for database backups
+    mkdir /var/opt/classy/db  # for database storage
+    mkdir /var/opt/classy/runs  # for grading container output
+    chown -Rh classy:classy /var/opt/classy
+    find /var/opt/classy -type d -exec chmod 770 {} \;
+    find /var/opt/classy -type f -exec chmod 660 {} \;
     ```
 
 2. Configure the `.env` (more instructions inside this file)
 
     ```bash
     cd /opt/classy
-    cp .env.sample .env
     nano .env
     ```
     
@@ -225,7 +192,7 @@ The following software should be installed on the host before attempting to depl
     Note: you can also use the additional options for [mongodump](https://docs.mongodb.com/manual/reference/program/mongodump/)
     and [mongorestore](https://docs.mongodb.com/manual/reference/program/mongorestore/) described in the docs.
     
-5. Archive old execution. AutoTest stores the output of each run on disk and, depending on the size of the output, can cause space issues.
+5. Archive old executions. AutoTest stores the output of each run on disk and, depending on the size of the output, can cause space issues.
    You can apply the following cron job (as root) that will archive (and then remove) runs more than a week old.
    Adapt as needed: this will run every Wednesday at 0300 and archive runs older than 7 days (based on last modified time);
    all runs are stored together in a single compressed tarball called `runs-TIMESTAMP.tar.gz` under `/cs/portal-backup/cs310.ugrad.cs.ubc.ca/classy`.
