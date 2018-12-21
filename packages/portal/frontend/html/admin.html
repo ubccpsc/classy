@@ -861,9 +861,12 @@
 
     <template id="createDockerImage.html">
         <ons-page id="create-docker-image-page">
-            <div class="left">
-                <ons-back-button id="create-docker-image-back">Back</ons-back-button>
-            </div>
+            <ons-toolbar>
+                <div class="left">
+                    <ons-back-button id="create-docker-image-back"></ons-back-button>
+                </div>
+                <div class="center">Classy Admin Portal</div>
+            </ons-toolbar>
 
             <ons-modal direction="up">
                 <div style="text-align: center">
@@ -889,7 +892,7 @@
                         <div class="expandable-content">
                             See <a href="https://docs.docker.com/engine/reference/commandline/build/#git-repositories">docker build</a>
                             documentation for details about how to construct the URL. The URL should start with "https://". If the
-                            repository is public, set GH_DOCKER_TOKEN in the .env. Do not include the token in the URL.
+                            repository is private, set GH_DOCKER_TOKEN in the .env. Do not include the token in the URL.
                         </div>
                     </ons-list-item>
 
