@@ -2,7 +2,7 @@ import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
 import {AdminController} from "./controllers/AdminController";
-import {ICourseController} from "./controllers/CourseController";
+import {CourseController, ICourseController} from "./controllers/CourseController";
 import {GitHubActions} from "./controllers/GitHubActions";
 import {GitHubController, IGitHubController} from "./controllers/GitHubController";
 
@@ -71,10 +71,12 @@ export class Factory {
             Log.trace("Factory::getCourseController() - using provided controller");
         }
 
-        if (name === 'sdmm' || name === 'secapstonetest') {
+        if (name === 'classytest') {
+            Factory.controller = new CourseController(ghController);
+        } else if (name === 'sdmm' || name === 'secapstonetest') {
             // instantiate on fork
             // Factory.controller = new SDMMController(ghController);
-        } else if (name === 'cs310' || name === 'classytest') {
+        } else if (name === 'cs310') {
             // instantiate on fork
             // Factory.controller = new CS310Controller(ghController);
         } else if (name === 'cs340' || name === 'cpsc340') {
