@@ -6,11 +6,9 @@ import {ICourseController} from "./controllers/CourseController";
 import {CS310Controller} from "./controllers/cs310/CS310Controller";
 import {GitHubActions} from "./controllers/GitHubActions";
 import {GitHubController, IGitHubController} from "./controllers/GitHubController";
-import {SDMMController} from "./controllers/SDMM/SDMMController";
 
 import NoCustomRoutes from "./server/common/NoCustomRoutes";
 import IREST from "./server/IREST";
-import SDMMREST from "./server/SDMM/SDMMREST";
 
 export class Factory {
 
@@ -35,7 +33,7 @@ export class Factory {
         }
 
         if (name === 'sdmm' || name === 'secapstonetest') {
-            return new SDMMREST();
+            // instantiate SDMMREST in fork
         } else if (name === 'cs310' || name === 'classytest') {
             // no custom routes are required for 310
             return new NoCustomRoutes();
@@ -75,7 +73,8 @@ export class Factory {
         }
 
         if (name === 'sdmm' || name === 'secapstonetest') {
-            Factory.controller = new SDMMController(ghController);
+            // instantiate on fork
+            // Factory.controller = new SDMMController(ghController);
         } else if (name === 'cs310' || name === 'classytest') {
             Factory.controller = new CS310Controller(ghController);
         } else if (name === 'cs340' || name === 'cpsc340') {
