@@ -1,8 +1,6 @@
 import {expect} from "chai";
 import "mocha";
-// import restify = require('restify');
 import * as restify from "restify";
-// const request = require('supertest');
 import * as request from "supertest";
 
 import Log from "../../../../common/Log";
@@ -10,7 +8,8 @@ import {AuthTransportPayload} from "../../../../common/types/PortalTypes";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 
 import BackendServer from "../../src/server/BackendServer";
-import {Test} from "../GlobalSpec";
+
+import {Test} from "../TestHarness";
 
 // const loadFirst = require("../xRunLast/TestDatasetGeneratorSpec");
 

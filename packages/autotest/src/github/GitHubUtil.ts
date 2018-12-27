@@ -1,7 +1,7 @@
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
-import {CommitTarget} from "../../../common/types/AutoTestTypes";
+import {CommitTarget} from "../../../common/types/ContainerTypes";
 import {ClassPortal, IClassPortal} from "../autotest/ClassPortal";
 
 /**
@@ -17,17 +17,38 @@ export class GitHubUtil {
      * @param message
      * @returns {string | null}
      */
-    public static parseDeliverableFromComment(message: any): string | null {
-        const matches = message.match("\\S*#d\\d+\\S*"); // \S*#d|a\d+\S*
+    public static parseDeliverableFromComment(message: any, delivIds: string[]): string | null {
+        // const matches = message.match("\\S*#d\\d+\\S*"); // just deliverables
+        // from https://stackoverflow.com/a/25693471
+        const regexp = /(\s|^)\#\w\w+\b/gm;
+        const matches = message.match(regexp);
+
+        Log.info("parseDeliverableFromComment(..) - ids: " + JSON.stringify(delivIds) +
+            "; matches: " + JSON.stringify(matches) + " for msg: " + message);
+
+        let parsedDelivId = null;
         if (matches) {
-            let deliv = matches.pop();
-            deliv = deliv.replace('#', '');
-            deliv = deliv.trim();
-            // deliv = deliv.replace(/[^a-z0-9]/gi, ""); // replace all non-alphanumeric with empty string
-            Log.trace("GitHubUtil::parseDeliverableFromComment() - input: " + message + "; output: " + deliv);
-            return deliv;
+            for (const delivId of delivIds) {
+                for (let match of matches) {
+                    if (parsedDelivId === null) {
+                        match = match.replace('#', '');
+                        match = match.trim();
+                        if (match === delivId) {
+                            // present in message and valid
+                            parsedDelivId = match;
+                        }
+                    }
+                }
+            }
         }
-        return null;
+
+        if (parsedDelivId === null) {
+            Log.warn("GitHubUtil::parseDeliverableFromComment() - NO MATCH; input: " +
+                message + "; options: " + JSON.stringify(delivIds));
+        } else {
+            Log.trace("GitHubUtil::parseDeliverableFromComment() - input: " + message + "; output: " + parsedDelivId);
+        }
+        return parsedDelivId;
     }
 
     public static parseSilentFromComment(message: any): boolean {
@@ -56,6 +77,7 @@ export class GitHubUtil {
      */
     public static async processComment(payload: any): Promise<CommitTarget> {
         try {
+            Log.trace("GitHubUtil::processComment(..) - start");
             const commitSHA = payload.comment.commit_id;
             let commitURL = payload.comment.html_url;  // this is the comment Url
             commitURL = commitURL.substr(0, commitURL.lastIndexOf("#")); // strip off the comment reference
@@ -67,7 +89,10 @@ export class GitHubUtil {
             const requestor = String(payload.comment.user.login); // .toLowerCase();
             const message = payload.comment.body;
 
-            const delivId = GitHubUtil.parseDeliverableFromComment(message);
+            const cp = new ClassPortal();
+            const config = await cp.getConfiguration();
+            const delivId = GitHubUtil.parseDeliverableFromComment(message, config.deliverableIds);
+
             const flags: string[] = [];
             if (GitHubUtil.parseForceFromComment(message) === true) {
                 flags.push("#force");
@@ -85,7 +110,6 @@ export class GitHubUtil {
             const timestamp = Date.now(); // set timestamp to the time the commit was made
 
             // need to get this from portal backend (this is a gitHubId, not a personId)
-            const cp = new ClassPortal();
             const personResponse = await cp.getPersonId(requestor); // NOTE: this returns Person.id, id, not Person.gitHubId!
             const personId = personResponse.personId;
 
@@ -101,6 +125,14 @@ export class GitHubUtil {
                 timestamp,
                 flags
             };
+
+            let msg = message;
+            if (msg.length > 40) {
+                msg = msg.substr(0, 40) + "...";
+            }
+            Log.info("GitHubUtil.processComment(..) - who: " + requestor + "; repoId: " +
+                repoId + "; botMentioned: " + botMentioned + "; message: " + msg);
+
             // Log.trace("GitHubUtil::processComment(..) - handling: " + JSON.stringify(commentEvent, null, 2));
             return commentEvent;
         } catch (err) {
@@ -153,15 +185,15 @@ export class GitHubUtil {
             // const timestamp = payload.repository.pushed_at * 1000;
             const timestamp = Date.now(); // it does not matter when the work was done, what matters is when it was submitted
 
-            const delivIdTrans = await portal.getDefaultDeliverableId();
+            const backendConfig = await portal.getConfiguration();
 
-            if (delivIdTrans === null) {
+            if (backendConfig === null) {
                 Log.warn("GitHubUtil::processComment() - no default deliverable for course");
                 return null;
             }
 
             const pushEvent: CommitTarget = {
-                delivId:      delivIdTrans.defaultDeliverable,
+                delivId:      backendConfig.defaultDeliverable,
                 repoId:       repo,
                 botMentioned: false, // not explicitly invoked
                 personId:     null, // not explicitly requested

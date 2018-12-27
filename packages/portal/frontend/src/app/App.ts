@@ -69,7 +69,7 @@ export class App {
             document.addEventListener('init', function(event) {
                 const page = event.target as OnsPageElement;
 
-                // update login button state
+                // update login button result
                 that.toggleLoginButton();
 
                 const pageName = page.id;
@@ -112,15 +112,6 @@ export class App {
 
                 if (pageName === 'loginPage') {
                     Log.trace("App::init() - loginPage init; attaching login button");
-                    /*
-                    Log.warn("App::init() - loginPage init; NEEDED??");
-                    const userrole = String(localStorage.userrole);
-                    if (userrole === 'student') {
-                        UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/student.html', {org: org});
-                    } else if (userrole === 'admin') {
-                        UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/admin.html', {org: org, isAdmin: true});
-                    }
-                    */
 
                     (document.querySelector('#loginButton') as OnsButtonElement).onclick = function() {
                         // localStorage.setItem('org', org);
@@ -145,7 +136,7 @@ export class App {
                 }
                 Log.trace('App::init()::show - page: ' + pageName + '; validated: ' + validated + '; event: ' + JSON.stringify(event));
 
-                // update login button state
+                // update login button result
                 that.toggleLoginButton();
 
                 if (that.view !== null) {
@@ -437,7 +428,8 @@ export class App {
                 Log.trace("App::handleMainPageClick(..) - admin");
                 // if we're admin, keep the logging on
                 Log.Level = LogLevel.TRACE;
-                UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/admin.html', params).then(function() {
+                UI.pushPage('admin.html', params).then(function() { // NOTE: _without_ HTMLPrefix()
+                    // not using .getHTMLPrefix() above because all instances share a single admin page
                     // success
                 }).catch(function(err) {
                     Log.error("UI::pushPage(..) - ERROR: " + err.message);

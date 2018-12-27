@@ -4,10 +4,11 @@ import "mocha";
 
 import Config from "../../common/Config";
 import Log from "../../common/Log";
-import {CommitTarget} from "../../common/types/AutoTestTypes";
+import {CommitTarget} from "../../common/types/ContainerTypes";
+import {DeliverablesController} from "../../portal/backend/src/controllers/DeliverablesController";
 import {PersonController} from "../../portal/backend/src/controllers/PersonController";
 import BackendServer from "../../portal/backend/src/server/BackendServer";
-import {Person} from "../../portal/backend/src/Types";
+import {Deliverable, Person} from "../../portal/backend/src/Types";
 import {MockClassPortal} from "../src/autotest/mocks/MockClassPortal";
 
 import {GitHubUtil} from "../src/github/GitHubUtil";
@@ -46,6 +47,44 @@ describe("GitHub Event Parser", () => {
         };
         // person needs to exist so we can do GitHubId <-> PersonId mapping
         await pc.createPerson(p);
+
+        // deliverable needs to exist so we can match it in the comment parser
+        const dc = new DeliverablesController();
+
+        const deliv: Deliverable = {
+            id: 'd4',
+
+            URL:            'http://NOTSET',
+            openTimestamp:  new Date(1400000000000).getTime(),
+            closeTimestamp: new Date(1500000000000).getTime(),
+            gradesReleased: false,
+
+            shouldProvision:  true,
+            importURL:        'https://github.com/classytest/PostTestDoNotDelete.git', // TODO: create ImportTestDoNotDelete
+            teamMinSize:      2,
+            teamMaxSize:      2,
+            teamSameLab:      true,
+            teamStudentsForm: true,
+            teamPrefix:       't',
+            repoPrefix:       '',
+
+            visibleToStudents: true,
+
+            lateAutoTest:      false,
+            shouldAutoTest:    true,
+            autotest:          {
+                dockerImage:        'testImage',
+                studentDelay:       60 * 60 * 12, // 12h
+                maxExecTime:        300,
+                regressionDelivIds: [],
+                custom:             {}
+            },
+
+            rubric: {},
+            custom: {}
+        };
+
+        await dc.saveDeliverable(deliv);
 
         Log.test("GitHubEventParserSpec::before() - done");
     });
@@ -144,7 +183,7 @@ describe("GitHub Event Parser", () => {
             botMentioned: true,
             commitSHA:    "bbe3980fff47b7d6a921e9f89c6727bea639589c",
             commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/bbe3980fff47b7d6a921e9f89c6727bea639589c",
-            delivId:      "d7",
+            delivId:      "d4",
             repoId:       "d1_project9999",
             postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments",
             timestamp:    1516324753000,
@@ -170,7 +209,7 @@ describe("GitHub Event Parser", () => {
             postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments",
             personId:     GITHUBID,
             repoId:       "d1_project9999",
-            delivId:      "d7",
+            delivId:      "d4",
             timestamp:    1516324833000,
             cloneURL:     'https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git',
             flags:        []
@@ -216,7 +255,7 @@ describe("GitHub Event Parser", () => {
             postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
             personId:     GITHUBID,
             repoId:       "d1_project9999",
-            delivId:      "d7",
+            delivId:      "d4",
             timestamp:    1516324931000,
             cloneURL:     "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git",
             flags:        []

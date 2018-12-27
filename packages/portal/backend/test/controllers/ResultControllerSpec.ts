@@ -1,13 +1,13 @@
 import {expect} from "chai";
 import "mocha";
-import {IGradeReport} from "../../../../common/types/AutoTestTypes";
+import {GradeReport} from "../../../../common/types/ContainerTypes";
 
 import {AutoTestResultTransport} from "../../../../common/types/PortalTypes";
 import {ResultsController} from "../../src/controllers/ResultsController";
 
 import '../GlobalSpec'; // load first
-import {Test} from "../GlobalSpec";
-import './CourseControllerSpec'; // make sure it runs before github controller (which should be last of the controllers)
+import {Test} from "../TestHarness";
+import './AdminControllerSpec'; // make sure it runs before github controller (which should be last of the controllers)
 
 describe("ResultController", () => {
 
@@ -100,6 +100,28 @@ describe("ResultController", () => {
             commitURL: 'url',
             commitSHA: 'sha',
             input:     {delivId: 'd0'}
+        } as AutoTestResultTransport;
+        deliv = await rc.validateAutoTestResult(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        data = {
+            delivId:   'd0',
+            repoId:    'r1',
+            commitURL: 'url',
+            commitSHA: 'sha',
+            input:     {delivId: 'd0', target: {}}
+        } as AutoTestResultTransport;
+        deliv = await rc.validateAutoTestResult(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an('string');
+
+        data = {
+            delivId:   'd0',
+            repoId:    'r1',
+            commitURL: 'url',
+            commitSHA: 'sha',
+            input:     {delivId: 'd0', target: {}}
         }as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
@@ -110,29 +132,7 @@ describe("ResultController", () => {
             repoId:    'r1',
             commitURL: 'url',
             commitSHA: 'sha',
-            input:     {delivId: 'd0', pushInfo: {}}
-        }as AutoTestResultTransport;
-        deliv = await rc.validateAutoTestResult(data);
-        expect(deliv).to.not.be.null;
-        expect(deliv).to.be.an('string');
-
-        data = {
-            delivId:   'd0',
-            repoId:    'r1',
-            commitURL: 'url',
-            commitSHA: 'sha',
-            input:     {delivId: 'd0', pushInfo: {}}
-        }as AutoTestResultTransport;
-        deliv = await rc.validateAutoTestResult(data);
-        expect(deliv).to.not.be.null;
-        expect(deliv).to.be.an('string');
-
-        data = {
-            delivId:   'd0',
-            repoId:    'r1',
-            commitURL: 'url',
-            commitSHA: 'sha',
-            input:     {delivId: 'd0', pushInfo: {}},
+            input:     {delivId: 'd0', target: {}},
             output:    {}
         }as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
@@ -144,7 +144,7 @@ describe("ResultController", () => {
             repoId:    'r1',
             commitURL: 'url',
             commitSHA: 'sha',
-            input:     {delivId: 'd0', pushInfo: {}},
+            input:     {delivId: 'd0', target: {}},
             output:    {timestamp: Date.now()}
         }as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
@@ -156,7 +156,7 @@ describe("ResultController", () => {
             repoId:    'r1',
             commitURL: 'url',
             commitSHA: 'sha',
-            input:     {delivId: 'd0', pushInfo: {}},
+            input:     {delivId: 'd0', target: {}},
             output:    {timestamp: Date.now(), postbackOnComplete: false}
         }as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
@@ -168,8 +168,8 @@ describe("ResultController", () => {
             repoId:    'r1',
             commitURL: 'url',
             commitSHA: 'sha',
-            input:     {delivId: 'd0', pushInfo: {}},
-            output:    {timestamp: Date.now(), postbackOnComplete: false, attachments: []}
+            input:     {delivId: 'd0', target: {}},
+            output:    {timestamp: Date.now(), postbackOnComplete: false, graderTaskId: ""}
         }as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
@@ -180,8 +180,8 @@ describe("ResultController", () => {
             repoId:    'r1',
             commitURL: 'url',
             commitSHA: 'sha',
-            input:     {delivId: 'd0', pushInfo: {}},
-            output:    {timestamp: Date.now(), postbackOnComplete: false, attachments: [], state: 'SUCCESS'}
+            input:     {delivId: 'd0', target: {}},
+            output:    {timestamp: Date.now(), postbackOnComplete: false, graderTaskId: "", state: 'SUCCESS'}
         }as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
@@ -192,8 +192,8 @@ describe("ResultController", () => {
             repoId:    'r1',
             commitURL: 'url',
             commitSHA: 'sha',
-            input:     {delivId: 'd0', pushInfo: {}},
-            output:    {timestamp: Date.now(), postbackOnComplete: false, attachments: [], state: 'SUCCESS', custom: {}}
+            input:     {delivId: 'd0', target: {}},
+            output:    {timestamp: Date.now(), postbackOnComplete: false, graderTaskId: "", state: 'SUCCESS', custom: {}}
         }as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
@@ -204,8 +204,8 @@ describe("ResultController", () => {
             repoId:    'r1',
             commitURL: 'url',
             commitSHA: 'sha',
-            input:     {delivId: 'd0', pushInfo: {}},
-            output:    {timestamp: Date.now(), postbackOnComplete: false, attachments: [], state: 'SUCCESS', custom: {}, report: {}}
+            input:     {delivId: 'd0', target: {}},
+            output:    {timestamp: Date.now(), postbackOnComplete: false, graderTaskId: "", state: 'SUCCESS', custom: {}, report: {}}
         }as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
@@ -224,7 +224,7 @@ describe("ResultController", () => {
         expect(valid).to.not.be.null;
         expect(valid).to.be.an('string');
 
-        let data: IGradeReport = {} as IGradeReport;
+        let data: GradeReport = {} as GradeReport;
         valid = await rc.validateGradeReport(data);
         expect(valid).to.not.be.null;
         expect(valid).to.be.an('string');
@@ -253,27 +253,27 @@ describe("ResultController", () => {
         //     // to persist.
         //     custom: {};
         // }
-        data = {scoreOverall: 12} as IGradeReport;
+        data = {scoreOverall: 12} as GradeReport;
         valid = await rc.validateGradeReport(data);
         expect(valid).to.not.be.null;
         expect(valid).to.be.an('string');
 
-        data = {scoreOverall: 12, scoreTest: 22} as IGradeReport;
+        data = {scoreOverall: 12, scoreTest: 22} as GradeReport;
         valid = await rc.validateGradeReport(data);
         expect(valid).to.not.be.null;
         expect(valid).to.be.an('string');
 
-        data = {scoreOverall: 12, scoreTest: 22, scoreCover: 33} as IGradeReport;
+        data = {scoreOverall: 12, scoreTest: 22, scoreCover: 33} as GradeReport;
         valid = await rc.validateGradeReport(data);
         expect(valid).to.not.be.null;
         expect(valid).to.be.an('string');
 
-        data = {scoreOverall: 12, scoreTest: 22, scoreCover: 33, passNames: ['pass']} as IGradeReport;
+        data = {scoreOverall: 12, scoreTest: 22, scoreCover: 33, passNames: ['pass']} as GradeReport;
         valid = await rc.validateGradeReport(data);
         expect(valid).to.not.be.null;
         expect(valid).to.be.an('string');
 
-        data = {scoreOverall: 12, scoreTest: 22, scoreCover: 33, passNames: ['pass'], failNames: ['fail']} as IGradeReport;
+        data = {scoreOverall: 12, scoreTest: 22, scoreCover: 33, passNames: ['pass'], failNames: ['fail']} as GradeReport;
         valid = await rc.validateGradeReport(data);
         expect(valid).to.not.be.null;
         expect(valid).to.be.an('string');
@@ -285,7 +285,7 @@ describe("ResultController", () => {
             passNames:    ['pass'],
             failNames:    ['fail'],
             errorNames:   ['error']
-        } as IGradeReport;
+        } as GradeReport;
         valid = await rc.validateGradeReport(data);
         expect(valid).to.not.be.null;
         expect(valid).to.be.an('string');
@@ -298,7 +298,7 @@ describe("ResultController", () => {
             failNames:    ['fail'],
             errorNames:   ['error'],
             skipNames:    ['skip']
-        } as IGradeReport;
+        } as GradeReport;
         valid = await rc.validateGradeReport(data);
         expect(valid).to.not.be.null;
         expect(valid).to.be.an('string');
@@ -312,7 +312,38 @@ describe("ResultController", () => {
             errorNames:   ['error'],
             skipNames:    ['skip'],
             feedback:     'feedback'
-        } as IGradeReport;
+        } as GradeReport;
+        valid = await rc.validateGradeReport(data);
+        expect(valid).to.not.be.null;
+        expect(valid).to.be.an('string');
+
+        data = {
+            scoreOverall: 12,
+            scoreTest:    22,
+            scoreCover:   33,
+            passNames:    ['pass'],
+            failNames:    ['fail'],
+            errorNames:   ['error'],
+            skipNames:    ['skip'],
+            feedback:     'feedback',
+            result:       'SUCCESS'
+        } as GradeReport;
+        valid = await rc.validateGradeReport(data);
+        expect(valid).to.not.be.null;
+        expect(valid).to.be.an('string');
+
+        data = {
+            scoreOverall: 12,
+            scoreTest:    22,
+            scoreCover:   33,
+            passNames:    ['pass'],
+            failNames:    ['fail'],
+            errorNames:   ['error'],
+            skipNames:    ['skip'],
+            feedback:     'feedback',
+            result:       'SUCCESS',
+            attachments:  []
+        } as GradeReport;
         valid = await rc.validateGradeReport(data);
         expect(valid).to.not.be.null;
         expect(valid).to.be.an('string');
@@ -327,8 +358,10 @@ describe("ResultController", () => {
             errorNames:   ['error'],
             skipNames:    ['skip'],
             feedback:     'feedback',
+            result:       'SUCCESS',
+            attachments:  [],
             custom:       {}
-        } as IGradeReport;
+        } as GradeReport;
         valid = await rc.validateGradeReport(data);
         expect(valid).to.be.null;
     });

@@ -5,7 +5,7 @@
  *
  * All fields should be primitives.
  */
-import {IAutoTestResult} from "./AutoTestTypes";
+import {AutoTestResult} from "./AutoTestTypes";
 
 export interface FailurePayload {
     message: string;
@@ -91,6 +91,7 @@ export interface DeliverableTransport {
     onCloseAction: string; // will change to something else
     URL: string; // student-facing description
     gradesReleased: boolean;
+    lateAutoTest: boolean;
 
     shouldAutoTest: boolean;
     autoTest: AutoTestConfigTransport; // autoTest options
@@ -199,6 +200,11 @@ export interface AutoTestConfigTransport {
     openTimestamp: number;
 
     closeTimestamp: number;
+
+    /**
+     * Whether AutoTest can be invoked after the closeTimestamp has passed
+     */
+    lateAutoTest: boolean;
 }
 
 export interface AutoTestAuthPayload {
@@ -216,17 +222,27 @@ export interface AutoTestAuthTransport {
     isAdmin: boolean;
 }
 
-export interface AutoTestDefaultDeliverablePayload {
-    success?: AutoTestDefaultDeliverableTransport; // only set if defined
+// export interface AutoTestDefaultDeliverablePayload {
+//     success?: AutoTestDefaultDeliverableTransport; // only set if defined
+//     failure?: FailurePayload; // only set if defined
+// }
+
+export interface ClassyConfigurationPayload {
+    success?: ClassyConfigurationTransport; // only set if defined
     failure?: FailurePayload; // only set if defined
 }
 
-/**
- * AutoTest configuration details.
- * Requested per-deliverable.
- */
-export interface AutoTestDefaultDeliverableTransport {
+// /**
+//  * AutoTest configuration details.
+//  * Requested per-deliverable.
+//  */
+// export interface AutoTestDefaultDeliverableTransport {
+//     defaultDeliverable: string;
+// }
+
+export interface ClassyConfigurationTransport {
     defaultDeliverable: string;
+    deliverableIds: string[];
 }
 
 export interface AutoTestPersonIdTransport {
@@ -250,7 +266,7 @@ export interface AutoTestResultPayload {
 }
 
 /* tslint:disable-next-line */ // This will get properties eventually
-export interface AutoTestResultTransport extends IAutoTestResult {
+export interface AutoTestResultTransport extends AutoTestResult {
     // NOTE: this extends should go away, but is easiest right now
 }
 
@@ -272,9 +288,9 @@ export interface AutoTestResultSummaryTransport {
     timestamp: number;
     commitSHA: string;
     commitURL: string;
-    scoreOverall: number | null; // null if state !== 'SUCCESS'
-    scoreCover: number | null; // null if state !== 'SUCCESS'
-    scoreTests: number | null; // null if state !== 'SUCCESS'
+    scoreOverall: number | null; // null if result !== 'SUCCESS'
+    scoreCover: number | null; // null if result !== 'SUCCESS'
+    scoreTests: number | null; // null if result !== 'SUCCESS'
 }
 
 // extends the result summary data

@@ -3,7 +3,8 @@ import "mocha";
 
 import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
-import {IAutoTestResult, IContainerInput, IContainerOutput} from "../../common/types/AutoTestTypes";
+import {AutoTestResult} from "../../common/types/AutoTestTypes";
+import {ContainerInput, ContainerOutput, ContainerState} from "../../common/types/ContainerTypes";
 import {AutoTestGradeTransport} from "../../common/types/PortalTypes";
 import {DatabaseController} from "../../portal/backend/src/controllers/DatabaseController";
 import BackendServer from "../../portal/backend/src/server/BackendServer";
@@ -126,7 +127,7 @@ describe("ClassPortal Service", () => {
         await db.writeCourseRecord(course);
 
         // test
-        const actual = await cp.getDefaultDeliverableId();
+        const actual = await cp.getConfiguration();
         Log.test("Actual: " + JSON.stringify(actual));
 
         expect(actual.defaultDeliverable).to.equal('d0');
@@ -177,7 +178,7 @@ describe("ClassPortal Service", () => {
         const projectURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
         const commitURL = projectURL + '/commits/FOOOSHA';
-        const output: IContainerOutput = {
+        const output: ContainerOutput = {
             timestamp:          ts,
             report:             {
                 scoreOverall: score,
@@ -188,16 +189,18 @@ describe("ClassPortal Service", () => {
                 errorNames:   [],
                 skipNames:    [],
                 custom:       {},
-                feedback:     'feedback'
+                feedback:     'feedback',
+                result:        "SUCCESS",
+                attachments:  []
             },
             postbackOnComplete: true,
             custom:             {},
-            attachments:        [],
-            state:              'SUCCESS' // enum: SUCCESS, FAIL, TIMEOUT, INVALID_REPORT
+            state:              ContainerState.SUCCESS,
+            graderTaskId:        ""
         };
 
-        const input: IContainerInput = {
-            pushInfo:        {
+        const input: ContainerInput = {
+            target:          {
                 delivId: delivId,
                 repoId:  repoId,
 
@@ -223,11 +226,11 @@ describe("ClassPortal Service", () => {
             delivId:         delivId
         };
 
-        const result: IAutoTestResult = {
+        const result: AutoTestResult = {
             delivId:   delivId,
             repoId:    repoId,
             commitURL: commitURL,
-            commitSHA: 'SHA',
+            commitSHA: 'sha',
             input:     input,
             output:    output
         };
@@ -238,7 +241,7 @@ describe("ClassPortal Service", () => {
     it("Should be able to send a valid result.", async () => {
         const result = getResult('d0', 'TESTrepo1', 50);
         // timestamp needs to be hardcoded to when the deliverable is open for new results
-        result.input.pushInfo.timestamp = new Date(Date.UTC(2017, 3, 1, 1, 1)).getTime();
+        result.input.target.timestamp = new Date(Date.UTC(2017, 3, 1, 1, 1)).getTime();
         const actual = await cp.sendResult(result);
         Log.test("Actual: " + JSON.stringify(actual));
 

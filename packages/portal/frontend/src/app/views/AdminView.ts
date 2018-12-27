@@ -1,5 +1,5 @@
 /**
- * This is the main student page for the SDDM.
+ * This is the main student page for the SDMM.
  *
  * Other courses should _not_ modify this but instead build their own
  * student views, as they need for their own courses.

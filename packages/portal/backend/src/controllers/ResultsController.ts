@@ -1,5 +1,6 @@
 import Log from "../../../../common/Log";
-import {IAutoTestResult, IGradeReport} from "../../../../common/types/AutoTestTypes";
+import {AutoTestResult} from "../../../../common/types/AutoTestTypes";
+import {GradeReport} from "../../../../common/types/ContainerTypes";
 import {Result} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
@@ -10,13 +11,44 @@ export class ResultsController {
     private db: DatabaseController = DatabaseController.getInstance();
 
     public async getAllResults(): Promise<Result[]> {
-        Log.info("ResultsController::getAllResults() - start");
+        Log.trace("ResultsController::getAllResults() - start");
 
         const results = await this.db.getResults();
+
+        // NOTE: this block can go away once all results have been migrated to use target instead of pushInfo
+        results.sort(function(a: Result, b: Result) {
+            let tsA = 0;
+            let tsB = 0;
+            if (typeof a.input.target !== 'undefined') {
+                tsA = a.input.target.timestamp;
+            }
+            if (typeof (a as any).input.pushInfo !== 'undefined') {
+                tsA = (a as any).input.pushInfo.timestamp;
+            }
+            if (typeof b.input.target !== 'undefined') {
+                tsB = b.input.target.timestamp;
+            }
+            if (typeof (b as any).input.pushInfo !== 'undefined') {
+                tsB = (b as any).input.pushInfo.timestamp;
+            }
+            return tsB - tsA;
+        });
+
         return results;
     }
 
-    public async createResult(record: IAutoTestResult): Promise<boolean> {
+    /**
+     * Gets the result from a commitURL.
+     *
+     * @param {string} url
+     * @returns {Result}
+     */
+    public async getResultFromURL(url: string): Promise<Result | null> {
+        const result = await this.db.getResultFromURL(url);
+        return result;
+    }
+
+    public async createResult(record: AutoTestResult): Promise<boolean> {
         Log.info("ResultsController::createResult(..) - start");
         Log.trace("GradesController::createResult(..) - payload: " + JSON.stringify(record));
 
@@ -30,7 +62,7 @@ export class ResultsController {
         return outcome;
     }
 
-    public async getResult(delivId: string, repoId: string, sha: string): Promise<IAutoTestResult | null> {
+    public async getResult(delivId: string, repoId: string, sha: string): Promise<AutoTestResult | null> {
         Log.info("ResultsController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - start");
 
         const outcome = await DatabaseController.getInstance().getResult(delivId, repoId, sha);
@@ -43,10 +75,10 @@ export class ResultsController {
      * @param {IAutoTestResult} record
      * @returns {string | null} String will contain a description of the error, null if successful.
      */
-    public validateAutoTestResult(record: IAutoTestResult): string | null {
+    public validateAutoTestResult(record: AutoTestResult): string | null {
         // multiple returns is poor, but at least it's quick
 
-        Log.info('ResultsController::validateAutoTestResult(..) - result: ' + JSON.stringify(record));
+        Log.trace('ResultsController::validateAutoTestResult(..) - result: ' + JSON.stringify(record));
 
         if (typeof record === 'undefined') {
             const msg = 'object undefined';
@@ -103,8 +135,8 @@ export class ResultsController {
             return msg;
         }
 
-        if (typeof record.input.pushInfo !== 'object') {
-            const msg = 'input pushInfo missing';
+        if (typeof record.input.target !== 'object') {
+            const msg = 'input target missing';
             Log.error('ResultsController::validateAutoTestResult(..) - ERROR: ' + msg);
             return msg;
         }
@@ -130,14 +162,14 @@ export class ResultsController {
             return msg;
         }
 
-        if (typeof record.output.attachments === 'undefined' || !Array.isArray(record.output.attachments)) {
-            const msg = 'output.attachments missing or not an array';
+        if (typeof record.output.graderTaskId === 'undefined' || typeof record.output.graderTaskId !== 'string') {
+            const msg = 'output.graderTaskId missing or not a string';
             Log.error('ResultsController::validateAutoTestResult(..) - ERROR: ' + msg);
             return msg;
         }
 
         if (typeof record.output.state === 'undefined' || typeof record.output.state !== 'string') {
-            const msg = 'output.state missing or not a string';
+            const msg = 'output.result missing or not a string';
             Log.error('ResultsController::validateAutoTestResult(..) - ERROR: ' + msg);
             return msg;
         }
@@ -166,7 +198,7 @@ export class ResultsController {
         return null;
     }
 
-    public validateGradeReport(report: IGradeReport): string | null {
+    public validateGradeReport(report: GradeReport): string | null {
         // Log.trace('ResultsController::validateGradeReport(..) - input: ' + JSON.stringify(report));
 
         if (typeof report === 'undefined') {
@@ -235,6 +267,17 @@ export class ResultsController {
             return msg;
         }
 
+        if (typeof report.attachments === 'undefined' || !Array.isArray(report.attachments)) {
+            const msg = 'output.report.attachments missing or not an array';
+            Log.error('ResultsController::validateGradeReport(..) - ERROR: ' + msg);
+            return msg;
+        }
+
+        if (typeof report.result === 'undefined' || typeof report.result !== 'string') {
+            const msg = 'output.report.result missing or not a string';
+            Log.error('ResultsController::validateGradeReport(..) - ERROR: ' + msg);
+            return msg;
+        }
         Log.info('ResultsController::validateGradeReport(..) - done; report is valid');
         return null; // everything is good
     }

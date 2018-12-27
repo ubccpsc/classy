@@ -10,7 +10,7 @@ import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import BackendServer from "../../src/server/BackendServer";
 
-import {Test} from "../GlobalSpec";
+import {Test} from "../TestHarness";
 
 describe('General Routes', function() {
 
@@ -174,6 +174,146 @@ describe('General Routes', function() {
         expect(body.failure).to.not.be.undefined;
         expect(body.failure.message).to.equal('Invalid credentials');
     });
+
+    it('Invalid students should not be able to get student resources.', async function() {
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        // get user
+        const auth = await dc.getAuth(Test.USER1.id);
+        expect(auth).to.not.be.null;
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/resource/ID/student/GUID/bar/baz.txt';
+        try {
+            Log.test('Making request');
+            response = await request(app).get(url).set('user', auth.personId).set('token', 'INVLALIDTOKEN');
+            Log.test('Response received');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(401);
+    });
+
+    it('Students should not be able to get admin resources.', async function() {
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        // get user
+        const auth = await dc.getAuth(Test.USER1.id);
+        expect(auth).to.not.be.null;
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/resource/ID/admin/GUID/bar/baz.txt';
+        try {
+            Log.test('Making request');
+            response = await request(app).get(url).set('user', auth.personId).set('token', auth.token);
+            Log.test('Response received');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(401);
+    });
+
+    it('Students should not be able to get staff resources.', async function() {
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        // get user
+        const auth = await dc.getAuth(Test.USER1.id);
+        expect(auth).to.not.be.null;
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/resource/ID/staff/GUID/bar/baz.txt';
+        try {
+            Log.test('Making request');
+            response = await request(app).get(url).set('user', auth.personId).set('token', auth.token);
+            Log.test('Response received');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(401);
+    });
+
+    it('Valid student should not be able to get get a resource that does not exist.', async function() {
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        // get user
+        const auth = await dc.getAuth(Test.USER1.id);
+        expect(auth).to.not.be.null;
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/resource/INVALIDID/student/NONEXISTENT/FILE.txt';
+        try {
+            Log.test('Making request');
+            response = await request(app).get(url).set('user', auth.personId).set('token', auth.token);
+            Log.test('Response received');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(400); // NOTE: should be 404, but that would involve spinning up the server
+    });
+
+    // it('Should be able to get get a student resource.', async function() {
+    //     const dc: DatabaseController = DatabaseController.getInstance();
+    //
+    //     // get user
+    //     const auth = await dc.getAuth(Test.USER1.id);
+    //     expect(auth).to.not.be.null;
+    //
+    //     let response = null;
+    //     let body: Payload;
+    //     const url = '/portal/resource/ID/student/GUID/bar/baz.txt'; // TODO: make this a real url
+    //     try {
+    //         Log.test('Making request');
+    //         response = await request(app).get(url).set('user', auth.personId).set('token', auth.token);
+    //         Log.test('Response received');
+    //         body = response.body;
+    //     } catch (err) {
+    //         Log.test('ERROR: ' + err);
+    //     }
+    //
+    //     Log.test(response.status + " -> " + JSON.stringify(body));
+    //     expect(response.status).to.equal(200);
+    //     // TODO: expect something about body
+    // });
+    //
+    // it('Should be able to get get an admin resource.', async function() {
+    //     const dc: DatabaseController = DatabaseController.getInstance();
+    //
+    //     // get user
+    //     const auth = await dc.getAuth(Test.ADMIN1.id);
+    //     expect(auth).to.not.be.null;
+    //
+    //     let response = null;
+    //     let body: Payload;
+    //     const url = '/portal/resource/ID/admin/GUID/bar/admin.txt'; // TODO: make this a real url an admin can access
+    //     try {
+    //         Log.test('Making request');
+    //         response = await request(app).get(url).set('user', auth.personId).set('token', auth.token);
+    //         Log.test('Response received');
+    //         body = response.body;
+    //     } catch (err) {
+    //         Log.test('ERROR: ' + err);
+    //     }
+    //
+    //     Log.test(response.status + " -> " + JSON.stringify(body));
+    //     expect(response.status).to.equal(200);
+    //     // TODO: expect something about body
+    // });
 
     it('Should be able to get get the teams for a user.', async function() {
         const dc: DatabaseController = DatabaseController.getInstance();

@@ -1,7 +1,7 @@
 import Log from "../../../../common/Log";
 import {StudentTransport} from "../../../../common/types/PortalTypes";
 import Util from "../../../../common/Util";
-import {Person, Repository} from "../Types";
+import {Person, PersonKind, Repository} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
 import {GitHubActions} from "./GitHubActions";
@@ -131,6 +131,40 @@ export class PersonController {
         const repos = await this.db.getRepositoriesForPerson(personId);
         Log.trace('PersonController::getRepos( ' + personId + ' ) - # repos: ' + repos.length + '; took: ' + Util.took(start));
         return repos;
+    }
+
+    /**
+     * Marks students as withdrawn if their gitHubId is not listed in the list of registered student githubIds.
+     * @param {string[]} registeredGithubIds
+     * @returns {Promise<string>}
+     */
+    public async markStudentsWithdrawn(registeredGithubIds: string[]): Promise<string> {
+        const people = await this.getAllPeople();
+        Log.info("PersonController::markStudentsWithdrawn( .. ) - # people: " +
+            people.length + "; # registered: " + registeredGithubIds.length);
+        let numStudents = 0;
+        let numWithdrawn = 0;
+        for (const person of people) {
+            if (person.kind === PersonKind.STUDENT) {
+                numStudents++;
+                if (registeredGithubIds.indexOf(person.githubId) >= 0) {
+                    // student is registered, do nothing
+                } else {
+                    if (person.labId !== 'W') {
+                        numWithdrawn++;
+                    }
+                    // student is not registered; mark as withdrawn
+                    // person.kind = PersonKind.WITHDRAWN; // NOTE: this is commented out for testing
+                    person.labId = 'W'; // mark without changing person kind
+                    Log.info("PersonController::markStudentsWithdrawn( .. ) - marking " + person.id + " as withdrawn");
+
+                    await this.writePerson(person);
+                }
+            }
+        }
+        const msg = "# students: " + numStudents + "; # withdrawn: " + numWithdrawn;
+        Log.info("PersonController::markStudentsWithdrawn( .. ) - done; " + msg);
+        return msg;
     }
 
     public static personToTransport(person: Person): StudentTransport {

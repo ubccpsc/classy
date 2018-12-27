@@ -16,6 +16,8 @@
 # - Services specified here can be extended (and additional services can be added) by creating additional
 #   docker-compose.yml files. See https://docs.docker.com/compose/extends/#example-use-case.
 
+# NOTE: Do not change the container names. They are used to refer to the service throughout the codebase in http requests.
+
 version: "3.5"
 
 services:
@@ -23,17 +25,20 @@ services:
         build:
             context: ./
             dockerfile: ./packages/autotest/Dockerfile
-        container_name: ${CONTAINER_NAME_AUTOTEST}
+        container_name: autotest
         depends_on:
             - db
-            - grader
         env_file: .env
         expose:
             - ${AUTOTEST_PORT}
         restart: always
-        user: "${UID}"
+        user: "${UID}:${GID}"
+        volumes:
+            - "${HOST_DIR}:${PERSIST_DIR}"
+            - "/var/run/docker.sock:/var/run/docker.sock"
     db:
-        container_name: ${CONTAINER_NAME_DATABASE}
+        command: --quiet
+        container_name: db
         environment:
           - MONGO_INITDB_ROOT_USERNAME
           - MONGO_INITDB_ROOT_PASSWORD
@@ -44,33 +49,6 @@ services:
         user: "${UID}"
         volumes:
             - /var/opt/classy/db:/data/db
-    grader:
-        build:
-            context: ./
-            dockerfile: ./packages/grader/Dockerfile
-        container_name: ${CONTAINER_NAME_GRADER}
-        # DO NOT PASS THE ENTIRE ENVIRONMENT FILE
-        # Students could log the token values
-        environment:
-            - GH_BOT_TOKEN  # Only access student repos not oracle
-            - UID
-            - GRADER_HOST_DIR
-            - GRADER_PERSIST_DIR
-            - GRADER_PORT
-            - DOCKER_NET=${GRADE_NET_NAME}
-            - HOSTS_ALLOW
-        expose:
-            - ${GRADER_PORT}
-        networks:
-            default:
-            grader:
-                ipv4_address: 172.28.2.0
-        restart: always
-        user: "0"  # Run as root; needs permission to interact with docker service
-        volumes:
-            - "/var/run/docker.sock:/var/run/docker.sock"
-            - "${GRADER_HOST_DIR}:${GRADER_PERSIST_DIR}"
-        privileged: true
     portal:
         build:
             args:
@@ -78,16 +56,13 @@ services:
                 - GH_BOT_EMAIL
             context: ./
             dockerfile: ./packages/portal/Dockerfile
-        container_name: ${CONTAINER_NAME_PORTAL}
+        container_name: portal
         depends_on:
             - db
             - autotest
         env_file: .env
         expose:
             - ${BACKEND_PORT}
-        # Hack for SDMM since the github webhook hits the port directly
-        ports:
-            - 5000:${BACKEND_PORT}
         restart: always
         user: "${UID}"
         volumes:
@@ -99,14 +74,10 @@ services:
                 - UID
                 - SSL_CERT_PATH
                 - SSL_KEY_PATH
-                - CONTAINER_NAME_PORTAL
                 - BACKEND_PORT
-                - CONTAINER_NAME_GRADER
-                - GRADER_PORT
-                - RAND_ENDPOINT
             context: ./
             dockerfile: ./packages/proxy/Dockerfile
-        container_name: ${CONTAINER_NAME_ROUTER}
+        container_name: proxy
         depends_on:
             - portal
         ports:
@@ -117,15 +88,3 @@ services:
         volumes:
             - "${HOST_SSL_CERT_PATH}:${SSL_CERT_PATH}"
             - "${HOST_SSL_KEY_PATH}:${SSL_KEY_PATH}"
-
-# Run grading containers in a subnet to make it easy to block all traffic using iptables.
-networks:
-    grader:
-        driver: bridge
-        driver_opts:
-            ip-range: "172.28.5.0/24"
-            gateway: "172.28.5.254"
-        ipam:
-            config:
-                - subnet: "172.28.0.0/16"
-        name: ${GRADE_NET_NAME}

@@ -1,3 +1,4 @@
+import * as rp from "request-promise-native";
 import * as restify from "restify";
 
 import Config, {ConfigKey} from '../../../../../common/Config';
@@ -16,6 +17,7 @@ import {
 } from "../../../../../common/types/PortalTypes";
 
 import {AuthController} from "../../controllers/AuthController";
+import {DatabaseController} from "../../controllers/DatabaseController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GitHubActions} from "../../controllers/GitHubActions";
 import {GitHubController} from "../../controllers/GitHubController";
@@ -24,9 +26,11 @@ import {PersonController} from "../../controllers/PersonController";
 import {RepositoryController} from "../../controllers/RepositoryController";
 import {TeamController} from "../../controllers/TeamController";
 import {Factory} from "../../Factory";
-import {Person} from "../../Types";
+import {AuditLabel, Person} from "../../Types";
 
 import IREST from "../IREST";
+import AdminRoutes from "./AdminRoutes";
+import {AuthRoutes} from "./AuthRoutes";
 
 export default class GeneralRoutes implements IREST {
 
@@ -51,6 +55,9 @@ export default class GeneralRoutes implements IREST {
 
         // used by students to create their teams
         server.post('/portal/team', GeneralRoutes.postTeam);
+
+        // server.get('/portal/resource/:path', GeneralRoutes.getResource);
+        server.get('/portal/resource/.*', GeneralRoutes.getResource);
     }
 
     public static getConfig(req: any, res: any, next: any) {
@@ -143,6 +150,99 @@ export default class GeneralRoutes implements IREST {
             res.send(400, payload);
             return next(false);
         });
+    }
+
+    public static getResource(req: any, res: any, next: any) {
+        Log.info('GeneralRoutes::getResource(..) - start');
+
+        const auth = AdminRoutes.processAuth(req);
+        // const user = req.headers.user;
+        // const token = req.headers.token;
+        // const params = req.params;
+        const path = req.url.substring(16);  // this strips off the route prefix (i.e., /portal/resource)
+
+        // right now this means requests _must_ be by an authorized user (admin, staff, or student)
+        if (typeof auth.user === 'undefined' || typeof auth.token === 'undefined') {
+            Log.warn('GeneralRoutes::isAdmin(..) - undefined user or token');
+            return GeneralRoutes.handleError(401, 'Authorization error; unknown user/token.', res, next);
+        }
+
+        Log.info('GeneralRoutes::getResource(..) - user: ' + auth.user + '; token: ' + auth.token + '; path: ' + path);
+
+        GeneralRoutes.performGetResource(auth, path).then(function(resource: any) {
+            res.send(200, resource); // return as text rather than json
+            return next();
+        }).catch(function(err) {
+            Log.error('GeneralRoutes::getResource(..) - ERROR: ' + err);
+            if (err.message === "401") {
+                return GeneralRoutes.handleError(401, 'Authorization error; unknown user/token.', res, next);
+            } else {
+                Log.info('GeneralRoutes::getResource(..) - ERROR: ' + err.message); // intentionally info
+                return GeneralRoutes.handleError(400, 'Problem encountered getting resource: ' + err.message, res, next);
+            }
+        });
+    }
+
+    public static async performGetResource(auth: {user: string, token: string}, path: string): Promise<any> {
+        Log.info("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - start");
+
+        const host = Config.getInstance().getProp(ConfigKey.autotestUrl);
+        const port = Config.getInstance().getProp(ConfigKey.autotestPort);
+        const uri = host + ':' + port + '/resource' + path;
+
+        const options = {
+            uri:    uri,
+            method: 'GET'
+            // headers: {
+            //     'Content-Type': 'application/json',
+            //     'User-Agent':   'Portal',
+            //     'user':         auth.user, // NOTE: can change to a different representation
+            //     'token':        auth.token, // NOTE: can change to a different representation
+            //     'path':         path // NOTE: can change to a different representation
+            // }
+        };
+
+        // if user/token does not have access to resource request should return 401
+        try {
+            const priv = await AuthRoutes.performGetCredentials(auth.user, auth.token);
+
+            let proceed = false;
+            if (path.indexOf('/student/') >= 0) {
+                Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - student resource; is valid");
+                // works for everyone (performGetCredentials would have thrown exception if not a valid user)
+                proceed = true;
+            } else if (path.indexOf('/admin/') >= 0) {
+
+                // works for admin only
+                if (priv.isAdmin === true) {
+                    Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - admin resource; is valid");
+                    proceed = true;
+                } else {
+                    Log.warn("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - admin resource; NOT valid");
+                }
+            } else if (path.indexOf('/staff/') >= 0) {
+                Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - staff resource");
+                // works for admin and staff
+                if (priv.isAdmin === true || priv.isStaff === true) {
+                    Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - staff resource; is valid");
+                    proceed = true;
+                } else {
+                    Log.warn("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - staff resource; NOT valid");
+                }
+            }
+            if (proceed === false) {
+                // internal throw not great, but gets us into the same path as invalid student from
+                throw new Error("401");
+            }
+        } catch (err) {
+            throw new Error("401");
+        }
+
+        Log.info("CourseController::performGetResource( .. ) - valid request; passing through to: " + uri);
+        // if resource does not exist, request should return 404
+        const res = await rp(options);
+        Log.info("CourseController::performGetResource( .. ) - done; body: " + res);
+        return res;
     }
 
     public static getRepos(req: any, res: any, next: any) {
@@ -239,6 +339,9 @@ export default class GeneralRoutes implements IREST {
 
             const team = await tc.formTeam(names.teamName, deliv, people, false);
 
+            const dbc = DatabaseController.getInstance();
+            await dbc.writeAudit(AuditLabel.TEAM_STUDENT, user, {}, team, {});
+
             const teamTrans: TeamTransport = {
                 id:      team.id,
                 delivId: team.delivId,
@@ -324,5 +427,11 @@ export default class GeneralRoutes implements IREST {
                 return repoTrans;
             }
         }
+    }
+
+    public static handleError(code: number, msg: string, res: any, next: any) {
+        Log.error('GeneralRoutes::handleError(..) - ERROR: ' + msg);
+        res.send(code, {failure: {message: msg, shouldLogout: false}});
+        return next(false);
     }
 }

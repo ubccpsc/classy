@@ -2,8 +2,9 @@ import {Collection, Db, MongoClient} from "mongodb";
 import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
 
 import Log from "../../../../common/Log";
+import Util from "../../../../common/Util";
 
-import {Auth, Course, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
+import {AuditEvent, AuditLabel, Auth, Course, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
 
 export class DatabaseController {
     /**
@@ -14,6 +15,9 @@ export class DatabaseController {
     public static getInstance() {
         if (DatabaseController.instance === null) {
             DatabaseController.instance = new DatabaseController();
+
+            // verify that any mandatory objects that are in the db
+            // not great to do this on
         }
         return DatabaseController.instance;
     }
@@ -29,6 +33,7 @@ export class DatabaseController {
     private readonly DELIVCOLL = 'deliverables';
     private readonly REPOCOLL = 'repositories';
     private readonly AUTHCOLL = 'auth';
+    private readonly AUDITCOLL = 'audit';
 
     /**
      * use getInstance() instead.
@@ -39,7 +44,7 @@ export class DatabaseController {
 
     public async getPerson(recordId: string): Promise<Person | null> {
         const person = await this.readSingleRecord(this.PERSONCOLL, {id: recordId}) as Person;
-        Log.info("DatabaseController::getPerson( " + recordId + " ) - found: " + (person !== null));
+        Log.trace("DatabaseController::getPerson( " + recordId + " ) - found: " + (person !== null));
         return person;
     }
 
@@ -87,9 +92,16 @@ export class DatabaseController {
 
     public async getResults(): Promise<Result[]> {
         const query = {};
-        const latestFirst = {"input.pushInfo.timestamp": -1}; // most recent first
+        // const latestFirst = {"input.pushInfo.timestamp": -1}; // most recent first
+        const latestFirst = {"input.target.timestamp": -1}; // most recent first
         const results = await this.readRecords(this.RESULTCOLL, query, latestFirst) as Result[];
         Log.info("DatabaseController::getResult() - #: " + results.length);
+        for (const result of results) {
+            if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
+                // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
+                result.input.target = (result.input as any).pushInfo;
+            }
+        }
         return results;
     }
 
@@ -221,7 +233,16 @@ export class DatabaseController {
      */
     public async writeResult(record: Result): Promise<boolean> {
         Log.info("DatabaseController::writeResult(..) - start");
-        return await this.writeRecord(this.RESULTCOLL, record);
+
+        const resultExists = await this.getResult(record.delivId, record.repoId, record.commitSHA);
+        if (resultExists === null) {
+            Log.trace("DatabaseController::writeResult(..) - new");
+            return await this.writeRecord(this.RESULTCOLL, record);
+        } else {
+            Log.trace("DatabaseController::writeResult(..) - update");
+            const query = {commitSHA: record.commitSHA, repoId: record.repoId, delivId: record.delivId};
+            return await this.updateRecord(this.RESULTCOLL, query, record);
+        }
     }
 
     /*
@@ -308,6 +329,39 @@ export class DatabaseController {
         }
     }
 
+    public async writeAudit(label: AuditLabel, personId: string, before: any, after: any, custom: any): Promise<boolean> {
+        try {
+            // Log.info("DatabaseController::writeAudit(..) - start");
+            Log.info("DatabaseController::writeAudit( " + label + ", " + personId + ", hasBefore: " +
+                !Util.isEmpty(before) + ", hasAfter: " + !Util.isEmpty(after) + " ) - start");
+
+            let finalLabel = label + '_';
+            if (Util.isEmpty(before) === true && Util.isEmpty(after) === true) {
+                // is an action, no postfix
+                finalLabel = label;
+            } else if (Util.isEmpty(before) === true) {
+                finalLabel = finalLabel + 'CREATE';
+            } else if (Util.isEmpty(after) === true) {
+                finalLabel = finalLabel + 'DELETE';
+            } else {
+                finalLabel = finalLabel + 'UPDATE';
+            }
+            const auditRecord: AuditEvent = {
+                label:     finalLabel,
+                timestamp: Date.now(),
+                personId:  personId,
+                before:    before,
+                after:     after,
+                custom:    custom
+            };
+            return await this.writeRecord(this.AUDITCOLL, auditRecord);
+        } catch (err) {
+            // never want this to mess with whatever called it; eat all errors
+            Log.error("DatabaseController::writeAudit(..) - ERROR: " + err.message);
+            return false;
+        }
+    }
+
     public async writeRepository(record: Repository): Promise<boolean> {
         // Log.info("DatabaseController::writeRepository(..) - start");
         if (record.custom === null) {
@@ -382,7 +436,7 @@ export class DatabaseController {
             // This prevents us from running the tests in production by accident and wiping the database
 
             const cols = [this.PERSONCOLL, this.GRADECOLL, this.RESULTCOLL, this.TEAMCOLL,
-                this.DELIVCOLL, this.REPOCOLL, this.AUTHCOLL, this.COURSECOLL];
+                this.DELIVCOLL, this.REPOCOLL, this.AUTHCOLL, this.COURSECOLL, this.AUDITCOLL];
 
             for (const col of cols) {
                 Log.info("DatabaseController::clearData() - removing data for collection: " + col);
@@ -390,6 +444,9 @@ export class DatabaseController {
                 await collection.deleteMany({});
             }
             Log.info("DatabaseController::clearData() - data removed");
+
+            await this.initDatabase();
+            Log.info("DatabaseController::clearData() - database reset with initial objects");
         } else {
             throw new Error("DatabaseController::clearData() - can only be called on test configurations");
         }
@@ -484,9 +541,11 @@ export class DatabaseController {
                 // _ are to help diagnose whitespace in dbname/mongoUrl
                 Log.info("DatabaseController::open() - db null; making new connection to: _" + dbName + "_ on: _" + dbHost + "_");
 
-                // 'mongodb://localhost:27017'
                 const client = await MongoClient.connect(dbHost);
                 this.db = await client.db(dbName);
+
+                // ensure required records / indexes exist
+                await this.initDatabase();
 
                 Log.info("DatabaseController::open() - db null; new connection made");
             }
@@ -496,6 +555,70 @@ export class DatabaseController {
             Log.error("DatabaseController::open() - ERROR: " + err);
             Log.error("DatabaseController::open() - ERROR: Host probably does not have a database configured " +
                 "and running (see README.md if this is a test instance).");
+        }
+    }
+
+    /**
+     * Collect any actions that need to happen when a database is first opened.
+     *
+     * This can include objects or indexes that must be created.
+     */
+    private async initDatabase() {
+
+        if (this.db === null) {
+            throw new Error("DatabaseController::initDatabase() cannot be called before db is set");
+        }
+
+        // create indexes if they don't exist (idempotent operation; even if index exists this is ok)
+        // https://stackoverflow.com/a/35020346
+
+        // results needs a timestamp index because it gets to be too long to iterate through all records (32MB result limit)
+        const coll = await this.getCollection(this.RESULTCOLL);
+        await coll.createIndex({
+            "input.target.timestamp": -1
+        }, {name: "ts"});
+
+        // Make sure required Team objects exist.
+        // Cannot use TeamController because this would cause an infinite loop since
+        // TeamController uses this code to get the database instance.
+        let teamName = 'admin';
+        let team = await this.getTeam(teamName);
+        if (team === null) {
+            const newTeam: Team = {
+                id:        teamName,
+                delivId:   null, // null for special teams
+                githubId:  null, // to be filled in later
+                URL:       null, // to be filled in later
+                personIds: [], // empty for special teams
+                custom:    {}
+            };
+            await this.writeTeam(newTeam);
+        }
+        teamName = 'staff';
+        team = await this.getTeam(teamName);
+        if (team === null) {
+            const newTeam: Team = {
+                id:        teamName,
+                delivId:   null, // null for special teams
+                githubId:  null, // to be filled in later
+                URL:       null, // to be filled in later
+                personIds: [], // empty for special teams
+                custom:    {}
+            };
+            await this.writeTeam(newTeam);
+        }
+        teamName = 'students';
+        team = await this.getTeam(teamName);
+        if (team === null) {
+            const newTeam: Team = {
+                id:        teamName,
+                delivId:   null, // null for special teams
+                githubId:  null, // to be filled in later
+                URL:       null, // to be filled in later
+                personIds: [], // empty for special teams
+                custom:    {}
+            };
+            await this.writeTeam(newTeam);
         }
     }
 
@@ -523,9 +646,18 @@ export class DatabaseController {
 
         if (result !== null) {
             Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - found: " + JSON.stringify(result));
+            if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
+                // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
+                result.input.target = (result.input as any).pushInfo;
+            }
         } else {
             Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - not found");
         }
+        return result;
+    }
+
+    public async getResultFromURL(commitURL: string): Promise<Result> {
+        const result = await this.readSingleRecord(this.RESULTCOLL, {commitURL: commitURL}) as Result;
 
         return result;
     }

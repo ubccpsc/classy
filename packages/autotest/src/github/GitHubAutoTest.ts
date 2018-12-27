@@ -1,16 +1,17 @@
+import * as Docker from "dockerode";
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
+import {AutoTestResult, IFeedbackGiven} from "../../../common/types/AutoTestTypes";
+import {CommitTarget, ContainerInput} from "../../../common/types/ContainerTypes";
 
-import {CommitTarget, IAutoTestResult, IContainerInput, IFeedbackGiven} from "../../../common/types/AutoTestTypes";
 import {
     AutoTestAuthTransport,
     AutoTestConfigTransport,
-    AutoTestDefaultDeliverableTransport,
-    AutoTestResultTransport
+    AutoTestResultTransport,
+    ClassyConfigurationTransport
 } from "../../../common/types/PortalTypes";
 import Util from "../../../common/Util";
 import {AutoTest} from "../autotest/AutoTest";
-
 import {IClassPortal} from "../autotest/ClassPortal";
 import {IDataStore} from "../autotest/DataStore";
 import {GitHubService, IGitHubMessage} from "./GitHubService";
@@ -38,8 +39,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
     // private github: IGitHubService = null;
 
-    constructor(dataStore: IDataStore, portal: IClassPortal) {
-        super(dataStore, portal);
+    constructor(dataStore: IDataStore, portal: IClassPortal, docker: Docker) {
+        super(dataStore, portal, docker);
         // this.github = github;
     }
 
@@ -70,7 +71,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             if (delivId !== null) {
                 const containerConfig = await this.getContainerConfig(delivId);
                 if (containerConfig !== null) {
-                    const input: IContainerInput = {delivId, pushInfo: info, containerConfig: containerConfig};
+                    const input: ContainerInput = {delivId, target: info, containerConfig: containerConfig};
                     this.addToStandardQueue(input);
                     this.tick();
                 } else {
@@ -103,8 +104,13 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         Log.info("GitHubAutoTest::checkCommentPreconditions(..) - for: " + info.personId + "; commit: " + info.commitSHA);
 
         if (info.personId === Config.getInstance().getProp(ConfigKey.botName)) {
-            Log.info("GitHubAutoTest::checkCommentPreconditions(..) - ignored, comment made by AutoBot");
-            return false;
+
+            if (typeof info.flags !== 'undefined' && info.flags.indexOf("#force") >= 0) {
+                Log.info("GitHubAutoTest::checkCommentPreconditions(..) - AutoBot post, but with #force");
+            } else {
+                Log.info("GitHubAutoTest::checkCommentPreconditions(..) - ignored, comment made by AutoBot");
+                return false;
+            }
         }
 
         if (info.botMentioned === false) {
@@ -162,7 +168,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 return false;
             }
 
-            if (deliv.closeTimestamp < info.timestamp) {
+            // late is ok if lateAutoTest is true
+            if (deliv.closeTimestamp < info.timestamp || deliv.lateAutoTest === false) {
                 Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, deliverable closed to AutoTest.");
                 // closed
                 const msg = "This deliverable is closed to grading.";
@@ -195,7 +202,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         Log.info("GitHubAutoTest::schedule(..) - scheduling for: " + info.personId + "; SHA: " + info.commitURL);
         const containerConfig = await this.getContainerConfig(info.delivId);
         if (containerConfig !== null) {
-            const input: IContainerInput = {delivId: info.delivId, pushInfo: info, containerConfig: containerConfig};
+            const input: ContainerInput = {delivId: info.delivId, target: info, containerConfig: containerConfig};
             this.addToStandardQueue(input);
             this.tick();
             Log.info("GitHubAutoTest::schedule(..) - scheduling completed for: " + info.commitURL);
@@ -213,7 +220,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             // previously processed
             Log.info("GitHubAutoTest::processComment(..) - result already exists; handling for: " +
                 info.personId + "; SHA: " + info.commitSHA);
-            await this.postToGitHub(info, {url: info.postbackURL, message: res.output.report.feedback});
+            const msg = await this.classPortal.formatFeedback(res.output.report);
+            await this.postToGitHub(info, {url: info.postbackURL, message: msg});
             await this.saveCommentInfo(info);
             if (res.output.postbackOnComplete === false) {
                 Log.info("GitHubAutoTest::processComment(..) - result already exists; feedback request logged for: " +
@@ -347,14 +355,17 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         }
     }
 
-    protected async processExecution(data: IAutoTestResult): Promise<void> {
+    protected async processExecution(data: AutoTestResult): Promise<void> {
         try {
             const feedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId);
+            const containerConfig: any = await this.getContainerConfig(data.input.delivId);
+            const feedbackMode: string = containerConfig.custom.feedbackMode;
             if (data.output.postbackOnComplete === true) {
                 // do this first, doesn't count against quota
                 Log.info("GitHubAutoTest::processExecution(..) - postback: true; deliv: " +
                     data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA);
-                await this.postToGitHub(data.input.pushInfo, {url: data.input.pushInfo.postbackURL, message: data.output.report.feedback});
+                const msg = await this.classPortal.formatFeedback(data.output.report, feedbackMode);
+                await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
                 // NOTE: if the feedback was requested for this build it shouldn't count
                 // since we're not calling saveFeedback this is right
                 // but if we replay the commit comments, we would see it there, so be careful
@@ -362,7 +373,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 // feedback has been previously requested
                 Log.info("GitHubAutoTest::processExecution(..) - feedback requested; deliv: " +
                     data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA + '; for: ' + feedbackRequested.personId);
-                await this.postToGitHub(data.input.pushInfo, {url: data.input.pushInfo.postbackURL, message: data.output.report.feedback});
+                const msg = await this.classPortal.formatFeedback(data.output.report, feedbackMode);
+                await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
                 await this.saveFeedbackGiven(data.input.delivId, feedbackRequested.personId, feedbackRequested.timestamp, data.commitURL);
             } else {
                 // do nothing
@@ -370,7 +382,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA);
             }
         } catch (err) {
-            Log.info("GitHubAutoTest::processExecution(..) - ERROR: " + err);
+            Log.error("GitHubAutoTest::processExecution(..) - ERROR: " + err);
             return; // do not let errors escape
         }
     }
@@ -459,10 +471,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     private async getDelivId(): Promise<string | null> {
         Log.trace("GitHubAutoTest::getDelivId() - start");
         try {
-            const delivTransport: AutoTestDefaultDeliverableTransport = await this.classPortal.getDefaultDeliverableId();
-            Log.trace("GitHubAutoTest::getDelivId() - response: " + JSON.stringify(delivTransport));
-            if (delivTransport !== null && typeof delivTransport.defaultDeliverable !== "undefined") {
-                return delivTransport.defaultDeliverable;
+            const config: ClassyConfigurationTransport = await this.classPortal.getConfiguration();
+            Log.trace("GitHubAutoTest::getDelivId() - response: " + JSON.stringify(config));
+            if (config !== null && typeof config.defaultDeliverable !== "undefined") {
+                return config.defaultDeliverable;
             }
         } catch (err) {
             Log.error("GitHubAutoTest::getDelivId() - ERROR: " + err);

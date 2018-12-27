@@ -1,19 +1,21 @@
+import * as request from "request";
 import * as rp from "request-promise-native";
 import * as restify from 'restify';
 
 import Config, {ConfigKey} from "../../../../../common/Config";
 import Log from "../../../../../common/Log";
-import {IAutoTestResult} from "../../../../../common/types/AutoTestTypes";
+import {AutoTestResult} from "../../../../../common/types/AutoTestTypes";
 import {
     AutoTestAuthPayload,
     AutoTestConfigPayload,
     AutoTestConfigTransport,
-    AutoTestDefaultDeliverablePayload,
     AutoTestGradeTransport,
     AutoTestResultPayload,
     AutoTestResultTransport,
+    ClassyConfigurationPayload,
     Payload
 } from "../../../../../common/types/PortalTypes";
+import {AdminController} from "../../controllers/AdminController";
 import {AuthController} from "../../controllers/AuthController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GitHubActions} from "../../controllers/GitHubActions";
@@ -21,7 +23,6 @@ import {GitHubController} from "../../controllers/GitHubController";
 import {GradesController} from "../../controllers/GradesController";
 import {PersonController} from "../../controllers/PersonController";
 import {ResultsController} from "../../controllers/ResultsController";
-import {Factory} from "../../Factory";
 
 import IREST from "../IREST";
 
@@ -33,7 +34,8 @@ export class AutoTestRoutes implements IREST {
     public registerRoutes(server: restify.Server) {
         Log.info('AutoTestRouteHandler::registerRoutes() - start');
 
-        server.get('/portal/at/defaultDeliverable', AutoTestRoutes.atDefaultDeliverable);
+        server.get('/portal/at', AutoTestRoutes.atConfiguration); // deprecates defaultDeliverable endpoint
+        // server.get('/portal/at/defaultDeliverable', AutoTestRoutes.atDefaultDeliverable);
         server.get('/portal/at/isStaff/:githubId', AutoTestRoutes.atIsStaff);
         server.get('/portal/at/personId/:githubId', AutoTestRoutes.atPersonId);
         server.get('/portal/at/container/:delivId', AutoTestRoutes.atContainerDetails);
@@ -47,6 +49,9 @@ export class AutoTestRoutes implements IREST {
 
         // >SDMM HACK< This is a hack to allow current webhooks on EdX to continue to function
         server.post('/githubWebhook', AutoTestRoutes.githubWebhook); // forward GitHub Webhooks to AutoTest
+
+        server.get('/portal/at/docker/images', AutoTestRoutes.getDockerImages);
+        server.post('/portal/at/docker/image', AutoTestRoutes.postDockerImage);
     }
 
     public static handleError(code: number, msg: string, res: any, next: any) {
@@ -78,7 +83,8 @@ export class AutoTestRoutes implements IREST {
                         regressionDelivIds: deliv.autotest.regressionDelivIds,
                         custom:             deliv.autotest.custom,
                         openTimestamp:      deliv.openTimestamp,
-                        closeTimestamp:     deliv.closeTimestamp
+                        closeTimestamp:     deliv.closeTimestamp,
+                        lateAutoTest:       deliv.lateAutoTest
                     };
                     payload = {success: at};
                     res.send(200, payload);
@@ -92,28 +98,59 @@ export class AutoTestRoutes implements IREST {
         }
     }
 
-    public static atDefaultDeliverable(req: any, res: any, next: any) {
-        Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - /defaultDeliverable/:name - start GET');
+    public static atConfiguration(req: any, res: any, next: any) {
+        Log.info('AutoTestRouteHandler::atConfiguration(..) - /at - start GET');
 
-        let payload: AutoTestDefaultDeliverablePayload;
+        let payload: ClassyConfigurationPayload;
         const providedSecret = req.headers.token;
         if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
             return AutoTestRoutes.handleError(400, 'Invalid AutoTest Secret: ' + providedSecret, res, next);
         } else {
 
             const name = Config.getInstance().getProp(ConfigKey.name);
-            Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - name: ' + name);
+            Log.info('AutoTestRouteHandler::atConfiguration(..) - name: ' + name);
 
-            const cc = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
+            const cc = new AdminController(new GitHubController(GitHubActions.getInstance()));
+            let defaultDeliverable: string | null = null;
             cc.getCourse().then(function(course) {
-                payload = {success: {defaultDeliverable: course.defaultDeliverableId}};
+                defaultDeliverable = course.defaultDeliverableId;
+                return cc.getDeliverables();
+            }).then(function(deliverables) {
+                const delivIds = [];
+                for (const deliv of deliverables) {
+                    delivIds.push(deliv.id);
+                }
+                payload = {success: {defaultDeliverable: defaultDeliverable, deliverableIds: delivIds}};
                 res.send(200, payload);
                 return next(true);
             }).catch(function(err) {
-                return AutoTestRoutes.handleError(400, 'No default deliverable found. ', res, next);
+                return AutoTestRoutes.handleError(400, 'Error retrieving backend configuration.', res, next);
             });
         }
     }
+
+    // public static atDefaultDeliverable(req: any, res: any, next: any) {
+    //     Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - /defaultDeliverable/:name - start GET');
+    //
+    //     let payload: AutoTestDefaultDeliverablePayload;
+    //     const providedSecret = req.headers.token;
+    //     if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
+    //         return AutoTestRoutes.handleError(400, 'Invalid AutoTest Secret: ' + providedSecret, res, next);
+    //     } else {
+    //
+    //         const name = Config.getInstance().getProp(ConfigKey.name);
+    //         Log.info('AutoTestRouteHandler::atDefaultDeliverable(..) - name: ' + name);
+    //
+    //         const cc = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
+    //         cc.getCourse().then(function(course) {
+    //             payload = {success: {defaultDeliverable: course.defaultDeliverableId}};
+    //             res.send(200, payload);
+    //             return next(true);
+    //         }).catch(function(err) {
+    //             return AutoTestRoutes.handleError(400, 'No default deliverable found. ', res, next);
+    //         });
+    //     }
+    // }
 
     public static atGrade(req: any, res: any, next: any) {
         Log.info('AutoTestRouteHandler::atGrade(..) - start');
@@ -148,7 +185,7 @@ export class AutoTestRoutes implements IREST {
         } else {
             Log.info('AutoTestRouteHandler::atGrade(..) - repoId: ' + grade.repoId +
                 '; delivId: ' + grade.delivId + '; body: ' + JSON.stringify(grade));
-            const cc = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
+            const cc = new AdminController(new GitHubController(GitHubActions.getInstance()));
             const success = await cc.processNewAutoTestGrade(grade);
             return success;
         }
@@ -205,7 +242,7 @@ export class AutoTestRoutes implements IREST {
                 return success;
             } else {
                 Log.info('AutoTestRouteHandler::performPostResult(..) - not accepting new results for delivId: ' + result.delivId +
-                    '; deadline: ' + new Date(deliv.closeTimestamp) + "; result ts: " + new Date(result.input.pushInfo.timestamp));
+                    '; deadline: ' + new Date(deliv.closeTimestamp) + "; result ts: " + new Date(result.input.target.timestamp));
                 return false;
             }
         }
@@ -277,39 +314,6 @@ export class AutoTestRoutes implements IREST {
         }
     }
 
-    /**
-     * This route forwards GitHub webhooks from the public-facing backend to AutoTest's
-     * endpoint (which can be internal and protected).
-     *
-     * @param req
-     * @param res
-     * @param next
-     */
-    public static githubWebhook(req: any, res: any, next: any) {
-        Log.info('AutoTestRouteHandler::githubWebhook(..) - start');
-        const webhookBody: any = req.body;
-
-        // TODO: is there any way to verify this actually came from GitHub?
-
-        const atHost = Config.getInstance().getProp(ConfigKey.autotestUrl);
-        const url = atHost + ':' + Config.getInstance().getProp(ConfigKey.autotestPort) + '/githubWebhook';
-        const options = {
-            uri:     url,
-            method:  'POST',
-            json:    true,
-            headers: req.headers, // use GitHub's headers
-            body:    webhookBody
-        };
-
-        return rp(options).then(function(succ) {
-            Log.info('AutoTestRouteHandler::githubWebhook(..) - success: ' + JSON.stringify(succ));
-            res.send(200, succ); // send interpretation back to GitHub
-            next();
-        }).catch(function(err) {
-            return AutoTestRoutes.handleError(400, 'Error processing webhook: ' + err.message, res, next);
-        });
-    }
-
     public static atGetResult(req: any, res: any, next: any) {
         Log.info('AutoTestRouteHandler::atGetResult(..) - /at/result/:delivId/:repoId - start GET');
 
@@ -326,7 +330,7 @@ export class AutoTestRoutes implements IREST {
             Log.info('AutoTestRouteHandler::atGetResult(..) - delivId: ' + delivId + '; repoId: ' + repoId + '; sha: ' + sha);
 
             const rc = new ResultsController();
-            rc.getResult(delivId, repoId, sha).then(function(result: IAutoTestResult) {
+            rc.getResult(delivId, repoId, sha).then(function(result: AutoTestResult) {
                 if (result !== null) {
                     payload = {success: [result]};
                 } else {
@@ -338,5 +342,172 @@ export class AutoTestRoutes implements IREST {
                 return AutoTestRoutes.handleError(400, 'Error retrieving result record: ' + err.message, res, next);
             });
         }
+    }
+
+    /**
+     * This route forwards GitHub webhooks from the public-facing backend to AutoTest's
+     * endpoint (which is internal and protected).
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
+    public static githubWebhook(req: any, res: any, next: any) {
+        Log.trace('AutoTestRouteHandler::githubWebhook(..) - start');
+        AutoTestRoutes.handleWebhook(req).then(function(succ) {
+            Log.info('AutoTestRouteHandler::githubWebhook(..) - success');
+            res.send(200, succ);
+        }).catch(function(err) {
+            Log.error('AutoTestRouteHandler::githubWebhook(..) - ERROR: ' + err.message);
+            return AutoTestRoutes.handleError(400, 'Error processing webhook: ' + err.message, res, next);
+        });
+    }
+
+    /**
+     * Forwards Webhook to AutoTest if it is from a valid host. Returns the processed body to GitHub
+     * so we can debug the contents in GitHub's webhook view, if needed.
+     *
+     * @param req
+     * @returns {Promise<{}>}
+     */
+    private static async handleWebhook(req: any): Promise<{}> {
+        const config = Config.getInstance();
+
+        const atHost = config.getProp(ConfigKey.autotestUrl);
+        const url = atHost + ':' + config.getProp(ConfigKey.autotestPort) + '/githubWebhook';
+        const options = {
+            uri:     url,
+            method:  'POST',
+            json:    true,
+            headers: req.headers, // use GitHub's headers
+            body:    req.body
+        };
+
+        const isValid: boolean = await AutoTestRoutes.isWebhookFromGitHub(req);
+        if (isValid === true) {
+            const success = await rp(options);
+            Log.trace('AutoTestRouteHandler::handleWebhook(..) - success: ' + JSON.stringify(success));
+            return success;
+        } else {
+            throw new Error("Webhook event did not originate from GitHub");
+        }
+    }
+
+    /**
+     * Helper function to check that a given request is from GitHub; this is a low-cost way to 'authenticate'
+     * that a webhook at least originated on the right host.
+     *
+     * While 'remoteAddress' would be the right way to get the IP of the request, this turns out to be incorrect
+     * becuase the Docker router actually forwards this result with an internal IP.
+     *
+     * @param req
+     * @returns {Promise<boolean>}
+     */
+    private static isWebhookFromGitHub(req: any): Promise<boolean> {
+        return new Promise(function(fulfill, reject) {
+            const config = Config.getInstance();
+            const start = Date.now();
+
+            let remoteAddr = '';
+            if (typeof req.headers['x-forwarded-for'] !== 'undefined') {
+                // docker frontend will report .remoteAddress as internal (e.g., ::ffff:172.18.0.2) so we should use forwarded-for
+                remoteAddr = req.headers['x-forwarded-for'];
+                Log.trace('AutoTestRouteHandler::isWebhookFromGitHub(..) - start; x-forwarded from: ' + remoteAddr);
+            } else {
+                remoteAddr = req.connection.remoteAddress;
+                Log.trace('AutoTestRouteHandler::isWebhookFromGitHub(..) - start; remoteAddress from: ' + remoteAddr);
+            }
+
+            // TODO: fix this
+            return fulfill(true);
+
+            // const ghAPI = config.getProp(ConfigKey.githubAPI);
+            // if (ghAPI.indexOf('github.com') > 0) {
+            //     Log.info('AutoTestRouteHandler::isWebhookFromGitHub(..) - accepted; host is github.com');
+            //     return fulfill(true);
+            // }
+            //
+            // dns.lookup(ghAPI, (err, expectedAddr) => {
+            //     if (err) {
+            //         Log.error('AutoTestRouteHandler::isWebhookFromGitHub(..) - ERROR: ' + err);
+            //         return reject(err);
+            //     }
+            //
+            //     // use indexOf here because address sometimes reports like: ::ffff:172.18.0.2
+            //     if (expectedAddr !== null && remoteAddr.indexOf(expectedAddr) >= 0) {
+            //         Log.info('AutoTestRouteHandler::isWebhookFromGitHub(..) - accepted; provided: ' +
+            //             remoteAddr + '; expected: ' + expectedAddr + '; took: ' + Util.took(start));
+            //         return fulfill(true);
+            //     } else {
+            //         const msg = 'Webhook did not originate from GitHub; request addr: ' +
+            //             remoteAddr + ' !== expected addr: ' + expectedAddr;
+            //         Log.error('AutoTestRouteHandler::isWebhookFromGitHub(..) - rejected: ' + msg);
+            //         return reject(new Error(msg));
+            //     }
+            // });
+        });
+    }
+
+    public static async getDockerImages(req: any, res: any, next: any) {
+        try {
+            const config = Config.getInstance();
+
+            const atHost = config.getProp(ConfigKey.autotestUrl);
+            const url = atHost + ':' + config.getProp(ConfigKey.autotestPort) + req.href().replace("/portal/at", "");
+            const options = {
+                uri:    url,
+                method: 'GET',
+                json:   true
+            };
+            const githubId = req.headers.user;
+            const pc = new PersonController();
+            const person = await pc.getGitHubPerson(githubId);
+            const privileges = await new AuthController().personPriviliged(person);
+            if (privileges.isAdmin) {
+                try {
+                    const atResponse = await rp(options);
+                    res.send(200, atResponse);
+                } catch (err) {
+                    Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Sending request to AutoTest service. " + err);
+                }
+            } else {
+                res.send(401);
+            }
+        } catch (err) {
+            res.send(400);
+        }
+        return next();
+    }
+
+    public static async postDockerImage(req: any, res: any, next: any) {
+        try {
+            const config = Config.getInstance();
+
+            const atHost = config.getProp(ConfigKey.autotestUrl);
+            const url = atHost + ':' + config.getProp(ConfigKey.autotestPort) + '/docker/image';
+            const options = {
+                uri:    url,
+                method: 'POST',
+                json:   true,
+                body:   req.body
+            };
+            const githubId = req.headers.user;
+            const pc = new PersonController();
+            const person = await pc.getGitHubPerson(githubId);
+            const privileges = await new AuthController().personPriviliged(person);
+            if (privileges.isAdmin) {
+                try {
+                    // Use native request library. See https://github.com/request/request-promise#api-in-detail.
+                    request(options).pipe(res);
+                } catch (err) {
+                    Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Sending request to AutoTest service. " + err);
+                }
+            } else {
+                res.send(401);
+            }
+        } catch (err) {
+            res.send(400);
+        }
+        return next();
     }
 }

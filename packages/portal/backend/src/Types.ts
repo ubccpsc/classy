@@ -1,4 +1,5 @@
-import {AutoTestConfig, IAutoTestResult} from "../../../common/types/AutoTestTypes";
+import {AutoTestResult} from "../../../common/types/AutoTestTypes";
+import {AutoTestConfig} from "../../../common/types/ContainerTypes";
 import {AssignmentGrade, AssignmentInfo, AssignmentRepositoryInfo} from "../../../common/types/CS340Types";
 
 /**
@@ -51,7 +52,7 @@ export interface Person {
 
     readonly fName: string;
     readonly lName: string;
-    kind: string | null; // student, staff, admin (staff / admin taken from GitHub if kind is null)
+    kind: PersonKind | null; // student, staff, admin (staff / admin taken from GitHub if kind is null)
     URL: string | null; // usually the person's GitHub profile URL; null when not yet validated
 
     labId: string | null; // null for non-students
@@ -60,6 +61,18 @@ export interface Person {
         sdmmStatus?: string, // SDMM // TODO: make into sdmm.status
         myProp?: any // PersonControllerSpec
     };
+}
+
+/**
+ * These are the kinds of Person. Using an enum for greater type checking flexibility.
+ */
+export enum PersonKind {
+    NONE = "",
+    STUDENT = "student",
+    WITHDRAWN = "withdrawn", // typically a student who has left the class
+    ADMINSTAFF = "adminstaff",
+    ADMIN = "admin",
+    STAFF = "staff"
 }
 
 export interface Auth {
@@ -89,6 +102,7 @@ export interface Deliverable {
         // mainFilePath?: any // AssignmentController // TODO: make into assignment.mainFilePath
     };
 
+    lateAutoTest: boolean; // whether the deliv can be executed after the deadline
     shouldAutoTest: boolean; // whether the deliv will use AutoTest
     autotest: AutoTestConfig;
 
@@ -112,6 +126,7 @@ export interface Team {
     readonly delivId: string; // invariant
 
     URL: string | null; // null when not yet created
+    githubId: number | null; // null when not yet created
     personIds: string[]; // Person.id[] - foreign key
 
     // githubStatus: string; // NONE | CREATED | LINKED
@@ -153,11 +168,11 @@ export interface Repository {
 
         assignmentInfo?: AssignmentRepositoryInfo,
 
-        d0enabled?: boolean, // SDDM // TODO: make sddm.d0enabled
-        d1enabled?: boolean, // SDDM // TODO: make sddm.d1enabled
-        d2enabled?: boolean, // SDDM // TODO: make sddm.d2enabled
-        d3enabled?: boolean  // SDDM // TODO: make sddm.d3enabled
-        sddmD3pr?: boolean, // SDDM // TODO: make sddm.d3pr
+        d0enabled?: boolean, // SDMM // TODO: make sdmm.d0enabled
+        d1enabled?: boolean, // SDMM // TODO: make sdmm.d1enabled
+        d2enabled?: boolean, // SDMM // TODO: make sdmm.d2enabled
+        d3enabled?: boolean  // SDMM // TODO: make sdmm.d3enabled
+        sddmD3pr?: boolean, // SDMM // TODO: make sdmm.d3pr
     };
 }
 
@@ -171,6 +186,31 @@ export interface Course {
     custom: {
         status?: string
     };
+}
+
+export enum AuditLabel {
+    COURSE = 'Course',
+    DELIVERABLE = 'Deliverable',
+    REPOSITORY = 'Repository',
+    TEAM = 'TEAM',
+    TEAM_ADMIN = 'TeamAdmin', // Created / updated by admin
+    TEAM_STUDENT = 'TeamStudent', // Created / updated by student
+    GRADE_ADMIN = 'GradeAdmin', // Created / updated by admin
+    GRADE_CHANGE = 'Grade_Change',
+    GRADE_AUTOTEST = 'GradeAutotest',
+    REPO_PROVISION = 'RepositoryProvision',
+    REPO_RELEASE = 'RepositoryRelease',
+    CLASSLIST_UPLOAD = 'Classlist_Upload',
+    CLASSLIST_PRUNE = 'Classlist_Prune'
+}
+
+export interface AuditEvent {
+    label: string;
+    timestamp: number;
+    personId: string;
+    before: object | null;
+    after: object | null;
+    custom: object; // enables easier querying
 }
 
 export interface Grade {
@@ -197,6 +237,6 @@ export interface Grade {
     };
 }
 
-export interface Result extends IAutoTestResult { // TODO: define this without this extends. This import is no good!
+export interface Result extends AutoTestResult { // TODO: define this without this extends. This import is no good!
     people: string[];
 }

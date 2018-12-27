@@ -37,22 +37,41 @@ export class AdminConfigTab extends AdminPage {
         await this.deliverablesPage.init(opts);
 
         (document.querySelector('#adminSubmitClasslist') as OnsButtonElement).onclick = function(evt) {
-            Log.info('AdminConfigTab::handleAdminConfig(..) - upload pressed');
+            Log.info('AdminConfigTab::handleAdminConfig(..) - upload classlist pressed');
             evt.stopPropagation(); // prevents list item expansion
 
             const fileInput = document.querySelector('#adminClasslistFile') as HTMLInputElement;
-            const isValid: boolean = that.validateClasslistSpecified(fileInput);
+            const isValid: boolean = that.validateFileSpecified(fileInput);
             if (isValid === true) {
                 that.uploadClasslist(fileInput.files).then(function() {
                     // done
                 }).catch(function(err) {
-                    Log.error('AdminConfigTab::handleAdminConfig(..) - upload pressed ERROR: ' + err.message);
+                    Log.error('AdminConfigTab::handleAdminConfig(..) - upload classlist pressed ERROR: ' + err.message);
+                });
+            }
+        };
+
+        (document.querySelector('#adminSubmitGradeCSV') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminConfigTab::handleAdminConfig(..) - upload grades pressed');
+            evt.stopPropagation(); // prevents list item expansion
+
+            const fileInput = document.querySelector('#adminGradeCSV') as HTMLInputElement;
+            const isValid: boolean = that.validateFileSpecified(fileInput);
+            if (isValid === true) {
+
+                const delivDropdown = document.querySelector('#adminGradeDeliverableSelect') as HTMLSelectElement;
+                const delivId = delivDropdown.value;
+                that.uploadGrades(fileInput.files, delivId).then(function() {
+                    // done
+                }).catch(function(err) {
+                    Log.error('AdminConfigTab::handleAdminConfig(..) - upload grades pressed ERROR: ' + err.message);
                 });
             }
         };
 
         (document.querySelector('#adminSubmitDefaultDeliverable') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - default deliverable pressed');
+            evt.preventDefault();
 
             that.defaultDeliverablePressed().then(function() {
                 // worked
@@ -63,6 +82,7 @@ export class AdminConfigTab extends AdminPage {
 
         (document.querySelector('#adminProvisionButton') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - provision deliverable pressed');
+            evt.preventDefault();
 
             that.provisionDeliverablePressed().then(function() {
                 // worked
@@ -73,6 +93,7 @@ export class AdminConfigTab extends AdminPage {
 
         (document.querySelector('#adminReleaseButton') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - release deliverable pressed');
+            evt.preventDefault();
 
             that.releaseDeliverablePressed().then(function() {
                 // worked
@@ -81,8 +102,31 @@ export class AdminConfigTab extends AdminPage {
             });
         };
 
+        (document.querySelector('#adminReadWriteButton') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminConfigTab::handleAdminConfig(..) - read/write deliverable pressed');
+            evt.preventDefault();
+
+            that.repoEnableWritePressed().then(function() {
+                // worked
+            }).catch(function(err) {
+                Log.info('AdminConfigTab::handleAdminConfig(..) - read/write deliverable pressed; ERROR: ' + err.message);
+            });
+        };
+
+        (document.querySelector('#adminReadOnlyButton') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminConfigTab::handleAdminConfig(..) - read only deliverable pressed');
+            evt.preventDefault();
+
+            that.repoDisableWritePressed().then(function() {
+                // worked
+            }).catch(function(err) {
+                Log.info('AdminConfigTab::handleAdminConfig(..) - read only deliverable pressed; ERROR: ' + err.message);
+            });
+        };
+
         (document.querySelector('#adminCreateTeamButton') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - create team pressed');
+            evt.preventDefault();
 
             that.createTeamPressed().then(function() {
                 // worked
@@ -93,6 +137,7 @@ export class AdminConfigTab extends AdminPage {
 
         (document.querySelector('#adminDeletePageButton') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - delete page pressed');
+            evt.preventDefault();
 
             that.pushPage('adminDelete.html', {}).then(function() {
                 const deletePage = new AdminDeletePage(that.remote);
@@ -106,19 +151,39 @@ export class AdminConfigTab extends AdminPage {
             });
         };
 
+        (document.querySelector('#adminPerformWithdrawButton') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminConfigTab::handleAdminConfig(..) - perform withdraw pressed');
+            evt.preventDefault();
+
+            that.performWithdraw().then(function() {
+                // worked
+            }).catch(function(err) {
+                Log.info('AdminConfigTab::handleAdminConfig(..) - perform withdraw pressed; ERROR: ' + err.message);
+            });
+        };
+
         UI.showModal("Retriving config / deliverable details.");
 
         this.course = await AdminView.getCourse(this.remote);
 
         const deliverables = await AdminDeliverablesTab.getDeliverables(this.remote);
+        const gradesDeliverableDropdown = document.querySelector('#adminGradeDeliverableSelect') as HTMLSelectElement;
         const defaultDeliverableDropdown = document.querySelector('#adminDefaultDeliverableSelect') as HTMLSelectElement;
         const provisionDropdown = document.querySelector('#adminProvisionDeliverableSelect') as HTMLSelectElement;
         const releaseDropdown = document.querySelector('#adminReleaseDeliverableSelect') as HTMLSelectElement;
         const teamDropdown = document.querySelector('#adminTeamDeliverableSelect') as HTMLSelectElement;
 
+        const repoReadDropdown = document.querySelector('#adminReadOnlyDeliverableSelect') as HTMLSelectElement;
+        const repoReadWriteDropdown = document.querySelector('#adminReadWriteDeliverableSelect') as HTMLSelectElement;
+
         const defaultDeliverableOptions = ['--Not Set--'];
         const provisionOptions = ['--Select--'];
         const releaseOptions = ['--Select--'];
+        const gradesOptions = ['--Select--'];
+        const allDeliverables = ['--Select--'];
+
+        const repoReadOptions = ['--Select--'];
+        const repoWriteOptions = ['--Select--'];
 
         for (const deliv of deliverables) {
             if (deliv.shouldAutoTest === true) {
@@ -129,13 +194,20 @@ export class AdminConfigTab extends AdminPage {
                 // can only provision or release deliverables that are provisionable
                 provisionOptions.push(deliv.id);
                 releaseOptions.push(deliv.id);
+                gradesOptions.push(deliv.id);
+                repoReadOptions.push(deliv.id);
+                repoWriteOptions.push(deliv.id);
             }
+            allDeliverables.push(deliv.id);
         }
 
         this.populateDelivSelect(defaultDeliverableOptions, defaultDeliverableDropdown);
         this.populateDelivSelect(provisionOptions, teamDropdown); // can only create teams on provisionable deliverables
         this.populateDelivSelect(provisionOptions, provisionDropdown);
         this.populateDelivSelect(releaseOptions, releaseDropdown);
+        this.populateDelivSelect(allDeliverables, gradesDeliverableDropdown);
+        this.populateDelivSelect(repoReadOptions, repoReadDropdown);
+        this.populateDelivSelect(repoWriteOptions, repoReadWriteDropdown);
 
         // set default deliverable, if it exists
         for (const o of (defaultDeliverableDropdown as any).children) {
@@ -162,12 +234,12 @@ export class AdminConfigTab extends AdminPage {
         }
     }
 
-    private validateClasslistSpecified(fileInput: HTMLInputElement) {
+    private validateFileSpecified(fileInput: HTMLInputElement) {
         if (fileInput.value.length > 0) {
-            Log.trace('AdminConfigTab::validateClasslistSpecified() - validation passed');
+            Log.trace('AdminConfigTab::validateFileSpecified() - validation passed');
             return true;
         } else {
-            UI.notification('You must select a ClassList CSV before you click "Upload".');
+            UI.notification('You must select a CSV before you click "Upload".');
             return false;
         }
     }
@@ -215,6 +287,49 @@ export class AdminConfigTab extends AdminPage {
         Log.trace('AdminConfigTab::uploadClasslist(..) - end');
     }
 
+    public async uploadGrades(fileList: FileList, delivId: string) {
+        Log.info('AdminConfigTab::uploadGrades(..) - start');
+        const url = this.remote + '/portal/admin/grades/' + delivId;
+
+        UI.showModal('Uploading grades.');
+
+        try {
+            const formData = new FormData();
+            formData.append('gradelist', fileList[0]); // The CSV is fileList[0]
+
+            const opts = {
+                headers: {
+                    // 'Content-Type': 'application/json', // violates CORS; leave commented out
+                    user:  localStorage.user,
+                    token: localStorage.token
+                }
+            };
+            const response: Response = await Network.httpPostFile(url, opts, formData);
+            if (response.status >= 200 && response.status < 300) {
+                const data: Payload = await response.json();
+                UI.hideModal();
+                Log.info('AdminConfigTab::uploadGrades(..) - RESPONSE: ' + JSON.stringify(data));
+                UI.notification(data.success.message);
+            } else {
+                const reason = await response.json();
+                UI.hideModal();
+                if (typeof reason.failure && typeof reason.failure.message) {
+                    UI.notification('There was an issue uploading your grade CSV. ' +
+                        'Please ensure the CSV file includes all required columns. <br/>Details: ' + reason.failure.message);
+                } else {
+                    UI.notification('There was an issue uploading your grade CSV. ' +
+                        'Please ensure the CSV file includes all required columns.');
+                }
+            }
+        } catch (err) {
+            UI.hideModal();
+            Log.error('AdminConfigTab::uploadGrades(..) - ERROR: ' + err.message);
+            AdminView.showError(err);
+        }
+
+        Log.trace('AdminConfigTab::uploadGrades(..) - end');
+    }
+
     private async createTeamPressed(): Promise<void> {
         Log.trace('AdminConfigTab::createTeamPressed(..) - start');
         const delivDropdown = document.querySelector('#adminTeamDeliverableSelect') as HTMLSelectElement;
@@ -242,6 +357,27 @@ export class AdminConfigTab extends AdminPage {
 
         if (typeof body.success !== 'undefined') {
             UI.showErrorToast("Team created successfully: " + body.success[0].id);
+        } else {
+            UI.showAlert(body.failure.message);
+        }
+    }
+
+    private async performWithdraw(): Promise<void> {
+        Log.trace('AdminConfigTab::performWithdraw(..) - start');
+
+        const url = this.remote + '/portal/admin/withdraw';
+        const options: any = AdminView.getOptions();
+        options.method = 'post';
+
+        Log.trace('AdminConfigTab::performWithdraw(..)');
+
+        options.body = JSON.stringify({}); // no params
+
+        const response = await fetch(url, options);
+        const body = await response.json();
+
+        if (typeof body.success !== 'undefined') {
+            UI.notificationToast("Withrdaw marking successful: " + body.success, 5000);
         } else {
             UI.showAlert(body.failure.message);
         }
@@ -311,6 +447,14 @@ export class AdminConfigTab extends AdminPage {
             }
         }
         Log.trace('AdminConfigTab::provisionDeliverablePressed(..) - done; took: ' + UI.took(start));
+    }
+
+    private async repoEnableWritePressed(): Promise<void> {
+        Log.trace('AdminConfigTab::repoEnableWritePressed(..) - start');
+    }
+
+    private async repoDisableWritePressed(): Promise<void> {
+        Log.trace('AdminConfigTab::repoDisableWritePressed(..) - start');
     }
 
     private async releaseDeliverablePressed(): Promise<void> {

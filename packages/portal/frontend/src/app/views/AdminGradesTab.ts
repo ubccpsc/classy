@@ -111,7 +111,7 @@ export class AdminGradesTab extends AdminPage {
                     if (grade.personId === student.id) {
                         if (grade.delivId === deliv.id) {
                             let score = '';
-                            if (grade.score !== null && grade.score > 0) {
+                            if (grade.score !== null && grade.score >= 0) {
                                 score = grade.score + '';
                             }
                             if (score !== '') {
@@ -287,12 +287,22 @@ export class AdminGradesTab extends AdminPage {
                 if (typeof gradeMap[grade.delivId] === 'undefined') {
                     gradeMap[grade.delivId] = [];
                 }
-                gradeMap[grade.delivId].push(grade.score);
+                // ignore grades for withdrawn students in the summary table
+                let inc = false;
+                for (const student of students) {
+                    if (student.id === grade.personId && student.labId !== 'W') {
+                        inc = true;
+                    }
+                }
+                if (inc === true) {
+                    gradeMap[grade.delivId].push(grade.score);
+                }
             }
         }
 
         const inBin = function(list: number[], lower: number, upper: number): number {
             const total = list.reduce(function(accumulator, currentValue) {
+                currentValue = Math.round(currentValue);
                 if (currentValue >= lower && currentValue <= upper) {
                     accumulator++;
                 }
@@ -315,7 +325,8 @@ export class AdminGradesTab extends AdminPage {
                 delivGrades.sort((a, b) => a - b);
                 const lowMiddle = Math.floor((num - 1) / 2);
                 const highMiddle = Math.ceil((num - 1) / 2);
-                const median = (delivGrades[lowMiddle] + delivGrades[highMiddle]) / 2;
+                let median = (delivGrades[lowMiddle] + delivGrades[highMiddle]) / 2;
+                median = Number(median.toFixed(2));
 
                 const row: TableCell[] = [
                     {value: delivId, html: delivId},

@@ -1,19 +1,19 @@
 import Log from "../../../common/Log";
-import {IContainerInput} from "../../../common/types/AutoTestTypes";
+import {ContainerInput} from "../../../common/types/ContainerTypes";
 
 export class Queue {
 
     private readonly numSlots: number = 1;
     private readonly name: string = '';
 
-    private slots: IContainerInput[] = [];
+    private slots: ContainerInput[] = [];
 
     constructor(name: string, numSlots: number) {
         this.name = name;
         this.numSlots = numSlots;
     }
 
-    private data: IContainerInput[] = [];
+    private data: ContainerInput[] = [];
 
     public getName(): string {
         return this.name;
@@ -27,7 +27,7 @@ export class Queue {
      * @param {IContainerInput} info
      * @returns {number}
      */
-    public push(info: IContainerInput): number {
+    public push(info: ContainerInput): number {
         return this.data.push(info); // end of queue
     }
 
@@ -37,7 +37,7 @@ export class Queue {
      * @param {IContainerInput} info
      * @returns {number}
      */
-    public pushFirst(info: IContainerInput): number {
+    public pushFirst(info: ContainerInput): number {
         return this.data.unshift(info); // start of queue
     }
 
@@ -46,7 +46,7 @@ export class Queue {
      *
      * @returns {IContainerInput | null}
      */
-    public pop(): IContainerInput | null {
+    public pop(): ContainerInput | null {
         if (this.data.length > 0) {
             return this.data.shift();
         }
@@ -59,12 +59,12 @@ export class Queue {
      * @param {string} commitURL
      * @returns {IContainerInput | null}
      */
-    public remove(commitURL: string): IContainerInput | null {
+    public remove(commitURL: string): ContainerInput | null {
         // for (let i = 0; i < this.data.length; i++) {
         for (let i = this.data.length - 1; i >= 0; i--) {
             // count down instead of up so we don't miss anything after a removal
             const info = this.data[i];
-            if (info.pushInfo.commitURL === commitURL) {
+            if (info.target.commitURL === commitURL) {
                 this.data.splice(i, 1);
                 return info;
             }
@@ -75,7 +75,7 @@ export class Queue {
     public indexOf(commitURL: string): number {
         for (let i = 0; i < this.data.length; i++) {
             const info = this.data[i];
-            if (info.pushInfo.commitURL === commitURL) {
+            if (info.target.commitURL === commitURL) {
                 return i;
             }
         }
@@ -88,7 +88,7 @@ export class Queue {
 
     public isCommitExecuting(commitURL: string, delivId: string) {
         for (const execution of this.slots) {
-            if (execution.pushInfo.commitURL === commitURL && execution.delivId === delivId) {
+            if (execution.target.commitURL === commitURL && execution.delivId === delivId) {
                 return true;
             }
         }
@@ -100,7 +100,7 @@ export class Queue {
         for (let i = this.slots.length - 1; i >= 0; i--) {
             const execution = this.slots[i];
             if (execution !== null) {
-                if (execution.pushInfo.commitURL === commitURL && execution.delivId === delivId) {
+                if (execution.target.commitURL === commitURL && execution.delivId === delivId) {
                     // remove this one
                     const lenBefore = this.slots.length;
                     this.slots.splice(i, 1);
@@ -125,7 +125,7 @@ export class Queue {
         return hasCapacity;
     }
 
-    public scheduleNext(): IContainerInput | null {
+    public scheduleNext(): ContainerInput | null {
         if (this.data.length < 1) {
             throw new Error("Queue::scheduleNext() - " + this.getName() + " called without anything on the stack.");
         }
@@ -133,7 +133,7 @@ export class Queue {
         this.slots.push(input);
 
         Log.info("Queue::scheduleNext() - " + this.getName() + " done; delivId: " +
-            input.delivId + "; commitURL: " + input.pushInfo.commitURL);
+            input.delivId + "; commitURL: " + input.target.commitURL);
         return input;
     }
 

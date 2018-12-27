@@ -74,6 +74,12 @@ export default class Server {
                 // GitHub Webhook endpoint
                 that.rest.post("/githubWebhook", restify.plugins.bodyParser(), RouteHandler.postGithubHook);
 
+                that.rest.post("/docker/image", restify.plugins.bodyParser(), RouteHandler.postDockerImage);
+                that.rest.get("/docker/images", restify.plugins.queryParser(), RouteHandler.getDockerImages);
+
+                // Resource endpoint
+                that.rest.get("/resource/.*", restify.plugins.bodyParser(), RouteHandler.getResource);
+
                 that.rest.listen(that.port, function() {
                     Log.info("Server::start() - restify listening: " + that.rest.url);
                     fulfill(true);

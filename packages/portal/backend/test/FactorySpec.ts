@@ -38,14 +38,14 @@ describe('Factory', function() {
         let actual = Factory.getCourseController(null, 'classytest');
         expect(actual).to.not.be.null;
 
-        actual = Factory.getCourseController(null, 'sdmm');
-        expect(actual).to.not.be.null;
-
-        actual = Factory.getCourseController(null, 'cs310');
-        expect(actual).to.not.be.null;
-
-        actual = Factory.getCourseController(null, 'cs340');
-        expect(actual).to.not.be.null;
+        // actual = Factory.getCourseController(null, 'sdmm');
+        // expect(actual).to.not.be.null;
+        //
+        // actual = Factory.getCourseController(null, 'cs310');
+        // expect(actual).to.not.be.null;
+        //
+        // actual = Factory.getCourseController(null, 'cs340');
+        // expect(actual).to.not.be.null;
 
         actual = null;
         let ex = null;

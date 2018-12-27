@@ -1,5 +1,7 @@
 FROM node:8-alpine
 
+RUN apk add --no-cache git
+
 WORKDIR /app
 
 # The common package requires the .env file directly so we have to pass it through

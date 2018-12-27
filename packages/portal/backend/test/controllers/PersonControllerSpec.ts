@@ -2,10 +2,10 @@ import {expect} from "chai";
 import "mocha";
 
 import {PersonController} from "../../src/controllers/PersonController";
-import {Person} from "../../src/Types";
+import {Person, PersonKind} from "../../src/Types";
 
-import {Test} from "../GlobalSpec";
 import '../GlobalSpec';
+import {Test} from "../TestHarness";
 import './DeliverablesControllerSpec';
 
 describe("PersonController", () => {
@@ -20,9 +20,9 @@ describe("PersonController", () => {
 
     before(async () => {
         await Test.suiteBefore('PersonController');
-        PERSON1 = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, 'student');
-        PERSON2 = Test.createPerson(Test.USER2.id, Test.USER2.csId, Test.USER2.github, 'student');
-        PERSON3 = Test.createPerson(Test.USER3.id, Test.USER3.csId, Test.USER3.github, 'student');
+        PERSON1 = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, PersonKind.STUDENT);
+        PERSON2 = Test.createPerson(Test.USER2.id, Test.USER2.csId, Test.USER2.github, PersonKind.STUDENT);
+        PERSON3 = Test.createPerson(Test.USER3.id, Test.USER3.csId, Test.USER3.github, PersonKind.STUDENT);
     });
 
     beforeEach(() => {
