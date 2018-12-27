@@ -3,7 +3,6 @@ import Log from "../../../common/Log";
 
 import {AdminController} from "./controllers/AdminController";
 import {ICourseController} from "./controllers/CourseController";
-import {CS310Controller} from "./controllers/cs310/CS310Controller";
 import {GitHubActions} from "./controllers/GitHubActions";
 import {GitHubController, IGitHubController} from "./controllers/GitHubController";
 
@@ -76,7 +75,8 @@ export class Factory {
             // instantiate on fork
             // Factory.controller = new SDMMController(ghController);
         } else if (name === 'cs310' || name === 'classytest') {
-            Factory.controller = new CS310Controller(ghController);
+            // instantiate on fork
+            // Factory.controller = new CS310Controller(ghController);
         } else if (name === 'cs340' || name === 'cpsc340') {
             // Factory.controller = new CS340Controller(ghController);
         } else if (name === 'cs210' || name === 'cpsc210') {
