@@ -31,13 +31,15 @@ export class Factory {
             name = Factory.getName();
         }
 
-        if (name === 'sdmm' || name === 'secapstonetest') {
-            // instantiate SDMMREST in fork
-        } else if (name === 'cs310' || name === 'classytest') {
-            // no custom routes are required for 310
+        if (name === 'classytest') {
             return new NoCustomRoutes();
-        } else if (name === 'cs340' || name === 'cpsc340') {
-            // instantiate CS340REST in fork
+            // } else if (name === 'sdmm' || name === 'secapstonetest') {
+            //     // instantiate SDMMREST in fork
+            // } else if (name === 'cs310') {
+            //     // no custom routes are required for 310
+            //     return new NoCustomRoutes();
+            // } else if (name === 'cs340' || name === 'cpsc340') {
+            //     // instantiate CS340REST in fork
         } else {
             Log.error("Factory::getCustomRouteHandler() - unknown name: " + name);
         }
@@ -73,18 +75,18 @@ export class Factory {
 
         if (name === 'classytest') {
             Factory.controller = new CourseController(ghController);
-        } else if (name === 'sdmm' || name === 'secapstonetest') {
+            // } else if (name === 'sdmm' || name === 'secapstonetest') {
             // instantiate on fork
             // Factory.controller = new SDMMController(ghController);
-        } else if (name === 'cs310') {
-            // instantiate on fork
-            // Factory.controller = new CS310Controller(ghController);
-        } else if (name === 'cs340' || name === 'cpsc340') {
-            // Factory.controller = new CS340Controller(ghController);
-        } else if (name === 'cs210' || name === 'cpsc210') {
-            // instantiate 210 controller in fork
-        } else if (name === 'cs221' || name === 'cpsc221') {
-            // instantiate 221 controller in fork
+            // } else if (name === 'cs310') {
+            //     // instantiate on fork
+            //     // Factory.controller = new CS310Controller(ghController);
+            // } else if (name === 'cs340' || name === 'cpsc340') {
+            //     // Factory.controller = new CS340Controller(ghController);
+            // } else if (name === 'cs210' || name === 'cpsc210') {
+            //     // instantiate 210 controller in fork
+            // } else if (name === 'cs221' || name === 'cpsc221') {
+            //     // instantiate 221 controller in fork
         } else {
             Log.error("Factory::getCourseController() - unknown name: " + name);
             throw new Error("Unknown course name: " + name);
