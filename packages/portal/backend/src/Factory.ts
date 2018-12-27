@@ -1,6 +1,5 @@
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
-import {CS340Controller} from "./controllers/340/CS340Controller";
 
 import {AdminController} from "./controllers/AdminController";
 import {ICourseController} from "./controllers/CourseController";
@@ -8,7 +7,6 @@ import {CS310Controller} from "./controllers/cs310/CS310Controller";
 import {GitHubActions} from "./controllers/GitHubActions";
 import {GitHubController, IGitHubController} from "./controllers/GitHubController";
 import {SDMMController} from "./controllers/SDMM/SDMMController";
-import CS340REST from "./server/340/CS340REST";
 
 import NoCustomRoutes from "./server/common/NoCustomRoutes";
 import IREST from "./server/IREST";
@@ -41,8 +39,8 @@ export class Factory {
         } else if (name === 'cs310' || name === 'classytest') {
             // no custom routes are required for 310
             return new NoCustomRoutes();
-        } else if (name === 'cs340' || name === 'cpsc340' || name.toLowerCase().startsWith('cpsc340')) {
-            return new CS340REST();
+        } else if (name === 'cs340' || name === 'cpsc340') {
+            // instantiate CS340REST in fork
         } else {
             Log.error("Factory::getCustomRouteHandler() - unknown name: " + name);
         }
@@ -81,7 +79,11 @@ export class Factory {
         } else if (name === 'cs310' || name === 'classytest') {
             Factory.controller = new CS310Controller(ghController);
         } else if (name === 'cs340' || name === 'cpsc340') {
-            Factory.controller = new CS340Controller(ghController);
+            // Factory.controller = new CS340Controller(ghController);
+        } else if (name === 'cs210' || name === 'cpsc210') {
+            // instantiate 210 controller in fork
+        } else if (name === 'cs221' || name === 'cpsc221') {
+            // instantiate 221 controller in fork
         } else {
             Log.error("Factory::getCourseController() - unknown name: " + name);
             throw new Error("Unknown course name: " + name);
