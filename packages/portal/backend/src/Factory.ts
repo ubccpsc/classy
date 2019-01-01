@@ -9,6 +9,8 @@ import {GitHubController, IGitHubController} from "./controllers/GitHubControlle
 import NoCustomRoutes from "./server/common/NoCustomRoutes";
 import IREST from "./server/IREST";
 
+import {CS310Controller} from "./controllers/CS310Controller";
+
 export class Factory {
 
     /**

@@ -2,7 +2,7 @@
 
 # Deploys the specified image (optionally from a pull request by specifying the id)
 
-GITHUB_TOKEN=$(grep COURSE_GH_ORG_TOKEN .env | cut -d '=' -f2)
+GITHUB_TOKEN=$(grep GH_DOCKER_TOKEN .env | cut -d '=' -f2)
 URL="https://${GITHUB_TOKEN}@github.ubc.ca/cpsc310/project-resources.git#"
 
 if [[ $2 == +([0-9]) ]]; then
