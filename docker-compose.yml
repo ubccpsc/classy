@@ -75,11 +75,13 @@ services:
                 - SSL_CERT_PATH
                 - SSL_KEY_PATH
                 - BACKEND_PORT
+                - UI_PORT
             context: ./
             dockerfile: ./packages/proxy/Dockerfile
         container_name: proxy
         depends_on:
             - portal
+            - reference_ui
         ports:
             - "80:8080"
             - "443:8443"
@@ -88,3 +90,19 @@ services:
         volumes:
             - "${HOST_SSL_CERT_PATH}:${SSL_CERT_PATH}"
             - "${HOST_SSL_KEY_PATH}:${SSL_KEY_PATH}"
+    geolocation:
+        image: cpsc310geocoder
+        container_name: geocoder
+        ports:
+            - ${GEO_PORT}:${GEO_PORT}
+        restart: always
+        user: "${UID}"
+    reference_ui:
+        image: cpsc310reference_ui
+        container_name: refui
+        environment:
+            - PLATFORM
+        expose:
+            - ${UI_PORT}
+        restart: always
+        user: "${UID}"
