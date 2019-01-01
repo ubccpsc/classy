@@ -15,11 +15,11 @@ case "${1}" in
         ;;
     ui)
         docker build --tag cpsc310reference_ui --file ui.dockerfile "${URL/%#/}" && \
-        docker-compose -f docker-compose.yml -f docker-compose.310.yml up --detach reference_ui
+        docker-compose up --detach reference_ui
         ;;
     geo)
         docker build --tag cpsc310geocoder "${URL}:geocoder"
-        docker-compose -f docker-compose.yml -f docker-compose.310.yml up --detach geolocation
+        docker-compose up --detach geolocation
         ;;
     *)
         echo $"Usage: $0 {grade|ui|geo} [PR#]"
