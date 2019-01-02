@@ -78,7 +78,7 @@ export default class Server {
                 that.rest.get("/docker/images", restify.plugins.queryParser(), RouteHandler.getDockerImages);
 
                 // Resource endpoint
-                that.rest.get("/resource/.*", restify.plugins.bodyParser(), RouteHandler.getResource);
+                // that.rest.get("/resource/.*", restify.plugins.bodyParser(), RouteHandler.getResource);
 
                 that.rest.listen(that.port, function() {
                     Log.info("Server::start() - restify listening: " + that.rest.url);

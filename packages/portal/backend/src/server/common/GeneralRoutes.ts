@@ -1,4 +1,4 @@
-import * as rp from "request-promise-native";
+import * as fs from "fs-extra";
 import * as restify from "restify";
 
 import Config, {ConfigKey} from '../../../../../common/Config';
@@ -170,7 +170,26 @@ export default class GeneralRoutes implements IREST {
         Log.info('GeneralRoutes::getResource(..) - user: ' + auth.user + '; token: ' + auth.token + '; path: ' + path);
 
         GeneralRoutes.performGetResource(auth, path).then(function(resource: any) {
-            res.send(200, resource); // return as text rather than json
+
+            const filePath = Config.getInstance().getProp(ConfigKey.persistDir) + path;
+            Log.info("GeneralRoutes::getResource(..) - start; trying to read file: " + filePath);
+
+            const rs = fs.createReadStream(filePath);
+            rs.on("error", (err: any) => {
+                if (err.code === "ENOENT") {
+                    Log.error("GeneralRoutes::getResource(..) - ERROR Requested resource does not exist: " + path);
+                    res.send(404, err.message);
+                } else {
+                    Log.error("GeneralRoutes::getResource(..) - ERROR Reading requested resource: " + path);
+                    res.send(500, err.message);
+                }
+            });
+            rs.on("end", () => {
+                Log.info("GeneralRoutes::getResource(..) - done; finished reading file: " + filePath);
+                rs.close();
+            });
+            rs.pipe(res);
+
             return next();
         }).catch(function(err) {
             Log.error('GeneralRoutes::getResource(..) - ERROR: ' + err);
@@ -183,30 +202,30 @@ export default class GeneralRoutes implements IREST {
         });
     }
 
-    public static async performGetResource(auth: {user: string, token: string}, path: string): Promise<any> {
+    public static async performGetResource(auth: {user: string, token: string}, path: string): Promise<boolean> {
         Log.info("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - start");
 
         const host = Config.getInstance().getProp(ConfigKey.autotestUrl);
         const port = Config.getInstance().getProp(ConfigKey.autotestPort);
         const uri = host + ':' + port + '/resource' + path;
 
-        const options = {
-            uri:    uri,
-            method: 'GET'
-            // headers: {
-            //     'Content-Type': 'application/json',
-            //     'User-Agent':   'Portal',
-            //     'user':         auth.user, // NOTE: can change to a different representation
-            //     'token':        auth.token, // NOTE: can change to a different representation
-            //     'path':         path // NOTE: can change to a different representation
-            // }
-        };
+        // const options = {
+        //     uri:    uri,
+        //     method: 'GET'
+        //     // headers: {
+        //     //     'Content-Type': 'application/json',
+        //     //     'User-Agent':   'Portal',
+        //     //     'user':         auth.user, // NOTE: can change to a different representation
+        //     //     'token':        auth.token, // NOTE: can change to a different representation
+        //     //     'path':         path // NOTE: can change to a different representation
+        //     // }
+        // };
 
+        let proceed = false;
         // if user/token does not have access to resource request should return 401
         try {
             const priv = await AuthRoutes.performGetCredentials(auth.user, auth.token);
 
-            let proceed = false;
             if (path.indexOf('/student/') >= 0) {
                 Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - student resource; is valid");
                 // works for everyone (performGetCredentials would have thrown exception if not a valid user)
@@ -238,11 +257,9 @@ export default class GeneralRoutes implements IREST {
             throw new Error("401");
         }
 
-        Log.info("CourseController::performGetResource( .. ) - valid request; passing through to: " + uri);
+        // Log.info("GeneralRoutes::performGetResource( .. ) - valid request; passing through to: " + uri);
         // if resource does not exist, request should return 404
-        const res = await rp(options);
-        Log.info("CourseController::performGetResource( .. ) - done; body: " + res);
-        return res;
+        return proceed;
     }
 
     public static getRepos(req: any, res: any, next: any) {
@@ -380,20 +397,16 @@ export default class GeneralRoutes implements IREST {
             throw new Error("Invalid credentials");
         } else {
             const pc = new PersonController();
-            const person = await pc.getPerson(user);
-            if (person === null) {
-                Log.warn('GeneralRoutes::performGetTeams(..) - person === null');
-                throw new Error('Unknown person');
-            } else {
-                const tc: TeamController = new TeamController();
-                const teams = await tc.getTeamsForPerson(person);
-                Log.trace('GeneralRoutes::performGetTeams(..) - in teams: ' + teams);
-                const teamTrans: TeamTransport[] = [];
-                for (const team of teams) {
-                    teamTrans.push(tc.teamToTransport(team));
-                }
-                return teamTrans;
+            const person = await pc.getPerson(user); // person will always exist (checked in isValid above)
+
+            const tc: TeamController = new TeamController();
+            const teams = await tc.getTeamsForPerson(person);
+            Log.trace('GeneralRoutes::performGetTeams(..) - in teams: ' + teams);
+            const teamTrans: TeamTransport[] = [];
+            for (const team of teams) {
+                teamTrans.push(tc.teamToTransport(team));
             }
+            return teamTrans;
         }
     }
 
@@ -405,24 +418,17 @@ export default class GeneralRoutes implements IREST {
             throw new Error("Invalid credentials");
         } else {
             const pc = new PersonController();
-            const person = await pc.getPerson(user);
-            // if (person === null) {
-            //     person = await pc.getGitHubPerson(user);
-            // }
-            if (person === null) {
-                Log.warn('GeneralRoutes::performGetRepos(..) - person === null');
-                throw new Error('Unknown person');
-            } else {
-                const rc = new RepositoryController();
-                const repos = await rc.getReposForPerson(person);
-                Log.trace('GeneralRoutes::performGetRepos(..) - repos: ' + repos);
-                const repoTrans: RepositoryTransport[] = [];
-                for (const repo of repos) {
-                    if (repo.URL !== null) {
-                        // null URLs are Repository objects that have been created locally but not on GitHub
-                        // TODO: should probably consider repo.custom.githubCreated
-                        repoTrans.push(RepositoryController.repositoryToTransport(repo));
-                    }
+            const person = await pc.getPerson(user); // person always exists (checked in isValid above)
+
+            const rc = new RepositoryController();
+            const repos = await rc.getReposForPerson(person);
+            Log.trace('GeneralRoutes::performGetRepos(..) - repos: ' + repos);
+            const repoTrans: RepositoryTransport[] = [];
+            for (const repo of repos) {
+                if (repo.URL !== null) {
+                    // null URLs are Repository objects that have been created locally but not on GitHub
+                    // TODO: should probably consider repo.custom.githubCreated
+                    repoTrans.push(RepositoryController.repositoryToTransport(repo));
                 }
                 return repoTrans;
             }

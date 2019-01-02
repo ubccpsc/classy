@@ -12,8 +12,8 @@ COPY packages/autotest ./packages/autotest
 
 RUN yarn install --pure-lockfile --non-interactive --ignore-scripts \
  && yarn tsc --sourceMap false \
- && chmod -R a+r /app
+ && chmod -R a+rx /app
 
-CMD ["node", "packages/autotest/src/AutoTestDaemon.js", "310"]
+CMD ["node", "/app/packages/autotest/src/AutoTestDaemon.js"]
 
 

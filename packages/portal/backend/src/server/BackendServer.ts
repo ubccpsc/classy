@@ -120,8 +120,9 @@ export default class BackendServer {
                 default:   'index.html'
             }));
 
-            that.rest.listen(that.config.getProp(ConfigKey.backendPort), function() {
-                Log.info('BackendServer::start() - restify listening: ' + that.rest.url);
+            const port = that.config.getProp(ConfigKey.backendPort);
+            that.rest.listen(port, function() {
+                Log.info('BackendServer::start() - restify listening: ' + that.rest.url + "; on port: " + port);
                 fulfill(true);
             });
 
