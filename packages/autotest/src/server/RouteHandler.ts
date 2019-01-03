@@ -1,5 +1,4 @@
 import * as Docker from "dockerode";
-import * as fs from "fs-extra";
 import * as restify from "restify";
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
@@ -55,13 +54,17 @@ export default class RouteHandler {
     public static postGithubHook(req: restify.Request, res: restify.Response, next: restify.Next) {
         const start = Date.now();
         const githubEvent: string = req.header("X-GitHub-Event");
-        Log.info("RouteHandler::postGithubHook(..) - start; handling event: " + githubEvent);
+        const githubSecret: string = req.header("X-Hub-Signature");
+
+        Log.info("RouteHandler::postGithubHook(..) - start; handling event: " + githubEvent + "; secret: " + githubSecret);
         const body = req.body;
 
         const handleError = function(msg: string) {
             Log.error("RouteHandler::postGithubHook() - failure; ERROR: " + msg + "; took: " + Util.took(start));
             res.json(400, "Failed to process commit.");
         };
+
+        // TODO: if githubSecret exists, check if it is right
 
         if (githubEvent === 'ping') {
             // github test packet; use to let the webhooks know we are listening
