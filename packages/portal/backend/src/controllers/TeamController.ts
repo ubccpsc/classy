@@ -132,20 +132,29 @@ export class TeamController {
         if (deliv === null) {
             throw new Error("Team not created; deliverable does not exist.");
         }
-        if (deliv.teamStudentsForm === false && !adminOverride) {
-            throw new Error("Team not created; students cannot form their own teams for this deliverable.");
-        }
 
+        // check for non-existent people
         if (people.indexOf(null) >= 0) {
             throw new Error("Team not created; some students not members of the course.");
         }
+
+        // make sure the team isn't too big
         if (people.length > deliv.teamMaxSize && !adminOverride) {
             throw new Error("Team not created; too many team members specified for this deliverable.");
         }
+
+        // make sure the team isn't too small
         if (people.length < deliv.teamMinSize && !adminOverride) {
             throw new Error("Team not created; too few team members specified for this deliverable.");
         }
 
+        // make sure students can form their own teams
+        if (deliv.teamMaxSize > 1) {
+            // only matters if the team size is grater than 1
+            if (deliv.teamStudentsForm === false && !adminOverride) {
+                throw new Error("Team not created; students cannot form their own teams for this deliverable.");
+            }
+        }
         // const people: Person[] = [];
         // for (const ghId of gitHubIds) {
         //     const person = await pc.getGitHubPerson(ghId);
