@@ -109,7 +109,7 @@ export default class RouteHandler {
 
                 const secret = crypto.createHash('sha256').update(atSecret, 'utf8').digest('hex');
                 const computed4 = crypto.createHmac('sha256', secret)
-                    .update(body)
+                    .update(JSON.stringify(body))
                     .digest('hex');
                 Log.info("RouteHandler::postGithubHook(..) - secret: " + secret + "; computed 4: " + computed4);
 
