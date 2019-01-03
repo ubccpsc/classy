@@ -35,6 +35,7 @@
         "coveralls": "^3.0.2",
         "csv-parse": "^2.5.0",
         "dotenv": "^5.0.1",
+        "fast-sha256": "^1.1.0",
         "fs-extra": "^5.0.0",
         "junit-viewer": "^4.11.1",
         "markdown-table": "^1.1.2",

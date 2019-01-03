@@ -8,7 +8,7 @@ This can be done by copying `.env.sample` to `.env` in the root of the project a
 The sample configuration file includes a lot of documentation inline so [take a look](https://github.com/ubccpsc/classy/blob/master/.env.sample).
 
 ## GitHub setup
-Classy manages administrators using GitHub teams. The GitHub organization the course uses should have two teams: `staff` and `admin`. GitHub users on the `staff` and `admin` teams will have access to the Classy admin portal, although users on the `admin` team will have greater privileges (e.g., the ability to configure the course).
+Classy manages administrators using GitHub teams. The GitHub organization the course uses should have two teams: `staff` and `admin`. GitHub users on the `staff` and `admin` teams will have access to the Classy admin portal, although users on the `admin` team will have greater privileges (e.g., the ability to configure the course). The bot user (often autobot) should be added to the admin team.
 
 ## Deploying Classy
 The project requires an ssl certificate.
@@ -22,7 +22,7 @@ This image is used as the base image for the other services.
 
 Then, to deploy, run:
 ```bash
-docker-compose -f docker-compose.yml -f docker-compose.310.yml up --build -d
+docker-compose -f docker-compose.yml -f docker-compose.yml up --build -d
 ```
 
 If you want to start a single service, in the `classy/` folder execute `docker-compose up -d <service>` (where service is something like `db`).
