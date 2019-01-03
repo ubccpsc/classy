@@ -1,9 +1,12 @@
 import * as Docker from "dockerode";
+import * as sha256 from "fast-sha256";
 import * as restify from "restify";
+
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {CommitTarget} from "../../../common/types/ContainerTypes";
 import Util from "../../../common/Util";
+
 import {AutoTest} from "../autotest/AutoTest";
 import {ClassPortal} from "../autotest/ClassPortal";
 import {MongoDataStore} from "../autotest/DataStore";
@@ -64,7 +67,29 @@ export default class RouteHandler {
             res.json(400, "Failed to process commit.");
         };
 
-        // TODO: if githubSecret exists, check if it is right
+        if (githubSecret !== null) {
+            try {
+                Log.info("RouteHandler::postGithubHook(..) - trying to compute webhook secrets");
+
+                let expectedSecret = Config.getInstance().getProp(ConfigKey.autotestSecret);
+                expectedSecret = new Buffer(sha256.hash(expectedSecret)).toString('hex');
+
+                const h = new sha256.HMAC(expectedSecret);
+                const digest = h.update(body).digest();
+                const computedSecret = new Buffer(digest).toString('hex');
+
+                Log.info("RouteHandler::postGithubHook(..) - expected: " + expectedSecret + "; header: " +
+                    githubSecret + "; computed: " + computedSecret);
+
+                // TODO: if githubSecret exists, check if it is right
+                // https://developer.github.com/webhooks/securing/
+
+            } catch (err) {
+                Log.error("RouteHandler::postGithubHook(..) - ERROR computing HMAC: " + err.message);
+            }
+        } else {
+            Log.info("RouteHandler::postGithubHook(..) - secret ignored (not present)");
+        }
 
         if (githubEvent === 'ping') {
             // github test packet; use to let the webhooks know we are listening
