@@ -59,6 +59,7 @@ export default class RouteHandler {
         const githubEvent: string = req.header("X-GitHub-Event");
         let githubSecret: string = req.header("X-Hub-Signature");
 
+        // https://developer.github.com/webhooks/securing/
         if (typeof githubSecret === 'undefined') {
             githubSecret = null;
         }
@@ -68,9 +69,10 @@ export default class RouteHandler {
 
         const handleError = function(msg: string) {
             Log.error("RouteHandler::postGithubHook() - failure; ERROR: " + msg + "; took: " + Util.took(start));
-            res.json(400, "Failed to process commit.");
+            res.json(400, "Failed to process commit: " + msg);
         };
 
+        let secretVerified = false;
         if (githubSecret !== null) {
             try {
                 Log.info("RouteHandler::postGithubHook(..) - trying to compute webhook secrets");
@@ -83,35 +85,42 @@ export default class RouteHandler {
                     .update(JSON.stringify(body))
                     .digest('hex');
 
-                Log.info("RouteHandler::postGithubHook(..) - same: " + (githubSecret === computed) +
-                    "; GitHub header: " + githubSecret + "; computed: " + computed);
+                Log.info("RouteHandler::postGithubHook(..) - GitHub header: " + githubSecret + "; computed: " + computed);
 
-                // TODO: if githubSecret exists, check if it is right
-                // https://developer.github.com/webhooks/securing/
-
+                secretVerified = (githubSecret === computed);
+                if (secretVerified === true) {
+                    Log.info("RouteHandler::postGithubHook(..) - webhook secret verified: " + secretVerified);
+                } else {
+                    Log.warn("RouteHandler::postGithubHook(..) - webhook secret does not match");
+                }
             } catch (err) {
                 Log.error("RouteHandler::postGithubHook(..) - ERROR computing HMAC: " + err.message);
             }
         } else {
-            Log.info("RouteHandler::postGithubHook(..) - secret ignored (not present)");
+            Log.warn("RouteHandler::postGithubHook(..) - secret ignored (not present)");
         }
 
-        if (githubEvent === 'ping') {
-            // github test packet; use to let the webhooks know we are listening
-            Log.info("RouteHandler::postGithubHook() - <200> pong.");
-            res.json(200, "pong");
+        secretVerified = true; // TODO: stop overwriting this
+        if (secretVerified === true) {
+            if (githubEvent === 'ping') {
+                // github test packet; use to let the webhooks know we are listening
+                Log.info("RouteHandler::postGithubHook() - <200> pong.");
+                res.json(200, "pong");
+            } else {
+                RouteHandler.handleWebhook(githubEvent, body).then(function(commitEvent) {
+                    if (commitEvent !== null) {
+                        res.json(200, commitEvent); // report back our interpretation of the hook
+                    } else {
+                        // handleError("Error handling webhook; event: " + githubEvent + "; body: " + JSON.stringify(body, null, 2));
+                        handleError("Webhook not handled (if branch was deleted this is normal)");
+                    }
+                }).catch(function(err) {
+                    Log.error("RouteHandler::postGithubHook() - ERROR: " + err);
+                    handleError(err);
+                });
+            }
         } else {
-            RouteHandler.handleWebhook(githubEvent, body).then(function(commitEvent) {
-                if (commitEvent !== null) {
-                    res.json(200, commitEvent); // report back our interpretation of the hook
-                } else {
-                    // handleError("Error handling webhook; event: " + githubEvent + "; body: " + JSON.stringify(body, null, 2));
-                    handleError("Webhook not handled (if branch was deleted this is normal)");
-                }
-            }).catch(function(err) {
-                Log.error("RouteHandler::postGithubHook() - ERROR: " + err);
-                handleError(err);
-            });
+            handleError("Invalid payload signature.");
         }
         return next();
     }
