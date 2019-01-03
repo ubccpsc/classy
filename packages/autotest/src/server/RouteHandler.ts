@@ -109,7 +109,7 @@ export default class RouteHandler {
 
                 const key = crypto.createHash('sha1').update(atSecret, 'utf8').digest('hex');
                 Log.info("RouteHandler::postGithubHook(..) - key: " + key); // should be same as webhook added key
-                const computed4 = crypto.createHmac('sha256', key)
+                const computed4 = crypto.createHmac('sha1', key)
                     .update(JSON.stringify(body))
                     .digest('hex');
                 Log.info("RouteHandler::postGithubHook(..) - key: " + key + "; computed 4: " + computed4);
