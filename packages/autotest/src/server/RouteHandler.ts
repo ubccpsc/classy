@@ -76,9 +76,9 @@ export default class RouteHandler {
                 Log.info("RouteHandler::postGithubHook(..) - trying to compute webhook secrets");
 
                 const atSecret = Config.getInstance().getProp(ConfigKey.autotestSecret);
-                const expectedSecret = new Buffer(sha256.hash(atSecret)).toString('hex');
+                const secretKey = new Buffer(sha256.hash(atSecret)).toString('hex');
 
-                Log.info("RouteHandler::postGithubHook(..) - expected: " + expectedSecret + "; header: " + githubSecret);
+                Log.info("RouteHandler::postGithubHook(..) - key: " + secretKey + "; header: " + githubSecret);
 
                 // different api, but same idea: https://gist.github.com/stigok/57d075c1cf2a609cb758898c0b202428
                 const h = new sha256.HMAC(sha256.hash(atSecret));
@@ -94,6 +94,11 @@ export default class RouteHandler {
                 const digest2 = sha256.hmac(sha256.hash(atSecret), bodyArr);
                 const computedSecret2 = new Buffer(digest2).toString('hex');
                 Log.info("RouteHandler::postGithubHook(..) - computed 2: " + computedSecret2);
+
+                const h3 = new sha256.HMAC(sha256.hash(atSecret));
+                const digest3 = h3.update(bodyArr).digest();
+                const computedSecret3 = new Buffer(digest3).toString('hex');
+                Log.info("RouteHandler::postGithubHook(..) - computed 3: " + computedSecret3);
 
                 // Log.info("RouteHandler::postGithubHook(..) - expected: " + expectedSecret + "; header: " +
                 //     githubSecret + "; computed: " + computedSecret);
