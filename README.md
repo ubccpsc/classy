@@ -11,6 +11,14 @@ Primary contributors:
 * [Reid Holmes](https://www.cs.ubc.ca/~rtholmes/)
 * [Nick Bradley](https://nickbradley.github.io/)
 
+Main course forks:
+
+* [ubccpsc210/classy](https://github.com/ubccpsc210/classy)
+* [ubccpsc221/classy](https://github.com/ubccpsc221/classy)
+* [ubccpsc310/classy](https://github.com/ubccpsc310/classy)
+* [CPSC 340 TBD](NOTSETYET)
+* [SDMM TBD](NOTSETYET)
+
 ## Development Process
 
 Classy has been developed as a minimal framework for helping courses stand up a system that can provide GitHub management, team formation, grade distribution, and AutoTest. Courses are free to use any subset of that functionality that they wish. It is important to note that _some_ development work will be required for any course wishing to use Classy; e.g., at the very least, the student view must be defined per-course and this must be done in code. Classy is _not_ intended to provide a comprehensive system that can be fully configured through its provided interfaces. That said, the extensions courses need to make should be small and contained, unless your own requirements are somewhat unusual.
