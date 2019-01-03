@@ -1,0 +1,29 @@
+<ons-page id="main">
+    <ons-toolbar>
+        <div class="center">UBC CPSC Classy Portal</div>
+
+        <div id='indexLogin' class="right">
+            <ons-toolbar-button onclick="myApp.logout();">
+                <ons-icon icon="fa-sign-out"></ons-icon>
+                <span style="vertical-align: top; font-size: 80%;">Logout</span>
+            </ons-toolbar-button>
+        </div>
+    </ons-toolbar>
+
+    <div style="height: 100%; display:flex; flex-direction: row; align-items:center; justify-content: center;">
+        <ons-card style="display: flex; flex-direction: row; align-items: center; text-align: center; margin:10em; max-width: 650px;">
+            <div>
+                <div style="padding-bottom: 1em; display: flex">
+                    <p>
+                        This is the Classy management portal.
+                    </p>
+                </div>
+                <ons-button onclick="myApp.handleMainPageClick()" modifier="large;"
+                            style="padding-top:1em; padding-bottom: 1em; padding-left:2em; padding-right: 2em;">
+                    <ons-icon icon="fa-grav" style="font-size: 250%; vertical-align: bottom;"></ons-icon>
+                    Portal Login
+                </ons-button>
+            </div>
+        </ons-card>
+    </div>
+</ons-page>

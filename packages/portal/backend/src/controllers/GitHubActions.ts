@@ -1,4 +1,4 @@
-import * as sha256 from "fast-sha256";
+import * as crypto from "crypto";
 import * as rp from "request-promise-native";
 
 import Config, {ConfigKey} from "../../../../common/Config";
@@ -672,7 +672,7 @@ export class GitHubActions implements IGitHubActions {
         Log.info("GitHubAction::addWebhook( .. ) - webhook: " + webhookEndpoint);
 
         let secret = Config.getInstance().getProp(ConfigKey.autotestSecret);
-        secret = new Buffer(sha256.hash(secret)).toString('hex');
+        secret = crypto.createHash('sha256').update(secret, 'utf8').digest('hex'); // webhook w/ sha256
         Log.info("GitHubAction::addWebhook( .. ) - secret: " + secret);
         const start = Date.now();
 
