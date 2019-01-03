@@ -107,9 +107,9 @@ export default class RouteHandler {
                 // const computedSecret3 = new Buffer(digest3).toString('hex');
                 // Log.info("RouteHandler::postGithubHook(..) - computed 3: " + computedSecret3);
 
-                const key = crypto.createHash('sha1').update(atSecret, 'utf8').digest('hex');
+                const key = crypto.createHash('sha256').update(atSecret, 'utf8').digest('hex'); // secret w/ sha256
                 Log.info("RouteHandler::postGithubHook(..) - key: " + key); // should be same as webhook added key
-                const computed4 = crypto.createHmac('sha1', key)
+                const computed4 = crypto.createHmac('sha1', key) // paylad w/ sha1
                     .update(JSON.stringify(body))
                     .digest('hex');
                 Log.info("RouteHandler::postGithubHook(..) - key: " + key + "; computed 4: " + computed4);
