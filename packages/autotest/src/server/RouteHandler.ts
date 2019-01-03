@@ -74,6 +74,7 @@ export default class RouteHandler {
                 let expectedSecret = Config.getInstance().getProp(ConfigKey.autotestSecret);
                 expectedSecret = new Buffer(sha256.hash(expectedSecret)).toString('hex');
 
+                // different api, but same idea: https://gist.github.com/stigok/57d075c1cf2a609cb758898c0b202428
                 const h = new sha256.HMAC(expectedSecret);
                 const digest = h.update(body).digest();
                 const computedSecret = new Buffer(digest).toString('hex');
