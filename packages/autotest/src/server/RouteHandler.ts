@@ -57,7 +57,11 @@ export default class RouteHandler {
     public static postGithubHook(req: restify.Request, res: restify.Response, next: restify.Next) {
         const start = Date.now();
         const githubEvent: string = req.header("X-GitHub-Event");
-        const githubSecret: string = req.header("X-Hub-Signature");
+        let githubSecret: string = req.header("X-Hub-Signature");
+
+        if (typeof githubSecret === 'undefined') {
+            githubSecret = null;
+        }
 
         Log.info("RouteHandler::postGithubHook(..) - start; handling event: " + githubEvent + "; secret: " + githubSecret);
         const body = req.body;
@@ -71,16 +75,28 @@ export default class RouteHandler {
             try {
                 Log.info("RouteHandler::postGithubHook(..) - trying to compute webhook secrets");
 
-                let expectedSecret = Config.getInstance().getProp(ConfigKey.autotestSecret);
-                expectedSecret = new Buffer(sha256.hash(expectedSecret)).toString('hex');
+                const atSecret = Config.getInstance().getProp(ConfigKey.autotestSecret);
+                const expectedSecret = new Buffer(sha256.hash(atSecret)).toString('hex');
+
+                Log.info("RouteHandler::postGithubHook(..) - expected: " + expectedSecret + "; header: " + githubSecret);
 
                 // different api, but same idea: https://gist.github.com/stigok/57d075c1cf2a609cb758898c0b202428
-                const h = new sha256.HMAC(expectedSecret);
+                const h = new sha256.HMAC(sha256.hash(atSecret));
                 const digest = h.update(body).digest();
                 const computedSecret = new Buffer(digest).toString('hex');
+                Log.info("RouteHandler::postGithubHook(..) - computed 1: " + computedSecret);
 
-                Log.info("RouteHandler::postGithubHook(..) - expected: " + expectedSecret + "; header: " +
-                    githubSecret + "; computed: " + computedSecret);
+                const bodyStr = JSON.stringify(body, null, 0);
+                const bodyArr = new Uint8Array(bodyStr.length);
+                for (let i = 0; i < bodyStr.length; i++) {
+                    bodyArr[i] = bodyStr.charCodeAt(i);
+                }
+                const digest2 = sha256.hmac(sha256.hash(atSecret), bodyArr);
+                const computedSecret2 = new Buffer(digest2).toString('hex');
+                Log.info("RouteHandler::postGithubHook(..) - computed 2: " + computedSecret2);
+
+                // Log.info("RouteHandler::postGithubHook(..) - expected: " + expectedSecret + "; header: " +
+                //     githubSecret + "; computed: " + computedSecret);
 
                 // TODO: if githubSecret exists, check if it is right
                 // https://developer.github.com/webhooks/securing/
