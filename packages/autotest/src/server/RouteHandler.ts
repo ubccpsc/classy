@@ -64,7 +64,7 @@ export default class RouteHandler {
             githubSecret = null;
         }
 
-        Log.info("RouteHandler::postGithubHook(..) - start; handling event: " + githubEvent + "; secret: " + githubSecret);
+        Log.info("RouteHandler::postGithubHook(..) - start; handling event: " + githubEvent + "; signature: " + githubSecret);
         const body = req.body;
 
         const handleError = function(msg: string) {
@@ -107,11 +107,17 @@ export default class RouteHandler {
                 // const computedSecret3 = new Buffer(digest3).toString('hex');
                 // Log.info("RouteHandler::postGithubHook(..) - computed 3: " + computedSecret3);
 
-                const secret = crypto.createHash('sha256').update(atSecret, 'utf8').digest('hex');
-                const computed4 = crypto.createHmac('sha256', secret)
+                const key = crypto.createHash('sha256').update(atSecret, 'utf8').digest('hex');
+                Log.info("RouteHandler::postGithubHook(..) - key: " + key); // should be same as webhook added key
+                const computed4 = crypto.createHmac('sha256', key)
                     .update(JSON.stringify(body))
                     .digest('hex');
-                Log.info("RouteHandler::postGithubHook(..) - secret: " + secret + "; computed 4: " + computed4);
+                Log.info("RouteHandler::postGithubHook(..) - key: " + key + "; computed 4: " + computed4);
+
+                const computed5 = crypto.createHmac('sha256', atSecret)
+                    .update(JSON.stringify(body))
+                    .digest('hex');
+                Log.info("RouteHandler::postGithubHook(..) - computed 5: " + computed5);
 
                 // Log.info("RouteHandler::postGithubHook(..) - expected: " + expectedSecret + "; header: " +
                 //     githubSecret + "; computed: " + computedSecret);
