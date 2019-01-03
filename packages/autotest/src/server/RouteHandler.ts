@@ -1,5 +1,6 @@
+// import * as sha256 from "fast-sha256";
+import * as crypto from "crypto";
 import * as Docker from "dockerode";
-import * as sha256 from "fast-sha256";
 import * as restify from "restify";
 
 import Config, {ConfigKey} from "../../../common/Config";
@@ -76,29 +77,41 @@ export default class RouteHandler {
                 Log.info("RouteHandler::postGithubHook(..) - trying to compute webhook secrets");
 
                 const atSecret = Config.getInstance().getProp(ConfigKey.autotestSecret);
-                const secretKey = new Buffer(sha256.hash(atSecret)).toString('hex');
 
-                Log.info("RouteHandler::postGithubHook(..) - key: " + secretKey + "; header: " + githubSecret);
+                // for this library:
+                // import * as sha256 from "fast-sha256";
+                //
+                // const secretKey = new Buffer(sha256.hash(atSecret)).toString('hex');
+                //
+                // Log.info("RouteHandler::postGithubHook(..) - key: " + secretKey + "; header: " + githubSecret);
+                //
+                // // different api, but same idea: https://gist.github.com/stigok/57d075c1cf2a609cb758898c0b202428
+                // const h = new sha256.HMAC(sha256.hash(atSecret));
+                // const digest = h.update(body).digest();
+                // const computedSecret = new Buffer(digest).toString('hex');
+                // Log.info("RouteHandler::postGithubHook(..) - computed 1: " + computedSecret);
+                //
+                // const bodyStr = JSON.stringify(body, null, 0);
+                // const bodyArr = new Uint8Array(bodyStr.length);
+                // for (let i = 0; i < bodyStr.length; i++) {
+                //     bodyArr[i] = bodyStr.charCodeAt(i);
+                // }
+                //
+                // // simpler than v3 below and with the same result
+                // const digest2 = sha256.hmac(sha256.hash(atSecret), bodyArr);
+                // const computedSecret2 = new Buffer(digest2).toString('hex');
+                // Log.info("RouteHandler::postGithubHook(..) - computed 2: " + computedSecret2);
+                //
+                // const h3 = new sha256.HMAC(sha256.hash(atSecret));
+                // const digest3 = h3.update(bodyArr).digest();
+                // const computedSecret3 = new Buffer(digest3).toString('hex');
+                // Log.info("RouteHandler::postGithubHook(..) - computed 3: " + computedSecret3);
 
-                // different api, but same idea: https://gist.github.com/stigok/57d075c1cf2a609cb758898c0b202428
-                const h = new sha256.HMAC(sha256.hash(atSecret));
-                const digest = h.update(body).digest();
-                const computedSecret = new Buffer(digest).toString('hex');
-                Log.info("RouteHandler::postGithubHook(..) - computed 1: " + computedSecret);
-
-                const bodyStr = JSON.stringify(body, null, 0);
-                const bodyArr = new Uint8Array(bodyStr.length);
-                for (let i = 0; i < bodyStr.length; i++) {
-                    bodyArr[i] = bodyStr.charCodeAt(i);
-                }
-                const digest2 = sha256.hmac(sha256.hash(atSecret), bodyArr);
-                const computedSecret2 = new Buffer(digest2).toString('hex');
-                Log.info("RouteHandler::postGithubHook(..) - computed 2: " + computedSecret2);
-
-                const h3 = new sha256.HMAC(sha256.hash(atSecret));
-                const digest3 = h3.update(bodyArr).digest();
-                const computedSecret3 = new Buffer(digest3).toString('hex');
-                Log.info("RouteHandler::postGithubHook(..) - computed 3: " + computedSecret3);
+                const secret = crypto.createHash('sha256').update(atSecret, 'utf8').digest('hex');
+                const computed4 = crypto.createHmac('sha256', secret)
+                    .update(body)
+                    .digest('hex');
+                Log.info("RouteHandler::postGithubHook(..) - secret: " + secret + "; computed 4: " + computed4);
 
                 // Log.info("RouteHandler::postGithubHook(..) - expected: " + expectedSecret + "; header: " +
                 //     githubSecret + "; computed: " + computedSecret);
