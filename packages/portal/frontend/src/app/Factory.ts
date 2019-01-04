@@ -1,7 +1,8 @@
 // import {SDMMSummaryView} from "./views/sdmm/SDMMSummaryView";
 import Log from "../../../../common/Log";
+import {CS340AdminView} from "./views/340/CS340AdminView";
 import {AdminView} from "./views/AdminView";
-import {CS221View} from "./views/cs221/CS221View";
+import {CS310AdminView} from "./views/cs310/CS310AdminView";
 import {CS310View} from "./views/cs310/CS310View";
 
 import {IView} from "./views/IView";
@@ -54,14 +55,14 @@ export class Factory {
                 this.studentView = new CS310View(backendUrl); // default to 310 for deploy testing
             } else if (this.name === 'cs310') {
                 this.studentView = new CS310View(backendUrl);
-            } else if (this.name === 'sdmm') {
-                this.studentView = new SDMMSummaryView(backendUrl);
-            } else if (this.name === 'CS310-2017Jan' || this.name === 'CS310-2017Jan_TEST') {
-                this.studentView = new CS310View(backendUrl);
-            } else if (this.name === 'cs340' || this.name === 'cpsc340') {
-                this.studentView = new CS340View(backendUrl);
-            } else if (this.name === 'cs221') {
-                this.studentView = new CS221View(backendUrl);
+                // } else if (this.name === 'sdmm') {
+                //     this.studentView = new SDMMSummaryView(backendUrl);
+                // } else if (this.name === 'CS310-2017Jan' || this.name === 'CS310-2017Jan_TEST') {
+                //     this.studentView = new CS310View(backendUrl);
+                // } else if (this.name === 'cs340' || this.name === 'cpsc340') {
+                //     this.studentView = new CS340View(backendUrl);
+                // } else if (this.name === 'cs221') {
+                //     this.studentView = new CS221View(backendUrl);
                 // } else if (this.name === 'sdmm') {
                 //     this.studentView = new SDMMSummaryView(backendUrl);
                 // } else if (this.name === 'CS310-2017Jan' || this.name === 'CS310-2017Jan_TEST') {
@@ -106,7 +107,7 @@ export class Factory {
                 tabs.results = false; // no results
                 tabs.dashboard = false; // no dashboard
                 this.adminView = new CS340AdminView(backendUrl, tabs);
-           } else {
+            } else {
                 Log.info("Factory::getAdminView() - returning default admin view for: " + this.name);
                 this.adminView = new AdminView(backendUrl, tabs); // default admin
             }
