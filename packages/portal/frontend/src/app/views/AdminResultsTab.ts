@@ -100,6 +100,14 @@ export class AdminResultsTab extends AdminPage {
 
         const headers: TableHeader[] = [
             {
+                id:          '?',
+                text:        '?',
+                sortable:    false,
+                defaultSort: false,
+                sortDown:    true,
+                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
+            },
+            {
                 id:          'repoId',
                 text:        'Repository',
                 sortable:    true,
@@ -164,7 +172,14 @@ export class AdminResultsTab extends AdminPage {
             const tsString = mom.format("MM/DD[@]HH:mm");
             // const tsString = new Date(ts).toLocaleDateString() + ' @ ' + new Date(ts).toLocaleTimeString();
 
+            const stdioViewerURL = '/stdio.html?delivId=' + result.delivId + '&repoId=' + result.repoId + '&sha=' + result.commitSHA;
+
             const row: TableCell[] = [
+                {
+                    value: '',
+                    html:  '<a style="cursor: pointer; cursor: hand;" target="_blank" href="' +
+                           stdioViewerURL + '"><ons-icon icon="ion-ios-help-outline"</ons-icon></a>'
+                },
                 {value: result.repoId, html: '<a href="' + result.repoURL + '">' + result.repoId + '</a>'},
                 // {value: result.repoId, html: result.repoId},
                 {value: result.delivId, html: result.delivId},
