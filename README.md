@@ -95,6 +95,8 @@ The following guidelines can be helpful for evaluating any PRs on a local fork (
 
 ### Fork initialization
 
+This only needs to happen once per fork, so if you already have a configured fork with a sync branch, you can ignore this step.
+
 1. fork `root` into an account you control
 1. create a branch called `sync` on your `fork` and `git push origin sync` (to create `fork/sync` on the server)
 1. add the upstream branch `git remote add upstream https://github.com/ubccpsc/classy.git` ([LINK](https://help.github.com/articles/configuring-a-remote-for-a-fork/))
