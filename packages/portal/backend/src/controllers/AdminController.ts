@@ -1,5 +1,3 @@
-import * as rp from "request-promise-native";
-
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {
@@ -402,11 +400,17 @@ export class AdminController {
                     }
                 }
 
+                // if the VM state is SUCCESS, return the report state
+                let state = result.output.state.toString();
+                if (state === 'SUCCESS' && typeof result.output.report.result !== 'undefined') {
+                    state = result.output.report.result;
+                }
+
                 const resultTrans: AutoTestResultSummaryTransport = {
                     repoId:       repoId,
                     repoURL:      repoURL,
                     delivId:      result.delivId,
-                    state:        result.output.state,
+                    state:        state,
                     timestamp:    result.output.timestamp,
                     commitSHA:    result.input.target.commitSHA,
                     commitURL:    result.input.target.commitURL,
