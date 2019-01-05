@@ -1,7 +1,5 @@
 import Log from "../../../../common/Log";
-
 import {AdminView} from "./views/AdminView";
-
 import {CS310AdminView} from "./views/cs310/CS310AdminView";
 import {CS310View} from "./views/cs310/CS310View";
 import {IView} from "./views/IView";
@@ -54,12 +52,6 @@ export class Factory {
                 this.studentView = new CS310View(backendUrl); // default to 310 for deploy testing
             } else if (this.name === 'cs310') {
                 this.studentView = new CS310View(backendUrl);
-                // } else if (this.name === 'sdmm') {
-                //     this.studentView = new SDMMSummaryView(backendUrl);
-                // } else if (this.name === 'CS310-2017Jan' || this.name === 'CS310-2017Jan_TEST') {
-                //     this.studentView = new CS310View(backendUrl);
-                // } else if (this.name === 'cs340' || this.name === 'cpsc340') {
-                //     this.studentView = new CS340View(backendUrl);
             } else {
                 Log.error("Factory::getView() - ERROR; unknown name: " + this.name);
             }
