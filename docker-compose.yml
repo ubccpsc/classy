@@ -68,6 +68,7 @@ services:
         volumes:
             - "${HOST_SSL_CERT_PATH}:${SSL_CERT_PATH}"
             - "${HOST_SSL_KEY_PATH}:${SSL_KEY_PATH}"
+            - "${HOST_DIR}:${PERSIST_DIR}:ro"
     proxy:
         build:
             args:
