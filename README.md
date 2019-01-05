@@ -98,7 +98,7 @@ The following guidelines can be helpful for evaluating any PRs on a local fork (
 This only needs to happen once per fork, so if you already have a configured fork with a sync branch, you can ignore this step.
 
 1. fork `root` into an account you control
-1. create a branch called `sync` on your `fork` and `git push origin sync` (to create `fork/sync` on the server)
+1. create a branch called `sync` on your `fork` (`git branch sync`) and create `fork/sync` on the server (`git push origin sync`)
 1. add the upstream branch `git remote add upstream https://github.com/ubccpsc/classy.git` ([LINK](https://help.github.com/articles/configuring-a-remote-for-a-fork/))
 
 ## Development process
@@ -107,7 +107,7 @@ All `fork` changes should be made on `fork/master` or other branches (just ***no
 
 ### Pulling changes from `root/master` into `fork/master` 
 
-This can happen regulairly, whenever there is a `root/master` change that fixes a bug or adds a feature that the fork might want.
+This can happen regularly, whenever there is a `root/master` change that fixes a bug or adds a feature that the fork might want.
  
 On `fork`:
 1. `git checkout master`
