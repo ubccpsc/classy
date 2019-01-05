@@ -11,7 +11,7 @@ fi
 
 case "${1}" in
     grade)
-        docker build --tag cpsc310image --file grade.dockerfile "${URL/%#/}"
+        docker build --tag grader --file grade.dockerfile "${URL/%#/}"
         ;;
     ui)
         docker build --tag cpsc310reference_ui --file ui.dockerfile "${URL/%#/}" && \
