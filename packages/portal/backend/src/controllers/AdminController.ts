@@ -627,6 +627,7 @@ export class AdminController {
 
         for (const repo of repos) {
             try {
+                Log.info("AdminController::provisionRepositories( .. ) ***** START *****");
                 Log.info("AdminController::provisionRepositories( .. ) - start for repo: " + repo.id);
                 if (repo.URL === null) {
                     const teams: Team[] = [];
@@ -649,7 +650,8 @@ export class AdminController {
 
                     Log.info("AdminController::provisionRepositories( .. ) - done provisioning: " + repo.id + "; forced wait");
                     await Util.delay(2 * 1000); // after any provisioning wait a bit
-                    Log.info("AdminController::provisionRepositories( .. ) - done provisioning: " + repo.id + "; wait complete");
+                    Log.info("AdminController::provisionRepositories( .. ) - done for repo: " + repo.id + "; wait complete");
+                    Log.info("AdminController::provisionRepositories( .. ) ***** DONE *****");
                 } else {
                     Log.info("AdminController::provisionRepositories( .. ) - skipped; already provisioned: " +
                         repo.id + "; URL: " + repo.URL);
