@@ -627,12 +627,15 @@ export class AdminController {
 
         for (const repo of repos) {
             try {
+                Log.info("AdminController::provisionRepositories( .. ) - start for repo: " + repo.id);
                 if (repo.URL === null) {
                     const teams: Team[] = [];
                     for (const teamId of repo.teamIds) {
                         teams.push(await this.dbc.getTeam(teamId));
                     }
+                    Log.info("AdminController::provisionRepositories( .. ) - about to provision: " + repo.id);
                     const success = await ghc.provisionRepository(repo.id, teams, importURL, false);
+                    Log.info("AdminController::provisionRepositories( .. ) - provisioned: " + repo.id + "; success: " + success);
 
                     if (success === true) {
                         repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
@@ -644,7 +647,9 @@ export class AdminController {
                         Log.warn("AdminController::provisionRepositories( .. ) - FAILED: " + repo.id + "; URL: " + repo.URL);
                     }
 
+                    Log.info("AdminController::provisionRepositories( .. ) - done provisioning: " + repo.id + "; forced wait");
                     await Util.delay(2 * 1000); // after any provisioning wait a bit
+                    Log.info("AdminController::provisionRepositories( .. ) - done provisioning: " + repo.id + "; wait complete");
                 } else {
                     Log.info("AdminController::provisionRepositories( .. ) - skipped; already provisioned: " +
                         repo.id + "; URL: " + repo.URL);
