@@ -644,7 +644,7 @@ export class AdminController {
                         Log.warn("AdminController::provisionRepositories( .. ) - FAILED: " + repo.id + "; URL: " + repo.URL);
                     }
 
-                    await Util.delay(1 * 1000); // after any provisioning wait a bit
+                    await Util.delay(2 * 1000); // after any provisioning wait a bit
                 } else {
                     Log.info("AdminController::provisionRepositories( .. ) - skipped; already provisioned: " +
                         repo.id + "; URL: " + repo.URL);

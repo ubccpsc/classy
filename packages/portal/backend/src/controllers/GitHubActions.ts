@@ -209,7 +209,7 @@ export class GitHubActions implements IGitHubActions {
     private readonly gitHubAuthToken: string | null = null;
     private readonly org: string | null = null;
 
-    private PAUSE = 1000;
+    private PAUSE = 5000;
     private pageSize = 100; // public for testing; 100 is the max; 10 is good for tests
 
     private dc: DatabaseController = null;
@@ -307,16 +307,21 @@ export class GitHubActions implements IGitHubActions {
                 json:    true
             };
 
+            Log.info("GitHubAction::createRepo( " + repoId + " ) - making request");
             const body = await rp(options);
+            Log.info("GitHubAction::createRepo( " + repoId + " ) - request complete");
             const url = body.html_url;
 
+            Log.info("GitHubAction::createRepo( " + repoId + " ) - db start");
             const repo = await this.dc.getRepository(repoId);
             repo.URL = url; // only update this field in the existing Repository record
             repo.cloneURL = body.clone_url; // only update this field in the existing Repository record
             await this.dc.writeRepository(repo);
+            Log.info("GitHubAction::createRepo( " + repoId + " ) - db done");
 
             Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; delaying to prep repo. Took: " + Util.took(start));
             await Util.delay(this.PAUSE);
+            Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; delaying complete");
 
             return url;
         } catch (err) {
