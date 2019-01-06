@@ -1,3 +1,4 @@
+import * as fs from "fs-extra";
 import * as restify from "restify";
 
 import Config, {ConfigKey} from '../../../../../common/Config';
@@ -28,6 +29,8 @@ import {Factory} from "../../Factory";
 import {AuditLabel, Person} from "../../Types";
 
 import IREST from "../IREST";
+import AdminRoutes from "./AdminRoutes";
+import {AuthRoutes} from "./AuthRoutes";
 
 export default class GeneralRoutes implements IREST {
 
@@ -52,6 +55,9 @@ export default class GeneralRoutes implements IREST {
 
         // used by students to create their teams
         server.post('/portal/team', GeneralRoutes.postTeam);
+
+        // server.get('/portal/resource/:path', GeneralRoutes.getResource);
+        server.get('/portal/resource/.*', GeneralRoutes.getResource);
     }
 
     public static getConfig(req: any, res: any, next: any) {
@@ -144,6 +150,119 @@ export default class GeneralRoutes implements IREST {
             res.send(400, payload);
             return next(false);
         });
+    }
+
+    public static getResource(req: any, res: any, next: any) {
+        Log.info('GeneralRoutes::getResource(..) - start');
+
+        const auth = AdminRoutes.processAuth(req);
+        // const user = req.headers.user;
+        // const token = req.headers.token;
+        // const params = req.params;
+        const path = req.url.substring(16);  // this strips off the route prefix (i.e., /portal/resource)
+
+        // right now this means requests _must_ be by an authorized user (admin, staff, or student)
+        if (typeof auth.user === 'undefined' || typeof auth.token === 'undefined') {
+            Log.warn('GeneralRoutes::isAdmin(..) - undefined user or token for resource: ' + path);
+            // If the requestor is not authenticated forward them back to the front page.
+            // TODO: use ref for forwarding the user to their original resource once they have logged in
+            const loc = Config.getInstance().getProp(ConfigKey.publichostname) + '?ref=' + path;
+            return res.redirect(loc, next);
+        }
+
+        Log.info('GeneralRoutes::getResource(..) - user: ' + auth.user + '; token: ' + auth.token + '; path: ' + path);
+
+        GeneralRoutes.performGetResource(auth, path).then(function(resource: any) {
+
+            const filePath = Config.getInstance().getProp(ConfigKey.persistDir) + path;
+            Log.info("GeneralRoutes::getResource(..) - start; trying to read file: " + filePath);
+
+            const rs = fs.createReadStream(filePath);
+            rs.on("error", (err: any) => {
+                if (err.code === "ENOENT") {
+                    Log.error("GeneralRoutes::getResource(..) - ERROR Requested resource does not exist: " + path);
+                    res.send(404, err.message);
+                } else {
+                    Log.error("GeneralRoutes::getResource(..) - ERROR Reading requested resource: " + path);
+                    res.send(500, err.message);
+                }
+            });
+            rs.on("end", () => {
+                Log.info("GeneralRoutes::getResource(..) - done; finished reading file: " + filePath);
+                rs.close();
+            });
+            rs.pipe(res);
+
+            return next();
+        }).catch(function(err) {
+            Log.error('GeneralRoutes::getResource(..) - ERROR: ' + err);
+            if (err.message === "401") {
+                return GeneralRoutes.handleError(401, 'Authorization error; unknown user/token.', res, next);
+            } else {
+                Log.info('GeneralRoutes::getResource(..) - ERROR: ' + err.message); // intentionally info
+                return GeneralRoutes.handleError(400, 'Problem encountered getting resource: ' + err.message, res, next);
+            }
+        });
+    }
+
+    public static async performGetResource(auth: {user: string, token: string}, path: string): Promise<boolean> {
+        Log.info("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - start");
+
+        const host = Config.getInstance().getProp(ConfigKey.autotestUrl);
+        const port = Config.getInstance().getProp(ConfigKey.autotestPort);
+        const uri = host + ':' + port + '/resource' + path;
+
+        // const options = {
+        //     uri:    uri,
+        //     method: 'GET'
+        //     // headers: {
+        //     //     'Content-Type': 'application/json',
+        //     //     'User-Agent':   'Portal',
+        //     //     'user':         auth.user, // NOTE: can change to a different representation
+        //     //     'token':        auth.token, // NOTE: can change to a different representation
+        //     //     'path':         path // NOTE: can change to a different representation
+        //     // }
+        // };
+
+        let proceed = false;
+        // if user/token does not have access to resource request should return 401
+        try {
+            const priv = await AuthRoutes.performGetCredentials(auth.user, auth.token);
+
+            if (path.indexOf('/student/') >= 0) {
+                Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - student resource; is valid");
+                // works for everyone (performGetCredentials would have thrown exception if not a valid user)
+                proceed = true;
+            } else if (path.indexOf('/admin/') >= 0) {
+
+                // works for admin only
+                if (priv.isAdmin === true) {
+                    Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - admin resource; is valid");
+                    proceed = true;
+                } else {
+                    Log.warn("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - admin resource; NOT valid");
+                }
+            } else if (path.indexOf('/staff/') >= 0) {
+                Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - staff resource");
+                // works for admin and staff
+                if (priv.isAdmin === true || priv.isStaff === true) {
+                    Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - staff resource; is valid");
+                    proceed = true;
+                } else {
+                    Log.warn("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - staff resource; NOT valid");
+                }
+            }
+            if (proceed === false) {
+                // internal throw not great, but gets us into the same path as invalid student from
+                throw new Error("401");
+            }
+        } catch (err) {
+            throw new Error("401");
+        }
+
+        // Log.info("GeneralRoutes::performGetResource( .. ) - valid request; passing through to: " + uri);
+        // if resource does not exist, request should return 404
+        return proceed;
     }
 
     public static getRepos(req: any, res: any, next: any) {
@@ -281,20 +400,16 @@ export default class GeneralRoutes implements IREST {
             throw new Error("Invalid credentials");
         } else {
             const pc = new PersonController();
-            const person = await pc.getPerson(user);
-            if (person === null) {
-                Log.warn('GeneralRoutes::performGetTeams(..) - person === null');
-                throw new Error('Unknown person');
-            } else {
-                const tc: TeamController = new TeamController();
-                const teams = await tc.getTeamsForPerson(person);
-                Log.trace('GeneralRoutes::performGetTeams(..) - in teams: ' + teams);
-                const teamTrans: TeamTransport[] = [];
-                for (const team of teams) {
-                    teamTrans.push(tc.teamToTransport(team));
-                }
-                return teamTrans;
+            const person = await pc.getPerson(user); // person will always exist (checked in isValid above)
+
+            const tc: TeamController = new TeamController();
+            const teams = await tc.getTeamsForPerson(person);
+            Log.trace('GeneralRoutes::performGetTeams(..) - in teams: ' + teams);
+            const teamTrans: TeamTransport[] = [];
+            for (const team of teams) {
+                teamTrans.push(tc.teamToTransport(team));
             }
+            return teamTrans;
         }
     }
 
@@ -306,27 +421,26 @@ export default class GeneralRoutes implements IREST {
             throw new Error("Invalid credentials");
         } else {
             const pc = new PersonController();
-            const person = await pc.getPerson(user);
-            // if (person === null) {
-            //     person = await pc.getGitHubPerson(user);
-            // }
-            if (person === null) {
-                Log.warn('GeneralRoutes::performGetRepos(..) - person === null');
-                throw new Error('Unknown person');
-            } else {
-                const rc = new RepositoryController();
-                const repos = await rc.getReposForPerson(person);
-                Log.trace('GeneralRoutes::performGetRepos(..) - repos: ' + repos);
-                const repoTrans: RepositoryTransport[] = [];
-                for (const repo of repos) {
-                    if (repo.URL !== null) {
-                        // null URLs are Repository objects that have been created locally but not on GitHub
-                        // TODO: should probably consider repo.custom.githubCreated
-                        repoTrans.push(RepositoryController.repositoryToTransport(repo));
-                    }
+            const person = await pc.getPerson(user); // person always exists (checked in isValid above)
+
+            const rc = new RepositoryController();
+            const repos = await rc.getReposForPerson(person);
+            Log.trace('GeneralRoutes::performGetRepos(..) - repos: ' + repos);
+            const repoTrans: RepositoryTransport[] = [];
+            for (const repo of repos) {
+                if (repo.URL !== null) {
+                    // null URLs are Repository objects that have been created locally but not on GitHub
+                    // TODO: should probably consider repo.custom.githubCreated
+                    repoTrans.push(RepositoryController.repositoryToTransport(repo));
                 }
                 return repoTrans;
             }
         }
+    }
+
+    public static handleError(code: number, msg: string, res: any, next: any) {
+        Log.error('GeneralRoutes::handleError(..) - ERROR: ' + msg);
+        res.send(code, {failure: {message: msg, shouldLogout: false}});
+        return next(false);
     }
 }

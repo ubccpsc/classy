@@ -43,10 +43,13 @@ export class CS310View extends StudentView {
     private async renderStudentPage(): Promise<void> {
         UI.showModal('Fetching Data');
         try {
-            // grades done in StudentView
-            // repos done in StudentView
+            Log.info('CS310View::renderStudentPage(..) - start');
 
-            // teams
+            // grades renedered in StudentView
+
+            // repos rendered in StudentView
+
+            // teams rendered here
             const teams = await this.fetchTeamData();
             this.teams = teams;
             await this.renderTeams(teams);
@@ -59,49 +62,7 @@ export class CS310View extends StudentView {
         return;
     }
 
-    // private async fetchData(endpoint: string): Promise<any> {
-    //     const url = this.remote + endpoint;
-    //     const response = await fetch(url, super.getOptions());
-    //     if (response.status === 200) {
-    //         Log.trace('CS310View::fetchData( ' + endpoint + ' ) - 200 received');
-    //         const json = await response.json();
-    //         Log.trace('CS310View::fetchData( ' + endpoint + ' ) - payload: ' + JSON.stringify(json));
-    //         if (typeof json.success !== 'undefined') {
-    //             Log.trace('CS310View::fetchData( ' + endpoint + ' ) - success: ' + json.success);
-    //             return json.success;
-    //         } else {
-    //             Log.trace('CS310View::fetchData( ' + endpoint + ' ) - ERROR: ' + json.failure.message);
-    //             throw new Error(json.failure.message);
-    //             // UI.showError(json.failure);
-    //         }
-    //     } else {
-    //         Log.trace('CS310View::fetchData( ' + endpoint + ' ) - teams !200 received');
-    //     }
-    //
-    //     UI.hideModal();
-    //     return [];
-    // }
-
     private async fetchTeamData(): Promise<TeamTransport[]> {
-
-        // this.teams = null;
-
-        // const url = this.remote + '/portal/teams';
-        // const response = await fetch(url, super.getOptions());
-        // if (response.status === 200) {
-        //     Log.trace('CS310View::fetchTeamData(..) - teams 200 received');
-        //     const json = await response.json();
-        //     Log.trace('CS310View::fetchTeamData(..) - teams payload: ' + JSON.stringify(json));
-        //     if (typeof json.success !== 'undefined') {
-        //         Log.trace('CS310View::fetchTeamData(..) - teams success: ' + json.success);
-        //         return json.success as TeamTransport[];
-        //     } else {
-        //         Log.trace('CS310View::fetchTeamData(..) - teams ERROR: ' + json.failure.message);
-        //         UI.showError(json.failure);
-        //     }
-        // } else {
-        //     Log.trace('CS310View::fetchTeamData(..) - teams !200 received');
-        // }
         try {
             this.teams = null;
             let data: TeamTransport[] = await this.fetchData('/portal/teams');
@@ -111,11 +72,10 @@ export class CS310View extends StudentView {
             this.teams = data;
             return data;
         } catch (err) {
-            Log.error('CS310View::fetchTeamData(..)' + err.message);
+            Log.error('CS310View::fetchTeamData(..) - ERROR: ' + err.message);
             this.teams = [];
             return [];
         }
-
     }
 
     private async renderTeams(teams: TeamTransport[]): Promise<void> {
@@ -160,16 +120,10 @@ export class CS310View extends StudentView {
             // already on team
             UI.showSection('studentPartnerDiv');
 
-            const tName = document.getElementById('studentPartnerTeamName');
-            // const pName = document.getElementById('studentPartnerTeammates');
+            const teamElement = document.getElementById('studentPartnerTeamName');
+            // const partnerElement = document.getElementById('studentPartnerTeammates');
             const team = projectTeam;
-
-            // if (team.URL !== null) {
-            //     tName.innerHTML = '<a href="' + team.URL + '">' + team.id + '</a>';
-            // } else {
-            tName.innerHTML = team.id;
-            // }
-            // pName.innerHTML = team.people[0]; // JSON.stringify(team.people);
+            teamElement.innerHTML = team.id;
         }
     }
 

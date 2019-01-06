@@ -1,4 +1,5 @@
 /* tslint:disable:no-console */
+
 export enum LogLevel {
     TRACE,
     INFO,
@@ -10,7 +11,7 @@ export enum LogLevel {
 
 let LOG_LEVEL: LogLevel;
 
-switch (("TRACE").toUpperCase()) {
+switch ((process.env["LOG_LEVEL"] || "").toUpperCase()) {
     case "TRACE":
         LOG_LEVEL = LogLevel.TRACE;
         break;

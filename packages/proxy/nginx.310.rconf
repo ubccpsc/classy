@@ -24,12 +24,6 @@ http {
             proxy_pass         http://<%= ENV["CONTAINER_NAME_UI"] %>:<%= ENV["UI_PORT"] %>/;
         }
 
-        location /<%= ENV["RAND_ENDPOINT"] %> {
-            port_in_redirect   off;  # Don't redirect to 8443 (https://serverfault.com/q/227742)
-            rewrite            /<%= ENV["RAND_ENDPOINT"] %>(/.+) $1 break;
-            proxy_pass         http://<%= ENV["CONTAINER_NAME_GRADER"] %>:<%= ENV["GRADER_PORT"] %>/;
-        }
-
         # pass requests to the portal service (which is automatically defined in the hosts file by docker)
         location / {
             proxy_pass         "https://<%= ENV["CONTAINER_NAME_PORTAL"] %>:<%= ENV["BACKEND_PORT"] %>/";

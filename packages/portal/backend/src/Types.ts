@@ -102,6 +102,7 @@ export interface Deliverable {
         // mainFilePath?: any // AssignmentController // TODO: make into assignment.mainFilePath
     };
 
+    lateAutoTest: boolean; // whether the deliv can be executed after the deadline
     shouldAutoTest: boolean; // whether the deliv will use AutoTest
     autotest: AutoTestConfig;
 
@@ -125,6 +126,7 @@ export interface Team {
     readonly delivId: string; // invariant
 
     URL: string | null; // null when not yet created
+    githubId: number | null; // null when not yet created
     personIds: string[]; // Person.id[] - foreign key
 
     // githubStatus: string; // NONE | CREATED | LINKED
@@ -193,8 +195,8 @@ export enum AuditLabel {
     TEAM = 'TEAM',
     TEAM_ADMIN = 'TeamAdmin', // Created / updated by admin
     TEAM_STUDENT = 'TeamStudent', // Created / updated by student
-    GRADE_ADMIN = 'GradeAdmin',
-    GRADE_UPLOAD = 'Grade_Upload',
+    GRADE_ADMIN = 'GradeAdmin', // Created / updated by admin
+    GRADE_CHANGE = 'Grade_Change',
     GRADE_AUTOTEST = 'GradeAutotest',
     REPO_PROVISION = 'RepositoryProvision',
     REPO_RELEASE = 'RepositoryRelease',

@@ -3,17 +3,18 @@ import * as rp from "request-promise-native";
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {AutoTestResult} from "../../../common/types/AutoTestTypes";
+import {GradeReport} from "../../../common/types/ContainerTypes";
 import {
     AutoTestAuthPayload,
     AutoTestAuthTransport,
     AutoTestConfigPayload,
     AutoTestConfigTransport,
-    AutoTestDefaultDeliverablePayload,
-    AutoTestDefaultDeliverableTransport,
     AutoTestGradeTransport,
     AutoTestPersonIdTransport,
     AutoTestResultPayload,
     AutoTestResultTransport,
+    ClassyConfigurationPayload,
+    ClassyConfigurationTransport,
     Payload
 } from "../../../common/types/PortalTypes";
 
@@ -33,7 +34,7 @@ export interface IClassPortal {
      * GET /portal/admin/getDefaultDeliverable
      *
      */
-    getDefaultDeliverableId(): Promise<AutoTestDefaultDeliverableTransport | null>;
+    getConfiguration(): Promise<ClassyConfigurationTransport | null>;
 
     /**
      * Returns whether the username is privileged on the course.
@@ -83,6 +84,17 @@ export interface IClassPortal {
      * @returns {Promise<AutoTestResultTransport | null>}
      */
     getResult(delivId: string, repoId: string, sha: string): Promise<AutoTestResultTransport | null>;
+
+    /**
+     * Converts a grade report into the feedback returned by the container. The default implementation
+     * on portal just returns gradeRecord.feedback but courses are free to adjust this as needed using
+     * their CourseController class.
+     *
+     * @param {GradeReport} gradeRecord
+     * @param {string} feedbackMode
+     * @returns {Promise<Payload>}
+     */
+    formatFeedback(gradeRecord: GradeReport, feedbackMode?: string): Promise<string | null>;
 }
 
 export class ClassPortal implements IClassPortal {
@@ -145,9 +157,9 @@ export class ClassPortal implements IClassPortal {
         }
     }
 
-    public async getDefaultDeliverableId(): Promise<AutoTestDefaultDeliverableTransport | null> {
+    public async getConfiguration(): Promise<ClassyConfigurationTransport | null> {
 
-        const url = this.host + ":" + this.port + "/portal/at/defaultDeliverable";
+        const url = this.host + ":" + this.port + "/portal/at";
         const opts: rp.RequestPromiseOptions = {
             rejectUnauthorized: false, headers: {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
@@ -157,7 +169,7 @@ export class ClassPortal implements IClassPortal {
         try {
             const res = await rp(url, opts); // .then(function(res) {
             Log.trace("ClassPortal::getDefaultDeliverableId() - success; payload: " + res);
-            const json: AutoTestDefaultDeliverablePayload = JSON.parse(res);
+            const json: ClassyConfigurationPayload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
                 return json.success;
             } else {
@@ -225,6 +237,30 @@ export class ClassPortal implements IClassPortal {
             Log.error("ClassPortal::sendGrade(..) - ERROR; url: " + url + "; ERROR: " + err);
             const pay: Payload = {failure: {message: err.message, shouldLogout: false}};
             return pay;
+        }
+    }
+
+    public async formatFeedback(gradeRecord: GradeReport, feedbackMode?: string): Promise<string | null> {
+        Log.info("ClassPortal::formatFeedback(..) - start; feedbackMode: " + feedbackMode);
+        try {
+            // TODO: this could actually be sent to the frontend for consideration in the course-specific classy controller
+
+            let feedback: string = gradeRecord.feedback;
+
+            let altFeedback: string = "";
+            if (typeof feedbackMode === "string" && feedbackMode !== "default") {
+                altFeedback = (gradeRecord.custom as any)[feedbackMode].feedback;
+
+                if (typeof altFeedback === "string") {
+                    Log.info("ClassPortal::formatFeedback(..) - using altFeedback");
+                    feedback = altFeedback;
+                }
+            }
+
+            return feedback;
+        } catch (err) {
+            Log.error("ClassPortal::formatFeedback(..) - ERROR; message: " + err.message);
+            return null;
         }
     }
 

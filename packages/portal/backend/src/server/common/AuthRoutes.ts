@@ -144,7 +144,7 @@ export class AuthRoutes implements IREST {
         });
     }
 
-    private static async performGetCredentials(user: string, token: string): Promise<{isAdmin: boolean, isStaff: boolean}> {
+    public static async performGetCredentials(user: string, token: string): Promise<{isAdmin: boolean, isStaff: boolean}> {
         const isValid = await AuthRoutes.ac.isValid(user, token);
         Log.trace('AuthRoutes::getCredentials(..) - in isValid(..)');
         if (isValid === false) {

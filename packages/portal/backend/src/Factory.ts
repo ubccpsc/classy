@@ -1,19 +1,23 @@
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
-import {CS340Controller} from "./controllers/340/CS340Controller";
 
-import {CourseController} from "./controllers/CourseController";
-import {CS310Controller} from "./controllers/cs310/CS310Controller";
+import {AdminController} from "./controllers/AdminController";
+import {CourseController, ICourseController} from "./controllers/CourseController";
 import {GitHubActions} from "./controllers/GitHubActions";
 import {GitHubController, IGitHubController} from "./controllers/GitHubController";
-import {SDMMController} from "./controllers/SDMM/SDMMController";
-import CS340REST from "./server/340/CS340REST";
 
 import NoCustomRoutes from "./server/common/NoCustomRoutes";
 import IREST from "./server/IREST";
-import SDMMREST from "./server/SDMM/SDMMREST";
 
 export class Factory {
+
+    /**
+     * This is a test variable, but can't be hosted in a test/ file because it breaks the Docker build process.
+     *
+     * Set to true if you want to run these slow tests locally (they will always run on CI):
+     */
+        // public static OVERRIDE = true; // NOTE: should be commented out when committing
+    public static OVERRIDE = false; // NOTE: should NOT be commented out when committing
 
     /**
      * Returns a custom route handler for a course. This will be used to configure
@@ -27,29 +31,31 @@ export class Factory {
             name = Factory.getName();
         }
 
-        if (name === 'sdmm' || name === 'secapstonetest') {
-            return new SDMMREST();
-        } else if (name === 'cs310' || name === 'classytest') {
-            // no custom routes are required for 310
+        if (name === 'classytest') {
             return new NoCustomRoutes();
-        } else if (name === 'cs340' || name === 'cpsc340' || name.toLowerCase().startsWith('cpsc340')) {
-            return new CS340REST();
+            // } else if (name === 'sdmm' || name === 'secapstonetest') {
+            //     // instantiate SDMMREST in fork
+            // } else if (name === 'cs310') {
+            //     // no custom routes are required for 310
+            //     return new NoCustomRoutes();
+            // } else if (name === 'cs340' || name === 'cpsc340') {
+            //     // instantiate CS340REST in fork
         } else {
-            Log.error("Factory::getCustomRouteHandler() - unknown name: " + name);
+            Log.warn("Factory::getCustomRouteHandler() - no custom routes for: " + name);
         }
         return new NoCustomRoutes(); // default handler
     }
 
     // only visible for testing
-    public static controller: CourseController = null;
+    public static controller: ICourseController = null;
 
     /**
      *
      * @param {IGitHubController} ghController
      * @param {string} name? optional name (for testing or overriding the default; usually not needed)
-     * @returns {CourseController}
+     * @returns {AdminController}
      */
-    public static getCourseController(ghController?: IGitHubController, name?: string): CourseController {
+    public static getCourseController(ghController?: IGitHubController, name?: string): ICourseController {
         if (typeof name === 'undefined') {
             name = Factory.getName();
         }
@@ -67,12 +73,19 @@ export class Factory {
             Log.trace("Factory::getCourseController() - using provided controller");
         }
 
-        if (name === 'sdmm' || name === 'secapstonetest') {
-            Factory.controller = new SDMMController(ghController);
-        } else if (name === 'cs310' || name === 'classytest') {
-            Factory.controller = new CS310Controller(ghController);
-        } else if (name === 'cs340' || name === 'cpsc340') {
-            Factory.controller = new CS340Controller(ghController);
+        if (name === 'classytest') {
+            // for unit testing
+            Factory.controller = new CourseController(ghController);
+        } else if (name === 'classy') {
+            // for test deploying
+            Factory.controller = new CourseController(ghController);
+            // } else if (name === 'cs340' || name === 'cpsc340') {
+            //     // Factory.controller = new CS340Controller(ghController);
+            // } else if (name === 'cs210' || name === 'cpsc210') {
+            //     // instantiate 210 controller in fork
+            // } else if (name === 'cs221' || name === 'cpsc221') {
+            //     // instantiate 221 controller in fork
+            //     Factory.controller = new CS221Controller(ghController);
         } else {
             Log.error("Factory::getCourseController() - unknown name: " + name);
             throw new Error("Unknown course name: " + name);

@@ -1,7 +1,11 @@
+import * as crypto from "crypto";
 import * as rp from "request-promise-native";
+
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
+import {Factory} from "../Factory";
+
 import {DatabaseController} from "./DatabaseController";
 import {GitTeamTuple} from "./GitHubController";
 
@@ -177,6 +181,25 @@ export interface IGitHubActions {
      * @returns {Promise<boolean>}
      */
     setRepoPermission(repoName: string, permissionLevel: string): Promise<boolean>;
+
+    /**
+     * Makes a comment on a commit.
+     *
+     * @param {string} url
+     * @param {string} message any text would work, but markdown is best
+     * @returns {Promise<boolean>}
+     */
+    makeComment(url: string, message: string): Promise<boolean>;
+
+    /**
+     * Simulates a comment as if it were received by a webook (for silently invoking AutoTest)
+     *
+     * @param {string} projectName
+     * @param {string} sha
+     * @param {string} message
+     * @returns {Promise<boolean>}
+     */
+    simulateWebookComment(projectName: string, sha: string, message: string): Promise<boolean>;
 }
 
 export class GitHubActions implements IGitHubActions {
@@ -186,7 +209,7 @@ export class GitHubActions implements IGitHubActions {
     private readonly gitHubAuthToken: string | null = null;
     private readonly org: string | null = null;
 
-    private PAUSE = 1000;
+    private PAUSE = 5000;
     private pageSize = 100; // public for testing; 100 is the max; 10 is good for tests
 
     private dc: DatabaseController = null;
@@ -207,9 +230,10 @@ export class GitHubActions implements IGitHubActions {
 
         // Sometimes we will want to run against the full live GitHub suite
         // const override = true; // NOTE: should be commented out for commits; runs full GitHub suite
-        const override = false; // NOTE: should NOT be commented out for commits
+        // const override = true; // NOTE: should NOT be commented out for commits
 
-        if (override) {
+        if (Factory.OVERRIDE === true) { // poor form to have a dependency into test code here
+            Log.trace("GitHubActions::getInstance(..) - forcing real (OVERRIDE == true)");
             forceReal = true;
         }
         if (typeof forceReal === 'undefined') {
@@ -283,16 +307,21 @@ export class GitHubActions implements IGitHubActions {
                 json:    true
             };
 
+            Log.info("GitHubAction::createRepo( " + repoId + " ) - making request");
             const body = await rp(options);
+            Log.info("GitHubAction::createRepo( " + repoId + " ) - request complete");
             const url = body.html_url;
 
+            Log.info("GitHubAction::createRepo( " + repoId + " ) - db start");
             const repo = await this.dc.getRepository(repoId);
             repo.URL = url; // only update this field in the existing Repository record
             repo.cloneURL = body.clone_url; // only update this field in the existing Repository record
             await this.dc.writeRepository(repo);
+            Log.info("GitHubAction::createRepo( " + repoId + " ) - db done");
 
             Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; delaying to prep repo. Took: " + Util.took(start));
             await Util.delay(this.PAUSE);
+            Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; delaying complete");
 
             return url;
         } catch (err) {
@@ -383,7 +412,9 @@ export class GitHubActions implements IGitHubActions {
     }
 
     /**
-     * Deletes a team.
+     * Deletes a team from GitHub. Does _NOT_ modify the Team object in the database.
+     *
+     * NOTE: if you're deleting the 'admin', 'staff', or 'students' teams, you're doing something terribly wrong.
      *
      * @param teamId
      */
@@ -392,6 +423,10 @@ export class GitHubActions implements IGitHubActions {
         try {
             const start = Date.now();
             Log.info("GitHubAction::deleteTeam( " + this.org + ", " + teamId + " ) - start");
+
+            if (teamId === null) {
+                throw new Error("GitHubAction::deleteTeam( null ) - null team requested");
+            }
 
             const uri = this.apiPath + '/teams/' + teamId;
             const options = {
@@ -640,8 +675,14 @@ export class GitHubActions implements IGitHubActions {
     public async addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
         Log.info("GitHubAction::addWebhook( " + this.org + ", " + repoName + ", ... ) - start");
         Log.info("GitHubAction::addWebhook( .. ) - webhook: " + webhookEndpoint);
+
+        let secret = Config.getInstance().getProp(ConfigKey.autotestSecret);
+        secret = crypto.createHash('sha256').update(secret, 'utf8').digest('hex'); // webhook w/ sha256
+        Log.info("GitHubAction::addWebhook( .. ) - secret: " + secret);
         const start = Date.now();
 
+        // https://developer.github.com/webhooks/creating/
+        // https://developer.github.com/v3/repos/hooks/#create-a-hook
         // POST /repos/:owner/:repo/hooks
         const uri = this.apiPath + '/repos/' + this.org + '/' + repoName + '/hooks';
         const opts = {
@@ -657,6 +698,7 @@ export class GitHubActions implements IGitHubActions {
                 events: ["commit_comment", "push"],
                 config: {
                     url:          webhookEndpoint,
+                    secret:       secret,
                     content_type: "json"
                 }
             },
@@ -806,11 +848,12 @@ export class GitHubActions implements IGitHubActions {
      *
      * Returns -1 if the team does not exist.
      *
+     * NOTE: most clients will want to use TeamController::getTeamNumber instead.
+     *
      * @param {string} teamName
      * @returns {Promise<number>}
      */
     public async getTeamNumber(teamName: string): Promise<number> {
-
         Log.info("GitHubAction::getTeamNumber( " + teamName + " ) - start");
         const start = Date.now();
         try {
@@ -819,7 +862,6 @@ export class GitHubActions implements IGitHubActions {
             for (const team of teamList) {
                 if (team.teamName === teamName) {
                     teamId = team.teamNumber;
-                    // Log.info("GitHubAction::getTeamNumber(..) - matched team: " + teamName + "; id: " + teamId);
                 }
             }
 
@@ -848,6 +890,11 @@ export class GitHubActions implements IGitHubActions {
     public async getTeamMembers(teamNumber: number): Promise<string[]> {
 
         Log.info("GitHubAction::getTeamMembers( " + teamNumber + " ) - start");
+
+        if (teamNumber === null) {
+            throw new Error("GitHubAction::getTeamMembers( nulll ) - null team requested");
+        }
+
         const start = Date.now();
         try {
             const uri = this.apiPath + '/teams/' + teamNumber + '/members?per_page=' + this.pageSize;
@@ -1383,6 +1430,166 @@ export class GitHubActions implements IGitHubActions {
         Log.trace("GitHubActions::checkDatabase( repo:_" + repoName + "_, team:_" + teamName + "_) - exists");
         return true;
     }
+
+    public simulateWebookComment(projectName: string, sha: string, message: string): Promise<boolean> {
+        return new Promise<boolean>((fulfill, reject) => {
+            try {
+                if (typeof projectName === "undefined" || projectName === null) {
+                    Log.error("GitHubActions::simulateWebookComment(..)  - url is required");
+                    reject(false);
+                }
+
+                if (typeof sha === "undefined" || sha === null) {
+                    Log.error("GitHubActions::simulateWebookComment(..)  - sha is required");
+                    reject(false);
+                }
+
+                if (typeof message === "undefined" || message === null) {
+                    Log.error("GitHubActions::simulateWebookComment(..)  - message is required");
+                    reject(false);
+                }
+
+                // find a better short string for logging
+                let messageToPrint = message;
+                if (messageToPrint.indexOf('\n') > 0) {
+                    messageToPrint = messageToPrint.substr(0, messageToPrint.indexOf('\n'));
+                }
+                if (messageToPrint.length > 80) {
+                    messageToPrint = messageToPrint.substr(0, 80) + "...";
+                }
+
+                Log.info("GitHubActions::simulateWebookComment(..) - Simulating comment to project: " +
+                    projectName + "; sha: " + sha + "; message: " + messageToPrint);
+
+                const c = Config.getInstance();
+                // const repoUrl = "https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/project_r2d2_c3p0";
+                const repoUrl = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/' + projectName;
+                // const apiUrl= "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T1/project_r2d2_c3p0";
+                const apiUrl = c.getProp(ConfigKey.githubAPI) + '/api/v3/repos/' + c.getProp(ConfigKey.org) + '/' + projectName;
+
+                const body = {
+                    comment:    {
+                        commit_id: sha, // 82ldl2731c665c364ad979c9135688d1c206462c
+                        // tslint:disable-next-line
+                        html_url:  repoUrl + "/commit/" + sha + "#fooWillBeStripped", // https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/project_r2d2_c3p0/commit/82ldl2731c665c364ad979c9135688d1c206462c#commitcomment-285811"
+                        user:      {
+                            login: Config.getInstance().getProp(ConfigKey.botName) // userId // autobot
+                        },
+                        body:      message
+                    },
+                    repository: {
+                        // tslint:disable-next-line
+                        commits_url: apiUrl + '/commits{/sha}', // https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T1/project_r2d2_c3p0/commits{/sha}
+                        clone_url:   repoUrl + ".git", // https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/project_r2d2_c3p0.git
+                        name:        projectName
+                    }
+                };
+
+                const urlToSend = Config.getInstance().getProp(ConfigKey.publichostname) + '/portal/githubWebhook';
+                Log.info("GitHubService::simulateWebookComment(..) - url: " + urlToSend + "; body: " + JSON.stringify(body));
+
+                const options: any = {
+                    method:  "POST",
+                    headers: {
+                        "Content-Type":   "application/json",
+                        "User-Agent":     "UBC-AutoTest",
+                        "X-GitHub-Event": "commit_comment",
+                        "Authorization":  Config.getInstance().getProp(ConfigKey.githubBotToken) // TODO: support auth from github
+                    },
+                    json:    true,
+                    body:    body
+                };
+
+                if (Config.getInstance().getProp(ConfigKey.postback) === true) {
+
+                    // Log.trace("GitHubService::postMarkdownToGithub(..) - request: " + JSON.stringify(options, null, 2));
+                    // const url = url; // this url comes from postbackURL which uses the right API format
+                    return rp(urlToSend, options).then(function(res) {
+                        Log.trace("GitHubService::simulateWebookComment(..) - success"); // : " + res);
+                        fulfill(true);
+                    }).catch(function(err) {
+                        Log.error("GitHubService::simulateWebookComment(..) - ERROR: " + err);
+                        reject(false);
+                    });
+
+                } else {
+                    Log.trace("GitHubService::simulateWebookComment(..) - send skipped (config.postback === false)");
+                    fulfill(true);
+                }
+            } catch (err) {
+                Log.error("GitHubService::simulateWebookComment(..) - ERROR: " + err);
+                reject(false);
+            }
+        });
+    }
+
+    public makeComment(url: string, message: string): Promise<boolean> {
+        return new Promise<boolean>((fulfill, reject) => {
+            try {
+                // find a better short string for logging
+                let messageToPrint = message;
+                if (messageToPrint.indexOf('\n') > 0) {
+                    messageToPrint = messageToPrint.substr(0, messageToPrint.indexOf('\n'));
+                }
+                if (messageToPrint.length > 80) {
+                    messageToPrint = messageToPrint.substr(0, 80) + "...";
+                }
+
+                Log.info("GitHubActions::makeComment(..) - Posting markdown to url: " +
+                    url + "; message: " + messageToPrint);
+
+                if (typeof url === "undefined" || url === null) {
+                    Log.error("GitHubActions::makeComment(..)  - message.url is required");
+                    reject(false);
+                }
+
+                if (typeof message === "undefined" || message === null || message.length < 1) {
+                    Log.error("GitHubActions::makeComment(..)  - message.message is required");
+                    reject(false);
+                }
+
+                /*
+                const org = Config.getInstance().getProp(ConfigKey.org);
+                const hostLength = message.url.indexOf(org);
+                const path = 'repos/' + message.url.substr(hostLength);
+                const host = Config.getInstance().getProp(ConfigKey.githubAPI);
+                */
+
+                const body: string = JSON.stringify({body: message});
+                const options: any = {
+                    method:  "POST",
+                    headers: {
+                        "Content-Type":  "application/json",
+                        "User-Agent":    "UBC-AutoTest",
+                        "Authorization": Config.getInstance().getProp(ConfigKey.githubBotToken)
+                    },
+                    body:    body
+                };
+
+                Log.trace("GitHubService::postMarkdownToGithub(..) - url: " + url);
+
+                if (Config.getInstance().getProp(ConfigKey.postback) === true) {
+
+                    // Log.trace("GitHubService::postMarkdownToGithub(..) - request: " + JSON.stringify(options, null, 2));
+                    // const url = url; // this url comes from postbackURL which uses the right API format
+                    return rp(url, options).then(function(res) {
+                        Log.trace("GitHubService::postMarkdownToGithub(..) - success"); // : " + res);
+                        fulfill(true);
+                    }).catch(function(err) {
+                        Log.error("GitHubService::postMarkdownToGithub(..) - ERROR: " + err);
+                        reject(false);
+                    });
+
+                } else {
+                    Log.trace("GitHubService::postMarkdownToGithub(..) - send skipped (config.postback === false)");
+                    fulfill(true);
+                }
+            } catch (err) {
+                Log.error("GitHubService::postMarkdownToGithub(..) - ERROR: " + err);
+                reject(false);
+            }
+        });
+    }
 }
 
 /* istanbul ignore next */
@@ -1670,6 +1877,16 @@ export class TestGitHubActions implements IGitHubActions {
 
     public setPageSize(size: number): void {
         Log.info("TestGitHubActions::setPageSize(..)");
+        return;
+    }
+
+    public makeComment(url: string, message: string): Promise<boolean> {
+        Log.info("TestGitHubActions::makeComment(..)");
+        return;
+    }
+
+    public simulateWebookComment(projectName: string, sha: string, message: string): Promise<boolean> {
+        Log.info("TestGitHubActions::simulateWebookComment(..)");
         return;
     }
 

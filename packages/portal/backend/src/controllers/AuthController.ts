@@ -62,12 +62,10 @@ export class AuthController {
             } else if (isAdmin === true) {
                 person.kind = PersonKind.ADMIN;
                 await dc.writePerson(person);
+            } else {
+                person.kind = PersonKind.STUDENT;
+                await dc.writePerson(person);
             }
-            // else {
-            // shouldn't happen: students shouldn't have null kind
-            // person.kind = 'student';
-            // await dbc.writePerson(person);
-            // }
         }
 
         Log.trace("AuthController::personPriviliged( " + personId + ", ... ) - " +

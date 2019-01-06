@@ -113,5 +113,9 @@ export interface GradeReport {
 export interface Attachment {
     name: string; // file identifier attachment (e.g., stdio.txt)
     path: string; // path to file (including name)
+    visibleToAdmin: boolean;
+    visibleToStaff: boolean;
+    visibleToStudent: boolean;
+    visibleToPublic: boolean; // almost always false
     content_type: string;
 }

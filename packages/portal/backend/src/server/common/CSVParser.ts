@@ -77,7 +77,7 @@ export class CSVParser {
                     peoplePromises.push(pc.createPerson(p));
                 } else {
                     Log.info('CSVParser::processClasslist(..) - column missing from: ' + JSON.stringify(row));
-                    peoplePromises.push(Promise.reject('Required column missing'));
+                    peoplePromises.push(Promise.reject('Required column missing (required: ACCT, CWL, SNUM, FIRST, LAST, LAB).'));
                 }
             }
 
@@ -101,6 +101,7 @@ export class CSVParser {
             const data = await this.parsePath(path);
 
             const dc = new DeliverablesController();
+            const pc = new PersonController();
             const deliv = await dc.getDeliverable(delivId);
             if (deliv === null) {
                 throw new Error("Unknown deliverable: " + delivId);
@@ -114,8 +115,9 @@ export class CSVParser {
                     typeof row.GRADE !== 'undefined' &&
                     typeof row.COMMENT !== 'undefined') {
 
+                    const personGrade = row.CSID; // TODO: will depend on instance (see above)
                     const g: Grade = {
-                        personId:  row.CSID, // TODO: will depend on instance (see above)
+                        personId:  personGrade,
                         delivId:   delivId,
                         score:     Number(row.GRADE),
                         comment:   row.COMMENT,
@@ -124,9 +126,16 @@ export class CSVParser {
                         URL:       null,
                         custom:    {}
                     };
-                    gradePromises.push(gc.saveGrade(g));
+
+                    const person = pc.getPerson(personGrade);
+                    if (person !== null) {
+                        gradePromises.push(gc.saveGrade(g));
+                    } else {
+                        Log.warn('CSVParser::processGrades(..) - record ignored for: ' + personGrade + '; unknown personId');
+                    }
+
                 } else {
-                    const msg = 'Required column missing';
+                    const msg = 'Required column missing (required: CSID, GRADE, COMMENT).';
                     Log.error('CSVParser::processGrades(..) - column missing from: ' + JSON.stringify(row));
                     throw new Error(msg);
                 }
@@ -136,7 +145,7 @@ export class CSVParser {
 
             // audit
             const dbc = DatabaseController.getInstance();
-            await dbc.writeAudit(AuditLabel.GRADE_UPLOAD, personId, {}, {}, {numGrades: grades.length});
+            await dbc.writeAudit(AuditLabel.GRADE_ADMIN, personId, {}, {}, {numGrades: grades.length});
 
             return grades;
         } catch (err) {

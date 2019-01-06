@@ -142,7 +142,8 @@ export class AdminStudentsTab {
                 const json: StudentTransportPayload = await response.json();
                 // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
                 if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                    Log.trace('AdminStudentsTab::getStudents(..)  - worked; took: ' + UI.took(start));
+                    Log.trace('AdminStudentsTab::getStudents(..)  - worked; # students: ' +
+                        json.success.length + '; took: ' + UI.took(start));
                     return json.success;
                 } else {
                     Log.trace('AdminStudentsTab::getStudents(..)  - ERROR: ' + json.failure.message);

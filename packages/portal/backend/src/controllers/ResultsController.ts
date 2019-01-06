@@ -11,10 +11,41 @@ export class ResultsController {
     private db: DatabaseController = DatabaseController.getInstance();
 
     public async getAllResults(): Promise<Result[]> {
-        Log.info("ResultsController::getAllResults() - start");
+        Log.trace("ResultsController::getAllResults() - start");
 
         const results = await this.db.getResults();
+
+        // NOTE: this block can go away once all results have been migrated to use target instead of pushInfo
+        results.sort(function(a: Result, b: Result) {
+            let tsA = 0;
+            let tsB = 0;
+            if (typeof a.input.target !== 'undefined') {
+                tsA = a.input.target.timestamp;
+            }
+            if (typeof (a as any).input.pushInfo !== 'undefined') {
+                tsA = (a as any).input.pushInfo.timestamp;
+            }
+            if (typeof b.input.target !== 'undefined') {
+                tsB = b.input.target.timestamp;
+            }
+            if (typeof (b as any).input.pushInfo !== 'undefined') {
+                tsB = (b as any).input.pushInfo.timestamp;
+            }
+            return tsB - tsA;
+        });
+
         return results;
+    }
+
+    /**
+     * Gets the result from a commitURL.
+     *
+     * @param {string} url
+     * @returns {Result}
+     */
+    public async getResultFromURL(url: string): Promise<Result | null> {
+        const result = await this.db.getResultFromURL(url);
+        return result;
     }
 
     public async createResult(record: AutoTestResult): Promise<boolean> {

@@ -23,10 +23,11 @@ import Util from "../../../../common/Util";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {GitHubActions} from "../../src/controllers/GitHubActions";
+import {TeamController} from "../../src/controllers/TeamController";
 
 import BackendServer from "../../src/server/BackendServer";
 
-import {Test} from "../GlobalSpec";
+import {Test} from "../TestHarness";
 import './AuthRoutesSpec';
 
 describe('Admin Routes', function() {
@@ -250,6 +251,43 @@ describe('Admin Routes', function() {
         expect(body.failure).to.not.be.undefined;
     });
 
+    it('Should be able to export the list of dashboard results', async function() {
+
+        let response = null;
+        let body: AutoTestResultPayload;
+        const url = '/portal/admin/export/dashboard/any/any';
+        try {
+            response = await request(app).get(url).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success).to.be.an('array');
+        // expect(body.success).to.have.lengthOf(101);
+
+        // should confirm body.success objects (at least one)
+    });
+
+    it('Should not be able to export the list of dashboard results if the requestor is not privileged', async function() {
+
+        let response = null;
+        let body: AutoTestResultPayload;
+        const url = '/portal/admin/export/dashboard/any/any';
+        try {
+            response = await request(app).get(url).set({user: Test.USER1.id, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(401);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+    });
+
     it('Should be able to get a list of repositories', async function() {
 
         let response = null;
@@ -397,6 +435,7 @@ describe('Admin Routes', function() {
                 visibleToStudents: d0.visibleToStudents,
                 URL:               d0.URL,
                 gradesReleased:    d0.gradesReleased,
+                lateAutoTest:      d0.lateAutoTest,
                 shouldAutoTest:    d0.shouldAutoTest,
                 autoTest:          at,
                 rubric:            d0.rubric,
@@ -667,6 +706,8 @@ describe('Admin Routes', function() {
 
             const ghCache = GitHubActions.getInstance(false);
             const ghReal = GitHubActions.getInstance(true);
+            const tcCache = new TeamController(ghCache);
+            const tcReal = new TeamController(ghReal);
 
             for (const repoName of repoNames) {
                 await ghCache.deleteRepo(repoName);
@@ -674,10 +715,10 @@ describe('Admin Routes', function() {
             }
 
             for (const teamName of teamNames) {
-                const cacheNum = await ghCache.getTeamNumber(teamName);
+                const cacheNum = await tcCache.getTeamNumber(teamName); // ghCache.getTeamNumber(teamName);
                 await ghCache.deleteTeam(cacheNum);
 
-                const realNum = await ghCache.getTeamNumber(teamName);
+                const realNum = await tcReal.getTeamNumber(teamName); // ghCache.getTeamNumber(teamName);
                 await ghReal.deleteTeam(realNum);
             }
 

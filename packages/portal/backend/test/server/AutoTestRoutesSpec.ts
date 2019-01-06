@@ -9,8 +9,8 @@ import Log from "../../../../common/Log";
 import {
     AutoTestAuthPayload,
     AutoTestConfigPayload,
-    AutoTestDefaultDeliverablePayload,
     AutoTestGradeTransport,
+    ClassyConfigurationPayload,
     Payload
 } from "../../../../common/types/PortalTypes";
 
@@ -18,7 +18,7 @@ import {DatabaseController} from "../../src/controllers/DatabaseController";
 
 import BackendServer from "../../src/server/BackendServer";
 
-import {Test} from "../GlobalSpec";
+import {Test} from "../TestHarness";
 
 // This seems silly, but just makes sure GlobalSpec runs first.
 // It should be at the top of every test file.
@@ -61,10 +61,10 @@ describe('AutoTest Routes', function() {
         await server.stop();
     });
 
-    it('Should reject an unauthorized defaultDeliverable request', async function() {
+    it('Should reject an unauthorized backend detail request', async function() {
 
         let response = null;
-        const url = '/portal/at/defaultDeliverable/';
+        const url = '/portal/at';
         let body = null;
         try {
             response = await request(app).get(url).set('token', 'INVALID');
@@ -78,11 +78,11 @@ describe('AutoTest Routes', function() {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should respond to a valid defaultDeliverable request', async function() {
+    it('Should respond to a valid backend detail request', async function() {
 
         let response = null;
-        let body: AutoTestDefaultDeliverablePayload;
-        const url = '/portal/at/defaultDeliverable/';
+        let body: ClassyConfigurationPayload;
+        const url = '/portal/at';
         try {
             response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
@@ -93,6 +93,8 @@ describe('AutoTest Routes', function() {
         expect(response.status).to.equal(200);
         expect(body.success.defaultDeliverable).to.not.be.undefined;
         expect(body.success.defaultDeliverable).to.equal(null);
+        expect(body.success.deliverableIds).to.not.be.undefined;
+        expect(body.success.deliverableIds).to.be.of.length(5);
 
         const dc = DatabaseController.getInstance();
         const cr = await dc.getCourseRecord();

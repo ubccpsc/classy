@@ -4,10 +4,10 @@ import {GradeReport} from "../../../../common/types/ContainerTypes";
 
 import {AutoTestResultTransport} from "../../../../common/types/PortalTypes";
 import {ResultsController} from "../../src/controllers/ResultsController";
-import {Test} from "../GlobalSpec";
 
 import '../GlobalSpec'; // load first
-import './CourseControllerSpec'; // make sure it runs before github controller (which should be last of the controllers)
+import {Test} from "../TestHarness";
+import './AdminControllerSpec'; // make sure it runs before github controller (which should be last of the controllers)
 
 describe("ResultController", () => {
 

@@ -11,9 +11,8 @@ import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
 import {Auth, Course, Deliverable, Person, PersonKind} from "../../src/Types";
 
-import {Test} from "../GlobalSpec";
-import "../server/SDMMRoutesSpec"; // try to run last
-// const loadFirst = require('../GlobalSpec');
+// import "../server/SDMMRoutesSpec"; // try to run last
+import {Test} from "../TestHarness";
 
 describe('TestDatasetGenerator', function() {
 
@@ -144,6 +143,7 @@ describe('TestDatasetGenerator', function() {
             teamStudentsForm: true,
             // bootstrapUrl:     '',
 
+            lateAutoTest:   false,
             shouldAutoTest: true,
             autotest:       {
                 dockerImage:        'testImage',

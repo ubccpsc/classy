@@ -14,8 +14,11 @@ export class GradesController {
 
     private db: DatabaseController = DatabaseController.getInstance();
 
-    public async getAllGrades(): Promise<Grade[]> {
-        Log.info("GradesController::getAllGrades() - start");
+    public async getAllGrades(studentsOnly?: boolean): Promise<Grade[]> {
+        if (typeof studentsOnly === 'undefined') {
+            studentsOnly = true;
+        }
+        Log.info("GradesController::getAllGrades( " + studentsOnly + " ) - start");
         const start = Date.now();
 
         const grades = await this.db.getGrades();
@@ -24,11 +27,16 @@ export class GradesController {
         const returnGrades = [];
         for (const grade of grades) {
             const person = await pc.getPerson(grade.personId);
-            if (person !== null && person.kind === PersonKind.STUDENT) {
+            if (person !== null && (studentsOnly === false || (studentsOnly === true && person.kind === PersonKind.STUDENT))) {
                 // only return student grades
                 returnGrades.push(grade);
             } else {
-                Log.info("GradesController::getAllGrades() - not returning grade for: " + grade.personId + "; kind: " + person.kind);
+                if (grade !== null && person !== null) {
+                    Log.info("GradesController::getAllGrades() - not returning grade for: " + grade.personId + "; kind: " + person.kind);
+                } else {
+                    Log.warn("GradesController::getAllGrades() - null; not returning grade: " +
+                        JSON.stringify(grade) + "; person: " + JSON.stringify(person));
+                }
             }
         }
         Log.info("GradesController::getAllGrades() - done; # all: " + grades.length +

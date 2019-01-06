@@ -1,5 +1,5 @@
 import Log from "../../../common/Log";
-import {AutoTestDefaultDeliverableTransport, AutoTestPersonIdTransport} from "../../../common/types/PortalTypes";
+import {AutoTestPersonIdTransport, ClassyConfigurationTransport} from "../../../common/types/PortalTypes";
 import {ClassPortal} from "../autotest/ClassPortal";
 
 export class EdXClassPortal extends ClassPortal {
@@ -8,7 +8,7 @@ export class EdXClassPortal extends ClassPortal {
      *
      * @returns {Promise<AutoTestDefaultDeliverableTransport | null>}
      */
-    public async getDefaultDeliverableId(): Promise<AutoTestDefaultDeliverableTransport | null> {
+    public async getConfiguration(): Promise<ClassyConfigurationTransport | null> {
         Log.info("EdXClassPortal::getDefaultDeliverableId(..) - returning null (no default deliverable for SDMM)");
         // no default deliverable for edx
         return null;
