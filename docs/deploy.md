@@ -43,7 +43,7 @@ The following software should be installed on the host before attempting to depl
         mkdir -p /opt/classy/ssl
         \cp -Hf /etc/letsencrypt/live/$(hostname)/* /opt/classy/ssl/
         chown -R --reference=/opt/classy /opt/classy/ssl
-        chmod -R 0050 /opt/classy/ssl
+        chmod -R 0550 /opt/classy/ssl
         EOF
             
         chmod +x /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
@@ -146,6 +146,7 @@ The following software should be installed on the host before attempting to depl
     cp -r ~/classy /opt && rm -rf ~/classy
     cp /opt/classy/.env.sample /opt/classy/.env
     chown -Rh classy:classy /opt/classy
+    chmod g+s /opt/classy
     find /opt/classy -type d -exec chmod 770 {} \;
     find /opt/classy -type f -exec chmod 660 {} \;
  

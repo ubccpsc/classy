@@ -1,3 +1,4 @@
+import * as crypto from "crypto";
 import * as rp from "request-promise-native";
 
 import Config, {ConfigKey} from "../../../../common/Config";
@@ -669,8 +670,14 @@ export class GitHubActions implements IGitHubActions {
     public async addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
         Log.info("GitHubAction::addWebhook( " + this.org + ", " + repoName + ", ... ) - start");
         Log.info("GitHubAction::addWebhook( .. ) - webhook: " + webhookEndpoint);
+
+        let secret = Config.getInstance().getProp(ConfigKey.autotestSecret);
+        secret = crypto.createHash('sha256').update(secret, 'utf8').digest('hex'); // webhook w/ sha256
+        Log.info("GitHubAction::addWebhook( .. ) - secret: " + secret);
         const start = Date.now();
 
+        // https://developer.github.com/webhooks/creating/
+        // https://developer.github.com/v3/repos/hooks/#create-a-hook
         // POST /repos/:owner/:repo/hooks
         const uri = this.apiPath + '/repos/' + this.org + '/' + repoName + '/hooks';
         const opts = {
@@ -686,6 +693,7 @@ export class GitHubActions implements IGitHubActions {
                 events: ["commit_comment", "push"],
                 config: {
                     url:          webhookEndpoint,
+                    secret:       secret,
                     content_type: "json"
                 }
             },

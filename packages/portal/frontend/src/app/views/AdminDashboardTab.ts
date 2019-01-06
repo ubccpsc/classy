@@ -189,7 +189,6 @@ export class AdminDashboardTab extends AdminPage {
             const stdioViewerURL = '/stdio.html?delivId=' + result.delivId + '&repoId=' + result.repoId + '&sha=' + result.commitSHA;
 
             const row: TableCell[] = [
-                // {value: '?', html: '<a href="http://refugeeks.com/wp-content/uploads/2014/04/501-Not-Implemented-600x480.jpg">?</a>'},
                 {
                     value: '',
                     html:  '<a style="cursor: pointer; cursor: hand;" target="_blank" href="' +

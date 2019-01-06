@@ -1,7 +1,7 @@
 # Classy
 
 [![CircleCI](https://circleci.com/gh/ubccpsc/classy.svg?style=svg)](https://circleci.com/gh/ubccpsc/classy)
-[![Coverage Status](https://coveralls.io/repos/github/ubccpsc/classy/badge.svg?branch=master)](https://coveralls.io/github/ubccpsc/classy?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/ubccpsc/classy/badge.svg?branch=master&service=github)](https://coveralls.io/github/ubccpsc/classy?branch=master)
 
 
 Classy is a classroom management system developed by the Department of Computer Science at UBC. Classy is tightly integrated with GitHub and has the ability to automatically provision student repositories, create teams, and mark assignments. Administrators can configure deliverables, enter grades, and view comprehensive dashboards of all student test executions. Students can use the system to create teams (if required) and view their grades and assignment feedback.
@@ -10,6 +10,14 @@ Primary contributors:
 
 * [Reid Holmes](https://www.cs.ubc.ca/~rtholmes/)
 * [Nick Bradley](https://nickbradley.github.io/)
+
+Main course forks:
+
+* [ubccpsc210/classy](https://github.com/ubccpsc210/classy)
+* [ubccpsc221/classy](https://github.com/ubccpsc221/classy)
+* [ubccpsc310/classy](https://github.com/ubccpsc310/classy)
+* [CPSC 340 TBD](NOTSETYET)
+* [SDMM TBD](NOTSETYET)
 
 ## Development Process
 
@@ -87,9 +95,11 @@ The following guidelines can be helpful for evaluating any PRs on a local fork (
 
 ### Fork initialization
 
-1. fork `root` into an account you control
-1. create a branch called `sync` on your `fork` and `git push origin sync` (to create `fork/sync` on the server)
-1. add the upstream branch `git remote add upstream https://github.com/ubccpsc/classy.git` ([LINK](https://help.github.com/articles/configuring-a-remote-for-a-fork/))
+This only needs to happen once per fork, so if you already have a configured fork with a sync branch, you can ignore this step.
+
+1. Fork `root` into a GitHub account you control (hereby called the `fork`).
+1. Create a branch called `sync` on your `fork` (`git branch sync`) and create `fork/sync` on the server (`git push origin sync`).
+1. Add the upstream branch `git remote add upstream https://github.com/ubccpsc/classy.git` ([LINK](https://help.github.com/articles/configuring-a-remote-for-a-fork/)).
 
 ## Development process
 
@@ -97,24 +107,28 @@ All `fork` changes should be made on `fork/master` or other branches (just ***no
 
 ### Pulling changes from `root/master` into `fork/master` 
 
-This can happen regulairly, whenever there is a `root/master` change that fixes a bug or adds a feature that the fork might want.
+This can happen regularly, whenever there is a `root/master` change that fixes a bug or adds a feature that the fork might want.
  
 On `fork`:
 1. `git checkout master`
-1. `git fetch upstream` (pulls down the changes)
-1. `git merge upstream/master` (merges them into master)
-1. `git push`
+1. `git fetch upstream` (pulls down the changes from `root/master` to your local repo).
+1. `git merge upstream/master` (merges the changes into your local repo).
+1. `git push` (pushes the changes from your local repo to its remote GitHub repo).
+
+<img src="docs/dev-local.png"/>
 
 ### Pushing changes from `fork` to `root/master`
 
 This is ***not*** likely to happen during the term, except for critical patches but it _is_ likely to happen at the end of the term when new features should be upstreamed to `root`.
 
 On `fork`: 
-1. Pull changes from `root/master` into `fork/sync` (described above but replace `master` with `sync` in the two relevant commands)
-1. `git checkout sync` (probably already checked out)
+1. Pull changes from `root/master` into `fork/sync` (described above but replace `master` with `sync` in the two relevant commands).
+1. `git checkout sync` (probably already checked out).
 1. `git cherry-pick -x <SHA>` for each `<SHA>` you want to upstream. BE CAREFUL: these commits should not include any course-specific code. Also, to clarify, these commits should be in the history of `fork/master`. Merge conflicts are likely at this step and need to be resolved before moving to the next step.
-1. `git push origin sync` (sends cherry picked commits to server)
+1. `git push origin sync` (sends cherry picked commits to server).
 1. Open the `sync` branch in the GitHub web interface and make a pull request `fork/sync` to `root/master` (sends cherry picked commits to `root/master` that can then be evaluated in a PR before being merged into `root/master`).
+
+<img src="docs/dev-upstream.png"/>
 
 ### About dev packages
 

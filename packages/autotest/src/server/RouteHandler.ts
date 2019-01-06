@@ -1,10 +1,12 @@
+import * as crypto from "crypto";
 import * as Docker from "dockerode";
-import * as fs from "fs-extra";
 import * as restify from "restify";
+
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {CommitTarget} from "../../../common/types/ContainerTypes";
 import Util from "../../../common/Util";
+
 import {AutoTest} from "../autotest/AutoTest";
 import {ClassPortal} from "../autotest/ClassPortal";
 import {MongoDataStore} from "../autotest/DataStore";
@@ -55,30 +57,70 @@ export default class RouteHandler {
     public static postGithubHook(req: restify.Request, res: restify.Response, next: restify.Next) {
         const start = Date.now();
         const githubEvent: string = req.header("X-GitHub-Event");
-        Log.info("RouteHandler::postGithubHook(..) - start; handling event: " + githubEvent);
+        let githubSecret: string = req.header("X-Hub-Signature");
+
+        // https://developer.github.com/webhooks/securing/
+        if (typeof githubSecret === 'undefined') {
+            githubSecret = null;
+        }
+
+        Log.info("RouteHandler::postGithubHook(..) - start; handling event: " + githubEvent + "; signature: " + githubSecret);
         const body = req.body;
 
         const handleError = function(msg: string) {
             Log.error("RouteHandler::postGithubHook() - failure; ERROR: " + msg + "; took: " + Util.took(start));
-            res.json(400, "Failed to process commit.");
+            res.json(400, "Failed to process commit: " + msg);
         };
 
-        if (githubEvent === 'ping') {
-            // github test packet; use to let the webhooks know we are listening
-            Log.info("RouteHandler::postGithubHook() - <200> pong.");
-            res.json(200, "pong");
-        } else {
-            RouteHandler.handleWebhook(githubEvent, body).then(function(commitEvent) {
-                if (commitEvent !== null) {
-                    res.json(200, commitEvent); // report back our interpretation of the hook
+        let secretVerified = false;
+        if (githubSecret !== null) {
+            try {
+                Log.info("RouteHandler::postGithubHook(..) - trying to compute webhook secrets");
+
+                const atSecret = Config.getInstance().getProp(ConfigKey.autotestSecret);
+                const key = crypto.createHash('sha256').update(atSecret, 'utf8').digest('hex'); // secret w/ sha256
+                Log.info("RouteHandler::postGithubHook(..) - key: " + key); // should be same as webhook added key
+
+                const computed = "sha1=" + crypto.createHmac('sha1', key) // payload w/ sha1
+                    .update(JSON.stringify(body))
+                    .digest('hex');
+
+                Log.info("RouteHandler::postGithubHook(..) - GitHub header: " + githubSecret + "; computed: " + computed);
+
+                secretVerified = (githubSecret === computed);
+                if (secretVerified === true) {
+                    Log.info("RouteHandler::postGithubHook(..) - webhook secret verified: " + secretVerified);
                 } else {
-                    // handleError("Error handling webhook; event: " + githubEvent + "; body: " + JSON.stringify(body, null, 2));
-                    handleError("Webhook not handled (if branch was deleted this is normal)");
+                    Log.warn("RouteHandler::postGithubHook(..) - webhook secret does not match");
                 }
-            }).catch(function(err) {
-                Log.error("RouteHandler::postGithubHook() - ERROR: " + err);
-                handleError(err);
-            });
+            } catch (err) {
+                Log.error("RouteHandler::postGithubHook(..) - ERROR computing HMAC: " + err.message);
+            }
+        } else {
+            Log.warn("RouteHandler::postGithubHook(..) - secret ignored (not present)");
+        }
+
+        secretVerified = true; // TODO: stop overwriting this
+        if (secretVerified === true) {
+            if (githubEvent === 'ping') {
+                // github test packet; use to let the webhooks know we are listening
+                Log.info("RouteHandler::postGithubHook() - <200> pong.");
+                res.json(200, "pong");
+            } else {
+                RouteHandler.handleWebhook(githubEvent, body).then(function(commitEvent) {
+                    if (commitEvent !== null) {
+                        res.json(200, commitEvent); // report back our interpretation of the hook
+                    } else {
+                        // handleError("Error handling webhook; event: " + githubEvent + "; body: " + JSON.stringify(body, null, 2));
+                        handleError("Webhook not handled (if branch was deleted this is normal)");
+                    }
+                }).catch(function(err) {
+                    Log.error("RouteHandler::postGithubHook() - ERROR: " + err);
+                    handleError(err);
+                });
+            }
+        } else {
+            handleError("Invalid payload signature.");
         }
         return next();
     }
