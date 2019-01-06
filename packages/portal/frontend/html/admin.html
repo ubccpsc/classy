@@ -938,5 +938,85 @@
         </ons-page>
     </template>
 
+    <template id="adminDelete2.html">
+        <ons-page id="adminDelete2">
+            <ons-toolbar>
+                <div class="left">
+                    <ons-back-button>Admin</ons-back-button>
+                </div>
+                <div class="center">DANGER DANGER Delete Objects: DANGER!</div>
+                <div id='indexLogin' class="right">
+                    <ons-toolbar-button onclick="myApp.logout();">
+                        <ons-icon icon="fa-sign-out"></ons-icon>
+                        <span style="vertical-align: top; font-size: 80%;">Logout</span>
+                    </ons-toolbar-button>
+                </div>
+            </ons-toolbar>
+
+            <ons-modal id="adminProgress">
+                <div style="display:flex; flex-direction:column; align-items: center;">
+                    <div id="modalText" style="padding-top: 1em; padding-bottom: 1em;">Data is being retrieved.</div>
+                    <ons-progress-circular indeterminate></ons-progress-circular>
+                </div>
+            </ons-modal>
+
+
+            <ons-list>
+                <ons-list-header>EULA</ons-list-header>
+                <ons-list-item>Note: These are all unrecoverable actions. Like seriously. Don't screw up.</ons-list-item>
+                <ons-list-header>Delete Deliverable</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Deliverable Name:
+                        <ons-input class="settingTextInput" style="margin-right: 1em; margin-left: 1em;"
+                                   id="adminDeleteDeliverableText"></ons-input>
+                        <ons-button id="adminDeleteDeliverableButton" modifier="medium">Delete Deliverable</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Will delete local object. Will not delete grades or results associated with deliverable.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-header>Delete Team</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Team Name:
+                        <select multiple size="10" style="width: 20em; margin-left: 1em; margin-right: 1em;" id="teamDeleteSelect">
+                        </select>
+                        <ons-button id="adminDeleteTeamButton" modifier="medium">Delete Team</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Will delete team object and associated GitHub team, if it exists. Will not delete grades or results associated
+                        with the team.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-header>Delete Repository</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Repository Name:
+                        <select multiple size="10" style="width: 20em; margin-left: 1em; margin-right: 1em;" id="repoDeleteSelect">
+                        </select>
+                        <ons-button id="adminDeleteRepositoryButton" modifier="medium">Delete Repository</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Will delete repository object and associated GitHub repository, if it exists. Will not delete grades or
+                        results associated with the repository.
+                    </div>
+                </ons-list-item>
+            </ons-list>
+
+        </ons-page>
+    </template>
 
 </ons-page>
+

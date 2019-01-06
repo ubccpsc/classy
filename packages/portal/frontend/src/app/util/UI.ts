@@ -75,6 +75,11 @@ export class UI {
     }
 
     public static showErrorToast(text: string) {
+        ons.notification.toast({message: text, timeout: 5000});
+    }
+
+    public static showSuccessToast(text: string) {
+        // TODO: change colour: https://onsen.io/v2/api/js/ons.notification.html#method-toast
         ons.notification.toast({message: text, timeout: 2000});
     }
 

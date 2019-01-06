@@ -139,12 +139,14 @@ export class AdminConfigTab extends AdminPage {
             Log.info('AdminConfigTab::handleAdminConfig(..) - delete page pressed');
             evt.preventDefault();
 
-            that.pushPage('adminDelete.html', {}).then(function() {
+            that.pushPage('./adminDelete2.html', {}).then(function() {
                 const deletePage = new AdminDeletePage(that.remote);
                 deletePage.init({}).then(function() {
                     // success
+                    Log.info('AdminConfigTab::handleAdminConfig(..) - delete page init');
                 }).catch(function(err) {
                     // error
+                    Log.error('AdminConfigTab::handleAdminConfig(..) - delete page ERROR: ' + err);
                 });
             }).catch(function(err) {
                 Log.error("AdminConfigTab - adminDelete ERROR: " + err.message);

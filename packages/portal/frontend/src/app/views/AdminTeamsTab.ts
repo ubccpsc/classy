@@ -227,7 +227,8 @@ export class AdminTeamsTab extends AdminPage {
                 Log.trace('AdminTeamsTab::getTeams(..) - 200 received');
                 const json: TeamTransportPayload = await response.json();
                 if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                    Log.trace('AdminTeamsTab::getTeams(..)  - worked; took: ' + UI.took(start));
+                    Log.trace('AdminTeamsTab::getTeams(..)  - worked; # teams: ' +
+                        json.success.length + '; took: ' + UI.took(start));
                     return json.success;
                 } else {
                     Log.trace('AdminTeamsTab::getTeams(..)  - ERROR: ' + json.failure.message);
