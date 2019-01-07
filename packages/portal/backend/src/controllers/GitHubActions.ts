@@ -984,6 +984,16 @@ export class GitHubActions implements IGitHubActions {
         const that = this;
         const start = Date.now();
 
+        if (typeof importRepo === 'undefined' || typeof studentRepo === 'undefined') {
+            Log.info('GitHubAction::importRepoFS(..) - FS import skipped; missing import or student repo');
+            return true;
+        }
+
+        if (importRepo === null || studentRepo === null || importRepo === '' || studentRepo === '') {
+            Log.info('GitHubAction::importRepoFS(..) - FS import skipped; missing import or student repo');
+            return true;
+        }
+
         function addGithubAuthToken(url: string) {
             const startAppend = url.indexOf('//') + 2;
             const token = that.gitHubAuthToken;

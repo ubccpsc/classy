@@ -189,7 +189,7 @@ export class AdminProvisionPage extends AdminPage {
 
         Log.info('AdminDeletePage::handleProvisionPressed(..) - start; # repos to provision: ' + selected.length);
         if (selected.length > 0) {
-            UI.showSuccessToast('Repo provisioning in progress; this will take a while. Do not close this browser window.', 5000);
+            UI.showSuccessToast('Repo provisioning in progress; this will take a while. Do not close this browser window.', 10000);
         } else {
             UI.showErrorToast('No repos selected for provisioning.');
         }
@@ -201,7 +201,7 @@ export class AdminProvisionPage extends AdminPage {
                 const delivId = UI.getDropdownValue('provisionRepoDeliverableSelect');
                 await this.provisionRepo(delivId, repoId);
                 Log.info('AdminDeletePage::handleProvision(..) - provisioning complete; repo: ' + repoId);
-                UI.showSuccessToast('Repo provisioned: ' + repoId + ' ( ' + (i + 1) + ' of ' + selected.length + ' )');
+                UI.showSuccessToast('Repo provisioned: ' + repoId + ' ( ' + (i + 1) + ' of ' + selected.length + ' )', 10000);
             } catch (err) {
                 Log.error('AdminDeletePage::handleProvision(..) - provisioning error for: ' + repoId + '; ERROR: ' + err.message);
                 UI.showErrorToast('Repo NOT provisioned: ' + repoId + ' (see error console)');

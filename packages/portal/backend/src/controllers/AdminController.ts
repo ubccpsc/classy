@@ -767,7 +767,7 @@ export class AdminController {
                         Log.info("AdminController::performProvision( .. ) - success: " + repo.id + "; URL: " + repo.URL);
                         provisionedRepos.push(repo);
                     } else {
-                        Log.warn("AdminController::performProvision( .. ) - FAILED: " + repo.id + "; URL: " + repo.URL);
+                        Log.warn("AdminController::performProvision( .. ) - provision FAILED: " + repo.id + "; URL: " + repo.URL);
                     }
 
                     Log.info("AdminController::performProvision( .. ) - done provisioning: " + repo.id + "; forced wait");
