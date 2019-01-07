@@ -265,7 +265,7 @@
                     </div>
                 </ons-list-item>
 
-                <ons-list-header>Manage Repositories</ons-list-header>
+                <ons-list-header>Provision and Release Repositories</ons-list-header>
 
                 <ons-list-item>
                     <div class="left settingIcon">
@@ -346,13 +346,13 @@
 
                 </div>
 
-                <ons-list-header>Delete Objects: DANGER!</ons-list-header>
+                <ons-list-header>Delete Inconsistent Repositories and Teams</ons-list-header>
                 <ons-list-item>
                     <div class="left settingIcon">
-                        <ons-icon icon="fa-cogs"></ons-icon>
+                        <ons-icon icon="fa-trash-alt"></ons-icon>
                     </div>
                     <div class="center">
-                        <ons-button id="adminDeletePageButton">Go to deletion page</ons-button>
+                        <ons-button id="adminDeletePageButton">Manage Database</ons-button>
                     </div>
                 </ons-list-item>
 
@@ -964,9 +964,9 @@
         <ons-page id="adminDelete2">
             <ons-toolbar>
                 <div class="left">
-                    <ons-back-button>Admin</ons-back-button>
+                    <ons-back-button></ons-back-button>
                 </div>
-                <div class="center">DANGER DANGER Delete Objects: DANGER!</div>
+                <div class="center">!DANGER! Delete Objects !DANGER!</div>
                 <div id='indexLogin' class="right">
                     <ons-toolbar-button onclick="myApp.logout();">
                         <ons-icon icon="fa-sign-out"></ons-icon>
@@ -989,10 +989,10 @@
                     present here but not in GitHub; this is because this list is populated from the Classy database. Deletion events will
                     delete both database entries and GitHub entities.
                 </ons-list-item>
-                <ons-list-header>Delete Deliverable</ons-list-header>
+                <ons-list-header>Select Deliverable to Delete</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
-                        <ons-icon icon="fa-cogs"></ons-icon>
+                        <ons-icon icon="fa-file-alt"></ons-icon>
                     </div>
                     <div class="center">
                         Deliverable Name:
@@ -1005,13 +1005,13 @@
                     </div>
                 </ons-list-item>
 
-                <ons-list-header>Delete Team</ons-list-header>
+                <ons-list-header>Select Teams to Delete</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
-                        <ons-icon icon="fa-cogs"></ons-icon>
+                        <ons-icon icon="fa-users"></ons-icon>
                     </div>
                     <div class="center">
-                        Team Name:
+                        Teams:
                         <select multiple size="10" style="width: 20em; margin-left: 1em; margin-right: 1em;" id="teamDeleteSelect">
                         </select>
                         <ons-button id="adminDeleteTeamButton" modifier="medium">Delete Team</ons-button>
@@ -1022,13 +1022,13 @@
                     </div>
                 </ons-list-item>
 
-                <ons-list-header>Delete Repository</ons-list-header>
+                <ons-list-header>Select Repositories to Delete</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
-                        <ons-icon icon="fa-cogs"></ons-icon>
+                        <ons-icon icon="fa-boxes"></ons-icon>
                     </div>
                     <div class="center">
-                        Repository Name:
+                        Repositories:
                         <select multiple size="10" style="width: 20em; margin-left: 1em; margin-right: 1em;" id="repoDeleteSelect">
                         </select>
                         <ons-button id="adminDeleteRepositoryButton" modifier="medium">Delete Repository</ons-button>
@@ -1080,7 +1080,7 @@
                 <ons-list-header>Select Deliverable</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
-                        <ons-icon icon="fa-cogs"></ons-icon>
+                        <ons-icon icon="fa-file-alt"></ons-icon>
                     </div>
                     <div class="center">
                         Select Deliverable:
@@ -1094,10 +1094,10 @@
                     </div>
                 </ons-list-item>
 
-                <ons-list-header>Provision Repositories</ons-list-header>
+                <ons-list-header>Select Repositories to Provision</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
-                        <ons-icon icon="fa-cogs"></ons-icon>
+                        <ons-icon icon="fa-plus-square"></ons-icon>
                     </div>
                     <div class="center">
                         Unprovisioned Repositories:
@@ -1111,13 +1111,13 @@
                     </div>
                 </ons-list-item>
 
-                <ons-list-header>Release Repositories</ons-list-header>
+                <ons-list-header>Release All Provisioned Repositories</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
-                        <ons-icon icon="fa-cogs"></ons-icon>
+                        <ons-icon icon="fa-address-book"></ons-icon>
                     </div>
                     <div class="center">
-                        <ons-button id="adminManageReleaseButton" modifier="medium">Release All Provisioned Repositories</ons-button>
+                        <ons-button id="adminManageReleaseButton" modifier="medium">Release Repositories</ons-button>
                     </div>
                     <div class="expandable-content">
                         Release all provisioned repositories. This can be performed multiple times.
@@ -1128,7 +1128,7 @@
                 <ons-list-header>Provisioned Repositories</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
-                        <ons-icon icon="fa-cogs"></ons-icon>
+                        <ons-icon icon="fa-plus-circle"></ons-icon>
                     </div>
                     <div class="center">
                         Provisioned Repositories:
