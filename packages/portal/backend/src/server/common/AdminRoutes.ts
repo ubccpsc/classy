@@ -26,6 +26,7 @@ import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GitHubActions} from "../../controllers/GitHubActions";
 import {GitHubController} from "../../controllers/GitHubController";
 import {PersonController} from "../../controllers/PersonController";
+import {RepositoryController} from "../../controllers/RepositoryController";
 import {TeamController} from "../../controllers/TeamController";
 import {Factory} from "../../Factory";
 
@@ -62,7 +63,9 @@ export default class AdminRoutes implements IREST {
         server.post('/portal/admin/deliverable', AdminRoutes.isAdmin, AdminRoutes.postDeliverable);
         server.post('/portal/admin/team', AdminRoutes.isAdmin, AdminRoutes.postTeam);
         server.post('/portal/admin/course', AdminRoutes.isAdmin, AdminRoutes.postCourse);
-        server.post('/portal/admin/provision', AdminRoutes.isAdmin, AdminRoutes.postProvision);
+        server.get('/portal/admin/provision/:delivId', AdminRoutes.isAdmin, AdminRoutes.getProvision);
+        // server.post('/portal/admin/provision', AdminRoutes.isAdmin, AdminRoutes.postProvision); // OLD: remove?
+        server.post('/portal/admin/provision/:delivId/:repoId', AdminRoutes.isAdmin, AdminRoutes.postProvision);
         server.post('/portal/admin/release', AdminRoutes.isAdmin, AdminRoutes.postRelease);
         server.post('/portal/admin/withdraw', AdminRoutes.isAdmin, AdminRoutes.postWithdraw);
         server.del('/portal/admin/deliverable/:delivId', AdminRoutes.isAdmin, AdminRoutes.deleteDeliverable);
@@ -641,10 +644,29 @@ export default class AdminRoutes implements IREST {
         Log.info('AdminRoutes::postProvision(..) - start');
         let payload: Payload;
         const user = req.headers.user;
+        const delivId = req.params.delivId;
+        const repoId = req.params.repoId;
 
         const provisionTrans: ProvisionTransport = req.params;
         Log.info('AdminRoutes::postProvision() - body: ' + provisionTrans);
-        AdminRoutes.handleProvision(user, provisionTrans).then(function(success) {
+        AdminRoutes.handleProvisionRepo(user, delivId, repoId).then(function(success) {
+            payload = {success: success};
+            res.send(200, payload);
+            return next(true);
+        }).catch(function(err) {
+            return AdminRoutes.handleError(400, 'Unable to provision repo: ' + err.message, res, next);
+        });
+    }
+
+    private static getProvision(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::getProvision(..) - start');
+        let payload: Payload;
+        // const user = req.headers.user;
+        const delivId = req.params.delivId;
+
+        // const provisionTrans: ProvisionTransport = req.params;
+        Log.info('AdminRoutes::getProvision() - delivId: ' + delivId);
+        AdminRoutes.planProvision({delivId: delivId, formSingle: false}).then(function(success) {
             payload = {success: success};
             res.send(200, payload);
             return next(true);
@@ -653,7 +675,56 @@ export default class AdminRoutes implements IREST {
         });
     }
 
-    private static async handleProvision(personId: string, provisionTrans: ProvisionTransport): Promise<RepositoryTransport[]> {
+    private static async handleProvisionRepo(personId: string, delivId: string, repoId: string): Promise<RepositoryTransport[]> {
+        const cc = new AdminController(AdminRoutes.ghc);
+
+        // TODO: if course is SDMM, always fail
+
+        const dc = new DeliverablesController();
+        const deliv = await dc.getDeliverable(delivId);
+        if (deliv !== null && deliv.shouldProvision === true) {
+            const dbc = DatabaseController.getInstance();
+            await dbc.writeAudit(AuditLabel.REPO_PROVISION, personId, {}, {}, {delivId: delivId, repoId: repoId});
+
+            const repo = await dbc.getRepository(repoId);
+            if (repo !== null) {
+                Log.info("AdminRoutes::handleProvisionRepo( " + delivId + ", " + repoId + " ) - provisioning...");
+                const provisionedRepos = await cc.performProvision([repo], deliv.importURL);
+                Log.info("AdminRoutes::handleProvisionRepo( " + delivId + ", " + repoId + " ) - provisioning complete.");
+                return [RepositoryController.repositoryToTransport(repo)];
+            } else {
+                throw new Error("AdminRoutes::handleProvisionRepo( " + delivId + ", " + repoId + " ) - null repository");
+            }
+        } else {
+            throw new Error("AdminRoutes::handleProvisionRepo( " + delivId + ", " + repoId + " ) - null deliverable");
+        }
+
+    }
+
+    // private static async handleProvision(personId: string, provisionTrans: ProvisionTransport): Promise<RepositoryTransport[]> {
+    //     const cc = new AdminController(AdminRoutes.ghc);
+    //     const result = AdminController.validateProvisionTransport(provisionTrans);
+    //
+    //     // TODO: if course is SDMM, always fail
+    //
+    //     if (result === null) {
+    //         const dc = new DeliverablesController();
+    //         const deliv = await dc.getDeliverable(provisionTrans.delivId);
+    //         if (deliv !== null && deliv.shouldProvision === true) {
+    //             const dbc = DatabaseController.getInstance();
+    //             await dbc.writeAudit(AuditLabel.REPO_PROVISION, personId, {}, {}, provisionTrans);
+    //             const provisionSucceeded = await cc.provision(deliv, provisionTrans.formSingle);
+    //             Log.info('AdminRoutes::handleProvision() - success; # results: ' + provisionSucceeded.length);
+    //             return provisionSucceeded;
+    //         } else {
+    //             throw new Error("Provisioning unsuccessful; cannot provision: " + provisionTrans.delivId);
+    //         }
+    //     }
+    //     // should never get here unless something goes wrong
+    //     throw new Error("Provisioning unsuccessful.");
+    // }
+
+    private static async planProvision(provisionTrans: ProvisionTransport): Promise<RepositoryTransport[]> {
         const cc = new AdminController(AdminRoutes.ghc);
         const result = AdminController.validateProvisionTransport(provisionTrans);
 
@@ -663,13 +734,13 @@ export default class AdminRoutes implements IREST {
             const dc = new DeliverablesController();
             const deliv = await dc.getDeliverable(provisionTrans.delivId);
             if (deliv !== null && deliv.shouldProvision === true) {
-                const dbc = DatabaseController.getInstance();
-                await dbc.writeAudit(AuditLabel.REPO_PROVISION, personId, {}, {}, provisionTrans);
-                const provisionSucceeded = await cc.provision(deliv, provisionTrans.formSingle);
-                Log.info('AdminRoutes::handleProvision() - success; # results: ' + provisionSucceeded.length);
-                return provisionSucceeded;
+                // const dbc = DatabaseController.getInstance();
+                // await dbc.writeAudit(AuditLabel.REPO_PROVISION, personId, {}, {}, provisionTrans);
+                const ret = await cc.planProvision(deliv, provisionTrans.formSingle);
+                Log.info('AdminRoutes::planProvision() - success; # results: ' + ret.length);
+                return ret;
             } else {
-                throw new Error("Provisioning unsuccessful; cannot provision: " + provisionTrans.delivId);
+                throw new Error("Provisioning planning unsuccessful; cannot provision: " + provisionTrans.delivId);
             }
         }
         // should never get here unless something goes wrong

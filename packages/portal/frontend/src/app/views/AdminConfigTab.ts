@@ -6,6 +6,7 @@ import {UI} from "../util/UI";
 import {AdminDeletePage} from "./AdminDeletePage";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminPage} from "./AdminPage";
+import {AdminProvisionPage} from "./AdminProvisionPage";
 import {AdminView} from "./AdminView";
 
 export class AdminConfigTab extends AdminPage {
@@ -150,6 +151,24 @@ export class AdminConfigTab extends AdminPage {
                 });
             }).catch(function(err) {
                 Log.error("AdminConfigTab - adminDelete ERROR: " + err.message);
+            });
+        };
+
+        (document.querySelector('#adminManageRepositoriesButton') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminConfigTab::handleAdminConfig(..) - manage repo page pressed');
+            evt.preventDefault();
+
+            that.pushPage('./adminProvision.html', {}).then(function() {
+                const provisionPage = new AdminProvisionPage(that.remote);
+                provisionPage.init({}).then(function() {
+                    // success
+                    Log.info('AdminConfigTab::handleAdminConfig(..) - provision page init');
+                }).catch(function(err) {
+                    // error
+                    Log.error('AdminConfigTab::handleAdminConfig(..) - provision page ERROR: ' + err);
+                });
+            }).catch(function(err) {
+                Log.error("AdminConfigTab - adminProvision ERROR: " + err.message);
             });
         };
 

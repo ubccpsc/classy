@@ -266,72 +266,94 @@
                 </ons-list-item>
 
                 <ons-list-header>Manage Repositories</ons-list-header>
-                <ons-list-item expandable>
+
+                <ons-list-item>
                     <div class="left settingIcon">
                         <ons-icon icon="fa-cogs"></ons-icon>
                     </div>
                     <div class="center">
-                        Provision Repositories for Deliverable
-                        <select id="adminProvisionDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
-                        <ons-button id="adminProvisionButton" modifier="medium">Provision</ons-button>
-                    </div>
-                    <div class="expandable-content">
-                        Creates the repositories for any provisionable Deliverable using all of the settings specified in the deliverable
-                        page. This is an incremental function; you can provision a deliverable several times as teams are formed, or after
-                        the class composition changes. It will also provision deliverables for all staff members who have previously logged
-                        into Classy (e.g., so they can see what the students see). This is a slow action (up to 30 seconds / repository) so
-                        do not leave this until the last second, and make sure multiple of these requests are not running concurrently.
-                        Cannot be undone, so use this with care.
+                        <ons-button id="adminManageRepositoriesButton" modifier="medium">Manage Repositories</ons-button>
                     </div>
                 </ons-list-item>
 
-                <ons-list-item expandable>
-                    <div class="left settingIcon">
-                        <ons-icon icon="fa-cogs"></ons-icon>
-                    </div>
-                    <div class="center">
-                        Enable write access for deliverable repositories
-                        <select id="adminReleaseDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
-                        <ons-button id="adminReleaseButton" modifier="medium">Release</ons-button>
-                    </div>
-                    <div class="expandable-content">
-                        Releases any provisoined repositories so students can make commits to their repositories. This is an incremental
-                        function; you can release a deliverable several times as teams are formed, or after the class composition changes.
-                    </div>
-                </ons-list-item>
+                <div style="display:none;">
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-cogs"></ons-icon>
+                        </div>
+                        <div class="center">
+                            Provision Repositories for Deliverable
+                            <select id="adminProvisionDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                            <ons-button id="adminProvisionButton" modifier="medium">Provision</ons-button>
+                        </div>
+                        <div class="expandable-content">
+                            Creates the repositories for any provisionable Deliverable using all of the settings specified in the
+                            deliverable
+                            page. This is an incremental function; you can provision a deliverable several times as teams are formed, or
+                            after
+                            the class composition changes. It will also provision deliverables for all staff members who have previously
+                            logged
+                            into Classy (e.g., so they can see what the students see). This is a slow action (up to 30 seconds / repository)
+                            so
+                            do not leave this until the last second, and make sure multiple of these requests are not running concurrently.
+                            Cannot be undone, so use this with care.
+                        </div>
+                    </ons-list-item>
 
-                <ons-list-item expandable>
-                    <div class="left settingIcon">
-                        <ons-icon icon="fa-cogs"></ons-icon>
-                    </div>
-                    <div class="center">
-                        NOT IMPLEMENTED: Disable write access for deliverable repositories
-                        <select id="adminReadOnlyDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
-                        <ons-button id="adminReadOnlyButton" modifier="medium">Disable write access</ons-button>
-                    </div>
-                    <div class="expandable-content">
-                        Sets any repositories to be read only so students can no longer make changes.
-                    </div>
-                </ons-list-item>
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-cogs"></ons-icon>
+                        </div>
+                        <div class="center">
+                            Enable write access for deliverable repositories
+                            <select id="adminReleaseDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                            <ons-button id="adminReleaseButton" modifier="medium">Release</ons-button>
+                        </div>
+                        <div class="expandable-content">
+                            Releases any provisoined repositories so students can make commits to their repositories. This is an incremental
+                            function; you can release a deliverable several times as teams are formed, or after the class composition
+                            changes.
+                        </div>
+                    </ons-list-item>
 
-                <ons-list-item expandable>
-                    <div class="left settingIcon">
-                        <ons-icon icon="fa-cogs"></ons-icon>
-                    </div>
-                    <div class="center">
-                        NOT IMPLEMENTED: Enable write access for deliverable repositories
-                        <select id="adminReadWriteDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
-                        <ons-button id="adminReadWriteButton" modifier="medium">Enable write access</ons-button>
-                    </div>
-                    <div class="expandable-content">
-                        Sets any repositories to be writeable so students make changes.
-                    </div>
-                </ons-list-item>
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-cogs"></ons-icon>
+                        </div>
+                        <div class="center">
+                            NOT IMPLEMENTED: Disable write access for deliverable repositories
+                            <select id="adminReadOnlyDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                            <ons-button id="adminReadOnlyButton" modifier="medium">Disable write access</ons-button>
+                        </div>
+                        <div class="expandable-content">
+                            Sets any repositories to be read only so students can no longer make changes.
+                        </div>
+                    </ons-list-item>
+
+                    <ons-list-item expandable>
+                        <div class="left settingIcon">
+                            <ons-icon icon="fa-cogs"></ons-icon>
+                        </div>
+                        <div class="center">
+                            NOT IMPLEMENTED: Enable write access for deliverable repositories
+                            <select id="adminReadWriteDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                            <ons-button id="adminReadWriteButton" modifier="medium">Enable write access</ons-button>
+                        </div>
+                        <div class="expandable-content">
+                            Sets any repositories to be writeable so students make changes.
+                        </div>
+                    </ons-list-item>
+
+                </div>
 
                 <ons-list-header>Delete Objects: DANGER!</ons-list-header>
                 <ons-list-item>
-                    <ons-button id="adminDeletePageButton">Go to deletion page</ons-button>
-                    <!-- onclick="myApp.view.pushPage('adminDelete.html',{});" -->
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <ons-button id="adminDeletePageButton">Go to deletion page</ons-button>
+                    </div>
                 </ons-list-item>
 
             </ons-list>
@@ -963,7 +985,10 @@
 
             <ons-list>
                 <ons-list-header>EULA</ons-list-header>
-                <ons-list-item>Note: These are all unrecoverable actions. Like seriously. Don't screw up.</ons-list-item>
+                <ons-list-item>Note: These are all unrecoverable actions. Like seriously. Don't screw up. Some of these items will be
+                    present here but not in GitHub; this is because this list is populated from the Classy database. Deletion events will
+                    delete both database entries and GitHub entities.
+                </ons-list-item>
                 <ons-list-header>Delete Deliverable</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
@@ -1013,6 +1038,107 @@
                         results associated with the repository.
                     </div>
                 </ons-list-item>
+            </ons-list>
+
+        </ons-page>
+    </template>
+
+    <template id="adminProvision.html">
+        <ons-page id="adminProision">
+            <ons-toolbar>
+                <div class="left">
+                    <ons-back-button>Admin</ons-back-button>
+                </div>
+                <div class="center">Provision & Release Repositories</div>
+                <div id='indexLogin' class="right">
+                    <ons-toolbar-button onclick="myApp.logout();">
+                        <ons-icon icon="fa-sign-out"></ons-icon>
+                        <span style="vertical-align: top; font-size: 80%;">Logout</span>
+                    </ons-toolbar-button>
+                </div>
+            </ons-toolbar>
+
+            <ons-modal id="adminProgress">
+                <div style="display:flex; flex-direction:column; align-items: center;">
+                    <div id="modalText" style="padding-top: 1em; padding-bottom: 1em;">Data is being retrieved.</div>
+                    <ons-progress-circular indeterminate></ons-progress-circular>
+                </div>
+            </ons-modal>
+
+
+            <ons-list>
+                <ons-list-header>Overview</ons-list-header>
+                <ons-list-item>
+                    This page is used for creating GitHub repositories for learners. The process has been split into two parts:
+                    <ul style="margin-bottom: 0;">
+                        <li><b>Provisioning</b> creates the GitHub repository as specified by the Deliverable being provisioned. This is a
+                            slow operation and can take a up to a minute or more to create a repository.
+                        </li>
+                        <li><b>Releasing</b> enables learners to access their repository. This is a relatively quick operation.</li>
+                    </ul>
+                </ons-list-item>
+                <ons-list-header>Select Deliverable</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Select Deliverable:
+                        <select id="provisionRepoDeliverableSelect" style="margin-left: 1em;">
+                            <option value="''">-None-</option>
+                        </select></div>
+                    </div>
+                    <div class="expandable-content">
+                        Provisioning and releasing is on a deliverable-by-deliverable basis. Select the deliverable you want to provision
+                        above.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-header>Provision Repositories</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Unprovisioned Repositories:
+                        <select multiple size="10"
+                                style="width: 20em; margin-left: 1em; margin-right: 1em;"
+                                id="repositoryProvisionSelect"></select>
+                        <ons-button id="adminManageProvisionButton" modifier="medium">Provision Repositories</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Select the repositories you wish to provision.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-header>Release Repositories</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <ons-button id="adminManageReleaseButton" modifier="medium">Release All Provisioned Repositories</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Release all provisioned repositories. This can be performed multiple times.
+                    </div>
+                </ons-list-item>
+
+
+                <ons-list-header>Provisioned Repositories</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-cogs"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Provisioned Repositories:
+                        <ul id="repositoryProvisionedUL"></ul>
+                    </div>
+                    <div class="expandable-content">
+                        These are the repositories that are already provisioned.
+                    </div>
+                </ons-list-item>
+
             </ons-list>
 
         </ons-page>

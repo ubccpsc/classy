@@ -488,6 +488,119 @@ export class AdminController {
         return null;
     }
 
+    // /**
+    //  *
+    //  * @param {Deliverable} deliv
+    //  * @param {boolean} formSingleTeams specify whether singletons should be allocated into teams.
+    //  * Choose false if you want to wait for the students to specify, choose true if you want to
+    //  * let them work individually. (Note: if your teams are of max size 1, you still need to say
+    //  * yes to make this happen.)
+    //  *
+    //  * @returns {Promise<RepositoryTransport[]>}
+    //  */
+    // public async provision(deliv: Deliverable, formSingleTeams: boolean): Promise<RepositoryTransport[]> {
+    //     Log.info("AdminController::provision( " + deliv.id + ", " + formSingleTeams + " ) - start");
+    //     const allPeople: Person[] = await this.pc.getAllPeople();
+    //     const allTeams: Team[] = await this.tc.getAllTeams();
+    //
+    //     if (deliv.teamMaxSize === 1) {
+    //         formSingleTeams = true;
+    //         Log.info("AdminController::provision( .. ) - team maxSize 1: formSingleTeams forced to true");
+    //     }
+    //
+    //     const delivTeams: Team[] = [];
+    //     for (const team of allTeams) {
+    //         if (team === null || deliv === null || team.id === null || deliv.id === null) {
+    //             // seeing this during 310 provisioning, need to figure this out
+    //             Log.error("AdminController::provision( .. ) - ERROR! null team: " +
+    //                 JSON.stringify(team) + " or deliv: " + JSON.stringify(deliv));
+    //         } else {
+    //             if (team.delivId === deliv.id) {
+    //                 Log.trace("AdminController::provision( .. ) - adding team: " + team.id + " to delivTeams");
+    //                 delivTeams.push(team);
+    //             }
+    //         }
+    //     }
+    //     Log.trace("AdminController::provision( .. ) - # deliv teams: " + delivTeams.length + "; total people: " + allPeople.length);
+    //
+    //     // remove any people who are already on teams
+    //     for (const team of delivTeams) {
+    //         for (const personId of team.personIds) {
+    //             const index = allPeople.map(function(p: Person) {
+    //                 return p.id;
+    //             }).indexOf(personId);
+    //             if (index >= 0) {
+    //                 allPeople.splice(index, 1);
+    //             } else {
+    //                 Log.error("AdminController::provision(..) - allPeople does not contain: " + personId);
+    //             }
+    //         }
+    //     }
+    //
+    //     Log.trace("AdminController::provision( .. ) - # people not on teams: " + allPeople.length);
+    //
+    //     if (formSingleTeams === true) {
+    //         // now create teams for individuals
+    //         for (const individual of allPeople) {
+    //             const names = await this.cc.computeNames(deliv, [individual]);
+    //
+    //             const team = await this.tc.formTeam(names.teamName, deliv, [individual], false);
+    //             delivTeams.push(team);
+    //         }
+    //     }
+    //
+    //     Log.trace("AdminController::provision( .. ) - # delivTeams after individual teams added: " + delivTeams.length);
+    //
+    //     const reposToProvision: Repository[] = [];
+    //     // now process the teams to create their repos
+    //     for (const delivTeam of delivTeams) {
+    //         // if (team.URL === null) { // this would be faster, but we are being more conservative here
+    //
+    //         Log.trace('AdminController::provision( .. ) - preparing to provision team: ' + delivTeam.id);
+    //
+    //         const people: Person[] = [];
+    //         for (const pId of delivTeam.personIds) {
+    //             people.push(await this.pc.getPerson(pId));
+    //         }
+    //         const names = await this.cc.computeNames(deliv, people);
+    //
+    //         Log.trace('AdminController::provision( .. ) - delivTeam: ' + delivTeam.id +
+    //             '; computed team: ' + names.teamName + '; computed repo: ' + names.repoName);
+    //
+    //         const team = await this.tc.getTeam(names.teamName);
+    //         let repo = await this.rc.getRepository(names.repoName);
+    //
+    //         if (team === null) {
+    //             // sanity checking team must not be null given what we have done above (should never happen)
+    //             throw new Error("AdminController::provision(..) - team unexpectedly null: " + names.teamName);
+    //         }
+    //
+    //         if (repo === null) {
+    //             repo = await this.rc.createRepository(names.repoName, deliv, [team], {});
+    //         }
+    //
+    //         if (repo === null) {
+    //             // sanity checking repo must not be null given what we have done above (should never happen)
+    //             throw new Error("AdminController::provision(..) - repo unexpectedly null: " + names.repoName);
+    //         }
+    //
+    //         // teams and repos should be provisioned together; this makes sure this consistency is maintained
+    //         if (team.URL === null && repo.URL === null) {
+    //             // provision
+    //             reposToProvision.push(repo);
+    //         } else if (team.URL !== null && repo.URL !== null) {
+    //             // already provisioned
+    //         } else {
+    //             Log.error("AdminController::provision(..) - inconsistent repo/team; repo.URL: " + repo.URL + "; team.URL: " + team.URL);
+    //         }
+    //     }
+    //
+    //     Log.trace("AdminController::provision( .. ) - # repos to provision: " + reposToProvision.length);
+    //
+    //     const provisionedRepos = await this.provisionRepositories(reposToProvision, deliv.importURL);
+    //     return provisionedRepos; // only returns provisioned this time; should it return all of them?
+    // }
+
     /**
      *
      * @param {Deliverable} deliv
@@ -498,30 +611,30 @@ export class AdminController {
      *
      * @returns {Promise<RepositoryTransport[]>}
      */
-    public async provision(deliv: Deliverable, formSingleTeams: boolean): Promise<RepositoryTransport[]> {
-        Log.info("AdminController::provision( " + deliv.id + ", " + formSingleTeams + " ) - start");
+    public async planProvision(deliv: Deliverable, formSingleTeams: boolean): Promise<RepositoryTransport[]> {
+        Log.info("AdminController::planProvision( " + deliv.id + ", " + formSingleTeams + " ) - start");
         const allPeople: Person[] = await this.pc.getAllPeople();
         const allTeams: Team[] = await this.tc.getAllTeams();
 
         if (deliv.teamMaxSize === 1) {
             formSingleTeams = true;
-            Log.info("AdminController::provision( .. ) - team maxSize 1: formSingleTeams forced to true");
+            Log.info("AdminController::planProvision( .. ) - team maxSize 1: formSingleTeams forced to true");
         }
 
         const delivTeams: Team[] = [];
         for (const team of allTeams) {
             if (team === null || deliv === null || team.id === null || deliv.id === null) {
                 // seeing this during 310 provisioning, need to figure this out
-                Log.error("AdminController::provision( .. ) - ERROR! null team: " +
+                Log.error("AdminController::planProvision( .. ) - ERROR! null team: " +
                     JSON.stringify(team) + " or deliv: " + JSON.stringify(deliv));
             } else {
                 if (team.delivId === deliv.id) {
-                    Log.trace("AdminController::provision( .. ) - adding team: " + team.id + " to delivTeams");
+                    Log.trace("AdminController::planProvision( .. ) - adding team: " + team.id + " to delivTeams");
                     delivTeams.push(team);
                 }
             }
         }
-        Log.trace("AdminController::provision( .. ) - # deliv teams: " + delivTeams.length + "; total people: " + allPeople.length);
+        Log.trace("AdminController::planProvision( .. ) - # deliv teams: " + delivTeams.length + "; total people: " + allPeople.length);
 
         // remove any people who are already on teams
         for (const team of delivTeams) {
@@ -532,12 +645,12 @@ export class AdminController {
                 if (index >= 0) {
                     allPeople.splice(index, 1);
                 } else {
-                    Log.error("AdminController::provision(..) - allPeople does not contain: " + personId);
+                    Log.error("AdminController::planProvision(..) - allPeople does not contain: " + personId);
                 }
             }
         }
 
-        Log.trace("AdminController::provision( .. ) - # people not on teams: " + allPeople.length);
+        Log.trace("AdminController::planProvision( .. ) - # people not on teams: " + allPeople.length);
 
         if (formSingleTeams === true) {
             // now create teams for individuals
@@ -549,14 +662,14 @@ export class AdminController {
             }
         }
 
-        Log.trace("AdminController::provision( .. ) - # delivTeams after individual teams added: " + delivTeams.length);
+        Log.trace("AdminController::planProvision( .. ) - # delivTeams after individual teams added: " + delivTeams.length);
 
         const reposToProvision: Repository[] = [];
         // now process the teams to create their repos
         for (const delivTeam of delivTeams) {
             // if (team.URL === null) { // this would be faster, but we are being more conservative here
 
-            Log.trace('AdminController::provision( .. ) - preparing to provision team: ' + delivTeam.id);
+            Log.trace('AdminController::planProvision( .. ) - preparing to provision team: ' + delivTeam.id);
 
             const people: Person[] = [];
             for (const pId of delivTeam.personIds) {
@@ -564,7 +677,7 @@ export class AdminController {
             }
             const names = await this.cc.computeNames(deliv, people);
 
-            Log.trace('AdminController::provision( .. ) - delivTeam: ' + delivTeam.id +
+            Log.trace('AdminController::planProvision( .. ) - delivTeam: ' + delivTeam.id +
                 '; computed team: ' + names.teamName + '; computed repo: ' + names.repoName);
 
             const team = await this.tc.getTeam(names.teamName);
@@ -572,7 +685,7 @@ export class AdminController {
 
             if (team === null) {
                 // sanity checking team must not be null given what we have done above (should never happen)
-                throw new Error("AdminController::provision(..) - team unexpectedly null: " + names.teamName);
+                throw new Error("AdminController::planProvision(..) - team unexpectedly null: " + names.teamName);
             }
 
             if (repo === null) {
@@ -581,24 +694,33 @@ export class AdminController {
 
             if (repo === null) {
                 // sanity checking repo must not be null given what we have done above (should never happen)
-                throw new Error("AdminController::provision(..) - repo unexpectedly null: " + names.repoName);
+                throw new Error("AdminController::planProvision(..) - repo unexpectedly null: " + names.repoName);
             }
 
-            // teams and repos should be provisioned together; this makes sure this consistency is maintained
-            if (team.URL === null && repo.URL === null) {
-                // provision
-                reposToProvision.push(repo);
-            } else if (team.URL !== null && repo.URL !== null) {
-                // already provisioned
-            } else {
-                Log.error("AdminController::provision(..) - inconsistent repo/team; repo.URL: " + repo.URL + "; team.URL: " + team.URL);
-            }
+            // // teams and repos should be provisioned together; this makes sure this consistency is maintained
+            // if (team.URL === null && repo.URL === null) {
+            //     // provision
+            //     reposToProvision.push(repo);
+            // } else if (team.URL !== null && repo.URL !== null) {
+            //     // already provisioned
+            // } else {
+            //     Log.error("AdminController::planProvision(..) -
+            // inconsistent repo/team; repo.URL: " + repo.URL + "; team.URL: " + team.URL);
+            // }
+
+            // this will include provisioned repos and unprovisioned repos
+            // provisioned repos will have a value for their URL, unprovisioned repos will not
+            reposToProvision.push(repo);
         }
 
-        Log.trace("AdminController::provision( .. ) - # repos to provision: " + reposToProvision.length);
+        Log.trace("AdminController::planProvision( .. ) - # repos to provision: " + reposToProvision.length);
 
-        const provisionedRepos = await this.provisionRepositories(reposToProvision, deliv.importURL);
-        return provisionedRepos; // only returns provisioned this time; should it return all of them?
+        const repoTrans: RepositoryTransport[] = [];
+        for (const repo of reposToProvision) {
+            repoTrans.push({delivId: deliv.id, id: repo.id, URL: repo.URL});
+        }
+
+        return repoTrans;
     }
 
     /**
@@ -614,50 +736,50 @@ export class AdminController {
      * @param {string} importURL
      * @returns {Promise<Repository[]>}
      */
-    public async provisionRepositories(repos: Repository[], importURL: string): Promise<RepositoryTransport[]> {
+    public async performProvision(repos: Repository[], importURL: string): Promise<RepositoryTransport[]> {
         const gha = GitHubActions.getInstance(true);
         const ghc = new GitHubController(gha);
 
         const config = Config.getInstance();
         const dbc = DatabaseController.getInstance();
 
-        Log.info("AdminController::provisionRepositories( .. ) - start; # repos: " +
+        Log.info("AdminController::performProvision( .. ) - start; # repos: " +
             repos.length + "; importURL: " + importURL);
         const provisionedRepos: Repository[] = [];
 
         for (const repo of repos) {
             try {
-                Log.info("AdminController::provisionRepositories( .. ) ***** START *****");
-                Log.info("AdminController::provisionRepositories( .. ) - start for repo: " + repo.id);
+                Log.info("AdminController::performProvision( .. ) ***** START *****");
+                Log.info("AdminController::performProvision( .. ) - start for repo: " + repo.id);
                 if (repo.URL === null) {
                     const teams: Team[] = [];
                     for (const teamId of repo.teamIds) {
                         teams.push(await this.dbc.getTeam(teamId));
                     }
-                    Log.info("AdminController::provisionRepositories( .. ) - about to provision: " + repo.id);
+                    Log.info("AdminController::performProvision( .. ) - about to provision: " + repo.id);
                     const success = await ghc.provisionRepository(repo.id, teams, importURL, false);
-                    Log.info("AdminController::provisionRepositories( .. ) - provisioned: " + repo.id + "; success: " + success);
+                    Log.info("AdminController::performProvision( .. ) - provisioned: " + repo.id + "; success: " + success);
 
                     if (success === true) {
                         repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
                         repo.custom.githubProvisioned = true;
                         await dbc.writeRepository(repo);
-                        Log.info("AdminController::provisionRepositories( .. ) - success: " + repo.id + "; URL: " + repo.URL);
+                        Log.info("AdminController::performProvision( .. ) - success: " + repo.id + "; URL: " + repo.URL);
                         provisionedRepos.push(repo);
                     } else {
-                        Log.warn("AdminController::provisionRepositories( .. ) - FAILED: " + repo.id + "; URL: " + repo.URL);
+                        Log.warn("AdminController::performProvision( .. ) - FAILED: " + repo.id + "; URL: " + repo.URL);
                     }
 
-                    Log.info("AdminController::provisionRepositories( .. ) - done provisioning: " + repo.id + "; forced wait");
+                    Log.info("AdminController::performProvision( .. ) - done provisioning: " + repo.id + "; forced wait");
                     await Util.delay(2 * 1000); // after any provisioning wait a bit
-                    Log.info("AdminController::provisionRepositories( .. ) - done for repo: " + repo.id + "; wait complete");
-                    Log.info("AdminController::provisionRepositories( .. ) ***** DONE *****");
+                    Log.info("AdminController::performProvision( .. ) - done for repo: " + repo.id + "; wait complete");
+                    Log.info("AdminController::performProvision( .. ) ***** DONE *****");
                 } else {
-                    Log.info("AdminController::provisionRepositories( .. ) - skipped; already provisioned: " +
+                    Log.info("AdminController::performProvision( .. ) - skipped; already provisioned: " +
                         repo.id + "; URL: " + repo.URL);
                 }
             } catch (err) {
-                Log.error("AdminController::provisionRepositories( .. ) - FAILED: " +
+                Log.error("AdminController::performProvision( .. ) - FAILED: " +
                     repo.id + "; URL: " + repo.URL + "; ERROR: " + err.message);
             }
         }

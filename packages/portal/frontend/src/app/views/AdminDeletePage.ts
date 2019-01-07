@@ -201,7 +201,7 @@ export class AdminDeletePage extends AdminPage {
         const response = await fetch(url, options);
         const body = await response.json();
         if (typeof body.success !== 'undefined') {
-            UI.notificationToast(body.success.message);
+            // UI.notificationToast(body.success.message);
             return true;
         } else {
             Log.error("Delete ERROR: " + body.failure.message);
