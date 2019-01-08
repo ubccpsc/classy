@@ -393,7 +393,7 @@ export class DatabaseController {
     }
 
     public async updateRecord(colName: string, query: {}, record: {}): Promise<boolean> {
-        Log.info("DatabaseController::updateRecord( " + colName + ", ...) - start");
+        Log.trace("DatabaseController::updateRecord( " + colName + ", ...) - start");
         Log.trace("DatabaseController::updateRecord(..) - colName: " + colName + "; record: " + JSON.stringify(record));
         try {
             const collection = await this.getCollection(colName);

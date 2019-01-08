@@ -818,7 +818,7 @@ export class GitHubActions implements IGitHubActions {
      */
     public async addTeamToRepo(teamId: number, repoName: string, permission: string): Promise<GitTeamTuple> {
 
-        Log.info("GitHubAction::addTeamToRepo( " + teamId + ", " + repoName + " ) - start");
+        Log.trace("GitHubAction::addTeamToRepo( " + teamId + ", " + repoName + " ) - start");
         const start = Date.now();
         try {
             const uri = this.apiPath + '/teams/' + teamId + '/repos/' + this.org + '/' + repoName;
@@ -839,7 +839,8 @@ export class GitHubActions implements IGitHubActions {
             };
 
             await rp(options);
-            Log.info("GitHubAction::addTeamToRepo(..) - success; team: " + teamId + "; repo: " + repoName + "; took: " + Util.took(start));
+            Log.info("GitHubAction::addTeamToRepo(..) - success; team: " + teamId +
+                "; repo: " + repoName + "; took: " + Util.took(start));
             return {githubTeamNumber: teamId, teamName: 'NOTSETHERE'};
 
         } catch (err) {

@@ -862,6 +862,7 @@ export class AdminController {
         const releasedRepos = [];
         for (const repo of repos) {
             try {
+                const startRepo = Date.now();
                 if (repo.URL !== null) {
                     const teams: Team[] = [];
                     for (const teamId of repo.teamIds) {
@@ -872,7 +873,8 @@ export class AdminController {
                     const success = await ghc.releaseRepository(repo, teams, false);
 
                     if (success === true) {
-                        Log.info("AdminController::releaseRepositories( .. ) - success: " + repo.id + '; took: ' + Util.took(start));
+                        Log.info("AdminController::releaseRepositories( .. ) - success: " + repo.id +
+                            '; took: ' + Util.took(startRepo));
                         releasedRepos.push(repo);
                     } else {
                         Log.warn("AdminController::releaseRepositories( .. ) - FAILED: " + repo.id);

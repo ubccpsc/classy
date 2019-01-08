@@ -792,7 +792,7 @@ export default class AdminRoutes implements IREST {
         const result = AdminController.validateProvisionTransport(releaseTrans);
 
         // TODO: if course is SDMM, always fail
-
+        const start = Date.now();
         if (result === null) {
             const dc = new DeliverablesController();
             const deliv = await dc.getDeliverable(releaseTrans.delivId);
@@ -801,7 +801,8 @@ export default class AdminRoutes implements IREST {
                 await dbc.writeAudit(AuditLabel.REPO_RELEASE, personId, {}, {}, releaseTrans);
 
                 const releaseSucceeded = await cc.release(deliv);
-                Log.info('AdminRoutes::handleRelease() - success; # results: ' + releaseSucceeded.length);
+                Log.info('AdminRoutes::handleRelease() - success; # results: ' + releaseSucceeded.length +
+                    '; took: ' + Util.took(start));
                 return releaseSucceeded;
             } else {
                 throw new Error("Release unsuccessful, cannot release: " + releaseTrans.delivId);
