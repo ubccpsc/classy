@@ -272,6 +272,7 @@ export class GitHubController implements IGitHubController {
                     if (teamValue.githubTeamNumber > 0) {
                         // worked
                         team.URL = teamValue.URL;
+                        team.githubId = teamValue.githubTeamNumber;
                         await dbc.writeTeam(team);
                     }
 
