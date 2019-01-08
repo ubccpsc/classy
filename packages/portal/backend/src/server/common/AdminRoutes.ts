@@ -117,7 +117,7 @@ export default class AdminRoutes implements IREST {
      * @param next
      */
     private static isPrivileged(req: any, res: any, next: any) {
-        Log.info('AdminRoutes::isPrivileged(..) - start');
+        // Log.info('AdminRoutes::isPrivileged(..) - start');
 
         const auth = AdminRoutes.processAuth(req);
         const user = auth.user;
@@ -127,8 +127,10 @@ export default class AdminRoutes implements IREST {
         ac.isPrivileged(user, token).then(function(priv) {
             Log.trace('AdminRoutes::isPrivileged(..) - in isPrivileged: ' + JSON.stringify(priv));
             if (priv.isStaff === true || priv.isAdmin === true) {
+                Log.info('AdminRoutes::isPrivileged( ' + user + ', ... ) - is priv');
                 return next();
             } else {
+                Log.info('AdminRoutes::isPrivileged( ' + user + ', ... ) - NOT priv');
                 return AdminRoutes.handleError(401, 'Authorization error; user not privileged', res, next);
             }
         }).catch(function(err) {
@@ -312,7 +314,8 @@ export default class AdminRoutes implements IREST {
 
         // if these params are missing the client will get 404 since they are part of the path
         const repoId = req.params.repoId;
-        const userId = req.params.userId;
+        const userId = req.headers.user;
+        // const userId = req.params.userId;
 
         AdminRoutes.handleDeleteRepository(userId, repoId).then(function(success) {
             Log.trace('AdminRoutes::deleteRepository(..) - done; success: ' + success);

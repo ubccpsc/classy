@@ -444,9 +444,9 @@ export class GitHubActions implements IGitHubActions {
             };
 
             const response = await rp(options);
-            Log.info("GitHubAction::deleteTeam(..) - response: " + response);
+            // Log.info("GitHubAction::deleteTeam(..) - response: " + response);
 
-            if (response.statusCode === 200) {
+            if (response.statusCode === 204) {
                 Log.info("GitHubAction::deleteTeam(..) - success; took: " + Util.took(start));
                 return true;
             } else {
@@ -630,7 +630,7 @@ export class GitHubActions implements IGitHubActions {
 
         // per_page max is 100; 10 is useful for testing pagination though
         const uri = this.apiPath + '/orgs/' + this.org + '/teams?per_page=' + this.pageSize;
-        Log.info("GitHubActions::listTeams(..) - uri: " + uri);
+        Log.info("GitHubActions::listTeams(..) - start"); // uri: " + uri);
         const options = {
             method:                  'GET',
             uri:                     uri,
@@ -822,7 +822,7 @@ export class GitHubActions implements IGitHubActions {
         const start = Date.now();
         try {
             const uri = this.apiPath + '/teams/' + teamId + '/repos/' + this.org + '/' + repoName;
-            Log.info("GitHubAction::addTeamToRepo(..) - URI: " + uri);
+            // Log.info("GitHubAction::addTeamToRepo(..) - URI: " + uri);
             const options = {
                 method:  'PUT',
                 uri:     uri,
