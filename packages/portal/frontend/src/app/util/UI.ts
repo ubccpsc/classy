@@ -338,7 +338,7 @@ export class UI {
         importNode.onload = function(importedNode: any, event: any) {
             // Put the document DOM tree in the import attribute as usual
             Log.info('UI::injectCustomPage( ' + path + ' ) - loading complete');
-            importNode.import = event.target.import;
+            (importNode as any).import = event.target.import;
         }.bind(this, importNode);
 
         // Triggers import loading
@@ -359,7 +359,7 @@ export class UI {
         const customs = (document.querySelectorAll('link[rel="import"]'));
         for (const custom of Array.from(customs) as HTMLLinkElement[]) {
             if (custom !== null) {
-                const templates = custom.import.querySelectorAll('template');
+                const templates = (custom as any).import.querySelectorAll('template');
                 for (const template of Array.from(templates) as HTMLTemplateElement[]) {
                     if (template !== null && template.id === id) {
                         const clone = document.importNode(template.content, true);

@@ -7,7 +7,7 @@ import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 import {UI} from "../util/UI";
 import {IView} from "./IView";
 
-export abstract class StudentView implements IView {
+export abstract class AbstractStudentView implements IView {
 
     protected remote: string = null;
     private person: StudentTransport = null;
@@ -37,7 +37,7 @@ export abstract class StudentView implements IView {
         try {
             this.person = await this.fetchData('/portal/person') as StudentTransport;
         } catch (err) {
-            Log.error('StudentView::prepareData() - fetching person; ERROR: ' + err.message);
+            Log.error('AbstractStudentView::prepareData() - fetching person; ERROR: ' + err.message);
             UI.showError(err.message);
             this.person = null;
         }
@@ -48,7 +48,7 @@ export abstract class StudentView implements IView {
                 this.grades = [];
             }
         } catch (err) {
-            Log.error('StudentView::prepareData() - fetching person; ERROR: ' + err.message);
+            Log.error('AbstractStudentView::prepareData() - fetching person; ERROR: ' + err.message);
             UI.showError(err.message);
             this.grades = [];
         }
@@ -59,7 +59,7 @@ export abstract class StudentView implements IView {
                 this.repos = [];
             }
         } catch (err) {
-            Log.error('StudentView::prepareData() - fetching repos; ERROR: ' + err.message);
+            Log.error('AbstractStudentView::prepareData() - fetching repos; ERROR: ' + err.message);
             UI.showError(err.message);
             this.repos = [];
         }
@@ -79,27 +79,27 @@ export abstract class StudentView implements IView {
         const url = this.remote + endpoint;
         const response = await fetch(url, this.getOptions());
         if (response.status === 200) {
-            Log.trace('StudentView::fetchData( ' + endpoint + ' ) - 200 received');
+            Log.trace('AbstractStudentView::fetchData( ' + endpoint + ' ) - 200 received');
             const json = await response.json();
-            Log.trace('StudentView::fetchData( ' + endpoint + ' ) - payload: ' + JSON.stringify(json));
+            Log.trace('AbstractStudentView::fetchData( ' + endpoint + ' ) - payload: ' + JSON.stringify(json));
             if (typeof json.success !== 'undefined') {
-                Log.trace('StudentView::fetchData( ' + endpoint + ' ) - success: ' + json.success);
+                Log.trace('AbstractStudentView::fetchData( ' + endpoint + ' ) - success: ' + json.success);
                 return json.success;
             } else {
-                Log.trace('StudentView::fetchData( ' + endpoint + ' ) - ERROR: ' + json.failure.message);
+                Log.trace('AbstractStudentView::fetchData( ' + endpoint + ' ) - ERROR: ' + json.failure.message);
                 throw new Error(json.failure.message);
             }
         } else {
-            Log.trace('StudentView::fetchData( ' + endpoint + ' ) - teams !200 received');
+            Log.trace('AbstractStudentView::fetchData( ' + endpoint + ' ) - teams !200 received');
         }
         return null;
     }
 
     private renderGrades() {
-        Log.trace("StudentView::renderGrades() - start");
+        Log.trace("AbstractStudentView::renderGrades() - start");
 
         if (document.getElementById('studentGradeTable') === null) {
-            Log.error("StudentView::renderGrades() - 'studentGradeTable' element is missing; grades not rendered.");
+            Log.error("AbstractStudentView::renderGrades() - 'studentGradeTable' element is missing; grades not rendered.");
             return;
         }
 
@@ -158,7 +158,7 @@ export abstract class StudentView implements IView {
     }
 
     private renderRepositories() {
-        Log.trace("StudentView::renderRepositories() - start");
+        Log.trace("AbstractStudentView::renderRepositories() - start");
 
         if (this.repos === null || this.repos.length < 1) {
             const el = document.getElementById('studentRepoTable');
@@ -220,7 +220,7 @@ export abstract class StudentView implements IView {
     }
 
     public pushPage(pageName: string, opts: {}) {
-        Log.info("StudentView::pushPage( " + pageName + ", ... ) - start");
+        Log.info("AbstractStudentView::pushPage( " + pageName + ", ... ) - start");
         if (typeof opts !== 'object') {
             opts = {};
         }
@@ -228,7 +228,7 @@ export abstract class StudentView implements IView {
         UI.pushPage(prefix + '/' + pageName, opts).then(function() {
             // success
         }).catch(function(err) {
-            Log.error("UI::pushPage(..) - ERROR: " + err.message);
+            Log.error("AbstractStudentView::pushPage(..) - ERROR: " + err.message);
         });
     }
 

@@ -11,9 +11,9 @@ import {DeliverableInfo} from "../../../../../../common/types/CS340Types";
 
 import {Payload, TeamFormationTransport, TeamTransport} from "../../../../../../common/types/PortalTypes";
 import {UI} from "../../util/UI";
-import {StudentView} from "../StudentView";
+import {AbstractStudentView} from "../AbstractStudentView";
 
-export class CS340View extends StudentView {
+export class CS340View extends AbstractStudentView {
     private teams: TeamTransport[];
     private deliverables: DeliverableInfo[];
 
