@@ -244,7 +244,8 @@ export class AdminResultsTab extends AdminPage {
                 const json: RepositoryPayload = await response.json();
                 // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
                 if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                    Log.trace('AdminResultsTab::getRepositories(..)  - worked; took: ' + UI.took(start));
+                    Log.trace('AdminResultsTab::getRepositories(..)  - worked; # repos: ' +
+                        json.success.length + '; took: ' + UI.took(start));
                     return json.success;
                 } else {
                     Log.trace('AdminResultsTab::getRepositories(..)  - ERROR: ' + json.failure.message);

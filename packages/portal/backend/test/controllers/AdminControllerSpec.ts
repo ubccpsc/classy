@@ -413,6 +413,7 @@ describe("AdminController", () => {
             }
         });
 
+        // // broken when we switched to plan/perform provisioning
         it("Should provision repos if there are some to do and singles are disabled.", async () => {
             await clearAndPreparePartial();
 
@@ -424,7 +425,15 @@ describe("AdminController", () => {
             expect(allTeams[0].URL).to.be.null; // not provisioned yet
 
             const deliv = await dc.getDeliverable(Test.DELIVIDPROJ);
-            const res = await ac.provision(deliv, false);
+            const plan = await ac.planProvision(deliv, false);
+
+            const repos: Repository[] = [];
+            for (const repo of plan) {
+                repos.push(await rc.getRepository(repo.id));
+            }
+
+            const res = await ac.performProvision(repos, deliv.importURL);
+            // const res = await ac.provision(deliv, false);
             Log.test("provisioned: " + JSON.stringify(res));
             expect(res).to.be.an('array');
             expect(res.length).to.equal(1);
@@ -445,6 +454,7 @@ describe("AdminController", () => {
 
         }).timeout(Test.TIMEOUTLONG);
 
+        // broken when we switched to plan/perform provisioning
         it("Should release repos.", async () => {
             // await clearAndPreparePartial();
             const allRepos = await rc.getAllRepos();
@@ -485,7 +495,14 @@ describe("AdminController", () => {
             expect(teamNum).to.be.lessThan(0); // should not be provisioned yet
 
             const deliv = await dc.getDeliverable(Test.DELIVID0);
-            const res = await ac.provision(deliv, true);
+            const plan = await ac.planProvision(deliv, true);
+
+            const repos: Repository[] = [];
+            for (const repo of plan) {
+                repos.push(await rc.getRepository(repo.id));
+            }
+            const res = await ac.performProvision(repos, deliv.importURL);
+
             Log.test("provisioned: " + JSON.stringify(res));
             expect(res).to.be.an('array');
             expect(res.length).to.equal(3);
@@ -523,7 +540,14 @@ describe("AdminController", () => {
             expect(allTeams.length).to.equal(4);
 
             const deliv = await dc.getDeliverable(Test.DELIVID0);
-            const res = await ac.provision(deliv, true);
+            const plan = await ac.planProvision(deliv, false);
+
+            const repos: Repository[] = [];
+            for (const repo of plan) {
+                repos.push(await rc.getRepository(repo.id));
+            }
+
+            const res = await ac.performProvision(repos, deliv.importURL);
             Log.test("Provisioned: " + JSON.stringify(res));
             expect(res).to.be.an('array');
             expect(res.length).to.equal(0);
