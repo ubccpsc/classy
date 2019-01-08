@@ -2,6 +2,7 @@ import {OnsButtonElement} from "onsenui";
 
 import Log from "../../../../../common/Log";
 import {DeliverableTransport, Payload, ProvisionTransport, RepositoryTransport} from "../../../../../common/types/PortalTypes";
+import Util from "../../../../../common/Util";
 
 import {UI} from "../util/UI";
 
@@ -101,10 +102,10 @@ export class AdminProvisionPage extends AdminPage {
 
                 for (const repo of repos) {
                     if (repo.URL === null) {
-                        Log.info('repo to provision: ' + repo.id + '; URL: ' + repo.URL);
+                        // Log.trace('Repo to provision: ' + repo.id + '; URL: ' + repo.URL);
                         toProvision.push(repo.id);
                     } else {
-                        Log.info('repo already provisioned: ' + repo.id + '; URL: ' + repo.URL);
+                        // Log.trace('Repo already provisioned: ' + repo.id + '; URL: ' + repo.URL);
                         provisioned.push(repo.id);
                     }
                 }
@@ -158,14 +159,17 @@ export class AdminProvisionPage extends AdminPage {
 
         UI.showModal("Releasing repositories for " + delivId + ". Please be patient.");
 
+        const start = Date.now();
         Log.trace('AdminProvisioningPage::handleReleasePressed(..) - GET from: ' + url);
         const response = await fetch(url, options);
         const json: Payload = await response.json();
+        Log.trace('AdminProvisioningPage::handleReleasePressed(..) - complete; took: ' + Util.took(start));
+
         UI.hideModal();
         UI.showSuccessToast('Repositories released.', {timeout: 10000});
 
         if (typeof json.success !== 'undefined') {
-            Log.info('AdminProvisioningPage::handleReleasePressed(..) - received: ' + json.success);
+            Log.info('AdminProvisioningPage::handleReleasePressed(..) - success'); // + json.success);
             return json.success;
         } else {
             Log.error('AdminProvisioningPage::handleReleasePressed(..) - ERROR: ' + json.failure);
@@ -189,7 +193,8 @@ export class AdminProvisionPage extends AdminPage {
 
         Log.info('AdminDeletePage::handleProvisionPressed(..) - start; # repos to provision: ' + selected.length);
         if (selected.length > 0) {
-            UI.showSuccessToast('Repo provisioning in progress; this will take a while. Do not close this browser window.', 10000);
+            UI.showSuccessToast('Repo provisioning in progress; this will take a while. Do not close this browser window.',
+                {timeout: 10000});
         } else {
             UI.showErrorToast('No repos selected for provisioning.');
         }
@@ -199,9 +204,12 @@ export class AdminProvisionPage extends AdminPage {
             const repoId = selected[i];
             try {
                 const delivId = UI.getDropdownValue('provisionRepoDeliverableSelect');
+                const start = Date.now();
                 await this.provisionRepo(delivId, repoId);
-                Log.info('AdminDeletePage::handleProvision(..) - provisioning complete; repo: ' + repoId);
-                UI.showSuccessToast('Repo provisioned: ' + repoId + ' ( ' + (i + 1) + ' of ' + selected.length + ' )', 10000);
+                Log.info('AdminDeletePage::handleProvision(..) - provisioning complete; repo: ' + repoId +
+                    '; took: ' + Util.took(start));
+                UI.showSuccessToast('Repo provisioned: ' + repoId + ' ( ' + (i + 1) + ' of ' + selected.length + ' )',
+                    {timeout: 10000});
             } catch (err) {
                 Log.error('AdminDeletePage::handleProvision(..) - provisioning error for: ' + repoId + '; ERROR: ' + err.message);
                 UI.showErrorToast('Repo NOT provisioned: ' + repoId + ' (see error console)');
@@ -210,7 +218,7 @@ export class AdminProvisionPage extends AdminPage {
 
         Log.info('AdminDeletePage::handleProvision(..) - done');
         if (selected.length > 0) {
-            UI.showSuccessToast('Repository provisioning complete.');
+            UI.showSuccessToast('Repository provisioning complete.', {timeout: 20000});
         }
         // refresh the page
         await this.init({});
@@ -225,12 +233,13 @@ export class AdminProvisionPage extends AdminPage {
         UI.showModal("Retrieving provisioning details for " + delivId);
 
         Log.trace('AdminProvisioningPage::getProvisionDetails(..) - GET from: ' + url);
+        const start = Date.now();
         const response = await fetch(url, options);
         const json: Payload = await response.json();
         UI.hideModal();
 
         if (typeof json.success !== 'undefined') {
-            Log.info('AdminProvisioningPage::getProvisionDetails(..) - received: ' + json.success);
+            Log.info('AdminProvisioningPage::getProvisionDetails(..) - success; took: ' + Util.took(start));
             return json.success;
         } else {
             Log.error('AdminProvisioningPage::getProvisionDetails(..) - ERROR: ' + json.failure);

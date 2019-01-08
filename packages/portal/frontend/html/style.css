@@ -90,10 +90,14 @@ Dashboard Page
     /* nothing yet */
 }
 
+.toast--danger {
+    background-color: hsl(348, 100%, 61%);
+}
+
 /**
 stdio viewer Page
  */
-#stdioViewer { 
+#stdioViewer {
     position: absolute;
     top: 0;
     right: 0;
