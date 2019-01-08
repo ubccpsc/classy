@@ -20,15 +20,28 @@ export abstract class AdminPage implements IView {
     public abstract async init(opts: any): Promise<void>;
 
     public renderPage(pageName: string, opts: {}): void {
-        Log.info("AdminPate::renderPage( " + pageName + ", ... ) - default implementation");
+        Log.info("AdminPage::renderPage( " + pageName + ", ... ) - default implementation");
     }
 
+    /**
+     * Pushes the page. If the page starts with ./ HTMLprefix is not added.
+     *
+     * @param {string} pageName
+     * @param {{}} opts
+     * @returns {Promise<void>}
+     */
     public pushPage(pageName: string, opts: {}): Promise<void> {
         Log.info("AdminPage::pushPage( " + pageName + ", ... ) - start");
         if (typeof opts !== 'object') {
             opts = {};
         }
-        const prefix = Factory.getInstance().getHTMLPrefix();
-        return UI.pushPage(prefix + '/' + pageName, opts);
+        if (pageName.startsWith("./")) {
+            pageName = pageName.substring(2);
+            return UI.pushPage(pageName, opts);
+        } else {
+            const prefix = Factory.getInstance().getHTMLPrefix();
+            return UI.pushPage(prefix + '/' + pageName, opts);
+        }
+
     }
 }

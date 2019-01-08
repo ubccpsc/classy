@@ -179,9 +179,9 @@ describe("GitHubAutoTest", () => {
         expect(meetsPreconditions).to.be.false;
         info.timestamp = new Date(2018, 2, 1).getTime();
 
-        info.timestamp = new Date(2018, 12, 1).getTime(); // closed
+        info.timestamp = new Date(2018, 12, 1).getTime(); // closed, but late autotest is true
         meetsPreconditions = await at["checkCommentPreconditions"](info);
-        expect(meetsPreconditions).to.be.false;
+        expect(meetsPreconditions).to.be.true;
         info.timestamp = new Date(2018, 2, 1).getTime();
 
         // TODO: try an invalid delivId

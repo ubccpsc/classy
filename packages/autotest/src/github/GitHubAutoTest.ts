@@ -169,8 +169,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             }
 
             // late is ok if lateAutoTest is true
-            if (deliv.closeTimestamp < info.timestamp || deliv.lateAutoTest === false) {
-                Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, deliverable closed to AutoTest.");
+            if (deliv.closeTimestamp < info.timestamp && deliv.lateAutoTest === false) {
+                Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, deliverable has been closed to AutoTest.");
                 // closed
                 const msg = "This deliverable is closed to grading.";
                 await this.postToGitHub(info, {url: info.postbackURL, message: msg});

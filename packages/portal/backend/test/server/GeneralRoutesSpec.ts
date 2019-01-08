@@ -227,6 +227,29 @@ describe('General Routes', function() {
         expect(body.failure.message).to.equal('Invalid credentials');
     });
 
+    it('Users who have not logged in should be handled gracefully.', async function() {
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        // get user
+        const auth = await dc.getAuth(Test.USER1.id);
+        expect(auth).to.not.be.null;
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/resource/ID/student/GUID/bar/baz.txt';
+        try {
+            Log.test('Making request');
+            response = await request(app).get(url);
+            Log.test('Response received');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(302); // user should be redirected to the login page
+    });
+
     it('Invalid students should not be able to get student resources.', async function() {
         const dc: DatabaseController = DatabaseController.getInstance();
 

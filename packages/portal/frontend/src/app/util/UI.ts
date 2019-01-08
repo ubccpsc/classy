@@ -75,7 +75,26 @@ export class UI {
     }
 
     public static showErrorToast(text: string) {
-        ons.notification.toast({message: text, timeout: 2000});
+        ons.notification.toast({message: text, timeout: 5000});
+    }
+
+    public static showSuccessToast(text: string, opts?: any) {
+        // TODO: change colour: https://onsen.io/v2/api/js/ons.notification.html#method-toast
+        if (typeof opts === "undefined") {
+            opts = {};
+        }
+
+        let timeout = 2000;
+        if (typeof opts.timeout !== "undefined") {
+            timeout = opts.timeout;
+        }
+
+        let force = true;
+        if (typeof opts.force !== "undefined") {
+            force = opts.force;
+        }
+
+        ons.notification.toast({message: text, timeout: timeout, force: force});
     }
 
     public static createListItem(text: string, subtext?: string, tappable?: boolean): HTMLElement {
@@ -306,4 +325,14 @@ export class UI {
             el.style.display = 'none'; // show the section
         }
     }
+
+    public static clearChildren(id: string) {
+        const el = document.getElementById(id);
+        if (el === null) {
+            Log.error("UI::clearChildren( " + id + " ) - unknown id");
+        } else {
+            el.innerHTML = '';
+        }
+    }
+
 }
