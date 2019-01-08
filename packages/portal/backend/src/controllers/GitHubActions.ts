@@ -8,6 +8,7 @@ import {Factory} from "../Factory";
 
 import {DatabaseController} from "./DatabaseController";
 import {GitTeamTuple} from "./GitHubController";
+import {TeamController} from "./TeamController";
 
 // tslint:disable-next-line
 const tmp = require('tmp-promise');
@@ -956,7 +957,10 @@ export class GitHubActions implements IGitHubActions {
             await GitHubActions.checkDatabase(null, teamName);
         }
 
-        const teamNumber = await gh.getTeamNumber(teamName);
+        const tc = new TeamController();
+        const teamNumber = await tc.getTeamNumber(teamName); // try to use cache
+
+        // const teamNumber = await gh.getTeamNumber(teamName);
 
         const teamMembers = await gh.getTeamMembers(teamNumber);
         for (const member of teamMembers) {
