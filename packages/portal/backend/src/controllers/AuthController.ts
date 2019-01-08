@@ -4,6 +4,7 @@ import {Person, PersonKind} from "../Types";
 import {DatabaseController} from "./DatabaseController";
 import {GitHubActions} from "./GitHubActions";
 import {PersonController} from "./PersonController";
+import {TeamController} from "./TeamController";
 
 /**
  * Nice OAuth Reference: https://medium.com/typeforms-engineering-blog/the-beginners-guide-to-oauth-dancing-4b8f3666de10
@@ -46,8 +47,9 @@ export class AuthController {
         const personId = person.id;
         if (person.kind === null || person.kind === PersonKind.NONE) {
             // check github for credentials and cache them
-            const isStaff = await GitHubActions.getInstance().isOnStaffTeam(personId);
-            const isAdmin = await GitHubActions.getInstance().isOnAdminTeam(personId);
+            const tc = new TeamController();
+            const isStaff = await tc.isOnStaffTeam(personId);
+            const isAdmin = await tc.isOnAdminTeam(personId);
             Log.trace("AuthController::personPriviliged( " + personId + ", ... ) - " +
                 " caching new credentials; admin: " + isAdmin + "; staff: " + isStaff);
 

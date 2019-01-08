@@ -4,7 +4,7 @@ import Util from "../../../../common/Util";
 import {Person, PersonKind, Repository} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
-import {GitHubActions} from "./GitHubActions";
+import {TeamController} from "./TeamController";
 
 export class PersonController {
 
@@ -71,9 +71,10 @@ export class PersonController {
             Log.trace("PersonController::getgetGitHubPersonPerson( " + githubId + " ) - githubId not yet registered.");
 
             // user not registered but might be admin or staff
-            const gh = GitHubActions.getInstance();
-            const isAdmin = await gh.isOnAdminTeam(githubId);
-            const isStaff = await gh.isOnStaffTeam(githubId);
+            // const gh = GitHubActions.getInstance();
+            const tc = new TeamController();
+            const isAdmin = await tc.isOnAdminTeam(githubId);
+            const isStaff = await tc.isOnStaffTeam(githubId);
 
             if (isAdmin === true || isStaff === true) {
                 Log.trace("PersonController::getgetGitHubPersonPerson( " + githubId + " ) - githubId is admin or staff.");

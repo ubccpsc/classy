@@ -242,4 +242,45 @@ export class TeamController {
         return t;
     }
 
+    public async isOnAdminTeam(userName: string): Promise<boolean> {
+        const isAdmin = await this.isOnTeam('admin', userName);
+        Log.trace('TeamController::isOnAdminTeam( ' + userName + ' ) - result: ' + isAdmin);
+        return isAdmin;
+    }
+
+    public async isOnStaffTeam(userName: string): Promise<boolean> {
+        const isStaff = await this.isOnTeam('staff', userName);
+        Log.trace('TeamController::isOnStaffTeam( ' + userName + ' ) - result: ' + isStaff);
+        return isStaff;
+    }
+
+    public async isOnTeam(teamName: string, userName: string): Promise<boolean> {
+        if (teamName !== 'staff' && teamName !== 'admin') {
+            // sanity-check non admin/staff teams
+            await GitHubActions.checkDatabase(null, teamName);
+        }
+
+        const team = await this.db.getTeam(teamName);
+        let teamNumber = -1;
+        if (team !== null && team.githubId !== null) {
+            Log.trace("TeamController::isOnTeam( " + teamName + ", ... ) - using cached teamId");
+            // TODO: should we check to make sure the team name is still right for that number?
+            teamNumber = team.githubId;
+        } else {
+            Log.trace("TeamController::isOnTeam( " + teamName + ", ... ) - fetching teamId");
+            teamNumber = await this.gha.getTeamNumber(teamName);
+        }
+
+        const teamMembers = await this.gha.getTeamMembers(teamNumber);
+        for (const member of teamMembers) {
+            if (member === userName) {
+                Log.info('TeamController::isOnTeam(..) - user: ' + userName + ' IS on team: ' + teamName);
+                return true;
+            }
+        }
+
+        Log.info('TeamController::isOnTeam(..) - user: ' + userName + ' is NOT on team: ' + teamName);
+        return false;
+    }
+
 }

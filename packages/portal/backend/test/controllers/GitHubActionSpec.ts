@@ -195,45 +195,6 @@ describe("GitHubActions", () => {
         expect(res.length).to.be.greaterThan(0);
     }).timeout(TIMEOUT);
 
-    it("Should be possible to identify an admin from the admin team.", async function() {
-        let res = await gh.isOnAdminTeam(Test.ADMIN1.github);
-        Log.test('res: ' + res);
-        expect(res).to.be.an('boolean');
-        expect(res).to.be.true;
-
-        // student shouldn't be admin
-        res = await gh.isOnAdminTeam(Test.USER1.github);
-        Log.test('res: ' + res);
-        expect(res).to.be.an('boolean');
-        expect(res).to.be.false;
-
-        // random shouldn't be admin
-        res = await gh.isOnAdminTeam('unknown' + Date.now());
-        Log.test('res: ' + res);
-        expect(res).to.be.an('boolean');
-        expect(res).to.be.false;
-
-    }).timeout(TIMEOUT);
-
-    it("Should be possible to identify a staff from the staff team.", async function() {
-        let res = await gh.isOnStaffTeam(Test.STAFF1.github);
-        Log.test('res: ' + res);
-        expect(res).to.be.an('boolean');
-        expect(res).to.be.true;
-
-        // student shouldn't be admin
-        res = await gh.isOnStaffTeam(Test.USER1.github);
-        Log.test('res: ' + res);
-        expect(res).to.be.an('boolean');
-        expect(res).to.be.false;
-
-        // random shouldn't be admin
-        res = await gh.isOnStaffTeam('unknown' + Date.now());
-        Log.test('res: ' + res);
-        expect(res).to.be.an('boolean');
-        expect(res).to.be.false;
-    }).timeout(TIMEOUT);
-
     it("Should not be possible to get a team number for a team that does not exist.", async function() {
         const val = await gh.getTeamNumber(Test.INVALIDTEAMNAME);
         Log.test('Team # ' + val);
