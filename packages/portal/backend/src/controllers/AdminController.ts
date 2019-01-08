@@ -749,7 +749,8 @@ export class AdminController {
 
         for (const repo of repos) {
             try {
-                Log.info("AdminController::performProvision( .. ) ***** START *****");
+                const start = Date.now();
+                Log.info("AdminController::performProvision( .. ) ***** START *****; repo: " + repo.id);
                 Log.info("AdminController::performProvision( .. ) - start for repo: " + repo.id);
                 if (repo.URL === null) {
                     const teams: Team[] = [];
@@ -773,7 +774,8 @@ export class AdminController {
                     Log.info("AdminController::performProvision( .. ) - done provisioning: " + repo.id + "; forced wait");
                     await Util.delay(2 * 1000); // after any provisioning wait a bit
                     Log.info("AdminController::performProvision( .. ) - done for repo: " + repo.id + "; wait complete");
-                    Log.info("AdminController::performProvision( .. ) ***** DONE *****");
+                    Log.info("AdminController::performProvision( .. ) ***** DONE *****; repo: " +
+                        repo.id + "; took: " + Util.took(start));
                 } else {
                     Log.info("AdminController::performProvision( .. ) - skipped; already provisioned: " +
                         repo.id + "; URL: " + repo.URL);

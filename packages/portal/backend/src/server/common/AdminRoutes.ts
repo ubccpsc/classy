@@ -641,14 +641,15 @@ export default class AdminRoutes implements IREST {
     }
 
     private static postProvision(req: any, res: any, next: any) {
-        Log.info('AdminRoutes::postProvision(..) - start');
+
         let payload: Payload;
         const user = req.headers.user;
         const delivId = req.params.delivId;
         const repoId = req.params.repoId;
 
-        const provisionTrans: ProvisionTransport = req.params;
-        Log.info('AdminRoutes::postProvision() - body: ' + provisionTrans);
+        Log.info('AdminRoutes::postProvision(..) - start; delivId: ' + delivId + '; repoId: ' + repoId);
+        // const provisionTrans: ProvisionTransport = req.params;
+        // Log.info('AdminRoutes::postProvision() - body: ' + provisionTrans);
         AdminRoutes.handleProvisionRepo(user, delivId, repoId).then(function(success) {
             payload = {success: success};
             res.send(200, payload);

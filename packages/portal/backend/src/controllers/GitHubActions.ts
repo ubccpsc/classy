@@ -251,7 +251,7 @@ export class GitHubActions implements IGitHubActions {
         const isInTest = typeof (global as any).it === 'function';
         if (isInTest === false) {
             // we're in prod, always return the real thing
-            Log.test("GitHubActions::getInstance(.. ) - prod; returning GitHubActions");
+            Log.trace("GitHubActions::getInstance(.. ) - prod; returning GitHubActions");
             return new GitHubActions();
         }
 
@@ -706,7 +706,7 @@ export class GitHubActions implements IGitHubActions {
         };
 
         const results = await rp(opts); // .then(function(results: any) {
-        Log.info("GitHubAction::addWebhook(..) - success: " + results + "; took: " + Util.took(start));
+        Log.info("GitHubAction::addWebhook(..) - success; took: " + Util.took(start));
         return true;
     }
 
@@ -1140,11 +1140,12 @@ export class GitHubActions implements IGitHubActions {
         }
 
         function pushToNewRepo() {
+            const pushStart = Date.now();
             Log.info('GitHubActions::importRepoFS(..)::pushToNewRepo() - start');
             const command = `cd ${cloneTempDir.path} && git push -q origin master`;
             return exec(command)
                 .then(function(result: any) {
-                    Log.info('GitHubActions::importRepoFS(..)::pushToNewRepo() - done');
+                    Log.info('GitHubActions::importRepoFS(..)::pushToNewRepo() - done; took: ' + Util.took(pushStart));
                     that.reportStdOut(result.stdout, 'GitHubActions::importRepoFS(..)::pushToNewRepo()');
                     that.reportStdErr(result.stderr, 'importRepoFS(..)::pushToNewRepo()');
                 });
@@ -1235,10 +1236,11 @@ export class GitHubActions implements IGitHubActions {
         return true;
 
         function cloneRepo(repoPath: string) {
+            const cloneStart = Date.now();
             Log.info('GitHubActions::writeFileToRepo(..)::cloneRepo() - cloning: ' + repoURL);
             return exec(`git clone -q ${authedRepo} ${repoPath}`)
                 .then(function(result: any) {
-                    Log.info('GitHubActions::writeFileToRepo(..)::cloneRepo() - done');
+                    Log.info('GitHubActions::writeFileToRepo(..)::cloneRepo() - done; took: ' + Util.took(cloneStart));
                     that.reportStdOut(result.stdout, 'GitHubActions::writeFileToRepo(..)::cloneRepo()');
                     // if (result.stderr) {
                     //     Log.warn('GitHubActions::writeFileToRepo(..)::cloneRepo() - stderr: ' + result.stderr);
