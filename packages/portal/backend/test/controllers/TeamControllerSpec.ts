@@ -18,8 +18,6 @@ describe("TeamController", () => {
     let pc: PersonController;
     let dc: DatabaseController;
 
-    const TIMEOUT = Test.TIMEOUTLONG; // was 20000; // was 5000
-
     before(async () => {
         await Test.suiteBefore('TeamController');
 
@@ -279,43 +277,4 @@ describe("TeamController", () => {
             expect(trans.people).to.contain(p);
         }
     }).timeout(Test.TIMEOUT);
-
-    it("Should be possible to identify an admin from the admin team.", async function() {
-        let res = await tc.isOnAdminTeam(Test.ADMIN1.github);
-        Log.test('res: ' + res);
-        expect(res).to.be.an('boolean');
-        expect(res).to.be.true;
-
-        // student shouldn't be admin
-        res = await tc.isOnAdminTeam(Test.USER1.github);
-        Log.test('res: ' + res);
-        expect(res).to.be.an('boolean');
-        expect(res).to.be.false;
-
-        // random shouldn't be admin
-        res = await tc.isOnAdminTeam('unknown' + Date.now());
-        Log.test('res: ' + res);
-        expect(res).to.be.an('boolean');
-        expect(res).to.be.false;
-
-    }).timeout(TIMEOUT);
-
-    it("Should be possible to identify a staff from the staff team.", async function() {
-        let res = await tc.isOnStaffTeam(Test.STAFF1.github);
-        Log.test('res: ' + res);
-        expect(res).to.be.an('boolean');
-        expect(res).to.be.true;
-
-        // student shouldn't be admin
-        res = await tc.isOnStaffTeam(Test.USER1.github);
-        Log.test('res: ' + res);
-        expect(res).to.be.an('boolean');
-        expect(res).to.be.false;
-
-        // random shouldn't be admin
-        res = await tc.isOnStaffTeam('unknown' + Date.now());
-        Log.test('res: ' + res);
-        expect(res).to.be.an('boolean');
-        expect(res).to.be.false;
-    }).timeout(TIMEOUT);
 });

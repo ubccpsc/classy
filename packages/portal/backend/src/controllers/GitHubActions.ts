@@ -151,11 +151,11 @@ export interface IGitHubActions {
      */
     getTeamMembers(teamNumber: number): Promise<string[]>;
 
-    // isOnAdminTeam(userName: string): Promise<boolean>;
-    //
-    // isOnStaffTeam(userName: string): Promise<boolean>;
-    //
-    // isOnTeam(teamName: string, userName: string): Promise<boolean>;
+    isOnAdminTeam(userName: string): Promise<boolean>;
+
+    isOnStaffTeam(userName: string): Promise<boolean>;
+
+    isOnTeam(teamName: string, userName: string): Promise<boolean>;
 
     importRepoFS(importRepo: string, studentRepo: string, seedFilePath?: string): Promise<boolean>;
 
@@ -936,39 +936,39 @@ export class GitHubActions implements IGitHubActions {
         }
     }
 
-    // public async isOnAdminTeam(userName: string): Promise<boolean> {
-    //     const isAdmin = await this.isOnTeam('admin', userName);
-    //     Log.trace('GitHubAction::isOnAdminTeam( ' + userName + ' ) - result: ' + isAdmin);
-    //     return isAdmin;
-    // }
-    //
-    // public async isOnStaffTeam(userName: string): Promise<boolean> {
-    //     const isStaff = await this.isOnTeam('staff', userName);
-    //     Log.trace('GitHubAction::isOnStaffTeam( ' + userName + ' ) - result: ' + isStaff);
-    //     return isStaff;
-    // }
-    //
-    // public async isOnTeam(teamName: string, userName: string): Promise<boolean> {
-    //     const gh = this;
-    //
-    //     if (teamName !== 'staff' && teamName !== 'admin') {
-    //         // sanity-check non admin/staff teams
-    //         await GitHubActions.checkDatabase(null, teamName);
-    //     }
-    //
-    //     const teamNumber = await gh.getTeamNumber(teamName);
-    //
-    //     const teamMembers = await gh.getTeamMembers(teamNumber);
-    //     for (const member of teamMembers) {
-    //         if (member === userName) {
-    //             Log.info('GitHubAction::isOnTeam(..) - user: ' + userName + ' IS on team: ' + teamName + ' for org: ' + gh.org);
-    //             return true;
-    //         }
-    //     }
-    //
-    //     Log.info('GitHubAction::isOnTeam(..) - user: ' + userName + ' is NOT on team: ' + teamName + ' for org: ' + gh.org);
-    //     return false;
-    // }
+    public async isOnAdminTeam(userName: string): Promise<boolean> {
+        const isAdmin = await this.isOnTeam('admin', userName);
+        Log.trace('GitHubAction::isOnAdminTeam( ' + userName + ' ) - result: ' + isAdmin);
+        return isAdmin;
+    }
+
+    public async isOnStaffTeam(userName: string): Promise<boolean> {
+        const isStaff = await this.isOnTeam('staff', userName);
+        Log.trace('GitHubAction::isOnStaffTeam( ' + userName + ' ) - result: ' + isStaff);
+        return isStaff;
+    }
+
+    public async isOnTeam(teamName: string, userName: string): Promise<boolean> {
+        const gh = this;
+
+        if (teamName !== 'staff' && teamName !== 'admin') {
+            // sanity-check non admin/staff teams
+            await GitHubActions.checkDatabase(null, teamName);
+        }
+
+        const teamNumber = await gh.getTeamNumber(teamName);
+
+        const teamMembers = await gh.getTeamMembers(teamNumber);
+        for (const member of teamMembers) {
+            if (member === userName) {
+                Log.info('GitHubAction::isOnTeam(..) - user: ' + userName + ' IS on team: ' + teamName + ' for org: ' + gh.org);
+                return true;
+            }
+        }
+
+        Log.info('GitHubAction::isOnTeam(..) - user: ' + userName + ' is NOT on team: ' + teamName + ' for org: ' + gh.org);
+        return false;
+    }
 
     public async listTeamMembers(teamName: string): Promise<string[]> {
         const gh = this;
