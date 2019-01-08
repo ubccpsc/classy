@@ -431,22 +431,26 @@ export class GitHubActions implements IGitHubActions {
 
             const uri = this.apiPath + '/teams/' + teamId;
             const options = {
-                method:  'DELETE',
-                uri:     uri,
-                headers: {
+                method:                  'DELETE',
+                uri:                     uri,
+                headers:                 {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent':    this.gitHubUserName,
                     // 'Accept': 'application/json', // custom because this is a preview api
                     'Accept':        'application/vnd.github.hellcat-preview+json'
-                }
+                },
+                resolveWithFullResponse: true,
+                json:                    true
             };
 
-            const status = await rp(options);
-            if (status.statusCode === 200) {
+            const response = await rp(options);
+            Log.info("GitHubAction::deleteTeam(..) - response: " + response);
+
+            if (response.statusCode === 200) {
                 Log.info("GitHubAction::deleteTeam(..) - success; took: " + Util.took(start));
                 return true;
             } else {
-                Log.info("GitHubAction::deleteTeam(..) - not deleted; code: " + status.statusCode + "; took: " + Util.took(start));
+                Log.info("GitHubAction::deleteTeam(..) - not deleted; code: " + response.statusCode + "; took: " + Util.took(start));
                 return false;
             }
 
