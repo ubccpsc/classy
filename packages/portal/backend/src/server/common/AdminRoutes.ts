@@ -18,6 +18,7 @@ import {
     TeamTransport,
     TeamTransportPayload
 } from '../../../../../common/types/PortalTypes';
+import Util from '../../../../../common/Util';
 import {AdminController} from "../../controllers/AdminController";
 
 import {AuthController} from "../../controllers/AuthController";
@@ -146,7 +147,7 @@ export default class AdminRoutes implements IREST {
      * @param next
      */
     private static isAdmin(req: any, res: any, next: any) {
-        Log.info('AdminRoutes::isAdmin(..) - start');
+        // Log.info('AdminRoutes::isAdmin(..) - start');
 
         const auth = AdminRoutes.processAuth(req);
         const user = auth.user;
@@ -161,8 +162,10 @@ export default class AdminRoutes implements IREST {
         ac.isPrivileged(user, token).then(function(priv) {
             Log.trace('AdminRoutes::isAdmin(..) - in isAdmin: ' + JSON.stringify(priv));
             if (priv.isAdmin === true) {
+                Log.info('AdminRoutes::isAdmin(..) - isAdmin = true');
                 return next();
             } else {
+                Log.info('AdminRoutes::isAdmin(..) - isAdmin NOT true');
                 return AdminRoutes.handleError(401, 'Authorization error; user not admin.', res, next);
             }
         }).catch(function(err) {
@@ -206,12 +209,13 @@ export default class AdminRoutes implements IREST {
      * @param next
      */
     private static getTeams(req: any, res: any, next: any) {
-        Log.info('AdminRoutes::getTeams(..) - start');
+        Log.trace('AdminRoutes::getTeams(..) - start');
+        const start = Date.now();
 
         const cc = new AdminController(AdminRoutes.ghc);
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getTeams().then(function(teams) {
-            Log.trace('AdminRoutes::getTeams(..) - in then; # teams: ' + teams.length);
+            Log.info('AdminRoutes::getTeams(..) - done; # teams: ' + teams.length + '; took: ' + Util.took(start));
             const payload: TeamTransportPayload = {success: teams};
             res.send(payload);
             return next();
@@ -221,12 +225,13 @@ export default class AdminRoutes implements IREST {
     }
 
     private static getRepositories(req: any, res: any, next: any) {
-        Log.info('AdminRoutes::getRepositories(..) - start');
+        Log.trace('AdminRoutes::getRepositories(..) - start');
+        const start = Date.now();
 
         const cc = new AdminController(AdminRoutes.ghc);
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getRepositories().then(function(repos) {
-            Log.trace('AdminRoutes::getRepositories(..) - in then; # repos: ' + repos.length);
+            Log.info('AdminRoutes::getRepositories(..) - done; # repos: ' + repos.length + '; took: ' + Util.took(start));
             const payload: RepositoryPayload = {success: repos};
             res.send(payload);
             return next();
@@ -243,7 +248,8 @@ export default class AdminRoutes implements IREST {
      * @param next
      */
     private static getResults(req: any, res: any, next: any) {
-        Log.info('AdminRoutes::getResults(..) - start');
+        Log.trace('AdminRoutes::getResults(..) - start');
+        const start = Date.now();
         const cc = new AdminController(AdminRoutes.ghc);
 
         // if these params are missing the client will get 404 since they are part of the path
@@ -252,7 +258,7 @@ export default class AdminRoutes implements IREST {
 
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getResults(delivId, repoId).then(function(results) {
-            Log.trace('AdminRoutes::getResults(..) - in then; # results: ' + results.length);
+            Log.info('AdminRoutes::getResults(..) - done; # results: ' + results.length + '; took: ' + Util.took(start));
             const payload: AutoTestResultSummaryPayload = {success: results};
             res.send(payload);
             return next();
@@ -356,6 +362,8 @@ export default class AdminRoutes implements IREST {
         // if these params are missing the client will get 404 since they are part of the path
         const teamId = req.params.teamId;
         const user = req.params.user;
+
+        Log.info("AdminRoutes::deleteTeam(..) - params: " + JSON.stringify(req.params)); // LOGGING, remove!
 
         AdminRoutes.handleDeleteTeam(user, teamId).then(function(success) {
             Log.trace('AdminRoutes::deleteTeam(..) - done; success: ' + success);
