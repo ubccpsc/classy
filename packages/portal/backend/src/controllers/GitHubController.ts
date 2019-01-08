@@ -157,6 +157,7 @@ export class GitHubController implements IGitHubController {
                                    teams: Team[],
                                    asCollaborators: boolean = false): Promise<boolean> {
         Log.info("GitHubController::releaseRepository( {" + repo.id + ", ...}, ...) - start");
+        const start = Date.now();
 
         await this.checkDatabase(repo.id, null);
 
@@ -198,7 +199,7 @@ export class GitHubController implements IGitHubController {
             }
         }
 
-        Log.info("GitHubController::releaseRepository(..) - finish");
+        Log.info("GitHubController::releaseRepository( " + repo.id + ", ... ) - done; took: " + Util.took(start));
         return true;
     }
 

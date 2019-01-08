@@ -872,13 +872,13 @@ export class AdminController {
                     const success = await ghc.releaseRepository(repo, teams, false);
 
                     if (success === true) {
-                        Log.info("AdminController::releaseRepositories( .. ) - success: " + repo.id);
+                        Log.info("AdminController::releaseRepositories( .. ) - success: " + repo.id + '; took: ' + Util.took(start));
                         releasedRepos.push(repo);
                     } else {
                         Log.warn("AdminController::releaseRepositories( .. ) - FAILED: " + repo.id);
                     }
 
-                    await Util.delay(2 * 1000); // after any releasing wait a bit
+                    await Util.delay(200); // after any releasing wait a short bit
                 } else {
                     Log.info("AdminController::releaseRepositories( .. ) - skipped; repo not yet provisioned: " +
                         repo.id + "; URL: " + repo.URL);
