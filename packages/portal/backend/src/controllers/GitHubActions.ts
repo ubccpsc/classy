@@ -405,7 +405,7 @@ export class GitHubActions implements IGitHubActions {
 
     public async deleteTeamByName(teamName: string): Promise<boolean> {
         Log.info("GitHubAction::deleteTeamByName( " + this.org + ", " + teamName + " ) - start");
-        const teamNum = await this.getTeamNumber(teamName);
+        const teamNum = await this.getTeamNumber(teamName); // be conservative, don't use TeamController on purpose
         if (teamNum >= 0) {
             return await this.deleteTeam(teamNum);
         }
@@ -727,7 +727,7 @@ export class GitHubActions implements IGitHubActions {
         try {
             await GitHubActions.checkDatabase(null, teamName);
 
-            const teamNum = await this.getTeamNumber(teamName);
+            const teamNum = await this.getTeamNumber(teamName); // be conservative, don't use TeamController on purpose
             if (teamNum > 0) {
                 Log.info("GitHubAction::createTeam( " + teamName + ", ... ) - success; exists: " + teamNum);
                 const config = Config.getInstance();
@@ -858,6 +858,9 @@ export class GitHubActions implements IGitHubActions {
         Log.info("GitHubAction::getTeamNumber( " + teamName + " ) - start");
         const start = Date.now();
         try {
+
+            // NOTE: this cannot use TeamController::getTeamNumber because that causes an infinite loop
+
             let teamId = -1;
             const teamList = await this.listTeams();
             for (const team of teamList) {
@@ -977,7 +980,8 @@ export class GitHubActions implements IGitHubActions {
     public async listTeamMembers(teamName: string): Promise<string[]> {
         const gh = this;
 
-        const teamNumber = await gh.getTeamNumber(teamName);
+        // const teamNumber = await gh.getTeamNumber(teamName);
+        const teamNumber = await new TeamController().getTeamNumber(teamName);
         const teamMembers = await gh.getTeamMembers(teamNumber);
 
         return teamMembers;
