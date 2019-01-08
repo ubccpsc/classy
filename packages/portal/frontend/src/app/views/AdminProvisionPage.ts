@@ -166,7 +166,7 @@ export class AdminProvisionPage extends AdminPage {
         Log.trace('AdminProvisioningPage::handleReleasePressed(..) - complete; took: ' + Util.took(start));
 
         UI.hideModal();
-        UI.showSuccessToast('Repositories released.', {timeout: 10000});
+        UI.showSuccessToast('Repositories released.', {timeout: 10000, buttonLabel: 'Ok'});
 
         if (typeof json.success !== 'undefined') {
             Log.info('AdminProvisioningPage::handleReleasePressed(..) - success'); // + json.success);
@@ -218,7 +218,7 @@ export class AdminProvisionPage extends AdminPage {
 
         Log.info('AdminDeletePage::handleProvision(..) - done');
         if (selected.length > 0) {
-            UI.showSuccessToast('Repository provisioning complete.', {timeout: 20000});
+            UI.showSuccessToast('Repository provisioning complete.', {timeout: 20000, buttonLabel: 'Ok'});
         }
         // refresh the page
         await this.init({});
