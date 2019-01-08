@@ -348,6 +348,15 @@ export default class AdminRoutes implements IREST {
         return worked;
     }
 
+    private static getUser(req: any): string {
+        const user = AdminRoutes.processAuth(req);
+        let userName = 'UNKNOWN';
+        if (typeof user.user !== 'undefined' && user.user !== null) {
+            userName = user.user;
+        }
+        return userName;
+    }
+
     /**
      *
      * @param req
@@ -361,11 +370,9 @@ export default class AdminRoutes implements IREST {
 
         // if these params are missing the client will get 404 since they are part of the path
         const teamId = req.params.teamId;
-        const user = req.params.user;
 
-        Log.info("AdminRoutes::deleteTeam(..) - params: " + JSON.stringify(req.params)); // LOGGING, remove!
-
-        AdminRoutes.handleDeleteTeam(user, teamId).then(function(success) {
+        const userName = AdminRoutes.getUser(req);
+        AdminRoutes.handleDeleteTeam(userName, teamId).then(function(success) {
             Log.trace('AdminRoutes::deleteTeam(..) - done; success: ' + success);
 
             const payload: Payload = {
@@ -501,11 +508,12 @@ export default class AdminRoutes implements IREST {
 
         try {
 
-            const user = req.params.user;
+            // const user = req.params.user;
+            const userName = AdminRoutes.getUser(req);
             const path = req.files.classlist.path; // this is brittle, but if it fails it will just trigger the exception
 
             const csvParser = new CSVParser();
-            csvParser.processClasslist(user, path).then(function(people) {
+            csvParser.processClasslist(userName, path).then(function(people) {
                 if (people.length > 0) {
                     const payload: Payload = {
                         success: {
@@ -532,12 +540,13 @@ export default class AdminRoutes implements IREST {
         // authentication handled by preceeding action in chain above (see registerRoutes)
 
         try {
-            const user = req.params.user;
+            // const user = req.params.user;
             const delivId = req.params.delivId;
             const path = req.files.gradelist.path; // this is brittle, but if it fails it will just trigger the exception
 
+            const userName = AdminRoutes.getUser(req);
             const csvParser = new CSVParser();
-            csvParser.processGrades(user, delivId, path).then(function(grades) {
+            csvParser.processGrades(userName, delivId, path).then(function(grades) {
                 if (grades.length > 0) {
                     const payload: Payload = {
                         success: {
@@ -563,11 +572,11 @@ export default class AdminRoutes implements IREST {
         let payload: Payload;
 
         // isValid handled by preceeding action in chain above (see registerRoutes)
-        const user = req.params.user;
-
+        // const user = req.params.user;
+        const userName = AdminRoutes.getUser(req);
         const delivTrans: DeliverableTransport = req.params;
         Log.info('AdminRoutes::postDeliverable() - body: ' + delivTrans);
-        AdminRoutes.handlePostDeliverable(user, delivTrans).then(function(success) {
+        AdminRoutes.handlePostDeliverable(userName, delivTrans).then(function(success) {
             Log.info('AdminRoutes::postDeliverable() - done');
             payload = {success: {message: 'Deliverable saved successfully'}};
             res.send(200, payload);
@@ -621,11 +630,11 @@ export default class AdminRoutes implements IREST {
         Log.info('AdminRoutes::postCourse(..) - start');
         let payload: Payload;
 
-        const user = req.params.user;
-
+        // const user = req.params.user;
+        const userName = AdminRoutes.getUser(req);
         const courseTrans: CourseTransport = req.params;
         Log.info('AdminRoutes::postCourse() - body: ' + courseTrans);
-        AdminRoutes.handlePostCourse(user, courseTrans).then(function(success) {
+        AdminRoutes.handlePostCourse(userName, courseTrans).then(function(success) {
             payload = {success: {message: 'Course object saved successfully'}};
             res.send(200, payload);
             return next(true);
@@ -654,14 +663,15 @@ export default class AdminRoutes implements IREST {
     private static postProvision(req: any, res: any, next: any) {
 
         let payload: Payload;
-        const user = req.headers.user;
+        // const user = req.headers.user;
         const delivId = req.params.delivId;
         const repoId = req.params.repoId;
 
+        const userName = AdminRoutes.getUser(req);
         Log.info('AdminRoutes::postProvision(..) - start; delivId: ' + delivId + '; repoId: ' + repoId);
         // const provisionTrans: ProvisionTransport = req.params;
         // Log.info('AdminRoutes::postProvision() - body: ' + provisionTrans);
-        AdminRoutes.handleProvisionRepo(user, delivId, repoId).then(function(success) {
+        AdminRoutes.handleProvisionRepo(userName, delivId, repoId).then(function(success) {
             payload = {success: success};
             res.send(200, payload);
             return next(true);
@@ -763,10 +773,11 @@ export default class AdminRoutes implements IREST {
         Log.info('AdminRoutes::postRelease(..) - start');
         let payload: Payload;
 
-        const user = req.headers.user;
+        // const user = req.headers.user;
+        const userName = AdminRoutes.getUser(req);
         const provisionTrans: ProvisionTransport = req.params;
         Log.info('AdminRoutes::postRelease() - body: ' + provisionTrans);
-        AdminRoutes.handleRelease(user, provisionTrans).then(function(success) {
+        AdminRoutes.handleRelease(userName, provisionTrans).then(function(success) {
             payload = {success: success};
             res.send(200, payload);
             return next(true);
@@ -827,11 +838,12 @@ export default class AdminRoutes implements IREST {
         Log.info('AdminRoutes::postTeam(..) - start');
 
         // handled by isAdmin in the route chain
-        const user = req.headers.user;
+        // const user = req.headers.user;
         // const token = req.headers.token;
+        const userName = AdminRoutes.getUser(req);
 
         const teamTrans: TeamFormationTransport = req.params;
-        AdminRoutes.performPostTeam(user, teamTrans).then(function(team) {
+        AdminRoutes.performPostTeam(userName, teamTrans).then(function(team) {
             Log.info('AdminRoutes::postTeam(..) - done; team: ' + JSON.stringify(team));
             const payload: TeamTransportPayload = {success: [team]}; // really shouldn't be an array, but it beats having another type
             res.send(200, payload);
