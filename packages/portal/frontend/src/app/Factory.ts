@@ -1,7 +1,6 @@
-// import {SDMMSummaryView} from "./views/sdmm/SDMMSummaryView";
 import Log from "../../../../common/Log";
-import {AdminView} from "./views/AdminView";
 
+import {AdminView} from "./views/AdminView";
 import {IView} from "./views/IView";
 
 /**
@@ -48,13 +47,13 @@ export class Factory {
             if (this.studentView === null) {
                 Log.info("Factory::getView() - instantating new student view for: " + this.name);
 
-                let plug: any;
-                // NOTE: iusing require instead of import because file might not be present in forks
+                // NOTE: using require instead of import because file might not be present in forks
                 // import complains about this, but require does not
+                let plug: any;
                 if (name === this.TESTNAME) {
                     plug = await require('./views/classy/ClassyStudentView'); // default for testing
                 } else {
-                    plug = await require('./views/course/StudentView'); // course-specific name
+                    plug = await require('./views/course/StudentView'); // course-specific file; must be present in all forks
                 }
 
                 Log.trace("Factory::getView() - view loaded");
@@ -91,18 +90,18 @@ export class Factory {
             if (this.adminView === null) {
                 Log.info("Factory::getAdminView() - instantating new admin view for: " + this.name);
 
+                // NOTE: using require instead of import because file might not be present in forks
+                // import complains about this, but require does not
                 let plug: any;
                 if (name === this.TESTNAME) {
                     plug = await require('./views/classy/ClassyAdminView'); // default for testing
                 } else {
-                    plug = await require('./views/course/AdminView'); // course-specific name
+                    plug = await require('./views/course/AdminView'); // course-specific file; not required
                 }
 
                 Log.trace("Factory::getAdminView() - view loaded");
 
                 const constructorName = Object.keys(plug)[0];
-                // Log.info("Factory::getView()  - with constructor: " + constructorName);
-
                 this.adminView = new plug[constructorName](backendUrl, tabs);
 
                 Log.info("Factory::getAdminView() - AdminView instantiated");
