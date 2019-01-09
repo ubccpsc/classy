@@ -1077,6 +1077,7 @@
                         </li>
                         <li><b>Releasing</b> enables learners to access their repository. This is a relatively quick operation.</li>
                     </ul>
+                    Please do not start a release until a provision is complete.
                 </ons-list-item>
                 <ons-list-header>Select Deliverable</ons-list-header>
                 <ons-list-item expandable>
@@ -1112,19 +1113,22 @@
                     </div>
                 </ons-list-item>
 
-                <ons-list-header>Release All Provisioned Repositories</ons-list-header>
+                <ons-list-header>Select Repositories to Release</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
-                        <ons-icon icon="fa-address-book"></ons-icon>
+                        <ons-icon icon="fa-plus-square"></ons-icon>
                     </div>
                     <div class="center">
+                        Unreleased Repositories:
+                        <select multiple size="10"
+                                style="width: 20em; margin-left: 1em; margin-right: 1em;"
+                                id="repositoryReleaseSelect"></select>
                         <ons-button id="adminManageReleaseButton" modifier="medium">Release Repositories</ons-button>
                     </div>
                     <div class="expandable-content">
-                        Release all provisioned repositories. This can be performed multiple times.
+                        Select the repositories you wish to release.
                     </div>
                 </ons-list-item>
-
 
                 <ons-list-header>Provisioned Repositories</ons-list-header>
                 <ons-list-item expandable>
@@ -1137,6 +1141,20 @@
                     </div>
                     <div class="expandable-content">
                         These are the repositories that are already provisioned.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-header>Released Repositories</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-plus-circle"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Provisioned Repositories:
+                        <ul id="repositoryReleasedUL"></ul>
+                    </div>
+                    <div class="expandable-content">
+                        These are the repositories that are already released.
                     </div>
                 </ons-list-item>
 

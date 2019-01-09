@@ -67,7 +67,8 @@ export default class AdminRoutes implements IREST {
         server.get('/portal/admin/provision/:delivId', AdminRoutes.isAdmin, AdminRoutes.getProvision);
         // server.post('/portal/admin/provision', AdminRoutes.isAdmin, AdminRoutes.postProvision); // OLD: remove?
         server.post('/portal/admin/provision/:delivId/:repoId', AdminRoutes.isAdmin, AdminRoutes.postProvision);
-        server.post('/portal/admin/release', AdminRoutes.isAdmin, AdminRoutes.postRelease);
+        server.get('/portal/admin/release/:delivId', AdminRoutes.isAdmin, AdminRoutes.getRelease);
+        server.post('/portal/admin/release/:repoId', AdminRoutes.isAdmin, AdminRoutes.postRelease);
         server.post('/portal/admin/withdraw', AdminRoutes.isAdmin, AdminRoutes.postWithdraw);
         server.del('/portal/admin/deliverable/:delivId', AdminRoutes.isAdmin, AdminRoutes.deleteDeliverable);
         server.del('/portal/admin/repository/:repoId', AdminRoutes.isAdmin, AdminRoutes.deleteRepository);
@@ -775,9 +776,9 @@ export default class AdminRoutes implements IREST {
 
         // const user = req.headers.user;
         const userName = AdminRoutes.getUser(req);
-        const provisionTrans: ProvisionTransport = req.params;
-        Log.info('AdminRoutes::postRelease() - body: ' + provisionTrans);
-        AdminRoutes.handleRelease(userName, provisionTrans).then(function(success) {
+        const repoId = req.params.repoId;
+        Log.info('AdminRoutes::postRelease() - repoId: ' + repoId);
+        AdminRoutes.performRelease(userName, repoId).then(function(success) {
             payload = {success: success};
             res.send(200, payload);
             return next(true);
@@ -787,29 +788,78 @@ export default class AdminRoutes implements IREST {
         });
     }
 
-    private static async handleRelease(personId: string, releaseTrans: ProvisionTransport): Promise<RepositoryTransport[]> {
-        const cc = new AdminController(AdminRoutes.ghc);
-        const result = AdminController.validateProvisionTransport(releaseTrans);
+    private static getRelease(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::getRelease(..) - start');
+
+        let payload: Payload;
+        const delivId = req.params.delivId;
+
+        // const provisionTrans: ProvisionTransport = req.params;
+        Log.info('AdminRoutes::getRelease() - delivId: ' + delivId);
+        AdminRoutes.planRelease(delivId).then(function(success) {
+            payload = {success: success};
+            res.send(200, payload);
+            return next(true);
+        }).catch(function(err) {
+            return AdminRoutes.handleError(400, 'Unable to plan release: ' + err.message, res, next);
+        });
+    }
+
+    private static async planRelease(delivId: string): Promise<RepositoryTransport[]> {
+        const ac = new AdminController(AdminRoutes.ghc);
+        // const result = AdminController.validateProvisionTransport(releaseTrans);
+
+        // const dc = new DeliverablesController();
+        // const deliv = await dc.getDeliverable(delivId);
+        // TODO: if course is SDMM, always fail
+        const start = Date.now();
+        // if (deliv=== null) {
+        const dc = new DeliverablesController();
+        const deliv = await dc.getDeliverable(delivId);
+        if (deliv !== null && deliv.shouldProvision === true) {
+            const dbc = DatabaseController.getInstance();
+            // await dbc.writeAudit(AuditLabel.REPO_RELEASE, personId, {}, {}, releaseTrans);
+
+            const releasePlan = await ac.planRelease(deliv);
+            const transportRepos: RepositoryTransport[] = [];
+            for (const repo of releasePlan) {
+                transportRepos.push(RepositoryController.repositoryToTransport(repo));
+            }
+            Log.info('AdminRoutes::planRelease() - success; # results: ' + transportRepos.length +
+                '; took: ' + Util.took(start));
+            return transportRepos;
+            // } else {
+            //     throw new Error("Release unsuccessful, cannot release: " + releaseTrans.delivId);
+            // }
+        } else {
+            // should never get here unless something goes wrong
+            throw new Error("Release planning unsuccessful.");
+        }
+    }
+
+    private static async performRelease(personId: string, repoId: string): Promise<RepositoryTransport[]> {
+        const ac = new AdminController(AdminRoutes.ghc);
+        // const result = AdminController.validateProvisionTransport(releaseTrans);
 
         // TODO: if course is SDMM, always fail
         const start = Date.now();
-        if (result === null) {
-            const dc = new DeliverablesController();
-            const deliv = await dc.getDeliverable(releaseTrans.delivId);
-            if (deliv !== null && deliv.shouldProvision === true) {
-                const dbc = DatabaseController.getInstance();
-                await dbc.writeAudit(AuditLabel.REPO_RELEASE, personId, {}, {}, releaseTrans);
+        const rc = new RepositoryController();
+        const repo = await rc.getRepository(repoId);
+        if (repo === null) {
 
-                const releaseSucceeded = await cc.release(deliv);
-                Log.info('AdminRoutes::handleRelease() - success; # results: ' + releaseSucceeded.length +
-                    '; took: ' + Util.took(start));
-                return releaseSucceeded;
-            } else {
-                throw new Error("Release unsuccessful, cannot release: " + releaseTrans.delivId);
-            }
+            const dbc = DatabaseController.getInstance();
+            await dbc.writeAudit(AuditLabel.REPO_RELEASE, personId, {}, {}, {repoId: repoId});
+
+            const releaseSucceeded = await ac.releaseRepositories([repo]);
+            Log.info('AdminRoutes::performRelease() - success; # results: ' + releaseSucceeded.length +
+                '; took: ' + Util.took(start));
+            return releaseSucceeded;
+
+        } else {
+            Log.error("AdminRoutes::performRelease() - unknown repository: " + repoId);
         }
         // should never get here unless something goes wrong
-        throw new Error("Release unsuccessful.");
+        throw new Error("Perform release unsuccessful.");
     }
 
     public static postWithdraw(req: any, res: any, next: any) {

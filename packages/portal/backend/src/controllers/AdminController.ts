@@ -794,33 +794,33 @@ export class AdminController {
     }
 
     /**
-     * Releases any provisioned repositories to their respective teams.
+     * Plans the releasing activity for attaching teams to their respective provisioned repositories.
      *
-     * NOTE: this does _not_ provision the repos; it just releases previously-provisioned repositories.
+     * NOTE: this does _not_ provision the repos, or release them. It just creates a plan.
      *
      * @param {Deliverable} deliv
      * @returns {Promise<RepositoryTransport[]>}
      */
-    public async release(deliv: Deliverable): Promise<RepositoryTransport[]> {
-        Log.info("AdminController::release( " + deliv.id + " ) - start");
+    public async planRelease(deliv: Deliverable): Promise<Repository[]> {
+        Log.info("AdminController::planRelease( " + deliv.id + " ) - start");
         const allTeams: Team[] = await this.tc.getAllTeams();
-        Log.info("AdminController::release( " + deliv.id + " ) - # teams: " + allTeams.length);
+        Log.info("AdminController::planRelease( " + deliv.id + " ) - # teams: " + allTeams.length);
 
         const delivTeams: Team[] = [];
         for (const team of allTeams) {
             if (team === null || deliv === null || team.id === null || deliv.id === null) {
                 // seeing this during 310 provisioning, need to figure this out
-                Log.error("AdminController::release( .. ) - ERROR! null team: " +
+                Log.error("AdminController::planRelease( .. ) - ERROR! null team: " +
                     JSON.stringify(team) + " or deliv: " + JSON.stringify(deliv));
             } else {
                 if (team.delivId === deliv.id) {
-                    Log.trace("AdminController::release(..) - adding team: " + team.id + " to delivTeams");
+                    Log.trace("AdminController::planRelease(..) - adding team: " + team.id + " to delivTeams");
                     delivTeams.push(team);
                 }
             }
         }
 
-        Log.info("AdminController::release( " + deliv.id + " ) - # deliv teams: " + delivTeams.length);
+        Log.info("AdminController::planRelease( " + deliv.id + " ) - # deliv teams: " + delivTeams.length);
         const reposToRelease: Repository[] = [];
         for (const team of delivTeams) {
             try {
@@ -837,22 +837,23 @@ export class AdminController {
                         // aka only release provisioned repos
                         reposToRelease.push(repo);
                     } else {
-                        Log.info("AdminController::release( " + deliv.id + " ) - repo not provisioned yet: " + JSON.stringify(names));
+                        Log.info("AdminController::planRelease( " + deliv.id + " ) - repo not provisioned yet: " + JSON.stringify(names));
                     }
                 } else {
-                    Log.info("AdminController::release( " + deliv.id + " ) - skipping team: " + team.id + "; already attached");
+                    Log.info("AdminController::planRelease( " + deliv.id + " ) - skipping team: " + team.id + "; already attached");
                 }
             } catch (err) {
-                Log.error("AdminController::release( .. ) - ERROR: " + err.message);
+                Log.error("AdminController::planRelease( .. ) - ERROR: " + err.message);
                 Log.exception(err);
             }
         }
 
-        Log.info("AdminController::release( " + deliv.id + " ) - # repos to release: " + reposToRelease.length);
-        return await this.releaseRepositories(reposToRelease);
+        Log.info("AdminController::planRelease( " + deliv.id + " ) - # repos in release plan: " + reposToRelease.length);
+        // return await this.releaseRepositories(reposToRelease);
+        return reposToRelease;
     }
 
-    private async releaseRepositories(repos: Repository[]): Promise<RepositoryTransport[]> {
+    public async releaseRepositories(repos: Repository[]): Promise<RepositoryTransport[]> {
         const gha = GitHubActions.getInstance(true);
         const ghc = new GitHubController(gha);
 
