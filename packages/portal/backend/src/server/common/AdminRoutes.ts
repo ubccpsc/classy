@@ -777,6 +777,7 @@ export default class AdminRoutes implements IREST {
         // const user = req.headers.user;
         const userName = AdminRoutes.getUser(req);
         const repoId = req.params.repoId;
+
         Log.info('AdminRoutes::postRelease() - repoId: ' + repoId);
         AdminRoutes.performRelease(userName, repoId).then(function(success) {
             payload = {success: success};
@@ -839,14 +840,14 @@ export default class AdminRoutes implements IREST {
 
     private static async performRelease(personId: string, repoId: string): Promise<RepositoryTransport[]> {
         const ac = new AdminController(AdminRoutes.ghc);
-        // const result = AdminController.validateProvisionTransport(releaseTrans);
 
         // TODO: if course is SDMM, always fail
         const start = Date.now();
         const rc = new RepositoryController();
-        const repo = await rc.getRepository(repoId);
-        if (repo === null) {
 
+        const repo = await rc.getRepository(repoId);
+        Log.info("AdminRoutes::performRelease( " + personId + ", " + repoId + " ) - repo: " + repo);
+        if (repo !== null) {
             const dbc = DatabaseController.getInstance();
             await dbc.writeAudit(AuditLabel.REPO_RELEASE, personId, {}, {}, {repoId: repoId});
 
