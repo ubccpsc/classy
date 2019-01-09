@@ -193,6 +193,8 @@ export class GitHubController implements IGitHubController {
                     // keep track of team addition
                     team.custom.githubAttached = true;
                     await this.dbc.writeTeam(team);
+                } else {
+                    Log.error("GitHubController::releaseRepository(..) - ERROR adding team to repo: " + JSON.stringify(res));
                 }
                 Log.info("GitHubController::releaseRepository(..) - " +
                     " added team (" + team.id + " ) with push permissions to repository (" + repo.id + ")");
@@ -205,8 +207,7 @@ export class GitHubController implements IGitHubController {
 
     public async provisionRepository(repoName: string,
                                      teams: Team[],
-                                     importUrl: string,
-                                     shouldRelease: boolean): Promise<boolean> {
+                                     importUrl: string): Promise<boolean> {
         Log.info("GitHubController::provisionRepository( " + repoName + ", ...) - start");
         const dbc = DatabaseController.getInstance();
 
@@ -273,6 +274,7 @@ export class GitHubController implements IGitHubController {
                         // worked
                         team.URL = teamValue.URL;
                         team.githubId = teamValue.githubTeamNumber;
+                        team.custom.githubAttached = false; // attaching happens in release
                         await dbc.writeTeam(team);
                     }
 
@@ -280,25 +282,25 @@ export class GitHubController implements IGitHubController {
                     const addMembers = await this.gha.addMembersToTeam(teamValue.teamName, teamValue.githubTeamNumber, team.personIds);
                     Log.info("GitHubController::provisionRepository( " + repoName + " ) - addMembers: " + addMembers.teamName);
 
-                    if (shouldRelease === true) {
-                        Log.info("GitHubController::provisionRepository() - add team: " + teamValue.teamName + " to repo");
-                        const teamAdd = await this.gha.addTeamToRepo(teamValue.githubTeamNumber, repoName, 'push');
-
-                        if (teamAdd.githubTeamNumber > 0) {
-                            // keep track of team addition
-                            team.custom.githubAttached = true;
-                            await dbc.writeTeam(team);
-                        }
-
-                        Log.info('GitHubController::provisionRepository(..) - team name: ' + teamAdd.teamName);
-                    } else {
-                        // keep track of fact that team wasn't added to repo
-                        team.custom.githubAttached = false;
-                        await dbc.writeTeam(team);
-
-                        Log.info("GitHubController::provisionRepository() - team: " +
-                            teamValue.teamName + " NOT added to repo (shouldRelease === false)");
-                    }
+                    // if (shouldRelease === true) {
+                    //     Log.info("GitHubController::provisionRepository() - add team: " + teamValue.teamName + " to repo");
+                    //     const teamAdd = await this.gha.addTeamToRepo(teamValue.githubTeamNumber, repoName, 'push');
+                    //
+                    //     if (teamAdd.githubTeamNumber > 0) {
+                    //         // keep track of team addition
+                    //         team.custom.githubAttached = true;
+                    //         await dbc.writeTeam(team);
+                    //     }
+                    //
+                    //     Log.info('GitHubController::provisionRepository(..) - team name: ' + teamAdd.teamName);
+                    // } else {
+                    // keep track of fact that team wasn't added to repo
+                    // team.custom.githubAttached = false;
+                    // await dbc.writeTeam(team);
+                    //
+                    // Log.info("GitHubController::provisionRepository() - team: " +
+                    //     teamValue.teamName + " NOT added to repo (shouldRelease === false)");
+                    // }
                 }
             } catch (err) {
                 Log.warn("GitHubController::provisionRepository() - create team ERROR: " + err);

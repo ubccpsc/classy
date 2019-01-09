@@ -697,6 +697,15 @@ export class AdminController {
                 throw new Error("AdminController::planProvision(..) - repo unexpectedly null: " + names.repoName);
             }
 
+            if (typeof repo.custom.githubCreated !== 'undefined' && repo.custom.githubCreated === true && repo.URL === null) {
+                // HACK: this is just for dealing with inconsistent databases
+                // This whole block should be removed in the future
+                Log.warn("AdminController::planProvision(..) - repo URL should not be null: " + repo.id);
+                const config = Config.getInstance();
+                repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
+                await this.dbc.writeRepository(repo);
+            }
+
             // // teams and repos should be provisioned together; this makes sure this consistency is maintained
             // if (team.URL === null && repo.URL === null) {
             //     // provision
@@ -717,7 +726,8 @@ export class AdminController {
 
         const repoTrans: RepositoryTransport[] = [];
         for (const repo of reposToProvision) {
-            repoTrans.push({delivId: deliv.id, id: repo.id, URL: repo.URL});
+            const newRepo = {delivId: deliv.id, id: repo.id, URL: repo.URL};
+            repoTrans.push(newRepo);
         }
 
         return repoTrans;
@@ -758,7 +768,7 @@ export class AdminController {
                         teams.push(await this.dbc.getTeam(teamId));
                     }
                     Log.info("AdminController::performProvision( .. ) - about to provision: " + repo.id);
-                    const success = await ghc.provisionRepository(repo.id, teams, importURL, false);
+                    const success = await ghc.provisionRepository(repo.id, teams, importURL);
                     Log.info("AdminController::performProvision( .. ) - provisioned: " + repo.id + "; success: " + success);
 
                     if (success === true) {
