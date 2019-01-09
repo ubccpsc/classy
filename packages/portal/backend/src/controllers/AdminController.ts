@@ -728,7 +728,7 @@ export class AdminController {
      * have not already been configured (e.g., their URL field is null).
      *
      * Does not release the repos to the students (e.g., the student team is not attached
-     * to the repository; this should be done with releaseRepositories). Released repos will
+     * to the repository; this should be done with performRelease). Released repos will
      * have their Team.URL fields set. e.g., creating the repo sets Repository.URL; releasing
      * the repo sets Team.URL (for the student teams associated with the repo).
      *
@@ -862,11 +862,11 @@ export class AdminController {
         return allRepos;
     }
 
-    public async releaseRepositories(repos: Repository[]): Promise<RepositoryTransport[]> {
+    public async performRelease(repos: Repository[]): Promise<RepositoryTransport[]> {
         const gha = GitHubActions.getInstance(true);
         const ghc = new GitHubController(gha);
 
-        Log.info("AdminController::releaseRepositories( .. ) - start; # repos: " + repos.length);
+        Log.info("AdminController::performRelease( .. ) - start; # repos: " + repos.length);
         const start = Date.now();
 
         const releasedRepos = [];
@@ -883,20 +883,20 @@ export class AdminController {
                     const success = await ghc.releaseRepository(repo, teams, false);
 
                     if (success === true) {
-                        Log.info("AdminController::releaseRepositories( .. ) - success: " + repo.id +
+                        Log.info("AdminController::performRelease( .. ) - success: " + repo.id +
                             '; took: ' + Util.took(startRepo));
                         releasedRepos.push(repo);
                     } else {
-                        Log.warn("AdminController::releaseRepositories( .. ) - FAILED: " + repo.id);
+                        Log.warn("AdminController::performRelease( .. ) - FAILED: " + repo.id);
                     }
 
                     await Util.delay(200); // after any releasing wait a short bit
                 } else {
-                    Log.info("AdminController::releaseRepositories( .. ) - skipped; repo not yet provisioned: " +
+                    Log.info("AdminController::performRelease( .. ) - skipped; repo not yet provisioned: " +
                         repo.id + "; URL: " + repo.URL);
                 }
             } catch (err) {
-                Log.error("AdminController::releaseRepositories( .. ) - FAILED: " +
+                Log.error("AdminController::performRelease( .. ) - FAILED: " +
                     repo.id + "; URL: " + repo.URL + "; ERROR: " + err.message);
             }
         }
@@ -905,7 +905,7 @@ export class AdminController {
         for (const repo of releasedRepos) {
             releasedRepositoryTransport.push(RepositoryController.repositoryToTransport(repo));
         }
-        Log.info("AdminController::releaseRepositories( .. ) - complete; # released: " +
+        Log.info("AdminController::performRelease( .. ) - complete; # released: " +
             releasedRepositoryTransport.length + "; took: " + Util.took(start));
 
         return releasedRepositoryTransport;

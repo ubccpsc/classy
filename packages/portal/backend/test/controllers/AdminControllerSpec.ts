@@ -454,34 +454,38 @@ describe("AdminController", () => {
 
         }).timeout(Test.TIMEOUTLONG);
 
-        // broken when we switched to plan/perform provisioning
-        // it("Should release repos.", async () => {
-        //     // await clearAndPreparePartial();
-        //     const allRepos = await rc.getAllRepos();
-        //     expect(allRepos.length).to.equal(1);
-        //     expect(allRepos[0].URL).to.not.be.null; // provisioned
-        //
-        //     const allTeams = await tc.getAllTeams();
-        //     expect(allTeams.length).to.equal(1);
-        //     expect(allTeams[0].URL).to.not.be.null; // provisioned
-        //     expect(allTeams[0].custom.githubAttached).to.be.false;
-        //
-        //     const deliv = await dc.getDeliverable(Test.DELIVIDPROJ);
-        //     let res = await ac.release(deliv);
-        //     Log.test("Released: " + JSON.stringify(res));
-        //     expect(res).to.be.an('array');
-        //     expect(res.length).to.equal(1);
-        //
-        //     const allNewTeams = await tc.getAllTeams();
-        //     expect(allNewTeams.length).to.equal(1);
-        //     expect(allNewTeams[0].custom.githubAttached).to.be.true;
-        //
-        //     // try again: should not release any more repos
-        //     res = await ac.release(deliv);
-        //     Log.test("Re-Released: " + JSON.stringify(res));
-        //     expect(res).to.be.an('array');
-        //     expect(res.length).to.equal(0);
-        // }).timeout(Test.TIMEOUTLONG);
+        it("Should release repos.", async () => {
+            // await clearAndPreparePartial();
+            const allRepos = await rc.getAllRepos();
+            expect(allRepos.length).to.equal(1);
+            expect(allRepos[0].URL).to.not.be.null; // provisioned
+
+            const allTeams = await tc.getAllTeams();
+            expect(allTeams.length).to.equal(1);
+            expect(allTeams[0].URL).to.not.be.null; // provisioned
+            expect(allTeams[0].custom.githubAttached).to.be.false;
+
+            const deliv = await dc.getDeliverable(Test.DELIVIDPROJ);
+            const relPlan = await ac.planRelease(deliv);
+            Log.test("Release plan: " + JSON.stringify(relPlan));
+            expect(relPlan).to.be.an('array');
+            expect(relPlan.length).to.equal(1);
+
+            const res = await ac.performRelease(allRepos);
+            Log.test("Released: " + JSON.stringify(res));
+            expect(res).to.be.an('array');
+            expect(res.length).to.equal(1);
+
+            const allNewTeams = await tc.getAllTeams();
+            expect(allNewTeams.length).to.equal(1);
+            expect(allNewTeams[0].custom.githubAttached).to.be.true;
+
+            // // try again: should not release any more repos
+            // res = await ac.release(allRepos);
+            // Log.test("Re-Released: " + JSON.stringify(res));
+            // expect(res).to.be.an('array');
+            // expect(res.length).to.equal(0);
+        }).timeout(Test.TIMEOUTLONG);
 
         it("Should provision repos if singles are enabled.", async () => {
             await clearAndPreparePartial();

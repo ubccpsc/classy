@@ -42,11 +42,7 @@ export class AdminProvisionPage extends AdminPage {
         }
         UI.setDropdownOptions('provisionRepoDeliverableSelect', delivOptions, null);
 
-        // clear options
-        const toProvisionSelect = document.getElementById("repositoryProvisionSelect") as HTMLSelectElement;
-        toProvisionSelect.innerHTML = '';
-        const provisionedUL = document.getElementById("repositoryProvisionedUL") as HTMLUListElement;
-        provisionedUL.innerHTML = '';
+        this.clearLists();
 
         (document.querySelector('#adminManageProvisionButton') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminProvisionPage::manageProvisionButton(..) - button pressed');
@@ -93,6 +89,9 @@ export class AdminProvisionPage extends AdminPage {
         releaseButton.disabled = false;
         provisionButton.disabled = false;
 
+        const delivSelect = document.getElementById('provisionRepoDeliverableSelect') as HTMLSelectElement;
+        delivSelect.disabled = false;
+
         toProvisionSelect.disabled = false;
         toReleaseSelect.disabled = false;
 
@@ -107,6 +106,8 @@ export class AdminProvisionPage extends AdminPage {
         const toReleaseSelect = document.getElementById("repositoryReleaseSelect") as HTMLSelectElement;
         const releaseButton = document.getElementById('adminManageReleaseButton') as HTMLButtonElement;
         const provisionButton = document.getElementById('adminManageProvisionButton') as HTMLButtonElement;
+        const delivSelect = document.getElementById('provisionRepoDeliverableSelect') as HTMLSelectElement;
+        delivSelect.disabled = true;
         releaseButton.disabled = true;
         provisionButton.disabled = true;
         toReleaseSelect.disabled = true;
@@ -219,7 +220,7 @@ export class AdminProvisionPage extends AdminPage {
             }
         } else {
             // none selected; clear selects
-            toProvisionSelect.innerHTML = '';
+            this.clearLists();
         }
     }
 
@@ -268,8 +269,7 @@ export class AdminProvisionPage extends AdminPage {
 
         Log.info('AdminDeletePage::handleReleasePressed(..) - start; # repos to provision: ' + selected.length);
         if (selected.length > 0) {
-            UI.showSuccessToast('Repo releasing in progress; this will take a while. Do not close this browser window.',
-                {timeout: 10000});
+            UI.showSuccessToast('Repo releasing in progress; this will take a while. Do not close this browser window.');
         } else {
             UI.showErrorToast('No repos selected for releasing.');
         }
