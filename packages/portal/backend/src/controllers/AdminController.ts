@@ -822,16 +822,18 @@ export class AdminController {
 
         Log.info("AdminController::planRelease( " + deliv.id + " ) - # deliv teams: " + delivTeams.length);
         const reposToRelease: Repository[] = [];
+        const reposAlreadyReleased: Repository[] = [];
         for (const team of delivTeams) {
             try {
+                // get repo for team
+                const people: Person[] = [];
+                for (const pId of team.personIds) {
+                    people.push(await this.dbc.getPerson(pId));
+                }
+                const names = await this.cc.computeNames(deliv, people);
+                const repo = await this.dbc.getRepository(names.repoName);
+
                 if (typeof team.custom.githubAttached === 'undefined' || team.custom.githubAttached === false) {
-                    // if the team
-                    const people: Person[] = [];
-                    for (const pId of team.personIds) {
-                        people.push(await this.dbc.getPerson(pId));
-                    }
-                    const names = await this.cc.computeNames(deliv, people);
-                    const repo = await this.dbc.getRepository(names.repoName);
                     if (repo !== null && typeof repo.custom.githubProvisioned !== 'undefined' && repo.custom.githubProvisioned === true) {
                         // repo exists and has been provisioned: this is important as teams may have formed that have not been provisioned
                         // aka only release provisioned repos
@@ -841,6 +843,7 @@ export class AdminController {
                     }
                 } else {
                     Log.info("AdminController::planRelease( " + deliv.id + " ) - skipping team: " + team.id + "; already attached");
+                    reposAlreadyReleased.push(repo);
                 }
             } catch (err) {
                 Log.error("AdminController::planRelease( .. ) - ERROR: " + err.message);
@@ -849,8 +852,14 @@ export class AdminController {
         }
 
         Log.info("AdminController::planRelease( " + deliv.id + " ) - # repos in release plan: " + reposToRelease.length);
-        // return await this.releaseRepositories(reposToRelease);
-        return reposToRelease;
+
+        // we want to know all repos whether they are released or not
+        const allRepos: Repository[] = reposAlreadyReleased;
+        for (const toReleaseRepo of reposToRelease) {
+            toReleaseRepo.URL = null; // HACK, but denotes that it hasn't been relesed yet
+            allRepos.push(toReleaseRepo);
+        }
+        return allRepos;
     }
 
     public async releaseRepositories(repos: Repository[]): Promise<RepositoryTransport[]> {

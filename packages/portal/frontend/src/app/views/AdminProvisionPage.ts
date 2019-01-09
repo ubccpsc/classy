@@ -88,10 +88,29 @@ export class AdminProvisionPage extends AdminPage {
         const toReleaseSelect = document.getElementById("repositoryReleaseSelect") as HTMLSelectElement;
         const releasedUL = document.getElementById("repositoryReleasedUL") as HTMLUListElement;
 
+        const releaseButton = document.getElementById('adminManageReleaseButton') as HTMLButtonElement;
+        const provisionButton = document.getElementById('adminManageProvisionButton') as HTMLButtonElement;
+        releaseButton.disabled = false;
+        provisionButton.disabled = false;
+
+        toProvisionSelect.disabled = false;
+        toReleaseSelect.disabled = false;
+
         toProvisionSelect.innerHTML = '';
         provisionedUL.innerHTML = '';
         toReleaseSelect.innerHTML = '';
         releasedUL.innerHTML = '';
+    }
+
+    private disableElements() {
+        const toProvisionSelect = document.getElementById("repositoryProvisionSelect") as HTMLSelectElement;
+        const toReleaseSelect = document.getElementById("repositoryReleaseSelect") as HTMLSelectElement;
+        const releaseButton = document.getElementById('adminManageReleaseButton') as HTMLButtonElement;
+        const provisionButton = document.getElementById('adminManageProvisionButton') as HTMLButtonElement;
+        releaseButton.disabled = true;
+        provisionButton.disabled = true;
+        toReleaseSelect.disabled = true;
+        toProvisionSelect.disabled = true;
     }
 
     private async handleDelivChanged(): Promise<void> {
@@ -160,13 +179,12 @@ export class AdminProvisionPage extends AdminPage {
                 let toRelease: string[] = [];
 
                 for (const repo of reposToRelease) {
-                    // TODO: some other property here?
-                    Log.info("repo for release: " + JSON.stringify(repo));
-                    // if (repo.URL === null) {
-                    toRelease.push(repo.id);
-                    // } else {
-                    //     released.push(repo.id);
-                    // }
+                    // Log.info("repo for release: " + JSON.stringify(repo));
+                    if (repo.URL === null) {
+                        toRelease.push(repo.id);
+                    } else {
+                        released.push(repo.id);
+                    }
                 }
 
                 released = released.sort();
@@ -394,6 +412,8 @@ export class AdminProvisionPage extends AdminPage {
     private async performAction(url: string): Promise<boolean> {
         const options: any = AdminView.getOptions();
         options.method = 'post';
+
+        this.disableElements();
 
         const response = await fetch(url, options);
         const body = await response.json();
