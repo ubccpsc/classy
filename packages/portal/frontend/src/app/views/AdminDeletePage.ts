@@ -117,7 +117,7 @@ export class AdminDeletePage extends AdminPage {
                 await this.deleteRepository(sel);
                 Log.info('AdminDeletePage::deleteRepoPressed(..) - delete complete; repo: ' + sel);
                 UI.showSuccessToast('Repository deleted: ' + sel + ' ( ' + (i + 1) + ' of ' + selected.length + ' )',
-                    {force: true});
+                    {force: true, animation: 'none'});
             } catch (err) {
                 Log.error('AdminDeletePage::deleteRepoPressed(..) - delete pressed ERROR: ' + err.message);
                 UI.showErrorToast('Repository NOT deleted: ' + sel);
@@ -126,7 +126,7 @@ export class AdminDeletePage extends AdminPage {
 
         Log.info('AdminDeletePage::deleteRepoPressed(..) - done');
         if (selected.length > 0) {
-            UI.showSuccessToast('Repository deletion complete.');
+            UI.showSuccessToast('Repository deletion complete.', {buttonLabel: 'Ok'});
         }
         // refresh the page
         await this.init({});
@@ -158,7 +158,7 @@ export class AdminDeletePage extends AdminPage {
                 await this.deleteTeam(sel);
                 Log.info('AdminDeletePage::deleteTeamPressed(..) - delete complete; team: ' + sel);
                 UI.showSuccessToast('Team deleted: ' + sel + ' ( ' + (i + 1) + ' of ' + selected.length + ' )',
-                    {force: true});
+                    {force: true, animation: 'none'});
             } catch (err) {
                 Log.error('AdminDeletePage::deleteTeamPressed(..) - delete pressed ERROR: ' + err.message);
                 UI.showErrorToast('Team deleted: ' + sel);
@@ -167,7 +167,7 @@ export class AdminDeletePage extends AdminPage {
 
         Log.info('AdminDeletePage::deleteTeamPressed(..) - done');
         if (selected.length > 0) {
-            UI.showSuccessToast('Team deletion complete.');
+            UI.showSuccessToast('Team deletion complete.', {buttonLabel: 'Ok'});
         }
         // refresh the page
         await this.init({});
