@@ -891,17 +891,12 @@ export default class AdminRoutes implements IREST {
         Log.info('AdminRoutes::postCheckDatabase(..) - start');
         const cc = new AdminController(AdminRoutes.ghc);
 
-        const dryRun = req.params.dryRun;
+        const dryRun = (req.params.dryRun === 'true');
 
         Log.info('AdminRoutes::postCheckDatabase(..) - dryRun: ' + dryRun +
-            '; true? ' + (dryRun === 'true') + '; false? ' + (dryRun === 'false'));
-        // handled by isAdmin in the route chain
-        // const user = req.headers.user;
-        // const token = req.headers.token;
+            '; true? ' + (dryRun === true) + '; false? ' + (dryRun === false));
 
-        // no params
-
-        cc.dbSanityCheck(true).then(function() {
+        cc.dbSanityCheck(dryRun).then(function() {
             Log.info('AdminRoutes::postCheckDatabase(..) - done');
             const payload: Payload = {success: {message: 'Check complete'}};
             res.send(200, payload);
