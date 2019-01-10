@@ -983,7 +983,7 @@ export class AdminController {
             const teamNumber = await gha.getTeamNumber(team.id);
             if (teamNumber >= 0) {
                 if (team.githubId !== teamNumber) {
-                    Log.warn("AdminController::dbSanityCheck() - team.githubId should match the team's id: " + team.id);
+                    Log.warn("AdminController::dbSanityCheck() - team.githubId should match the GitHub id for: " + team.id);
                     team.githubId = teamNumber;
                 }
             } else {
@@ -996,11 +996,10 @@ export class AdminController {
                     Log.warn("AdminController::dbSanityCheck() - team.custom.githubAttached should be false: " + team.id);
                     team.custom.githubAttached = false; // doesn't exist, must not be attached
                 }
-
-                if (dryRun === false) {
-                    await this.dbc.writeTeam(team);
-                }
                 Log.info("AdminController::dbSanityCheck() - done; team: " + team.id);
+            }
+            if (dryRun === false) {
+                await this.dbc.writeTeam(team);
             }
         }
 
