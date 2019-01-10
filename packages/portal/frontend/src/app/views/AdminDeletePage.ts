@@ -190,7 +190,18 @@ export class AdminDeletePage extends AdminPage {
 
         try {
             const url = this.remote + '/portal/admin/sanitizeDB/' + dryRun;
-            await this.performDelete(url); // terrible name, but it does the same thing
+
+            const options: any = AdminView.getOptions();
+            options.method = 'post';
+
+            const response = await fetch(url, options);
+            const body = await response.json();
+            if (typeof body.success !== 'undefined') {
+                // UI.notificationToast(body.success.message);
+            } else {
+                Log.error("Delete ERROR: " + body.failure.message);
+                UI.showError(body.failure.message);
+            }
 
             Log.info('AdminDeletePage::sanitizeDBPressed(..) - done');
             UI.showSuccessToast('Sanitiztion complete', {buttonLabel: 'Ok'});
