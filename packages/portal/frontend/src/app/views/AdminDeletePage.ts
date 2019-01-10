@@ -189,7 +189,7 @@ export class AdminDeletePage extends AdminPage {
         Log.info('AdminDeletePage::sanitizeDBPressed(..) - start; dryRun: ' + dryRun.checked);
 
         try {
-            const url = this.remote + '/portal/admin/sanitizeDB/' + (dryRun.checked === true);
+            const url = this.remote + '/portal/admin/checkDatabase/' + (dryRun.checked === true);
 
             const options: any = AdminView.getOptions();
             options.method = 'post';
