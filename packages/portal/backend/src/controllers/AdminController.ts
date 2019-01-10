@@ -983,7 +983,6 @@ export class AdminController {
             if (dryRun === false) {
                 await this.dbc.writeRepository(repo);
             }
-
             Log.trace("AdminController::dbSanityCheck() - done; repo: " + repo.id);
         }
 
@@ -1022,6 +1021,7 @@ export class AdminController {
                     team.custom.githubAttached = false; // doesn't exist, must not be attached
                 }
             }
+
             if (dryRun === false) {
                 await this.dbc.writeTeam(team);
             }
@@ -1032,7 +1032,7 @@ export class AdminController {
         const checkedTeams: Team[] = [];
         for (const repo of repos) {
             Log.info("AdminController::dbSanityCheck() - start; repo second pass: " + repo.id);
-            let repoChecked = false;
+            let repoHasBeenChecked = false;
 
             for (const teamId of repo.teamIds) {
                 const team = await this.dbc.getTeam(teamId);
@@ -1043,7 +1043,7 @@ export class AdminController {
                     if (teamOnRepo.teamName === teamId) {
                         // team is on repo
                         isTeamOnRepo = true;
-                        repoChecked = true;
+                        repoHasBeenChecked = true;
                         checkedTeams.push(team);
                     }
                 }
@@ -1066,7 +1066,7 @@ export class AdminController {
                 }
             }
 
-            if (repoChecked === false) {
+            if (repoHasBeenChecked === false) {
                 // repos that weren't found to have teams must not be released
                 if (repo.custom.githubReleased !== false) {
                     repo.custom.githubReleased = false; // wasn't found above, must be unreleased

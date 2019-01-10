@@ -493,7 +493,7 @@ export class AdminDeliverablesTab extends AdminPage {
 
         if (typeof body.success !== 'undefined') {
             // worked
-            UI.showErrorToast("Deliverable saved successfully.");
+            UI.showSuccessToast("Deliverable saved successfully.");
             UI.popPage();
         } else {
             UI.showAlert(body.failure.message);
