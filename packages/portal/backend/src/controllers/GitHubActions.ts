@@ -1626,7 +1626,7 @@ export class GitHubActions implements IGitHubActions {
 
     public async getTeamsOnRepo(repoId: string): Promise<GitTeamTuple[]> {
         // GET /repos/:owner/:repo/teams
-        Log.info('GitHubActions::getTeamsOnRepo( ' + repoId + ' ) - start');
+        Log.trace('GitHubActions::getTeamsOnRepo( ' + repoId + ' ) - start');
         const start = Date.now();
         const uri = this.apiPath + '/repos/' + this.org + '/' + repoId + '/teams';
         const options = {

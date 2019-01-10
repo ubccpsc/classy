@@ -1002,8 +1002,6 @@ export class AdminController {
                 }
                 Log.info("AdminController::dbSanityCheck() - done; team: " + team.id);
             }
-
-            Log.info("AdminController::dbSanityCheck() - done; took: " + Util.took(start));
         }
 
         repos = await this.dbc.getRepositories();
@@ -1076,6 +1074,8 @@ export class AdminController {
                 }
             }
         }
+
+        Log.info("AdminController::dbSanityCheck() - done; took: " + Util.took(start));
     }
 
     // NOTE: the default implementation is currently broken; do not use it.
