@@ -75,7 +75,7 @@ export class UI {
     }
 
     public static showErrorToast(text: string) {
-        ons.notification.toast({message: text, timeout: 5000});
+        ons.notification.toast({message: text, buttonLabel: 'Ok', modifier: 'danger'});
     }
 
     public static showSuccessToast(text: string, opts?: any) {
@@ -84,17 +84,21 @@ export class UI {
             opts = {};
         }
 
-        let timeout = 2000;
-        if (typeof opts.timeout !== "undefined") {
-            timeout = opts.timeout;
+        opts.message = text;
+
+        if (typeof opts.timeout === "undefined") {
+            opts.timeout = 2000;
         }
 
-        let force = true;
-        if (typeof opts.force !== "undefined") {
-            force = opts.force;
+        if (typeof opts.force === "undefined") {
+            opts.force = false;
         }
 
-        ons.notification.toast({message: text, timeout: timeout, force: force});
+        if (typeof opts.buttonLabel === 'undefined') {
+            // do nothing; no button by default
+        }
+
+        ons.notification.toast(opts);
     }
 
     public static createListItem(text: string, subtext?: string, tappable?: boolean): HTMLElement {

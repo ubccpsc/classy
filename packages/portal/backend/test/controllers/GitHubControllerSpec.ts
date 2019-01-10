@@ -140,7 +140,7 @@ describe("GitHubController", () => {
 
         // const webhook = 'https://devnull.cs.ubc.ca/classyWebhook';
         const importUrl = 'https://github.com/SECapstone/bootstrap';
-        const provisioned = await gc.provisionRepository(repos[0].id, teams, importUrl, true);
+        const provisioned = await gc.provisionRepository(repos[0].id, teams, importUrl);
         expect(provisioned).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
 
@@ -156,7 +156,7 @@ describe("GitHubController", () => {
         let res = null;
         let ex = null;
         try {
-            res = await gc.provisionRepository(repos[0].id, teams, importUrl, true);
+            res = await gc.provisionRepository(repos[0].id, teams, importUrl);
         } catch (err) {
             ex = err;
         }
@@ -167,7 +167,7 @@ describe("GitHubController", () => {
         ex = null;
         try {
             // no repository object for this repoName
-            res = await gc.provisionRepository('invalidRepo' + Date.now(), teams, importUrl, true);
+            res = await gc.provisionRepository('invalidRepo' + Date.now(), teams, importUrl);
         } catch (err) {
             ex = err;
         }

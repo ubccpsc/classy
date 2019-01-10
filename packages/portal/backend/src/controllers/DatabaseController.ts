@@ -50,43 +50,43 @@ export class DatabaseController {
 
     public async getGitHubPerson(recordId: string): Promise<Person | null> {
         const person = await this.readSingleRecord(this.PERSONCOLL, {githubId: recordId}) as Person;
-        Log.info("DatabaseController::getGitHubPerson( " + recordId + " ) - found: " + (person !== null));
+        Log.trace("DatabaseController::getGitHubPerson( " + recordId + " ) - found: " + (person !== null));
         return person;
     }
 
     public async getRepository(recordId: string): Promise<Repository | null> {
         const repo = await this.readSingleRecord(this.REPOCOLL, {id: recordId}) as Repository;
-        Log.info("DatabaseController::getRepository( " + recordId + " ) - found: " + (repo !== null));
+        Log.trace("DatabaseController::getRepository( " + recordId + " ) - found: " + (repo !== null));
         return repo;
     }
 
     public async getTeam(recordId: string): Promise<Team | null> {
         const team = await this.readSingleRecord(this.TEAMCOLL, {id: recordId}) as Team;
-        Log.info("DatabaseController::getTeam( " + recordId + " ) - found: " + (team !== null));
+        Log.trace("DatabaseController::getTeam( " + recordId + " ) - found: " + (team !== null));
         return team;
     }
 
     public async getAuth(personId: string): Promise<Auth | null> {
         const auth = await this.readSingleRecord(this.AUTHCOLL, {personId: personId}) as Auth;
-        Log.info("DatabaseController::getAuthToken( " + personId + " ) - found: " + (auth !== null));
+        Log.trace("DatabaseController::getAuthToken( " + personId + " ) - found: " + (auth !== null));
         return auth;
     }
 
     public async getRepositories(): Promise<Repository[]> {
         const repos = await this.readRecords(this.REPOCOLL, {}) as Repository[];
-        Log.info("DatabaseController::getRepositories() - #: " + repos.length);
+        Log.trace("DatabaseController::getRepositories() - #: " + repos.length);
         return repos;
     }
 
     public async getCourseRecord(): Promise<Course | null> {
         const record = await this.readSingleRecord(this.COURSECOLL, {id: Config.getInstance().getProp(ConfigKey.name)}) as Course;
-        Log.info("DatabaseController::getCourseRecord() - found: " + (record !== null));
+        Log.trace("DatabaseController::getCourseRecord() - found: " + (record !== null));
         return record;
     }
 
     public async getTeams(): Promise<Team[]> {
         const teams = await this.readRecords(this.TEAMCOLL, {}) as Team[];
-        Log.info("DatabaseController::getTeams() - #: " + teams.length);
+        Log.trace("DatabaseController::getTeams() - #: " + teams.length);
         return teams;
     }
 
@@ -95,7 +95,7 @@ export class DatabaseController {
         // const latestFirst = {"input.pushInfo.timestamp": -1}; // most recent first
         const latestFirst = {"input.target.timestamp": -1}; // most recent first
         const results = await this.readRecords(this.RESULTCOLL, query, latestFirst) as Result[];
-        Log.info("DatabaseController::getResult() - #: " + results.length);
+        Log.trace("DatabaseController::getResult() - #: " + results.length);
         for (const result of results) {
             if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
                 // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
@@ -160,25 +160,25 @@ export class DatabaseController {
 
     public async getPeople(): Promise<Person[]> {
         const people = await this.readRecords(this.PERSONCOLL, {}) as Person[];
-        Log.info("DatabaseController::getPeople() - #: " + people.length);
+        Log.trace("DatabaseController::getPeople() - #: " + people.length);
         return people;
     }
 
     public async getDeliverables(): Promise<Deliverable[]> {
         const delivs = await this.readRecords(this.DELIVCOLL, {}) as Deliverable[];
-        Log.info("DatabaseController::getDeliverables() - #: " + delivs.length);
+        Log.trace("DatabaseController::getDeliverables() - #: " + delivs.length);
         return delivs;
     }
 
     public async getDeliverable(id: string): Promise<Deliverable> {
         const deliv = await this.readSingleRecord(this.DELIVCOLL, {id: id}) as Deliverable;
-        Log.info("DatabaseController::getDeliverable() - found: " + (deliv !== null));
+        Log.trace("DatabaseController::getDeliverable() - found: " + (deliv !== null));
         return deliv;
     }
 
     public async getGrades(): Promise<Grade[]> {
         const grades = await this.readRecords(this.GRADECOLL, {}) as Grade[];
-        Log.info("DatabaseController::getGrades() - #: " + grades.length);
+        Log.trace("DatabaseController::getGrades() - #: " + grades.length);
         return grades;
     }
 
@@ -378,7 +378,7 @@ export class DatabaseController {
     }
 
     public async writeRecord(colName: string, record: {}): Promise<boolean> {
-        Log.info("DatabaseController::writeRecord( " + colName + ", ...) - writing");
+        Log.trace("DatabaseController::writeRecord( " + colName + ", ...) - writing");
         // Log.trace("DatabaseController::writeRecord(..) - col: " + colName + "; record: " + JSON.stringify(record));
         try {
             const collection = await this.getCollection(colName);
@@ -393,7 +393,7 @@ export class DatabaseController {
     }
 
     public async updateRecord(colName: string, query: {}, record: {}): Promise<boolean> {
-        Log.info("DatabaseController::updateRecord( " + colName + ", ...) - start");
+        Log.trace("DatabaseController::updateRecord( " + colName + ", ...) - start");
         Log.trace("DatabaseController::updateRecord(..) - colName: " + colName + "; record: " + JSON.stringify(record));
         try {
             const collection = await this.getCollection(colName);

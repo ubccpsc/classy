@@ -18,6 +18,7 @@ import {
     TeamTransport,
     TeamTransportPayload
 } from '../../../../../common/types/PortalTypes';
+import Util from '../../../../../common/Util';
 import {AdminController} from "../../controllers/AdminController";
 
 import {AuthController} from "../../controllers/AuthController";
@@ -66,8 +67,10 @@ export default class AdminRoutes implements IREST {
         server.get('/portal/admin/provision/:delivId', AdminRoutes.isAdmin, AdminRoutes.getProvision);
         // server.post('/portal/admin/provision', AdminRoutes.isAdmin, AdminRoutes.postProvision); // OLD: remove?
         server.post('/portal/admin/provision/:delivId/:repoId', AdminRoutes.isAdmin, AdminRoutes.postProvision);
-        server.post('/portal/admin/release', AdminRoutes.isAdmin, AdminRoutes.postRelease);
+        server.get('/portal/admin/release/:delivId', AdminRoutes.isAdmin, AdminRoutes.getRelease);
+        server.post('/portal/admin/release/:repoId', AdminRoutes.isAdmin, AdminRoutes.postRelease);
         server.post('/portal/admin/withdraw', AdminRoutes.isAdmin, AdminRoutes.postWithdraw);
+        server.post('/portal/admin/checkDatabase/:dryRun', AdminRoutes.isAdmin, AdminRoutes.postCheckDatabase);
         server.del('/portal/admin/deliverable/:delivId', AdminRoutes.isAdmin, AdminRoutes.deleteDeliverable);
         server.del('/portal/admin/repository/:repoId', AdminRoutes.isAdmin, AdminRoutes.deleteRepository);
         server.del('/portal/admin/team/:teamId', AdminRoutes.isAdmin, AdminRoutes.deleteTeam);
@@ -117,7 +120,7 @@ export default class AdminRoutes implements IREST {
      * @param next
      */
     private static isPrivileged(req: any, res: any, next: any) {
-        Log.info('AdminRoutes::isPrivileged(..) - start');
+        // Log.info('AdminRoutes::isPrivileged(..) - start');
 
         const auth = AdminRoutes.processAuth(req);
         const user = auth.user;
@@ -127,8 +130,10 @@ export default class AdminRoutes implements IREST {
         ac.isPrivileged(user, token).then(function(priv) {
             Log.trace('AdminRoutes::isPrivileged(..) - in isPrivileged: ' + JSON.stringify(priv));
             if (priv.isStaff === true || priv.isAdmin === true) {
+                Log.info('AdminRoutes::isPrivileged( ' + user + ', ... ) - is priv');
                 return next();
             } else {
+                Log.info('AdminRoutes::isPrivileged( ' + user + ', ... ) - NOT priv');
                 return AdminRoutes.handleError(401, 'Authorization error; user not privileged', res, next);
             }
         }).catch(function(err) {
@@ -144,7 +149,7 @@ export default class AdminRoutes implements IREST {
      * @param next
      */
     private static isAdmin(req: any, res: any, next: any) {
-        Log.info('AdminRoutes::isAdmin(..) - start');
+        // Log.info('AdminRoutes::isAdmin(..) - start');
 
         const auth = AdminRoutes.processAuth(req);
         const user = auth.user;
@@ -159,8 +164,10 @@ export default class AdminRoutes implements IREST {
         ac.isPrivileged(user, token).then(function(priv) {
             Log.trace('AdminRoutes::isAdmin(..) - in isAdmin: ' + JSON.stringify(priv));
             if (priv.isAdmin === true) {
+                Log.info('AdminRoutes::isAdmin(..) - isAdmin = true');
                 return next();
             } else {
+                Log.info('AdminRoutes::isAdmin(..) - isAdmin NOT true');
                 return AdminRoutes.handleError(401, 'Authorization error; user not admin.', res, next);
             }
         }).catch(function(err) {
@@ -204,12 +211,13 @@ export default class AdminRoutes implements IREST {
      * @param next
      */
     private static getTeams(req: any, res: any, next: any) {
-        Log.info('AdminRoutes::getTeams(..) - start');
+        Log.trace('AdminRoutes::getTeams(..) - start');
+        const start = Date.now();
 
         const cc = new AdminController(AdminRoutes.ghc);
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getTeams().then(function(teams) {
-            Log.trace('AdminRoutes::getTeams(..) - in then; # teams: ' + teams.length);
+            Log.info('AdminRoutes::getTeams(..) - done; # teams: ' + teams.length + '; took: ' + Util.took(start));
             const payload: TeamTransportPayload = {success: teams};
             res.send(payload);
             return next();
@@ -219,12 +227,13 @@ export default class AdminRoutes implements IREST {
     }
 
     private static getRepositories(req: any, res: any, next: any) {
-        Log.info('AdminRoutes::getRepositories(..) - start');
+        Log.trace('AdminRoutes::getRepositories(..) - start');
+        const start = Date.now();
 
         const cc = new AdminController(AdminRoutes.ghc);
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getRepositories().then(function(repos) {
-            Log.trace('AdminRoutes::getRepositories(..) - in then; # repos: ' + repos.length);
+            Log.info('AdminRoutes::getRepositories(..) - done; # repos: ' + repos.length + '; took: ' + Util.took(start));
             const payload: RepositoryPayload = {success: repos};
             res.send(payload);
             return next();
@@ -241,7 +250,8 @@ export default class AdminRoutes implements IREST {
      * @param next
      */
     private static getResults(req: any, res: any, next: any) {
-        Log.info('AdminRoutes::getResults(..) - start');
+        Log.trace('AdminRoutes::getResults(..) - start');
+        const start = Date.now();
         const cc = new AdminController(AdminRoutes.ghc);
 
         // if these params are missing the client will get 404 since they are part of the path
@@ -250,7 +260,7 @@ export default class AdminRoutes implements IREST {
 
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getResults(delivId, repoId).then(function(results) {
-            Log.trace('AdminRoutes::getResults(..) - in then; # results: ' + results.length);
+            Log.info('AdminRoutes::getResults(..) - done; # results: ' + results.length + '; took: ' + Util.took(start));
             const payload: AutoTestResultSummaryPayload = {success: results};
             res.send(payload);
             return next();
@@ -312,7 +322,8 @@ export default class AdminRoutes implements IREST {
 
         // if these params are missing the client will get 404 since they are part of the path
         const repoId = req.params.repoId;
-        const userId = req.params.userId;
+        const userId = req.headers.user;
+        // const userId = req.params.userId;
 
         AdminRoutes.handleDeleteRepository(userId, repoId).then(function(success) {
             Log.trace('AdminRoutes::deleteRepository(..) - done; success: ' + success);
@@ -339,6 +350,15 @@ export default class AdminRoutes implements IREST {
         return worked;
     }
 
+    private static getUser(req: any): string {
+        const user = AdminRoutes.processAuth(req);
+        let userName = 'UNKNOWN';
+        if (typeof user.user !== 'undefined' && user.user !== null) {
+            userName = user.user;
+        }
+        return userName;
+    }
+
     /**
      *
      * @param req
@@ -352,9 +372,9 @@ export default class AdminRoutes implements IREST {
 
         // if these params are missing the client will get 404 since they are part of the path
         const teamId = req.params.teamId;
-        const user = req.params.user;
 
-        AdminRoutes.handleDeleteTeam(user, teamId).then(function(success) {
+        const userName = AdminRoutes.getUser(req);
+        AdminRoutes.handleDeleteTeam(userName, teamId).then(function(success) {
             Log.trace('AdminRoutes::deleteTeam(..) - done; success: ' + success);
 
             const payload: Payload = {
@@ -490,11 +510,12 @@ export default class AdminRoutes implements IREST {
 
         try {
 
-            const user = req.params.user;
+            // const user = req.params.user;
+            const userName = AdminRoutes.getUser(req);
             const path = req.files.classlist.path; // this is brittle, but if it fails it will just trigger the exception
 
             const csvParser = new CSVParser();
-            csvParser.processClasslist(user, path).then(function(people) {
+            csvParser.processClasslist(userName, path).then(function(people) {
                 if (people.length > 0) {
                     const payload: Payload = {
                         success: {
@@ -521,12 +542,13 @@ export default class AdminRoutes implements IREST {
         // authentication handled by preceeding action in chain above (see registerRoutes)
 
         try {
-            const user = req.params.user;
+            // const user = req.params.user;
             const delivId = req.params.delivId;
             const path = req.files.gradelist.path; // this is brittle, but if it fails it will just trigger the exception
 
+            const userName = AdminRoutes.getUser(req);
             const csvParser = new CSVParser();
-            csvParser.processGrades(user, delivId, path).then(function(grades) {
+            csvParser.processGrades(userName, delivId, path).then(function(grades) {
                 if (grades.length > 0) {
                     const payload: Payload = {
                         success: {
@@ -552,11 +574,11 @@ export default class AdminRoutes implements IREST {
         let payload: Payload;
 
         // isValid handled by preceeding action in chain above (see registerRoutes)
-        const user = req.params.user;
-
+        // const user = req.params.user;
+        const userName = AdminRoutes.getUser(req);
         const delivTrans: DeliverableTransport = req.params;
         Log.info('AdminRoutes::postDeliverable() - body: ' + delivTrans);
-        AdminRoutes.handlePostDeliverable(user, delivTrans).then(function(success) {
+        AdminRoutes.handlePostDeliverable(userName, delivTrans).then(function(success) {
             Log.info('AdminRoutes::postDeliverable() - done');
             payload = {success: {message: 'Deliverable saved successfully'}};
             res.send(200, payload);
@@ -610,11 +632,11 @@ export default class AdminRoutes implements IREST {
         Log.info('AdminRoutes::postCourse(..) - start');
         let payload: Payload;
 
-        const user = req.params.user;
-
+        // const user = req.params.user;
+        const userName = AdminRoutes.getUser(req);
         const courseTrans: CourseTransport = req.params;
         Log.info('AdminRoutes::postCourse() - body: ' + courseTrans);
-        AdminRoutes.handlePostCourse(user, courseTrans).then(function(success) {
+        AdminRoutes.handlePostCourse(userName, courseTrans).then(function(success) {
             payload = {success: {message: 'Course object saved successfully'}};
             res.send(200, payload);
             return next(true);
@@ -641,15 +663,17 @@ export default class AdminRoutes implements IREST {
     }
 
     private static postProvision(req: any, res: any, next: any) {
-        Log.info('AdminRoutes::postProvision(..) - start');
+
         let payload: Payload;
-        const user = req.headers.user;
+        // const user = req.headers.user;
         const delivId = req.params.delivId;
         const repoId = req.params.repoId;
 
-        const provisionTrans: ProvisionTransport = req.params;
-        Log.info('AdminRoutes::postProvision() - body: ' + provisionTrans);
-        AdminRoutes.handleProvisionRepo(user, delivId, repoId).then(function(success) {
+        const userName = AdminRoutes.getUser(req);
+        Log.info('AdminRoutes::postProvision(..) - start; delivId: ' + delivId + '; repoId: ' + repoId);
+        // const provisionTrans: ProvisionTransport = req.params;
+        // Log.info('AdminRoutes::postProvision() - body: ' + provisionTrans);
+        AdminRoutes.handleProvisionRepo(userName, delivId, repoId).then(function(success) {
             payload = {success: success};
             res.send(200, payload);
             return next(true);
@@ -751,10 +775,12 @@ export default class AdminRoutes implements IREST {
         Log.info('AdminRoutes::postRelease(..) - start');
         let payload: Payload;
 
-        const user = req.headers.user;
-        const provisionTrans: ProvisionTransport = req.params;
-        Log.info('AdminRoutes::postRelease() - body: ' + provisionTrans);
-        AdminRoutes.handleRelease(user, provisionTrans).then(function(success) {
+        // const user = req.headers.user;
+        const userName = AdminRoutes.getUser(req);
+        const repoId = req.params.repoId;
+
+        Log.info('AdminRoutes::postRelease() - repoId: ' + repoId);
+        AdminRoutes.performRelease(userName, repoId).then(function(success) {
             payload = {success: success};
             res.send(200, payload);
             return next(true);
@@ -764,28 +790,78 @@ export default class AdminRoutes implements IREST {
         });
     }
 
-    private static async handleRelease(personId: string, releaseTrans: ProvisionTransport): Promise<RepositoryTransport[]> {
-        const cc = new AdminController(AdminRoutes.ghc);
-        const result = AdminController.validateProvisionTransport(releaseTrans);
+    private static getRelease(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::getRelease(..) - start');
+
+        let payload: Payload;
+        const delivId = req.params.delivId;
+
+        // const provisionTrans: ProvisionTransport = req.params;
+        Log.info('AdminRoutes::getRelease() - delivId: ' + delivId);
+        AdminRoutes.planRelease(delivId).then(function(success) {
+            payload = {success: success};
+            res.send(200, payload);
+            return next(true);
+        }).catch(function(err) {
+            return AdminRoutes.handleError(400, 'Unable to plan release: ' + err.message, res, next);
+        });
+    }
+
+    private static async planRelease(delivId: string): Promise<RepositoryTransport[]> {
+        const ac = new AdminController(AdminRoutes.ghc);
+        // const result = AdminController.validateProvisionTransport(releaseTrans);
+
+        // const dc = new DeliverablesController();
+        // const deliv = await dc.getDeliverable(delivId);
+        // TODO: if course is SDMM, always fail
+        const start = Date.now();
+        // if (deliv=== null) {
+        const dc = new DeliverablesController();
+        const deliv = await dc.getDeliverable(delivId);
+        if (deliv !== null && deliv.shouldProvision === true) {
+            const dbc = DatabaseController.getInstance();
+            // await dbc.writeAudit(AuditLabel.REPO_RELEASE, personId, {}, {}, releaseTrans);
+
+            const releasePlan = await ac.planRelease(deliv);
+            const transportRepos: RepositoryTransport[] = [];
+            for (const repo of releasePlan) {
+                transportRepos.push(RepositoryController.repositoryToTransport(repo));
+            }
+            Log.info('AdminRoutes::planRelease() - success; # results: ' + transportRepos.length +
+                '; took: ' + Util.took(start));
+            return transportRepos;
+            // } else {
+            //     throw new Error("Release unsuccessful, cannot release: " + releaseTrans.delivId);
+            // }
+        } else {
+            // should never get here unless something goes wrong
+            throw new Error("Release planning unsuccessful.");
+        }
+    }
+
+    private static async performRelease(personId: string, repoId: string): Promise<RepositoryTransport[]> {
+        const ac = new AdminController(AdminRoutes.ghc);
 
         // TODO: if course is SDMM, always fail
+        const start = Date.now();
+        const rc = new RepositoryController();
 
-        if (result === null) {
-            const dc = new DeliverablesController();
-            const deliv = await dc.getDeliverable(releaseTrans.delivId);
-            if (deliv !== null && deliv.shouldProvision === true) {
-                const dbc = DatabaseController.getInstance();
-                await dbc.writeAudit(AuditLabel.REPO_RELEASE, personId, {}, {}, releaseTrans);
+        const repo = await rc.getRepository(repoId);
+        Log.info("AdminRoutes::performRelease( " + personId + ", " + repoId + " ) - repo: " + repo);
+        if (repo !== null) {
+            const dbc = DatabaseController.getInstance();
+            await dbc.writeAudit(AuditLabel.REPO_RELEASE, personId, {}, {}, {repoId: repoId});
 
-                const releaseSucceeded = await cc.release(deliv);
-                Log.info('AdminRoutes::handleRelease() - success; # results: ' + releaseSucceeded.length);
-                return releaseSucceeded;
-            } else {
-                throw new Error("Release unsuccessful, cannot release: " + releaseTrans.delivId);
-            }
+            const releaseSucceeded = await ac.performRelease([repo]);
+            Log.info('AdminRoutes::performRelease() - success; # results: ' + releaseSucceeded.length +
+                '; took: ' + Util.took(start));
+            return releaseSucceeded;
+
+        } else {
+            Log.error("AdminRoutes::performRelease() - unknown repository: " + repoId);
         }
         // should never get here unless something goes wrong
-        throw new Error("Release unsuccessful.");
+        throw new Error("Perform release unsuccessful.");
     }
 
     public static postWithdraw(req: any, res: any, next: any) {
@@ -811,15 +887,38 @@ export default class AdminRoutes implements IREST {
         });
     }
 
+    public static postCheckDatabase(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::postCheckDatabase(..) - start');
+        const cc = new AdminController(AdminRoutes.ghc);
+
+        const dryRun = (req.params.dryRun === 'true');
+
+        Log.info('AdminRoutes::postCheckDatabase(..) - dryRun: ' + dryRun +
+            '; true? ' + (dryRun === true) + '; false? ' + (dryRun === false));
+
+        cc.dbSanityCheck(dryRun).then(function() {
+            Log.info('AdminRoutes::postCheckDatabase(..) - done');
+            const payload: Payload = {success: {message: 'Check complete'}};
+            res.send(200, payload);
+            return next(true);
+        }).catch(function(err) {
+            Log.info('AdminRoutes::postCheckDatabase(..) - ERROR: ' + err.message); // intentionally info
+            const payload: Payload = {failure: {message: err.message, shouldLogout: false}};
+            res.send(400, payload);
+            return next(false);
+        });
+    }
+
     public static postTeam(req: any, res: any, next: any) {
         Log.info('AdminRoutes::postTeam(..) - start');
 
         // handled by isAdmin in the route chain
-        const user = req.headers.user;
+        // const user = req.headers.user;
         // const token = req.headers.token;
+        const userName = AdminRoutes.getUser(req);
 
         const teamTrans: TeamFormationTransport = req.params;
-        AdminRoutes.performPostTeam(user, teamTrans).then(function(team) {
+        AdminRoutes.performPostTeam(userName, teamTrans).then(function(team) {
             Log.info('AdminRoutes::postTeam(..) - done; team: ' + JSON.stringify(team));
             const payload: TeamTransportPayload = {success: [team]}; // really shouldn't be an array, but it beats having another type
             res.send(200, payload);

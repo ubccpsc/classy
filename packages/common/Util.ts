@@ -65,23 +65,6 @@ export default class Util {
         return msg;
     }
 
-    // // just a useful delay function for when we need to wait for GH to do something
-    // // or we want a test to be able to slow itself down
-    // public static delay(ms: number): Promise<{}> {
-    //     // Log.info("Util::delay( " + ms + " ) - start: " + Date.now());
-    //
-    //     const waitComplete = function() {
-    //         // blank
-    //     };
-    //     const fire = new Date(Date.now() + ms);
-    //     Log.info("Util::delay( " + ms + " ms ) - waiting; will trigger at " + fire.toLocaleTimeString());
-    //
-    //     await setTimeout(waitComplete, ms);
-    //
-    //     Log.info("Util::delay( " + ms + ") - done: " + Date.now());
-    //     return;
-    // }
-
     // just a useful delay function for when we need to wait for GH to do something
     // or we want a test to be able to slow itself down
     public static delay(ms: number): Promise<{}> {
@@ -89,7 +72,7 @@ export default class Util {
         const start = Date.now();
         return new Promise(function(resolve) {
             const fire = new Date(start + ms);
-            Log.info("Util::delay( " + ms + " ms ) - waiting; will trigger at " + fire.toLocaleTimeString());
+            Log.trace("Util::delay( " + ms + " ms ) - waiting; will trigger at " + fire.toLocaleTimeString());
             setTimeout(function() {
                 const actual = Date.now();
                 const took = actual - start;

@@ -160,7 +160,7 @@ export interface Repository {
 
     custom: { // rather than having custom be .any, this allows courses to make sure they don't clash on their .custom parameters
         githubCreated?: boolean,
-        githubProvisioned?: boolean,
+        githubReleased?: boolean,
 
         // status?: any, // AssignmentController // TODO: make into assignment.status
         // assignmentId?: any, // AssignmentController // TODO: make into assignment.id

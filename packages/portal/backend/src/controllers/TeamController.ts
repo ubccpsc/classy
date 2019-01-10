@@ -1,6 +1,7 @@
 import Log from "../../../../common/Log";
 
 import {TeamTransport} from "../../../../common/types/PortalTypes";
+import Util from "../../../../common/Util";
 import {Deliverable, Person, Team} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
@@ -27,11 +28,11 @@ export class TeamController {
      * @returns {Promise<Team[]>}
      */
     public async getAllTeams(): Promise<Team[]> {
-        Log.info("TeamController::getAllTeams() - start");
+        Log.trace("TeamController::getAllTeams() - start");
 
         const teams = await this.db.getTeams();
-        // remove special teams
 
+        // remove special teams
         const teamsToReturn = [];
         for (const team of teams) {
             if (team.id === 'admin' || team.id === 'staff' || team.id === 'students') {
@@ -45,7 +46,7 @@ export class TeamController {
     }
 
     public async getTeam(name: string): Promise<Team | null> {
-        Log.info("TeamController::getAllTeams( " + name + " ) - start");
+        Log.info("TeamController::getTeam( " + name + " ) - start");
 
         const team = await this.db.getTeam(name);
         return team;
@@ -61,6 +62,7 @@ export class TeamController {
      */
     public async getTeamNumber(name: string): Promise<number | null> {
         Log.info("TeamController::getTeamNumber( " + name + " ) - start");
+        const start = Date.now();
 
         const team = await this.db.getTeam(name);
 
@@ -83,6 +85,7 @@ export class TeamController {
             await this.saveTeam(team);
         }
 
+        Log.info("TeamController::getTeamNumber( " + name + " ) - done; took: " + Util.took(start));
         return team.githubId;
     }
 
