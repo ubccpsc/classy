@@ -195,13 +195,15 @@ export class AdminDeletePage extends AdminPage {
             options.method = 'post';
 
             const response = await fetch(url, options);
-            const body = await response.json();
-            if (typeof body.success !== 'undefined') {
-                // UI.notificationToast(body.success.message);
-            } else {
-                Log.error("Delete ERROR: " + body.failure.message);
-                UI.showError(body.failure.message);
-            }
+
+            UI.showSuccessToast("Sanitization complete.", {buttonLabel: 'Ok'});
+            // const body = await response.json();
+            // if (typeof body.success !== 'undefined') {
+            //     // UI.notificationToast(body.success.message);
+            // } else {
+            //     Log.error("Delete ERROR: " + body.failure.message);
+            //     UI.showError(body.failure.message);
+            // }
 
             Log.info('AdminDeletePage::sanitizeDBPressed(..) - done');
             UI.showSuccessToast('Sanitiztion complete', {buttonLabel: 'Ok'});
