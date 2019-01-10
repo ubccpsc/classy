@@ -597,6 +597,16 @@ describe("GitHubActions", () => {
         expect(val.length).to.equal(0);
     }).timeout(TIMEOUT);
 
+    it("Should be possible to get the team from a number.", async function() {
+        const teamNumber = await gh.getTeamNumber(Test.TEAMNAMEREAL);
+        expect(teamNumber).to.be.greaterThan(0);
+
+        const val = await gh.getTeam(teamNumber);
+        expect(val).to.be.an('object');
+        expect(val.githubTeamNumber).to.equal(teamNumber);
+        expect(val.teamName).to.equal(Test.TEAMNAMEREAL);
+    }).timeout(TIMEOUT);
+
     it("Clear stale repos and teams.", async function() {
         const del = await deleteStale();
         expect(del).to.be.true;
