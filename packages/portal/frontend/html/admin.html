@@ -1038,6 +1038,22 @@
                         results associated with the repository.
                     </div>
                 </ons-list-item>
+
+                <ons-list-header>Sanitize Database</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-users"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <ons-button id="adminDeleteSanitizeDB" modifier="medium">Sanitize Database</ons-button>
+                        Dry Run:
+                        <ons-switch id="adminDeleteSanitizeDBToggle"></ons-switch>
+                    </div>
+                    <div class="expandable-content">
+                        This will sanitize the database. There is no UI or progress. You almost certainly do not want to do this.
+                    </div>
+                </ons-list-item>
+
             </ons-list>
 
         </ons-page>

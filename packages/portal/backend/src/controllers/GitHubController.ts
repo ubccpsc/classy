@@ -183,6 +183,8 @@ export class GitHubController implements IGitHubController {
                         "with #: " + newTeam.githubTeamNumber);
 
                     teamNum = newTeam.githubTeamNumber;
+                    team.githubId = teamNum; // add team number to team
+
                     await this.gha.addMembersToTeam(team.id, teamNum, team.personIds);
                     Log.info("GitHubController::releaseRepository(..) - added members to team");
                 }
@@ -192,10 +194,12 @@ export class GitHubController implements IGitHubController {
                 if (res.githubTeamNumber > 0) {
                     // keep track of team addition
                     team.custom.githubAttached = true;
-                    await this.dbc.writeTeam(team);
                 } else {
                     Log.error("GitHubController::releaseRepository(..) - ERROR adding team to repo: " + JSON.stringify(res));
+                    team.custom.githubAttached = false;
                 }
+
+                await this.dbc.writeTeam(team); // add new properties to the team
                 Log.info("GitHubController::releaseRepository(..) - " +
                     " added team (" + team.id + " ) with push permissions to repository (" + repo.id + ")");
             }

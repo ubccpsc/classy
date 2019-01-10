@@ -88,6 +88,16 @@ export class AdminDeletePage extends AdminPage {
                 // didn't
             });
         };
+
+        (document.querySelector('#adminDeleteSanitizeDB') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminDeletePage::adminDeleteSanitizeDB(..) - button pressed');
+            evt.stopPropagation(); // prevents list item expansion
+            that.sanitizeDBPressed().then(function() {
+                // worked
+            }).catch(function(err) {
+                // didn't
+            });
+        };
     }
 
     private async deleteRepoPressed(): Promise<void> {
@@ -171,6 +181,23 @@ export class AdminDeletePage extends AdminPage {
         }
         // refresh the page
         await this.init({});
+    }
+
+    private async sanitizeDBPressed(): Promise<void> {
+        const dryRun = document.getElementById("adminDeleteSanitizeDBToggle") as HTMLInputElement;
+
+        Log.info('AdminDeletePage::sanitizeDBPressed(..) - start; dryRun: ' + dryRun);
+
+        try {
+            const url = this.remote + '/portal/admin/sanitizeDB/' + dryRun;
+            await this.performDelete(url); // terrible name, but it does the same thing
+
+            Log.info('AdminDeletePage::sanitizeDBPressed(..) - done');
+            UI.showSuccessToast('Sanitiztion complete', {buttonLabel: 'Ok'});
+        } catch (err) {
+            Log.error('AdminDeletePage::sanitizeDBPressed(..) - ERROR: ' + err.message);
+            UI.showErrorToast('Error sanitizing DB: ' + err.message);
+        }
     }
 
     public renderPage(pageName: string, opts: {}): void {

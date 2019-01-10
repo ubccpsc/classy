@@ -201,6 +201,14 @@ export interface IGitHubActions {
      * @returns {Promise<boolean>}
      */
     simulateWebookComment(projectName: string, sha: string, message: string): Promise<boolean>;
+
+    /**
+     * Returns a list of teamIds on a repo
+     *
+     * @param {string} repoId
+     * @returns {{teamId: string}[]}
+     */
+    getTeamsOnRepo(repoId: string): Promise<GitTeamTuple[]>;
 }
 
 export class GitHubActions implements IGitHubActions {
@@ -1615,6 +1623,38 @@ export class GitHubActions implements IGitHubActions {
             }
         });
     }
+
+    public async getTeamsOnRepo(repoId: string): Promise<GitTeamTuple[]> {
+        // GET /repos/:owner/:repo/teams
+        Log.info('GitHubActions::getTeamsOnRepo( ' + repoId + ' ) - start');
+        const start = Date.now();
+        const uri = this.apiPath + '/repos/' + this.org + '/' + repoId + '/teams';
+        const options = {
+            method:  'GET',
+            uri:     uri,
+            headers: {
+                'Authorization': this.gitHubAuthToken,
+                'User-Agent':    this.gitHubUserName,
+                'Accept':        'application/json'
+            },
+            json:    true
+        };
+
+        try {
+            const results = await rp(options);
+            Log.trace("GitHubAction::repoExists( " + repoId + " ) - true; took: " + Util.took(start));
+
+            const toReturn: GitTeamTuple[] = [];
+            for (const result of results) {
+                toReturn.push({teamName: result.name, githubTeamNumber: result.id});
+            }
+
+            return toReturn;
+        } catch (err) {
+            Log.trace("GitHubAction::repoExists( " + repoId + " ) - false; took: " + Util.took(start));
+            return [];
+        }
+    }
 }
 
 /* istanbul ignore next */
@@ -1912,6 +1952,10 @@ export class TestGitHubActions implements IGitHubActions {
 
     public simulateWebookComment(projectName: string, sha: string, message: string): Promise<boolean> {
         Log.info("TestGitHubActions::simulateWebookComment(..)");
+        return;
+    }
+
+    public getTeamsOnRepo(repoId: string): Promise<GitTeamTuple[]> {
         return;
     }
 

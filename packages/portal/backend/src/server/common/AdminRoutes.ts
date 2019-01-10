@@ -70,6 +70,7 @@ export default class AdminRoutes implements IREST {
         server.get('/portal/admin/release/:delivId', AdminRoutes.isAdmin, AdminRoutes.getRelease);
         server.post('/portal/admin/release/:repoId', AdminRoutes.isAdmin, AdminRoutes.postRelease);
         server.post('/portal/admin/withdraw', AdminRoutes.isAdmin, AdminRoutes.postWithdraw);
+        server.post('/portal/admin/checkDatabase/:dryRun', AdminRoutes.isAdmin, AdminRoutes.postCheckDatabase);
         server.del('/portal/admin/deliverable/:delivId', AdminRoutes.isAdmin, AdminRoutes.deleteDeliverable);
         server.del('/portal/admin/repository/:repoId', AdminRoutes.isAdmin, AdminRoutes.deleteRepository);
         server.del('/portal/admin/team/:teamId', AdminRoutes.isAdmin, AdminRoutes.deleteTeam);
@@ -880,6 +881,33 @@ export default class AdminRoutes implements IREST {
             return next(true);
         }).catch(function(err) {
             Log.info('AdminRoutes::postWithdraw(..) - ERROR: ' + err.message); // intentionally info
+            const payload: Payload = {failure: {message: err.message, shouldLogout: false}};
+            res.send(400, payload);
+            return next(false);
+        });
+    }
+
+    public static postCheckDatabase(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::postCheckDatabase(..) - start');
+        const cc = new AdminController(AdminRoutes.ghc);
+
+        const dryRun = req.params.dryRun;
+
+        Log.info('AdminRoutes::postCheckDatabase(..) - dryRun: ' + dryRun +
+            '; true? ' + (dryRun === 'true') + '; false? ' + (dryRun === 'false'));
+        // handled by isAdmin in the route chain
+        // const user = req.headers.user;
+        // const token = req.headers.token;
+
+        // no params
+
+        cc.dbSanityCheck(true).then(function(msg) {
+            Log.info('AdminRoutes::postCheckDatabase(..) - done; msg: ' + msg);
+            const payload: Payload = {success: msg}; // really shouldn't be an array, but it beats having another type
+            res.send(200, payload);
+            return next(true);
+        }).catch(function(err) {
+            Log.info('AdminRoutes::postCheckDatabase(..) - ERROR: ' + err.message); // intentionally info
             const payload: Payload = {failure: {message: err.message, shouldLogout: false}};
             res.send(400, payload);
             return next(false);

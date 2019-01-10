@@ -591,6 +591,11 @@ describe("GitHubActions", () => {
     //
     // }).timeout(TIMEOUT);
 
+    it.only("Should be possible to find the teams on a repo.", async function() {
+        const val = await gh.getTeamsOnRepo('TESTrepo2');
+        expect(val).to.be.true;
+    }).timeout(TIMEOUT);
+
     it("Clear stale repos and teams.", async function() {
         const del = await deleteStale();
         expect(del).to.be.true;
