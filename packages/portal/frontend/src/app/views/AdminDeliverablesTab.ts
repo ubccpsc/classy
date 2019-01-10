@@ -506,7 +506,7 @@ export class AdminDeliverablesTab extends AdminPage {
             return null;
         }
         const label = document.querySelector('label[for=' + checkedRadio.id + ']');
-        const sha = label.firstElementChild.firstElementChild.innerHTML;
+        const sha = label.firstElementChild.children[1].innerHTML;
         return sha;
     }
 
