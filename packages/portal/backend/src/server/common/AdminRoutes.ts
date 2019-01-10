@@ -901,9 +901,9 @@ export default class AdminRoutes implements IREST {
 
         // no params
 
-        cc.dbSanityCheck(true).then(function(msg) {
-            Log.info('AdminRoutes::postCheckDatabase(..) - done; msg: ' + msg);
-            const payload: Payload = {success: msg}; // really shouldn't be an array, but it beats having another type
+        cc.dbSanityCheck(true).then(function() {
+            Log.info('AdminRoutes::postCheckDatabase(..) - done');
+            const payload: Payload = {success: {message: 'Check complete'}};
             res.send(200, payload);
             return next(true);
         }).catch(function(err) {

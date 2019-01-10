@@ -1025,20 +1025,21 @@ export class AdminController {
                         checkedTeams.push(team);
                     }
                 }
+                if (isTeamOnRepo === true) {
+                    if (repo.custom.githubReleased !== true) {
+                        repo.custom.githubReleased = true;
+                        Log.warn("AdminController::dbSanityCheck() - repo2.custom.githubReleased should be true: " + repo.id);
+                    }
 
-                if (repo.custom.githubReleased !== true) {
-                    repo.custom.githubReleased = true;
-                    Log.warn("AdminController::dbSanityCheck() - repo2.custom.githubReleased should be true: " + repo.id);
-                }
+                    if (team.custom.githubAttached !== true) {
+                        team.custom.githubAttached = true;
+                        Log.warn("AdminController::dbSanityCheck() - team2.custom.githubAttached should be true: " + team.id);
+                    }
 
-                if (team.custom.githubAttached !== true) {
-                    team.custom.githubAttached = true;
-                    Log.warn("AdminController::dbSanityCheck() - team2.custom.githubAttached should be true: " + team.id);
-                }
-
-                if (dryRun === false) {
-                    await this.dbc.writeRepository(repo);
-                    await this.dbc.writeTeam(team);
+                    if (dryRun === false) {
+                        await this.dbc.writeRepository(repo);
+                        await this.dbc.writeTeam(team);
+                    }
                 }
             }
 
