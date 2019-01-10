@@ -209,6 +209,8 @@ export interface IGitHubActions {
      * @returns {{teamId: string}[]}
      */
     getTeamsOnRepo(repoId: string): Promise<GitTeamTuple[]>;
+
+    getTeam(teamNumber: number): Promise<GitTeamTuple | null>;
 }
 
 export class GitHubActions implements IGitHubActions {
@@ -951,6 +953,53 @@ export class GitHubActions implements IGitHubActions {
             // just return empy [] rather than failing
             return [];
         }
+    }
+
+    /**
+     * Gets the team associated with the team number.
+     *
+     * Returns null if the team does not exist.
+     *
+     * @param {string} teamNumber
+     * @returns {Promise<number>}
+     */
+    public async getTeam(teamNumber: number): Promise<GitTeamTuple | null> {
+
+        Log.info("GitHubAction::getTeam( " + teamNumber + " ) - start");
+
+        if (teamNumber === null) {
+            throw new Error("GitHubAction::getTeam( null ) - null team requested");
+        }
+
+        const start = Date.now();
+        try {
+            const uri = this.apiPath + '/teams/' + teamNumber;
+            const options = {
+                method:                  'GET',
+                uri:                     uri,
+                headers:                 {
+                    'Authorization': this.gitHubAuthToken,
+                    'User-Agent':    this.gitHubUserName,
+                    'Accept':        'application/json'
+                },
+                resolveWithFullResponse: true,
+                json:                    true
+            };
+
+            const response = await rp(options);
+
+            if (response.statusCode === 200) {
+                const ret = {githubTeamNumber: response.body.id, teamName: response.body.name};
+                Log.info("GitHubAction::getTeam( " + teamNumber + " ) - found: " + JSON.stringify(ret) + "; took: " + Util.took(start));
+                return ret;
+            } else {
+                Log.info("GitHubAction::getTeam( " + teamNumber + " ) - team does not exist on GitHub; took: " + Util.took(start));
+            }
+
+        } catch (err) {
+            Log.warn("GitHubAction::getTeam( " + teamNumber + " ) - ERROR: " + err.message);
+        }
+        return null;
     }
 
     public async isOnAdminTeam(userName: string): Promise<boolean> {
@@ -1774,6 +1823,15 @@ export class TestGitHubActions implements IGitHubActions {
         }
         Log.info("TestGitHubActions::getTeamNumber( " + teamName + " ) - returning: -1; other records: " + JSON.stringify(this.teams));
         return -1;
+    }
+
+    public async getTeam(teamNumber: number): Promise<GitTeamTuple | null> {
+        for (const team of this.teams) {
+            if (team.githubTeamNumber === teamNumber) {
+                return {githubTeamNumber: teamNumber, teamName: team.id};
+            }
+        }
+        return null;
     }
 
     public async importRepoFS(importRepo: string, studentRepo: string, seedFilePath?: string): Promise<boolean> {

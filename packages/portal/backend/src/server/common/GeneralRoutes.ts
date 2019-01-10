@@ -162,7 +162,7 @@ export default class GeneralRoutes implements IREST {
         const path = req.url.substring(16);  // this strips off the route prefix (i.e., /portal/resource)
 
         // right now this means requests _must_ be by an authorized user (admin, staff, or student)
-        if (typeof auth.user === 'undefined' || typeof auth.token === 'undefined') {
+        if (auth === null || typeof auth.user === 'undefined' || typeof auth.token === 'undefined') {
             Log.warn('GeneralRoutes::isAdmin(..) - undefined user or token for resource: ' + path);
             // If the requestor is not authenticated forward them back to the front page.
             // TODO: use ref for forwarding the user to their original resource once they have logged in

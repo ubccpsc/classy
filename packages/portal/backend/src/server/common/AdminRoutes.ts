@@ -88,28 +88,40 @@ export default class AdminRoutes implements IREST {
     }
 
     public static processAuth(req: any): {user: string, token: string} {
-        let user = req.headers.user;
-        let token = req.headers.token;
+        try {
+            let user = req.headers.user;
+            let token = req.headers.token;
 
-        // fallback to getting token from cookies
-        // this is useful for providing links in for attachments, but also might become the default in the future
-        if ((typeof user === 'undefined' || typeof token === 'undefined') && typeof req.headers.cookie !== 'undefined') {
-            // the following snippet is a tiny modification based on a snippet in App.validateCredentials()
-            // https://github.com/ubccpsc/classy/blob/bbe1d564f21d828101935892103b51453ed7863f/packages/portal/frontend/src/app/App.ts#L200
-            const tokenString = cookie.parse(req.headers.cookie)['token'];
-            if (tokenString !== null) {
-                const tokenParts = tokenString.split('__'); // Firefox doesn't like multiple tokens
-                if (tokenParts.length === 1) {
-                    token = tokenParts[0];
-                } else if (tokenParts.length === 2) {
-                    token = tokenParts[0];
-                    user = tokenParts[1];
+            // fallback to getting token from cookies
+            // this is useful for providing links in for attachments, but also might become the default in the future
+            if ((typeof user === 'undefined' || typeof token === 'undefined') && typeof req.headers.cookie !== 'undefined') {
+                // the following snippet is a tiny modification based on a snippet in App.validateCredentials()
+                // https://github.com/ubccpsc/classy/blob/bbe1d564f21d828101935892103b51453ed7863f/
+                // packages/portal/frontend/src/app/App.ts#L200
+                const tokenString = cookie.parse(req.headers.cookie)['token'];
+                if (typeof tokenString !== 'undefined' && tokenString !== null && typeof tokenString.split !== 'undefined') {
+                    const tokenParts = tokenString.split('__'); // Firefox doesn't like multiple tokens
+                    if (tokenParts.length === 1) {
+                        token = tokenParts[0];
+                    } else if (tokenParts.length === 2) {
+                        token = tokenParts[0];
+                        user = tokenParts[1];
+                    }
+                    Log.info('AdminRoutes::processAuth(..) - from cookies; user: ' + user + '; token: ' + token);
+                } else {
+                    // we're here because user or token aren't defined, but we don't have them here either
+                    Log.info('AdminRoutes::processAuth(..) - cookies parsing failed; tokenString: ' + tokenString);
                 }
-                Log.info('AdminRoutes::processAuth(..) - from cookies; user: ' + user + '; token: ' + token);
             }
-        }
 
-        return {user, token};
+            // only return a valid object if both user and token exist (aka no partial credentials)
+            if (typeof user !== 'undefined' && typeof token !== 'undefined') {
+                return {user, token};
+            }
+        } catch (err) {
+            Log.error('AdminRoutes::processAuth(..) - ERROR: ' + err.message);
+        }
+        return null;
     }
 
     /**
@@ -125,6 +137,11 @@ export default class AdminRoutes implements IREST {
         const auth = AdminRoutes.processAuth(req);
         const user = auth.user;
         const token = auth.token;
+
+        if (auth === null || typeof user === 'undefined' || typeof token === 'undefined') {
+            Log.warn('AdminRoutes::isPrivileged(..) - undefined user or token; user not admin.');
+            return AdminRoutes.handleError(401, 'Authorization credentials error; user not admin.', res, next);
+        }
 
         const ac = new AuthController();
         ac.isPrivileged(user, token).then(function(priv) {
@@ -155,7 +172,7 @@ export default class AdminRoutes implements IREST {
         const user = auth.user;
         const token = auth.token;
 
-        if (typeof user === 'undefined' || typeof token === 'undefined') {
+        if (auth === null || typeof user === 'undefined' || typeof token === 'undefined') {
             Log.warn('AdminRoutes::isAdmin(..) - undefined user or token; user not admin.');
             return AdminRoutes.handleError(401, 'Authorization credentials error; user not admin.', res, next);
         }
@@ -353,7 +370,7 @@ export default class AdminRoutes implements IREST {
     private static getUser(req: any): string {
         const user = AdminRoutes.processAuth(req);
         let userName = 'UNKNOWN';
-        if (typeof user.user !== 'undefined' && user.user !== null) {
+        if (user === null || typeof user.user !== 'undefined' && user.user !== null) {
             userName = user.user;
         }
         return userName;

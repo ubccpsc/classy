@@ -931,6 +931,16 @@ export class AdminController {
         return [];
     }
 
+    /**
+     * Synchronizes the database objects with GitHub. Does _NOT_ remove any DB objects, just makes
+     * sure their properties match those in the GitHub org. This is useful if manual changes are made
+     * to the org that you want to have updated in the repo as well.
+     *
+     * NOTE: team membership is _NOT_ currently read from GitHub and will not be synced.
+     *
+     * @param {boolean} dryRun
+     * @returns {Promise<void>}
+     */
     public async dbSanityCheck(dryRun: boolean): Promise<void> {
         Log.info("AdminController::dbSanityCheck() - start");
         const start = Date.now();
@@ -973,17 +983,31 @@ export class AdminController {
             if (dryRun === false) {
                 await this.dbc.writeRepository(repo);
             }
-
-            Log.info("AdminController::dbSanityCheck() - done; repo: " + repo.id);
+            Log.trace("AdminController::dbSanityCheck() - done; repo: " + repo.id);
         }
 
         let teams = await tc.getAllTeams(); // not DBC because we want special teams filtered out
         for (const team of teams) {
             Log.info("AdminController::dbSanityCheck() - start; team: " + team.id);
-            const teamNumber = await gha.getTeamNumber(team.id);
+
+            let teamNumber: number = -1;
+            if (team.githubId !== null) {
+                // use the cached team id if it exists and is correct (much faster)
+                const tuple = await gha.getTeam(team.githubId);
+                if (tuple !== null && tuple.githubTeamNumber === team.githubId && tuple.teamName === team.id) {
+                    Log.info("AdminController::dbSanityCheck() - using cached gitHubId for team: " + team.id);
+                    teamNumber = team.githubId;
+                }
+            }
+
+            if (teamNumber <= 0) {
+                Log.info("AdminController::dbSanityCheck() - not using cached gitHubId for team: " + team.id);
+                teamNumber = await gha.getTeamNumber(team.id);
+            }
+
             if (teamNumber >= 0) {
                 if (team.githubId !== teamNumber) {
-                    Log.warn("AdminController::dbSanityCheck() - team.githubId should match the team's id: " + team.id);
+                    Log.warn("AdminController::dbSanityCheck() - team.githubId should match the GitHub id for: " + team.id);
                     team.githubId = teamNumber;
                 }
             } else {
@@ -996,19 +1020,19 @@ export class AdminController {
                     Log.warn("AdminController::dbSanityCheck() - team.custom.githubAttached should be false: " + team.id);
                     team.custom.githubAttached = false; // doesn't exist, must not be attached
                 }
-
-                if (dryRun === false) {
-                    await this.dbc.writeTeam(team);
-                }
-                Log.info("AdminController::dbSanityCheck() - done; team: " + team.id);
             }
+
+            if (dryRun === false) {
+                await this.dbc.writeTeam(team);
+            }
+            Log.trace("AdminController::dbSanityCheck() - done; team: " + team.id);
         }
 
         repos = await this.dbc.getRepositories();
         const checkedTeams: Team[] = [];
         for (const repo of repos) {
             Log.info("AdminController::dbSanityCheck() - start; repo second pass: " + repo.id);
-            let repoChecked = false;
+            let repoHasBeenChecked = false;
 
             for (const teamId of repo.teamIds) {
                 const team = await this.dbc.getTeam(teamId);
@@ -1019,10 +1043,11 @@ export class AdminController {
                     if (teamOnRepo.teamName === teamId) {
                         // team is on repo
                         isTeamOnRepo = true;
-                        repoChecked = true;
+                        repoHasBeenChecked = true;
                         checkedTeams.push(team);
                     }
                 }
+
                 if (isTeamOnRepo === true) {
                     if (repo.custom.githubReleased !== true) {
                         repo.custom.githubReleased = true;
@@ -1041,7 +1066,7 @@ export class AdminController {
                 }
             }
 
-            if (repoChecked === false) {
+            if (repoHasBeenChecked === false) {
                 // repos that weren't found to have teams must not be released
                 if (repo.custom.githubReleased !== false) {
                     repo.custom.githubReleased = false; // wasn't found above, must be unreleased
