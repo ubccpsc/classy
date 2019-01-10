@@ -186,10 +186,10 @@ export class AdminDeletePage extends AdminPage {
     private async sanitizeDBPressed(): Promise<void> {
         const dryRun = document.getElementById("adminDeleteSanitizeDBToggle") as HTMLInputElement;
 
-        Log.info('AdminDeletePage::sanitizeDBPressed(..) - start; dryRun: ' + dryRun);
+        Log.info('AdminDeletePage::sanitizeDBPressed(..) - start; dryRun: ' + dryRun.checked);
 
         try {
-            const url = this.remote + '/portal/admin/sanitizeDB/' + dryRun;
+            const url = this.remote + '/portal/admin/sanitizeDB/' + (dryRun.checked === true);
 
             const options: any = AdminView.getOptions();
             options.method = 'post';
