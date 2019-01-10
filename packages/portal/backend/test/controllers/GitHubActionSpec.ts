@@ -598,13 +598,13 @@ describe("GitHubActions", () => {
     }).timeout(TIMEOUT);
 
     it("Should be possible to get the team from a number.", async function() {
-        const teamNumber = await gh.getTeamNumber(Test.TEAMNAMEREAL);
+        const teamNumber = await gh.getTeamNumber(TEAMNAME);
         expect(teamNumber).to.be.greaterThan(0);
 
         const val = await gh.getTeam(teamNumber);
         expect(val).to.be.an('object');
         expect(val.githubTeamNumber).to.equal(teamNumber);
-        expect(val.teamName).to.equal(Test.TEAMNAMEREAL);
+        expect(val.teamName).to.equal(TEAMNAME);
     }).timeout(TIMEOUT);
 
     it("Clear stale repos and teams.", async function() {
