@@ -163,14 +163,33 @@ describe("GitHubActions", () => {
     }).timeout(TIMEOUT);
 
     it("Should be able to create a webhook.", async function() {
-        let hooks = await gh.listWebhooks(REPONAME);
+        let hooks = await gh.listWebhooks(REPONAME); // REPONAME
         expect(hooks).to.be.empty;
 
-        const createHook = await gh.addWebhook(REPONAME, 'https://localhost/test');
+        const hookName = 'https://localhost/test/' + Date.now();
+        const createHook = await gh.addWebhook(REPONAME, hookName);
         expect(createHook).to.be.true;
 
         hooks = await gh.listWebhooks(REPONAME);
         expect(hooks).to.have.lengthOf(1);
+        expect((hooks[0] as any).config.url).to.equal(hookName);
+    }).timeout(TIMEOUT);
+
+    it("Should be able to edit a webhook.", async function() {
+        let hooks = await gh.listWebhooks(REPONAME);
+        expect(hooks).to.have.lengthOf(1);
+
+        const oldHook = (hooks[0] as any).config.url;
+        const NEWHOOK = 'https://localhost/testNEWHOOK/' + Date.now();
+        expect(oldHook).to.not.equal(NEWHOOK);
+
+        // update the hook
+        const updated = await gh.updateWebhook(REPONAME, NEWHOOK);
+        expect(updated).to.be.true;
+
+        hooks = await gh.listWebhooks(REPONAME);
+        const newHook = (hooks[0] as any).config.url;
+        expect(newHook).to.equal(NEWHOOK);
     }).timeout(TIMEOUT);
 
     it("Should be possible to list the repos in an org.", async function() {

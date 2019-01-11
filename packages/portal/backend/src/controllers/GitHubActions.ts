@@ -97,7 +97,9 @@ export interface IGitHubActions {
      */
     listTeamMembers(teamName: string): Promise<string[]>;
 
-    listWebhooks(repoName: string): Promise<{}>;
+    listWebhooks(repoName: string): Promise<Array<{}>>;
+
+    updateWebhook(repoName: string, webhookEndpoint: string): Promise<boolean>;
 
     addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean>;
 
@@ -667,7 +669,7 @@ export class GitHubActions implements IGitHubActions {
         return teams;
     }
 
-    public async listWebhooks(repoName: string): Promise<{}> {
+    public async listWebhooks(repoName: string): Promise<Array<{}>> {
         Log.info("GitHubAction::listWebhooks( " + this.org + ", " + repoName + " ) - start");
         const start = Date.now();
         // POST /repos/:owner/:repo/hooks
@@ -688,8 +690,8 @@ export class GitHubActions implements IGitHubActions {
     }
 
     public async addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
-        Log.info("GitHubAction::addWebhook( " + this.org + ", " + repoName + ", ... ) - start");
-        Log.info("GitHubAction::addWebhook( .. ) - webhook: " + webhookEndpoint);
+        Log.info("GitHubAction::addWebhook( " + repoName + ", " + webhookEndpoint + " ) - start");
+        // Log.info("GitHubAction::addWebhook( .. ) - webhook: " + webhookEndpoint);
 
         let secret = Config.getInstance().getProp(ConfigKey.autotestSecret);
         secret = crypto.createHash('sha256').update(secret, 'utf8').digest('hex'); // webhook w/ sha256
@@ -720,9 +722,56 @@ export class GitHubActions implements IGitHubActions {
             json:    true
         };
 
-        const results = await rp(opts); // .then(function(results: any) {
+        const results = await rp(opts);
         Log.info("GitHubAction::addWebhook(..) - success; took: " + Util.took(start));
         return true;
+    }
+
+    public async updateWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
+        Log.info("GitHubAction::updateWebhook( " + repoName + ", " + webhookEndpoint + " ) - start");
+
+        const existingWebhooks = await this.listWebhooks(repoName);
+        if (existingWebhooks.length === 1) {
+
+            const hookId = (existingWebhooks[0] as any).id;
+
+            let secret = Config.getInstance().getProp(ConfigKey.autotestSecret);
+            secret = crypto.createHash('sha256').update(secret, 'utf8').digest('hex'); // webhook w/ sha256
+            Log.info("GitHubAction::updateWebhook( .. ) - secret: " + secret);
+            const start = Date.now();
+
+            // https://developer.github.com/webhooks/creating/
+            // https://developer.github.com/v3/repos/hooks/#edit-a-hook
+            // PATCH /repos/:owner/:repo/hooks/:hook_id
+            const uri = this.apiPath + '/repos/' + this.org + '/' + repoName + '/hooks/' + hookId;
+            const opts = {
+                method:  'PATCH',
+                uri:     uri,
+                headers: {
+                    'Authorization': this.gitHubAuthToken,
+                    'User-Agent':    this.gitHubUserName
+                },
+                body:    {
+                    name:   "web",
+                    active: true,
+                    events: ["commit_comment", "push"],
+                    config: {
+                        url:          webhookEndpoint,
+                        secret:       secret,
+                        content_type: "json"
+                    }
+                },
+                json:    true
+            };
+
+            await rp(opts);
+            Log.info("GitHubAction::updateWebhook(..) - success; took: " + Util.took(start));
+            return true;
+        } else {
+            Log.error("GitHubAction::updateWebhook( " + repoName + ", " + webhookEndpoint + " ) - Invalid number of existing webhooks: " +
+                JSON.stringify(existingWebhooks));
+        }
+        return false;
     }
 
     /**
@@ -1730,7 +1779,7 @@ export class TestGitHubActions implements IGitHubActions {
         if (typeof this.webHookState[repoName] === 'undefined') {
             this.webHookState[repoName] = [];
         }
-        this.webHookState[repoName].push(webhookEndpoint);
+        this.webHookState[repoName] = webhookEndpoint;
         return true;
     }
 
@@ -1952,12 +2001,23 @@ export class TestGitHubActions implements IGitHubActions {
 
     private webHookState: any = {};
 
-    public async listWebhooks(repoName: string): Promise<{}> {
+    public async listWebhooks(repoName: string): Promise<Array<{}>> {
         Log.info("TestGitHubActions::listWebhooks()");
         if (typeof this.webHookState[repoName] === 'undefined') {
             return [];
         }
         return this.webHookState[repoName];
+    }
+
+    public async updateWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
+        Log.info("TestGitHubActions::updateWebhook()");
+        if (typeof this.webHookState[repoName] === 'undefined') {
+            return false;
+        }
+
+        this.webHookState[repoName] = webhookEndpoint;
+
+        return true;
     }
 
     public async repoExists(repoName: string): Promise<boolean> {
