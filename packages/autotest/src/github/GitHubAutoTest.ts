@@ -120,8 +120,16 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         // update info record
         const delivId = info.delivId;
+        if (delivId === null) {
+            Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, null delivId");
+            // no deliverable, give warning and abort
+            const msg = "Please specify a deliverable so AutoTest knows what to run against (e.g., #d0).";
+            await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+            return false;
+        }
+
         const deliv = await this.classPortal.getContainerDetails(delivId);
-        if (delivId === null || deliv === null) {
+        if (deliv === null) {
             Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, unknown delivId: " + delivId);
             // no deliverable, give warning and abort
             const msg = "Please specify a deliverable so AutoTest knows what to run against (e.g., #d0).";
