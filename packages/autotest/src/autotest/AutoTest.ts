@@ -137,34 +137,44 @@ export abstract class AutoTest implements IAutoTest {
                     "regression - #wait: " + this.regressionQueue.length() + ", #run: " + this.regressionQueue.numRunning() + ".");
             }
 
-            this.persistQueues().then(function() {
-                //
+            this.persistQueues().then(function(success: boolean) {
+                Log.trace("[PTEST] AutoTest::tick() - persist complete: " + success);
             }).catch(function(err) {
-                //
+                Log.error("[PTEST] AutoTest::tick() - persist queue ERROR: " + err.message);
             });
         } catch (err) {
             Log.error("AutoTest::tick() - ERROR: " + err.message);
         }
     }
 
-    private async persistQueues(): Promise<void> {
-        Log.info("AutoTest::persistQueues() - start");
-        const start = Date.now();
-        const writing = [
-            this.standardQueue.persist(),
-            this.regressionQueue.persist(),
-            this.expressQueue.persist()
-        ];
-        await Promise.all(writing);
-        Log.info("AutoTest::persistQueues() - done; took: " + Util.took(start));
+    private async persistQueues(): Promise<boolean> {
+        Log.info("[PTEST] AutoTest::persistQueues() - start");
+        try {
+            const start = Date.now();
+            const writing = [
+                this.standardQueue.persist(),
+                this.regressionQueue.persist(),
+                this.expressQueue.persist()
+            ];
+            await Promise.all(writing);
+            Log.info("[PTEST] AutoTest::persistQueues() - done; took: " + Util.took(start));
+            return true;
+        } catch (err) {
+            Log.info("[PTEST] AutoTest::persistQueues() - ERROR: " + err.message);
+        }
+        return false;
     }
 
     private loadQueues() {
-        Log.warn("AutoTest::loadQueues() - start"); // just warn for now; this is really just for testing
-        this.standardQueue.load();
-        this.regressionQueue.load();
-        this.expressQueue.load();
-        Log.warn("AutoTest::loadQueues() - done; queues loaded");
+        try {
+            Log.info("[PTEST] AutoTest::loadQueues() - start"); // just warn for now; this is really just for testing
+            this.standardQueue.load();
+            this.regressionQueue.load();
+            this.expressQueue.load();
+            Log.info("[PTEST] AutoTest::loadQueues() - done; queues loaded");
+        } catch (err) {
+            Log.error("[PTEST] AutoTest::loadQueues() - ERROR: " + err.message);
+        }
         this.tick();
     }
 
