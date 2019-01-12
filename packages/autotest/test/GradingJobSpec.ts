@@ -33,17 +33,17 @@ class ContainerMock extends Docker.Container {
     }
 }
 
-describe("GradingJob", function () {
+describe("GradingJob", function() {
     const containerMaxExecTime = 0.1;  // seconds
 
-    describe("#runContainer", function () {
+    describe("#runContainer", function() {
         let container: ContainerMock;
 
-        beforeEach(function () {
+        beforeEach(function() {
             container = new ContainerMock(null, "test-container");
         });
 
-        it("Should return the container's exit code", async function () {
+        it("Should return the container's exit code", async function() {
             let result: any;
             try {
                 result = await GradingJob.runContainer(container, containerMaxExecTime);
@@ -54,7 +54,7 @@ describe("GradingJob", function () {
             }
         });
 
-        it("Should return -1 if the container is stopped", async function () {
+        it("Should return -1 if the container is stopped", async function() {
             container.waitTime = containerMaxExecTime + 0.05;
             let result: any;
             try {

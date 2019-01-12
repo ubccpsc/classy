@@ -135,7 +135,7 @@ export class GradingJob {
             // Set a timer to kill the container if it doesn't finish in the allotted time
             timer = setTimeout(async () => {
                 timedOut = true;
-                await container.stop()
+                await container.stop();
             }, maxExecTime * 1000);
         }
 
