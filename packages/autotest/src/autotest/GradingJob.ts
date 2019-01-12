@@ -101,7 +101,7 @@ export class GradingJob {
         const exitCode = await this.runContainer(container);
 
         const out = this.record.output;
-        if (typeof exitCode === "undefined") {
+        if (exitCode === -1) {
             out.report.feedback = "Container did not complete for `" + this.input.delivId + "` in the allotted time.";
             out.state = ContainerState.TIMEOUT;
         } else {
@@ -127,12 +127,16 @@ export class GradingJob {
         const execTime = this.input.containerConfig.maxExecTime;
         let result: any;
         let timer: any;
+        let timedOut: boolean = false;
 
         await container.start();
 
         if (execTime > 0) {
             // Set a timer to kill the container if it doesn't finish in the allotted time
-            timer = setTimeout(async () => await container.stop(), execTime * 1000);
+            timer = setTimeout(async () => {
+                timedOut = true;
+                await container.stop()
+            }, execTime * 1000);
         }
 
         try {
@@ -143,6 +147,6 @@ export class GradingJob {
             clearTimeout(timer);
         }
 
-        return result.StatusCode;
+        return timedOut ? -1 : result.StatusCode;
     }
 }
