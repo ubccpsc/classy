@@ -23,7 +23,7 @@ export class GitHubUtil {
         const regexp = /(\s|^)\#\w\w+\b/gm;
         const matches = message.match(regexp);
 
-        Log.info("parseDeliverableFromComment(..) - ids: " + JSON.stringify(delivIds) +
+        Log.info("GitHubUtil::parseDeliverableFromComment(..) - ids: " + JSON.stringify(delivIds) +
             "; matches: " + JSON.stringify(matches) + " for msg: " + message);
 
         let parsedDelivId = null;
@@ -42,13 +42,26 @@ export class GitHubUtil {
             }
         }
 
+        let msg = message;
+        if (msg.length > 40) {
+            msg = msg.substr(0, 40) + "...";
+        }
         if (parsedDelivId === null) {
-            Log.warn("GitHubUtil::parseDeliverableFromComment() - NO MATCH; input: " +
-                message + "; options: " + JSON.stringify(delivIds));
+            Log.info("GitHubUtil::parseDeliverableFromComment() - NO MATCH; input: " +
+                msg + "; options: " + JSON.stringify(delivIds));
         } else {
-            Log.trace("GitHubUtil::parseDeliverableFromComment() - input: " + message + "; output: " + parsedDelivId);
+            Log.trace("GitHubUtil::parseDeliverableFromComment() - input: " + msg + "; output: " + parsedDelivId);
         }
         return parsedDelivId;
+    }
+
+    public static parseCheckFromComment(message: any): boolean {
+        if (message.indexOf('#check') >= 0) {
+            Log.trace("GitHubUtil::parseCheckFromComment() - input: " + message + "; check: true");
+            return true;
+        }
+        Log.trace("GitHubUtil::parseCheckFromComment() - input: " + message + "; silent: false");
+        return false;
     }
 
     public static parseSilentFromComment(message: any): boolean {
@@ -99,6 +112,9 @@ export class GitHubUtil {
             }
             if (GitHubUtil.parseSilentFromComment(message) === true) {
                 flags.push("#silent");
+            }
+            if (GitHubUtil.parseCheckFromComment(message) === true) {
+                flags.push("#check");
             }
 
             const botName = "@" + Config.getInstance().getProp(ConfigKey.botName).toLowerCase();

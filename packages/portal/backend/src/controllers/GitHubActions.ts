@@ -8,6 +8,7 @@ import {Factory} from "../Factory";
 
 import {DatabaseController} from "./DatabaseController";
 import {GitTeamTuple} from "./GitHubController";
+import {TeamController} from "./TeamController";
 
 // tslint:disable-next-line
 const tmp = require('tmp-promise');
@@ -96,7 +97,9 @@ export interface IGitHubActions {
      */
     listTeamMembers(teamName: string): Promise<string[]>;
 
-    listWebhooks(repoName: string): Promise<{}>;
+    listWebhooks(repoName: string): Promise<Array<{}>>;
+
+    updateWebhook(repoName: string, webhookEndpoint: string): Promise<boolean>;
 
     addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean>;
 
@@ -200,6 +203,16 @@ export interface IGitHubActions {
      * @returns {Promise<boolean>}
      */
     simulateWebookComment(projectName: string, sha: string, message: string): Promise<boolean>;
+
+    /**
+     * Returns a list of teamIds on a repo
+     *
+     * @param {string} repoId
+     * @returns {{teamId: string}[]}
+     */
+    getTeamsOnRepo(repoId: string): Promise<GitTeamTuple[]>;
+
+    getTeam(teamNumber: number): Promise<GitTeamTuple | null>;
 }
 
 export class GitHubActions implements IGitHubActions {
@@ -251,7 +264,7 @@ export class GitHubActions implements IGitHubActions {
         const isInTest = typeof (global as any).it === 'function';
         if (isInTest === false) {
             // we're in prod, always return the real thing
-            Log.test("GitHubActions::getInstance(.. ) - prod; returning GitHubActions");
+            Log.trace("GitHubActions::getInstance(.. ) - prod; returning GitHubActions");
             return new GitHubActions();
         }
 
@@ -404,7 +417,7 @@ export class GitHubActions implements IGitHubActions {
 
     public async deleteTeamByName(teamName: string): Promise<boolean> {
         Log.info("GitHubAction::deleteTeamByName( " + this.org + ", " + teamName + " ) - start");
-        const teamNum = await this.getTeamNumber(teamName);
+        const teamNum = await this.getTeamNumber(teamName); // be conservative, don't use TeamController on purpose
         if (teamNum >= 0) {
             return await this.deleteTeam(teamNum);
         }
@@ -430,22 +443,26 @@ export class GitHubActions implements IGitHubActions {
 
             const uri = this.apiPath + '/teams/' + teamId;
             const options = {
-                method:  'DELETE',
-                uri:     uri,
-                headers: {
+                method:                  'DELETE',
+                uri:                     uri,
+                headers:                 {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent':    this.gitHubUserName,
                     // 'Accept': 'application/json', // custom because this is a preview api
                     'Accept':        'application/vnd.github.hellcat-preview+json'
-                }
+                },
+                resolveWithFullResponse: true,
+                json:                    true
             };
 
-            const status = await rp(options);
-            if (status.statusCode === 200) {
+            const response = await rp(options);
+            // Log.info("GitHubAction::deleteTeam(..) - response: " + response);
+
+            if (response.statusCode === 204) {
                 Log.info("GitHubAction::deleteTeam(..) - success; took: " + Util.took(start));
                 return true;
             } else {
-                Log.info("GitHubAction::deleteTeam(..) - not deleted; code: " + status.statusCode + "; took: " + Util.took(start));
+                Log.info("GitHubAction::deleteTeam(..) - not deleted; code: " + response.statusCode + "; took: " + Util.took(start));
                 return false;
             }
 
@@ -625,7 +642,7 @@ export class GitHubActions implements IGitHubActions {
 
         // per_page max is 100; 10 is useful for testing pagination though
         const uri = this.apiPath + '/orgs/' + this.org + '/teams?per_page=' + this.pageSize;
-        Log.info("GitHubActions::listTeams(..) - uri: " + uri);
+        Log.info("GitHubActions::listTeams(..) - start"); // uri: " + uri);
         const options = {
             method:                  'GET',
             uri:                     uri,
@@ -652,8 +669,8 @@ export class GitHubActions implements IGitHubActions {
         return teams;
     }
 
-    public async listWebhooks(repoName: string): Promise<{}> {
-        Log.info("GitHubAction::listWebhooks( " + this.org + ", " + repoName + " ) - start");
+    public async listWebhooks(repoName: string): Promise<Array<{}>> {
+        Log.trace("GitHubAction::listWebhooks( " + this.org + ", " + repoName + " ) - start");
         const start = Date.now();
         // POST /repos/:owner/:repo/hooks
         const uri = this.apiPath + '/repos/' + this.org + '/' + repoName + '/hooks';
@@ -668,13 +685,13 @@ export class GitHubActions implements IGitHubActions {
         };
 
         const results = await rp(opts);
-        Log.info("GitHubAction::listWebhooks(..) - success: " + results + "; took: " + Util.took(start));
+        Log.trace("GitHubAction::listWebhooks(..) - success; took: " + Util.took(start));
         return results;
     }
 
     public async addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
-        Log.info("GitHubAction::addWebhook( " + this.org + ", " + repoName + ", ... ) - start");
-        Log.info("GitHubAction::addWebhook( .. ) - webhook: " + webhookEndpoint);
+        Log.info("GitHubAction::addWebhook( " + repoName + ", " + webhookEndpoint + " ) - start");
+        // Log.info("GitHubAction::addWebhook( .. ) - webhook: " + webhookEndpoint);
 
         let secret = Config.getInstance().getProp(ConfigKey.autotestSecret);
         secret = crypto.createHash('sha256').update(secret, 'utf8').digest('hex'); // webhook w/ sha256
@@ -705,9 +722,57 @@ export class GitHubActions implements IGitHubActions {
             json:    true
         };
 
-        const results = await rp(opts); // .then(function(results: any) {
-        Log.info("GitHubAction::addWebhook(..) - success: " + results + "; took: " + Util.took(start));
+        const results = await rp(opts);
+        Log.info("GitHubAction::addWebhook(..) - success; took: " + Util.took(start));
         return true;
+    }
+
+    public async updateWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
+        Log.info("GitHubAction::updateWebhook( " + repoName + ", " + webhookEndpoint + " ) - start");
+
+        const existingWebhooks = await this.listWebhooks(repoName);
+
+        if (existingWebhooks.length === 1) {
+
+            const hookId = (existingWebhooks[0] as any).id;
+
+            let secret = Config.getInstance().getProp(ConfigKey.autotestSecret);
+            secret = crypto.createHash('sha256').update(secret, 'utf8').digest('hex'); // webhook w/ sha256
+            Log.info("GitHubAction::updateWebhook( .. ) - secret: " + secret);
+            const start = Date.now();
+
+            // https://developer.github.com/webhooks/creating/
+            // https://developer.github.com/v3/repos/hooks/#edit-a-hook
+            // PATCH /repos/:owner/:repo/hooks/:hook_id
+            const uri = this.apiPath + '/repos/' + this.org + '/' + repoName + '/hooks/' + hookId;
+            const opts = {
+                method:  'PATCH',
+                uri:     uri,
+                headers: {
+                    'Authorization': this.gitHubAuthToken,
+                    'User-Agent':    this.gitHubUserName
+                },
+                body:    {
+                    name:   "web",
+                    active: true,
+                    events: ["commit_comment", "push"],
+                    config: {
+                        url:          webhookEndpoint,
+                        secret:       secret,
+                        content_type: "json"
+                    }
+                },
+                json:    true
+            };
+
+            await rp(opts);
+            Log.info("GitHubAction::updateWebhook(..) - success; took: " + Util.took(start));
+            return true;
+        } else {
+            Log.error("GitHubAction::updateWebhook( " + repoName + ", " + webhookEndpoint + " ) - Invalid number of existing webhooks: " +
+                JSON.stringify(existingWebhooks));
+        }
+        return false;
     }
 
     /**
@@ -726,7 +791,7 @@ export class GitHubActions implements IGitHubActions {
         try {
             await GitHubActions.checkDatabase(null, teamName);
 
-            const teamNum = await this.getTeamNumber(teamName);
+            const teamNum = await this.getTeamNumber(teamName); // be conservative, don't use TeamController on purpose
             if (teamNum > 0) {
                 Log.info("GitHubAction::createTeam( " + teamName + ", ... ) - success; exists: " + teamNum);
                 const config = Config.getInstance();
@@ -813,11 +878,11 @@ export class GitHubActions implements IGitHubActions {
      */
     public async addTeamToRepo(teamId: number, repoName: string, permission: string): Promise<GitTeamTuple> {
 
-        Log.info("GitHubAction::addTeamToRepo( " + teamId + ", " + repoName + " ) - start");
+        Log.trace("GitHubAction::addTeamToRepo( " + teamId + ", " + repoName + " ) - start");
         const start = Date.now();
         try {
             const uri = this.apiPath + '/teams/' + teamId + '/repos/' + this.org + '/' + repoName;
-            Log.info("GitHubAction::addTeamToRepo(..) - URI: " + uri);
+            // Log.info("GitHubAction::addTeamToRepo(..) - URI: " + uri);
             const options = {
                 method:  'PUT',
                 uri:     uri,
@@ -834,7 +899,8 @@ export class GitHubActions implements IGitHubActions {
             };
 
             await rp(options);
-            Log.info("GitHubAction::addTeamToRepo(..) - success; team: " + teamId + "; repo: " + repoName + "; took: " + Util.took(start));
+            Log.info("GitHubAction::addTeamToRepo(..) - success; team: " + teamId +
+                "; repo: " + repoName + "; took: " + Util.took(start));
             return {githubTeamNumber: teamId, teamName: 'NOTSETHERE'};
 
         } catch (err) {
@@ -857,6 +923,9 @@ export class GitHubActions implements IGitHubActions {
         Log.info("GitHubAction::getTeamNumber( " + teamName + " ) - start");
         const start = Date.now();
         try {
+
+            // NOTE: this cannot use TeamController::getTeamNumber because that causes an infinite loop
+
             let teamId = -1;
             const teamList = await this.listTeams();
             for (const team of teamList) {
@@ -936,6 +1005,53 @@ export class GitHubActions implements IGitHubActions {
         }
     }
 
+    /**
+     * Gets the team associated with the team number.
+     *
+     * Returns null if the team does not exist.
+     *
+     * @param {string} teamNumber
+     * @returns {Promise<number>}
+     */
+    public async getTeam(teamNumber: number): Promise<GitTeamTuple | null> {
+
+        Log.info("GitHubAction::getTeam( " + teamNumber + " ) - start");
+
+        if (teamNumber === null) {
+            throw new Error("GitHubAction::getTeam( null ) - null team requested");
+        }
+
+        const start = Date.now();
+        try {
+            const uri = this.apiPath + '/teams/' + teamNumber;
+            const options = {
+                method:                  'GET',
+                uri:                     uri,
+                headers:                 {
+                    'Authorization': this.gitHubAuthToken,
+                    'User-Agent':    this.gitHubUserName,
+                    'Accept':        'application/json'
+                },
+                resolveWithFullResponse: true,
+                json:                    true
+            };
+
+            const response = await rp(options);
+
+            if (response.statusCode === 200) {
+                const ret = {githubTeamNumber: response.body.id, teamName: response.body.name};
+                Log.info("GitHubAction::getTeam( " + teamNumber + " ) - found: " + JSON.stringify(ret) + "; took: " + Util.took(start));
+                return ret;
+            } else {
+                Log.info("GitHubAction::getTeam( " + teamNumber + " ) - team does not exist on GitHub; took: " + Util.took(start));
+            }
+
+        } catch (err) {
+            Log.warn("GitHubAction::getTeam( " + teamNumber + " ) - ERROR: " + err.message);
+        }
+        return null;
+    }
+
     public async isOnAdminTeam(userName: string): Promise<boolean> {
         const isAdmin = await this.isOnTeam('admin', userName);
         Log.trace('GitHubAction::isOnAdminTeam( ' + userName + ' ) - result: ' + isAdmin);
@@ -956,7 +1072,10 @@ export class GitHubActions implements IGitHubActions {
             await GitHubActions.checkDatabase(null, teamName);
         }
 
-        const teamNumber = await gh.getTeamNumber(teamName);
+        const tc = new TeamController();
+        const teamNumber = await tc.getTeamNumber(teamName); // try to use cache
+
+        // const teamNumber = await gh.getTeamNumber(teamName);
 
         const teamMembers = await gh.getTeamMembers(teamNumber);
         for (const member of teamMembers) {
@@ -973,7 +1092,8 @@ export class GitHubActions implements IGitHubActions {
     public async listTeamMembers(teamName: string): Promise<string[]> {
         const gh = this;
 
-        const teamNumber = await gh.getTeamNumber(teamName);
+        // const teamNumber = await gh.getTeamNumber(teamName);
+        const teamNumber = await new TeamController().getTeamNumber(teamName);
         const teamMembers = await gh.getTeamMembers(teamNumber);
 
         return teamMembers;
@@ -1140,11 +1260,12 @@ export class GitHubActions implements IGitHubActions {
         }
 
         function pushToNewRepo() {
+            const pushStart = Date.now();
             Log.info('GitHubActions::importRepoFS(..)::pushToNewRepo() - start');
             const command = `cd ${cloneTempDir.path} && git push -q origin master`;
             return exec(command)
                 .then(function(result: any) {
-                    Log.info('GitHubActions::importRepoFS(..)::pushToNewRepo() - done');
+                    Log.info('GitHubActions::importRepoFS(..)::pushToNewRepo() - done; took: ' + Util.took(pushStart));
                     that.reportStdOut(result.stdout, 'GitHubActions::importRepoFS(..)::pushToNewRepo()');
                     that.reportStdErr(result.stderr, 'importRepoFS(..)::pushToNewRepo()');
                 });
@@ -1235,10 +1356,11 @@ export class GitHubActions implements IGitHubActions {
         return true;
 
         function cloneRepo(repoPath: string) {
+            const cloneStart = Date.now();
             Log.info('GitHubActions::writeFileToRepo(..)::cloneRepo() - cloning: ' + repoURL);
             return exec(`git clone -q ${authedRepo} ${repoPath}`)
                 .then(function(result: any) {
-                    Log.info('GitHubActions::writeFileToRepo(..)::cloneRepo() - done');
+                    Log.info('GitHubActions::writeFileToRepo(..)::cloneRepo() - done; took: ' + Util.took(cloneStart));
                     that.reportStdOut(result.stdout, 'GitHubActions::writeFileToRepo(..)::cloneRepo()');
                     // if (result.stderr) {
                     //     Log.warn('GitHubActions::writeFileToRepo(..)::cloneRepo() - stderr: ' + result.stderr);
@@ -1600,6 +1722,38 @@ export class GitHubActions implements IGitHubActions {
             }
         });
     }
+
+    public async getTeamsOnRepo(repoId: string): Promise<GitTeamTuple[]> {
+        // GET /repos/:owner/:repo/teams
+        Log.trace('GitHubActions::getTeamsOnRepo( ' + repoId + ' ) - start');
+        const start = Date.now();
+        const uri = this.apiPath + '/repos/' + this.org + '/' + repoId + '/teams';
+        const options = {
+            method:  'GET',
+            uri:     uri,
+            headers: {
+                'Authorization': this.gitHubAuthToken,
+                'User-Agent':    this.gitHubUserName,
+                'Accept':        'application/json'
+            },
+            json:    true
+        };
+
+        try {
+            const results = await rp(options);
+            Log.trace("GitHubAction::repoExists( " + repoId + " ) - true; took: " + Util.took(start));
+
+            const toReturn: GitTeamTuple[] = [];
+            for (const result of results) {
+                toReturn.push({teamName: result.name, githubTeamNumber: result.id});
+            }
+
+            return toReturn;
+        } catch (err) {
+            Log.trace("GitHubAction::repoExists( " + repoId + " ) - false; took: " + Util.took(start));
+            return [];
+        }
+    }
 }
 
 /* istanbul ignore next */
@@ -1626,7 +1780,7 @@ export class TestGitHubActions implements IGitHubActions {
         if (typeof this.webHookState[repoName] === 'undefined') {
             this.webHookState[repoName] = [];
         }
-        this.webHookState[repoName].push(webhookEndpoint);
+        this.webHookState[repoName] = webhookEndpoint;
         return true;
     }
 
@@ -1719,6 +1873,15 @@ export class TestGitHubActions implements IGitHubActions {
         }
         Log.info("TestGitHubActions::getTeamNumber( " + teamName + " ) - returning: -1; other records: " + JSON.stringify(this.teams));
         return -1;
+    }
+
+    public async getTeam(teamNumber: number): Promise<GitTeamTuple | null> {
+        for (const team of this.teams) {
+            if (team.githubTeamNumber === teamNumber) {
+                return {githubTeamNumber: teamNumber, teamName: team.id};
+            }
+        }
+        return null;
     }
 
     public async importRepoFS(importRepo: string, studentRepo: string, seedFilePath?: string): Promise<boolean> {
@@ -1839,12 +2002,23 @@ export class TestGitHubActions implements IGitHubActions {
 
     private webHookState: any = {};
 
-    public async listWebhooks(repoName: string): Promise<{}> {
+    public async listWebhooks(repoName: string): Promise<Array<{}>> {
         Log.info("TestGitHubActions::listWebhooks()");
         if (typeof this.webHookState[repoName] === 'undefined') {
             return [];
         }
         return this.webHookState[repoName];
+    }
+
+    public async updateWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
+        Log.info("TestGitHubActions::updateWebhook()");
+        if (typeof this.webHookState[repoName] === 'undefined') {
+            return false;
+        }
+
+        this.webHookState[repoName] = webhookEndpoint;
+
+        return true;
     }
 
     public async repoExists(repoName: string): Promise<boolean> {
@@ -1897,6 +2071,10 @@ export class TestGitHubActions implements IGitHubActions {
 
     public simulateWebookComment(projectName: string, sha: string, message: string): Promise<boolean> {
         Log.info("TestGitHubActions::simulateWebookComment(..)");
+        return;
+    }
+
+    public getTeamsOnRepo(repoId: string): Promise<GitTeamTuple[]> {
         return;
     }
 

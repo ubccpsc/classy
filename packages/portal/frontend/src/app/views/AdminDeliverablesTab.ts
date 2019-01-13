@@ -493,7 +493,7 @@ export class AdminDeliverablesTab extends AdminPage {
 
         if (typeof body.success !== 'undefined') {
             // worked
-            UI.showErrorToast("Deliverable saved successfully.");
+            UI.showSuccessToast("Deliverable saved successfully.");
             UI.popPage();
         } else {
             UI.showAlert(body.failure.message);
@@ -506,7 +506,7 @@ export class AdminDeliverablesTab extends AdminPage {
             return null;
         }
         const label = document.querySelector('label[for=' + checkedRadio.id + ']');
-        const sha = label.firstElementChild.firstElementChild.innerHTML;
+        const sha = label.firstElementChild.children[1].innerHTML;
         return sha;
     }
 

@@ -88,6 +88,16 @@ export class AdminDeletePage extends AdminPage {
                 // didn't
             });
         };
+
+        (document.querySelector('#adminDeleteSanitizeDB') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminDeletePage::adminDeleteSanitizeDB(..) - button pressed');
+            evt.stopPropagation(); // prevents list item expansion
+            that.sanitizeDBPressed().then(function() {
+                // worked
+            }).catch(function(err) {
+                // didn't
+            });
+        };
     }
 
     private async deleteRepoPressed(): Promise<void> {
@@ -116,7 +126,8 @@ export class AdminDeletePage extends AdminPage {
             try {
                 await this.deleteRepository(sel);
                 Log.info('AdminDeletePage::deleteRepoPressed(..) - delete complete; repo: ' + sel);
-                UI.showSuccessToast('Repository deleted: ' + sel + ' ( ' + (i + 1) + ' of ' + selected.length + ' )');
+                UI.showSuccessToast('Repository deleted: ' + sel + ' ( ' + (i + 1) + ' of ' + selected.length + ' )',
+                    {force: true, animation: 'none'});
             } catch (err) {
                 Log.error('AdminDeletePage::deleteRepoPressed(..) - delete pressed ERROR: ' + err.message);
                 UI.showErrorToast('Repository NOT deleted: ' + sel);
@@ -125,7 +136,7 @@ export class AdminDeletePage extends AdminPage {
 
         Log.info('AdminDeletePage::deleteRepoPressed(..) - done');
         if (selected.length > 0) {
-            UI.showSuccessToast('Repository deletion complete.');
+            UI.showSuccessToast('Repository deletion complete.', {buttonLabel: 'Ok'});
         }
         // refresh the page
         await this.init({});
@@ -156,7 +167,8 @@ export class AdminDeletePage extends AdminPage {
             try {
                 await this.deleteTeam(sel);
                 Log.info('AdminDeletePage::deleteTeamPressed(..) - delete complete; team: ' + sel);
-                UI.showSuccessToast('Team deleted: ' + sel + ' ( ' + (i + 1) + ' of ' + selected.length + ' )');
+                UI.showSuccessToast('Team deleted: ' + sel + ' ( ' + (i + 1) + ' of ' + selected.length + ' )',
+                    {force: true, animation: 'none'});
             } catch (err) {
                 Log.error('AdminDeletePage::deleteTeamPressed(..) - delete pressed ERROR: ' + err.message);
                 UI.showErrorToast('Team deleted: ' + sel);
@@ -165,10 +177,40 @@ export class AdminDeletePage extends AdminPage {
 
         Log.info('AdminDeletePage::deleteTeamPressed(..) - done');
         if (selected.length > 0) {
-            UI.showSuccessToast('Team deletion complete.');
+            UI.showSuccessToast('Team deletion complete.', {buttonLabel: 'Ok'});
         }
         // refresh the page
         await this.init({});
+    }
+
+    private async sanitizeDBPressed(): Promise<void> {
+        const dryRun = document.getElementById("adminDeleteSanitizeDBToggle") as HTMLInputElement;
+
+        Log.info('AdminDeletePage::sanitizeDBPressed(..) - start; dryRun: ' + dryRun.checked);
+
+        try {
+            const url = this.remote + '/portal/admin/checkDatabase/' + (dryRun.checked === true);
+
+            const options: any = AdminView.getOptions();
+            options.method = 'post';
+
+            const response = await fetch(url, options);
+
+            UI.showSuccessToast("Sanitization complete.", {buttonLabel: 'Ok'});
+            // const body = await response.json();
+            // if (typeof body.success !== 'undefined') {
+            //     // UI.notificationToast(body.success.message);
+            // } else {
+            //     Log.error("Delete ERROR: " + body.failure.message);
+            //     UI.showError(body.failure.message);
+            // }
+
+            Log.info('AdminDeletePage::sanitizeDBPressed(..) - done');
+            UI.showSuccessToast('Sanitiztion complete', {buttonLabel: 'Ok'});
+        } catch (err) {
+            Log.error('AdminDeletePage::sanitizeDBPressed(..) - ERROR: ' + err.message);
+            UI.showErrorToast('Error sanitizing DB: ' + err.message);
+        }
     }
 
     public renderPage(pageName: string, opts: {}): void {

@@ -1,3 +1,6 @@
+import * as fs from "fs-extra";
+import Config, {ConfigKey} from "../../../common/Config";
+
 import Log from "../../../common/Log";
 import {ContainerInput} from "../../../common/types/ContainerTypes";
 
@@ -7,10 +10,17 @@ export class Queue {
     private readonly name: string = '';
 
     private slots: ContainerInput[] = [];
+    private readonly persistDir: string;
 
     constructor(name: string, numSlots: number) {
+        Log.info("[PTEST] Queue::<init>( " + name + ", " + numSlots + " )");
         this.name = name;
         this.numSlots = numSlots;
+
+        // almost certainly exists (contains all queue output), but quick to check
+        fs.ensureDirSync(Config.getInstance().getProp(ConfigKey.persistDir));
+
+        this.persistDir = Config.getInstance().getProp(ConfigKey.persistDir) + '/' + this.name + '.json';
     }
 
     private data: ContainerInput[] = [];
@@ -141,4 +151,36 @@ export class Queue {
         return this.slots.length;
     }
 
+    public async persist(): Promise<boolean> {
+        try {
+            // push current elements back onto the front of the stack
+            const store = {slots: this.slots, data: this.data};
+            await fs.writeJSON(this.persistDir, store);
+            Log.trace("[PTEST] Queue::persist() - done");
+            return true;
+        } catch (err) {
+            Log.error("[PTEST] Queue::persist() - ERROR: " + err.message);
+            return false;
+        }
+
+    }
+
+    public load() {
+        try {
+            // this happens so infrequently, we will do it synchronously
+            const store = fs.readJSONSync(this.persistDir);
+            Log.info("[PTEST] Queue::load() - rehydrated store: " + store);
+            Log.info("[PTEST] Queue::load() - for testing only; not adding rehydrated elements to queue yet");
+
+            // NOTE: this is disabled on purpose for now, but this is what we would do
+            // put queues back; add slots to head of queue so they can be run on next tick
+            // this.data = store.data;
+            // for (const slot of store.slots) {
+            //     this.data.unshift(slot); // add to head of array
+            // }
+        } catch (err) {
+            // if anything happens just don't add to the queue
+            Log.info("[PTEST] Queue::load() - ERROR rehydrating queue: " + err.message);
+        }
+    }
 }

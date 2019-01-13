@@ -697,6 +697,15 @@ export class AdminController {
                 throw new Error("AdminController::planProvision(..) - repo unexpectedly null: " + names.repoName);
             }
 
+            if (typeof repo.custom.githubCreated !== 'undefined' && repo.custom.githubCreated === true && repo.URL === null) {
+                // HACK: this is just for dealing with inconsistent databases
+                // This whole block should be removed in the future
+                Log.warn("AdminController::planProvision(..) - repo URL should not be null: " + repo.id);
+                const config = Config.getInstance();
+                repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
+                await this.dbc.writeRepository(repo);
+            }
+
             // // teams and repos should be provisioned together; this makes sure this consistency is maintained
             // if (team.URL === null && repo.URL === null) {
             //     // provision
@@ -717,7 +726,8 @@ export class AdminController {
 
         const repoTrans: RepositoryTransport[] = [];
         for (const repo of reposToProvision) {
-            repoTrans.push({delivId: deliv.id, id: repo.id, URL: repo.URL});
+            const newRepo = {delivId: deliv.id, id: repo.id, URL: repo.URL};
+            repoTrans.push(newRepo);
         }
 
         return repoTrans;
@@ -728,7 +738,7 @@ export class AdminController {
      * have not already been configured (e.g., their URL field is null).
      *
      * Does not release the repos to the students (e.g., the student team is not attached
-     * to the repository; this should be done with releaseRepositories). Released repos will
+     * to the repository; this should be done with performRelease). Released repos will
      * have their Team.URL fields set. e.g., creating the repo sets Repository.URL; releasing
      * the repo sets Team.URL (for the student teams associated with the repo).
      *
@@ -749,20 +759,21 @@ export class AdminController {
 
         for (const repo of repos) {
             try {
-                Log.info("AdminController::performProvision( .. ) ***** START *****");
-                Log.info("AdminController::performProvision( .. ) - start for repo: " + repo.id);
+                const start = Date.now();
+                Log.info("AdminController::performProvision( .. ) ***** START *****; repo: " + repo.id);
+                // Log.info("AdminController::performProvision( .. ) - start for repo: " + repo.id);
                 if (repo.URL === null) {
                     const teams: Team[] = [];
                     for (const teamId of repo.teamIds) {
                         teams.push(await this.dbc.getTeam(teamId));
                     }
                     Log.info("AdminController::performProvision( .. ) - about to provision: " + repo.id);
-                    const success = await ghc.provisionRepository(repo.id, teams, importURL, false);
+                    const success = await ghc.provisionRepository(repo.id, teams, importURL);
                     Log.info("AdminController::performProvision( .. ) - provisioned: " + repo.id + "; success: " + success);
 
                     if (success === true) {
                         repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
-                        repo.custom.githubProvisioned = true;
+                        repo.custom.githubCreated = true;
                         await dbc.writeRepository(repo);
                         Log.info("AdminController::performProvision( .. ) - success: " + repo.id + "; URL: " + repo.URL);
                         provisionedRepos.push(repo);
@@ -772,8 +783,9 @@ export class AdminController {
 
                     Log.info("AdminController::performProvision( .. ) - done provisioning: " + repo.id + "; forced wait");
                     await Util.delay(2 * 1000); // after any provisioning wait a bit
-                    Log.info("AdminController::performProvision( .. ) - done for repo: " + repo.id + "; wait complete");
-                    Log.info("AdminController::performProvision( .. ) ***** DONE *****");
+                    // Log.info("AdminController::performProvision( .. ) - done for repo: " + repo.id + "; wait complete");
+                    Log.info("AdminController::performProvision( .. ) ***** DONE *****; repo: " +
+                        repo.id + "; took: " + Util.took(start));
                 } else {
                     Log.info("AdminController::performProvision( .. ) - skipped; already provisioned: " +
                         repo.id + "; URL: " + repo.URL);
@@ -792,74 +804,85 @@ export class AdminController {
     }
 
     /**
-     * Releases any provisioned repositories to their respective teams.
+     * Plans the releasing activity for attaching teams to their respective provisioned repositories.
      *
-     * NOTE: this does _not_ provision the repos; it just releases previously-provisioned repositories.
+     * NOTE: this does _not_ provision the repos, or release them. It just creates a plan.
      *
      * @param {Deliverable} deliv
      * @returns {Promise<RepositoryTransport[]>}
      */
-    public async release(deliv: Deliverable): Promise<RepositoryTransport[]> {
-        Log.info("AdminController::release( " + deliv.id + " ) - start");
+    public async planRelease(deliv: Deliverable): Promise<Repository[]> {
+        Log.info("AdminController::planRelease( " + deliv.id + " ) - start");
         const allTeams: Team[] = await this.tc.getAllTeams();
-        Log.info("AdminController::release( " + deliv.id + " ) - # teams: " + allTeams.length);
+        Log.info("AdminController::planRelease( " + deliv.id + " ) - # teams: " + allTeams.length);
 
         const delivTeams: Team[] = [];
         for (const team of allTeams) {
             if (team === null || deliv === null || team.id === null || deliv.id === null) {
                 // seeing this during 310 provisioning, need to figure this out
-                Log.error("AdminController::release( .. ) - ERROR! null team: " +
+                Log.error("AdminController::planRelease( .. ) - ERROR! null team: " +
                     JSON.stringify(team) + " or deliv: " + JSON.stringify(deliv));
             } else {
                 if (team.delivId === deliv.id) {
-                    Log.trace("AdminController::release(..) - adding team: " + team.id + " to delivTeams");
+                    Log.trace("AdminController::planRelease(..) - adding team: " + team.id + " to delivTeams");
                     delivTeams.push(team);
                 }
             }
         }
 
-        Log.info("AdminController::release( " + deliv.id + " ) - # deliv teams: " + delivTeams.length);
+        Log.info("AdminController::planRelease( " + deliv.id + " ) - # deliv teams: " + delivTeams.length);
         const reposToRelease: Repository[] = [];
+        const reposAlreadyReleased: Repository[] = [];
         for (const team of delivTeams) {
             try {
+                // get repo for team
+                const people: Person[] = [];
+                for (const pId of team.personIds) {
+                    people.push(await this.dbc.getPerson(pId));
+                }
+                const names = await this.cc.computeNames(deliv, people);
+                const repo = await this.dbc.getRepository(names.repoName);
+
                 if (typeof team.custom.githubAttached === 'undefined' || team.custom.githubAttached === false) {
-                    // if the team
-                    const people: Person[] = [];
-                    for (const pId of team.personIds) {
-                        people.push(await this.dbc.getPerson(pId));
-                    }
-                    const names = await this.cc.computeNames(deliv, people);
-                    const repo = await this.dbc.getRepository(names.repoName);
-                    if (repo !== null && typeof repo.custom.githubProvisioned !== 'undefined' && repo.custom.githubProvisioned === true) {
+                    if (repo !== null && typeof repo.custom.githubCreated !== 'undefined' && repo.custom.githubCreated === true) {
                         // repo exists and has been provisioned: this is important as teams may have formed that have not been provisioned
                         // aka only release provisioned repos
                         reposToRelease.push(repo);
                     } else {
-                        Log.info("AdminController::release( " + deliv.id + " ) - repo not provisioned yet: " + JSON.stringify(names));
+                        Log.info("AdminController::planRelease( " + deliv.id + " ) - repo not provisioned yet: " + JSON.stringify(names));
                     }
                 } else {
-                    Log.info("AdminController::release( " + deliv.id + " ) - skipping team: " + team.id + "; already attached");
+                    Log.info("AdminController::planRelease( " + deliv.id + " ) - skipping team: " + team.id + "; already attached");
+                    reposAlreadyReleased.push(repo);
                 }
             } catch (err) {
-                Log.error("AdminController::release( .. ) - ERROR: " + err.message);
+                Log.error("AdminController::planRelease( .. ) - ERROR: " + err.message);
                 Log.exception(err);
             }
         }
 
-        Log.info("AdminController::release( " + deliv.id + " ) - # repos to release: " + reposToRelease.length);
-        return await this.releaseRepositories(reposToRelease);
+        Log.info("AdminController::planRelease( " + deliv.id + " ) - # repos in release plan: " + reposToRelease.length);
+
+        // we want to know all repos whether they are released or not
+        const allRepos: Repository[] = reposAlreadyReleased;
+        for (const toReleaseRepo of reposToRelease) {
+            toReleaseRepo.URL = null; // HACK, but denotes that it hasn't been relesed yet
+            allRepos.push(toReleaseRepo);
+        }
+        return allRepos;
     }
 
-    private async releaseRepositories(repos: Repository[]): Promise<RepositoryTransport[]> {
+    public async performRelease(repos: Repository[]): Promise<RepositoryTransport[]> {
         const gha = GitHubActions.getInstance(true);
         const ghc = new GitHubController(gha);
 
-        Log.info("AdminController::releaseRepositories( .. ) - start; # repos: " + repos.length);
+        Log.info("AdminController::performRelease( .. ) - start; # repos: " + repos.length);
         const start = Date.now();
 
         const releasedRepos = [];
         for (const repo of repos) {
             try {
+                const startRepo = Date.now();
                 if (repo.URL !== null) {
                     const teams: Team[] = [];
                     for (const teamId of repo.teamIds) {
@@ -870,19 +893,20 @@ export class AdminController {
                     const success = await ghc.releaseRepository(repo, teams, false);
 
                     if (success === true) {
-                        Log.info("AdminController::releaseRepositories( .. ) - success: " + repo.id);
+                        Log.info("AdminController::performRelease( .. ) - success: " + repo.id +
+                            '; took: ' + Util.took(startRepo));
                         releasedRepos.push(repo);
                     } else {
-                        Log.warn("AdminController::releaseRepositories( .. ) - FAILED: " + repo.id);
+                        Log.warn("AdminController::performRelease( .. ) - FAILED: " + repo.id);
                     }
 
-                    await Util.delay(2 * 1000); // after any releasing wait a bit
+                    await Util.delay(200); // after any releasing wait a short bit
                 } else {
-                    Log.info("AdminController::releaseRepositories( .. ) - skipped; repo not yet provisioned: " +
+                    Log.info("AdminController::performRelease( .. ) - skipped; repo not yet provisioned: " +
                         repo.id + "; URL: " + repo.URL);
                 }
             } catch (err) {
-                Log.error("AdminController::releaseRepositories( .. ) - FAILED: " +
+                Log.error("AdminController::performRelease( .. ) - FAILED: " +
                     repo.id + "; URL: " + repo.URL + "; ERROR: " + err.message);
             }
         }
@@ -891,7 +915,7 @@ export class AdminController {
         for (const repo of releasedRepos) {
             releasedRepositoryTransport.push(RepositoryController.repositoryToTransport(repo));
         }
-        Log.info("AdminController::releaseRepositories( .. ) - complete; # released: " +
+        Log.info("AdminController::performRelease( .. ) - complete; # released: " +
             releasedRepositoryTransport.length + "; took: " + Util.took(start));
 
         return releasedRepositoryTransport;
@@ -907,6 +931,178 @@ export class AdminController {
         return [];
     }
 
+    /**
+     * Synchronizes the database objects with GitHub. Does _NOT_ remove any DB objects, just makes
+     * sure their properties match those in the GitHub org. This is useful if manual changes are made
+     * to the org that you want to have updated in the repo as well.
+     *
+     * NOTE: team membership is _NOT_ currently read from GitHub and will not be synced.
+     *
+     * @param {boolean} dryRun
+     * @returns {Promise<void>}
+     */
+    public async dbSanityCheck(dryRun: boolean): Promise<void> {
+        Log.info("AdminController::dbSanityCheck() - start");
+        const start = Date.now();
+        const gha = GitHubActions.getInstance(true);
+        const tc = new TeamController();
+        const config = Config.getInstance();
+
+        let repos = await this.dbc.getRepositories();
+        for (const repo of repos) {
+            Log.info("AdminController::dbSanityCheck() - start; repo: " + repo.id);
+            const repoExists = await gha.repoExists(repo.id);
+            if (repoExists === true) {
+                // make sure repo is consistent
+                repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
+                if (repo.custom.githubCreated !== true) {
+                    // can't be
+                    Log.warn("AdminController::dbSanityCheck() - repo.custom.githubCreated should not be false for created: " + repo.id);
+                    repo.custom.githubCreated = true;
+                }
+            } else {
+                if (repo.custom.githubCreated !== false) {
+                    // can't be
+                    Log.warn("AdminController::dbSanityCheck() - repo.custom.githubCreated should not be true for !created: " + repo.id);
+                    repo.custom.githubCreated = false; // doesn't exist, must not be created
+                }
+
+                if (repo.custom.githubReleased !== false) {
+                    // can't be
+                    Log.warn("AdminController::dbSanityCheck() - repo.custom.githubReleased should not be true for !created: " + repo.id);
+                    repo.custom.githubReleased = false; // doesn't exist, must not be released
+                }
+
+                if (repo.URL !== null) {
+                    // can't be
+                    Log.warn("AdminController::dbSanityCheck() - repo.URL should be null for: " + repo.id);
+                    repo.URL = null;
+                }
+            }
+
+            if (dryRun === false) {
+                await this.dbc.writeRepository(repo);
+            }
+            Log.trace("AdminController::dbSanityCheck() - done; repo: " + repo.id);
+        }
+
+        let teams = await tc.getAllTeams(); // not DBC because we want special teams filtered out
+        for (const team of teams) {
+            Log.info("AdminController::dbSanityCheck() - start; team: " + team.id);
+
+            let teamNumber: number = -1;
+            if (team.githubId !== null) {
+                // use the cached team id if it exists and is correct (much faster)
+                const tuple = await gha.getTeam(team.githubId);
+                if (tuple !== null && tuple.githubTeamNumber === team.githubId && tuple.teamName === team.id) {
+                    Log.info("AdminController::dbSanityCheck() - using cached gitHubId for team: " + team.id);
+                    teamNumber = team.githubId;
+                }
+            }
+
+            if (teamNumber <= 0) {
+                Log.info("AdminController::dbSanityCheck() - not using cached gitHubId for team: " + team.id);
+                teamNumber = await gha.getTeamNumber(team.id);
+            }
+
+            if (teamNumber >= 0) {
+                if (team.githubId !== teamNumber) {
+                    Log.warn("AdminController::dbSanityCheck() - team.githubId should match the GitHub id for: " + team.id);
+                    team.githubId = teamNumber;
+                }
+            } else {
+                if (team.githubId !== null) {
+                    Log.warn("AdminController::dbSanityCheck() - team.githubId should be null: " + team.id);
+                    team.githubId = null; // doesn't exist, must not have a number
+                }
+
+                if (team.custom.githubAttached !== false) {
+                    Log.warn("AdminController::dbSanityCheck() - team.custom.githubAttached should be false: " + team.id);
+                    team.custom.githubAttached = false; // doesn't exist, must not be attached
+                }
+            }
+
+            if (dryRun === false) {
+                await this.dbc.writeTeam(team);
+            }
+            Log.trace("AdminController::dbSanityCheck() - done; team: " + team.id);
+        }
+
+        repos = await this.dbc.getRepositories();
+        const checkedTeams: Team[] = [];
+        for (const repo of repos) {
+            Log.info("AdminController::dbSanityCheck() - start; repo second pass: " + repo.id);
+            let repoHasBeenChecked = false;
+
+            for (const teamId of repo.teamIds) {
+                const team = await this.dbc.getTeam(teamId);
+
+                const teamsOnRepo = await gha.getTeamsOnRepo(repo.id);
+                let isTeamOnRepo = false;
+                for (const teamOnRepo of teamsOnRepo) {
+                    if (teamOnRepo.teamName === teamId) {
+                        // team is on repo
+                        isTeamOnRepo = true;
+                        repoHasBeenChecked = true;
+                        checkedTeams.push(team);
+                    }
+                }
+
+                if (isTeamOnRepo === true) {
+                    if (repo.custom.githubReleased !== true) {
+                        repo.custom.githubReleased = true;
+                        Log.warn("AdminController::dbSanityCheck() - repo2.custom.githubReleased should be true: " + repo.id);
+                    }
+
+                    if (team.custom.githubAttached !== true) {
+                        team.custom.githubAttached = true;
+                        Log.warn("AdminController::dbSanityCheck() - team2.custom.githubAttached should be true: " + team.id);
+                    }
+
+                    if (dryRun === false) {
+                        await this.dbc.writeRepository(repo);
+                        await this.dbc.writeTeam(team);
+                    }
+                }
+            }
+
+            if (repoHasBeenChecked === false) {
+                // repos that weren't found to have teams must not be released
+                if (repo.custom.githubReleased !== false) {
+                    repo.custom.githubReleased = false; // wasn't found above, must be unreleased
+                    Log.warn("AdminController::dbSanityCheck() - repo2.custom.githubReleased should be false: " + repo.id);
+
+                    if (dryRun === false) {
+                        await this.dbc.writeRepository(repo);
+                    }
+                }
+            }
+        }
+
+        teams = await tc.getAllTeams(); // not DBC because we want special teams filtered out
+        for (const team of teams) {
+            let checked = false;
+            for (const checkedTeam of checkedTeams) {
+                if (checkedTeam.id === team.id) {
+                    checked = true;
+                }
+            }
+            if (checked === false) {
+                // teams that weren't found with repos must not be attached
+                if (team.custom.githubAttached !== false) {
+                    team.custom.githubAttached = false;
+                    Log.warn("AdminController::dbSanityCheck() - team2.custom.githubAttached should be false: " + team.id);
+
+                    if (dryRun === false) {
+                        await this.dbc.writeTeam(team);
+                    }
+                }
+            }
+        }
+
+        Log.info("AdminController::dbSanityCheck() - done; took: " + Util.took(start));
+    }
+
     // NOTE: the default implementation is currently broken; do not use it.
     /**
      * This is a method that subtypes can call from computeNames if they do not want to implement it themselves.
@@ -915,54 +1111,59 @@ export class AdminController {
      * @param {Person[]} people
      * @returns {Promise<{teamName: string | null; repoName: string | null}>}
      */
-    // public async computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}> {
-    //     Log.info("AdminController::computeNames(..) - start; # people: " + people.length);
-    //
-    //     // TODO: this code has a fatal flaw; if the team/repo exists already for the specified people,
-    //     // it is correct to return those.
-    //
-    //     let repoPrefix = '';
-    //     if (deliv.repoPrefix.length > 0) {
-    //         repoPrefix = deliv.repoPrefix;
-    //     } else {
-    //         repoPrefix = deliv.id;
-    //     }
-    //
-    //     let teamPrefix = '';
-    //     if (deliv.teamPrefix.length > 0) {
-    //         teamPrefix = deliv.teamPrefix;
-    //     } else {
-    //         teamPrefix = deliv.id;
-    //     }
-    //     // the repo name and the team name should be the same, so just use the repo name
-    //     const repos = await this.dbc.getRepositories();
-    //     let repoCount = 0;
-    //     for (const repo of repos) {
-    //         if (repo.id.startsWith(repoPrefix)) {
-    //             repoCount++;
-    //         }
-    //     }
-    //     let repoName = '';
-    //     let teamName = '';
-    //
-    //     let ready = false;
-    //     while (!ready) {
-    //         repoName = repoPrefix + '_' + repoCount;
-    //         teamName = teamPrefix + '_' + repoCount;
-    //         const r = await this.dbc.getRepository(repoName);
-    //         const t = await this.dbc.getTeam(teamName);
-    //         if (r === null && t === null) {
-    //             ready = true;
-    //         } else {
-    //             Log.warn("AdminController::computeNames(..) - name not available; r: " + repoName + "; t: " + teamName);
-    //             repoCount++; // try the next one
-    //         }
-    //     }
-    //     Log.info("AdminController::computeNames(..) - done; r: " + repoName + "; t: " + teamName);
-    //     return {teamName: teamName, repoName: repoName};
-    // }
+        // public async computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}> {
+        //     Log.info("AdminController::computeNames(..) - start; # people: " + people.length);
+        //
+        //     // TODO: this code has a fatal flaw; if the team/repo exists already for the specified people,
+        //     // it is correct to return those.
+        //
+        //     let repoPrefix = '';
+        //     if (deliv.repoPrefix.length > 0) {
+        //         repoPrefix = deliv.repoPrefix;
+        //     } else {
+        //         repoPrefix = deliv.id;
+        //     }
+        //
+        //     let teamPrefix = '';
+        //     if (deliv.teamPrefix.length > 0) {
+        //         teamPrefix = deliv.teamPrefix;
+        //     } else {
+        //         teamPrefix = deliv.id;
+        //     }
+        //     // the repo name and the team name should be the same, so just use the repo name
+        //     const repos = await this.dbc.getRepositories();
+        //     let repoCount = 0;
+        //     for (const repo of repos) {
+        //         if (repo.id.startsWith(repoPrefix)) {
+        //             repoCount++;
+        //         }
+        //     }
+        //     let repoName = '';
+        //     let teamName = '';
+        //
+        //     let ready = false;
+        //     while (!ready) {
+        //         repoName = repoPrefix + '_' + repoCount;
+        //         teamName = teamPrefix + '_' + repoCount;
+        //         const r = await this.dbc.getRepository(repoName);
+        //         const t = await this.dbc.getTeam(teamName);
+        //         if (r === null && t === null) {
+        //             ready = true;
+        //         } else {
+        //             Log.warn("AdminController::computeNames(..) - name not available; r: " + repoName + "; t: " + teamName);
+        //             repoCount++; // try the next one
+        //         }
+        //     }
+        //     Log.info("AdminController::computeNames(..) - done; r: " + repoName + "; t: " + teamName);
+        //     return {teamName: teamName, repoName: repoName};
+        // }
 
-    public static validateProvisionTransport(obj: ProvisionTransport) {
+    public static
+
+    validateProvisionTransport(obj
+                                   :
+                                   ProvisionTransport
+    ) {
         if (typeof obj === 'undefined' || obj === null) {
             const msg = 'Transport not populated.';
             Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);

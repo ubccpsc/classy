@@ -75,23 +75,22 @@ export default class RouteHandler {
         let secretVerified = false;
         if (githubSecret !== null) {
             try {
-                Log.info("RouteHandler::postGithubHook(..) - trying to compute webhook secrets");
+                Log.trace("RouteHandler::postGithubHook(..) - trying to compute webhook secrets");
 
                 const atSecret = Config.getInstance().getProp(ConfigKey.autotestSecret);
                 const key = crypto.createHash('sha256').update(atSecret, 'utf8').digest('hex'); // secret w/ sha256
-                Log.info("RouteHandler::postGithubHook(..) - key: " + key); // should be same as webhook added key
+                // Log.info("RouteHandler::postGithubHook(..) - key: " + key); // should be same as webhook added key
 
                 const computed = "sha1=" + crypto.createHmac('sha1', key) // payload w/ sha1
                     .update(JSON.stringify(body))
                     .digest('hex');
 
-                Log.info("RouteHandler::postGithubHook(..) - GitHub header: " + githubSecret + "; computed: " + computed);
-
                 secretVerified = (githubSecret === computed);
                 if (secretVerified === true) {
                     Log.info("RouteHandler::postGithubHook(..) - webhook secret verified: " + secretVerified);
                 } else {
-                    Log.warn("RouteHandler::postGithubHook(..) - webhook secret does not match");
+                    Log.warn("RouteHandler::postGithubHook(..) - webhook secrets do not match");
+                    Log.warn("RouteHandler::postGithubHook(..) - GitHub header: " + githubSecret + "; computed: " + computed);
                 }
             } catch (err) {
                 Log.error("RouteHandler::postGithubHook(..) - ERROR computing HMAC: " + err.message);

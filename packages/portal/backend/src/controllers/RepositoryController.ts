@@ -11,7 +11,7 @@ export class RepositoryController {
     private db: DatabaseController = DatabaseController.getInstance();
 
     public async getAllRepos(): Promise<Repository[]> {
-        Log.info("RepositoryController::getAllRepos() - start");
+        Log.trace("RepositoryController::getAllRepos() - start");
 
         const repos = await this.db.getRepositories();
         return repos;

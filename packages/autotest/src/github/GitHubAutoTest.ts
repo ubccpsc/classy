@@ -120,8 +120,16 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         // update info record
         const delivId = info.delivId;
+        if (delivId === null) {
+            Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, null delivId");
+            // no deliverable, give warning and abort
+            const msg = "Please specify a deliverable so AutoTest knows what to run against (e.g., #d0).";
+            await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+            return false;
+        }
+
         const deliv = await this.classPortal.getContainerDetails(delivId);
-        if (delivId === null || deliv === null) {
+        if (deliv === null) {
             Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, unknown delivId: " + delivId);
             // no deliverable, give warning and abort
             const msg = "Please specify a deliverable so AutoTest knows what to run against (e.g., #d0).";
@@ -329,6 +337,14 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         Log.info("GitHubAutoTest::handleCommentEvent(..) - start; for: " +
             info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA);
 
+        const res: AutoTestResultTransport = await this.classPortal.getResult(info.delivId, info.repoId, info.commitSHA);
+
+        // handle #check requests (not great here), also doesn't auto-postback
+        if (await this.handleCheck(info, res) === true) {
+            // don't like early return, but it simplifies the rest of the method
+            return;
+        }
+
         // sanity check; this keeps the rest of the code much simpler
         const preconditionsMet = await this.checkCommentPreconditions(info);
         if (preconditionsMet === false) {
@@ -337,7 +353,6 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         }
 
         const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(info.personId);
-        const res: AutoTestResultTransport = await this.classPortal.getResult(info.delivId, info.repoId, info.commitSHA);
         if (isStaff !== null && (isStaff.isStaff === true || isStaff.isAdmin === true)) {
             Log.info("GitHubAutoTest::handleCommentEvent(..) - handleAdmin; for: " +
                 info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA);
@@ -353,6 +368,30 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA);
             await this.handleCommentStudent(info, res);
         }
+        Log.trace("GitHubAutoTest::handleCommentEvent(..) - done; took: " + Util.took(start));
+    }
+
+    private async handleCheck(info: CommitTarget, res: AutoTestResultTransport): Promise<boolean> {
+        if (info !== null && typeof info.flags !== 'undefined' && info.flags.indexOf("#check") >= 0) {
+            Log.info("GitHubAutoTest::handleCheck(..) - ignored, #check requested.");
+            delete info.flags;
+            if (res !== null) {
+                let state = '';
+                if (res.output.state === 'SUCCESS' && typeof res.output.report.result !== 'undefined') {
+                    state = res.output.report.result;
+                } else {
+                    state = res.output.state;
+                }
+                const msg = "Check status for commit: " + state;
+                await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+            } else {
+                // not processed yet
+                const msg = "Commit not yet processed. If you want to #check again, you will have to request later.";
+                await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+            }
+            return true;
+        }
+        return false;
     }
 
     protected async processExecution(data: AutoTestResult): Promise<void> {

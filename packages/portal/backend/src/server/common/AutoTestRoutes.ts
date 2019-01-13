@@ -47,9 +47,6 @@ export class AutoTestRoutes implements IREST {
 
         server.post('/portal/githubWebhook', AutoTestRoutes.githubWebhook); // forward GitHub Webhooks to AutoTest
 
-        // >SDMM HACK< This is a hack to allow current webhooks on EdX to continue to function
-        server.post('/githubWebhook', AutoTestRoutes.githubWebhook); // forward GitHub Webhooks to AutoTest
-
         server.get('/portal/at/docker/images', AutoTestRoutes.getDockerImages);
         server.post('/portal/at/docker/image', AutoTestRoutes.postDockerImage);
     }

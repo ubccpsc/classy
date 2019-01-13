@@ -157,6 +157,7 @@ export class GitHubController implements IGitHubController {
                                    teams: Team[],
                                    asCollaborators: boolean = false): Promise<boolean> {
         Log.info("GitHubController::releaseRepository( {" + repo.id + ", ...}, ...) - start");
+        const start = Date.now();
 
         await this.checkDatabase(repo.id, null);
 
@@ -182,6 +183,8 @@ export class GitHubController implements IGitHubController {
                         "with #: " + newTeam.githubTeamNumber);
 
                     teamNum = newTeam.githubTeamNumber;
+                    team.githubId = teamNum; // add team number to team
+
                     await this.gha.addMembersToTeam(team.id, teamNum, team.personIds);
                     Log.info("GitHubController::releaseRepository(..) - added members to team");
                 }
@@ -191,21 +194,24 @@ export class GitHubController implements IGitHubController {
                 if (res.githubTeamNumber > 0) {
                     // keep track of team addition
                     team.custom.githubAttached = true;
-                    await this.dbc.writeTeam(team);
+                } else {
+                    Log.error("GitHubController::releaseRepository(..) - ERROR adding team to repo: " + JSON.stringify(res));
+                    team.custom.githubAttached = false;
                 }
+
+                await this.dbc.writeTeam(team); // add new properties to the team
                 Log.info("GitHubController::releaseRepository(..) - " +
                     " added team (" + team.id + " ) with push permissions to repository (" + repo.id + ")");
             }
         }
 
-        Log.info("GitHubController::releaseRepository(..) - finish");
+        Log.info("GitHubController::releaseRepository( " + repo.id + ", ... ) - done; took: " + Util.took(start));
         return true;
     }
 
     public async provisionRepository(repoName: string,
                                      teams: Team[],
-                                     importUrl: string,
-                                     shouldRelease: boolean): Promise<boolean> {
+                                     importUrl: string): Promise<boolean> {
         Log.info("GitHubController::provisionRepository( " + repoName + ", ...) - start");
         const dbc = DatabaseController.getInstance();
 
@@ -271,6 +277,8 @@ export class GitHubController implements IGitHubController {
                     if (teamValue.githubTeamNumber > 0) {
                         // worked
                         team.URL = teamValue.URL;
+                        team.githubId = teamValue.githubTeamNumber;
+                        team.custom.githubAttached = false; // attaching happens in release
                         await dbc.writeTeam(team);
                     }
 
@@ -278,25 +286,25 @@ export class GitHubController implements IGitHubController {
                     const addMembers = await this.gha.addMembersToTeam(teamValue.teamName, teamValue.githubTeamNumber, team.personIds);
                     Log.info("GitHubController::provisionRepository( " + repoName + " ) - addMembers: " + addMembers.teamName);
 
-                    if (shouldRelease === true) {
-                        Log.info("GitHubController::provisionRepository() - add team: " + teamValue.teamName + " to repo");
-                        const teamAdd = await this.gha.addTeamToRepo(teamValue.githubTeamNumber, repoName, 'push');
-
-                        if (teamAdd.githubTeamNumber > 0) {
-                            // keep track of team addition
-                            team.custom.githubAttached = true;
-                            await dbc.writeTeam(team);
-                        }
-
-                        Log.info('GitHubController::provisionRepository(..) - team name: ' + teamAdd.teamName);
-                    } else {
-                        // keep track of fact that team wasn't added to repo
-                        team.custom.githubAttached = false;
-                        await dbc.writeTeam(team);
-
-                        Log.info("GitHubController::provisionRepository() - team: " +
-                            teamValue.teamName + " NOT added to repo (shouldRelease === false)");
-                    }
+                    // if (shouldRelease === true) {
+                    //     Log.info("GitHubController::provisionRepository() - add team: " + teamValue.teamName + " to repo");
+                    //     const teamAdd = await this.gha.addTeamToRepo(teamValue.githubTeamNumber, repoName, 'push');
+                    //
+                    //     if (teamAdd.githubTeamNumber > 0) {
+                    //         // keep track of team addition
+                    //         team.custom.githubAttached = true;
+                    //         await dbc.writeTeam(team);
+                    //     }
+                    //
+                    //     Log.info('GitHubController::provisionRepository(..) - team name: ' + teamAdd.teamName);
+                    // } else {
+                    // keep track of fact that team wasn't added to repo
+                    // team.custom.githubAttached = false;
+                    // await dbc.writeTeam(team);
+                    //
+                    // Log.info("GitHubController::provisionRepository() - team: " +
+                    //     teamValue.teamName + " NOT added to repo (shouldRelease === false)");
+                    // }
                 }
             } catch (err) {
                 Log.warn("GitHubController::provisionRepository() - create team ERROR: " + err);
@@ -304,7 +312,8 @@ export class GitHubController implements IGitHubController {
             }
 
             Log.trace("GitHubController::provisionRepository() - add staff team to repo");
-            const staffTeamNumber = await this.gha.getTeamNumber('staff');
+            const staffTeamNumber = await new TeamController().getTeamNumber('staff');
+            //  const staffTeamNumber = await this.gha.getTeamNumber('staff');
             Log.trace('GitHubController::provisionRepository(..) - staffTeamNumber: ' + staffTeamNumber);
             const staffAdd = await this.gha.addTeamToRepo(staffTeamNumber, repoName, 'admin');
             Log.trace('GitHubController::provisionRepository(..) - team name: ' + staffAdd.teamName);
