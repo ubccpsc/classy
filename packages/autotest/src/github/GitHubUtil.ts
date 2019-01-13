@@ -55,6 +55,15 @@ export class GitHubUtil {
         return parsedDelivId;
     }
 
+    public static parseCheckFromComment(message: any): boolean {
+        if (message.indexOf('#check') >= 0) {
+            Log.trace("GitHubUtil::parseCheckFromComment() - input: " + message + "; check: true");
+            return true;
+        }
+        Log.trace("GitHubUtil::parseCheckFromComment() - input: " + message + "; silent: false");
+        return false;
+    }
+
     public static parseSilentFromComment(message: any): boolean {
         if (message.indexOf('#silent') >= 0) {
             Log.trace("GitHubUtil::parseSilentFromComment() - input: " + message + "; silent: true");
@@ -103,6 +112,9 @@ export class GitHubUtil {
             }
             if (GitHubUtil.parseSilentFromComment(message) === true) {
                 flags.push("#silent");
+            }
+            if (GitHubUtil.parseCheckFromComment(message) === true) {
+                flags.push("#check");
             }
 
             const botName = "@" + Config.getInstance().getProp(ConfigKey.botName).toLowerCase();
