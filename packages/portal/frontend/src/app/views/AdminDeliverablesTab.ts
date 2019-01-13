@@ -572,6 +572,10 @@ export class AdminDeliverablesTab extends AdminPage {
                     }
                 };
                 xhr.onload = function() {
+                    if (xhr.status >= 400) {
+                        return reject(new Error(xhr.responseText));
+                    }
+
                     if (lines.length > 2 && lines[lines.length - 2].startsWith("Successfully built")) {
                         const sha = lines[lines.length - 2].replace("Successfully built ", "").trim();
                         // const tag = lines[lines.length - 1].replace("Successfully tagged ", "");
