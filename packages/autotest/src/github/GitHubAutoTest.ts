@@ -341,8 +341,11 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         // handle #check requests (not great here), also doesn't auto-postback
         if (await this.handleCheck(info, res) === true) {
+            Log.info("GitHubAutoTest::handleCommentEvent(..) - handleCheck true");
             // don't like early return, but it simplifies the rest of the method
             return;
+        } else {
+            Log.info("GitHubAutoTest::handleCommentEvent(..) - handleCheck false");
         }
 
         // sanity check; this keeps the rest of the code much simpler
@@ -371,8 +374,22 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         Log.trace("GitHubAutoTest::handleCommentEvent(..) - done; took: " + Util.took(start));
     }
 
+    /**
+     * Returns true if handleCheck runs. False means standard processing should continue.
+     *
+     * @param {CommitTarget} info
+     * @param {AutoTestResultTransport} res
+     * @returns {Promise<boolean>}
+     */
     private async handleCheck(info: CommitTarget, res: AutoTestResultTransport): Promise<boolean> {
         if (info !== null && typeof info.flags !== 'undefined' && info.flags.indexOf("#check") >= 0) {
+
+            if (info.flags.indexOf("#force") >= 0) {
+                const msg = '#force cannot be used in conjunction with #check.';
+                await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+                return true;
+            }
+
             Log.info("GitHubAutoTest::handleCheck(..) - ignored, #check requested.");
             delete info.flags;
             if (res !== null) {
