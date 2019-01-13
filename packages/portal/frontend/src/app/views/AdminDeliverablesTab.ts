@@ -292,7 +292,7 @@ export class AdminDeliverablesTab extends AdminPage {
             options: AdminView.getOptions()
         };
         const state = {
-            checkedItemId: selectedDockerImage
+            checkedItemTag: selectedDockerImage
         };
         new DockerListImageView(list).bind(dataSource, state).catch(function(err: Error) {
             UI.showErrorToast("Docker images: " + err);
