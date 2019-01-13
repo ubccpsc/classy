@@ -1,8 +1,22 @@
+import * as rp from "request-promise-native";
+
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
 import {CommitTarget} from "../../../common/types/ContainerTypes";
 import {ClassPortal, IClassPortal} from "../autotest/ClassPortal";
+
+export interface IGitHubMessage {
+    /**
+     * Commit where comment should be made (should be commitURL)
+     */
+    url: string;
+
+    /**
+     * Markdown format
+     */
+    message: string;
+}
 
 /**
  * Translator class to turn REST payloads into IPushEvent and ICommentEvents.
@@ -225,6 +239,71 @@ export class GitHubUtil {
             Log.error("GitHubUtil::processPush(..) - ERROR parsing: " + err);
             Log.error("GitHubUtil::processPush(..) - ERROR payload: " + JSON.stringify(payload, null, 2));
             return null;
+        }
+    }
+
+    public static async postMarkdownToGithub(message: IGitHubMessage): Promise<boolean> {
+        // return new Promise<boolean>((fulfill, reject) => {
+        try {
+            // find a better short string for logging
+            let messageToPrint = message.message;
+            if (messageToPrint.indexOf('\n') > 0) {
+                messageToPrint = messageToPrint.substr(0, messageToPrint.indexOf('\n'));
+            }
+            if (messageToPrint.length > 80) {
+                messageToPrint = messageToPrint.substr(0, 80) + "...";
+            }
+
+            Log.info("GitHubUtil::postMarkdownToGithub(..) - Posting markdown to url: " +
+                message.url + "; message: " + messageToPrint);
+
+            if (typeof message.url === "undefined" || message.url === null) {
+                Log.error("GitHubUtil::postMarkdownToGithub(..)  - message.url is required");
+                return false;
+            }
+
+            if (typeof message.message === "undefined" || message.message === null || message.message.length < 1) {
+                Log.error("GitHubUtil::postMarkdownToGithub(..)  - message.message is required");
+                return false;
+            }
+
+            /*
+            const org = Config.getInstance().getProp(ConfigKey.org);
+            const hostLength = message.url.indexOf(org);
+            const path = 'repos/' + message.url.substr(hostLength);
+            const host = Config.getInstance().getProp(ConfigKey.githubAPI);
+            */
+
+            const body: string = JSON.stringify({body: message.message});
+            const options: any = {
+                method:  "POST",
+                headers: {
+                    "Content-Type":  "application/json",
+                    "User-Agent":    "UBC-AutoTest",
+                    "Authorization": Config.getInstance().getProp(ConfigKey.githubBotToken)
+                },
+                body:    body
+            };
+
+            if (Config.getInstance().getProp(ConfigKey.postback) === true) {
+
+                // Log.trace("GitHubService::postMarkdownToGithub(..) - request: " + JSON.stringify(options, null, 2));
+                const url = message.url; // this url comes from postbackURL which uses the right API format
+                try {
+                    await rp(url, options);
+                    Log.trace("GitHubUtil::postMarkdownToGithub(..) - success"); // : " + res);
+                    return true;
+                } catch (err) {
+                    Log.error("GitHubUtil::postMarkdownToGithub(..) - ERROR: " + err);
+                    return false;
+                }
+            } else {
+                Log.trace("GitHubUtil::postMarkdownToGithub(..) - send skipped (config.postback === false)");
+                return true;
+            }
+        } catch (err) {
+            Log.error("GitHubUtil::postMarkdownToGithub(..) - ERROR: " + err);
+            return false;
         }
     }
 }

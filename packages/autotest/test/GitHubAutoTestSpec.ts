@@ -13,7 +13,7 @@ import {IClassPortal} from "../src/autotest/ClassPortal";
 import {MockClassPortal} from "../src/autotest/mocks/MockClassPortal";
 import {MockDataStore} from "../src/autotest/mocks/MockDataStore";
 import {GitHubAutoTest} from "../src/github/GitHubAutoTest";
-import {GitHubService, IGitHubMessage} from "../src/github/GitHubService";
+import {GitHubUtil, IGitHubMessage} from "../src/github/GitHubUtil";
 
 import "./GlobalSpec"; // load first
 import {TestData} from "./TestData";
@@ -26,7 +26,7 @@ describe("GitHubAutoTest", () => {
     let pushes: CommitTarget[];
     let data: MockDataStore;
     let portal: IClassPortal;
-    let gh: GitHubService;
+    // let gh: GitHubService;
     let at: GitHubAutoTest;
 
     const TS_IN = new Date(2018, 3, 3).getTime();
@@ -50,7 +50,7 @@ describe("GitHubAutoTest", () => {
         await data.clearData();
 
         portal = new MockClassPortal();
-        gh = new GitHubService();
+        // gh = new GitHubService();
 
         Config.getInstance().setProp(ConfigKey.postback, false);
 
@@ -479,7 +479,8 @@ describe("GitHubAutoTest", () => {
             commitURL: "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263fSOMEOTHER", // different commit
             delivId:   "d1", // same deliverable
             timestamp: TestData.commentRecordUserA.timestamp, // 1516451273288,
-            personId:  "cs310test"
+            personId:  "cs310test",
+            kind:      'standard'
         };
 
         await data.savePush(TestData.inputRecordA.target);

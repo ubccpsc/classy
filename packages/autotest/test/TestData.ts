@@ -106,7 +106,8 @@ export class TestData {
         // org:       TestData.commentRecordStaffA.org,
         delivId:   TestData.commentRecordStaffA.delivId,
         timestamp: TestData.commentRecordStaffA.timestamp + 1000,
-        commitURL: TestData.commentRecordStaffA.commitURL
+        commitURL: TestData.commentRecordStaffA.commitURL,
+        kind:      'standard'
     };
 
     public static readonly feedbackRecordB: IFeedbackGiven = {
@@ -114,7 +115,8 @@ export class TestData {
         // org:       TestData.commentRecordUserA.org,
         delivId:   TestData.commentRecordUserA.delivId,
         timestamp: TestData.commentRecordUserA.timestamp + 1000,
-        commitURL: TestData.commentRecordUserA.commitURL
+        commitURL: TestData.commentRecordUserA.commitURL,
+        kind:      'standard'
     };
 
     public static readonly outputRecordA: AutoTestResult = {
@@ -136,14 +138,14 @@ export class TestData {
                 skipNames:    [],
                 custom:       [],
                 feedback:     "Test Feedback",
-                result:        "SUCCESS",
-                attachments:        []
+                result:       "SUCCESS",
+                attachments:  []
             },
             // "feedback":           "Test Feedback",
             postbackOnComplete: false,
             custom:             {},
             state:              ContainerState.SUCCESS,
-            graderTaskId:        ""
+            graderTaskId:       ""
         }
     };
 
@@ -173,7 +175,7 @@ export class TestData {
             postbackOnComplete: false,
             custom:             {},
             state:              ContainerState.SUCCESS,
-            graderTaskId:        ""
+            graderTaskId:       ""
         }
     };
 }

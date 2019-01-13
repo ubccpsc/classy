@@ -1,7 +1,6 @@
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {AutoTestResult} from "../../../../common/types/AutoTestTypes";
-import {GradeReport} from "../../../../common/types/ContainerTypes";
 import {
     AutoTestAuthTransport,
     AutoTestConfigTransport,
@@ -98,8 +97,8 @@ export class MockClassPortal implements IClassPortal {
         return Promise.resolve({personId: userName});
     }
 
-    public async formatFeedback(gradeRecord: GradeReport, feedbackMode?: string): Promise<string | null> {
-        return Promise.resolve(gradeRecord.feedback);
+    public async formatFeedback(res: AutoTestResultTransport, feedbackMode?: string): Promise<string | null> {
+        return Promise.resolve(res.output.report.feedback);
     }
 
 }

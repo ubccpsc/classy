@@ -4,7 +4,7 @@ import "mocha";
 import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
 
-import {GitHubService, IGitHubMessage, IGitHubService} from "../src/github/GitHubService";
+import {GitHubUtil, IGitHubMessage} from "../src/github/GitHubUtil";
 import "./GlobalSpec";
 
 describe("GitHub Markdown Service", () => {
@@ -15,12 +15,12 @@ describe("GitHub Markdown Service", () => {
 
     const TIMEOUT = 5000;
 
-    let gh: IGitHubService;
+    // let gh: IGitHubService;
 
     const postbackVal = Config.getInstance().getProp(ConfigKey.postback);
 
     before(function() {
-        gh = new GitHubService();
+        // gh = new GitHubService();
 
         // set postback to be true so we an actually validate this
         const config = Config.getInstance();
@@ -33,35 +33,38 @@ describe("GitHub Markdown Service", () => {
         config.setProp(ConfigKey.postback, postbackVal);
     });
 
-    it("Should be able to post a valid message.", function() {
+    it("Should be able to post a valid message.", async function() {
         const post: IGitHubMessage = {
             url:     VALID_URL,
             message: "Automated Test Suite Message"
         };
 
         Log.test("Trying a valid url");
-        return gh.postMarkdownToGithub(post).then(function(res: boolean) {
+        const res = await GitHubUtil.postMarkdownToGithub(post);
+        if (res === true) {
             Log.test("Success (expected)");
             expect(res).to.equal(true);
-        }).catch(function(err) {
-            Log.test("Failure (unexpected): " + err);
+        } else {
+            Log.test("Failure (unexpected)");
             expect.fail();
-        });
+        }
     }).timeout(TIMEOUT);
 
-    it("Should fail when trying to post an invalid message.", () => {
+    it("Should fail when trying to post an invalid message.", async function() {
         const post: any = {
             url: VALID_URL
         };
 
         Log.test("Trying an invalid message");
-        return gh.postMarkdownToGithub(post).then(function(res: boolean) {
+
+        const res = await GitHubUtil.postMarkdownToGithub(post);
+        if (res === true) {
             Log.test("Success (unexpected): " + res);
             expect.fail();
-        }).catch(function(err) {
+        } else {
             Log.test("Failure (expected)");
-            expect(err).to.equal(false);
-        });
-    });
+            expect(res).to.equal(false);
+        }
+    }).timeout(TIMEOUT);
 
 });

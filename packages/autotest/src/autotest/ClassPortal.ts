@@ -3,7 +3,7 @@ import * as rp from "request-promise-native";
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {AutoTestResult} from "../../../common/types/AutoTestTypes";
-import {GradeReport} from "../../../common/types/ContainerTypes";
+import {CommitTarget, GradeReport} from "../../../common/types/ContainerTypes";
 import {
     AutoTestAuthPayload,
     AutoTestAuthTransport,
@@ -90,11 +90,10 @@ export interface IClassPortal {
      * on portal just returns gradeRecord.feedback but courses are free to adjust this as needed using
      * their CourseController class.
      *
-     * @param {GradeReport} gradeRecord
      * @param {string} feedbackMode
      * @returns {Promise<Payload>}
      */
-    formatFeedback(gradeRecord: GradeReport, feedbackMode?: string): Promise<string | null>;
+    formatFeedback(res: AutoTestResultTransport, feedbackMode?: string): Promise<string | null>;
 }
 
 export class ClassPortal implements IClassPortal {
@@ -240,10 +239,13 @@ export class ClassPortal implements IClassPortal {
         }
     }
 
-    public async formatFeedback(gradeRecord: GradeReport, feedbackMode?: string): Promise<string | null> {
+    public async formatFeedback(res: AutoTestResultTransport, feedbackMode?: string): Promise<string | null> {
         Log.info("ClassPortal::formatFeedback(..) - start; feedbackMode: " + feedbackMode);
         try {
+            // TODO: #check formatting should be handled here
+
             // TODO: this could actually be sent to the frontend for consideration in the course-specific classy controller
+            const gradeRecord = res.output.report;
 
             let feedback: string = gradeRecord.feedback;
 
