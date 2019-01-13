@@ -372,7 +372,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     }
 
     private async handleCheck(info: CommitTarget, res: AutoTestResultTransport): Promise<boolean> {
-        if (info.flags.indexOf("#check") >= 0) {
+        if (info !== null && typeof info.flags !== 'undefined' && info.flags.indexOf("#check") >= 0) {
             Log.info("GitHubAutoTest::handleCheck(..) - ignored, #check requested.");
             delete info.flags;
             if (res !== null) {
