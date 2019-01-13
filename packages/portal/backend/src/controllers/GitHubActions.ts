@@ -670,7 +670,7 @@ export class GitHubActions implements IGitHubActions {
     }
 
     public async listWebhooks(repoName: string): Promise<Array<{}>> {
-        Log.info("GitHubAction::listWebhooks( " + this.org + ", " + repoName + " ) - start");
+        Log.trace("GitHubAction::listWebhooks( " + this.org + ", " + repoName + " ) - start");
         const start = Date.now();
         // POST /repos/:owner/:repo/hooks
         const uri = this.apiPath + '/repos/' + this.org + '/' + repoName + '/hooks';
@@ -685,7 +685,7 @@ export class GitHubActions implements IGitHubActions {
         };
 
         const results = await rp(opts);
-        Log.info("GitHubAction::listWebhooks(..) - success: " + results + "; took: " + Util.took(start));
+        Log.trace("GitHubAction::listWebhooks(..) - success; took: " + Util.took(start));
         return results;
     }
 
@@ -731,6 +731,7 @@ export class GitHubActions implements IGitHubActions {
         Log.info("GitHubAction::updateWebhook( " + repoName + ", " + webhookEndpoint + " ) - start");
 
         const existingWebhooks = await this.listWebhooks(repoName);
+
         if (existingWebhooks.length === 1) {
 
             const hookId = (existingWebhooks[0] as any).id;

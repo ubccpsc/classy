@@ -23,7 +23,8 @@ export class WebhookUpdater {
      *
      * @type {string}
      */
-    private HOOK_URL = 'https://localhost/portal/githubWebhook';
+        // private HOOK_URL = 'https://localhost/portal/githubWebhook';
+    private HOOK_URL = 'https://sdmm.cs.ubc.ca/portal/githubWebhook';
 
     private gha = GitHubActions.getInstance(true);
 
@@ -33,10 +34,10 @@ export class WebhookUpdater {
 
         Log.warn("WebhookUpdater::<init> - ORGNAME: " + config.getProp(ConfigKey.org));
 
-        if (config.getProp(ConfigKey.org) !== config.getProp(ConfigKey.testorg)) {
-            Log.error("WebhookUpdater::<init> - org is not the test org. You probably REALLY REALLY do not want to do this");
-            this.DRY_RUN = true; // force back to dry run
-        }
+        // if (config.getProp(ConfigKey.org) !== config.getProp(ConfigKey.testorg)) {
+        //     Log.error("WebhookUpdater::<init> - org is not the test org. You probably REALLY REALLY do not want to do this");
+        //     this.DRY_RUN = true; // force back to dry run
+        // }
     }
 
     public async run(): Promise<void> {
@@ -46,7 +47,7 @@ export class WebhookUpdater {
     private async updateHooks(): Promise<void> {
         Log.info("WebhookUpdater::updateHooks() - start");
 
-        const REPOS_TO_IGNORE = ['PostTestDoNotDelete'];
+        const REPOS_TO_IGNORE = ['PostTestDoNotDelete', 'bootstrap', 'capstone', 'project_oracle', 'course-csv-dataset ', 'classy'];
 
         const reposToUpdate = [];
         const repos = await this.gha.listRepos();
@@ -66,12 +67,23 @@ export class WebhookUpdater {
                 currHook = currentHooks[0].config.url;
             }
 
-            Log.info("WebhookUpdater::updateHooks() - repo: " + repo.repoName + "; current: " + currHook + "; new: " + this.HOOK_URL);
-
             if (this.DRY_RUN === false) {
-                Log.info("WebhookUpdater::updateHooks() - DRY_RUN === false");
-                await this.gha.updateWebhook(repo.repoName, this.HOOK_URL);
-                Log.info("WebhookUpdater::updateHooks() - done updating: " + repo.repoName);
+                if (currHook === this.HOOK_URL) {
+                    Log.info("WebhookUpdater::updateHooks() - hook correct for repo: " + repo.repoName);
+                } else {
+                    Log.warn("WebhookUpdater::updateHooks() - fixing hook for repo: " + repo.repoName +
+                        "; current: " + currHook + "; new: " + this.HOOK_URL);
+                    await this.gha.updateWebhook(repo.repoName, this.HOOK_URL);
+                    Log.info("WebhookUpdater::updateHooks() - done updating: " + repo.repoName);
+                }
+
+            } else {
+                if (currHook === this.HOOK_URL) {
+                    Log.info("WebhookUpdater::updateHooks() - dry run; hook correct for repo: " + repo.repoName);
+                } else {
+                    Log.warn("WebhookUpdater::updateHooks() - dry run; fixing hook for repo: " + repo.repoName +
+                        "; current: " + currHook + "; new: " + this.HOOK_URL);
+                }
             }
         }
 
