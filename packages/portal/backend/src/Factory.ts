@@ -79,8 +79,8 @@ export class Factory {
         } else if (name === 'classy') {
             // for test deploying
             Factory.controller = new CourseController(ghController);
-            // } else if (name === 'cs340' || name === 'cpsc340') {
-            //     // Factory.controller = new CS340Controller(ghController);
+        } else if (name === 'cs340' || name === 'cpsc340') {
+                Factory.controller = new CourseController(ghController);
             // } else if (name === 'cs210' || name === 'cpsc210') {
             //     // instantiate 210 controller in fork
             // } else if (name === 'cs221' || name === 'cpsc221') {
