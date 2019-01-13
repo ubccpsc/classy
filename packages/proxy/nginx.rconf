@@ -21,6 +21,7 @@ http {
             port_in_redirect   off;  # Don't redirect to 8443 (https://serverfault.com/q/227742)
             rewrite            ^/ui/?$ /ui/index.html permanent;
             rewrite            /ui(/.+) $1 break;
+            proxy_read_timeout 240;
             proxy_pass         http://refui:<%= ENV["UI_PORT"] %>/;
         }
 
