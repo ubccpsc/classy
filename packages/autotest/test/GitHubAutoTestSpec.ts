@@ -19,7 +19,7 @@ import "./GlobalSpec"; // load first
 import {TestData} from "./TestData";
 
 /* tslint:disable:max-line-length */
-describe.only("GitHubAutoTest", () => {
+describe("GitHubAutoTest", () => {
 
     Config.getInstance();
 
