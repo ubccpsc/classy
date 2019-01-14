@@ -53,8 +53,8 @@ export class MockClassPortal implements IClassPortal {
                 maxExecTime:        300,
                 regressionDelivIds: [],
                 custom:             {},
-                openTimestamp:      new Date(2018, 1, 1).getTime(),
-                closeTimestamp:     new Date(2018, 6, 1).getTime(),
+                openTimestamp:      new Date(2015, 1, 1).getTime(),
+                closeTimestamp:     new Date(2030, 6, 1).getTime(),
                 lateAutoTest:       true
             };
         }

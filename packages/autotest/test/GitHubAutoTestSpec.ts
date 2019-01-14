@@ -32,6 +32,8 @@ describe("GitHubAutoTest", () => {
     const TS_BEFORE = new Date(2017, 12, 12).getTime();
     const TS_AFTER = new Date(2018, 12, 12).getTime();
 
+    const WAIT = 1000;
+
     // now: 1516559187579
     // now -10h: 1516523258762
     // now - 24h: 1516472872288
@@ -68,7 +70,7 @@ describe("GitHubAutoTest", () => {
         // pause after each test so async issues don't persist
         // this is a hack, but makes the tests more deterministic
         Log.test("AutoTest::afterEach() - start");
-        await Util.timeout(100);
+        await Util.timeout(WAIT / 2);
         Log.test("AutoTest::afterEach() - done");
     });
 
@@ -145,14 +147,17 @@ describe("GitHubAutoTest", () => {
         let info: CommitTarget;
         let meetsPreconditions: boolean;
 
+        Log.test('null info');
         info = null;
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
 
+        Log.test('undefined info');
         info = undefined;
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
 
+        Log.test('???');
         info = {
             personId:     Config.getInstance().getProp(ConfigKey.botName),
             botMentioned: true,
@@ -169,17 +174,20 @@ describe("GitHubAutoTest", () => {
         expect(meetsPreconditions).to.be.false;
         info.personId = 'validName';
 
+        Log.test('null delivId');
         info.delivId = null;
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
         info.delivId = 'd1';
 
-        info.timestamp = new Date(2017, 12, 1).getTime(); // not open yet
+        Log.test('not open yet');
+        info.timestamp = new Date(2001, 12, 1).getTime(); // not open yet
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
         info.timestamp = new Date(2018, 2, 1).getTime();
 
-        info.timestamp = new Date(2018, 12, 1).getTime(); // closed, but late autotest is true
+        Log.test('closed');
+        info.timestamp = new Date(2050, 12, 1).getTime(); // closed, but late autotest is true
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.true;
         info.timestamp = new Date(2018, 2, 1).getTime();
@@ -246,18 +254,15 @@ describe("GitHubAutoTest", () => {
             cloneURL:     "https://cloneURL"
         };
 
-        await Util.delay(100);
+        await Util.delay(WAIT);
 
         expect(allData.comments.length).to.equal(0);
         await at.handleCommentEvent(ce);
 
-        await Util.delay(100);
+        await Util.delay(WAIT);
         allData = await data.getAllData();
         expect(allData.comments.length).to.equal(1);
-
-        // await Util.timeout(1 * 1000); // let test finish so it doesn't ruin subsequent executions
-
-    });
+    }).timeout(WAIT * 10);
 
     let gitHubMessages: IGitHubMessage[] = [];
 
@@ -328,7 +333,7 @@ describe("GitHubAutoTest", () => {
         expect(gitHubMessages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
         expect(allData.comments.length).to.equal(1);
 
-        await Util.timeout(200); // just clear the buffer before moving onto the next test
+        await Util.timeout(WAIT); // just clear the buffer before moving onto the next test
     });
 
     it("Should give a user a response for on a commit once it finishes if they have previously requested it.", async () => {
@@ -354,7 +359,7 @@ describe("GitHubAutoTest", () => {
         expect(gitHubMessages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
-        await Util.timeout(250); // Wait for it!
+        await Util.timeout(WAIT); // Wait for it!
         Log.test("Round 1 complete");
 
         allData = await data.getAllData();
@@ -391,7 +396,7 @@ describe("GitHubAutoTest", () => {
         expect(gitHubMessages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
-        await Util.timeout(250); // Wait for it!
+        await Util.timeout(WAIT); // Wait for it!
         Log.test("Round 1 complete");
 
         allData = await data.getAllData();
@@ -427,7 +432,7 @@ describe("GitHubAutoTest", () => {
         // expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
 
         // Wait for it!
-        await Util.timeout(100);
+        await Util.timeout(WAIT);
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(1); // should post response
         expect(gitHubMessages[0].message).to.equal("Build Problem Encountered.");
@@ -461,7 +466,7 @@ describe("GitHubAutoTest", () => {
         expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
 
         // Wait for it!
-        await Util.timeout(250);
+        await Util.timeout(WAIT);
         Log.test("test two ready");
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(2); // should post response
@@ -484,7 +489,7 @@ describe("GitHubAutoTest", () => {
         expect(gitHubMessages.length).to.equal(0); // should not be any feedback yet
         expect(allData.pushes.length).to.equal(1);
         expect(allData.feedback.length).to.equal(0);
-        await Util.timeout(250); // should be long enough for processing to finish
+        await Util.timeout(WAIT); // should be long enough for processing to finish
         Log.test("Setup complete");
 
         // TEST: send a comment
