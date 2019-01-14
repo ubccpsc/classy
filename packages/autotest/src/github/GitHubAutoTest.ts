@@ -322,6 +322,31 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         }
     }
 
+    private async shouldCharge(info: CommitTarget, isStaff: AutoTestAuthTransport, res: AutoTestResultTransport): Promise<boolean> {
+
+        // always false for staff and admins
+        if (isStaff !== null && (isStaff.isAdmin === true || isStaff.isStaff === true)) {
+            Log.info("GitHubAutoTest::shouldCharge(..) - false (staff || admin): " + info.personId);
+            return false;
+        }
+
+        // always false for #check
+        if (info.flags.indexOf("#check") >= 0) {
+            Log.info("GitHubAutoTest::shouldCharge(..) - false (#check)");
+            return false;
+        }
+
+        // false if res exists and has been previously paid for
+        if (res !== null) {
+            const feedbackRequested: CommitTarget = await this.getRequestor(info.commitURL, info.delivId, 'standard');
+            if (feedbackRequested !== null) {
+                Log.info("GitHubAutoTest::shouldCharge(..) - false (already paid for)");
+            }
+        }
+
+        return true;
+    }
+
     /**
      *
      * NOTE: This description is from an older version of this method.
@@ -354,17 +379,6 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         Log.info("GitHubAutoTest::handleCommentEvent(..) - start; for: " +
             info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA);
 
-        const res: AutoTestResultTransport = await this.classPortal.getResult(info.delivId, info.repoId, info.commitSHA);
-
-        // handle #check requests (not great here), also doesn't auto-postback
-        if (await this.handleCheck(info, res) === true) {
-            Log.info("GitHubAutoTest::handleCommentEvent(..) - handleCheck true");
-            // don't like early return, but it simplifies the rest of the method
-            return;
-        } else {
-            Log.info("GitHubAutoTest::handleCommentEvent(..) - handleCheck false");
-        }
-
         // sanity check; this keeps the rest of the code much simpler
         const preconditionsMet = await this.checkCommentPreconditions(info);
         if (preconditionsMet === false) {
@@ -372,6 +386,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             return false;
         }
 
+        const res: AutoTestResultTransport = await this.classPortal.getResult(info.delivId, info.repoId, info.commitSHA);
         const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(info.personId);
         if (isStaff !== null && (isStaff.isStaff === true || isStaff.isAdmin === true)) {
             Log.info("GitHubAutoTest::handleCommentEvent(..) - handleAdmin; for: " +
@@ -398,39 +413,39 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      * @param {AutoTestResultTransport} res
      * @returns {Promise<boolean>}
      */
-    private async handleCheck(info: CommitTarget, res: AutoTestResultTransport): Promise<boolean> {
-        if (info !== null && typeof info.flags !== 'undefined' && info.flags.indexOf("#check") >= 0) {
-
-            if (info.flags.indexOf("#force") >= 0) {
-                const msg = '#force cannot be used in conjunction with #check.';
-                await this.postToGitHub(info, {url: info.postbackURL, message: msg});
-                return true;
-            }
-
-            Log.info("GitHubAutoTest::handleCheck(..) - ignored, #check requested.");
-            delete info.flags;
-            if (res !== null) {
-                let state = '';
-                if (res.output.state === 'SUCCESS' && typeof res.output.report.result !== 'undefined') {
-                    state = res.output.report.result;
-                } else {
-                    state = res.output.state;
-                }
-                const msg = "Check status for commit: " + state;
-                await this.postToGitHub(info, {url: info.postbackURL, message: msg});
-            } else {
-                // not processed yet
-                const msg = "Commit not yet processed. If you want to #check again, you will have to request later.";
-                await this.postToGitHub(info, {url: info.postbackURL, message: msg});
-            }
-            return true;
-        }
-        return false;
-    }
+    // private async handleCheck(info: CommitTarget, res: AutoTestResultTransport): Promise<boolean> {
+    //     if (info !== null && typeof info.flags !== 'undefined' && info.flags.indexOf("#check") >= 0) {
+    //
+    //         if (info.flags.indexOf("#force") >= 0) {
+    //             const msg = '#force cannot be used in conjunction with #check.';
+    //             await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+    //             return true;
+    //         }
+    //
+    //         Log.info("GitHubAutoTest::handleCheck(..) - ignored, #check requested.");
+    //         delete info.flags;
+    //         if (res !== null) {
+    //             let state = '';
+    //             if (res.output.state === 'SUCCESS' && typeof res.output.report.result !== 'undefined') {
+    //                 state = res.output.report.result;
+    //             } else {
+    //                 state = res.output.state;
+    //             }
+    //             const msg = "Check status for commit: " + state;
+    //             await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+    //         } else {
+    //             // not processed yet
+    //             const msg = "Commit not yet processed. If you want to #check again, you will have to request later.";
+    //             await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+    //         }
+    //         return true;
+    //     }
+    //     return false;
+    // }
 
     protected async processExecution(data: AutoTestResult): Promise<void> {
         try {
-            const feedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId);
+            const feedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId, 'standard');
             const containerConfig: any = await this.getContainerConfig(data.input.delivId);
             const feedbackMode: string = containerConfig.custom.feedbackMode;
             if (data.output.postbackOnComplete === true) {
@@ -599,9 +614,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      * @param commitURL
      * @param delivId
      */
-    private async getRequestor(commitURL: string, delivId: string): Promise<CommitTarget | null> {
+    private async getRequestor(commitURL: string, delivId: string, kind: string): Promise<CommitTarget | null> {
         try {
-            const record: CommitTarget = await this.dataStore.getCommentRecord(commitURL, delivId);
+            const record: CommitTarget = await this.dataStore.getCommentRecord(commitURL, delivId, kind);
             if (record !== null) {
                 return record;
             }

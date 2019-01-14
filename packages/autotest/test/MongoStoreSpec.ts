@@ -92,7 +92,8 @@ describe("MongoStore", () => {
         await ds.saveComment(TestData.commentRecordStaffA);
 
         // TEST
-        const actual = await ds.getCommentRecord(TestData.commentRecordStaffA.commitURL, TestData.commentRecordStaffA.delivId);
+        const actual = await ds.getCommentRecord(TestData.commentRecordStaffA.commitURL,
+            TestData.commentRecordStaffA.delivId, 'standard');
 
         // VERIFY
         expect(actual).to.not.be.null;
@@ -105,7 +106,8 @@ describe("MongoStore", () => {
         await ds.saveComment(TestData.commentRecordStaffA);
 
         // TEST
-        const actual = await ds.getCommentRecord(TestData.commentRecordUserA.commitURL, TestData.commentRecordUserA.delivId);
+        const actual = await ds.getCommentRecord(TestData.commentRecordUserA.commitURL,
+            TestData.commentRecordUserA.delivId, 'standard');
 
         // VERIFY
         expect(actual).to.be.null;

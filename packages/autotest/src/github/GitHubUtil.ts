@@ -142,6 +142,7 @@ export class GitHubUtil {
             // need to get this from portal backend (this is a gitHubId, not a personId)
             const personResponse = await cp.getPersonId(requestor); // NOTE: this returns Person.id, id, not Person.gitHubId!
             const personId = personResponse.personId;
+            const kind = 'standard'; // if #check, set that here
 
             const commentEvent: CommitTarget = {
                 delivId,
@@ -152,6 +153,7 @@ export class GitHubUtil {
                 postbackURL,
                 cloneURL,
                 personId,
+                kind,
                 timestamp,
                 flags
             };
@@ -227,6 +229,7 @@ export class GitHubUtil {
                 repoId:       repo,
                 botMentioned: false, // not explicitly invoked
                 personId:     null, // not explicitly requested
+                kind:         'push',
                 cloneURL,
                 commitSHA,
                 commitURL,

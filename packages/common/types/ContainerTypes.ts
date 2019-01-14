@@ -37,11 +37,12 @@ export interface CommitTarget {
      * have a default id and one is not specified (e.g., in a commit comment)
      * we cannot create a CommitTarget.
      */
-    delivId: string; // TODO: remove this from here? it's already in IContainerInput
+    delivId: string;
     repoId: string;
 
     botMentioned: boolean; // true if explicitly mentioned
     personId: string | null; // string is Person.id if explicily invoked, null otherwise
+    kind: string; // kind of request (currently just 'push', 'standard' or 'check')
 
     cloneURL: string;
 

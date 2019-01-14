@@ -11,6 +11,7 @@ export class TestData {
         timestamp:    1516472872288,
         botMentioned: false,
         personId:     null,
+        kind:         'push',
         delivId:      "d0"
     };
 
@@ -24,6 +25,7 @@ export class TestData {
         timestamp:    1516992872288,
         botMentioned: false,
         personId:     null,
+        kind:         'push',
         delivId:      "d0"
     };
 
@@ -38,6 +40,7 @@ export class TestData {
         timestamp:    1516472872288,
         botMentioned: false,
         personId:     null,
+        kind:         'push',
         delivId:      "d0"
     };
 
@@ -70,6 +73,7 @@ export class TestData {
         commitSHA:    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         personId:     "cs310test",
+        kind:         'standard',
         repoId:       "d0_team999",
         delivId:      "d1",
         postbackURL:  "EMPTY",
@@ -82,6 +86,7 @@ export class TestData {
         commitSHA:    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         personId:     "cs310test",
+        kind:         'standard',
         repoId:       "d0_team999",
         delivId:      "d1",
         postbackURL:  "EMPTY",
@@ -94,6 +99,7 @@ export class TestData {
         commitSHA:    "abe1b0918b872997de4c4d2baf4c263f8d4staff",
         commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4staff",
         personId:     "staff",
+        kind:         'standard',
         repoId:       "d0_team999",
         delivId:      "d1",
         postbackURL:  "EMPTY",

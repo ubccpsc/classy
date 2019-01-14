@@ -9,6 +9,8 @@ import {AutoTestGradeTransport} from "../../common/types/PortalTypes";
 import {DatabaseController} from "../../portal/backend/src/controllers/DatabaseController";
 import BackendServer from "../../portal/backend/src/server/BackendServer";
 import {Course} from "../../portal/backend/src/Types";
+
+import {Test} from "../../portal/backend/test/TestHarness";
 import {ClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
 
 import "./GlobalSpec";
@@ -23,6 +25,10 @@ describe("ClassPortal Service", () => {
         Log.test("ClassPortalSpec::before() - start");
         backend = new BackendServer();
         await backend.start();
+        await Test.prepareDeliverables();
+        await Test.preparePeople();
+        await Test.prepareTeams();
+        await Test.prepareRepositories();
         Log.test("ClassPortalSpec::before() - done");
     });
 
@@ -131,12 +137,11 @@ describe("ClassPortal Service", () => {
         Log.test("Actual: " + JSON.stringify(actual));
 
         expect(actual.defaultDeliverable).to.equal('d0');
-        // expect(actual.defaultDeliverable).to.be.null;
     });
 
     it("Should be able to send a valid grade.", async () => {
         const grade: AutoTestGradeTransport = {
-            repoId:    'TESTrepo1',
+            repoId:    Test.REPONAME1,
             repoURL:   'https://repo1',
             delivId:   'd0',
             score:     60,
@@ -155,7 +160,7 @@ describe("ClassPortal Service", () => {
 
     it("Should fail to send an invalid grade.", async () => {
         const grade: any = { // AutoTestGradeTransport
-            repoId:    'repo1',
+            repoId:    Test.REPONAME1,
             repoURL:   'https://repo1',
             // delivId:   'd0',  // this should be required
             score:     60,
@@ -190,13 +195,13 @@ describe("ClassPortal Service", () => {
                 skipNames:    [],
                 custom:       {},
                 feedback:     'feedback',
-                result:        "SUCCESS",
+                result:       "SUCCESS",
                 attachments:  []
             },
             postbackOnComplete: true,
             custom:             {},
             state:              ContainerState.SUCCESS,
-            graderTaskId:        ""
+            graderTaskId:       ""
         };
 
         const input: ContainerInput = {
@@ -211,6 +216,7 @@ describe("ClassPortal Service", () => {
 
                 botMentioned: false,
                 personId:     null,
+                kind:         'push',
 
                 // projectURL:  projectURL,
                 postbackURL: 'postbackURL',

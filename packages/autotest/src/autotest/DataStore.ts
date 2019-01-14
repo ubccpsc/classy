@@ -35,7 +35,7 @@ export interface IDataStore {
      */
     saveComment(info: CommitTarget): Promise<void>;
 
-    getCommentRecord(commitURL: string, delivId: string): Promise<CommitTarget | null>;
+    getCommentRecord(commitURL: string, delivId: string, kind: string): Promise<CommitTarget | null>;
 
     // DO NOT DO THIS HERE: Classy should validate/save these records
     // saveOutputRecord(outputInfo: IAutoTestResult): Promise<void>;
@@ -197,11 +197,11 @@ export class MongoDataStore implements IDataStore {
         return;
     }
 
-    public async getCommentRecord(commitURL: string, delivId: string): Promise<CommitTarget | null> {
-        Log.trace("MongoDataStore::getCommentRecord(..) - start; delivId: " + delivId + "; url: " + commitURL);
+    public async getCommentRecord(commitURL: string, delivId: string, kind: string): Promise<CommitTarget | null> {
+        Log.trace("MongoDataStore::getCommentRecord(..) - start; delivId: " + delivId + "; url: " + commitURL + "; kind: " + kind);
         try {
             const start = Date.now();
-            const res = await this.getSingleRecord(this.COMMENTCOLL, {delivId: delivId, commitURL: commitURL});
+            const res = await this.getSingleRecord(this.COMMENTCOLL, {delivId: delivId, commitURL: commitURL, kind: kind});
             if (res === null) {
                 Log.trace("MongoDataStore::getCommentRecord(..) - record not found for: " + commitURL);
             } else {

@@ -13,7 +13,7 @@ import {IClassPortal} from "../src/autotest/ClassPortal";
 import {MockClassPortal} from "../src/autotest/mocks/MockClassPortal";
 import {MockDataStore} from "../src/autotest/mocks/MockDataStore";
 import {GitHubAutoTest} from "../src/github/GitHubAutoTest";
-import {GitHubUtil, IGitHubMessage} from "../src/github/GitHubUtil";
+import {IGitHubMessage} from "../src/github/GitHubUtil";
 
 import "./GlobalSpec"; // load first
 import {TestData} from "./TestData";
@@ -26,7 +26,6 @@ describe("GitHubAutoTest", () => {
     let pushes: CommitTarget[];
     let data: MockDataStore;
     let portal: IClassPortal;
-    // let gh: GitHubService;
     let at: GitHubAutoTest;
 
     const TS_IN = new Date(2018, 3, 3).getTime();
@@ -46,11 +45,11 @@ describe("GitHubAutoTest", () => {
         for (const push of pushes) {
             push.timestamp = TS_IN + i++ * 1000;
         }
+
         data = new MockDataStore();
         await data.clearData();
 
         portal = new MockClassPortal();
-        // gh = new GitHubService();
 
         Config.getInstance().setProp(ConfigKey.postback, false);
 
@@ -158,6 +157,7 @@ describe("GitHubAutoTest", () => {
             personId:     Config.getInstance().getProp(ConfigKey.botName),
             botMentioned: true,
             delivId:      'd1',
+            kind:         'standard',
             repoId:       'repoId',
             commitSHA:    'SHA',
             commitURL:    'https://URL',
@@ -205,6 +205,7 @@ describe("GitHubAutoTest", () => {
             commitSHA:    pe.commitSHA,
             commitURL:    pe.commitURL,
             personId:     "myUser",
+            kind:         'standard',
             repoId:       "d1_project9999",
             // org:           "310",
             delivId:      "d0",
@@ -237,6 +238,7 @@ describe("GitHubAutoTest", () => {
             commitSHA:    pushes[2].commitSHA,
             commitURL:    pushes[2].commitURL,
             personId:     "myUser",
+            kind:         'standard',
             delivId:      "d0",
             repoId:       "d1_project9999",
             postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/cbe1b0918b872997de4c4d2baf4c263f8d4c6dc2/comments",
