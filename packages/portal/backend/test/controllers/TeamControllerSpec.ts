@@ -12,7 +12,7 @@ import {Test} from "../TestHarness";
 import './PersonControllerSpec';
 // const loadFirst = require("../GlobalSpec");
 
-describe("TeamController", () => {
+describe.only("TeamController", () => {
 
     let tc: TeamController;
     let pc: PersonController;
