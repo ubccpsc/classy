@@ -466,8 +466,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA + '; for: ' + checkFeedbackRequested.personId);
                 const msg = await this.classPortal.formatFeedback(data, feedbackMode);
                 await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
-                await this.saveFeedbackGiven(data.input.delivId, standardFeedbackRequested.personId,
-                    standardFeedbackRequested.timestamp, data.commitURL, 'check');
+                await this.saveFeedbackGiven(data.input.delivId, checkFeedbackRequested.personId,
+                    checkFeedbackRequested.timestamp, data.commitURL, 'check');
             } else if (standardFeedbackRequested !== null) {
                 // feedback has been previously requested
                 Log.info("GitHubAutoTest::processExecution(..) - standard feedback requested; deliv: " +
@@ -559,7 +559,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      */
     private async saveCommentInfo(info: CommitTarget) {
         try {
-            Log.trace("GitHubAutoTest::saveCommentInfo(..) - for: " + info.personId + "; SHA: " + info.commitSHA);
+            Log.trace("GitHubAutoTest::saveCommentInfo(..) - for: " + info.personId +
+                "; SHA: " + info.commitSHA + "; kind: " + info.kind);
             await this.dataStore.saveComment(info);
         } catch (err) {
             Log.error("GitHubAutoTest::saveCommentInfo(..) - ERROR: " + err);

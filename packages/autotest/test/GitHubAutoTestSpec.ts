@@ -354,7 +354,7 @@ describe("GitHubAutoTest", () => {
         expect(gitHubMessages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
-        await Util.timeout(200); // Wait for it!
+        await Util.timeout(250); // Wait for it!
         Log.test("Round 1 complete");
 
         allData = await data.getAllData();
@@ -362,6 +362,43 @@ describe("GitHubAutoTest", () => {
         expect(gitHubMessages[1].message).to.equal("Test execution complete.");
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(1); // should be charged
+        Log.test("Test complete");
+    });
+
+    it("Should give a user a response for on a commit once it finishes if they have previously requested a check on it.", async () => {
+        expect(at).not.to.equal(null);
+
+        // start fresh
+        await data.clearData();
+        stubDependencies();
+
+        // SETUP: add a push with no output records
+        await at.handlePushEvent(TestData.pushEventA);
+        let allData = await data.getAllData();
+        expect(gitHubMessages.length).to.equal(0); // should not be any feedback yet
+        expect(allData.comments.length).to.equal(0);
+        expect(allData.pushes.length).to.equal(1);
+        // don't wait; want to catch this push in flight
+        Log.test("Setup complete");
+
+        // TEST: send a comment (this is the previous test)
+        const req = Util.clone(TestData.commentRecordUserA) as CommitTarget;
+        req.flags = ["#check"];
+        req.kind = 'check';
+        await at.handleCommentEvent(req);
+        allData = await data.getAllData();
+        expect(gitHubMessages.length).to.equal(1); // should generate a warning
+        expect(gitHubMessages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
+        expect(allData.comments.length).to.equal(1);
+        expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
+        await Util.timeout(250); // Wait for it!
+        Log.test("Round 1 complete");
+
+        allData = await data.getAllData();
+        expect(gitHubMessages.length).to.equal(2); // should generate a warning
+        expect(gitHubMessages[1].message).to.equal("Test execution complete.");
+        expect(allData.comments.length).to.equal(1);
+        expect(allData.feedback.length).to.equal(1);
         Log.test("Test complete");
     });
 
@@ -416,6 +453,7 @@ describe("GitHubAutoTest", () => {
 
         // TEST: send a comment (this is the previous test)
         await at.handleCommentEvent(TestData.commentRecordUserA);
+        Log.test("test one ready");
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
         expect(gitHubMessages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
@@ -423,7 +461,8 @@ describe("GitHubAutoTest", () => {
         expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
 
         // Wait for it!
-        await Util.timeout(100);
+        await Util.timeout(250);
+        Log.test("test two ready");
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(2); // should post response
         expect(gitHubMessages[1].message).to.equal("Build Problem Encountered.");
@@ -445,7 +484,7 @@ describe("GitHubAutoTest", () => {
         expect(gitHubMessages.length).to.equal(0); // should not be any feedback yet
         expect(allData.pushes.length).to.equal(1);
         expect(allData.feedback.length).to.equal(0);
-        await Util.timeout(200); // should be long enough for processing to finish
+        await Util.timeout(250); // should be long enough for processing to finish
         Log.test("Setup complete");
 
         // TEST: send a comment

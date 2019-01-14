@@ -142,7 +142,10 @@ export class GitHubUtil {
             // need to get this from portal backend (this is a gitHubId, not a personId)
             const personResponse = await cp.getPersonId(requestor); // NOTE: this returns Person.id, id, not Person.gitHubId!
             const personId = personResponse.personId;
-            const kind = 'standard'; // if #check, set that here
+            let kind = 'standard'; // if #check, set that here
+            if (flags.indexOf("#check") >= 0) {
+                kind = 'check';
+            }
 
             const commentEvent: CommitTarget = {
                 delivId,

@@ -98,6 +98,10 @@ export class MockClassPortal implements IClassPortal {
     }
 
     public async formatFeedback(res: AutoTestResultTransport, feedbackMode?: string): Promise<string | null> {
+        // const cp = new ClassPortal();
+        // // using the real object here because CP isn't actually live for formatFeedback yet
+        // const msg = await cp.formatFeedback(res, feedbackMode);
+        // return msg;
         return Promise.resolve(res.output.report.feedback);
     }
 

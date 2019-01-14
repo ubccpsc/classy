@@ -12,6 +12,7 @@ export class TestData {
         botMentioned: false,
         personId:     null,
         kind:         'push',
+        flags:        [],
         delivId:      "d0"
     };
 
@@ -26,6 +27,7 @@ export class TestData {
         botMentioned: false,
         personId:     null,
         kind:         'push',
+        flags:        [],
         delivId:      "d0"
     };
 
@@ -41,6 +43,7 @@ export class TestData {
         botMentioned: false,
         personId:     null,
         kind:         'push',
+        flags:        [],
         delivId:      "d0"
     };
 
@@ -74,6 +77,7 @@ export class TestData {
         commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         personId:     "cs310test",
         kind:         'standard',
+        flags:        [],
         repoId:       "d0_team999",
         delivId:      "d1",
         postbackURL:  "EMPTY",
@@ -87,6 +91,7 @@ export class TestData {
         commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         personId:     "cs310test",
         kind:         'standard',
+        flags:        [],
         repoId:       "d0_team999",
         delivId:      "d1",
         postbackURL:  "EMPTY",
@@ -100,6 +105,7 @@ export class TestData {
         commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4staff",
         personId:     "staff",
         kind:         'standard',
+        flags:        [],
         repoId:       "d0_team999",
         delivId:      "d1",
         postbackURL:  "EMPTY",
