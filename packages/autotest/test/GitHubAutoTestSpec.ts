@@ -1,6 +1,7 @@
 import {expect} from "chai";
 import * as fs from "fs-extra";
 import "mocha";
+
 import Config, {ConfigKey} from "../../common/Config";
 
 import Log from "../../common/Log";
@@ -9,7 +10,6 @@ import {CommitTarget} from "../../common/types/ContainerTypes";
 import Util from "../../common/Util";
 
 import {IClassPortal} from "../src/autotest/ClassPortal";
-
 import {MockClassPortal} from "../src/autotest/mocks/MockClassPortal";
 import {MockDataStore} from "../src/autotest/mocks/MockDataStore";
 import {GitHubAutoTest} from "../src/github/GitHubAutoTest";
@@ -19,7 +19,7 @@ import "./GlobalSpec"; // load first
 import {TestData} from "./TestData";
 
 /* tslint:disable:max-line-length */
-describe("GitHubAutoTest", () => {
+describe.only("GitHubAutoTest", () => {
 
     Config.getInstance();
 
@@ -59,7 +59,10 @@ describe("GitHubAutoTest", () => {
     });
 
     beforeEach(async function() {
-        Log.test("AutoTest::beforeEach() - start");
+        // Log.test("AutoTest::beforeEach() - start");
+        Log.test("*****");
+        Log.test("GitHubAutoTestSpec::beforeEach( " + this.currentTest.title + " ) - start");
+        Log.test("*****");
         await data.clearData();
 
         // create a new AutoTest every test (allows us to mess with methods and make sure they are called)
@@ -69,9 +72,12 @@ describe("GitHubAutoTest", () => {
     afterEach(async function() {
         // pause after each test so async issues don't persist
         // this is a hack, but makes the tests more deterministic
-        Log.test("AutoTest::afterEach() - start");
+        // Log.test("AutoTest::afterEach() - start");
         await Util.timeout(WAIT / 2);
-        Log.test("AutoTest::afterEach() - done");
+        // Log.test("AutoTest::afterEach() - done");
+        Log.test("*****");
+        Log.test("GitHubAutoTestSpec::afterEach( " + this.currentTest.title + " ) - done");
+        Log.test("*****");
     });
 
     it("Should be able to be instantiated.", () => {
@@ -336,7 +342,7 @@ describe("GitHubAutoTest", () => {
         await Util.timeout(WAIT); // just clear the buffer before moving onto the next test
     });
 
-    it("Should give a user a response for on a commit once it finishes if they have previously requested it.", async () => {
+    it.only("Should give a user a response for on a commit once it finishes if they have previously requested it.", async () => {
         expect(at).not.to.equal(null);
 
         // start fresh
@@ -355,14 +361,18 @@ describe("GitHubAutoTest", () => {
         // TEST: send a comment (this is the previous test)
         await at.handleCommentEvent(TestData.commentRecordUserA);
         allData = await data.getAllData();
+        Log.test("1: - ghMessages: " + JSON.stringify(gitHubMessages));
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
         expect(gitHubMessages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
+        Log.test("1: - allData: " + JSON.stringify(allData));
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
         await Util.timeout(WAIT); // Wait for it!
         Log.test("Round 1 complete");
 
         allData = await data.getAllData();
+        Log.test("2: - githubMessages: " + JSON.stringify(gitHubMessages));
+        Log.test("2: - allData: " + JSON.stringify(allData));
         expect(gitHubMessages.length).to.equal(2); // should generate a warning
         expect(gitHubMessages[1].message).to.equal("Test execution complete.");
         expect(allData.comments.length).to.equal(1);
