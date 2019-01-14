@@ -294,6 +294,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         Log.info("GitHubAutoTest::handleCommentStudent(..) - handling student request for: " +
             info.personId + "; deliv: " + info.delivId + "; for commit: " + info.commitURL);
 
+        const shouldCharge = await this.shouldCharge(info, null, res);
         const feedbackDelay: string | null = await this.requestFeedbackDelay(info.delivId, info.personId, info.timestamp);
         const previousRequest: IFeedbackGiven = await this.dataStore.getFeedbackGivenRecordForCommit(
             info.commitURL, info.delivId, info.personId);
@@ -302,7 +303,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             info.personId + " for commit: " + info.commitURL + "; null previous: " + (previousRequest === null) +
             "; null delay: " + (feedbackDelay === null));
 
-        if (previousRequest === null && feedbackDelay !== null) {
+        if (shouldCharge === true && previousRequest === null && feedbackDelay !== null) {
             Log.info("GitHubAutoTest::handleCommentStudent(..) - too early for: " + info.personId + "; must wait: " +
                 feedbackDelay + "; SHA: " + info.commitURL);
             // NOPE, not yet (this is the most common case; feedback requested without time constraints)
@@ -331,7 +332,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         }
 
         // always false for #check
-        if (info.flags.indexOf("#check") >= 0) {
+        if (typeof info.flags !== 'undefined' && info.flags !== null && info.flags.indexOf("#check") >= 0) {
             Log.info("GitHubAutoTest::shouldCharge(..) - false (#check)");
             return false;
         }
@@ -341,6 +342,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             const feedbackRequested: CommitTarget = await this.getRequestor(info.commitURL, info.delivId, 'standard');
             if (feedbackRequested !== null) {
                 Log.info("GitHubAutoTest::shouldCharge(..) - false (already paid for)");
+                return false;
             }
         }
 
@@ -445,7 +447,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
     protected async processExecution(data: AutoTestResult): Promise<void> {
         try {
-            const feedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId, 'standard');
+            const standardFeedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId, 'standard');
+            const checkFeedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId, 'check');
             const containerConfig: any = await this.getContainerConfig(data.input.delivId);
             const feedbackMode: string = containerConfig.custom.feedbackMode;
             if (data.output.postbackOnComplete === true) {
@@ -457,14 +460,22 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 // NOTE: if the feedback was requested for this build it shouldn't count
                 // since we're not calling saveFeedback this is right
                 // but if we replay the commit comments, we would see it there, so be careful
-            } else if (feedbackRequested !== null) {
+            } else if (checkFeedbackRequested !== null) {
                 // feedback has been previously requested
-                Log.info("GitHubAutoTest::processExecution(..) - feedback requested; deliv: " +
-                    data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA + '; for: ' + feedbackRequested.personId);
+                Log.info("GitHubAutoTest::processExecution(..) - check feedback requested; deliv: " +
+                    data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA + '; for: ' + checkFeedbackRequested.personId);
                 const msg = await this.classPortal.formatFeedback(data, feedbackMode);
                 await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
-                await this.saveFeedbackGiven(data.input.delivId, feedbackRequested.personId,
-                    feedbackRequested.timestamp, data.commitURL, 'standard');
+                await this.saveFeedbackGiven(data.input.delivId, standardFeedbackRequested.personId,
+                    standardFeedbackRequested.timestamp, data.commitURL, 'check');
+            } else if (standardFeedbackRequested !== null) {
+                // feedback has been previously requested
+                Log.info("GitHubAutoTest::processExecution(..) - standard feedback requested; deliv: " +
+                    data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA + '; for: ' + standardFeedbackRequested.personId);
+                const msg = await this.classPortal.formatFeedback(data, feedbackMode);
+                await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
+                await this.saveFeedbackGiven(data.input.delivId, standardFeedbackRequested.personId,
+                    standardFeedbackRequested.timestamp, data.commitURL, 'standard');
             } else {
                 // do nothing
                 Log.info("GitHubAutoTest::processExecution(..) - commit not requested - no feedback given;  deliv: " +
@@ -491,7 +502,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             Log.info("GitHubAutoTest::requestFeedbackDelay( " + delivId + ", " + userName + ", " + reqTimestamp + " ) - start");
             // async operations up front
             const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(userName);
-            const record: IFeedbackGiven = await this.dataStore.getLatestFeedbackGivenRecord(delivId, userName);
+            // can hard-code standard because #check requests will not reach here
+            const record: IFeedbackGiven = await this.dataStore.getLatestFeedbackGivenRecord(delivId, userName, 'standard');
             const details: AutoTestConfigTransport = await this.classPortal.getContainerDetails(delivId); // should cache this
             let testDelay = 0;
             if (details !== null) {

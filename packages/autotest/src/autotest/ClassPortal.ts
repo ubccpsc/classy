@@ -3,7 +3,6 @@ import * as rp from "request-promise-native";
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {AutoTestResult} from "../../../common/types/AutoTestTypes";
-import {CommitTarget, GradeReport} from "../../../common/types/ContainerTypes";
 import {
     AutoTestAuthPayload,
     AutoTestAuthTransport,
@@ -241,29 +240,35 @@ export class ClassPortal implements IClassPortal {
 
     public async formatFeedback(res: AutoTestResultTransport, feedbackMode?: string): Promise<string | null> {
         Log.info("ClassPortal::formatFeedback(..) - start; feedbackMode: " + feedbackMode);
+        let feedback: string = '';
         try {
-            // TODO: #check formatting should be handled here
+            if (res.input.target.kind === 'check') {
+                let state = '';
+                if (res.output.state === 'SUCCESS' && typeof res.output.report.result !== 'undefined') {
+                    state = res.output.report.result;
+                } else {
+                    state = res.output.state;
+                }
+                feedback = "### AutoTest statuts for commit: " + state;
+            } else {
+                // TODO: this could actually be sent to the frontend for consideration in the course-specific classy controller
+                const gradeRecord = res.output.report;
+                feedback = gradeRecord.feedback;
+                let altFeedback: string = "";
+                if (typeof feedbackMode === "string" && feedbackMode !== "default") {
+                    altFeedback = (gradeRecord.custom as any)[feedbackMode].feedback;
 
-            // TODO: this could actually be sent to the frontend for consideration in the course-specific classy controller
-            const gradeRecord = res.output.report;
-
-            let feedback: string = gradeRecord.feedback;
-
-            let altFeedback: string = "";
-            if (typeof feedbackMode === "string" && feedbackMode !== "default") {
-                altFeedback = (gradeRecord.custom as any)[feedbackMode].feedback;
-
-                if (typeof altFeedback === "string") {
-                    Log.info("ClassPortal::formatFeedback(..) - using altFeedback");
-                    feedback = altFeedback;
+                    if (typeof altFeedback === "string") {
+                        Log.info("ClassPortal::formatFeedback(..) - using altFeedback");
+                        feedback = altFeedback;
+                    }
                 }
             }
-
-            return feedback;
         } catch (err) {
             Log.error("ClassPortal::formatFeedback(..) - ERROR; message: " + err.message);
             return null;
         }
+        return feedback;
     }
 
     public async sendResult(result: AutoTestResult): Promise<Payload> { // really just a mechanism to report more verbose errors
