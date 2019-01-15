@@ -451,6 +451,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             const checkFeedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId, 'check');
             const containerConfig: any = await this.getContainerConfig(data.input.delivId);
             const feedbackMode: string = containerConfig.custom.feedbackMode;
+
             if (data.output.postbackOnComplete === true) {
                 // do this first, doesn't count against quota
                 Log.info("GitHubAutoTest::processExecution(..) - postback: true; deliv: " +
@@ -460,22 +461,24 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 // NOTE: if the feedback was requested for this build it shouldn't count
                 // since we're not calling saveFeedback this is right
                 // but if we replay the commit comments, we would see it there, so be careful
-            } else if (checkFeedbackRequested !== null) {
+
+            } else if (checkFeedbackRequested !== null || standardFeedbackRequested !== null) {
                 // feedback has been previously requested
-                Log.info("GitHubAutoTest::processExecution(..) - check feedback requested; deliv: " +
-                    data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA + '; for: ' + checkFeedbackRequested.personId);
-                const msg = await this.classPortal.formatFeedback(data, feedbackMode);
-                await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
-                await this.saveFeedbackGiven(data.input.delivId, checkFeedbackRequested.personId,
-                    checkFeedbackRequested.timestamp, data.commitURL, 'check');
-            } else if (standardFeedbackRequested !== null) {
-                // feedback has been previously requested
-                Log.info("GitHubAutoTest::processExecution(..) - standard feedback requested; deliv: " +
-                    data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA + '; for: ' + standardFeedbackRequested.personId);
-                const msg = await this.classPortal.formatFeedback(data, feedbackMode);
-                await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
-                await this.saveFeedbackGiven(data.input.delivId, standardFeedbackRequested.personId,
-                    standardFeedbackRequested.timestamp, data.commitURL, 'standard');
+                const giveFeedback = async function(target: CommitTarget, kind: string): Promise<void> {
+                    Log.info("GitHubAutoTest::processExecution(..) - check feedback requested; deliv: " +
+                        data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA + '; for: ' + target.personId);
+                    const msg = await this.classPortal.formatFeedback(data, feedbackMode);
+                    await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
+                    await this.saveFeedbackGiven(data.input.delivId, target.personId,
+                        target.timestamp, data.commitURL, kind);
+                    return;
+                };
+                if (checkFeedbackRequested !== null) {
+                    await giveFeedback(checkFeedbackRequested, 'check');
+                }
+                if (standardFeedbackRequested !== null) {
+                    await giveFeedback(standardFeedbackRequested, 'standard');
+                }
             } else {
                 // do nothing
                 Log.info("GitHubAutoTest::processExecution(..) - commit not requested - no feedback given;  deliv: " +

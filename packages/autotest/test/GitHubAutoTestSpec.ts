@@ -342,7 +342,7 @@ describe("GitHubAutoTest", () => {
         await Util.timeout(WAIT); // just clear the buffer before moving onto the next test
     });
 
-    it.only("Should give a user a response for on a commit once it finishes if they have previously requested it.", async () => {
+    it("Should give a user a response for on a commit once it finishes if they have previously requested it.", async () => {
         expect(at).not.to.equal(null);
 
         // start fresh
