@@ -35,7 +35,7 @@ export interface IDataStore {
      */
     saveComment(info: CommitTarget): Promise<void>;
 
-    getCommentRecord(commitURL: string, delivId: string): Promise<CommitTarget | null>;
+    getCommentRecord(commitURL: string, delivId: string, kind: string): Promise<CommitTarget | null>;
 
     // DO NOT DO THIS HERE: Classy should validate/save these records
     // saveOutputRecord(outputInfo: IAutoTestResult): Promise<void>;
@@ -44,7 +44,7 @@ export interface IDataStore {
 
     saveFeedbackGivenRecord(request: IFeedbackGiven): Promise<void>;
 
-    getLatestFeedbackGivenRecord(delivId: string, userName: string): Promise<IFeedbackGiven | null>;
+    getLatestFeedbackGivenRecord(delivId: string, userName: string, kind: string): Promise<IFeedbackGiven | null>;
 
     getFeedbackGivenRecordForCommit(commitURL: string, delivId: string, userName: string): Promise<IFeedbackGiven | null>;
 
@@ -197,11 +197,11 @@ export class MongoDataStore implements IDataStore {
         return;
     }
 
-    public async getCommentRecord(commitURL: string, delivId: string): Promise<CommitTarget | null> {
-        Log.trace("MongoDataStore::getCommentRecord(..) - start; delivId: " + delivId + "; url: " + commitURL);
+    public async getCommentRecord(commitURL: string, delivId: string, kind: string): Promise<CommitTarget | null> {
+        Log.trace("MongoDataStore::getCommentRecord(..) - start; delivId: " + delivId + "; url: " + commitURL + "; kind: " + kind);
         try {
             const start = Date.now();
-            const res = await this.getSingleRecord(this.COMMENTCOLL, {delivId: delivId, commitURL: commitURL});
+            const res = await this.getSingleRecord(this.COMMENTCOLL, {delivId: delivId, commitURL: commitURL, kind: kind});
             if (res === null) {
                 Log.trace("MongoDataStore::getCommentRecord(..) - record not found for: " + commitURL);
             } else {
@@ -243,9 +243,9 @@ export class MongoDataStore implements IDataStore {
         return;
     }
 
-    public async getLatestFeedbackGivenRecord(delivId: string, userName: string): Promise<IFeedbackGiven | null> {
+    public async getLatestFeedbackGivenRecord(delivId: string, userName: string, kind: string): Promise<IFeedbackGiven | null> {
         try {
-            const res = await this.getRecords(this.FEEDBACKCOLL, {delivId: delivId, personId: userName});
+            const res = await this.getRecords(this.FEEDBACKCOLL, {delivId: delivId, personId: userName, kind: kind});
             if (res === null) {
                 Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - record not found for deliv: " +
                     delivId + "; user: " + userName);

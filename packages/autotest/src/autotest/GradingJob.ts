@@ -93,15 +93,16 @@ export class GradingJob {
                 NetworkMode: "grading_net",
             }
         });
+        const maxExecTime = this.input.containerConfig.maxExecTime;
 
         const stdio = fs.createWriteStream(this.path + "/staff/stdio.txt");
         const stream = await container.attach({stream: true, stdout: true, stderr: true});
         stream.pipe(stdio);
 
-        const exitCode = await this.runContainer(container);
+        const exitCode = await GradingJob.runContainer(container, maxExecTime);
 
         const out = this.record.output;
-        if (typeof exitCode === "undefined") {
+        if (exitCode === -1) {
             out.report.feedback = "Container did not complete for `" + this.input.delivId + "` in the allotted time.";
             out.state = ContainerState.TIMEOUT;
         } else {
@@ -123,16 +124,19 @@ export class GradingJob {
         return this.record;
     }
 
-    private async runContainer(container: Docker.Container): Promise<number> {
-        const execTime = this.input.containerConfig.maxExecTime;
+    public static async runContainer(container: Docker.Container, maxExecTime: number): Promise<number> {
         let result: any;
         let timer: any;
+        let timedOut: boolean = false;
 
         await container.start();
 
-        if (execTime > 0) {
+        if (maxExecTime > 0) {
             // Set a timer to kill the container if it doesn't finish in the allotted time
-            timer = setTimeout(async () => await container.stop(), execTime * 1000);
+            timer = setTimeout(async () => {
+                timedOut = true;
+                await container.stop();
+            }, maxExecTime * 1000);
         }
 
         try {
@@ -143,6 +147,6 @@ export class GradingJob {
             clearTimeout(timer);
         }
 
-        return result.StatusCode;
+        return timedOut ? -1 : result.StatusCode;
     }
 }

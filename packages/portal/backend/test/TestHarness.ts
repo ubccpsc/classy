@@ -586,6 +586,7 @@ export class Test {
 
                 botMentioned: false,
                 personId:     null,
+                kind:         'push',
 
                 // projectURL:  projectURL,
                 postbackURL: 'postbackURL',

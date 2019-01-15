@@ -1,5 +1,4 @@
 import * as Docker from "dockerode";
-import * as fs from "fs-extra";
 import {URL} from "url";
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
@@ -44,9 +43,11 @@ export abstract class AutoTest implements IAutoTest {
 
     // noinspection TypeScriptAbstractClassConstructorCanBeMadeProtected
     constructor(dataStore: IDataStore, classPortal: IClassPortal, docker: Docker) {
+        Log.info("AutoTest::<init> - starting AutoTest");
         this.dataStore = dataStore;
         this.classPortal = classPortal;
         this.docker = docker;
+        this.loadQueues();
     }
 
     public addToStandardQueue(input: ContainerInput): void {
@@ -124,7 +125,6 @@ export abstract class AutoTest implements IAutoTest {
             // Log.trace("Queue::tick(..) - handle regression");
             tickQueue(this.regressionQueue);
 
-            // if (updated === false) {
             if (this.standardQueue.length() === 0 && this.standardQueue.numRunning() === 0 &&
                 this.expressQueue.length() === 0 && this.expressQueue.numRunning() === 0 &&
                 this.regressionQueue.length() === 0 && this.regressionQueue.numRunning() === 0) {
@@ -136,10 +136,46 @@ export abstract class AutoTest implements IAutoTest {
                     "express - #wait: " + this.expressQueue.length() + ", #run: " + this.expressQueue.numRunning() + "; " +
                     "regression - #wait: " + this.regressionQueue.length() + ", #run: " + this.regressionQueue.numRunning() + ".");
             }
-            // }
+
+            this.persistQueues().then(function(success: boolean) {
+                Log.trace("[PTEST] AutoTest::tick() - persist complete: " + success);
+            }).catch(function(err) {
+                Log.error("[PTEST] AutoTest::tick() - persist queue ERROR: " + err.message);
+            });
         } catch (err) {
             Log.error("AutoTest::tick() - ERROR: " + err.message);
         }
+    }
+
+    private async persistQueues(): Promise<boolean> {
+        Log.info("[PTEST] AutoTest::persistQueues() - start");
+        try {
+            const start = Date.now();
+            const writing = [
+                this.standardQueue.persist(),
+                this.regressionQueue.persist(),
+                this.expressQueue.persist()
+            ];
+            await Promise.all(writing);
+            Log.info("[PTEST] AutoTest::persistQueues() - done; took: " + Util.took(start));
+            return true;
+        } catch (err) {
+            Log.info("[PTEST] AutoTest::persistQueues() - ERROR: " + err.message);
+        }
+        return false;
+    }
+
+    private loadQueues() {
+        try {
+            Log.info("[PTEST] AutoTest::loadQueues() - start"); // just warn for now; this is really just for testing
+            this.standardQueue.load();
+            this.regressionQueue.load();
+            this.expressQueue.load();
+            Log.info("[PTEST] AutoTest::loadQueues() - done; queues loaded");
+        } catch (err) {
+            Log.error("[PTEST] AutoTest::loadQueues() - ERROR: " + err.message);
+        }
+        this.tick();
     }
 
     /**
@@ -339,15 +375,15 @@ export abstract class AutoTest implements IAutoTest {
             const org = Config.getInstance().getProp(ConfigKey.org);
             const repoId = input.target.repoId;
             const gradePayload: AutoTestGradeTransport = {
-                delivId: input.delivId,
+                delivId:   input.delivId,
                 repoId,
-                repoURL: `${githubHost}/${org}/${repoId}`,
+                repoURL:   `${githubHost}/${org}/${repoId}`,
                 score,
-                urlName: repoId,
-                URL: input.target.commitURL,
-                comment: '',
+                urlName:   repoId,
+                URL:       input.target.commitURL,
+                comment:   '',
                 timestamp: input.target.timestamp,
-                custom: {}
+                custom:    {}
             };
 
             await this.classPortal.sendGrade(gradePayload);

@@ -1,7 +1,6 @@
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {AutoTestResult} from "../../../../common/types/AutoTestTypes";
-import {GradeReport} from "../../../../common/types/ContainerTypes";
 import {
     AutoTestAuthTransport,
     AutoTestConfigTransport,
@@ -54,8 +53,8 @@ export class MockClassPortal implements IClassPortal {
                 maxExecTime:        300,
                 regressionDelivIds: [],
                 custom:             {},
-                openTimestamp:      new Date(2018, 1, 1).getTime(),
-                closeTimestamp:     new Date(2018, 6, 1).getTime(),
+                openTimestamp:      new Date(2015, 1, 1).getTime(),
+                closeTimestamp:     new Date(2030, 6, 1).getTime(),
                 lateAutoTest:       true
             };
         }
@@ -98,8 +97,12 @@ export class MockClassPortal implements IClassPortal {
         return Promise.resolve({personId: userName});
     }
 
-    public async formatFeedback(gradeRecord: GradeReport, feedbackMode?: string): Promise<string | null> {
-        return Promise.resolve(gradeRecord.feedback);
+    public async formatFeedback(res: AutoTestResultTransport, feedbackMode?: string): Promise<string | null> {
+        // const cp = new ClassPortal();
+        // // using the real object here because CP isn't actually live for formatFeedback yet
+        // const msg = await cp.formatFeedback(res, feedbackMode);
+        // return msg;
+        return Promise.resolve(res.output.report.feedback);
     }
 
 }

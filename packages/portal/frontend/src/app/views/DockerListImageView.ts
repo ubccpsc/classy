@@ -34,14 +34,14 @@ export class DockerListImageView {
                     const id = item.querySelector("label[for] > ons-row > ons-col").innerText;
                     if (image.id.startsWith(id)) {
                         exists = true;
-                        if (id === state.checkedItemId) {
+                        if (image.tag === state.checkedItemTag) {
                             this.setCheckedItem(item);
                         }
                         break;
                     }
                 }
                 if (!exists) {
-                    const item = DockerListImageView.generateListItem(image, image.id.startsWith(state.checkedItemId));
+                    const item = DockerListImageView.generateListItem(image, image.tag === state.checkedItemTag);
                     pendingAdditionsFragment.appendChild(item);
                 }
             }

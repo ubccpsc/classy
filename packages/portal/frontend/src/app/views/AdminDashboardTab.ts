@@ -238,7 +238,7 @@ export class AdminDashboardTab extends AdminPage {
         for (const name of all) {
             let state = 'unknown';
             let colour = 'black';
-            if (failNames.indexOf(name) > 0) {
+            if (failNames.indexOf(name) >= 0) {
                 state = 'fail';
                 colour = 'red';
             } else if (passNames.indexOf(name) >= 0) {
