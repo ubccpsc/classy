@@ -249,7 +249,7 @@ export class ClassPortal implements IClassPortal {
                 } else {
                     state = res.output.state;
                 }
-                feedback = "### AutoTest statuts for commit: " + state;
+                feedback = `AutoTest status for commit: **_${state}_**`;
             } else {
                 // TODO: this could actually be sent to the frontend for consideration in the course-specific classy controller
                 const gradeRecord = res.output.report;
