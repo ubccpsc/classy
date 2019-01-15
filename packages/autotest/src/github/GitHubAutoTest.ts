@@ -447,6 +447,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
     protected async processExecution(data: AutoTestResult): Promise<void> {
         try {
+            const that = this;
             const standardFeedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId, 'standard');
             const checkFeedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId, 'check');
             const containerConfig: any = await this.getContainerConfig(data.input.delivId);
@@ -467,9 +468,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 const giveFeedback = async function(target: CommitTarget, kind: string): Promise<void> {
                     Log.info("GitHubAutoTest::processExecution(..) - check feedback requested; deliv: " +
                         data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA + '; for: ' + target.personId);
-                    const msg = await this.classPortal.formatFeedback(data, feedbackMode);
-                    await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
-                    await this.saveFeedbackGiven(data.input.delivId, target.personId,
+                    const msg = await that.classPortal.formatFeedback(data, feedbackMode);
+                    await that.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
+                    await that.saveFeedbackGiven(data.input.delivId, target.personId,
                         target.timestamp, data.commitURL, kind);
                     return;
                 };

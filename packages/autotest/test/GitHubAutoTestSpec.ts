@@ -340,7 +340,7 @@ describe("GitHubAutoTest", () => {
         expect(allData.comments.length).to.equal(1);
 
         await Util.timeout(WAIT); // just clear the buffer before moving onto the next test
-    });
+    }).timeout(WAIT * 10);
 
     it("Should give a user a response for on a commit once it finishes if they have previously requested it.", async () => {
         expect(at).not.to.equal(null);
@@ -378,7 +378,7 @@ describe("GitHubAutoTest", () => {
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(1); // should be charged
         Log.test("Test complete");
-    });
+    }).timeout(WAIT * 10);
 
     it("Should give a user a response for on a commit once it finishes if they have previously requested a check on it.", async () => {
         expect(at).not.to.equal(null);
@@ -415,7 +415,7 @@ describe("GitHubAutoTest", () => {
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(1);
         Log.test("Test complete");
-    });
+    }).timeout(WAIT * 10);
 
     it("Should give a user a response for on a commit once it finishes if postback is true.", async () => {
         expect(at).not.to.equal(null);
@@ -448,7 +448,7 @@ describe("GitHubAutoTest", () => {
         expect(gitHubMessages[0].message).to.equal("Build Problem Encountered.");
         expect(allData.comments.length).to.equal(0);
         expect(allData.feedback.length).to.equal(0); // no charge
-    });
+    }).timeout(WAIT * 10);
 
     it("Should give a user a response for on a commit once it finishes if postback is true. They should not be charged if they requested this build.", async () => {
         expect(at).not.to.equal(null);
@@ -483,7 +483,7 @@ describe("GitHubAutoTest", () => {
         expect(gitHubMessages[1].message).to.equal("Build Problem Encountered.");
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(0); // no charge
-    });
+    }).timeout(WAIT * 10);
 
     it("Should give a user the results message on a commit that has been finished.", async () => {
         expect(at).not.to.equal(null);
@@ -519,7 +519,7 @@ describe("GitHubAutoTest", () => {
         expect(allData.comments.length).to.equal(2);
         expect(allData.feedback.length).to.equal(2);
         Log.test("Test complete.");
-    });
+    }).timeout(WAIT * 10);
 
     it("Should not let a user request results too soon.", async () => {
         // This case happens when a comment is made on a commit that AutoTest did not see the push for
@@ -557,7 +557,7 @@ describe("GitHubAutoTest", () => {
         expect(allData.feedback.length).to.equal(1); // no extra feedback records should be present
 
         Log.test("Test complete.");
-    });
+    }).timeout(WAIT * 10);
 
     it("Should be able to invoke a container.", async () => {
         expect(at).not.to.equal(null);
