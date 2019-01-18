@@ -1,7 +1,4 @@
-<<<<<<< fe389d656647e87160170071c2e35203c8ee33cb
 import {OnsListItemElement} from "onsenui";
-=======
->>>>>>> [WIP] Add framework for scheduling controller
 import Log from "../../../../../../common/Log";
 import {AdminTabs, AdminView} from "../AdminView";
 
