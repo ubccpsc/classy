@@ -38,6 +38,7 @@ export class CS340AdminView extends AdminView {
         if (name === 'AdminEditDeliverable') {
             Log.warn("CS340AdminView::renderPage::AdminEditDeliverable - Injecting switches");
             this.insertRepositoryScheduleCreationSwitch("adminEditDeliverablePage-autoGenerate");
+            this.insertAssignmentBlock();
         }
 
         Log.warn("CS340AdminView::renderPage(..) with name: " + name + " - complete");
@@ -60,7 +61,6 @@ export class CS340AdminView extends AdminView {
 
             const scheduleDiv: HTMLDivElement = document.createElement("div") as HTMLDivElement;
             scheduleDiv.classList.add("top");
-            scheduleDiv.classList.add("list-item__top");
 
             const scheduleExplanationDiv: HTMLDivElement = document.createElement("div") as HTMLDivElement;
             scheduleExplanationDiv.classList.add("expandable-content");
@@ -106,8 +106,128 @@ export class CS340AdminView extends AdminView {
         return false;
     }
 
+    private insertAssignmentBlock(): boolean {
+        const header: HTMLElement = document.getElementById("adminEditDeliverablePage-header-deliverableDates");
+
+        const assignmentSwitch: OnsListItemElement = this.generateAssignmentSwitch("adminEditDeliverablePage-assignmentSwitch");
+
+        header.parentNode.insertBefore(assignmentSwitch, header);
+        return false;
+    }
+
+    private generateAssignmentSwitch(switchId: string): OnsListItemElement {
+        // const assignmentToggleSwitch: OnsListItemElement = document.createElement("ons-list-item") as OnsListItemElement;
+        // assignmentToggleSwitch.setAttribute("display", "flex");
+        // assignmentToggleSwitch.classList.add("list-item");
+        // // assignmentToggleSwitch.classList.add("list-item--expandable");
+        // assignmentToggleSwitch.setAttribute("expandable", "");
+        //
+        // const assignmentSwitchBox: HTMLDivElement = document.createElement("div") as HTMLDivElement;
+        // assignmentSwitchBox.classList.add("top");
+        //
+        // const assignmentExplanationBox: HTMLDivElement = document.createElement("div") as HTMLDivElement;
+        // assignmentExplanationBox.classList.add("expandable-content");
+        // assignmentExplanationBox.innerHTML = "Indicates if this is a manually graded assignment";
+        //
+        // const iconBox = document.createElement("div");
+        // iconBox.classList.add("left");
+        // iconBox.classList.add("settingIcon");
+        // const assignmentIcon = document.createElement("ons-icon");
+        // assignmentIcon.setAttribute("icon", "fa-cogs");
+        // iconBox.appendChild(assignmentIcon);
+        //
+        // const descriptionBox = document.createElement("div");
+        // descriptionBox.classList.add("center");
+        // descriptionBox.classList.add("settingLabel");
+        // const descriptionValue = document.createElement("span");
+        // descriptionValue.setAttribute("title", "Toggles assignment status");
+        // descriptionValue.innerHTML = "Deliverable is an Assignment";
+        // descriptionBox.appendChild(descriptionValue);
+        //
+        // const switchBox = document.createElement("div");
+        // switchBox.classList.add("right");
+        // switchBox.classList.add("settingRight");
+        const sliderSwitch = document.createElement("ons-switch");
+        sliderSwitch.setAttribute("id", switchId);
+        sliderSwitch.setAttribute("modifier", "list-item");
+        sliderSwitch.setAttribute("onclick", "");
+        // switchBox.appendChild(sliderSwitch);
+
+        const newItem = this.buildOnsListItem("fa-cogs", "Deliverable is an Assignment", sliderSwitch,
+            "Indicates if this is a manually graded assignment");
+
+        // assignmentSwitchBox.appendChild(iconBox);
+        // assignmentSwitchBox.appendChild(descriptionBox);
+        // assignmentSwitchBox.appendChild(switchBox);
+
+        // assignmentToggleSwitch.appendChild(assignmentSwitchBox);
+        // assignmentToggleSwitch.appendChild(assignmentExplanationBox);
+
+        return newItem;
+    }
+
+    private generateHiddenAssignmentConfig(): HTMLElement {
+        const assignmentConfig: HTMLElement = document.createElement("ons-list");
+        assignmentConfig.setAttribute("display", "none");
+        assignmentConfig.setAttribute("id", "adminEditDeliverablePage-assignmentConfig");
+
+        const assignmentHeader: HTMLElement = document.createElement("ons-list-header");
+
+        const seedRepoPath: OnsListItemElement = document.createElement("ons-list-item") as OnsListItemElement;
+        seedRepoPath.setAttribute("expandable", "");
+        // const seedRepoPathIconBox
+
+        return assignmentConfig;
+    }
+
     private verifyCustomParameters(): boolean {
         return false;
+    }
+
+    private buildOnsListItem(iconName: string,
+                             name: string,
+                             insertedElement: HTMLElement,
+                             description: string): OnsListItemElement {
+        const newListItem: OnsListItemElement = document.createElement("ons-list-item") as OnsListItemElement;
+        newListItem.setAttribute("display", "flex");
+        newListItem.classList.add("list-item");
+        newListItem.setAttribute("expandable", "");
+
+        const elementBox: HTMLDivElement = document.createElement("div") as HTMLDivElement;
+        elementBox.classList.add("top");
+
+        const explanationBox: HTMLDivElement = document.createElement("div") as HTMLDivElement;
+        explanationBox.classList.add("expandable-content");
+        explanationBox.innerHTML = description;
+
+        const iconBox = document.createElement("div");
+        iconBox.classList.add("left");
+        iconBox.classList.add("settingIcon");
+        const iconElement = document.createElement("ons-icon");
+        iconElement.setAttribute("icon", iconName);
+        iconBox.appendChild(iconElement);
+
+        const descriptionBox = document.createElement("div");
+        descriptionBox.classList.add("center");
+        descriptionBox.classList.add("settingLabel");
+        const descriptionElement = document.createElement("span");
+        descriptionElement.setAttribute("title", name);
+        descriptionElement.innerHTML = name;
+        descriptionBox.appendChild(descriptionElement);
+
+        const insertedElementBox = document.createElement("div");
+        insertedElementBox.classList.add("right");
+        insertedElementBox.classList.add("settingRight");
+        insertedElementBox.appendChild(insertedElement);
+
+        elementBox.appendChild(iconBox);
+        elementBox.appendChild(descriptionBox);
+        elementBox.appendChild(insertedElementBox);
+
+        newListItem.appendChild(elementBox);
+        newListItem.appendChild(explanationBox);
+
+        return newListItem;
     }
 
     private saveDeliverable(): boolean {
