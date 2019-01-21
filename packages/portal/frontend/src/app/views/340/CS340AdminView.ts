@@ -1,4 +1,4 @@
-import {OnsListItemElement} from "onsenui";
+import {OnsInputElement, OnsListItemElement} from "onsenui";
 import Log from "../../../../../../common/Log";
 import {AdminTabs, AdminView} from "../AdminView";
 
@@ -53,50 +53,15 @@ export class CS340AdminView extends AdminView {
         Log.info("CS340AdminView::insertRepositoryScheduleCreationSwitch(" + switchId + ") - start");
         const openSwitch: HTMLElement = document.getElementById("adminEditDeliverablePage-open");
         if (openSwitch !== null) {
-            const schedulerSwitch: OnsListItemElement = document.createElement("ons-list-item") as OnsListItemElement;
-            schedulerSwitch.setAttribute("display", "flex");
-            schedulerSwitch.classList.add("list-item");
-            schedulerSwitch.classList.add("list-item--expandable");
-            schedulerSwitch.setAttribute("expandable", "");
-
-            const scheduleDiv: HTMLDivElement = document.createElement("div") as HTMLDivElement;
-            scheduleDiv.classList.add("top");
-
-            const scheduleExplanationDiv: HTMLDivElement = document.createElement("div") as HTMLDivElement;
-            scheduleExplanationDiv.classList.add("expandable-content");
-            scheduleExplanationDiv.innerHTML = "This allows Classy to automatically provision and " +
-                "release repositories without user interaction";
-
-            const calendarBox = document.createElement("div");
-            calendarBox.classList.add("left");
-            calendarBox.classList.add("settingIcon");
-            const calendarIcon = document.createElement("ons-icon");
-            calendarIcon.setAttribute("icon", "ion-calendar");
-            calendarBox.appendChild(calendarIcon);
-
-            const descriptionBox = document.createElement("div");
-            descriptionBox.classList.add("center");
-            descriptionBox.classList.add("settingLabel");
-            const descriptionValue = document.createElement("span");
-            descriptionValue.setAttribute("title", "Toggles auto-creation");
-            descriptionValue.innerHTML = "Automatically generate Repositories";
-            descriptionBox.appendChild(descriptionValue);
-
-            const switchBox = document.createElement("div");
-            switchBox.classList.add("right");
-            switchBox.classList.add("settingRight");
             const sliderSwitch = document.createElement("ons-switch");
             sliderSwitch.setAttribute("id", switchId);
             sliderSwitch.setAttribute("modifier", "list-item");
             sliderSwitch.setAttribute("onclick", "");
-            switchBox.appendChild(sliderSwitch);
 
-            scheduleDiv.appendChild(calendarBox);
-            scheduleDiv.appendChild(descriptionBox);
-            scheduleDiv.appendChild(switchBox);
-
-            schedulerSwitch.appendChild(scheduleDiv);
-            schedulerSwitch.appendChild(scheduleExplanationDiv);
+            const schedulerSwitch = this.buildOnsListItem("ion-calendar",
+                "Automatically generate Repositories",
+                sliderSwitch, "This allows Classy to automatically provision and " +
+                "release repositories without user interaction");
 
             const openBlock = openSwitch.parentNode.parentNode.parentNode;
             const upperBlock = openBlock.parentNode;
@@ -110,72 +75,67 @@ export class CS340AdminView extends AdminView {
         const header: HTMLElement = document.getElementById("adminEditDeliverablePage-header-deliverableDates");
 
         const assignmentSwitch: OnsListItemElement = this.generateAssignmentSwitch("adminEditDeliverablePage-assignmentSwitch");
+        const assignmentConfigBlock = this.generateHiddenAssignmentConfig();
 
         header.parentNode.insertBefore(assignmentSwitch, header);
+        header.parentNode.insertBefore(assignmentConfigBlock, header);
         return false;
     }
 
     private generateAssignmentSwitch(switchId: string): OnsListItemElement {
-        // const assignmentToggleSwitch: OnsListItemElement = document.createElement("ons-list-item") as OnsListItemElement;
-        // assignmentToggleSwitch.setAttribute("display", "flex");
-        // assignmentToggleSwitch.classList.add("list-item");
-        // // assignmentToggleSwitch.classList.add("list-item--expandable");
-        // assignmentToggleSwitch.setAttribute("expandable", "");
-        //
-        // const assignmentSwitchBox: HTMLDivElement = document.createElement("div") as HTMLDivElement;
-        // assignmentSwitchBox.classList.add("top");
-        //
-        // const assignmentExplanationBox: HTMLDivElement = document.createElement("div") as HTMLDivElement;
-        // assignmentExplanationBox.classList.add("expandable-content");
-        // assignmentExplanationBox.innerHTML = "Indicates if this is a manually graded assignment";
-        //
-        // const iconBox = document.createElement("div");
-        // iconBox.classList.add("left");
-        // iconBox.classList.add("settingIcon");
-        // const assignmentIcon = document.createElement("ons-icon");
-        // assignmentIcon.setAttribute("icon", "fa-cogs");
-        // iconBox.appendChild(assignmentIcon);
-        //
-        // const descriptionBox = document.createElement("div");
-        // descriptionBox.classList.add("center");
-        // descriptionBox.classList.add("settingLabel");
-        // const descriptionValue = document.createElement("span");
-        // descriptionValue.setAttribute("title", "Toggles assignment status");
-        // descriptionValue.innerHTML = "Deliverable is an Assignment";
-        // descriptionBox.appendChild(descriptionValue);
-        //
-        // const switchBox = document.createElement("div");
-        // switchBox.classList.add("right");
-        // switchBox.classList.add("settingRight");
         const sliderSwitch = document.createElement("ons-switch");
         sliderSwitch.setAttribute("id", switchId);
         sliderSwitch.setAttribute("modifier", "list-item");
         sliderSwitch.setAttribute("onclick", "");
-        // switchBox.appendChild(sliderSwitch);
 
-        const newItem = this.buildOnsListItem("fa-cogs", "Deliverable is an Assignment", sliderSwitch,
+        return this.buildOnsListItem("fa-cogs", "Deliverable is an Assignment", sliderSwitch,
             "Indicates if this is a manually graded assignment");
-
-        // assignmentSwitchBox.appendChild(iconBox);
-        // assignmentSwitchBox.appendChild(descriptionBox);
-        // assignmentSwitchBox.appendChild(switchBox);
-
-        // assignmentToggleSwitch.appendChild(assignmentSwitchBox);
-        // assignmentToggleSwitch.appendChild(assignmentExplanationBox);
-
-        return newItem;
     }
 
     private generateHiddenAssignmentConfig(): HTMLElement {
         const assignmentConfig: HTMLElement = document.createElement("ons-list");
         assignmentConfig.setAttribute("display", "none");
+        // assignmentConfig.setAttribute("style", "display: none");
         assignmentConfig.setAttribute("id", "adminEditDeliverablePage-assignmentConfig");
 
         const assignmentHeader: HTMLElement = document.createElement("ons-list-header");
+        assignmentHeader.innerHTML = "Assignment Config";
 
-        const seedRepoPath: OnsListItemElement = document.createElement("ons-list-item") as OnsListItemElement;
-        seedRepoPath.setAttribute("expandable", "");
-        // const seedRepoPathIconBox
+        const seedRepoPathInput: OnsInputElement = document.createElement("ons-input") as OnsInputElement;
+        seedRepoPathInput.setAttribute("id", "adminEditDeliverablePage-assignment-seedRepoPath");
+        seedRepoPathInput.classList.add("settingTextInput");
+        const seedRepoPath: OnsListItemElement = this.buildOnsListItem("fa-gears",
+            "Seed Repo Path (Optional)",
+            seedRepoPathInput,
+            "The path that should be cloned for the repository.\n" +
+            "The format of this string should be like: \"folder/to/files/*\".\n" +
+            "This is optional, if not specified, the repository will be fully cloned."
+            );
+
+        const mainFilePathInput: OnsInputElement = document.createElement("ons-input") as OnsInputElement;
+        mainFilePathInput.setAttribute("id", "adminEditDeliverablePage-assignment-mainFilePath");
+        mainFilePathInput.classList.add("settingTextInput");
+        const mainFilePath: OnsListItemElement = this.buildOnsListItem("fa-gears",
+            "Main File Path (Optional)",
+            mainFilePathInput,
+            "Path to the main file that will be parsed to generate the rubric.\n" +
+            "Supported file formats: \".tex\", \".md\", \".ipynb\", \".Rmd\".\n" +
+            "This is optional, if not specified, the rubric will not be automatically generated"
+        );
+
+        const courseWeightInput: OnsInputElement = document.createElement("ons-input") as OnsInputElement;
+        courseWeightInput.setAttribute("id", "adminEditDeliverablePage-assignment-courseWeight");
+        courseWeightInput.classList.add("settingTextInput");
+        const courseWeight: OnsListItemElement = this.buildOnsListItem("fa-gears",
+            "Course Weight",
+            courseWeightInput,
+            "Determines the weight the assignment. Should be a number from 0-1."
+        );
+
+        assignmentConfig.appendChild(assignmentHeader);
+        assignmentConfig.appendChild(seedRepoPath);
+        assignmentConfig.appendChild(mainFilePath);
+        assignmentConfig.appendChild(courseWeight);
 
         return assignmentConfig;
     }
