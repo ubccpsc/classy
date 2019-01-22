@@ -1,4 +1,4 @@
-import {OnsInputElement, OnsListItemElement} from "onsenui";
+import {OnsInputElement, OnsListItemElement, OnsSwitchElement} from "onsenui";
 import Log from "../../../../../../common/Log";
 import {AdminTabs, AdminView} from "../AdminView";
 
@@ -74,7 +74,7 @@ export class CS340AdminView extends AdminView {
     private insertAssignmentBlock(): boolean {
         const header: HTMLElement = document.getElementById("adminEditDeliverablePage-header-deliverableDates");
 
-        const assignmentSwitch: OnsListItemElement = this.generateAssignmentSwitch("adminEditDeliverablePage-assignmentSwitch");
+        const assignmentSwitch: OnsListItemElement = this.generateAssignmentSwitch("adminEditDeliverablePage-isAssignment");
         const assignmentConfigBlock = this.generateHiddenAssignmentConfig();
 
         header.parentNode.insertBefore(assignmentSwitch, header);
@@ -84,9 +84,14 @@ export class CS340AdminView extends AdminView {
 
     private generateAssignmentSwitch(switchId: string): OnsListItemElement {
         const sliderSwitch = document.createElement("ons-switch");
+        const that = this;
+
         sliderSwitch.setAttribute("id", switchId);
         sliderSwitch.setAttribute("modifier", "list-item");
-        sliderSwitch.setAttribute("onclick", "");
+
+        sliderSwitch.onclick = function(evt) {
+            that.updateAssignmentBlock();
+        };
 
         return this.buildOnsListItem("fa-cogs", "Deliverable is an Assignment", sliderSwitch,
             "Indicates if this is a manually graded assignment");
@@ -94,9 +99,8 @@ export class CS340AdminView extends AdminView {
 
     private generateHiddenAssignmentConfig(): HTMLElement {
         const assignmentConfig: HTMLElement = document.createElement("ons-list");
-        assignmentConfig.setAttribute("display", "none");
-        // assignmentConfig.setAttribute("style", "display: none");
-        assignmentConfig.setAttribute("id", "adminEditDeliverablePage-assignmentConfig");
+        assignmentConfig.style.display = "none";
+        assignmentConfig.setAttribute("id", "adminEditDeliverablePage-assignmentConfigBlock");
 
         const assignmentHeader: HTMLElement = document.createElement("ons-list-header");
         assignmentHeader.innerHTML = "Assignment Config";
@@ -140,10 +144,34 @@ export class CS340AdminView extends AdminView {
         return assignmentConfig;
     }
 
+    private updateAssignmentBlock() {
+        Log.info("CS340AdminView::updateAssignmentBlock(..) - start");
+        const isAssignment = document.getElementById("adminEditDeliverablePage-isAssignment") as OnsSwitchElement;
+        const isAssignmentValue = isAssignment.checked;
+        Log.info("CS340AdminView::updateAssignmentBlock(..); isAssignment; value: " + isAssignmentValue);
+
+        const assignmentConfigBlock = document.getElementById("adminEditDeliverablePage-assignmentConfigBlock");
+        if (isAssignmentValue === true) {
+            assignmentConfigBlock.style.display = 'inherit';
+        } else {
+            assignmentConfigBlock.style.display = 'none';
+        }
+        return;
+    }
+
     private verifyCustomParameters(): boolean {
         return false;
     }
 
+
+    /**
+     * Helper method that allows for quicker OnsListItem generation
+     * @param {string} iconName - name for right hand icon
+     * @param {string} name - title for the list item
+     * @param {HTMLElement} insertedElement - right side element to be inserted
+     * @param {string} description - expandable definition
+     * @returns {ons.OnsListItemElement} Generated OnsListItem
+     */
     private buildOnsListItem(iconName: string,
                              name: string,
                              insertedElement: HTMLElement,
