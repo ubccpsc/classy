@@ -1,6 +1,7 @@
 import {OnsInputElement, OnsListItemElement, OnsSwitchElement} from "onsenui";
 import Log from "../../../../../../common/Log";
 import {AdminTabs, AdminView} from "../AdminView";
+import {Deliverable} from "../../../../../backend/src/Types";
 
 declare var ons: any;
 
@@ -53,7 +54,7 @@ export class CS340AdminView extends AdminView {
         Log.info("CS340AdminView::insertRepositoryScheduleCreationSwitch(" + switchId + ") - start");
         const openSwitch: HTMLElement = document.getElementById("adminEditDeliverablePage-open");
         if (openSwitch !== null) {
-            const sliderSwitch = document.createElement("ons-switch");
+            const sliderSwitch: OnsSwitchElement = document.createElement("ons-switch");
             sliderSwitch.setAttribute("id", switchId);
             sliderSwitch.setAttribute("modifier", "list-item");
             sliderSwitch.setAttribute("onclick", "");
@@ -159,10 +160,22 @@ export class CS340AdminView extends AdminView {
         return;
     }
 
-    private verifyCustomParameters(): boolean {
+    private generateCustomParameters(delivRecord: Deliverable = null): boolean {
+        // retrieve the values in the edit deliverable page
+        const seedRepoPath: OnsInputElement = document.getElementById(
+            "adminEditDeliverablePage-assignment-seedRepoPath") as OnsInputElement;
+        const mainFilePath: OnsInputElement = document.getElementById(
+            "adminEditDeliverablePage-assignment-mainFilePath") as OnsInputElement;
+        const courseWeight: OnsInputElement = document.getElementById("" +
+            "adminEditDeliverablePage-assignment-courseWeight") as OnsInputElement;
+        const autoGenerate: OnsSwitchElement = document.getElementById(
+            "adminEditDeliverablePage-autoGenerate") as OnsSwitchElement;
+
+        // check if there should already be some custom information
+        // if (delivRecord === null || delivRecord.custom)
+
         return false;
     }
-
 
     /**
      * Helper method that allows for quicker OnsListItem generation
