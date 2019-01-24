@@ -2,6 +2,7 @@ import {OnsInputElement, OnsListItemElement, OnsSwitchElement} from "onsenui";
 import Log from "../../../../../../common/Log";
 import {AdminTabs, AdminView} from "../AdminView";
 import {Deliverable} from "../../../../../backend/src/Types";
+import {AssignmentInfo} from "../../../../../../common/types/CS340Types";
 
 declare var ons: any;
 
@@ -54,10 +55,12 @@ export class CS340AdminView extends AdminView {
         Log.info("CS340AdminView::insertRepositoryScheduleCreationSwitch(" + switchId + ") - start");
         const openSwitch: HTMLElement = document.getElementById("adminEditDeliverablePage-open");
         if (openSwitch !== null) {
-            const sliderSwitch: OnsSwitchElement = document.createElement("ons-switch");
+            const sliderSwitch: OnsSwitchElement = document.createElement("ons-switch") as OnsSwitchElement;
             sliderSwitch.setAttribute("id", switchId);
             sliderSwitch.setAttribute("modifier", "list-item");
-            sliderSwitch.setAttribute("onclick", "");
+            sliderSwitch.onclick = (evt) => {
+                this.generateCustomParameters(null);
+            };
 
             const schedulerSwitch = this.buildOnsListItem("ion-calendar",
                 "Automatically generate Repositories",
@@ -92,6 +95,7 @@ export class CS340AdminView extends AdminView {
 
         sliderSwitch.onclick = function(evt) {
             that.updateAssignmentBlock();
+            that.generateCustomParameters(null);
         };
 
         return this.buildOnsListItem("fa-cogs", "Deliverable is an Assignment", sliderSwitch,
@@ -99,6 +103,8 @@ export class CS340AdminView extends AdminView {
     }
 
     private generateHiddenAssignmentConfig(): HTMLElement {
+        const that = this;
+
         const assignmentConfig: HTMLElement = document.createElement("ons-list");
         assignmentConfig.style.display = "none";
         assignmentConfig.setAttribute("id", "adminEditDeliverablePage-assignmentConfigBlock");
@@ -137,10 +143,22 @@ export class CS340AdminView extends AdminView {
             "Determines the weight the assignment. Should be a number from 0-1."
         );
 
+        seedRepoPath.onchange = (evt) => {
+            that.generateCustomParameters(null);
+        };
+
+        courseWeight.onchange = (evt) => {
+            that.generateCustomParameters(null);
+        };
+
+        mainFilePath.onchange = (evt) => {
+            that.generateCustomParameters(null)
+        };
+
         assignmentConfig.appendChild(assignmentHeader);
+        assignmentConfig.appendChild(courseWeight);
         assignmentConfig.appendChild(seedRepoPath);
         assignmentConfig.appendChild(mainFilePath);
-        assignmentConfig.appendChild(courseWeight);
 
         return assignmentConfig;
     }
@@ -170,11 +188,43 @@ export class CS340AdminView extends AdminView {
             "adminEditDeliverablePage-assignment-courseWeight") as OnsInputElement;
         const autoGenerate: OnsSwitchElement = document.getElementById(
             "adminEditDeliverablePage-autoGenerate") as OnsSwitchElement;
+        const isAssignment: OnsSwitchElement = document.getElementById(
+            "adminEditDeliverablePage-isAssignment") as OnsSwitchElement;
 
+        let customParameters: any;
+        let assignmentInfo: AssignmentInfo;
         // check if there should already be some custom information
-        // if (delivRecord === null || delivRecord.custom)
+        if (delivRecord === null || delivRecord.custom === null || delivRecord.custom.assignment === null) {
+            assignmentInfo = {
+                seedRepoPath: "",
+                mainFilePath: "",
+                courseWeight: 0
+            };
+            customParameters = {
+                scheduled: false,
+            };
 
-        return false;
+        } else {
+            customParameters = delivRecord.custom;
+        }
+
+        customParameters.scheduled = autoGenerate.checked;
+
+        if (isAssignment.checked === true) {
+            assignmentInfo.seedRepoPath = seedRepoPath.value;
+            assignmentInfo.mainFilePath = mainFilePath.value;
+            assignmentInfo.courseWeight = Number(courseWeight.value);
+            customParameters.assignment = assignmentInfo;
+        }
+
+        // update the field
+
+        const customField: OnsInputElement = document.getElementById(
+            "adminEditDeliverablePage-custom") as OnsInputElement;
+
+        customField.value = JSON.stringify(customParameters);
+
+        return true;
     }
 
     /**

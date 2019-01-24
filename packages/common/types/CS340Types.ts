@@ -30,13 +30,13 @@ export interface SubQuestionGrade {
 
 // Placed in Deliverable.custom
 export interface AssignmentInfo {
-    seedRepoURL: string;
+    // seedRepoURL: string;
     seedRepoPath: string;
     mainFilePath: string;
     courseWeight: number;               // should be a value between 0-1, relative to the final grade
-    status: AssignmentStatus;
-    rubric: AssignmentGradingRubric;
-    repositories: string[];             // Associated Repositories based on IDs
+    // status: AssignmentStatus;
+    // rubric: AssignmentGradingRubric;
+    // repositories: string[];             // Associated Repositories based on IDs
 }
 
 // Placed in Repository.custom

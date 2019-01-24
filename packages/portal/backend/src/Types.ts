@@ -96,11 +96,7 @@ export interface Deliverable {
     custom: {
         rubric?: any, // CS340REST
         assignment?: AssignmentInfo // AssignmentController
-        scheduled?: boolean,
-        // courseWeight?: any, // AssignmentController // TODO: make into assignment.courseWeight
-        // seedRepoURL?: any, // RubricController // TODO: make into rubric.seedRepoURL
-        // seedRepoPath?: any, // RubricController // TODO: make into rubric.seedRepoPath
-        // mainFilePath?: any // AssignmentController // TODO: make into assignment.mainFilePath
+        scheduled?: any, // TODO [Jonathan] Create type for this
     };
 
     lateAutoTest: boolean; // whether the deliv can be executed after the deadline
