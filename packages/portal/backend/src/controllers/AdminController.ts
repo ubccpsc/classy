@@ -613,7 +613,11 @@ export class AdminController {
      */
     public async planProvision(deliv: Deliverable, formSingleTeams: boolean): Promise<RepositoryTransport[]> {
         Log.info("AdminController::planProvision( " + deliv.id + ", " + formSingleTeams + " ) - start");
-        const allPeople: Person[] = await this.pc.getAllPeople();
+        let allPeople: Person[] = await this.pc.getAllPeople();
+
+        // remove all withdrawn people, we don't need to provision these
+        allPeople = allPeople.filter((person) => person.kind !== PersonKind.WITHDRAWN);
+
         const allTeams: Team[] = await this.tc.getAllTeams();
 
         if (deliv.teamMaxSize === 1) {
