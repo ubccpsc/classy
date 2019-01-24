@@ -120,6 +120,11 @@ export class PersonController {
         return person;
     }
 
+    /**
+     * This returns _all_ people (including admins, staff, withrdawn students, etc.).
+     *
+     * @returns {Promise<Person[]>}
+     */
     public async getAllPeople(): Promise<Person[]> {
         Log.trace("PersonController::getAllPeople() - start");
         return await this.db.getPeople();
@@ -145,20 +150,23 @@ export class PersonController {
         let numStudents = 0;
         let numWithdrawn = 0;
         for (const person of people) {
-            if (person.kind === PersonKind.STUDENT) {
+            if (person.kind === PersonKind.STUDENT || person.kind === PersonKind.WITHDRAWN) {
                 numStudents++;
                 if (registeredGithubIds.indexOf(person.githubId) >= 0) {
-                    // student is registered, do nothing
-                } else {
-                    if (person.labId !== 'W') {
-                        numWithdrawn++;
+                    // student is registered
+                    if (person.kind === PersonKind.WITHDRAWN) {
+                        // this will happen if they have withdrawn and then re-enrolled
+                        person.kind = PersonKind.STUDENT;
+                        await this.writePerson(person);
                     }
+                } else {
                     // student is not registered; mark as withdrawn
-                    // person.kind = PersonKind.WITHDRAWN; // NOTE: this is commented out for testing
-                    person.labId = 'W'; // mark without changing person kind
-                    Log.info("PersonController::markStudentsWithdrawn( .. ) - marking " + person.id + " as withdrawn");
-
-                    await this.writePerson(person);
+                    if (person.kind !== PersonKind.WITHDRAWN) {
+                        numWithdrawn++;
+                        person.kind = PersonKind.WITHDRAWN;
+                        Log.info("PersonController::markStudentsWithdrawn( .. ) - marking " + person.id + " as withdrawn");
+                        await this.writePerson(person);
+                    }
                 }
             }
         }

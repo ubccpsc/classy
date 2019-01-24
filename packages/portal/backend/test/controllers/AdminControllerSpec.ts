@@ -564,7 +564,9 @@ describe("AdminController", () => {
         }).timeout(Test.TIMEOUTLONG * 5);
 
         it("Should be able to mark students as withdrawn.", async () => {
+            const studentsBefore = await ac.getStudents();
             let people = await pc.getAllPeople();
+
             let numWithrdrawnBefore = 0;
             for (const person of people) {
                 if (person.kind === PersonKind.WITHDRAWN) {
@@ -584,8 +586,10 @@ describe("AdminController", () => {
                     numWithrdrawnAfter++;
                 }
             }
-            // TODO: enable this expect when removing the personKind.withrdawn commented out line in personcontroller
-            // expect(numWithrdrawnAfter).to.be.greaterThan(numWithrdrawnBefore);
+            expect(numWithrdrawnAfter).to.be.greaterThan(numWithrdrawnBefore);
+
+            const studentsAfter = await ac.getStudents();
+            expect(studentsBefore.length).to.be.greaterThan(studentsAfter.length); // students should not include withdrawn students
         }).timeout(Test.TIMEOUTLONG * 5);
     });
 });
