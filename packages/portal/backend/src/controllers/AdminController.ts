@@ -134,7 +134,7 @@ export class AdminController {
     }
 
     /**
-     * Gets the students associated with the course.
+     * Gets the students associated with the course. Admins, staff, and withdrawn students are not included.
      *
      * @returns {Promise<StudentTransport[]>}
      */
