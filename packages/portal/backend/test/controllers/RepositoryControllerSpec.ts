@@ -12,7 +12,7 @@ import '../GlobalSpec'; // load first
 import {Test} from "../TestHarness";
 import './TeamControllerSpec'; // load first
 
-describe.only("RepositoryController", () => {
+describe("RepositoryController", () => {
 
     let rc: RepositoryController;
     let tc: TeamController;

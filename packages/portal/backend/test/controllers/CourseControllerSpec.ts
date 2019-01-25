@@ -13,7 +13,7 @@ import '../GlobalSpec';
 import {Test} from "../TestHarness";
 import './PersonControllerSpec';
 
-describe.only("CourseController", () => {
+describe("CourseController", () => {
 
     const TIMEOUT = 10000;
 

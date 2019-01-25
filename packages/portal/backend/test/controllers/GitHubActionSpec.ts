@@ -15,7 +15,7 @@ import {TeamController} from "../../src/controllers/TeamController";
 import '../GlobalSpec';
 import {Test} from "../TestHarness";
 
-describe.only("GitHubActions", () => {
+describe("GitHubActions", () => {
 
     // TODO: investigate skipping this way: https://stackoverflow.com/a/41908943 (and turning them on/off with an env flag)
 

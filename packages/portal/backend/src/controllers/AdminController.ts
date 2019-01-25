@@ -946,8 +946,10 @@ export class AdminController {
      * @returns {Promise<void>}
      */
     public async dbSanityCheck(dryRun: boolean): Promise<void> {
+        /* tslint:disable */
         Log.info("AdminController::dbSanityCheck() - start");
         const start = Date.now();
+
         const gha = GitHubActions.getInstance(true);
         const tc = new TeamController();
         const config = Config.getInstance();
@@ -1105,6 +1107,7 @@ export class AdminController {
         }
 
         Log.info("AdminController::dbSanityCheck() - done; took: " + Util.took(start));
+        /* tslint:enable */
     }
 
     // NOTE: the default implementation is currently broken; do not use it.
