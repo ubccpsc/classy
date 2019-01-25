@@ -12,7 +12,7 @@ import '../GlobalSpec'; // load first
 import {Test} from "../TestHarness";
 import './TeamControllerSpec'; // load first
 
-describe("RepositoryController", () => {
+describe.only("RepositoryController", () => {
 
     let rc: RepositoryController;
     let tc: TeamController;
@@ -141,6 +141,29 @@ describe("RepositoryController", () => {
 
         repos = await rc.getAllRepos();
         expect(repos).to.have.lengthOf(2); // should have created a new repo
+    });
+
+    it("Should fail to update a repo gracefully.", async () => {
+        const res = await rc.updateRepository(null);
+        expect(res).to.be.null;
+    });
+
+    it("Should fail to create a RepositoryTransport gracefully if something is wrong.", async () => {
+        let ex = null;
+        try {
+            RepositoryController.repositoryToTransport(null);
+        } catch (err) {
+            ex = err;
+        }
+        expect(ex).to.not.be.null;
+
+        ex = null;
+        try {
+            RepositoryController.repositoryToTransport(undefined);
+        } catch (err) {
+            ex = err;
+        }
+        expect(ex).to.not.be.null;
     });
 
 });
