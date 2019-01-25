@@ -652,15 +652,22 @@ describe("GitHubActions", () => {
 
         let ex = null;
         try {
-            worked = await gh.simulateWebookComment(Test.REPONAMEREAL2, "c35a0e5968338a9757813b58368f36ddd64b063e", "message");
+            let msg = "message";
+            worked = await gh.simulateWebookComment(Test.REPONAMEREAL2, "c35a0e5968338a9757813b58368f36ddd64b063e", msg);
+
+            for (let i = 0; i < 10; i++) {
+                msg = msg + msg; // make a long message
+            }
+            msg = msg + '\n' + msg;
+            worked = await gh.simulateWebookComment(Test.REPONAMEREAL2, "c35a0e5968338a9757813b58368f36ddd64b063e", msg);
+
+            // NOTE: worked not checked because githubWebhook needs to be active for this to work
+            // expect(worked).to.be.true;
+            expect(worked).to.not.be.null;
         } catch (err) {
             ex = err;
         }
         expect(ex).to.be.null; // at least don't throw an exception
-
-        // NOTE: worked not checked because githubWebhook needs to be active for this to work
-        // expect(worked).to.be.true;
-        expect(worked).to.not.be.null;
     }).timeout(TIMEOUT);
 
     it("Should not be possible to make a comment with invalid params.", async function() {
@@ -672,13 +679,19 @@ describe("GitHubActions", () => {
     }).timeout(TIMEOUT);
 
     it("Should be possible to make a comment.", async function() {
+        let msg = "message";
         let url = "https://api.github.com/repos/classytest/" + Test.REPONAMEREAL2 + "/commits/INVALIDSHA/comments";
-        let worked = await gh.makeComment(url, "test message");
+        let worked = await gh.makeComment(url, msg);
         expect(worked).to.be.false; // false because SHA is invalid
+
+        for (let i = 0; i < 10; i++) {
+            msg = msg + msg; // make a long message
+        }
+        msg = msg + '\n' + msg;
 
         url = "https://api.github.com/repos/classytest/" + Test.REPONAMEREAL2 +
             "/commits/c35a0e5968338a9757813b58368f36ddd64b063e/comments";
-        worked = await gh.makeComment(url, "test message");
+        worked = await gh.makeComment(url, msg);
         expect(worked).to.be.true; // should have worked
     }).timeout(TIMEOUT);
 

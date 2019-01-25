@@ -1655,6 +1655,16 @@ export class GitHubActions implements IGitHubActions {
 
     public async makeComment(url: string, message: string): Promise<boolean> {
         try {
+            if (typeof url === "undefined" || url === null) {
+                Log.error("GitHubActions::makeComment(..)  - message.url is required");
+                return Promise.resolve(false);
+            }
+
+            if (typeof message === "undefined" || message === null || message.length < 1) {
+                Log.error("GitHubActions::makeComment(..)  - message.message is required");
+                return Promise.resolve(false);
+            }
+
             // find a better short string for logging
             let messageToPrint = message;
             if (messageToPrint.indexOf('\n') > 0) {
@@ -1667,17 +1677,6 @@ export class GitHubActions implements IGitHubActions {
             Log.info("GitHubActions::makeComment(..) - Posting markdown to url: " +
                 url + "; message: " + messageToPrint);
 
-            if (typeof url === "undefined" || url === null) {
-                Log.error("GitHubActions::makeComment(..)  - message.url is required");
-                return Promise.resolve(false);
-            }
-
-            if (typeof message === "undefined" || message === null || message.length < 1) {
-                Log.error("GitHubActions::makeComment(..)  - message.message is required");
-                return Promise.resolve(false);
-            }
-
-            // const body: string = JSON.stringify({body: message});
             const body = {body: message};
             const options: any = {
                 method:                  "POST",
