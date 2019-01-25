@@ -957,7 +957,6 @@ export class GitHubActions implements IGitHubActions {
      * @returns {Promise<number>}
      */
     public async getTeamMembers(teamNumber: number): Promise<string[]> {
-
         Log.info("GitHubAction::getTeamMembers( " + teamNumber + " ) - start");
 
         if (teamNumber === null) {
@@ -1090,9 +1089,9 @@ export class GitHubActions implements IGitHubActions {
     }
 
     public async listTeamMembers(teamName: string): Promise<string[]> {
-        const gh = this;
+        Log.info('GitHubAction::listTeamMembers( ' + teamName + ' ) - start');
 
-        // const teamNumber = await gh.getTeamNumber(teamName);
+        const gh = this;
         const teamNumber = await new TeamController().getTeamNumber(teamName);
         const teamMembers = await gh.getTeamMembers(teamNumber);
 

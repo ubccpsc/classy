@@ -15,7 +15,7 @@ import {TeamController} from "../../src/controllers/TeamController";
 import '../GlobalSpec';
 import {Test} from "../TestHarness";
 
-describe("GitHubActions", () => {
+describe.only("GitHubActions", () => {
 
     // TODO: investigate skipping this way: https://stackoverflow.com/a/41908943 (and turning them on/off with an env flag)
 
@@ -624,6 +624,38 @@ describe("GitHubActions", () => {
         expect(val).to.be.an('object');
         expect(val.githubTeamNumber).to.equal(teamNumber);
         expect(val.teamName).to.equal(TEAMNAME);
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to find the teams on a repo.", async function() {
+        const val = await gh.getTeamsOnRepo(REPONAME);
+        Log.test("listed teams: " + JSON.stringify(val));
+        expect(val).to.be.an('array');
+        expect(val.length).to.equal(2);
+
+        let exists = false;
+        for (const team of val) {
+            if (team.teamName === 'staff') {
+                exists = true;
+            }
+        }
+        expect(exists).to.be.true;
+
+        exists = false;
+        for (const team of val) {
+            if (team.teamName === Test.TEAMNAME1) {
+                exists = true;
+            }
+        }
+        expect(exists).to.be.true;
+
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to find the members of a team.", async function() {
+        const val = await gh.listTeamMembers(TEAMNAME);
+        Log.test("listed members: " + JSON.stringify(val));
+        expect(val).to.be.an('array');
+        expect(val.length).to.equal(1);
+        expect(val[0]).to.equal(Test.USERNAMEGITHUB2);
     }).timeout(TIMEOUT);
 
     it("Clear stale repos and teams.", async function() {
