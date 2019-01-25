@@ -627,9 +627,12 @@ describe("GitHubActions", () => {
     }).timeout(TIMEOUT);
 
     it("Should be possible to check the database.", async function() {
-        await GitHubActions.checkDatabase(REPONAME, TEAMNAME);
-        // TODO: do this test
-        expect(true).to.be.false;
+        let res = await GitHubActions.checkDatabase(null, null);
+        expect(res).to.be.true;
+
+        // if anything goes wrong exceptions will be thrown
+        res = await GitHubActions.checkDatabase(REPONAME, TEAMNAME);
+        expect(res).to.be.true;
     }).timeout(TIMEOUT);
 
     it("Should not be possible to simulate a webhook with the wrong params.", async function() {
