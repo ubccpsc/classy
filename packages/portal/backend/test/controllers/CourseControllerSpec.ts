@@ -1,5 +1,6 @@
 import {expect} from "chai";
 import "mocha";
+import Util from "../../../../common/Util";
 
 import {CourseController} from "../../src/controllers/CourseController";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
@@ -31,6 +32,12 @@ describe.only("CourseController", () => {
 
     after(async () => {
         Test.suiteAfter('CourseController');
+    });
+
+    it("Should be able to handle an unknown user.", async () => {
+        const person = await cc.handleUnknownUser('unknown_' + Date.now());
+        // should do nothing
+        expect(person).to.be.null;
     });
 
     it("Should be able to compute names.", async () => {
@@ -99,8 +106,11 @@ describe.only("CourseController", () => {
             custom:    {}
         };
 
-        const acceptGrade = await cc.handleNewAutoTestGrade(deliv, g, null);
-        expect(acceptGrade).to.be.true;
+        const g1 = Util.clone(g) as Grade;
+        g1.score = 50; // existing grade is higher
+
+        const acceptGrade = await cc.handleNewAutoTestGrade(deliv, g, g1);
+        expect(acceptGrade).to.be.false;
     });
 
     it("Should not accept an autotest grade outside of the deliverable window.", async () => {

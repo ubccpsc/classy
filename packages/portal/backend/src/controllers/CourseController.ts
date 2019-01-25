@@ -128,12 +128,11 @@ export class CourseController implements ICourseController {
     }
 
     public async computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}> {
-        Log.info('CourseController::computeNames( ' + deliv.id + ', ... ) - start');
-
         if (deliv === null) {
             throw new Error("CourseController::computeNames( ... ) - null Deliverable");
         }
 
+        Log.info('CourseController::computeNames( ' + deliv.id + ', ... ) - start');
         if (people.length < 1) {
             throw new Error("CourseController::computeNames( ... ) - must provide people");
         }
