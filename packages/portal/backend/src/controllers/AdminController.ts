@@ -935,6 +935,7 @@ export class AdminController {
         return [];
     }
 
+    /* istanbul ignore next */
     /**
      * Synchronizes the database objects with GitHub. Does _NOT_ remove any DB objects, just makes
      * sure their properties match those in the GitHub org. This is useful if manual changes are made
@@ -946,7 +947,6 @@ export class AdminController {
      * @returns {Promise<void>}
      */
     public async dbSanityCheck(dryRun: boolean): Promise<void> {
-        /* tslint:disable */
         Log.info("AdminController::dbSanityCheck() - start");
         const start = Date.now();
 
@@ -1107,7 +1107,6 @@ export class AdminController {
         }
 
         Log.info("AdminController::dbSanityCheck() - done; took: " + Util.took(start));
-        /* tslint:enable */
     }
 
     // NOTE: the default implementation is currently broken; do not use it.

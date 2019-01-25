@@ -626,6 +626,59 @@ describe("GitHubActions", () => {
         expect(val.teamName).to.equal(TEAMNAME);
     }).timeout(TIMEOUT);
 
+    it("Should be possible to check the database.", async function() {
+        await GitHubActions.checkDatabase(REPONAME, TEAMNAME);
+        // TODO: do this test
+        expect(true).to.be.false;
+    }).timeout(TIMEOUT);
+
+    it("Should not be possible to simulate a webhook with the wrong params.", async function() {
+        let worked = await gh.simulateWebookComment(null, "SHA", "message");
+        expect(worked).to.be.false;
+
+        worked = await gh.simulateWebookComment(REPONAME, null, "message");
+        expect(worked).to.be.false;
+
+        worked = await gh.simulateWebookComment(REPONAME, "SHA", null);
+        expect(worked).to.be.false;
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to simulate a webhook.", async function() {
+        let worked = await gh.simulateWebookComment(Test.REPONAMEREAL2, "SHA", "message");
+        expect(worked).to.be.false; // SHA is not right
+
+        let ex = null;
+        try {
+            worked = await gh.simulateWebookComment(Test.REPONAMEREAL2, "c35a0e5968338a9757813b58368f36ddd64b063e", "message");
+        } catch (err) {
+            ex = err;
+        }
+        expect(ex).to.be.null; // at least don't throw an exception
+
+        // NOTE: worked not checked because githubWebhook needs to be active for this to work
+        // expect(worked).to.be.true;
+        expect(worked).to.not.be.null;
+    }).timeout(TIMEOUT);
+
+    it("Should not be possible to make a comment with invalid params.", async function() {
+        let worked = await gh.makeComment(null, "message");
+        expect(worked).to.be.false;
+
+        worked = await gh.makeComment("URL", null);
+        expect(worked).to.be.false;
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to make a comment.", async function() {
+        let url = "https://api.github.com/repos/classytest/" + Test.REPONAMEREAL2 + "/commits/INVALIDSHA/comments";
+        let worked = await gh.makeComment(url, "test message");
+        expect(worked).to.be.false; // false because SHA is invalid
+
+        url = "https://api.github.com/repos/classytest/" + Test.REPONAMEREAL2 +
+            "/commits/c35a0e5968338a9757813b58368f36ddd64b063e/comments";
+        worked = await gh.makeComment(url, "test message");
+        expect(worked).to.be.true; // should have worked
+    }).timeout(TIMEOUT);
+
     it("Should be possible to find the teams on a repo.", async function() {
         const val = await gh.getTeamsOnRepo(REPONAME);
         Log.test("listed teams: " + JSON.stringify(val));

@@ -410,6 +410,7 @@ export class Test {
     public static readonly REPONAME3 = 'TESTrepo3';
     public static readonly REPONAMEREAL = 'd0_cpscbot_rthse2';
     public static readonly INVALIDREPONAME = "InvalidRepoNameShouldNotExist";
+    public static readonly REPONAMEREAL2 = 'PostTestDoNotDelete';
 
     public static readonly REALTOKEN = 'realtoken';
     public static readonly FAKETOKEN = 'faketoken';
