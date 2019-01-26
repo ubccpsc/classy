@@ -500,7 +500,6 @@ export class AutoTestRoutes implements IREST {
                     // Use native request library. See https://github.com/request/request-promise#api-in-detail.
                     request(options)
                         .on("error", (err) => {
-                            console.log(err);
                             Log.error("AutoTestRoutes::getDockerImages(..) - ERROR " + err);
                             return res.send(500);
                         })
