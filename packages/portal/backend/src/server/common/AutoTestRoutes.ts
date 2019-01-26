@@ -466,11 +466,14 @@ export class AutoTestRoutes implements IREST {
                     res.send(200, atResponse);
                 } catch (err) {
                     Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Sending request to AutoTest service. " + err);
+                    res.send(500);
                 }
             } else {
+                Log.warn("AutoTestRoutes::getDockerImages(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
                 res.send(401);
             }
         } catch (err) {
+            Log.error("AutoTestRoutes::getDockerImages(..) - ERROR " + err);
             res.send(400);
         }
         return next();
@@ -495,14 +498,23 @@ export class AutoTestRoutes implements IREST {
             if (privileges.isAdmin) {
                 try {
                     // Use native request library. See https://github.com/request/request-promise#api-in-detail.
-                    request(options).pipe(res);
+                    request(options)
+                        .on("error", (err) => {
+                            console.log(err);
+                            Log.error("AutoTestRoutes::getDockerImages(..) - ERROR " + err);
+                            return res.send(500);
+                        })
+                        .pipe(res);
                 } catch (err) {
                     Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Sending request to AutoTest service. " + err);
+                    throw err;
                 }
             } else {
+                Log.warn("AutoTestRoutes::getDockerImages(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
                 res.send(401);
             }
         } catch (err) {
+            Log.error("AutoTestRoutes::getDockerImages(..) - ERROR " + err);
             res.send(400);
         }
         return next();

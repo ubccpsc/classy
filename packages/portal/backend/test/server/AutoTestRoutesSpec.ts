@@ -46,13 +46,15 @@ describe('AutoTest Routes', function() {
         // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
         server = new BackendServer(false);
 
-        return server.start().then(function() {
+        try {
+            await server.start();
             Log.test('AutoTestRoutes::before - server started');
             // Log.test('orgName: ' + Test.ORGNAME);
             app = server.getServer();
-        }).catch(function(err) {
+        } catch (err) {
             Log.test('AutoTestRoutes::before - server might already be started: ' + err);
-        });
+        }
+        expect(app).to.not.be.null; // this is a terrible assert but need some indication (other than log output) that this failed.
     });
 
     after(async function() {
@@ -485,4 +487,116 @@ describe('AutoTest Routes', function() {
         expect(index0 >= 0 || index1 >= 0 || index2 >= 0).to.be.true;
     });
 
+    describe('GET /portal/at/docker/images', function() {
+        const url = '/portal/at/docker/images';
+
+        it('Should respond 401 if user is not an admin.', async function() {
+            let res: any;
+
+            try {
+                res = await request(app).get(url).set('user', Test.REALUSER1.github);
+            } catch (err) {
+                res = err;
+            } finally {
+                expect(res).to.haveOwnProperty('status');
+                expect(res.status).to.eq(401);
+            }
+        });
+        it('Should respond 400 if the user is not in the request header.', async function() {
+            let res: any;
+
+            try {
+                res = await request(app).get(url);
+            } catch (err) {
+                res = err;
+            } finally {
+                expect(res).to.haveOwnProperty('status');
+                expect(res.status).to.eq(400);
+            }
+        });
+        it('Should respond 400 if the user is not a GitHub person.', async function() {
+            let res: any;
+
+            try {
+                res = await request(app).get(url).set('user', 'fakeUser123');
+            } catch (err) {
+                res = err;
+            } finally {
+                expect(res).to.haveOwnProperty('status');
+                expect(res.status).to.eq(400);
+            }
+        });
+        it('Should respond 500 if forwarding the request to AutoTest fails.', async function() {
+            this.timeout(15000);
+            let res: any;
+
+            try {
+                res = await request(app).get(url).set('user', Test.ADMIN1.github);
+            } catch (err) {
+                res = err;
+            } finally {
+                expect(res).to.haveOwnProperty('status');
+                expect(res.status).to.eq(500);
+            }
+        });
+        // it('Should respond 400 if the user privileges cannot be determined.');
+        // it('Should respond 400 if the AutoTest service is malformed.');
+    });
+
+    describe('POST /portal/at/docker/image', function() {
+        const url = '/portal/at/docker/image';
+        const body = {};
+
+        it('Should respond 401 if user is not an admin.', async function() {
+            let res: any;
+
+            try {
+                res = await request(app).post(url).set('user', Test.REALUSER1.github).send(body);
+            } catch (err) {
+                res = err;
+            } finally {
+                expect(res).to.haveOwnProperty('status');
+                expect(res.status).to.eq(401);
+            }
+        });
+        it('Should respond 400 if the user is not in the request header.', async function() {
+            let res: any;
+
+            try {
+                res = await request(app).post(url).send(body);
+            } catch (err) {
+                res = err;
+            } finally {
+                expect(res).to.haveOwnProperty('status');
+                expect(res.status).to.eq(400);
+            }
+        });
+        it('Should respond 400 if the user is not a GitHub person.', async function() {
+            let res: any;
+
+            try {
+                res = await request(app).post(url).set('user', 'fakeUser123').send(body);
+            } catch (err) {
+                res = err;
+            } finally {
+                expect(res).to.haveOwnProperty('status');
+                expect(res.status).to.eq(400);
+            }
+        });
+        it('Should respond 500 if forwarding the request to AutoTest fails.', async function() {
+            this.timeout(15000);
+            let res: any;
+
+            try {
+                res = await request(app).post(url).set('user', Test.ADMIN1.github).send(body);
+            } catch (err) {
+                res = err;
+            } finally {
+                expect(res).to.haveOwnProperty('status');
+                expect(res.status).to.eq(500);
+            }
+        });
+        // it('Should respond 400 if the AutoTest service is malformed.');
+        // it('Should respond 400 if the user privileges cannot be determined.');
+    });
 });

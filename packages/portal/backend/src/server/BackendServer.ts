@@ -69,15 +69,15 @@ export default class BackendServer {
         return new Promise(function(fulfill, reject) {
 
             // noinspection TsLint
-            let httpsOptions: any = {
+            const httpsOptions: any = {
                 name:        'backend',
-                key:         fs.readFileSync(that.config.getProp(ConfigKey.sslKeyPath)),
-                certificate: fs.readFileSync(that.config.getProp(ConfigKey.sslCertPath))
             };
 
             if (that.useHttps === false) {
                 Log.warn('BackendServer::start() - disabling HTTPS; should only be used in testing!');
-                httpsOptions = {name: 'backend'};
+            } else {
+                httpsOptions['key'] = fs.readFileSync(that.config.getProp(ConfigKey.sslKeyPath));
+                httpsOptions['certificate'] = fs.readFileSync(that.config.getProp(ConfigKey.sslCertPath));
             }
 
             that.rest = restify.createServer(httpsOptions);
