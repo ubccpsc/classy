@@ -135,13 +135,14 @@ export default class AdminRoutes implements IREST {
         // Log.info('AdminRoutes::isPrivileged(..) - start');
 
         const auth = AdminRoutes.processAuth(req);
-        const user = auth.user;
-        const token = auth.token;
 
-        if (auth === null || typeof user === 'undefined' || typeof token === 'undefined') {
+        if (auth === null || typeof auth.user === 'undefined' || typeof auth.token === 'undefined') {
             Log.warn('AdminRoutes::isPrivileged(..) - undefined user or token; user not admin.');
             return AdminRoutes.handleError(401, 'Authorization credentials error; user not admin.', res, next);
         }
+
+        const user = auth.user;
+        const token = auth.token;
 
         const ac = new AuthController();
         ac.isPrivileged(user, token).then(function(priv) {

@@ -87,6 +87,24 @@ describe('Admin Routes', function() {
         // should confirm body.success objects (at least one)
     }).timeout(Test.TIMEOUT);
 
+    it('Should be able to get a list of students with cookies for authentication', async function() {
+
+        let response = null;
+        let body: StudentTransportPayload;
+        const url = '/portal/admin/students';
+        try {
+            response = await request(app).get(url).set('Cookie', ['token=' + userToken + '__' + userName]);
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success).to.be.an('array');
+        // should confirm body.success objects (at least one)
+    }).timeout(Test.TIMEOUT);
+
     it('Should not be able to get a list of students if the requestor is not privileged', async function() {
 
         let response = null;
@@ -94,6 +112,40 @@ describe('Admin Routes', function() {
         const url = '/portal/admin/students';
         try {
             response = await request(app).get(url).set({user: Test.USER1.id, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(401);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+    });
+
+    it('Should not be able to get a list of students with bad cookies for auth', async function() {
+
+        let response = null;
+        let body: StudentTransportPayload;
+        const url = '/portal/admin/students';
+        try {
+            response = await request(app).get(url).set('Cookie', ['token=BADTOKEN' + Date.now() + '__' + userName]);
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(401);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+    });
+
+    it('Should not be able to get a list of students without any auth data', async function() {
+
+        let response = null;
+        let body: StudentTransportPayload;
+        const url = '/portal/admin/students';
+        try {
+            response = await request(app).get(url);
             body = response.body;
         } catch (err) {
             Log.test('ERROR: ' + err);
@@ -900,7 +952,7 @@ describe('Admin Routes', function() {
         expect(body.success.length).to.equal(1);
     });
 
-    it('Should fail to create a team for a deliverable if something is invalid.', async function() {
+    it('Should fail to create a team for a deliverable if something is invalid', async function() {
 
         let response = null;
         let body: Payload;
