@@ -1024,14 +1024,15 @@ export class GitHubActions implements IGitHubActions {
         try {
             const uri = this.apiPath + '/teams/' + teamNumber;
             const options = {
-                method:  'GET',
-                uri:     uri,
-                headers: {
+                method:                  'GET',
+                uri:                     uri,
+                headers:                 {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent':    this.gitHubUserName,
                     'Accept':        'application/json'
                 },
-                json:    true
+                json:                    true,
+                resolveWithFullResponse: true
             };
 
             const response = await rp(options);
