@@ -1103,12 +1103,10 @@ export class GitHubActions implements IGitHubActions {
         const that = this;
         const start = Date.now();
 
-        if (typeof importRepo === 'undefined' || typeof studentRepo === 'undefined') {
-            Log.info('GitHubAction::importRepoFS(..) - FS import skipped; missing import or student repo');
-            return true;
-        }
-
-        if (importRepo === null || studentRepo === null || importRepo === '' || studentRepo === '') {
+        // if we don't need to do this step, just skip it rather than crashing later on
+        if (typeof importRepo === 'undefined' || typeof studentRepo === 'undefined' ||
+            importRepo === null || studentRepo === null ||
+            importRepo === '' || studentRepo === '') {
             Log.info('GitHubAction::importRepoFS(..) - FS import skipped; missing import or student repo');
             return true;
         }

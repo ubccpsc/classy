@@ -292,6 +292,18 @@ describe("GitHubActions", () => {
         // expect(bool).to.be.true;
     }).timeout(TIMEOUT);
 
+    it("Should fail to get team members for an invalid team number argument.", async function() {
+        let val = null;
+        let ex = null;
+        try {
+            val = await gh.getTeamMembers(null);
+        } catch (err) {
+            ex = err;
+        }
+        expect(val).to.be.null;
+        expect(ex).to.not.be.null;
+    }).timeout(TIMEOUT);
+
     it("Should get an empty array of team members for a team that does not exist.", async function() {
         const val = await gh.getTeamMembers(-1337);
         Log.test('# Team members: ' + val.length);
@@ -583,6 +595,18 @@ describe("GitHubActions", () => {
 
     }).timeout(TIMEOUT);
 
+    it("Should not be able to change permissions of a repo to an invalid value.", async function() {
+        let permissionEdit = null;
+        let ex = null;
+        try {
+            permissionEdit = await gh.setRepoPermission(Test.REPONAME1, "invalidvalue");
+        } catch (err) {
+            ex = err;
+        }
+        expect(permissionEdit).to.be.null;
+        expect(ex).to.not.be.null;
+    }).timeout(TIMEOUT);
+
     // this test wasn't failing for the right reasons and was disabled until we can figure out what is going on
     // it("Should not be able to bulk edit permissions to admins", async function() {
     //     const githubTeam = await gh.createTeam(TEAMNAME, 'push');
@@ -624,6 +648,30 @@ describe("GitHubActions", () => {
         expect(val).to.be.an('object');
         expect(val.githubTeamNumber).to.equal(teamNumber);
         expect(val.teamName).to.equal(TEAMNAME);
+    }).timeout(TIMEOUT);
+
+    it("Should not be possible to get the team that does not exist.", async function() {
+        let res: any = "exists";
+        let ex = null;
+        try {
+            res = await gh.getTeam(-1337);
+        } catch (err) {
+            ex = err;
+        }
+        expect(res).to.be.null; // non-existant should return null
+        expect(ex).to.be.null;
+    }).timeout(TIMEOUT);
+
+    it("Should not be possible to get the team with an invalid param.", async function() {
+        let res = null;
+        let ex = null;
+        try {
+            res = await gh.getTeam(null);
+        } catch (err) {
+            ex = err;
+        }
+        expect(res).to.be.null;
+        expect(ex).to.not.be.null;
     }).timeout(TIMEOUT);
 
     it("Should be possible to check the database.", async function() {
