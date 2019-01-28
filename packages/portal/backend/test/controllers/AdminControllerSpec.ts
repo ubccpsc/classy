@@ -365,6 +365,40 @@ describe("AdminController", () => {
         expect(res).to.be.an('string');
     });
 
+    it("Should not be able to validate an invalid provision object.", function() {
+        let res = null;
+        let ex = null;
+        try {
+            res = AdminController.validateProvisionTransport(null);
+        } catch (err) {
+            ex = err;
+        }
+        expect(res).to.be.null;
+        expect(ex).to.not.be.null;
+
+        res = null;
+        ex = null;
+        let course: any = {delivId: 42}; // should be a string
+        try {
+            res = AdminController.validateProvisionTransport(course);
+        } catch (err) {
+            ex = err;
+        }
+        expect(res).to.be.null;
+        expect(ex).to.not.be.null;
+
+        res = null;
+        ex = null;
+        course = {delivId: Test.DELIVID0, formSingle: 'true'}; // formSingle should be a boolean
+        try {
+            res = AdminController.validateProvisionTransport(course);
+        } catch (err) {
+            ex = err;
+        }
+        expect(res).to.be.null;
+        expect(ex).to.not.be.null;
+    });
+
     it("Should be able to compute a team and repo name.", async () => {
         const db = DatabaseController.getInstance();
 

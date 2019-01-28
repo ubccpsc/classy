@@ -778,6 +778,122 @@ describe('Admin Routes', function() {
             Log.test("AdminRoutesSpec::clearAll() - done; took: " + Util.took(start));
         }
 
+        it('Should be able to get a provision plan for a deliverable', async function() {
+
+            let response = null;
+            let body: RepositoryPayload;
+            const url = '/portal/admin/provision/' + Test.DELIVIDPROJ;
+            try {
+                response = await request(app).get(url).set({user: userName, token: userToken});
+                body = response.body;
+            } catch (err) {
+                Log.test('ERROR: ' + err);
+            }
+            Log.test(response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(200);
+            expect(body.success).to.not.be.undefined;
+            expect(body.success).to.be.an('array');
+            expect(body.success).to.have.lengthOf(0);
+
+            // check one entry
+            // const entry = body.success[0];
+            // expect(entry.id).to.not.be.undefined;
+            // expect(entry.URL).to.not.be.undefined;
+        });
+
+        // it('Should be able to perform provision', async function() {
+        //     let response = null;
+        //     let body: Payload;
+        //     const url = '/portal/admin/provision/' + Test.DELIVIDPROJ + '/' + Test.REPONAME1;
+        //     try {
+        //         response = await request(app).post(url).send({}).set({user: userName, token: userToken});
+        //         body = response.body;
+        //     } catch (err) {
+        //         Log.test('ERROR: ' + err);
+        //     }
+        //     Log.test(response.status + " -> " + JSON.stringify(body));
+        //     expect(response.status).to.equal(200);
+        //     expect(body.success).to.not.be.undefined;
+        //     expect(body.success).to.be.an('array');
+        //     expect(body.success[0].id).to.equal(Test.REPONAME1);
+        // }).timeout(TIMEOUT * 30);
+
+        it('Should be able to get a release plan for a deliverable', async function() {
+
+            let response = null;
+            let body: RepositoryPayload;
+            const url = '/portal/admin/release/' + Test.DELIVIDPROJ;
+            try {
+                response = await request(app).get(url).set({user: userName, token: userToken});
+                body = response.body;
+            } catch (err) {
+                Log.test('ERROR: ' + err);
+            }
+            Log.test(response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(200);
+            expect(body.success).to.not.be.undefined;
+            expect(body.success).to.be.an('array');
+            expect(body.success).to.have.lengthOf(0);
+
+            // check one entry
+            // const entry = body.success[0];
+            // expect(entry.id).to.not.be.undefined;
+            // expect(entry.URL).to.not.be.undefined;
+        });
+
+        // it('Should be able to perform release', async function() {
+        //     let response = null;
+        //     let body: Payload;
+        //     const url = '/portal/admin/release/' + Test.REPONAME1;
+        //     try {
+        //         response = await request(app).post(url).send({}).set({user: userName, token: userToken});
+        //         body = response.body;
+        //     } catch (err) {
+        //         Log.test('ERROR: ' + err);
+        //     }
+        //     Log.test(response.status + " -> " + JSON.stringify(body));
+        //     expect(response.status).to.equal(200);
+        //     expect(body.success).to.not.be.undefined;
+        //     expect(body.success).to.be.an('array');
+        //     expect(body.success.length).to.equal(0); // NOTE: this is terrible, something should be being released
+        // }).timeout(TIMEOUT * 30);
+
+        it('Should be able to perform a withdraw task', async function() {
+
+            // This is tricky because the live github data will have a different team id than we're using locally
+
+            let response = null;
+            let body: Payload;
+            const url = '/portal/admin/withdraw';
+            try {
+                response = await request(app).post(url).send({}).set({user: userName, token: userToken});
+                body = response.body;
+            } catch (err) {
+                Log.test('ERROR: ' + err);
+            }
+            Log.test(response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(200);
+            expect(body.success).to.not.be.undefined;
+            expect(body.success.message).to.be.an('string');
+        }).timeout(TIMEOUT * 10);
+
+        it('Should be able to sanity check a database', async function() {
+
+            let response = null;
+            let body: Payload;
+            const url = '/portal/admin/checkDatabase/true';
+            try {
+                response = await request(app).post(url).send({}).set({user: userName, token: userToken});
+                body = response.body;
+            } catch (err) {
+                Log.test('ERROR: ' + err);
+            }
+            Log.test(response.status + " -> " + JSON.stringify(body));
+            expect(response.status).to.equal(200);
+            expect(body.success).to.not.be.undefined;
+            expect(body.success.message).to.be.an('string');
+        }).timeout(TIMEOUT * 10);
+
         it('Should be able to provision a deliverable', async function() {
 
             const dbc = DatabaseController.getInstance();
@@ -1178,121 +1294,4 @@ describe('Admin Routes', function() {
         expect(body.failure).to.not.be.undefined;
         expect(ex).to.be.null;
     });
-
-    it('Should be able to get a provision plan for a deliverable', async function() {
-
-        let response = null;
-        let body: RepositoryPayload;
-        const url = '/portal/admin/provision/' + Test.DELIVIDPROJ;
-        try {
-            response = await request(app).get(url).set({user: userName, token: userToken});
-            body = response.body;
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-        }
-        Log.test(response.status + " -> " + JSON.stringify(body));
-        expect(response.status).to.equal(200);
-        expect(body.success).to.not.be.undefined;
-        expect(body.success).to.be.an('array');
-        expect(body.success).to.have.lengthOf(0);
-
-        // check one entry
-        // const entry = body.success[0];
-        // expect(entry.id).to.not.be.undefined;
-        // expect(entry.URL).to.not.be.undefined;
-    });
-
-    it('Should be able to perform provision', async function() {
-        let response = null;
-        let body: Payload;
-        const url = '/portal/admin/provision/' + Test.DELIVIDPROJ + '/' + Test.REPONAME1;
-        try {
-            response = await request(app).post(url).send({}).set({user: userName, token: userToken});
-            body = response.body;
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-        }
-        Log.test(response.status + " -> " + JSON.stringify(body));
-        expect(response.status).to.equal(200);
-        expect(body.success).to.not.be.undefined;
-        expect(body.success).to.be.an('array');
-        expect(body.success[0].id).to.equal(Test.REPONAME1);
-    }).timeout(TIMEOUT * 30);
-
-    it('Should be able to get a release plan for a deliverable', async function() {
-
-        let response = null;
-        let body: RepositoryPayload;
-        const url = '/portal/admin/release/' + Test.DELIVIDPROJ;
-        try {
-            response = await request(app).get(url).set({user: userName, token: userToken});
-            body = response.body;
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-        }
-        Log.test(response.status + " -> " + JSON.stringify(body));
-        expect(response.status).to.equal(200);
-        expect(body.success).to.not.be.undefined;
-        expect(body.success).to.be.an('array');
-        expect(body.success).to.have.lengthOf(0);
-
-        // check one entry
-        // const entry = body.success[0];
-        // expect(entry.id).to.not.be.undefined;
-        // expect(entry.URL).to.not.be.undefined;
-    });
-
-    it('Should be able to perform release', async function() {
-        let response = null;
-        let body: Payload;
-        const url = '/portal/admin/release/' + Test.REPONAME1;
-        try {
-            response = await request(app).post(url).send({}).set({user: userName, token: userToken});
-            body = response.body;
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-        }
-        Log.test(response.status + " -> " + JSON.stringify(body));
-        expect(response.status).to.equal(200);
-        expect(body.success).to.not.be.undefined;
-        expect(body.success).to.be.an('array');
-        expect(body.success.length).to.equal(0); // NOTE: this is terrible, something should be being released
-    }).timeout(TIMEOUT * 30);
-
-    it('Should be able to perform a withdraw task', async function() {
-
-        // This is tricky because the live github data will have a different team id than we're using locally
-
-        let response = null;
-        let body: Payload;
-        const url = '/portal/admin/withdraw';
-        try {
-            response = await request(app).post(url).send({}).set({user: userName, token: userToken});
-            body = response.body;
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-        }
-        Log.test(response.status + " -> " + JSON.stringify(body));
-        expect(response.status).to.equal(200);
-        expect(body.success).to.not.be.undefined;
-        expect(body.success.message).to.be.an('string');
-    }).timeout(TIMEOUT * 10);
-
-    it('Should be able to sanity check a database', async function() {
-
-        let response = null;
-        let body: Payload;
-        const url = '/portal/admin/checkDatabase/true';
-        try {
-            response = await request(app).post(url).send({}).set({user: userName, token: userToken});
-            body = response.body;
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-        }
-        Log.test(response.status + " -> " + JSON.stringify(body));
-        expect(response.status).to.equal(200);
-        expect(body.success).to.not.be.undefined;
-        expect(body.success.message).to.be.an('string');
-    }).timeout(TIMEOUT * 10);
-
 });

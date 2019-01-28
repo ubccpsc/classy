@@ -1117,59 +1117,60 @@ export class AdminController {
      * @param {Person[]} people
      * @returns {Promise<{teamName: string | null; repoName: string | null}>}
      */
-        // public async computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}> {
-        //     Log.info("AdminController::computeNames(..) - start; # people: " + people.length);
-        //
-        //     // TODO: this code has a fatal flaw; if the team/repo exists already for the specified people,
-        //     // it is correct to return those.
-        //
-        //     let repoPrefix = '';
-        //     if (deliv.repoPrefix.length > 0) {
-        //         repoPrefix = deliv.repoPrefix;
-        //     } else {
-        //         repoPrefix = deliv.id;
-        //     }
-        //
-        //     let teamPrefix = '';
-        //     if (deliv.teamPrefix.length > 0) {
-        //         teamPrefix = deliv.teamPrefix;
-        //     } else {
-        //         teamPrefix = deliv.id;
-        //     }
-        //     // the repo name and the team name should be the same, so just use the repo name
-        //     const repos = await this.dbc.getRepositories();
-        //     let repoCount = 0;
-        //     for (const repo of repos) {
-        //         if (repo.id.startsWith(repoPrefix)) {
-        //             repoCount++;
-        //         }
-        //     }
-        //     let repoName = '';
-        //     let teamName = '';
-        //
-        //     let ready = false;
-        //     while (!ready) {
-        //         repoName = repoPrefix + '_' + repoCount;
-        //         teamName = teamPrefix + '_' + repoCount;
-        //         const r = await this.dbc.getRepository(repoName);
-        //         const t = await this.dbc.getTeam(teamName);
-        //         if (r === null && t === null) {
-        //             ready = true;
-        //         } else {
-        //             Log.warn("AdminController::computeNames(..) - name not available; r: " + repoName + "; t: " + teamName);
-        //             repoCount++; // try the next one
-        //         }
-        //     }
-        //     Log.info("AdminController::computeNames(..) - done; r: " + repoName + "; t: " + teamName);
-        //     return {teamName: teamName, repoName: repoName};
-        // }
+    // public async computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}> {
+    //     Log.info("AdminController::computeNames(..) - start; # people: " + people.length);
+    //
+    //     // TODO: this code has a fatal flaw; if the team/repo exists already for the specified people,
+    //     // it is correct to return those.
+    //
+    //     let repoPrefix = '';
+    //     if (deliv.repoPrefix.length > 0) {
+    //         repoPrefix = deliv.repoPrefix;
+    //     } else {
+    //         repoPrefix = deliv.id;
+    //     }
+    //
+    //     let teamPrefix = '';
+    //     if (deliv.teamPrefix.length > 0) {
+    //         teamPrefix = deliv.teamPrefix;
+    //     } else {
+    //         teamPrefix = deliv.id;
+    //     }
+    //     // the repo name and the team name should be the same, so just use the repo name
+    //     const repos = await this.dbc.getRepositories();
+    //     let repoCount = 0;
+    //     for (const repo of repos) {
+    //         if (repo.id.startsWith(repoPrefix)) {
+    //             repoCount++;
+    //         }
+    //     }
+    //     let repoName = '';
+    //     let teamName = '';
+    //
+    //     let ready = false;
+    //     while (!ready) {
+    //         repoName = repoPrefix + '_' + repoCount;
+    //         teamName = teamPrefix + '_' + repoCount;
+    //         const r = await this.dbc.getRepository(repoName);
+    //         const t = await this.dbc.getTeam(teamName);
+    //         if (r === null && t === null) {
+    //             ready = true;
+    //         } else {
+    //             Log.warn("AdminController::computeNames(..) - name not available; r: " + repoName + "; t: " + teamName);
+    //             repoCount++; // try the next one
+    //         }
+    //     }
+    //     Log.info("AdminController::computeNames(..) - done; r: " + repoName + "; t: " + teamName);
+    //     return {teamName: teamName, repoName: repoName};
+    // }
 
-    public static
-
-    validateProvisionTransport(obj
-                                   :
-                                   ProvisionTransport
-    ) {
+    /**
+     * Returns null if the object is valid. This API is terrible.
+     *
+     * @param {ProvisionTransport} obj
+     * @returns {ProvisionTransport | null}
+     */
+    public static validateProvisionTransport(obj: ProvisionTransport): ProvisionTransport | null {
         if (typeof obj === 'undefined' || obj === null) {
             const msg = 'Transport not populated.';
             Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
@@ -1183,27 +1184,12 @@ export class AdminController {
             throw new Error(msg);
         }
 
-        // // noinspection SuspiciousTypeOfGuard
-        // if (obj.action !== 'PROVISION' && obj.action !== 'RELEASE') {
-        //     const msg = 'action not correct: ' + obj.action;
-        //     Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
-        //     return msg;
-        // }
-
         // noinspection SuspiciousTypeOfGuard
         if (typeof obj.formSingle !== 'boolean') {
             const msg = 'formSingle not specified';
             Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
-            return msg;
+            throw new Error(msg);
         }
-
-        // const dc = new DeliverablesController();
-        // const deliv = await dc.getDeliverable(obj.delivId);
-        // if (deliv === null && deliv.shouldProvision === true){
-        //     const msg = 'delivId does not correspond to a real deliverable or that deliverable is not provisionable';
-        //     Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
-        //     return msg;
-        // }
 
         return null;
     }
