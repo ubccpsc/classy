@@ -187,6 +187,22 @@ describe("GitHubController", () => {
         expect(success).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
 
+    // doesn't actually check the right thing (aka it fails because the repo db object does not exist, not because creation failed)
+    // it("Should not be able to create a repo with an invalid name.", async function() {
+    //     const name = ''; // // repo names must have length 1 on github
+    //     const importURL = 'https://github.com/SECapstone/capstone';
+    //
+    //     repo = null;
+    //     let ex = null;
+    //     try {
+    //         repo = await gc.createRepository(name, importURL);
+    //     } catch (err) {
+    //         ex = err;
+    //     }
+    //     expect(repo).to.be.null;
+    //     expect(ex).to.not.be.null;
+    // }).timeout(Test.TIMEOUTLONG);
+
     it("Should not be able to create a repo when preconditions are not met.", async function() {
         // setup
         const rc: RepositoryController = new RepositoryController();
