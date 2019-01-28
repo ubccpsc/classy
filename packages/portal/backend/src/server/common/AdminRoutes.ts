@@ -170,13 +170,13 @@ export default class AdminRoutes implements IREST {
         // Log.info('AdminRoutes::isAdmin(..) - start');
 
         const auth = AdminRoutes.processAuth(req);
-        const user = auth.user;
-        const token = auth.token;
-
-        if (auth === null || typeof user === 'undefined' || typeof token === 'undefined') {
+        if (auth === null || typeof auth.user === 'undefined' || typeof auth.token === 'undefined') {
             Log.warn('AdminRoutes::isAdmin(..) - undefined user or token; user not admin.');
             return AdminRoutes.handleError(401, 'Authorization credentials error; user not admin.', res, next);
         }
+
+        const user = auth.user;
+        const token = auth.token;
 
         const ac = new AuthController();
         ac.isPrivileged(user, token).then(function(priv) {
@@ -820,13 +820,11 @@ export default class AdminRoutes implements IREST {
 
     private static async planRelease(delivId: string): Promise<RepositoryTransport[]> {
         const ac = new AdminController(AdminRoutes.ghc);
-        // const result = AdminController.validateProvisionTransport(releaseTrans);
 
-        // const dc = new DeliverablesController();
-        // const deliv = await dc.getDeliverable(delivId);
         // TODO: if course is SDMM, always fail
+
         const start = Date.now();
-        // if (deliv=== null) {
+
         const dc = new DeliverablesController();
         const deliv = await dc.getDeliverable(delivId);
         if (deliv !== null && deliv.shouldProvision === true) {
@@ -841,9 +839,6 @@ export default class AdminRoutes implements IREST {
             Log.info('AdminRoutes::planRelease() - success; # results: ' + transportRepos.length +
                 '; took: ' + Util.took(start));
             return transportRepos;
-            // } else {
-            //     throw new Error("Release unsuccessful, cannot release: " + releaseTrans.delivId);
-            // }
         } else {
             // should never get here unless something goes wrong
             throw new Error("Release planning unsuccessful.");

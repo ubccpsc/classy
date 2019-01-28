@@ -29,7 +29,7 @@ import BackendServer from "../../src/server/BackendServer";
 import {Test} from "../TestHarness";
 import './AuthRoutesSpec';
 
-describe('Admin Routes', function() {
+describe.only('Admin Routes', function() {
 
     let app: restify.Server = null;
     let server: BackendServer = null;
@@ -1175,5 +1175,28 @@ describe('Admin Routes', function() {
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
         expect(ex).to.be.null;
+    });
+
+    it('Should be able to get a release plan for a deliverable', async function() {
+
+        let response = null;
+        let body: RepositoryPayload;
+        const url = '/portal/admin/release/' + Test.DELIVIDPROJ;
+        try {
+            response = await request(app).get(url).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success).to.be.an('array');
+        expect(body.success).to.have.lengthOf(0);
+
+        // check one entry
+        // const entry = body.success[0];
+        // expect(entry.id).to.not.be.undefined;
+        // expect(entry.URL).to.not.be.undefined;
     });
 });
