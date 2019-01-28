@@ -736,29 +736,6 @@ export default class AdminRoutes implements IREST {
 
     }
 
-    // private static async handleProvision(personId: string, provisionTrans: ProvisionTransport): Promise<RepositoryTransport[]> {
-    //     const cc = new AdminController(AdminRoutes.ghc);
-    //     const result = AdminController.validateProvisionTransport(provisionTrans);
-    //
-    //     // TODO: if course is SDMM, always fail
-    //
-    //     if (result === null) {
-    //         const dc = new DeliverablesController();
-    //         const deliv = await dc.getDeliverable(provisionTrans.delivId);
-    //         if (deliv !== null && deliv.shouldProvision === true) {
-    //             const dbc = DatabaseController.getInstance();
-    //             await dbc.writeAudit(AuditLabel.REPO_PROVISION, personId, {}, {}, provisionTrans);
-    //             const provisionSucceeded = await cc.provision(deliv, provisionTrans.formSingle);
-    //             Log.info('AdminRoutes::handleProvision() - success; # results: ' + provisionSucceeded.length);
-    //             return provisionSucceeded;
-    //         } else {
-    //             throw new Error("Provisioning unsuccessful; cannot provision: " + provisionTrans.delivId);
-    //         }
-    //     }
-    //     // should never get here unless something goes wrong
-    //     throw new Error("Provisioning unsuccessful.");
-    // }
-
     private static async planProvision(provisionTrans: ProvisionTransport): Promise<RepositoryTransport[]> {
         const cc = new AdminController(AdminRoutes.ghc);
         const result = AdminController.validateProvisionTransport(provisionTrans);
@@ -882,7 +859,7 @@ export default class AdminRoutes implements IREST {
 
         cc.performStudentWithdraw().then(function(msg) {
             Log.info('AdminRoutes::postWithdraw(..) - done; msg: ' + msg);
-            const payload: Payload = {success: msg}; // really shouldn't be an array, but it beats having another type
+            const payload: Payload = {success: {message: msg}}; // really shouldn't be an array, but it beats having another type
             res.send(200, payload);
             return next(true);
         }).catch(function(err) {

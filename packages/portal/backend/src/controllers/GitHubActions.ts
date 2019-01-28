@@ -960,7 +960,7 @@ export class GitHubActions implements IGitHubActions {
         Log.info("GitHubAction::getTeamMembers( " + teamNumber + " ) - start");
 
         if (teamNumber === null) {
-            throw new Error("GitHubAction::getTeamMembers( nulll ) - null team requested");
+            throw new Error("GitHubAction::getTeamMembers( null ) - null team requested");
         }
 
         const start = Date.now();
@@ -1860,6 +1860,11 @@ export class TestGitHubActions implements IGitHubActions {
     }
 
     public async getTeamNumber(teamName: string): Promise<number> {
+        if (teamName === 'students') {
+            // return a value that works for testing and for the live environment
+            // this is the team number for the students team in the classytest org on github.com
+            return 2941733;
+        }
         if (typeof this.teams[teamName] !== 'undefined') {
             const num = this.teams[teamName].githubTeamNumber;
             Log.info("TestGitHubActions::getTeamNumber( " + teamName + " ) - returning: " + num);

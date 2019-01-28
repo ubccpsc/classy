@@ -398,7 +398,7 @@ export class AdminConfigTab extends AdminPage {
         const body = await response.json();
 
         if (typeof body.success !== 'undefined') {
-            UI.notificationToast("Withrdaw marking successful: " + body.success, 5000);
+            UI.notificationToast("Withrdaw marking successful: " + body.success.message, 5000);
         } else {
             UI.showAlert(body.failure.message);
         }
