@@ -1024,26 +1024,21 @@ export class GitHubActions implements IGitHubActions {
         try {
             const uri = this.apiPath + '/teams/' + teamNumber;
             const options = {
-                method:                  'GET',
-                uri:                     uri,
-                headers:                 {
+                method:  'GET',
+                uri:     uri,
+                headers: {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent':    this.gitHubUserName,
                     'Accept':        'application/json'
                 },
-                resolveWithFullResponse: true,
-                json:                    true
+                json:    true
             };
 
             const response = await rp(options);
 
-            if (response.statusCode === 200) {
-                const ret = {githubTeamNumber: response.body.id, teamName: response.body.name};
-                Log.info("GitHubAction::getTeam( " + teamNumber + " ) - found: " + JSON.stringify(ret) + "; took: " + Util.took(start));
-                return ret;
-            } else {
-                Log.info("GitHubAction::getTeam( " + teamNumber + " ) - team does not exist on GitHub; took: " + Util.took(start));
-            }
+            const ret = {githubTeamNumber: response.body.id, teamName: response.body.name};
+            Log.info("GitHubAction::getTeam( " + teamNumber + " ) - found: " + JSON.stringify(ret) + "; took: " + Util.took(start));
+            return ret;
 
         } catch (err) {
             Log.warn("GitHubAction::getTeam( " + teamNumber + " ) - ERROR: " + err.message);
@@ -1151,6 +1146,7 @@ export class GitHubActions implements IGitHubActions {
                         cloneTempDir.cleanup();
                         return Promise.resolve(true); // made it cleanly
                     }).catch((err: any) => {
+                        /* istanbul ignore next */
                         Log.error('GitHubAction::cloneRepo() seedPath - ERROR: ' + err);
                         seedTempDir.cleanup();
                         cloneTempDir.cleanup();
@@ -1175,6 +1171,7 @@ export class GitHubActions implements IGitHubActions {
                         cloneTempDir.cleanup();
                         return Promise.resolve(true); // made it cleanly
                     }).catch((err: any) => {
+                        /* istanbul ignore next */
                         Log.error('GitHubAction::cloneRepo() - ERROR: ' + err);
                         cloneTempDir.cleanup();
                         return Promise.reject(err);
@@ -1508,6 +1505,7 @@ export class GitHubActions implements IGitHubActions {
         }
     }
 
+    /* istanbul ignore next */
     /**
      * Checks to make sure the repoName or teamName (or both, if specified) are in the database.
      *
