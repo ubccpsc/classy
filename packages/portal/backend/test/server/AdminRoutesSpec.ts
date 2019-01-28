@@ -1202,7 +1202,22 @@ describe('Admin Routes', function() {
         // expect(entry.URL).to.not.be.undefined;
     });
 
-    // TODO: post a provision
+    it('Should be able to perform provision', async function() {
+        let response = null;
+        let body: Payload;
+        const url = '/portal/admin/provision/' + Test.DELIVIDPROJ + '/' + Test.REPONAME1;
+        try {
+            response = await request(app).post(url).send({}).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success).to.be.an('array');
+        expect(body.success[0].id).to.equal(Test.REPONAME1);
+    }).timeout(TIMEOUT * 30);
 
     it('Should be able to get a release plan for a deliverable', async function() {
 
@@ -1227,7 +1242,22 @@ describe('Admin Routes', function() {
         // expect(entry.URL).to.not.be.undefined;
     });
 
-    // TODO: post a release
+    it('Should be able to perform release', async function() {
+        let response = null;
+        let body: Payload;
+        const url = '/portal/admin/release/' + Test.REPONAME1;
+        try {
+            response = await request(app).post(url).send({}).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success).to.be.an('array');
+        expect(body.success.length).to.equal(0); // NOTE: this is terrible, something should be being released
+    }).timeout(TIMEOUT * 30);
 
     it('Should be able to perform a withdraw task', async function() {
 
