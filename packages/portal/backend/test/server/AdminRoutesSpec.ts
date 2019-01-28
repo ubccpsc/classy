@@ -93,7 +93,7 @@ describe.only('Admin Routes', function() {
         let body: StudentTransportPayload;
         const url = '/portal/admin/students';
         try {
-            response = await request(app).get(url).set('Cookie', ['token=' + userToken + '__' + userName]);
+            response = await request(app).get(url).set('Cookie', 'token=' + userToken + '__' + userName);
             body = response.body;
         } catch (err) {
             Log.test('ERROR: ' + err);
@@ -128,7 +128,7 @@ describe.only('Admin Routes', function() {
         let body: StudentTransportPayload;
         const url = '/portal/admin/students';
         try {
-            response = await request(app).get(url).set('Cookie', ['token=BADTOKEN' + Date.now() + '__' + userName]);
+            response = await request(app).get(url).set('Cookie', 'token=BADTOKEN' + Date.now() + '__' + userName);
             body = response.body;
         } catch (err) {
             Log.test('ERROR: ' + err);
