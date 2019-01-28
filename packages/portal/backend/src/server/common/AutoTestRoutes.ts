@@ -379,70 +379,9 @@ export class AutoTestRoutes implements IREST {
             headers: req.headers, // use GitHub's headers
             body:    req.body
         };
-
-        const isValid: boolean = await AutoTestRoutes.isWebhookFromGitHub(req);
-        if (isValid === true) {
-            const success = await rp(options);
-            Log.trace('AutoTestRouteHandler::handleWebhook(..) - success: ' + JSON.stringify(success));
-            return success;
-        } else {
-            throw new Error("Webhook event did not originate from GitHub");
-        }
-    }
-
-    /**
-     * Helper function to check that a given request is from GitHub; this is a low-cost way to 'authenticate'
-     * that a webhook at least originated on the right host.
-     *
-     * While 'remoteAddress' would be the right way to get the IP of the request, this turns out to be incorrect
-     * becuase the Docker router actually forwards this result with an internal IP.
-     *
-     * @param req
-     * @returns {Promise<boolean>}
-     */
-    private static isWebhookFromGitHub(req: any): Promise<boolean> {
-        return new Promise(function(fulfill, reject) {
-            const config = Config.getInstance();
-            const start = Date.now();
-
-            let remoteAddr = '';
-            if (typeof req.headers['x-forwarded-for'] !== 'undefined') {
-                // docker frontend will report .remoteAddress as internal (e.g., ::ffff:172.18.0.2) so we should use forwarded-for
-                remoteAddr = req.headers['x-forwarded-for'];
-                Log.trace('AutoTestRouteHandler::isWebhookFromGitHub(..) - start; x-forwarded from: ' + remoteAddr);
-            } else {
-                remoteAddr = req.connection.remoteAddress;
-                Log.trace('AutoTestRouteHandler::isWebhookFromGitHub(..) - start; remoteAddress from: ' + remoteAddr);
-            }
-
-            // TODO: fix this
-            return fulfill(true);
-
-            // const ghAPI = config.getProp(ConfigKey.githubAPI);
-            // if (ghAPI.indexOf('github.com') > 0) {
-            //     Log.info('AutoTestRouteHandler::isWebhookFromGitHub(..) - accepted; host is github.com');
-            //     return fulfill(true);
-            // }
-            //
-            // dns.lookup(ghAPI, (err, expectedAddr) => {
-            //     if (err) {
-            //         Log.error('AutoTestRouteHandler::isWebhookFromGitHub(..) - ERROR: ' + err);
-            //         return reject(err);
-            //     }
-            //
-            //     // use indexOf here because address sometimes reports like: ::ffff:172.18.0.2
-            //     if (expectedAddr !== null && remoteAddr.indexOf(expectedAddr) >= 0) {
-            //         Log.info('AutoTestRouteHandler::isWebhookFromGitHub(..) - accepted; provided: ' +
-            //             remoteAddr + '; expected: ' + expectedAddr + '; took: ' + Util.took(start));
-            //         return fulfill(true);
-            //     } else {
-            //         const msg = 'Webhook did not originate from GitHub; request addr: ' +
-            //             remoteAddr + ' !== expected addr: ' + expectedAddr;
-            //         Log.error('AutoTestRouteHandler::isWebhookFromGitHub(..) - rejected: ' + msg);
-            //         return reject(new Error(msg));
-            //     }
-            // });
-        });
+        const success = await rp(options);
+        Log.trace('AutoTestRouteHandler::handleWebhook(..) - success: ' + JSON.stringify(success));
+        return success;
     }
 
     public static async getDockerImages(req: any, res: any, next: any) {
