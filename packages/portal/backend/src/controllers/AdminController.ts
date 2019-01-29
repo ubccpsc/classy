@@ -29,18 +29,13 @@ import {TeamController} from "./TeamController";
 
 export class AdminController {
 
+    /**
+     * Returns the name for this instance. Not defensive: If name is null or something goes wrong there will be errors all over.
+     *
+     * @returns {string | null}
+     */
     public static getName(): string | null {
-        try {
-            const name = Config.getInstance().getProp(ConfigKey.name);
-            if (name !== null) {
-                return name;
-            } else {
-                Log.error("AdminController::getName() - ERROR: null name");
-            }
-        } catch (err) {
-            Log.error("AdminController::getName() - ERROR: " + err.message);
-        }
-        return null;
+        return Config.getInstance().getProp(ConfigKey.name);
     }
 
     protected dbc = DatabaseController.getInstance();
@@ -701,6 +696,7 @@ export class AdminController {
                 throw new Error("AdminController::planProvision(..) - repo unexpectedly null: " + names.repoName);
             }
 
+            /* istanbul ignore then */
             if (typeof repo.custom.githubCreated !== 'undefined' && repo.custom.githubCreated === true && repo.URL === null) {
                 // HACK: this is just for dealing with inconsistent databases
                 // This whole block should be removed in the future
@@ -838,6 +834,7 @@ export class AdminController {
         const reposToRelease: Repository[] = [];
         const reposAlreadyReleased: Repository[] = [];
         for (const team of delivTeams) {
+            /* istanbul ignore catch */
             try {
                 // get repo for team
                 const people: Person[] = [];
@@ -847,7 +844,9 @@ export class AdminController {
                 const names = await this.cc.computeNames(deliv, people);
                 const repo = await this.dbc.getRepository(names.repoName);
 
+                /* istanbul ignore else */
                 if (typeof team.custom.githubAttached === 'undefined' || team.custom.githubAttached === false) {
+                    /* istanbul ignore else */
                     if (repo !== null && typeof repo.custom.githubCreated !== 'undefined' && repo.custom.githubCreated === true) {
                         // repo exists and has been provisioned: this is important as teams may have formed that have not been provisioned
                         // aka only release provisioned repos

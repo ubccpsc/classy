@@ -134,9 +134,14 @@ export class Test {
         p = Test.createPerson(Test.STAFF1.id, Test.STAFF1.csId, Test.STAFF1.github, null);
         await dc.writePerson(p);
 
-        // admin person (this username should be on the 'staff' team, and the 'admin' team in the github org)
+        // adminstaff person (this username should be on the 'staff' team, and the 'admin' team in the github org)
         p = Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.csId, Test.ADMIN1.github, null);
         await dc.writePerson(p);
+
+        // admin person (this username should be on the admin but not the staff team in the github org)
+        p = Test.createPerson(Test.REALUSER3.id, Test.REALUSER3.csId, Test.REALUSER3.github, null);
+        await dc.writePerson(p);
+
         Log.test("Test::preparePeople() - end");
     }
 

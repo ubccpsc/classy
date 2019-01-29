@@ -281,7 +281,7 @@ describe("AdminController", () => {
             urlName: 'commitName', // description to go with the URL (repo if exists)
             URL:     'commitUrl', // commit URL if known, otherwise repo URL (commit / repo if exists)
 
-            timestamp: Date.now(), // even if grade < 0 might as well return when the entry was made
+            timestamp: new Date(1400000000000 + 1000).getTime(), // shouldSave should be true
             custom:    {},
 
             repoId:  Test.REPONAME1,

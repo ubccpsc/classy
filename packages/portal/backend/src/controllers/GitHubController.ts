@@ -95,6 +95,7 @@ export class GitHubController implements IGitHubController {
             throw new Error("createRepository(..) failed; Repository " + repoName + " already exists.");
         }
 
+        /* istanbul ignore catch */
         try {
             // create the repository
             Log.trace("GitHubController::createRepository() - create GitHub repo");
@@ -173,21 +174,23 @@ export class GitHubController implements IGitHubController {
 
                 await this.checkDatabase(null, team.id);
 
-                let teamNum = await this.tc.getTeamNumber(team.id);
-                if (teamNum === -1 || teamNum === null) {
-                    // did not find a team, create one first
-                    Log.info("GitHubController::releaseRepository(..) - did not find team, creating");
+                const teamNum = await this.tc.getTeamNumber(team.id);
 
-                    const newTeam = await this.gha.createTeam(team.id, "push");
-                    Log.info("GitHubController::releaseRepository(..) - created team " +
-                        "with #: " + newTeam.githubTeamNumber);
-
-                    teamNum = newTeam.githubTeamNumber;
-                    team.githubId = teamNum; // add team number to team
-
-                    await this.gha.addMembersToTeam(team.id, teamNum, team.personIds);
-                    Log.info("GitHubController::releaseRepository(..) - added members to team");
-                }
+                // TeamController::getTeamNumber makes sure this never happens
+                // if (teamNum === -1 || teamNum === null) {
+                //     // did not find a team, create one first
+                //     Log.info("GitHubController::releaseRepository(..) - did not find team, creating");
+                //
+                //     const newTeam = await this.gha.createTeam(team.id, "push");
+                //     Log.info("GitHubController::releaseRepository(..) - created team " +
+                //         "with #: " + newTeam.githubTeamNumber);
+                //
+                //     teamNum = newTeam.githubTeamNumber;
+                //     team.githubId = teamNum; // add team number to team
+                //
+                //     await this.gha.addMembersToTeam(team.id, teamNum, team.personIds);
+                //     Log.info("GitHubController::releaseRepository(..) - added members to team");
+                // }
 
                 // now, add the team to the repository
                 const res = await this.gha.addTeamToRepo(teamNum, repo.id, "push");
@@ -239,6 +242,7 @@ export class GitHubController implements IGitHubController {
             // return false;
         }
 
+        /* istanbul ignore catch */
         try {
             // create a repo
             Log.info("GitHubController::provisionRepository( " + repoName + " ) - creating GitHub repo");

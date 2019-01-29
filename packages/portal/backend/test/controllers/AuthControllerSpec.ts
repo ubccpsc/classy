@@ -50,7 +50,7 @@ describe("AuthController", () => {
     });
 
     it("Should not let a person who does not exist be privileged.", async () => {
-        const isPriv = await ac.isPrivileged('aUserwhoDoesNotExist_sadmewnmdsvKKDSS', ''); // not registered
+        const isPriv = await ac.isPrivileged('aUserwhoDoesNotExist_' + Date.now(), ''); // not registered
         expect(isPriv.isAdmin).to.be.false;
         expect(isPriv.isStaff).to.be.false;
     });
@@ -72,7 +72,7 @@ describe("AuthController", () => {
         expect(isPriv.isStaff).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
 
-    it("Should identify an admin correctly.", async function() {
+    it("Should identify an adminstaff correctly.", async function() {
         let isValid = await ac.isValid(Test.ADMIN1.id, Test.FAKETOKEN);
         expect(isValid).to.be.false;
 
@@ -87,6 +87,23 @@ describe("AuthController", () => {
         const isPriv = await ac.isPrivileged(Test.ADMIN1.id, Test.REALTOKEN);
         expect(isPriv.isAdmin).to.be.true;
         expect(isPriv.isStaff).to.be.true;
+    }).timeout(Test.TIMEOUTLONG);
+
+    it("Should identify an admin (but not adminstaff) correctly.", async function() {
+        let isValid = await ac.isValid(Test.REALUSER3.id, Test.REALTOKEN);
+        expect(isValid).to.be.false;
+
+        const auth: Auth = {
+            personId: Test.REALUSER3.id,
+            token:    Test.REALTOKEN
+        };
+        await DatabaseController.getInstance().writeAuth(auth);
+        isValid = await ac.isValid(Test.REALUSER3.id, Test.REALTOKEN);
+        expect(isValid).to.be.true;
+
+        const isPriv = await ac.isPrivileged(Test.REALUSER3.id, Test.REALTOKEN);
+        expect(isPriv.isAdmin).to.be.true;
+        expect(isPriv.isStaff).to.be.false;
     }).timeout(Test.TIMEOUTLONG);
 
     it("Should identify a non-admin correctly.", async function() {
