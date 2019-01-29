@@ -696,7 +696,7 @@ export class AdminController {
                 throw new Error("AdminController::planProvision(..) - repo unexpectedly null: " + names.repoName);
             }
 
-            /* istanbul ignore then */
+            /* istanbul ignore if */
             if (typeof repo.custom.githubCreated !== 'undefined' && repo.custom.githubCreated === true && repo.URL === null) {
                 // HACK: this is just for dealing with inconsistent databases
                 // This whole block should be removed in the future
@@ -706,19 +706,6 @@ export class AdminController {
                 await this.dbc.writeRepository(repo);
             }
 
-            // // teams and repos should be provisioned together; this makes sure this consistency is maintained
-            // if (team.URL === null && repo.URL === null) {
-            //     // provision
-            //     reposToProvision.push(repo);
-            // } else if (team.URL !== null && repo.URL !== null) {
-            //     // already provisioned
-            // } else {
-            //     Log.error("AdminController::planProvision(..) -
-            // inconsistent repo/team; repo.URL: " + repo.URL + "; team.URL: " + team.URL);
-            // }
-
-            // this will include provisioned repos and unprovisioned repos
-            // provisioned repos will have a value for their URL, unprovisioned repos will not
             reposToProvision.push(repo);
         }
 
@@ -834,7 +821,6 @@ export class AdminController {
         const reposToRelease: Repository[] = [];
         const reposAlreadyReleased: Repository[] = [];
         for (const team of delivTeams) {
-            /* istanbul ignore catch */
             try {
                 // get repo for team
                 const people: Person[] = [];
@@ -859,6 +845,7 @@ export class AdminController {
                     reposAlreadyReleased.push(repo);
                 }
             } catch (err) {
+                /* istanbul ignore next */
                 Log.error("AdminController::planRelease( .. ) - ERROR: " + err.message);
                 Log.exception(err);
             }

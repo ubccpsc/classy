@@ -342,6 +342,10 @@ describe("AdminController", () => {
         res.defaultDeliverableId = null;
         delete (res.custom as any).fooProperty;
         await ac.saveCourse(res);
+
+        (res as any).id = 'newId' + Date.now();
+        delete (res.custom as any).fooProperty;
+        await ac.saveCourse(res);
     });
 
     it("Should not be able to validate an invalid course object.", function() {
