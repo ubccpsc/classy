@@ -10,8 +10,7 @@ import {
     AutoTestAuthPayload,
     AutoTestConfigPayload,
     AutoTestGradeTransport,
-    ClassyConfigurationPayload,
-    Payload
+    ClassyConfigurationPayload
 } from "../../../../common/types/PortalTypes";
 
 import {DatabaseController} from "../../src/controllers/DatabaseController";
@@ -387,7 +386,7 @@ describe('AutoTest Routes', function() {
             urlName:   'urlName',
             URL:       'test URL from grade record',
             comment:   'test comment from grade record',
-            timestamp: Date.now(),
+            timestamp: new Date(1400000000000 + 1000).getTime(), // within the open window
             custom:    {}
         };
 
