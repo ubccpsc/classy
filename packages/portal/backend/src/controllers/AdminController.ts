@@ -845,9 +845,11 @@ export class AdminController {
                     reposAlreadyReleased.push(repo);
                 }
             } catch (err) {
-                /* istanbul ignore next */
-                Log.error("AdminController::planRelease( .. ) - ERROR: " + err.message);
-                Log.exception(err);
+                /* istanbul ignore next: curlies needed for ignore */
+                {
+                    Log.error("AdminController::planRelease( .. ) - ERROR: " + err.message);
+                    Log.exception(err);
+                }
             }
         }
 

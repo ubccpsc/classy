@@ -95,18 +95,20 @@ export class GitHubController implements IGitHubController {
             throw new Error("createRepository(..) failed; Repository " + repoName + " already exists.");
         }
 
-        /* istanbul ignore catch */
         try {
             // create the repository
             Log.trace("GitHubController::createRepository() - create GitHub repo");
             const repoCreateVal = await this.gha.createRepo(repoName);
             Log.trace('GitHubController::createRepository(..) - success; repo: ' + repoCreateVal);
         } catch (err) {
-            Log.error('GitHubController::createRepository(..) - create repo error: ' + err);
-            // repo creation failed; remove if needed (requires createRepo be permissive if already exists)
-            const res = await this.gha.deleteRepo(repoName);
-            Log.info('GitHubController::createRepository(..) - repo removed: ' + res);
-            throw new Error("createRepository(..) failed; Repository " + repoName + " creation failed; ERROR: " + err.message);
+            /* istanbul ignore next: curlies needed for ignore */
+            {
+                Log.error('GitHubController::createRepository(..) - create repo error: ' + err);
+                // repo creation failed; remove if needed (requires createRepo be permissive if already exists)
+                const res = await this.gha.deleteRepo(repoName);
+                Log.info('GitHubController::createRepository(..) - repo removed: ' + res);
+                throw new Error("createRepository(..) failed; Repository " + repoName + " creation failed; ERROR: " + err.message);
+            }
         }
 
         try {
@@ -242,7 +244,6 @@ export class GitHubController implements IGitHubController {
             // return false;
         }
 
-        /* istanbul ignore catch */
         try {
             // create a repo
             Log.info("GitHubController::provisionRepository( " + repoName + " ) - creating GitHub repo");
@@ -257,11 +258,14 @@ export class GitHubController implements IGitHubController {
 
             Log.info("GitHubController::provisionRepository( " + repoName + " ) - val: " + repoVal);
         } catch (err) {
-            Log.error("GitHubController::provisionRepository( " + repoName + " ) - create repo ERROR: " + err);
-            // repo creation failed; remove if needed (requires createRepo be permissive if already exists)
-            const res = await this.gha.deleteRepo(repoName);
-            Log.info("GitHubController::provisionRepository( " + repoName + " ) - repo removed: " + res);
-            throw new Error("provisionRepository( " + repoName + " ) failed; failed to create repo; ERROR: " + err.message);
+            /* istanbul ignore next: curlies needed for ignore */
+            {
+                Log.error("GitHubController::provisionRepository( " + repoName + " ) - create repo ERROR: " + err);
+                // repo creation failed; remove if needed (requires createRepo be permissive if already exists)
+                const res = await this.gha.deleteRepo(repoName);
+                Log.info("GitHubController::provisionRepository( " + repoName + " ) - repo removed: " + res);
+                throw new Error("provisionRepository( " + repoName + " ) failed; failed to create repo; ERROR: " + err.message);
+            }
         }
 
         try {
