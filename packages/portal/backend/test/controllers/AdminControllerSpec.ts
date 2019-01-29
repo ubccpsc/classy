@@ -293,6 +293,29 @@ describe("AdminController", () => {
         expect(res).to.be.true;
     });
 
+    it("Should be able to reject a new AutoTest grade when it should not be saved.", async () => {
+
+        const grade: AutoTestGradeTransport = {
+            delivId: 'd0',
+
+            score:   100, // grade: < 0 will mean 'N/A' in the UI
+            comment: '', // simple grades will just have a comment
+
+            urlName: 'commitName', // description to go with the URL (repo if exists)
+            URL:     'commitUrl', // commit URL if known, otherwise repo URL (commit / repo if exists)
+
+            timestamp: new Date(1500000000000 + 1000).getTime(), // too late: shouldSave should be false
+            custom:    {},
+
+            repoId:  Test.REPONAME1,
+            repoURL: 'repoUrl'
+        };
+
+        const res = await ac.processNewAutoTestGrade(grade);
+        expect(res).to.be.an('boolean');
+        expect(res).to.be.false;
+    });
+
     it("Should fail to handle a new AutoTest grade if the repoId is invalid.", async () => {
 
         const grade: AutoTestGradeTransport = {

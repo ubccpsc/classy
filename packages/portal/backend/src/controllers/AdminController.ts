@@ -53,6 +53,12 @@ export class AdminController {
         this.cc = Factory.getCourseController(ghController);
     }
 
+    /**
+     * Processes the new autotest grade. Only returns true if the grade was accepted and saved.
+     *
+     * @param {AutoTestGradeTransport} grade
+     * @returns {Promise<boolean>} Whether the new grade was saved
+     */
     public async processNewAutoTestGrade(grade: AutoTestGradeTransport): Promise<boolean> {
         Log.info("AdminController::processNewAutoTestGrade( .. ) - start");
 
@@ -75,6 +81,8 @@ export class AdminController {
             const delivController = new DeliverablesController();
             const deliv = await delivController.getDeliverable(grade.delivId);
 
+            let saved = false;
+
             for (const personId of peopleIds) {
                 const newGrade: Grade = {
                     personId:  personId,
@@ -94,9 +102,10 @@ export class AdminController {
                     await this.dbc.writeAudit(AuditLabel.GRADE_AUTOTEST, 'AutoTest',
                         existingGrade, newGrade, {repoId: grade.repoId});
                     await this.gc.saveGrade(newGrade);
+                    saved = true;
                 }
             }
-            return true;
+            return saved;
         } catch (err) {
             Log.error("AdminController::processNewAutoTestGrade( .. ) - ERROR: " + err);
             return false;
