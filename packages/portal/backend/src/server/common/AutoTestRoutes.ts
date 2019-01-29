@@ -160,13 +160,9 @@ export class AutoTestRoutes implements IREST {
         } else {
             const gradeRecord: AutoTestGradeTransport = req.body;
 
-            AutoTestRoutes.performPostGrade(gradeRecord).then(function(success: any) {
-                if (success === true) {
-                    payload = {success: {success: true}};
-                    res.send(200, payload);
-                } else {
-                    return AutoTestRoutes.handleError(400, 'Failed to receive grade.', res, next);
-                }
+            AutoTestRoutes.performPostGrade(gradeRecord).then(function(saved: any) {
+                payload = {success: {success: saved}};
+                res.send(200, payload);
                 return next(true);
             }).catch(function(err) {
                 return AutoTestRoutes.handleError(400, 'Failed to receive grade; ERROR: ' + err.message, res, next);
