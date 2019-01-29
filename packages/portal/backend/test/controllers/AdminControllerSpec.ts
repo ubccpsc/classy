@@ -281,7 +281,7 @@ describe("AdminController", () => {
             urlName: 'commitName', // description to go with the URL (repo if exists)
             URL:     'commitUrl', // commit URL if known, otherwise repo URL (commit / repo if exists)
 
-            timestamp: Date.now(), // even if grade < 0 might as well return when the entry was made
+            timestamp: new Date(1400000000000 + 1000).getTime(), // shouldSave should be true
             custom:    {},
 
             repoId:  Test.REPONAME1,
@@ -291,6 +291,29 @@ describe("AdminController", () => {
         const res = await ac.processNewAutoTestGrade(grade);
         expect(res).to.be.an('boolean');
         expect(res).to.be.true;
+    });
+
+    it("Should be able to reject a new AutoTest grade when it should not be saved.", async () => {
+
+        const grade: AutoTestGradeTransport = {
+            delivId: 'd0',
+
+            score:   100, // grade: < 0 will mean 'N/A' in the UI
+            comment: '', // simple grades will just have a comment
+
+            urlName: 'commitName', // description to go with the URL (repo if exists)
+            URL:     'commitUrl', // commit URL if known, otherwise repo URL (commit / repo if exists)
+
+            timestamp: new Date(1500000000000 + 1000).getTime(), // too late: shouldSave should be false
+            custom:    {},
+
+            repoId:  Test.REPONAME1,
+            repoURL: 'repoUrl'
+        };
+
+        const res = await ac.processNewAutoTestGrade(grade);
+        expect(res).to.be.an('boolean');
+        expect(res).to.be.false;
     });
 
     it("Should fail to handle a new AutoTest grade if the repoId is invalid.", async () => {
@@ -342,6 +365,10 @@ describe("AdminController", () => {
         res.defaultDeliverableId = null;
         delete (res.custom as any).fooProperty;
         await ac.saveCourse(res);
+
+        (res as any).id = 'newId' + Date.now();
+        delete (res.custom as any).fooProperty;
+        await ac.saveCourse(res);
     });
 
     it("Should not be able to validate an invalid course object.", function() {
@@ -363,6 +390,40 @@ describe("AdminController", () => {
         res = AdminController.validateCourseTransport(course);
         expect(res).to.not.be.null;
         expect(res).to.be.an('string');
+    });
+
+    it("Should not be able to validate an invalid provision object.", function() {
+        let res = null;
+        let ex = null;
+        try {
+            res = AdminController.validateProvisionTransport(null);
+        } catch (err) {
+            ex = err;
+        }
+        expect(res).to.be.null;
+        expect(ex).to.not.be.null;
+
+        res = null;
+        ex = null;
+        let course: any = {delivId: 42}; // should be a string
+        try {
+            res = AdminController.validateProvisionTransport(course);
+        } catch (err) {
+            ex = err;
+        }
+        expect(res).to.be.null;
+        expect(ex).to.not.be.null;
+
+        res = null;
+        ex = null;
+        course = {delivId: Test.DELIVID0, formSingle: 'true'}; // formSingle should be a boolean
+        try {
+            res = AdminController.validateProvisionTransport(course);
+        } catch (err) {
+            ex = err;
+        }
+        expect(res).to.be.null;
+        expect(ex).to.not.be.null;
     });
 
     it("Should be able to compute a team and repo name.", async () => {

@@ -65,7 +65,6 @@ export default class AdminRoutes implements IREST {
         server.post('/portal/admin/team', AdminRoutes.isAdmin, AdminRoutes.postTeam);
         server.post('/portal/admin/course', AdminRoutes.isAdmin, AdminRoutes.postCourse);
         server.get('/portal/admin/provision/:delivId', AdminRoutes.isAdmin, AdminRoutes.getProvision);
-        // server.post('/portal/admin/provision', AdminRoutes.isAdmin, AdminRoutes.postProvision); // OLD: remove?
         server.post('/portal/admin/provision/:delivId/:repoId', AdminRoutes.isAdmin, AdminRoutes.postProvision);
         server.get('/portal/admin/release/:delivId', AdminRoutes.isAdmin, AdminRoutes.getRelease);
         server.post('/portal/admin/release/:repoId', AdminRoutes.isAdmin, AdminRoutes.postRelease);
@@ -135,13 +134,14 @@ export default class AdminRoutes implements IREST {
         // Log.info('AdminRoutes::isPrivileged(..) - start');
 
         const auth = AdminRoutes.processAuth(req);
-        const user = auth.user;
-        const token = auth.token;
 
-        if (auth === null || typeof user === 'undefined' || typeof token === 'undefined') {
+        if (auth === null || typeof auth.user === 'undefined' || typeof auth.token === 'undefined') {
             Log.warn('AdminRoutes::isPrivileged(..) - undefined user or token; user not admin.');
             return AdminRoutes.handleError(401, 'Authorization credentials error; user not admin.', res, next);
         }
+
+        const user = auth.user;
+        const token = auth.token;
 
         const ac = new AuthController();
         ac.isPrivileged(user, token).then(function(priv) {
@@ -169,13 +169,13 @@ export default class AdminRoutes implements IREST {
         // Log.info('AdminRoutes::isAdmin(..) - start');
 
         const auth = AdminRoutes.processAuth(req);
-        const user = auth.user;
-        const token = auth.token;
-
-        if (auth === null || typeof user === 'undefined' || typeof token === 'undefined') {
+        if (auth === null || typeof auth.user === 'undefined' || typeof auth.token === 'undefined') {
             Log.warn('AdminRoutes::isAdmin(..) - undefined user or token; user not admin.');
             return AdminRoutes.handleError(401, 'Authorization credentials error; user not admin.', res, next);
         }
+
+        const user = auth.user;
+        const token = auth.token;
 
         const ac = new AuthController();
         ac.isPrivileged(user, token).then(function(priv) {
@@ -735,29 +735,6 @@ export default class AdminRoutes implements IREST {
 
     }
 
-    // private static async handleProvision(personId: string, provisionTrans: ProvisionTransport): Promise<RepositoryTransport[]> {
-    //     const cc = new AdminController(AdminRoutes.ghc);
-    //     const result = AdminController.validateProvisionTransport(provisionTrans);
-    //
-    //     // TODO: if course is SDMM, always fail
-    //
-    //     if (result === null) {
-    //         const dc = new DeliverablesController();
-    //         const deliv = await dc.getDeliverable(provisionTrans.delivId);
-    //         if (deliv !== null && deliv.shouldProvision === true) {
-    //             const dbc = DatabaseController.getInstance();
-    //             await dbc.writeAudit(AuditLabel.REPO_PROVISION, personId, {}, {}, provisionTrans);
-    //             const provisionSucceeded = await cc.provision(deliv, provisionTrans.formSingle);
-    //             Log.info('AdminRoutes::handleProvision() - success; # results: ' + provisionSucceeded.length);
-    //             return provisionSucceeded;
-    //         } else {
-    //             throw new Error("Provisioning unsuccessful; cannot provision: " + provisionTrans.delivId);
-    //         }
-    //     }
-    //     // should never get here unless something goes wrong
-    //     throw new Error("Provisioning unsuccessful.");
-    // }
-
     private static async planProvision(provisionTrans: ProvisionTransport): Promise<RepositoryTransport[]> {
         const cc = new AdminController(AdminRoutes.ghc);
         const result = AdminController.validateProvisionTransport(provisionTrans);
@@ -819,13 +796,11 @@ export default class AdminRoutes implements IREST {
 
     private static async planRelease(delivId: string): Promise<RepositoryTransport[]> {
         const ac = new AdminController(AdminRoutes.ghc);
-        // const result = AdminController.validateProvisionTransport(releaseTrans);
 
-        // const dc = new DeliverablesController();
-        // const deliv = await dc.getDeliverable(delivId);
         // TODO: if course is SDMM, always fail
+
         const start = Date.now();
-        // if (deliv=== null) {
+
         const dc = new DeliverablesController();
         const deliv = await dc.getDeliverable(delivId);
         if (deliv !== null && deliv.shouldProvision === true) {
@@ -840,9 +815,6 @@ export default class AdminRoutes implements IREST {
             Log.info('AdminRoutes::planRelease() - success; # results: ' + transportRepos.length +
                 '; took: ' + Util.took(start));
             return transportRepos;
-            // } else {
-            //     throw new Error("Release unsuccessful, cannot release: " + releaseTrans.delivId);
-            // }
         } else {
             // should never get here unless something goes wrong
             throw new Error("Release planning unsuccessful.");
@@ -886,7 +858,7 @@ export default class AdminRoutes implements IREST {
 
         cc.performStudentWithdraw().then(function(msg) {
             Log.info('AdminRoutes::postWithdraw(..) - done; msg: ' + msg);
-            const payload: Payload = {success: msg}; // really shouldn't be an array, but it beats having another type
+            const payload: Payload = {success: {message: msg}}; // really shouldn't be an array, but it beats having another type
             res.send(200, payload);
             return next(true);
         }).catch(function(err) {

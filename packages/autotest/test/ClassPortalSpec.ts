@@ -148,7 +148,7 @@ describe("ClassPortal Service", () => {
             comment:   'comment!',
             urlName:   'SHAName',
             URL:       'https://SHAURL',
-            timestamp: Date.now(),
+            timestamp: new Date(1400000000000 + 1000).getTime(),
             custom:    {}
         };
         const actual = await cp.sendGrade(grade);

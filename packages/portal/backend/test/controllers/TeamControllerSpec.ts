@@ -8,9 +8,7 @@ import {TeamController} from "../../src/controllers/TeamController";
 import '../GlobalSpec';
 
 import {Test} from "../TestHarness";
-// import '../GlobalSpec';
 import './PersonControllerSpec';
-// const loadFirst = require("../GlobalSpec");
 
 describe("TeamController", () => {
 
@@ -47,6 +45,16 @@ describe("TeamController", () => {
         const person = await pc.getPerson(Test.USER1.id);
         const teams = await tc.getTeamsForPerson(person);
         expect(teams).to.have.lengthOf(0);
+    });
+
+    it("Should not be able to get the number for a null team.", async () => {
+        const teamNumber = await tc.getTeamNumber(null);
+        expect(teamNumber).to.be.null;
+    });
+
+    it("Should not be able to get the number for a team that does not exist.", async () => {
+        const teamNumber = await tc.getTeamNumber("INVALIDTEAMNAME" + Date.now());
+        expect(teamNumber).to.be.null;
     });
 
     it("Should not able to create a team if a deliverable was not specified.", async () => {

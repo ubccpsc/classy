@@ -95,6 +95,11 @@ describe("DatabaseController", () => {
         expect(result).to.be.null;
     });
 
+    it("Should not be able to get an invalid result URL.", async () => {
+        const result = await dc.getResultFromURL('invalidURL' + Date.now());
+        expect(result).to.be.null;
+    });
+
     it("Should not be able to get an invalid grade.", async () => {
         const grade = await dc.getGrade(Test.INVALIDUSER1.id, 'invalidDeliv');
         expect(grade).to.be.null;

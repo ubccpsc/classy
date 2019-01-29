@@ -29,18 +29,13 @@ import {TeamController} from "./TeamController";
 
 export class AdminController {
 
+    /**
+     * Returns the name for this instance. Not defensive: If name is null or something goes wrong there will be errors all over.
+     *
+     * @returns {string | null}
+     */
     public static getName(): string | null {
-        try {
-            const name = Config.getInstance().getProp(ConfigKey.name);
-            if (name !== null) {
-                return name;
-            } else {
-                Log.error("AdminController::getName() - ERROR: null name");
-            }
-        } catch (err) {
-            Log.error("AdminController::getName() - ERROR: " + err.message);
-        }
-        return null;
+        return Config.getInstance().getProp(ConfigKey.name);
     }
 
     protected dbc = DatabaseController.getInstance();
@@ -58,6 +53,12 @@ export class AdminController {
         this.cc = Factory.getCourseController(ghController);
     }
 
+    /**
+     * Processes the new autotest grade. Only returns true if the grade was accepted and saved.
+     *
+     * @param {AutoTestGradeTransport} grade
+     * @returns {Promise<boolean>} Whether the new grade was saved
+     */
     public async processNewAutoTestGrade(grade: AutoTestGradeTransport): Promise<boolean> {
         Log.info("AdminController::processNewAutoTestGrade( .. ) - start");
 
@@ -80,6 +81,8 @@ export class AdminController {
             const delivController = new DeliverablesController();
             const deliv = await delivController.getDeliverable(grade.delivId);
 
+            let saved = false;
+
             for (const personId of peopleIds) {
                 const newGrade: Grade = {
                     personId:  personId,
@@ -99,9 +102,10 @@ export class AdminController {
                     await this.dbc.writeAudit(AuditLabel.GRADE_AUTOTEST, 'AutoTest',
                         existingGrade, newGrade, {repoId: grade.repoId});
                     await this.gc.saveGrade(newGrade);
+                    saved = true;
                 }
             }
-            return true;
+            return saved;
         } catch (err) {
             Log.error("AdminController::processNewAutoTestGrade( .. ) - ERROR: " + err);
             return false;
@@ -701,6 +705,7 @@ export class AdminController {
                 throw new Error("AdminController::planProvision(..) - repo unexpectedly null: " + names.repoName);
             }
 
+            /* istanbul ignore if */
             if (typeof repo.custom.githubCreated !== 'undefined' && repo.custom.githubCreated === true && repo.URL === null) {
                 // HACK: this is just for dealing with inconsistent databases
                 // This whole block should be removed in the future
@@ -710,19 +715,6 @@ export class AdminController {
                 await this.dbc.writeRepository(repo);
             }
 
-            // // teams and repos should be provisioned together; this makes sure this consistency is maintained
-            // if (team.URL === null && repo.URL === null) {
-            //     // provision
-            //     reposToProvision.push(repo);
-            // } else if (team.URL !== null && repo.URL !== null) {
-            //     // already provisioned
-            // } else {
-            //     Log.error("AdminController::planProvision(..) -
-            // inconsistent repo/team; repo.URL: " + repo.URL + "; team.URL: " + team.URL);
-            // }
-
-            // this will include provisioned repos and unprovisioned repos
-            // provisioned repos will have a value for their URL, unprovisioned repos will not
             reposToProvision.push(repo);
         }
 
@@ -847,7 +839,9 @@ export class AdminController {
                 const names = await this.cc.computeNames(deliv, people);
                 const repo = await this.dbc.getRepository(names.repoName);
 
+                /* istanbul ignore else */
                 if (typeof team.custom.githubAttached === 'undefined' || team.custom.githubAttached === false) {
+                    /* istanbul ignore else */
                     if (repo !== null && typeof repo.custom.githubCreated !== 'undefined' && repo.custom.githubCreated === true) {
                         // repo exists and has been provisioned: this is important as teams may have formed that have not been provisioned
                         // aka only release provisioned repos
@@ -860,8 +854,11 @@ export class AdminController {
                     reposAlreadyReleased.push(repo);
                 }
             } catch (err) {
-                Log.error("AdminController::planRelease( .. ) - ERROR: " + err.message);
-                Log.exception(err);
+                /* istanbul ignore next: curlies needed for ignore */
+                {
+                    Log.error("AdminController::planRelease( .. ) - ERROR: " + err.message);
+                    Log.exception(err);
+                }
             }
         }
 
@@ -935,6 +932,7 @@ export class AdminController {
         return [];
     }
 
+    /* istanbul ignore next */
     /**
      * Synchronizes the database objects with GitHub. Does _NOT_ remove any DB objects, just makes
      * sure their properties match those in the GitHub org. This is useful if manual changes are made
@@ -948,6 +946,7 @@ export class AdminController {
     public async dbSanityCheck(dryRun: boolean): Promise<void> {
         Log.info("AdminController::dbSanityCheck() - start");
         const start = Date.now();
+
         const gha = GitHubActions.getInstance(true);
         const tc = new TeamController();
         const config = Config.getInstance();
@@ -1115,59 +1114,60 @@ export class AdminController {
      * @param {Person[]} people
      * @returns {Promise<{teamName: string | null; repoName: string | null}>}
      */
-        // public async computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}> {
-        //     Log.info("AdminController::computeNames(..) - start; # people: " + people.length);
-        //
-        //     // TODO: this code has a fatal flaw; if the team/repo exists already for the specified people,
-        //     // it is correct to return those.
-        //
-        //     let repoPrefix = '';
-        //     if (deliv.repoPrefix.length > 0) {
-        //         repoPrefix = deliv.repoPrefix;
-        //     } else {
-        //         repoPrefix = deliv.id;
-        //     }
-        //
-        //     let teamPrefix = '';
-        //     if (deliv.teamPrefix.length > 0) {
-        //         teamPrefix = deliv.teamPrefix;
-        //     } else {
-        //         teamPrefix = deliv.id;
-        //     }
-        //     // the repo name and the team name should be the same, so just use the repo name
-        //     const repos = await this.dbc.getRepositories();
-        //     let repoCount = 0;
-        //     for (const repo of repos) {
-        //         if (repo.id.startsWith(repoPrefix)) {
-        //             repoCount++;
-        //         }
-        //     }
-        //     let repoName = '';
-        //     let teamName = '';
-        //
-        //     let ready = false;
-        //     while (!ready) {
-        //         repoName = repoPrefix + '_' + repoCount;
-        //         teamName = teamPrefix + '_' + repoCount;
-        //         const r = await this.dbc.getRepository(repoName);
-        //         const t = await this.dbc.getTeam(teamName);
-        //         if (r === null && t === null) {
-        //             ready = true;
-        //         } else {
-        //             Log.warn("AdminController::computeNames(..) - name not available; r: " + repoName + "; t: " + teamName);
-        //             repoCount++; // try the next one
-        //         }
-        //     }
-        //     Log.info("AdminController::computeNames(..) - done; r: " + repoName + "; t: " + teamName);
-        //     return {teamName: teamName, repoName: repoName};
-        // }
+    // public async computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}> {
+    //     Log.info("AdminController::computeNames(..) - start; # people: " + people.length);
+    //
+    //     // TODO: this code has a fatal flaw; if the team/repo exists already for the specified people,
+    //     // it is correct to return those.
+    //
+    //     let repoPrefix = '';
+    //     if (deliv.repoPrefix.length > 0) {
+    //         repoPrefix = deliv.repoPrefix;
+    //     } else {
+    //         repoPrefix = deliv.id;
+    //     }
+    //
+    //     let teamPrefix = '';
+    //     if (deliv.teamPrefix.length > 0) {
+    //         teamPrefix = deliv.teamPrefix;
+    //     } else {
+    //         teamPrefix = deliv.id;
+    //     }
+    //     // the repo name and the team name should be the same, so just use the repo name
+    //     const repos = await this.dbc.getRepositories();
+    //     let repoCount = 0;
+    //     for (const repo of repos) {
+    //         if (repo.id.startsWith(repoPrefix)) {
+    //             repoCount++;
+    //         }
+    //     }
+    //     let repoName = '';
+    //     let teamName = '';
+    //
+    //     let ready = false;
+    //     while (!ready) {
+    //         repoName = repoPrefix + '_' + repoCount;
+    //         teamName = teamPrefix + '_' + repoCount;
+    //         const r = await this.dbc.getRepository(repoName);
+    //         const t = await this.dbc.getTeam(teamName);
+    //         if (r === null && t === null) {
+    //             ready = true;
+    //         } else {
+    //             Log.warn("AdminController::computeNames(..) - name not available; r: " + repoName + "; t: " + teamName);
+    //             repoCount++; // try the next one
+    //         }
+    //     }
+    //     Log.info("AdminController::computeNames(..) - done; r: " + repoName + "; t: " + teamName);
+    //     return {teamName: teamName, repoName: repoName};
+    // }
 
-    public static
-
-    validateProvisionTransport(obj
-                                   :
-                                   ProvisionTransport
-    ) {
+    /**
+     * Returns null if the object is valid. This API is terrible.
+     *
+     * @param {ProvisionTransport} obj
+     * @returns {ProvisionTransport | null}
+     */
+    public static validateProvisionTransport(obj: ProvisionTransport): ProvisionTransport | null {
         if (typeof obj === 'undefined' || obj === null) {
             const msg = 'Transport not populated.';
             Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
@@ -1181,27 +1181,12 @@ export class AdminController {
             throw new Error(msg);
         }
 
-        // // noinspection SuspiciousTypeOfGuard
-        // if (obj.action !== 'PROVISION' && obj.action !== 'RELEASE') {
-        //     const msg = 'action not correct: ' + obj.action;
-        //     Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
-        //     return msg;
-        // }
-
         // noinspection SuspiciousTypeOfGuard
         if (typeof obj.formSingle !== 'boolean') {
             const msg = 'formSingle not specified';
             Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
-            return msg;
+            throw new Error(msg);
         }
-
-        // const dc = new DeliverablesController();
-        // const deliv = await dc.getDeliverable(obj.delivId);
-        // if (deliv === null && deliv.shouldProvision === true){
-        //     const msg = 'delivId does not correspond to a real deliverable or that deliverable is not provisionable';
-        //     Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
-        //     return msg;
-        // }
 
         return null;
     }

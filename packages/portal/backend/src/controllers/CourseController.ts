@@ -1,5 +1,4 @@
 import Log from "../../../../common/Log";
-import {ProvisionTransport} from '../../../../common/types/PortalTypes';
 import {Deliverable, Grade, Person} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
@@ -104,10 +103,20 @@ export class CourseController implements ICourseController {
         Log.info("CourseController::handleNewAutoTestGrade( " + deliv.id + ", " +
             newGrade.personId + ", " + newGrade.score + ", ... ) - start");
 
-        const gradeIsLarger = (existingGrade === null || newGrade.score >= existingGrade.score);
-        const gradeBeforeDeadline = newGrade.timestamp <= deliv.closeTimestamp;
+        if (newGrade.timestamp < deliv.openTimestamp) {
+            // too early
+            return Promise.resolve(false);
+        }
 
-        if (gradeIsLarger === true && gradeBeforeDeadline === true) {
+        if (newGrade.timestamp > deliv.closeTimestamp) {
+            // too late
+            return Promise.resolve(false);
+        }
+
+        // >= on purpose so 'last highest' is used
+        const gradeIsLarger = (existingGrade === null || newGrade.score >= existingGrade.score);
+
+        if (gradeIsLarger === true) {
             Log.trace("CourseController::handleNewAutoTestGrade( " + deliv.id + ", " +
                 newGrade.personId + ", " + newGrade.score + ", ... ) - returning true");
             return Promise.resolve(true);
@@ -119,8 +128,11 @@ export class CourseController implements ICourseController {
     }
 
     public async computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}> {
-        Log.info('CourseController::computeNames( ' + deliv.id + ', ... ) - start');
+        if (deliv === null) {
+            throw new Error("CourseController::computeNames( ... ) - null Deliverable");
+        }
 
+        Log.info('CourseController::computeNames( ' + deliv.id + ', ... ) - start');
         if (people.length < 1) {
             throw new Error("CourseController::computeNames( ... ) - must provide people");
         }
@@ -218,42 +230,35 @@ export class CourseController implements ICourseController {
     //     return {teamName: teamName, repoName: repoName};
     // }
 
-    public static validateProvisionTransport(obj: ProvisionTransport) {
-        if (typeof obj === 'undefined' || obj === null) {
-            const msg = 'Transport not populated.';
-            Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
-            throw new Error(msg);
-        }
-
-        // noinspection SuspiciousTypeOfGuard
-        if (typeof obj.delivId !== 'string') {
-            const msg = 'Provision.id not specified';
-            Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
-            throw new Error(msg);
-        }
-
-        // // noinspection SuspiciousTypeOfGuard
-        // if (obj.action !== 'PROVISION' && obj.action !== 'RELEASE') {
-        //     const msg = 'action not correct: ' + obj.action;
-        //     Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
-        //     return msg;
-        // }
-
-        // noinspection SuspiciousTypeOfGuard
-        if (typeof obj.formSingle !== 'boolean') {
-            const msg = 'formSingle not specified';
-            Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
-            return msg;
-        }
-
-        // const dc = new DeliverablesController();
-        // const deliv = await dc.getDeliverable(obj.delivId);
-        // if (deliv === null && deliv.shouldProvision === true){
-        //     const msg = 'delivId does not correspond to a real deliverable or that deliverable is not provisionable';
-        //     Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
-        //     return msg;
-        // }
-
-        return null;
-    }
+    // public static validateProvisionTransport(obj: ProvisionTransport) {
+    //     if (typeof obj === 'undefined' || obj === null) {
+    //         const msg = 'Transport not populated.';
+    //         Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
+    //         throw new Error(msg);
+    //     }
+    //
+    //     // noinspection SuspiciousTypeOfGuard
+    //     if (typeof obj.delivId !== 'string') {
+    //         const msg = 'Provision.id not specified';
+    //         Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
+    //         throw new Error(msg);
+    //     }
+    //
+    //     // noinspection SuspiciousTypeOfGuard
+    //     if (typeof obj.formSingle !== 'boolean') {
+    //         const msg = 'formSingle not specified';
+    //         Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
+    //         return msg;
+    //     }
+    //
+    //     // const dc = new DeliverablesController();
+    //     // const deliv = await dc.getDeliverable(obj.delivId);
+    //     // if (deliv === null && deliv.shouldProvision === true){
+    //     //     const msg = 'delivId does not correspond to a real deliverable or that deliverable is not provisionable';
+    //     //     Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
+    //     //     return msg;
+    //     // }
+    //
+    //     return null;
+    // }
 }

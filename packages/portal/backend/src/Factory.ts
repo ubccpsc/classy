@@ -33,13 +33,6 @@ export class Factory {
 
         if (name === 'classytest') {
             return new NoCustomRoutes();
-            // } else if (name === 'sdmm' || name === 'secapstonetest') {
-            //     // instantiate SDMMREST in fork
-            // } else if (name === 'cs310') {
-            //     // no custom routes are required for 310
-            //     return new NoCustomRoutes();
-            // } else if (name === 'cs340' || name === 'cpsc340') {
-            //     // instantiate CS340REST in fork
         } else {
             Log.warn("Factory::getCustomRouteHandler() - no custom routes for: " + name);
         }
@@ -100,6 +93,7 @@ export class Factory {
      */
     private static getName(): string | null {
         const name = Config.getInstance().getProp(ConfigKey.name);
+        /* istanbul ignore if */
         if (name === null) {
             const msg = "Factory::getName() - null name; this is almost certainly an error with your .env file.";
             Log.error(msg);

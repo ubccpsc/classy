@@ -109,18 +109,18 @@ export class RepositoryController {
         }
     }
 
-    public async createPullRequest(repoId: string, prId: string, custom: any): Promise<Repository | null> {
-        Log.error("RepositoryController::createPullRequest( " + repoId + ", " + prId + ", .. ) -  NOT IMPLEMENTED!!");
-        // TODO: implement PR functionality
-
-        // NOTE: this impl is more complex than it needs to be but is erring on the side of caution
-        const repo = await this.getRepository(repoId);
-        const customA = Object.assign({}, repo.custom);
-        const customB = Object.assign(customA, custom); // overwrite with new fields
-        repo.custom = customB;
-        await this.db.writeRepository(repo);
-        return await this.getRepository(repoId);
-    }
+    // public async createPullRequest(repoId: string, prId: string, custom: any): Promise<Repository | null> {
+    //     Log.error("RepositoryController::createPullRequest( " + repoId + ", " + prId + ", .. ) -  NOT IMPLEMENTED!!");
+    //     // TODO: implement PR functionality
+    //
+    //     // NOTE: this impl is more complex than it needs to be but is erring on the side of caution
+    //     const repo = await this.getRepository(repoId);
+    //     const customA = Object.assign({}, repo.custom);
+    //     const customB = Object.assign(customA, custom); // overwrite with new fields
+    //     repo.custom = customB;
+    //     await this.db.writeRepository(repo);
+    //     return await this.getRepository(repoId);
+    // }
 
     public async getPeopleForRepo(repoId: string): Promise<string[] | null> {
         Log.info("RepositoryController::getPeopleForRepo( " + repoId + ", .. ) -  start");
