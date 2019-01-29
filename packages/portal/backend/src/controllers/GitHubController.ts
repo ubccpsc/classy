@@ -130,7 +130,8 @@ export class GitHubController implements IGitHubController {
 
             Log.trace("GitHubController::createRepository() - importing project (slow)");
             let output;
-            if (path) {
+            /* istanbul ignore if */
+            if (typeof path !== 'undefined') {
                 output = await this.gha.importRepoFS(importUrl, targetUrl, path);
             } else {
                 output = await this.gha.importRepoFS(importUrl, targetUrl);
@@ -380,6 +381,7 @@ export class GitHubController implements IGitHubController {
                 throw new Error(msg);
             } else {
                 // ensure custom property is there
+                /* istanbul ignore if */
                 if (typeof repo.custom === 'undefined' || repo.custom === null || typeof repo.custom !== 'object') {
                     const msg = "Repository: " + repoName + " has a non-object .custom property";
                     Log.error("GitHubController::checkDatabase() - repo ERROR: " + msg);
@@ -397,6 +399,7 @@ export class GitHubController implements IGitHubController {
                 throw new Error(msg);
             } else {
                 // ensure custom property is there
+                /* istanbul ignore if */
                 if (typeof team.custom === 'undefined' || team.custom === null || typeof team.custom !== 'object') {
                     const msg = "Team: " + teamName + " has a non-object .custom property";
                     Log.error("GitHubController::checkDatabase() - team ERROR: " + msg);
