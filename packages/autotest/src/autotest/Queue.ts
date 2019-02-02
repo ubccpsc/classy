@@ -18,9 +18,9 @@ export class Queue {
         this.numSlots = numSlots;
 
         // almost certainly exists (contains all queue output), but quick to check
-        fs.ensureDirSync(Config.getInstance().getProp(ConfigKey.persistDir));
+        fs.mkdirpSync(Config.getInstance().getProp(ConfigKey.persistDir) + '/queues');
 
-        this.persistDir = Config.getInstance().getProp(ConfigKey.persistDir) + '/' + this.name + '.json';
+        this.persistDir = Config.getInstance().getProp(ConfigKey.persistDir) + '/queues/' + this.name + '.json';
     }
 
     private data: ContainerInput[] = [];
