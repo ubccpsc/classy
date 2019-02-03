@@ -1,8 +1,11 @@
 import {OnsInputElement, OnsListItemElement, OnsSwitchElement} from "onsenui";
 import Log from "../../../../../../common/Log";
-import {AdminTabs, AdminView} from "../AdminView";
+import {AssignmentInfo, AssignmentStatus} from "../../../../../../common/types/CS340Types";
 import {Deliverable} from "../../../../../backend/src/Types";
-import {AssignmentInfo} from "../../../../../../common/types/CS340Types";
+import {Factory} from "../../Factory";
+import {UI} from "../../util/UI";
+import {AdminTabs, AdminView} from "../AdminView";
+import {AdminMarkingTab} from "./AdminMarkingTab";
 
 declare var ons: any;
 
@@ -11,9 +14,13 @@ declare var ons: any;
  * extensibility so we can better understand how to do it for other courses.
  */
 export class CS340AdminView extends AdminView {
+    private markingTab: AdminMarkingTab;
+
     constructor(remoteUrl: string, tabs: AdminTabs) {
         Log.info("CS340AdminView::<init>(..)");
         super(remoteUrl, tabs);
+
+        this.markingTab = new AdminMarkingTab(remoteUrl);
     }
 
     public renderPage(name: string, opts: any) {
@@ -22,17 +29,6 @@ export class CS340AdminView extends AdminView {
 
         if (name === 'AdminRoot') {
             Log.info('CS340AdminView::renderPage(..) - augmenting tabs');
-
-            // this does not seem to work; it creates the tab on the menu, but it isn't clickable
-            // const tab = document.createElement('ons-tab');
-            // tab.setAttribute('page', 'dashboard.html');
-            // tab.setAttribute('label', 'Foo');
-            // tab.setAttribute('active', 'true');
-            // tab.setAttribute('icon', 'ion-ios-gear');
-            // tab.setAttribute('class', 'tabbar__item tabbar--top__item');
-            // tab.setAttribute('modifier', 'top');
-            // const tabbar = document.getElementById('adminTabbar');
-            // tabbar.children[1].appendChild(tab);
 
             Log.info('CS340AdminView::renderPage(..) - augmenting tabs done.');
         }
@@ -44,6 +40,11 @@ export class CS340AdminView extends AdminView {
         }
 
         Log.warn("CS340AdminView::renderPage(..) with name: " + name + " - complete");
+    }
+    public handleAdminMarking(opts: any) {
+        Log.info("CS340AdminView::handleAdminMarking(..) - start; options : " + JSON.stringify(opts));
+
+        return this.markingTab.init(opts);
     }
 
     /**
@@ -152,7 +153,7 @@ export class CS340AdminView extends AdminView {
         };
 
         mainFilePath.onchange = (evt) => {
-            that.generateCustomParameters(null)
+            that.generateCustomParameters(null);
         };
 
         assignmentConfig.appendChild(assignmentHeader);
@@ -198,7 +199,8 @@ export class CS340AdminView extends AdminView {
             assignmentInfo = {
                 seedRepoPath: "",
                 mainFilePath: "",
-                courseWeight: 0
+                courseWeight: 0,
+                status: AssignmentStatus.INACTIVE,
             };
             customParameters = {
                 scheduled: false,
@@ -285,5 +287,16 @@ export class CS340AdminView extends AdminView {
         Log.error("Error: Unimplemented");
 
         return false;
+    }
+
+    public transitionGradingPage(sid: string, aid: string, isTeam: boolean = false) {
+        // Move to grading
+        UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/GradingView.html', {
+            sid:    sid,
+            aid:    aid,
+            isTeam: isTeam
+        }).then().catch((error) => {
+                Log.error("CS340AdminView::transitionGradingPage(..) - error: " + JSON.stringify(error));
+        });
     }
 }

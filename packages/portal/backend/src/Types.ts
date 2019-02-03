@@ -1,6 +1,6 @@
 import {AutoTestResult} from "../../../common/types/AutoTestTypes";
 import {AutoTestConfig} from "../../../common/types/ContainerTypes";
-import {AssignmentGrade, AssignmentInfo, AssignmentRepositoryInfo} from "../../../common/types/CS340Types";
+import {AssignmentGrade, AssignmentInfo} from "../../../common/types/CS340Types";
 
 /**
  * These types are the storage-specific types used by the backend.
@@ -158,12 +158,6 @@ export interface Repository {
     custom: { // rather than having custom be .any, this allows courses to make sure they don't clash on their .custom parameters
         githubCreated?: boolean,
         githubReleased?: boolean,
-
-        // status?: any, // AssignmentController // TODO: make into assignment.status
-        // assignmentId?: any, // AssignmentController // TODO: make into assignment.id
-        // assignedTeams?: any, // AssignmentController // TODO: make into assignment.assignedTeams
-
-        assignmentInfo?: AssignmentRepositoryInfo,
 
         d0enabled?: boolean, // SDMM // TODO: make sdmm.d0enabled
         d1enabled?: boolean, // SDMM // TODO: make sdmm.d1enabled

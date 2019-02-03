@@ -6,23 +6,42 @@
 // Represents an Assignment grade, comprised of an arbitrary amount of Questions
 // TODO [WISHLIST]: Remove AssignmentGrade from having studentID and assignmentID (redundant, grade already tracks this)
 
+export interface AssignmentRubric {
+    questions: QuestionRubric[];
+}
+
+export interface QuestionRubric {
+    name: string;
+    description: string;
+    subQuestions: SubQuestionRubric[];
+}
+
+export interface SubQuestionRubric {
+    name: string;
+    description: string;
+    outOf: number;
+    weight: number;                 // score multiplier for the total grade
+    modifiers: any;                 // Custom modifiers - course dependant
+}
+
 export interface AssignmentGrade {
-    assignmentID: string;               // Unique Assignment ID per course
-    studentID: string;                  // Unique Student ID per course
-    released: boolean;                  // status if assignment grade has been released or not
+    // assignmentID: string;               // Unique Assignment ID per course
+    // studentID: string;                  // Unique Student ID per course
+    // released: boolean;                  // status if assignment grade has been released or not
+    fullyGraded: boolean;
     questions: QuestionGrade[];         // SubQuestions
 }
 
 // Represents the Question's grade, comprised of an arbitrary amount of subQuestions
 export interface QuestionGrade {
-    questionName: string;
-    commentName: string;
-    subQuestion: SubQuestionGrade[];
+    name: string;
+    comment: string;
+    subQuestions: SubQuestionGrade[];
 }
 
 // Represents the subQuestion's grade
 export interface SubQuestionGrade {
-    sectionName: string;
+    name: string;
     grade: number;
     graded: boolean;
     feedback: string;
@@ -34,39 +53,39 @@ export interface AssignmentInfo {
     seedRepoPath: string;
     mainFilePath: string;
     courseWeight: number;               // should be a value between 0-1, relative to the final grade
-    // status: AssignmentStatus;
+    status: AssignmentStatus;
     // rubric: AssignmentGradingRubric;
     // repositories: string[];             // Associated Repositories based on IDs
 }
 
 // Placed in Repository.custom
-export interface AssignmentRepositoryInfo {
-    assignmentId: string[];
-    status: AssignmentStatus;
-    assignedTeams: string[]; // team.id[]
-}
+// export interface AssignmentRepositoryInfo {
+//     assignmentId: string[];
+//     status: AssignmentStatus;
+//     assignedTeams: string[]; // team.id[]
+// }
 
-// Represents a grading rubric
-export interface AssignmentGradingRubric {
-    name: string;
-    comment: string; // placeholders for future use
-    questions: QuestionGradingRubric[];
-}
-
-// Represents a question rubric
-export interface QuestionGradingRubric {
-    name: string;
-    comment: string; // placeholders for future use
-    subQuestions: SubQuestionGradingRubric[];
-}
-
-export interface SubQuestionGradingRubric {
-    name: string;
-    comment: string;
-    outOf: number;
-    weight: number;                 // score multiplier for the total grade
-    modifiers: any;                 // Custom modifiers - course dependant
-}
+// // Represents a grading rubric
+// export interface AssignmentGradingRubric {
+//     name: string;
+//     comment: string; // placeholders for future use
+//     questions: QuestionGradingRubric[];
+// }
+//
+// // Represents a question rubric
+// export interface QuestionGradingRubric {
+//     name: string;
+//     comment: string; // placeholders for future use
+//     subQuestions: SubQuestionGradingRubric[];
+// }
+//
+// export interface SubQuestionGradingRubric {
+//     name: string;
+//     comment: string;
+//     outOf: number;
+//     weight: number;                 // score multiplier for the total grade
+//     modifiers: any;                 // Custom modifiers - course dependant
+// }
 
 export enum AssignmentStatus {
                             // Repositories Status:
@@ -77,12 +96,12 @@ export enum AssignmentStatus {
     CLOSED, //      = 4,        //    X    |  X   |       | Created, viewable, no push access
 }
 
-// Contains information about deliverables
-export interface DeliverableInfo {
-    id: string;
-    minStudents: number;
-    maxStudents: number;
-}
+// // Contains information about deliverables
+// export interface DeliverableInfo {
+//     id: string;
+//     minStudents: number;
+//     maxStudents: number;
+// }
 
 /*
 export interface CategoricalGradeRecord extends CategoricalRecord {

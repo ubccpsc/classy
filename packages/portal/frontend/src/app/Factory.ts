@@ -105,7 +105,7 @@ export class Factory {
             } else if (this.name === 'cs340' || this.name === 'cpsc340') {
                 tabs.teams = false; // no teams
                 tabs.results = false; // no results
-                tabs.dashboard = false; // no dashboard
+                // tabs.dashboard = false; // no dashboard
                 this.adminView = new CS340AdminView(backendUrl, tabs);
             } else {
                 Log.info("Factory::getAdminView() - returning default admin view for: " + this.name);

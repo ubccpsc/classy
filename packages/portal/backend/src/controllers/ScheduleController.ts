@@ -108,8 +108,4 @@ export class ScheduleController {
         Log.info("ScheduleController::scheduleAssignmentClose(..) - task scheduled");
         return true;
     }
-
-
-
-
 }
