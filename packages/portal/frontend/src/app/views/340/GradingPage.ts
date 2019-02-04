@@ -37,7 +37,7 @@ export class GradingPageView extends AdminPage {
         }
 
         // retrieving rubric
-        const rubric: AssignmentRubric = (deliverable.custom as any).assignment;
+        const rubric: AssignmentRubric = (deliverable.rubric) as AssignmentRubric;
         if (rubric === null) {
             // Log.error(`GradingPage::populateGradingPage(..) `);
             Log.error(`GradingPage::populateGradingPage(..) - ERROR: Assignment does not have a rubric`);

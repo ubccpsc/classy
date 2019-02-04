@@ -72,8 +72,8 @@ export class CS340AdminView extends AdminView {
         closeAssignmentButton.setAttribute("id", "adminProvision-closeAssignment");
         closeAssignmentButton.setAttribute("modifier", "medium");
         closeAssignmentButton.innerText = "Close Repositories";
-        closeAssignmentButton.onclick = (event) => {
-            this.saveDeliverable();
+        closeAssignmentButton.onclick = async (event) => {
+            await this.closeRepositories();
         };
 
         const closeAssignment = this.buildOnsListItem("fa-plus-square",
@@ -326,6 +326,25 @@ export class CS340AdminView extends AdminView {
         Log.error("Error: Unimplemented");
 
         return false;
+    }
+
+    private async closeRepositories(): Promise<void> {
+        Log.info(`CS340AdminView::closeRepositories() - start`);
+
+        const deliverableSelectElement: HTMLSelectElement =
+            document.getElementById("provisionRepoDeliverableSelect") as HTMLSelectElement;
+        Log.info(`CS340AdminView::closeRepositories() - ${deliverableSelectElement.value}`);
+
+        // get class options
+        const options: any = AdminView.getOptions();
+        options.method = 'post';
+
+        const url = this.remote + '/portal/cs340/generateRubric/' + deliverableSelectElement.value;
+        const response = await fetch(url, options);
+
+        Log.info(`CS340AdminView::closeRepositories() - response: ${JSON.stringify(response)}`);
+
+        return;
     }
 
     public transitionGradingPage(sid: string, aid: string, isTeam: boolean = false) {

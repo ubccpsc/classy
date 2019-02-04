@@ -7,6 +7,7 @@ import {GitHubActions} from "./controllers/GitHubActions";
 import {GitHubController, IGitHubController} from "./controllers/GitHubController";
 
 import NoCustomRoutes from "./server/common/NoCustomRoutes";
+import CS340Routes from "./server/CS340/CS340Routes";
 import IREST from "./server/IREST";
 
 export class Factory {
@@ -38,8 +39,9 @@ export class Factory {
             // } else if (name === 'cs310') {
             //     // no custom routes are required for 310
             //     return new NoCustomRoutes();
-            // } else if (name === 'cs340' || name === 'cpsc340') {
-            //     // instantiate CS340REST in fork
+        } else if (name === 'cs340' || name === 'cpsc340') {
+            // instantiate CS340REST in fork
+            return new CS340Routes();
         } else {
             Log.warn("Factory::getCustomRouteHandler() - no custom routes for: " + name);
         }
