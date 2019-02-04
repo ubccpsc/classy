@@ -40,7 +40,7 @@ export class CS340AdminView extends AdminView {
             this.insertAssignmentBlock();
         }
 
-        if (name === "adminProision") {
+        if (name === "adminProvision") {
             Log.warn("CS340AdminView::renderPage::AdminProvision - Injecting Buttons");
             this.insertCloseAssignmentButton();
         }
