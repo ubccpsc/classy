@@ -260,15 +260,16 @@ export class AdminMarkingTab extends AdminPage {
                 const maxGrade = this.calculateMaxGrade(deliverable);
                 newEntry = {
                     value: `${grade.score}`,
-                    html:
-    `<a onclick='window.myApp.view.transitionGradingPage("${studentId}",true)' href='#'>${grade.score}/${maxGrade}</a>`
+                    html: `<a onclick='window.myApp.view.transitionGradingPage` +
+                        `("${studentId}","${deliverable.id}",true)' href='#'>${grade.score}/${maxGrade}</a>`
     // `<a onclick='this.transitionGradingPage("${studentId}",true)' href='#'>${grade.score}/${maxGrade}</a>`
                 };
             } else {
                 // not completely graded
                 newEntry = {
                     value: "---",
-                    html: `<a onclick='window.myApp.view.transitionGradingPage("${studentId}",true)' href='#'>---</a>`
+                    html: `<a onclick='window.myApp.view.transitionGradingPage` +
+                        `("${studentId}","${deliverable.id}",true)' href='#'>---</a>`
                     // html: `<a onclick='this.transitionGradingPage("${studentId}",true)' href='#'>---</a>`
                 };
             }

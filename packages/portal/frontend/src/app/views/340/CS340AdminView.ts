@@ -1,4 +1,4 @@
-import {OnsInputElement, OnsListItemElement, OnsSwitchElement} from "onsenui";
+import {OnsButtonElement, OnsInputElement, OnsListItemElement, OnsSwitchElement} from "onsenui";
 import Log from "../../../../../../common/Log";
 import {AssignmentInfo, AssignmentStatus} from "../../../../../../common/types/CS340Types";
 import {Deliverable} from "../../../../../backend/src/Types";
@@ -6,6 +6,7 @@ import {Factory} from "../../Factory";
 import {UI} from "../../util/UI";
 import {AdminTabs, AdminView} from "../AdminView";
 import {AdminMarkingTab} from "./AdminMarkingTab";
+import {GradingPageView} from "./GradingPage";
 
 declare var ons: any;
 
@@ -39,12 +40,50 @@ export class CS340AdminView extends AdminView {
             this.insertAssignmentBlock();
         }
 
+        if (name === "adminProision") {
+            Log.warn("CS340AdminView::renderPage::AdminProvision - Injecting Buttons");
+            this.insertCloseAssignmentButton();
+        }
+
         Log.warn("CS340AdminView::renderPage(..) with name: " + name + " - complete");
     }
-    public handleAdminMarking(opts: any) {
+    public handleAdminMarking(opts: any): void {
         Log.info("CS340AdminView::handleAdminMarking(..) - start; options : " + JSON.stringify(opts));
+        this.markingTab.init(opts).then().catch();
+        return null;
+    }
 
-        return this.markingTab.init(opts);
+    public handleGradingView(opts: any): void {
+        Log.info(`CS340AdminView::handleGradingView(..) - start; options: ${JSON.stringify(opts)}`);
+
+        const gradingView: GradingPageView = new GradingPageView(this.remote);
+        gradingView.init(opts).then().catch();
+
+        return null;
+    }
+
+    private insertCloseAssignmentButton() {
+        Log.info(`CS340AdminView::insertCloseAssignmentButton(..) - start`);
+        const repositoryReleaseSelectElement: HTMLSelectElement =
+            document.getElementById("repositoryReleaseSelect") as HTMLSelectElement;
+        const listElement: HTMLDivElement = repositoryReleaseSelectElement
+            .parentElement.parentElement.parentElement.parentElement as HTMLDivElement;
+        const closeAssignmentButton: OnsButtonElement = document.createElement("ons-button") as OnsButtonElement;
+        closeAssignmentButton.setAttribute("id", "adminProvision-closeAssignment");
+        closeAssignmentButton.setAttribute("modifier", "medium");
+        closeAssignmentButton.innerText = "Close Repositories";
+        closeAssignmentButton.onclick = (event) => {
+            this.saveDeliverable();
+        };
+
+        const closeAssignment = this.buildOnsListItem("fa-plus-square",
+            "Close Repositories",
+            closeAssignmentButton, "This closes the repositories and prevents users from pushing to the repo"
+        );
+
+        listElement.appendChild(closeAssignment);
+
+        return;
     }
 
     /**
