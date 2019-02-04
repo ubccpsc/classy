@@ -1,6 +1,7 @@
 import {expect} from "chai";
 import * as fs from "fs-extra";
 import "mocha";
+
 import Config, {ConfigKey} from "../../common/Config";
 
 import Log from "../../common/Log";
@@ -9,11 +10,10 @@ import {CommitTarget} from "../../common/types/ContainerTypes";
 import Util from "../../common/Util";
 
 import {IClassPortal} from "../src/autotest/ClassPortal";
-
 import {MockClassPortal} from "../src/autotest/mocks/MockClassPortal";
 import {MockDataStore} from "../src/autotest/mocks/MockDataStore";
 import {GitHubAutoTest} from "../src/github/GitHubAutoTest";
-import {GitHubService, IGitHubMessage} from "../src/github/GitHubService";
+import {IGitHubMessage} from "../src/github/GitHubUtil";
 
 import "./GlobalSpec"; // load first
 import {TestData} from "./TestData";
@@ -26,12 +26,13 @@ describe("GitHubAutoTest", () => {
     let pushes: CommitTarget[];
     let data: MockDataStore;
     let portal: IClassPortal;
-    let gh: GitHubService;
     let at: GitHubAutoTest;
 
     const TS_IN = new Date(2018, 3, 3).getTime();
     const TS_BEFORE = new Date(2017, 12, 12).getTime();
     const TS_AFTER = new Date(2018, 12, 12).getTime();
+
+    const WAIT = 1000;
 
     // now: 1516559187579
     // now -10h: 1516523258762
@@ -46,11 +47,11 @@ describe("GitHubAutoTest", () => {
         for (const push of pushes) {
             push.timestamp = TS_IN + i++ * 1000;
         }
+
         data = new MockDataStore();
         await data.clearData();
 
         portal = new MockClassPortal();
-        gh = new GitHubService();
 
         Config.getInstance().setProp(ConfigKey.postback, false);
 
@@ -58,7 +59,10 @@ describe("GitHubAutoTest", () => {
     });
 
     beforeEach(async function() {
-        Log.test("AutoTest::beforeEach() - start");
+        // Log.test("AutoTest::beforeEach() - start");
+        Log.test("*****");
+        Log.test("GitHubAutoTestSpec::beforeEach( " + this.currentTest.title + " ) - start");
+        Log.test("*****");
         await data.clearData();
 
         // create a new AutoTest every test (allows us to mess with methods and make sure they are called)
@@ -68,9 +72,12 @@ describe("GitHubAutoTest", () => {
     afterEach(async function() {
         // pause after each test so async issues don't persist
         // this is a hack, but makes the tests more deterministic
-        Log.test("AutoTest::afterEach() - start");
-        await Util.timeout(100);
-        Log.test("AutoTest::afterEach() - done");
+        // Log.test("AutoTest::afterEach() - start");
+        await Util.timeout(WAIT / 2);
+        // Log.test("AutoTest::afterEach() - done");
+        Log.test("*****");
+        Log.test("GitHubAutoTestSpec::afterEach( " + this.currentTest.title + " ) - done");
+        Log.test("*****");
     });
 
     it("Should be able to be instantiated.", () => {
@@ -146,18 +153,22 @@ describe("GitHubAutoTest", () => {
         let info: CommitTarget;
         let meetsPreconditions: boolean;
 
+        Log.test('null info');
         info = null;
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
 
+        Log.test('undefined info');
         info = undefined;
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
 
+        Log.test('???');
         info = {
             personId:     Config.getInstance().getProp(ConfigKey.botName),
             botMentioned: true,
             delivId:      'd1',
+            kind:         'standard',
             repoId:       'repoId',
             commitSHA:    'SHA',
             commitURL:    'https://URL',
@@ -169,17 +180,20 @@ describe("GitHubAutoTest", () => {
         expect(meetsPreconditions).to.be.false;
         info.personId = 'validName';
 
+        Log.test('null delivId');
         info.delivId = null;
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
         info.delivId = 'd1';
 
-        info.timestamp = new Date(2017, 12, 1).getTime(); // not open yet
+        Log.test('not open yet');
+        info.timestamp = new Date(2001, 12, 1).getTime(); // not open yet
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
         info.timestamp = new Date(2018, 2, 1).getTime();
 
-        info.timestamp = new Date(2018, 12, 1).getTime(); // closed, but late autotest is true
+        Log.test('closed');
+        info.timestamp = new Date(2050, 12, 1).getTime(); // closed, but late autotest is true
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.true;
         info.timestamp = new Date(2018, 2, 1).getTime();
@@ -205,6 +219,7 @@ describe("GitHubAutoTest", () => {
             commitSHA:    pe.commitSHA,
             commitURL:    pe.commitURL,
             personId:     "myUser",
+            kind:         'standard',
             repoId:       "d1_project9999",
             // org:           "310",
             delivId:      "d0",
@@ -237,6 +252,7 @@ describe("GitHubAutoTest", () => {
             commitSHA:    pushes[2].commitSHA,
             commitURL:    pushes[2].commitURL,
             personId:     "myUser",
+            kind:         'standard',
             delivId:      "d0",
             repoId:       "d1_project9999",
             postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/cbe1b0918b872997de4c4d2baf4c263f8d4c6dc2/comments",
@@ -244,18 +260,15 @@ describe("GitHubAutoTest", () => {
             cloneURL:     "https://cloneURL"
         };
 
-        await Util.delay(100);
+        await Util.delay(WAIT);
 
         expect(allData.comments.length).to.equal(0);
         await at.handleCommentEvent(ce);
 
-        await Util.delay(100);
+        await Util.delay(WAIT);
         allData = await data.getAllData();
         expect(allData.comments.length).to.equal(1);
-
-        // await Util.timeout(1 * 1000); // let test finish so it doesn't ruin subsequent executions
-
-    });
+    }).timeout(WAIT * 10);
 
     let gitHubMessages: IGitHubMessage[] = [];
 
@@ -326,8 +339,8 @@ describe("GitHubAutoTest", () => {
         expect(gitHubMessages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
         expect(allData.comments.length).to.equal(1);
 
-        await Util.timeout(200); // just clear the buffer before moving onto the next test
-    });
+        await Util.timeout(WAIT); // just clear the buffer before moving onto the next test
+    }).timeout(WAIT * 10);
 
     it("Should give a user a response for on a commit once it finishes if they have previously requested it.", async () => {
         expect(at).not.to.equal(null);
@@ -348,20 +361,61 @@ describe("GitHubAutoTest", () => {
         // TEST: send a comment (this is the previous test)
         await at.handleCommentEvent(TestData.commentRecordUserA);
         allData = await data.getAllData();
+        Log.test("1: - ghMessages: " + JSON.stringify(gitHubMessages));
+        expect(gitHubMessages.length).to.equal(1); // should generate a warning
+        expect(gitHubMessages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
+        Log.test("1: - allData: " + JSON.stringify(allData));
+        expect(allData.comments.length).to.equal(1);
+        expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
+        await Util.timeout(WAIT); // Wait for it!
+        Log.test("Round 1 complete");
+
+        allData = await data.getAllData();
+        Log.test("2: - githubMessages: " + JSON.stringify(gitHubMessages));
+        Log.test("2: - allData: " + JSON.stringify(allData));
+        expect(gitHubMessages.length).to.equal(2); // should generate a warning
+        expect(gitHubMessages[1].message).to.equal("Test execution complete.");
+        expect(allData.comments.length).to.equal(1);
+        expect(allData.feedback.length).to.equal(1); // should be charged
+        Log.test("Test complete");
+    }).timeout(WAIT * 10);
+
+    it("Should give a user a response for on a commit once it finishes if they have previously requested a check on it.", async () => {
+        expect(at).not.to.equal(null);
+
+        // start fresh
+        await data.clearData();
+        stubDependencies();
+
+        // SETUP: add a push with no output records
+        await at.handlePushEvent(TestData.pushEventA);
+        let allData = await data.getAllData();
+        expect(gitHubMessages.length).to.equal(0); // should not be any feedback yet
+        expect(allData.comments.length).to.equal(0);
+        expect(allData.pushes.length).to.equal(1);
+        // don't wait; want to catch this push in flight
+        Log.test("Setup complete");
+
+        // TEST: send a comment (this is the previous test)
+        const req = Util.clone(TestData.commentRecordUserA) as CommitTarget;
+        req.flags = ["#check"];
+        req.kind = 'check';
+        await at.handleCommentEvent(req);
+        allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
         expect(gitHubMessages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
-        await Util.timeout(200); // Wait for it!
+        await Util.timeout(WAIT); // Wait for it!
         Log.test("Round 1 complete");
 
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(2); // should generate a warning
         expect(gitHubMessages[1].message).to.equal("Test execution complete.");
         expect(allData.comments.length).to.equal(1);
-        expect(allData.feedback.length).to.equal(1); // should be charged
+        expect(allData.feedback.length).to.equal(1);
         Log.test("Test complete");
-    });
+    }).timeout(WAIT * 10);
 
     it("Should give a user a response for on a commit once it finishes if postback is true.", async () => {
         expect(at).not.to.equal(null);
@@ -388,13 +442,13 @@ describe("GitHubAutoTest", () => {
         // expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
 
         // Wait for it!
-        await Util.timeout(100);
+        await Util.timeout(WAIT);
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(1); // should post response
         expect(gitHubMessages[0].message).to.equal("Build Problem Encountered.");
         expect(allData.comments.length).to.equal(0);
         expect(allData.feedback.length).to.equal(0); // no charge
-    });
+    }).timeout(WAIT * 10);
 
     it("Should give a user a response for on a commit once it finishes if postback is true. They should not be charged if they requested this build.", async () => {
         expect(at).not.to.equal(null);
@@ -414,6 +468,7 @@ describe("GitHubAutoTest", () => {
 
         // TEST: send a comment (this is the previous test)
         await at.handleCommentEvent(TestData.commentRecordUserA);
+        Log.test("test one ready");
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
         expect(gitHubMessages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
@@ -421,13 +476,14 @@ describe("GitHubAutoTest", () => {
         expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
 
         // Wait for it!
-        await Util.timeout(100);
+        await Util.timeout(WAIT);
+        Log.test("test two ready");
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(2); // should post response
         expect(gitHubMessages[1].message).to.equal("Build Problem Encountered.");
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(0); // no charge
-    });
+    }).timeout(WAIT * 10);
 
     it("Should give a user the results message on a commit that has been finished.", async () => {
         expect(at).not.to.equal(null);
@@ -443,7 +499,7 @@ describe("GitHubAutoTest", () => {
         expect(gitHubMessages.length).to.equal(0); // should not be any feedback yet
         expect(allData.pushes.length).to.equal(1);
         expect(allData.feedback.length).to.equal(0);
-        await Util.timeout(200); // should be long enough for processing to finish
+        await Util.timeout(WAIT); // should be long enough for processing to finish
         Log.test("Setup complete");
 
         // TEST: send a comment
@@ -463,7 +519,7 @@ describe("GitHubAutoTest", () => {
         expect(allData.comments.length).to.equal(2);
         expect(allData.feedback.length).to.equal(2);
         Log.test("Test complete.");
-    });
+    }).timeout(WAIT * 10);
 
     it("Should not let a user request results too soon.", async () => {
         // This case happens when a comment is made on a commit that AutoTest did not see the push for
@@ -479,7 +535,8 @@ describe("GitHubAutoTest", () => {
             commitURL: "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263fSOMEOTHER", // different commit
             delivId:   "d1", // same deliverable
             timestamp: TestData.commentRecordUserA.timestamp, // 1516451273288,
-            personId:  "cs310test"
+            personId:  "cs310test",
+            kind:      'standard'
         };
 
         await data.savePush(TestData.inputRecordA.target);
@@ -500,7 +557,7 @@ describe("GitHubAutoTest", () => {
         expect(allData.feedback.length).to.equal(1); // no extra feedback records should be present
 
         Log.test("Test complete.");
-    });
+    }).timeout(WAIT * 10);
 
     it("Should be able to invoke a container.", async () => {
         expect(at).not.to.equal(null);

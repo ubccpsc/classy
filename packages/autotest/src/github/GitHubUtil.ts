@@ -1,8 +1,22 @@
+import * as rp from "request-promise-native";
+
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
 import {CommitTarget} from "../../../common/types/ContainerTypes";
 import {ClassPortal, IClassPortal} from "../autotest/ClassPortal";
+
+export interface IGitHubMessage {
+    /**
+     * Commit where comment should be made (should be commitURL)
+     */
+    url: string;
+
+    /**
+     * Markdown format
+     */
+    message: string;
+}
 
 /**
  * Translator class to turn REST payloads into IPushEvent and ICommentEvents.
@@ -128,6 +142,10 @@ export class GitHubUtil {
             // need to get this from portal backend (this is a gitHubId, not a personId)
             const personResponse = await cp.getPersonId(requestor); // NOTE: this returns Person.id, id, not Person.gitHubId!
             const personId = personResponse.personId;
+            let kind = 'standard'; // if #check, set that here
+            if (flags.indexOf("#check") >= 0) {
+                kind = 'check';
+            }
 
             const commentEvent: CommitTarget = {
                 delivId,
@@ -138,6 +156,7 @@ export class GitHubUtil {
                 postbackURL,
                 cloneURL,
                 personId,
+                kind,
                 timestamp,
                 flags
             };
@@ -213,6 +232,7 @@ export class GitHubUtil {
                 repoId:       repo,
                 botMentioned: false, // not explicitly invoked
                 personId:     null, // not explicitly requested
+                kind:         'push',
                 cloneURL,
                 commitSHA,
                 commitURL,
@@ -226,5 +246,62 @@ export class GitHubUtil {
             Log.error("GitHubUtil::processPush(..) - ERROR payload: " + JSON.stringify(payload, null, 2));
             return null;
         }
+    }
+
+    public static async postMarkdownToGithub(message: IGitHubMessage): Promise<boolean> {
+        try {
+            // sanity checking
+            if (message === null) {
+                Log.error("GitHubUtil::postMarkdownToGithub(..)  - message is required");
+                return false;
+            }
+            if (typeof message.url === "undefined" || message.url === null) {
+                Log.error("GitHubUtil::postMarkdownToGithub(..)  - message.url is required");
+                return false;
+            }
+            if (typeof message.message === "undefined" || message.message === null || message.message.length < 1) {
+                Log.error("GitHubUtil::postMarkdownToGithub(..)  - message.message is required");
+                return false;
+            }
+
+            // find a better short string for logging
+            let loggingMessage = message.message;
+            if (loggingMessage.indexOf('\n') > 0) {
+                loggingMessage = loggingMessage.substr(0, loggingMessage.indexOf('\n'));
+            }
+            if (loggingMessage.length > 80) {
+                loggingMessage = loggingMessage.substr(0, 80) + "...";
+            }
+
+            Log.info("GitHubUtil::postMarkdownToGithub(..) - Posting markdown to url: " +
+                message.url + "; message: " + loggingMessage);
+
+            const body: string = JSON.stringify({body: message.message});
+            const options: any = {
+                method:  "POST",
+                headers: {
+                    "Content-Type":  "application/json",
+                    "User-Agent":    "UBC-AutoTest",
+                    "Authorization": Config.getInstance().getProp(ConfigKey.githubBotToken)
+                },
+                body:    body
+            };
+
+            if (Config.getInstance().getProp(ConfigKey.postback) === true) {
+                try {
+                    await rp(message.url, options);
+                    Log.trace("GitHubUtil::postMarkdownToGithub(..) - success");
+                } catch (err) {
+                    Log.error("GitHubUtil::postMarkdownToGithub(..) - ERROR: " + err);
+                    return false;
+                }
+            } else {
+                Log.trace("GitHubUtil::postMarkdownToGithub(..) - send skipped (config.postback === false)");
+            }
+        } catch (err) {
+            Log.error("GitHubUtil::postMarkdownToGithub(..) - ERROR: " + err);
+            return false;
+        }
+        return true;
     }
 }

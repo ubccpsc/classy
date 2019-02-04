@@ -11,6 +11,8 @@ export class TestData {
         timestamp:    1516472872288,
         botMentioned: false,
         personId:     null,
+        kind:         'push',
+        flags:        [],
         delivId:      "d0"
     };
 
@@ -24,6 +26,8 @@ export class TestData {
         timestamp:    1516992872288,
         botMentioned: false,
         personId:     null,
+        kind:         'push',
+        flags:        [],
         delivId:      "d0"
     };
 
@@ -38,6 +42,8 @@ export class TestData {
         timestamp:    1516472872288,
         botMentioned: false,
         personId:     null,
+        kind:         'push',
+        flags:        [],
         delivId:      "d0"
     };
 
@@ -70,6 +76,8 @@ export class TestData {
         commitSHA:    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         personId:     "cs310test",
+        kind:         'standard',
+        flags:        [],
         repoId:       "d0_team999",
         delivId:      "d1",
         postbackURL:  "EMPTY",
@@ -82,6 +90,8 @@ export class TestData {
         commitSHA:    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         personId:     "cs310test",
+        kind:         'standard',
+        flags:        [],
         repoId:       "d0_team999",
         delivId:      "d1",
         postbackURL:  "EMPTY",
@@ -94,6 +104,8 @@ export class TestData {
         commitSHA:    "abe1b0918b872997de4c4d2baf4c263f8d4staff",
         commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4staff",
         personId:     "staff",
+        kind:         'standard',
+        flags:        [],
         repoId:       "d0_team999",
         delivId:      "d1",
         postbackURL:  "EMPTY",
@@ -106,7 +118,8 @@ export class TestData {
         // org:       TestData.commentRecordStaffA.org,
         delivId:   TestData.commentRecordStaffA.delivId,
         timestamp: TestData.commentRecordStaffA.timestamp + 1000,
-        commitURL: TestData.commentRecordStaffA.commitURL
+        commitURL: TestData.commentRecordStaffA.commitURL,
+        kind:      'standard'
     };
 
     public static readonly feedbackRecordB: IFeedbackGiven = {
@@ -114,7 +127,8 @@ export class TestData {
         // org:       TestData.commentRecordUserA.org,
         delivId:   TestData.commentRecordUserA.delivId,
         timestamp: TestData.commentRecordUserA.timestamp + 1000,
-        commitURL: TestData.commentRecordUserA.commitURL
+        commitURL: TestData.commentRecordUserA.commitURL,
+        kind:      'standard'
     };
 
     public static readonly outputRecordA: AutoTestResult = {
@@ -136,14 +150,14 @@ export class TestData {
                 skipNames:    [],
                 custom:       [],
                 feedback:     "Test Feedback",
-                result:        "SUCCESS",
-                attachments:        []
+                result:       "SUCCESS",
+                attachments:  []
             },
             // "feedback":           "Test Feedback",
             postbackOnComplete: false,
             custom:             {},
             state:              ContainerState.SUCCESS,
-            graderTaskId:        ""
+            graderTaskId:       ""
         }
     };
 
@@ -173,7 +187,7 @@ export class TestData {
             postbackOnComplete: false,
             custom:             {},
             state:              ContainerState.SUCCESS,
-            graderTaskId:        ""
+            graderTaskId:       ""
         }
     };
 }

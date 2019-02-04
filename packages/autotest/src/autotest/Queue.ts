@@ -18,9 +18,9 @@ export class Queue {
         this.numSlots = numSlots;
 
         // almost certainly exists (contains all queue output), but quick to check
-        fs.ensureDirSync(Config.getInstance().getProp(ConfigKey.persistDir));
+        fs.mkdirpSync(Config.getInstance().getProp(ConfigKey.persistDir) + '/queues');
 
-        this.persistDir = Config.getInstance().getProp(ConfigKey.persistDir) + '/' + this.name + '.json';
+        this.persistDir = Config.getInstance().getProp(ConfigKey.persistDir) + '/queues/' + this.name + '.json';
     }
 
     private data: ContainerInput[] = [];
@@ -169,7 +169,7 @@ export class Queue {
         try {
             // this happens so infrequently, we will do it synchronously
             const store = fs.readJSONSync(this.persistDir);
-            Log.info("[PTEST] Queue::load() - rehydrated store: " + store);
+            Log.info("[PTEST] Queue::load() - rehydrated store: " + JSON.stringify(store));
             Log.info("[PTEST] Queue::load() - for testing only; not adding rehydrated elements to queue yet");
 
             // NOTE: this is disabled on purpose for now, but this is what we would do

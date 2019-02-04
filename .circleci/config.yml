@@ -27,18 +27,18 @@ jobs:
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
 
-      - run: yarn install
+      - run: yarn install --ignore-engines
 
       - run:
-            command: cd packages/common && yarn install
+            command: cd packages/common && yarn install --ignore-engines
             name: Preparing common
 
       - run:
-            command: cd packages/autotest && yarn install
+            command: cd packages/autotest && yarn install --ignore-engines
             name: Preparing autotest
 
       - run:
-            command: cd packages/portal/backend && mkdir -p ssl/ && yarn install
+            command: cd packages/portal/backend && mkdir -p ssl/ && yarn install --ignore-engines
             name: Preparing backend
 
       - save_cache:

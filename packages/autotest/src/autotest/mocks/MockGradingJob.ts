@@ -25,9 +25,9 @@ export class MockGradingJob extends GradingJob {
             // TODO: This should really become TestDocker.ts or something that can be instantiated
             let timeout = 10000;
             if (Config.getInstance().getProp(ConfigKey.name) === Config.getInstance().getProp(ConfigKey.testname)) {
-                timeout = 20; // don't slow down tests; don't need a lot to get out of order here
+                timeout = 200; // don't slow down tests; don't need a lot to get out of order here
             }
-            await Util.timeout(timeout); // simulate the container taking longer than the rest of the process
+            await Util.delay(timeout); // simulate the container taking longer than the rest of the process
 
             const gradeReport: GradeReport = {
                 scoreOverall: 50,

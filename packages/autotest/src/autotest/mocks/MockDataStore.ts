@@ -109,7 +109,7 @@ export class MockDataStore implements IDataStore {
         }
     }
 
-    public async getCommentRecord(commitURL: string, delivId: string): Promise<CommitTarget | null> {
+    public async getCommentRecord(commitURL: string, delivId: string, kind: string): Promise<CommitTarget | null> {
         // Log.info("MockDataStore::getCommentRecord(..) - start");
         try {
             const start = Date.now();
@@ -119,7 +119,7 @@ export class MockDataStore implements IDataStore {
             // find and return
             for (const record of outRecords) {
                 if (record !== null && typeof record.commitURL !== "undefined" &&
-                    record.commitURL === commitURL && record.delivId === delivId) {
+                    record.commitURL === commitURL && record.delivId === delivId && record.kind === kind) {
                     Log.info("MockDataStore::getCommentRecord(..) - found; took: " + Util.took(start));
                     return record;
                 }
@@ -190,7 +190,7 @@ export class MockDataStore implements IDataStore {
         }
     }
 
-    public async getLatestFeedbackGivenRecord(delivId: string, userName: string): Promise<IFeedbackGiven | null> {
+    public async getLatestFeedbackGivenRecord(delivId: string, userName: string, kind: string): Promise<IFeedbackGiven | null> {
         // Log.trace("MockDataStore::getLatestFeedbackGivenRecord(..) - start");
         let ret: IFeedbackGiven | null = null;
         try {
@@ -198,7 +198,7 @@ export class MockDataStore implements IDataStore {
             const records: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
             const shortList: IFeedbackGiven[] = [];
             for (const req of records) {
-                if (req !== null && req.delivId === delivId && req.personId === userName) {
+                if (req !== null && req.delivId === delivId && req.personId === userName && req.kind === kind) {
                     shortList.push(req);
                 }
             }
