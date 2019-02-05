@@ -339,7 +339,7 @@ export class CS340AdminView extends AdminView {
         const options: any = AdminView.getOptions();
         options.method = 'post';
 
-        const url = this.remote + '/portal/cs340/generateRubric/' + deliverableSelectElement.value;
+        const url = this.remote + '/portal/cs340/closeAssignmentRepositories/' + deliverableSelectElement.value;
         const response = await fetch(url, options);
 
         Log.info(`CS340AdminView::closeRepositories() - response: ${JSON.stringify(response)}`);
