@@ -1,17 +1,33 @@
-import {OnsInputElement} from "onsenui";
+import {OnsInputElement, OnsSearchInputElement} from "onsenui";
 import Log from "../../../../../../common/Log";
-import {AssignmentGrade, AssignmentRubric, SubQuestionRubric} from "../../../../../../common/types/CS340Types";
-import {DeliverableTransport, RepositoryTransport} from "../../../../../../common/types/PortalTypes";
+import {
+    AssignmentGrade,
+    AssignmentRubric,
+    QuestionGrade, SubQuestionGrade,
+    SubQuestionRubric
+} from "../../../../../../common/types/CS340Types";
+import {DeliverableTransport, RepositoryTransport, TeamTransport} from "../../../../../../common/types/PortalTypes";
 import {UI} from "../../util/UI";
 import {AdminDeliverablesTab} from "../AdminDeliverablesTab";
 import {AdminPage} from "../AdminPage";
 import {AdminResultsTab} from "../AdminResultsTab";
 import {AdminView} from "../AdminView";
 
+const ERROR_POTENTIAL_INCORRECT_INPUT: string = "input triggered warning";
+const ERROR_INVALID_INPUT: string = "invalid input";
+const ERROR_NON_NUMERICAL_GRADE: string = "non-numerical grade entered";
+const ERROR_NULL_RUBRIC: string = "null rubric-data";
+const ERROR_MALFORMED_PAGE: string = "malformed page with info elements";
+const WARN_EMPTY_FIELD: string = "empty field";
+
 export class GradingPageView extends AdminPage {
     // private students: string[];
     // private isTeam: boolean;
     // private deliverableId: string;
+
+    private studentId: string;
+    private assignmentId: string;
+    private isTeam: boolean;
 
     constructor(remote: string) {
         super(remote);
@@ -19,6 +35,9 @@ export class GradingPageView extends AdminPage {
 
     public async init(opts: any): Promise<void> {
         Log.info(`GradingPage::init(..) - opts: ${JSON.stringify(opts)}`);
+        this.studentId = opts.sid;
+        this.assignmentId = opts.aid;
+        this.isTeam = opts.isTeam;
         return await this.populateGradingPage(opts.aid, opts.sid, opts.isTeam);
     }
 
@@ -96,7 +115,7 @@ export class GradingPageView extends AdminPage {
         studentIDBox.appendChild(assignmentInfoStudentID);
 
         if (gradingSectionElement === null || assignmentInfoElement === null) {
-            Log.error("CS340View::populateGradingPage() - Unable to populate page due to missing elements");
+            Log.error("GradingPage::populateGradingPage() - Unable to populate page due to missing elements");
             return;
         }
 
@@ -104,7 +123,10 @@ export class GradingPageView extends AdminPage {
 
         // Create a "DID NOT COMPLETE" button
         const dncButton = document.createElement("ons-button");
-        dncButton.setAttribute("onclick", "window.myApp.view.submitGrade(false)");
+        // dncButton.setAttribute("onclick", "window.myApp.view.submitGrade(false)");
+        dncButton.onclick = async (evt) => {
+            await this.submitReturn(this.studentId, this.assignmentId, false);
+        };
         dncButton.setAttribute("style", "margin-left: 1em; background: red");
         dncButton.innerHTML = "No Submission";
         gradingSectionElement!.appendChild(dncButton);
@@ -162,8 +184,11 @@ export class GradingPageView extends AdminPage {
                 gradeInputElement.setAttribute("data-type", subQuestion.name);
                 gradeInputElement.setAttribute("modifier", "underbar");
                 gradeInputElement.setAttribute("class", "subQuestionGradeInput");
-                gradeInputElement.setAttribute("onchange",
-                    "window.myApp.view.checkIfWarning(this)");
+                // gradeInputElement.setAttribute("onchange", "window.myApp.view.checkIfWarning(this)");
+                gradeInputElement.onchange = (element) => {
+                    this.checkIfWarning((element.target as HTMLInputElement).parentElement as OnsInputElement);
+                };
+                // gradeInputElement.setAttribute("onchange", "window.myApp.view.checkIfWarning(this)");
                 gradeInputElement.setAttribute("data-outOf", "" + subQuestion.outOf);
                 gradeInputElement.innerHTML = subQuestion.name + " [out of " + subQuestion.outOf + "]";
 
@@ -205,7 +230,10 @@ export class GradingPageView extends AdminPage {
 
         // Create a Save Grade button
         const submitButton = document.createElement("ons-button");
-        submitButton.setAttribute("onclick", "window.myApp.view.submitGrade()");
+        // submitButton.setAttribute("onclick", "window.myApp.view.submitGrade()");
+        submitButton.onclick = async (evt) => {
+            await this.submitReturn(this.studentId, this.assignmentId);
+        };
         submitButton.innerHTML = "Save Grade";
 
         gradingSectionElement!.appendChild(submitButton);
@@ -220,5 +248,267 @@ export class GradingPageView extends AdminPage {
     private async getPreviousSubmission(studentId: string, deliverableId: string): Promise<AssignmentGrade> {
         // TODO: Complete this
         return null;
+    }
+
+    private async submitReturn(studentId: string, deliverableId: string, completed: boolean = true): Promise<void> {
+        if (await this.submitGrade(studentId, deliverableId, completed)) {
+            UI.popPage();
+        }
+        return;
+    }
+
+    /**
+     * Scrapes the page and creates a grade to save
+     * @param studentId
+     * @param deliverableId
+     */
+    private async submitGrade(studentId: string, deliverableId: string, completed: boolean = true): Promise<boolean> {
+        let errorStatus = false;
+        let warnStatus = false;
+        let warnComment: string = "";
+        let errorComment: string = "";
+        const questionArray: QuestionGrade[] = [];
+        const questionBoxes = document.getElementsByClassName("questionBox");
+
+        for (let i = 0; i < questionBoxes.length; i++) {
+            // A single question box, representative of many subquestions
+            const questionBox = questionBoxes[i];
+            // Get each subquestion from the questionBox
+            const subQuestions = questionBox.getElementsByClassName("subQuestionBody");
+            // initalize an array to place all the information inside
+            const subQuestionArray: SubQuestionGrade[] = [];
+
+            // for each subQuestion
+            // tslint:disable-next-line
+            for (let j = 0; j < subQuestions.length; j++) {
+                // Get a single subQuestion
+                const subQuestion = subQuestions[j];
+
+                // Grab the elements associated with the subQuesiton
+                const gradeInputElements = subQuestion.getElementsByClassName("subQuestionGradeInput");
+                const errorElements = subQuestion.getElementsByClassName("errorBox");
+                const responseBoxElements = subQuestion.getElementsByClassName("textarea");
+
+                // Check if there is exactly one element in each
+                // otherwise something is wrong with the webpage
+                if (gradeInputElements.length !== 1 ||
+                    responseBoxElements.length !== 1 ||
+                    errorElements.length !== 1) {
+                    // Display an error
+                    Log.error("GradingPage::submitGrade - Error: Page is malformed");
+                    return false;
+                }
+
+                // Grab the elements
+                const gradeInputElement = gradeInputElements[0] as HTMLInputElement;
+                const responseBoxElement = responseBoxElements[0] as HTMLTextAreaElement;
+                const errorElement = errorElements[0] as HTMLElement;
+
+                // Get the type from the embedded HTML data
+                let rubricType = gradeInputElement.getAttribute("data-type");
+
+                // Retrieve the value inputted into the form field
+                let gradeValue = parseFloat(gradeInputElement.value);
+                let graded = true;
+
+                // If the value is not found, set it to a default empty string
+                if (rubricType === null) {
+                    rubricType = "";
+                    if (!errorStatus) {
+                        errorComment = ERROR_NULL_RUBRIC;
+                    }
+                    errorStatus = true;
+                    continue;
+                }
+
+                if (gradeInputElement.value === "") {
+                    gradeValue = 0;
+                    if (!warnStatus) {
+                        warnComment = WARN_EMPTY_FIELD;
+                    }
+                    warnStatus = true;
+                    graded = false;
+                    errorElement.innerHTML = "Warning: Input field is empty";
+                }
+
+                // If the grade value retrieved is not a number, default the value to 0
+                if (gradeInputElement.value !== "" && isNaN(gradeValue)) {
+                    gradeValue = 0;
+                    if (!errorStatus) {
+                        errorComment = ERROR_NON_NUMERICAL_GRADE;
+                    }
+                    errorStatus = true;
+                    errorElement.innerHTML = "Error: Must specify a valid number";
+                    continue;
+                } else {
+                    // If the gradeValue is an actual number
+                    // check if there are any warnings about the input value
+                    if (this.checkIfWarning(gradeInputElement)) {
+                        if (!errorStatus) {
+                            errorComment = ERROR_POTENTIAL_INCORRECT_INPUT;
+                        }
+                        errorStatus = true;
+                    }
+                }
+
+                // create a new subgrade, but if assignment was NOT _completed_, give 0
+                const newSubGrade: SubQuestionGrade = {
+                    name: rubricType,
+                    grade:       completed ? gradeValue : 0,
+                    graded:      completed ? graded : true,
+                    feedback:    responseBoxElement.value
+                };
+
+                subQuestionArray.push(newSubGrade);
+            }
+
+            const questionNames = document.getElementsByClassName("questionName");
+
+            const newQuestion: QuestionGrade = {
+                name: questionNames[i].innerHTML,
+                comment:  "",
+                subQuestions:  subQuestionArray
+            };
+
+            questionArray.push(newQuestion);
+        }
+
+        const aInfoSIDElements = document.getElementsByClassName("aInfoSID");
+        const aInfoIDElements = document.getElementsByClassName("aInfoID");
+
+        if (aInfoSIDElements.length !== 1 || aInfoIDElements.length !== 1) {
+            if (!errorStatus) {
+                errorComment = ERROR_MALFORMED_PAGE;
+            }
+            errorStatus = true;
+        }
+
+        if (errorStatus) {
+            if (errorComment !== ERROR_POTENTIAL_INCORRECT_INPUT || !confirm("Warning: " +
+                "Potential incorrect value entered into page! " +
+                "Do you still wish to save?")) {
+                Log.error("GradingPage::submitGrade() - Unable to submit data; error: " + errorComment);
+                return null;
+            }
+        }
+
+        const sid = aInfoSIDElements[0].innerHTML;
+        const aid = aInfoIDElements[0].innerHTML;
+
+        // check some condition
+        const teamIndicator: HTMLParagraphElement | null = (document.getElementById("teamIndicator") as HTMLParagraphElement);
+        const targetStudentIds: string[] = [];
+        if (teamIndicator !== null) {
+            // this is kind of tricky, pull the team information out and get all the student IDs
+            const teamOptions: any = AdminView.getOptions();
+            const teamURL = this.remote + '/portal/cs340/getStudentTeamByDeliv/' + sid + "/" + aid;
+            const teamResponse = await fetch(teamURL, teamOptions);
+            if (teamResponse.status !== 200) {
+                const errJson = await teamResponse.json();
+                Log.error("CS340AdminView::submitGrade(..) - Error: " + errJson.error);
+                UI.notification("Unable to save grade to team; unable to find correct team");
+                return null;
+            } else {
+                const teamJson = await teamResponse.json();
+                const team: TeamTransport = teamJson.response;
+                for (const personId of team.people) {
+                    targetStudentIds.push(personId);
+                }
+            }
+        } else {
+            targetStudentIds.push(sid);
+        }
+
+        return await this.submitGradeRecord(aid, targetStudentIds, questionArray);
+    }
+
+    public async submitGradeRecord(aid: string, personIds: string[], questionArray: QuestionGrade[]): Promise<boolean> {
+        Log.info("CS340AdminView::submitGradeRecord(..) - start");
+        const allPromises: Array<Promise<any>> = [];
+        UI.showModal("Submitting grade(s), please wait...");
+
+        for (const personId of personIds) {
+            // create a new grade
+            const newAssignmentGrade: AssignmentGrade = {
+                fullyGraded:  false,
+                questions:    questionArray
+            };
+
+            const verifiedAssignmentGrade: AssignmentGrade = this.verifyMarkedAssignmentGrade(newAssignmentGrade);
+
+            const url = this.remote + `/portal/cs340/setAssignmentGrade/${personId}/${aid}`;
+            Log.info("CS340View::submitGrade() - uri: " + url);
+
+            // Call the function
+            const options: any = AdminView.getOptions();
+
+            options.method = 'put';
+            options.headers.Accept = 'application/json';
+            options.json = true;
+            options.body = JSON.stringify(verifiedAssignmentGrade);
+
+            Log.info("CS340View::submitGrade() - request body: " + options.body);
+
+            allPromises.push(fetch(url, options));
+        }
+
+        const resultArray = await Promise.all(allPromises);
+
+        for (const response of resultArray) {
+            Log.info("CS340View::submitGrade() - response from api " + response);
+            if (response.status !== 200) {
+                const errResponse = await response.json();
+                Log.trace("CS340AdminView::submitGrade() - error submitting grades, code: " +
+                    response.status + " error: " + response.statusText);
+                // alert(errResponse.error);
+                UI.showAlert(errResponse.error);
+                UI.hideModal();
+                return false;
+            }
+        }
+        UI.hideModal();
+        Log.info("CS340AdminView::submitGradeRecord(..) - end");
+
+        return true;
+    }
+
+    /**
+     * Checks if the input value should be causing any warnings, and updates the related field
+     * @param gradeInputElement
+     */
+    private checkIfWarning(gradeInputElement: OnsInputElement): boolean {
+        // TODO: Complete this
+        // data-outOf
+        Log.info(`GradingPage::checkIfWarning(${JSON.stringify(gradeInputElement)} - start`);
+        Log.info(`Parameter: ${gradeInputElement.value}`);
+        const gradeValue: number = parseFloat(gradeInputElement.value);
+        const gradeOutOf: number = parseFloat(gradeInputElement.getAttribute("data-outOf"));
+        const parentElement: HTMLElement = gradeInputElement.parentElement;
+        const errorBox = parentElement.getElementsByClassName("errorBox");
+        if (gradeValue < 0 || gradeValue > gradeOutOf) {
+            errorBox[0].innerHTML = "Warning: Grade out of bounds";
+            return true;
+        } else {
+            errorBox[0].innerHTML = "";
+            return false;
+        }
+    }
+
+    /**
+     * Verifies if the assignment is fully graded or not, then returns the Assignment grade
+     * @param {AssignmentGrade} assignmentGrade
+     * @returns {AssignmentGrade}
+     */
+    private verifyMarkedAssignmentGrade(assignmentGrade: AssignmentGrade): AssignmentGrade {
+        for (const question of assignmentGrade.questions) {
+            for (const subQuestion of question.subQuestions) {
+                if (subQuestion.graded === false) {
+                    assignmentGrade.fullyGraded = false;
+                    return assignmentGrade;
+                }
+            }
+        }
+        assignmentGrade.fullyGraded = true;
+        return assignmentGrade;
     }
 }

@@ -193,24 +193,6 @@ export class AdminMarkingTab extends AdminPage {
         st.generate();
     }
 
-    /**
-     * Verifies if the assignment is fully graded or not, then returns the Assignment grade
-     * @param {AssignmentGrade} assignmentGrade
-     * @returns {AssignmentGrade}
-     */
-    private verifyMarkedAssignmentGrade(assignmentGrade: AssignmentGrade): AssignmentGrade {
-        for (const question of assignmentGrade.questions) {
-            for (const subQuestion of question.subQuestions) {
-                if (subQuestion.graded === false) {
-                    assignmentGrade.fullyGraded = false;
-                    return assignmentGrade;
-                }
-            }
-        }
-        assignmentGrade.fullyGraded = true;
-        return assignmentGrade;
-    }
-
     private checkIfCompletelyGraded(gradeTransport: GradeTransport): boolean {
         if (gradeTransport === null || typeof gradeTransport === "undefined") {
             return false;
