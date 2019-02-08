@@ -140,15 +140,6 @@ export class AdminMarkingTab extends AdminPage {
             // TODO: Implement hidden names
         }
 
-        // tableHeaders.push({
-        //     id:          "repo",
-        //     text:        "Repository",
-        //     sortable:    true,
-        //     defaultSort: false,
-        //     sortDown:    false,
-        //     style:       'padding-left: 1em; padding-right: 1em;'
-        // });
-
         tableHeaders.push({
             id:          "grade",
             text:        "Grade",
@@ -199,7 +190,7 @@ export class AdminMarkingTab extends AdminPage {
         }
 
         // verify it contains assignment information
-        if (this.isAssignmentGrade(gradeTransport)) {
+        if (!this.isAssignmentGrade(gradeTransport)) {
             return false;
         } else {
             return gradeTransport.custom.assignmentGrade.fullyGraded;
