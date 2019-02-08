@@ -1,9 +1,11 @@
 import {OnsButtonElement, OnsInputElement, OnsListItemElement, OnsSelectElement, OnsSwitchElement} from "onsenui";
 import Log from "../../../../../../common/Log";
 import {AssignmentInfo, AssignmentStatus} from "../../../../../../common/types/CS340Types";
+import {DeliverableTransport} from "../../../../../../common/types/PortalTypes";
 import {Deliverable} from "../../../../../backend/src/Types";
 import {Factory} from "../../Factory";
 import {UI} from "../../util/UI";
+import {AdminDeliverablesTab} from "../AdminDeliverablesTab";
 import {AdminTabs, AdminView} from "../AdminView";
 import {AdminMarkingTab} from "./AdminMarkingTab";
 import {GradingPageView} from "./GradingPage";
@@ -34,11 +36,11 @@ export class CS340AdminView extends AdminView {
             Log.info('CS340AdminView::renderPage(..) - augmenting tabs done.');
         }
 
-        if (name === 'AdminEditDeliverable') {
-            Log.warn("CS340AdminView::renderPage::AdminEditDeliverable - Injecting switches");
-            this.insertRepositoryScheduleCreationSwitch("adminEditDeliverablePage-autoGenerate");
-            this.insertAssignmentBlock();
-        }
+        // if (name === 'AdminEditDeliverable') {
+            // Log.warn("CS340AdminView::renderPage::AdminEditDeliverable - Injecting switches");
+            // this.insertRepositoryScheduleCreationSwitch("adminEditDeliverablePage-autoGenerate");
+            // this.insertAssignmentBlock();
+        // }
 
         if (name === "adminProvision") {
             Log.warn("CS340AdminView::renderPage::AdminProvision - Injecting Buttons");
@@ -47,6 +49,16 @@ export class CS340AdminView extends AdminView {
 
         Log.warn("CS340AdminView::renderPage(..) with name: " + name + " - complete");
     }
+
+    public handleAdminEditDeliverable(opts: any): void {
+        super.handleAdminEditDeliverable(opts);
+        Log.warn(`CS340AdminView::handleAdminEditDeliverable(${JSON.stringify(opts)}) - Injecting switches`);
+        // Log.warn("CS340AdminView::renderPage::AdminEditDeliverable - Injecting switches");
+        this.insertRepositoryScheduleCreationSwitch("adminEditDeliverablePage-autoGenerate");
+        this.insertAssignmentBlock();
+        this.populateAssignmentFields((opts as any).delivId).then().catch();
+    }
+
     public handleAdminMarking(opts: any): void {
         Log.info("CS340AdminView::handleAdminMarking(..) - start; options : " + JSON.stringify(opts));
         this.markingTab.init(opts).then().catch();
@@ -118,7 +130,7 @@ export class CS340AdminView extends AdminView {
     private insertAssignmentBlock(): boolean {
         const header: HTMLElement = document.getElementById("adminEditDeliverablePage-header-deliverableDates");
 
-        const assignmentSwitch: OnsListItemElement = this.generateAssignmentSwitch("adminEditDeliverablePage-isAssignment");
+        const assignmentSwitch: OnsListItemElement = this.generateAssignmentSwitch();
         const assignmentConfigBlock = this.generateHiddenAssignmentConfig();
 
         header.parentNode.insertBefore(assignmentSwitch, header);
@@ -126,11 +138,11 @@ export class CS340AdminView extends AdminView {
         return false;
     }
 
-    private generateAssignmentSwitch(switchId: string): OnsListItemElement {
+    private generateAssignmentSwitch(): OnsListItemElement {
         const sliderSwitch = document.createElement("ons-switch");
         const that = this;
 
-        sliderSwitch.setAttribute("id", switchId);
+        sliderSwitch.setAttribute("id", "adminEditDeliverablePage-isAssignment");
         sliderSwitch.setAttribute("modifier", "list-item");
 
         sliderSwitch.onclick = function(evt) {
@@ -203,9 +215,51 @@ export class CS340AdminView extends AdminView {
         return assignmentConfig;
     }
 
-    private populateAssignmentFields() {
-        const customObjectElement: OnsInputElement = document.getElementById("adminEditDeliverablePage-custom") as OnsInputElement;
-        const customObjectValue = customObjectElement.value;
+    private async populateAssignmentFields(delivId: string) {
+        // const customObjectElement: OnsInputElement = document.getElementById("adminEditDeliverablePage-custom") as OnsInputElement;
+        // const customObject: any = JSON.parse(customObjectElement.value);
+        Log.info(`CS340AdminView::populateAssignmentFields(${delivId}) - start`);
+
+        const deliverableTransports: DeliverableTransport[] = await AdminDeliverablesTab.getDeliverables(this.remote);
+
+        const selectedDeliverable = deliverableTransports.find((delivTransport) => {
+            return delivTransport.id === delivId;
+        });
+
+        if (selectedDeliverable === undefined) {
+            Log.error(`CS340AdminView::populateAssignmentFields(..) - Error: Invalid deliverable ID specified; ` +
+                `unable to find deliverable with ID: ${delivId}`);
+            return;
+        }
+
+        const customDeliverableObject: any = selectedDeliverable.custom as any;
+
+        if (customDeliverableObject.scheduled === true) {
+            const scheduleSwitchElement: OnsSwitchElement =
+                document.getElementById("adminEditDeliverablePage-autoGenerate") as OnsSwitchElement;
+            scheduleSwitchElement.checked = true;
+        }
+
+        if (typeof customDeliverableObject.assignment !== "undefined") {
+            const seedRepoPath: string = customDeliverableObject.assignment.seedRepoPath;
+            const mainFilePath: string = customDeliverableObject.assignment.mainFilePath;
+            const courseWeight: number = customDeliverableObject.assignment.courseWeight;
+
+            const assignmentRepoPathElement: OnsInputElement =
+                document.getElementById("adminEditDeliverablePage-assignment-seedRepoPath") as OnsInputElement;
+            const assignmentFilePathElement: OnsInputElement =
+                document.getElementById("adminEditDeliverablePage-assignment-mainFilePath") as OnsInputElement;
+            const assignmentCourseWeightElement: OnsInputElement =
+                document.getElementById("adminEditDeliverablePage-assignment-courseWeight") as OnsInputElement;
+
+            assignmentRepoPathElement.value = seedRepoPath;
+            assignmentFilePathElement.value = mainFilePath;
+            assignmentCourseWeightElement.value = courseWeight.toString();
+
+            const isAssignment = document.getElementById("adminEditDeliverablePage-isAssignment") as OnsSwitchElement;
+            isAssignment.checked = true;
+            this.updateAssignmentBlock();
+        }
 
     }
 

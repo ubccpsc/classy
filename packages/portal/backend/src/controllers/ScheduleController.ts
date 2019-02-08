@@ -2,9 +2,9 @@ import Log from "../../../../common/Log";
 import {Deliverable} from "../Types";
 // import {AssignmentController} from "./340/AssignmentController";
 import {DatabaseController} from "./DatabaseController";
+import {DeliverablesController} from "./DeliverablesController";
 import {GitHubActions} from "./GitHubActions";
 import {GitHubController} from "./GitHubController";
-import {DeliverablesController} from "./DeliverablesController";
 
 // tslint:disable-next-line
 const schedule = require('node-schedule');
@@ -26,7 +26,7 @@ export class ScheduleController {
     private taskList: Map<string, Task>;
     private static instance: ScheduleController = null;
     private dc: DeliverablesController = new DeliverablesController();
-    private db: DatabaseController = new DatabaseController();
+    private db: DatabaseController = DatabaseController.getInstance();
 
     private CREATE_OFFSET_HOURS: number = 2;
 
@@ -118,7 +118,7 @@ export class ScheduleController {
         Log.info(`ScheduleController::verifyScheduledAssignmentTasks(${assignId}) - start`);
 
         // retrieve deliverable information
-        const deliverableRecord: Deliverable = this.db.getDeliverable(assignId);
+        const deliverableRecord: Deliverable = await this.db.getDeliverable(assignId);
 
         if (deliverableRecord === null) {
             Log.error(`ScheduleController::verifyScheduledAssignmentTasks(..) - Error: No deliverable found with id: ${assignId}`);
