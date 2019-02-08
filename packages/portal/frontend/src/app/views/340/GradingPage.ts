@@ -1,10 +1,12 @@
 import {OnsInputElement} from "onsenui";
 import Log from "../../../../../../common/Log";
 import {AssignmentGrade, AssignmentRubric, SubQuestionRubric} from "../../../../../../common/types/CS340Types";
-import {DeliverableTransport} from "../../../../../../common/types/PortalTypes";
+import {DeliverableTransport, RepositoryTransport} from "../../../../../../common/types/PortalTypes";
 import {UI} from "../../util/UI";
 import {AdminDeliverablesTab} from "../AdminDeliverablesTab";
 import {AdminPage} from "../AdminPage";
+import {AdminResultsTab} from "../AdminResultsTab";
+import {AdminView} from "../AdminView";
 
 export class GradingPageView extends AdminPage {
     // private students: string[];
@@ -55,6 +57,26 @@ export class GradingPageView extends AdminPage {
         const assignmentInfoList = document.createElement("div");
         const assignmentIDBox = document.getElementById("aidBox");
         const studentIDBox = document.getElementById("sidBox");
+
+        const submissionBox = document.getElementById("submissionBox");
+        let linkElement: HTMLElement;
+
+        const options: any = AdminView.getOptions();
+        const url = `${this.remote}/portal/cs340/retrieveRepoUrl/${studentId}/${delivId}`;
+        const response = await fetch(url, options);
+        const responseJson = await response.json();
+
+        if (response.status === 200) {
+            linkElement = document.createElement("a");
+            linkElement.innerHTML = responseJson.response;
+            (linkElement as HTMLLinkElement).href = responseJson.response;
+            linkElement.setAttribute("target", "_blank");
+        } else {
+            linkElement = document.createElement("p");
+            linkElement.innerHTML = responseJson.error;
+        }
+
+        submissionBox.appendChild(linkElement);
 
         if (isTeam) {
             const teamIndicator: HTMLParagraphElement = document.createElement("p");
