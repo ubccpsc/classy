@@ -17,8 +17,8 @@ Main course forks:
 * [ubccpsc221/classy](https://github.com/ubccpsc221/classy)
 * [ubccpsc310/classy](https://github.com/ubccpsc310/classy)
 * [cpsc340/classy](https://github.com/CPSC340/classy)
+* [secapstone/classy](https://github.com/SECapstone/classy)
 * [MDS TBD](NOTSETYET)
-* [SDMM TBD](NOTSETYET)
 
 ## Development Process
 

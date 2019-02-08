@@ -957,11 +957,10 @@ export class GitHubActions implements IGitHubActions {
      * @returns {Promise<number>}
      */
     public async getTeamMembers(teamNumber: number): Promise<string[]> {
-
         Log.info("GitHubAction::getTeamMembers( " + teamNumber + " ) - start");
 
         if (teamNumber === null) {
-            throw new Error("GitHubAction::getTeamMembers( nulll ) - null team requested");
+            throw new Error("GitHubAction::getTeamMembers( null ) - null team requested");
         }
 
         const start = Date.now();
@@ -1032,19 +1031,15 @@ export class GitHubActions implements IGitHubActions {
                     'User-Agent':    this.gitHubUserName,
                     'Accept':        'application/json'
                 },
-                resolveWithFullResponse: true,
-                json:                    true
+                json:                    true,
+                resolveWithFullResponse: true
             };
 
             const response = await rp(options);
 
-            if (response.statusCode === 200) {
-                const ret = {githubTeamNumber: response.body.id, teamName: response.body.name};
-                Log.info("GitHubAction::getTeam( " + teamNumber + " ) - found: " + JSON.stringify(ret) + "; took: " + Util.took(start));
-                return ret;
-            } else {
-                Log.info("GitHubAction::getTeam( " + teamNumber + " ) - team does not exist on GitHub; took: " + Util.took(start));
-            }
+            const ret = {githubTeamNumber: response.body.id, teamName: response.body.name};
+            Log.info("GitHubAction::getTeam( " + teamNumber + " ) - found: " + JSON.stringify(ret) + "; took: " + Util.took(start));
+            return ret;
 
         } catch (err) {
             Log.warn("GitHubAction::getTeam( " + teamNumber + " ) - ERROR: " + err.message);
@@ -1090,9 +1085,9 @@ export class GitHubActions implements IGitHubActions {
     }
 
     public async listTeamMembers(teamName: string): Promise<string[]> {
-        const gh = this;
+        Log.info('GitHubAction::listTeamMembers( ' + teamName + ' ) - start');
 
-        // const teamNumber = await gh.getTeamNumber(teamName);
+        const gh = this;
         const teamNumber = await new TeamController().getTeamNumber(teamName);
         const teamMembers = await gh.getTeamMembers(teamNumber);
 
@@ -1104,12 +1099,10 @@ export class GitHubActions implements IGitHubActions {
         const that = this;
         const start = Date.now();
 
-        if (typeof importRepo === 'undefined' || typeof studentRepo === 'undefined') {
-            Log.info('GitHubAction::importRepoFS(..) - FS import skipped; missing import or student repo');
-            return true;
-        }
-
-        if (importRepo === null || studentRepo === null || importRepo === '' || studentRepo === '') {
+        // if we don't need to do this step, just skip it rather than crashing later on
+        if (typeof importRepo === 'undefined' || typeof studentRepo === 'undefined' ||
+            importRepo === null || studentRepo === null ||
+            importRepo === '' || studentRepo === '') {
             Log.info('GitHubAction::importRepoFS(..) - FS import skipped; missing import or student repo');
             return true;
         }
@@ -1154,6 +1147,7 @@ export class GitHubActions implements IGitHubActions {
                         cloneTempDir.cleanup();
                         return Promise.resolve(true); // made it cleanly
                     }).catch((err: any) => {
+                        /* istanbul ignore next */
                         Log.error('GitHubAction::cloneRepo() seedPath - ERROR: ' + err);
                         seedTempDir.cleanup();
                         cloneTempDir.cleanup();
@@ -1178,6 +1172,7 @@ export class GitHubActions implements IGitHubActions {
                         cloneTempDir.cleanup();
                         return Promise.resolve(true); // made it cleanly
                     }).catch((err: any) => {
+                        /* istanbul ignore next */
                         Log.error('GitHubAction::cloneRepo() - ERROR: ' + err);
                         cloneTempDir.cleanup();
                         return Promise.reject(err);
@@ -1511,6 +1506,7 @@ export class GitHubActions implements IGitHubActions {
         }
     }
 
+    /* istanbul ignore next */
     /**
      * Checks to make sure the repoName or teamName (or both, if specified) are in the database.
      *
@@ -1563,164 +1559,159 @@ export class GitHubActions implements IGitHubActions {
         return true;
     }
 
-    public simulateWebookComment(projectName: string, sha: string, message: string): Promise<boolean> {
-        return new Promise<boolean>((fulfill, reject) => {
-            try {
-                if (typeof projectName === "undefined" || projectName === null) {
-                    Log.error("GitHubActions::simulateWebookComment(..)  - url is required");
-                    reject(false);
-                }
-
-                if (typeof sha === "undefined" || sha === null) {
-                    Log.error("GitHubActions::simulateWebookComment(..)  - sha is required");
-                    reject(false);
-                }
-
-                if (typeof message === "undefined" || message === null) {
-                    Log.error("GitHubActions::simulateWebookComment(..)  - message is required");
-                    reject(false);
-                }
-
-                // find a better short string for logging
-                let messageToPrint = message;
-                if (messageToPrint.indexOf('\n') > 0) {
-                    messageToPrint = messageToPrint.substr(0, messageToPrint.indexOf('\n'));
-                }
-                if (messageToPrint.length > 80) {
-                    messageToPrint = messageToPrint.substr(0, 80) + "...";
-                }
-
-                Log.info("GitHubActions::simulateWebookComment(..) - Simulating comment to project: " +
-                    projectName + "; sha: " + sha + "; message: " + messageToPrint);
-
-                const c = Config.getInstance();
-                // const repoUrl = "https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/project_r2d2_c3p0";
-                const repoUrl = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/' + projectName;
-                // const apiUrl= "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T1/project_r2d2_c3p0";
-                const apiUrl = c.getProp(ConfigKey.githubAPI) + '/api/v3/repos/' + c.getProp(ConfigKey.org) + '/' + projectName;
-
-                const body = {
-                    comment:    {
-                        commit_id: sha, // 82ldl2731c665c364ad979c9135688d1c206462c
-                        // tslint:disable-next-line
-                        html_url:  repoUrl + "/commit/" + sha + "#fooWillBeStripped", // https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/project_r2d2_c3p0/commit/82ldl2731c665c364ad979c9135688d1c206462c#commitcomment-285811"
-                        user:      {
-                            login: Config.getInstance().getProp(ConfigKey.botName) // userId // autobot
-                        },
-                        body:      message
-                    },
-                    repository: {
-                        // tslint:disable-next-line
-                        commits_url: apiUrl + '/commits{/sha}', // https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T1/project_r2d2_c3p0/commits{/sha}
-                        clone_url:   repoUrl + ".git", // https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/project_r2d2_c3p0.git
-                        name:        projectName
-                    }
-                };
-
-                const urlToSend = Config.getInstance().getProp(ConfigKey.publichostname) + '/portal/githubWebhook';
-                Log.info("GitHubService::simulateWebookComment(..) - url: " + urlToSend + "; body: " + JSON.stringify(body));
-
-                const options: any = {
-                    method:  "POST",
-                    headers: {
-                        "Content-Type":   "application/json",
-                        "User-Agent":     "UBC-AutoTest",
-                        "X-GitHub-Event": "commit_comment",
-                        "Authorization":  Config.getInstance().getProp(ConfigKey.githubBotToken) // TODO: support auth from github
-                    },
-                    json:    true,
-                    body:    body
-                };
-
-                if (Config.getInstance().getProp(ConfigKey.postback) === true) {
-
-                    // Log.trace("GitHubService::postMarkdownToGithub(..) - request: " + JSON.stringify(options, null, 2));
-                    // const url = url; // this url comes from postbackURL which uses the right API format
-                    return rp(urlToSend, options).then(function(res) {
-                        Log.trace("GitHubService::simulateWebookComment(..) - success"); // : " + res);
-                        fulfill(true);
-                    }).catch(function(err) {
-                        Log.error("GitHubService::simulateWebookComment(..) - ERROR: " + err);
-                        reject(false);
-                    });
-
-                } else {
-                    Log.trace("GitHubService::simulateWebookComment(..) - send skipped (config.postback === false)");
-                    fulfill(true);
-                }
-            } catch (err) {
-                Log.error("GitHubService::simulateWebookComment(..) - ERROR: " + err);
-                reject(false);
+    public async simulateWebookComment(projectName: string, sha: string, message: string): Promise<boolean> {
+        try {
+            if (typeof projectName === "undefined" || projectName === null) {
+                Log.error("GitHubActions::simulateWebookComment(..)  - url is required");
+                return Promise.resolve(false);
             }
-        });
+
+            if (typeof sha === "undefined" || sha === null) {
+                Log.error("GitHubActions::simulateWebookComment(..)  - sha is required");
+                return Promise.resolve(false);
+            }
+
+            if (typeof message === "undefined" || message === null) {
+                Log.error("GitHubActions::simulateWebookComment(..)  - message is required");
+                return Promise.resolve(false);
+            }
+
+            // find a better short string for logging
+            let messageToPrint = message;
+            if (messageToPrint.indexOf('\n') > 0) {
+                messageToPrint = messageToPrint.substr(0, messageToPrint.indexOf('\n'));
+            }
+            if (messageToPrint.length > 80) {
+                messageToPrint = messageToPrint.substr(0, 80) + "...";
+            }
+
+            Log.info("GitHubActions::simulateWebookComment(..) - Simulating comment to project: " +
+                projectName + "; sha: " + sha + "; message: " + messageToPrint);
+
+            const c = Config.getInstance();
+            // const repoUrl = "https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/project_r2d2_c3p0";
+            const repoUrl = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/' + projectName;
+            // const apiUrl= "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T1/project_r2d2_c3p0";
+            const apiUrl = c.getProp(ConfigKey.githubAPI) + '/api/v3/repos/' + c.getProp(ConfigKey.org) + '/' + projectName;
+
+            const body = {
+                comment:    {
+                    commit_id: sha, // 82ldl2731c665c364ad979c9135688d1c206462c
+                    // tslint:disable-next-line
+                    html_url:  repoUrl + "/commit/" + sha + "#fooWillBeStripped", // https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/project_r2d2_c3p0/commit/82ldl2731c665c364ad979c9135688d1c206462c#commitcomment-285811"
+                    user:      {
+                        login: Config.getInstance().getProp(ConfigKey.botName) // userId // autobot
+                    },
+                    body:      message
+                },
+                repository: {
+                    // tslint:disable-next-line
+                    commits_url: apiUrl + '/commits{/sha}', // https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T1/project_r2d2_c3p0/commits{/sha}
+                    clone_url:   repoUrl + ".git", // https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/project_r2d2_c3p0.git
+                    name:        projectName
+                }
+            };
+
+            const urlToSend = Config.getInstance().getProp(ConfigKey.publichostname) + '/portal/githubWebhook';
+            Log.info("GitHubService::simulateWebookComment(..) - url: " + urlToSend + "; body: " + JSON.stringify(body));
+
+            const options: any = {
+                method:  "POST",
+                headers: {
+                    "Content-Type":   "application/json",
+                    "User-Agent":     "UBC-AutoTest",
+                    "X-GitHub-Event": "commit_comment",
+                    "Authorization":  Config.getInstance().getProp(ConfigKey.githubBotToken) // TODO: support auth from github
+                },
+                json:    true,
+                body:    body
+            };
+
+            if (Config.getInstance().getProp(ConfigKey.postback) === true) {
+
+                // Log.trace("GitHubService::postMarkdownToGithub(..) - request: " + JSON.stringify(options, null, 2));
+                // const url = url; // this url comes from postbackURL which uses the right API format
+                try {
+                    const res = await rp(urlToSend, options); // .then(function(res) {
+                    Log.trace("GitHubService::simulateWebookComment(..) - success"); // : " + res);
+                    return Promise.resolve(true);
+                } catch (err) {
+                    Log.error("GitHubService::simulateWebookComment(..) - ERROR: " + err);
+                    return Promise.resolve(false);
+                }
+
+            } else {
+                Log.trace("GitHubService::simulateWebookComment(..) - send skipped (config.postback === false)");
+                return Promise.resolve(true);
+            }
+        } catch (err) {
+            Log.error("GitHubService::simulateWebookComment(..) - ERROR: " + err);
+            return Promise.resolve(false);
+        }
     }
 
-    public makeComment(url: string, message: string): Promise<boolean> {
-        return new Promise<boolean>((fulfill, reject) => {
-            try {
-                // find a better short string for logging
-                let messageToPrint = message;
-                if (messageToPrint.indexOf('\n') > 0) {
-                    messageToPrint = messageToPrint.substr(0, messageToPrint.indexOf('\n'));
-                }
-                if (messageToPrint.length > 80) {
-                    messageToPrint = messageToPrint.substr(0, 80) + "...";
-                }
-
-                Log.info("GitHubActions::makeComment(..) - Posting markdown to url: " +
-                    url + "; message: " + messageToPrint);
-
-                if (typeof url === "undefined" || url === null) {
-                    Log.error("GitHubActions::makeComment(..)  - message.url is required");
-                    reject(false);
-                }
-
-                if (typeof message === "undefined" || message === null || message.length < 1) {
-                    Log.error("GitHubActions::makeComment(..)  - message.message is required");
-                    reject(false);
-                }
-
-                /*
-                const org = Config.getInstance().getProp(ConfigKey.org);
-                const hostLength = message.url.indexOf(org);
-                const path = 'repos/' + message.url.substr(hostLength);
-                const host = Config.getInstance().getProp(ConfigKey.githubAPI);
-                */
-
-                const body: string = JSON.stringify({body: message});
-                const options: any = {
-                    method:  "POST",
-                    headers: {
-                        "Content-Type":  "application/json",
-                        "User-Agent":    "UBC-AutoTest",
-                        "Authorization": Config.getInstance().getProp(ConfigKey.githubBotToken)
-                    },
-                    body:    body
-                };
-
-                Log.trace("GitHubService::postMarkdownToGithub(..) - url: " + url);
-
-                if (Config.getInstance().getProp(ConfigKey.postback) === true) {
-
-                    // Log.trace("GitHubService::postMarkdownToGithub(..) - request: " + JSON.stringify(options, null, 2));
-                    // const url = url; // this url comes from postbackURL which uses the right API format
-                    return rp(url, options).then(function(res) {
-                        Log.trace("GitHubService::postMarkdownToGithub(..) - success"); // : " + res);
-                        fulfill(true);
-                    }).catch(function(err) {
-                        Log.error("GitHubService::postMarkdownToGithub(..) - ERROR: " + err);
-                        reject(false);
-                    });
-
-                } else {
-                    Log.trace("GitHubService::postMarkdownToGithub(..) - send skipped (config.postback === false)");
-                    fulfill(true);
-                }
-            } catch (err) {
-                Log.error("GitHubService::postMarkdownToGithub(..) - ERROR: " + err);
-                reject(false);
+    public async makeComment(url: string, message: string): Promise<boolean> {
+        try {
+            if (typeof url === "undefined" || url === null) {
+                Log.error("GitHubActions::makeComment(..)  - message.url is required");
+                return Promise.resolve(false);
             }
-        });
+
+            if (typeof message === "undefined" || message === null || message.length < 1) {
+                Log.error("GitHubActions::makeComment(..)  - message.message is required");
+                return Promise.resolve(false);
+            }
+
+            // find a better short string for logging
+            let messageToPrint = message;
+            if (messageToPrint.indexOf('\n') > 0) {
+                messageToPrint = messageToPrint.substr(0, messageToPrint.indexOf('\n'));
+            }
+            if (messageToPrint.length > 80) {
+                messageToPrint = messageToPrint.substr(0, 80) + "...";
+            }
+
+            Log.info("GitHubActions::makeComment(..) - Posting markdown to url: " +
+                url + "; message: " + messageToPrint);
+
+            const body = {body: message};
+            const options: any = {
+                method:                  "POST",
+                headers:                 {
+                    "Content-Type":  "application/json",
+                    "User-Agent":    "UBC-AutoTest",
+                    "Authorization": Config.getInstance().getProp(ConfigKey.githubBotToken)
+                },
+                body:                    body,
+                resolveWithFullResponse: true,
+                json:                    true
+            };
+
+            Log.trace("GitHubService::makeComment(..) - url: " + url);
+
+            if (Config.getInstance().getProp(ConfigKey.postback) === true) {
+                try {
+                    const res = await rp(url, options);
+                    if (res.statusCode === 201) {
+                        Log.trace("GitHubService::makeComment(..) - success");
+                        return Promise.resolve(true);
+                    } else {
+                        Log.trace("GitHubService::makeComment(..) - failed; code: " + res.statusCode);
+                        return Promise.resolve(false);
+                    }
+                } catch (err) {
+                    Log.error("GitHubService::makeComment(..) - ERROR: " + err);
+                    return Promise.resolve(false);
+                }
+
+            } else {
+                Log.trace("GitHubService::makeComment(..) - send skipped (config.postback === false)");
+                return Promise.resolve(true);
+            }
+        } catch (err) {
+            Log.error("GitHubService::makeComment(..) - ERROR: " + err);
+            return Promise.resolve(false);
+        }
     }
 
     public async getTeamsOnRepo(repoId: string): Promise<GitTeamTuple[]> {
@@ -1866,6 +1857,11 @@ export class TestGitHubActions implements IGitHubActions {
     }
 
     public async getTeamNumber(teamName: string): Promise<number> {
+        if (teamName === 'students') {
+            // return a value that works for testing and for the live environment
+            // this is the team number for the students team in the classytest org on github.com
+            return 2941733;
+        }
         if (typeof this.teams[teamName] !== 'undefined') {
             const num = this.teams[teamName].githubTeamNumber;
             Log.info("TestGitHubActions::getTeamNumber( " + teamName + " ) - returning: " + num);
@@ -1891,7 +1887,7 @@ export class TestGitHubActions implements IGitHubActions {
     }
 
     public async isOnAdminTeam(userName: string): Promise<boolean> {
-        if (userName === this.Test.ADMIN1.id) {
+        if (userName === this.Test.ADMIN1.id || userName === this.Test.REALUSER3.id) {
             Log.info("TestGitHubActions::isOnAdminTeam( " + userName + " ) - true");
             return true;
         }

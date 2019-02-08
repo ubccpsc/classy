@@ -160,13 +160,9 @@ export class AutoTestRoutes implements IREST {
         } else {
             const gradeRecord: AutoTestGradeTransport = req.body;
 
-            AutoTestRoutes.performPostGrade(gradeRecord).then(function(success: any) {
-                if (success === true) {
-                    payload = {success: {success: true}};
-                    res.send(200, payload);
-                } else {
-                    return AutoTestRoutes.handleError(400, 'Failed to receive grade.', res, next);
-                }
+            AutoTestRoutes.performPostGrade(gradeRecord).then(function(saved: any) {
+                payload = {success: {success: saved}};
+                res.send(200, payload);
                 return next(true);
             }).catch(function(err) {
                 return AutoTestRoutes.handleError(400, 'Failed to receive grade; ERROR: ' + err.message, res, next);
@@ -379,70 +375,9 @@ export class AutoTestRoutes implements IREST {
             headers: req.headers, // use GitHub's headers
             body:    req.body
         };
-
-        const isValid: boolean = await AutoTestRoutes.isWebhookFromGitHub(req);
-        if (isValid === true) {
-            const success = await rp(options);
-            Log.trace('AutoTestRouteHandler::handleWebhook(..) - success: ' + JSON.stringify(success));
-            return success;
-        } else {
-            throw new Error("Webhook event did not originate from GitHub");
-        }
-    }
-
-    /**
-     * Helper function to check that a given request is from GitHub; this is a low-cost way to 'authenticate'
-     * that a webhook at least originated on the right host.
-     *
-     * While 'remoteAddress' would be the right way to get the IP of the request, this turns out to be incorrect
-     * becuase the Docker router actually forwards this result with an internal IP.
-     *
-     * @param req
-     * @returns {Promise<boolean>}
-     */
-    private static isWebhookFromGitHub(req: any): Promise<boolean> {
-        return new Promise(function(fulfill, reject) {
-            const config = Config.getInstance();
-            const start = Date.now();
-
-            let remoteAddr = '';
-            if (typeof req.headers['x-forwarded-for'] !== 'undefined') {
-                // docker frontend will report .remoteAddress as internal (e.g., ::ffff:172.18.0.2) so we should use forwarded-for
-                remoteAddr = req.headers['x-forwarded-for'];
-                Log.trace('AutoTestRouteHandler::isWebhookFromGitHub(..) - start; x-forwarded from: ' + remoteAddr);
-            } else {
-                remoteAddr = req.connection.remoteAddress;
-                Log.trace('AutoTestRouteHandler::isWebhookFromGitHub(..) - start; remoteAddress from: ' + remoteAddr);
-            }
-
-            // TODO: fix this
-            return fulfill(true);
-
-            // const ghAPI = config.getProp(ConfigKey.githubAPI);
-            // if (ghAPI.indexOf('github.com') > 0) {
-            //     Log.info('AutoTestRouteHandler::isWebhookFromGitHub(..) - accepted; host is github.com');
-            //     return fulfill(true);
-            // }
-            //
-            // dns.lookup(ghAPI, (err, expectedAddr) => {
-            //     if (err) {
-            //         Log.error('AutoTestRouteHandler::isWebhookFromGitHub(..) - ERROR: ' + err);
-            //         return reject(err);
-            //     }
-            //
-            //     // use indexOf here because address sometimes reports like: ::ffff:172.18.0.2
-            //     if (expectedAddr !== null && remoteAddr.indexOf(expectedAddr) >= 0) {
-            //         Log.info('AutoTestRouteHandler::isWebhookFromGitHub(..) - accepted; provided: ' +
-            //             remoteAddr + '; expected: ' + expectedAddr + '; took: ' + Util.took(start));
-            //         return fulfill(true);
-            //     } else {
-            //         const msg = 'Webhook did not originate from GitHub; request addr: ' +
-            //             remoteAddr + ' !== expected addr: ' + expectedAddr;
-            //         Log.error('AutoTestRouteHandler::isWebhookFromGitHub(..) - rejected: ' + msg);
-            //         return reject(new Error(msg));
-            //     }
-            // });
-        });
+        const success = await rp(options);
+        Log.trace('AutoTestRouteHandler::handleWebhook(..) - success: ' + JSON.stringify(success));
+        return success;
     }
 
     public static async getDockerImages(req: any, res: any, next: any) {
@@ -466,11 +401,14 @@ export class AutoTestRoutes implements IREST {
                     res.send(200, atResponse);
                 } catch (err) {
                     Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Sending request to AutoTest service. " + err);
+                    res.send(500);
                 }
             } else {
+                Log.warn("AutoTestRoutes::getDockerImages(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
                 res.send(401);
             }
         } catch (err) {
+            Log.error("AutoTestRoutes::getDockerImages(..) - ERROR " + err);
             res.send(400);
         }
         return next();
@@ -493,16 +431,19 @@ export class AutoTestRoutes implements IREST {
             const person = await pc.getGitHubPerson(githubId);
             const privileges = await new AuthController().personPriviliged(person);
             if (privileges.isAdmin) {
-                try {
-                    // Use native request library. See https://github.com/request/request-promise#api-in-detail.
-                    request(options).pipe(res);
-                } catch (err) {
-                    Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Sending request to AutoTest service. " + err);
-                }
+                // Use native request library. See https://github.com/request/request-promise#api-in-detail.
+                request(options)
+                    .on("error", (err) => {
+                        Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Sending request to AutoTest service. " + err);
+                        return res.send(500);
+                    })
+                    .pipe(res);
             } else {
+                Log.warn("AutoTestRoutes::getDockerImages(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
                 res.send(401);
             }
         } catch (err) {
+            Log.error("AutoTestRoutes::getDockerImages(..) - ERROR " + err);
             res.send(400);
         }
         return next();

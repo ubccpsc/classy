@@ -69,15 +69,18 @@ export default class BackendServer {
         return new Promise(function(fulfill, reject) {
 
             // noinspection TsLint
-            let httpsOptions: any = {
-                name:        'backend',
-                key:         fs.readFileSync(that.config.getProp(ConfigKey.sslKeyPath)),
-                certificate: fs.readFileSync(that.config.getProp(ConfigKey.sslCertPath))
+            const httpsOptions: any = {
+                name: 'backend'
             };
 
+            /* istanbul ignore else */
             if (that.useHttps === false) {
+                // test only
                 Log.warn('BackendServer::start() - disabling HTTPS; should only be used in testing!');
-                httpsOptions = {name: 'backend'};
+            } else {
+                // prod only
+                httpsOptions['key'] = fs.readFileSync(that.config.getProp(ConfigKey.sslKeyPath));
+                httpsOptions['certificate'] = fs.readFileSync(that.config.getProp(ConfigKey.sslCertPath));
             }
 
             that.rest = restify.createServer(httpsOptions);
@@ -126,6 +129,7 @@ export default class BackendServer {
                 fulfill(true);
             });
 
+            /* istanbul ignore next */
             that.rest.on('error', function(err: string) {
                 // catches errors in restify start; unusual syntax due to internal node not using normal exceptions here
                 Log.error('BackendServer::start() - restify ERROR: ' + err);
