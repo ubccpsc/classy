@@ -1,4 +1,4 @@
-import {OnsButtonElement, OnsInputElement, OnsListItemElement, OnsSwitchElement} from "onsenui";
+import {OnsButtonElement, OnsInputElement, OnsListItemElement, OnsSelectElement, OnsSwitchElement} from "onsenui";
 import Log from "../../../../../../common/Log";
 import {AssignmentInfo, AssignmentStatus} from "../../../../../../common/types/CS340Types";
 import {Deliverable} from "../../../../../backend/src/Types";
@@ -203,6 +203,12 @@ export class CS340AdminView extends AdminView {
         return assignmentConfig;
     }
 
+    private populateAssignmentFields() {
+        const customObjectElement: OnsInputElement = document.getElementById("adminEditDeliverablePage-custom") as OnsInputElement;
+        const customObjectValue = customObjectElement.value;
+
+    }
+
     private updateAssignmentBlock() {
         Log.info("CS340AdminView::updateAssignmentBlock(..) - start");
         const isAssignment = document.getElementById("adminEditDeliverablePage-isAssignment") as OnsSwitchElement;
@@ -254,6 +260,13 @@ export class CS340AdminView extends AdminView {
         if (isAssignment.checked === true) {
             assignmentInfo.seedRepoPath = seedRepoPath.value;
             assignmentInfo.mainFilePath = mainFilePath.value;
+            let courseWeightValue: number;
+            if (!Number.isNaN(Number(courseWeight.value))) {
+                courseWeightValue = Number(courseWeight.value);
+            } else {
+                courseWeightValue = 0;
+            }
+            assignmentInfo.courseWeight = courseWeightValue;
             assignmentInfo.courseWeight = Number(courseWeight.value);
             customParameters.assignment = assignmentInfo;
         }
@@ -341,8 +354,14 @@ export class CS340AdminView extends AdminView {
 
         const url = this.remote + '/portal/cs340/closeAssignmentRepositories/' + deliverableSelectElement.value;
         const response = await fetch(url, options);
+        const responseJson = await response.json();
+        Log.info(`CS340AdminView::closeRepositories() - response: ${responseJson}`);
 
-        Log.info(`CS340AdminView::closeRepositories() - response: ${JSON.stringify(response)}`);
+        if (responseJson.result === true) {
+            UI.notificationToast(`Closed all "${deliverableSelectElement.value}" repositories`);
+        } else {
+            UI.notificationToast(`Unable to close "${deliverableSelectElement.value}" repositories; error: ${responseJson.error}`);
+        }
 
         return;
     }
