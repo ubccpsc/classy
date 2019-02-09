@@ -32,9 +32,9 @@ describe.only('General Routes', function() {
         const pDir = Config.getInstance().getProp(ConfigKey.persistDir);
         fs.ensureDirSync(pDir);
 
-        ADMINRESOURCEPATH = pDir + 'runs/TESTID/admin/';
-        STAFFRESOURCEPATH = pDir + 'runs/TESTID/staff/';
-        STUDENTRESOURCEPATH = pDir + 'runs/TESTID/student/';
+        ADMINRESOURCEPATH = pDir + '/runs/TESTID/admin/';
+        STAFFRESOURCEPATH = pDir + '/runs/TESTID/staff/';
+        STUDENTRESOURCEPATH = pDir + '/runs/TESTID/student/';
 
         fs.ensureDirSync(ADMINRESOURCEPATH);
         fs.ensureDirSync(STAFFRESOURCEPATH);
