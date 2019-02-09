@@ -13,7 +13,7 @@ import BackendServer from "../../src/server/BackendServer";
 
 import {Test} from "../TestHarness";
 
-describe('General Routes', function() {
+describe.only('General Routes', function() {
 
     let app: restify.Server = null;
 
@@ -683,7 +683,7 @@ describe('General Routes', function() {
         expect(response.status).to.equal(200);
         expect(ex).to.be.null;
         expect(body.success).to.not.be.undefined;
-        expect(body.success.length).to.equal(0); // HACK: should be 2?
+        expect(body.success.length).to.equal(1); // HACK: should be 2?
     });
 
     it('Should not be able to get get the repos with an invalid token.', async function() {
