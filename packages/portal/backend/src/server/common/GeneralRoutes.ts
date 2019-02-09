@@ -433,8 +433,8 @@ export default class GeneralRoutes implements IREST {
                     // TODO: should probably consider repo.custom.githubCreated
                     repoTrans.push(RepositoryController.repositoryToTransport(repo));
                 }
-                return repoTrans;
             }
+            return repoTrans;
         }
     }
 
