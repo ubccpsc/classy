@@ -68,6 +68,14 @@ describe.only('General Routes', function() {
         return server.stop();
     });
 
+    beforeEach(function() {
+        Test.testAfter("GeneralRoutesSpec", this);
+    });
+
+    afterEach(function() {
+        Test.testAfter("GeneralRoutesSpec", this);
+    });
+
     it('Should be able to get config details', async function() {
 
         let response = null;
