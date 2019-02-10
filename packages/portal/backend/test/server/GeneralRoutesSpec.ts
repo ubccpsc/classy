@@ -13,7 +13,7 @@ import BackendServer from "../../src/server/BackendServer";
 
 import {Test} from "../TestHarness";
 
-describe('General Routes', function() {
+describe.only('General Routes', function() {
 
     let app: restify.Server = null;
 
@@ -32,9 +32,9 @@ describe('General Routes', function() {
         const pDir = Config.getInstance().getProp(ConfigKey.persistDir);
         fs.ensureDirSync(pDir);
 
-        ADMINRESOURCEPATH = pDir + '/TESTID/admin/';
-        STAFFRESOURCEPATH = pDir + '/TESTID/staff/';
-        STUDENTRESOURCEPATH = pDir + '/TESTID/student/';
+        ADMINRESOURCEPATH = pDir + '/runs/TESTID/admin/';
+        STAFFRESOURCEPATH = pDir + '/runs/TESTID/staff/';
+        STUDENTRESOURCEPATH = pDir + '/runs/TESTID/student/';
 
         fs.ensureDirSync(ADMINRESOURCEPATH);
         fs.ensureDirSync(STAFFRESOURCEPATH);
@@ -66,6 +66,14 @@ describe('General Routes', function() {
         Log.test('GeneralRoutes::after - start');
         Test.suiteAfter('General Routes');
         return server.stop();
+    });
+
+    beforeEach(function() {
+        Test.testAfter("GeneralRoutesSpec", this);
+    });
+
+    afterEach(function() {
+        Test.testAfter("GeneralRoutesSpec", this);
     });
 
     it('Should be able to get config details', async function() {
@@ -683,7 +691,7 @@ describe('General Routes', function() {
         expect(response.status).to.equal(200);
         expect(ex).to.be.null;
         expect(body.success).to.not.be.undefined;
-        expect(body.success.length).to.equal(0); // HACK: should be 2?
+        expect(body.success.length).to.equal(1); // HACK: should be 2?
     });
 
     it('Should not be able to get get the repos with an invalid token.', async function() {
