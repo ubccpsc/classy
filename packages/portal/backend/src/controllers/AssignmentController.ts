@@ -1,12 +1,15 @@
 import Log from "../../../../common/Log";
 import {AssignmentGrade} from "../../../../common/types/CS340Types";
 import {GradePayload} from "../../../../common/types/SDMMTypes";
-import {Grade, Repository, Team} from "../Types";
+import {Deliverable, Grade, Repository, Team} from "../Types";
 import {DatabaseController} from "./DatabaseController";
 import {GitHubActions, IGitHubActions} from "./GitHubActions";
 import {GradesController} from "./GradesController";
 import {RepositoryController} from "./RepositoryController";
 import {RubricController} from "./RubricController";
+import {AdminController} from "./AdminController";
+import {RepositoryTransport} from "../../../../common/types/PortalTypes";
+import {GitHubController, IGitHubController} from "./GitHubController";
 
 export class AssignmentController {
 
@@ -14,7 +17,72 @@ export class AssignmentController {
     private rc: RepositoryController = new RepositoryController();
     private rubricController: RubricController = new RubricController();
     private gha: IGitHubActions = GitHubActions.getInstance();
+    private ghc: IGitHubController = new GitHubController(this.gha);
     private gc: GradesController = new GradesController();
+    private cc: AdminController = new AdminController(this.ghc);
+
+    public async createAllRepositories(delivId: string): Promise<boolean> {
+        Log.info(`AssignmentController::createAllRepositories(${delivId}) - start`);
+
+        const deliverableRecord: Deliverable = await this.db.getDeliverable(delivId);
+
+        if (deliverableRecord === null) {
+            Log.error(`AssignmentController::createAllRepositories(..) - Error: Unable to find deliverable`);
+            return false;
+        }
+        const provisionDetails: RepositoryTransport[] = await this.cc.planProvision(deliverableRecord, false);
+
+        const repoRecordPromises: Array<Promise<Repository>> = [];
+
+        for (const provisionDetail of provisionDetails) {
+            repoRecordPromises.push(this.db.getRepository(provisionDetail.id));
+        }
+
+        const repoRecords: Repository[] = await Promise.all(repoRecordPromises);
+
+        let importURL: string = deliverableRecord.importURL;
+
+        // if (deliverableRecord.custom !== null && deliverableRecord.custom.assignment !== null) {
+        //     if (deliverableRecord.custom.assignment.seedRepoPath !== null) {
+        //         importURL += deliverableRecord.custom.assignment.seedRepoPath;
+        //     }
+        // }
+
+        await this.cc.performProvision(repoRecords, importURL);
+
+        return true;
+    }
+
+    public async releaseAllRepositories(delivId: string): Promise<boolean> {
+        Log.info(`AssignmentController::releaseAllRepositories(${delivId}) - start`);
+
+        // doubling down; releasing any repositories that are missed
+
+        await this.createAllRepositories(delivId);
+
+        const deliverableRecord: Deliverable = await this.db.getDeliverable(delivId);
+
+        if (deliverableRecord === null) {
+            Log.error(`AssignmentController::releaseAllRepositories(..) - Error: Unable to find deliverable`);
+            return false;
+        }
+
+        const releaseDetails: Repository[] = await this.cc.planRelease(deliverableRecord);
+
+        const repoRecordPromises: Array<Promise<Repository>> = [];
+
+        for (const releaseDetail of releaseDetails) {
+            repoRecordPromises.push(this.db.getRepository(releaseDetail.id));
+        }
+
+        const repoRecords: Repository[] = await Promise.all(repoRecordPromises);
+
+        Log.info(`AssignmentController::releaseAllRepositories(..) - Repos to release: ${JSON.stringify(repoRecords)}`);
+
+        await this.cc.performRelease(repoRecords);
+
+        return true;
+    }
 
     public async closeAllRepositories(delivId: string): Promise<boolean> {
         Log.info(`AssignmentController::closeAllRepositories(${delivId}) - start`);

@@ -1,6 +1,6 @@
 import Log from "../../../../common/Log";
 import {Deliverable} from "../Types";
-// import {AssignmentController} from "./340/AssignmentController";
+import {AssignmentController} from "./AssignmentController";
 import {DatabaseController} from "./DatabaseController";
 import {DeliverablesController} from "./DeliverablesController";
 import {GitHubActions} from "./GitHubActions";
@@ -27,6 +27,7 @@ export class ScheduleController {
     private static instance: ScheduleController = null;
     private dc: DeliverablesController = new DeliverablesController();
     private db: DatabaseController = DatabaseController.getInstance();
+    private ac: AssignmentController = new AssignmentController();
 
     private CREATE_OFFSET_HOURS: number = 2;
 
@@ -52,9 +53,10 @@ export class ScheduleController {
             this.taskList.delete(taskName);
         }
 
-        const scheduledJob = schedule.scheduleJob(scheduledTime, () => {
+        const scheduledJob = schedule.scheduleJob(scheduledTime, async() => {
             Log.info("ScheduleController::scheduleAssignmentCreation::scheduledJob() - starting task");
             // TODO: do something inside here
+            await this.ac.createAllRepositories(assignId);
             Log.info("ScheduleController::scheduleAssignmentCreation::scheduledJob() - finished task");
         });
 
@@ -76,9 +78,10 @@ export class ScheduleController {
             this.taskList.delete(taskName);
         }
 
-        const scheduledJob = schedule.scheduleJob(scheduledTime, () => {
+        const scheduledJob = schedule.scheduleJob(scheduledTime, async () => {
             Log.info("ScheduleController::scheduleAssignmentRelease::scheduledJob() - starting task");
             // TODO: do something inside here
+            await this.ac.releaseAllRepositories(assignId);
             Log.info("ScheduleController::scheduleAssignmentRelease::scheduledJob() - finished task");
         });
 
@@ -100,9 +103,10 @@ export class ScheduleController {
             this.taskList.delete(taskName);
         }
 
-        const scheduledJob = schedule.scheduleJob(scheduledTime, () => {
+        const scheduledJob = schedule.scheduleJob(scheduledTime, async () => {
             Log.info("ScheduleController::scheduleAssignmentClose::scheduledJob() - starting task");
             // TODO: do something inside here
+            await this.ac.closeAllRepositories(assignId);
             Log.info("ScheduleController::scheduleAssignmentClose::scheduledJob() - finished task");
         });
 

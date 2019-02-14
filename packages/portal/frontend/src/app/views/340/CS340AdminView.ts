@@ -1,4 +1,4 @@
-import {OnsButtonElement, OnsInputElement, OnsListItemElement, OnsSelectElement, OnsSwitchElement} from "onsenui";
+import {OnsButtonElement, OnsFabElement, OnsInputElement, OnsListItemElement, OnsSelectElement, OnsSwitchElement} from "onsenui";
 import Log from "../../../../../../common/Log";
 import {AssignmentInfo, AssignmentStatus} from "../../../../../../common/types/CS340Types";
 import {DeliverableTransport} from "../../../../../../common/types/PortalTypes";
@@ -32,7 +32,7 @@ export class CS340AdminView extends AdminView {
 
         if (name === 'AdminRoot') {
             Log.info('CS340AdminView::renderPage(..) - augmenting tabs');
-
+            // this.verifyAllScheduledTasks();
             Log.info('CS340AdminView::renderPage(..) - augmenting tabs done.');
         }
 
@@ -52,11 +52,23 @@ export class CS340AdminView extends AdminView {
 
     public handleAdminEditDeliverable(opts: any): void {
         super.handleAdminEditDeliverable(opts);
+        const that = this;
         Log.warn(`CS340AdminView::handleAdminEditDeliverable(${JSON.stringify(opts)}) - Injecting switches`);
         // Log.warn("CS340AdminView::renderPage::AdminEditDeliverable - Injecting switches");
         this.insertRepositoryScheduleCreationSwitch("adminEditDeliverablePage-autoGenerate");
         this.insertAssignmentBlock();
         this.populateAssignmentFields((opts as any).delivId).then().catch();
+
+        const fab = document.querySelector('#adminEditDeliverableSave') as OnsFabElement;
+        fab.addEventListener("click", async () => {
+            Log.info(`CS340AdminView::handleAdminEditDeliverable::onSave::click - Verify Schedule - start`);
+            const idElement: OnsInputElement = document.getElementById("adminEditDeliverablePage-name") as OnsInputElement;
+            const delivId: string = idElement.value;
+            await new Promise( (resolve) => setTimeout(resolve, 1000) );
+
+            Log.info(`CS340AdminView::handleAdminEditDeliverable::onSave::click - ${delivId}`)
+            that.verifyScheduledTasks(delivId);
+        });
     }
 
     public handleAdminMarking(opts: any): void {
@@ -416,6 +428,36 @@ export class CS340AdminView extends AdminView {
         } else {
             UI.notificationToast(`Unable to close "${deliverableSelectElement.value}" repositories; error: ${responseJson.error}`);
         }
+
+        return;
+    }
+
+    private async verifyScheduledTasks(delivId: string): Promise<void> {
+        Log.info(`CS340AdminView::verifyScheduledTasks(${delivId}) - start`);
+
+        // get class options
+        const options: any = AdminView.getOptions();
+        options.method = 'post';
+
+        const url = this.remote + '/portal/cs340/verifyScheduledTasks/' + delivId;
+        const response = await fetch(url, options);
+        const responseJson = await response.json();
+        Log.info(`CS340AdminView::closeRepositories() - response: ${responseJson}`);
+
+        return;
+    }
+
+    private async verifyAllScheduledTasks(): Promise<void> {
+        Log.info(`CS340AdminView::verifyAllScheduledTasks() - start`);
+
+        // get class options
+        const options: any = AdminView.getOptions();
+        options.method = 'post';
+
+        const url = this.remote + '/portal/cs340/verifyAllScheduledTasks/';
+        const response = await fetch(url, options);
+        const responseJson = await response.json();
+        Log.info(`CS340AdminView::closeRepositories() - response: ${responseJson}`);
 
         return;
     }
