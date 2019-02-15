@@ -46,7 +46,7 @@ export interface IDataStore {
 
     getLatestFeedbackGivenRecord(delivId: string, userName: string, kind: string): Promise<IFeedbackGiven | null>;
 
-    getFeedbackGivenRecordForCommit(commitURL: string, delivId: string, userName: string): Promise<IFeedbackGiven | null>;
+    getFeedbackGivenRecordForCommit(commitTarget: CommitTarget): Promise<IFeedbackGiven | null>;
 
     /**
      * Debugging / testing only, should not be commonly used.
@@ -267,8 +267,12 @@ export class MongoDataStore implements IDataStore {
         return null;
     }
 
-    public async getFeedbackGivenRecordForCommit(commitURL: string, delivId: string, userName: string): Promise<IFeedbackGiven | null> {
+    public async getFeedbackGivenRecordForCommit(target: CommitTarget): Promise<IFeedbackGiven | null> {
+
         try {
+            const commitURL = target.commitURL;
+            const delivId = target.delivId;
+            const userName = target.personId;
             const res = await this.getSingleRecord(this.FEEDBACKCOLL, {delivId: delivId, commitURL: commitURL});
             if (res === null) {
                 Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit( " + delivId + ", " + userName +

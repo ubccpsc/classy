@@ -3,6 +3,7 @@ import "mocha";
 
 import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
+import {CommitTarget} from "../../common/types/ContainerTypes";
 
 import {IDataStore, MongoDataStore} from "../src/autotest/DataStore";
 // const loadFirst = require('./GlobalSpec');
@@ -176,9 +177,14 @@ describe("MongoStore", () => {
         // SETUP
         await ds.saveFeedbackGivenRecord(TestData.feedbackRecordA);
 
+        const target: CommitTarget = {
+            commitURL: TestData.feedbackRecordA.commitURL,
+            delivId:   TestData.feedbackRecordA.delivId,
+            personId:  TestData.feedbackRecordA.personId
+        } as CommitTarget; // not a complete target
+
         // TEST
-        const actual = await ds.getFeedbackGivenRecordForCommit(TestData.feedbackRecordA.commitURL,
-            TestData.feedbackRecordA.delivId, TestData.feedbackRecordA.personId);
+        const actual = await ds.getFeedbackGivenRecordForCommit(target);
 
         // VERIFY
         expect(actual).to.not.be.null;
@@ -205,9 +211,14 @@ describe("MongoStore", () => {
         // SETUP
         await ds.saveFeedbackGivenRecord(TestData.feedbackRecordA);
 
+        const target: CommitTarget = {
+            commitURL: TestData.feedbackRecordA.commitURL,
+            delivId:   TestData.feedbackRecordA.delivId,
+            personId:  TestData.feedbackRecordA.personId
+        } as CommitTarget; // not a complete target
+
         // TEST
-        const actual = await ds.getFeedbackGivenRecordForCommit(TestData.feedbackRecordB.commitURL,
-            TestData.feedbackRecordB.delivId, TestData.feedbackRecordB.personId);
+        const actual = await ds.getFeedbackGivenRecordForCommit(target);
 
         // VERIFY
         expect(actual).to.be.null;
