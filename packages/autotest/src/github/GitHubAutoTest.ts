@@ -245,7 +245,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         await this.saveCommentInfo(info);
         if (res.output.postbackOnComplete === false) {
             const previousFeedback = await this.dataStore.getFeedbackGivenRecordForCommit(info);
-            if (previousFeedback !== null) {
+            if (previousFeedback === null) {
                 // new request, charge for feedback given
                 Log.info("GitHubAutoTest::processCommentExists(..) - result already exists; feedback request logged for: " +
                     info.personId + "; SHA: " + info.commitSHA);

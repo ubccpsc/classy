@@ -212,9 +212,9 @@ describe("MongoStore", () => {
         await ds.saveFeedbackGivenRecord(TestData.feedbackRecordA);
 
         const target: CommitTarget = {
-            commitURL: TestData.feedbackRecordA.commitURL,
-            delivId:   TestData.feedbackRecordA.delivId,
-            personId:  TestData.feedbackRecordA.personId
+            commitURL: TestData.feedbackRecordB.commitURL,
+            delivId:   TestData.feedbackRecordB.delivId,
+            personId:  TestData.feedbackRecordB.personId
         } as CommitTarget; // not a complete target
 
         // TEST
