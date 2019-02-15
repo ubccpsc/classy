@@ -40,7 +40,7 @@ export class AssignmentController {
 
         const repoRecords: Repository[] = await Promise.all(repoRecordPromises);
 
-        let importURL: string = deliverableRecord.importURL;
+        const importURL: string = deliverableRecord.importURL;
 
         // if (deliverableRecord.custom !== null && deliverableRecord.custom.assignment !== null) {
         //     if (deliverableRecord.custom.assignment.seedRepoPath !== null) {
