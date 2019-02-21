@@ -1,7 +1,7 @@
 import * as restify from "restify";
 import Log from "../../../../../common/Log";
 import {AssignmentGrade} from "../../../../../common/types/CS340Types";
-import {TeamTransport} from "../../../../../common/types/PortalTypes";
+import {Payload, RepositoryTransport, TeamTransport} from "../../../../../common/types/PortalTypes";
 import {AssignmentController} from "../../controllers/AssignmentController";
 import {AuthController} from "../../controllers/AuthController";
 import {DatabaseController} from "../../controllers/DatabaseController";
@@ -10,7 +10,7 @@ import {RepositoryController} from "../../controllers/RepositoryController";
 import {RubricController} from "../../controllers/RubricController";
 import {ScheduleController} from "../../controllers/ScheduleController";
 import {TeamController} from "../../controllers/TeamController";
-import {Deliverable, Grade, Person, Repository, Team} from "../../Types";
+import {AuditLabel, Deliverable, Grade, Person, Repository, Team} from "../../Types";
 import IREST from "../IREST";
 
 export default class CS340Routes implements IREST {
@@ -30,6 +30,9 @@ export default class CS340Routes implements IREST {
 
         server.post("/portal/cs340/verifyScheduledTasks/:delivId", CS340Routes.verifyScheduledTasks);
         server.post("/portal/cs340/verifyAllScheduledTasks/", CS340Routes.verifyAllScheduledTasks);
+
+        server.post("/portal/cs340/provision/:delivId/:repoId", CS340Routes.provisionOverride);
+
     }
 
     public static async createAllRepositories(req: any, res: any, next: any) {
@@ -367,5 +370,62 @@ export default class CS340Routes implements IREST {
         }
 
         return next();
+    }
+
+    private static async provisionOverride(req: any, res: any, next: any) {
+        Log.info(`CS340Routes::provisionOverride(..) - start`);
+
+        const user = req.headers.user;
+        const token = req.headers.token;
+
+        const ac = new AuthController();
+        const isValid = await ac.isPrivileged(user, token);
+        if (!isValid.isStaff) {
+            res.send(401, {
+                error: "Unauthorized usage of API: If you believe this is an error, please contact the course admin"
+            });
+            return next();
+        }
+
+        let payload: Payload;
+        // const user = req.headers.user;
+        const delivId = req.params.delivId;
+        const repoId = req.params.repoId;
+
+        Log.info('CS340Routes::postProvision(..) - start; delivId: ' + delivId + '; repoId: ' + repoId);
+
+        try {
+            const success = await CS340Routes.provisionRepository(user, delivId, repoId);
+            payload = {success: success};
+            res.send(200, payload);
+            return next(true);
+        } catch (err) {
+            Log.error(`CS340Routes:: Error - Unable to provision repo: ${err.message} `);
+            res.send(400, {failure: {message: `Unable to provision repo: ${err.message}`}, shouldLogout: false});
+            return next(false);
+        }
+    }
+
+    private static async provisionRepository(personId: string, delivId: string, repoId: string): Promise<RepositoryTransport[]> {
+        const dc: DatabaseController = DatabaseController.getInstance();
+        const ac: AssignmentController = new AssignmentController();
+        const deliv = await dc.getDeliverable(delivId);
+
+        if (deliv !== null && deliv.shouldProvision === true) {
+            await dc.writeAudit(AuditLabel.REPO_PROVISION, personId, {}, {}, {delivId: delivId, repoId: repoId});
+
+            const repo = await dc.getRepository(repoId);
+            if (repo !== null) {
+                Log.info("CS340Routes::handleProvisionRepo( " + delivId + ", " + repoId + " ) - provisioning...");
+                const provisionedRepos = await ac.provisionRepos([repo], deliv);
+                Log.info("CS340Routes::handleProvisionRepo( " + delivId + ", " + repoId + " ) - provisioning complete.");
+                return [RepositoryController.repositoryToTransport(repo)];
+            } else {
+                throw new Error("CS340Routes::handleProvisionRepo( " + delivId + ", " + repoId + " ) - null repository");
+            }
+        } else {
+            throw new Error("CS340Routes::handleProvisionRepo( " + delivId + ", " + repoId + " ) - null deliverable");
+        }
+
     }
 }

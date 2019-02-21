@@ -2,6 +2,7 @@ import {OnsButtonElement, OnsFabElement, OnsInputElement, OnsListItemElement, On
 import Log from "../../../../../../common/Log";
 import {AssignmentInfo, AssignmentStatus} from "../../../../../../common/types/CS340Types";
 import {DeliverableTransport} from "../../../../../../common/types/PortalTypes";
+import Util from "../../../../../../common/Util";
 import {Deliverable} from "../../../../../backend/src/Types";
 import {Factory} from "../../Factory";
 import {UI} from "../../util/UI";
@@ -43,7 +44,7 @@ export class CS340AdminView extends AdminView {
         // }
 
         if (name === "adminProvision") {
-            Log.warn("CS340AdminView::renderPage::AdminProvision - Injecting Buttons");
+            Log.error("CS340AdminView::renderPage::AdminProvision - Injecting buttons");
             this.insertCloseAssignmentButton();
         }
 
@@ -66,10 +67,25 @@ export class CS340AdminView extends AdminView {
             const delivId: string = idElement.value;
             await new Promise( (resolve) => setTimeout(resolve, 1000) );
 
-            Log.info(`CS340AdminView::handleAdminEditDeliverable::onSave::click - ${delivId}`)
-            that.verifyScheduledTasks(delivId);
+            Log.info(`CS340AdminView::handleAdminEditDeliverable::onSave::click - ${delivId}`);
+            await that.verifyScheduledTasks(delivId);
         });
     }
+
+    // public handleadminProvision(opts: any): void {
+    //     Log.info(`CS340AdminView::handleAdminProvision(${JSON.stringify(opts)}) - Injecting`);
+    //     const that = this;
+    //     this.insertCloseAssignmentButton();
+    //
+    //     const provisionRepoButton: OnsButtonElement = document.getElementById("adminManageProvisionButton") as OnsButtonElement;
+    //     provisionRepoButton.onclick = async (evt) => {
+    //         Log.info('CS340AdminView::manageProvisionButton(..) - button pressed');
+    //         evt.stopPropagation(); // prevents list item expansion
+    //         await that.handleProvisionPressed();
+    //     };
+    //
+    //     return;
+    // }
 
     public handleAdminMarking(opts: any): void {
         Log.info("CS340AdminView::handleAdminMarking(..) - start; options : " + JSON.stringify(opts));
@@ -471,5 +487,71 @@ export class CS340AdminView extends AdminView {
         }).then().catch((error) => {
                 Log.error("CS340AdminView::transitionGradingPage(..) - error: " + JSON.stringify(error));
         });
+    }
+
+    private async handleProvisionPressed(): Promise<boolean> {
+        Log.info('CS340AdminView::handleProvisionPressed(..) - start');
+
+        const provisionList = document.getElementById("repositoryProvisionSelect") as HTMLSelectElement;
+        const selected = [];
+
+        // tslint:disable-next-line
+        for (let i = 0; i < provisionList.options.length; i++) {
+            const opt = provisionList.options[i];
+            if (opt.selected) {
+                selected.push(opt.value || opt.text);
+            }
+        }
+
+        Log.info('CS340AdminView::handleProvisionPressed(..) - start; # repos to provision: ' + selected.length);
+        if (selected.length > 0) {
+            UI.showSuccessToast('Repo provisioning in progress; this will take a while. Do not close this browser window.',
+                {timeout: 10000});
+        } else {
+            UI.showErrorToast('No repos selected for provisioning.');
+        }
+
+        // tslint:disable-next-line
+        for (let i = 0; i < selected.length; i++) {
+            const repoId = selected[i];
+            try {
+                const delivId = UI.getDropdownValue('provisionRepoDeliverableSelect');
+                const start = Date.now();
+                await this.provisionRepo(delivId, repoId);
+                Log.info('CS340AdminView::handleProvision(..) - provisioning complete; repo: ' + repoId +
+                    '; took: ' + Util.took(start));
+                UI.showSuccessToast('Repo provisioned: ' + repoId + ' ( ' + (i + 1) + ' of ' + selected.length + ' )',
+                    {timeout: 10000});
+            } catch (err) {
+                Log.error('CS340AdminView::handleProvision(..) - provisioning error for: ' + repoId + '; ERROR: ' + err.message);
+                UI.showErrorToast('Repo NOT provisioned: ' + repoId + ' (see error console)');
+            }
+        }
+
+        Log.info('CS340AdminView::handleProvision(..) - done');
+        if (selected.length > 0) {
+            UI.showSuccessToast('Repository provisioning complete.', {timeout: 20000, buttonLabel: 'Ok'});
+        }
+        super.renderPage("adminProvision", {});
+        return true;
+    }
+
+    private async provisionRepo(delivId: string, repoId: string): Promise<boolean> {
+        Log.info("AdminDeletePage::provisionRepo( " + delivId + ", " + repoId + " ) - start");
+
+        const url = this.remote + '/portal/cs340/provision/' + delivId + '/' + repoId;
+
+        const options: any = AdminView.getOptions();
+        options.method = 'post';
+
+        const response = await fetch(url, options);
+        const body = await response.json();
+        if (typeof body.success !== 'undefined') {
+            return true;
+        } else {
+            Log.error("Provision ERROR: " + body.failure.message);
+            UI.showError(body.failure.message);
+            return false;
+        }
     }
 }

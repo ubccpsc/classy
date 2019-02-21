@@ -69,7 +69,7 @@ export class GitHubController implements IGitHubController {
      * @returns {Promise<boolean>}
      */
     public async createRepositoryWithPath(repoName: string,
-                                          teams: team[],
+                                          teams: Team[],
                                           importURL: string,
                                           path?: string): Promise<boolean> {
         Log.info("GitHubController::createRepositoryWithPath( " + repoName + ", ...) - start");
@@ -173,9 +173,9 @@ export class GitHubController implements IGitHubController {
             Log.trace("GitHubController::createRepositoryWithPath() - importing project (slow)");
             let output;
             if (typeof path !== "undefined" && path !== null && path.trim() !== "") {
-                output = await this.gha.importRepoFS(importUrl, targetUrl, path);
+                output = await this.gha.importRepoFS(importURL, targetUrl, path);
             } else {
-                output = await this.gha.importRepoFS(importUrl, targetUrl);
+                output = await this.gha.importRepoFS(importURL, targetUrl);
             }
             Log.trace('GitHubController::createRepositoryWithPath(..) - import complete; success: ' + output);
 

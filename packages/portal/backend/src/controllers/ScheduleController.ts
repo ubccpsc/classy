@@ -53,7 +53,7 @@ export class ScheduleController {
             this.taskList.delete(taskName);
         }
 
-        const scheduledJob = schedule.scheduleJob(scheduledTime, async() => {
+        const scheduledJob = schedule.scheduleJob(scheduledTime, async () => {
             Log.info("ScheduleController::scheduleAssignmentCreation::scheduledJob() - starting task");
             // TODO: do something inside here
             await this.ac.createAllRepositories(assignId);

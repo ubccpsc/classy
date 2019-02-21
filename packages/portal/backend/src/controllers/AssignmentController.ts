@@ -1,15 +1,17 @@
+import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {AssignmentGrade} from "../../../../common/types/CS340Types";
+import {RepositoryTransport} from "../../../../common/types/PortalTypes";
 import {GradePayload} from "../../../../common/types/SDMMTypes";
-import {Deliverable, Grade, Repository, Team} from "../Types";
+import Util from "../../../../common/Util";
+import {Deliverable, Repository, Team} from "../Types";
+import {AdminController} from "./AdminController";
 import {DatabaseController} from "./DatabaseController";
 import {GitHubActions, IGitHubActions} from "./GitHubActions";
+import {GitHubController} from "./GitHubController";
 import {GradesController} from "./GradesController";
 import {RepositoryController} from "./RepositoryController";
 import {RubricController} from "./RubricController";
-import {AdminController} from "./AdminController";
-import {RepositoryTransport} from "../../../../common/types/PortalTypes";
-import {GitHubController, IGitHubController} from "./GitHubController";
 
 export class AssignmentController {
 
@@ -17,7 +19,7 @@ export class AssignmentController {
     private rc: RepositoryController = new RepositoryController();
     private rubricController: RubricController = new RubricController();
     private gha: IGitHubActions = GitHubActions.getInstance();
-    private ghc: IGitHubController = new GitHubController(this.gha);
+    private ghc: GitHubController = new GitHubController(this.gha);
     private gc: GradesController = new GradesController();
     private cc: AdminController = new AdminController(this.ghc);
 
@@ -40,15 +42,7 @@ export class AssignmentController {
 
         const repoRecords: Repository[] = await Promise.all(repoRecordPromises);
 
-        const importURL: string = deliverableRecord.importURL;
-
-        // if (deliverableRecord.custom !== null && deliverableRecord.custom.assignment !== null) {
-        //     if (deliverableRecord.custom.assignment.seedRepoPath !== null) {
-        //         importURL += deliverableRecord.custom.assignment.seedRepoPath;
-        //     }
-        // }
-
-        await this.cc.performProvision(repoRecords, importURL);
+        await this.provisionRepos(repoRecords, deliverableRecord);
 
         return true;
     }
@@ -182,5 +176,80 @@ export class AssignmentController {
         // TODO: Perhaps add stuff about releasing grades?
 
         return success;
+    }
+
+    public async provisionRepos(repos: Repository[], deliverable: Deliverable): Promise<RepositoryTransport[]> {
+        const config = Config.getInstance();
+
+        Log.info(`AssignmentController::provisionRepos(..) - start; ` +
+            `# repos: ${repos.length}; deliverable: ${deliverable.id}`);
+        const provisionedRepos: Repository[] = [];
+
+        if (deliverable === null) {
+            Log.error(`AssignmentController:provisionRepos(..) - Error: Unable to provision repositories ` +
+                `due to invalid deliverable.`);
+            return provisionedRepos;
+        }
+
+        let importPath: string = "";
+        const importURL: string = deliverable.importURL;
+        if (typeof deliverable.custom !== "undefined" && typeof deliverable.custom.assignment !== null) {
+            importPath = deliverable.custom.assignment.seedRepoPath.trim();
+            Log.info(`AssignmentController::provisionRepos(..) - Deliverable ${deliverable.id} is an assignment; ` +
+                `Seed path: ${importPath}`);
+        } else {
+            Log.info(`AssignmentController::provisionRepos(..) - Deliverable is not an assignment; using ` +
+                `default behaviour`);
+        }
+
+        for (const repo of repos) {
+            try {
+                const start = Date.now();
+                Log.info(`AssignmentController::provisionRepos(..) ***** START *****; repo: ${repo.id}`);
+                if (repo.URL === null) {
+                    const teams: Team[] = [];
+                    for (const teamId of repo.teamIds) {
+                        teams.push(await this.db.getTeam(teamId));
+                    }
+                    Log.info(`AssignmentController::performProvision(..) - about to provision: ${repo.id}`);
+
+                    let success: boolean;
+                    if (importPath !== "") {
+                        success = await this.ghc.createRepositoryWithPath(repo.id, teams, importURL, importPath);
+                    } else {
+                        success = await this.ghc.provisionRepository(repo.id, teams, importURL);
+                    }
+                    Log.info(`AssignmentController::performProvision(..) - provisioned: ${repo.id}; success: ${success}`);
+
+                    if (success === true) {
+                        repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
+                        repo.custom.githubCreated = true;
+                        await this.db.writeRepository(repo);
+                        Log.info(`AssignmentController::performProvision(..) - success: ${repo.id}; URL: ${repo.URL}`);
+                        provisionedRepos.push(repo);
+                    } else {
+                        Log.warn(`AssignmentController::performProvision(..) - provision FAILED: ${repo.id}; URL: ${repo.URL}`);
+                    }
+
+                    Log.info(`AssignmentController::performProvision(..) - done provisioning: ${repo.id}; forced wait`);
+                    await Util.delay(2 * 1000); // after any provisioning wait a bit
+                    // Log.info("AdminController::performProvision(..) - done for repo: " + repo.id + "; wait complete");
+                    Log.info(`AssignmentController::performProvision(..) ***** DONE *****; repo: ${repo.id}; ` +
+                        ` took: ${Util.took(start)}`);
+                } else {
+                    Log.info(`AssignmentController::performProvision(..) - skipped; already provisioned: ${repo.id};` +
+                        ` URL: ${repo.URL}`);
+                }
+            } catch (error) {
+                Log.error(`AssignmentController::performProvision(..) - FAILED: ${repo.id}; Deliv: ${deliverable.id}; ` +
+                `ERROR: ${error.message}`);
+            }
+        }
+
+        const provisionedRepositoryTransport: RepositoryTransport[] = [];
+        for (const repo of provisionedRepos) {
+            provisionedRepositoryTransport.push(RepositoryController.repositoryToTransport(repo));
+        }
+        return provisionedRepositoryTransport;
     }
 }
