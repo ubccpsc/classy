@@ -437,7 +437,7 @@ export class GradingPageView extends AdminPage {
             const verifiedAssignmentGrade: AssignmentGrade = this.verifyMarkedAssignmentGrade(newAssignmentGrade);
 
             const url = this.remote + `/portal/cs340/setAssignmentGrade/${personId}/${aid}`;
-            Log.info("CS340View::submitGrade() - uri: " + url);
+            Log.info("GradingPage::submitGrade() - uri: " + url);
 
             // Call the function
             const options: any = AdminView.getOptions();
@@ -447,7 +447,7 @@ export class GradingPageView extends AdminPage {
             options.json = true;
             options.body = JSON.stringify(verifiedAssignmentGrade);
 
-            Log.info("CS340View::submitGrade() - request body: " + options.body);
+            Log.info("GradingPage::submitGrade() - request body: " + options.body);
 
             allPromises.push(fetch(url, options));
         }
@@ -455,7 +455,7 @@ export class GradingPageView extends AdminPage {
         const resultArray = await Promise.all(allPromises);
 
         for (const response of resultArray) {
-            Log.info("CS340View::submitGrade() - response from api " + response);
+            Log.info("GradingPage::submitGrade() - response from api " + response);
             if (response.status !== 200) {
                 const errResponse = await response.json();
                 Log.trace("CS340AdminView::submitGrade() - error submitting grades, code: " +

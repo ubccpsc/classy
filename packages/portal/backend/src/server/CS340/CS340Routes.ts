@@ -1,10 +1,16 @@
 import * as restify from "restify";
 import Log from "../../../../../common/Log";
 import {AssignmentGrade} from "../../../../../common/types/CS340Types";
-import {Payload, RepositoryTransport, TeamTransport} from "../../../../../common/types/PortalTypes";
+import {
+    DeliverableTransport,
+    Payload,
+    RepositoryTransport,
+    TeamTransport
+} from "../../../../../common/types/PortalTypes";
 import {AssignmentController} from "../../controllers/AssignmentController";
 import {AuthController} from "../../controllers/AuthController";
 import {DatabaseController} from "../../controllers/DatabaseController";
+import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {PersonController} from "../../controllers/PersonController";
 import {RepositoryController} from "../../controllers/RepositoryController";
 import {RubricController} from "../../controllers/RubricController";
@@ -20,6 +26,7 @@ export default class CS340Routes implements IREST {
 
         server.get("/portal/cs340/retrieveRepoUrl/:sid/:delivId", CS340Routes.retrieveRepoUrl);
         server.get("/portal/cs340/getStudentTeamByDeliv/:sid/:delivId", CS340Routes.getStudentTeamByDeliv);
+        server.get("portal/cs340/deliverables", CS340Routes.getDeliverables);
 
         server.post("/portal/cs340/generateRubric/:delivId", CS340Routes.generateRubric);
         server.post("/portal/cs340/closeAssignmentRepositories/:delivId", CS340Routes.closeAssignmentRepositories);
@@ -372,6 +379,23 @@ export default class CS340Routes implements IREST {
         return next();
     }
 
+    public static async getDeliverables(req: any, res: any, next: any) {
+        Log.info(`CS340Routes::getDeliverable(..) - start`);
+
+        const dbc: DatabaseController = DatabaseController.getInstance();
+        const deliverables: Deliverable[] = await dbc.getDeliverables();
+
+        const deliverableTransports: DeliverableTransport[] = [];
+
+        for (const deliv of deliverables) {
+            deliverableTransports.push(DeliverablesController.deliverableToTransport(deliv));
+        }
+
+        res.send(200, {success: deliverableTransports});
+
+        return next();
+    }
+
     private static async provisionOverride(req: any, res: any, next: any) {
         Log.info(`CS340Routes::provisionOverride(..) - start`);
 
@@ -426,6 +450,5 @@ export default class CS340Routes implements IREST {
         } else {
             throw new Error("CS340Routes::handleProvisionRepo( " + delivId + ", " + repoId + " ) - null deliverable");
         }
-
     }
 }
