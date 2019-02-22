@@ -145,6 +145,9 @@ export class CS340View extends StudentView {
                 }];
 
                 const st = new SortableTable(headers, "#studentGradeBreakdownTable");
+                let totalGrade: number = 0;
+                let maxGrade: number = 0;
+
                 for (let i = 0; i < assignmentGrade.questions.length; i++) {
                     const question = assignmentGrade.questions[i];
                     for (let j = 0; j < question.subQuestions.length; j++) {
@@ -160,10 +163,34 @@ export class CS340View extends StudentView {
                             newRow.push({value: subQuestion.grade.toString(), html: subQuestion.grade.toString()});
                             newRow.push({value: subRubric.outOf.toString(), html: subRubric.outOf.toString()});
                             newRow.push({value: subQuestion.feedback, html: subQuestion.feedback});
+
+                            totalGrade += subQuestion.grade * subRubric.weight;
+                            maxGrade += subRubric.outOf;
+
                             st.addRow(newRow);
                         }
                     }
                 }
+
+                const totalRow: TableCell[] = [];
+                totalRow.push({
+                    value: "Total Grade",
+                    html: "<b>Total Grade</b>"
+                });
+                totalRow.push({
+                    value: totalGrade.toString(),
+                    html: totalGrade.toString()
+                });
+                totalRow.push({
+                    value: maxGrade.toString(),
+                    html: maxGrade.toString()
+                });
+                totalRow.push({
+                    value: "",
+                    html: ""
+                });
+
+                st.addRow(totalRow);
 
                 // for (const question of assignmentGrade.questions) {
                 //     //
