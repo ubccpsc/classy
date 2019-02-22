@@ -1,10 +1,3 @@
-/**
- * This is the main student page for CS310.
- *
- * Other courses should _not_ modify this but instead build their own
- * student views, as they need for their own courses.
- */
-
 import {OnsButtonElement} from "onsenui";
 import Log from "../../../../../../common/Log";
 import {
@@ -14,6 +7,8 @@ import {
     TeamTransport
 } from "../../../../../../common/types/PortalTypes";
 
+import {AssignmentGrade, AssignmentRubric} from "../../../../../../common/types/CS340Types";
+import {SortableTable, TableCell, TableHeader} from "../../util/SortableTable";
 import {UI} from "../../util/UI";
 import {StudentView} from "../StudentView";
 
@@ -21,6 +16,7 @@ export class CS340View extends StudentView {
 
     private teams: TeamTransport[];
     private deliverables: DeliverableTransport[];
+    private delivGradeMap: Map<string, GradeTransport>;
 
     constructor(remoteUrl: string) {
         super();
@@ -63,11 +59,102 @@ export class CS340View extends StudentView {
 
             await this.renderDeliverables();
 
+            await this.renderGradesDropdown();
+
+            for (const grade of this.grades) {
+                this.delivGradeMap.set(grade.delivId, grade);
+            }
+
             Log.info('CS340View::renderStudentPage(..) - done');
         } catch (err) {
             Log.error('Error encountered: ' + err.message);
         }
         UI.hideModal();
+        return;
+    }
+
+    private async renderGradesDropdown(): Promise<void> {
+        Log.info(`CS340View::renderGradesDropdown(..) - start`);
+        const that = this;
+        const gradeDropdown = this.populateDeliverableDropdown("studentGradeSelect");
+        if (gradeDropdown === null) {
+            return;
+        }
+        gradeDropdown.addEventListener("change", async (evt) => {
+            Log.info(`CS340View::renderGradesDropdown::onChange(..) - start with value: ` +
+            `${(evt.target as HTMLSelectElement).value}`);
+            await that.handleGradeChange((evt.target as HTMLSelectElement).value);
+        });
+        return;
+    }
+
+    private async handleGradeChange(delivId: string): Promise<void> {
+        Log.info(`CS340View::handleGradeChange(${delivId}) - start`);
+
+        if (this.delivGradeMap.has(delivId)) {
+            const grade = this.delivGradeMap.get(delivId);
+            const customGrade = grade.custom;
+            const studentGradeTable = document.getElementById("studentGradeBreakdownTable");
+            if (typeof customGrade.assignmentGrade === "undefined") {
+                // display normal grade
+                studentGradeTable.innerHTML = `Grade: ${grade.score}`;
+            } else {
+                // something here
+                const assignmentGrade: AssignmentGrade = customGrade.assignmentGrade;
+                const headers: TableHeader[] = [{
+                    id: 'exerciseId',
+                    text: "Exercise Name",
+                    sortable: false,
+                    defaultSort: false,
+                    sortDown: false,
+                    style: 'padding-left: 1em; padding-right: 1em; text-align: left',
+                }, {
+                    id: 'grade',
+                    text: 'Grade',
+                    sortable: false,
+                    defaultSort: false,
+                    sortDown: false,
+                    style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+                }, {
+                    id: 'outOf',
+                    text: 'Out Of',
+                    sortable: false,
+                    defaultSort: false,
+                    sortDown: false,
+                    style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+                }, {
+                    id: 'feedback',
+                    text: 'Feedback',
+                    sortable: false,
+                    defaultSort: false,
+                    sortDown: false,
+                    style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+                }];
+
+                const st = new SortableTable(headers, "studentGradeBreakdownTable");
+                for (const question of assignmentGrade.questions) {
+                    //
+                    for (const subQuestion of question.subQuestions) {
+                        const newRow: TableCell[] = [];
+                        newRow.push({value: subQuestion.name, html: subQuestion.name});
+                        newRow.push({value: subQuestion.grade, html: subQuestion.grade});
+                        newRow.push({value: subQuestion.outOf, html: subQuestion.outOf}); // need the rubric
+                        newRow.push({value: subQuestion.feedback, html: subQuestion.feedback});
+                        st.addRow(newRow);
+                    }
+                }
+
+                st.generate();
+
+                UI.showSection("studentGradeBreakdownTable");
+                UI.hideSection("studentNoGradesDiv");
+                }
+
+        } else {
+            UI.hideSection("studentGradeBreakdownTable");
+            UI.showSection("studentNoGradesDiv");
+        }
+
         return;
     }
 
@@ -102,12 +189,16 @@ export class CS340View extends StudentView {
         }
     }
 
-    private async renderDeliverables(): Promise<void> {
-        Log.info(`CS340View:L:renderDeliverables(..) - start`);
+    private populateDeliverableDropdown(dropdownId: string): HTMLSelectElement {
+        Log.info(`CS340View::populateDeliverableDropdown(${dropdownId}) - string`);
 
-        const that = this;
+        const delivSelectElement = document.getElementById(dropdownId) as HTMLSelectElement;
+        if (delivSelectElement === null) {
+            Log.error(`CS340View::populateDeliverableDropdown(..) - Error: Unable to find dropdown with id: ${dropdownId}`);
+            return null;
+        }
+
         const deliverables = this.deliverables;
-        const delivSelectElement = document.getElementById("studentDeliverableSelect") as HTMLSelectElement;
         const delivOptions: string[] = ["--N/A--"];
 
         for (const deliv of deliverables) {
@@ -122,6 +213,15 @@ export class CS340View extends StudentView {
 
             delivSelectElement.appendChild(option);
         }
+
+        return delivSelectElement;
+    }
+
+    private async renderDeliverables(): Promise<void> {
+        Log.info(`CS340View::renderDeliverables(..) - start`);
+
+        const that = this;
+        const delivSelectElement = this.populateDeliverableDropdown("studentDeliverableSelect");
 
         Log.info(`CS340View::renderDeliverables(..) - hooking event listener`);
 

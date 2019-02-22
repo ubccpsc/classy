@@ -12,8 +12,30 @@
     <ons-list>
         <ons-list-header>Grades</ons-list-header>
         <ons-list-item>
-            <div id="studentGradeTable" style="width:100%;"></div>
+            <div class="left settingIcon">
+                <ons-icon style="padding-right: 1em;" icon="fa-cogs"></ons-icon>
+                Select Deliverable:
+            </div>
+            <div>
+                <select id="studentGradeSelect">
+                </select>
+            </div>
         </ons-list-item>
+        <div id="studentGradesDiv" style="display: none;">
+            <ons-list-item>
+                <div id="studentGradeBreakdownTable" style="width:100%;">
+
+                </div>
+            </ons-list-item>
+        </div>
+        <div id="studentNoGradesDiv" style="display: none;">
+            <ons-list-item>
+                No grades available for this deliverable.
+            </ons-list-item>
+        </div>
+        <!--<ons-list-item>-->
+            <!--<div id="studentGradeTable" style="width:100%;"></div>-->
+        <!--</ons-list-item>-->
         <ons-list-header>Repositories</ons-list-header>
         <ons-list-item>
             <div id="studentRepoTable" style="width:100%;"></div>

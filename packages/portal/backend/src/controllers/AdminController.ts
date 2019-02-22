@@ -655,13 +655,12 @@ export class AdminController {
         if (formSingleTeams === true) {
             // now create teams for individuals
             for (const individual of allPeople) {
-                if (individual.kind !== PersonKind.STUDENT) {
-                    continue;
-                }
-                const names = await this.cc.computeNames(deliv, [individual]);
+                if (individual.kind === PersonKind.STUDENT) {
+                    const names = await this.cc.computeNames(deliv, [individual]);
 
-                const team = await this.tc.formTeam(names.teamName, deliv, [individual], false);
-                delivTeams.push(team);
+                    const team = await this.tc.formTeam(names.teamName, deliv, [individual], false);
+                    delivTeams.push(team);
+                }
             }
         }
 
