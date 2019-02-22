@@ -11,6 +11,7 @@ import {AssignmentController} from "../../controllers/AssignmentController";
 import {AuthController} from "../../controllers/AuthController";
 import {DatabaseController} from "../../controllers/DatabaseController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
+import {GitHubActions, IGitHubActions} from "../../controllers/GitHubActions";
 import {PersonController} from "../../controllers/PersonController";
 import {RepositoryController} from "../../controllers/RepositoryController";
 import {RubricController} from "../../controllers/RubricController";
@@ -39,6 +40,8 @@ export default class CS340Routes implements IREST {
         server.post("/portal/cs340/verifyAllScheduledTasks/", CS340Routes.verifyAllScheduledTasks);
 
         server.post("/portal/cs340/provision/:delivId/:repoId", CS340Routes.provisionOverride);
+
+        server.get("/portal/cs340/test/testAddCollaborator", CS340Routes.testAddCollaborator);
 
     }
 
@@ -402,6 +405,16 @@ export default class CS340Routes implements IREST {
 
         res.send(200, {success: deliverableTransports});
 
+        return next();
+    }
+
+    public static async testAddCollaborator(req: any, res: any, next: any) {
+        // TOOD: Remove this
+        const gha: GitHubActions = GitHubActions.getInstance() as GitHubActions;
+
+        const result = await gha.addCollaborators("d1_lossycompression", ["kyrozoki"], "pull");
+
+        res.send(200, {response: result});
         return next();
     }
 

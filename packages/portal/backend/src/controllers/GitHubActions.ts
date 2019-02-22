@@ -1754,6 +1754,76 @@ export class GitHubActions implements IGitHubActions {
             return [];
         }
     }
+
+    public async addCollaborators(repoId: string, userIds: string[], permissionLevel: string): Promise<boolean> {
+        // PUT /repos/:owner/:repo/collaborators/:username
+        Log.trace(`GithubActions::addCollaborators(${repoId}, ${userIds}, ${permissionLevel}) - start`);
+
+        const start = Date.now();
+        let completeSuccess: boolean = true;
+        try {
+            for (const userId of userIds) {
+                const uri = `${this.apiPath}/repos/${this.org}/${repoId}/collaborators/${userId}`;
+                const options: any = {
+                    method: 'PUT',
+                    uri: uri,
+                    headers: {
+                        'Authorization': this.gitHubAuthToken,
+                        'User-Agent': this.gitHubUserName,
+                        'Accept': 'application/json'
+                    },
+                    body: {
+                        permission: permissionLevel
+                    },
+                    json: true
+                };
+
+                const response = await rp(options);
+            }
+        } catch (error) {
+            Log.trace(`GithubActions::addCollaborators(..) - Error: ${error}`);
+            completeSuccess = false;
+        }
+
+        // for (const response of responses) {
+        //     completeSuccess = completeSuccess && ((response.status === 201) || (response.status === 204));
+        // }
+
+        Log.trace(`GitHubAction::addCollaborators(..) - complete; result: ${completeSuccess}, took: ${Util.took(start)}`);
+        return completeSuccess;
+    }
+
+    public async listCollaborators(repoId: string): Promise<string[]> {
+        // GET /repos/:owner/:repo/collaborators
+        Log.trace(`GithubActions::listCollaborators(${repoId}) - start`);
+        const collaborators: string[] = [];
+
+        const uri = `${this.apiPath}/repos/${this.org}/${repoId}/collaborators/`;
+        const options: any = {
+            method:  'GET',
+            headers: {
+                'Authorization': this.gitHubAuthToken,
+                'User-Agent':    this.gitHubUserName,
+                'Accept':        'application/json'
+            },
+            json:    true
+        };
+
+        const response = await fetch(uri, options);
+        try {
+            if (response.status === 200) {
+                const responseBody = await response.json();
+                for (const userInfo of responseBody) {
+                    collaborators.push(userInfo.login);
+                }
+            }
+        } catch (error) {
+            Log.error(`GithubActions::listCollaborators(..) - ERROR: ${error}`);
+        }
+
+        Log.trace(`GithubActions::listCollaborators(${repoId}) - complete; collaborators: ${collaborators}`);
+        return collaborators;
+    }
 }
 
 /* istanbul ignore next */
