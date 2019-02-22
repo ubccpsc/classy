@@ -16,7 +16,8 @@ export class CS340View extends StudentView {
 
     private teams: TeamTransport[];
     private deliverables: DeliverableTransport[];
-    private delivGradeMap: Map<string, GradeTransport>;
+    private delivGradeMap: Map<string, GradeTransport> = new Map();
+    private delivMap: Map<string, DeliverableTransport> = new Map();
 
     constructor(remoteUrl: string) {
         super();
@@ -65,6 +66,10 @@ export class CS340View extends StudentView {
                 this.delivGradeMap.set(grade.delivId, grade);
             }
 
+            for (const deliv of this.deliverables) {
+                this.delivMap.set(deliv.id, deliv);
+            }
+
             Log.info('CS340View::renderStudentPage(..) - done');
         } catch (err) {
             Log.error('Error encountered: ' + err.message);
@@ -91,15 +96,23 @@ export class CS340View extends StudentView {
     private async handleGradeChange(delivId: string): Promise<void> {
         Log.info(`CS340View::handleGradeChange(${delivId}) - start`);
 
+        if (delivId === "--N/A--") {
+            UI.hideSection("studentGradesDiv");
+            UI.hideSection("studentNoGradesDiv");
+            return;
+        }
+
         if (this.delivGradeMap.has(delivId)) {
-            const grade = this.delivGradeMap.get(delivId);
+            const grade: GradeTransport = this.delivGradeMap.get(delivId);
+            const deliv: DeliverableTransport = this.delivMap.get(delivId);
             const customGrade = grade.custom;
             const studentGradeTable = document.getElementById("studentGradeBreakdownTable");
-            if (typeof customGrade.assignmentGrade === "undefined") {
+            if (typeof customGrade.assignmentGrade === "undefined" || typeof deliv.rubric === "undefined" ||
+                typeof (deliv.rubric as AssignmentRubric).questions === "undefined") {
                 // display normal grade
                 studentGradeTable.innerHTML = `Grade: ${grade.score}`;
             } else {
-                // something here
+                const rubric: AssignmentRubric = deliv.rubric as AssignmentRubric;
                 const assignmentGrade: AssignmentGrade = customGrade.assignmentGrade;
                 const headers: TableHeader[] = [{
                     id: 'exerciseId',
@@ -131,27 +144,47 @@ export class CS340View extends StudentView {
                     style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
                 }];
 
-                const st = new SortableTable(headers, "studentGradeBreakdownTable");
-                for (const question of assignmentGrade.questions) {
-                    //
-                    for (const subQuestion of question.subQuestions) {
-                        const newRow: TableCell[] = [];
-                        newRow.push({value: subQuestion.name, html: subQuestion.name});
-                        newRow.push({value: subQuestion.grade, html: subQuestion.grade});
-                        newRow.push({value: subQuestion.outOf, html: subQuestion.outOf}); // need the rubric
-                        newRow.push({value: subQuestion.feedback, html: subQuestion.feedback});
-                        st.addRow(newRow);
+                const st = new SortableTable(headers, "#studentGradeBreakdownTable");
+                for (let i = 0; i < assignmentGrade.questions.length; i++) {
+                    const question = assignmentGrade.questions[i];
+                    for (let j = 0; j < question.subQuestions.length; j++) {
+                        if (i < rubric.questions.length && j < rubric.questions[i].subQuestions.length) {
+                            const subRubric = rubric.questions[i].subQuestions[j];
+                            const subQuestion = question.subQuestions[j];
+
+                            const newRow: TableCell[] = [];
+                            newRow.push({
+                                value: `${question.name} ${subQuestion.name}`,
+                                html: `${question.name} ${subQuestion.name}`}
+                                );
+                            newRow.push({value: subQuestion.grade.toString(), html: subQuestion.grade.toString()});
+                            newRow.push({value: subRubric.outOf.toString(), html: subRubric.outOf.toString()});
+                            newRow.push({value: subQuestion.feedback, html: subQuestion.feedback});
+                            st.addRow(newRow);
+                        }
                     }
                 }
 
+                // for (const question of assignmentGrade.questions) {
+                //     //
+                //     for (const subQuestion of question.subQuestions) {
+                //         const newRow: TableCell[] = [];
+                //         newRow.push({value: subQuestion.name, html: subQuestion.name});
+                //         newRow.push({value: subQuestion.grade.toString(), html: subQuestion.grade.toString()});
+                //         newRow.push({value: subQuestion.outOf, html: subQuestion.outOf}); // need the rubric
+                //         newRow.push({value: subQuestion.feedback, html: subQuestion.feedback});
+                //         st.addRow(newRow);
+                //     }
+                // }
+
                 st.generate();
 
-                UI.showSection("studentGradeBreakdownTable");
+                UI.showSection("studentGradesDiv");
                 UI.hideSection("studentNoGradesDiv");
                 }
 
         } else {
-            UI.hideSection("studentGradeBreakdownTable");
+            UI.hideSection("studentGradesDiv");
             UI.showSection("studentNoGradesDiv");
         }
 
@@ -175,7 +208,7 @@ export class CS340View extends StudentView {
     }
 
     private async fetchDeliverableData(): Promise<DeliverableTransport[]> {
-        Log.info(`CS340AdminView::fetchDeliverableData() - Start`);
+        Log.info(`CS340AdminView::fetchDeliverableData() - start`);
         try {
             this.deliverables = null;
             const data = await this.fetchData('/portal/cs340/deliverables') as DeliverableTransport[];

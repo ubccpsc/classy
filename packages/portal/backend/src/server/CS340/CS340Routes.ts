@@ -71,6 +71,15 @@ export default class CS340Routes implements IREST {
         return next();
     }
 
+    public static async getRubric(req: any, res: any, next: any) {
+        Log.info(`CS340Routes::getRubric(..) - start`);
+
+        const db: DatabaseController = DatabaseController.getInstance();
+
+        const delivId: string = req.params.delivId;
+        const deliverable: Deliverable = await db.getDeliverable(delivId);
+    }
+
     public static async releaseAllRepositories(req: any, res: any, next: any) {
         Log.info(`CS340Routes::releaseAllRepositories(..) - start`);
 
