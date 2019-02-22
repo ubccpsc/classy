@@ -4,7 +4,7 @@ import {AssignmentGrade} from "../../../../common/types/CS340Types";
 import {RepositoryTransport} from "../../../../common/types/PortalTypes";
 import {GradePayload} from "../../../../common/types/SDMMTypes";
 import Util from "../../../../common/Util";
-import {Deliverable, Repository, Team} from "../Types";
+import {Deliverable, Person, Repository, Team} from "../Types";
 import {AdminController} from "./AdminController";
 import {DatabaseController} from "./DatabaseController";
 import {GitHubActions, IGitHubActions} from "./GitHubActions";
@@ -22,6 +22,8 @@ export class AssignmentController {
     private ghc: GitHubController = new GitHubController(this.gha);
     private gc: GradesController = new GradesController();
     private cc: AdminController = new AdminController(this.ghc);
+
+    public static COLLABORATOR_FLAG: boolean = true;
 
     public async createAllRepositories(delivId: string): Promise<boolean> {
         Log.info(`AssignmentController::createAllRepositories(${delivId}) - start`);
@@ -73,7 +75,7 @@ export class AssignmentController {
 
         Log.info(`AssignmentController::releaseAllRepositories(..) - Repos to release: ${JSON.stringify(repoRecords)}`);
 
-        await this.cc.performRelease(repoRecords);
+        await this.cc.performRelease(repoRecords, AssignmentController.COLLABORATOR_FLAG);
 
         return true;
     }
@@ -96,7 +98,7 @@ export class AssignmentController {
         }
 
         const filteredRepos = repos.filter((repo) => {
-            return repo.delivId === delivId;
+            return repo.delivId === delivId && repo.URL !== null;
         });
 
         Log.info(`AssignmentController::closeAllRepositories(..) - Closing ${filteredRepos.length} repos`);
@@ -124,12 +126,33 @@ export class AssignmentController {
     public async closeAssignmentRepository(repoId: string): Promise<boolean> {
         Log.info(`AssignmentController::closeAssignmentRepository(${repoId}) - start`);
 
-        const success = await this.gha.setRepoPermission(repoId, "pull");
-        if (!success) {
-            Log.error(`AssignmentController::closeAssignmentRepository(..) - Error: unable to close repo: ${repoId}`);
+        const repo: Repository = await this.db.getRepository(repoId);
+
+        if (repo === null || repo.URL === null) {
+            Log.warn(`AssignmentController::closeAssignmentRepository(..) - Unable to close a repo that doesn't exist!`);
+            return true;
         }
 
-        return success;
+        const success = await this.gha.setRepoPermission(repoId, "pull");
+
+        let collabSuccess = true;
+
+        // find collaborators and change their permissions, if we are using collaborators
+        if (AssignmentController.COLLABORATOR_FLAG === true) {
+            const collaborators: Array<{id: string, permission: string}> = await this.gha.listCollaborators(repoId);
+
+            const collaboratorIds: string[] = collaborators.filter((x) => x.permission !== "admin")
+                .map((x) => x.id);
+
+            collabSuccess = await this.gha.addCollaborators(repoId, collaboratorIds, "pull");
+        }
+
+        if (!success || !collabSuccess) {
+            Log.error(`AssignmentController::closeAssignmentRepository(..) - Error: unable to close repo: ${repoId};` +
+                `closed teams: ${success} collaborators: ${collabSuccess}`);
+        }
+
+        return success && collabSuccess;
     }
 
     /**

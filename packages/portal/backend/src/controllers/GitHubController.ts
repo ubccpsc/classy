@@ -296,8 +296,18 @@ export class GitHubController implements IGitHubController {
             if (asCollaborators) {
                 Log.info("GitHubController::releaseRepository(..) - releasing repository as " +
                     "individual collaborators");
-                Log.error("GitHubController::releaseRepository(..) - ERROR: Not implemented");
-                throw new Error("GitHubController - w/ collaborators NOT IMPLEMENTED");
+                await this.checkDatabase(null, team.id);
+
+                const personIds = team.personIds;
+                const githubIds: string[] = [];
+                for (const personId of personIds) {
+                    const personRecord = await this.dbc.getPerson(personId);
+
+                    githubIds.push(personRecord.githubId);
+                }
+
+                const success = await this.gha.addCollaborators(repo.id, githubIds, "push");
+                Log.info(`GithubController::releaseRepository(..) - success: ${success}`);
             } else {
 
                 await this.checkDatabase(null, team.id);

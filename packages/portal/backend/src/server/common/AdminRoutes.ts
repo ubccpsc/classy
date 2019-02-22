@@ -869,7 +869,7 @@ export default class AdminRoutes implements IREST {
             const dbc = DatabaseController.getInstance();
             await dbc.writeAudit(AuditLabel.REPO_RELEASE, personId, {}, {}, {repoId: repoId});
 
-            const releaseSucceeded = await ac.performRelease([repo]);
+            const releaseSucceeded = await ac.performRelease([repo], true);
             Log.info('AdminRoutes::performRelease() - success; # results: ' + releaseSucceeded.length +
                 '; took: ' + Util.took(start));
             return releaseSucceeded;

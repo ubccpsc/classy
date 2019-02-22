@@ -30,11 +30,11 @@ export default class CS340Routes implements IREST {
         server.get("portal/cs340/deliverables", CS340Routes.getDeliverables);
 
         server.post("/portal/cs340/generateRubric/:delivId", CS340Routes.generateRubric);
-        server.post("/portal/cs340/closeAssignmentRepositories/:delivId", CS340Routes.closeAssignmentRepositories);
         server.put("/portal/cs340/setAssignmentGrade/:sid/:delivId", CS340Routes.setAssignmentGrade);
 
         server.post("/portal/cs340/createAllRepositories/:delivId", CS340Routes.createAllRepositories);
         server.post("/portal/cs340/releaseAllRepositories/:delivId", CS340Routes.releaseAllRepositories);
+        server.post("/portal/cs340/closeAssignmentRepositories/:delivId", CS340Routes.closeAssignmentRepositories);
 
         server.post("/portal/cs340/verifyScheduledTasks/:delivId", CS340Routes.verifyScheduledTasks);
         server.post("/portal/cs340/verifyAllScheduledTasks/", CS340Routes.verifyAllScheduledTasks);

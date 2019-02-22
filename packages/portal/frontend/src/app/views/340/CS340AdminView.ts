@@ -439,7 +439,7 @@ export class CS340AdminView extends AdminView {
         const responseJson = await response.json();
         Log.info(`CS340AdminView::closeRepositories() - response: ${responseJson}`);
 
-        if (responseJson.result === true) {
+        if (responseJson.response === true) {
             UI.notificationToast(`Closed all "${deliverableSelectElement.value}" repositories`);
         } else {
             UI.notificationToast(`Unable to close "${deliverableSelectElement.value}" repositories; error: ${responseJson.error}`);
