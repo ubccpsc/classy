@@ -56,10 +56,12 @@ export class CS340View extends StudentView {
             this.teams = teams;
             // await this.renderTeams(teams);
 
+            UI.hideSection('studentSelectPartnerDiv');
+            UI.hideSection('studentPartnerDiv');
+
             await this.fetchDeliverableData();
 
             await this.renderDeliverables();
-
             await this.renderGradesDropdown();
 
             for (const grade of this.grades) {
@@ -69,6 +71,8 @@ export class CS340View extends StudentView {
             for (const deliv of this.deliverables) {
                 this.delivMap.set(deliv.id, deliv);
             }
+
+            await this.updateTeams();
 
             Log.info('CS340View::renderStudentPage(..) - done');
         } catch (err) {
@@ -340,12 +344,13 @@ export class CS340View extends StudentView {
 
                 Log.info("CS340View::updateTeams(..)::createTeam::onClick - selectedDeliv: " + selectedID);
                 const teamCreation: TeamTransport = await that.formTeam(selectedID);
-                Log.info("CS340View::updateTeams(..)::createTeam::onClick::then - result: " + teamCreation.toString());
+                Log.info("CS340View::updateTeams(..)::createTeam::onClick::then - result: " + JSON.stringify(teamCreation));
                 if (teamCreation === null) {
                     return;
                 }
                 that.teams.push(teamCreation);
 
+                UI.hideSection("studentSelectPartnerDiv");
                 that.renderPage({});
             };
 
@@ -397,6 +402,7 @@ export class CS340View extends StudentView {
 
         if (typeof body.success !== 'undefined') {
             // worked
+            UI.notificationToast(`Successfully formed team with: ${JSON.stringify(idArray)}`);
             return body.success as TeamTransport;
         } else if (typeof body.failure !== 'undefined') {
             // failed
