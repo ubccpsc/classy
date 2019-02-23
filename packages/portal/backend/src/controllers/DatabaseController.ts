@@ -534,6 +534,7 @@ export class DatabaseController {
                 let dbName = Config.getInstance().getProp(ConfigKey.name).trim(); // make sure there are no extra spaces in config
                 const dbHost = Config.getInstance().getProp(ConfigKey.mongoUrl).trim(); // make sure there are no extra spaces in config
 
+                /* istanbul ignore if */
                 if (dbName === 'sdmm') {
                     dbName = 'secapstone'; // NOTE: this is just an unfortunate historical artifact
                 }

@@ -102,6 +102,7 @@ export class Factory {
      */
     private static getName(): string | null {
         const name = Config.getInstance().getProp(ConfigKey.name);
+        /* istanbul ignore if */
         if (name === null) {
             const msg = "Factory::getName() - null name; this is almost certainly an error with your .env file.";
             Log.error(msg);

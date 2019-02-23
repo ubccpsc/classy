@@ -56,10 +56,10 @@ export class AuthController {
             if (isStaff === true && isAdmin === true) {
                 person.kind = PersonKind.ADMINSTAFF;
                 await dc.writePerson(person);
-            } else if (isStaff === true) {
+            } else if (isStaff === true && isAdmin === false) {
                 person.kind = PersonKind.STAFF;
                 await dc.writePerson(person);
-            } else if (isAdmin === true) {
+            } else if (isAdmin === true && isStaff === false) {
                 person.kind = PersonKind.ADMIN;
                 await dc.writePerson(person);
             } else {

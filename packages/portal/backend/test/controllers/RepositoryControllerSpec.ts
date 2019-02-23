@@ -143,4 +143,44 @@ describe("RepositoryController", () => {
         expect(repos).to.have.lengthOf(2); // should have created a new repo
     });
 
+    it("Should fail to update a repo gracefully.", async () => {
+        const res = await rc.updateRepository(null);
+        expect(res).to.be.null;
+    });
+
+    it("Should be able to create a RepositoryTransport.", async () => {
+        const repo: Repository = {
+            id:       Date.now() + '_id',
+            delivId:  Test.DELIVID0,
+            URL:      null,
+            cloneURL: null,
+            custom:   {},
+            teamIds:  []
+        };
+
+        const rt = RepositoryController.repositoryToTransport(repo);
+
+        expect(rt.id).to.equal(repo.id);
+        expect(rt.delivId).to.equal(repo.delivId);
+        expect(rt.URL).to.equal(repo.URL);
+    });
+
+    it("Should fail to create a RepositoryTransport gracefully if something is wrong.", async () => {
+        let ex = null;
+        try {
+            RepositoryController.repositoryToTransport(null);
+        } catch (err) {
+            ex = err;
+        }
+        expect(ex).to.not.be.null;
+
+        ex = null;
+        try {
+            RepositoryController.repositoryToTransport(undefined);
+        } catch (err) {
+            ex = err;
+        }
+        expect(ex).to.not.be.null;
+    });
+
 });

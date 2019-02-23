@@ -16,7 +16,7 @@ export class GradingJob {
     constructor(containerInput: ContainerInput) {
         this.input = containerInput;
         this.id = this.input.target.commitSHA + "-" + this.input.target.delivId;
-        this.path = Config.getInstance().getProp(ConfigKey.persistDir) + "/" + this.id;
+        this.path = Config.getInstance().getProp(ConfigKey.persistDir) + "/runs/" + this.id;
         this.record = {
             delivId: this.input.delivId,
             repoId: this.input.target.repoId,
@@ -73,7 +73,7 @@ export class GradingJob {
     }
 
     public async run(docker: Docker): Promise<AutoTestResult> {
-        const hostDir = Config.getInstance().getProp(ConfigKey.hostDir) + "/" + this.id;
+        const hostDir = Config.getInstance().getProp(ConfigKey.hostDir) + "/runs/" + this.id;
         const container = await docker.createContainer({
             User: Config.getInstance().getProp(ConfigKey.dockerUid),
             Image: this.input.containerConfig.dockerImage,

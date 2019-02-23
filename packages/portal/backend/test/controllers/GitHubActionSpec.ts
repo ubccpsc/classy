@@ -292,6 +292,18 @@ describe("GitHubActions", () => {
         // expect(bool).to.be.true;
     }).timeout(TIMEOUT);
 
+    it("Should fail to get team members for an invalid team number argument.", async function() {
+        let val = null;
+        let ex = null;
+        try {
+            val = await gh.getTeamMembers(null);
+        } catch (err) {
+            ex = err;
+        }
+        expect(val).to.be.null;
+        expect(ex).to.not.be.null;
+    }).timeout(TIMEOUT);
+
     it("Should get an empty array of team members for a team that does not exist.", async function() {
         const val = await gh.getTeamMembers(-1337);
         Log.test('# Team members: ' + val.length);
@@ -583,6 +595,18 @@ describe("GitHubActions", () => {
 
     }).timeout(TIMEOUT);
 
+    it("Should not be able to change permissions of a repo to an invalid value.", async function() {
+        let permissionEdit = null;
+        let ex = null;
+        try {
+            permissionEdit = await gh.setRepoPermission(Test.REPONAME1, "invalidvalue");
+        } catch (err) {
+            ex = err;
+        }
+        expect(permissionEdit).to.be.null;
+        expect(ex).to.not.be.null;
+    }).timeout(TIMEOUT);
+
     // this test wasn't failing for the right reasons and was disabled until we can figure out what is going on
     // it("Should not be able to bulk edit permissions to admins", async function() {
     //     const githubTeam = await gh.createTeam(TEAMNAME, 'push');
@@ -624,6 +648,131 @@ describe("GitHubActions", () => {
         expect(val).to.be.an('object');
         expect(val.githubTeamNumber).to.equal(teamNumber);
         expect(val.teamName).to.equal(TEAMNAME);
+    }).timeout(TIMEOUT);
+
+    it("Should not be possible to get the team that does not exist.", async function() {
+        let res: any = "exists";
+        let ex = null;
+        try {
+            res = await gh.getTeam(-1337);
+        } catch (err) {
+            ex = err;
+        }
+        expect(res).to.be.null; // non-existant should return null
+        expect(ex).to.be.null;
+    }).timeout(TIMEOUT);
+
+    it("Should not be possible to get the team with an invalid param.", async function() {
+        let res = null;
+        let ex = null;
+        try {
+            res = await gh.getTeam(null);
+        } catch (err) {
+            ex = err;
+        }
+        expect(res).to.be.null;
+        expect(ex).to.not.be.null;
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to check the database.", async function() {
+        let res = await GitHubActions.checkDatabase(null, null);
+        expect(res).to.be.true;
+
+        // if anything goes wrong exceptions will be thrown
+        res = await GitHubActions.checkDatabase(REPONAME, TEAMNAME);
+        expect(res).to.be.true;
+    }).timeout(TIMEOUT);
+
+    it("Should not be possible to simulate a webhook with the wrong params.", async function() {
+        let worked = await gh.simulateWebookComment(null, "SHA", "message");
+        expect(worked).to.be.false;
+
+        worked = await gh.simulateWebookComment(REPONAME, null, "message");
+        expect(worked).to.be.false;
+
+        worked = await gh.simulateWebookComment(REPONAME, "SHA", null);
+        expect(worked).to.be.false;
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to simulate a webhook.", async function() {
+        let worked = await gh.simulateWebookComment(Test.REPONAMEREAL2, "SHA", "message");
+        expect(worked).to.be.false; // SHA is not right
+
+        let ex = null;
+        try {
+            let msg = "message";
+            worked = await gh.simulateWebookComment(Test.REPONAMEREAL2, "c35a0e5968338a9757813b58368f36ddd64b063e", msg);
+
+            for (let i = 0; i < 10; i++) {
+                msg = msg + msg; // make a long message
+            }
+            msg = msg + '\n' + msg;
+            worked = await gh.simulateWebookComment(Test.REPONAMEREAL2, "c35a0e5968338a9757813b58368f36ddd64b063e", msg);
+
+            // NOTE: worked not checked because githubWebhook needs to be active for this to work
+            // expect(worked).to.be.true;
+            expect(worked).to.not.be.null;
+        } catch (err) {
+            ex = err;
+        }
+        expect(ex).to.be.null; // at least don't throw an exception
+    }).timeout(TIMEOUT);
+
+    it("Should not be possible to make a comment with invalid params.", async function() {
+        let worked = await gh.makeComment(null, "message");
+        expect(worked).to.be.false;
+
+        worked = await gh.makeComment("URL", null);
+        expect(worked).to.be.false;
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to make a comment.", async function() {
+        let msg = "message";
+        let url = "https://api.github.com/repos/classytest/" + Test.REPONAMEREAL2 + "/commits/INVALIDSHA/comments";
+        let worked = await gh.makeComment(url, msg);
+        expect(worked).to.be.false; // false because SHA is invalid
+
+        for (let i = 0; i < 10; i++) {
+            msg = msg + msg; // make a long message
+        }
+        msg = msg + '\n' + msg;
+
+        url = "https://api.github.com/repos/classytest/" + Test.REPONAMEREAL2 +
+            "/commits/c35a0e5968338a9757813b58368f36ddd64b063e/comments";
+        worked = await gh.makeComment(url, msg);
+        expect(worked).to.be.true; // should have worked
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to find the teams on a repo.", async function() {
+        const val = await gh.getTeamsOnRepo(REPONAME);
+        Log.test("listed teams: " + JSON.stringify(val));
+        expect(val).to.be.an('array');
+        expect(val.length).to.equal(2);
+
+        let exists = false;
+        for (const team of val) {
+            if (team.teamName === 'staff') {
+                exists = true;
+            }
+        }
+        expect(exists).to.be.true;
+
+        exists = false;
+        for (const team of val) {
+            if (team.teamName === Test.TEAMNAME1) {
+                exists = true;
+            }
+        }
+        expect(exists).to.be.true;
+
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to find the members of a team.", async function() {
+        const val = await gh.listTeamMembers(TEAMNAME);
+        Log.test("listed members: " + JSON.stringify(val));
+        expect(val).to.be.an('array');
+        expect(val.length).to.equal(1);
+        expect(val[0]).to.equal(Test.USERNAMEGITHUB2);
     }).timeout(TIMEOUT);
 
     it("Clear stale repos and teams.", async function() {

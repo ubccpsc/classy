@@ -59,7 +59,7 @@ export abstract class StudentView implements IView {
                 this.repos = [];
             }
         } catch (err) {
-            Log.error('StudentView::prepareData() - fetching repos; ERROR: ' + err.message);
+            Log.error('StudentView::prepareData() - fetching data; ERROR: ' + err.message);
             UI.showError(err.message);
             this.repos = [];
         }

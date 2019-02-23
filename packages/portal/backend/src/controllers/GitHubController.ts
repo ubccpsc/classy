@@ -239,11 +239,14 @@ export class GitHubController implements IGitHubController {
             const repoCreateVal = await this.gha.createRepo(repoName);
             Log.trace('GitHubController::createRepository(..) - success; repo: ' + repoCreateVal);
         } catch (err) {
-            Log.error('GitHubController::createRepository(..) - create repo error: ' + err);
-            // repo creation failed; remove if needed (requires createRepo be permissive if already exists)
-            const res = await this.gha.deleteRepo(repoName);
-            Log.info('GitHubController::createRepository(..) - repo removed: ' + res);
-            throw new Error("createRepository(..) failed; Repository " + repoName + " creation failed; ERROR: " + err.message);
+            /* istanbul ignore next: curlies needed for ignore */
+            {
+                Log.error('GitHubController::createRepository(..) - create repo error: ' + err);
+                // repo creation failed; remove if needed (requires createRepo be permissive if already exists)
+                const res = await this.gha.deleteRepo(repoName);
+                Log.info('GitHubController::createRepository(..) - repo removed: ' + res);
+                throw new Error("createRepository(..) failed; Repository " + repoName + " creation failed; ERROR: " + err.message);
+            }
         }
 
         try {
@@ -265,7 +268,8 @@ export class GitHubController implements IGitHubController {
 
             Log.trace("GitHubController::createRepository() - importing project (slow)");
             let output;
-            if (path) {
+            /* istanbul ignore if */
+            if (typeof path !== 'undefined') {
                 output = await this.gha.importRepoFS(importUrl, targetUrl, path);
             } else {
                 output = await this.gha.importRepoFS(importUrl, targetUrl);
@@ -323,21 +327,23 @@ export class GitHubController implements IGitHubController {
 
                 await this.checkDatabase(null, team.id);
 
-                let teamNum = await this.tc.getTeamNumber(team.id);
-                if (teamNum === -1 || teamNum === null) {
-                    // did not find a team, create one first
-                    Log.info("GitHubController::releaseRepository(..) - did not find team, creating");
+                const teamNum = await this.tc.getTeamNumber(team.id);
 
-                    const newTeam = await this.gha.createTeam(team.id, "push");
-                    Log.info("GitHubController::releaseRepository(..) - created team " +
-                        "with #: " + newTeam.githubTeamNumber);
-
-                    teamNum = newTeam.githubTeamNumber;
-                    team.githubId = teamNum; // add team number to team
-
-                    await this.gha.addMembersToTeam(team.id, teamNum, team.personIds);
-                    Log.info("GitHubController::releaseRepository(..) - added members to team");
-                }
+                // TeamController::getTeamNumber makes sure this never happens
+                // if (teamNum === -1 || teamNum === null) {
+                //     // did not find a team, create one first
+                //     Log.info("GitHubController::releaseRepository(..) - did not find team, creating");
+                //
+                //     const newTeam = await this.gha.createTeam(team.id, "push");
+                //     Log.info("GitHubController::releaseRepository(..) - created team " +
+                //         "with #: " + newTeam.githubTeamNumber);
+                //
+                //     teamNum = newTeam.githubTeamNumber;
+                //     team.githubId = teamNum; // add team number to team
+                //
+                //     await this.gha.addMembersToTeam(team.id, teamNum, team.personIds);
+                //     Log.info("GitHubController::releaseRepository(..) - added members to team");
+                // }
 
                 // now, add the team to the repository
                 const res = await this.gha.addTeamToRepo(teamNum, repo.id, "push");
@@ -403,11 +409,14 @@ export class GitHubController implements IGitHubController {
 
             Log.info("GitHubController::provisionRepository( " + repoName + " ) - val: " + repoVal);
         } catch (err) {
-            Log.error("GitHubController::provisionRepository( " + repoName + " ) - create repo ERROR: " + err);
-            // repo creation failed; remove if needed (requires createRepo be permissive if already exists)
-            const res = await this.gha.deleteRepo(repoName);
-            Log.info("GitHubController::provisionRepository( " + repoName + " ) - repo removed: " + res);
-            throw new Error("provisionRepository( " + repoName + " ) failed; failed to create repo; ERROR: " + err.message);
+            /* istanbul ignore next: curlies needed for ignore */
+            {
+                Log.error("GitHubController::provisionRepository( " + repoName + " ) - create repo ERROR: " + err);
+                // repo creation failed; remove if needed (requires createRepo be permissive if already exists)
+                const res = await this.gha.deleteRepo(repoName);
+                Log.info("GitHubController::provisionRepository( " + repoName + " ) - repo removed: " + res);
+                throw new Error("provisionRepository( " + repoName + " ) failed; failed to create repo; ERROR: " + err.message);
+            }
         }
 
         try {
@@ -522,6 +531,7 @@ export class GitHubController implements IGitHubController {
                 throw new Error(msg);
             } else {
                 // ensure custom property is there
+                /* istanbul ignore if */
                 if (typeof repo.custom === 'undefined' || repo.custom === null || typeof repo.custom !== 'object') {
                     const msg = "Repository: " + repoName + " has a non-object .custom property";
                     Log.error("GitHubController::checkDatabase() - repo ERROR: " + msg);
@@ -539,6 +549,7 @@ export class GitHubController implements IGitHubController {
                 throw new Error(msg);
             } else {
                 // ensure custom property is there
+                /* istanbul ignore if */
                 if (typeof team.custom === 'undefined' || team.custom === null || typeof team.custom !== 'object') {
                     const msg = "Team: " + teamName + " has a non-object .custom property";
                     Log.error("GitHubController::checkDatabase() - team ERROR: " + msg);
