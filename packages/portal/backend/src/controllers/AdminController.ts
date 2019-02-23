@@ -624,9 +624,10 @@ export class AdminController {
 
         const allTeams: Team[] = await this.tc.getAllTeams();
 
-        if (deliv.teamMaxSize === 1) {
+        if (deliv.teamMaxSize === 1 || deliv.teamMinSize === 1) {
             formSingleTeams = true;
-            Log.info("AdminController::planProvision( .. ) - team maxSize 1: formSingleTeams forced to true");
+            Log.info(`AdminController::planProvision( .. ) - team minSize: ${deliv.teamMinSize}; ` +
+                `team maxSize: ${deliv.teamMaxSize}; formSingleTeams forced to true`);
         }
 
         const delivTeams: Team[] = [];
