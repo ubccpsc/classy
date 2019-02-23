@@ -12,6 +12,7 @@ import {GitHubController} from "./GitHubController";
 import {GradesController} from "./GradesController";
 import {RepositoryController} from "./RepositoryController";
 import {RubricController} from "./RubricController";
+import {ScheduleController} from "./ScheduleController";
 
 export class AssignmentController {
 
@@ -216,7 +217,7 @@ export class AssignmentController {
 
         let importPath: string = "";
         const importURL: string = deliverable.importURL;
-        if (typeof deliverable.custom !== "undefined" && typeof deliverable.custom.assignment !== null) {
+        if (typeof deliverable.custom !== "undefined" && typeof deliverable.custom.assignment !== "undefined") {
             importPath = deliverable.custom.assignment.seedRepoPath.trim();
             Log.info(`AssignmentController::provisionRepos(..) - Deliverable ${deliverable.id} is an assignment; ` +
                 `Seed path: ${importPath}`);

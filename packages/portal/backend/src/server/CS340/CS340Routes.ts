@@ -42,7 +42,6 @@ export default class CS340Routes implements IREST {
         server.post("/portal/cs340/provision/:delivId/:repoId", CS340Routes.provisionOverride);
 
         server.get("/portal/cs340/test/testAddCollaborator", CS340Routes.testAddCollaborator);
-
     }
 
     public static async createAllRepositories(req: any, res: any, next: any) {
@@ -399,6 +398,9 @@ export default class CS340Routes implements IREST {
         return next();
     }
 
+    /**
+     * Student accessible deliverable info
+     */
     public static async getDeliverables(req: any, res: any, next: any) {
         Log.info(`CS340Routes::getDeliverable(..) - start`);
 

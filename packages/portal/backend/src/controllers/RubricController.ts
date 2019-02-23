@@ -40,7 +40,7 @@ export class RubricController {
         if (deliverableRecord.custom.assignment === undefined || deliverableRecord.custom.assignment === null ||
             typeof (deliverableRecord.custom.assignment as AssignmentInfo).status === 'undefined') {
             Log.error(`RubricController::updateRubric(..) - Error: Deliverable with id: ${delivId} is not an assignment`);
-            return false;
+            return true;
         }
 
         const assignInfo: AssignmentInfo = deliverableRecord.custom.assignment;
