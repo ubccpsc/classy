@@ -3,8 +3,6 @@ import {Deliverable} from "../Types";
 import {AssignmentController} from "./AssignmentController";
 import {DatabaseController} from "./DatabaseController";
 import {DeliverablesController} from "./DeliverablesController";
-import {GitHubActions} from "./GitHubActions";
-import {GitHubController} from "./GitHubController";
 
 // tslint:disable-next-line
 const schedule = require('node-schedule');
