@@ -32,11 +32,10 @@ export class ScheduleController {
     private CREATE_OFFSET_HOURS: number = 2;
 
     public static getInstance(): ScheduleController {
-        if (this.instance === null) {
+        if (typeof this.instance === "undefined" || this.instance === null) {
             this.instance = new ScheduleController();
-        } else {
-            return this.instance;
         }
+        return this.instance;
     }
 
     private constructor() {

@@ -65,7 +65,7 @@ export class CS340AdminView extends AdminView {
             Log.info(`CS340AdminView::handleAdminEditDeliverable::onSave::click - Verify Schedule - start`);
             const idElement: OnsInputElement = document.getElementById("adminEditDeliverablePage-name") as OnsInputElement;
             const delivId: string = idElement.value;
-            await new Promise( (resolve) => setTimeout(resolve, 1000) );
+            await new Promise( (resolve) => setTimeout(resolve, 2000) );
 
             Log.info(`CS340AdminView::handleAdminEditDeliverable::onSave::click - ${delivId}`);
             await that.verifyScheduledTasks(delivId);

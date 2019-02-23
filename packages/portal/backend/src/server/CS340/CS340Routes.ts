@@ -348,11 +348,19 @@ export default class CS340Routes implements IREST {
             const sc: ScheduleController = ScheduleController.getInstance();
             const delivId = req.params.delivId;
 
+            Log.info(`CS340Routes::verifyScheduledTasks(..) - DelivId: ${delivId}`);
+
             if (typeof delivId === "undefined" || delivId === "") {
                 res.send(400, {error: "Improper usage; please specify valid deliverable id"});
             } else {
-                await sc.verifyScheduledAssignmentTasks(delivId);
-                res.send(200, {response: true});
+                try {
+                    await sc.verifyScheduledAssignmentTasks(delivId);
+                    res.send(200, {response: true});
+                } catch (e) {
+                    Log.error(`CS340Routes::verifyScheduledTasks(..) - ERROR: ${e}`);
+                    res.send(400, {error: JSON.stringify(e)});
+                }
+
             }
         }
 
