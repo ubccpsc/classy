@@ -3,6 +3,7 @@ import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
 
 import {Repository, Team} from "../Types";
+import {AssignmentController} from "./AssignmentController";
 import {DatabaseController} from "./DatabaseController";
 import {IGitHubActions} from "./GitHubActions";
 import {TeamController} from "./TeamController";
@@ -132,20 +133,28 @@ export class GitHubController implements IGitHubController {
                         throw new Error("GitHubController::createRepositoryWithPath( " + repoName + " ) - " +
                             'team does not exist in datastore (but should): ' + team.id);
                     }
-                    teamValue = await this.gha.createTeam(team.id, 'push');
-                    Log.info("GitHubController::createRepositoryWithPath( " + repoName + " ) - createTeam: " + teamValue.teamName);
 
-                    if (teamValue.githubTeamNumber > 0) {
-                        // worked
-                        team.URL = teamValue.URL;
-                        team.githubId = teamValue.githubTeamNumber;
-                        team.custom.githubAttached = false; // attaching happens in release
+                    if (AssignmentController.COLLABORATOR_FLAG === true) {
+                        team.custom.githubAttached = false;
                         await dbc.writeTeam(team);
+                    } else {
+                        teamValue = await this.gha.createTeam(team.id, 'push');
+                        Log.info("GitHubController::createRepositoryWithPath( " + repoName + " ) - createTeam: " + teamValue.teamName);
+
+                        if (teamValue.githubTeamNumber > 0) {
+                            // worked
+                            team.URL = teamValue.URL;
+                            team.githubId = teamValue.githubTeamNumber;
+                            team.custom.githubAttached = false; // attaching happens in release
+                            await dbc.writeTeam(team);
+                        }
+
+                        Log.info("GitHubController::createRepositoryWithPath( " + repoName + " ) - add members to GitHub team: " + team.id);
+                        const addMembers = await this.gha.addMembersToTeam(teamValue.teamName, teamValue.githubTeamNumber, team.personIds);
+                        Log.info("GitHubController::createRepositoryWithPath( " + repoName + " ) - addMembers: " + addMembers.teamName);
+
                     }
 
-                    Log.info("GitHubController::createRepositoryWithPath( " + repoName + " ) - add members to GitHub team: " + team.id);
-                    const addMembers = await this.gha.addMembersToTeam(teamValue.teamName, teamValue.githubTeamNumber, team.personIds);
-                    Log.info("GitHubController::createRepositoryWithPath( " + repoName + " ) - addMembers: " + addMembers.teamName);
                 }
             } catch (err) {
                 Log.warn("GitHubController::createRepositoryWithPath() - create team ERROR: " + err);
@@ -307,6 +316,8 @@ export class GitHubController implements IGitHubController {
                 }
 
                 const success = await this.gha.addCollaborators(repo.id, githubIds, "push");
+                team.custom.githubAttached = true;
+                await this.dbc.writeTeam(team);
                 Log.info(`GithubController::releaseRepository(..) - success: ${success}`);
             } else {
 
