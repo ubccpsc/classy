@@ -21,6 +21,8 @@ const ERROR_MALFORMED_PAGE: string = "malformed page with info elements";
 const WARN_EMPTY_FIELD: string = "empty field";
 
 export class GradingPageView extends AdminPage {
+
+    private UBC_LETTER_GRADES: Map<string, {lower: number, upper: number}> = new Map<string, {lower: number, upper: number}>();
     // private students: string[];
     // private isTeam: boolean;
     // private deliverableId: string;
@@ -36,6 +38,15 @@ export class GradingPageView extends AdminPage {
     }
 
     public async init(opts: any): Promise<void> {
+        this.UBC_LETTER_GRADES.set("A+",    {lower: 90  , upper: 100});
+        this.UBC_LETTER_GRADES.set("A",     {lower: 85  , upper: 89});
+        this.UBC_LETTER_GRADES.set("A-",    {lower: 80  , upper: 84});
+        this.UBC_LETTER_GRADES.set("B+",    {lower: 76  , upper: 79});
+        this.UBC_LETTER_GRADES.set("B",     {lower: 72  , upper: 75});
+        this.UBC_LETTER_GRADES.set("B-",    {lower: 68  , upper: 71});
+        this.UBC_LETTER_GRADES.set("C+",    {lower: 64  , upper: 67});
+        this.UBC_LETTER_GRADES.set("C",     {lower: 60  , upper: 63});
+        this.UBC_LETTER_GRADES.set("F",     {lower: 0   , upper: 59});
         Log.info(`GradingPage::init(..) - opts: ${JSON.stringify(opts)}`);
         this.studentId = opts.sid;
         this.assignmentId = opts.aid;
@@ -177,13 +188,15 @@ export class GradingPageView extends AdminPage {
 
                 // Create the grade input element
                 const gradeInputElement = document.createElement("ons-input");
-                gradeInputElement.setAttribute("type", "number");
+                // gradeInputElement.setAttribute("type", "number");
                 if (previousSubmission === null || !previousSubmission.questions[i].subQuestions[j].graded) {
                     gradeInputElement.setAttribute("placeHolder", subQuestion.name);
                 } else {
-                    gradeInputElement.setAttribute("placeHolder",
-                        previousSubmission.questions[i].subQuestions[j].grade.toString());
-                    (gradeInputElement as OnsInputElement).value = previousSubmission.questions[i].subQuestions[j].grade.toString();
+                    const letterGrade: string = this.getLetterGrade(
+                        previousSubmission.questions[i].subQuestions[j].grade,
+                        subQuestion.outOf);
+                    gradeInputElement.setAttribute("placeHolder", letterGrade);
+                    (gradeInputElement as OnsInputElement).value = letterGrade;
                 }
                 gradeInputElement.setAttribute("data-type", subQuestion.name);
                 gradeInputElement.setAttribute("modifier", "underbar");
@@ -328,7 +341,7 @@ export class GradingPageView extends AdminPage {
                 let rubricType = gradeInputElement.getAttribute("data-type");
 
                 // Retrieve the value inputted into the form field
-                let gradeValue = parseFloat(gradeInputElement.value);
+                let gradeValue: number = 0;
                 let graded = true;
 
                 // If the value is not found, set it to a default empty string
@@ -341,35 +354,46 @@ export class GradingPageView extends AdminPage {
                     continue;
                 }
 
-                if (gradeInputElement.value === "") {
-                    gradeValue = 0;
-                    if (!warnStatus) {
-                        warnComment = WARN_EMPTY_FIELD;
+                // if the value causes a warning (invalid input)
+                if (this.checkIfWarning(gradeInputElement)) {
+                    errorComment = ERROR_INVALID_INPUT;
+                    errorStatus = true;
+                } else {
+                    if (!this.UBC_LETTER_GRADES.has(gradeInputElement.value)) {
+                        gradeValue = 0;
+                        if (!warnStatus) {
+                            warnComment = WARN_EMPTY_FIELD;
+                        }
+                        warnStatus = true;
+                        graded = false;
+                        errorElement.innerHTML = "Warning: Input field is empty";
+                    } else {
+                        const gradeRange = this.UBC_LETTER_GRADES.get(gradeInputElement.value);
+                        const multiplier = Math.ceil((gradeRange.upper + gradeRange.lower) / 2) / 100;
+                        const outOf = parseFloat(gradeInputElement.getAttribute("data-outOf"));
+                        gradeValue = multiplier * outOf;
                     }
-                    warnStatus = true;
-                    graded = false;
-                    errorElement.innerHTML = "Warning: Input field is empty";
                 }
 
                 // If the grade value retrieved is not a number, default the value to 0
-                if (gradeInputElement.value !== "" && isNaN(gradeValue)) {
-                    gradeValue = 0;
-                    if (!errorStatus) {
-                        errorComment = ERROR_NON_NUMERICAL_GRADE;
-                    }
-                    errorStatus = true;
-                    errorElement.innerHTML = "Error: Must specify a valid number";
-                    continue;
-                } else {
-                    // If the gradeValue is an actual number
-                    // check if there are any warnings about the input value
-                    if (this.checkIfWarning(gradeInputElement)) {
-                        if (!errorStatus) {
-                            errorComment = ERROR_POTENTIAL_INCORRECT_INPUT;
-                        }
-                        errorStatus = true;
-                    }
-                }
+                // if (gradeInputElement.value !== "" && isNaN(gradeValue)) {
+                //     gradeValue = 0;
+                //     if (!errorStatus) {
+                //         errorComment = ERROR_NON_NUMERICAL_GRADE;
+                //     }
+                //     errorStatus = true;
+                //     errorElement.innerHTML = "Error: Must specify a valid number";
+                //     continue;
+                // } else {
+                //     // If the gradeValue is an actual number
+                //     // check if there are any warnings about the input value
+                //     if (this.checkIfWarning(gradeInputElement)) {
+                //         if (!errorStatus) {
+                //             errorComment = ERROR_POTENTIAL_INCORRECT_INPUT;
+                //         }
+                //         errorStatus = true;
+                //     }
+                // }
 
                 // create a new subgrade, but if assignment was NOT _completed_, give 0
                 const newSubGrade: SubQuestionGrade = {
@@ -404,12 +428,14 @@ export class GradingPageView extends AdminPage {
         }
 
         if (errorStatus) {
-            if (errorComment !== ERROR_POTENTIAL_INCORRECT_INPUT || !confirm("Warning: " +
-                "Potential incorrect value entered into page! " +
-                "Do you still wish to save?")) {
-                Log.error("GradingPage::submitGrade() - Unable to submit data; error: " + errorComment);
-                return null;
-            }
+            Log.error("GradingPage::submitGrade() - Unable to submit data; error: " + errorComment);
+            return null;
+        }
+
+        if (warnComment === WARN_EMPTY_FIELD && !confirm(`Warning: Some parts of the form are not graded, do you` +
+        ` wish to proceed?`)) {
+            Log.info(`GradingPage::submitGrade() - Cancelling submission; empty field confirmation`);
+            return null;
         }
 
         const sid = aInfoSIDElements[0].innerHTML;
@@ -501,16 +527,28 @@ export class GradingPageView extends AdminPage {
         // data-outOf
         Log.info(`GradingPage::checkIfWarning(${JSON.stringify(gradeInputElement)} - start`);
         Log.info(`Parameter: ${gradeInputElement.value}`);
-        const gradeValue: number = parseFloat(gradeInputElement.value);
-        const gradeOutOf: number = parseFloat(gradeInputElement.getAttribute("data-outOf"));
+        // const gradeValue: number = parseFloat(gradeInputElement.value);
+        // const gradeOutOf: number = parseFloat(gradeInputElement.getAttribute("data-outOf"));
+        // const parentElement: HTMLElement = gradeInputElement.parentElement;
+        // const errorBox = parentElement.getElementsByClassName("errorBox");
+        // if (gradeValue < 0 || gradeValue > gradeOutOf) {
+        //     errorBox[0].innerHTML = "Warning: Grade out of bounds";
+        //     return true;
+        // } else {
+        //     errorBox[0].innerHTML = "";
+        //     return false;
+        // }
+
+        const value = gradeInputElement.value;
         const parentElement: HTMLElement = gradeInputElement.parentElement;
         const errorBox = parentElement.getElementsByClassName("errorBox");
-        if (gradeValue < 0 || gradeValue > gradeOutOf) {
-            errorBox[0].innerHTML = "Warning: Grade out of bounds";
-            return true;
-        } else {
+
+        if (value.match(new RegExp('^[ABCabc][\-\+]?$|^F$|^$'))) {
             errorBox[0].innerHTML = "";
             return false;
+        } else {
+            errorBox[0].innerHTML = "ERROR: Invalid input";
+            return true;
         }
     }
 
@@ -530,5 +568,20 @@ export class GradingPageView extends AdminPage {
         }
         assignmentGrade.fullyGraded = true;
         return assignmentGrade;
+    }
+
+    /**
+     *
+     */
+    private getLetterGrade(grade: number, outOf: number) : string {
+        const gradePercent = (grade / outOf) * 100;
+        for (const key of this.UBC_LETTER_GRADES.keys()) {
+            const range = this.UBC_LETTER_GRADES.get(key);
+            if (range.lower <= gradePercent && gradePercent <= range.upper) {
+                return key;
+            }
+        }
+
+        return "";
     }
 }
