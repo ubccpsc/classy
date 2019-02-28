@@ -28,6 +28,8 @@ export class GradingPageView extends AdminPage {
     private studentId: string;
     private assignmentId: string;
     private isTeam: boolean;
+    private rubric: AssignmentRubric;
+    private previousSubmission: AssignmentGrade;
 
     constructor(remote: string) {
         super(remote);
@@ -66,9 +68,11 @@ export class GradingPageView extends AdminPage {
             return null;
         }
 
+        this.rubric = rubric;
         Log.info(`GradingPage::populateGradingPage(${JSON.stringify(rubric)}`);
 
         const previousSubmission = await this.getPreviousSubmission(studentId, delivId);
+        this.previousSubmission = previousSubmission;
 
         const assignmentInfoElement = document.getElementById('assignmentInfoSection');
         const gradingSectionElement = document.getElementById('gradingSection');
@@ -246,8 +250,23 @@ export class GradingPageView extends AdminPage {
      * @param deliverableId
      */
     private async getPreviousSubmission(studentId: string, deliverableId: string): Promise<AssignmentGrade> {
-        // TODO: Complete this
-        return null;
+        Log.info(`GradingPage::getPreviousSubmission(${studentId}, ${deliverableId}) - start`);
+
+        // get class options
+        const options: any = AdminView.getOptions();
+
+        const url = `${this.remote}/portal/cs340/getAssignmentGrade/${deliverableId}/${studentId}`;
+        const response = await fetch(url, options);
+
+        if (response.status === 200) {
+            const responseJSON = await response.json();
+            this.previousSubmission = responseJSON.response;
+        } else {
+            Log.warn(`GradingPage::getPreviousSubmission - Unable to find previous submission; Status code: ${response.status}`);
+            this.previousSubmission = null;
+        }
+
+        return this.previousSubmission;
     }
 
     private async submitReturn(studentId: string, deliverableId: string, completed: boolean = true): Promise<void> {
@@ -261,6 +280,7 @@ export class GradingPageView extends AdminPage {
      * Scrapes the page and creates a grade to save
      * @param studentId
      * @param deliverableId
+     * @param completed
      */
     private async submitGrade(studentId: string, deliverableId: string, completed: boolean = true): Promise<boolean> {
         let errorStatus = false;

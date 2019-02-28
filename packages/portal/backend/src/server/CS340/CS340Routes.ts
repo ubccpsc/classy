@@ -27,7 +27,8 @@ export default class CS340Routes implements IREST {
 
         server.get("/portal/cs340/retrieveRepoUrl/:sid/:delivId", CS340Routes.retrieveRepoUrl);
         server.get("/portal/cs340/getStudentTeamByDeliv/:sid/:delivId", CS340Routes.getStudentTeamByDeliv);
-        server.get("portal/cs340/deliverables", CS340Routes.getDeliverables);
+        server.get("/portal/cs340/deliverables", CS340Routes.getDeliverables);
+        server.get("/portal/cs340/getAssignmentGrade/:delivId/:studentId", CS340Routes.getAssignmentGrade);
 
         server.post("/portal/cs340/generateRubric/:delivId", CS340Routes.generateRubric);
         server.put("/portal/cs340/setAssignmentGrade/:sid/:delivId", CS340Routes.setAssignmentGrade);
@@ -73,13 +74,34 @@ export default class CS340Routes implements IREST {
         return next();
     }
 
-    public static async getRubric(req: any, res: any, next: any) {
-        Log.info(`CS340Routes::getRubric(..) - start`);
+    public static async getAssignmentGrade(req: any, res: any, next: any) {
+        Log.info(`CS340Routes::getAssignmentGrade(..) - start`);
 
-        const db: DatabaseController = DatabaseController.getInstance();
+        const user = req.headers.user;
+        const token = req.headers.token;
+        const ac = new AuthController();
+        const isValid = await ac.isPrivileged(user, token);
+        if (!isValid.isAdmin) {
+            res.send(401, {
+                error: "Unauthorized usage of API: If you believe this is an error, please contact the course admin"
+            });
+        } else {
+            const delivId = req.params.delivId;
+            const studentId = req.params.studentId;
 
-        const delivId: string = req.params.delivId;
-        const deliverable: Deliverable = await db.getDeliverable(delivId);
+            const db: DatabaseController = DatabaseController.getInstance();
+            const grade: Grade = await db.getGrade(studentId, delivId);
+            if (grade === null) {
+                res.send(404, {error: `Unable to find grade with student ID and deliverable ID`});
+            } else {
+                if (typeof grade.custom.assignmentGrade === "undefined" || grade.custom.assignmentGrade === null) {
+                    res.send(400, {error: `Grade is not an assignment grade`});
+                } else {
+                    res.send(200, {response: grade.custom.assignmentGrade});
+                }
+            }
+            return next();
+        }
     }
 
     public static async releaseAllRepositories(req: any, res: any, next: any) {
