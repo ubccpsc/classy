@@ -12,6 +12,8 @@ import {AdminDeliverablesTab} from "../AdminDeliverablesTab";
 import {AdminPage} from "../AdminPage";
 import {AdminResultsTab} from "../AdminResultsTab";
 import {AdminView} from "../AdminView";
+import {AdminMarkingTab} from "./AdminMarkingTab";
+import {Factory} from "../../Factory";
 
 const ERROR_POTENTIAL_INCORRECT_INPUT: string = "input triggered warning";
 const ERROR_INVALID_INPUT: string = "invalid input";
@@ -30,6 +32,7 @@ export class GradingPageView extends AdminPage {
     private studentId: string;
     private assignmentId: string;
     private isTeam: boolean;
+    // private gradingCollection: string[];
     private rubric: AssignmentRubric;
     private previousSubmission: AssignmentGrade;
 
@@ -254,6 +257,37 @@ export class GradingPageView extends AdminPage {
         submitButton.innerHTML = "Save Grade";
 
         gradingSectionElement!.appendChild(submitButton);
+
+        // check if it is possible to create a next button
+        const lastArray = AdminMarkingTab.lastGradingArray;
+
+        if (lastArray.length !== 0) {
+            // begin searching for this current team
+            let nextId = "";
+            for (let i = 0; i < lastArray.length - 1; i++) {
+                if (lastArray[i].people[0] === this.studentId) {
+                    Log.info(`GradingPage::populateGradingPage(..) - Found Student ID and next student: ${lastArray[i+1]}`);
+                    nextId = lastArray[i+1].people[0];
+                    break;
+                }
+            }
+
+            if (nextId !== "") {
+                Log.info(`GradingPage::populateGradingPage(..) - Creating button:`);
+                const nextButton = document.createElement("ons-button");
+                nextButton.onclick = async (evt) => {
+                    await this.submitNext(this.studentId, this.assignmentId, nextId);
+                };
+                nextButton.innerHTML = "Next submission";
+                gradingSectionElement!.appendChild(nextButton);
+            } else {
+                Log.info(`GradingPage::populateGradingPage(..) - Did not find next person, skipping button creation:`);
+            }
+        } else {
+            //
+            Log.info(`GradingPage::populateGradingPage(..) - unable to find next studentId due to missing lastGradingArray`);
+        }
+
         return null;
     }
 
@@ -287,6 +321,19 @@ export class GradingPageView extends AdminPage {
             UI.popPage();
         }
         return;
+    }
+
+    private async submitNext(studentId: string, deliverableId: string, nextStudentId: string): Promise<void> {
+        if (!await this.submitGrade(studentId, deliverableId, true)) {
+            Log.warn(`GradingPage::submitNext(..) - Something went wrong! Unable to save grade.`);
+            return;
+        }
+
+        await UI.replacePage(Factory.getInstance().getHTMLPrefix() + '/GradingView.html', {
+            sid: nextStudentId,
+            aid: deliverableId,
+            isTeam: this.isTeam
+        });
     }
 
     /**
@@ -573,7 +620,7 @@ export class GradingPageView extends AdminPage {
     /**
      *
      */
-    private getLetterGrade(grade: number, outOf: number) : string {
+    private getLetterGrade(grade: number, outOf: number): string {
         const gradePercent = (grade / outOf) * 100;
         for (const key of this.UBC_LETTER_GRADES.keys()) {
             const range = this.UBC_LETTER_GRADES.get(key);
