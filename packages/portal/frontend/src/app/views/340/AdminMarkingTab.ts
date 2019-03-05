@@ -21,6 +21,7 @@ import {AdminTeamsTab} from "../AdminTeamsTab";
 export class AdminMarkingTab extends AdminPage {
 
     private selectedDeliverable: string | null = null;
+    public static lastGradingArray: TeamTransport[] = [];
 
     // private readonly remote: string; // url to backend
     constructor(remote: string) {
@@ -149,12 +150,14 @@ export class AdminMarkingTab extends AdminPage {
             style:       'padding-left: 1em; padding-right: 1em;'
         });
 
+        const teamTransportTable: TeamTransport[] = [];
         const st = new SortableTable(tableHeaders, "#markingListTable");
         for (const team of teamTransports) {
             if (team.delivId !== delivId) {
                 continue;
             }
 
+            teamTransportTable.push(team);
             const newRow: TableCell[] = [];
             for (const personId of team.people) {
                 newRow.push({value: personId, html: personId});
@@ -179,8 +182,17 @@ export class AdminMarkingTab extends AdminPage {
             newRow.push(newEntry);
 
             st.addRow(newRow);
-
         }
+
+        AdminMarkingTab.lastGradingArray = teamTransportTable.sort((item1, item2) => {
+            if (item1.people[0] > item2.people[0]) {
+                return 1;
+            } else if (item1.people[0] < item2.people[0]) {
+                return -1;
+            } else {
+                return 0;
+            }
+        });
         st.generate();
     }
 
@@ -232,9 +244,9 @@ export class AdminMarkingTab extends AdminPage {
                 // completely graded
                 const maxGrade = this.calculateMaxGrade(deliverable);
                 newEntry = {
-                    value: `${grade.score}`,
+                    value: `${grade.score.toFixed(2)}`,
                     html: `<a onclick='window.myApp.view.transitionGradingPage` +
-                        `("${studentId}","${deliverable.id}",true)' href='#'>${grade.score}/${maxGrade}</a>`
+                        `("${studentId}","${deliverable.id}",true)' href='#'>${grade.score.toFixed(2)}/${maxGrade}</a>`
     // `<a onclick='this.transitionGradingPage("${studentId}",true)' href='#'>${grade.score}/${maxGrade}</a>`
                 };
             } else {

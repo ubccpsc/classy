@@ -164,7 +164,8 @@ export class CS340View extends StudentView {
                                 value: `${question.name} ${subQuestion.name}`,
                                 html: `${question.name} ${subQuestion.name}`}
                                 );
-                            newRow.push({value: subQuestion.grade.toString(), html: subQuestion.grade.toString()});
+                            newRow.push({value: subQuestion.grade.toFixed(2).toString(),
+                                html: subQuestion.grade.toFixed(2).toString()});
                             newRow.push({value: subRubric.outOf.toString(), html: subRubric.outOf.toString()});
                             newRow.push({value: subQuestion.feedback, html: subQuestion.feedback});
 
@@ -182,8 +183,8 @@ export class CS340View extends StudentView {
                     html: "<b>Total Grade</b>"
                 });
                 totalRow.push({
-                    value: totalGrade.toString(),
-                    html: totalGrade.toString()
+                    value: totalGrade.toFixed(2).toString(),
+                    html: totalGrade.toFixed(2).toString()
                 });
                 totalRow.push({
                     value: maxGrade.toString(),
