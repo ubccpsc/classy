@@ -34,6 +34,21 @@ export class UI {
         }
     }
 
+    public static replacePage(pageId: string, options?: any): any {
+        if (typeof options === 'undefined') {
+            options = {};
+        }
+        Log.trace('UI::pushPage( ' + pageId + ', ' + JSON.stringify(options) + ' )');
+
+        const nav = document.querySelector('#myNavigator') as any; // as ons.OnsNavigatorElement;
+        if (nav !== null) {
+            return nav.replacePage(pageId, options);
+        } else {
+            Log.error('UI::pushPage(..) - WARN: nav is null');
+            return nav.replacePage(pageId, options);
+        }
+    }
+
     public static getCurrentPage(): any {
         const nav = document.querySelector('#myNavigator') as any;
         if (nav !== null) {
