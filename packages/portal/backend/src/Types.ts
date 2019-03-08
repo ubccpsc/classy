@@ -175,7 +175,8 @@ export interface Course {
     readonly id: string; // invariant; this is the name of the course
     defaultDeliverableId: string | null; // Deliverable.id foreign key
     custom: {
-        status?: string
+        status?: string,
+        finalGradesReleased?: boolean
     };
 }
 

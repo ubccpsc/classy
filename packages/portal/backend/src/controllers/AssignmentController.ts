@@ -276,4 +276,24 @@ export class AssignmentController {
         }
         return provisionedRepositoryTransport;
     }
+
+    public async getFinalGradeStatus(): Promise<boolean> {
+        Log.info(`AssignmentController::getFinalGradeStatus(..) - start`);
+        const courseObj = await this.db.getCourseRecord();
+
+        if (courseObj === null) {
+            Log.error(`AssignmentController::getFinalGradeStatus(..) - ERROR: Unable to find course object`);
+            return false;
+        }
+
+        if (typeof courseObj.custom.finalGradesReleased === "undefined" || courseObj.custom.finalGradesReleased === null) {
+            Log.warn(`AssignmentController::getFinalGradeStatus(..) - Creating final grade release flag`);
+            courseObj.custom.finalGradesReleased = false;
+            await this.db.writeCourseRecord(courseObj);
+            return false;
+        }
+
+
+        return true;
+    }
 }
