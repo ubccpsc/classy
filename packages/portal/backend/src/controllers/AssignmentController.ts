@@ -293,7 +293,6 @@ export class AssignmentController {
             return false;
         }
 
-
         return true;
     }
 }
