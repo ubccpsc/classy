@@ -296,15 +296,16 @@ export class AssignmentController {
         return courseObj.custom.finalGradesReleased;
     }
 
-    public async getFinalGrade(studentId: string): Promise<any> {
-        Log.info(`AssignmentController::getFinalGrade(${studentId}) - start`);
+    public async toggleFinalGradeStatus(): Promise<boolean> {
+        Log.info(`AssignmentController::toggleFinalGradeStatus(..) - start`);
 
-        const released = await this.getFinalGradeStatus();
+        const status: boolean = await this.getFinalGradeStatus();
+        const courseObj = await this.db.getCourseRecord();
 
-        if (!released) {
-            return false;
-        }
+        courseObj.custom.finalGradesReleased = !status;
 
-        return true;
+        await this.db.writeCourseRecord(courseObj);
+
+        return !status;
     }
 }

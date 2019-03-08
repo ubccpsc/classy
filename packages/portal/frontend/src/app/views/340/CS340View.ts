@@ -74,6 +74,8 @@ export class CS340View extends StudentView {
 
             await this.updateTeams();
 
+            await this.renderFinalGrade();
+
             Log.info('CS340View::renderStudentPage(..) - done');
         } catch (err) {
             Log.error('Error encountered: ' + err.message);
@@ -420,7 +422,7 @@ export class CS340View extends StudentView {
         // checking if final grade is released
 
         const result = await this.fetchData(`/portal/cs340/isFinalGradeReleased`);
-
+        // const result = true;
         if (result) {
             Log.info(`CS340View::renderFinalGrade(..) - Grades released; rendering`);
 
@@ -470,8 +472,8 @@ export class CS340View extends StudentView {
 
             // prepare table
             const st = new SortableTable(headers, "#studentFinalGradeTable");
-            // let totalGrade: number = 0;
-            // let maxGrade: number = 0;
+            let totalWeightedGrade: number = 0;
+            let totalWeightedMaxGrade: number = 0;
 
             // get each deliverable and render
             for (const deliverableTransport of this.deliverables) {
@@ -501,9 +503,81 @@ export class CS340View extends StudentView {
                 const weightedScore = score * weight;
                 const weightedTotal = maxScore * weight;
 
+                totalWeightedGrade += weightedScore;
+                totalWeightedMaxGrade += weightedTotal;
+
                 // TODO: Complete this
+                const newRow: TableCell[] = [];
+                newRow.push({
+                    value: `${deliverableTransport.id}`,
+                    html: `${deliverableTransport.id}`
+                });
+
+                newRow.push({
+                    value: `${score}`,
+                    html: `${score}`
+                });
+
+                newRow.push({
+                    value: `${maxScore}`,
+                    html: `${maxScore}`
+                });
+
+                newRow.push({
+                    value: `${weight}`,
+                    html: `${weight}`
+                });
+
+                newRow.push({
+                    value: `${weightedScore}`,
+                    html: `${weightedScore}`
+                });
+
+                newRow.push({
+                    value: `${weightedTotal}`,
+                    html: `${weightedTotal}`
+                });
+
+                st.addRow(newRow);
             }
 
+            const totalRow: TableCell[] = [];
+
+            totalRow.push({
+                value: `Total`,
+                html: `<b>Total</b>`
+            });
+
+            totalRow.push({
+                value: ``,
+                html: ``
+            });
+
+            totalRow.push({
+                value: ``,
+                html: ``
+            });
+
+            const percentRaw: number = (totalWeightedGrade / totalWeightedMaxGrade) * 100;
+
+            totalRow.push({
+                value: `${percentRaw.toFixed(2)}%`,
+                html: `${percentRaw.toFixed(2)}%`,
+            });
+
+            totalRow.push({
+                value: `${totalWeightedGrade}`,
+                html: `${totalWeightedGrade}`
+            });
+
+            totalRow.push({
+                value: `${totalWeightedMaxGrade}`,
+                html: `${totalWeightedMaxGrade}`
+            });
+
+            st.addRow(totalRow);
+
+            st.generate();
             UI.showSection("studentFinalGradeSection");
 
         } else {
@@ -517,7 +591,7 @@ export class CS340View extends StudentView {
 
     private getMaxScore(deliverableRubric: AssignmentRubric): number {
         Log.info(`CS340View::getMaxScore(..) - start`);
-        if (deliverableRubric === null) {
+        if (deliverableRubric === null || typeof deliverableRubric.questions === "undefined") {
             Log.info(`CS340View::getMaxScore(..) - No rubric`);
             return 0;
         }
