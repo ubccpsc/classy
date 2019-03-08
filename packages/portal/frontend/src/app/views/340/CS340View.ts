@@ -414,6 +414,124 @@ export class CS340View extends StudentView {
         }
     }
 
+    private async renderFinalGrade(): Promise<void> {
+        Log.info(`CS340View::renderFinalGrade(..) - start`);
+
+        // checking if final grade is released
+
+        const result = await this.fetchData(`/portal/cs340/isFinalGradeReleased`);
+
+        if (result) {
+            Log.info(`CS340View::renderFinalGrade(..) - Grades released; rendering`);
+
+            const headers: TableHeader[] = [{
+                id: 'itemId',
+                text: "Item",
+                sortable: true,
+                defaultSort: false,
+                sortDown: false,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: left',
+            }, {
+                id: 'rawGrade',
+                text: 'Raw Grade',
+                sortable: false,
+                defaultSort: false,
+                sortDown: false,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+            }, {
+                id: 'maxGrade',
+                text: 'Max Grade',
+                sortable: false,
+                defaultSort: false,
+                sortDown: false,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+            }, {
+                id: 'weight',
+                text: 'Weight',
+                sortable: false,
+                defaultSort: false,
+                sortDown: false,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+            }, {
+                id: 'weightedGrade',
+                text: 'Weighted Grade',
+                sortable: false,
+                defaultSort: false,
+                sortDown: false,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+            }, {
+                id: 'weightedTotal',
+                text: 'Weighted Total',
+                sortable: false,
+                defaultSort: false,
+                sortDown: false,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+            }];
+
+            // prepare table
+            const st = new SortableTable(headers, "#studentFinalGradeTable");
+            // let totalGrade: number = 0;
+            // let maxGrade: number = 0;
+
+            // get each deliverable and render
+            for (const deliverableTransport of this.deliverables) {
+                // get grade
+                let score = 0;
+                if (this.delivGradeMap.has(deliverableTransport.id)) {
+                    Log.info(`CS340View::renderFinalGrades(..) - retriving score`);
+
+                    const grade: GradeTransport = this.delivGradeMap.get(deliverableTransport.id);
+                    score = grade.score;
+                }
+
+                let maxScore = score;
+                if (deliverableTransport.rubric !== null && typeof deliverableTransport.rubric !== "undefined") {
+                    // get max grade
+                    Log.info(`CS340View::renderFinalGrades(..) - calculating maxScore`);
+                    maxScore = this.getMaxScore(deliverableTransport.rubric as AssignmentRubric);
+                }
+
+                let weight = 1;
+
+                if (typeof (deliverableTransport.custom as any).assignment !== "undefined" &&
+                    (deliverableTransport.custom as any).assignment !== null) {
+                    weight = (deliverableTransport.custom as any).assignment.courseWeight;
+                }
+
+                const weightedScore = score * weight;
+                const weightedTotal = maxScore * weight;
+
+                // TODO: Complete this
+            }
+
+            UI.showSection("studentFinalGradeSection");
+
+        } else {
+            Log.info(`CS340View::renderFinalGrade(..) - Grades not released; hiding section`);
+            UI.hideSection("studentFinalGradeSection");
+
+        }
+
+        return;
+    }
+
+    private getMaxScore(deliverableRubric: AssignmentRubric): number {
+        Log.info(`CS340View::getMaxScore(..) - start`);
+        if (deliverableRubric === null) {
+            Log.info(`CS340View::getMaxScore(..) - No rubric`);
+            return 0;
+        }
+
+        let maxScore = 0;
+        for (const question of deliverableRubric.questions) {
+            for (const subQuestion of question.subQuestions) {
+                maxScore += subQuestion.outOf * subQuestion.weight;
+            }
+        }
+
+        return maxScore;
+    }
+
     // private async renderTeams(teams: TeamTransport[]): Promise<void> {
     //     Log.trace('CS340View::renderTeams(..) - start');
     //     const that = this;

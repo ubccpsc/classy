@@ -293,6 +293,18 @@ export class AssignmentController {
             return false;
         }
 
+        return courseObj.custom.finalGradesReleased;
+    }
+
+    public async getFinalGrade(studentId: string): Promise<any> {
+        Log.info(`AssignmentController::getFinalGrade(${studentId}) - start`);
+
+        const released = await this.getFinalGradeStatus();
+
+        if (!released) {
+            return false;
+        }
+
         return true;
     }
 }

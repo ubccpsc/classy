@@ -41,8 +41,6 @@ export default class CS340Routes implements IREST {
         server.post("/portal/cs340/verifyAllScheduledTasks/", CS340Routes.verifyAllScheduledTasks);
 
         server.post("/portal/cs340/provision/:delivId/:repoId", CS340Routes.provisionOverride);
-
-        server.get("/portal/cs340/test/testAddCollaborator", CS340Routes.testAddCollaborator);
     }
 
     public static async createAllRepositories(req: any, res: any, next: any) {
@@ -440,13 +438,14 @@ export default class CS340Routes implements IREST {
         return next();
     }
 
-    public static async testAddCollaborator(req: any, res: any, next: any) {
-        // TOOD: Remove this
-        const gha: GitHubActions = GitHubActions.getInstance() as GitHubActions;
+    public static async isFinalGradeReleased(req: any, res: any, next: any) {
+        Log.info(`CS340Routes::isFinalGradeReleased(..) - start`);
 
-        const result = await gha.addCollaborators("d1_lossycompression", ["kyrozoki"], "pull");
+        const ac: AssignmentController = new AssignmentController();
 
-        res.send(200, {response: result});
+        const result = await ac.getFinalGradeStatus();
+
+        res.send(200, {success: result});
         return next();
     }
 
