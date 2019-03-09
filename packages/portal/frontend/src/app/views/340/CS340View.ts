@@ -74,6 +74,8 @@ export class CS340View extends StudentView {
 
             await this.updateTeams();
 
+            await this.renderFinalGrade();
+
             Log.info('CS340View::renderStudentPage(..) - done');
         } catch (err) {
             Log.error('Error encountered: ' + err.message);
@@ -412,6 +414,196 @@ export class CS340View extends StudentView {
         } else {
             Log.error("CS340View::formTeam() - else ERROR: " + JSON.stringify(body));
         }
+    }
+
+    private async renderFinalGrade(): Promise<void> {
+        Log.info(`CS340View::renderFinalGrade(..) - start`);
+
+        // checking if final grade is released
+
+        const result = await this.fetchData(`/portal/cs340/isFinalGradeReleased`);
+        // const result = true;
+        if (result) {
+            Log.info(`CS340View::renderFinalGrade(..) - Grades released; rendering`);
+
+            const headers: TableHeader[] = [{
+                id: 'itemId',
+                text: "Item",
+                sortable: true,
+                defaultSort: false,
+                sortDown: false,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: left',
+            }, {
+                id: 'rawGrade',
+                text: 'Raw Grade',
+                sortable: false,
+                defaultSort: false,
+                sortDown: false,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+            }, {
+                id: 'maxGrade',
+                text: 'Max Grade',
+                sortable: false,
+                defaultSort: false,
+                sortDown: false,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+            }, {
+                id: 'weight',
+                text: 'Weight',
+                sortable: false,
+                defaultSort: false,
+                sortDown: false,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+            }, {
+                id: 'weightedGrade',
+                text: 'Weighted Grade',
+                sortable: false,
+                defaultSort: false,
+                sortDown: false,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+            }, {
+                id: 'weightedTotal',
+                text: 'Weighted Total',
+                sortable: false,
+                defaultSort: false,
+                sortDown: false,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+            }];
+
+            // prepare table
+            const st = new SortableTable(headers, "#studentFinalGradeTable");
+            let totalWeightedGrade: number = 0;
+            let totalWeightedMaxGrade: number = 0;
+
+            // get each deliverable and render
+            for (const deliverableTransport of this.deliverables) {
+                // get grade
+                let score = 0;
+                if (this.delivGradeMap.has(deliverableTransport.id)) {
+                    Log.info(`CS340View::renderFinalGrades(..) - retriving score`);
+
+                    const grade: GradeTransport = this.delivGradeMap.get(deliverableTransport.id);
+                    score = grade.score;
+                }
+
+                let maxScore = score;
+                if (deliverableTransport.rubric !== null && typeof deliverableTransport.rubric !== "undefined") {
+                    // get max grade
+                    Log.info(`CS340View::renderFinalGrades(..) - calculating maxScore`);
+                    maxScore = this.getMaxScore(deliverableTransport.rubric as AssignmentRubric);
+                }
+
+                let weight = 1;
+
+                if (typeof (deliverableTransport.custom as any).assignment !== "undefined" &&
+                    (deliverableTransport.custom as any).assignment !== null) {
+                    weight = (deliverableTransport.custom as any).assignment.courseWeight;
+                }
+
+                const weightedScore = score * weight;
+                const weightedTotal = maxScore * weight;
+
+                totalWeightedGrade += weightedScore;
+                totalWeightedMaxGrade += weightedTotal;
+
+                // TODO: Complete this
+                const newRow: TableCell[] = [];
+                newRow.push({
+                    value: `${deliverableTransport.id}`,
+                    html: `${deliverableTransport.id}`
+                });
+
+                newRow.push({
+                    value: `${score}`,
+                    html: `${score}`
+                });
+
+                newRow.push({
+                    value: `${maxScore}`,
+                    html: `${maxScore}`
+                });
+
+                newRow.push({
+                    value: `${weight}`,
+                    html: `${weight}`
+                });
+
+                newRow.push({
+                    value: `${weightedScore}`,
+                    html: `${weightedScore}`
+                });
+
+                newRow.push({
+                    value: `${weightedTotal}`,
+                    html: `${weightedTotal}`
+                });
+
+                st.addRow(newRow);
+            }
+
+            const totalRow: TableCell[] = [];
+
+            totalRow.push({
+                value: `Total`,
+                html: `<b>Total</b>`
+            });
+
+            totalRow.push({
+                value: ``,
+                html: ``
+            });
+
+            totalRow.push({
+                value: ``,
+                html: ``
+            });
+
+            const percentRaw: number = (totalWeightedGrade / totalWeightedMaxGrade) * 100;
+
+            totalRow.push({
+                value: `${percentRaw.toFixed(2)}%`,
+                html: `${percentRaw.toFixed(2)}%`,
+            });
+
+            totalRow.push({
+                value: `${totalWeightedGrade}`,
+                html: `${totalWeightedGrade}`
+            });
+
+            totalRow.push({
+                value: `${totalWeightedMaxGrade}`,
+                html: `${totalWeightedMaxGrade}`
+            });
+
+            st.addRow(totalRow);
+
+            st.generate();
+            UI.showSection("studentFinalGradeSection");
+
+        } else {
+            Log.info(`CS340View::renderFinalGrade(..) - Grades not released; hiding section`);
+            UI.hideSection("studentFinalGradeSection");
+
+        }
+
+        return;
+    }
+
+    private getMaxScore(deliverableRubric: AssignmentRubric): number {
+        Log.info(`CS340View::getMaxScore(..) - start`);
+        if (deliverableRubric === null || typeof deliverableRubric.questions === "undefined") {
+            Log.info(`CS340View::getMaxScore(..) - No rubric`);
+            return 0;
+        }
+
+        let maxScore = 0;
+        for (const question of deliverableRubric.questions) {
+            for (const subQuestion of question.subQuestions) {
+                maxScore += subQuestion.outOf * subQuestion.weight;
+            }
+        }
+
+        return maxScore;
     }
 
     // private async renderTeams(teams: TeamTransport[]): Promise<void> {

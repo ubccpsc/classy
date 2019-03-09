@@ -3,6 +3,7 @@ import Log from "../../../../../../common/Log";
 import {AssignmentInfo, AssignmentStatus} from "../../../../../../common/types/CS340Types";
 import {DeliverableTransport} from "../../../../../../common/types/PortalTypes";
 import Util from "../../../../../../common/Util";
+import {AssignmentController} from "../../../../../backend/src/controllers/AssignmentController";
 import {Deliverable} from "../../../../../backend/src/Types";
 import {Factory} from "../../Factory";
 import {UI} from "../../util/UI";
@@ -44,8 +45,14 @@ export class CS340AdminView extends AdminView {
         // }
 
         if (name === "adminProvision") {
-            Log.error("CS340AdminView::renderPage::AdminProvision - Injecting buttons");
+            Log.info("CS340AdminView::renderPage::AdminProvision - Injecting buttons");
             this.insertCloseAssignmentButton();
+        }
+
+        if (name === "AdminConfig") {
+            Log.info("CS340AdminView::renderPage::AdminConfig - Injecting switch");
+
+            this.generateFinalGradeSwitch();
         }
 
         Log.warn("CS340AdminView::renderPage(..) with name: " + name + " - complete");
@@ -487,5 +494,117 @@ export class CS340AdminView extends AdminView {
         }).then().catch((error) => {
                 Log.error("CS340AdminView::transitionGradingPage(..) - error: " + JSON.stringify(error));
         });
+    }
+
+    // private async generateFinalGradeToggleSwitch(): Promise<void> {
+    //     const onsSwitch: OnsSwitchElement = document.createElement(`ons-switch`) as OnsSwitchElement;
+    //
+    //     const ac: AssignmentController = new AssignmentController();
+    //
+    //     const isReleased = await ac.getFinalGradeStatus();
+    //
+    //     if (isReleased) {
+    //         onsSwitch.setAttribute("checked", 'true');
+    //     } else {
+    //         onsSwitch.removeAttribute("checked");
+    //     }
+    //
+    //     onsSwitch.onclick = async () => {
+    //         const newStatus = await ac.toggleFinalGradeStatus();
+    //         if (newStatus) {
+    //             onsSwitch.setAttribute("checked", 'true');
+    //         } else {
+    //             onsSwitch.removeAttribute("checked");
+    //         }
+    //     };
+    //
+    //     const onsListItem = this.buildOnsListItem(`fa-retweet`,
+    //         `Final Grades Released`,
+    //         onsSwitch,
+    //         `This releases final grades to the students.`
+    //     );
+    //
+    //     // append to the end
+    //     // get delete item button
+    //     const manageDatabaseButton = document.getElementById("adminDeletePageButton");
+    //
+    //     // get parent items
+    //     const listToAdd = manageDatabaseButton.parentNode.parentNode.parentNode;
+    //
+    //     listToAdd.appendChild(onsListItem);
+    //     return;
+    // }
+
+    private async generateFinalGradeSwitch(): Promise<void> {
+            const onsSwitch: OnsSwitchElement = document.createElement(`ons-switch`) as OnsSwitchElement;
+            onsSwitch.setAttribute("id", "generateFinalGradeSwitch");
+
+            if (document.getElementById("generateFinalGradeSwitch") !== null) {
+                return;
+            }
+
+            const isReleased = await this.getFinalGradeReleaseStatus();
+
+            if (isReleased) {
+                onsSwitch.setAttribute("checked", 'true');
+            } else {
+                onsSwitch.removeAttribute("checked");
+            }
+
+            onsSwitch.onclick = async () => {
+                const newStatus = await this.toggleFinalGradesReleased();
+                if (newStatus) {
+                    onsSwitch.setAttribute("checked", 'true');
+                } else {
+                    onsSwitch.removeAttribute("checked");
+                }
+            };
+
+            const onsListItem = this.buildOnsListItem(`fa-retweet`,
+                `Final Grades Released`,
+                onsSwitch,
+                `This releases final grades to the students.`
+            );
+
+            // append to the end
+            // get delete item button
+            const manageDatabaseButton = document.getElementById("adminDeletePageButton");
+
+            // get parent items
+            const listToAdd = manageDatabaseButton.parentNode.parentNode.parentNode;
+
+            listToAdd.appendChild(onsListItem);
+            return;
+    }
+
+    private async getFinalGradeReleaseStatus(): Promise<boolean> {
+        // get class options
+        const options: any = AdminView.getOptions();
+
+        const url = this.remote + '/portal/cs340/isFinalGradeReleased';
+        const response = await fetch(url, options);
+        if (response.status === 200) {
+            Log.info(`CS340AdminView::getFinalGradeReleaseStatus(..) - 200 received`);
+            const json = await response.json();
+            return json.success;
+        }
+        Log.error(`CS340AdminView::getFinalGradeReleaseStatus(..) - Error: Response code is: ${response.status}`);
+        return false;
+    }
+
+    private async toggleFinalGradesReleased(): Promise<boolean> {
+        // get class options
+        const options: any = AdminView.getOptions();
+        options.method = 'post';
+
+        const url = this.remote + '/portal/cs340/toggleFinalGradeRelease';
+        const response = await fetch(url, options);
+        if (response.status === 200) {
+            Log.info(`CS340AdminView::toggleFinalGradesReleased(..) - 200 received`);
+            const json = await response.json();
+            return json.success;
+        }
+        Log.error(`CS340AdminView::toggleFinalGradesReleased(..) - Error: Response code is: ${response.status}`);
+        return false;
     }
 }

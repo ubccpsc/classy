@@ -293,6 +293,19 @@ export class AssignmentController {
             return false;
         }
 
-        return true;
+        return courseObj.custom.finalGradesReleased;
+    }
+
+    public async toggleFinalGradeStatus(): Promise<boolean> {
+        Log.info(`AssignmentController::toggleFinalGradeStatus(..) - start`);
+
+        const status: boolean = await this.getFinalGradeStatus();
+        const courseObj = await this.db.getCourseRecord();
+
+        courseObj.custom.finalGradesReleased = !status;
+
+        await this.db.writeCourseRecord(courseObj);
+
+        return !status;
     }
 }
