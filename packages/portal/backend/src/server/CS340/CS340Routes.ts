@@ -11,7 +11,6 @@ import {AssignmentController} from "../../controllers/AssignmentController";
 import {AuthController} from "../../controllers/AuthController";
 import {DatabaseController} from "../../controllers/DatabaseController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
-import {GitHubActions, IGitHubActions} from "../../controllers/GitHubActions";
 import {PersonController} from "../../controllers/PersonController";
 import {RepositoryController} from "../../controllers/RepositoryController";
 import {RubricController} from "../../controllers/RubricController";

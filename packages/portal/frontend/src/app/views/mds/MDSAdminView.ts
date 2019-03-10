@@ -18,39 +18,39 @@ declare var ons: any;
  * 340 only uses the default Classy admin features, but this class is for experimenting with
  * extensibility so we can better understand how to do it for other courses.
  */
-export class CS340AdminView extends AdminView {
+export class MDSAdminView extends AdminView {
     private markingTab: AdminMarkingTab;
 
     constructor(remoteUrl: string, tabs: AdminTabs) {
-        Log.info("CS340AdminView::<init>(..)");
+        Log.info("MDSAdminView::<init>(..)");
         super(remoteUrl, tabs);
 
         this.markingTab = new AdminMarkingTab(remoteUrl);
     }
 
     public renderPage(name: string, opts: any) {
-        Log.info('CS340AdminView::renderPage( ' + name + ', ... ) - start; options: ' + JSON.stringify(opts));
+        Log.info('MDSAdminView::renderPage( ' + name + ', ... ) - start; options: ' + JSON.stringify(opts));
         super.renderPage(name, opts);
 
         if (name === 'AdminRoot') {
-            Log.info('CS340AdminView::renderPage(..) - augmenting tabs');
+            Log.info('MDSAdminView::renderPage(..) - augmenting tabs');
             // this.verifyAllScheduledTasks();
-            Log.info('CS340AdminView::renderPage(..) - augmenting tabs done.');
+            Log.info('MDSAdminView::renderPage(..) - augmenting tabs done.');
         }
 
         // if (name === 'AdminEditDeliverable') {
-            // Log.warn("CS340AdminView::renderPage::AdminEditDeliverable - Injecting switches");
+            // Log.warn("MDSAdminView::renderPage::AdminEditDeliverable - Injecting switches");
             // this.insertRepositoryScheduleCreationSwitch("adminEditDeliverablePage-autoGenerate");
             // this.insertAssignmentBlock();
         // }
 
         if (name === "adminProvision") {
-            Log.info("CS340AdminView::renderPage::AdminProvision - Injecting buttons");
+            Log.info("MDSAdminView::renderPage::AdminProvision - Injecting buttons");
             this.insertCloseAssignmentButton();
         }
 
         if (name === "AdminConfig") {
-            Log.info("CS340AdminView::renderPage::AdminConfig - Injecting switch");
+            Log.info("MDSAdminView::renderPage::AdminConfig - Injecting switch");
 
             this.generateFinalGradeSwitch().then(() => {
                 Log.info(`MDSAdminView::renderPage::AdminConfig - finished creating switch`);
@@ -59,14 +59,14 @@ export class CS340AdminView extends AdminView {
             });
         }
 
-        Log.warn("CS340AdminView::renderPage(..) with name: " + name + " - complete");
+        Log.warn("MDSAdminView::renderPage(..) with name: " + name + " - complete");
     }
 
     public handleAdminEditDeliverable(opts: any): void {
         super.handleAdminEditDeliverable(opts);
         const that = this;
         Log.warn(`CS340AdminView::handleAdminEditDeliverable(${JSON.stringify(opts)}) - Injecting switches`);
-        // Log.warn("CS340AdminView::renderPage::AdminEditDeliverable - Injecting switches");
+        // Log.warn("MDSAdminView::renderPage::AdminEditDeliverable - Injecting switches");
         this.insertRepositoryScheduleCreationSwitch("adminEditDeliverablePage-autoGenerate");
         this.insertAssignmentBlock();
         this.populateAssignmentFields((opts as any).delivId).then().catch();
@@ -84,13 +84,13 @@ export class CS340AdminView extends AdminView {
     }
 
     // public handleadminProvision(opts: any): void {
-    //     Log.info(`CS340AdminView::handleAdminProvision(${JSON.stringify(opts)}) - Injecting`);
+    //     Log.info(`MDSAdminView::handleAdminProvision(${JSON.stringify(opts)}) - Injecting`);
     //     const that = this;
     //     this.insertCloseAssignmentButton();
     //
     //     const provisionRepoButton: OnsButtonElement = document.getElementById("adminManageProvisionButton") as OnsButtonElement;
     //     provisionRepoButton.onclick = async (evt) => {
-    //         Log.info('CS340AdminView::manageProvisionButton(..) - button pressed');
+    //         Log.info('MDSAdminView::manageProvisionButton(..) - button pressed');
     //         evt.stopPropagation(); // prevents list item expansion
     //         await that.handleProvisionPressed();
     //     };
@@ -99,7 +99,7 @@ export class CS340AdminView extends AdminView {
     // }
 
     public handleAdminMarking(opts: any): void {
-        Log.info("CS340AdminView::handleAdminMarking(..) - start; options : " + JSON.stringify(opts));
+        Log.info("MDSAdminView::handleAdminMarking(..) - start; options : " + JSON.stringify(opts));
         this.markingTab.init(opts).then().catch();
         return null;
     }
@@ -143,7 +143,7 @@ export class CS340AdminView extends AdminView {
      * @returns {boolean}
      */
     private insertRepositoryScheduleCreationSwitch(switchId: string): boolean {
-        Log.info("CS340AdminView::insertRepositoryScheduleCreationSwitch(" + switchId + ") - start");
+        Log.info("MDSAdminView::insertRepositoryScheduleCreationSwitch(" + switchId + ") - start");
         const openSwitch: HTMLElement = document.getElementById("adminEditDeliverablePage-open");
         if (openSwitch !== null) {
             const sliderSwitch: OnsSwitchElement = document.createElement("ons-switch") as OnsSwitchElement;
@@ -303,10 +303,10 @@ export class CS340AdminView extends AdminView {
     }
 
     private updateAssignmentBlock() {
-        Log.info("CS340AdminView::updateAssignmentBlock(..) - start");
+        Log.info("MDSAdminView::updateAssignmentBlock(..) - start");
         const isAssignment = document.getElementById("adminEditDeliverablePage-isAssignment") as OnsSwitchElement;
         const isAssignmentValue = isAssignment.checked;
-        Log.info("CS340AdminView::updateAssignmentBlock(..); isAssignment; value: " + isAssignmentValue);
+        Log.info("MDSAdminView::updateAssignmentBlock(..); isAssignment; value: " + isAssignmentValue);
 
         const assignmentConfigBlock = document.getElementById("adminEditDeliverablePage-assignmentConfigBlock");
         if (isAssignmentValue === true) {
@@ -496,7 +496,7 @@ export class CS340AdminView extends AdminView {
             aid:    aid,
             isTeam: isTeam
         }).then().catch((error) => {
-                Log.error("CS340AdminView::transitionGradingPage(..) - error: " + JSON.stringify(error));
+                Log.error("MDSAdminView::transitionGradingPage(..) - error: " + JSON.stringify(error));
         });
     }
 

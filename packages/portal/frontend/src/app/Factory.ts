@@ -7,6 +7,7 @@ import {CS310View} from "./views/cs310/CS310View";
 
 import {CS340View} from "./views/340/CS340View";
 import {IView} from "./views/IView";
+import {MDSAdminView} from "./views/mds/MDSAdminView";
 
 /**
  * Entry point for configuring per-course aspects of the frontend.
@@ -108,6 +109,11 @@ export class Factory {
                 tabs.results = false; // no results
                 // tabs.dashboard = false; // no dashboard
                 this.adminView = new CS340AdminView(backendUrl, tabs);
+            } else if (this.name.toLowerCase() === 'mds') {
+                tabs.teams = false; // no teams
+                tabs.results = false; // no results
+                // tabs.dashboard = false; // no dashboard
+                this.adminView = new MDSAdminView(backendUrl, tabs);
             } else {
                 Log.info("Factory::getAdminView() - returning default admin view for: " + this.name);
                 this.adminView = new AdminView(backendUrl, tabs); // default admin

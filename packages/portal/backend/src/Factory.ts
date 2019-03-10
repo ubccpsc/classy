@@ -42,6 +42,8 @@ export class Factory {
         } else if (name === 'cs340' || name === 'cpsc340') {
             // instantiate CS340REST in fork
             return new CS340Routes();
+        } else if (name === 'mds') {
+            return new CS340Routes();
         } else {
             Log.warn("Factory::getCustomRouteHandler() - no custom routes for: " + name);
         }
@@ -82,12 +84,14 @@ export class Factory {
             // for test deploying
             Factory.controller = new CourseController(ghController);
         } else if (name === 'cs340' || name === 'cpsc340') {
-                Factory.controller = new CourseController(ghController);
+            Factory.controller = new CourseController(ghController);
             // } else if (name === 'cs210' || name === 'cpsc210') {
             //     // instantiate 210 controller in fork
             // } else if (name === 'cs221' || name === 'cpsc221') {
             //     // instantiate 221 controller in fork
             //     Factory.controller = new CS221Controller(ghController);
+        } else if (name === 'mds') {
+            Factory.controller = new CourseController(ghController);
         } else {
             Log.error("Factory::getCourseController() - unknown name: " + name);
             throw new Error("Unknown course name: " + name);
