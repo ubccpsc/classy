@@ -271,6 +271,7 @@ export class AuthRoutes implements IREST {
 
         // we now have a github username
         Log.info("AuthRoutes::performAuthCallback(..) - /portal/authCallback - GH username received");
+        Log.info(`AuthRoutes::preformAuthCallback(..) - /portal/authCallback - response: ${ans}`);
         const body = JSON.parse(ans);
         username = body.login;
         Log.info("AuthRoutes::performAuthCallback(..) - /portal/authCallback - GH username: " + username);
