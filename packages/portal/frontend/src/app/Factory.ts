@@ -8,6 +8,7 @@ import {CS310View} from "./views/cs310/CS310View";
 import {CS340View} from "./views/340/CS340View";
 import {IView} from "./views/IView";
 import {MDSAdminView} from "./views/mds/MDSAdminView";
+import {MDSView} from "./views/mds/MDSView";
 
 /**
  * Entry point for configuring per-course aspects of the frontend.
@@ -69,8 +70,8 @@ export class Factory {
                 //     this.studentView = new SDMMSummaryView(backendUrl);
                 // } else if (this.name === 'CS310-2017Jan' || this.name === 'CS310-2017Jan_TEST') {
                 //     this.studentView = new CS310View(backendUrl);
-                // } else if (this.name === 'cs340' || this.name === 'cpsc340') {
-                //     this.studentView = new CS340View(backendUrl);
+            } else if (this.name === 'mds') {
+                this.studentView = new MDSView(backendUrl);
             } else {
                 Log.error("Factory::getView() - ERROR; unknown name: " + this.name);
             }
