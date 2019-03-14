@@ -406,7 +406,7 @@ export class GradingPageView extends AdminPage {
                     errorComment = ERROR_INVALID_INPUT;
                     errorStatus = true;
                 } else {
-                    if (!this.UBC_LETTER_GRADES.has(gradeInputElement.value)) {
+                    if (!this.UBC_LETTER_GRADES.has(gradeInputElement.value.toUpperCase())) {
                         gradeValue = 0;
                         if (!warnStatus) {
                             warnComment = WARN_EMPTY_FIELD;
