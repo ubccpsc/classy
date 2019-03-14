@@ -406,7 +406,8 @@ export class GradingPageView extends AdminPage {
                     errorComment = ERROR_INVALID_INPUT;
                     errorStatus = true;
                 } else {
-                    if (!this.UBC_LETTER_GRADES.has(gradeInputElement.value.toUpperCase())) {
+                    const gradeLetter: string = gradeInputElement.value.toUpperCase();
+                    if (!this.UBC_LETTER_GRADES.has(gradeLetter)) {
                         gradeValue = 0;
                         if (!warnStatus) {
                             warnComment = WARN_EMPTY_FIELD;
@@ -415,7 +416,7 @@ export class GradingPageView extends AdminPage {
                         graded = false;
                         errorElement.innerHTML = "Warning: Input field is empty";
                     } else {
-                        const gradeRange = this.UBC_LETTER_GRADES.get(gradeInputElement.value);
+                        const gradeRange = this.UBC_LETTER_GRADES.get(gradeLetter);
                         const multiplier = Math.ceil((gradeRange.upper + gradeRange.lower) / 2) / 100;
                         const outOf = parseFloat(gradeInputElement.getAttribute("data-outOf"));
                         gradeValue = multiplier * outOf;
