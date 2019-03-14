@@ -44,6 +44,13 @@ export class AdminMarkingTab extends AdminPage {
         UI.hideModal();
 
         this.populateDeliverableDropdown(delivs);
+
+        if (this.selectedDeliverable !== null) {
+            Log.info(`AdminMarkingTab::init(..) - Re-rendering student submissions`); // TODO: Make this more efficient
+            await this.renderStudentSubmissions(this.selectedDeliverable);
+        } else {
+            Log.info(`AdminMarkingTab::init(..) - Selected Deliverable is null; not re-rendering - value: ${this.selectedDeliverable}`);
+        }
     }
 
     private populateDeliverableDropdown(delivs: DeliverableTransport[]): void {
