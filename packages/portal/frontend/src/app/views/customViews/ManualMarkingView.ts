@@ -554,8 +554,8 @@ export class ManualMarkingView extends StudentView {
                 });
 
                 newRow.push({
-                    value: `${gradeValue}`,
-                    html: `${gradeValue}`
+                    value: `${Math.round(gradeValue)}%`,
+                    html: `${Math.round(gradeValue)}%`
                 });
 
                 st.addRow(newRow);
@@ -591,8 +591,8 @@ export class ManualMarkingView extends StudentView {
             });
 
             totalRow.push({
-                value: `${totalWeightedGrade}%`,
-                html: `${totalWeightedGrade}%`
+                value: `${Math.round(totalWeightedGrade)}%`,
+                html: `${Math.round(totalWeightedGrade)}%`
             });
 
             // totalRow.push({
@@ -604,11 +604,9 @@ export class ManualMarkingView extends StudentView {
 
             st.generate();
             UI.showSection(`studentFinalGradeSection`);
-
         } else {
             Log.info(`${this.loggingName}::renderFinalGrade(..) - Grades not released; hiding section`);
             UI.hideSection(`studentFinalGradeSection`);
-
         }
 
         return;
