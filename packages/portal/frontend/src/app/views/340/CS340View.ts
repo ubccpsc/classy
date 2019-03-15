@@ -44,6 +44,10 @@ export class CS340View extends StudentView {
         });
     }
 
+    /**
+     * Handles rendering of all data; after StudentView runs
+     * @returns {Promise<void>}
+     */
     private async renderStudentPage(): Promise<void> {
         UI.showModal('Fetching Data');
         try {
@@ -62,7 +66,6 @@ export class CS340View extends StudentView {
             await this.fetchDeliverableData();
 
             await this.renderDeliverables();
-            await this.renderGradesDropdown();
 
             for (const grade of this.grades) {
                 this.delivGradeMap.set(grade.delivId, grade);
@@ -81,21 +84,6 @@ export class CS340View extends StudentView {
             Log.error('Error encountered: ' + err.message);
         }
         UI.hideModal();
-        return;
-    }
-
-    private async renderGradesDropdown(): Promise<void> {
-        Log.info(`CS340View::renderGradesDropdown(..) - start`);
-        const that = this;
-        const gradeDropdown = this.populateDeliverableDropdown("studentGradeSelect");
-        if (gradeDropdown === null) {
-            return;
-        }
-        gradeDropdown.addEventListener("change", async (evt) => {
-            Log.info(`CS340View::renderGradesDropdown::onChange(..) - start with value: ` +
-            `${(evt.target as HTMLSelectElement).value}`);
-            await that.handleGradeChange((evt.target as HTMLSelectElement).value);
-        });
         return;
     }
 
@@ -293,6 +281,7 @@ export class CS340View extends StudentView {
         Log.info(`CS340View::renderDeliverables(..) - hooking event listener`);
 
         delivSelectElement.addEventListener("change", async (evt) => {
+            await that.handleGradeChange((evt.target as HTMLSelectElement).value);
             await that.updateTeams();
         });
 
@@ -329,15 +318,18 @@ export class CS340View extends StudentView {
         }
 
         if (found) {
-            const tName = document.getElementById('studentPartnerTeamName');
-            const pName = document.getElementById('studentPartnerTeammates');
-
+            const partnerInfo = document.getElementById("studentPartnerInfo");
+            let embeddedTeamName;
             if (selectedTeam.URL !== null) {
-                tName.innerHTML = '<a href="' + selectedTeam.URL + '">' + selectedTeam.id + '</a>';
+                embeddedTeamName = `<a href=${selectedTeam.URL}>${selectedTeam.id}</a>`;
+                // tName.innerHTML = '<a href="' + selectedTeam.URL + '">' + selectedTeam.id + '</a>';
             } else {
-                tName.innerHTML = selectedTeam.id;
+                embeddedTeamName = `${selectedTeam.id}`;
+                // tName.innerHTML = selectedTeam.id;
             }
-            pName.innerHTML = JSON.stringify(selectedTeam.people);
+            const formattedString = `Your team is ${embeddedTeamName}; your team is: ${JSON.stringify(selectedTeam.people)}`;
+            // pName.innerHTML = JSON.stringify(selectedTeam.people);
+            partnerInfo.innerHTML = formattedString;
             UI.showSection("studentPartnerDiv");
         } else {
             const button = document.querySelector('#studentSelectPartnerButton') as OnsButtonElement;
@@ -365,6 +357,12 @@ export class CS340View extends StudentView {
                     minTeam.innerHTML = delivInfo.minTeamSize.toString();
                     maxTeam.innerHTML = delivInfo.maxTeamSize.toString();
                 }
+            }
+
+            if (delivInfo.maxTeamSize === 0) {
+                UI.hideSection('studentSelectPartnerDiv');
+                UI.hideSection('studentPartnerDiv');
+                return;
             }
 
             UI.showSection('studentSelectPartnerDiv');

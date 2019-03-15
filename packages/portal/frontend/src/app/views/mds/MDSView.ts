@@ -44,6 +44,10 @@ export class MDSView extends StudentView {
         });
     }
 
+    /**
+     * Handles rendering of all data; after StudentView runs
+     * @returns {Promise<void>}
+     */
     private async renderStudentPage(): Promise<void> {
         UI.showModal('Fetching Data');
         try {
@@ -62,7 +66,6 @@ export class MDSView extends StudentView {
             await this.fetchDeliverableData();
 
             await this.renderDeliverables();
-            await this.renderGradesDropdown();
 
             for (const grade of this.grades) {
                 this.delivGradeMap.set(grade.delivId, grade);
@@ -84,23 +87,8 @@ export class MDSView extends StudentView {
         return;
     }
 
-    private async renderGradesDropdown(): Promise<void> {
-        Log.info(`CS340View::renderGradesDropdown(..) - start`);
-        const that = this;
-        const gradeDropdown = this.populateDeliverableDropdown("studentGradeSelect");
-        if (gradeDropdown === null) {
-            return;
-        }
-        gradeDropdown.addEventListener("change", async (evt) => {
-            Log.info(`CS340View::renderGradesDropdown::onChange(..) - start with value: ` +
-            `${(evt.target as HTMLSelectElement).value}`);
-            await that.handleGradeChange((evt.target as HTMLSelectElement).value);
-        });
-        return;
-    }
-
     private async handleGradeChange(delivId: string): Promise<void> {
-        Log.info(`CS340View::handleGradeChange(${delivId}) - start`);
+        Log.info(`MDSView::handleGradeChange(${delivId}) - start`);
 
         if (delivId === "--N/A--") {
             UI.hideSection("studentGradesDiv");
@@ -165,7 +153,7 @@ export class MDSView extends StudentView {
                             newRow.push({
                                 value: `${question.name} ${subQuestion.name}`,
                                 html: `${question.name} ${subQuestion.name}`}
-                                );
+                            );
                             newRow.push({value: subQuestion.grade.toFixed(2).toString(),
                                 html: subQuestion.grade.toFixed(2).toString()});
                             newRow.push({value: subRubric.outOf.toString(), html: subRubric.outOf.toString()});
@@ -215,7 +203,7 @@ export class MDSView extends StudentView {
 
                 UI.showSection("studentGradesDiv");
                 UI.hideSection("studentNoGradesDiv");
-                }
+            }
 
         } else {
             UI.hideSection("studentGradesDiv");
@@ -242,26 +230,26 @@ export class MDSView extends StudentView {
     }
 
     private async fetchDeliverableData(): Promise<DeliverableTransport[]> {
-        Log.info(`CS340AdminView::fetchDeliverableData() - start`);
+        Log.info(`MDSAdminView::fetchDeliverableData() - start`);
         try {
             this.deliverables = null;
-            const data = await this.fetchData('/portal/cs340/deliverables') as DeliverableTransport[];
+            const data = await this.fetchData('/portal/MDS/deliverables') as DeliverableTransport[];
 
             this.deliverables = data;
             return data;
         } catch (err) {
-            Log.error(`CS340View::fetchDeliverableData() - Error: ${JSON.stringify(err)}`);
+            Log.error(`MDSView::fetchDeliverableData() - Error: ${JSON.stringify(err)}`);
             this.teams = [];
             return [];
         }
     }
 
     private populateDeliverableDropdown(dropdownId: string): HTMLSelectElement {
-        Log.info(`CS340View::populateDeliverableDropdown(${dropdownId}) - string`);
+        Log.info(`MDSView::populateDeliverableDropdown(${dropdownId}) - string`);
 
         const delivSelectElement = document.getElementById(dropdownId) as HTMLSelectElement;
         if (delivSelectElement === null) {
-            Log.error(`CS340View::populateDeliverableDropdown(..) - Error: Unable to find dropdown with id: ${dropdownId}`);
+            Log.error(`MDSView::populateDeliverableDropdown(..) - Error: Unable to find dropdown with id: ${dropdownId}`);
             return null;
         }
 
@@ -285,18 +273,19 @@ export class MDSView extends StudentView {
     }
 
     private async renderDeliverables(): Promise<void> {
-        Log.info(`CS340View::renderDeliverables(..) - start`);
+        Log.info(`MDSView::renderDeliverables(..) - start`);
 
         const that = this;
         const delivSelectElement = this.populateDeliverableDropdown("studentDeliverableSelect");
 
-        Log.info(`CS340View::renderDeliverables(..) - hooking event listener`);
+        Log.info(`MDSView::renderDeliverables(..) - hooking event listener`);
 
         delivSelectElement.addEventListener("change", async (evt) => {
+            await that.handleGradeChange((evt.target as HTMLSelectElement).value);
             await that.updateTeams();
         });
 
-        Log.info(`CS340View::renderDeliverables(..) - finished hooking event listener`);
+        Log.info(`MDSView::renderDeliverables(..) - finished hooking event listener`);
 
         Log.info("MDSView::renderDeliverables(..) - finished rendering deliverable");
 
@@ -329,15 +318,18 @@ export class MDSView extends StudentView {
         }
 
         if (found) {
-            const tName = document.getElementById('studentPartnerTeamName');
-            const pName = document.getElementById('studentPartnerTeammates');
-
+            const partnerInfo = document.getElementById("studentPartnerInfo");
+            let embeddedTeamName;
             if (selectedTeam.URL !== null) {
-                tName.innerHTML = '<a href="' + selectedTeam.URL + '">' + selectedTeam.id + '</a>';
+                embeddedTeamName = `<a href=${selectedTeam.URL}>${selectedTeam.id}</a>`;
+                // tName.innerHTML = '<a href="' + selectedTeam.URL + '">' + selectedTeam.id + '</a>';
             } else {
-                tName.innerHTML = selectedTeam.id;
+                embeddedTeamName = `${selectedTeam.id}`;
+                // tName.innerHTML = selectedTeam.id;
             }
-            pName.innerHTML = JSON.stringify(selectedTeam.people);
+            const formattedString = `Your team is ${embeddedTeamName}; your team is: ${JSON.stringify(selectedTeam.people)}`;
+            // pName.innerHTML = JSON.stringify(selectedTeam.people);
+            partnerInfo.innerHTML = formattedString;
             UI.showSection("studentPartnerDiv");
         } else {
             const button = document.querySelector('#studentSelectPartnerButton') as OnsButtonElement;
@@ -365,6 +357,12 @@ export class MDSView extends StudentView {
                     minTeam.innerHTML = delivInfo.minTeamSize.toString();
                     maxTeam.innerHTML = delivInfo.maxTeamSize.toString();
                 }
+            }
+
+            if (delivInfo.maxTeamSize === 0) {
+                UI.hideSection('studentSelectPartnerDiv');
+                UI.hideSection('studentPartnerDiv');
+                return;
             }
 
             UI.showSection('studentSelectPartnerDiv');
@@ -417,14 +415,14 @@ export class MDSView extends StudentView {
     }
 
     private async renderFinalGrade(): Promise<void> {
-        Log.info(`CS340View::renderFinalGrade(..) - start`);
+        Log.info(`MDSView::renderFinalGrade(..) - start`);
 
         // checking if final grade is released
 
-        const result = await this.fetchData(`/portal/cs340/isFinalGradeReleased`);
+        const result = await this.fetchData(`/portal/MDS/isFinalGradeReleased`);
         // const result = true;
         if (result) {
-            Log.info(`CS340View::renderFinalGrade(..) - Grades released; rendering`);
+            Log.info(`MDSView::renderFinalGrade(..) - Grades released; rendering`);
 
             const headers: TableHeader[] = [{
                 id: 'itemId',
@@ -480,7 +478,7 @@ export class MDSView extends StudentView {
                 // get grade
                 let score = 0;
                 if (this.delivGradeMap.has(deliverableTransport.id)) {
-                    Log.info(`CS340View::renderFinalGrades(..) - retriving score`);
+                    Log.info(`MDSView::renderFinalGrades(..) - retriving score`);
 
                     const grade: GradeTransport = this.delivGradeMap.get(deliverableTransport.id);
                     score = grade.score;
@@ -489,7 +487,7 @@ export class MDSView extends StudentView {
                 let maxScore = score;
                 if (deliverableTransport.rubric !== null && typeof deliverableTransport.rubric !== "undefined") {
                     // get max grade
-                    Log.info(`CS340View::renderFinalGrades(..) - calculating maxScore`);
+                    Log.info(`MDSView::renderFinalGrades(..) - calculating maxScore`);
                     maxScore = this.getMaxScore(deliverableTransport.rubric as AssignmentRubric);
                 }
 
@@ -581,7 +579,7 @@ export class MDSView extends StudentView {
             UI.showSection("studentFinalGradeSection");
 
         } else {
-            Log.info(`CS340View::renderFinalGrade(..) - Grades not released; hiding section`);
+            Log.info(`MDSView::renderFinalGrade(..) - Grades not released; hiding section`);
             UI.hideSection("studentFinalGradeSection");
 
         }
@@ -590,9 +588,9 @@ export class MDSView extends StudentView {
     }
 
     private getMaxScore(deliverableRubric: AssignmentRubric): number {
-        Log.info(`CS340View::getMaxScore(..) - start`);
+        Log.info(`MDSView::getMaxScore(..) - start`);
         if (deliverableRubric === null || typeof deliverableRubric.questions === "undefined") {
-            Log.info(`CS340View::getMaxScore(..) - No rubric`);
+            Log.info(`MDSView::getMaxScore(..) - No rubric`);
             return 0;
         }
 
@@ -655,40 +653,40 @@ export class MDSView extends StudentView {
     //     }
     // }
 
-/*
-    private async formTeam(): Promise<TeamTransport> {
-        Log.info("MDSView::formTeam() - start");
-        const otherId = UI.getTextFieldValue('studentSelectPartnerText');
-        const myGithubId = this.getStudent().githubId;
-        const payload: TeamFormationTransport = {
-            delivId:   'project', // only one team in cs310 (and it is always called project)
-            githubIds: [myGithubId, otherId]
-        };
-        const url = this.remote + '/portal/team';
-        const options: any = this.getOptions();
-        options.method = 'post';
-        options.body = JSON.stringify(payload);
+    /*
+        private async formTeam(): Promise<TeamTransport> {
+            Log.info("MDSView::formTeam() - start");
+            const otherId = UI.getTextFieldValue('studentSelectPartnerText');
+            const myGithubId = this.getStudent().githubId;
+            const payload: TeamFormationTransport = {
+                delivId:   'project', // only one team in cs310 (and it is always called project)
+                githubIds: [myGithubId, otherId]
+            };
+            const url = this.remote + '/portal/team';
+            const options: any = this.getOptions();
+            options.method = 'post';
+            options.body = JSON.stringify(payload);
 
-        Log.info("MDSView::formTeam() - URL: " + url + "; payload: " + JSON.stringify(payload));
-        const response = await fetch(url, options);
+            Log.info("MDSView::formTeam() - URL: " + url + "; payload: " + JSON.stringify(payload));
+            const response = await fetch(url, options);
 
-        Log.info("MDSView::formTeam() - responded");
+            Log.info("MDSView::formTeam() - responded");
 
-        const body = await response.json() as Payload;
+            const body = await response.json() as Payload;
 
-        Log.info("MDSView::formTeam() - response: " + JSON.stringify(body));
+            Log.info("MDSView::formTeam() - response: " + JSON.stringify(body));
 
-        if (typeof body.success !== 'undefined') {
-            // worked
-            return body.success as TeamTransport;
-        } else if (typeof body.failure !== 'undefined') {
-            // failed
-            UI.showError(body);
-            return null;
-        } else {
-            Log.error("MDSView::formTeam() - else ERROR: " + JSON.stringify(body));
+            if (typeof body.success !== 'undefined') {
+                // worked
+                return body.success as TeamTransport;
+            } else if (typeof body.failure !== 'undefined') {
+                // failed
+                UI.showError(body);
+                return null;
+            } else {
+                Log.error("MDSView::formTeam() - else ERROR: " + JSON.stringify(body));
+            }
         }
-    }
-*/
+    */
 
 }

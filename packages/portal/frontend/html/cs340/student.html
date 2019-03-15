@@ -10,29 +10,6 @@
     </ons-toolbar>
 
     <ons-list>
-        <ons-list-header>Grades</ons-list-header>
-        <ons-list-item>
-            <div class="left settingIcon">
-                <ons-icon style="padding-right: 1em;" icon="fa-cogs"></ons-icon>
-                Select Deliverable:
-            </div>
-            <div>
-                <select id="studentGradeSelect">
-                </select>
-            </div>
-        </ons-list-item>
-        <div id="studentGradesDiv" style="display: none;">
-            <ons-list-item>
-                <div id="studentGradeBreakdownTable" style="width:100%;">
-
-                </div>
-            </ons-list-item>
-        </div>
-        <div id="studentNoGradesDiv" style="display: none;">
-            <ons-list-item>
-                No grades available for this deliverable.
-            </ons-list-item>
-        </div>
         <!--<ons-list-item>-->
             <!--<div id="studentGradeTable" style="width:100%;"></div>-->
         <!--</ons-list-item>-->
@@ -51,6 +28,20 @@
                 </select>
             </div>
         </ons-list-item>
+        <div id="studentGradesDiv" style="display: none;">
+            <ons-list-header>Grades</ons-list-header>
+            <ons-list-item>
+                <div id="studentGradeBreakdownTable" style="width:100%;">
+
+                </div>
+            </ons-list-item>
+        </div>
+        <div id="studentNoGradesDiv" style="display: none;">
+            <ons-list-header>Grades</ons-list-header>
+            <ons-list-item>
+                No grades available for this deliverable.
+            </ons-list-item>
+        </div>
         <div id="studentSelectPartnerDiv" style="display: none;">
             <ons-list-header>Select Project Partner</ons-list-header>
             <ons-list-item expandable>
@@ -81,13 +72,13 @@
         </div>
         <div id="studentPartnerDiv" style="display: none;">
             <ons-list-header>Project Partner</ons-list-header>
-            <ons-list-item>
-                Your team is&nbsp;<span id="studentPartnerTeamName"></span>; your teammates are&nbsp;<span id="studentPartnerTeammates"></span>.
+            <ons-list-item id="studentPartnerInfo">
+                <!--Your team is &nbsp;<span id="studentPartnerTeamName"></span>; your teammates are&nbsp;&nbsp;<span id="studentPartnerTeammates"></span>.-->
             </ons-list-item>
         </div>
     </ons-list>
     <div id="studentFinalGradeSection" style="display: none;">
-        <ons-list-header>Final Grade</ons-list-header>
+        <ons-list-header>Overall Course Grade</ons-list-header>
         <ons-list-item>
             <div id="studentFinalGradeTable" style="width:100%;"></div>
         </ons-list-item>
