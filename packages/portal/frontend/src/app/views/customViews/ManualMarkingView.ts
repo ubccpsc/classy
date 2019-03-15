@@ -489,20 +489,6 @@ export class ManualMarkingView extends StudentView {
                 sortDown: false,
                 style: `padding-left: 1em; padding-right: 1em; text-align: left`,
             }, {
-                id: `rawGrade`,
-                text: `Raw Grade`,
-                sortable: false,
-                defaultSort: false,
-                sortDown: false,
-                style: `padding-left: 1em; padding-right: 1em; text-align: center;`
-            }, {
-                id: `maxGrade`,
-                text: `Max Grade`,
-                sortable: false,
-                defaultSort: false,
-                sortDown: false,
-                style: `padding-left: 1em; padding-right: 1em; text-align: center;`
-            }, {
                 id: `weight`,
                 text: `Weight`,
                 sortable: false,
@@ -510,15 +496,8 @@ export class ManualMarkingView extends StudentView {
                 sortDown: false,
                 style: `padding-left: 1em; padding-right: 1em; text-align: center;`
             }, {
-                id: `weightedGrade`,
-                text: `Weighted Grade`,
-                sortable: false,
-                defaultSort: false,
-                sortDown: false,
-                style: `padding-left: 1em; padding-right: 1em; text-align: center;`
-            }, {
-                id: `weightedTotal`,
-                text: `Weighted Total`,
+                id: `grade`,
+                text: `Grade`,
                 sortable: false,
                 defaultSort: false,
                 sortDown: false,
@@ -557,6 +536,7 @@ export class ManualMarkingView extends StudentView {
 
                 const weightedScore = score * weight;
                 const weightedTotal = maxScore * weight;
+                const gradeValue = (score / maxScore) * 100;
 
                 totalWeightedGrade += weightedScore;
                 totalWeightedMaxGrade += weightedTotal;
@@ -569,28 +549,13 @@ export class ManualMarkingView extends StudentView {
                 });
 
                 newRow.push({
-                    value: `${score}`,
-                    html: `${score}`
-                });
-
-                newRow.push({
-                    value: `${maxScore}`,
-                    html: `${maxScore}`
-                });
-
-                newRow.push({
                     value: `${weight}`,
                     html: `${weight}`
                 });
 
                 newRow.push({
-                    value: `${weightedScore}`,
-                    html: `${weightedScore}`
-                });
-
-                newRow.push({
-                    value: `${weightedTotal}`,
-                    html: `${weightedTotal}`
+                    value: `${gradeValue}`,
+                    html: `${gradeValue}`
                 });
 
                 st.addRow(newRow);
@@ -603,32 +568,37 @@ export class ManualMarkingView extends StudentView {
                 html: `<b>Total</b>`
             });
 
-            totalRow.push({
-                value: ``,
-                html: ``
-            });
+            // totalRow.push({
+            //     value: ``,
+            //     html: ``
+            // });
+            //
+            // totalRow.push({
+            //     value: ``,
+            //     html: ``
+            // });
+            //
+            // const percentRaw: number = (totalWeightedGrade / totalWeightedMaxGrade) * 100;
+            //
+            // totalRow.push({
+            //     value: `${percentRaw.toFixed(2)}%`,
+            //     html: `${percentRaw.toFixed(2)}%`,
+            // });
 
             totalRow.push({
                 value: ``,
                 html: ``
             });
 
-            const percentRaw: number = (totalWeightedGrade / totalWeightedMaxGrade) * 100;
-
             totalRow.push({
-                value: `${percentRaw.toFixed(2)}%`,
-                html: `${percentRaw.toFixed(2)}%`,
+                value: `${totalWeightedGrade}%`,
+                html: `${totalWeightedGrade}%`
             });
 
-            totalRow.push({
-                value: `${totalWeightedGrade}`,
-                html: `${totalWeightedGrade}`
-            });
-
-            totalRow.push({
-                value: `${totalWeightedMaxGrade}`,
-                html: `${totalWeightedMaxGrade}`
-            });
+            // totalRow.push({
+            //     value: `${totalWeightedMaxGrade}`,
+            //     html: `${totalWeightedMaxGrade}`
+            // });
 
             st.addRow(totalRow);
 
