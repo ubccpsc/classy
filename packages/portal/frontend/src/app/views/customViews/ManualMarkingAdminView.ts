@@ -123,6 +123,7 @@ export class ManualMarkingAdminView extends AdminView {
         closeAssignmentButton.setAttribute(`modifier`, `medium`);
         closeAssignmentButton.innerText = `Close Repositories`;
         closeAssignmentButton.onclick = async (event) => {
+            UI.notificationToast(`Closing repositories...`, 300);
             await this.closeRepositories();
         };
 
