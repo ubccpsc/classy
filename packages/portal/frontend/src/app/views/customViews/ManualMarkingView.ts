@@ -238,8 +238,8 @@ export class ManualMarkingView extends StudentView {
                     html: maxGrade.toString()
                 });
                 totalRow.push({
-                    value: ``,
-                    html: ``
+                    value: `Final grade: ${((totalGrade / maxGrade) * 100).toFixed(2)} %`,
+                    html: `Final grade: ${((totalGrade / maxGrade) * 100).toFixed(2)} %`
                 });
 
                 st.addRow(totalRow);
