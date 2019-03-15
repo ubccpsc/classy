@@ -64,7 +64,7 @@ export class ManualMarkingAdminView extends AdminView {
     public handleAdminEditDeliverable(opts: any): void {
         super.handleAdminEditDeliverable(opts);
         const that = this;
-        Log.warn(`CS340AdminView::handleAdminEditDeliverable(${JSON.stringify(opts)}) - Injecting switches`);
+        Log.warn(`${this.loggingName}::handleAdminEditDeliverable(${JSON.stringify(opts)}) - Injecting switches`);
         // Log.warn(`${this.loggingName}::renderPage::AdminEditDeliverable - Injecting switches`);
         this.insertRepositoryScheduleCreationSwitch(`adminEditDeliverablePage-autoGenerate`);
         this.insertAssignmentBlock();
@@ -72,12 +72,12 @@ export class ManualMarkingAdminView extends AdminView {
 
         const fab = document.querySelector(`#adminEditDeliverableSave`) as OnsFabElement;
         fab.addEventListener(`click`, async () => {
-            Log.info(`CS340AdminView::handleAdminEditDeliverable::onSave::click - Verify Schedule - start`);
+            Log.info(`${this.loggingName}::handleAdminEditDeliverable::onSave::click - Verify Schedule - start`);
             const idElement: OnsInputElement = document.getElementById(`adminEditDeliverablePage-name`) as OnsInputElement;
             const delivId: string = idElement.value;
             await new Promise( (resolve) => setTimeout(resolve, 2000) );
 
-            Log.info(`CS340AdminView::handleAdminEditDeliverable::onSave::click - ${delivId}`);
+            Log.info(`${this.loggingName}::handleAdminEditDeliverable::onSave::click - ${delivId}`);
             await that.verifyScheduledTasks(delivId);
         });
     }
@@ -104,7 +104,7 @@ export class ManualMarkingAdminView extends AdminView {
     }
 
     public handleGradingView(opts: any): void {
-        Log.info(`CS340AdminView::handleGradingView(..) - start; options: ${JSON.stringify(opts)}`);
+        Log.info(`${this.loggingName}::handleGradingView(..) - start; options: ${JSON.stringify(opts)}`);
 
         const gradingView: GradingPageView = new GradingPageView(this.remote);
         gradingView.init(opts).then().catch();
@@ -113,7 +113,7 @@ export class ManualMarkingAdminView extends AdminView {
     }
 
     protected insertCloseAssignmentButton() {
-        Log.info(`CS340AdminView::insertCloseAssignmentButton(..) - start`);
+        Log.info(`${this.loggingName}::insertCloseAssignmentButton(..) - start`);
         const repositoryReleaseSelectElement: HTMLSelectElement =
             document.getElementById(`repositoryReleaseSelect`) as HTMLSelectElement;
         const listElement: HTMLDivElement = repositoryReleaseSelectElement
@@ -257,7 +257,7 @@ export class ManualMarkingAdminView extends AdminView {
     protected async populateAssignmentFields(delivId: string) {
         // const customObjectElement: OnsInputElement = document.getElementById(`adminEditDeliverablePage-custom`) as OnsInputElement;
         // const customObject: any = JSON.parse(customObjectElement.value);
-        Log.info(`CS340AdminView::populateAssignmentFields(${delivId}) - start`);
+        Log.info(`${this.loggingName}::populateAssignmentFields(${delivId}) - start`);
 
         const deliverableTransports: DeliverableTransport[] = await AdminDeliverablesTab.getDeliverables(this.remote);
 
@@ -266,7 +266,7 @@ export class ManualMarkingAdminView extends AdminView {
         });
 
         if (selectedDeliverable === undefined) {
-            Log.error(`CS340AdminView::populateAssignmentFields(..) - Error: Invalid deliverable ID specified; ` +
+            Log.error(`${this.loggingName}::populateAssignmentFields(..) - Error: Invalid deliverable ID specified; ` +
                 `unable to find deliverable with ID: ${delivId}`);
             return;
         }
@@ -435,11 +435,11 @@ export class ManualMarkingAdminView extends AdminView {
     }
 
     protected async closeRepositories(): Promise<void> {
-        Log.info(`CS340AdminView::closeRepositories() - start`);
+        Log.info(`${this.loggingName}::closeRepositories() - start`);
 
         const deliverableSelectElement: HTMLSelectElement =
             document.getElementById(`provisionRepoDeliverableSelect`) as HTMLSelectElement;
-        Log.info(`CS340AdminView::closeRepositories() - ${deliverableSelectElement.value}`);
+        Log.info(`${this.loggingName}::closeRepositories() - ${deliverableSelectElement.value}`);
 
         // get class options
         const options: any = AdminView.getOptions();
@@ -448,7 +448,7 @@ export class ManualMarkingAdminView extends AdminView {
         const url = this.remote + `/portal/cs340/closeAssignmentRepositories/` + deliverableSelectElement.value;
         const response = await fetch(url, options);
         const responseJson = await response.json();
-        Log.info(`CS340AdminView::closeRepositories() - response: ${responseJson}`);
+        Log.info(`${this.loggingName}::closeRepositories() - response: ${responseJson}`);
 
         if (responseJson.response === true) {
             UI.notificationToast(`Closed all ${deliverableSelectElement.value} repositories`);
@@ -460,7 +460,7 @@ export class ManualMarkingAdminView extends AdminView {
     }
 
     protected async verifyScheduledTasks(delivId: string): Promise<void> {
-        Log.info(`CS340AdminView::verifyScheduledTasks(${delivId}) - start`);
+        Log.info(`${this.loggingName}::verifyScheduledTasks(${delivId}) - start`);
 
         // get class options
         const options: any = AdminView.getOptions();
@@ -469,13 +469,13 @@ export class ManualMarkingAdminView extends AdminView {
         const url = this.remote + `/portal/cs340/verifyScheduledTasks/` + delivId;
         const response = await fetch(url, options);
         const responseJson = await response.json();
-        Log.info(`CS340AdminView::closeRepositories() - response: ${responseJson}`);
+        Log.info(`${this.loggingName}::closeRepositories() - response: ${responseJson}`);
 
         return;
     }
 
     protected async verifyAllScheduledTasks(): Promise<void> {
-        Log.info(`CS340AdminView::verifyAllScheduledTasks() - start`);
+        Log.info(`${this.loggingName}::verifyAllScheduledTasks() - start`);
 
         // get class options
         const options: any = AdminView.getOptions();
@@ -484,7 +484,7 @@ export class ManualMarkingAdminView extends AdminView {
         const url = this.remote + `/portal/cs340/verifyAllScheduledTasks/`;
         const response = await fetch(url, options);
         const responseJson = await response.json();
-        Log.info(`CS340AdminView::closeRepositories() - response: ${responseJson}`);
+        Log.info(`${this.loggingName}::closeRepositories() - response: ${responseJson}`);
 
         return;
     }
@@ -588,11 +588,11 @@ export class ManualMarkingAdminView extends AdminView {
         const url = this.remote + `/portal/cs340/isFinalGradeReleased`;
         const response = await fetch(url, options);
         if (response.status === 200) {
-            Log.info(`CS340AdminView::getFinalGradeReleaseStatus(..) - 200 received`);
+            Log.info(`${this.loggingName}::getFinalGradeReleaseStatus(..) - 200 received`);
             const json = await response.json();
             return json.success;
         }
-        Log.error(`CS340AdminView::getFinalGradeReleaseStatus(..) - Error: Response code is: ${response.status}`);
+        Log.error(`${this.loggingName}::getFinalGradeReleaseStatus(..) - Error: Response code is: ${response.status}`);
         return false;
     }
 
@@ -604,11 +604,11 @@ export class ManualMarkingAdminView extends AdminView {
         const url = this.remote + `/portal/cs340/toggleFinalGradeRelease`;
         const response = await fetch(url, options);
         if (response.status === 200) {
-            Log.info(`CS340AdminView::toggleFinalGradesReleased(..) - 200 received`);
+            Log.info(`${this.loggingName}::toggleFinalGradesReleased(..) - 200 received`);
             const json = await response.json();
             return json.success;
         }
-        Log.error(`CS340AdminView::toggleFinalGradesReleased(..) - Error: Response code is: ${response.status}`);
+        Log.error(`${this.loggingName}::toggleFinalGradesReleased(..) - Error: Response code is: ${response.status}`);
         return false;
     }
 }
