@@ -8,9 +8,9 @@ import {Deliverable} from "../../../../../backend/src/Types";
 import {Factory} from "../../Factory";
 import {UI} from "../../util/UI";
 import {AdminDeliverablesTab} from "../AdminDeliverablesTab";
+import {AdminMarkingTab} from "../AdminMarkingTab";
 import {AdminTabs, AdminView} from "../AdminView";
-import {AdminMarkingTab} from "./AdminMarkingTab";
-import {GradingPageView} from "./GradingPage";
+import {GradingPageView} from "../GradingPage";
 
 declare var ons: any;
 

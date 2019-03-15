@@ -1,4 +1,4 @@
-import Log from "../../../../../../common/Log";
+import Log from "../../../../../common/Log";
 
 import {
     DeliverableTransport,
@@ -6,17 +6,17 @@ import {
     GradeTransportPayload,
     StudentTransport,
     TeamTransport
-} from "../../../../../../common/types/PortalTypes";
-import {SortableTable, TableCell, TableHeader} from "../../util/SortableTable";
+} from "../../../../../common/types/PortalTypes";
+import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 
 import {OnsSelectElement} from "onsenui";
-import {AssignmentGrade, AssignmentRubric} from "../../../../../../common/types/CS340Types";
-import {UI} from "../../util/UI";
-import {AdminDeliverablesTab} from "../AdminDeliverablesTab";
-import {AdminGradesTab} from "../AdminGradesTab";
-import {AdminPage} from "../AdminPage";
-import {AdminStudentsTab} from "../AdminStudentsTab";
-import {AdminTeamsTab} from "../AdminTeamsTab";
+import {AssignmentGrade, AssignmentRubric} from "../../../../../common/types/CS340Types";
+import {UI} from "../util/UI";
+import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
+import {AdminGradesTab} from "./AdminGradesTab";
+import {AdminPage} from "./AdminPage";
+import {AdminStudentsTab} from "./AdminStudentsTab";
+import {AdminTeamsTab} from "./AdminTeamsTab";
 
 export class AdminMarkingTab extends AdminPage {
 
