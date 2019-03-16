@@ -149,6 +149,15 @@ export class AdminMarkingTab extends AdminPage {
         }
 
         tableHeaders.push({
+            id: "section",
+            text: "Lab Section",
+            sortable: true,
+            defaultSort: false,
+            sortDown: false,
+            style: `padding-left: 1em; padding-right: 1em`
+        });
+
+        tableHeaders.push({
             id:          "grade",
             text:        "Grade",
             sortable:    true,
@@ -177,8 +186,14 @@ export class AdminMarkingTab extends AdminPage {
 
             // ASSUMPTION: If students are on a team for a deliverable, they should all have the same grade
             const studentId: string = team.people[0];
+            const studentTransport = studentIdMap.get(studentId);
+            if (studentTransport === null) {
+                Log.info(`AdminMarkingTab::renderStudentSubmission(..) - Unable to find student object`);
+                newRow.push({value: `N/A`, html: `N/A`});
+            } else {
+                newRow.push({value: `${studentTransport.labId}`, html: `${studentTransport.labId}`});
+            }
             let newEntry: TableCell;
-            // let completelyGraded: boolean = false;
 
             if (gradeMap.has(studentId)) {
                 newEntry = this.buildGradeCell(studentId, gradeMap.get(studentId), deliverableTransport);
