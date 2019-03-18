@@ -45,6 +45,8 @@ export class ManualMarkingAdminView extends AdminView {
 
         if (name === `adminProvision`) {
             Log.info(`${this.loggingName}::renderPage::AdminProvision - Injecting buttons`);
+            this.insertProvisionAllRepositoriesButton();
+            this.insertReleaseAllRepositoriesButton();
             this.insertCloseAssignmentButton();
         }
 
@@ -80,6 +82,13 @@ export class ManualMarkingAdminView extends AdminView {
             Log.info(`${this.loggingName}::handleAdminEditDeliverable::onSave::click - ${delivId}`);
             await that.verifyScheduledTasks(delivId);
         });
+
+        // if (typeof opts.delivId === "undefined" || opts.delivId === null) {
+        //     Log.info(`${this.loggingName}::handleAdminEditDeliverable - New Deliverable detected`);
+        //
+        //     const autoTestSwitch = document.getElementById("adminEditDeliverablePage-shouldAutoTest");
+        //     autoTestSwitch.removeAttribute("checked");
+        // }
     }
 
     // public handleadminProvision(opts: any): void {
@@ -110,6 +119,52 @@ export class ManualMarkingAdminView extends AdminView {
         gradingView.init(opts).then().catch();
 
         return null;
+    }
+
+    protected insertProvisionAllRepositoriesButton(): void {
+        Log.info(`${this.loggingName}::insertProvisionAllRepositoriesButton(..) - start`);
+        const repositoryReleaseSelectElement: HTMLSelectElement =
+            document.getElementById(`repositoryReleaseSelect`) as HTMLSelectElement;
+        const listElement: HTMLDivElement = repositoryReleaseSelectElement
+            .parentElement.parentElement.parentElement.parentElement as HTMLDivElement;
+        const provisionAllButton = document.createElement(`ons-button`) as OnsButtonElement;
+        provisionAllButton.setAttribute(`id`, `adminProvision-provisionAll`);
+        provisionAllButton.setAttribute(`modifier`, `medium`);
+        provisionAllButton.innerText = `Provision All Repositories`;
+        provisionAllButton.onclick = async (event) => {
+            UI.notificationToast(`Provisioning All Repositories`, 5000);
+            await this.provisionAllRepositories();
+        };
+
+        const provisionRepositories = this.buildOnsListItem(`fa-plus-square`,
+            `Provision All Repositories`,
+            provisionAllButton,
+            `This provisions all repositories for the selected deliverable`);
+
+        listElement.appendChild(provisionRepositories);
+    }
+
+    protected insertReleaseAllRepositoriesButton(): void {
+        Log.info(`${this.loggingName}::insertReleaseAllRepositoriesButton(..) - start`);
+        const repositoryReleaseSelectElement: HTMLSelectElement =
+            document.getElementById(`repositoryReleaseSelect`) as HTMLSelectElement;
+        const listElement: HTMLDivElement = repositoryReleaseSelectElement
+            .parentElement.parentElement.parentElement.parentElement as HTMLDivElement;
+        const releaseAllButton = document.createElement(`ons-button`) as OnsButtonElement;
+        releaseAllButton.setAttribute(`id`, `adminProvision-releaseAll`);
+        releaseAllButton.setAttribute(`modifier`, `medium`);
+        releaseAllButton.innerText = `Create and Release All Repositories`;
+        releaseAllButton.onclick = async (event) => {
+            UI.notificationToast(`Releasing All Repositories`, 300);
+            await this.releaseAllRepositories();
+        };
+
+        const releaseRepositories = this.buildOnsListItem(`fa-plus-square`,
+            `Create and Release All Repositories`,
+            releaseAllButton,
+            `This creates repositories, if necessary, then releases all repositories for the selected deliverable`);
+
+        listElement.appendChild(releaseRepositories);
     }
 
     protected insertCloseAssignmentButton() {
@@ -434,6 +489,56 @@ export class ManualMarkingAdminView extends AdminView {
         return false;
     }
 
+    protected async provisionAllRepositories(): Promise<void> {
+        Log.info(`${this.loggingName}::provisionAllRepositories() - start`);
+        const deliverableSelectElement: HTMLSelectElement =
+            document.getElementById(`provisionRepoDeliverableSelect`) as HTMLSelectElement;
+        Log.info(`${this.loggingName}::provisionAllRepositories() - ${deliverableSelectElement.value}`);
+
+        // get class options
+        const options: any = AdminView.getOptions();
+        options.method = `post`;
+
+        const url = this.remote + `/portal/cs340/createAllRepositories/` + deliverableSelectElement.value;
+        const response = await fetch(url, options);
+        const responseJson = await response.json();
+        Log.info(`${this.loggingName}::provisionAllRepositories() - response: ${responseJson}`);
+
+        if (responseJson.result === true) {
+            UI.notificationToast(`Provisioned all ${deliverableSelectElement.value} repositories`);
+        } else {
+            UI.notificationToast(`Unable to provision all ${deliverableSelectElement.value} repositories; ` +
+            `error: ${responseJson.error}`);
+        }
+
+        return;
+    }
+
+    protected async releaseAllRepositories(): Promise<void> {
+        Log.info(`${this.loggingName}::releaseAllRepositories() - start`);
+        const deliverableSelectElement: HTMLSelectElement =
+            document.getElementById(`provisionRepoDeliverableSelect`) as HTMLSelectElement;
+        Log.info(`${this.loggingName}::releaseAllRepositories() - ${deliverableSelectElement.value}`);
+
+        // get class options
+        const options: any = AdminView.getOptions();
+        options.method = `post`;
+
+        const url = this.remote + `/portal/cs340/releaseAllRepositories/` + deliverableSelectElement.value;
+        const response = await fetch(url, options);
+        const responseJson = await response.json();
+        Log.info(`${this.loggingName}::releaseAllRepositories() - response: ${responseJson}`);
+
+        if (responseJson.result === true) {
+            UI.notificationToast(`Released all ${deliverableSelectElement.value} repositories`);
+        } else {
+            UI.notificationToast(`Unable to release all ${deliverableSelectElement.value} repositories; ` +
+                `error: ${responseJson.error}`);
+        }
+
+        return;
+    }
+
     protected async closeRepositories(): Promise<void> {
         Log.info(`${this.loggingName}::closeRepositories() - start`);
 
@@ -499,45 +604,6 @@ export class ManualMarkingAdminView extends AdminView {
             Log.error(`${this.loggingName}::transitionGradingPage(..) - error: ` + JSON.stringify(error));
         });
     }
-
-    // protected async generateFinalGradeToggleSwitch(): Promise<void> {
-    //     const onsSwitch: OnsSwitchElement = document.createElement(`ons-switch`) as OnsSwitchElement;
-    //
-    //     const ac: AssignmentController = new AssignmentController();
-    //
-    //     const isReleased = await ac.getFinalGradeStatus();
-    //
-    //     if (isReleased) {
-    //         onsSwitch.setAttribute(`checked`, `true`);
-    //     } else {
-    //         onsSwitch.removeAttribute(`checked`);
-    //     }
-    //
-    //     onsSwitch.onclick = async () => {
-    //         const newStatus = await ac.toggleFinalGradeStatus();
-    //         if (newStatus) {
-    //             onsSwitch.setAttribute(`checked`, `true`);
-    //         } else {
-    //             onsSwitch.removeAttribute(`checked`);
-    //         }
-    //     };
-    //
-    //     const onsListItem = this.buildOnsListItem(`fa-retweet`,
-    //         `Final Grades Released`,
-    //         onsSwitch,
-    //         `This releases final grades to the students.`
-    //     );
-    //
-    //     // append to the end
-    //     // get delete item button
-    //     const manageDatabaseButton = document.getElementById(`adminDeletePageButton`);
-    //
-    //     // get parent items
-    //     const listToAdd = manageDatabaseButton.parentNode.parentNode.parentNode;
-    //
-    //     listToAdd.appendChild(onsListItem);
-    //     return;
-    // }
 
     protected async generateFinalGradeSwitch(): Promise<void> {
         const onsSwitch: OnsSwitchElement = document.createElement(`ons-switch`) as OnsSwitchElement;
