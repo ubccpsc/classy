@@ -10,8 +10,8 @@ import {
 } from "../../../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../../util/SortableTable";
 import {UI} from "../../util/UI";
-import {StudentView} from "../StudentView";
 import {GradingPageView} from "../GradingPage";
+import {StudentView} from "../StudentView";
 
 export class ManualMarkingView extends StudentView {
 

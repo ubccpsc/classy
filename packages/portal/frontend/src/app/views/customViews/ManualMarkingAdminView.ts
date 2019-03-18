@@ -383,9 +383,9 @@ export class ManualMarkingAdminView extends AdminView {
      * @returns {ons.OnsListItemElement} Generated OnsListItem
      */
     protected buildOnsListItem(iconName: string,
-                             name: string,
-                             insertedElement: HTMLElement,
-                             description: string): OnsListItemElement {
+                               name: string,
+                               insertedElement: HTMLElement,
+                               description: string): OnsListItemElement {
         const newListItem: OnsListItemElement = document.createElement(`ons-list-item`) as OnsListItemElement;
         newListItem.setAttribute(`display`, `flex`);
         newListItem.classList.add(`list-item`);
