@@ -84,10 +84,10 @@ export class RubricController {
                                 if (latexFileExp.test(assignInfo.mainFilePath)) {
                                     // if this is a latex file, use a different exp
                                     headerExp = /(?:sub?:)*section(?:\*?:)?.*/;
-                                    headerCleaner = /([{}\n]|\\(sub)?section)/g;
+                                    headerCleaner = /([{}\n]|\\(sub)?section|(["'])?,$|^\s*(["']))/g;
                                 } else {
                                     headerExp = /#\s+.*/;
-                                    headerCleaner = /((#+\s+)|\\n)/g;
+                                    headerCleaner = /((#+\s+)|\\n|(["'])?,$|^\s*(["']))/g;
                                 }
                                 const rubricString = arrayData[i];
                                 headerString = this.reverseBack(arrayData, i, headerExp);
@@ -138,7 +138,7 @@ export class RubricController {
                                             description:    "",
                                             outOf:          value,
                                             weight:         1,
-                                            modifiers:      null
+                                            modifiers:      []
                                         };
 
                                         subQuestionArray.push(newSubQuestionRubric);
