@@ -2,6 +2,7 @@ import {OnsButtonElement, OnsFabElement, OnsInputElement, OnsListItemElement, On
 import Log from "../../../../../../common/Log";
 import {AssignmentInfo, AssignmentStatus} from "../../../../../../common/types/CS340Types";
 import {DeliverableTransport} from "../../../../../../common/types/PortalTypes";
+import Util from "../../../../../../common/Util";
 import {Deliverable} from "../../../../../backend/src/Types";
 import {Factory} from "../../Factory";
 import {UI} from "../../util/UI";
@@ -490,27 +491,75 @@ export class ManualMarkingAdminView extends AdminView {
     }
 
     protected async provisionAllRepositories(): Promise<void> {
+        const that = this;
+        const startingTime = Date.now();
         Log.info(`${this.loggingName}::provisionAllRepositories() - start`);
         const deliverableSelectElement: HTMLSelectElement =
             document.getElementById(`provisionRepoDeliverableSelect`) as HTMLSelectElement;
         Log.info(`${this.loggingName}::provisionAllRepositories() - ${deliverableSelectElement.value}`);
 
-        // get class options
-        const options: any = AdminView.getOptions();
-        options.method = `post`;
-
-        const url = this.remote + `/portal/cs340/createAllRepositories/` + deliverableSelectElement.value;
-        const response = await fetch(url, options);
-        const responseJson = await response.json();
-        Log.info(`${this.loggingName}::provisionAllRepositories() - response: ${responseJson}`);
-
-        if (responseJson.result === true) {
-            UI.notificationToast(`Provisioned all ${deliverableSelectElement.value} repositories`);
-        } else {
-            UI.notificationToast(`Unable to provision all ${deliverableSelectElement.value} repositories; ` +
-            `error: ${responseJson.error}`);
+        if (deliverableSelectElement.value === "N/A" || deliverableSelectElement.value === "-None-") {
+            UI.showErrorToast(`Must select a deliverable before attempting to provision!`);
+            return;
         }
 
+        const releaseList = document.getElementById("repositoryProvisionSelect") as HTMLSelectElement;
+        const selected: any[] = [];
+
+        // tslint:disable-next-line
+        for (let i = 0; i < releaseList.options.length; i++) {
+            const opt = releaseList.options[i];
+            selected.push(opt.value || opt.text);
+        }
+
+        Log.info(`${this.loggingName}::provisionAllRepositories(..) - start; # of repos to provision: ${selected.length}`);
+
+        UI.showSuccessToast(`Repo provisioning in progress, this will take a while...`);
+
+        const requestArray: Array<Promise<any>> = [];
+
+        // tslint:disable-next-line
+        for (let i = 0; i < selected.length; i++) {
+            const repoId = selected[i];
+            try {
+                const start = Date.now();
+                requestArray.push(this.provisionRepo(deliverableSelectElement.value, repoId).then((result) => {
+                    Log.info(`${this.loggingName}::provisionAllRepositories(..) - released ${repoId}` +
+                    `; took ${Util.took(start)}`);
+
+                    UI.showSuccessToast(`Repo released: ${repoId} (${i + 1} of ${selected.length})`,
+                        {timeout: 1000, animation: `none`});
+                }).catch((err) => {
+                            Log.error(`${that.loggingName}::provisionAllRepositories(..) - provisioning error for: ${repoId}` +
+                            `; ERROR: ${err.message}`);
+                            UI.showErrorToast(`Repo NOT created: ${repoId} (see error console for more details)`);
+
+                }));
+            } catch (err) {
+                Log.error('AdminDeletePage::handleReleasePressed(..) - releasing error for: ' + repoId + '; ERROR: ' + err.message);
+                UI.showErrorToast('Repo NOT released: ' + repoId + ' (see error console)');
+            }
+        }
+
+        const promiseResult = await Promise.all(requestArray);
+
+        UI.notificationToast(`Finished provisioning all repositories`);
+        Log.info(`Provisioning ${selected.length} repos TOOK: ${Util.took(startingTime)}`);
+        // // get class options
+        // const options: any = AdminView.getOptions();
+        // options.method = `post`;
+        //
+        // const url = this.remote + `/portal/cs340/createAllRepositories/` + deliverableSelectElement.value;
+        // const response = await fetch(url, options);
+        // const responseJson = await response.json();
+        // Log.info(`${this.loggingName}::provisionAllRepositories() - response: ${responseJson}`);
+        //
+        // if (responseJson.result === true) {
+        //     UI.notificationToast(`Provisioned all ${deliverableSelectElement.value} repositories`);
+        // } else {
+        //     UI.notificationToast(`Unable to provision all ${deliverableSelectElement.value} repositories; ` +
+        //     `error: ${responseJson.error}`);
+        // }
         return;
     }
 
@@ -676,5 +725,67 @@ export class ManualMarkingAdminView extends AdminView {
         }
         Log.error(`${this.loggingName}::toggleFinalGradesReleased(..) - Error: Response code is: ${response.status}`);
         return false;
+    }
+
+    /*
+    Copied functions
+     */
+
+    private async provisionRepo(delivId: string, repoId: string): Promise<boolean> {
+        Log.info("AdminDeletePage::provisionRepo( " + delivId + ", " + repoId + " ) - start");
+
+        const url = this.remote + '/portal/cs340/provision/' + delivId + '/' + repoId;
+        return await this.performAction(url);
+    }
+
+    private async releaseRepo(repoId: string): Promise<boolean> {
+        Log.info("AdminDeletePage::releaseRepo( " + repoId + " ) - start");
+
+        const url = this.remote + '/portal/admin/release/' + repoId;
+        return await this.performAction(url);
+    }
+
+    private async performAction(url: string): Promise<boolean> {
+        const options: any = AdminView.getOptions();
+        options.method = 'post';
+
+        this.disableElements();
+
+        const response = await fetch(url, options);
+        const body = await response.json();
+        this.enableElements();
+        if (typeof body.success !== 'undefined') {
+            return true;
+        } else {
+            Log.error("Provision ERROR: " + body.failure.message);
+            UI.showError(body.failure.message);
+            return false;
+        }
+    }
+
+    private disableElements() {
+        const toProvisionSelect = document.getElementById("repositoryProvisionSelect") as HTMLSelectElement;
+        const toReleaseSelect = document.getElementById("repositoryReleaseSelect") as HTMLSelectElement;
+        const releaseButton = document.getElementById('adminManageReleaseButton') as HTMLButtonElement;
+        const provisionButton = document.getElementById('adminManageProvisionButton') as HTMLButtonElement;
+        const delivSelect = document.getElementById('provisionRepoDeliverableSelect') as HTMLSelectElement;
+        delivSelect.disabled = true;
+        releaseButton.disabled = true;
+        provisionButton.disabled = true;
+        toReleaseSelect.disabled = true;
+        toProvisionSelect.disabled = true;
+    }
+
+    private enableElements() {
+        const toProvisionSelect = document.getElementById("repositoryProvisionSelect") as HTMLSelectElement;
+        const toReleaseSelect = document.getElementById("repositoryReleaseSelect") as HTMLSelectElement;
+        const releaseButton = document.getElementById('adminManageReleaseButton') as HTMLButtonElement;
+        const provisionButton = document.getElementById('adminManageProvisionButton') as HTMLButtonElement;
+        const delivSelect = document.getElementById('provisionRepoDeliverableSelect') as HTMLSelectElement;
+        delivSelect.disabled = false;
+        releaseButton.disabled = false;
+        provisionButton.disabled = false;
+        toReleaseSelect.disabled = false;
+        toProvisionSelect.disabled = false;
     }
 }
