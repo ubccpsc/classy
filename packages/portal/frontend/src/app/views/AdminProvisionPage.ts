@@ -398,7 +398,7 @@ export class AdminProvisionPage extends AdminPage {
     private async provisionRepo(delivId: string, repoId: string): Promise<boolean> {
         Log.info("AdminDeletePage::provisionRepo( " + delivId + ", " + repoId + " ) - start");
 
-        const url = this.remote + '/portal/cs340/provision/' + delivId + '/' + repoId;
+        const url = this.remote + '/portal/admin/provision/' + delivId + '/' + repoId;
         return await this.performAction(url);
     }
 

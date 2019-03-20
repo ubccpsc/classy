@@ -624,10 +624,9 @@ export class AdminController {
 
         const allTeams: Team[] = await this.tc.getAllTeams();
 
-        if (deliv.teamMaxSize === 1 || deliv.teamMinSize === 1) {
+        if (deliv.teamMaxSize === 1) {
             formSingleTeams = true;
-            Log.info(`AdminController::planProvision( .. ) - team minSize: ${deliv.teamMinSize}; ` +
-                `team maxSize: ${deliv.teamMaxSize}; formSingleTeams forced to true`);
+            Log.info("AdminController::planProvision( .. ) - team maxSize 1: formSingleTeams forced to true");
         }
 
         const delivTeams: Team[] = [];
@@ -664,12 +663,10 @@ export class AdminController {
         if (formSingleTeams === true) {
             // now create teams for individuals
             for (const individual of allPeople) {
-                if (individual.kind === PersonKind.STUDENT) {
-                    const names = await this.cc.computeNames(deliv, [individual]);
+                const names = await this.cc.computeNames(deliv, [individual]);
 
-                    const team = await this.tc.formTeam(names.teamName, deliv, [individual], false);
-                    delivTeams.push(team);
-                }
+                const team = await this.tc.formTeam(names.teamName, deliv, [individual], false);
+                delivTeams.push(team);
             }
         }
 
@@ -876,7 +873,7 @@ export class AdminController {
         return allRepos;
     }
 
-    public async performRelease(repos: Repository[], asCollaborators: boolean = false): Promise<RepositoryTransport[]> {
+    public async performRelease(repos: Repository[]): Promise<RepositoryTransport[]> {
         const gha = GitHubActions.getInstance(true);
         const ghc = new GitHubController(gha);
 
@@ -894,7 +891,7 @@ export class AdminController {
                     }
 
                     // actually release the repo
-                    const success = await ghc.releaseRepository(repo, teams, asCollaborators);
+                    const success = await ghc.releaseRepository(repo, teams, false);
 
                     if (success === true) {
                         Log.info("AdminController::performRelease( .. ) - success: " + repo.id +
