@@ -112,7 +112,7 @@ export class AdminGradesTab extends AdminPage {
                         if (grade.delivId === deliv.id) {
                             let score = '';
                             if (grade.score !== null && grade.score >= 0) {
-                                score = grade.score.toFixed(2) + '';
+                                score = grade.score + '';
                             }
                             if (score !== '') {
                                 tableCell = {value: score, html: '<a href="' + grade.URL + '">' + score + '</a>'};
