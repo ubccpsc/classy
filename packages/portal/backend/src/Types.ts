@@ -1,6 +1,6 @@
 import {AutoTestResult} from "../../../common/types/AutoTestTypes";
 import {AutoTestConfig} from "../../../common/types/ContainerTypes";
-import {AssignmentGrade, AssignmentInfo, AssignmentRepositoryInfo} from "../../../common/types/CS340Types";
+import {AssignmentGrade, AssignmentInfo} from "../../../common/types/CS340Types";
 
 /**
  * These types are the storage-specific types used by the backend.
@@ -96,10 +96,7 @@ export interface Deliverable {
     custom: {
         rubric?: any, // CS340REST
         assignment?: AssignmentInfo // AssignmentController
-        // courseWeight?: any, // AssignmentController // TODO: make into assignment.courseWeight
-        // seedRepoURL?: any, // RubricController // TODO: make into rubric.seedRepoURL
-        // seedRepoPath?: any, // RubricController // TODO: make into rubric.seedRepoPath
-        // mainFilePath?: any // AssignmentController // TODO: make into assignment.mainFilePath
+        scheduled?: boolean, // TODO [Jonathan] Create type for this
     };
 
     lateAutoTest: boolean; // whether the deliv can be executed after the deadline
@@ -162,12 +159,6 @@ export interface Repository {
         githubCreated?: boolean,
         githubReleased?: boolean,
 
-        // status?: any, // AssignmentController // TODO: make into assignment.status
-        // assignmentId?: any, // AssignmentController // TODO: make into assignment.id
-        // assignedTeams?: any, // AssignmentController // TODO: make into assignment.assignedTeams
-
-        assignmentInfo?: AssignmentRepositoryInfo,
-
         d0enabled?: boolean, // SDMM // TODO: make sdmm.d0enabled
         d1enabled?: boolean, // SDMM // TODO: make sdmm.d1enabled
         d2enabled?: boolean, // SDMM // TODO: make sdmm.d2enabled
@@ -184,7 +175,8 @@ export interface Course {
     readonly id: string; // invariant; this is the name of the course
     defaultDeliverableId: string | null; // Deliverable.id foreign key
     custom: {
-        status?: string
+        status?: string,
+        finalGradesReleased?: boolean
     };
 }
 

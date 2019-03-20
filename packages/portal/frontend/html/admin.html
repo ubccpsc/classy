@@ -23,6 +23,11 @@
         <ons-tab id="AdminGradeTab" page="grades.html" label="Grades" icon="ion-ios-paper-outline">
         </ons-tab>
 
+        <!-- CS340 Custom Edit: BEGIN -->
+        <ons-tab id="AdminMarkingTab" page="marking.html" label="Marking" icon="ion-ios-paper-outline">
+        </ons-tab>
+        <!-- CS340 Custom Edit: END-->
+
         <ons-tab id="AdminResultTab" page="results.html" label="Results" icon="ion-android-checkmark-circle">
         </ons-tab>
 
@@ -108,6 +113,27 @@
             </ons-list>
         </ons-page>
     </template>
+
+    <!-- CS340 Addition - Begin -->
+    <template id="marking.html">
+        <ons-page id="AdminMarking">
+            <ons-list id="AdminMarkingList">
+                <ons-list-header>Deliverable Select</ons-list-header>
+                <div id="markingDeliverableSelectBox" style="text-align:center; padding: 1em; width:100%;">
+                    Deliverable:
+                    <select id="markingDeliverableSelect" style="margin-left: 1em;">
+                        <option value="any">-All-</option>
+                    </select>
+                </div>
+                <ons-list-header>Deliverable Grades</ons-list-header>
+                <div id="markingListTable" style="width:100%;"></div>
+                <div id="markingListTableNone" class="noResultsRow">
+                    No Results
+                </div>
+            </ons-list>
+        </ons-page>
+    </template>
+    <!-- CS340 Addition - End -->
 
     <template id="results.html">
         <ons-page id="AdminResults">

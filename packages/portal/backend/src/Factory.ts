@@ -7,6 +7,7 @@ import {GitHubActions} from "./controllers/GitHubActions";
 import {GitHubController, IGitHubController} from "./controllers/GitHubController";
 
 import NoCustomRoutes from "./server/common/NoCustomRoutes";
+import CS340Routes from "./server/CS340/CS340Routes";
 import IREST from "./server/IREST";
 
 export class Factory {
@@ -33,6 +34,16 @@ export class Factory {
 
         if (name === 'classytest') {
             return new NoCustomRoutes();
+            // } else if (name === 'sdmm' || name === 'secapstonetest') {
+            //     // instantiate SDMMREST in fork
+            // } else if (name === 'cs310') {
+            //     // no custom routes are required for 310
+            //     return new NoCustomRoutes();
+        } else if (name === 'cs340' || name === 'cpsc340') {
+            // instantiate CS340REST in fork
+            return new CS340Routes();
+        } else if (name === 'mds') {
+            return new CS340Routes();
         } else {
             Log.warn("Factory::getCustomRouteHandler() - no custom routes for: " + name);
         }
@@ -72,13 +83,15 @@ export class Factory {
         } else if (name === 'classy') {
             // for test deploying
             Factory.controller = new CourseController(ghController);
-            // } else if (name === 'cs340' || name === 'cpsc340') {
-            //     // Factory.controller = new CS340Controller(ghController);
+        } else if (name === 'cs340' || name === 'cpsc340') {
+            Factory.controller = new CourseController(ghController);
             // } else if (name === 'cs210' || name === 'cpsc210') {
             //     // instantiate 210 controller in fork
             // } else if (name === 'cs221' || name === 'cpsc221') {
             //     // instantiate 221 controller in fork
             //     Factory.controller = new CS221Controller(ghController);
+        } else if (name === 'mds') {
+            Factory.controller = new CourseController(ghController);
         } else {
             Log.error("Factory::getCourseController() - unknown name: " + name);
             throw new Error("Unknown course name: " + name);
