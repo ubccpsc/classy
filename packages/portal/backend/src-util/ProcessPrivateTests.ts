@@ -14,8 +14,12 @@ import {AuditLabel, Grade} from "../src/Types";
  *
  * 1) Get on the VPN
  * 2) Make sure you don't have a local mongo instance running
- * 3) Ensure your .env corresponds to the production values
+ * 3) Ensure your .env corresponds to the production values; change DB_URL to point to 127.0.0.1
  * 4) ssh user@host -L 27017:127.0.0.1:27017
+ * 5) Check
+ *    - DELIVID
+ *    - ORG
+ *    - DRY_RUN
  * 5) Run this script
  */
 export class ProcessPrivateTests {
@@ -23,7 +27,8 @@ export class ProcessPrivateTests {
     private dc: DatabaseController;
     private DRY_RUN = true;
 
-    private readonly DELIVID: string = 'd3';
+    private readonly DELIVID: string = 'd4';
+    private readonly ORG: string = 'CPSC310-2018W-T2';
 
     constructor() {
         Log.info("ProcessPrivateTests::<init> - start");
@@ -103,8 +108,8 @@ export class ProcessPrivateTests {
 
             // update prefix
             // https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/ --> https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T1/
-            const prefixOld = 'https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/';
-            const prefixNew = 'https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T1/';
+            const prefixOld = 'https://github.ugrad.cs.ubc.ca/' + this.ORG + '/';
+            const prefixNew = 'https://github.ugrad.cs.ubc.ca/api/v3/repos/' + this.ORG + '/';
             u = u.replace(prefixOld, prefixNew);
 
             // change path
