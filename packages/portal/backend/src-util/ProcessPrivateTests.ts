@@ -53,7 +53,7 @@ export class ProcessPrivateTests {
         for (const grade of grades) {
             const url = grade.URL;
 
-            const result = await resultsC.getResultFromURL(url);
+            const result = await resultsC.getResultFromURL(url, this.DELIVID);
             const scorePub = Number(result.output.report.scoreTest);
             const scoreCover = Number(result.output.report.scoreCover);
             const scorePriv = Number((result.output.report.custom as any).private.scoreTest);
