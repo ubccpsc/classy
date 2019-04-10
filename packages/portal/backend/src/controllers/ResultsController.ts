@@ -43,8 +43,8 @@ export class ResultsController {
      * @param {string} url
      * @returns {Result}
      */
-    public async getResultFromURL(url: string): Promise<Result | null> {
-        const result = await this.db.getResultFromURL(url);
+    public async getResultFromURL(url: string, delivId: string): Promise<Result | null> {
+        const result = await this.db.getResultFromURL(url, delivId);
         return result;
     }
 

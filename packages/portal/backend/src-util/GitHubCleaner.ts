@@ -5,7 +5,11 @@ import {GitHubActions} from "../src/controllers/GitHubActions";
 import {TeamController} from "../src/controllers/TeamController";
 
 /**
- * This is an executable for munging GitHub orgs. You almost certainly do not use it.
+ * DANGER: You almost certainly do not use this file.
+ *
+ * This is an executable for munging GitHub orgs and the classy backend database. It will
+ * delete database objects _AND_ their corresponding Github pieces resulting in unrecoverable
+ * data loss.
  *
  * I'd really recommend closing this file now. Doing the wrong thing will ruin your
  * _whole_ day. And that's probably underestimating things.
