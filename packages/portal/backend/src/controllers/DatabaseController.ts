@@ -671,4 +671,11 @@ export class DatabaseController {
 
         return result;
     }
+
+
+    public async getResultsForPerson(personId: string, delivId: string): Promise<Result | null> {
+        const result = await this.readSingleRecord(this.RESULTCOLL, {people: personId, delivId: delivId}) as Result;
+
+        return result;
+    }
 }
