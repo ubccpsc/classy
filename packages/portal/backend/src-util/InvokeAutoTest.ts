@@ -34,20 +34,20 @@ export class InvokeAutoTest {
      * NOTE: this is ignored for the TEST_USER user.
      * @type {boolean}
      */
-    private DRY_RUN = true;
+    private DRY_RUN = false;
 
     /**
      * Usernames to ignore DRY_RUN for (aka usually a TA or course repo for testing)
      * @type {string}
      */
-    private readonly TEST_USERS: string[] = ['w8j0b', 'l7m1b']; // ['w8j0b', 'r5t0b'];
+    private readonly TEST_USERS: string[] = ['r5t0b']; // ['w8j0b', 'l7m1b']; // ['w8j0b', 'r5t0b'];
 
     /**
      * Invoke Autotest invisibly (aka by faking a webhook) or visibly (by making a public comment).
      *
      * @type {boolean}
      */
-    private readonly INVISIBLE = true;
+    private INVISIBLE = false;
 
     private readonly DELIVID = 'd3';
 
@@ -58,10 +58,10 @@ export class InvokeAutoTest {
      *
      * @type {string}
      */
-    private readonly PREFIXOLD = 'https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/';
-    private readonly PREFIXNEW = 'https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T1/';
+    private readonly PREFIXOLD = 'https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T2/';
+    private readonly PREFIXNEW = 'https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T2/';
 
-    private readonly MSG = "@autobot #d4 #force #silent.";
+    private readonly MSG = "@autobot #d4 #force #silent. D4 results will be posted to the Classy grades view once they are released.";
     // private readonly MSG  = "@autobot #d1 #force #silent.";
     // private readonly MSG  = "@autobot #d2 #force #silent.";
     // private readonly MSG  = "@autobot #d4 #force #silent. D4 results will be posted to the Classy grades view once they are released. " +
@@ -101,10 +101,11 @@ export class InvokeAutoTest {
 
             if (alreadyProcessed.indexOf(url) >= 0) {
                 Log.info("InvokeAutoTest::process() - skipping result; already handled: " + url);
-            } else {
-                Log.info("InvokeAutoTest::process() - processing result: " + url);
-                alreadyProcessed.push(url);
+                continue;
             }
+
+            Log.info("InvokeAutoTest::process() - processing result: " + url);
+            alreadyProcessed.push(url);
 
             if (this.DRY_RUN === false || this.TEST_USERS.indexOf(grade.personId) >= 0) {
                 if (this.MSG !== null) {
