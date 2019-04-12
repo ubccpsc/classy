@@ -49,8 +49,8 @@ export class TransformGrades {
      *
      * @type {string}
      */
-    private readonly PREFIXOLD = 'https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/';
-    private readonly PREFIXNEW = 'https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T1/';
+    private readonly PREFIXOLD = 'https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T2/';
+    private readonly PREFIXNEW = 'https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T2/';
 
     constructor() {
         Log.info("TransformGrades::<init> - start");
@@ -58,7 +58,7 @@ export class TransformGrades {
     }
 
     public async process(): Promise<void> {
-        Log.info("TransformGrades::process() - start");
+        Log.info("TransformGrades::process() - start for delivId: " + this.DELIVID);
 
         const gradesC = new GradesController();
         const resultsC = new ResultsController();
@@ -128,11 +128,13 @@ export class TransformGrades {
 
                 // change grade
                 // could add comment here too if needed (e.g., to newGrade.comment)
+                newGrade.urlName = "Transformed";
                 newGrade.score = finalScore;
 
                 Log.info("TransformGrades::process() - processing result: " + url);
                 if (this.DRY_RUN === false || grade.personId === this.TEST_USER) {
                     // publish grade
+                    Log.info("Grade update for: " + newGrade.personId);
                     await gradesC.saveGrade(newGrade);
                     await dbc.writeAudit(AuditLabel.GRADE_CHANGE, 'ProcessPrivateTest', grade, newGrade, {});
                 } else {
