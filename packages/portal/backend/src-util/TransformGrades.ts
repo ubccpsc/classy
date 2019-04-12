@@ -81,6 +81,7 @@ export class TransformGrades {
                 const scorePub = Number(result.output.report.scoreTest);
                 const scoreCover = Number(result.output.report.scoreCover);
                 const scorePriv = Number((result.output.report.custom as any).private.scoreTest);
+                const scorePubOverall = Number(result.output.report.scoreOverall);
 
                 let finalScore = 0;
                 if (this.DELIVID === 'd1') {
@@ -88,12 +89,12 @@ export class TransformGrades {
                     finalScore = (((scorePub * .75) + (scorePriv * .25)) * .8) + (scoreCover * .2);
                     finalScore = Number(finalScore.toFixed(2));
                     Log.info("Updating grade for " + this.DELIVID + " for url: " + url + "; pub: " +
-                        scorePub.toFixed(0) + "; priv: " + scorePriv.toFixed(0));
+                        scorePubOverall.toFixed(0) + "; priv: " + finalScore.toFixed(0));
 
                     // if there's a big difference, print a warning
                     if ((scorePub - scorePriv) > 20) {
                         Log.warn("Divergent score between public and private; pub: " +
-                            scorePub.toFixed(0) + "; priv: " + scorePriv.toFixed(0) + "; url: " + url);
+                            scorePubOverall.toFixed(0) + "; priv: " + finalScore.toFixed(0) + "; url: " + url);
                     }
                 }
                 if (this.DELIVID === 'd2') {
@@ -101,24 +102,24 @@ export class TransformGrades {
                     finalScore = (((scorePub * .75) + (scorePriv * .25)) * .8) + (scoreCover * .2);
                     finalScore = Number(finalScore.toFixed(2));
                     Log.info("Updating grade for " + this.DELIVID + " for url: " + url + "; pub: " +
-                        scorePub.toFixed(0) + "; priv: " + scorePriv.toFixed(0));
+                        scorePubOverall.toFixed(0) + "; priv: " + finalScore.toFixed(0));
 
                     // if there's a big difference, print a warning
                     if ((scorePub - scorePriv) > 20) {
                         Log.warn("Divergent score between public and private; pub: " +
-                            scorePub.toFixed(0) + "; priv: " + scorePriv.toFixed(0) + "; url: " + url);
+                            scorePubOverall.toFixed(0) + "; priv: " + finalScore.toFixed(0) + "; url: " + url);
                     }
                 } else if (this.DELIVID === 'd3') {
                     // 50% private tests
                     finalScore = (((scorePub * .5) + (scorePriv * .5)) * .8) + (scoreCover * .2);
                     finalScore = Number(finalScore.toFixed(2));
                     Log.info("Updating grade for " + this.DELIVID + " for url: " + url + "; pub: " +
-                        scorePub.toFixed(0) + "; priv: " + scorePriv.toFixed(0));
+                        scorePubOverall.toFixed(0) + "; priv: " + finalScore.toFixed(0));
 
                     // if there's a big difference, print a warning
                     if ((scorePub - scorePriv) > 20) {
                         Log.warn("Divergent score between public and private; pub: " +
-                            scorePub.toFixed(0) + "; priv: " + scorePriv.toFixed(0) + "; url: " + url);
+                            scorePubOverall.toFixed(0) + "; priv: " + finalScore.toFixed(0) + "; url: " + url);
                     }
                 }
 
