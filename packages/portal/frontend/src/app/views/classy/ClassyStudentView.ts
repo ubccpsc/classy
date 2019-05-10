@@ -1,8 +1,9 @@
 /**
- * This is the main student page for CS310.
+ * This is a sample file for a course-specific implementation for StudentView.
  *
- * Other courses should _not_ modify this but instead build their own
- * student views, as they need for their own courses.
+ * This is provided only for testing. Other courses should _not_ modify this but
+ * instead build their own student views, as they need for their own courses. This
+ * course-specific file must live in 'views/course/StudentView.ts'.
  */
 
 import {OnsButtonElement} from "onsenui";

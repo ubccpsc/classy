@@ -4,15 +4,8 @@ import {AdminView} from "./views/AdminView";
 import {IView} from "./views/IView";
 
 /**
- * Entry point for configuring per-course aspects of the frontend.
- *
- * While course options will be hardcoded in here (e.g., with strings
- * corresponding to their org name), the file should only need to be
- * modified when new courses are added; not during active development.
- *
- * The current org will be pulled from the backend when App starts and
- * set here; this means that the org should only be specified in the
- * .env file on the backend.
+ * Entry point for loading the course-specific student view and for a custom
+ * admin view (if provided). This file should *NOT* need to be edited by forks.
  *
  */
 export class Factory {
@@ -91,16 +84,19 @@ export class Factory {
                 Log.info("Factory::getAdminView() - instantating new admin view for: " + this.name);
 
                 // NOTE: using require instead of import because file might not be present in forks
-                // import complains about this, but require does not
+                // import complains about this, but require does not.
                 let plug: any;
                 if (name === this.TESTNAME) {
                     plug = await require('./views/classy/ClassyAdminView'); // default for testing
                 } else {
-                    plug = await require('./views/course/AdminView'); // course-specific file; not required
+                    // If a course wants to specialize the AdminView it should be in the file below.
+                    // This is not required. But if it is added, it should never be pushed back to 'classy/master'
+                    plug = await require('./views/course/AdminView');
                 }
 
                 Log.trace("Factory::getAdminView() - view loaded");
 
+                // if this fails an error will be raised and the default view will be provided in the catch below
                 const constructorName = Object.keys(plug)[0];
                 this.adminView = new plug[constructorName](backendUrl, tabs);
 
@@ -130,8 +126,12 @@ export class Factory {
 
     /**
      * Returns the prefix directory for the HTML files specific to the course.
-     * This allows courses to have different HTML prefixes than their course
-     * identifiers (useful if multiple orgs should be served by the same prefix).
+     *
+     * The recommended approach is to just put your html files in the
+     * 'html/<courseName>' directory.
+     *
+     * Examples of what these files can look like can be found in the test
+     * implementations found in 'html/classy/'.
      *
      * While you can have many files in this directory, several are required:
      *   - landing.html - This is the main course-specific landing page
@@ -142,10 +142,10 @@ export class Factory {
      */
     public getHTMLPrefix() {
         // FORK: You probably do not need to change this unless you want your course
-        // name to be different than the directory your htmnl files are stored in.
+        // name to be different than the directory your html files are stored in.
         Log.trace("Factory::getHTMLPrefix() - getting prefix for: " + this.name);
         if (this.name === 'classytest') {
-            return 'cs310'; // might need to change this per-course for testing
+            return 'classy';
         } else {
             return this.name;
         }

@@ -4,8 +4,7 @@ import {AdminTabs, AdminView} from "../AdminView";
 declare var ons: any;
 
 /**
- * 310 only uses the default Classy admin features, but this class is for experimenting with
- * extensibility so we can better understand how to do it for other courses.
+ * This is a test implementation of the Classy admin features.
  */
 export class ClassyAdminView extends AdminView {
     constructor(remoteUrl: string, tabs: AdminTabs) {
