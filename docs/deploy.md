@@ -38,12 +38,13 @@ The following software should be installed on the host before attempting to depl
         cat <<- EOF > /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
         #!/bin/sh
         set -e
-        
-        # Copies the latest certificates to Classy
-        mkdir -p /opt/classy/ssl
-        \cp -Hf /etc/letsencrypt/live/$(hostname)/* /opt/classy/ssl/
-        chown -R --reference=/opt/classy /opt/classy/ssl
-        chmod -R 0550 /opt/classy/ssl
+        {
+          # Copies the latest certificates to Classy
+          mkdir -p /opt/classy/ssl
+          \cp -Hf /etc/letsencrypt/live/$(hostname)/* /opt/classy/ssl/
+          chown -R --reference=/opt/classy /opt/classy/ssl
+          chmod -R 0550 /opt/classy/ssl
+        } > /opt/classy/$(basename $BASH_SOURCE).log 2>&1
         EOF
             
         chmod +x /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
@@ -63,19 +64,21 @@ The following software should be installed on the host before attempting to depl
         cat <<- EOF > /etc/letsencrypt/renewal-hooks/pre/stop-classy.sh
         #!/bin/sh
         set -e
-        
-        # Stop Classy so that port 80 and 443 can be used by certbot
-        cd /opt/classy
-        /usr/local/bin/docker-compose stop || true
+        {
+          # Stop Classy so that port 80 and 443 can be used by certbot
+          cd /opt/classy
+          /usr/local/bin/docker-compose stop || true
+        } > /opt/classy/$(basename $BASH_SOURCE).log 2>&1
         EOF    
         
         cat <<- EOF > /etc/letsencrypt/renewal-hooks/post/start-classy.sh
         #!/bin/sh
         set -e
-        
-        # Restart classy
-        cd /opt/classy
-        /usr/local/bin/docker-compose up --detach
+        {
+          # Restart classy
+          cd /opt/classy
+          /usr/local/bin/docker-compose up --detach
+        } > /opt/classy/$(basename $BASH_SOURCE).log 2>&1
         EOF
         
         chmod +x /etc/letsencrypt/renewal-hooks/pre/stop-classy.sh

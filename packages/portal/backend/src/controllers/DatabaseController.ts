@@ -226,7 +226,8 @@ export class DatabaseController {
     }
 
     /**
-     * These are write-only; they should never need to be updated.
+     * Result records are associated with repos, SHAs, and delivIds. Really the repo could be removed
+     * as the SHA (or commitURL) would be enough to work with the delivId.
      *
      * @param {Result} record
      * @returns {Promise<boolean>}
@@ -640,7 +641,7 @@ export class DatabaseController {
         let result = null;
         for (const res of results) {
             if (res.commitSHA === sha) {
-                // NOTE: there could be multiple, but we're just getting the last
+                // there should only be one of these <delivId, SHA> tuples, but if there are more than one this will return the last one
                 result = res;
             }
         }
@@ -657,8 +658,22 @@ export class DatabaseController {
         return result;
     }
 
-    public async getResultFromURL(commitURL: string): Promise<Result> {
-        const result = await this.readSingleRecord(this.RESULTCOLL, {commitURL: commitURL}) as Result;
+    /**
+     * Gets the result for a commit and a deliverable. Only returns one record because multiple executions on the same <SHA, delivId>
+     * tuple cause the db record to be updated.
+     *
+     * @param {string} commitURL
+     * @param {string} delivId
+     * @returns {Promise<Result>}
+     */
+    public async getResultFromURL(commitURL: string, delivId: string): Promise<Result | null> {
+        const result = await this.readSingleRecord(this.RESULTCOLL, {commitURL: commitURL, delivId: delivId}) as Result;
+
+        return result;
+    }
+
+    public async getResultsForPerson(personId: string, delivId: string): Promise<Result | null> {
+        const result = await this.readSingleRecord(this.RESULTCOLL, {people: personId, delivId: delivId}) as Result;
 
         return result;
     }

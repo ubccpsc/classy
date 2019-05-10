@@ -10,9 +10,9 @@ import {IView} from "./IView";
 export abstract class AbstractStudentView implements IView {
 
     protected remote: string = null;
-    private person: StudentTransport = null;
-    private grades: GradeTransport[] = [];
-    private repos: RepositoryTransport[] = [];
+    protected person: StudentTransport = null;
+    protected grades: GradeTransport[] = [];
+    protected repos: RepositoryTransport[] = [];
 
     public abstract renderPage(pageName: string, opts: {}): void;
 

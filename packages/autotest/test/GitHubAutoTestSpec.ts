@@ -517,7 +517,7 @@ describe("GitHubAutoTest", () => {
         expect(gitHubMessages.length).to.equal(2); // should return the row
         expect(gitHubMessages[0].message).to.equal("Test execution complete."); // would really be the whole message
         expect(allData.comments.length).to.equal(2);
-        expect(allData.feedback.length).to.equal(2);
+        expect(allData.feedback.length).to.equal(1); // user should not have been charged again
         Log.test("Test complete.");
     }).timeout(WAIT * 10);
 
