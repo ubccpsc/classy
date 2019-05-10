@@ -84,6 +84,7 @@ export class FrontendDatasetGenerator {
 
     private async createTeams(): Promise<void> {
         Log.info("FrontendDatasetGenerator::createTeams() - start");
+        const cc = await Factory.getCourseController(this.ghc);
 
         const tc = new TeamController();
         const delivs = await this.dc.getDeliverables();
@@ -114,7 +115,8 @@ export class FrontendDatasetGenerator {
                 }
 
                 if (p1Team === null && p2Team === null) {
-                    const names = await Factory.getCourseController(this.ghc).computeNames(deliv, [p1, p2]);
+
+                    const names = await cc.computeNames(deliv, [p1, p2]);
                     // both members not on a team
                     const team = Test.getTeam(names.teamName, deliv.id, [p1.id, p2.id]);
                     Log.info("FrontendDatasetGenerator::createTeams() - creating team: " + team.id);

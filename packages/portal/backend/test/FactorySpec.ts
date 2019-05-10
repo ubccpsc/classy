@@ -35,37 +35,31 @@ describe('Factory', function() {
     });
 
     it('Can get the course controller for courses', async function() {
-        let actual = Factory.getCourseController(null, 'classytest');
+        // should be able to get our test controller
+        let actual = await Factory.getCourseController(null, 'classytest');
         expect(actual).to.not.be.null;
 
-        // actual = Factory.getCourseController(null, 'sdmm');
-        // expect(actual).to.not.be.null;
-        //
-        // actual = Factory.getCourseController(null, 'cs310');
-        // expect(actual).to.not.be.null;
-        //
-        // actual = Factory.getCourseController(null, 'cs340');
-        // expect(actual).to.not.be.null;
-
+        // should fail to get a controller for a course that doesn't exist
         actual = null;
         let ex = null;
         try {
-            actual = Factory.getCourseController(null, 'INVALIDcourseNAME');
+            actual = await Factory.getCourseController(null, 'INVALIDcourseNAME');
         } catch (err) {
             ex = err;
         }
         expect(actual).to.be.null;
         expect(ex).to.not.be.null;
 
-        actual = null;
-        ex = null;
-        try {
-            actual = Factory.getCourseController(); // won't error because it uses the default name
-        } catch (err) {
-            ex = err;
-        }
-        expect(actual).to.not.be.null;
-        expect(ex).to.be.null;
+        // actual = null;
+        // ex = null;
+        // try {
+        //     // won't error because it uses the default name
+        //     actual = Factory.getCourseController();
+        // } catch (err) {
+        //     ex = err;
+        // }
+        // expect(actual).to.be.null;
+        // expect(ex).to.not.be.null;
     });
 
 });

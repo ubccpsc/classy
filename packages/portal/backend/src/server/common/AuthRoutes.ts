@@ -281,7 +281,7 @@ export class AuthRoutes implements IREST {
 
         if (person === null) {
             Log.info("AuthRoutes::performAuthCallback(..) - /portal/authCallback - github username not registered");
-            const cc = Factory.getCourseController();
+            const cc = await Factory.getCourseController();
             person = await cc.handleUnknownUser(username);
         } else {
             Log.info("AuthRoutes::performAuthCallback(..) - /portal/authCallback - github username IS registered");

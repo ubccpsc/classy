@@ -1,22 +1,11 @@
-// import {SDMMSummaryView} from "./views/sdmm/SDMMSummaryView";
 import Log from "../../../../common/Log";
-import {CS340AdminView} from "./views/340/CS340AdminView";
-import {AdminView} from "./views/AdminView";
-import {CS310AdminView} from "./views/cs310/CS310AdminView";
-import {CS310View} from "./views/cs310/CS310View";
 
+import {AdminView} from "./views/AdminView";
 import {IView} from "./views/IView";
 
 /**
- * Entry point for configuring per-course aspects of the frontend.
- *
- * While course options will be hardcoded in here (e.g., with strings
- * corresponding to their org name), the file should only need to be
- * modified when new courses are added; not during active development.
- *
- * The current org will be pulled from the backend when App starts and
- * set here; this means that the org should only be specified in the
- * .env file on the backend.
+ * Entry point for loading the course-specific student view and for a custom
+ * admin view (if provided). This file should *NOT* need to be edited by forks.
  *
  */
 export class Factory {
@@ -26,6 +15,8 @@ export class Factory {
 
     private studentView: IView | null = null;
     private adminView: IView | null = null;
+
+    private readonly TESTNAME = 'classytest';
 
     /**
      * Use getInstance instead.
@@ -44,74 +35,78 @@ export class Factory {
         return Factory.instance;
     }
 
-    public getView(backendUrl: string): IView {
-        // FORK: You _will_ need to add a new block here for your course to point to your student view.
-        // NOTE: this will be improved in the future.
-        if (this.studentView === null) {
-            Log.trace("Factory::getView() - instantating new view for: " + this.name);
-            if (this.name === 'classytest') {
-                this.studentView = new CS310View(backendUrl); // default to 310 for unit testing
-            } else if (this.name === 'classy') {
-                this.studentView = new CS310View(backendUrl); // default to 310 for deploy testing
-            } else if (this.name === 'cs310') {
-                this.studentView = new CS310View(backendUrl);
-                // } else if (this.name === 'sdmm') {
-                //     this.studentView = new SDMMSummaryView(backendUrl);
-                // } else if (this.name === 'CS310-2017Jan' || this.name === 'CS310-2017Jan_TEST') {
-                //     this.studentView = new CS310View(backendUrl);
-                // } else if (this.name === 'cs340' || this.name === 'cpsc340') {
-                //     this.studentView = new CS340View(backendUrl);
-                // } else if (this.name === 'cs221') {
-                //     this.studentView = new CS221View(backendUrl);
-                // } else if (this.name === 'sdmm') {
-                //     this.studentView = new SDMMSummaryView(backendUrl);
-                // } else if (this.name === 'CS310-2017Jan' || this.name === 'CS310-2017Jan_TEST') {
-                //     this.studentView = new CS310View(backendUrl);
-                // } else if (this.name === 'cs340' || this.name === 'cpsc340') {
-                //     this.studentView = new CS340View(backendUrl);
-            } else {
-                Log.error("Factory::getView() - ERROR; unknown name: " + this.name);
+    public async getView(backendUrl: string): Promise<IView> {
+        try {
+            if (this.studentView === null) {
+                Log.info("Factory::getView() - instantating new student view for: " + this.name);
+
+                // NOTE: using require instead of import because file might not be present in forks
+                // import complains about this, but require does not
+                let plug: any;
+                if (name === this.TESTNAME) {
+                    plug = await require('./views/classy/ClassyStudentView'); // default for testing
+                } else {
+                    plug = await require('./custom/CustomStudentView'); // course-specific file; must be present in all forks
+                }
+
+                Log.trace("Factory::getView() - view loaded");
+
+                const constructorName = Object.keys(plug)[0];
+                // Log.info("Factory::getView()  - with constructor: " + constructorName);
+
+                this.studentView = new plug[constructorName](backendUrl);
+                Log.info("Factory::getView() - StudentView instantiated");
             }
+        } catch (err) {
+            Log.error("Factory::configureStudentView() - ERROR: " + err.message);
+            Log.error("Factory::configureStudentView() - This likely means that your fork does not have a file called " +
+                "classy/packages/portal/frontend/src/views/course/StudentView.ts which should extend AbstractStudentView");
+
+            this.studentView = null;
         }
+
         return this.studentView;
     }
 
-    public getAdminView(backendUrl: string): IView {
-        // FORK: You probably do not need to modify this unless you have created
-        // a custom admin view.
-        if (this.adminView === null) {
-            Log.trace("Factory::getAdminView() - instantating new view for: " + this.name);
-            const tabs = {
-                deliverables: true,
-                students:     true,
-                teams:        true,
-                results:      true,
-                grades:       true,
-                dashboard:    true,
-                config:       true
-            };
+    public async getAdminView(backendUrl: string): Promise<IView> {
+        const tabs = {
+            deliverables: true,
+            students:     true,
+            teams:        true,
+            results:      true,
+            grades:       true,
+            dashboard:    true,
+            config:       true
+        };
 
-            if (this.name === 'classytest') {
-                // tabs.deliverables = false;
-                // tabs.students = false;
-                // tabs.teams = false;
-                // tabs.grades = false;
-                // tabs.results = false;
-                // tabs.dashboard = false;
-                // tabs.config = false;
-                this.adminView = new AdminView(backendUrl, tabs); // default admin
-            } else if (this.name === 'cs310') {
-                this.adminView = new CS310AdminView(backendUrl, tabs);
-            } else if (this.name === 'cs340' || this.name === 'cpsc340') {
-                tabs.teams = false; // no teams
-                tabs.results = false; // no results
-                tabs.dashboard = false; // no dashboard
-                this.adminView = new CS340AdminView(backendUrl, tabs);
-            } else {
-                Log.info("Factory::getAdminView() - returning default admin view for: " + this.name);
-                this.adminView = new AdminView(backendUrl, tabs); // default admin
+        try {
+            if (this.adminView === null) {
+                Log.info("Factory::getAdminView() - instantating new admin view for: " + this.name);
+
+                // NOTE: using require instead of import because file might not be present in forks
+                // import complains about this, but require does not.
+                let plug: any;
+                if (name === this.TESTNAME) {
+                    plug = await require('./views/classy/ClassyAdminView'); // default for testing
+                } else {
+                    // If a course wants to specialize the AdminView it should be in the file below.
+                    // This is not required. But if it is added, it should never be pushed back to 'classy/master'
+                    plug = await require('./custom/CustomAdminView');
+                }
+
+                Log.trace("Factory::getAdminView() - view loaded");
+
+                // if this fails an error will be raised and the default view will be provided in the catch below
+                const constructorName = Object.keys(plug)[0];
+                this.adminView = new plug[constructorName](backendUrl, tabs);
+
+                Log.info("Factory::getAdminView() - AdminView instantiated");
             }
+        } catch (err) {
+            Log.info("Factory::getAdminView() - custom admin view not provided; using default AdminView");
+            this.adminView = new AdminView(backendUrl, tabs);
         }
+
         return this.adminView;
     }
 
@@ -131,8 +126,12 @@ export class Factory {
 
     /**
      * Returns the prefix directory for the HTML files specific to the course.
-     * This allows courses to have different HTML prefixes than their course
-     * identifiers (useful if multiple orgs should be served by the same prefix).
+     *
+     * The recommended approach is to just put your html files in the
+     * 'html/<courseName>' directory.
+     *
+     * Examples of what these files can look like can be found in the test
+     * implementations found in 'html/classy/'.
      *
      * While you can have many files in this directory, several are required:
      *   - landing.html - This is the main course-specific landing page
@@ -143,10 +142,10 @@ export class Factory {
      */
     public getHTMLPrefix() {
         // FORK: You probably do not need to change this unless you want your course
-        // name to be different than the directory your htmnl files are stored in.
+        // name to be different than the directory your html files are stored in.
         Log.trace("Factory::getHTMLPrefix() - getting prefix for: " + this.name);
         if (this.name === 'classytest') {
-            return 'cs310'; // might need to change this per-course for testing
+            return 'classy';
         } else {
             return this.name;
         }

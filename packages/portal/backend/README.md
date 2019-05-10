@@ -1,8 +1,6 @@
 
 # Portal Backend
 
-
-
 ## Dev Instructions
 
 Follow the one-time instructions below. Once those are done do the following:

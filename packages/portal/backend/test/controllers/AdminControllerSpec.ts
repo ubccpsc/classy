@@ -38,14 +38,14 @@ describe("AdminController", () => {
         await clearAndPrepareAll();
     });
 
-    beforeEach(function() {
+    beforeEach(async function() {
         Test.testBefore("CourseControllerSpec", this);
 
         gha = GitHubActions.getInstance(true);
         const ghInstance = new GitHubController(gha);
 
         ac = new AdminController(ghInstance);
-        cc = Factory.getCourseController(ghInstance);
+        cc = await Factory.getCourseController(ghInstance);
 
         rc = new RepositoryController();
         gc = new GradesController();

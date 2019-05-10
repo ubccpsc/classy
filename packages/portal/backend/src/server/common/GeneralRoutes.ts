@@ -353,7 +353,7 @@ export default class GeneralRoutes implements IREST {
                 }
             }
 
-            const cc = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
+            const cc = await Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
             const deliv = await dc.getDeliverable(requestedTeam.delivId);
             const names = await cc.computeNames(deliv, people);
 

@@ -287,7 +287,7 @@ export default class AdminRoutes implements IREST {
      */
     private static deleteDeliverable(req: any, res: any, next: any) {
         Log.info('AdminRoutes::deleteDeliverable(..) - start');
-        const cc = Factory.getCourseController(AdminRoutes.ghc);
+        // const cc = Factory.getCourseController(AdminRoutes.ghc);
 
         // isAdmin prehandler verifies that only valid users can do this
 
@@ -955,7 +955,7 @@ export default class AdminRoutes implements IREST {
             }
         }
 
-        const cc = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
+        const cc = await Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
         const names = await cc.computeNames(deliv, people);
         const team = await tc.formTeam(names.teamName, deliv, people, true);
 
