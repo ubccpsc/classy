@@ -9,7 +9,7 @@
         </div>
     </ons-toolbar>
 
-    <ons-tabbar id='adminTabbar' position="top">
+    <ons-tabbar id='adminTabbar' position="top" animation="none">
         <!--
         <ons-tab id="AdminDeliverableTab" page="deliverables.html" label="Deliverables" icon="ion-home, material:md-home" active>
         </ons-tab>
@@ -86,7 +86,7 @@
                     No Results
                 </div>
                 <ons-list-header>Individuals</ons-list-header>
-                <div id="teamsIndividualListTable" style="width:100%;">
+                <div id="teamsIndividualListTable" style="widt:100%;">
                 </div>
                 <div id="teamsIndividualListTableNone" class="noResultsRow">
                     No Results
@@ -99,9 +99,9 @@
         <ons-page id="AdminGrades">
             <ons-list id="AdminGradesList">
                 <ons-list-header>Grade Summary</ons-list-header>
-                <div id="gradesSummaryTable" style="width:100%;"></div>
+                <div id="gradesSummaryTable" style="width:100%; overflow-x: scroll; white-space: nowrap;"></div>
                 <ons-list-header>Deliverable Grades</ons-list-header>
-                <div id="gradesListTable" style="width:100%;"></div>
+                <div id="gradesListTable" style="width:100%; overflow-x: scroll; white-space: nowrap;"></div>
                 <div id="gradesListTableNone" class="noResultsRow">
                     No Results
                 </div>

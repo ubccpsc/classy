@@ -1,22 +1,27 @@
 
 # Portal Backend
 
-
-
 ## Dev Instructions
 
-This assumes you're working with WebStorm.
+Follow the one-time instructions below. Once those are done do the following:
+
+* In a terminal start mongo: `docker run -p 27017:27017 mongo`
+* In WebStorm, start the backend (the backend target below).
+* Make sure the UI code is being regenerated `webpack -watch` in `packages/frontend`
+* In the browser, visit `https://localhost:3000/`
+
+### One-time setup:
 
 * Create `classy/ssl/XXX` and `classy/ssl/XXX`.
 	* Instructions for this are in `classy/README.md`.
 * Copy `classy/ssl/` into `classy/packages/portal/backend/ssl/`.
 
-When configuring a WebStorm Run config:
+* When configuring a WebStorm Run config:
 
 	* Node parameters: `--require dotenv/config`.
 	* JavaScript File: `src/server/Backend.js`.
 
-## Instructions TODO
+## Further dev instructions
 
     * `webpack` description missing
     
@@ -42,6 +47,8 @@ When configuring a WebStorm Run config:
 4) Make sure you have `GH_CLIENT_ID` and `GH_CLIENT_SECRET` set to a GitHub OAuth client that redirects to `https://localhost:5000/portal/authCallback?orgName=YOURORG` so you can authenticate with your test instance. 
 
 5) Run the tests / Run the service for interactive work (this will require running `portal-frontend` too and accessing it all via `https://localhost:3000`).
+
+Note: Sometimes having some test data can be helpful; you can get this by running `FrontendDatasetGenerator`.
 
 ## High-Level Architecture
 

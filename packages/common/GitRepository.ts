@@ -43,7 +43,7 @@ export class GitRepository extends Command implements Repository {
 
     public async clone(url: string): Promise<CommandResult> {
         const args: string[] = ["clone", url, this.path];
-        return await this.executeCommand(args, {env: {GIT_TERMINAL_PROMPT: 0}});
+        return await this.executeCommand(args, {env: {GIT_TERMINAL_PROMPT: '0'}});
     }
 
     public async getSha(): Promise<string> {

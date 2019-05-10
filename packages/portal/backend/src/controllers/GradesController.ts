@@ -162,7 +162,14 @@ export class GradesController {
 
     public async saveGrade(grade: Grade): Promise<boolean> {
         Log.info("GradesController::saveGrade( ... ) - start");
-        // grade.score = Number(grade.score);
+
+        const existingGrade = await this.db.getGrade(grade.personId, grade.delivId);
+        if (existingGrade !== null) {
+            (grade.custom as any).previousGrade = existingGrade; // persist previous grade
+            if (grade.URL === null && existingGrade.URL !== null) {
+                grade.URL = existingGrade.URL; // restore the URL, if it exists on the previous but not on the update (e.g., for CSV upload)
+            }
+        }
         return await this.db.writeGrade(grade);
     }
 

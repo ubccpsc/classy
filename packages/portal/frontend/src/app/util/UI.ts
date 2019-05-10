@@ -330,6 +330,51 @@ export class UI {
         }
     }
 
+    public static injectCustomPage(path: string) {
+        Log.info('UI::injectCustomPage( ' + path + ' ) - start');
+
+        // Create a new import node
+        const importNode = document.createElement('link');
+        importNode.href = path;
+        importNode.rel = 'import';
+        // Set the callback used when import is loaded. The line below is
+        // adapted from importHref function in Polymer
+        importNode.onload = function(importedNode: any, event: any) {
+            // Put the document DOM tree in the import attribute as usual
+            Log.info('UI::injectCustomPage( ' + path + ' ) - loading complete');
+            (importNode as any).import = event.target.import;
+        }.bind(this, importNode);
+
+        // Triggers import loading
+        document.head.appendChild(importNode);
+    }
+
+    /**
+     * Clones a custom element from a template injected with injectCustomPage above
+     * and prepares it to be added to the DOM wherever it is required.
+     *
+     * @param {string} id
+     * @returns {Node | null}
+     */
+    public static cloneCustomElement(id: string): Node | null {
+        Log.info("UI::cloneCustomElement( " + id + " ) - start");
+
+        // iterates through all linked imports and returns the first element with the right id
+        const customs = (document.querySelectorAll('link[rel="import"]'));
+        for (const custom of Array.from(customs) as HTMLLinkElement[]) {
+            if (custom !== null) {
+                const templates = (custom as any).import.querySelectorAll('template');
+                for (const template of Array.from(templates) as HTMLTemplateElement[]) {
+                    if (template !== null && template.id === id) {
+                        const clone = document.importNode(template.content, true);
+                        return clone;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     public static clearChildren(id: string) {
         const el = document.getElementById(id);
         if (el === null) {

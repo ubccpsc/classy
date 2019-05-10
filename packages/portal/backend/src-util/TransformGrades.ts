@@ -13,9 +13,9 @@ import {AuditLabel, Grade} from "../src/Types";
  *
  * 1) Get on the VPN
  * 2) Make sure you don't have a local mongo instance running
- * 3) Ensure your .env corresponds to the production values
+ * 3) Ensure your .env corresponds to the production values; change DB_URL connection string to use 127.0.0.1
  * 4) ssh user@host -L 27017:127.0.0.1:27017
- * 5) Run this script
+ * 5) Run this script: node packages/portal/backend/src-util/TransformGrades.js
  */
 export class TransformGrades {
 
@@ -49,8 +49,8 @@ export class TransformGrades {
      *
      * @type {string}
      */
-    private readonly PREFIXOLD = 'https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/';
-    private readonly PREFIXNEW = 'https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T1/';
+    private readonly PREFIXOLD = 'https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T2/';
+    private readonly PREFIXNEW = 'https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T2/';
 
     constructor() {
         Log.info("TransformGrades::<init> - start");
@@ -58,7 +58,7 @@ export class TransformGrades {
     }
 
     public async process(): Promise<void> {
-        Log.info("TransformGrades::process() - start");
+        Log.info("TransformGrades::process() - start for delivId: " + this.DELIVID);
 
         const gradesC = new GradesController();
         const resultsC = new ResultsController();
@@ -81,31 +81,45 @@ export class TransformGrades {
                 const scorePub = Number(result.output.report.scoreTest);
                 const scoreCover = Number(result.output.report.scoreCover);
                 const scorePriv = Number((result.output.report.custom as any).private.scoreTest);
+                const scorePubOverall = Number(result.output.report.scoreOverall);
 
                 let finalScore = 0;
+                if (this.DELIVID === 'd1') {
+                    // 25% private tests
+                    finalScore = (((scorePub * .75) + (scorePriv * .25)) * .8) + (scoreCover * .2);
+                    finalScore = Number(finalScore.toFixed(2));
+                    Log.info("Updating grade for " + this.DELIVID + " for url: " + url + "; pub: " +
+                        scorePubOverall.toFixed(0) + "; priv: " + finalScore.toFixed(0));
+
+                    // if there's a big difference, print a warning
+                    if ((scorePub - scorePriv) > 20) {
+                        Log.warn("Divergent score between public and private; pub: " +
+                            scorePubOverall.toFixed(0) + "; priv: " + finalScore.toFixed(0) + "; url: " + url);
+                    }
+                }
                 if (this.DELIVID === 'd2') {
                     // 25% private tests
                     finalScore = (((scorePub * .75) + (scorePriv * .25)) * .8) + (scoreCover * .2);
                     finalScore = Number(finalScore.toFixed(2));
                     Log.info("Updating grade for " + this.DELIVID + " for url: " + url + "; pub: " +
-                        scorePub.toFixed(0) + "; priv: " + scorePriv.toFixed(0));
+                        scorePubOverall.toFixed(0) + "; priv: " + finalScore.toFixed(0));
 
                     // if there's a big difference, print a warning
                     if ((scorePub - scorePriv) > 20) {
                         Log.warn("Divergent score between public and private; pub: " +
-                            scorePub.toFixed(0) + "; priv: " + scorePriv.toFixed(0) + "; url: " + url);
+                            scorePubOverall.toFixed(0) + "; priv: " + finalScore.toFixed(0) + "; url: " + url);
                     }
                 } else if (this.DELIVID === 'd3') {
                     // 50% private tests
                     finalScore = (((scorePub * .5) + (scorePriv * .5)) * .8) + (scoreCover * .2);
                     finalScore = Number(finalScore.toFixed(2));
                     Log.info("Updating grade for " + this.DELIVID + " for url: " + url + "; pub: " +
-                        scorePub.toFixed(0) + "; priv: " + scorePriv.toFixed(0));
+                        scorePubOverall.toFixed(0) + "; priv: " + finalScore.toFixed(0));
 
                     // if there's a big difference, print a warning
                     if ((scorePub - scorePriv) > 20) {
                         Log.warn("Divergent score between public and private; pub: " +
-                            scorePub.toFixed(0) + "; priv: " + scorePriv.toFixed(0) + "; url: " + url);
+                            scorePubOverall.toFixed(0) + "; priv: " + finalScore.toFixed(0) + "; url: " + url);
                     }
                 }
 
@@ -115,11 +129,13 @@ export class TransformGrades {
 
                 // change grade
                 // could add comment here too if needed (e.g., to newGrade.comment)
+                newGrade.urlName = "Transformed";
                 newGrade.score = finalScore;
 
                 Log.info("TransformGrades::process() - processing result: " + url);
                 if (this.DRY_RUN === false || grade.personId === this.TEST_USER) {
                     // publish grade
+                    Log.info("Grade update for: " + newGrade.personId);
                     await gradesC.saveGrade(newGrade);
                     await dbc.writeAudit(AuditLabel.GRADE_CHANGE, 'ProcessPrivateTest', grade, newGrade, {});
                 } else {

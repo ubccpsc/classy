@@ -1,8 +1,8 @@
 /**
- * This is the main student page for the SDMM.
+ * This is the main implementation underlying the classy admin frontend.
  *
  * Other courses should _not_ modify this but instead build their own
- * student views, as they need for their own courses.
+ * admin views (if they need it) and put it in `course/AdminView.ts`.
  *
  * As much as possible, this class will forward requests to the tabs
  * for them to handle their own behaviour.
