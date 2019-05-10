@@ -96,7 +96,7 @@ describe("DatabaseController", () => {
     });
 
     it("Should not be able to get an invalid result URL.", async () => {
-        const result = await dc.getResultFromURL('invalidURL' + Date.now());
+        const result = await dc.getResultFromURL('invalidURL' + Date.now(), Test.DELIVID0);
         expect(result).to.be.null;
     });
 

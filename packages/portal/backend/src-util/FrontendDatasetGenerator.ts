@@ -9,6 +9,9 @@ import {Factory} from "../src/Factory";
 import {PersonKind} from "../src/Types";
 import {Test} from "../test/TestHarness";
 
+/**
+ * This sample file shows how to create a bunch of fake data for course testing.
+ */
 export class FrontendDatasetGenerator {
 
     private dc: DatabaseController = null;

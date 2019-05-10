@@ -244,15 +244,22 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         await this.postToGitHub(info, {url: info.postbackURL, message: msg});
         await this.saveCommentInfo(info);
         if (res.output.postbackOnComplete === false) {
-            Log.info("GitHubAutoTest::processCommentExists(..) - result already exists; feedback request logged for: " +
-                info.personId + "; SHA: " + info.commitSHA);
-            await this.saveFeedbackGiven(info.delivId, info.personId, info.timestamp, info.commitURL, 'standard');
+            const previousFeedback = await this.dataStore.getFeedbackGivenRecordForCommit(info);
+            if (previousFeedback === null) {
+                // new request, charge for feedback given
+                Log.info("GitHubAutoTest::processCommentExists(..) - result already exists; feedback request logged for: " +
+                    info.personId + "; SHA: " + info.commitSHA);
+                await this.saveFeedbackGiven(info.delivId, info.personId, info.timestamp, info.commitURL, 'standard');
+            } else {
+                // previously paid, don't charge
+                Log.info("GitHubAutoTest::processCommentExists(..) - result already exists and paid for for: " +
+                    info.personId + "; SHA: " + info.commitSHA);
+            }
         } else {
             // postbackOnComplete should only be true for lint / compile errors; don't saveFeedback (charge) for these
             Log.info("GitHubAutoTest::processCommentExists(..) - result already exists; feedback request skipped for: " +
                 info.personId + "; SHA: " + info.commitSHA);
         }
-
         return;
     }
 
@@ -296,8 +303,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         const shouldCharge = await this.shouldCharge(info, null, res);
         const feedbackDelay: string | null = await this.requestFeedbackDelay(info.delivId, info.personId, info.timestamp);
-        const previousRequest: IFeedbackGiven = await this.dataStore.getFeedbackGivenRecordForCommit(
-            info.commitURL, info.delivId, info.personId);
+        const previousRequest: IFeedbackGiven = await this.dataStore.getFeedbackGivenRecordForCommit(info);
 
         Log.info("GitHubAutoTest::handleCommentStudent(..) - handling student request for: " +
             info.personId + " for commit: " + info.commitURL + "; null previous: " + (previousRequest === null) +

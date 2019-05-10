@@ -2,7 +2,7 @@ import Log from "../../../../common/Log";
 
 import {TeamTransport} from "../../../../common/types/PortalTypes";
 import Util from "../../../../common/Util";
-import {Deliverable, Person, Team} from "../Types";
+import {Deliverable, Person, PersonKind, Team} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
 import {GitHubActions, IGitHubActions} from "./GitHubActions";
@@ -160,15 +160,13 @@ export class TeamController {
                 throw new Error("Team not created; students cannot form their own teams for this deliverable.");
             }
         }
-        // const people: Person[] = [];
-        // for (const ghId of gitHubIds) {
-        //     const person = await pc.getGitHubPerson(ghId);
-        //     if (person === null) {
-        //         throw new Error("Team not created; GitHub id not associated with student registered in course: " + ghId);
-        //     } else {
-        //         people.push(person);
-        //     }
-        // }
+
+        // make sure all students are still registered in the class
+        for (const p of people) {
+            if (p.kind === PersonKind.WITHDRAWN) {
+                throw new Error("Team not created; at least one student is not an active member of the class.");
+            }
+        }
 
         // ensure members are all in the same lab section (if required)
         if (deliv.teamSameLab === true) {

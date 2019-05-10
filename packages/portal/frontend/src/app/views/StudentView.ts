@@ -10,9 +10,9 @@ import {IView} from "./IView";
 export abstract class StudentView implements IView {
 
     protected remote: string = null;
-    private person: StudentTransport = null;
-    private grades: GradeTransport[] = [];
-    private repos: RepositoryTransport[] = [];
+    protected person: StudentTransport = null;
+    protected grades: GradeTransport[] = [];
+    protected repos: RepositoryTransport[] = [];
 
     public abstract renderPage(pageName: string, opts: {}): void;
 
@@ -59,7 +59,7 @@ export abstract class StudentView implements IView {
                 this.repos = [];
             }
         } catch (err) {
-            Log.error('StudentView::prepareData() - fetching repos; ERROR: ' + err.message);
+            Log.error('StudentView::prepareData() - fetching data; ERROR: ' + err.message);
             UI.showError(err.message);
             this.repos = [];
         }

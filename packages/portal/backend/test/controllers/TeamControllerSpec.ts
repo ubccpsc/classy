@@ -1,12 +1,14 @@
 import {expect} from "chai";
 import "mocha";
+
 import Log from "../../../../common/Log";
 
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {TeamController} from "../../src/controllers/TeamController";
-import '../GlobalSpec';
+import {PersonKind} from "../../src/Types";
 
+import '../GlobalSpec';
 import {Test} from "../TestHarness";
 import './PersonControllerSpec';
 
@@ -238,6 +240,24 @@ describe("TeamController", () => {
         ex = null;
         try {
             team = await tc.formTeam('testTeamName_' + Date.now(), d1, [p2, p2], false);
+        } catch (err) {
+            Log.test(err);
+            ex = err;
+        }
+        expect(ex).to.not.be.null;
+        expect(team).to.be.null;
+
+        // student already withrdawn
+        team = null;
+        ex = null;
+        try {
+            // withdraw a student
+            const dbc = DatabaseController.getInstance();
+            const p6 = await pc.getGitHubPerson(Test.USER6.github);
+            p6.kind = PersonKind.WITHDRAWN;
+            await dbc.writePerson(p6);
+
+            team = await tc.formTeam('testTeamName_' + Date.now(), proj, [p2, p6], false);
         } catch (err) {
             Log.test(err);
             ex = err;

@@ -220,10 +220,14 @@ export class MockDataStore implements IDataStore {
 
     }
 
-    public async getFeedbackGivenRecordForCommit(commitURL: string, delivId: string, userName: string): Promise<IFeedbackGiven | null> {
+    public async getFeedbackGivenRecordForCommit(target: CommitTarget): Promise<IFeedbackGiven | null> {
         // Log.trace("MockDataStore::getFeedbackGivenRecordForCommit(..) - start");
         let ret: IFeedbackGiven | null = null;
         try {
+            const commitURL = target.commitURL;
+            const delivId = target.delivId;
+            const userName = target.personId;
+
             const start = Date.now();
             const records: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
             for (const feedback of records) {

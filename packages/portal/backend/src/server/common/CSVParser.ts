@@ -123,7 +123,7 @@ export class CSVParser {
                         comment:   row.COMMENT,
                         timestamp: Date.now(),
                         urlName:   'CSV Upload',
-                        URL:       null,
+                        URL:       null, // set to null so GradesController can restore URL if needed
                         custom:    {}
                     };
 
