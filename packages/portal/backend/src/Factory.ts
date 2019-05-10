@@ -5,7 +5,9 @@ import {AdminController} from "./controllers/AdminController";
 import {CourseController, ICourseController} from "./controllers/CourseController";
 import {GitHubActions} from "./controllers/GitHubActions";
 import {GitHubController, IGitHubController} from "./controllers/GitHubController";
+import {CustomCourseController} from "./custom/CustomCourseController";
 
+import CustomCourseRoutes from "./custom/CustomCourseRoutes";
 import NoCustomRoutes from "./server/common/NoCustomRoutes";
 import IREST from "./server/IREST";
 
@@ -32,11 +34,12 @@ export class Factory {
         }
 
         if (name === 'classytest') {
+            Log.info("Factory::getCustomRouteHandler() - using NoCustomRoutes");
             return new NoCustomRoutes();
         } else {
-            Log.warn("Factory::getCustomRouteHandler() - no custom routes for: " + name);
+            Log.info("Factory::getCustomRouteHandler() - using CustomCourseRoutes");
+            return new CustomCourseRoutes(); // instantiate any course-specific routes
         }
-        return new NoCustomRoutes(); // default handler
     }
 
     // only visible for testing
@@ -71,17 +74,13 @@ export class Factory {
             Factory.controller = new CourseController(ghController);
         } else if (name === 'classy') {
             // for test deploying
+            Log.info("Factory::getCourseController() - using CourseController for: " + name);
             Factory.controller = new CourseController(ghController);
-            // } else if (name === 'cs340' || name === 'cpsc340') {
-            //     // Factory.controller = new CS340Controller(ghController);
-            // } else if (name === 'cs210' || name === 'cpsc210') {
-            //     // instantiate 210 controller in fork
-            // } else if (name === 'cs221' || name === 'cpsc221') {
-            //     // instantiate 221 controller in fork
-            //     Factory.controller = new CS221Controller(ghController);
         } else {
-            Log.error("Factory::getCourseController() - unknown name: " + name);
-            throw new Error("Unknown course name: " + name);
+            // NOTE: this could be updated to be like the frontend Factory (using plug) if we have problems with
+            // forks trying to upstream their Custom*.ts changes
+            Log.info("Factory::getCourseController() - using CustomCourseController for: " + name);
+            Factory.controller = new CustomCourseController(ghController);
         }
         return Factory.controller;
     }

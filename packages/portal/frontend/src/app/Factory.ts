@@ -46,7 +46,7 @@ export class Factory {
                 if (name === this.TESTNAME) {
                     plug = await require('./views/classy/ClassyStudentView'); // default for testing
                 } else {
-                    plug = await require('./views/course/StudentView'); // course-specific file; must be present in all forks
+                    plug = await require('./custom/CustomStudentView'); // course-specific file; must be present in all forks
                 }
 
                 Log.trace("Factory::getView() - view loaded");
@@ -91,7 +91,7 @@ export class Factory {
                 } else {
                     // If a course wants to specialize the AdminView it should be in the file below.
                     // This is not required. But if it is added, it should never be pushed back to 'classy/master'
-                    plug = await require('./views/course/AdminView');
+                    plug = await require('./custom/CustomAdminView');
                 }
 
                 Log.trace("Factory::getAdminView() - view loaded");
