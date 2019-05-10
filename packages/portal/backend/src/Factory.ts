@@ -2,13 +2,9 @@ import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
 import {AdminController} from "./controllers/AdminController";
-import {CourseController, ICourseController} from "./controllers/CourseController";
+import {ICourseController} from "./controllers/CourseController";
 import {GitHubActions} from "./controllers/GitHubActions";
 import {GitHubController, IGitHubController} from "./controllers/GitHubController";
-import {CustomCourseController} from "./custom/CustomCourseController";
-
-import CustomCourseRoutes from "./custom/CustomCourseRoutes";
-import NoCustomRoutes from "./server/common/NoCustomRoutes";
 import IREST from "./server/IREST";
 
 export class Factory {
@@ -28,17 +24,35 @@ export class Factory {
      * @param {string} name? optional name (for testing or overriding the default; usually not needed)
      * @returns {IREST}
      */
-    public static getCustomRouteHandler(name?: string): IREST {
+    public static async getCustomRouteHandler(name?: string): Promise<IREST> {
         if (typeof name === 'undefined') {
             name = Factory.getName();
         }
+        try {
+            Log.info("Factory::getCustomRouteHandler() - instantating custom route handler for: " + name);
 
-        if (name === 'classytest') {
-            Log.info("Factory::getCustomRouteHandler() - using NoCustomRoutes");
-            return new NoCustomRoutes();
-        } else {
-            Log.info("Factory::getCustomRouteHandler() - using CustomCourseRoutes");
-            return new CustomCourseRoutes(); // instantiate any course-specific routes
+            // NOTE: using require instead of import because file might not be present in forks
+            // import complains about this, but require does not.
+            let plug: any;
+            if (name === 'classytest') {
+                plug = await require('./server/common/NoCustomRoutes'); // default for testing
+            } else {
+                // If a course wants to specialize the AdminView it should be in the file below.
+                // This is not required. But if it is added, it should never be pushed back to 'classy/master'
+                plug = await require('./custom/CustomCourseRoutes');
+            }
+
+            Log.trace("Factory::getCustomRouteHandler() - handler loaded");
+
+            // if this fails an error will be raised and the default view will be provided in the catch below
+            const constructorName = Object.keys(plug)[0];
+            const handler = new plug[constructorName]();
+            Log.info("Factory::getCustomRouteHandler() - handler instantiated");
+            return handler;
+        } catch (err) {
+            const msg = "Factory::getCustomRouteHandler() - src/custom/CustomCourseRoutes.ts must be defined";
+            Log.error(msg);
+            throw new Error(msg);
         }
     }
 
@@ -51,7 +65,7 @@ export class Factory {
      * @param {string} name? optional name (for testing or overriding the default; usually not needed)
      * @returns {AdminController}
      */
-    public static getCourseController(ghController?: IGitHubController, name?: string): ICourseController {
+    public static async getCourseController(ghController?: IGitHubController, name?: string): Promise<ICourseController> {
         if (typeof name === 'undefined') {
             name = Factory.getName();
         }
@@ -68,21 +82,30 @@ export class Factory {
             // really only for testing
             Log.trace("Factory::getCourseController() - using provided controller");
         }
+        try {
+            // NOTE: using require instead of import because file might not be present in forks
+            // import complains about this, but require does not.
+            let plug: any;
+            if (name === 'classytest') {
+                plug = await require('./controllers/CourseController'); // default for testing
+            } else {
+                // If a course wants to specialize the AdminView it should be in the file below.
+                // This is not required. But if it is added, it should never be pushed back to 'classy/master'
+                plug = await require('./custom/CustomCourseController');
+            }
 
-        if (name === 'classytest') {
-            // for unit testing
-            Factory.controller = new CourseController(ghController);
-        } else if (name === 'classy') {
-            // for test deploying
-            Log.info("Factory::getCourseController() - using CourseController for: " + name);
-            Factory.controller = new CourseController(ghController);
-        } else {
-            // NOTE: this could be updated to be like the frontend Factory (using plug) if we have problems with
-            // forks trying to upstream their Custom*.ts changes
-            Log.info("Factory::getCourseController() - using CustomCourseController for: " + name);
-            Factory.controller = new CustomCourseController(ghController);
+            Log.trace("Factory::getCourseController() - handler loaded");
+
+            // if this fails an error will be raised and the default view will be provided in the catch below
+            const constructorName = Object.keys(plug)[0];
+            const handler = new plug[constructorName]();
+            Log.info("Factory::getCourseController() - handler instantiated");
+            return handler;
+        } catch (err) {
+            const msg = "Factory::getCourseController() - src/custom/CustomCourseController.ts must be defined";
+            Log.error(msg);
+            throw new Error(msg);
         }
-        return Factory.controller;
     }
 
     /**

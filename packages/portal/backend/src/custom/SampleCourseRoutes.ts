@@ -9,7 +9,7 @@ import IREST from "../server/IREST";
  *
  * Nothing should be added to this class.
  */
-export default class CustomCourseRoutes implements IREST {
+export default class SampleCourseRoutes implements IREST {
     public registerRoutes(server: restify.Server) {
         Log.trace('CustomCourseRoutes::registerRoutes()');
     }
