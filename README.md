@@ -131,6 +131,11 @@ On `fork`:
 
 <img src="docs/dev-upstream.png"/>
 
+### Customizing your instance of Classy
+
+1. To add to the backend, you should modify `packages/portal/backend/src/custom/CustomCourseController.ts` and `packages/portal/backend/src/custom/CustomRoutes.ts`. These changes should ***NOT*** be pushed back into `classy/master` but should only stay in the fork.
+2. To add to the frontend, you should add the `pacakges/portal/frontend/src/app/custom/CustomStudentView.ts`. These changes should ***NOT*** be pushed back into `classy/master` but should only stay in the fork.
+
 ### About dev packages
 
 Wherever possible, please try to minimize external package dependencies. Classy has been configured to use [yarn workspaces](https://yarnpkg.com/lang/en/docs/workspaces/#toc-how-to-use-it).

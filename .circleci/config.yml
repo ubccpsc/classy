@@ -120,10 +120,10 @@ jobs:
               MOCHA_FILE: testOutput/autotest/test/test-results.xml
             when: on_success
 
-      - run:
-            command: cd packages/autotest && ./node_modules/junit-viewer/bin/junit-viewer --results=../../testOutput/autotest/test/test-results.xml --save=../../testOutput/autotest/test/index.html
-            name: Converting backend test results to HTML
-            when: on_success
+#      - run:
+#            command: cd packages/autotest && ./node_modules/junit-viewer/bin/junit-viewer --results=../../testOutput/autotest/test/test-results.xml --save=../../testOutput/autotest/test/index.html
+#            name: Converting autotest test results to HTML
+#            when: on_success
 
       - run:
             command: cd packages/portal/backend && yarn coveralls

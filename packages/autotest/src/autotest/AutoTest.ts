@@ -39,7 +39,7 @@ export abstract class AutoTest implements IAutoTest {
 
     private regressionQueue = new Queue('regression', 1);
     private standardQueue = new Queue('standard', 2);
-    private expressQueue = new Queue('express', 1);
+    private expressQueue = new Queue('express', 2);
 
     // noinspection TypeScriptAbstractClassConstructorCanBeMadeProtected
     constructor(dataStore: IDataStore, classPortal: IClassPortal, docker: Docker) {
