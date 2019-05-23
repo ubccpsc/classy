@@ -48,7 +48,7 @@ services:
         restart: always
         user: "${UID}"
         volumes:
-            - /var/opt/classy/db:/data/db
+            - /Users/braxtonhall/SPL/SECapstone/classy/data/db:/data/db #/var/opt/classy/db:/data/db TODO revert this
     portal:
         build:
             args:
@@ -76,11 +76,13 @@ services:
                 - SSL_CERT_PATH
                 - SSL_KEY_PATH
                 - BACKEND_PORT
+                - UI_PORT
             context: ./
             dockerfile: ./packages/proxy/Dockerfile
         container_name: proxy
         depends_on:
             - portal
+            - reference_ui
         ports:
             - "80:8080"
             - "443:8443"
@@ -89,3 +91,37 @@ services:
         volumes:
             - "${HOST_SSL_CERT_PATH}:${SSL_CERT_PATH}"
             - "${HOST_SSL_KEY_PATH}:${SSL_KEY_PATH}"
+    geolocation:
+        build:
+            args:
+            - GEO_PORT
+            context: https://${COURSE_GH_ORG_TOKEN}@github.ubc.ca/cpsc310/cpsc310geocoder.git
+        container_name: ${CONTAINER_NAME_GEO}
+        ports:
+        - ${GEO_PORT}:${GEO_PORT}
+        restart: always
+        user: "${UID}"
+    reference_ui:
+        build:
+            args:
+            - UI_PORT
+            - UID
+            context: https://${COURSE_GH_ORG_TOKEN}@github.ubc.ca/cpsc310/project_oracle_sdmm.git
+            dockerfile: ui.dockerfile
+        container_name: refui
+        expose:
+        - ${UI_PORT}
+        restart: always
+        user: "${UID}"
+    patchtool:
+        image: "sinatra"
+        build:
+            context: https://${COURSE_GH_ORG_TOKEN}@github.ubc.ca/cpsc310/repoPatchTool.git#webservice
+        volumes:
+        - "${HOST_SSL_CERT_PATH}:/usr/cert.pem"
+        - "${HOST_SSL_KEY_PATH}:/usr/key.pem"
+        container_name: patchtool
+        environment:
+        - GH_BOT_TOKEN
+        - COURSE_GH_ORG_TOKEN
+        - PATCH_SOURCE_REPO
