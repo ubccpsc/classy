@@ -372,8 +372,7 @@ export class GitHubController implements IGitHubController {
             return false;
         }
 
-        const cf: Config = Config.getInstance();
-        const baseUrl: string = cf.getProp(ConfigKey.patchToolUrl);
+        const baseUrl: string = Config.getInstance().getProp(ConfigKey.patchToolUrl);
         const patchUrl: string = `${baseUrl}/autopatch?patch_id=${prName}&github_url=${repo.cloneURL}&dryrun=${dryrun}`;
 
         const options: { method: string } = { method: 'POST' };

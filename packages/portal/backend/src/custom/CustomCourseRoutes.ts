@@ -17,6 +17,8 @@ export default class CustomCourseRoutes implements IREST {
         server.post('/portal/sdmm/performAction/:action/', CustomCourseRoutes.performAction);
         server.post('/portal/sdmm/performAction/:action/:param', CustomCourseRoutes.performAction);
         server.get('/portal/sdmm/currentStatus', CustomCourseRoutes.getCurrentStatus);
+
+        Log.trace('CustomCourseRoutes::registerRoutes() - done');
     }
 
     public static handleError(code: number, msg: string, res: any, next: any) {
