@@ -41,7 +41,7 @@ export class DeliverablesController {
         // }
 
         // the above was pretty complicated
-        const MIN_DELAY = 60 * 60; // 1 hour
+        const MIN_DELAY = 60 * 15; // 15 minutes
         if (deliv.autotest.studentDelay < MIN_DELAY) {
             deliv.autotest.studentDelay = MIN_DELAY;
         }
