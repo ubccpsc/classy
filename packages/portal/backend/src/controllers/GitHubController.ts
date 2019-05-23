@@ -7,6 +7,9 @@ import {DatabaseController} from "./DatabaseController";
 import {IGitHubActions} from "./GitHubActions";
 import {TeamController} from "./TeamController";
 
+import fetch from "node-fetch";
+import {Response} from "node-fetch";
+
 export interface IGitHubController {
     /**
      * This is a complex method that provisions an entire repository.
@@ -352,9 +355,55 @@ export class GitHubController implements IGitHubController {
         return false;
     }
 
-    public async createPullRequest(repoName: string, prName: string): Promise<boolean> {
-        Log.error("GitHubController::createPullRequest(..) - NOT IMPLEMENTED");
-        throw new Error("NOT IMPLEMENTED");
+    /**
+     * Calls the patchtool
+     * @param {string} repoName: Name of the repo to be patched // TODO can I change this to type Repository?
+     * @param {string} prName: Name of the patch to apply
+     * @param {boolean} dryrun: Whether to do a practice patch
+     *        i.e.: if dryrun is false  -> patch is applied to repo
+     *              elif dryrun is true -> patch is not applied,
+     *                   but otherwise will behave as if it was
+     */
+    public async createPullRequest(repoName: string, prName: string, dryrun: boolean = false): Promise<boolean> {
+        Log.info(`GitHubController::createPullRequest(..) - Repo: (${repoName}) start`);
+        const repo: Repository = await this.dbc.getRepository(repoName);
+        if (repo.cloneURL === null || repo.cloneURL === undefined) {
+            Log.error(`GitHubController::createPullRequest(..) - ${repoName} didn't have a valid URL associated with it.`);
+            return false;
+        }
+
+        const cf: Config = Config.getInstance();
+        const baseUrl: string = cf.getProp(ConfigKey.patchToolUrl);
+        const patchUrl: string = `${baseUrl}/autopatch?patch_id=${prName}&github_url=${repo.cloneURL}&dryrun=${dryrun}`;
+
+        const options: { method: string } = { method: 'POST' };
+        try {
+            let result: Response = await fetch(patchUrl, options);
+            if (result.status === 200) {
+                Log.info("GitHubController::createPullRequest(..) - Patch applied successfully");
+                return true;
+            } else if (result.status === 424) {
+                Log.error(`GitHubController::createPullRequest(..) - ${prName} wasn't found by the patchtool. Retrying.`);
+                const updateUrl: string = `${baseUrl}/update`;
+                result = await fetch(updateUrl, options);
+                result = await fetch(patchUrl, options);
+                if (200 === result.status) {
+                    Log.info("GitHubController::createPullRequest(..) - Patch applied successfully on second attempt");
+                    return true;
+                } else {
+                    Log.error("GitHubController::createPullRequest(..) - Patch failed on second attempt. Message from patchtool server: " +
+                        (await result.json()).message);
+                    return false;
+                }
+            } else {
+                Log.error("GitHubController::createPullRequest(..) - Patch failed. Message from patchtool server: " +
+                    (await result.json()).message);
+                return false;
+            }
+        } catch (err) {
+            Log.error("GitHubController::createPullRequest(..) - Wasn't able to make a connection to patchtool. Error: " + err.message);
+            return false;
+        }
     }
 
     /**

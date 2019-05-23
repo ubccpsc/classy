@@ -171,7 +171,7 @@ export class DatabaseController {
     }
 
     public async getDeliverable(id: string): Promise<Deliverable> {
-        const deliv = await this.readSingleRecord(this.DELIVCOLL, {id: id}) as Deliverable;
+        const deliv = await this.readSingleRecord(this.DELIVCOLL, {id}) as Deliverable;
         Log.trace("DatabaseController::getDeliverable() - found: " + (deliv !== null));
         return deliv;
     }

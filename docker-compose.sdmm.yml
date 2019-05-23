@@ -34,4 +34,18 @@ services:
             - ${UI_PORT}
         restart: always
         user: "${UID}"
+    patchtool:
+        image: "sinatra"
+        build:
+            context: https://${COURSE_GH_ORG_TOKEN}@github.ubc.ca/cpsc310/repoPatchTool.git#webservice
+#        ports:
+#        - "127.0.0.1:${PATCH_TOOL_PORT}:3000" #If you remove this you disallow any outside access
+        volumes:
+        - "${HOST_SSL_CERT_PATH}:/usr/cert.pem"
+        - "${HOST_SSL_KEY_PATH}:/usr/key.pem"
+        container_name: patchtool
+        environment:
+        - GH_BOT_TOKEN
+        - COURSE_GH_ORG_TOKEN
+        - PATCH_SOURCE_REPO
 
