@@ -48,7 +48,7 @@ services:
         restart: always
         user: "${UID}"
         volumes:
-            - /var/opt/classy/db:/data/db
+            - ${DB_VOLUME_PATH}:/data/db
     portal:
         build:
             args:

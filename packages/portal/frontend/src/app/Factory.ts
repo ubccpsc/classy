@@ -38,7 +38,7 @@ export class Factory {
     public async getView(backendUrl: string): Promise<IView> {
         try {
             if (this.studentView === null) {
-                Log.info("Factory::getView() - instantating new student view for: " + this.name);
+                Log.info("Factory::getView() - instantiating new student view for: " + this.name);
 
                 // NOTE: using require instead of import because file might not be present in forks
                 // import complains about this, but require does not
