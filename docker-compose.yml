@@ -48,7 +48,7 @@ services:
         restart: always
         user: "${UID}"
         volumes:
-            - /Users/braxtonhall/SPL/SECapstone/classy/data/db:/data/db #/var/opt/classy/db:/data/db TODO revert this
+            - /var/opt/classy/db:/data/db
     portal:
         build:
             args:
