@@ -125,3 +125,14 @@ services:
         - GH_BOT_TOKEN
         - COURSE_GH_ORG_TOKEN
         - PATCH_SOURCE_REPO
+
+networks:
+    grader:
+        driver: bridge
+        driver_opts:
+            ip-range: "172.28.5.0/24"
+            gateway: "172.28.5.254"
+        ipam:
+            config:
+            - subnet: "172.28.0.0/16"
+        name: ${GRADE_NET_NAME}
