@@ -36,6 +36,10 @@ services:
         volumes:
             - "${HOST_DIR}:${PERSIST_DIR}"
             - "/var/run/docker.sock:/var/run/docker.sock"
+        networks:
+            default:
+            autotest:
+                ipv4_address: 172.28.2.0
     db:
         command: --quiet
         container_name: db
