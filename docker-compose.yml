@@ -127,7 +127,7 @@ services:
         - PATCH_SOURCE_REPO
 
 networks:
-    grader:
+    autotest:
         driver: bridge
         driver_opts:
             ip-range: "172.28.5.0/24"
