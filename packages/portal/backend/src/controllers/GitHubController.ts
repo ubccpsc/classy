@@ -378,7 +378,7 @@ export class GitHubController implements IGitHubController {
         const patchUrl: string = `${baseUrl}/autopatch?patch_id=${prName}&github_url=${repoUrl}&dryrun=${dryrun}`;
         const updateUrl: string = `${baseUrl}/update`;
 
-        // const options: { method: string } = { method: 'POST' };
+        // rejectUnauthorized false only allowable because this is a local (currently self-signed) service
         const options = {
             method: 'POST',
             agent: new https.Agent({
