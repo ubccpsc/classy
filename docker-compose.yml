@@ -97,8 +97,6 @@ services:
             - "${HOST_SSL_KEY_PATH}:${SSL_KEY_PATH}"
     geolocation:
         build:
-            args:
-            - GEO_PORT
             context: https://${COURSE_GH_ORG_TOKEN}@github.ubc.ca/cpsc310/cpsc310geocoder.git
         container_name: ${CONTAINER_NAME_GEO}
         ports:
