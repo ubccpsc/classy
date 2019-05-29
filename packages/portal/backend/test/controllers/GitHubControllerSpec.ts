@@ -325,7 +325,8 @@ describe("GitHubController", () => {
         let ex = null;
         try {
             // not implemented yet, should fail right away
-            res = await gc.createPullRequest(Test.REPONAME1, 'patch');
+            const repos = await new RepositoryController().getAllRepos();
+            res = await gc.createPullRequest(repos[0], 'patch');
         } catch (err) {
             ex = err;
         }

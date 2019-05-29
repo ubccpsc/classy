@@ -750,7 +750,7 @@ export class CustomCourseController extends CourseController {
         const patchedRepos: string[] = []; // Eligible repos that were patched successfully
         const failedRepos: string[] = [];  // Repos that should have been patched, but failed for some reason
         for (const repo of reposToPatch) {
-            const patchResult = await this.gh.createPullRequest(repo.id, Config.getInstance().getProp(ConfigKey.patchId));
+            const patchResult = await this.gh.createPullRequest(repo, Config.getInstance().getProp(ConfigKey.patchId));
             if (patchResult === true) {
                 Log.info("CustomCourseController::updateRepositoryD2toD3(..) - Patched " + repo.id);
                 repo.custom.sddmD3pr = true;
@@ -764,11 +764,10 @@ export class CustomCourseController extends CourseController {
             }
         }
         if (patchedRepos.length > 0 && failedRepos.length > 0) {
-            throw new Error("CustomCourseController::updateRepositoryD2toD3(..) - " + JSON.stringify(patchedRepos) +
-                " were successfully patched, however " + JSON.stringify(failedRepos) + " were not patched successfully.");
+            throw new Error(patchedRepos.join(", ") + (patchedRepos.length === 1 ? " was" : " were") + " successfully patched, however "
+                + failedRepos.join(", ") + (failedRepos.length === 1 ? " was" : " were") + " not patched successfully.");
         } else if (failedRepos.length > 0) {
-            throw new Error("CustomCourseController::updateRepositoryD2toD3(..) - No repos of "
-                + JSON.stringify(failedRepos) + " were successfully patched.");
+            throw new Error(failedRepos.join(", ") + " failed to get patched. Please contact staff.");
         } else {
             return {success: {message: "D3 PR success for all eligible repos.", status: await this.getStatus(personId)}};
         }
