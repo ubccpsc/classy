@@ -7,6 +7,7 @@ import {DatabaseController} from "./DatabaseController";
 import {IGitHubActions} from "./GitHubActions";
 import {TeamController} from "./TeamController";
 
+import * as https from "https";
 import fetch from "node-fetch";
 import {Response} from "node-fetch";
 
@@ -357,7 +358,7 @@ export class GitHubController implements IGitHubController {
 
     /**
      * Calls the patchtool
-     * @param {Repository} repo: Name of the repo to be patched // TODO can I change this to type Repository?
+     * @param {Repository} repo: Name of the repo to be patched
      * @param {string} prName: Name of the patch to apply
      * @param {boolean} dryrun: Whether to do a practice patch
      *        i.e.: if dryrun is false  -> patch is applied to repo
@@ -371,11 +372,19 @@ export class GitHubController implements IGitHubController {
             return false;
         }
 
+        // TODO this really should only be cloneURL, but it's not being set when repo is provisioned
         const repoUrl: string = repo.cloneURL ? repo.cloneURL : `${repo.URL}.git`;
         const baseUrl: string = Config.getInstance().getProp(ConfigKey.patchToolUrl);
         const patchUrl: string = `${baseUrl}/autopatch?patch_id=${prName}&github_url=${repoUrl}&dryrun=${dryrun}`;
+        const updateUrl: string = `${baseUrl}/update`;
 
-        const options: { method: string } = { method: 'POST' };
+        // const options: { method: string } = { method: 'POST' };
+        const options = {
+            method: 'POST',
+            agent: new https.Agent({
+                rejectUnauthorized: false
+            })
+        };
         try {
             let result: Response = await fetch(patchUrl, options);
             if (result.status === 200) {
@@ -383,8 +392,7 @@ export class GitHubController implements IGitHubController {
                 return true;
             } else if (result.status === 424) {
                 Log.error(`GitHubController::createPullRequest(..) - ${prName} wasn't found by the patchtool. Retrying.`);
-                const updateUrl: string = `${baseUrl}/update`;
-                result = await fetch(updateUrl, options);
+                await fetch(updateUrl, options);
                 result = await fetch(patchUrl, options);
                 if (200 === result.status) {
                     Log.info("GitHubController::createPullRequest(..) - Patch applied successfully on second attempt");
