@@ -23,7 +23,6 @@
         "@types/node-schedule": "^1.2.2",
         "@types/request-promise-native": "^1.0.11",
         "@types/restify": "^5.0.7",
-        "awesome-typescript-loader": "^3.4.1",
         "client-oauth2": "^4.1.0",
         "dotenv": "5.0.1",
         "flatpickr": "^4.5.1",
@@ -34,11 +33,12 @@
         "request": "^2.83.0",
         "request-promise-native": "^1.0.5",
         "restify": "^6.3.4",
-        "source-map-loader": "^0.2.3",
+        "source-map-loader": "^0.2.4",
         "ts-loader": "^6.0.0",
         "tslint": "^5.11.0",
-        "typescript": "^2",
-        "webpack": "^3.11.0"
+        "typescript": "^3",
+        "webpack": "^4",
+        "webpack-cli": "^3"
     },
     "resolutions": {
         "**/event-stream": "^4.0.1"
