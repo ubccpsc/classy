@@ -36,6 +36,10 @@ services:
         volumes:
             - "${HOST_DIR}:${PERSIST_DIR}"
             - "/var/run/docker.sock:/var/run/docker.sock"
+        networks:
+            default:
+            autotest:
+                ipv4_address: 172.28.2.0
     db:
         command: --quiet
         container_name: db
@@ -48,7 +52,7 @@ services:
         restart: always
         user: "${UID}"
         volumes:
-            - ${DB_VOLUME_PATH}:/data/db
+            - /var/opt/classy/db:/data/db
     portal:
         build:
             args:
@@ -76,11 +80,13 @@ services:
                 - SSL_CERT_PATH
                 - SSL_KEY_PATH
                 - BACKEND_PORT
+                - UI_PORT
             context: ./
             dockerfile: ./packages/proxy/Dockerfile
         container_name: proxy
         depends_on:
             - portal
+            - reference_ui
         ports:
             - "80:8080"
             - "443:8443"
@@ -89,3 +95,48 @@ services:
         volumes:
             - "${HOST_SSL_CERT_PATH}:${SSL_CERT_PATH}"
             - "${HOST_SSL_KEY_PATH}:${SSL_KEY_PATH}"
+    geolocation:
+        build:
+            args:
+            - GEO_PORT
+            context: https://${COURSE_GH_ORG_TOKEN}@github.ubc.ca/cpsc310/cpsc310geocoder.git
+        container_name: ${CONTAINER_NAME_GEO}
+        ports:
+        - ${GEO_PORT}:${GEO_PORT}
+        restart: always
+        user: "${UID}"
+    reference_ui:
+        build:
+            args:
+            - UI_PORT
+            - UID
+            context: https://${COURSE_GH_ORG_TOKEN}@github.ubc.ca/cpsc310/project_oracle_sdmm.git
+            dockerfile: ui.dockerfile
+        container_name: refui
+        expose:
+        - ${UI_PORT}
+        restart: always
+        user: "${UID}"
+    patchtool:
+        image: "sinatra"
+        build:
+            context: https://${COURSE_GH_ORG_TOKEN}@github.ubc.ca/cpsc310/repoPatchTool.git#webservice
+        volumes:
+        - "${HOST_SSL_CERT_PATH}:/usr/cert.pem"
+        - "${HOST_SSL_KEY_PATH}:/usr/key.pem"
+        container_name: patchtool
+        environment:
+        - GH_BOT_TOKEN
+        - COURSE_GH_ORG_TOKEN
+        - PATCH_SOURCE_REPO
+
+networks:
+    autotest:
+        driver: bridge
+        driver_opts:
+            ip-range: "172.28.5.0/24"
+            gateway: "172.28.5.254"
+        ipam:
+            config:
+            - subnet: "172.28.0.0/16"
+        name: ${GRADE_NET_NAME}

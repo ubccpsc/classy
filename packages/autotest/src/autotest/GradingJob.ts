@@ -74,12 +74,14 @@ export class GradingJob {
 
     public async run(docker: Docker): Promise<AutoTestResult> {
         const hostDir = Config.getInstance().getProp(ConfigKey.hostDir) + "/runs/" + this.id;
+        const dockerUid: string = Config.getInstance().getProp(ConfigKey.dockerUid);
         const container = await docker.createContainer({
-            User: Config.getInstance().getProp(ConfigKey.dockerUid),
+            User: dockerUid,
             Image: this.input.containerConfig.dockerImage,
             Env: [
                 `ASSIGNMENT=${this.input.delivId}`,
-                `EXEC_ID=${this.id}`
+                `EXEC_ID=${this.id}`,
+                `USER_UID=${dockerUid}`
             ],
             HostConfig: {
                 AutoRemove: true,
