@@ -97,8 +97,6 @@ services:
             - "${HOST_SSL_KEY_PATH}:${SSL_KEY_PATH}"
     geolocation:
         build:
-            args:
-            - GEO_PORT
             context: https://${COURSE_GH_ORG_TOKEN}@github.ubc.ca/cpsc310/cpsc310geocoder.git
         container_name: ${CONTAINER_NAME_GEO}
         ports:
@@ -122,7 +120,7 @@ services:
         build:
             context: https://${COURSE_GH_ORG_TOKEN}@github.ubc.ca/cpsc310/repoPatchTool.git#webservice
         volumes:
-        - "${HOST_SSL_CERT_PATH}:/usr/cert.pem"
+        - "${HOST_SSL_CERT_PATH}:/usr/cert.pem" # This can't be correct. These are the cert/key pems for sdmm.cs.ubc.ca
         - "${HOST_SSL_KEY_PATH}:/usr/key.pem"
         container_name: patchtool
         environment:

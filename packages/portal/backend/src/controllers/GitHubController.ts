@@ -7,6 +7,7 @@ import {DatabaseController} from "./DatabaseController";
 import {IGitHubActions} from "./GitHubActions";
 import {TeamController} from "./TeamController";
 
+import * as https from "https";
 import fetch from "node-fetch";
 import {Response} from "node-fetch";
 
@@ -24,7 +25,7 @@ export interface IGitHubController {
      */
     provisionRepository(repoName: string, teams: Team[], sourceRepo: string, shouldRelease: boolean): Promise<boolean>;
 
-    createPullRequest(repoName: string, prName: string): Promise<boolean>;
+    createPullRequest(repo: Repository, prName: string): Promise<boolean>;
 
     getRepositoryUrl(repo: Repository): Promise<string>;
 
@@ -357,25 +358,33 @@ export class GitHubController implements IGitHubController {
 
     /**
      * Calls the patchtool
-     * @param {string} repoName: Name of the repo to be patched // TODO can I change this to type Repository?
+     * @param {Repository} repo: Name of the repo to be patched
      * @param {string} prName: Name of the patch to apply
      * @param {boolean} dryrun: Whether to do a practice patch
      *        i.e.: if dryrun is false  -> patch is applied to repo
      *              elif dryrun is true -> patch is not applied,
      *                   but otherwise will behave as if it was
      */
-    public async createPullRequest(repoName: string, prName: string, dryrun: boolean = false): Promise<boolean> {
-        Log.info(`GitHubController::createPullRequest(..) - Repo: (${repoName}) start`);
-        const repo: Repository = await this.dbc.getRepository(repoName);
-        if (repo.cloneURL === null || repo.cloneURL === undefined) {
-            Log.error(`GitHubController::createPullRequest(..) - ${repoName} didn't have a valid URL associated with it.`);
+    public async createPullRequest(repo: Repository, prName: string, dryrun: boolean = false): Promise<boolean> {
+        Log.info(`GitHubController::createPullRequest(..) - Repo: (${repo.id}) start`);
+        if ((repo.cloneURL === null || repo.cloneURL === undefined) && (repo.URL === null || repo.URL === undefined)) {
+            Log.error(`GitHubController::createPullRequest(..) - ${repo.id} didn't have a valid URL associated with it.`);
             return false;
         }
 
+        // TODO this really should only be cloneURL, but it's not being set when repo is provisioned
+        const repoUrl: string = repo.cloneURL ? repo.cloneURL : `${repo.URL}.git`;
         const baseUrl: string = Config.getInstance().getProp(ConfigKey.patchToolUrl);
-        const patchUrl: string = `${baseUrl}/autopatch?patch_id=${prName}&github_url=${repo.cloneURL}&dryrun=${dryrun}`;
+        const patchUrl: string = `${baseUrl}/autopatch?patch_id=${prName}&github_url=${repoUrl}&dryrun=${dryrun}`;
+        const updateUrl: string = `${baseUrl}/update`;
 
-        const options: { method: string } = { method: 'POST' };
+        // rejectUnauthorized false only allowable because this is a local (currently self-signed) service
+        const options = {
+            method: 'POST',
+            agent: new https.Agent({
+                rejectUnauthorized: false
+            })
+        };
         try {
             let result: Response = await fetch(patchUrl, options);
             if (result.status === 200) {
@@ -383,8 +392,7 @@ export class GitHubController implements IGitHubController {
                 return true;
             } else if (result.status === 424) {
                 Log.error(`GitHubController::createPullRequest(..) - ${prName} wasn't found by the patchtool. Retrying.`);
-                const updateUrl: string = `${baseUrl}/update`;
-                result = await fetch(updateUrl, options);
+                await fetch(updateUrl, options);
                 result = await fetch(patchUrl, options);
                 if (200 === result.status) {
                     Log.info("GitHubController::createPullRequest(..) - Patch applied successfully on second attempt");
@@ -483,7 +491,7 @@ export class TestGitHubController implements IGitHubController {
         return true;
     }
 
-    public async createPullRequest(repoName: string, prName: string): Promise<boolean> {
+    public async createPullRequest(repo: Repository, prName: string): Promise<boolean> {
         Log.warn("TestGitHubController::createPullRequest(..) - TEST");
         return true;
     }

@@ -319,13 +319,12 @@ describe("GitHubController", () => {
     }).timeout(Test.TIMEOUT);
 
     it("Should fail to create a pull request.", async function() {
-        // Allow self-signed certificates. FIXME: Probably shouldn't be here
-        process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
         let res = null;
         let ex = null;
         try {
             // not implemented yet, should fail right away
-            res = await gc.createPullRequest(Test.REPONAME1, 'patch');
+            const repos = await new RepositoryController().getAllRepos();
+            res = await gc.createPullRequest(repos[0], 'patch');
         } catch (err) {
             ex = err;
         }
