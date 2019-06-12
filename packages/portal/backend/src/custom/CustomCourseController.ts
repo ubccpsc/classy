@@ -63,7 +63,7 @@ export class CustomCourseController extends CourseController {
     //     }
     // }
 
-    private GRADE_TO_ADVANCE = 90;
+    private GRADE_TO_ADVANCE = 80;
 
     public static readonly D0 = 'd0';
     public static readonly D1 = 'd1';
