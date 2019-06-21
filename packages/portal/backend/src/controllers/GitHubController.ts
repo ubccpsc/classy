@@ -253,7 +253,9 @@ export class GitHubController implements IGitHubController {
             const repoVal = await this.gha.createRepo(repoName);
             Log.info("GitHubController::provisionRepository( " + repoName + " ) - GitHub repo created");
 
-            // NOTE: this isn't done here on purpose: we consider the repo to be provisioned once the whole flow is done
+            // NOTE: this statement commented below isn't done here on purpose;
+            //    repo.url = repoVal
+            // we consider the repo to be provisioned once the whole flow is done
             // callers of this method should instead set the URL field
             repo = await dbc.getRepository(repoName);
             repo.custom.githubCreated = true;
