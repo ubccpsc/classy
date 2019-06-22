@@ -7,9 +7,7 @@ import {DatabaseController} from "./DatabaseController";
 import {IGitHubActions} from "./GitHubActions";
 import {TeamController} from "./TeamController";
 
-import * as https from "https";
-import fetch from "node-fetch";
-import {Response} from "node-fetch";
+import * as rp from "request-promise-native";
 
 export interface IGitHubController {
     /**
@@ -232,7 +230,7 @@ export class GitHubController implements IGitHubController {
         }
 
         Log.info("GitHubController::provisionRepository( " + repoName + " ) - checking to see if repo already exists");
-        const repo = await dbc.getRepository(repoName);
+        let repo = await dbc.getRepository(repoName);
         if (repo === null) {
             // repo object should be in datastore before we try to provision it
             throw new Error("GitHubController::provisionRepository( " + repoName +
@@ -255,9 +253,11 @@ export class GitHubController implements IGitHubController {
             const repoVal = await this.gha.createRepo(repoName);
             Log.info("GitHubController::provisionRepository( " + repoName + " ) - GitHub repo created");
 
-            // NOTE: this isn't done here on purpose: we consider the repo to be provisioned once the whole flow is done
+            // NOTE: this statement commented below isn't done here on purpose;
+            //    repo.url = repoVal
+            // we consider the repo to be provisioned once the whole flow is done
             // callers of this method should instead set the URL field
-            // repo.URL = repoVal;
+            repo = await dbc.getRepository(repoName);
             repo.custom.githubCreated = true;
             await dbc.writeRepository(repo);
 
@@ -373,43 +373,53 @@ export class GitHubController implements IGitHubController {
         }
 
         // TODO this really should only be cloneURL, but it's not being set when repo is provisioned
+        // TODO remove this when pushing changes up stream
         const repoUrl: string = repo.cloneURL ? repo.cloneURL : `${repo.URL}.git`;
         const baseUrl: string = Config.getInstance().getProp(ConfigKey.patchToolUrl);
-        const patchUrl: string = `${baseUrl}/autopatch?patch_id=${prName}&github_url=${repoUrl}&dryrun=${dryrun}`;
+        const patchUrl: string = `${baseUrl}/autopatch`;
         const updateUrl: string = `${baseUrl}/update`;
+        const qs: {[key: string]: string | boolean} = {patch_id: prName, github_url: repoUrl, dryrun: dryrun};
 
-        // rejectUnauthorized false only allowable because this is a local (currently self-signed) service
         const options = {
             method: 'POST',
-            agent: new https.Agent({
-                rejectUnauthorized: false
-            })
+            rejectUnauthorized: false,
+            strictSSL: false,
         };
+
+        let result;
+
         try {
-            let result: Response = await fetch(patchUrl, options);
-            if (result.status === 200) {
-                Log.info("GitHubController::createPullRequest(..) - Patch applied successfully");
-                return true;
-            } else if (result.status === 424) {
-                Log.error(`GitHubController::createPullRequest(..) - ${prName} wasn't found by the patchtool. Retrying.`);
-                await fetch(updateUrl, options);
-                result = await fetch(patchUrl, options);
-                if (200 === result.status) {
+            await rp(patchUrl, {qs, ...options});
+            Log.info("GitHubController::createPullRequest(..) - Patch applied successfully");
+            return true;
+        } catch (err) {
+            result = err;
+        }
+
+        switch (result.statusCode) {
+            case 424:
+                Log.info(`GitHubController::createPullRequest(..) - ${prName} wasn't found by the patchtool. Updating patches.`);
+                try {
+                    await rp(updateUrl, options);
+                    Log.info(`GitHubController::createPullRequest(..) - Patches updated successfully. Retrying.`);
+                    await rp(patchUrl, {qs, ...options});
                     Log.info("GitHubController::createPullRequest(..) - Patch applied successfully on second attempt");
                     return true;
-                } else {
-                    Log.error("GitHubController::createPullRequest(..) - Patch failed on second attempt. Message from patchtool server: " +
-                        (await result.json()).message);
+                } catch (err) {
+                    Log.error("GitHubController::createPullRequest(..) - Patch failed on second attempt. Message from patchtool server:" +
+                        result.message);
                     return false;
                 }
-            } else {
-                Log.error("GitHubController::createPullRequest(..) - Patch failed. Message from patchtool server: " +
-                    (await result.json()).message);
+            case 500:
+                Log.error(
+                    `GitHubController::createPullRequest(..) - patchtool internal error. Message from patchtool server: ${result.message}`
+                );
                 return false;
-            }
-        } catch (err) {
-            Log.error("GitHubController::createPullRequest(..) - Wasn't able to make a connection to patchtool. Error: " + err.message);
-            return false;
+            default:
+                Log.error(
+                    `GitHubController::createPullRequest(..) - Wasn't able to make a connection to patchtool. Error: ${result.message}`
+                );
+                return false;
         }
     }
 
