@@ -165,7 +165,7 @@ export default class AdminRoutes implements IREST {
      * @param res
      * @param next
      */
-    private static isAdmin(req: any, res: any, next: any) {
+    public static isAdmin(req: any, res: any, next: any) {
         // Log.info('AdminRoutes::isAdmin(..) - start');
 
         const auth = AdminRoutes.processAuth(req);

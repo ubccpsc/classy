@@ -439,7 +439,8 @@ export class App {
                 Log.trace("App::handleMainPageClick(..) - admin");
                 // if we're admin, keep the logging on
                 Log.Level = LogLevel.TRACE;
-                UI.pushPage('admin.html', params).then(function() { // NOTE: _without_ HTMLPrefix()
+                // TODO is this correct?
+                UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/admin.html', params).then(function() { // NOTE: _without_ HTMLPrefix()
                     // not using .getHTMLPrefix() above because all instances share a single admin page
                     // success
                 }).catch(function(err) {

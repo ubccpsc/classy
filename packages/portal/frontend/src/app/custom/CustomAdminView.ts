@@ -1,5 +1,6 @@
 import Log from "../../../../../common/Log";
 import {AdminTabs, AdminView} from "../views/AdminView";
+import {CustomAdminConfigTab} from "./CustomAdminConfigTab";
 
 /**
  * CS 310 Admin view doesn't really differ at all from the stock Classy view.
@@ -8,6 +9,7 @@ export class ClassyAdminView extends AdminView {
     constructor(remoteUrl: string, tabs: AdminTabs) {
         Log.info("CustomAdminView::<init>(..)");
         super(remoteUrl, tabs);
+        this.configTab = new CustomAdminConfigTab(remoteUrl, this.isAdmin);
     }
 
     public renderPage(name: string, opts: any) {
