@@ -373,10 +373,12 @@ export class GitHubController implements IGitHubController {
         }
 
         // TODO this really should only be cloneURL, but it's not being set when repo is provisioned
+        // TODO remove this when pushing changes up stream
         const repoUrl: string = repo.cloneURL ? repo.cloneURL : `${repo.URL}.git`;
         const baseUrl: string = Config.getInstance().getProp(ConfigKey.patchToolUrl);
-        const patchUrl: string = `${baseUrl}/autopatch?patch_id=${prName}&github_url=${repoUrl}&dryrun=${dryrun}`;
+        const patchUrl: string = `${baseUrl}/autopatch`;
         const updateUrl: string = `${baseUrl}/update`;
+        const qs: {[key: string]: string | boolean} = {patch_id: prName, github_url: repoUrl, dryrun: dryrun};
 
         const options = {
             method: 'POST',
@@ -387,7 +389,7 @@ export class GitHubController implements IGitHubController {
         let result;
 
         try {
-            await rp({url: patchUrl, ...options});
+            await rp(patchUrl, {qs, ...options});
             Log.info("GitHubController::createPullRequest(..) - Patch applied successfully");
             return true;
         } catch (err) {
@@ -398,8 +400,8 @@ export class GitHubController implements IGitHubController {
             case 424:
                 Log.info(`GitHubController::createPullRequest(..) - ${prName} wasn't found by the patchtool. Retrying.`);
                 try {
-                    await rp({url: updateUrl, ...options});
-                    await rp({url: patchUrl, ...options});
+                    await rp(updateUrl, options);
+                    await rp(patchUrl, {qs, ...options});
                     Log.info("GitHubController::createPullRequest(..) - Patch applied successfully on second attempt");
                     return true;
                 } catch (err) {
