@@ -398,9 +398,10 @@ export class GitHubController implements IGitHubController {
 
         switch (result.statusCode) {
             case 424:
-                Log.info(`GitHubController::createPullRequest(..) - ${prName} wasn't found by the patchtool. Retrying.`);
+                Log.info(`GitHubController::createPullRequest(..) - ${prName} wasn't found by the patchtool. Updating patches.`);
                 try {
                     await rp(updateUrl, options);
+                    Log.info(`GitHubController::createPullRequest(..) - Patches updated successfully. Retrying.`);
                     await rp(patchUrl, {qs, ...options});
                     Log.info("GitHubController::createPullRequest(..) - Patch applied successfully on second attempt");
                     return true;
