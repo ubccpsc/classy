@@ -116,28 +116,29 @@ export default class BackendServer {
             Factory.getCustomRouteHandler().then(function(handler) {
                 handler.registerRoutes(that.rest);
                 Log.info('BackendServer::start() - Registering custom handler; done');
+
+                // serve up the static frontend resources
+                that.rest.get('/\/.*/', restify.plugins.serveStatic({
+                    directory: __dirname + '/../../../frontend/html',
+                    default:   'index.html'
+                }));
+
+                const port = that.config.getProp(ConfigKey.backendPort);
+                that.rest.listen(port, function() {
+                    Log.info('BackendServer::start() - restify listening: ' + that.rest.url + "; on port: " + port);
+                    fulfill(true);
+                });
+
+                /* istanbul ignore next */
+                that.rest.on('error', function(err: string) {
+                    // catches errors in restify start; unusual syntax due to internal node not using normal exceptions here
+                    Log.error('BackendServer::start() - restify ERROR: ' + err);
+                    reject(err);
+                });
             }).catch(function(err) {
                 Log.error('BackendServer::start() - Registering custom ERROR: ' + err);
             });
 
-            // serve up the static frontend resources
-            that.rest.get('/\/.*/', restify.plugins.serveStatic({
-                directory: __dirname + '/../../../frontend/html',
-                default:   'index.html'
-            }));
-
-            const port = that.config.getProp(ConfigKey.backendPort);
-            that.rest.listen(port, function() {
-                Log.info('BackendServer::start() - restify listening: ' + that.rest.url + "; on port: " + port);
-                fulfill(true);
-            });
-
-            /* istanbul ignore next */
-            that.rest.on('error', function(err: string) {
-                // catches errors in restify start; unusual syntax due to internal node not using normal exceptions here
-                Log.error('BackendServer::start() - restify ERROR: ' + err);
-                reject(err);
-            });
         });
     }
 }

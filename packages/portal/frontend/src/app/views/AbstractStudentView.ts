@@ -207,7 +207,7 @@ export abstract class AbstractStudentView implements IView {
         }
     }
 
-    protected getOptions() {
+    protected getOptions(): {headers: {[header: string]: string}} {
         const options = {
             headers: {
                 'Content-Type': 'application/json',
