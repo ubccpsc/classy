@@ -152,7 +152,7 @@ export class AdminPullRequestsPage extends AdminPage {
                 UI.showSuccessToast('Patches Refreshed.', {timeout: 10000, buttonLabel: 'Ok'});
             } else {
                 Log.error('AdminPullRequestsPage::handlePatchRefresh(..) - ERROR: ' + json.failure);
-                UI.showErrorToast("Couldn't refresh patches. Failure received from patchtool. View logs.");
+                UI.showErrorToast("Couldn't refresh patches. Failure received from patchtool (see error console)");
             }
         } catch (err) {
             Log.error('AdminPullRequestsPage::handlePatchRefresh(..) - Error refreshing patches: ' + err);
@@ -193,7 +193,7 @@ export class AdminPullRequestsPage extends AdminPage {
                         {timeout: 1000, animation: 'none'});
                 } catch (err) {
                     Log.error('AdminPullRequestPage::patchListOfRepos(..) - patching error for: ' + patch + '; ERROR: ' + err.message);
-                    UI.showErrorToast('Repo NOT released: ' + repo + ' (see error console)');
+                    UI.showErrorToast('Repo NOT patched: ' + repo + ' (see error console)');
                 }
             }
             Log.info('AdminPullRequestPage::patchListOfRepos(..) - done');
