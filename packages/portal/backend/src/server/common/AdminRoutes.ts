@@ -31,14 +31,16 @@ import {RepositoryController} from "../../controllers/RepositoryController";
 import {TeamController} from "../../controllers/TeamController";
 import {Factory} from "../../Factory";
 
-import {AuditLabel, Person} from "../../Types";
+import {AuditLabel, Person, Repository} from "../../Types";
 
+import * as rp from "request-promise-native";
 import IREST from "../IREST";
 import {CSVParser} from "./CSVParser";
 
 export default class AdminRoutes implements IREST {
 
     private static ghc = new GitHubController(GitHubActions.getInstance());
+    private static rc = new RepositoryController();
 
     public registerRoutes(server: restify.Server) {
         Log.trace('AdminRoutes::registerRoutes() - start');
@@ -73,6 +75,11 @@ export default class AdminRoutes implements IREST {
         server.del('/portal/admin/deliverable/:delivId', AdminRoutes.isAdmin, AdminRoutes.deleteDeliverable);
         server.del('/portal/admin/repository/:repoId', AdminRoutes.isAdmin, AdminRoutes.deleteRepository);
         server.del('/portal/admin/team/:teamId', AdminRoutes.isAdmin, AdminRoutes.deleteTeam);
+        server.get('/portal/admin/listPatches', AdminRoutes.isAdmin, AdminRoutes.listPatches);
+        server.post('/portal/admin/patchRepo', AdminRoutes.isAdmin, AdminRoutes.patchRepo);
+        server.post('/portal/admin/patchRepoList', AdminRoutes.isAdmin, AdminRoutes.patchRepoList);
+        server.post('/portal/admin/patchAllRepos', AdminRoutes.isAdmin, AdminRoutes.patchAllRepos);
+        server.post('/portal/admin/updatePatches', AdminRoutes.isAdmin, AdminRoutes.updatePatches);
 
         // TODO: unrelease repos
 
@@ -165,7 +172,7 @@ export default class AdminRoutes implements IREST {
      * @param res
      * @param next
      */
-    public static isAdmin(req: any, res: any, next: any) {
+    private static isAdmin(req: any, res: any, next: any) {
         // Log.info('AdminRoutes::isAdmin(..) - start');
 
         const auth = AdminRoutes.processAuth(req);
@@ -971,5 +978,138 @@ export default class AdminRoutes implements IREST {
 
         Log.info('AdminRoutes::performPostTeam(..) - team created: ' + team.id);
         return teamTrans;
+    }
+
+    private static updatePatches(req: any, res: any, next: any) {
+        Log.trace('AdminRoutes::updatePatches(..) - start');
+        const start = Date.now();
+        // TODO get the url from the config key
+        const url = "http://localhost:8080" + "/update";
+        const opts: rp.RequestPromiseOptions = {
+            rejectUnauthorized: false,
+            strictSSL: false,
+            method: 'post'
+        };
+
+        rp(url, opts).then((result) => {
+            Log.info('AdminRoutes::updatePatches(..) - done; took: ' + Util.took(start));
+            res.send({success: "patches updated"});
+            return next();
+        }).catch((err) => {
+            return AdminRoutes.handleError(400, 'Unable to update patches. Error: ' + err.message, res, next);
+        });
+    }
+
+    private static listPatches(req: any, res: any, next: any) {
+        Log.trace('AdminRoutes::listPatches(..) - start');
+        const start = Date.now();
+        // TODO get the url from the config key
+        const url = "http://localhost:8080" + "/patches";
+        const opts: rp.RequestPromiseOptions = {
+            rejectUnauthorized: false,
+            strictSSL: false,
+            method: 'get'
+        };
+
+        rp(url, opts).then((result) => {
+            try  {
+                const patches = JSON.parse(result).message;
+                Log.info('AdminRoutes::listPatches(..) - done; ' + patches.length + ' patch' +
+                    (patches.length === 1 ? '' : 'es') + ' found; took: ' + Util.took(start));
+                res.send({success: patches});
+                return next();
+            } catch (err) {
+                return AdminRoutes.handleError(400, 'Patches not returned in expected format. Error: '
+                    + err.message, res, next);
+            }
+        }).catch((err) => {
+            return AdminRoutes.handleError(400, 'Unable to get patches. Error: ' + err.message, res, next);
+        });
+    }
+
+    private static patchRepoList(req: any, res: any, next: any) {
+        Log.trace('AdminRoutes::patchRepoList(..) - start');
+        const start = Date.now();
+        const patch: string = req.params.patch;
+        const reposToPatch = req.body;
+        const promises: Array<Promise<Repository>> = [];
+        try {
+            for (const repoId of reposToPatch) {
+                promises.push(AdminRoutes.rc.getRepository(repoId));
+            }
+            Promise.all(promises)
+                .then((repos: Repository[]) => {
+                    // TODO remove when changes are pull from upstream
+                    // @ts-ignore
+                    return repos.map((repo: Repository) => AdminRoutes.ghc.createPullRequest(repo, patch));
+                })
+                .then((results) => {
+                    const failures = reposToPatch.filter((name: string, index: number) => results[index] === false);
+                    if (failures.length > 0) {
+                        Log.error("AdminRoutes::patchRepoList(..) - " +
+                            `${failures.length} repo${failures.length === 1 ? ' was' : 's were'} not patched successfully.`);
+                    }
+                    Log.info('AdminRoutes::patchRepoList(..) - done; took: ' + Util.took(start));
+                    res.send({failures});
+                    return next();
+                })
+                .catch((err) => {
+                    return AdminRoutes.handleError(400, 'Unable to patch repo list. ERROR: ' + err.message, res, next);
+                });
+        } catch (err) {
+            return AdminRoutes.handleError(400, 'ErrUnable to patch repo list. ERROR: ' + err.message, res, next);
+        }
+    }
+
+    private static patchRepo(req: any, res: any, next: any) {
+        Log.trace('AdminRoutes::patchRepo(..) - start');
+        const start = Date.now();
+        const patch: string = req.params.patch;
+        const repoId: string = req.params.repo;
+        AdminRoutes.rc.getRepository(repoId)
+            .then((repo: Repository) => {
+                // TODO remove when changes are pull from upstream
+                // @ts-ignore
+                return stomCourseRoutes.ghc.createPullRequest(repo, patch);
+            })
+            .then((result: boolean) => {
+                if (result) {
+                    Log.info('AdminRoutes::patchRepo(..) - done; took: ' + Util.took(start));
+                    res.send({success: repoId});
+                    return next();
+                } else {
+                    return AdminRoutes.handleError(400, 'Unable to patch repo.', res, next);
+                }
+            })
+            .catch((err: any) => {
+                return AdminRoutes.handleError(400, 'Unable to patch repo. ERROR: ' + err.message, res, next);
+            });
+    }
+
+    private static patchAllRepos(req: any, res: any, next: any) {
+        Log.trace('AdminRoutes::patchAllRepos(..) - start');
+        const start = Date.now();
+        let repoNames: string[];
+        const patch: string = req.params.patch;
+
+        AdminRoutes.rc.getAllRepos().then(function(repos: Repository[]) {
+            repoNames = repos.map((repo: Repository) => repo.id);
+            // TODO remove when changes are pull from upstream
+            const promises: Array<Promise<boolean>> = repos
+            // @ts-ignore
+                .map((repo: Repository) => AdminRoutes.ghc.createPullRequest(repo, patch));
+            return Promise.all(promises);
+        }).then((results: boolean[]) => {
+            const failures = repoNames.filter((name: string, index: number) => !results[index]);
+            if (failures.length > 0) {
+                Log.error("AdminRoutes::patchAllRepos(..) - " +
+                    `${failures.length} repo${failures.length === 1 ? ' was' : 's were'} not patched successfully.`);
+            }
+            Log.info('AdminRoutes::patchAllRepos(..) - done; took: ' + Util.took(start));
+            res.send({failures});
+            return next();
+        }).catch(function(err: any) {
+            return AdminRoutes.handleError(400, 'Unable to patch all repos. ERROR: ' + err.message, res, next);
+        });
     }
 }

@@ -3,8 +3,8 @@ import Log from "../../../../../common/Log";
 import {Payload, RepositoryTransport} from "../../../../../common/types/PortalTypes";
 import Util from "../../../../../common/Util";
 import {UI} from "../util/UI";
-import {AdminPage} from "../views/AdminPage";
-import {AdminView} from "../views/AdminView";
+import {AdminPage} from "./AdminPage";
+import {AdminView} from "./AdminView";
 
 export class AdminPullRequestsPage extends AdminPage {
     private patches: string[];
@@ -22,6 +22,16 @@ export class AdminPullRequestsPage extends AdminPage {
 
         await this.populatePatches();
         await this.populateRepos();
+
+        (document.querySelector('#adminViewPatch') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminPullRequestsPage::viewPatchButton(..) - button pressed');
+            evt.stopPropagation(); // prevents list item expansion
+            that.handleViewPatch().then(function() {
+                // worked
+            }).catch(function(err) {
+                // didn't
+            });
+        };
 
         (document.querySelector('#adminRefreshPatches') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminPullRequestsPage::refreshPatchesButton(..) - button pressed');
@@ -113,6 +123,18 @@ export class AdminPullRequestsPage extends AdminPage {
         return [];
     }
 
+    private async handleViewPatch(): Promise<void> {
+        const patch = UI.getDropdownValue('adminPatchSelect');
+        if (patch === "-None-") {
+            UI.showErrorToast("No patch has been selected.");
+        } else {
+            // TODO get address from config after pulling upstream changes
+            const source = "https://github.ubc.ca/cpsc310/project-patches.git";
+            const address = `${source.replace(/\.git$/, "")}/tree/master/${patch}/diff`;
+            window.open(address, '_blank');
+        }
+    }
+
     private async handlePatchRefresh(): Promise<void> {
         try {
             UI.showModal('Refreshing Patches');
@@ -130,9 +152,11 @@ export class AdminPullRequestsPage extends AdminPage {
                 UI.showSuccessToast('Patches Refreshed.', {timeout: 10000, buttonLabel: 'Ok'});
             } else {
                 Log.error('AdminPullRequestsPage::handlePatchRefresh(..) - ERROR: ' + json.failure);
+                UI.showErrorToast("Couldn't refresh patches. Failure received from patchtool. View logs.");
             }
         } catch (err) {
             Log.error('AdminPullRequestsPage::handlePatchRefresh(..) - Error refreshing patches: ' + err);
+            UI.showErrorToast("Couldn't refresh patches.");
         } finally {
             UI.hideModal();
         }
