@@ -1,13 +1,14 @@
 import {OnsButtonElement} from "onsenui";
+// import Config, {ConfigKey} from "../../../../../common/Config";
 import Log from "../../../../../common/Log";
 import {Payload, RepositoryTransport} from "../../../../../common/types/PortalTypes";
 import Util from "../../../../../common/Util";
 import {UI} from "../util/UI";
 import {AdminPage} from "./AdminPage";
 import {AdminView} from "./AdminView";
-// import Config, {ConfigKey} from "../../../../../common/Config";
 
 export class AdminPullRequestsPage extends AdminPage {
+    private patchSourceRepo: string;
     private patches: string[];
     private repos: string[];
 
@@ -17,15 +18,16 @@ export class AdminPullRequestsPage extends AdminPage {
 
     public async init(opts: any): Promise<void> {
         const that = this;
-        Log.info('AdminPullRequestsPage::init(..) - start');
+        Log.info("AdminPullRequestsPage::init(..) - start");
 
-        UI.showModal('Retrieving Patches and Repositories');
+        UI.showModal("Retrieving Patches and Repositories");
 
+        await this.enableSelectors();
         await this.populatePatches();
         await this.populateRepos();
 
         (document.querySelector('#adminViewPatch') as OnsButtonElement).onclick = function(evt) {
-            Log.info('AdminPullRequestsPage::viewPatchButton(..) - button pressed');
+            Log.info("AdminPullRequestsPage::viewPatchButton(..) - button pressed");
             evt.stopPropagation(); // prevents list item expansion
             that.handleViewPatch().then(function() {
                 // worked
@@ -35,7 +37,7 @@ export class AdminPullRequestsPage extends AdminPage {
         };
 
         (document.querySelector('#adminRefreshPatches') as OnsButtonElement).onclick = function(evt) {
-            Log.info('AdminPullRequestsPage::refreshPatchesButton(..) - button pressed');
+            Log.info("AdminPullRequestsPage::refreshPatchesButton(..) - button pressed");
             evt.stopPropagation(); // prevents list item expansion
             that.handlePatchRefresh().then(function() {
                 // worked
@@ -45,7 +47,7 @@ export class AdminPullRequestsPage extends AdminPage {
         };
 
         (document.querySelector('#adminPatchSubsetOfReposButton') as OnsButtonElement).onclick = function(evt) {
-            Log.info('AdminPullRequestsPage::patchSubsetRepos(..) - button pressed');
+            Log.info("AdminPullRequestsPage::patchSubsetRepos(..) - button pressed");
             evt.stopPropagation(); // prevents list item expansion
             that.handlePatchSubset().then(function() {
                 // worked
@@ -55,7 +57,7 @@ export class AdminPullRequestsPage extends AdminPage {
         };
 
         (document.querySelector('#adminPatchAllReposButton') as OnsButtonElement).onclick = function(evt) {
-            Log.info('AdminPullRequestsPage::patchAllRepos(..) - button pressed');
+            Log.info("AdminPullRequestsPage::patchAllRepos(..) - button pressed");
             evt.stopPropagation(); // prevents list item expansion
             that.handlePatchAll().then(function() {
                 // worked
@@ -67,16 +69,19 @@ export class AdminPullRequestsPage extends AdminPage {
         const patchSelector = document.querySelector('#adminPatchSelect') as HTMLSelectElement;
         patchSelector.onchange = function(evt) {
             evt.stopPropagation(); // prevents list item expansion
-            // that.handlePatchChanged().then(function() {
-            //     //
-            // }).catch(function(err) {
-            //     //
-            // });
         };
+
         UI.hideModal();
     }
 
+    private async enableSelectors(): Promise<void> {
+        (document.getElementById("adminRefreshPatches") as HTMLButtonElement).disabled = false;
+        (document.getElementById("repositoryPatchSelect") as HTMLSelectElement).disabled = false;
+        (document.getElementById("adminViewPatch") as HTMLButtonElement).disabled = false;
+    }
+
     private async populatePatches(): Promise<void> {
+        this.patchSourceRepo = await this.getPatchSourceRepo();
         this.patches = await this.getPatches();
         this.patches = this.patches.sort();
         const displayPatches = ['-None-', ...this.patches];
@@ -102,7 +107,7 @@ export class AdminPullRequestsPage extends AdminPage {
                 repositorySelect.disabled = false;
             }
         } catch (err) {
-            Log.error('AdminPullRequestsPage::populateRepos(..) - ERROR listing repos: ' + err);
+            Log.error("AdminPullRequestsPage::populateRepos(..) - ERROR listing repos: " + err);
         }
     }
 
@@ -116,10 +121,10 @@ export class AdminPullRequestsPage extends AdminPage {
         const json: Payload = await response.json();
 
         if (typeof json.success !== 'undefined') {
-            Log.info('AdminPullRequestsPage::getAllRepos(..) - success; took: ' + Util.took(start));
+            Log.info("AdminPullRequestsPage::getAllRepos(..) - success; took: " + Util.took(start));
             return json.success;
         } else {
-            Log.error('AdminPullRequestsPage::getAllRepos(..) - ERROR: ' + json.failure);
+            Log.error("AdminPullRequestsPage::getAllRepos(..) - ERROR: " + json.failure);
         }
         return [];
     }
@@ -128,18 +133,17 @@ export class AdminPullRequestsPage extends AdminPage {
         const patch = UI.getDropdownValue('adminPatchSelect');
         if (patch === "-None-") {
             UI.showErrorToast("No patch has been selected.");
+        } else if (this.patchSourceRepo === "") {
+            UI.showErrorToast("No patch source repo was found to view.");
         } else {
-            // TODO get address from config after pulling upstream changes
-            // const source = Config.getInstance().getProp(ConfigKey.patchSourceRepo);
-            const source = "https://github.ubc.ca/cpsc310/project-patches.git";
-            const address = `${source.replace(/\.git$/, "")}/tree/master/${patch}/diff`;
+            const address = `${this.patchSourceRepo.replace(/\.git$/, "")}/tree/master/${patch}/diff`;
             window.open(address, '_blank');
         }
     }
 
     private async handlePatchRefresh(): Promise<void> {
         try {
-            UI.showModal('Refreshing Patches');
+            UI.showModal("Refreshing Patches");
             const url = this.remote + '/portal/admin/updatePatches';
             const options: any = AdminView.getOptions();
             options.method = 'post';
@@ -149,15 +153,15 @@ export class AdminPullRequestsPage extends AdminPage {
             const json: Payload = await response.json();
 
             if (typeof json.success !== 'undefined') {
-                Log.info('AdminPullRequestsPage::handlePatchRefresh(..) - update success; took: ' + Util.took(start));
+                Log.info("AdminPullRequestsPage::handlePatchRefresh(..) - update success; took: " + Util.took(start));
                 await this.populatePatches();
-                UI.showSuccessToast('Patches Refreshed.', {timeout: 10000, buttonLabel: 'Ok'});
+                UI.showSuccessToast("Patches Refreshed.", {timeout: 10000, buttonLabel: 'Ok'});
             } else {
-                Log.error('AdminPullRequestsPage::handlePatchRefresh(..) - ERROR: ' + json.failure);
+                Log.error("AdminPullRequestsPage::handlePatchRefresh(..) - ERROR: " + json.failure);
                 UI.showErrorToast("Couldn't refresh patches. Failure received from patchtool (see error console)");
             }
         } catch (err) {
-            Log.error('AdminPullRequestsPage::handlePatchRefresh(..) - Error refreshing patches: ' + err);
+            Log.error("AdminPullRequestsPage::handlePatchRefresh(..) - Error refreshing patches: " + err);
             UI.showErrorToast("Couldn't refresh patches.");
         } finally {
             UI.hideModal();
@@ -179,7 +183,7 @@ export class AdminPullRequestsPage extends AdminPage {
     private async patchListOfRepos(repoList: string[]): Promise<void> {
         const patch = UI.getDropdownValue('adminPatchSelect');
         if (repoList.length < 1) {
-            UI.showErrorToast("No repos have been selected.");
+            UI.showErrorToast("There are no repos to patch.");
         } else if (patch === '-None-') {
             UI.showErrorToast("No patch has been selected.");
         } else {
@@ -189,17 +193,17 @@ export class AdminPullRequestsPage extends AdminPage {
                 const start = Date.now();
                 try {
                     await this.patchRepo(repo, patch);
-                    Log.info('AdminPullRequestPage::patchListOfRepos(..) - patching complete; repo: ' + repo +
-                        '; took: ' + Util.took(start));
-                    UI.showSuccessToast('Repo patched: ' + repo + ' ( ' + (++i) + ' of ' + repoList.length + ' )',
+                    Log.info("AdminPullRequestPage::patchListOfRepos(..) - patching complete; repo: " + repo +
+                        "; took: " + Util.took(start));
+                    UI.showSuccessToast("Repo patched: " + repo + " ( " + (++i) + " of " + repoList.length + " )",
                         {timeout: 1000, animation: 'none'});
                 } catch (err) {
-                    Log.error('AdminPullRequestPage::patchListOfRepos(..) - patching error for: ' + patch + '; ERROR: ' + err.message);
-                    UI.showErrorToast('Repo NOT patched: ' + repo + ' (see error console)');
+                    Log.error("AdminPullRequestPage::patchListOfRepos(..) - patching error for: " + patch + "; ERROR: " + err.message);
+                    UI.showErrorToast("Repo NOT patched: " + repo + " (see error console)");
                 }
             }
-            Log.info('AdminPullRequestPage::patchListOfRepos(..) - done');
-            UI.showSuccessToast('Repository patching complete.', {timeout: 20000, buttonLabel: 'Ok'});
+            Log.info("AdminPullRequestPage::patchListOfRepos(..) - done");
+            UI.showSuccessToast("Repository patching complete.", {timeout: 20000, buttonLabel: 'Ok'});
             await this.init({}); // Refresh the page
         }
     }
@@ -225,12 +229,32 @@ export class AdminPullRequestsPage extends AdminPage {
         const json: Payload = await response.json();
 
         if (typeof json.success !== 'undefined') {
-            Log.info('AdminPullRequestsPage::getPatches(..) - success; took: ' + Util.took(start));
+            Log.info("AdminPullRequestsPage::getPatches(..) - success; took: " + Util.took(start));
             return json.success;
         } else {
-            Log.error('AdminPullRequestsPage::getPatches(..) - ERROR: ' + json.failure);
+            Log.error("AdminPullRequestsPage::getPatches(..) - ERROR: " + json.failure);
         }
         return [];
     }
 
+    private async getPatchSourceRepo(): Promise<string> {
+        const url = this.remote + '/portal/admin/patchSource';
+        const options: any = AdminView.getOptions();
+        options.method = 'get';
+
+        const start = Date.now();
+        const response = await fetch(url, options);
+        const json: Payload = await response.json();
+
+        if (typeof json.success !== 'undefined') {
+            Log.info("AdminPullRequestsPage::getPatchSourceRepo(..) - success; took: " + Util.took(start));
+            return json.success;
+        } else {
+            Log.error("AdminPullRequestsPage::getPatchSourceRepo(..) - ERROR: " + json.failure);
+            UI.showErrorToast("No patch source repo was found in environment. Patch refresh not possible.");
+            (document.getElementById("adminRefreshPatches") as HTMLButtonElement).disabled = true;
+            (document.getElementById("adminViewPatch") as HTMLButtonElement).disabled = true;
+            return "";
+        }
+    }
 }
