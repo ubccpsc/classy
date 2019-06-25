@@ -34,6 +34,7 @@ import {Factory} from "../../Factory";
 import {AuditLabel, Person, Repository} from "../../Types";
 
 import * as rp from "request-promise-native";
+// import Config, {ConfigKey} from "../../../../../common/Config";
 import IREST from "../IREST";
 import {CSVParser} from "./CSVParser";
 
@@ -984,6 +985,7 @@ export default class AdminRoutes implements IREST {
         Log.trace('AdminRoutes::updatePatches(..) - start');
         const start = Date.now();
         // TODO get the url from the config key
+        // Config.getInstance().getProp(ConfigKey.patchToolUrl);
         const url = "http://localhost:8080" + "/update";
         const opts: rp.RequestPromiseOptions = {
             rejectUnauthorized: false,
@@ -1004,6 +1006,7 @@ export default class AdminRoutes implements IREST {
         Log.trace('AdminRoutes::listPatches(..) - start');
         const start = Date.now();
         // TODO get the url from the config key
+        // Config.getInstance().getProp(ConfigKey.patchToolUrl);
         const url = "http://localhost:8080" + "/patches";
         const opts: rp.RequestPromiseOptions = {
             rejectUnauthorized: false,

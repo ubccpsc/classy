@@ -5,6 +5,7 @@ import Util from "../../../../../common/Util";
 import {UI} from "../util/UI";
 import {AdminPage} from "./AdminPage";
 import {AdminView} from "./AdminView";
+// import Config, {ConfigKey} from "../../../../../common/Config";
 
 export class AdminPullRequestsPage extends AdminPage {
     private patches: string[];
@@ -129,6 +130,7 @@ export class AdminPullRequestsPage extends AdminPage {
             UI.showErrorToast("No patch has been selected.");
         } else {
             // TODO get address from config after pulling upstream changes
+            // const source = Config.getInstance().getProp(ConfigKey.patchSourceRepo);
             const source = "https://github.ubc.ca/cpsc310/project-patches.git";
             const address = `${source.replace(/\.git$/, "")}/tree/master/${patch}/diff`;
             window.open(address, '_blank');
