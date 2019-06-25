@@ -7,6 +7,8 @@ import {DatabaseController} from "./DatabaseController";
 import {IGitHubActions} from "./GitHubActions";
 import {TeamController} from "./TeamController";
 
+import * as rp from "request-promise-native";
+
 export interface IGitHubController {
     /**
      * This is a complex method that provisions an entire repository.
@@ -21,7 +23,7 @@ export interface IGitHubController {
      */
     provisionRepository(repoName: string, teams: Team[], sourceRepo: string, shouldRelease: boolean): Promise<boolean>;
 
-    createPullRequest(repoName: string, prName: string): Promise<boolean>;
+    createPullRequest(repo: Repository, prName: string): Promise<boolean>;
 
     getRepositoryUrl(repo: Repository): Promise<string>;
 
@@ -228,7 +230,7 @@ export class GitHubController implements IGitHubController {
         }
 
         Log.info("GitHubController::provisionRepository( " + repoName + " ) - checking to see if repo already exists");
-        const repo = await dbc.getRepository(repoName);
+        let repo = await dbc.getRepository(repoName);
         if (repo === null) {
             // repo object should be in datastore before we try to provision it
             throw new Error("GitHubController::provisionRepository( " + repoName +
@@ -251,9 +253,11 @@ export class GitHubController implements IGitHubController {
             const repoVal = await this.gha.createRepo(repoName);
             Log.info("GitHubController::provisionRepository( " + repoName + " ) - GitHub repo created");
 
-            // NOTE: this isn't done here on purpose: we consider the repo to be provisioned once the whole flow is done
+            // NOTE: this statement commented below isn't done here on purpose;
+            //    repo.url = repoVal
+            // we consider the repo to be provisioned once the whole flow is done
             // callers of this method should instead set the URL field
-            // repo.URL = repoVal;
+            repo = await dbc.getRepository(repoName);
             repo.custom.githubCreated = true;
             await dbc.writeRepository(repo);
 
@@ -352,9 +356,68 @@ export class GitHubController implements IGitHubController {
         return false;
     }
 
-    public async createPullRequest(repoName: string, prName: string): Promise<boolean> {
-        Log.error("GitHubController::createPullRequest(..) - NOT IMPLEMENTED");
-        throw new Error("NOT IMPLEMENTED");
+    /**
+     * Calls the patchtool
+     * @param {Repository} repo: Repo to be patched
+     * @param {string} prName: Name of the patch to apply
+     * @param {boolean} dryrun: Whether to do a practice patch
+     *        i.e.: if dryrun is false  -> patch is applied to repo
+     *              elif dryrun is true -> patch is not applied,
+     *                   but otherwise will behave as if it was
+     */
+    public async createPullRequest(repo: Repository, prName: string, dryrun: boolean = false): Promise<boolean> {
+        Log.info(`GitHubController::createPullRequest(..) - Repo: (${repo.id}) start`);
+        if (repo.cloneURL === null || repo.cloneURL === undefined) {
+            Log.error(`GitHubController::createPullRequest(..) - ${repo.id} didn't have a valid cloneURL associated with it.`);
+            return false;
+        }
+
+        const baseUrl: string = Config.getInstance().getProp(ConfigKey.patchToolUrl);
+        const patchUrl: string = `${baseUrl}/autopatch`;
+        const updateUrl: string = `${baseUrl}/update`;
+        const qs: {[key: string]: string | boolean} = {patch_id: prName, github_url: repo.cloneURL, dryrun: dryrun};
+
+        const options = {
+            method: 'POST',
+            rejectUnauthorized: false,
+            strictSSL: false,
+        };
+
+        let result;
+
+        try {
+            await rp(patchUrl, {qs, ...options});
+            Log.info("GitHubController::createPullRequest(..) - Patch applied successfully");
+            return true;
+        } catch (err) {
+            result = err;
+        }
+
+        switch (result.statusCode) {
+            case 424:
+                Log.info(`GitHubController::createPullRequest(..) - ${prName} wasn't found by the patchtool. Updating patches.`);
+                try {
+                    await rp(updateUrl, options);
+                    Log.info(`GitHubController::createPullRequest(..) - Patches updated successfully. Retrying.`);
+                    await rp(patchUrl, {qs, ...options});
+                    Log.info("GitHubController::createPullRequest(..) - Patch applied successfully on second attempt");
+                    return true;
+                } catch (err) {
+                    Log.error("GitHubController::createPullRequest(..) - Patch failed on second attempt. Message from patchtool server:" +
+                        result.message);
+                    return false;
+                }
+            case 500:
+                Log.error(
+                    `GitHubController::createPullRequest(..) - patchtool internal error. Message from patchtool server: ${result.message}`
+                );
+                return false;
+            default:
+                Log.error(
+                    `GitHubController::createPullRequest(..) - Wasn't able to make a connection to patchtool. Error: ${result.message}`
+                );
+                return false;
+        }
     }
 
     /**
@@ -435,7 +498,7 @@ export class TestGitHubController implements IGitHubController {
         return true;
     }
 
-    public async createPullRequest(repoName: string, prName: string): Promise<boolean> {
+    public async createPullRequest(repo: Repository, prName: string): Promise<boolean> {
         Log.warn("TestGitHubController::createPullRequest(..) - TEST");
         return true;
     }
