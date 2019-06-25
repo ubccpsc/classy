@@ -57,6 +57,9 @@ export enum ConfigKey {
     timeout = "timeout",
     botName = "botName",
     postback = "postback",
+
+    patchId = "patchId",
+    patchToolUrl = "patchToolUrl",
 }
 
 export default class Config {
@@ -112,6 +115,9 @@ export default class Config {
                 autotestUrl:    process.env.AUTOTEST_URL,
                 autotestPort:   process.env.AUTOTEST_PORT,
                 autotestSecret: process.env.AUTOTEST_SECRET,
+
+                patchId: process.env.PATCH_ID,
+                patchToolUrl: process.env.PATCH_TOOL_URL,
             };
 
             // this is not a great place for this
