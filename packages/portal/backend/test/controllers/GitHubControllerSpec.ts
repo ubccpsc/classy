@@ -318,7 +318,8 @@ describe("GitHubController", () => {
         expect(ex).to.not.be.null;
     }).timeout(Test.TIMEOUT);
 
-    it("Should fail to create a pull request.", async function() {
+    // TODO: actually write tests for the PR feature
+    xit("Should fail to create a pull request.", async function() {
         let res = null;
         let ex = null;
         try {
