@@ -63,8 +63,8 @@ export class CSVParser {
                     const p: Person = {
                         id:            row.ACCT.toLowerCase(), // id is CSID since this cannot be changed
                         csId:          row.ACCT.toLowerCase(),
-                        // github.ugrad wants row.ACCT; github.ubc wants row.CWL
-                        githubId:      row.ACCT.toLowerCase(),  // TODO: will depend on instance (see above)
+                        // github.ugrad.cs wanted row.ACCT; github.students.cs and github.ubc want row.CWL
+                        githubId:      row.CWL.toLowerCase(),
                         studentNumber: row.SNUM,
                         fName:         row.FIRST,
                         lName:         row.LAST,
