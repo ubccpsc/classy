@@ -131,14 +131,6 @@ export default class Config {
                 Log.info("Config - Log::<init> - CI NOT detected");
             }
 
-            const hostname = this.config.publichostname;
-            if (hostname.indexOf("://localhost") < 0) {
-                Log.info("Config - Log::<init> - Prod detected; changing to INFO");
-                Log.Level = LogLevel.INFO;
-            } else {
-                Log.info("Config - Log::<init> - Prod NOT detected");
-            }
-
         } catch (err) {
             Log.error("Config::<init> - fatal error reading configuration file: " + err);
         }
