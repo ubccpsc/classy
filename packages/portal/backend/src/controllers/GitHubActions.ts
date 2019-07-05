@@ -93,7 +93,7 @@ export interface IGitHubActions {
      * Lists the Github IDs of members for a teamName (e.g. students).
      *
      * @param {string} teamName
-     * @returns {Promise<string[]>}
+     * @returns {Promise<string[]>} // list of githubIds
      */
     listTeamMembers(teamName: string): Promise<string[]>;
 
@@ -119,10 +119,10 @@ export interface IGitHubActions {
      *
      * @param teamName
      * @param githubTeamId
-     * @param members: string[] // github usernames
+     * @param memberGithubIds: string[] // github usernames
      * @returns {Promise<GitTeamTuple>}
      */
-    addMembersToTeam(teamName: string, githubTeamId: number, members: string[]): Promise<GitTeamTuple>;
+    addMembersToTeam(teamName: string, githubTeamId: number, memberGithubIds: string[]): Promise<GitTeamTuple>;
 
     /**
      * NOTE: needs the team Id (number), not the team name (string)!
@@ -841,6 +841,17 @@ export class GitHubActions implements IGitHubActions {
         Log.info("GitHubAction::addMembersToTeam( " + teamName + ", ..) - start; id: " +
             githubTeamId + "; members: " + JSON.stringify(members));
         const start = Date.now();
+
+        // sanity check (members should be githubIds, not other ids)
+        for (const member of members) {
+            const person = this.dc.getGitHubPerson(member);
+            if (person === null) {
+                const emsg = "GitHubAction::addMembersToTeam( .. ) - githubId: " + member +
+                    " is unknown; is this actually an id instead of a githubId?";
+                Log.error(emsg);
+                throw new Error(emsg);
+            }
+        }
 
         const promises: any = [];
         for (const member of members) {
@@ -1887,7 +1898,7 @@ export class TestGitHubActions implements IGitHubActions {
     }
 
     public async isOnAdminTeam(userName: string): Promise<boolean> {
-        if (userName === this.Test.ADMIN1.id || userName === this.Test.REALUSER3.id) {
+        if (userName === this.Test.ADMIN1.github || userName === this.Test.REALUSER3.github) {
             Log.info("TestGitHubActions::isOnAdminTeam( " + userName + " ) - true");
             return true;
         }
@@ -1896,7 +1907,7 @@ export class TestGitHubActions implements IGitHubActions {
     }
 
     public async isOnStaffTeam(userName: string): Promise<boolean> {
-        if (userName === this.Test.STAFF1.id || userName === this.Test.ADMIN1.id) {
+        if (userName === this.Test.STAFF1.github || userName === this.Test.ADMIN1.github) {
             Log.info("TestGitHubActions::isOnStaffTeam( " + userName + " ) - true");
             return true;
         }
@@ -1909,15 +1920,15 @@ export class TestGitHubActions implements IGitHubActions {
         USERNAMEGITHUB1: 'cpscbot',
         USERNAMEGITHUB2: 'rthse2',
         USERNAMEGITHUB3: 'ubcbot',
-        REALUSER1:       {id: 'rthse2', csId: 'rthse2', github: 'rthse2'}, // real account for testing users
-        REALUSER2:       {id: "jopika", csId: "jopika", github: "jopika"}, // real account for testing users
-        REALUSER3:       {id: "atest-01", csId: "atest-01", github: "atest-01"}, // real account for testing users
-        USER1:           {id: 'user1id', csId: 'user1id', github: 'user1gh'},
-        USER2:           {id: 'user2id', csId: 'user2id', github: 'user2gh'},
-        USER3:           {id: 'user3id', csId: 'user3id', github: 'user3gh'},
-        USER4:           {id: 'user4id', csId: 'user4id', github: 'user4gh'},
-        ADMIN1:          {id: 'classyadmin', csId: 'classyadmin', github: 'classyadmin'},
-        STAFF1:          {id: 'classystaff', csId: 'classystaff', github: 'classystaff'},
+        REALUSER1:       {id: "rthse2ID", csId: "rthse2CSID", github: "rthse2"}, // real account for testing users
+        REALUSER2:       {id: "jopikaID", csId: "jopikaCSID", github: "jopika"}, // real account for testing users
+        REALUSER3:       {id: "atest-01ID", csId: "atest-01CSID", github: "atest-01"}, // real account for testing users
+        USER1:           {id: 'user1ID', csId: 'user1CSID', github: 'user1gh'},
+        USER2:           {id: 'user2ID', csId: 'user2CSID', github: 'user2gh'},
+        USER3:           {id: 'user3ID', csId: 'user3CSID', github: 'user3gh'},
+        USER4:           {id: 'user4ID', csId: 'user4CSID', github: 'user4gh'},
+        ADMIN1:          {id: 'classyadminID', csId: 'classyadminCSID', github: 'classyadmin'},
+        STAFF1:          {id: 'classystaffID', csId: 'classystaffCSID', github: 'classystaff'},
         TEAMNAME1:       't_d0_user1id_user2id',
         INVALIDREPONAME: 'InvalidRepoNameShouldNotExist'
     };

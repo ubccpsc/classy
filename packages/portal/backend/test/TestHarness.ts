@@ -57,16 +57,16 @@ export class Test {
 
         await Test.prepareDeliverables();
 
-        let person = await Test.createPerson(Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, PersonKind.STUDENT);
+        let person = await Test.createPerson(Test.GITHUB1.id, Test.GITHUB1.csId, Test.GITHUB1.github, PersonKind.STUDENT);
         await dbc.writePerson(person);
-        person = await Test.createPerson(Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, PersonKind.STUDENT);
+        person = await Test.createPerson(Test.GITHUB2.id, Test.GITHUB2.csId, Test.GITHUB2.github, PersonKind.STUDENT);
         await dbc.writePerson(person);
-        person = await Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.id, Test.ADMIN1.id, PersonKind.ADMINSTAFF);
+        person = await Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.csId, Test.ADMIN1.github, PersonKind.ADMINSTAFF);
         await dbc.writePerson(person);
 
         await Test.prepareAuth(); // adds admin token (and user1 which is not real)
         // create a team
-        const team = await Test.createTeam(Test.TEAMNAMEREAL, Test.DELIVID0, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+        const team = await Test.createTeam(Test.TEAMNAMEREAL, Test.DELIVID0, [Test.GITHUB1.id, Test.GITHUB2.id]);
         await dbc.writeTeam(team);
     }
 
@@ -269,7 +269,7 @@ export class Test {
         await dc.writeAuth(auth);
 
         auth = {
-            personId: Test.USERNAMEGITHUB1,
+            personId: Test.GITHUB1.id,
             token:    Test.REALTOKEN
         };
         await dc.writeAuth(auth);
@@ -370,35 +370,40 @@ export class Test {
         }
     }
 
-    public static readonly TEAMNAME1 = 't_d0_user1id_user2id';
+    public static readonly TEAMNAME1 = 't_d0_user1gh_user2gh';
     public static readonly TEAMNAME2 = 'TESTteam2';
     public static readonly TEAMNAME3 = 'TESTteam3';
     public static readonly TEAMNAME4 = 'TESTteam4';
     public static readonly TEAMNAMEREAL = 't_d0_cpscbot_rthse2';
     public static readonly INVALIDTEAMNAME = "InvalidTeamNameShouldNotExist";
 
-    public static readonly USER1 = {id: 'user1id', csId: 'user1id', github: 'user1gh'};
-    public static readonly USER2 = {id: 'user2id', csId: 'user2id', github: 'user2gh'};
-    public static readonly USER3 = {id: 'user3id', csId: 'user3id', github: 'user3gh'};
-    public static readonly USER4 = {id: 'user4id', csId: 'user4id', github: 'user4gh'};
-    public static readonly USER5 = {id: 'user5id', csId: 'user5id', github: 'user5gh'};
-    public static readonly USER6 = {id: 'user6id', csId: 'user6id', github: 'user6gh'};
+    public static readonly USER1 = {id: 'user1ID', csId: 'user1CSID', github: 'user1gh'};
+    public static readonly USER2 = {id: 'user2ID', csId: 'user2CSID', github: 'user2gh'};
+    public static readonly USER3 = {id: 'user3ID', csId: 'user3CSID', github: 'user3gh'};
+    public static readonly USER4 = {id: 'user4ID', csId: 'user4CSID', github: 'user4gh'};
+    public static readonly USER5 = {id: 'user5ID', csId: 'user5CSID', github: 'user5gh'};
+    public static readonly USER6 = {id: 'user6ID', csId: 'user6CSID', github: 'user6gh'};
 
-    public static readonly INVALIDUSER1 = {id: 'invalidUser1id', csId: 'invalidUser1id', github: 'invalidUser1gh'};
+    public static readonly INVALIDUSER1 = {id: 'invalidUser1id', csId: 'invalidUser1CSID', github: 'invalidUser1gh'};
 
-    public static readonly ADMIN1 = {id: 'classyadmin', csId: 'classyadmin', github: 'classyadmin'};
+    public static readonly ADMIN1 = {id: 'classyadminID', csId: 'classyadminCSID', github: 'classyadmin'};
     // public static readonly ADMIN1 = {id: 'atest-01', csId: 'atest-01', github: 'atest-01'}; // github-dev.ugrad
-    public static readonly STAFF1 = {id: 'classystaff', csId: 'classystaff', github: 'classystaff'};
+    public static readonly STAFF1 = {id: 'classystaffID', csId: 'classystaffCSID', github: 'classystaff'};
     // public static readonly STAFF1 = {id: 'atest-02', csId: 'atest-02', github: 'atest-02'}; // github-dev.ugrad (not provisioned yet)
 
-    public static readonly REALUSER1 = {id: 'rthse2', csId: 'rthse2', github: 'rthse2'}; // real account for testing users
-    public static readonly REALUSER2 = {id: "jopika", csId: "jopika", github: "jopika"}; // real account for testing users
-    public static readonly REALUSER3 = {id: "atest-01", csId: "atest-01", github: "atest-01"}; // real account for testing users
+    public static readonly REALUSER1 = {id: 'rthse2ID', csId: 'rthse2CSID', github: 'rthse2'}; // real account for testing users
+    public static readonly REALUSER2 = {id: "jopikaID", csId: "jopikaCSID", github: "jopika"}; // real account for testing users
+    public static readonly REALUSER3 = {id: "atest-01ID", csId: "atest-01CSID", github: "atest-01"}; // real account for testing users
 
-    public static readonly USERNAMEGITHUB1 = "cpscbot";
-    public static readonly USERNAMEGITHUB2 = "rthse2";
-    public static readonly USERNAMEGITHUB3 = "ubcbot";
-    public static readonly USERNAMEGITHUB4 = "classystaff";
+    public static readonly GITHUB1 = {id: "cpscbotID", csId: "cpscbotCSID", github: "cpscbot"};
+    public static readonly GITHUB2 = {id: "rthse2ID", csId: "rthse2CSID", github: "rthse2"};
+    public static readonly GITHUB3 = {id: "ubcbotID", csId: "ubcbotCSID", github: "ubcbot"};
+    public static readonly GITHUB4 = {id: "classystaffID", csId: "classystaffCSID", github: "classystaff"};
+
+    // public static readonly USERNAMEGITHUB1 = "cpscbot";
+    // public static readonly USERNAMEGITHUB2 = "rthse2";
+    // public static readonly USERNAMEGITHUB3 = "ubcbot";
+    // public static readonly USERNAMEGITHUB4 = "classystaff";
     // public static readonly USERNAMEGITHUB1 = "atest-01"; // "cpscbot"; // github-dev.ugrad
     // public static readonly USERNAMEGITHUB2 = "atest-02"; // "rthse2"; // github-dev.ugrad
 
@@ -420,8 +425,8 @@ export class Test {
     public static readonly REALTOKEN = 'realtoken';
     public static readonly FAKETOKEN = 'faketoken';
 
-    public static readonly ASSIGNTEAMNAME0 = Test.ASSIGNID0 + "__" + Test.REALUSER1.id;
-    public static readonly ASSIGNTEAMNAME1 = Test.ASSIGNID1 + "__" + Test.REALUSER1.id;
+    public static readonly ASSIGNTEAMNAME0 = Test.ASSIGNID0 + "__" + Test.REALUSER1.github; // TODO: id should be .githubId
+    public static readonly ASSIGNTEAMNAME1 = Test.ASSIGNID1 + "__" + Test.REALUSER1.github; // TODO: id should be .githubId
 
     public static getDeliverable(delivId: string): Deliverable {
         const deliv: Deliverable = {

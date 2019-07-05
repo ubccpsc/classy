@@ -81,12 +81,12 @@ describe("AdminController", () => {
         // clear github teams and repositories we will end up provisioning
         await gha.deleteRepo(Test.REPONAMEREAL);
         // await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
-        await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB1);
-        await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB2);
-        await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB3);
+        await gha.deleteRepo('d0_' + Test.GITHUB1.github);
+        await gha.deleteRepo('d0_' + Test.GITHUB2.github);
+        await gha.deleteRepo('d0_' + Test.GITHUB3.github);
 
-        await gha.deleteRepo('project_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
-        await gha.deleteRepo('project_' + Test.USERNAMEGITHUB3);
+        await gha.deleteRepo('project_' + Test.GITHUB1.github + '_' + Test.GITHUB2.github);
+        await gha.deleteRepo('project_' + Test.GITHUB3.github);
         await gha.deleteRepo(Test.REPONAME1);
         await gha.deleteRepo(Test.REPONAME2);
 
@@ -94,32 +94,32 @@ describe("AdminController", () => {
         // await gha.deleteTeam(teamNum);
 
         // NOTE: using GHA instead of TC because we really want to clear out GitHub
-        let teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB1);
+        let teamNum = await gha.getTeamNumber('t_d0_' + Test.GITHUB1.github);
         await gha.deleteTeam(teamNum);
-        teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB2);
+        teamNum = await gha.getTeamNumber('t_d0_' + Test.GITHUB2.github);
         await gha.deleteTeam(teamNum);
-        teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB3);
+        teamNum = await gha.getTeamNumber('t_d0_' + Test.GITHUB3.github);
         await gha.deleteTeam(teamNum);
-        teamNum = await gha.getTeamNumber('t_project_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
+        teamNum = await gha.getTeamNumber('t_project_' + Test.GITHUB1.github + '_' + Test.GITHUB2.github);
         await gha.deleteTeam(teamNum);
-        teamNum = await  gha.getTeamNumber('t_project_' + Test.USERNAMEGITHUB3);
+        teamNum = await  gha.getTeamNumber('t_project_' + Test.GITHUB3.github);
         await gha.deleteTeam(teamNum);
         teamNum = await gha.getTeamNumber(Test.TEAMNAMEREAL);
         await gha.deleteTeam(teamNum);
 
         await Test.prepareDeliverables();
 
-        const p1: Person = Test.createPerson(Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, PersonKind.STUDENT);
+        const p1: Person = Test.createPerson(Test.GITHUB1.id, Test.GITHUB1.csId, Test.GITHUB1.github, PersonKind.STUDENT);
         await dbc.writePerson(p1);
-        const p2 = Test.createPerson(Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, PersonKind.STUDENT);
+        const p2 = Test.createPerson(Test.GITHUB2.id, Test.GITHUB2.csId, Test.GITHUB2.github, PersonKind.STUDENT);
         await dbc.writePerson(p2);
-        const p3 = Test.createPerson(Test.USERNAMEGITHUB3, Test.USERNAMEGITHUB3, Test.USERNAMEGITHUB3, PersonKind.STUDENT);
+        const p3 = Test.createPerson(Test.GITHUB3.id, Test.GITHUB3.csId, Test.GITHUB3.github, PersonKind.STUDENT);
         await dbc.writePerson(p3);
 
         const deliv = await dbc.getDeliverable(Test.DELIVIDPROJ);
         const names = await cc.computeNames(deliv, [p1, p2]);
 
-        const t = await Test.createTeam(names.teamName, Test.DELIVIDPROJ, [p1.githubId, p2.githubId]);
+        const t = await Test.createTeam(names.teamName, Test.DELIVIDPROJ, [p1.id, p2.id]);
         await dbc.writeTeam(t);
     }
 

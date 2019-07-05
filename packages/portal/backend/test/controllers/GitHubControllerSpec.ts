@@ -46,15 +46,15 @@ describe("GitHubController", () => {
         // redo with real github people
         const dbc = DatabaseController.getInstance();
         const pc = new PersonController();
-        let p = Test.createPerson(Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, PersonKind.STUDENT);
+        let p = Test.createPerson(Test.GITHUB1.id, Test.GITHUB1.csId, Test.GITHUB1.github, PersonKind.STUDENT);
         await pc.writePerson(p);
-        p = Test.createPerson(Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, PersonKind.STUDENT);
+        p = Test.createPerson(Test.GITHUB2.id, Test.GITHUB2.csId, Test.GITHUB2.github, PersonKind.STUDENT);
         await pc.writePerson(p);
 
         // const tc = new TeamController();
-        const t1 = await Test.createTeam(Test.TEAMNAME1, Test.DELIVID0, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+        const t1 = await Test.createTeam(Test.TEAMNAME1, Test.DELIVID0, [Test.GITHUB1.id, Test.GITHUB2.id]);
         await dbc.writeTeam(t1);
-        const t2 = await Test.createTeam(Test.TEAMNAME2, Test.DELIVID1, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+        const t2 = await Test.createTeam(Test.TEAMNAME2, Test.DELIVID1, [Test.GITHUB1.id, Test.GITHUB2.id]);
         await dbc.writeTeam(t2);
         // const t3 = await Test.createTeam(Test.TEAMNAME3, Test.DELIVID2, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
         // await dbc.writeTeam(t3);
@@ -307,7 +307,7 @@ describe("GitHubController", () => {
         res = null;
         ex = null;
         try {
-            const team: any = {id: Test.TEAMNAME3, personIds: [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]};
+            const team: any = {id: Test.TEAMNAME3, personIds: [Test.GITHUB1.id, Test.GITHUB2.id]};
             // try to release a repo with a team that doesn't exist
             res = await gc.releaseRepository(allRepos[1], [team], false);
             expect(res).to.be.false;
