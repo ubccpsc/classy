@@ -57,6 +57,9 @@ export enum ConfigKey {
     timeout = "timeout",
     botName = "botName",
     postback = "postback",
+
+    patchId = "patchId",
+    patchToolUrl = "patchToolUrl",
 }
 
 export default class Config {
@@ -112,6 +115,9 @@ export default class Config {
                 autotestUrl:    process.env.AUTOTEST_URL,
                 autotestPort:   process.env.AUTOTEST_PORT,
                 autotestSecret: process.env.AUTOTEST_SECRET,
+
+                patchId: process.env.PATCH_ID,
+                patchToolUrl: process.env.PATCH_TOOL_URL,
             };
 
             // this is not a great place for this
@@ -123,14 +129,6 @@ export default class Config {
                 Log.Level = LogLevel.INFO; // change to INFO from TRACE if on CI
             } else {
                 Log.info("Config - Log::<init> - CI NOT detected");
-            }
-
-            const hostname = this.config.publichostname;
-            if (hostname.indexOf("://localhost") < 0) {
-                Log.info("Config - Log::<init> - Prod detected; changing to INFO");
-                Log.Level = LogLevel.INFO;
-            } else {
-                Log.info("Config - Log::<init> - Prod NOT detected");
             }
 
         } catch (err) {

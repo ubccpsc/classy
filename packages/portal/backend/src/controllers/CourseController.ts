@@ -15,7 +15,7 @@ import {TeamController} from "./TeamController";
  * implement this interface but should instead extend CourseController.
  *
  * Courses can also of course add their own methods to their custom subclass
- * (e.g., see SDMMController), or can have minimial implementations (e.g.,
+ * (e.g., see CustomCourseController), or can have minimal implementations (e.g.,
  * see CS310Controller).
  */
 export interface ICourseController {

@@ -318,12 +318,14 @@ describe("GitHubController", () => {
         expect(ex).to.not.be.null;
     }).timeout(Test.TIMEOUT);
 
-    it("Should fail to create a pull request.", async function() {
+    // TODO: actually write tests for the PR feature
+    xit("Should fail to create a pull request.", async function() {
         let res = null;
         let ex = null;
         try {
-            // not implemented yet, shoulf fail right away
-            res = await gc.createPullRequest('', '');
+            // not implemented yet, should fail right away
+            const repos = await new RepositoryController().getAllRepos();
+            res = await gc.createPullRequest(repos[0], 'patch');
         } catch (err) {
             ex = err;
         }

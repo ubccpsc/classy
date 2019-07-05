@@ -29,7 +29,7 @@ export class Factory {
             name = Factory.getName();
         }
         try {
-            Log.info("Factory::getCustomRouteHandler() - instantating custom route handler for: " + name);
+            Log.info("Factory::getCustomRouteHandler() - instantiating custom route handler for: " + name);
 
             // NOTE: using require instead of import because file might not be present in forks
             // import complains about this, but require does not.
