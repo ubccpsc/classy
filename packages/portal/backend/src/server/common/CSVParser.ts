@@ -47,16 +47,43 @@ export class CSVParser {
         });
     }
 
+    private duplicateDataCheck(data: any[], columnNames: string[]): any {
+        Log.info('CSVParser::duplicateDataCheck -- start');
+        const that = this;
+        const dupColumnData: any = {};
+        columnNames.forEach(function(column) {
+            Object.assign(dupColumnData, {[column]: that.getDuplicateRowsByColumn(data, column)});
+        });
+        columnNames.forEach(function(column) {
+            if (dupColumnData[column].length) {
+                throw new Error('Duplicate Data Check Error: ' + JSON.stringify(dupColumnData));
+            }
+        });
+    }
+
+    private getDuplicateRowsByColumn(data: any[], column: string) {
+        Log.info('CSVParser::getDuplicateRowsByColumn -- start');
+        const set = new Set();
+        return data.filter((row) => {
+            if (set.has(row[column])) {
+                return true;
+            }
+            set.add(row[column]);
+            return false;
+        });
+    }
+
     public async processClasslist(personId: string, path: string): Promise<Person[]> {
         try {
             Log.info('CSVParser::processClasslist(..) - start');
 
             const data = await this.parsePath(path);
             const pc = new PersonController();
-
             const peoplePromises: Array<Promise<Person>> = [];
+            const duplicateData: any[] = this.duplicateDataCheck(data, ['SNUM', 'ACCT', 'CWL']);
             for (const row of data) {
                 // Log.trace(JSON.stringify(row));
+
                 if (typeof row.ACCT !== 'undefined' && typeof row.CWL !== 'undefined' &&
                     typeof row.SNUM !== 'undefined' && typeof row.FIRST !== 'undefined' &&
                     typeof row.LAST !== 'undefined' && typeof row.LAB !== 'undefined') {
