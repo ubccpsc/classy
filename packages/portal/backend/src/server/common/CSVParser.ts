@@ -61,7 +61,7 @@ export class CSVParser {
         });
     }
 
-    private getDuplicateRowsByColumn(data: any[], column: string) {
+    private getDuplicateRowsByColumn(data: any[], column: string): any[] {
         Log.info('CSVParser::getDuplicateRowsByColumn -- start');
         const set = new Set();
         return data.filter((row) => {
@@ -73,6 +73,27 @@ export class CSVParser {
         });
     }
 
+    private getMissingDataRowsByColumn(data: any[], column: string): any[] {
+        return data.filter((row) => {
+            if (row[column] === '') {
+                return true;
+            }
+            return false;
+        });
+    }
+    private missingDataCheck(data: any[], columns: string[]) {
+        const that = this;
+        const missingData: any = {};
+        columns.forEach((column) => {
+            Object.assign(missingData, {[column]: that.getMissingDataRowsByColumn(data, column)});
+        });
+        columns.forEach((column) => {
+            if (missingData[column].length) {
+                throw new Error('Missing necessary field data in class list ' + JSON.stringify(missingData));
+            }
+        });
+    }
+
     public async processClasslist(personId: string, path: string): Promise<Person[]> {
         try {
             Log.info('CSVParser::processClasslist(..) - start');
@@ -81,6 +102,7 @@ export class CSVParser {
             const pc = new PersonController();
             const peoplePromises: Array<Promise<Person>> = [];
             this.duplicateDataCheck(data, ['SNUM', 'ACCT', 'CWL']);
+            this.missingDataCheck(data, ['SNUM', 'ACCT', 'CWL']);
             for (const row of data) {
                 // Log.trace(JSON.stringify(row));
 
