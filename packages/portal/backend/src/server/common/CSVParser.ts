@@ -47,7 +47,7 @@ export class CSVParser {
         });
     }
 
-    private duplicateDataCheck(data: any[], columnNames: string[]): any {
+    private duplicateDataCheck(data: any[], columnNames: string[]) {
         Log.info('CSVParser::duplicateDataCheck -- start');
         const that = this;
         const dupColumnData: any = {};
@@ -65,10 +65,10 @@ export class CSVParser {
         Log.info('CSVParser::getDuplicateRowsByColumn -- start');
         const set = new Set();
         return data.filter((row) => {
-            if (set.has(row[column])) {
+            if (set.has(row[column].toLowerCase())) {
                 return true;
             }
-            set.add(row[column]);
+            set.add(row[column].toLowerCase());
             return false;
         });
     }
@@ -80,7 +80,7 @@ export class CSVParser {
             const data = await this.parsePath(path);
             const pc = new PersonController();
             const peoplePromises: Array<Promise<Person>> = [];
-            const duplicateData: any[] = this.duplicateDataCheck(data, ['SNUM', 'ACCT', 'CWL']);
+            this.duplicateDataCheck(data, ['SNUM', 'ACCT', 'CWL']);
             for (const row of data) {
                 // Log.trace(JSON.stringify(row));
 
