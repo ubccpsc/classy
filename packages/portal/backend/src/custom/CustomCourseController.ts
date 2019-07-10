@@ -598,6 +598,8 @@ export class CustomCourseController extends CourseController {
                 team.URL = await this.gh.getTeamUrl(team);
                 await this.dbc.writeTeam(team); // don't really need to wait, but this is conservative
 
+                await this.gh.releaseRepository(repo, [team]);
+
                 // create grade entry
                 const grade: GradePayload = {
                     score:     null,
@@ -862,6 +864,8 @@ export class CustomCourseController extends CourseController {
 
                 team.URL = await this.gh.getTeamUrl(team);
                 await this.dbc.writeTeam(team); // don't really need to wait, but this is conservative
+
+                await this.gh.releaseRepository(repo, [team]);
 
                 // create grade entries
                 const grade: GradePayload = {

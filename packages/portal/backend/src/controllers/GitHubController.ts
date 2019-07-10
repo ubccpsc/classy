@@ -28,6 +28,8 @@ export interface IGitHubController {
     getRepositoryUrl(repo: Repository): Promise<string>;
 
     getTeamUrl(team: Team): Promise<string>;
+
+    releaseRepository(repo: Repository, teams: Team[]): Promise<boolean>;
 }
 
 export interface GitTeamTuple {
@@ -503,6 +505,11 @@ export class TestGitHubController implements IGitHubController {
 
     public async createPullRequest(repo: Repository, prName: string): Promise<boolean> {
         Log.warn("TestGitHubController::createPullRequest(..) - TEST");
+        return true;
+    }
+
+    public async releaseRepository(repo: Repository, teams: Team[]): Promise<boolean> {
+        Log.warn("TestGitHubController::releaseRepository(..) - TEST");
         return true;
     }
 }
