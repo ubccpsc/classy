@@ -224,13 +224,6 @@
     "@types/bson" "*"
     "@types/node" "*"
 
-"@types/node-fetch@^2.3.5":
-  version "2.3.5"
-  resolved "https://registry.yarnpkg.com/@types/node-fetch/-/node-fetch-2.3.5.tgz#e25e5b6715f377f46a82783817acceef29121d6e"
-  integrity sha512-Sh6FFmu7t4ccxKTplwKgEeg4fYWi9Ib1uVq3eSEndj6ckM6GaJnHp5mxHmMOq3JsU+lIq5I5GYCLVEpWXoAucA==
-  dependencies:
-    "@types/node" "*"
-
 "@types/node-schedule@^1.2.2":
   version "1.2.3"
   resolved "https://registry.yarnpkg.com/@types/node-schedule/-/node-schedule-1.2.3.tgz#614ba775c4c9b200e5f939a4eeef6727eb0ed6b7"
@@ -4903,7 +4896,7 @@ nice-try@^1.0.4:
   resolved "https://registry.yarnpkg.com/nice-try/-/nice-try-1.0.5.tgz#a3378a7696ce7d223e88fc9b764bd7ef1089e366"
   integrity sha512-1nh45deeb5olNY7eX82BkPO7SSxR5SSYJiPTrTdFUVYwAl8CKMA5N9PjTYkHiRjisVcxcQ1HXdLhx2qxxJzLNQ==
 
-node-fetch@^2.2.0, node-fetch@^2.6.0:
+node-fetch@^2.2.0:
   version "2.6.0"
   resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.0.tgz#e633456386d4aa55863f676a7ab0daa8fdecb0fd"
   integrity sha512-8dG4H5ujfvFiqDmVu9fQ5bOHUC15JMjMY/Zumv26oOvvVJjM67KF8koCWIabKQ1GJIa9r2mMZscBq/TbdOcmNA==
@@ -7167,11 +7160,6 @@ types@^0.1.1:
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/types/-/types-0.1.1.tgz#860c6859d11366293f835d8c95aebcf95029838e"
   integrity sha1-hgxoWdETZik/g12Mla68+VApg44=
-
-typescript@2.6.2:
-  version "2.6.2"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-2.6.2.tgz#3c5b6fd7f6de0914269027f03c0946758f7673a4"
-  integrity sha1-PFtv1/beCRQmkCfwPAlGdY92c6Q=
 
 typescript@^2.9.2:
   version "2.9.2"
