@@ -89,7 +89,7 @@ export class CSVParser {
         });
         columns.forEach((column) => {
             if (missingData[column].length) {
-                throw new Error('Missing necessary field data in class list ' + JSON.stringify(missingData));
+                throw new Error('CWL, SNUM, and ACCT fields cannot be empty: ' + JSON.stringify(missingData));
             }
         });
     }
