@@ -47,53 +47,6 @@ export class CSVParser {
         });
     }
 
-    private duplicateDataCheck(data: any[], columnNames: string[]) {
-        Log.info('CSVParser::duplicateDataCheck -- start');
-        const that = this;
-        const dupColumnData: any = {};
-        columnNames.forEach(function(column) {
-            Object.assign(dupColumnData, {[column]: that.getDuplicateRowsByColumn(data, column)});
-        });
-        columnNames.forEach(function(column) {
-            if (dupColumnData[column].length) {
-                throw new Error('Duplicate Data Check Error: ' + JSON.stringify(dupColumnData));
-            }
-        });
-    }
-
-    private getDuplicateRowsByColumn(data: any[], column: string): any[] {
-        Log.info('CSVParser::getDuplicateRowsByColumn -- start');
-        const set = new Set();
-        return data.filter((row) => {
-            if (set.has(row[column].toLowerCase())) {
-                return true;
-            }
-            set.add(row[column].toLowerCase());
-            return false;
-        });
-    }
-
-    private getMissingDataRowsByColumn(data: any[], column: string): any[] {
-        return data.filter((row) => {
-            if (row[column] === '') {
-                return true;
-            }
-            return false;
-        });
-    }
-    private missingDataCheck(data: any[], columns: string[]) {
-        const that = this;
-        const missingData: any = {};
-        columns.forEach((column) => {
-            Object.assign(missingData, {[column]: that.getMissingDataRowsByColumn(data, column)});
-        });
-        columns.forEach((column) => {
-            if (missingData[column].length) {
-                throw new Error('CWL, SNUM, and ACCT fields cannot be empty: ' + JSON.stringify(missingData));
-            }
-        });
-    }
-
     public async processClasslist(personId: string, path: string): Promise<Person[]> {
         try {
             Log.info('CSVParser::processClasslist(..) - start');
@@ -202,4 +155,52 @@ export class CSVParser {
         }
     }
 
+    private duplicateDataCheck(data: any[], columnNames: string[]) {
+        Log.info('CSVParser::duplicateDataCheck -- start');
+        const that = this;
+        const dupColumnData: any = {};
+        columnNames.forEach(function(column) {
+            Object.assign(dupColumnData, {[column]: that.getDuplicateRowsByColumn(data, column)});
+        });
+        columnNames.forEach(function(column) {
+            if (dupColumnData[column].length) {
+                throw new Error('Duplicate Data Check Error: ' + JSON.stringify(dupColumnData));
+            }
+        });
+    }
+
+    private getDuplicateRowsByColumn(data: any[], column: string): any[] {
+        Log.info('CSVParser::getDuplicateRowsByColumn -- start');
+        const set = new Set();
+        return data.filter((row) => {
+            if (set.has(row[column].toLowerCase())) {
+                return true;
+            }
+            set.add(row[column].toLowerCase());
+            return false;
+        });
+    }
+
+    private getMissingDataRowsByColumn(data: any[], column: string): any[] {
+        Log.info('CSVParser::getMissingDataRowsByColumn -- start');
+        return data.filter((row) => {
+            if (row[column] === '') {
+                return true;
+            }
+            return false;
+        });
+    }
+    private missingDataCheck(data: any[], columns: string[]) {
+        Log.info('CSVParser::missingDataCheck -- start');
+        const that = this;
+        const missingData: any = {};
+        columns.forEach((column) => {
+            Object.assign(missingData, {[column]: that.getMissingDataRowsByColumn(data, column)});
+        });
+        columns.forEach((column) => {
+            if (missingData[column].length) {
+                throw new Error('CWL, SNUM, and ACCT fields cannot be empty: ' + JSON.stringify(missingData));
+            }
+        });
+    }
 }
