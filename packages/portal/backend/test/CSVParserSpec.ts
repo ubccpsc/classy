@@ -31,6 +31,30 @@ describe('CSVParser', function() {
         expect(rows).to.have.lengthOf(5);
     });
 
+    it('Should reject a classlist with empty field from CWL, SNUM, ACCT fields', async function() {
+        const path = __dirname + '/data/classlistEmptyField.csv';
+        const csv = new CSVParser();
+        let ex = null;
+        try {
+            await csv.processClasslist(Test.ADMIN1.id, path);
+        } catch (err) {
+            ex = err;
+        }
+        expect(ex).to.not.be.null;
+    });
+
+    it('Should reject a classlist with duplicate data from CWL, SNUM, ACCT fields', async function() {
+        const path = __dirname + '/data/classlistDuplicateField.csv';
+        const csv = new CSVParser();
+        let ex = null;
+        try {
+            await csv.processClasslist(Test.ADMIN1.id, path);
+        } catch (err) {
+            ex = err;
+        }
+        expect(ex).to.not.be.null;
+    });
+
     it('Should be able to process an updated classlist', async function() {
         const path = __dirname + '/data/classlistValidUpdate.csv';
         const csv = new CSVParser();
