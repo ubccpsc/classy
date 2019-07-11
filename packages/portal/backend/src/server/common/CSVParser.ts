@@ -54,8 +54,8 @@ export class CSVParser {
             const data = await this.parsePath(path);
             const pc = new PersonController();
             const peoplePromises: Array<Promise<Person>> = [];
-            this.duplicateDataCheck(data, ['SNUM', 'ACCT', 'CWL']);
-            this.missingDataCheck(data, ['SNUM', 'ACCT', 'CWL']);
+            this.duplicateDataCheck(data, ['ACCT', 'CWL']);
+            this.missingDataCheck(data, ['ACCT', 'CWL']);
             for (const row of data) {
                 // Log.trace(JSON.stringify(row));
                 if (typeof row.ACCT !== 'undefined' && typeof row.CWL !== 'undefined' &&
