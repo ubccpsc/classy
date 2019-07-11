@@ -156,7 +156,7 @@ export class CSVParser {
     }
 
     private duplicateDataCheck(data: any[], columnNames: string[]) {
-        Log.info('CSVParser::duplicateDataCheck -- start');
+        Log.trace('CSVParser::duplicateDataCheck -- start');
         const that = this;
         const dupColumnData: any = {};
         columnNames.forEach(function(column) {
@@ -164,13 +164,15 @@ export class CSVParser {
         });
         columnNames.forEach(function(column) {
             if (dupColumnData[column].length) {
+                Log.error('CSVParser::duplicateDataCheck(..) - ERROR: Duplicate Data Check Error'
+                    + JSON.stringify(dupColumnData));
                 throw new Error('Duplicate Data Check Error: ' + JSON.stringify(dupColumnData));
             }
         });
     }
 
     private getDuplicateRowsByColumn(data: any[], column: string): any[] {
-        Log.info('CSVParser::getDuplicateRowsByColumn -- start');
+        Log.trace('CSVParser::getDuplicateRowsByColumn -- start');
         const set = new Set();
         return data.filter((row) => {
             if (set.has(row[column].toLowerCase())) {
@@ -182,7 +184,7 @@ export class CSVParser {
     }
 
     private getMissingDataRowsByColumn(data: any[], column: string): any[] {
-        Log.info('CSVParser::getMissingDataRowsByColumn -- start');
+        Log.trace('CSVParser::getMissingDataRowsByColumn -- start');
         return data.filter((row) => {
             if (row[column] === '') {
                 return true;
@@ -191,7 +193,7 @@ export class CSVParser {
         });
     }
     private missingDataCheck(data: any[], columns: string[]) {
-        Log.info('CSVParser::missingDataCheck -- start');
+        Log.trace('CSVParser::missingDataCheck -- start');
         const that = this;
         const missingData: any = {};
         columns.forEach((column) => {
@@ -199,6 +201,8 @@ export class CSVParser {
         });
         columns.forEach((column) => {
             if (missingData[column].length) {
+                Log.error('CSVParser::missingDataCheck(..) - ERROR: CWL, SNUM, and ACCT fields cannot be empty: '
+                    + JSON.stringify(missingData));
                 throw new Error('CWL, SNUM, and ACCT fields cannot be empty: ' + JSON.stringify(missingData));
             }
         });
