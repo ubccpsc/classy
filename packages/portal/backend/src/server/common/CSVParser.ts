@@ -201,9 +201,9 @@ export class CSVParser {
         });
         columns.forEach((column) => {
             if (missingData[column].length) {
-                Log.error('CSVParser::missingDataCheck(..) - ERROR: CWL, SNUM, and ACCT fields cannot be empty: '
+                Log.error('CSVParser::missingDataCheck(..) - ERROR: Certain fields cannot be empty: '
                     + JSON.stringify(missingData));
-                throw new Error('CWL, SNUM, and ACCT fields cannot be empty: ' + JSON.stringify(missingData));
+                throw new Error('Certain fields cannot be empty: ' + JSON.stringify(missingData));
             }
         });
     }
