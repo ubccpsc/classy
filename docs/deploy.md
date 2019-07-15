@@ -183,7 +183,7 @@ The bot user (probably autobot) should be added to the admin team.
     cp -r /tmp/classy /opt && rm -rf /tmp/classy
     cp /opt/classy/.env.sample /opt/classy/.env
     chown -Rh classy:classy /opt/classy
-    chmod -R ug+rwX /opt/classy
+    chmod -R ug+rwX,o-rwx /opt/classy
     find /opt/classy -type d -exec chmod g+s {} \;
  
     mkdir /var/opt/classy
