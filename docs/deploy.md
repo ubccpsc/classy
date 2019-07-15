@@ -185,6 +185,7 @@ The bot user (probably autobot) should be added to the admin team.
     chown -Rh classy:classy /opt/classy
     chmod -R ug+rwX,o-rwx /opt/classy
     find /opt/classy -type d -exec chmod g+s {} \;
+    /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
  
     mkdir /var/opt/classy
     mkdir /var/opt/classy/backups  # for database backups
