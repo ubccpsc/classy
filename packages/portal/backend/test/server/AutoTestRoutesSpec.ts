@@ -93,7 +93,7 @@ describe('AutoTest Routes', function() {
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success.defaultDeliverable).to.not.be.undefined;
-        expect(body.success.defaultDeliverable).to.equal(null);
+        expect(body.success.defaultDeliverable).to.equal(1);
         expect(body.success.deliverableIds).to.not.be.undefined;
         expect(body.success.deliverableIds).to.be.of.length(5);
 
