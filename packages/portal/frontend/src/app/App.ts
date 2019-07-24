@@ -64,7 +64,7 @@ export class App {
             Log.trace('App::init() - validated: false');
         }
 
-        return new Promise(function(fulfill, reject) {
+        return new Promise(async function(fulfill, reject) {
 
             document.addEventListener('init', function(event) {
                 const page = event.target as OnsPageElement;

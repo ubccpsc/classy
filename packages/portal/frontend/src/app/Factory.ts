@@ -68,7 +68,6 @@ export class Factory {
     }
 
     public async getAdminView(backendUrl: string): Promise<IView> {
-        const fs = require('fs');
         const tabs = {
             deliverables: true,
             students:     true,
@@ -82,13 +81,14 @@ export class Factory {
         try {
             if (this.adminView === null) {
                 Log.info("Factory::getAdminView() - instantating new admin view for: " + this.name);
+                const customAdminView = await require('./custom/CustomAdminView');
 
                 // NOTE: using require instead of import because file might not be present in forks
                 // import complains about this, but require does not.
                 let plug: any;
                 if (name === this.TESTNAME) {
                     plug = await require('./views/classy/ClassyAdminView'); // default for testing
-                } else if (fs.exists('./' +  this.name)) { // IF SOME DIRECTORY EXISTS AND EQUALS NAME OF
+                } else if (!customAdminView) { // IF SOME DIRECTORY EXISTS AND EQUALS NAME OF
                     Log.info('enter code here');
                     // If a course wants to specialize the AdminView it should be in the file below.
                     // This is not required. But if it is added, it should never be pushed back to 'classy/master'
@@ -144,14 +144,24 @@ export class Factory {
      *
      * @returns {string}
      */
-    public getHTMLPrefix() {
-        // FORK: You probably do not need to change this unless you want your course
-        // name to be different than the directory your html files are stored in.
+    public  getHTMLPrefix() {
+        // FORK: Gets the default html/landing.html page unless your course
+        // html pages are implemented in {name}/landing.html. ie.cs210/landing.html
+        let customDir = null;
+
+        try {
+            customDir = require(this.name + '/landing.html');
+        } catch (err) {
+            Log.info('Factory::getHTMLPrefix() - no custom page detected');
+        }
+
         Log.trace("Factory::getHTMLPrefix() - getting prefix for: " + this.name);
         if (this.name === 'classytest') {
-            return 'classy';
-        } else {
+            return 'default';
+        } else if (customDir) {
             return this.name;
+        } else {
+            return 'default';
         }
     }
 }
