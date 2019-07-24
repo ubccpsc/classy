@@ -152,7 +152,7 @@ export class Factory {
         try {
             customDir = require(this.name + '/landing.html');
         } catch (err) {
-            Log.info('Factory::getHTMLPrefix() - no custom page detected');
+            Log.info('Factory::getHTMLPrefix() - no custom HTML landing page detected');
         }
 
         Log.trace("Factory::getHTMLPrefix() - getting prefix for: " + this.name);
