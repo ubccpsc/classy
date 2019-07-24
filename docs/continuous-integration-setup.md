@@ -18,7 +18,7 @@ Circle CI is a testing tool that integrates directly with Github and is free for
 
 A `yml` file is included in the `./circleci` directory of the `classy` repository. The `yml` file contains the steps that Circle CI uses to run tests and create a coverage report. Necessary encrypted files, which are also included in the `.circleci` directory, are decrypted during Circle CI runtime using an an `ENVKEY` that is mentioned in the "Setup Instructions" in this README.
 
-# Coveralls 
+## Coveralls 
 
 Coveralls is a code coverage tool that visually charts the code coverage percentage of a Git repository. 
 
