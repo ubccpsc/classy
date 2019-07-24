@@ -2,21 +2,21 @@
 
 ## Setup Overview 
 
-A pull-request MUST pass the all tests in the continuous integration (CI) test suite before it is merged into the Master branch of the root project. This setup ensures that code may only be merged into the Master branch (a.) through a pull-request opened on Github, (b.) approved by at least one member of the project, and (c.) passes all CI tests.
+A pull-request MUST pass all tests in the continuous integration (CI) test suite before it is merged into the Master branch of the root project. This setup ensures that code may only be merged into the Master branch (a.) through a pull-request opened on Github, (b.) approved by at least one member of the project, and (c.) passes all CI tests.
 
-**Three components:** Github Public or Github Enterprise, Circle CI, Coveralls
+**Three components:** Github Public or Github Enterprise, Circle CI, and Coveralls.
 
 **CI Process:** User Pushes Code to Repo **==>** Circle CI Runs Tests **==>** Circle CI Sends Coverage Report to Coveralls **==>** Circle CI Notifies Github that Branch Passes or Fails Tests
 
 ## Github Public or Github Enterprise
 
-Github Public contains the root `classy` repository, which is forked into various Github organizations and user accounts. This continuous integration setup can be re-created on any repository fork, as long as the organization or user account grants access to Circle CI.
+Github Public contains the root `classy` repository, which is forked into various Github organizations and user accounts. This continuous integration setup can be re-created on any repository fork, as long as the organization or user account grants access to Circle CI and Coveralls.
 
 ## Circle CI
 
-Circle CI is a testing tool that integrates directly with Github and is free for use on public repositories. It automatically runs test suites against branches that are pushed to a remote Git repository. Circle CI allows environment variables to be securely included in your test runs while integrating with other services, such as Coveralls.
+Circle CI is a testing tool that integrates directly with Github and is free for use on public repositories. It automatically runs test suites against code that is pushed to any remote Git repository branch. Circle CI allows environment variables to be, securely, included in your test runs while integrating with other services, such as Coveralls.
 
-A `yml` file is included in the `./circleci` directory of the `classy` repository. The `yml` file contains the steps that Circle CI runs to run tests and create a coverage report. Encrypted files are contained in the folder that are decrypted during Circle CI runtime using an an `ENVKEY` that is mentioned in the "Setup Instructions" in this README.
+A `yml` file is included in the `./circleci` directory of the `classy` repository. The `yml` file contains the steps that Circle CI uses to run tests and create a coverage report. Necessary encrypted files, which are also included in the `.circleci` directory, are decrypted during Circle CI runtime using an an `ENVKEY` that is mentioned in the "Setup Instructions" in this README.
 
 # Coveralls 
 
