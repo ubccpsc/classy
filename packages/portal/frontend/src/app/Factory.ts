@@ -1,5 +1,4 @@
 import Log from "../../../../common/Log";
-
 import {AdminView} from "./views/AdminView";
 import {IView} from "./views/IView";
 
@@ -69,6 +68,7 @@ export class Factory {
     }
 
     public async getAdminView(backendUrl: string): Promise<IView> {
+        const fs = require('fs');
         const tabs = {
             deliverables: true,
             students:     true,
@@ -88,9 +88,13 @@ export class Factory {
                 let plug: any;
                 if (name === this.TESTNAME) {
                     plug = await require('./views/classy/ClassyAdminView'); // default for testing
-                } else {
+                } else if (fs.exists('./' +  this.name)) { // IF SOME DIRECTORY EXISTS AND EQUALS NAME OF
+                    Log.info('enter code here');
                     // If a course wants to specialize the AdminView it should be in the file below.
                     // This is not required. But if it is added, it should never be pushed back to 'classy/master'
+                    plug = await require('./custom/CustomAdminView');
+                } else {
+                    // If default view should be loaded when there is no custom implementation
                     plug = await require('./custom/CustomAdminView');
                 }
 
