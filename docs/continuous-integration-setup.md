@@ -44,4 +44,12 @@ Register for an account on https://coveralls.io and grant Coveralls access to th
 
 Github: 
 
+Underneath the repository settings area, select "Branches" on the left-panel and then:
+
+- Add a Branch Protection Rule
+- Enter the Branch Name Pattern: `master`
+- Under Rule Settings, select: 
+  -- Require pull request reviews before merging (1 or more required approval reviews)
+  -- Require status checks to pass before merging (select `ci/circleci:build`, deselect `coverage/coveralls`)
+  -- Include Administrators
 
