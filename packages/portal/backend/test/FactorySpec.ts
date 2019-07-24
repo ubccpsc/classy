@@ -11,22 +11,22 @@ describe('Factory', function() {
      * These are all terrible tests and just make sure that _some_ object is returned.
      */
     it('Can get the route handler for courses', async function() {
-        let actual = Factory.getCustomRouteHandler('classytest');
+        let actual = Factory.getRouteHandler('classytest');
         expect(actual).to.not.be.null;
 
-        actual = Factory.getCustomRouteHandler('sdmm');
+        actual = Factory.getRouteHandler('sdmm');
         expect(actual).to.not.be.null;
 
-        actual = Factory.getCustomRouteHandler('cs310');
+        actual = Factory.getRouteHandler('cs310');
         expect(actual).to.not.be.null;
 
-        actual = Factory.getCustomRouteHandler('cs340');
+        actual = Factory.getRouteHandler('cs340');
         expect(actual).to.not.be.null;
 
         actual = null;
         let ex = null;
         try {
-            actual = Factory.getCustomRouteHandler('INVALIDcourseNAME');
+            actual = Factory.getRouteHandler('INVALIDcourseNAME');
         } catch (err) {
             ex = err;
         }
