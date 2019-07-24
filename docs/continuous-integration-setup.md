@@ -2,7 +2,7 @@
 
 ## Setup Overview 
 
-A pull-request MUST pass all tests in the continuous integration (CI) test suite before it is merged into the Master branch of the root project. This setup ensures that code may only be merged into the Master branch (a.) through a pull-request opened on Github, (b.) approved by at least one member of the project, and (c.) passes all CI tests.
+A pull-request MUST pass all tests in the continuous integration (CI) test suite before it is merged into the Master branch of the root project. This setup ensures that code may only be merged into the Master branch (a.) through a pull-request opened on Github, (b.) approved by at least one member of the project, and (c.) after it passes all CI tests.
 
 **Three components:** Github Public or Github Enterprise, Circle CI, and Coveralls.
 
@@ -28,19 +28,19 @@ Coveralls is a code coverage tool that visually charts the code coverage percent
 
 ## Circle CI: 
 
-Register for a CircleCI account on https://circleci.com and grant Circle CI access to the organization or user account where the `classy` fork is hosted. You may click on "Add Projects" and select the `classy` repository from a list of repos under the organization or user account.
+Register for a CircleCI account on https://circleci.com and grant Circle CI access to the organization or user account where the `classy` fork is hosted. Click on "Add Projects" and select the `classy` repository from a list of repos under the organization or user account.
 
-Click on the `classy` project. Under the `classy` project, click on the cog-wheel on the right (not left panel). Underneath the "Build Settings", you must add the two environment variables below:
+Click on the `classy` project. Under the `classy` project view, click on the cog-wheel on the right (not left panel). Underneath the "Build Settings", you must add the two environment variables below:
 
     COVERALLS_REPO_TOKEN: randomLongString
     ENVKEY: randomLongString
 
-- The `ENVKEY` is private and you must ask a project owner for access to it.
-- The `COVERALLS_REPO_TOKEN` is unique to each `classy` repository fork that you can create in next step.
+- The `ENVKEY` is private and you must ask a project owner for it.
+- The `COVERALLS_REPO_TOKEN` is unique to each `classy` repository fork and found in the next step.
 
 ## Coveralls: 
 
-Register for an account on https://coveralls.io and grant Coveralls access to the organization or user account where `classy` is hosted. Click on "Add Repos" on the left panel and select the `classy` repository by (1.) clicking on the organization or user account where `classy` is located, and (2.) toggling the button beside the repo to "on". A `repo token` will exist underneath the settings of the repo that you added. This `repo token` is the `COVERALLS_REPO_TOKEN` that you must enter into Circle CI's "Build Settings". 
+Register for an account on https://coveralls.io and grant Coveralls access to the organization or user account where `classy` is hosted. Click on "Add Repos" on the left panel and select the `classy` repository by (1.) clicking on the organization or user account where `classy` is located, and (2.) toggling the button beside the repo to "on". A `repo token` will be found underneath the repository's settings view of the repository that you added. This `repo token` is the `COVERALLS_REPO_TOKEN` that you must enter into Circle CI's "Build Settings" above. 
 
 ## Github: 
 
