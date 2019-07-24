@@ -16,7 +16,7 @@ Github Public contains the root `classy` repository, which is forked into variou
 
 Circle CI is a testing tool that integrates directly with Github and is free for use on public repositories. It automatically runs test suites against branches that are pushed to a remote Git repository. Circle CI allows environment variables to be securely included in your test runs while integrating with other services, such as Coveralls.
 
-A `./circleci` directory exists in the classy project where a yml file contains the steps that Circle CI runs to run tests and create a coverage report. Encrypted files are contained in this folder that must be decrypted using an `ENVKEY` that is further mentioned in the "Setup Instructions" of this README.md.
+A `yml` file is included in the `./circleci` directory of the `classy` repository. The `yml` file contains the steps that Circle CI runs to run tests and create a coverage report. Encrypted files are contained in the folder that are decrypted during Circle CI runtime using an an `ENVKEY` that is mentioned in the "Setup Instructions" in this README.
 
 # Coveralls 
 
