@@ -68,7 +68,7 @@ export class Factory {
         }
 
         try {
-            defaultRoutes = require('./server/custom/DefaultCourseRoutes');
+            defaultRoutes = require('./custom/DefaultCourseRoutes');
         } catch (err) {
             Log.warn('Factory::getRouteFiles() - CRITICAL: Could not find DefaultRoutes.ts fallback');
         }
