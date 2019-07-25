@@ -1,10 +1,12 @@
 # Fork Customization
 
-This folder must contain two files:
+This folder must contain at least two files:
 
-* `CustomCourseController.ts` should extend `CourseController`. This class is used for the most common course-specific overrides that require code. 
+* Copy `DefaultCourseController.ts` to create `CustomCourseController.ts`. `CustomCourseController` extends `CourseController`, which is used for the most common course-specific overrides that require code
 
-* `CustomCourseRoutes.ts` should implement `IREST`. This is where you can define any custom REST routes required by the backend.An optional file called `CustomAdminView.ts` containing a class that extends `AdminView` can also be added. 
+* Copy `DefaultCourseRoutes.ts` to create `CustomCourseRoutes.ts`. `CustomCourseRoutes.ts` implements `IREST`, which allows you to define any custom REST routes required by the backend.
+* 
+* An optional file called `CustomAdminView.ts` containing a class that extends `AdminView` can also be added. Copy `DefaultAdminView.ts` to a new file called `CustomAdminView.ts` to create 
 
 Any number of subclasses can also be contained in this folder. These changes should ***NOT*** be pushed back to `classy/master`.
   
