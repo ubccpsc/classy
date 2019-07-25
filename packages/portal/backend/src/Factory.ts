@@ -24,56 +24,36 @@ export class Factory {
      * @param {string} name? optional name (for testing or overriding the default; usually not needed)
      * @returns {IREST}
      */
-    public static async getRouteHandler(name?: string): Promise<IREST> {
+    public static async getCustomRouteHandler(name?: string): Promise<IREST> {
         if (typeof name === 'undefined') {
             name = Factory.getName();
         }
-
-        const {defaultRoutes, customRoutes} = this.getRouteFiles();
-        let plug: any;
-        if (customRoutes) {
-            // If a course wants to specialize the AdminView it should be in the CustomCourseRoutes.ts file.
-            // This is not required. But if it is added, it should never be pushed back to 'classy/master'
-            plug = customRoutes;
-        } else {
-            plug = defaultRoutes;
-        }
-
-        Log.trace("Factory::getRouteHandler() - handler loaded");
         try {
-            Log.info("Factory::getRouteHandler() - instantiating custom route handler for: " + name);
+            Log.info("Factory::getCustomRouteHandler() - instantiating custom route handler for: " + name);
+
+            // NOTE: using require instead of import because file might not be present in forks
+            // import complains about this, but require does not.
+            let plug: any;
+            if (name === 'classytest') {
+                plug = await require('./server/common/DefaultCourseRoutes'); // default for testing
+            } else {
+                // If a course wants to specialize the AdminView it should be in the file below.
+                // This is not required. But if it is added, it should never be pushed back to 'classy/master'
+                plug = await require('./custom/CustomCourseRoutes');
+            }
+
+            Log.trace("Factory::getCustomRouteHandler() - handler loaded");
 
             // if this fails an error will be raised and the default view will be provided in the catch below
             const constructorName = Object.keys(plug)[0];
             const handler = new plug[constructorName]();
-            Log.info("Factory::getRouteHandler() - handler instantiated");
+            Log.info("Factory::getCustomRouteHandler() - handler instantiated");
             return handler;
         } catch (err) {
-            const msg = "Factory::getRouteHandler() - Custom Course Routes not implemented and Default Course Routes not found";
+            const msg = "Factory::getCustomRouteHandler() - src/custom/CustomCourseRoutes.ts must be defined";
             Log.error(msg);
             throw new Error(msg);
         }
-    }
-
-    private static getRouteFiles(): {defaultRoutes: NodeRequire, customRoutes: NodeRequire} {
-        // NOTE: using require instead of import because file might not be present in forks
-        // import complains about this, but require does not.
-        let customRoutes = null;
-        let defaultRoutes = null;
-
-        try {
-            customRoutes = require('./custom/CustomCourseRoutes');
-        } catch (err) {
-            Log.info('Factory::getRouteFiles() - No custom routes found');
-        }
-
-        try {
-            // DefaultCourseRoutes also used for CI Tests
-            defaultRoutes = require('./custom/DefaultCourseRoutes');
-        } catch (err) {
-            Log.warn('Factory::getRouteFiles() - CRITICAL: Could not find DefaultRoutes.ts fallback');
-        }
-        return {customRoutes, defaultRoutes};
     }
 
     // only visible for testing

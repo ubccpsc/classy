@@ -113,7 +113,7 @@ export default class BackendServer {
             // Register custom route handler for specific classy instance
             Log.info('BackendServer::start() - Registering custom handler');
 
-            Factory.getRouteHandler().then(function(handler) {
+            Factory.getCustomRouteHandler().then(function(handler) {
                 handler.registerRoutes(that.rest);
                 Log.info('BackendServer::start() - Registering custom handler; done');
 
