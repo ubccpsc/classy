@@ -43,7 +43,7 @@ export class Factory {
                 // import complains about this, but require does not
                 let plug: any;
                 if (name === this.TESTNAME) {
-                    plug = await require('./views/classy/ClassyStudentView'); // default for testing
+                    plug = await require('./custom/DefaultStudentView'); // default for testing
                 } else {
                     plug = await require('./custom/CustomStudentView'); // course-specific file; must be present in all forks
                 }
@@ -81,20 +81,15 @@ export class Factory {
         try {
             if (this.adminView === null) {
                 Log.info("Factory::getAdminView() - instantating new admin view for: " + this.name);
-                const customAdminView = await require('./custom/CustomAdminView');
 
                 // NOTE: using require instead of import because file might not be present in forks
                 // import complains about this, but require does not.
                 let plug: any;
                 if (name === this.TESTNAME) {
-                    plug = await require('./views/classy/ClassyAdminView'); // default for testing
-                } else if (!customAdminView) { // IF SOME DIRECTORY EXISTS AND EQUALS NAME OF
-                    Log.info('enter code here');
+                    plug = await require('./custom/DefaultAdminView'); // default for testing
+                } else {
                     // If a course wants to specialize the AdminView it should be in the file below.
                     // This is not required. But if it is added, it should never be pushed back to 'classy/master'
-                    plug = await require('./custom/CustomAdminView');
-                } else {
-                    // If default view should be loaded when there is no custom implementation
                     plug = await require('./custom/CustomAdminView');
                 }
 
