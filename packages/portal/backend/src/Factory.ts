@@ -28,28 +28,18 @@ export class Factory {
         if (typeof name === 'undefined') {
             name = Factory.getName();
         }
-        let customRoutes = null;
-
-        try {
-            customRoutes = require('./custom/CustomCourseRoutes');
-        } catch (err) {
-            Log.info('Factory::getRouteHandler - No Custom Route Handler Found.');
-        }
+        const {defaultRoutes, customRoutes} = this.getRouteFiles();
 
         try {
             Log.info("Factory::getRouteHandler() - instantiating custom route handler for: " + name);
 
-            // NOTE: using require instead of import because file might not be present in forks
-            // import complains about this, but require does not.
             let plug: any;
-            if (name === 'classytest') {
-                plug = await require('./server/common/NoCustomRoutes'); // default for testing
-            } else if (customRoutes) {
+            if (customRoutes) {
                 plug = customRoutes;
             } else {
                 // If a course wants to specialize the AdminView it should be in the file below.
                 // This is not required. But if it is added, it should never be pushed back to 'classy/master'
-                plug = await require('./default/DefaultCourseRoutes');
+                plug = defaultRoutes;
             }
 
             Log.trace("Factory::getRouteHandler() - handler loaded");
@@ -60,10 +50,30 @@ export class Factory {
             Log.info("Factory::getRouteHandler() - handler instantiated");
             return handler;
         } catch (err) {
-            const msg = "Factory::getRouteHandler() - src/custom/CustomCourseRoutes.ts must be defined";
+            const msg = "Factory::getRouteHandler() - Custom Course Routes not implemented and Default Course Routes not found";
             Log.error(msg);
             throw new Error(msg);
         }
+    }
+
+    private static getRouteFiles(): {defaultRoutes: NodeRequire, customRoutes: NodeRequire} {
+        // NOTE: using require instead of import because file might not be present in forks
+        // import complains about this, but require does not.
+        let customRoutes = null;
+        let defaultRoutes = null;
+
+        try {
+            customRoutes = require('./custom/CustomCourseRoutes');
+        } catch (err) {
+            Log.info('Factory::getRouteFiles() - No custom routes found');
+        }
+
+        try {
+            defaultRoutes = require('./server/common/DefaultRoutes');
+        } catch (err) {
+            Log.warn('Factory::getRouteFiles() - CRITICAL: Could not find DefaultRoutes.ts fallback');
+        }
+        return {customRoutes, defaultRoutes};
     }
 
     // only visible for testing

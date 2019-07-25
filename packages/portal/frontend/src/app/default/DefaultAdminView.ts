@@ -2,7 +2,7 @@ import Log from "../../../../../common/Log";
 import {AdminTabs, AdminView} from "../views/AdminView";
 
 /**
- * Stock Defaut Admin view (ie. used by CS210)
+ * Stock Default Admin view (ie. used by CS210)
  */
 export class DefaultAdminView extends AdminView {
     constructor(remoteUrl: string, tabs: AdminTabs) {
