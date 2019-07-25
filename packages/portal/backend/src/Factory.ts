@@ -35,7 +35,7 @@ export class Factory {
             // import complains about this, but require does not.
             let plug: any;
             if (name === 'classytest') {
-                plug = await require('./server/common/DefaultCourseRoutes'); // default for testing
+                plug = await require('./custom/DefaultCourseRoutes'); // default for testing
             } else {
                 // If a course wants to specialize the AdminView it should be in the file below.
                 // This is not required. But if it is added, it should never be pushed back to 'classy/master'
