@@ -28,21 +28,20 @@ export class Factory {
         if (typeof name === 'undefined') {
             name = Factory.getName();
         }
-        const {defaultRoutes, customRoutes} = this.getRouteFiles();
 
+        const {defaultRoutes, customRoutes} = this.getRouteFiles();
+        let plug: any;
+        if (customRoutes) {
+            // If a course wants to specialize the AdminView it should be in the CustomCourseRoutes.ts file.
+            // This is not required. But if it is added, it should never be pushed back to 'classy/master'
+            plug = customRoutes;
+        } else {
+            plug = defaultRoutes;
+        }
+
+        Log.trace("Factory::getRouteHandler() - handler loaded");
         try {
             Log.info("Factory::getRouteHandler() - instantiating custom route handler for: " + name);
-
-            let plug: any;
-            if (customRoutes) {
-                plug = customRoutes;
-            } else {
-                // If a course wants to specialize the AdminView it should be in the file below.
-                // This is not required. But if it is added, it should never be pushed back to 'classy/master'
-                plug = defaultRoutes;
-            }
-
-            Log.trace("Factory::getRouteHandler() - handler loaded");
 
             // if this fails an error will be raised and the default view will be provided in the catch below
             const constructorName = Object.keys(plug)[0];
@@ -69,7 +68,7 @@ export class Factory {
         }
 
         try {
-            defaultRoutes = require('./server/common/DefaultRoutes');
+            defaultRoutes = require('./server/custom/DefaultCourseRoutes');
         } catch (err) {
             Log.warn('Factory::getRouteFiles() - CRITICAL: Could not find DefaultRoutes.ts fallback');
         }
