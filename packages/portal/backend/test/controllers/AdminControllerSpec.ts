@@ -429,8 +429,8 @@ describe("AdminController", () => {
     it("Should be able to compute a team and repo name.", async () => {
         const db = DatabaseController.getInstance();
 
-        const tExpected = 't_d0_' + Test.USER1.github + '_' + Test.USER2.github;
-        const rExpected = 'd0_' + Test.USER1.github + '_' + Test.USER2.github;
+        const tExpected = 't_d0_' + Test.USER1.csId + '_' + Test.USER2.csId;
+        const rExpected = 'd0_' + Test.USER1.csId + '_' + Test.USER2.csId;
 
         // prepare
         const dbc = DatabaseController.getInstance();
