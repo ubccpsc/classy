@@ -13,8 +13,7 @@ The front-end uses Onsen UI, which is a lightweight UI framework that uses vanil
 ### Step 1: CREATE CUSTOM HTML VIEWS
 
 - Copy the contents of `Classy/packages/portal/frontend/html/default` to `Classy/packages/portal/frontend/html/*name*`. The name variable MUST be the `name` variable found in `Classy/.env`)
-  
-Any custom HTML templating may be implemented but `landing.html`, `login.html`, and `student.html` are REQUIRED. 
+- The previous step copies the REQUIRED HTML templates: `landing.html`, `login.html`, and `student.html`. Any custom HTML templates may be added here.
 
 UI components and instructions for writing Custom View Model logic can be found here: https://onsen.io/v2/guide/#getting-started.
 
