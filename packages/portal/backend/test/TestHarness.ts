@@ -370,11 +370,11 @@ export class Test {
         }
     }
 
-    public static readonly TEAMNAME1 = 't_d0_user1gh_user2gh';
+    public static readonly TEAMNAME1 = 't_d0_user1CSID_user2CSID';
     public static readonly TEAMNAME2 = 'TESTteam2';
     public static readonly TEAMNAME3 = 'TESTteam3';
     public static readonly TEAMNAME4 = 'TESTteam4';
-    public static readonly TEAMNAMEREAL = 't_d0_cpscbot_rthse2';
+    public static readonly TEAMNAMEREAL = 't_d0_cpscbotCSID_rthse2CSID';
     public static readonly INVALIDTEAMNAME = "InvalidTeamNameShouldNotExist";
 
     public static readonly USER1 = {id: 'user1ID', csId: 'user1CSID', github: 'user1gh'};
@@ -418,7 +418,7 @@ export class Test {
     public static readonly REPONAME1 = 'TESTrepo1';
     public static readonly REPONAME2 = 'TESTrepo2';
     public static readonly REPONAME3 = 'TESTrepo3';
-    public static readonly REPONAMEREAL = 'd0_cpscbot_rthse2';
+    public static readonly REPONAMEREAL = 'd0_cpscbotCSID_rthse2CSID';
     public static readonly INVALIDREPONAME = "InvalidRepoNameShouldNotExist";
     public static readonly REPONAMEREAL2 = 'PostTestDoNotDelete';
 

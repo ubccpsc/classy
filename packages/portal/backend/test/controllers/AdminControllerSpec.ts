@@ -81,12 +81,12 @@ describe("AdminController", () => {
         // clear github teams and repositories we will end up provisioning
         await gha.deleteRepo(Test.REPONAMEREAL);
         // await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
-        await gha.deleteRepo('d0_' + Test.GITHUB1.github);
-        await gha.deleteRepo('d0_' + Test.GITHUB2.github);
-        await gha.deleteRepo('d0_' + Test.GITHUB3.github);
+        await gha.deleteRepo('d0_' + Test.GITHUB1.csId);
+        await gha.deleteRepo('d0_' + Test.GITHUB2.csId);
+        await gha.deleteRepo('d0_' + Test.GITHUB3.csId);
 
-        await gha.deleteRepo('project_' + Test.GITHUB1.github + '_' + Test.GITHUB2.github);
-        await gha.deleteRepo('project_' + Test.GITHUB3.github);
+        await gha.deleteRepo('project_' + Test.GITHUB1.csId + '_' + Test.GITHUB2.csId);
+        await gha.deleteRepo('project_' + Test.GITHUB3.csId);
         await gha.deleteRepo(Test.REPONAME1);
         await gha.deleteRepo(Test.REPONAME2);
 
@@ -94,15 +94,15 @@ describe("AdminController", () => {
         // await gha.deleteTeam(teamNum);
 
         // NOTE: using GHA instead of TC because we really want to clear out GitHub
-        let teamNum = await gha.getTeamNumber('t_d0_' + Test.GITHUB1.github);
+        let teamNum = await gha.getTeamNumber('t_d0_' + Test.GITHUB1.csId);
         await gha.deleteTeam(teamNum);
-        teamNum = await gha.getTeamNumber('t_d0_' + Test.GITHUB2.github);
+        teamNum = await gha.getTeamNumber('t_d0_' + Test.GITHUB2.csId);
         await gha.deleteTeam(teamNum);
-        teamNum = await gha.getTeamNumber('t_d0_' + Test.GITHUB3.github);
+        teamNum = await gha.getTeamNumber('t_d0_' + Test.GITHUB3.csId);
         await gha.deleteTeam(teamNum);
-        teamNum = await gha.getTeamNumber('t_project_' + Test.GITHUB1.github + '_' + Test.GITHUB2.github);
+        teamNum = await gha.getTeamNumber('t_project_' + Test.GITHUB1.csId + '_' + Test.GITHUB2.csId);
         await gha.deleteTeam(teamNum);
-        teamNum = await  gha.getTeamNumber('t_project_' + Test.GITHUB3.github);
+        teamNum = await  gha.getTeamNumber('t_project_' + Test.GITHUB3.csId);
         await gha.deleteTeam(teamNum);
         teamNum = await gha.getTeamNumber(Test.TEAMNAMEREAL);
         await gha.deleteTeam(teamNum);
