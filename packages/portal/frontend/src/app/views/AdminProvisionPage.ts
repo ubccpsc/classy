@@ -364,7 +364,7 @@ export class AdminProvisionPage extends AdminPage {
             Log.info('AdminProvisioningPage::getProvisionDetails(..) - success; took: ' + Util.took(start));
             return json.success;
         } else {
-            Log.error('AdminProvisioningPage::getProvisionDetails(..) - ERROR: ' + json.failure.message);
+            Log.error('AdminProvisioningPage::getProvisionDetails(..) - ERROR: ' + json.failure);
         }
         return [];
     }
