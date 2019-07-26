@@ -1,5 +1,4 @@
 import Log from "../../../../common/Log";
-
 import {CourseController} from "../controllers/CourseController";
 import {IGitHubController} from "../controllers/GitHubController";
 

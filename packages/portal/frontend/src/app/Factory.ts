@@ -34,18 +34,34 @@ export class Factory {
         return Factory.instance;
     }
 
+    private customViewsExist(): boolean {
+        let customHtml = null;
+        try {
+            customHtml = require(this.name + '/landing.html');
+        } catch (err) {
+            Log.info('Factory::getView() - Custom html pages not found for course: ' + this.name);
+        }
+        return customHtml ? true : false;
+    }
+
     public async getView(backendUrl: string): Promise<IView> {
+        // Loads a custom view model if custom HTML code exists, default model for default html, etc.
+        const customViewsExist = this.customViewsExist();
+
         try {
             if (this.studentView === null) {
                 Log.info("Factory::getView() - instantiating new student view for: " + this.name);
 
                 // NOTE: using require instead of import because file might not be present in forks
                 // import complains about this, but require does not
+
                 let plug: any;
                 if (name === this.TESTNAME) {
                     plug = await require('./custom/DefaultStudentView'); // default for testing
+                } else if (customViewsExist) {
+                    plug = await require('./custom/CustomStudentView'); // course-specific file;
                 } else {
-                    plug = await require('./custom/CustomStudentView'); // course-specific file; must be present in all forks
+                    plug = await require('./custom/DefaultStudentView');
                 }
 
                 Log.trace("Factory::getView() - view loaded");
@@ -77,6 +93,7 @@ export class Factory {
             dashboard:    true,
             config:       true
         };
+        const customViewsExist = this.customViewsExist();
 
         try {
             if (this.adminView === null) {
@@ -87,10 +104,12 @@ export class Factory {
                 let plug: any;
                 if (name === this.TESTNAME) {
                     plug = await require('./custom/DefaultAdminView'); // default for testing
-                } else {
+                } else if (customViewsExist) {
                     // If a course wants to specialize the AdminView it should be in the file below.
                     // This is not required. But if it is added, it should never be pushed back to 'classy/master'
-                    plug = await require('./custom/CustomAdminView');
+                    plug = await require('./custom/CustomStudentView'); // course-specific file;
+                } else {
+                    plug = await require('./custom/DefaultAdminView');
                 }
 
                 Log.trace("Factory::getAdminView() - view loaded");
