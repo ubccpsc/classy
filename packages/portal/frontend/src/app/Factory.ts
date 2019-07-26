@@ -142,10 +142,10 @@ export class Factory {
     public  getHTMLPrefix() {
         // FORK: Gets the default html/landing.html page unless your course
         // html pages are implemented in {name}/landing.html. ie.cs210/landing.html
-        let customDir = null;
+        let customPage = null;
 
         try {
-            customDir = require(this.name + '/landing.html');
+            customPage = require(this.name + '/landing.html');
         } catch (err) {
             Log.info('Factory::getHTMLPrefix() - no custom HTML landing page detected');
         }
@@ -153,7 +153,7 @@ export class Factory {
         Log.trace("Factory::getHTMLPrefix() - getting prefix for: " + this.name);
         if (this.name === 'classytest') {
             return 'default';
-        } else if (customDir) {
+        } else if (customPage) {
             return this.name;
         } else {
             return 'default';
