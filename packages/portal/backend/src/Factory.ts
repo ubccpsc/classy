@@ -18,7 +18,7 @@ export class Factory {
     public static OVERRIDE = false; // NOTE: should NOT be commented out when committing
 
     /**
-     * Returns a custom OR default route handler for a course. This will be used to configure
+     * Returns a custom route handler for a course. This will be used to configure
      * Restify with any custom routes required for the course backend. Only one
      * custom handler is permitted per instance.
      * @param {string} name? optional name (for testing or overriding the default; usually not needed)
