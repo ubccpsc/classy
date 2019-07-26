@@ -16,7 +16,7 @@ The front-end uses Onsen UI, which is a lightweight UI framework that uses vanil
   
 Any custom HTML templating may be implemented but `landing.html`, `login.html`, and `student.html` are REQUIRED. 
 
-UI components may be found on https://onsen.io. HTML may implement Custom View Model logic below by using vanilla JavaScript.
+UI components and instructions for writing Custom View Model logic can be found here: https://onsen.io/v2/guide/#getting-started.
 
 ### Step 2: *CREATE CUSTOM VIEW MODELS*
 
