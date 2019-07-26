@@ -24,20 +24,19 @@ In `Classy/packages/portal/frontend/src/app/custom`:
 - Copy `./DefaultAdminView.ts` to `./CustomAdminView.ts`
 - Copy `./DefaultStudentView.ts` to `./CustomStudentView.ts`
 
-Any custom logic may be implemented in the 'Custom' view model files if the files continue to extend the  `AdminView` and `AbstractStudentView` classes. 
+Any custom logic may be implemented in the 'Custom' view model files if the files continue to extend the  `AdminView` and `AbstractStudentView` classes. Any number of subclasses can also be contained in this folder. These changes should ***NOT*** be pushed back to `classy/master`.
 
 ## Back-End Customization
 
-The back-end uses Restify, a RESTful API server, to provide data to the front-end. 
+The back-end uses Restify, a RESTful API server, to provide data to the front-end. Customized back-end controllers and routes MUST be implemented:
 
-You are REQUIRED to implement custom back-end controllers and routes:
+In `Classy/packages/portal/backend/src/custom`:
 
 * Copy `DefaultCourseController.ts` to create `CustomCourseController.ts`. `CustomCourseController` extends `CourseController`, which is used for the most common course-specific overrides that require code
-
 * Copy `DefaultCourseRoutes.ts` to create `CustomCourseRoutes.ts`. `CustomCourseRoutes.ts` implements `IREST`, which allows you to define any custom REST routes required by the backend.
 
 Any number of subclasses can also be contained in this folder. These changes should ***NOT*** be pushed back to `classy/master`.
 
 ## Test Fork Customization 
 
-Continuous Integration (CI) tests can be run to ensure that your implementation works. If all tests pass, then Classy should run in Production, as long as you do not have errors that occur during runtime. To implement CI tests, follow the `Classy/docs/continuous-integration-setup.md` instructions.
+Continuous Integration (CI) tests can be run to ensure that your front-end and back-end implementations work. If all tests pass, then Classy will run in Production. To implement CI tests, follow the `Classy/docs/continuous-integration-setup.md` instructions.
