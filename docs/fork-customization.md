@@ -17,7 +17,7 @@ The front-end uses Onsen UI, which is a lightweight UI framework that uses vanil
 
 UI components and instructions for writing Custom View Model logic can be found here: https://onsen.io/v2/guide/#getting-started.
 
-### Step 2: *CREATE CUSTOM VIEW MODELS*
+### Step 2: CREATE CUSTOM VIEW MODELS
 
 In `Classy/packages/portal/frontend/src/app/custom`:
 
@@ -28,12 +28,12 @@ Any custom logic may be implemented in the 'Custom' view model files if the file
 
 ## Back-End Customization
 
-The back-end uses Restify, a RESTful API server, to provide data to the front-end. Customized back-end controllers and routes MUST be implemented:
+The back-end uses Restify, a RESTful API server, to provide data to the front-end. A customized Course Controller and Course Routes class, respectively, MUST be implemented.
 
-In `Classy/packages/portal/backend/src/custom`:
+To implement custom Course Controller and Course Routes, in `Classy/packages/portal/backend/src/custom`:
 
-* Copy `DefaultCourseController.ts` to create `CustomCourseController.ts`. `CustomCourseController` extends `CourseController`, which is used for the most common course-specific overrides that require code
-* Copy `DefaultCourseRoutes.ts` to create `CustomCourseRoutes.ts`. `CustomCourseRoutes.ts` implements `IREST`, which allows you to define any custom REST routes required by the backend.
+* Copy `DefaultCourseController.ts` to create `CustomCourseController.ts` in the same directory. `CustomCourseController` extends `CourseController` because it is used in the most common course-specific overrides that require code.
+* Copy `DefaultCourseRoutes.ts` to create `CustomCourseRoutes.ts` in the same directory. `CustomCourseRoutes.ts` implements `IREST`, which allows you to define any custom REST routes required by the backend.
 
 Any number of subclasses can also be contained in this folder. These changes should ***NOT*** be pushed back to `classy/master`.
 
