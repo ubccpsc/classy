@@ -2,9 +2,9 @@ import Log from "../../../../../common/Log";
 import {AdminTabs, AdminView} from "../views/AdminView";
 
 /**
- * This is the default Admin View (used in cs210);
+ * Stock Default Admin view
  */
-export class ClassyAdminView extends AdminView {
+export class DefaultAdminView extends AdminView {
     constructor(remoteUrl: string, tabs: AdminTabs) {
         Log.info("CustomAdminView::<init>(..)");
         super(remoteUrl, tabs);

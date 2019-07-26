@@ -1,5 +1,5 @@
 /**
- * This is the default Student View (used in 210);
+ * This is the Default Student View for Classy.
  *
  */
 
@@ -10,30 +10,30 @@ import {Payload, TeamFormationTransport, TeamTransport} from "../../../../../com
 import {UI} from "../util/UI";
 import {AbstractStudentView} from "../views/AbstractStudentView";
 
-export class CustomStudentView extends AbstractStudentView {
+export class DefaultStudentView extends AbstractStudentView {
 
     private teams: TeamTransport[];
 
     constructor(remoteUrl: string) {
         super();
-        Log.info("CS210View::<init>");
+        Log.info("DefaultView::<init>");
         this.remote = remoteUrl;
     }
 
     public renderPage(opts: {}) {
-        Log.info('CustomStudentView::renderPage() - start; options: ' + opts);
+        Log.info('DefaultStudentView::renderPage() - start; options: ' + opts);
         const that = this;
         const start = Date.now();
 
         UI.showModal("Fetching data.");
         super.render().then(function() {
-            // super render complete; do custom work
+            // super render complete; do Default work
             return that.renderStudentPage();
         }).then(function() {
-            Log.info('CustomStudentView::renderPage(..) - prep & render took: ' + UI.took(start));
+            Log.info('DefaultStudentView::renderPage(..) - prep & render took: ' + UI.took(start));
             UI.hideModal();
         }).catch(function(err) {
-            Log.error('CustomStudentView::renderPage() - ERROR: ' + err);
+            Log.error('DefaultStudentView::renderPage() - ERROR: ' + err);
             UI.hideModal();
         });
     }
@@ -41,7 +41,7 @@ export class CustomStudentView extends AbstractStudentView {
     private async renderStudentPage(): Promise<void> {
         UI.showModal('Fetching Data');
         try {
-            Log.info('CustomStudentView::renderStudentPage(..) - start');
+            Log.info('DefaultStudentView::renderStudentPage(..) - start');
 
             // grades renedered in StudentView
 
@@ -52,7 +52,7 @@ export class CustomStudentView extends AbstractStudentView {
             this.teams = teams;
             await this.renderTeams(teams);
 
-            Log.info('CustomStudentView::renderStudentPage(..) - done');
+            Log.info('DefaultStudentView::renderStudentPage(..) - done');
         } catch (err) {
             Log.error('Error encountered: ' + err.message);
         }
@@ -70,14 +70,14 @@ export class CustomStudentView extends AbstractStudentView {
             this.teams = data;
             return data;
         } catch (err) {
-            Log.error('CustomStudentView::fetchTeamData(..) - ERROR: ' + err.message);
+            Log.error('DefaultStudentView::fetchTeamData(..) - ERROR: ' + err.message);
             this.teams = [];
             return [];
         }
     }
 
     private async renderTeams(teams: TeamTransport[]): Promise<void> {
-        Log.trace('CustomStudentView::renderTeams(..) - start');
+        Log.trace('DefaultStudentView::renderTeams(..) - start');
         const that = this;
 
         // make sure these are hidden
@@ -101,15 +101,15 @@ export class CustomStudentView extends AbstractStudentView {
 
             const button = document.querySelector('#studentSelectPartnerButton') as OnsButtonElement;
             button.onclick = function(evt: any) {
-                Log.info('CustomStudentView::renderTeams(..)::createTeam::onClick');
+                Log.info('DefaultStudentView::renderTeams(..)::createTeam::onClick');
                 that.formTeam().then(function(team) {
-                    Log.info('CustomStudentView::renderTeams(..)::createTeam::onClick::then - team created');
+                    Log.info('DefaultStudentView::renderTeams(..)::createTeam::onClick::then - team created');
                     that.teams.push(team);
                     if (team !== null) {
                         that.renderPage({}); // simulating refresh
                     }
                 }).catch(function(err) {
-                    Log.info('CustomStudentView::renderTeams(..)::createTeam::onClick::catch - ERROR: ' + err);
+                    Log.info('DefaultStudentView::renderTeams(..)::createTeam::onClick::catch - ERROR: ' + err);
                 });
             };
 
@@ -126,7 +126,7 @@ export class CustomStudentView extends AbstractStudentView {
     }
 
     private async formTeam(): Promise<TeamTransport> {
-        Log.info("CustomStudentView::formTeam() - start");
+        Log.info("DefaultStudentView::formTeam() - start");
         const otherId = UI.getTextFieldValue('studentSelectPartnerText');
         const myGithubId = this.getStudent().githubId;
         const payload: TeamFormationTransport = {
@@ -138,14 +138,14 @@ export class CustomStudentView extends AbstractStudentView {
         options.method = 'post';
         options.body = JSON.stringify(payload);
 
-        Log.info("CustomStudentView::formTeam() - URL: " + url + "; payload: " + JSON.stringify(payload));
+        Log.info("DefaultStudentView::formTeam() - URL: " + url + "; payload: " + JSON.stringify(payload));
         const response = await fetch(url, options);
 
-        Log.info("CustomStudentView::formTeam() - responded");
+        Log.info("DefaultStudentView::formTeam() - responded");
 
         const body = await response.json() as Payload;
 
-        Log.info("CustomStudentView::formTeam() - response: " + JSON.stringify(body));
+        Log.info("DefaultStudentView::formTeam() - response: " + JSON.stringify(body));
 
         if (typeof body.success !== 'undefined') {
             // worked
@@ -155,7 +155,7 @@ export class CustomStudentView extends AbstractStudentView {
             UI.showError(body);
             return null;
         } else {
-            Log.error("CustomStudentView::formTeam() - else ERROR: " + JSON.stringify(body));
+            Log.error("DefaultStudentView::formTeam() - else ERROR: " + JSON.stringify(body));
         }
     }
 

@@ -149,7 +149,7 @@ export class Factory {
      * 'html/<courseName>' directory.
      *
      * Examples of what these files can look like can be found in the test
-     * implementations found in 'html/classy/'.
+     * implementations found in 'html/custom/' by looking at Default files.
      *
      * While you can have many files in this directory, several are required:
      *   - landing.html - This is the main course-specific landing page
@@ -159,8 +159,8 @@ export class Factory {
      * @returns {string}
      */
     public  getHTMLPrefix() {
-        // FORK: Gets the default html/landing.html page unless your course
-        // html pages are implemented in {name}/landing.html. ie.cs210/landing.html
+        // FORK: Gets the default html/default/landing.html page unless your course
+        // html pages are implemented in html/{name}/landing.html. ie. html/cs210/landing.html
         let customPage = null;
 
         try {
