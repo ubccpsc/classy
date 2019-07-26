@@ -39,7 +39,7 @@ export class Factory {
         try {
             customHtml = require(this.name + '/landing.html');
         } catch (err) {
-            Log.info('Factory::getView() - Custom html pages not found for course: ' + this.name);
+            Log.info('Factory::customViewsExist() - Custom html pages not found for course: ' + this.name);
         }
         return customHtml ? true : false;
     }
@@ -107,7 +107,7 @@ export class Factory {
                 } else if (customViewsExist) {
                     // If a course wants to specialize the AdminView it should be in the file below.
                     // This is not required. But if it is added, it should never be pushed back to 'classy/master'
-                    plug = await require('./custom/CustomStudentView'); // course-specific file;
+                    plug = await require('./custom/CustomAdminView'); // course-specific file;
                 } else {
                     plug = await require('./custom/DefaultAdminView');
                 }
