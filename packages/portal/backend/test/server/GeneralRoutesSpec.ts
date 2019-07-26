@@ -532,7 +532,7 @@ describe('General Routes', function() {
         expect(response.status).to.equal(400);
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
-        expect(body.failure.message).to.equal('User is already on a team for this deliverable ( user1ID is on t_d0_user1gh_user2gh ).');
+        expect(body.failure.message).to.equal('User is already on a team for this deliverable ( user1ID is on t_d0_user1CSID_user2CSID ).');
 
         try {
             Log.test('Making request');
@@ -650,9 +650,9 @@ describe('General Routes', function() {
 
         // create a team, but don't release it
         const deliv = await dc.getDeliverable(Test.DELIVIDPROJ);
-        const team = await dc.getTeam('t_project_user1gh_user2gh');
+        const team = await dc.getTeam('t_project_user1CSID_user2CSID');
         const rc = new RepositoryController();
-        const repo = await rc.createRepository('t_project_user1gh_user2gh', deliv, [team], {});
+        const repo = await rc.createRepository('t_project_user1CSID_user2CSID', deliv, [team], {});
 
         ex = null;
         try {
