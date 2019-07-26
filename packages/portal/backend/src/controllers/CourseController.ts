@@ -145,7 +145,7 @@ export class CourseController implements ICourseController {
 
         let postfix = '';
         for (const person of people) {
-            postfix = postfix + '_' + person.githubId;
+            postfix = postfix + '_' + person.csId;
         }
 
         let tName = '';
