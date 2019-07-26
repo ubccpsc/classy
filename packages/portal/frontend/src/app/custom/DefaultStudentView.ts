@@ -1,5 +1,5 @@
 /**
- * This is the main student page for CS210.
+ * This is the main default student page.
  *
  */
 
