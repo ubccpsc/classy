@@ -2,7 +2,7 @@ import Log from "../../../../../common/Log";
 import {AdminTabs, AdminView} from "../views/AdminView";
 
 /**
- * CS 210 Admin view doesn't really differ at all from the stock Classy view.
+ * This is the default Admin View (used in cs210);
  */
 export class ClassyAdminView extends AdminView {
     constructor(remoteUrl: string, tabs: AdminTabs) {

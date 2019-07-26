@@ -1,5 +1,5 @@
 /**
- * This is the main default student page.
+ * This is the default Student View (used in 210);
  *
  */
 
