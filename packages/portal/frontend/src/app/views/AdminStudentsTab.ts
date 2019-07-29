@@ -69,7 +69,6 @@ export class AdminStudentsTab {
             },
             {
                 id:          'labId',
-
                 text:        'Lab Section',
                 sortable:    true,
                 defaultSort: false,
