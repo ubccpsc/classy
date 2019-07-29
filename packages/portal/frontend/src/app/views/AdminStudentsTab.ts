@@ -86,8 +86,8 @@ export class AdminStudentsTab {
                 labId = student.labId;
             }
             const row: TableCell[] = [
-                {value: student.id, html: '<a href="' + student.userUrl + '">' + student.id + '</a>'}, // Should be CSID w/ CWL Github Link
-                {value: student.githubId, html: student.githubId},
+                {value: student.githubId, html: '<a href="' + student.userUrl + '">' + student.githubId + '</a>'}, // Should be CWL
+                {value: student.id, html: student.id}, // Should be CSID
                 {value: student.firstName, html: student.firstName},
                 {value: student.lastName, html: student.lastName},
                 {value: labId, html: labId}
