@@ -36,7 +36,7 @@ export class AdminStudentsTab {
 
         const headers: TableHeader[] = [
             {
-                id:          'id',
+                id:          'githubId',
                 text:        'Github Id',
                 sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
