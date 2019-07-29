@@ -44,8 +44,8 @@ export class AdminStudentsTab {
                 style:       'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:         'githubId',
-                text:       'CWL',
+                id:         'id',
+                text:       'Internal Id',
                 sortable:   true,
                 defaultSort: false,
                 sortDown:   true,
