@@ -44,6 +44,14 @@ export class AdminStudentsTab {
                 style:       'padding-left: 1em; padding-right: 1em;'
             },
             {
+                id:         'githubId',
+                text:       'CWL',
+                sortable:   true,
+                defaultSort: false,
+                sortDown:   true,
+                style:      'padding-left: 1em; padding-right: 1em;',
+            },
+            {
                 id:          'fName',
                 text:        'First Name',
                 sortable:    true,
@@ -61,6 +69,7 @@ export class AdminStudentsTab {
             },
             {
                 id:          'labId',
+
                 text:        'Lab Section',
                 sortable:    true,
                 defaultSort: false,
@@ -78,7 +87,8 @@ export class AdminStudentsTab {
                 labId = student.labId;
             }
             const row: TableCell[] = [
-                {value: student.githubId, html: '<a href="' + student.userUrl + '">' + student.id + '</a>'}, // SHOULD BE ID?
+                {value: student.id, html: '<a href="' + student.userUrl + '">' + student.id + '</a>'}, // Should be CSID w/ CWL Github Link
+                {value: student.githubId, html: student.githubId},
                 {value: student.firstName, html: student.firstName},
                 {value: student.lastName, html: student.lastName},
                 {value: labId, html: labId}
