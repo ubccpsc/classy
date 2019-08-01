@@ -1,7 +1,8 @@
+import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {StudentTransport} from "../../../../common/types/PortalTypes";
 import Util from "../../../../common/Util";
-import {Person, PersonKind, Repository} from "../Types";
+import {AuditLabel, Person, PersonKind, Repository} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
 import {GitHubActions} from "./GitHubActions";
@@ -9,6 +10,7 @@ import {GitHubActions} from "./GitHubActions";
 export class PersonController {
 
     private db: DatabaseController = DatabaseController.getInstance();
+    private pc: PersonController = new PersonController();
 
     /**
      * Creates a person. If that person exists, returns the existing person.
@@ -57,6 +59,46 @@ export class PersonController {
 
         const successful = await this.db.writePerson(person);
         return successful;
+    }
+
+    public async processClasslist(data: any): Promise<Person[]> {
+        Log.trace("PersonController::processClasslist(...) - start");
+
+        const peoplePromises = [];
+
+        for (const row of data) {
+            // Log.trace(JSON.stringify(row));
+            if (typeof row.ACCT !== 'undefined' && typeof row.CWL !== 'undefined' &&
+                typeof row.SNUM !== 'undefined' && typeof row.FIRST !== 'undefined' &&
+                typeof row.LAST !== 'undefined' && typeof row.LAB !== 'undefined') {
+                const p: Person = {
+                    id:            row.ACCT.toLowerCase(), // id is CSID since this cannot be changed
+                    csId:          row.ACCT.toLowerCase(),
+                    // github.ugrad.cs wanted row.ACCT; github.students.cs and github.ubc want row.CWL
+                    githubId:      row.CWL.toLowerCase(),
+                    studentNumber: row.SNUM,
+                    fName:         row.FIRST,
+                    lName:         row.LAST,
+
+                    kind:   PersonKind.STUDENT,
+                    URL:    null,
+                    labId:  row.LAB,
+                    custom: {}
+                };
+                peoplePromises.push(this.pc.createPerson(p));
+            } else {
+                Log.info('CSVParser::processClasslist(..) - column missing from: ' + JSON.stringify(row));
+                peoplePromises.push(Promise.reject('Required column missing (required: ACCT, CWL, SNUM, FIRST, LAST, LAB).'));
+            }
+        }
+
+        const people = await Promise.all(peoplePromises);
+
+        // audit
+        await this.db.writeAudit(AuditLabel.CLASSLIST_UPLOAD, Config.getInstance().getProp(ConfigKey.classlist_hostname),
+            {}, {}, {numPoeple: people.length});
+
+        return people;
     }
 
     /**
