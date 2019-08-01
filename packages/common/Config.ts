@@ -22,6 +22,17 @@ export enum ConfigCourses {
 }
 
 export enum ConfigKey {
+
+    // MOVE SOMEWHERE MORE APPROPRIATE
+    classlist_hostname = "classlist_hostname",
+    classlist_course_num = "classlist_course_num",
+    classlist_year = "classlist_year",
+    classlist_semester = "classlist_semester",
+    classlist_sections = "classlist_sections",
+    classlist_username = "classlist_username",
+    classlist_password = "classlist_password",
+    classlist_test_url = "classlist_test_url",
+
     name = "name", // name of the course (e.g., cs310, cs340, secapstone, classytest) // should be stable between course instances
     org = "org",
     testorg = "testorg",
@@ -80,6 +91,17 @@ export default class Config {
         // should not be called by clients but typescript does not allow private constructors
         try {
             this.config = {
+
+                // MOVE SOMEWHERE MORE APPROPRIATE
+                classlist_hostname:     process.env.CLASSLIST_HOSTNAME,
+                classlist_course_num:   process.env.CLASSLIST_COURSE_NUM,
+                classlist_year:         process.env.CLASSLIST_YEAR,
+                classlist_semester:     process.env.CLASSLIST_SEMESTER,
+                classlist_sections:     process.env.CLASSLIST_SECTIONS,
+                classlist_username:     process.env.CLASSLIST_USERNAME,
+                classlist_password:     process.env.CLASSLIST_PASSWORD,
+                classlist_test_url:     process.env.CLASSLIST_TEST_URL,
+
                 name:     process.env.NAME,
                 org:      process.env.ORG,
                 testorg:  process.env.ORGTEST,
