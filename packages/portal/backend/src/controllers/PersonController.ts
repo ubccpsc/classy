@@ -12,7 +12,6 @@ import {GitHubActions} from "./GitHubActions";
 export class PersonController {
 
     private db: DatabaseController = DatabaseController.getInstance();
-    private pc: PersonController = new PersonController();
 
     /**
      * Creates a person. If that person exists, returns the existing person.
@@ -93,7 +92,7 @@ export class PersonController {
                     labId:  row.LAB,
                     custom: {}
                 };
-                peoplePromises.push(this.pc.createPerson(p));
+                peoplePromises.push(this.createPerson(p));
             } else {
                 Log.info('PersonController::processClasslist(..) - column missing from: ' + JSON.stringify(row));
                 peoplePromises.push(Promise.reject('Required column missing (required: ACCT, CWL, SNUM, FIRST, LAST, LAB).'));
