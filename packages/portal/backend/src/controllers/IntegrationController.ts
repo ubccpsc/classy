@@ -12,21 +12,16 @@ export class IntegrationController {
 
     private db: DatabaseController = DatabaseController.getInstance();
 
-    public async fetchClasslist() {
+    public async fetchClasslist(): Promise<ClasslistTransport[]> {
         Log.info("IntegrationController::fetchClasslist - start");
         try {
             const config = Config.getInstance();
             const uri = config.getProp(ConfigKey.classlist_test_url);
-            const credentials = config.getProp(ConfigKey.classlist_username) + ':'
-             + config.getProp(ConfigKey.classlist_password);
-            const base64Auth = new Buffer(credentials).toString('base64');
             const options = {
                 uri:     uri,
-                headers: {
-                    Authorization: 'Basic ' + base64Auth,
-                    Accept:        'application/json'
-                }
+                rejectUnauthorized: false
             };
+
             return rp(options);
         } catch (err) {
             Log.error("IntegrationController::fetchClasslist - ERROR: " + err);
