@@ -68,7 +68,7 @@ export default class GeneralRoutes implements IREST {
         Log.info('GeneralRoutes::updateClasslist(..) - start');
         const pc = new PersonController();
         const ic = new IntegrationController();
-        const user = req.headers && req.headers.user || null;
+        const user = req.headers && req.headers.user || null; // SHOULD be null because this is an automated function
 
         try {
             const data = await ic.fetchClasslist();

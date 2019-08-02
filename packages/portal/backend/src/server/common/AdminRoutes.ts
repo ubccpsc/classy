@@ -26,6 +26,7 @@ import {DatabaseController} from "../../controllers/DatabaseController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GitHubActions} from "../../controllers/GitHubActions";
 import {GitHubController} from "../../controllers/GitHubController";
+import {IntegrationController} from "../../controllers/IntegrationController";
 import {PersonController} from "../../controllers/PersonController";
 import {RepositoryController} from "../../controllers/RepositoryController";
 import {TeamController} from "../../controllers/TeamController";
@@ -60,7 +61,7 @@ export default class AdminRoutes implements IREST {
 
         // admin-only functions
         server.post('/portal/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
-        server.put('/portal/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
+        server.put('/portal/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.updateClasslist);
         server.post('/portal/admin/grades/:delivId', AdminRoutes.isAdmin, AdminRoutes.postGrades);
         server.post('/portal/admin/deliverable', AdminRoutes.isAdmin, AdminRoutes.postDeliverable);
         server.post('/portal/admin/team', AdminRoutes.isAdmin, AdminRoutes.postTeam);
@@ -514,12 +515,30 @@ export default class AdminRoutes implements IREST {
         });
     }
 
-    private static updateClasslist(req: any, res: any, next: any) {
+    private static async updateClasslist(req: any, res: any, next: any) {
         Log.info('AdminRoutes::updateClasslist(..) - start');
+        const pc = new PersonController();
+        const ic = new IntegrationController();
+        const user = req.headers && req.headers.user || null; // SHOULD be null because this is an automated function
 
         // authentication handled by preceeding action in chain above (see registerRoutes)
         const userName = AdminRoutes.getUser(req);
+        try {
+            const data = await ic.fetchClasslist();
+            const people = await pc.processClasslist(user, null, data);
 
+            let payload: Payload;
+
+            if (people.length) {
+                payload = {success: {message: 'Classlist upload successful. ' + people.length + ' students processed.'}};
+            } else {
+                const msg = 'Classlist upload not successful; no students were processed from CSV.';
+                return AdminRoutes.handleError(400, msg, res, next);
+            }
+        } catch (err) {
+            const msg = 'Classlist upload not successful; no students were processed from CSV.';
+            return AdminRoutes.handleError(400, msg, res, next);
+        }
     }
 
     private static postClasslist(req: any, res: any, next: any) {
