@@ -77,7 +77,7 @@ export class PersonController {
             // Log.trace(JSON.stringify(row));
             if (typeof row.ACCT !== 'undefined' && typeof row.CWL !== 'undefined' &&
                 typeof row.SNUM !== 'undefined' && typeof row.FIRST !== 'undefined' &&
-                typeof row.LAST !== 'undefined') {
+                typeof row.LAST !== 'undefined' && typeof row.LAB !== 'undefined') {
                 const p: Person = {
                     id:            row.ACCT.toLowerCase(), // id is CSID since this cannot be changed
                     csId:          row.ACCT.toLowerCase(),
@@ -94,8 +94,8 @@ export class PersonController {
                 };
                 peoplePromises.push(this.createPerson(p));
             } else {
-                Log.info('PersonController::processClasslist(..) - column missing from: ' + JSON.stringify(row));
-                peoplePromises.push(Promise.reject('Required column missing (required: ACCT, CWL, SNUM, FIRST, LAST).'));
+                Log.error('PersonController::processClasslist(..) - column missing from: ' + JSON.stringify(row));
+                peoplePromises.push(Promise.reject('Required column missing (required: ACCT, CWL, SNUM, FIRST, LAST, LAB).'));
         }
     }
         const people = await Promise.all(peoplePromises);
