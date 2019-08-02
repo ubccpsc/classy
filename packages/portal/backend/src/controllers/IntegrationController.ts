@@ -19,11 +19,11 @@ export class IntegrationController {
             const uri = config.getProp(ConfigKey.classlist_test_url);
             const credentials = config.getProp(ConfigKey.classlist_username) + ':'
              + config.getProp(ConfigKey.classlist_password);
-            const buffer = new Buffer(credentials).toString('base64');
+            const base64Auth = new Buffer(credentials).toString('base64');
             const options = {
                 uri:     uri,
                 headers: {
-                    Authorization: 'Basic ' + new Buffer(credentials).toString('base64'),
+                    Authorization: 'Basic ' + base64Auth,
                     Accept:        'application/json'
                 }
             };
