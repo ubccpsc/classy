@@ -23,7 +23,11 @@ export enum ConfigCourses {
 
 export enum ConfigKey {
 
-    // MOVE SOMEWHERE MORE APPROPRIATE
+    name = "name", // name of the course (e.g., cs310, cs340, secapstone, classytest) // should be stable between course instances
+    org = "org",
+    testorg = "testorg",
+    testname = "testname",
+
     classlist_hostname = "classlist_hostname",
     classlist_course_num = "classlist_course_num",
     classlist_year = "classlist_year",
@@ -31,11 +35,6 @@ export enum ConfigKey {
     classlist_sections = "classlist_sections",
     classlist_username = "classlist_username",
     classlist_password = "classlist_password",
-
-    name = "name", // name of the course (e.g., cs310, cs340, secapstone, classytest) // should be stable between course instances
-    org = "org",
-    testorg = "testorg",
-    testname = "testname",
 
     publichostname = "publichostname",
 
@@ -91,7 +90,11 @@ export default class Config {
         try {
             this.config = {
 
-                // MOVE SOMEWHERE MORE APPROPRIATE
+                name:     process.env.NAME,
+                org:      process.env.ORG,
+                testorg:  process.env.ORGTEST,
+                testname: process.env.NAMETEST,
+
                 classlist_hostname:     process.env.CLASSLIST_HOSTNAME,
                 classlist_course_num:   process.env.CLASSLIST_COURSE_NUM,
                 classlist_year:         process.env.CLASSLIST_YEAR,
@@ -99,11 +102,6 @@ export default class Config {
                 classlist_sections:     process.env.CLASSLIST_SECTIONS,
                 classlist_username:     process.env.CLASSLIST_USERNAME,
                 classlist_password:     process.env.CLASSLIST_PASSWORD,
-
-                name:     process.env.NAME,
-                org:      process.env.ORG,
-                testorg:  process.env.ORGTEST,
-                testname: process.env.NAMETEST,
 
                 publichostname: process.env.PUBLICHOSTNAME,
 
