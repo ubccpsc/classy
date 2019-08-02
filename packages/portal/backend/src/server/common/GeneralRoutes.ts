@@ -72,7 +72,7 @@ export default class GeneralRoutes implements IREST {
 
         try {
             const data = await ic.fetchClasslist();
-            const people = await pc.processClasslist(user, null, req.body);
+            const people = await pc.processClasslist(user, null, data);
 
             let payload: Payload;
 
