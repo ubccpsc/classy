@@ -31,7 +31,6 @@ export enum ConfigKey {
     classlist_sections = "classlist_sections",
     classlist_username = "classlist_username",
     classlist_password = "classlist_password",
-    classlist_test_url = "classlist_test_url",
 
     name = "name", // name of the course (e.g., cs310, cs340, secapstone, classytest) // should be stable between course instances
     org = "org",
@@ -100,7 +99,6 @@ export default class Config {
                 classlist_sections:     process.env.CLASSLIST_SECTIONS,
                 classlist_username:     process.env.CLASSLIST_USERNAME,
                 classlist_password:     process.env.CLASSLIST_PASSWORD,
-                classlist_test_url:     process.env.CLASSLIST_TEST_URL,
 
                 name:     process.env.NAME,
                 org:      process.env.ORG,
