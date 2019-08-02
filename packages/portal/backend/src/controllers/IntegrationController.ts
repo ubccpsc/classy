@@ -22,7 +22,7 @@ export class IntegrationController {
                 rejectUnauthorized: false
             };
 
-            return rp(options);
+            return JSON.parse(await rp(options));
         } catch (err) {
             Log.error("IntegrationController::fetchClasslist - ERROR: " + err);
             throw new Error("Could not fetch Classlist " + err.message);
