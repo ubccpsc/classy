@@ -60,6 +60,7 @@ export default class AdminRoutes implements IREST {
 
         // admin-only functions
         server.post('/portal/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
+        server.put('/portal/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
         server.post('/portal/admin/grades/:delivId', AdminRoutes.isAdmin, AdminRoutes.postGrades);
         server.post('/portal/admin/deliverable', AdminRoutes.isAdmin, AdminRoutes.postDeliverable);
         server.post('/portal/admin/team', AdminRoutes.isAdmin, AdminRoutes.postTeam);
@@ -511,6 +512,14 @@ export default class AdminRoutes implements IREST {
         }).catch(function(err) {
             return AdminRoutes.handleError(400, 'Unable to get deliverable list; ERROR: ' + err.message, res, next);
         });
+    }
+
+    private static updateClasslist(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::updateClasslist(..) - start');
+
+        // authentication handled by preceeding action in chain above (see registerRoutes)
+        const userName = AdminRoutes.getUser(req);
+
     }
 
     private static postClasslist(req: any, res: any, next: any) {
