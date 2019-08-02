@@ -22,6 +22,7 @@ import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GitHubActions} from "../../controllers/GitHubActions";
 import {GitHubController} from "../../controllers/GitHubController";
 import {GradesController} from "../../controllers/GradesController";
+import {IntegrationController} from "../../controllers/IntegrationController";
 import {PersonController} from "../../controllers/PersonController";
 import {RepositoryController} from "../../controllers/RepositoryController";
 import {TeamController} from "../../controllers/TeamController";
@@ -66,9 +67,12 @@ export default class GeneralRoutes implements IREST {
     public static async updateClasslist(req: any, res: any, next: any) {
         Log.info('GeneralRoutes::updateClasslist(..) - start');
         const pc = new PersonController();
+        const ic = new IntegrationController();
         const user = req.headers && req.headers.user || null;
+
         try {
-            const people = await pc.processClasslist(req.body, user);
+            const data = await ic.fetchClasslist();
+            const people = await pc.processClasslist(user, null, req.body);
 
             let payload: Payload;
 

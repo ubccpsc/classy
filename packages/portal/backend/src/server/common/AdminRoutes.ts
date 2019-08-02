@@ -526,7 +526,7 @@ export default class AdminRoutes implements IREST {
 
             const csvData = new CSVParser().parsePath(path);
             const pc = new PersonController();
-            pc.processClasslist(userName, path).then(function(people) {
+            pc.processClasslist(userName, path, null).then(function(people) {
                 if (people.length > 0) {
                     const payload: Payload = {
                         success: {

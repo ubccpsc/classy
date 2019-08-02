@@ -1,5 +1,7 @@
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
+import { CSVParser } from "../server/common/CSVParser";
+
 import {StudentTransport} from "../../../../common/types/PortalTypes";
 import Util from "../../../../common/Util";
 import {AuditLabel, Person, PersonKind, Repository} from "../Types";
@@ -61,9 +63,13 @@ export class PersonController {
         return successful;
     }
 
-    public async processClasslist(personId: string = null, data: any): Promise<Person[]> {
+    public async processClasslist(personId: string = null, path: string = null,  data: any): Promise<Person[]> {
         Log.trace("PersonController::processClasslist(...) - start");
-        const pc = new PersonController();
+
+        if (path !== null) {
+            data = new CSVParser().parsePath(path);
+        }
+
         this.duplicateDataCheck(data, ['ACCT', 'CWL']);
         this.missingDataCheck(data, ['ACCT', 'CWL']);
         const peoplePromises: Array<Promise<Person>> = [];
@@ -91,9 +97,8 @@ export class PersonController {
             } else {
                 Log.info('PersonController::processClasslist(..) - column missing from: ' + JSON.stringify(row));
                 peoplePromises.push(Promise.reject('Required column missing (required: ACCT, CWL, SNUM, FIRST, LAST, LAB).'));
-            }
         }
-
+    }
         const people = await Promise.all(peoplePromises);
 
         // audit
