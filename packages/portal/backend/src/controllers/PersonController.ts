@@ -66,7 +66,7 @@ export class PersonController {
         Log.trace("PersonController::processClasslist(...) - start");
 
         if (path !== null) {
-            data = new CSVParser().parsePath(path);
+            data = await new CSVParser().parsePath(path);
         }
 
         this.duplicateDataCheck(data, ['ACCT', 'CWL']);
