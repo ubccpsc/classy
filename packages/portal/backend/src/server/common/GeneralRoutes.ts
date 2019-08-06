@@ -61,7 +61,7 @@ export default class GeneralRoutes implements IREST {
         server.get('/portal/resource/.*', GeneralRoutes.getResource);
 
         // this does not return results so it is not protected;
-        server.put('/portal/classlist/update', GeneralRoutes.updateClasslist);
+        server.put('/portal/classlist', GeneralRoutes.updateClasslist);
     }
 
     public static async updateClasslist(req: any, res: any, next: any) {
@@ -78,6 +78,8 @@ export default class GeneralRoutes implements IREST {
 
             if (people.length) {
                 payload = {success: {message: 'Classlist upload successful. ' + people.length + ' students processed.'}};
+                res.send(200, payload);
+                Log.info('GeneralRoutes::updateClasslist(..) - done: ' + payload.success.message);
             } else {
                 const msg = 'Classlist upload not successful; no students were processed from CSV.';
                 return GeneralRoutes.handleError(400, msg, res, next);

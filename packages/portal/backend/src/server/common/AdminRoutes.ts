@@ -531,6 +531,8 @@ export default class AdminRoutes implements IREST {
 
             if (people.length) {
                 payload = {success: {message: 'Classlist upload successful. ' + people.length + ' students processed.'}};
+                res.send(200, payload);
+                Log.info('AdminRoutes::updateClasslist(..) - done: ' + payload.success.message);
             } else {
                 const msg = 'Classlist upload not successful; no students were processed from CSV.';
                 return AdminRoutes.handleError(400, msg, res, next);
