@@ -121,6 +121,19 @@ describe('General Routes', function() {
         expect(body.success.githubId).to.equal(Test.USER1.github);
     });
 
+    it('Should be able to update a classlist, automatically', async function() {
+        let response = null;
+        let body: Payload;
+        const url = '/portal/admin/classlist';
+        try {
+            response = await request(app).put(url);
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+            expect.fail('should not happen');
+        }
+    });
+
     it('Should not be able to get a person without the right token.', async function() {
         const dc: DatabaseController = DatabaseController.getInstance();
 
