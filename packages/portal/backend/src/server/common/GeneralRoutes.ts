@@ -86,8 +86,8 @@ export default class GeneralRoutes implements IREST {
             const msg = 'Classlist upload not successful; no students were processed from CSV.';
             return GeneralRoutes.handleError(400, msg, res, next);
         }
-
     }
+
     public static getConfig(req: any, res: any, next: any) {
         Log.info('GeneralRoutes::getConfig(..) - start');
 
