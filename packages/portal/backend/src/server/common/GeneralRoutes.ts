@@ -60,7 +60,7 @@ export default class GeneralRoutes implements IREST {
         // server.get('/portal/resource/:path', GeneralRoutes.getResource);
         server.get('/portal/resource/.*', GeneralRoutes.getResource);
 
-        // this automatically fetches class list from clean source so is not protected
+        // this does not return results so it is not protected;
         server.get('/portal/classlist/update', GeneralRoutes.updateClasslist);
     }
 
@@ -68,7 +68,7 @@ export default class GeneralRoutes implements IREST {
         Log.info('GeneralRoutes::updateClasslist(..) - start');
         const pc = new PersonController();
         const ic = new IntegrationController();
-        const user = req.headers && req.headers.user || null; // SHOULD be null because this is an automated function
+        const user = req.headers && req.headers.user || null; // null when on timer; user when manually triggered
 
         try {
             const data = await ic.fetchClasslist();
