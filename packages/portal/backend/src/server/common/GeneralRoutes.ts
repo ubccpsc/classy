@@ -61,7 +61,7 @@ export default class GeneralRoutes implements IREST {
         server.get('/portal/resource/.*', GeneralRoutes.getResource);
 
         // this does not return results so it is not protected;
-        server.get('/portal/classlist/update', GeneralRoutes.updateClasslist);
+        server.put('/portal/classlist/update', GeneralRoutes.updateClasslist);
     }
 
     public static async updateClasslist(req: any, res: any, next: any) {
