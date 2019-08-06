@@ -59,35 +59,6 @@ export default class GeneralRoutes implements IREST {
 
         // server.get('/portal/resource/:path', GeneralRoutes.getResource);
         server.get('/portal/resource/.*', GeneralRoutes.getResource);
-
-        // this does not return results so it is not protected;
-        server.put('/portal/classlist', GeneralRoutes.updateClasslist);
-    }
-
-    public static async updateClasslist(req: any, res: any, next: any) {
-        Log.info('GeneralRoutes::updateClasslist(..) - start');
-        const pc = new PersonController();
-        const ic = new IntegrationController();
-        const user = req.headers && req.headers.user || null; // null when on timer; user when manually triggered
-
-        try {
-            const data = await ic.fetchClasslist();
-            const people = await pc.processClasslist(user, null, data);
-
-            let payload: Payload;
-
-            if (people.length) {
-                payload = {success: {message: 'Classlist upload successful. ' + people.length + ' students processed.'}};
-                res.send(200, payload);
-                Log.info('GeneralRoutes::updateClasslist(..) - done: ' + payload.success.message);
-            } else {
-                const msg = 'Classlist upload not successful; no students were processed from CSV.';
-                return GeneralRoutes.handleError(400, msg, res, next);
-            }
-        } catch (err) {
-            const msg = 'Classlist upload not successful; no students were processed from CSV.';
-            return GeneralRoutes.handleError(400, msg, res, next);
-        }
     }
 
     public static getConfig(req: any, res: any, next: any) {

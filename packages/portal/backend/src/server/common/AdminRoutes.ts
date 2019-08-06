@@ -61,7 +61,7 @@ export default class AdminRoutes implements IREST {
 
         // admin-only functions
         server.post('/portal/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
-        server.put('/portal/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.updateClasslist);
+        server.put('/portal/admin/classlist', AdminRoutes.updateClasslist); // Admin/IP Check within route
         server.post('/portal/admin/grades/:delivId', AdminRoutes.isAdmin, AdminRoutes.postGrades);
         server.post('/portal/admin/deliverable', AdminRoutes.isAdmin, AdminRoutes.postDeliverable);
         server.post('/portal/admin/team', AdminRoutes.isAdmin, AdminRoutes.postTeam);
@@ -192,6 +192,41 @@ export default class AdminRoutes implements IREST {
         }).catch(function(err) {
             return AdminRoutes.handleError(401, 'Authorization error; user not admin. ERROR: ' + err.message, res, next);
         });
+    }
+
+    public static async updateClasslist(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::updateClasslist(..) - start');
+        const pc = new PersonController();
+        const ic = new IntegrationController();
+        const ipAddr = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        const ipReg: RegExp = /(142\.103\.[1-9]+\.[1-9])/;
+        let auditInfo: string;
+
+        if (ipAddr.match('142.103') === false) {
+            AdminRoutes.isPrivileged(req, res, next);
+            auditInfo = req.headers.user;
+        }
+
+        auditInfo = req.headers.user;
+
+        try {
+            const data = await ic.fetchClasslist();
+            const people = await pc.processClasslist(auditInfo, null, data);
+
+            let payload: Payload;
+
+            if (people.length) {
+                payload = {success: {message: 'Classlist upload successful. ' + people.length + ' students processed.'}};
+                res.send(200, payload);
+                Log.info('GeneralRoutes::updateClasslist(..) - done: ' + payload.success.message);
+            } else {
+                const msg = 'Classlist upload not successful; no students were processed from CSV.';
+                return AdminRoutes.handleError(400, msg, res, next);
+            }
+        } catch (err) {
+            const msg = 'Classlist upload not successful; no students were processed from CSV.';
+            return AdminRoutes.handleError(400, msg, res, next);
+        }
     }
 
     /**
@@ -513,34 +548,6 @@ export default class AdminRoutes implements IREST {
         }).catch(function(err) {
             return AdminRoutes.handleError(400, 'Unable to get deliverable list; ERROR: ' + err.message, res, next);
         });
-    }
-
-    private static async updateClasslist(req: any, res: any, next: any) {
-        Log.info('AdminRoutes::updateClasslist(..) - start');
-        const pc = new PersonController();
-        const ic = new IntegrationController();
-        const user = req.headers && req.headers.user || null; // SHOULD be null because this is an automated function
-
-        // authentication handled by preceeding action in chain above (see registerRoutes)
-        const userName = AdminRoutes.getUser(req);
-        try {
-            const data = await ic.fetchClasslist();
-            const people = await pc.processClasslist(user, null, data);
-
-            let payload: Payload;
-
-            if (people.length) {
-                payload = {success: {message: 'Classlist upload successful. ' + people.length + ' students processed.'}};
-                res.send(200, payload);
-                Log.info('AdminRoutes::updateClasslist(..) - done: ' + payload.success.message);
-            } else {
-                const msg = 'Classlist upload not successful; no students were processed from CSV.';
-                return AdminRoutes.handleError(400, msg, res, next);
-            }
-        } catch (err) {
-            const msg = 'Classlist upload not successful; no students were processed from CSV.';
-            return AdminRoutes.handleError(400, msg, res, next);
-        }
     }
 
     private static postClasslist(req: any, res: any, next: any) {
