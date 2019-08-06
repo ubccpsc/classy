@@ -101,7 +101,7 @@ export class PersonController {
         const people = await Promise.all(peoplePromises);
 
         // audit
-        await this.db.writeAudit(AuditLabel.CLASSLIST_UPLOAD, personId || Config.getInstance().getProp(ConfigKey.classlist_hostname),
+        await this.db.writeAudit(AuditLabel.CLASSLIST_UPLOAD, personId,
             {}, {}, {numPoeple: people.length});
 
         return people;

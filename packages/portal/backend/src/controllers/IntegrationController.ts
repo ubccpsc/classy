@@ -30,14 +30,13 @@ export class IntegrationController {
 
     private getClasslistUri() {
         const config = Config.getInstance();
-        const hostname = config.getProp(ConfigKey.classlist_hostname).trim();
-        const courseNum = config.getProp(ConfigKey.classlist_course_num).trim();
-        const year = config.getProp(ConfigKey.classlist_year).trim();
-        const semester = config.getProp(ConfigKey.classlist_semester).toUpperCase().trim().charAt(0);
-        const sections = config.getProp(ConfigKey.classlist_sections).trim();
-        const username = config.getProp(ConfigKey.classlist_username).trim();
-        const password = config.getProp(ConfigKey.classlist_password).trim();
-        return 'https://' + username + ':' + password + '@' + hostname + '/classlist1.0/CPSC/' + courseNum + '/'
-            + year + semester + '/' + sections;
+        const auth = config.getProp(ConfigKey.classlist_username).trim() + ':' + config.getProp(ConfigKey.classlist_password).trim();
+        const uri = config.getProp(ConfigKey.classlist_uri).trim();
+
+        if (uri.indexOf('https://') === 0) {
+            return 'https://' + auth + '@' + uri.slice(8);
+        } else {
+            throw new Error('https:// protocol is required for API integration');
+        }
     }
 }

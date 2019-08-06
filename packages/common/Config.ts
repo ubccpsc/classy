@@ -28,11 +28,7 @@ export enum ConfigKey {
     testorg = "testorg",
     testname = "testname",
 
-    classlist_hostname = "classlist_hostname",
-    classlist_course_num = "classlist_course_num",
-    classlist_year = "classlist_year",
-    classlist_semester = "classlist_semester",
-    classlist_sections = "classlist_sections",
+    classlist_uri = "classlist_uri",
     classlist_username = "classlist_username",
     classlist_password = "classlist_password",
 
@@ -95,13 +91,9 @@ export default class Config {
                 testorg:  process.env.ORGTEST,
                 testname: process.env.NAMETEST,
 
-                classlist_hostname:     process.env.CLASSLIST_HOSTNAME,
-                classlist_course_num:   process.env.CLASSLIST_COURSE_NUM,
-                classlist_year:         process.env.CLASSLIST_YEAR,
-                classlist_semester:     process.env.CLASSLIST_SEMESTER,
-                classlist_sections:     process.env.CLASSLIST_SECTIONS,
-                classlist_username:     process.env.CLASSLIST_USERNAME,
-                classlist_password:     process.env.CLASSLIST_PASSWORD,
+                classlist_uri:      process.env.CLASSLIST_URI,
+                classlist_username: process.env.CLASSLIST_USERNAME,
+                classlist_password: process.env.CLASSLIST_PASSWORD,
 
                 publichostname: process.env.PUBLICHOSTNAME,
 
