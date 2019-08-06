@@ -336,7 +336,7 @@ export class PersonController {
     private getMissingDataRowsByColumn(data: any[], column: string): any[] {
         Log.trace('CSVParser::getMissingDataRowsByColumn -- start');
         return data.filter((row) => {
-            if (row[column] === '') {
+            if (row[column] === '' || typeof row[column] === 'undefined') {
                 return true;
             }
             return false;
