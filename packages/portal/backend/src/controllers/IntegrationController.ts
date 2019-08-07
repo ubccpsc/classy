@@ -35,7 +35,7 @@ export class IntegrationController {
         const uri = config.getProp(ConfigKey.classlist_uri).trim();
 
         if (uri.indexOf('https://') === 0) {
-            return 'https://' + uri.slice(8);
+            return 'https://' + auth + '@' + uri.slice(8);
         } else {
             throw new Error('https:// protocol is required for API integration');
         }
