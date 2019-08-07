@@ -1,7 +1,6 @@
 import * as rp from "request-promise-native";
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
-
 import {ClasslistTransport} from "../../../../common/types/PortalTypes";
 import Util from "../../../../common/Util";
 
@@ -17,10 +16,12 @@ export class IntegrationController {
         try {
             const uri = this.getClasslistUri();
             const options = {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.0' // for testing
+                },
                 uri,
                 rejectUnauthorized: false
             };
-
             return JSON.parse(await rp(options));
         } catch (err) {
             Log.error("IntegrationController::fetchClasslist - ERROR: " + err);
@@ -34,7 +35,7 @@ export class IntegrationController {
         const uri = config.getProp(ConfigKey.classlist_uri).trim();
 
         if (uri.indexOf('https://') === 0) {
-            return 'https://' + auth + '@' + uri.slice(8);
+            return 'https://' + uri.slice(8);
         } else {
             throw new Error('https:// protocol is required for API integration');
         }
