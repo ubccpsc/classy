@@ -22,6 +22,7 @@ import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GitHubActions} from "../../controllers/GitHubActions";
 import {GitHubController} from "../../controllers/GitHubController";
 import {GradesController} from "../../controllers/GradesController";
+import {IntegrationController} from "../../controllers/IntegrationController";
 import {PersonController} from "../../controllers/PersonController";
 import {RepositoryController} from "../../controllers/RepositoryController";
 import {TeamController} from "../../controllers/TeamController";
@@ -58,6 +59,9 @@ export default class GeneralRoutes implements IREST {
 
         // server.get('/portal/resource/:path', GeneralRoutes.getResource);
         server.get('/portal/resource/.*', GeneralRoutes.getResource);
+
+        // IP restricted
+        server.put('/portal/classlist', GeneralRoutes.updateClasslist);
     }
 
     public static getConfig(req: any, res: any, next: any) {
@@ -301,6 +305,41 @@ export default class GeneralRoutes implements IREST {
             res.send(400, payload);
             return next(false);
         });
+    }
+
+    public static async updateClasslist(req: any, res: any, next: any) {
+        Log.info('GeneralRoutes::updateClasslist(..) - start');
+        const pc = new PersonController();
+        const ic = new IntegrationController();
+        const ipAddr = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        const host = req.headers['host'];
+        const ipReg: RegExp = /(142\.103\.5\.[1-9])/;
+        let auditInfo: string;
+
+        if (ipReg.test(ipAddr) === false && host.includes('localhost') === false) {
+            await GeneralRoutes.handleError(403, 'Forbidden error; user not privileged', res, next);
+        }
+
+        auditInfo = req.headers.user || ipAddr;
+
+        try {
+            const data = await ic.fetchClasslist();
+            const people = await pc.processClasslist(auditInfo, null, data);
+
+            let payload: Payload;
+
+            if (people.length) {
+                payload = {success: {message: 'Classlist upload successful. ' + people.length + ' students processed.'}};
+                res.send(200, payload);
+                Log.info('GeneralRoutes::updateClasslist(..) - done: ' + payload.success.message);
+            } else {
+                const msg = 'Classlist upload not successful; no students were processed from CSV.';
+                return GeneralRoutes.handleError(400, msg, res, next);
+            }
+        } catch (err) {
+            const msg = 'Classlist upload not successful; no students were processed from CSV.';
+            return GeneralRoutes.handleError(400, msg, res, next);
+        }
     }
 
     private static async performPostTeam(user: string, token: string, requestedTeam: TeamFormationTransport): Promise<TeamTransport> {
