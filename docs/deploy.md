@@ -41,14 +41,30 @@ The following software should be installed on the host before attempting to depl
     1. Create a certbot deploy hook that will run when new certificates are obtained:
         ```bash
         #!/bin/sh
-        # copy-certs.sh
+        # /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
+        # Copies the current certificates to Classy
+
+        # Stop on error
         set -e
+
+        [[ -d /opt/classy ]] || { echo "copy-certs.sh error: /opt/classy doesn't exist!"; exit 1; }
+
         {
-          # Copies the latest certificates to Classy
-          mkdir -p /opt/classy/ssl
-          cp -Hf /etc/letsencrypt/live/$(hostname)/* /opt/classy/ssl/
+          date
+
+          if [[ ! -d /opt/classy/ssl ]]
+          then
+              echo "+ mkdir /opt/classy/ssl"
+              mkdir /opt/classy/ssl
+          fi
+
+          # echo commands
+          set -x
+
+          cp -Hfp /etc/letsencrypt/live/$HOSTNAME/* /opt/classy/ssl/
           chown -R --reference=/opt/classy /opt/classy/ssl
-          chmod -R 0550 /opt/classy/ssl
+          chmod -R ug=rX,o= /opt/classy/ssl
+
         } > /opt/classy/$(basename $BASH_SOURCE).log 2>&1
         ```
         ```bash
@@ -71,23 +87,45 @@ The following software should be installed on the host before attempting to depl
     3. Configure pre and post-renewal hooks to automatically start and stop Classy when it is time to renew:
         ```bash
         #!/bin/sh
-        # stop-classy.sh
+        # /etc/letsencrypt/renewal-hooks/pre/stop-classy.sh
+        # Stop Classy so that port 80 and 443 can be used by certbot
+
+        # Stop on error
         set -e
+
+        [[ -d /opt/classy ]] || { echo "stop-classy.sh error: /opt/classy doesn't exist!"; exit 1; }
+
         {
-          # Stop Classy so that port 80 and 443 can be used by certbot
+          date
+
+          # echo commands
+          set -x
+
           cd /opt/classy
-          /usr/local/bin/docker-compose stop || true
+          /usr/local/bin/docker-compose stop
+
         } > /opt/classy/$(basename $BASH_SOURCE).log 2>&1
         ```
         
         ```bash
         #!/bin/sh
-        # start-classy.sh
+        # /etc/letsencrypt/renewal-hooks/post/start-classy.sh
+        # Restart classy
+
+        # Stop on error
         set -e
+
+        [[ -d /opt/classy ]] || { echo "stop-classy.sh error: /opt/classy doesn't exist!"; exit 1; }
+
         {
-          # Restart classy
+          date
+
+          # echo commands
+          set -x
+
           cd /opt/classy
           /usr/local/bin/docker-compose up --detach
+
         } > /opt/classy/$(basename $BASH_SOURCE).log 2>&1
         ```
         
