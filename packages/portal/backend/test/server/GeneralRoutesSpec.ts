@@ -1,7 +1,6 @@
 import {expect} from "chai";
 import * as fs from "fs-extra";
 import "mocha";
-import * as nock from "nock";
 import * as restify from "restify";
 import * as request from "supertest";
 
