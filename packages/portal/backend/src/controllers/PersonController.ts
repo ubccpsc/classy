@@ -1,6 +1,6 @@
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
-import { CSVParser } from "../server/common/CSVParser";
+import {CSVParser} from "../server/common/CSVParser";
 
 import {StudentTransport} from "../../../../common/types/PortalTypes";
 import Util from "../../../../common/Util";
