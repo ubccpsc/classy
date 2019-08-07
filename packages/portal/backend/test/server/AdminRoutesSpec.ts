@@ -547,23 +547,6 @@ describe('Admin Routes', function() {
         expect(body.success.message).to.contain('5 students');
     });
 
-    it('Should be able to update a classlist, manually', async function() {
-
-        let response = null;
-        let body: Payload;
-        const url = '/portal/classlist/update';
-        try {
-            response = await request(app).put(url).set({
-                user: userName,
-                token : userToken
-            });
-            body = response.body;
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-            expect.fail('should not happen');
-        }
-    });
-
     it('Should fail to upload bad classlists', async function() {
 
         let response = null;
