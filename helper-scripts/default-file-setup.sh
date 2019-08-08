@@ -12,19 +12,26 @@ version=1.0.0
 envFile=".env"
 envVar=''
 
-frontendFiles=(packages/portal/frontend/src/app/custom/CustomAdminView.ts 
-	packages/portal/frontend/src/app/custom/CustomStudentView.ts)
+setFilenames() {
+	backendFiles=(packages/portal/backend/src/custom/CustomCourseRoutes.ts
+		packages/portal/backend/src/custom/CustomCourseController.ts)
 
-backendFiles=(packages/portal/backend/src/custom/CustomCourseRoutes.ts
-	packages/portal/backend/src/custom/CustomCourseController.ts)
+	frontendFiles=(packages/portal/frontend/src/app/custom/CustomStudentView.ts
+		packages/portal/frontend/src/app/custom/CustomAdminView.ts
+		packages/portal/frontend/html/${envVar}/custom.html
+		packages/portal/frontend/html/${envVar}/landing.html
+		packages/portal/frontend/html/${envVar}/login.html
+		packages/portal/frontend/html/${envVar}/student.html
+	)
+}
 
 function main() {
 	echo "default-file-setup.sh:: starting script version ${version}..."
 	cd ..
 	setEnvName
+	setFilenames
 	preCopy
 	copyFiles
-	# postFileChecks
 	exit 0
 }
 
@@ -32,7 +39,6 @@ function preCopy() {
 	## 1. Check that files do not already exist.
 	doesFileExist "${frontendFiles[@]}"
 	doesFileExist "${backendFiles[@]}"
-	## 2. Check that envVar can be set; needed for subdirectory path creation
 }
 
 ## Exits if a matching file is found
@@ -41,7 +47,7 @@ function doesFileExist() {
 	filenameList=("$@")
 	for filename in "${filenameList[@]}"
 		do
-			if [ -f $filename ]; then
+			if [ -f "${filename}" ]; then
 				echo "default-file-setup.sh:: doesFileExist ERROR: File ${filename} exists!"
 				echo "default-file-setup.sh:: CANNOT CREATE CUSTOM FILES IF A CUSTOM FILE ALREADY EXISTS. ALL CUSTOM FILES MUST BE REMOVED BEFORE RE-CREATING CUSTOM FILES FROM DEFAULTS"
 				exit 1
@@ -58,22 +64,15 @@ function copyFiles() {
 
 	echo "default-file-setup.sh:: copyFiles() started - FRONTEND"
 	## VIEW MODELS
-	cp -nv "packages/portal/frontend/src/custom/DefaultStudentView.ts" "packages/portal/frontend/src/custom/CustomStudentView.ts"
-	cp -nv "packages/portal/frontend/src/custom/DefaultAdminView.ts" "packages/portal/frontend/src/custom/CustomAdminView.ts"
+	cp -nv "packages/portal/frontend/src/app/custom/DefaultStudentView.ts" "packages/portal/frontend/src/app/custom/CustomStudentView.ts"
+	cp -nv "packages/portal/frontend/src/app/custom/DefaultAdminView.ts" "packages/portal/frontend/src/app/custom/CustomAdminView.ts"
 
 	## HTML VIEWS
-	mkdir -p "packages/portal/frontend/html/${CUSTOM_NAME}/"
+	mkdir -p "packages/portal/frontend/html/${envVar}/"
 	cp -nv "packages/portal/frontend/html/default/custom.html" "packages/portal/frontend/html/${envVar}/custom.html"
-	cp -nv "packages/portal/frontend/html/default/custom.html" "packages/portal/frontend/html/${envVar}/landing.html"
-	cp -nv "packages/portal/frontend/html/default/custom.html" "packages/portal/frontend/html/${envVar}/login.html"
-	cp -nv "packages/portal/frontend/html/default/custom.html" "packages/portal/frontend/html/${envVar}/default.html"
-
-	# filenamesMap=("$@")
-	# for filenames in "${!filenamesMap[@]}"
-		# do
-		# 	echo "default-file-setup.sh:: copyFrontend() - copying ${filenames} to ${filenamesMap[$filenames]}"
-		# done
-	# cp -i
+	cp -nv "packages/portal/frontend/html/default/landing.html" "packages/portal/frontend/html/${envVar}/landing.html"
+	cp -nv "packages/portal/frontend/html/default/login.html" "packages/portal/frontend/html/${envVar}/login.html"
+	cp -nv "packages/portal/frontend/html/default/student.html" "packages/portal/frontend/html/${envVar}/student.html"
 }
 
 function setEnvName() {
