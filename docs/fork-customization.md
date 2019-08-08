@@ -15,12 +15,10 @@ Any custom logic may be implemented in the 'Custom' view model files if the file
 
 ## Back-End Customization
 
-The back-end uses Restify, a RESTful API server, to provide data to the front-end. A customized Course Controller and Course Routes class, respectively, MUST be implemented.
+The back-end uses Restify, a RESTful API server, to provide data to the front-end. Customized boilerplate files are loaded into Restify at start-up. These boilerplate files may be modified:
 
-To implement custom Course Controller and Course Routes, in `Classy/packages/portal/backend/src/custom`:
-
-* Copy `DefaultCourseController.ts` to create `CustomCourseController.ts` in the same directory. `CustomCourseController` extends `CourseController` because it is used in the most common course-specific overrides that require code.
-* Copy `DefaultCourseRoutes.ts` to create `CustomCourseRoutes.ts` in the same directory. `CustomCourseRoutes.ts` implements `IREST`, which allows you to define any custom REST routes required by the backend.
+- `Classy/packages/portal/backend/src/custom/CustomCourseRoutes.ts`
+- `Classy/packages/portal/backend/src/custom/CustomCoursecontroller.ts`
 
 Any number of subclasses can also be contained in this folder. These changes should ***NOT*** be pushed back to `classy/master`.
 
