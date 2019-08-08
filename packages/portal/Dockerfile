@@ -12,6 +12,7 @@ COPY .env ./
 COPY package.json tsconfig.json .env ./
 COPY packages/common ./packages/common
 COPY packages/portal ./packages/portal
+COPY helper-scripts ./helper-scripts
 
 RUN yarn run pre-build \
  && yarn install --pure-lockfile --non-interactive --ignore-scripts \
