@@ -6,23 +6,10 @@ Process Overview: Fork Code from Root Classy Repository --> Optional: Modify For
 
 ## Front-End Customization
 
-The front-end uses Onsen UI, which is a lightweight UI framework that uses vanilla Javascript and HTML templates in a MVC pattern. If a fork would like to modify the default views in Classy, it is necessary to create these custom files from their default counterparts:
+The front-end uses Onsen UI, which is a lightweight UI framework that uses vanilla Javascript and HTML templates in a MVC pattern. UI components and instructions for writing Custom View Model logic can be found here: https://onsen.io/v2/guide/#getting-started. If you are famiiar with the MVC pattern and would like to modify the views:
 
-**IF you create Custom HTML Views, you must ALSO create custom view models**
-
-### Step 1: CREATE CUSTOM HTML VIEWS
-
-- Copy the contents of `Classy/packages/portal/frontend/html/default` to `Classy/packages/portal/frontend/html/*name*`. The name variable MUST be the `name` variable found in `Classy/.env`)
-- The previous step copies the REQUIRED HTML templates: `landing.html`, `login.html`, and `student.html`. Any custom HTML templates may be added here.
-
-UI components and instructions for writing Custom View Model logic can be found here: https://onsen.io/v2/guide/#getting-started.
-
-### Step 2: CREATE CUSTOM VIEW MODELS
-
-In `Classy/packages/portal/frontend/src/app/custom`:
-
-- Copy `./DefaultAdminView.ts` to `./CustomAdminView.ts`
-- Copy `./DefaultStudentView.ts` to `./CustomStudentView.ts`
+- Modify any of the HTML templates under `Classy/packages/portal/frontend/html/*name*`
+- Modify any of the View Models with the `Custom` filename prefixes found under `Classy/packages/portal/frontend/src/app/custom`
 
 Any custom logic may be implemented in the 'Custom' view model files if the files continue to extend the  `AdminView` and `AbstractStudentView` classes. Any number of subclasses can also be contained in this folder. These changes should ***NOT*** be pushed back to `classy/master`.
 
