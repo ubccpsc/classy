@@ -56,7 +56,7 @@ function doesFileExist() {
 }
 
 ## Creates Custom boilerplate files from Default files
-## -i flag to not overwrite just to be safe
+## -n flag to not overwrite just to be safe
 function copyFiles() {
 	echo "default-file-setup.sh:: copyFiles() started - BACKEND"
 	cp -nv "packages/portal/backend/src/custom/DefaultCourseRoutes.ts" "packages/portal/backend/src/custom/CustomCourseRoutes.ts"
