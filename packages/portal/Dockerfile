@@ -14,7 +14,8 @@ COPY packages/common ./packages/common
 COPY packages/portal ./packages/portal
 COPY helper-scripts ./helper-scripts
 
-RUN cd helper-scripts && ./default-file-setup.sh && cd .. \
+RUN chmod +x ./helper-scripts/default-file-setup.sh 
+RUN ls ./helper-scripts && ./helper-scripts/default-file-setup.sh \
  && yarn install --pure-lockfile --non-interactive --ignore-scripts \
  && yarn tsc --sourceMap false \
  && cd packages/portal/frontend && yarn webpack \
