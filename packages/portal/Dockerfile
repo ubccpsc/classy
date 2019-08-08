@@ -7,8 +7,6 @@ RUN apk add --no-cache git
 
 WORKDIR /app
 
-RUN ./helper-scripts/default-file-setup.sh
-
 # The common package requires the .env file directly so we have to pass it through
 COPY .env ./
 COPY package.json tsconfig.json .env ./
