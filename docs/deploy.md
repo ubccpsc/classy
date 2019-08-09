@@ -263,6 +263,8 @@ cd /opt/classy
 docker network create --attachable --ip-range "172.28.5.0/24" --gateway "172.28.5.254" --subnet "172.28.0.0/16" grading_net
 
 # Copy default front-end and back-end templates to customizable files needed to run Classy:
+./helper-scripts/default-file-setup.sh
+# Or if you have yarn: (runs the same script, see package.json)
 yarn run pre-build
 
 docker-compose build
