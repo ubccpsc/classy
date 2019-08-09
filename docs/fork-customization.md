@@ -21,15 +21,15 @@ If you are famiiar with the MVC pattern and would like to modify the view, famil
 
 ### HTML:
 
-packages/portal/frontend/html/{*name*}/custom.html
-packages/portal/frontend/html/{*name*}/landing.html
-packages/portal/frontend/html/{*name*}/login.html
-packages/portal/frontend/html/{*name*}/student.html
+- packages/portal/frontend/html/{*name*}/custom.html
+- packages/portal/frontend/html/{*name*}/landing.html
+- packages/portal/frontend/html/{*name*}/login.html
+- packages/portal/frontend/html/{*name*}/student.html
 
 ### View Models:
 
-packages/portal/frontend/src/app/custom/CustomStudentView.ts
-packages/portal/frontend/src/app/custom/CustomAdminView.ts
+- packages/portal/frontend/src/app/custom/CustomStudentView.ts
+- packages/portal/frontend/src/app/custom/CustomAdminView.ts
 
 You may modify any of these files generated above. Any custom logic may also be implemented in the 'Custom' view model files if the files continue to extend the  `AdminView` and `AbstractStudentView` classes. Any number of subclasses can also be contained in this folder.  These changes should ***NOT*** be pushed back to `classy/master`.
 
@@ -39,8 +39,8 @@ The back-end uses Restify, a RESTful API server, to provide data to the front-en
 
 ### Customizable Back-end Files:
 
-- `Classy/packages/portal/backend/src/custom/CustomCourseRoutes.ts`
-- `Classy/packages/portal/backend/src/custom/CustomCourseController.ts`
+- Classy/packages/portal/backend/src/custom/CustomCourseRoutes.ts
+- Classy/packages/portal/backend/src/custom/CustomCourseController.ts
 
 `CustomCourseController.ts` extends `CourseController` because it is used in the most common course-specific overrides that require code. 
 
