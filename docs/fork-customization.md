@@ -46,9 +46,9 @@ The back-end uses Restify, a RESTful API server, to provide data to the front-en
 
 `CustomCourseRoutes.ts` implements `IREST`, which allows you to define any custom REST routes required by the backend. Any number of subclasses can also be contained in this folder. These changes should ***NOT*** be pushed back to `classy/master`.
 
-## Restoring the Default State
+## Restoring Default Application State
 
-The original default files can be found in `default-file-setup.sh`. To revert to the default state, remove all of the custom files from front-end and back-end, and re-run `default-file-setup.sh`.
+The default files used to create the custom boilerplate files can be found in the `default-file-setup.sh` script. To revert to the default state, remove all of the custom files from front-end and back-end applications, and then re-run `default-file-setup.sh` from the `./Classy` directory.
 
 ## Test Fork Customization 
 
