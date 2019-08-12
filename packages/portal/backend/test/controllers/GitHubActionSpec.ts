@@ -774,6 +774,7 @@ describe("GitHubActions", () => {
         expect(val).to.be.an('array');
         expect(val.length).to.equal(2);
         expect(val[0]).to.equal(Test.GITHUB1.github);
+        expect(val[1]).to.equal(Test.GITHUB2.github);
     }).timeout(TIMEOUT);
 
     it("Clear stale repos and teams.", async function() {
