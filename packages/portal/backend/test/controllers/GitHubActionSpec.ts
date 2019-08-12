@@ -772,7 +772,7 @@ describe("GitHubActions", () => {
         const val = await gh.listTeamMembers(TEAMNAME);
         Log.test("listed members: " + JSON.stringify(val));
         expect(val).to.be.an('array');
-        expect(val.length).to.equal(1);
+        expect(val.length).to.equal(2);
         expect(val[0]).to.equal(Test.GITHUB2.github);
     }).timeout(TIMEOUT);
 
