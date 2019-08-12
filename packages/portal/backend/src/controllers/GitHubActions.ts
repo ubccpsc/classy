@@ -1927,8 +1927,8 @@ export class TestGitHubActions implements IGitHubActions {
         USER2:           {id: 'user2ID', csId: 'user2CSID', github: 'user2gh'},
         USER3:           {id: 'user3ID', csId: 'user3CSID', github: 'user3gh'},
         USER4:           {id: 'user4ID', csId: 'user4CSID', github: 'user4gh'},
-        ADMIN1:          {id: 'classyadminID', csId: 'classyadminCSID', github: 'classyadmin'},
-        STAFF1:          {id: 'classystaffID', csId: 'classystaffCSID', github: 'classystaff'},
+        ADMIN1:          {id: 'atest-09ID', csId: 'atest-09CSID', github: 'atest-09'},
+        STAFF1:          {id: 'atest-08ID', csId: 'atest-08CSID', github: 'atest-08'},
         TEAMNAME1:       't_d0_user1id_user2id',
         INVALIDREPONAME: 'InvalidRepoNameShouldNotExist'
     };
