@@ -397,7 +397,8 @@ describe("GitHubActions", () => {
         const start = Date.now();
         const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME;
-        const importUrl = 'https://github.com/SECapstone/bootstrap'; // this is hard coded, but at least it's public
+        // keep a random repo public here so that all Github instances can work with cloning this:
+        const importUrl = 'https://github-dev.students.cs.ubc.ca/STECA-TEST/TESTING_SAMPLE_REPO';
 
         const output = await gh.importRepoFS(importUrl, targetUrl);
         expect(output).to.be.true;
