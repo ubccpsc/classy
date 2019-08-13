@@ -139,7 +139,7 @@ describe("GitHubController", () => {
         expect(teams.length).to.be.greaterThan(0);
 
         // const webhook = 'https://devnull.cs.ubc.ca/classyWebhook';
-        const importUrl = 'https://github-dev.students.cs.ubc.ca/classytest/TESTING_SAMPLE_REPO';
+        const importUrl = 'https://github-dev.students.cs.ubc.ca/STECA-TEST/TESTING_SAMPLE_REPO';
         const provisioned = await gc.provisionRepository(repos[0].id, teams, importUrl);
         expect(provisioned).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
@@ -152,7 +152,7 @@ describe("GitHubController", () => {
         expect(teams.length).to.be.greaterThan(0);
 
         // const webhook = 'https://devnull.cs.ubc.ca/classyWebhook';
-        const importUrl = 'https://github-dev.students.cs.ubc.ca/classytest/TESTING_SAMPLE_REPO';
+        const importUrl = 'https://github.com/SECapstone/bootstrap';
         let res = null;
         let ex = null;
         try {
