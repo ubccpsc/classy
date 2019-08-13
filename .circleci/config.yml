@@ -27,16 +27,6 @@ jobs:
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
 
-      - run:
-          name: "Setup encrypted .env variable per Classy fork (chooses default env.enc when not set)"
-          command: |
-            echo 'export ENV_ENC_FILE="${ENCRYPT_ENV:-env}"' >> $BASH_ENV # Redirect ENCRYPT_ENV into $BASH_ENV
-
-      - run:
-          name: "TEST COMMAND"
-          command: |
-            echo "cd .circleci && openssl aes-256-cbc -d -in $ENV_ENC_FILE.enc -out ../.env -k"
-
       - run: yarn install --ignore-engines
 
       - run:
@@ -63,14 +53,9 @@ jobs:
           command: |
             echo 'export ENV_ENC_FILE="${ENCRYPT_ENV:-env}"' >> $BASH_ENV # Redirect ENCRYPT_ENV into $BASH_ENV
 
-      - run:
-          name: "TEST COMMAND"
-          command: |
-            echo "cd .circleci && openssl aes-256-cbc -d -in $ENV_ENC_FILE.enc -out ../.env -k"
-
      # openssl aes-256-cbc -e -in ../.env -out .config -k $KEY
       - run:
-            command: cd .circleci && openssl aes-256-cbc -d -in $ENV_ENC_FILE.enc -out ../.env -k $ENVKEY
+            command: cd .circleci && openssl aes-256-cbc -d -in "$ENV_ENC_FILE.enc" -out ../.env -k $ENVKEY
             name: Configuring .env
             when: always
 
