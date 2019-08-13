@@ -48,9 +48,19 @@ jobs:
 #            - packages/portal-backend/node_modules
           key: v1-dependencies-{{ checksum "package.json" }}
 
+      - run:
+          name: "Setup encrypted .env variable per Classy fork (chooses default env.enc when not set)"
+          command: |
+            echo 'export ENV_ENC_FILE="${ENCRYPT_ENV:-env}"' >> $BASH_ENV # Redirect ENCRYPT_ENV into $BASH_ENV
+
+      - run:
+          name: "TEST COMMAND"
+          command: |
+            echo 'cd .circleci && openssl aes-256-cbc -d -in $ENV_ENC_FILE.enc -out ../.env -k $ENVKEY'
+
      # openssl aes-256-cbc -e -md sha512 -in ../.env -out .config -k $KEY
       - run:
-            command: cd .circleci && openssl aes-256-cbc -d -md sha512 -in env.enc -out ../.env -k $ENVKEY
+            command: cd .circleci && openssl aes-256-cbc -d -md sha512 -in $ENV_ENC_FILE.enc -out ../.env -k $ENVKEY
             name: Configuring .env
             when: always
 
