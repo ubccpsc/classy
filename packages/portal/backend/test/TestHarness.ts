@@ -64,7 +64,7 @@ export class Test {
         person = await Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.csId, Test.ADMIN1.github, PersonKind.ADMINSTAFF);
         await dbc.writePerson(person);
 
-        await Test.prepareAuth(); // adds admin token (and user1 which is not real)
+        await Test.prepareAuth(); // adds admin token (and atest-05, atest-06 which are both real on GE)
         // create a team
         const team = await Test.createTeam(Test.TEAMNAMEREAL, Test.DELIVID0, [Test.GITHUB1.id, Test.GITHUB2.id]);
         await dbc.writeTeam(team);
@@ -374,7 +374,7 @@ export class Test {
     public static readonly TEAMNAME2 = 'TESTteam2';
     public static readonly TEAMNAME3 = 'TESTteam3';
     public static readonly TEAMNAME4 = 'TESTteam4';
-    public static readonly TEAMNAMEREAL = 't_d0_cpscbotCSID_rthse2CSID';
+    public static readonly TEAMNAMEREAL = 't_d0_atest-04CSID_atest-05CSID';
     public static readonly INVALIDTEAMNAME = "InvalidTeamNameShouldNotExist";
 
     public static readonly USER1 = {id: 'user1ID', csId: 'user1CSID', github: 'user1gh'};
@@ -418,15 +418,15 @@ export class Test {
     public static readonly REPONAME1 = 'TESTrepo1';
     public static readonly REPONAME2 = 'TESTrepo2';
     public static readonly REPONAME3 = 'TESTrepo3';
-    public static readonly REPONAMEREAL = 'd0_cpscbotCSID_rthse2CSID';
+    public static readonly REPONAMEREAL = 'd0_atest-04CSID_atest-05CSID';
     public static readonly INVALIDREPONAME = "InvalidRepoNameShouldNotExist";
     public static readonly REPONAMEREAL2 = 'PostTestDoNotDelete';
 
     public static readonly REALTOKEN = 'realtoken';
     public static readonly FAKETOKEN = 'faketoken';
 
-    public static readonly ASSIGNTEAMNAME0 = Test.ASSIGNID0 + "__" + Test.REALUSER1.github; // TODO: id should be .githubId
-    public static readonly ASSIGNTEAMNAME1 = Test.ASSIGNID1 + "__" + Test.REALUSER1.github; // TODO: id should be .githubId
+    public static readonly ASSIGNTEAMNAME0 = Test.ASSIGNID0 + "__" + Test.REALUSER1.id;
+    public static readonly ASSIGNTEAMNAME1 = Test.ASSIGNID1 + "__" + Test.REALUSER1.id;
 
     public static getDeliverable(delivId: string): Deliverable {
         const deliv: Deliverable = {
