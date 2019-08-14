@@ -95,10 +95,10 @@ jobs:
             name: Linting project
             when: always
 
-      - run:
-            command: git config --global user.email "CI@test.com" && git config --global user.name "CI Test Name"
-            name: Configure local git
-            when: on_success
+      # - run:
+      #       command: git config --global user.email "CI@test.com" && git config --global user.name "CI Test Name"
+      #       name: Configure local git
+      #       when: on_success
 
       # - run:
       #       command: |
@@ -110,18 +110,9 @@ jobs:
       #         MOCHA_FILE: testOutput/backend/test/test-results.xml
       #       when: on_success
 
-      # - run:
-      #       command: cd packages/portal/backend && ./node_modules/junit-viewer/bin/junit-viewer --results=../../../testOutput/backend/test/test-results.xml --save=../../../testOutput/backend/test/index.html
-      #       name: Converting backend test results to HTML
-      #       when: on_success
-
-      ## DEBUG. REMOVE BEFORE RELEASE
       - run:
-            command: |
-                      set -e
-                      cd packages/autotest
-                      node ./node_modules/.bin/mocha 
-            name: Running autotest tests - WITH TEST COMMAND
+            command: cd packages/portal/backend && ./node_modules/junit-viewer/bin/junit-viewer --results=../../../testOutput/backend/test/test-results.xml --save=../../../testOutput/backend/test/index.html
+            name: Converting backend test results to HTML
             when: on_success
 
       - run:
