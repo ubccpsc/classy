@@ -115,6 +115,17 @@ jobs:
             name: Converting backend test results to HTML
             when: on_success
 
+      ## DEBUG. REMOVE BEFORE RELEASE
+      - run:
+            command: |
+                      set -e
+                      cd packages/autotest
+                      node ./node_modules/.bin/mocha 
+            name: Running autotest tests - WITH TEST COMMAND
+            environment:
+              MOCHA_FILE: testOutput/autotest/test/test-results.xml
+            when: on_success
+
       - run:
             command: |
                       set -e
