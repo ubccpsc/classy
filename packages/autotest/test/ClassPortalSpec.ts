@@ -45,7 +45,7 @@ describe("ClassPortal Service", () => {
     // NOTE: if this fails it could be because the ClassPortal Backend has not been started yet
     it("Should be able for a staff user to be staff.", async () => {
         try {
-            const actual = await cp.isStaff("classyadmin");
+            const actual = await cp.isStaff("atest-09");
             Log.test('Actual: ' + actual);
             expect(actual.isStaff).to.equal(true);
             expect(actual.isAdmin).to.equal(true);
