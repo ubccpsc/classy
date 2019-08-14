@@ -11,7 +11,7 @@ describe("GitHub Markdown Service", () => {
     Config.getInstance();
 
     // tslint:disable-next-line
-    const VALID_URL = "https://api.github.com/repos/classytest/PostTestDoNotDelete/commits/c35a0e5968338a9757813b58368f36ddd64b063e/comments";
+    const VALID_URL = "https://github-dev.students.ubc.ca/api/v3/repos/classytest/PostTestDoNotDelete/commits/c35a0e5968338a9757813b58368f36ddd64b063e/comments";
 
     const TIMEOUT = 5000;
 
