@@ -30,11 +30,12 @@ describe("GitHub Event Parser", () => {
         await backend.start();
 
         const pc = new PersonController();
-        const id = GITHUBID;
+        const id = PERSONID;
+        const githubId = GITHUBID;
         const p: Person = {
             id:            id,
             csId:          id,
-            githubId:      id,
+            githubId:      githubId,
             studentNumber: null,
 
             fName: 'f' + id,
@@ -180,6 +181,8 @@ describe("GitHub Event Parser", () => {
 
     it("Should be able to parse a comment on a master commit with one deliverable and a mention.", async function() {
         const content = readFile("comment_master_bot_one-deliv.json");
+        // CI To do: abstract the logic to contain the config bot name, as this test should ;; '@autobot #d4';
+        // always look for the request logic.
         const actual = await GitHubUtil.processComment(JSON.parse(content));
         Log.test(JSON.stringify(actual));
 
@@ -203,7 +206,7 @@ describe("GitHub Event Parser", () => {
     }).timeout(TIMEOUT * 10);
 
     it("Should be able to parse a comment on a master commit with multiple deliverables and a mention.", async () => {
-        const content = readFile("comment_master_bot_two-deliv.json");
+        const content = readFile("comment_master_bot_two-deliv.json"); // CI TO DO: Replace JSON autobot reference with Config BOT reference
         const actual = await GitHubUtil.processComment(JSON.parse(content));
         Log.test(JSON.stringify(actual));
 
@@ -251,6 +254,7 @@ describe("GitHub Event Parser", () => {
     }).timeout(TIMEOUT * 10);
 
     it("Should be able to parse a comment on another branch with one deliverable and a mention.", async () => {
+        // CI to do: ensure that autobot/ubcbot or whatever bot name is switched out in this test from config file
         const content = readFile("comment_other-branch_bot_one-deliv.json");
         const actual = await GitHubUtil.processComment(JSON.parse(content));
         Log.test(JSON.stringify(actual));
