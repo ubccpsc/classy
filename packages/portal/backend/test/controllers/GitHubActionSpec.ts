@@ -398,7 +398,7 @@ describe("GitHubActions", () => {
         const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME;
         // keep a random repo public here so that all Github instances can work with cloning this:
-        const importUrl = Confi.getInstance().getProp(ConfigKey.githubHost) + '/classytest/TESTING_SAMPLE_REPO';
+        const importUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/classytest/TESTING_SAMPLE_REPO';
 
         const output = await gh.importRepoFS(importUrl, targetUrl);
         expect(output).to.be.true;
@@ -728,9 +728,9 @@ describe("GitHubActions", () => {
     }).timeout(TIMEOUT);
 
     it("Should be possible to make a comment.", async function() {
-        const githubAPI = Config.getInstance().getProp(ConfigKey.githubAPI)
+        const githubAPI = Config.getInstance().getProp(ConfigKey.githubAPI);
         let msg = "message";
-        let url = githubAPI + '/repos/classytest/" + Test.REPONAMEREAL2 + "/commits/INVALIDSHA/comments";
+        let url = githubAPI + '/repos/classytest/' + Test.REPONAMEREAL2 + '/commits/INVALIDSHA/comments';
         let worked = await gh.makeComment(url, msg);
         expect(worked).to.be.false; // false because SHA is invalid
 
