@@ -27,6 +27,7 @@ import {PersonController} from "../../controllers/PersonController";
 import {RepositoryController} from "../../controllers/RepositoryController";
 import {TeamController} from "../../controllers/TeamController";
 import {Factory} from "../../Factory";
+import {ClassListAgent} from "../../server/common/ClassListAgent";
 import {AuditLabel, Person} from "../../Types";
 
 import IREST from "../IREST";
@@ -311,6 +312,7 @@ export default class GeneralRoutes implements IREST {
         Log.info('GeneralRoutes::updateClasslist(..) - start');
         const pc = new PersonController();
         const ic = new IntegrationController();
+        const clAg = new ClassListAgent();
         const ipAddr = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         const host = req.headers['host'];
         const ipReg: RegExp = /(142\.103\.5\.[1-9])/;
@@ -324,7 +326,7 @@ export default class GeneralRoutes implements IREST {
 
         try {
             const data = await ic.fetchClasslist();
-            const people = await pc.processClasslist(auditInfo, null, data);
+            const people = await clAg.processClasslist(auditInfo, null, data);
 
             let payload: Payload;
 
