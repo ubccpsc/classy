@@ -382,8 +382,8 @@ export class Test {
      * @param userKey ConfigKey property for user ie. ConfigKey.githubAdmin
      * @param index of userData if an array in .env config
      */
-    public static createTestUserTemplate(userKey: ConfigKey, index: number = 0): any {
-        const userData = Config.getInstance().getProp(userKey)[index] || Config.getInstance().getProp(userKey);
+    public static createTestUserTemplate(userKey: ConfigKey, index: number = null): any {
+        const userData: string | string[] = index ? Config.getInstance().getProp(userKey)[index] : Config.getInstance().getProp(userKey);
         return {
             id: userData + 'ID',
             csId: userData + 'CSID',
@@ -401,15 +401,14 @@ export class Test {
     public static readonly INVALIDUSER1 = {id: 'invalidUser1id', csId: 'invalidUser1CSID', github: 'invalidUser1gh'};
 
     // Some test users must be integrated with Github.com/Enterprise live instances. They are in the .env config:
-    public static readonly ADMIN1 = Test.createTestUserTemplate(ConfigKey.githubAdmin);
+    public static readonly ADMIN1 = {id: 'atest-09ID', csId: 'atest-09CSID', github: 'atest-09'};
     // public static readonly ADMIN1 = {id: 'atest-01', csId: 'atest-01', github: 'atest-01'}; // github-dev.ugrad
-    public static readonly STAFF1 = Test.createTestUserTemplate(ConfigKey.githubStaff);
+    public static readonly STAFF1 = {id: 'atest-08ID', csId: 'atest-08CSID', github: 'atest-08'};
     // public static readonly STAFF1 = {id: 'atest-02', csId: 'atest-02', github: 'atest-02'}; // github-dev.ugrad (not provisioned yet)
 
-    public static readonly REALUSER1 = Test.createTestUserTemplate(ConfigKey.githubTestUsers); // real account for testing users
-    public static readonly REALUSER2 = Test.createTestUserTemplate(ConfigKey.githubTestUsers); // real account for testing users
-    public static readonly REALUSER3 = Test.createTestUserTemplate(ConfigKey.githubTestUsers); // real account for testing users
-
+    public static readonly REALUSER1 = {id: 'atest-01ID', csId: 'atest-01CSID', github: 'atest-01'}; // real account for testing users
+    public static readonly REALUSER2 = {id: "atest-02ID", csId: "atest-02CSID", github: "atest-02"}; // real account for testing users
+    public static readonly REALUSER3 = {id: "atest-03ID", csId: "atest-03CSID", github: "atest-03"}; // rea
     public static readonly GITHUB1 = {id: "atest-04ID", csId: "atest-04CSID", github: "atest-04"}; // 4-7 have potential to be real
     public static readonly GITHUB2 = {id: "atest-05ID", csId: "atest-05CSID", github: "atest-05"};
     public static readonly GITHUB3 = {id: "atest-06ID", csId: "atest-06CSID", github: "atest-06"};
