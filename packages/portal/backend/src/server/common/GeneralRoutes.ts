@@ -22,12 +22,12 @@ import {DeliverablesController} from "../../controllers/DeliverablesController";
 import {GitHubActions} from "../../controllers/GitHubActions";
 import {GitHubController} from "../../controllers/GitHubController";
 import {GradesController} from "../../controllers/GradesController";
-import {IntegrationController} from "../../controllers/IntegrationController";
 import {PersonController} from "../../controllers/PersonController";
 import {RepositoryController} from "../../controllers/RepositoryController";
 import {TeamController} from "../../controllers/TeamController";
 import {Factory} from "../../Factory";
 import {AuditLabel, Person} from "../../Types";
+import {ClasslistAgent} from "./ClasslistAgent";
 
 import IREST from "../IREST";
 import AdminRoutes from "./AdminRoutes";
@@ -310,7 +310,7 @@ export default class GeneralRoutes implements IREST {
     public static async updateClasslist(req: any, res: any, next: any) {
         Log.info('GeneralRoutes::updateClasslist(..) - start');
         const pc = new PersonController();
-        const ic = new IntegrationController();
+        const ca = new ClasslistAgent();
         const ipAddr = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         const host = req.headers['host'];
         const ipReg: RegExp = /(142\.103\.5\.[1-9])/;
@@ -323,8 +323,8 @@ export default class GeneralRoutes implements IREST {
         auditInfo = req.headers.user || ipAddr;
 
         try {
-            const data = await ic.fetchClasslist();
-            const people = await pc.processClasslist(auditInfo, null, data);
+            const data = await ca.fetchClasslist();
+            const people = await ca.processClasslist(auditInfo, null, data);
 
             let payload: Payload;
 

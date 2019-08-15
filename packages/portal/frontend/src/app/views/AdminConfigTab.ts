@@ -417,7 +417,7 @@ export class AdminConfigTab extends AdminPage {
 
     private async updateClasslistPressed(): Promise<void> {
         Log.trace('AdminConfigTab::updateClasslistPressed(..) - start');
-        const url = this.remote + '/portal/admin/classlist';
+        const url = this.remote + '/portal/classlist';
         const options: any = AdminView.getOptions();
         options.method = 'put';
 
