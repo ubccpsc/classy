@@ -84,7 +84,6 @@ export default class Config {
         // should not be called by clients but typescript does not allow private constructors
         try {
             this.config = {
-
                 name:     process.env.NAME,
                 org:      process.env.ORG,
                 testorg:  process.env.ORGTEST,
