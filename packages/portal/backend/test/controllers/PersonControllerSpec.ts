@@ -11,9 +11,9 @@ import {Test} from "../TestHarness";
 import './DeliverablesControllerSpec';
 
 describe("PersonController", () => {
+    const clAg: ClassListAgent = new ClassListAgent();
 
     let pc: PersonController;
-    let clAg: ClassListAgent = new ClassListAgent();
 
     let PERSON1: Person = null;
     let PERSON2: Person = null;
