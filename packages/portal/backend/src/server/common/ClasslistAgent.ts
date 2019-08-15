@@ -39,8 +39,8 @@ export class ClasslistAgent {
 
     private getClasslistUri() {
         const config = Config.getInstance();
-        const auth = config.getProp(ConfigKey.classlist_username).trim() + ':' + config.getProp(ConfigKey.classlist_password).trim();
-        const uri = config.getProp(ConfigKey.classlist_uri).trim();
+        const auth = config.getProp(ConfigKey.classlist_username) + ':' + config.getProp(ConfigKey.classlist_password);
+        const uri = config.getProp(ConfigKey.classlist_uri);
 
         if (uri.indexOf('https://') === 0) {
             return 'https://' + auth + '@' + uri.slice(8);
