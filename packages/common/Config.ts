@@ -22,7 +22,6 @@ export enum ConfigCourses {
 }
 
 export enum ConfigKey {
-
     name = "name", // name of the course (e.g., cs310, cs340, secapstone, classytest) // should be stable between course instances
     org = "org",
     testorg = "testorg",
