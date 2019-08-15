@@ -1,14 +1,16 @@
 import * as parse from 'csv-parse';
 import * as fs from 'fs';
+import * as rp from "request-promise-native";
+import Config, {ConfigKey} from "../../../../../common/Config";
 import Log from '../../../../../common/Log';
 
+import {ClasslistTransport} from "../../../../../common/types/PortalTypes";
 import {DatabaseController} from "../../controllers/DatabaseController";
 import {PersonController} from "../../controllers/PersonController";
-import {CSVParser} from "../../server/common/CSVParser";
-import {AuditLabel, ClasslistTransport, Grade, Person, PersonKind} from "../../Types";
-import {ClasslistTransport} from "../../../../common/types/PortalTypes";
+import {AuditLabel, Grade, Person, PersonKind} from "../../Types";
+import {CSVParser} from "./CSVParser";
 
-export class ClassListAgent {
+export class ClasslistAgent {
 
     constructor() {
         //
@@ -16,7 +18,6 @@ export class ClassListAgent {
 
     private pc = new PersonController();
     private db = DatabaseController.getInstance();
-
 
     public async fetchClasslist(): Promise<ClasslistTransport[]> {
         Log.info("IntegrationController::fetchClasslist - start");
@@ -47,7 +48,7 @@ export class ClassListAgent {
             throw new Error('https:// protocol is required for API integration');
         }
     }
-    
+
     public async processClasslist(personId: string = null, path: string = null,  data: any): Promise<Person[]> {
         Log.trace("PersonController::processClasslist(...) - start");
 

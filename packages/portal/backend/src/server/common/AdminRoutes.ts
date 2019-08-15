@@ -31,7 +31,7 @@ import {PersonController} from "../../controllers/PersonController";
 import {RepositoryController} from "../../controllers/RepositoryController";
 import {TeamController} from "../../controllers/TeamController";
 import {Factory} from "../../Factory";
-import {ClassListAgent} from "../../server/common/ClassListAgent";
+import {ClasslistAgent} from "./ClasslistAgent";
 
 import {AuditLabel, Person} from "../../Types";
 
@@ -527,8 +527,8 @@ export default class AdminRoutes implements IREST {
             const path = req.files.classlist.path; // this is brittle, but if it fails it will just trigger the exception
 
             const csvData = new CSVParser().parsePath(path);
-            const clAg = new ClassListAgent();
-            clAg.processClasslist(userName, path, null).then(function(people) {
+            const ca = new ClasslistAgent();
+            ca.processClasslist(userName, path, null).then(function(people) {
                 if (people.length > 0) {
                     const payload: Payload = {
                         success: {

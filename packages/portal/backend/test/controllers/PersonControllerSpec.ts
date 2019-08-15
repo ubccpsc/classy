@@ -3,7 +3,7 @@ import "mocha";
 
 import Log from "../../../../common/Log";
 import {PersonController} from "../../src/controllers/PersonController";
-import {ClassListAgent} from "../../src/server/common/ClassListAgent";
+import {ClasslistAgent} from "../../src/server/common/ClasslistAgent";
 import {Person, PersonKind} from "../../src/Types";
 
 import '../GlobalSpec';
@@ -11,7 +11,7 @@ import {Test} from "../TestHarness";
 import './DeliverablesControllerSpec';
 
 describe("PersonController", () => {
-    const clAg: ClassListAgent = new ClassListAgent();
+    const ca: ClasslistAgent = new ClasslistAgent();
 
     let pc: PersonController;
 
@@ -155,14 +155,14 @@ describe("PersonController", () => {
 
     it('Should be able to process an empty classlist', async function() {
         const path = __dirname + '/../data/classlistEmpty.csv';
-        const rows = await clAg.processClasslist(Test.ADMIN1.id, path, null);
+        const rows = await ca.processClasslist(Test.ADMIN1.id, path, null);
         Log.test('# rows processed: ' + rows.length);
         expect(rows).to.have.lengthOf(0);
     });
 
     it('Should be able to process a vaild classlist', async function() {
         const path = __dirname + '/../data/classlistValid.csv';
-        const rows = await clAg.processClasslist(Test.ADMIN1.id, path, null);
+        const rows = await ca.processClasslist(Test.ADMIN1.id, path, null);
         Log.test('# rows processed: ' + rows.length);
         expect(rows).to.have.lengthOf(5);
     });
@@ -171,7 +171,7 @@ describe("PersonController", () => {
         const path = __dirname + '/../data/classlistEmptyField.csv';
         let ex = null;
         try {
-            await clAg.processClasslist(Test.ADMIN1.id, path, null);
+            await ca.processClasslist(Test.ADMIN1.id, path, null);
         } catch (err) {
             ex = err;
         }
@@ -182,7 +182,7 @@ describe("PersonController", () => {
         const path = __dirname + '/../data/classlistDuplicateField.csv';
         let ex = null;
         try {
-            await clAg.processClasslist(Test.ADMIN1.id, path, null);
+            await ca.processClasslist(Test.ADMIN1.id, path, null);
         } catch (err) {
             ex = err;
         }
@@ -191,7 +191,7 @@ describe("PersonController", () => {
 
     it('Should be able to process an updated classlist', async function() {
         const path = __dirname + '/../data/classlistValidUpdate.csv';
-        const rows = await clAg.processClasslist(Test.ADMIN1.id, path, null);
+        const rows = await ca.processClasslist(Test.ADMIN1.id, path, null);
         Log.test('# rows processed: ' + rows.length);
         expect(rows).to.have.lengthOf(5);
     });
@@ -201,7 +201,7 @@ describe("PersonController", () => {
         let ex = null;
         try {
             const path = __dirname + '/../data/classlistInvalid.csv';
-            rows = await clAg.processClasslist(Test.ADMIN1.id, path, null);
+            rows = await ca.processClasslist(Test.ADMIN1.id, path, null);
         } catch (err) {
             ex = err;
         }
