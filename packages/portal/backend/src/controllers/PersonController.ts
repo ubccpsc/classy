@@ -1,9 +1,7 @@
-import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
-
 import {StudentTransport} from "../../../../common/types/PortalTypes";
 import Util from "../../../../common/Util";
-import {AuditLabel, Person, PersonKind, Repository} from "../Types";
+import {Person, PersonKind, Repository} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
 import {GitHubActions} from "./GitHubActions";
@@ -258,7 +256,6 @@ export class PersonController {
     //
     //     return {newPeople: newPeople, updatedPeople: updatedPeople};
     // }
-
     //
     // /**
     //  * Returns an empty string if the csv is valid; a string error message otherwise.
