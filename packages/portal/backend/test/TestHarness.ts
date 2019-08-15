@@ -380,12 +380,14 @@ export class Test {
     /**
      * Creates user testing templates for real Github accounts configured in .env
      * @param userKey ConfigKey property for user ie. ConfigKey.githubAdmin
+     * @param index of userData if an array in .env config
      */
-    public static createTestUserTemplate(userKey: ConfigKey): any {
+    public static createTestUserTemplate(userKey: ConfigKey, index: number = 0): any {
+        const userData = Config.getInstance().getProp(userKey)[index] || Config.getInstance().getProp(userKey);
         return {
-            id: Config.getInstance().getProp(userKey) + 'ID',
-            csId: Config.getInstance().getProp(userKey) + 'CSID',
-            github: Config.getInstance().getProp(userKey)
+            id: userData + 'ID',
+            csId: userData + 'CSID',
+            github: userData
         };
     }
 
@@ -404,9 +406,9 @@ export class Test {
     public static readonly STAFF1 = Test.createTestUserTemplate(ConfigKey.githubStaff);
     // public static readonly STAFF1 = {id: 'atest-02', csId: 'atest-02', github: 'atest-02'}; // github-dev.ugrad (not provisioned yet)
 
-    public static readonly REALUSER1 = Test.createTestUserTemplate(ConfigKey.githubTestUsers)[0]; // real account for testing users
-    public static readonly REALUSER2 = Test.createTestUserTemplate(ConfigKey.githubTestUsers)[1]; // real account for testing users
-    public static readonly REALUSER3 = Test.createTestUserTemplate(ConfigKey.githubTestUsers)[2]; // real account for testing users
+    public static readonly REALUSER1 = Test.createTestUserTemplate(ConfigKey.githubTestUsers); // real account for testing users
+    public static readonly REALUSER2 = Test.createTestUserTemplate(ConfigKey.githubTestUsers); // real account for testing users
+    public static readonly REALUSER3 = Test.createTestUserTemplate(ConfigKey.githubTestUsers); // real account for testing users
 
     public static readonly GITHUB1 = {id: "atest-04ID", csId: "atest-04CSID", github: "atest-04"}; // 4-7 have potential to be real
     public static readonly GITHUB2 = {id: "atest-05ID", csId: "atest-05CSID", github: "atest-05"};

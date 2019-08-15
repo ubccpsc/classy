@@ -1921,6 +1921,8 @@ export class TestGitHubActions implements IGitHubActions {
     }
 
     // HACK: can't reference GlobalSpec::Test here (docker limitation); need to move these to common?
+    // UPDATE: We moved real Github users into the .env file. Common could still be a good place
+    // for usernames that are not used in live Github tests.
     private Test = {
         USERNAMEGITHUB1: 'cpscbot',
         USERNAMEGITHUB2: 'rthse2',
