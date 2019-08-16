@@ -20,7 +20,7 @@ export class ClasslistAgent {
     private db = DatabaseController.getInstance();
 
     public async fetchClasslist(): Promise<ClasslistTransport[]> {
-        Log.info("IntegrationController::fetchClasslist - start");
+        Log.info("ClasslistAgent::fetchClasslist - start");
         try {
             const uri = this.getClasslistUri();
             const options = {
@@ -32,7 +32,7 @@ export class ClasslistAgent {
             };
             return JSON.parse(await rp(options));
         } catch (err) {
-            Log.error("IntegrationController::fetchClasslist - ERROR: " + err);
+            Log.error("ClasslistAgent::fetchClasslist - ERROR: " + err);
             throw new Error("Could not fetch Classlist " + err.message);
         }
     }
@@ -50,7 +50,7 @@ export class ClasslistAgent {
     }
 
     public async processClasslist(personId: string = null, path: string = null,  data: any): Promise<Person[]> {
-        Log.trace("PersonController::processClasslist(...) - start");
+        Log.trace("ClasslistAgent::processClasslist(...) - start");
 
         if (path !== null) {
             data = await new CSVParser().parsePath(path);
@@ -81,7 +81,7 @@ export class ClasslistAgent {
                 };
                 peoplePromises.push(this.pc.createPerson(p));
             } else {
-                Log.error('PersonController::processClasslist(..) - column missing from: ' + JSON.stringify(row));
+                Log.error('ClasslistAgent::processClasslist(..) - column missing from: ' + JSON.stringify(row));
                 peoplePromises.push(Promise.reject('Required column missing (required: ACCT, CWL, SNUM, FIRST, LAST, LAB).'));
         }
     }
@@ -95,7 +95,7 @@ export class ClasslistAgent {
     }
 
     private duplicateDataCheck(data: any[], columnNames: string[]) {
-        Log.trace('CSVParser::duplicateDataCheck -- start');
+        Log.trace('ClasslistAgent::duplicateDataCheck -- start');
         const that = this;
         const dupColumnData: any = {};
         columnNames.forEach(function(column) {
@@ -103,7 +103,7 @@ export class ClasslistAgent {
         });
         columnNames.forEach(function(column) {
             if (dupColumnData[column].length) {
-                Log.error('CSVParser::duplicateDataCheck(..) - ERROR: Duplicate Data Check Error'
+                Log.error('ClasslistAgent::duplicateDataCheck(..) - ERROR: Duplicate Data Check Error'
                     + JSON.stringify(dupColumnData));
                 throw new Error('Duplicate Data Check Error: ' + JSON.stringify(dupColumnData));
             }
@@ -111,7 +111,7 @@ export class ClasslistAgent {
     }
 
     private getDuplicateRowsByColumn(data: any[], column: string): any[] {
-        Log.trace('CSVParser::getDuplicateRowsByColumn -- start');
+        Log.trace('ClasslistAgent::getDuplicateRowsByColumn -- start');
         const set = new Set();
         return data.filter((row) => {
             if (set.has(row[column].toLowerCase())) {
@@ -123,7 +123,7 @@ export class ClasslistAgent {
     }
 
     private getMissingDataRowsByColumn(data: any[], column: string): any[] {
-        Log.trace('CSVParser::getMissingDataRowsByColumn -- start');
+        Log.trace('ClasslistAgent::getMissingDataRowsByColumn -- start');
         return data.filter((row) => {
             if (row[column] === '' || typeof row[column] === 'undefined') {
                 return true;
@@ -133,7 +133,7 @@ export class ClasslistAgent {
     }
 
     private missingDataCheck(data: any[], columns: string[]) {
-        Log.trace('CSVParser::missingDataCheck -- start');
+        Log.trace('ClasslistAgent::missingDataCheck -- start');
         const that = this;
         const missingData: any = {};
         columns.forEach((column) => {
@@ -141,7 +141,7 @@ export class ClasslistAgent {
         });
         columns.forEach((column) => {
             if (missingData[column].length) {
-                Log.error('CSVParser::missingDataCheck(..) - ERROR: Certain fields cannot be empty: '
+                Log.error('ClasslistAgent::missingDataCheck(..) - ERROR: Certain fields cannot be empty: '
                     + JSON.stringify(missingData));
                 throw new Error('Certain fields cannot be empty: ' + JSON.stringify(missingData));
             }
