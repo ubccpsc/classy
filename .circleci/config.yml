@@ -119,7 +119,7 @@ jobs:
             command: |
                       set -e
                       cd packages/autotest
-                      yarn testCI
+                      yarn test
             name: Running autotest tests
             environment:
               MOCHA_FILE: testOutput/autotest/test/test-results.xml
