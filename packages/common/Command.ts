@@ -32,13 +32,12 @@ export class Command implements ICommand {
                 output = Buffer.concat([output, data], output.length + data.length);
             });
             cmd.on(`close`, (code, signal) => {
-                let out = output.toString().trim();
+                const out = output.toString().trim();
                 if (code === 0) {
                     resolve([code, out]);
                 } else {
-                    out = Log.sanitize(out);
                     Log.warn(Log.sanitize(`Command::executeCommand(..) -> EXIT ${code}: ${this.cmdName} ${args.join(" ")}. ${out}`));
-                    reject([code, out]);
+                    reject([code, Log.sanitize(out)]);
                 }
             });
         });
