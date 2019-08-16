@@ -93,7 +93,7 @@ export default class Log {
             const value: string = config.getProp(sk).replace('token ', '');
 
             const hint = value.substring(0, 4);
-            input = input.replace(value, hint + '-xxxxxx');
+            input = input.replace(new RegExp(value, 'g'), hint + '-xxxxxx');
         });
         return input;
     }
