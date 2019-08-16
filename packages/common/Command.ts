@@ -19,8 +19,7 @@ export class Command implements ICommand {
     }
 
     public async executeCommand(args: string[], options: SpawnOptions = {}): Promise<CommandResult> {
-        // LIKELY CANNOT PUT BACK IN UNLESS WE FILTER OUT SENSITIVE INFORMATION or just show first couple args
-        // Log.trace(`Command::executeCommand(..) -> ${this.cmdName} ${args.join(" ")}`);
+        Log.trace(Log.sanitize(`Command::executeCommand(..) -> ${this.cmdName} ${args.join(" ")}`));
         return new Promise<CommandResult>((resolve, reject) => {
             let output: Buffer = Buffer.allocUnsafe(0);
             const cmd: ChildProcess = this.spawn(this.cmdName, args, options);
