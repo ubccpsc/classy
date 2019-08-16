@@ -18,7 +18,8 @@ export class Command implements ICommand {
     }
 
     public async executeCommand(args: string[], options: SpawnOptions = {}): Promise<CommandResult> {
-        Log.trace(`Command::executeCommand(..) -> ${this.cmdName} ${args.join(" ")}`);
+        // LIKELY CANNOT PUT BACK IN UNLESS WE FILTER OUT SENSITIVE INFORMATION or just show first couple args
+        // Log.trace(`Command::executeCommand(..) -> ${this.cmdName} ${args.join(" ")}`);
         return new Promise<CommandResult>((resolve, reject) => {
             let output: Buffer = Buffer.allocUnsafe(0);
             const cmd: ChildProcess = this.spawn(this.cmdName, args, options);
@@ -36,7 +37,12 @@ export class Command implements ICommand {
                 if (code === 0) {
                     resolve([code, out]);
                 } else {
-                    Log.warn(`Command::executeCommand(..) -> EXIT ${code}: ${this.cmdName} ${args.join(" ")}. ${out}`);
+                    const codeString = JSON.stringify([code, out]);
+                    if (codeString.indexOf(`fatal: unable to access 'https://`)) {
+                        console.log('stop here to debug');
+                    }
+                    // REMOVED THIS CODE UNTIL WE FIGURE OUT TO DO WITH THE SENSITIVE INFORMATION IN HERE.
+                    // Log.warn(`Command::executeCommand(..) -> EXIT ${code}: ${this.cmdName} ${args.join(" ")}. ${out}`);
                     reject([code, out]);
                 }
             });
