@@ -1,4 +1,5 @@
 /* tslint:disable:no-console */
+import Config, {ConfigKey} from '../common/Config';
 
 export enum LogLevel {
     TRACE,
@@ -78,5 +79,22 @@ export default class Log {
         if (Log.Level <= LogLevel.TEST) {
             console.log(`<X> ${new Date().toLocaleString()}: ${msg}`);
         }
+    }
+
+    /**
+     * Removes sensitive information from string types
+     * @param input a string that you MAY want to remove sensitive information from
+     */
+    public static sanitize(input: string): string {
+        const sensitiveKeys: ConfigKey[] = [ConfigKey.githubBotToken];
+        const config = Config.getInstance();
+        sensitiveKeys.forEach((sk) => {
+            // HACK: replace() - edge case regarding token prefix in the config.
+            const value: string = config.getProp(sk).replace('token ', '');
+
+            const hint = value.substring(0, 4);
+            input = input.replace(value, hint + '-xxxxxx');
+        });
+        return input;
     }
 }

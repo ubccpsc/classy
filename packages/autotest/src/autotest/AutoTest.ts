@@ -388,8 +388,7 @@ export abstract class AutoTest implements IAutoTest {
 
             await this.classPortal.sendGrade(gradePayload);
         } catch (err) {
-            // REMOVED ERR obj until sensitive information can be removed.
-            Log.error("AutoTest::handleTick(..) - ERROR for SHA: " + input.target.commitSHA + "; ERROR: // MUST PUT BACK IN ERR OBJ");
+            Log.error("AutoTest::handleTick(..) - ERROR for SHA: " + input.target.commitSHA + "; ERROR: " + err);
         } finally {
             await this.handleExecutionComplete(record);
             Log.info("AutoTest::handleTick(..) - complete; delivId: " + input.delivId +

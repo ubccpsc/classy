@@ -1,5 +1,6 @@
 import {ChildProcess, spawn, SpawnOptions} from "child_process";
 import Log from "./Log";
+import Util from './Util';
 
 export type CommandResult = [number, any];
 
@@ -33,16 +34,16 @@ export class Command implements ICommand {
                 output = Buffer.concat([output, data], output.length + data.length);
             });
             cmd.on(`close`, (code, signal) => {
-                const out = output.toString().trim();
+                let out = output.toString().trim();
                 if (code === 0) {
                     resolve([code, out]);
                 } else {
                     const codeString = JSON.stringify([code, out]);
                     if (codeString.indexOf(`fatal: unable to access 'https://`)) {
-                        console.log('stop here to debug');
+                        Log.info('stop here to debug');
                     }
-                    // REMOVED THIS CODE UNTIL WE FIGURE OUT TO DO WITH THE SENSITIVE INFORMATION IN HERE.
-                    // Log.warn(`Command::executeCommand(..) -> EXIT ${code}: ${this.cmdName} ${args.join(" ")}. ${out}`);
+                    out = Log.sanitize(out);
+                    Log.warn(Log.sanitize(`Command::executeCommand(..) -> EXIT ${code}: ${this.cmdName} ${args.join(" ")}. ${out}`));
                     reject([code, out]);
                 }
             });
