@@ -86,7 +86,7 @@ export default class Log {
      * @param input a string that you MAY want to remove sensitive information from
      */
     public static sanitize(input: string): string {
-        const sensitiveKeys: ConfigKey[] = [ConfigKey.githubBotToken];
+        const sensitiveKeys: ConfigKey[] = [ConfigKey.githubBotToken]; // Can add any sensitive keys here
         const config = Config.getInstance();
         sensitiveKeys.forEach((sk) => {
             // HACK: replace() - edge case regarding token prefix in the config.
