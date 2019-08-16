@@ -36,10 +36,6 @@ export class Command implements ICommand {
                 if (code === 0) {
                     resolve([code, out]);
                 } else {
-                    const codeString = JSON.stringify([code, out]);
-                    if (codeString.indexOf(`fatal: unable to access 'https://`)) {
-                        Log.info('stop here to debug');
-                    }
                     out = Log.sanitize(out);
                     Log.warn(Log.sanitize(`Command::executeCommand(..) -> EXIT ${code}: ${this.cmdName} ${args.join(" ")}. ${out}`));
                     reject([code, out]);
