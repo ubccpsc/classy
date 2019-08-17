@@ -52,6 +52,17 @@ export class AdminConfigTab extends AdminPage {
             }
         };
 
+        (document.querySelector('#adminUpdateClasslist') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminConfigTab::handleAdminConfig(..) - update classlist pressed');
+            evt.stopPropagation(); // prevents list item expansion
+
+            that.updateClasslistPressed().then(function() {
+                // worked
+            }).catch(function(err) {
+                Log.error('AdminConfigTab::handleAdminConfig(..) - update classlist pressed; ERROR: ' + err.message);
+            });
+        };
+
         (document.querySelector('#adminSubmitGradeCSV') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - upload grades pressed');
             evt.stopPropagation(); // prevents list item expansion
@@ -399,6 +410,22 @@ export class AdminConfigTab extends AdminPage {
 
         if (typeof body.success !== 'undefined') {
             UI.notificationToast("Withrdaw marking successful: " + body.success.message, 5000);
+        } else {
+            UI.showAlert(body.failure.message);
+        }
+    }
+
+    private async updateClasslistPressed(): Promise<void> {
+        Log.trace('AdminConfigTab::updateClasslistPressed(..) - start');
+        const url = this.remote + '/portal/classlist';
+        const options: any = AdminView.getOptions();
+        options.method = 'put';
+
+        const response = await fetch(url, options);
+        const body = await response.json();
+
+        if (typeof body.success !== 'undefined') {
+            UI.showErrorToast("Classlist successfully updated.");
         } else {
             UI.showAlert(body.failure.message);
         }

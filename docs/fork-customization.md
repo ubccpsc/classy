@@ -4,38 +4,51 @@ Each CPSC course that uses Classy requires a fork of the `root` https://github.c
 
 Process Overview: Fork Code from Root Classy Repository --> Optional: Modify Forked Classy Code --> Technical Staff Hosts Code on Server
 
-## Front-End Customization
+## Classy Customization
 
-The front-end uses Onsen UI, which is a lightweight UI framework that uses vanilla Javascript and HTML templates in a MVC pattern. If a fork would like to modify the default views in Classy, it is necessary to create these custom files from their default counterparts:
+Classy requires that a set of custom files are implemented for each course offering. These files allow you to customize your course by modifying the views on the front-end and the controller logic on the back-end. As most courses require very standard logic, custom files can automatically be generated from default boilerplates. To generate your custom files: 
 
-**IF you create Custom HTML Views, you must ALSO create custom view models**
+- Double-check that your `.env` file `NAME` property contains your course name. The file may be found in the root `./Classy/.env`.
+- Then, run the Bash script `./helper-scripts/default-file-setup.sh` from the root `./Classy` directory.
 
-### Step 1: CREATE CUSTOM HTML VIEWS
+By running the Bash script above, files will be generated that allow you to either (a.) run the application with its defaults or (b.) modify the code to achieve unique business logic requirements. 
 
-- Copy the contents of `Classy/packages/portal/frontend/html/default` to `Classy/packages/portal/frontend/html/*name*`. The name variable MUST be the `name` variable found in `Classy/.env`)
-- The previous step copies the REQUIRED HTML templates: `landing.html`, `login.html`, and `student.html`. Any custom HTML templates may be added here.
+## Modifying the Front-end
 
-UI components and instructions for writing Custom View Model logic can be found here: https://onsen.io/v2/guide/#getting-started.
+The front-end uses Onsen UI, which is a lightweight framework that uses vanilla Javascript and HTML templates in a MVC pattern. UI components and instructions for writing Custom View Model logic can be found here: https://onsen.io/v2/guide/#getting-started.
 
-### Step 2: CREATE CUSTOM VIEW MODELS
+If you are famiiar with the MVC pattern and would like to modify the view, familiarize yourself with the set of custom files that are generated:
 
-In `Classy/packages/portal/frontend/src/app/custom`:
+### HTML:
 
-- Copy `./DefaultAdminView.ts` to `./CustomAdminView.ts`
-- Copy `./DefaultStudentView.ts` to `./CustomStudentView.ts`
+- packages/portal/frontend/html/{*name*}/custom.html
+- packages/portal/frontend/html/{*name*}/landing.html
+- packages/portal/frontend/html/{*name*}/login.html
+- packages/portal/frontend/html/{*name*}/student.html
 
-Any custom logic may be implemented in the 'Custom' view model files if the files continue to extend the  `AdminView` and `AbstractStudentView` classes. Any number of subclasses can also be contained in this folder. These changes should ***NOT*** be pushed back to `classy/master`.
+### View Models:
 
-## Back-End Customization
+- packages/portal/frontend/src/app/custom/CustomStudentView.ts
+- packages/portal/frontend/src/app/custom/CustomAdminView.ts
 
-The back-end uses Restify, a RESTful API server, to provide data to the front-end. A customized Course Controller and Course Routes class, respectively, MUST be implemented.
+You may modify any of these files generated above. Any custom logic may also be implemented in the 'Custom' view model files if the files continue to extend the  `AdminView` and `AbstractStudentView` classes. Any number of subclasses can also be contained in this folder.  These changes should ***NOT*** be pushed back to `classy/master`.
 
-To implement custom Course Controller and Course Routes, in `Classy/packages/portal/backend/src/custom`:
+## Modifying the Back-end
 
-* Copy `DefaultCourseController.ts` to create `CustomCourseController.ts` in the same directory. `CustomCourseController` extends `CourseController` because it is used in the most common course-specific overrides that require code.
-* Copy `DefaultCourseRoutes.ts` to create `CustomCourseRoutes.ts` in the same directory. `CustomCourseRoutes.ts` implements `IREST`, which allows you to define any custom REST routes required by the backend.
+The back-end uses Restify, a RESTful API server, to provide data to the front-end. Customized boilerplate files are loaded by Restify at start-up. These boilerplate files may also be modified:
 
-Any number of subclasses can also be contained in this folder. These changes should ***NOT*** be pushed back to `classy/master`.
+### Customizable Back-end Files:
+
+- Classy/packages/portal/backend/src/custom/CustomCourseRoutes.ts
+- Classy/packages/portal/backend/src/custom/CustomCourseController.ts
+
+`CustomCourseController.ts` extends `CourseController` because it is used in the most common course-specific overrides that require code. 
+
+`CustomCourseRoutes.ts` implements `IREST`, which allows you to define any custom REST routes required by the backend. Any number of subclasses can also be contained in this folder. These changes should ***NOT*** be pushed back to `classy/master`.
+
+## Restoring Default Application State
+
+The default files used to create the custom boilerplate files can be found in the `default-file-setup.sh` script. To revert to the default state, remove all of the custom files from front-end and back-end applications, and then re-run `default-file-setup.sh` from the `./Classy` directory.
 
 ## Test Fork Customization 
 

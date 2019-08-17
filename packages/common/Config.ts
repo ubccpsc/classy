@@ -27,6 +27,10 @@ export enum ConfigKey {
     testorg = "testorg",
     testname = "testname",
 
+    classlist_uri = "classlist_uri",
+    classlist_username = "classlist_username",
+    classlist_password = "classlist_password",
+
     publichostname = "publichostname",
 
     backendUrl = "backendUrl",
@@ -84,6 +88,10 @@ export default class Config {
                 org:      process.env.ORG,
                 testorg:  process.env.ORGTEST,
                 testname: process.env.NAMETEST,
+
+                classlist_uri:      process.env.CLASSLIST_URI,
+                classlist_username: process.env.CLASSLIST_USERNAME,
+                classlist_password: process.env.CLASSLIST_PASSWORD,
 
                 publichostname: process.env.PUBLICHOSTNAME,
 
