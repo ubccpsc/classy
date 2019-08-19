@@ -2,21 +2,80 @@
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
+    "version": "0.3.0",
     "configurations": [
+        // BACK-END: Launches Debug Mode Classy Rest API
         {
             "type": "node",
             "request": "launch",
-            "name": "Mocha All",
-            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
+            "name": "Classy Back-end",
+            "program": "${workspaceFolder}/packages/portal/backend/src/Backend.ts",
+            "preLaunchTask": "tsc: build - tsconfig.json",
+            "outFiles": [
+                "${workspaceFolder}/packages/portal/backend/src/*.js"
+            ],
+        },
+        // BACK-END: Runs All Back-end Tests with Working Debug Breakpoints
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Classy Back-end: Mocha All",
+            "program": "${workspaceFolder}/packages/portal/backend/node_modules/mocha/bin/_mocha",
             "args": [
                 "--timeout",
                 "999999",
                 "--colors",
-                "--require",
-                "ts-node/register"
+                "${workspaceFolder}/packages/portal/backend/test/**/*Spec.js",
+                "--recursive"
             ],
-            "preLaunchTask": "npmbuild",
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+        },
+        // BACK-END: Runs ONLY specified file in Back-end Tests with Debug Breakpoints
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Mocha Current File",
+            "program": "${workspaceFolder}/packages/portal/backend/node_modules/mocha/bin/_mocha",
+            "args": [
+                "--timeout",
+                "999999",
+                "--colors",
+                "${workspaceFolder}/packages/portal/backend/test/controllers/GithubActionSpec.js"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+        },
+        // FRONT-END: Launches Debug Mode for Front-end Classy Onsen UI Client
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Classy Front-end",
+            "url": "https://localhost:3000", // or whatever port you use
+            "webRoot": "${workspaceFolder}"
+        },
+        // FRONT-END: IF break-points not triggered by browser actions, launch 'Attach to Chrome'
+        {
+            "type": "chrome",
+            "request": "attach",
+            "name": "Classy Front-end: Attach to Chrome",
+            "port": 9222,
+            "sourceMaps": true,
+            "webRoot": "${workspaceFolder}"
+        },
+        // AUTOTEST: Launches All AutoTest Tests with Debug Breakpoints
+        {
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/packages/autotest", // set working path to support fileReadSync relative paths
+            "name": "AutoTest - Mocha All",
+            "program": "${workspaceFolder}/packages/portal/backend/node_modules/mocha/bin/_mocha",
+            "args": [
+                "--timeout",
+                "999999",
+                "--colors",
+                "${workspaceFolder}/packages/autotest/test/**/*Spec.js"
+            ],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen"
         }
