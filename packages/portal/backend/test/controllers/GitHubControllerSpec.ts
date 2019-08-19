@@ -132,6 +132,7 @@ describe("GitHubController", () => {
     });
 
     it("Should be able to provision a repo.", async function() {
+        const githubHost  = Config.getInstance().getProp(ConfigKey.githubHost);
         const repos = await new RepositoryController().getAllRepos();
         expect(repos.length).to.be.greaterThan(0);
 
@@ -139,7 +140,7 @@ describe("GitHubController", () => {
         expect(teams.length).to.be.greaterThan(0);
 
         // const webhook = 'https://devnull.cs.ubc.ca/classyWebhook';
-        const importUrl = 'https://github.com/SECapstone/bootstrap';
+        const importUrl = githubHost + '/classytest/TESTING_SAMPLE_REPO';
         const provisioned = await gc.provisionRepository(repos[0].id, teams, importUrl);
         expect(provisioned).to.be.true;
     }).timeout(Test.TIMEOUTLONG);

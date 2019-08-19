@@ -46,6 +46,13 @@ export enum ConfigKey {
     githubClientSecret = "githubClientSecret",
     githubHost = "githubHost",
 
+    githubAdmin = "githubAdmin",
+    githubAdminStaff = "githubAdminStaff",
+    githubStaff = "githubStaff",
+    githubBot01 = "githubBot01",
+    githubBot02 = "githubBot02",
+    githubTestUsers = "githubTestUsers",
+
     autotestUrl = "autotestUrl",
     autotestPort = "autotestPort",
     autotestSecret = "autotestSecret",
@@ -119,6 +126,13 @@ export default class Config {
                 githubClientId:     process.env.GH_CLIENT_ID,
                 githubClientSecret: process.env.GH_CLIENT_SECRET,
                 githubDockerToken:  process.env.GH_DOCKER_TOKEN,
+
+                githubAdmin:        process.env.GH_ADMIN,
+                githubAdminStaff:   process.env.GH_ADMIN_STAFF,
+                githubStaff:        process.env.GH_STAFF,
+                githubBot01:        process.env.GH_BOT_01,
+                githubBot02:        process.env.GH_BOT_02,
+                githubTestUsers:    process.env.GH_TEST_USERS,
 
                 autotestUrl:    process.env.AUTOTEST_URL,
                 autotestPort:   process.env.AUTOTEST_PORT,

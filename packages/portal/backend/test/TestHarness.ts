@@ -64,7 +64,7 @@ export class Test {
         person = await Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.csId, Test.ADMIN1.github, PersonKind.ADMINSTAFF);
         await dbc.writePerson(person);
 
-        await Test.prepareAuth(); // adds admin token (and user1 which is not real)
+        await Test.prepareAuth(); // adds admin token (and atest-05, atest-06 which are both real on GE)
         // create a team
         const team = await Test.createTeam(Test.TEAMNAMEREAL, Test.DELIVID0, [Test.GITHUB1.id, Test.GITHUB2.id]);
         await dbc.writeTeam(team);
@@ -374,8 +374,22 @@ export class Test {
     public static readonly TEAMNAME2 = 'TESTteam2';
     public static readonly TEAMNAME3 = 'TESTteam3';
     public static readonly TEAMNAME4 = 'TESTteam4';
-    public static readonly TEAMNAMEREAL = 't_d0_cpscbotCSID_rthse2CSID';
+    public static readonly TEAMNAMEREAL = 't_d0_atest-04CSID_atest-05CSID';
     public static readonly INVALIDTEAMNAME = "InvalidTeamNameShouldNotExist";
+
+    /**
+     * Creates user testing templates for real Github accounts configured in .env
+     * @param userKey ConfigKey property for user ie. ConfigKey.githubAdmin
+     * @param index of userData if an array in .env config
+     */
+    public static createTestUserTemplate(userKey: ConfigKey, index: number = null): any {
+        const userData: string | string[] = index ? Config.getInstance().getProp(userKey)[index] : Config.getInstance().getProp(userKey);
+        return {
+            id: userData + 'ID',
+            csId: userData + 'CSID',
+            github: userData
+        };
+    }
 
     public static readonly USER1 = {id: 'user1ID', csId: 'user1CSID', github: 'user1gh'};
     public static readonly USER2 = {id: 'user2ID', csId: 'user2CSID', github: 'user2gh'};
@@ -386,19 +400,19 @@ export class Test {
 
     public static readonly INVALIDUSER1 = {id: 'invalidUser1id', csId: 'invalidUser1CSID', github: 'invalidUser1gh'};
 
-    public static readonly ADMIN1 = {id: 'classyadminID', csId: 'classyadminCSID', github: 'classyadmin'};
+    // Some test users must be integrated with Github.com/Enterprise live instances. They are in the .env config:
+    public static readonly ADMIN1 = {id: 'atest-09ID', csId: 'atest-09CSID', github: 'atest-09'};
     // public static readonly ADMIN1 = {id: 'atest-01', csId: 'atest-01', github: 'atest-01'}; // github-dev.ugrad
-    public static readonly STAFF1 = {id: 'classystaffID', csId: 'classystaffCSID', github: 'classystaff'};
+    public static readonly STAFF1 = {id: 'atest-08ID', csId: 'atest-08CSID', github: 'atest-08'};
     // public static readonly STAFF1 = {id: 'atest-02', csId: 'atest-02', github: 'atest-02'}; // github-dev.ugrad (not provisioned yet)
 
-    public static readonly REALUSER1 = {id: 'rthse2ID', csId: 'rthse2CSID', github: 'rthse2'}; // real account for testing users
-    public static readonly REALUSER2 = {id: "jopikaID", csId: "jopikaCSID", github: "jopika"}; // real account for testing users
-    public static readonly REALUSER3 = {id: "atest-01ID", csId: "atest-01CSID", github: "atest-01"}; // real account for testing users
-
-    public static readonly GITHUB1 = {id: "cpscbotID", csId: "cpscbotCSID", github: "cpscbot"};
-    public static readonly GITHUB2 = {id: "rthse2ID", csId: "rthse2CSID", github: "rthse2"};
-    public static readonly GITHUB3 = {id: "ubcbotID", csId: "ubcbotCSID", github: "ubcbot"};
-    public static readonly GITHUB4 = {id: "classystaffID", csId: "classystaffCSID", github: "classystaff"};
+    public static readonly REALUSER1 = {id: 'atest-01ID', csId: 'atest-01CSID', github: 'atest-01'}; // real account for testing users
+    public static readonly REALUSER2 = {id: "atest-02ID", csId: "atest-02CSID", github: "atest-02"}; // real account for testing users
+    public static readonly REALUSER3 = {id: "atest-03ID", csId: "atest-03CSID", github: "atest-03"}; // rea
+    public static readonly GITHUB1 = {id: "atest-04ID", csId: "atest-04CSID", github: "atest-04"}; // 4-7 have potential to be real
+    public static readonly GITHUB2 = {id: "atest-05ID", csId: "atest-05CSID", github: "atest-05"};
+    public static readonly GITHUB3 = {id: "atest-06ID", csId: "atest-06CSID", github: "atest-06"};
+    public static readonly GITHUB4 = {id: "atest-07ID", csId: "atest-07CSID", github: "atest-07"};
 
     // public static readonly USERNAMEGITHUB1 = "cpscbot";
     // public static readonly USERNAMEGITHUB2 = "rthse2";
@@ -418,15 +432,15 @@ export class Test {
     public static readonly REPONAME1 = 'TESTrepo1';
     public static readonly REPONAME2 = 'TESTrepo2';
     public static readonly REPONAME3 = 'TESTrepo3';
-    public static readonly REPONAMEREAL = 'd0_cpscbotCSID_rthse2CSID';
+    public static readonly REPONAMEREAL = 'd0_atest-04CSID_atest-05CSID';
     public static readonly INVALIDREPONAME = "InvalidRepoNameShouldNotExist";
     public static readonly REPONAMEREAL2 = 'PostTestDoNotDelete';
 
     public static readonly REALTOKEN = 'realtoken';
     public static readonly FAKETOKEN = 'faketoken';
 
-    public static readonly ASSIGNTEAMNAME0 = Test.ASSIGNID0 + "__" + Test.REALUSER1.github; // TODO: id should be .githubId
-    public static readonly ASSIGNTEAMNAME1 = Test.ASSIGNID1 + "__" + Test.REALUSER1.github; // TODO: id should be .githubId
+    public static readonly ASSIGNTEAMNAME0 = Test.ASSIGNID0 + "__" + Test.REALUSER1.id;
+    public static readonly ASSIGNTEAMNAME1 = Test.ASSIGNID1 + "__" + Test.REALUSER1.id;
 
     public static getDeliverable(delivId: string): Deliverable {
         const deliv: Deliverable = {
