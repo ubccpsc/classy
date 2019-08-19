@@ -19,7 +19,7 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Classy Back-end: Mocha All",
+            "name": "Classy Back-end: Mocha All Tests",
             "program": "${workspaceFolder}/packages/portal/backend/node_modules/mocha/bin/_mocha",
             "args": [
                 "--timeout",
@@ -35,13 +35,13 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Mocha Current File",
+            "name": " Classy Back-end: Mocha Specified File",
             "program": "${workspaceFolder}/packages/portal/backend/node_modules/mocha/bin/_mocha",
             "args": [
                 "--timeout",
                 "999999",
                 "--colors",
-                "${workspaceFolder}/packages/portal/backend/test/controllers/GithubActionSpec.js"
+                "${workspaceFolder}/packages/portal/backend/test/ClasslistAgentSpec.js"
             ],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen"
@@ -63,18 +63,34 @@
             "sourceMaps": true,
             "webRoot": "${workspaceFolder}"
         },
-        // AUTOTEST: Launches All AutoTest Tests with Debug Breakpoints
+        // AUTOTEST: Runs ALL AutoTest Testsuite Files with Debug Breakpoints
         {
             "type": "node",
             "request": "launch",
             "cwd": "${workspaceFolder}/packages/autotest", // set working path to support fileReadSync relative paths
-            "name": "AutoTest - Mocha All",
-            "program": "${workspaceFolder}/packages/portal/backend/node_modules/mocha/bin/_mocha",
+            "name": "AutoTest: Mocha All Tests",
+            "program": "${workspaceFolder}/packages/autotest/node_modules/mocha/bin/_mocha",
             "args": [
                 "--timeout",
                 "999999",
                 "--colors",
                 "${workspaceFolder}/packages/autotest/test/**/*Spec.js"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+        },
+        // AUTOTEST: Runs ONLY specified file in AutoTest Testsuite with Debug Breakpoints
+        {
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/packages/autotest", // set working path to support fileReadSync relative paths
+            "name": "AutoTest: Mocha Specified File",
+            "program": "${workspaceFolder}/packages/autotest/node_modules/mocha/bin/_mocha",
+            "args": [
+                "--timeout",
+                "999999",
+                "--colors",
+                "${workspaceFolder}/packages/autotest/test/MongoStoreSpec.js"
             ],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen"
