@@ -8,9 +8,9 @@
         {
             "type": "node",
             "request": "launch",
+            "cwd": "${workspaceFolder}/packages/portal/backend", // set working path to build Backend project
             "name": "Classy Back-end",
             "program": "${workspaceFolder}/packages/portal/backend/src/Backend.ts",
-            "preLaunchTask": "tsc: build - tsconfig.json",
             "outFiles": [
                 "${workspaceFolder}/packages/portal/backend/src/*.js"
             ],
@@ -19,6 +19,7 @@
         {
             "type": "node",
             "request": "launch",
+            "cwd": "${workspaceFolder}/packages/portal/backend",
             "name": "Classy Back-end: Mocha All Tests",
             "program": "${workspaceFolder}/packages/portal/backend/node_modules/mocha/bin/_mocha",
             "args": [
@@ -35,6 +36,7 @@
         {
             "type": "node",
             "request": "launch",
+            "cwd": "${workspaceFolder}/packages/portal/backend",
             "name": " Classy Back-end: Mocha Specified File",
             "program": "${workspaceFolder}/packages/portal/backend/node_modules/mocha/bin/_mocha",
             "args": [
@@ -50,6 +52,7 @@
         {
             "type": "chrome",
             "request": "launch",
+            "cwd": "${workspaceFolder}/packages/portal/frontend", // set working path to build front-end and webpack compile
             "name": "Classy Front-end",
             "url": "https://localhost:3000", // or whatever port you use
             "webRoot": "${workspaceFolder}"
@@ -63,11 +66,43 @@
             "sourceMaps": true,
             "webRoot": "${workspaceFolder}"
         },
-        // AUTOTEST: Runs ALL AutoTest Testsuite Files with Debug Breakpoints
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Mocha All",
+            "program": "${workspaceFolder}/packages/autotest/node_modules/mocha/bin/_mocha",
+            "args": [
+                "--timeout",
+                "999999",
+                "--colors",
+                "${workspaceFolder}/test"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+        },
+        // AUTOTEST: Launches Debug Mode Runtime Application
+        // TO DO: Determine what 'nohup node ./src/AutoTestDaemon.js 310 &> nohup.out' entails in autotest/package.json 
+        // in yarn run autotest:dev command
         {
             "type": "node",
             "request": "launch",
             "cwd": "${workspaceFolder}/packages/autotest", // set working path to support fileReadSync relative paths
+            "name": "AutoTest",
+            "program": "${workspaceFolder}/packages/autotest/src/AutoTestDaemon.ts",
+            "args": [
+
+            ],
+            "outFiles": [
+                "${workspaceFolder}/packages/autotest/src/AutoTestDaemon.js"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen"
+        },
+        // AUTOTEST: Runs ALL AutoTest Testsuite Files with Debug Breakpoints
+        {
+            "type": "node",
+            "request": "launch",
+            "cwd": "${workspaceFolder}/packages/autotest",
             "name": "AutoTest: Mocha All Tests",
             "program": "${workspaceFolder}/packages/autotest/node_modules/mocha/bin/_mocha",
             "args": [
@@ -83,7 +118,7 @@
         {
             "type": "node",
             "request": "launch",
-            "cwd": "${workspaceFolder}/packages/autotest", // set working path to support fileReadSync relative paths
+            "cwd": "${workspaceFolder}/packages/autotest",
             "name": "AutoTest: Mocha Specified File",
             "program": "${workspaceFolder}/packages/autotest/node_modules/mocha/bin/_mocha",
             "args": [
@@ -94,6 +129,16 @@
             ],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen"
+        },
+    ],
+    "compounds": [
+        {
+            "name": "Classy Back-end/Classy Front-end",
+            "configurations": ["Classy Back-end", "Classy Front-end"]
+        },
+        {
+            "name": "Classy AutoTest/Back-end/Classy Front-end",
+            "configurations": ["Classy Back-end", "Classy Front-end", "AutoTest"]
         }
     ]
 }
