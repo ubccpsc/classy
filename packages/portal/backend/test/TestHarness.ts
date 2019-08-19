@@ -409,9 +409,9 @@ export class Test {
     public static readonly REALUSER1 = {id: 'atest-01ID', csId: 'atest-01CSID', github: 'atest-01'}; // real account for testing users
     public static readonly REALUSER2 = {id: "atest-02ID", csId: "atest-02CSID", github: "atest-02"}; // real account for testing users
     public static readonly REALUSER3 = {id: "atest-03ID", csId: "atest-03CSID", github: "atest-03"}; // rea
-    public static readonly GITHUB1 = {id: "atest-04ID", csId: "atest-04CSID", github: "atest-04"}; // 4-7 have potential to be real
+    public static readonly GITHUB1 = {id: "atest-04ID", csId: "atest-04CSID", github: "atest-04"}; // 04-07 (at least one must be fake)
     public static readonly GITHUB2 = {id: "atest-05ID", csId: "atest-05CSID", github: "atest-05"};
-    public static readonly GITHUB3 = {id: "atest-06ID", csId: "atest-06CSID", github: "atest-06"};
+    public static readonly GITHUB3 = {id: "atest-FAKEID", csId: "atest-FAKECSID", github: "atest-FAKE"}; // MUST BE UNREGISTERED TO WITHDRAW
     public static readonly GITHUB4 = {id: "atest-07ID", csId: "atest-07CSID", github: "atest-07"};
 
     // public static readonly USERNAMEGITHUB1 = "cpscbot";
