@@ -66,20 +66,6 @@
             "sourceMaps": true,
             "webRoot": "${workspaceFolder}"
         },
-        {
-            "type": "node",
-            "request": "launch",
-            "name": "Mocha All",
-            "program": "${workspaceFolder}/packages/autotest/node_modules/mocha/bin/_mocha",
-            "args": [
-                "--timeout",
-                "999999",
-                "--colors",
-                "${workspaceFolder}/test"
-            ],
-            "console": "integratedTerminal",
-            "internalConsoleOptions": "neverOpen"
-        },
         // AUTOTEST: Launches Debug Mode Runtime Application
         // TO DO: Determine what 'nohup node ./src/AutoTestDaemon.js 310 &> nohup.out' entails in autotest/package.json 
         // in yarn run autotest:dev command
