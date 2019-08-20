@@ -9,11 +9,6 @@ module.exports = {
         portal: "./src/app/App.ts"
     },
 
-    // As Log.ts is imported on the front-end, which references Dotenv, we have to mock 'fs' out in webpack compilation
-    node: {
-        fs: 'empty'
-    },
-
     output: {
         path: path.resolve(__dirname, "./html/js/"),
         publicPath: path.resolve(__dirname, "./html/js/"),
