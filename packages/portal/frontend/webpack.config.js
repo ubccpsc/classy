@@ -9,6 +9,10 @@ module.exports = {
         portal: "./src/app/App.ts"
     },
 
+    node: {
+        fs: 'empty'
+    },
+
     output: {
         path: path.resolve(__dirname, "./html/js/"),
         publicPath: path.resolve(__dirname, "./html/js/"),
