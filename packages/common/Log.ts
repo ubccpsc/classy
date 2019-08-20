@@ -80,22 +80,4 @@ export default class Log {
             console.log(`<X> ${new Date().toLocaleString()}: ${msg}`);
         }
     }
-
-    /**
-     * WARNING: Can only be used by back-end, as dotenv uses FS, which does not work on front-end.
-     * Removes sensitive information from string types
-     * @param input a string that you MAY want to remove sensitive information from
-     */
-    public static sanitize(input: string): string {
-        const sensitiveKeys: ConfigKey[] = [ConfigKey.githubBotToken]; // Can add any sensitive keys here
-        const config = Config.getInstance();
-        sensitiveKeys.forEach((sk) => {
-            // HACK: replace() - edge case regarding token prefix in the config.
-            const value: string = config.getProp(sk).replace('token ', '');
-
-            const hint = value.substring(0, 4);
-            input = input.replace(new RegExp(value, 'g'), hint + '-xxxxxx');
-        });
-        return input;
-    }
 }
