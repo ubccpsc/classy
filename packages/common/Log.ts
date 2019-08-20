@@ -82,6 +82,7 @@ export default class Log {
     }
 
     /**
+     * WARNING: Can only be used by back-end, as dotenv uses FS, which does not work on front-end.
      * Removes sensitive information from string types
      * @param input a string that you MAY want to remove sensitive information from
      */
