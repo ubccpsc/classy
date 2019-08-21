@@ -61,6 +61,7 @@ export default class AdminRoutes implements IREST {
 
         // admin-only functions
         server.post('/portal/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
+        server.put('/portal/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.updateClasslist);
         server.post('/portal/admin/grades/:delivId', AdminRoutes.isAdmin, AdminRoutes.postGrades);
         server.post('/portal/admin/deliverable', AdminRoutes.isAdmin, AdminRoutes.postDeliverable);
         server.post('/portal/admin/team', AdminRoutes.isAdmin, AdminRoutes.postTeam);
@@ -512,6 +513,32 @@ export default class AdminRoutes implements IREST {
         }).catch(function(err) {
             return AdminRoutes.handleError(400, 'Unable to get deliverable list; ERROR: ' + err.message, res, next);
         });
+    }
+
+    public static async updateClasslist(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::updateClasslist(..) - start');
+        const pc = new PersonController();
+        const ca = new ClasslistAgent();
+        const auditUser = req.headers.user;
+
+        try {
+            const data = await ca.fetchClasslist();
+            const people = await ca.processClasslist(auditUser, null, data);
+
+            let payload: Payload;
+
+            if (people.length) {
+                payload = {success: {message: 'Classlist upload successful. ' + people.length + ' students processed.'}};
+                res.send(200, payload);
+                Log.info('AdminRoutes::updateClasslist(..) - done: ' + payload.success.message);
+            } else {
+                const msg = 'Classlist upload not successful; no students were processed from CSV.';
+                return AdminRoutes.handleError(400, msg, res, next);
+            }
+        } catch (err) {
+            const msg = 'Classlist upload not successful; no students were processed from CSV.';
+            return AdminRoutes.handleError(400, msg, res, next);
+        }
     }
 
     private static postClasslist(req: any, res: any, next: any) {
