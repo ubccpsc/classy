@@ -121,22 +121,7 @@ describe('General Routes', function() {
         expect(body.success.githubId).to.equal(Test.USER1.github);
     });
 
-    it('Should be able to update a classlist on localhost', async function() {
-        let response = null;
-        let body: Payload;
-
-        const url = '/portal/classlist';
-        try {
-            response = await request(app).put(url).set('Host', 'localhost');
-            body = response.body;
-            expect(body).to.haveOwnProperty('success');
-            expect(body.success.message).to.equal('Classlist upload successful. 3 students processed.');
-        } catch (err) {
-            Log.test('ERROR: ' + err);
-        }
-    });
-
-    it('Should NOT be able to update a classlist on if NOT on localhost and on a 143.103.5 IP', async function() {
+    it('Should NOT be able to update a classlist on if NOT on localhost and on a 143.103.*.* IP', async function() {
         let response = null;
         let body: Payload;
         const url = '/portal/classlist';

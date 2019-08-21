@@ -313,10 +313,10 @@ export default class GeneralRoutes implements IREST {
         const ca = new ClasslistAgent();
         const ipAddr = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         const host = req.headers['host'];
-        const ipReg: RegExp = /(142\.103\.[1-9]\.[1-9])/;
+        const ipReg: RegExp = /(142\.103\.[1-9]+\.[1-9]+)/;
         let auditInfo: string;
 
-        if (ipReg.test(ipAddr) === false && host.includes('localhost') === false) {
+        if (ipReg.test(ipAddr) === false) {
             return await GeneralRoutes.handleError(403, 'Forbidden error; user not privileged', res, next);
         }
 
