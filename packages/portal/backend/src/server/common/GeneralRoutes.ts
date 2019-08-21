@@ -317,7 +317,7 @@ export default class GeneralRoutes implements IREST {
         let auditInfo: string;
 
         if (ipReg.test(ipAddr) === false && host.includes('localhost') === false) {
-            await GeneralRoutes.handleError(403, 'Forbidden error; user not privileged', res, next);
+            return await GeneralRoutes.handleError(403, 'Forbidden error; user not privileged', res, next);
         }
 
         auditInfo = req.headers.user || ipAddr;
