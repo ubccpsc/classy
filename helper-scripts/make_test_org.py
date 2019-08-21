@@ -24,7 +24,7 @@ api_base_uri = os.getenv('GH_API')
 github_url = os.getenv('GH_HOST')
 classy_name = os.getenv('NAME')
 headers = {'Content-Type': 'application/json',
-			'Authorization': 'token {0}'.format(api_token)}
+			'Authorization': f'token {api_token}'}
 maintainer = 'steca'
 admin_team_members = ['atest-03', 'atest-09', 'autobot', 'classytest-admin', 'steca']
 staff_team_members = ['atest-08', 'atest-09', 'classytest-admstaff', 'classytest-staff']
