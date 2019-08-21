@@ -1294,4 +1294,34 @@ describe('Admin Routes', function() {
         expect(body.failure).to.not.be.undefined;
         expect(ex).to.be.null;
     });
+
+    it('Should be able to update a classlist if authorized as admin', async function() {
+        let response = null;
+        let body: Payload;
+        const url = '/portal/admin/classlist';
+        try {
+            response = await request(app).put(url).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        expect(body).to.haveOwnProperty('success');
+        expect(body.success).to.haveOwnProperty('message');
+        expect(body.success.message).to.contain('Classlist upload successful');
+    });
+
+    it('Should NOT be able to update a classlist if not authorized as admin', async function() {
+        let response = null;
+        let body: Payload;
+        const url = '/portal/admin/classlist';
+        try {
+            response = await request(app).put(url);
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        expect(body).to.haveOwnProperty('failure');
+    });
 });
