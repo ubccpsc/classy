@@ -312,7 +312,6 @@ export default class GeneralRoutes implements IREST {
         const pc = new PersonController();
         const ca = new ClasslistAgent();
         const ipAddr = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-        const host = req.headers['host'];
         const ipReg: RegExp = /(142\.103\.[1-9]+\.[1-9]+)/;
         let auditInfo: string;
 
