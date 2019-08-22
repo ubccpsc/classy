@@ -9,7 +9,7 @@ import {DatabaseController} from "../../src/controllers/DatabaseController";
 
 import BackendServer from "../../src/server/BackendServer";
 
-import {Test} from "../TestHarness";
+import {Test} from "../../../../common/TestHarness";
 
 // const loadFirst = require("../xRunLast/TestDatasetGeneratorSpec");
 

@@ -3,6 +3,7 @@ import * as rp from "request-promise-native";
 
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
+import {Test} from "../../../../common/TestHarness";
 import Util from "../../../../common/Util";
 import {Factory} from "../Factory";
 
@@ -1820,7 +1821,7 @@ export class TestGitHubActions implements IGitHubActions {
 
     public async deleteRepo(repoName: string): Promise<boolean> {
         Log.info("TestGitHubActions::deleteRepo( " + repoName + " )");
-        // if (repoName === Test.INVALIDREPONAME) {
+        // if (repoName === Test.DeprecatedUsers.INVALIDREPONAME) {
         //     return false;
         // }
         // const repoExists = await this.repoExists(repoName);
@@ -1869,7 +1870,7 @@ export class TestGitHubActions implements IGitHubActions {
         if (teamNumber < 0) {
             return [];
         }
-        return [this.Test.USERNAMEGITHUB1, this.Test.USERNAMEGITHUB2, this.Test.ADMIN1.github];
+        return [Test.DeprecatedUsers.USERNAMEGITHUB1, Test.DeprecatedUsers.USERNAMEGITHUB2, Test.DeprecatedUsers.ADMIN1.github];
     }
 
     public async getTeamNumber(teamName: string): Promise<number> {
@@ -1903,7 +1904,7 @@ export class TestGitHubActions implements IGitHubActions {
     }
 
     public async isOnAdminTeam(userName: string): Promise<boolean> {
-        if (userName === this.Test.ADMIN1.github || userName === this.Test.REALUSER3.github) {
+        if (userName === Test.DeprecatedUsers.ADMIN1.github || userName === Test.DeprecatedUsers.REALUSER3.github) {
             Log.info("TestGitHubActions::isOnAdminTeam( " + userName + " ) - true");
             return true;
         }
@@ -1912,33 +1913,13 @@ export class TestGitHubActions implements IGitHubActions {
     }
 
     public async isOnStaffTeam(userName: string): Promise<boolean> {
-        if (userName === this.Test.STAFF1.github || userName === this.Test.ADMIN1.github) {
+        if (userName === Test.DeprecatedUsers.STAFF1.github || userName === Test.DeprecatedUsers.ADMIN1.github) {
             Log.info("TestGitHubActions::isOnStaffTeam( " + userName + " ) - true");
             return true;
         }
         Log.info("TestGitHubActions::isOnStaffTeam( " + userName + " ) - false");
         return false;
     }
-
-    // HACK: can't reference GlobalSpec::Test here (docker limitation); need to move these to common?
-    // UPDATE: We moved real Github users into the .env file. Common could still be a good place
-    // for usernames that are not used in live Github tests.
-    private Test = {
-        USERNAMEGITHUB1: 'cpscbot',
-        USERNAMEGITHUB2: 'rthse2',
-        USERNAMEGITHUB3: 'ubcbot',
-        REALUSER1:       {id: "rthse2ID", csId: "rthse2CSID", github: "rthse2"}, // real account for testing users
-        REALUSER2:       {id: "jopikaID", csId: "jopikaCSID", github: "jopika"}, // real account for testing users
-        REALUSER3:       {id: "atest-01ID", csId: "atest-01CSID", github: "atest-01"}, // real account for testing users
-        USER1:           {id: 'user1ID', csId: 'user1CSID', github: 'user1gh'},
-        USER2:           {id: 'user2ID', csId: 'user2CSID', github: 'user2gh'},
-        USER3:           {id: 'user3ID', csId: 'user3CSID', github: 'user3gh'},
-        USER4:           {id: 'user4ID', csId: 'user4CSID', github: 'user4gh'},
-        ADMIN1:          {id: 'atest-09ID', csId: 'atest-09CSID', github: 'atest-09'},
-        STAFF1:          {id: 'atest-08ID', csId: 'atest-08CSID', github: 'atest-08'},
-        TEAMNAME1:       't_d0_user1id_user2id',
-        INVALIDREPONAME: 'InvalidRepoNameShouldNotExist'
-    };
 
     public async isOnTeam(teamName: string, userName: string): Promise<boolean> {
         Log.info("TestGitHubActions::isOnTeam( t: " + teamName + ", u: " + userName + " )");
@@ -1970,16 +1951,16 @@ export class TestGitHubActions implements IGitHubActions {
         const people = [];
 
         const start = Date.now();
-        people.push({personNumber: start, url: 'URL', githubId: this.Test.USERNAMEGITHUB1});
-        people.push({personNumber: start - 5, url: 'URL', githubId: this.Test.USERNAMEGITHUB2});
-        people.push({personNumber: start - 15, url: 'URL', githubId: this.Test.USERNAMEGITHUB3});
-        people.push({personNumber: start - 15, url: 'URL', githubId: this.Test.REALUSER1.github});
-        people.push({personNumber: start - 15, url: 'URL', githubId: this.Test.REALUSER2.github});
-        people.push({personNumber: start - 15, url: 'URL', githubId: this.Test.REALUSER3.github});
-        people.push({personNumber: start - 25, url: 'URL', githubId: this.Test.USER1.github});
-        people.push({personNumber: start - 35, url: 'URL', githubId: this.Test.USER2.github});
-        people.push({personNumber: start - 45, url: 'URL', githubId: this.Test.USER3.github});
-        people.push({personNumber: start - 55, url: 'URL', githubId: this.Test.USER4.github});
+        people.push({personNumber: start, url: 'URL', githubId: Test.DeprecatedUsers.USERNAMEGITHUB1});
+        people.push({personNumber: start - 5, url: 'URL', githubId: Test.DeprecatedUsers.USERNAMEGITHUB2});
+        people.push({personNumber: start - 15, url: 'URL', githubId: Test.DeprecatedUsers.USERNAMEGITHUB3});
+        people.push({personNumber: start - 15, url: 'URL', githubId: Test.DeprecatedUsers.REALUSER1.github});
+        people.push({personNumber: start - 15, url: 'URL', githubId: Test.DeprecatedUsers.REALUSER2.github});
+        people.push({personNumber: start - 15, url: 'URL', githubId: Test.DeprecatedUsers.REALUSER3.github});
+        people.push({personNumber: start - 25, url: 'URL', githubId: Test.DeprecatedUsers.USER1.github});
+        people.push({personNumber: start - 35, url: 'URL', githubId: Test.DeprecatedUsers.USER2.github});
+        people.push({personNumber: start - 45, url: 'URL', githubId: Test.DeprecatedUsers.USER3.github});
+        people.push({personNumber: start - 55, url: 'URL', githubId: Test.DeprecatedUsers.USER4.github});
 
         return people;
     }
@@ -2003,7 +1984,7 @@ export class TestGitHubActions implements IGitHubActions {
     // TODO: use a private teams map to keep track of teams
     public async listTeams(): Promise<Array<{ teamName: string, teamNumber: number }>> {
         Log.info("TestGitHubActions::listTeams(..)");
-        // return [{teamNumber: Date.now(), teamName: this.Test.TEAMNAME1}];
+        // return [{teamNumber: Date.now(), teamName: Test.DeprecatedUsers.TEAMNAME1}];
         const ret = [];
         for (const name of Object.keys(this.teams)) {
             const teamNum = this.teams[name].githubTeamNumber;
@@ -2037,7 +2018,7 @@ export class TestGitHubActions implements IGitHubActions {
 
     public async repoExists(repoName: string): Promise<boolean> {
         Log.info("TestGitHubActions::repoExists( " + repoName + " )");
-        // if (repoName === Test.INVALIDREPONAME) {
+        // if (repoName === Test.DeprecatedUsers.INVALIDREPONAME) {
         //     return false;
         // }
         // return true;
@@ -2051,7 +2032,7 @@ export class TestGitHubActions implements IGitHubActions {
 
     public async setRepoPermission(repoName: string, permissionLevel: string): Promise<boolean> {
         Log.info("TestGitHubActions::setRepoPermission( " + repoName + ", " + permissionLevel + " )");
-        if (repoName === this.Test.INVALIDREPONAME) {
+        if (repoName === Test.DeprecatedUsers.INVALIDREPONAME) {
             return false;
         }
         if (permissionLevel === "admin") {
