@@ -400,14 +400,14 @@ export class Test {
     /**
      * Creates user testing templates for real Github accounts configured in .env
      * @param userKey ConfigKey property for user ie. ConfigKey.githubAdmin
-     * @param index of userData if an array in .env config
+     * @param num account number (atest-06 would be the number 6)
      */
-    public static createTestUserTemplate(userKey: ConfigKey, index: number = null): any {
-        const userData: string | string[] = index ? Config.getInstance().getProp(userKey)[index] : Config.getInstance().getProp(userKey);
+    public static getConfigUser(userKey: ConfigKey, num: number = null): any {
+        const username = num ? Config.getInstance().getProp(userKey) : Config.getInstance().getProp(userKey)[num + 1];
         return {
-            id: userData + 'ID',
-            csId: userData + 'CSID',
-            github: userData
+            id: username + 'ID',
+            csId: username + 'CSID',
+            github: username
         };
     }
 
@@ -420,10 +420,10 @@ export class Test {
 
     public static readonly INVALIDUSER1 = {id: 'invalidUser1id', csId: 'invalidUser1CSID', github: 'invalidUser1gh'};
 
-    // Some test users must be integrated with Github.com/Enterprise live instances. They are in the .env config:
-    public static readonly ADMIN1 = {id: 'atest-09ID', csId: 'atest-09CSID', github: 'atest-09'};
+    // Test users below are generated with same pattern above from the CWL usernames in the config:
+    public static readonly ADMIN1 = Test.getConfigUser(ConfigKey.githubTestUsers, 9); // atest-09 is currently an admin in some tests
     // public static readonly ADMIN1 = {id: 'atest-01', csId: 'atest-01', github: 'atest-01'}; // github-dev.ugrad
-    public static readonly STAFF1 = {id: 'atest-08ID', csId: 'atest-08CSID', github: 'atest-08'};
+    public static readonly STAFF1 = Test.getConfigUser(ConfigKey.githubTestUsers, 8); // atest-08 is currently an admin in some tests
     // public static readonly STAFF1 = {id: 'atest-02', csId: 'atest-02', github: 'atest-02'}; // github-dev.ugrad (not provisioned yet)
 
     public static readonly REALUSER1 = {id: 'atest-01ID', csId: 'atest-01CSID', github: 'atest-01'}; // real account for testing users
