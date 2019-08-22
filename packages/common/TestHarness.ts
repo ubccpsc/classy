@@ -403,7 +403,7 @@ export class Test {
      * @param num account number (atest-06 would be the number 6)
      */
     public static getConfigUser(userKey: ConfigKey, num: number = null): any {
-        const username = num ? Config.getInstance().getProp(userKey) : Config.getInstance().getProp(userKey)[num + 1];
+        const username = num ? Config.getInstance().getProp(userKey).split(',')[num - 1].trim() : Config.getInstance().getProp(userKey);
         return {
             id: username + 'ID',
             csId: username + 'CSID',
