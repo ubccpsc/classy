@@ -10,7 +10,7 @@ import {DatabaseController} from "../../portal/backend/src/controllers/DatabaseC
 import BackendServer from "../../portal/backend/src/server/BackendServer";
 import {Course} from "../../portal/backend/src/Types";
 
-import {Test} from "../../portal/backend/test/TestHarness";
+import {Test} from "../../common/TestHarness";
 import {ClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
 
 import "./GlobalSpec";

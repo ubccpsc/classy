@@ -17,7 +17,7 @@ import {DatabaseController} from "../../src/controllers/DatabaseController";
 
 import BackendServer from "../../src/server/BackendServer";
 
-import {Test} from "../TestHarness";
+import {Test} from "../../../../common/TestHarness";
 
 // This seems silly, but just makes sure GlobalSpec runs first.
 // It should be at the top of every test file.

@@ -2,6 +2,7 @@ import {expect} from "chai";
 import "mocha";
 
 import Log from "../../../../common/Log";
+import {Test} from "../../../../common/TestHarness";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
@@ -9,7 +10,6 @@ import {TeamController} from "../../src/controllers/TeamController";
 import {Repository} from "../../src/Types";
 
 import '../GlobalSpec'; // load first
-import {Test} from "../TestHarness";
 import './TeamControllerSpec'; // load first
 
 describe("RepositoryController", () => {

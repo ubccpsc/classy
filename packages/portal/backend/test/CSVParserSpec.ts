@@ -2,11 +2,11 @@ import {expect} from "chai";
 import "mocha";
 
 import Log from "../../../common/Log";
+import {Test} from '../../../common/TestHarness';
 import {GradesController} from "../src/controllers/GradesController";
 import {CSVParser} from "../src/server/common/CSVParser";
 
 import "./GlobalSpec";
-import {Test} from './TestHarness';
 
 describe('CSVParser', function() {
 

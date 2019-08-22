@@ -26,7 +26,7 @@ import {TeamController} from "../../src/controllers/TeamController";
 
 import BackendServer from "../../src/server/BackendServer";
 
-import {Test} from "../TestHarness";
+import {Test} from "../../../../common/TestHarness";
 import './AuthRoutesSpec';
 
 describe('Admin Routes', function() {
