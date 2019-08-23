@@ -134,8 +134,12 @@ export class Test {
         p = Test.createPerson(Test.STAFF1.id, Test.STAFF1.csId, Test.STAFF1.github, null);
         await dc.writePerson(p);
 
-        // adminstaff person (this username should be on the 'staff' team, and the 'admin' team in the github org)
+        // admin person (this username should be on the 'admin' team in the github org)
         p = Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.csId, Test.ADMIN1.github, null);
+        await dc.writePerson(p);
+
+        // adminstaff person (this username should be on the 'staff' team, and the 'admin' team in the github org)
+        p = Test.createPerson(Test.ADMINSTAFF1.id, Test.ADMINSTAFF1.csId, Test.ADMINSTAFF1.github, null);
         await dc.writePerson(p);
 
         // admin person (this username should be on the admin but not the staff team in the github org)
@@ -423,9 +427,9 @@ export class Test {
     public static readonly GITHUB3 = {id: "atest-FAKEID", csId: "atest-FAKECSID", github: "atest-FAKE"}; // MUST BE UNREGISTERED TO WITHDRAW
     public static readonly GITHUB4 = Test.getConfigUser(ConfigKey.githubTestUsers, 7);
 
-    // public static readonly USERNAMEGITHUB1 = "cpscbot";
-    // public static readonly USERNAMEGITHUB2 = "rthse2";
-    // public static readonly USERNAMEGITHUB3 = "ubcbot";
+    // public static readonly USERNAMEGITHUB1 = "cpscbot"; // test bot 1
+    // public static readonly USERNAMEGITHUB2 = "rthse2"; // some staff cwl
+    // public static readonly USERNAMEGITHUB3 = "ubcbot"; // test bot 2
     // public static readonly USERNAMEGITHUB4 = "classystaff";
     // public static readonly USERNAMEGITHUB1 = "atest-01"; // "cpscbot"; // github-dev.ugrad
     // public static readonly USERNAMEGITHUB2 = "atest-02"; // "rthse2"; // github-dev.ugrad
