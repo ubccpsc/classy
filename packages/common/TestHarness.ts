@@ -458,7 +458,6 @@ export class Test {
         USER2:           Test.USER2,
         USER3:           Test.USER3,
         USER4:           Test.USER4,
-        ADMIN1:          Test.getConfigUser(ConfigKey.githubAdmin), // ATEST09 works
         STAFF1:          Test.getConfigUser(ConfigKey.githubStaff), // Atest08 works
         TEAMNAME1:       't_d0_user1id_user2id',
         INVALIDREPONAME: 'InvalidRepoNameShouldNotExist'
