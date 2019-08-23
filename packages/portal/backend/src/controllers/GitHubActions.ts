@@ -1870,7 +1870,7 @@ export class TestGitHubActions implements IGitHubActions {
         if (teamNumber < 0) {
             return [];
         }
-        return [Test.DeprecatedUsers.USERNAMEGITHUB1, Test.DeprecatedUsers.USERNAMEGITHUB2, Test.DeprecatedUsers.ADMIN1.github];
+        return [Test.DeprecatedUsers.USERNAMEGITHUB1, Test.DeprecatedUsers.USERNAMEGITHUB2, Test.ADMIN1.github];
     }
 
     public async getTeamNumber(teamName: string): Promise<number> {
@@ -1913,7 +1913,7 @@ export class TestGitHubActions implements IGitHubActions {
     }
 
     public async isOnStaffTeam(userName: string): Promise<boolean> {
-        if (userName === Test.DeprecatedUsers.STAFF1.github || userName === Test.DeprecatedUsers.ADMIN1.github) {
+        if (userName === Test.STAFF1.github || userName === Test.ADMIN1.github) {
             Log.info("TestGitHubActions::isOnStaffTeam( " + userName + " ) - true");
             return true;
         }
