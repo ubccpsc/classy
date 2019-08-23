@@ -460,11 +460,6 @@ export class Test {
     public static readonly ASSIGNTEAMNAME0 = Test.ASSIGNID0 + "__" + Test.REALUSER1.id;
     public static readonly ASSIGNTEAMNAME1 = Test.ASSIGNID1 + "__" + Test.REALUSER1.id;
 
-    public static readonly DeprecatedUsers = {
-        // PR: Some of these can't be real users, as it does not fail test on Github Enterprise, as these are
-        // Github.com public usernames.
-    };
-
     public static getDeliverable(delivId: string): Deliverable {
         const deliv: Deliverable = {
             id: delivId,
