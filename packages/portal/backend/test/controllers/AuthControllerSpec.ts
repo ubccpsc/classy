@@ -91,18 +91,18 @@ describe("AuthController", () => {
     }).timeout(Test.TIMEOUTLONG);
 
     it("Should identify an admin (but not adminstaff) correctly.", async function() {
-        let isValid = await ac.isValid(Test.REALUSER3.id, Test.REALTOKEN);
+        let isValid = await ac.isValid(Test.ADMIN1.id, Test.REALTOKEN);
         expect(isValid).to.be.false;
 
         const auth: Auth = {
-            personId: Test.REALUSER3.id,
+            personId: Test.ADMIN1.id,
             token:    Test.REALTOKEN
         };
         await DatabaseController.getInstance().writeAuth(auth);
-        isValid = await ac.isValid(Test.REALUSER3.id, Test.REALTOKEN);
+        isValid = await ac.isValid(Test.ADMIN1.id, Test.REALTOKEN);
         expect(isValid).to.be.true;
 
-        const isPriv = await ac.isPrivileged(Test.REALUSER3.id, Test.REALTOKEN);
+        const isPriv = await ac.isPrivileged(Test.ADMIN1.id, Test.REALTOKEN);
         expect(isPriv.isAdmin).to.be.true;
         expect(isPriv.isStaff).to.be.false;
     }).timeout(Test.TIMEOUTLONG);
