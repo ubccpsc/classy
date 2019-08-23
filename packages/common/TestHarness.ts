@@ -460,9 +460,6 @@ export class Test {
     public static readonly ASSIGNTEAMNAME0 = Test.ASSIGNID0 + "__" + Test.REALUSER1.id;
     public static readonly ASSIGNTEAMNAME1 = Test.ASSIGNID1 + "__" + Test.REALUSER1.id;
 
-    // HACK: can't reference GlobalSpec::Test here (docker limitation); need to move these to common?
-    // UPDATE: We moved real Github users into the .env file. Common could still be a good place
-    // for usernames that are not used in live Github tests.
     public static readonly DeprecatedUsers = {
         // PR: Some of these can't be real users, as it does not fail test on Github Enterprise, as these are
         // Github.com public usernames.
