@@ -61,9 +61,10 @@ export class Test {
         await dbc.writePerson(person);
         person = await Test.createPerson(Test.GITHUB2.id, Test.GITHUB2.csId, Test.GITHUB2.github, PersonKind.STUDENT);
         await dbc.writePerson(person);
-        person = await Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.csId, Test.ADMIN1.github, PersonKind.ADMINSTAFF);
+        person = await Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.csId, Test.ADMIN1.github, PersonKind.ADMIN);
         await dbc.writePerson(person);
-
+        person = await Test.createPerson(Test.ADMINSTAFF1.id, Test.ADMINSTAFF1.csId, Test.ADMINSTAFF1.github, PersonKind.ADMINSTAFF);
+        await dbc.writePerson(person);
         await Test.prepareAuth(); // adds admin token (and atest-05, atest-06 which are both real on GE)
         // create a team
         const team = await Test.createTeam(Test.TEAMNAMEREAL, Test.DELIVID0, [Test.GITHUB1.id, Test.GITHUB2.id]);
@@ -100,13 +101,8 @@ export class Test {
         Log.test("Test::preparePeople() - start");
         const dc = DatabaseController.getInstance();
 
-        let p = Test.createPerson(Test.REALUSER1.id, Test.REALUSER1.csId, Test.REALUSER1.github, PersonKind.STUDENT);
-        await dc.writePerson(p);
-
-        p = Test.createPerson(Test.REALUSER2.id, Test.REALUSER2.csId, Test.REALUSER2.github, PersonKind.STUDENT);
-        await dc.writePerson(p);
-
-        p = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, PersonKind.STUDENT);
+        // FAKE USERS ON GITHUB, BUT STILL IN DB FOR INTERNAL CLASSY BUSINESS LOGIC:
+        let p = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, PersonKind.STUDENT);
         p.labId = 'l1a';
         await dc.writePerson(p);
 
@@ -130,16 +126,22 @@ export class Test {
         p.labId = 'l2d';
         await dc.writePerson(p);
 
+        p = Test.createPerson(Test.ADMINSTAFF1.id, Test.ADMINSTAFF1.csId, Test.ADMINSTAFF1.github, PersonKind.ADMINSTAFF);
+        await dc.writePerson(p);
+
+        // REAL USERS ON GITHUB FOR EXTERNAL BUSINESS LOGIC, AND ALSO IN DB FOR INTERNAL BUSINESS LOGIC:
+        Test.createPerson(Test.REALUSER1.id, Test.REALUSER1.csId, Test.REALUSER1.github, PersonKind.STUDENT);
+        await dc.writePerson(p);
+
+        p = Test.createPerson(Test.REALUSER2.id, Test.REALUSER2.csId, Test.REALUSER2.github, PersonKind.STUDENT);
+        await dc.writePerson(p);
+
         // staff person (this username should be on the 'staff' team, but not the 'admin' team in the github org)
-        p = Test.createPerson(Test.STAFF1.id, Test.STAFF1.csId, Test.STAFF1.github, null);
+        p = Test.createPerson(Test.STAFF1.id, Test.STAFF1.csId, Test.STAFF1.github, PersonKind.STAFF);
         await dc.writePerson(p);
 
         // admin person (this username should be on the 'admin' team in the github org)
-        p = Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.csId, Test.ADMIN1.github, null);
-        await dc.writePerson(p);
-
-        // adminstaff person (this username should be on the 'staff' team, and the 'admin' team in the github org)
-        p = Test.createPerson(Test.ADMINSTAFF1.id, Test.ADMINSTAFF1.csId, Test.ADMINSTAFF1.github, null);
+        p = Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.csId, Test.ADMIN1.github, PersonKind.ADMIN);
         await dc.writePerson(p);
 
         // admin person (this username should be on the admin but not the staff team in the github org)
@@ -280,6 +282,12 @@ export class Test {
 
         auth = {
             personId: Test.ADMIN1.id,
+            token:    Test.REALTOKEN
+        };
+        await dc.writeAuth(auth);
+
+        auth = {
+            personId: Test.ADMINSTAFF1.id,
             token:    Test.REALTOKEN
         };
         await dc.writeAuth(auth);
@@ -466,7 +474,6 @@ export class Test {
         // Github.com public usernames.
         REALUSER1:       Test.USER1,
         REALUSER2:       Test.USER2, // real account for testing users
-        REALUSER3:       Test.ADMIN1, // REAL USER USED IN ADMIN TEST
         USER1:           Test.USER1,
         USER2:           Test.USER2,
         USER3:           Test.USER3,
