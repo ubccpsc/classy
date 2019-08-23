@@ -525,6 +525,7 @@ describe('AutoTest Routes', function() {
             let res: any;
 
             try {
+                // Possibly NOT working as REALUSER1 is actually a fake user but test is still passing
                 res = await request(app).post(url).set('user', Test.REALUSER1.github).send(body);
             } catch (err) {
                 res = err;
