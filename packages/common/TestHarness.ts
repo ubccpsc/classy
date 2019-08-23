@@ -402,8 +402,8 @@ export class Test {
     public static readonly INVALIDUSER1 = {id: 'invalidUser1id', csId: 'invalidUser1CSID', github: 'invalidUser1gh'};
 
     // REAL USERS -- CURRENTLY USED TO TEST ON GITHUB -- ENVSURE .ENV FILE CONTAINS REAL GITHUB USERS
-    public static readonly ADMINSTAFF1 = Test.getConfigUser(ConfigKey.githubAdminStaff);
     public static readonly ADMIN1 = Test.getConfigUser(ConfigKey.githubAdmin);
+    public static readonly ADMINSTAFF1 = Test.getConfigUser(ConfigKey.githubAdminStaff);
     public static readonly STAFF1 = Test.getConfigUser(ConfigKey.githubStaff); // atest-08 works
     public static readonly REALUSER1 =  Test.getConfigUser(ConfigKey.githubTestUsers, 1); // real account for testing users
     public static readonly REALUSER2 =  Test.getConfigUser(ConfigKey.githubTestUsers, 2); // real account for testing users
