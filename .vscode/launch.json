@@ -43,7 +43,7 @@
                 "--timeout",
                 "999999",
                 "--colors",
-                "${workspaceFolder}/packages/portal/backend/test/ClasslistAgentSpec.js"
+                "${workspaceFolder}/packages/portal/backend/test/AutoTestRoutesSpec.js"
             ],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen"
@@ -67,7 +67,7 @@
             "webRoot": "${workspaceFolder}"
         },
         // AUTOTEST: Launches Debug Mode Runtime Application
-        // TO DO: Determine what 'nohup node ./src/AutoTestDaemon.js 310 &> nohup.out' entails in autotest/package.json 
+        // TO DO: Determine what 'nohup node ./src/AutoTestDaemon.js 310 &> nohup.out' entails in autotest/package.json
         // in yarn run autotest:dev command
         {
             "type": "node",

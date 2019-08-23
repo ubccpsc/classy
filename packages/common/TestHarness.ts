@@ -439,13 +439,6 @@ export class Test {
     public static readonly REALBOTNAME2 = Test.getConfigUser(ConfigKey.githubBot02); // was 'ubcbot';
     public static readonly REALUSERNAME = Test.getConfigUser(ConfigKey.githubTestUsers, 9); // was 'rthse2';
 
-    // public static readonly USERNAMEGITHUB1 = "cpscbot"; // test bot 1
-    // public static readonly USERNAMEGITHUB2 = "rthse2"; // some staff cwl
-    // public static readonly USERNAMEGITHUB3 = "ubcbot"; // test bot 2
-    // public static readonly USERNAMEGITHUB4 = "classystaff";
-    // public static readonly USERNAMEGITHUB1 = "atest-01"; // "cpscbot"; // github-dev.ugrad
-    // public static readonly USERNAMEGITHUB2 = "atest-02"; // "rthse2"; // github-dev.ugrad
-
     public static readonly DELIVIDPROJ = 'project';
     public static readonly DELIVID0 = 'd0';
     public static readonly DELIVID1 = 'd1';
