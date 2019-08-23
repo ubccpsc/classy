@@ -318,7 +318,7 @@ describe("GitHubActions", () => {
         const val = await gh.getTeamMembers(teamnum);
         Log.test('# Team members: ' + val.length);
         expect(val.length).to.be.greaterThan(0);
-        expect(val).to.contain(Test.ADMIN1.github);
+        expect(val).to.contain(Test.ADMINSTAFF1.github);
     }).timeout(TIMEOUT);
 
     it("Should be able to create many teams and get their numbers (tests team paging).", async function() {

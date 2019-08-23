@@ -231,7 +231,7 @@ describe('AutoTest Routes', function() {
 
         let response = null;
         let body: AutoTestAuthPayload;
-        const url = '/portal/at/isStaff/' + Test.ADMIN1.github;
+        const url = '/portal/at/isStaff/' + Test.ADMINSTAFF1.github;
         try {
             response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
