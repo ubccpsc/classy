@@ -129,11 +129,15 @@ export class Test {
         p = Test.createPerson(Test.ADMINSTAFF1.id, Test.ADMINSTAFF1.csId, Test.ADMINSTAFF1.github, PersonKind.ADMINSTAFF);
         await dc.writePerson(p);
 
-        // REAL USERS ON GITHUB FOR EXTERNAL BUSINESS LOGIC, AND ALSO IN DB FOR INTERNAL BUSINESS LOGIC:
+        // REAL USERS CAPABLE FOR GITHUB EXTERNAL BUSINESS LOGIC TESTS. CAN ADD MORE USERS: atest-04-09
         p = Test.createPerson(Test.REALUSER1.id, Test.REALUSER1.csId, Test.REALUSER1.github, PersonKind.STUDENT);
         await dc.writePerson(p);
 
         p = Test.createPerson(Test.REALUSER2.id, Test.REALUSER2.csId, Test.REALUSER2.github, PersonKind.STUDENT);
+        await dc.writePerson(p);
+
+        // admin person (this username should be on the admin but not the staff team in the github org)
+        p = Test.createPerson(Test.REALUSER3.id, Test.REALUSER3.csId, Test.REALUSER3.github, null);
         await dc.writePerson(p);
 
         // staff person (this username should be on the 'staff' team, but not the 'admin' team in the github org)
@@ -142,10 +146,6 @@ export class Test {
 
         // admin person (this username should be on the 'admin' team in the github org)
         p = Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.csId, Test.ADMIN1.github, PersonKind.ADMIN);
-        await dc.writePerson(p);
-
-        // admin person (this username should be on the admin but not the staff team in the github org)
-        p = Test.createPerson(Test.REALUSER3.id, Test.REALUSER3.csId, Test.REALUSER3.github, null);
         await dc.writePerson(p);
 
         Log.test("Test::preparePeople() - end");
@@ -417,8 +417,8 @@ export class Test {
     public static readonly ADMIN1 = Test.getConfigUser(ConfigKey.githubAdmin);
     public static readonly ADMINSTAFF1 = Test.getConfigUser(ConfigKey.githubAdminStaff);
     public static readonly STAFF1 = Test.getConfigUser(ConfigKey.githubStaff);
-    public static readonly REALUSER1 =  Test.getConfigUser(ConfigKey.githubTestUsers, 1); // real account for testing users
-    public static readonly REALUSER2 =  Test.getConfigUser(ConfigKey.githubTestUsers, 2); // real account for testing users
+    public static readonly REALUSER1 =  Test.getConfigUser(ConfigKey.githubTestUsers, 1);
+    public static readonly REALUSER2 =  Test.getConfigUser(ConfigKey.githubTestUsers, 2);
     public static readonly REALUSER3 =  Test.getConfigUser(ConfigKey.githubTestUsers, 3);
     public static readonly REALUSER4 =  Test.getConfigUser(ConfigKey.githubTestUsers, 4);
 

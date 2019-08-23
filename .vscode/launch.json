@@ -37,13 +37,13 @@
             "type": "node",
             "request": "launch",
             "cwd": "${workspaceFolder}/packages/portal/backend",
-            "name": " Classy Back-end: Mocha Specified File",
+            "name": "Classy Back-end: Mocha Specified File",
             "program": "${workspaceFolder}/packages/portal/backend/node_modules/mocha/bin/_mocha",
             "args": [
                 "--timeout",
                 "999999",
                 "--colors",
-                "${workspaceFolder}/packages/portal/backend/test/AutoTestRoutesSpec.js"
+                "${workspaceFolder}/packages/portal/backend/test/server/AdminRoutesSpec.js"
             ],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen"
