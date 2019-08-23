@@ -391,7 +391,7 @@ export class Test {
         };
     }
 
-    // FAKE USERS -- NOT USED TO INTERACT WITH GITHUB
+    // FAKE USERS -- NOT USED TO INTERACT WITH GITHUB AND WORK
     public static readonly USER1 = {id: 'user1ID', csId: 'user1CSID', github: 'user1gh'};
     public static readonly USER2 = {id: 'user2ID', csId: 'user2CSID', github: 'user2gh'};
     public static readonly USER3 = {id: 'user3ID', csId: 'user3CSID', github: 'user3gh'};
@@ -404,10 +404,20 @@ export class Test {
     // REAL USERS -- CURRENTLY USED TO TEST ON GITHUB -- ENVSURE .ENV FILE CONTAINS REAL GITHUB USERS
     public static readonly ADMIN1 = Test.getConfigUser(ConfigKey.githubAdmin);
     public static readonly ADMINSTAFF1 = Test.getConfigUser(ConfigKey.githubAdminStaff);
-    public static readonly STAFF1 = Test.getConfigUser(ConfigKey.githubStaff); // atest-08 works
+    public static readonly STAFF1 = Test.getConfigUser(ConfigKey.githubStaff);
     public static readonly REALUSER1 =  Test.getConfigUser(ConfigKey.githubTestUsers, 1); // real account for testing users
     public static readonly REALUSER2 =  Test.getConfigUser(ConfigKey.githubTestUsers, 2); // real account for testing users
     public static readonly REALUSER3 =  Test.getConfigUser(ConfigKey.githubTestUsers, 3);
+    public static readonly REALUSER4 =  Test.getConfigUser(ConfigKey.githubTestUsers, 4);
+
+    public static readonly REALUSER5 =  Test.getConfigUser(ConfigKey.githubTestUsers, 5);
+
+    public static readonly REALUSER6 =  Test.getConfigUser(ConfigKey.githubTestUsers, 6);
+
+    public static readonly REALUSER7 =  Test.getConfigUser(ConfigKey.githubTestUsers, 7);
+    public static readonly REALUSER8 =  Test.getConfigUser(ConfigKey.githubTestUsers, 8);
+    public static readonly REALUSER9 =  Test.getConfigUser(ConfigKey.githubTestUsers, 9);
+    public static readonly REALUSER10 =  Test.getConfigUser(ConfigKey.githubTestUsers, 10);
     public static readonly GITHUB1 =  Test.getConfigUser(ConfigKey.githubTestUsers, 4); // 04-07 (at least one must be fake)
     public static readonly GITHUB2 = Test.getConfigUser(ConfigKey.githubTestUsers, 5);
     // TO DO: Confirmed that this is still true with new tests on Github Enterprise. MUST CHANGE
