@@ -1870,7 +1870,7 @@ export class TestGitHubActions implements IGitHubActions {
         if (teamNumber < 0) {
             return [];
         }
-        return [Test.DeprecatedUsers.USERNAMEGITHUB1, Test.DeprecatedUsers.USERNAMEGITHUB2, Test.ADMIN1.github];
+        return [Test.REALBOTNAME1, Test.REALUSERNAME, Test.ADMIN1.github];
     }
 
     public async getTeamNumber(teamName: string): Promise<number> {
@@ -1951,9 +1951,9 @@ export class TestGitHubActions implements IGitHubActions {
         const people = [];
 
         const start = Date.now();
-        people.push({personNumber: start, url: 'URL', githubId: Test.DeprecatedUsers.USERNAMEGITHUB1});
-        people.push({personNumber: start - 5, url: 'URL', githubId: Test.DeprecatedUsers.USERNAMEGITHUB2});
-        people.push({personNumber: start - 15, url: 'URL', githubId: Test.DeprecatedUsers.USERNAMEGITHUB3});
+        people.push({personNumber: start, url: 'URL', githubId: Test.REALBOTNAME1});
+        people.push({personNumber: start - 5, url: 'URL', githubId: Test.REALUSERNAME});
+        people.push({personNumber: start - 15, url: 'URL', githubId: Test.REALBOTNAME1});
         people.push({personNumber: start - 15, url: 'URL', githubId: Test.REALUSER1.github});
         people.push({personNumber: start - 15, url: 'URL', githubId: Test.REALUSER2.github});
         people.push({personNumber: start - 15, url: 'URL', githubId: Test.ADMIN1.github});
@@ -1984,7 +1984,7 @@ export class TestGitHubActions implements IGitHubActions {
     // TODO: use a private teams map to keep track of teams
     public async listTeams(): Promise<Array<{ teamName: string, teamNumber: number }>> {
         Log.info("TestGitHubActions::listTeams(..)");
-        // return [{teamNumber: Date.now(), teamName: Test.DeprecatedUsers.TEAMNAME1}];
+        // return [{teamNumber: Date.now(), teamName: Test.TEAMNAME1}];
         const ret = [];
         for (const name of Object.keys(this.teams)) {
             const teamNum = this.teams[name].githubTeamNumber;
@@ -2018,7 +2018,7 @@ export class TestGitHubActions implements IGitHubActions {
 
     public async repoExists(repoName: string): Promise<boolean> {
         Log.info("TestGitHubActions::repoExists( " + repoName + " )");
-        // if (repoName === Test.DeprecatedUsers.INVALIDREPONAME) {
+        // if (repoName === Test.INVALIDREPONAME) {
         //     return false;
         // }
         // return true;
@@ -2032,7 +2032,7 @@ export class TestGitHubActions implements IGitHubActions {
 
     public async setRepoPermission(repoName: string, permissionLevel: string): Promise<boolean> {
         Log.info("TestGitHubActions::setRepoPermission( " + repoName + ", " + permissionLevel + " )");
-        if (repoName === Test.DeprecatedUsers.INVALIDREPONAME) {
+        if (repoName === Test.INVALIDREPONAME) {
             return false;
         }
         if (permissionLevel === "admin") {

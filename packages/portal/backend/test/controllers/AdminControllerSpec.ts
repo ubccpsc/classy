@@ -79,7 +79,7 @@ describe("AdminController", () => {
 
         // clear github teams and repositories we will end up provisioning
         await gha.deleteRepo(Test.REPONAMEREAL);
-        // await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
+        // await gha.deleteRepo('d0_' + Test.REALBOTNAME01 + '_' + Test.USERNAMEGITHUB2);
         await gha.deleteRepo('d0_' + Test.GITHUB1.csId);
         await gha.deleteRepo('d0_' + Test.GITHUB2.csId);
         await gha.deleteRepo('d0_' + Test.GITHUB3.csId);
@@ -89,7 +89,7 @@ describe("AdminController", () => {
         await gha.deleteRepo(Test.REPONAME1);
         await gha.deleteRepo(Test.REPONAME2);
 
-        // let teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
+        // let teamNum = await gha.getTeamNumber('t_d0_' + Test.REALBOTNAME01 + '_' + Test.USERNAMEGITHUB2);
         // await gha.deleteTeam(teamNum);
 
         // NOTE: using GHA instead of TC because we really want to clear out GitHub
