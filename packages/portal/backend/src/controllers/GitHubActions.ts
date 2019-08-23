@@ -1899,7 +1899,7 @@ export class TestGitHubActions implements IGitHubActions {
     }
 
     public async isOnAdminTeam(userName: string): Promise<boolean> {
-        if (userName === Test.ADMIN1.github || userName === Test.DeprecatedUsers.REALUSER3.github) {
+        if (userName === Test.ADMIN1.github || userName === Test.ADMIN1.github) {
             Log.info("TestGitHubActions::isOnAdminTeam( " + userName + " ) - true");
             return true;
         }
@@ -1951,7 +1951,7 @@ export class TestGitHubActions implements IGitHubActions {
         people.push({personNumber: start - 15, url: 'URL', githubId: Test.DeprecatedUsers.USERNAMEGITHUB3});
         people.push({personNumber: start - 15, url: 'URL', githubId: Test.DeprecatedUsers.REALUSER1.github});
         people.push({personNumber: start - 15, url: 'URL', githubId: Test.DeprecatedUsers.REALUSER2.github});
-        people.push({personNumber: start - 15, url: 'URL', githubId: Test.DeprecatedUsers.REALUSER3.github});
+        people.push({personNumber: start - 15, url: 'URL', githubId: Test.ADMIN1.github});
         people.push({personNumber: start - 25, url: 'URL', githubId: Test.DeprecatedUsers.USER1.github});
         people.push({personNumber: start - 35, url: 'URL', githubId: Test.DeprecatedUsers.USER2.github});
         people.push({personNumber: start - 45, url: 'URL', githubId: Test.DeprecatedUsers.USER3.github});
