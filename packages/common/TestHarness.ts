@@ -435,6 +435,10 @@ export class Test {
     public static readonly GITHUB3 = {id: "atest-FAKEID", csId: "atest-FAKECSID", github: "atest-FAKE"}; // MUST BE UNREGISTERED TO WITHDRAW
     public static readonly GITHUB4 = Test.getConfigUser(ConfigKey.githubTestUsers, 7);
 
+    public static readonly REALBOTNAME1 = Test.getConfigUser(ConfigKey.githubBot01); // was 'cpscbot';
+    public static readonly REALBOTNAME2 = Test.getConfigUser(ConfigKey.githubBot02); // was 'ubcbot';
+    public static readonly REALUSERNAME = Test.getConfigUser(ConfigKey.githubTestUsers, 9); // was 'rthse2';
+
     // public static readonly USERNAMEGITHUB1 = "cpscbot"; // test bot 1
     // public static readonly USERNAMEGITHUB2 = "rthse2"; // some staff cwl
     // public static readonly USERNAMEGITHUB3 = "ubcbot"; // test bot 2
@@ -467,19 +471,8 @@ export class Test {
     // UPDATE: We moved real Github users into the .env file. Common could still be a good place
     // for usernames that are not used in live Github tests.
     public static readonly DeprecatedUsers = {
-        USERNAMEGITHUB1: 'cpscbot',
-        USERNAMEGITHUB2: 'rthse2',
-        USERNAMEGITHUB3: 'ubcbot',
         // PR: Some of these can't be real users, as it does not fail test on Github Enterprise, as these are
         // Github.com public usernames.
-        REALUSER2:       Test.USER2, // real account for testing users
-        USER1:           Test.USER1,
-        USER2:           Test.USER2,
-        USER3:           Test.USER3,
-        USER4:           Test.USER4,
-        STAFF1:          Test.getConfigUser(ConfigKey.githubStaff), // Atest08 works
-        TEAMNAME1:       't_d0_user1id_user2id',
-        INVALIDREPONAME: 'InvalidRepoNameShouldNotExist'
     };
 
     public static getDeliverable(delivId: string): Deliverable {
