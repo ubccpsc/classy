@@ -130,7 +130,7 @@ export class Test {
         await dc.writePerson(p);
 
         // REAL USERS ON GITHUB FOR EXTERNAL BUSINESS LOGIC, AND ALSO IN DB FOR INTERNAL BUSINESS LOGIC:
-        Test.createPerson(Test.REALUSER1.id, Test.REALUSER1.csId, Test.REALUSER1.github, PersonKind.STUDENT);
+        p = Test.createPerson(Test.REALUSER1.id, Test.REALUSER1.csId, Test.REALUSER1.github, PersonKind.STUDENT);
         await dc.writePerson(p);
 
         p = Test.createPerson(Test.REALUSER2.id, Test.REALUSER2.csId, Test.REALUSER2.github, PersonKind.STUDENT);
@@ -472,7 +472,6 @@ export class Test {
         USERNAMEGITHUB3: 'ubcbot',
         // PR: Some of these can't be real users, as it does not fail test on Github Enterprise, as these are
         // Github.com public usernames.
-        REALUSER1:       Test.USER1,
         REALUSER2:       Test.USER2, // real account for testing users
         USER1:           Test.USER1,
         USER2:           Test.USER2,
