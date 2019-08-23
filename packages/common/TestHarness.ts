@@ -429,10 +429,9 @@ export class Test {
     public static readonly REALUSER7 =  Test.getConfigUser(ConfigKey.githubTestUsers, 7);
     public static readonly REALUSER8 =  Test.getConfigUser(ConfigKey.githubTestUsers, 8);
     public static readonly REALUSER9 =  Test.getConfigUser(ConfigKey.githubTestUsers, 9);
-    public static readonly GITHUB1 =  Test.getConfigUser(ConfigKey.githubTestUsers, 4); // 04-07 (at least one must be fake)
+    public static readonly GITHUB1 =  Test.getConfigUser(ConfigKey.githubTestUsers, 4);
     public static readonly GITHUB2 = Test.getConfigUser(ConfigKey.githubTestUsers, 5);
-    // TO DO: Confirmed that this is still true with new tests on Github Enterprise. MUST CHANGE
-    public static readonly GITHUB3 = {id: "atest-FAKEID", csId: "atest-FAKECSID", github: "atest-FAKE"}; // MUST BE UNREGISTERED TO WITHDRAW
+    public static readonly GITHUB3 = Test.getConfigUser(ConfigKey.githubTestUsers, 6);
     public static readonly GITHUB4 = Test.getConfigUser(ConfigKey.githubTestUsers, 7);
 
     public static readonly REALBOTNAME1 = Test.getConfigUser(ConfigKey.githubBot01); // was 'cpscbot';

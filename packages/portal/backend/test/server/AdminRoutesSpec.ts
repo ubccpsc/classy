@@ -859,8 +859,9 @@ describe('Admin Routes', function() {
         // }).timeout(TIMEOUT * 30);
 
         it('Should be able to perform a withdraw task', async function() {
-
             // This is tricky because the live github data will have a different team id than we're using locally
+            // NOTE: We need a Github user on the 'students' team who is not registered in the classlist to make
+            // this test pass.
 
             let response = null;
             let body: Payload;

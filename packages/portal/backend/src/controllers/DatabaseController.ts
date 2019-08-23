@@ -246,13 +246,6 @@ export class DatabaseController {
         }
     }
 
-    /*
-    public async deletePerson(record: Person): Promise<boolean> {
-        Log.info("DatabaseController::deletePerson(..) - start");
-        return await this.deleteRecord(this.PERSONCOLL, {id: record.id});
-    }
-    */
-
     public async deleteAuth(record: Auth): Promise<boolean> {
         if (record !== null) {
             Log.info("DatabaseController::deleteAuth( " + record.personId + " ) - start");
