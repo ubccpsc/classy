@@ -1949,13 +1949,13 @@ export class TestGitHubActions implements IGitHubActions {
         people.push({personNumber: start, url: 'URL', githubId: Test.DeprecatedUsers.USERNAMEGITHUB1});
         people.push({personNumber: start - 5, url: 'URL', githubId: Test.DeprecatedUsers.USERNAMEGITHUB2});
         people.push({personNumber: start - 15, url: 'URL', githubId: Test.DeprecatedUsers.USERNAMEGITHUB3});
-        people.push({personNumber: start - 15, url: 'URL', githubId: Test.DeprecatedUsers.REALUSER1.github});
-        people.push({personNumber: start - 15, url: 'URL', githubId: Test.DeprecatedUsers.REALUSER2.github});
+        people.push({personNumber: start - 15, url: 'URL', githubId: Test.REALUSER1.github});
+        people.push({personNumber: start - 15, url: 'URL', githubId: Test.REALUSER2.github});
         people.push({personNumber: start - 15, url: 'URL', githubId: Test.ADMIN1.github});
-        people.push({personNumber: start - 25, url: 'URL', githubId: Test.DeprecatedUsers.USER1.github});
-        people.push({personNumber: start - 35, url: 'URL', githubId: Test.DeprecatedUsers.USER2.github});
-        people.push({personNumber: start - 45, url: 'URL', githubId: Test.DeprecatedUsers.USER3.github});
-        people.push({personNumber: start - 55, url: 'URL', githubId: Test.DeprecatedUsers.USER4.github});
+        people.push({personNumber: start - 25, url: 'URL', githubId: Test.USER1.github});
+        people.push({personNumber: start - 35, url: 'URL', githubId: Test.USER2.github});
+        people.push({personNumber: start - 45, url: 'URL', githubId: Test.USER3.github});
+        people.push({personNumber: start - 55, url: 'URL', githubId: Test.USER4.github});
 
         return people;
     }
