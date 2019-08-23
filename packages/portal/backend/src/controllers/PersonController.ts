@@ -149,9 +149,12 @@ export class PersonController {
             people.length + "; # registered: " + registeredGithubIds.length);
         let numStudents = 0;
         let numWithdrawn = 0;
+        const students: any = [];
+        const withdrawn: any = [];
         for (const person of people) {
             if (person.kind === PersonKind.STUDENT || person.kind === PersonKind.WITHDRAWN) {
                 numStudents++;
+                students.push(person);
                 if (registeredGithubIds.indexOf(person.githubId) >= 0) {
                     // student is registered
                     if (person.kind === PersonKind.WITHDRAWN) {
@@ -163,6 +166,7 @@ export class PersonController {
                     // student is not registered; mark as withdrawn
                     if (person.kind !== PersonKind.WITHDRAWN) {
                         numWithdrawn++;
+                        withdrawn.push(person);
                         person.kind = PersonKind.WITHDRAWN;
                         Log.info("PersonController::markStudentsWithdrawn( .. ) - marking " + person.id + " as withdrawn");
                         await this.writePerson(person);
@@ -170,6 +174,8 @@ export class PersonController {
                 }
             }
         }
+        Log.info('students: ' + JSON.stringify(students));
+        Log.info('withdrawn: ' + JSON.stringify(withdrawn));
         const msg = "# students: " + numStudents + "; # withdrawn: " + numWithdrawn;
         Log.info("PersonController::markStudentsWithdrawn( .. ) - done; " + msg);
         return msg;
