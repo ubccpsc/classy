@@ -617,7 +617,7 @@ describe("GitHubActions", () => {
     //
     //     // Expects adding members to work
     //     const addMembers = await gh.addMembersToTeam(githubTeam.teamName, githubTeam.githubTeamNumber,
-    //         [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+    //         [Test.REALBOTNAME01, Test.REALUSERNAME]);
     //     expect(addMembers).to.not.be.null;
     //     const teamAdd = await gh.addTeamToRepo(githubTeam.githubTeamNumber, REPONAME, 'push');
     //     expect(teamAdd).to.not.be.null;
