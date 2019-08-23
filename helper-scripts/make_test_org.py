@@ -31,8 +31,8 @@ github_url = os.getenv('GH_HOST')
 headers = {'Content-Type': 'application/json',
 			'Authorization': f'token {api_token}'}
 maintainer = os.getenv('ORG_ADMIN_USER')
-admin_team_members = ['atest-03', 'atest-09', 'classytest-admstaff', 'classytest-admin', 'steca', 'autobot']
-staff_team_members = ['atest-08', 'atest-09', 'classytest-admstaff', 'classytest-staff']
+admin_team_members = ['classytest-admstaff', 'classytest-admin', 'steca', 'autobot']
+staff_team_members = ['classytest-admstaff', 'classytest-staff']
 students_team_members = ['atest-01', 'atest-02', 'atest-03', 'atest-04', 'atest-05', 'atest-06', 'atest-07', 'atest-08',
 	'atest-09']
 
