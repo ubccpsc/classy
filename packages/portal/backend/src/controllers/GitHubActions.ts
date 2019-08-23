@@ -1899,7 +1899,7 @@ export class TestGitHubActions implements IGitHubActions {
     }
 
     public async isOnAdminTeam(userName: string): Promise<boolean> {
-        if (userName === Test.DeprecatedUsers.ADMIN1.github || userName === Test.DeprecatedUsers.REALUSER3.github) {
+        if (userName === Test.ADMIN1.github || userName === Test.DeprecatedUsers.REALUSER3.github) {
             Log.info("TestGitHubActions::isOnAdminTeam( " + userName + " ) - true");
             return true;
         }
