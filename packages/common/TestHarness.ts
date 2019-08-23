@@ -459,8 +459,8 @@ export class Test {
         USER2:           Test.USER2,
         USER3:           Test.USER3,
         USER4:           Test.USER4,
-        ADMIN1:          {id: 'atest-09ID', csId: 'atest-09CSID', github: 'atest-09'},
-        STAFF1:          {id: 'atest-08ID', csId: 'atest-08CSID', github: 'atest-08'},
+        ADMIN1:          Test.getConfigUser(ConfigKey.githubTestUsers, 9), // REAL USER - ATEST09 is in ADMIN AND STAFF TEAM
+        STAFF1:          Test.getConfigUser(ConfigKey.githubTestUsers, 8), // REAL USER - ATEST08 IS IN STAFF TEAM
         TEAMNAME1:       't_d0_user1id_user2id',
         INVALIDREPONAME: 'InvalidRepoNameShouldNotExist'
     };
