@@ -136,8 +136,20 @@ export class Test {
         p = Test.createPerson(Test.REALUSER2.id, Test.REALUSER2.csId, Test.REALUSER2.github, PersonKind.STUDENT);
         await dc.writePerson(p);
 
+        p = Test.createPerson(Test.REALUSER3.id, Test.REALUSER3.csId, Test.REALUSER3.github, PersonKind.STUDENT);
+        await dc.writePerson(p);
+
+        p = Test.createPerson(Test.REALUSER4.id, Test.REALUSER4.csId, Test.REALUSER4.github, PersonKind.STUDENT);
+        await dc.writePerson(p);
+
+        p = Test.createPerson(Test.REALUSER5.id, Test.REALUSER5.csId, Test.REALUSER5.github, PersonKind.STUDENT);
+        await dc.writePerson(p);
+
+        p = Test.createPerson(Test.REALUSER6.id, Test.REALUSER6.csId, Test.REALUSER6.github, PersonKind.STUDENT);
+        await dc.writePerson(p);
+
         // admin person (this username should be on the admin but not the staff team in the github org)
-        p = Test.createPerson(Test.REALUSER3.id, Test.REALUSER3.csId, Test.REALUSER3.github, null);
+        p = Test.createPerson(Test.ADMINSTAFF1.id, Test.ADMINSTAFF1.csId, Test.ADMINSTAFF1.github, null);
         await dc.writePerson(p);
 
         // staff person (this username should be on the 'staff' team, but not the 'admin' team in the github org)
