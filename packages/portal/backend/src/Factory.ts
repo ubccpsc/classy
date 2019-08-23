@@ -15,7 +15,7 @@ export class Factory {
      * Set to true if you want to run these slow tests locally (they will always run on CI):
      */
     // public static OVERRIDE = true; // NOTE: should be commented out when committing
-    public static OVERRIDE = true; // NOTE: should NOT be commented out when committing
+    public static OVERRIDE = false; // NOTE: should NOT be commented out when committing
 
     /**
      * Returns a custom route handler for a course. This will be used to configure
