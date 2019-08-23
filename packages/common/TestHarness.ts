@@ -16,26 +16,6 @@ import {Auth, Course, Deliverable, Grade, Person, PersonKind, Repository, Result
 
 export class Test {
 
-    // HACK: can't reference GlobalSpec::Test here (docker limitation); need to move these to common?
-    // UPDATE: We moved real Github users into the .env file. Common could still be a good place
-    // for usernames that are not used in live Github tests.
-    public static readonly DeprecatedUsers = {
-        USERNAMEGITHUB1: 'cpscbot',
-        USERNAMEGITHUB2: 'rthse2',
-        USERNAMEGITHUB3: 'ubcbot',
-        REALUSER1:       {id: "rthse2ID", csId: "rthse2CSID", github: "rthse2"}, // real account for testing users
-        REALUSER2:       {id: "jopikaID", csId: "jopikaCSID", github: "jopika"}, // real account for testing users
-        REALUSER3:       {id: "atest-01ID", csId: "atest-01CSID", github: "atest-01"}, // real account for testing users
-        USER1:           {id: 'user1ID', csId: 'user1CSID', github: 'user1gh'},
-        USER2:           {id: 'user2ID', csId: 'user2CSID', github: 'user2gh'},
-        USER3:           {id: 'user3ID', csId: 'user3CSID', github: 'user3gh'},
-        USER4:           {id: 'user4ID', csId: 'user4CSID', github: 'user4gh'},
-        ADMIN1:          {id: 'atest-09ID', csId: 'atest-09CSID', github: 'atest-09'},
-        STAFF1:          {id: 'atest-08ID', csId: 'atest-08CSID', github: 'atest-08'},
-        TEAMNAME1:       't_d0_user1id_user2id',
-        INVALIDREPONAME: 'InvalidRepoNameShouldNotExist'
-    };
-
     public static readonly TIMEOUT = 1000 * 10;
     public static readonly TIMEOUTLONG = 1000 * 300; // 5 minutes
 
@@ -461,6 +441,28 @@ export class Test {
 
     public static readonly ASSIGNTEAMNAME0 = Test.ASSIGNID0 + "__" + Test.REALUSER1.id;
     public static readonly ASSIGNTEAMNAME1 = Test.ASSIGNID1 + "__" + Test.REALUSER1.id;
+
+        // HACK: can't reference GlobalSpec::Test here (docker limitation); need to move these to common?
+    // UPDATE: We moved real Github users into the .env file. Common could still be a good place
+    // for usernames that are not used in live Github tests.
+    public static readonly DeprecatedUsers = {
+        USERNAMEGITHUB1: 'cpscbot',
+        USERNAMEGITHUB2: 'rthse2',
+        USERNAMEGITHUB3: 'ubcbot',
+        // PR: Some of these can't be real users, as it does not fail test on Github Enterprise, as these are
+        // Github.com public usernames.
+        REALUSER1:       Test.USER1,
+        REALUSER2:       Test.USER2, // real account for testing users
+        REALUSER3:       {id: "atest-01ID", csId: "atest-01CSID", github: "atest-01"}, // real account for testing users
+        USER1:           {id: 'user1ID', csId: 'user1CSID', github: 'user1gh'},
+        USER2:           {id: 'user2ID', csId: 'user2CSID', github: 'user2gh'},
+        USER3:           {id: 'user3ID', csId: 'user3CSID', github: 'user3gh'},
+        USER4:           {id: 'user4ID', csId: 'user4CSID', github: 'user4gh'},
+        ADMIN1:          {id: 'atest-09ID', csId: 'atest-09CSID', github: 'atest-09'},
+        STAFF1:          {id: 'atest-08ID', csId: 'atest-08CSID', github: 'atest-08'},
+        TEAMNAME1:       't_d0_user1id_user2id',
+        INVALIDREPONAME: 'InvalidRepoNameShouldNotExist'
+    };
 
     public static getDeliverable(delivId: string): Deliverable {
         const deliv: Deliverable = {
