@@ -861,15 +861,16 @@ describe('Admin Routes', function() {
 
         it('Should be able to perform a withdraw task', async function() {
             // This is tricky because the live github data will have a different team id than we're using locally
-            // NOTE: We need a Github user on the 'students' team who is not registered in the classlist to make
-            // this test pass.
-            const realGithubUser = await (new PersonController()).getPerson(Test.REALUSER6.github);
-            await (DatabaseController.getInstance()).deletePerson(realGithubUser);
 
             let response = null;
             let body: Payload;
             const url = '/portal/admin/withdraw';
             try {
+                // NOTE: We need a Github user on the 'students' team who is not registered in the classlist to make
+                // this test pass.
+                const realGithubUser = await (new PersonController()).getPerson(Test.REALUSER3.id);
+                await (DatabaseController.getInstance()).deletePerson(realGithubUser);
+
                 response = await request(app).post(url).send({}).set({user: userName, token: userToken});
                 body = response.body;
             } catch (err) {
