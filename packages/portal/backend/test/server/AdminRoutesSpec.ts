@@ -22,6 +22,7 @@ import Util from "../../../../common/Util";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {GitHubActions} from "../../src/controllers/GitHubActions";
+import {PersonController} from "../../src/controllers/PersonController";
 import {TeamController} from "../../src/controllers/TeamController";
 
 import BackendServer from "../../src/server/BackendServer";
@@ -862,6 +863,8 @@ describe('Admin Routes', function() {
             // This is tricky because the live github data will have a different team id than we're using locally
             // NOTE: We need a Github user on the 'students' team who is not registered in the classlist to make
             // this test pass.
+            const realGithubUser = await (new PersonController()).getPerson(Test.REALUSER6.github);
+            await (DatabaseController.getInstance()).deletePerson(realGithubUser);
 
             let response = null;
             let body: Payload;
