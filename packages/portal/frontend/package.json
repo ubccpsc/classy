@@ -5,6 +5,7 @@
     "main": "app/index.html",
     "scripts": {
         "build": "tsc",
+        "watch": "webpack --watch",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "repository": {

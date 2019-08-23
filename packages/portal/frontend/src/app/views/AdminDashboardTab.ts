@@ -16,6 +16,29 @@ import {AdminPage} from "./AdminPage";
 import {AdminResultsTab} from "./AdminResultsTab";
 import {AdminView} from "./AdminView";
 
+interface DetailRow {
+            name: string;
+            state: string;
+            colour: string;
+        }
+
+const clusters: {[key:string]:{[key2:string]: string[]}} = {
+    "d1": {
+        "ADD": ["A", "B", "C"],
+        "REM": ["B", "C", "D"],
+        "LIS": ["D", "E"],
+        "LT": ["F", "G", "H", "I"],
+        "GT": ["G", "H", "I", "J"],
+        "EQ": ["H", "I"],
+        "IS": ["H", "I", "J"],
+        "WC": ["I", "J"],
+        "AND": ["G", "I"],
+        "OR": ["H", "J"],
+        "NOT": ["J"],
+        "VAL": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
+    }
+}
+
 export class AdminDashboardTab extends AdminPage {
 
     // private readonly remote: string; // url to backend
@@ -228,11 +251,7 @@ export class AdminDashboardTab extends AdminPage {
         all = all.concat(passNames, failNames, skipNames, errorNames);
         all = all.sort();
 
-        interface DetailRow {
-            name: string;
-            state: string;
-            colour: string;
-        }
+        
 
         const annotated: DetailRow[] = [];
         for (const name of all) {
@@ -255,15 +274,44 @@ export class AdminDashboardTab extends AdminPage {
             }
             annotated.push({name: name, state: state, colour: colour});
         }
+        let str: string;
+        const CLUSTER = true;
+        if (CLUSTER && Object.keys(clusters).includes(row.delivId)) {
+                str = this.generateTableClustered(annotated, row.delivId);
+        } else {
+            str = this.generateTableDefault(annotated, all.length);
+        }
+        Log.trace(str);
+        return str;
+    }
 
+    private generateTableDefault(annotated: DetailRow[], num: number): string {
         let str = '<span><table style="height: 20px;">';
         str += '<tr>';
-        str += '<td style="width: 2em; text-align: center;">' + all.length + '</td>';
+        str += '<td style="width: 2em; text-align: center;">' + num + '</td>';
         for (const a of annotated) {
             str += '<td class="dashResultCell" style="width: 5px; height: 20px; background: ' + a.colour + '" title="' + a.name + '"></td>';
         }
-
         str += '</tr>';
+        str += '</table></span>';
+        return str;
+    }
+
+    private generateTableClustered(annotated: DetailRow[], delivId: string): string {
+        const cellMap: {[key: string]: string} = {};
+        for (const cell of annotated) {
+            cellMap[cell.name] = '<td class="dashResultCell" style="width: 5px; height: 20px; background: ' + cell.colour + '" title="' + cell.name + '"></td>'
+        }
+        const clstrs: {[key:string]: string[]} = clusters["d1"];
+        let str = '<span><table style="height: 20px;">';
+        for (const cluster of Object.keys(clstrs)) {
+            str += '<tr>';
+            str += '<td style="width: 2em; text-align: center;">' + cluster + '</td>';
+            for (const test of clstrs[cluster]) {
+                str += cellMap[test];
+            }
+            str += '</tr>';
+        }
         str += '</table></span>';
         return str;
     }
