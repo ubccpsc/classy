@@ -65,7 +65,7 @@ export class Test {
         await dbc.writePerson(person);
         person = await Test.createPerson(Test.ADMINSTAFF1.id, Test.ADMINSTAFF1.csId, Test.ADMINSTAFF1.github, PersonKind.ADMINSTAFF);
         await dbc.writePerson(person);
-        await Test.prepareAuth(); // adds admin token (and atest-05, atest-06 which are both real on GE)
+        await Test.prepareAuth();
         // create a team
         const team = await Test.createTeam(Test.TEAMNAMEREAL, Test.DELIVID0, [Test.GITHUB1.id, Test.GITHUB2.id]);
         await dbc.writeTeam(team);
