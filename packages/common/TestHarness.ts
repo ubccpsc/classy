@@ -149,7 +149,7 @@ export class Test {
         await dc.writePerson(p);
 
         // admin person (this username should be on the admin but not the staff team in the github org)
-        p = Test.createPerson(Test.ADMINSTAFF1.id, Test.ADMINSTAFF1.csId, Test.ADMINSTAFF1.github, null);
+        p = Test.createPerson(Test.ADMINSTAFF1.id, Test.ADMINSTAFF1.csId, Test.ADMINSTAFF1.github, PersonKind.ADMINSTAFF);
         await dc.writePerson(p);
 
         // staff person (this username should be on the 'staff' team, but not the 'admin' team in the github org)
@@ -422,7 +422,6 @@ export class Test {
     public static readonly USER4 = {id: 'user4ID', csId: 'user4CSID', github: 'user4gh'};
     public static readonly USER5 = {id: 'user5ID', csId: 'user5CSID', github: 'user5gh'};
     public static readonly USER6 = {id: 'user6ID', csId: 'user6CSID', github: 'user6gh'};
-
     public static readonly INVALIDUSER1 = {id: 'invalidUser1id', csId: 'invalidUser1CSID', github: 'invalidUser1gh'};
 
     // REAL USERS -- CURRENTLY USED TO TEST ON GITHUB -- ENVSURE .ENV FILE CONTAINS REAL GITHUB USERS
