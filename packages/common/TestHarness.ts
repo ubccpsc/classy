@@ -391,6 +391,7 @@ export class Test {
         };
     }
 
+    // FAKE USERS -- NOT USED TO INTERACT WITH GITHUB
     public static readonly USER1 = {id: 'user1ID', csId: 'user1CSID', github: 'user1gh'};
     public static readonly USER2 = {id: 'user2ID', csId: 'user2CSID', github: 'user2gh'};
     public static readonly USER3 = {id: 'user3ID', csId: 'user3CSID', github: 'user3gh'};
@@ -400,12 +401,9 @@ export class Test {
 
     public static readonly INVALIDUSER1 = {id: 'invalidUser1id', csId: 'invalidUser1CSID', github: 'invalidUser1gh'};
 
-    // Test users below are generated with same pattern above from the CWL usernames in the config:
-    public static readonly ADMIN1 = Test.getConfigUser(ConfigKey.githubTestUsers, 9); // atest-09 is currently an admin in some tests
-    // public static readonly ADMIN1 = {id: 'atest-01', csId: 'atest-01', github: 'atest-01'}; // github-dev.ugrad
-    public static readonly STAFF1 = Test.getConfigUser(ConfigKey.githubTestUsers, 8); // atest-08 is currently an admin in some tests
-    // public static readonly STAFF1 = {id: 'atest-02', csId: 'atest-02', github: 'atest-02'}; // github-dev.ugrad (not provisioned yet)
-
+    // REAL USERS -- CURRENTLY USED TO TEST ON GITHUB -- ENVSURE .ENV FILE CONTAINS REAL GITHUB USERS
+    public static readonly ADMIN1 = Test.getConfigUser(ConfigKey.githubAdmin); // atest-09 works
+    public static readonly STAFF1 = Test.getConfigUser(ConfigKey.githubStaff); // atest-08 works
     public static readonly REALUSER1 =  Test.getConfigUser(ConfigKey.githubTestUsers, 1); // real account for testing users
     public static readonly REALUSER2 =  Test.getConfigUser(ConfigKey.githubTestUsers, 2); // real account for testing users
     public static readonly REALUSER3 =  Test.getConfigUser(ConfigKey.githubTestUsers, 3);
@@ -459,8 +457,8 @@ export class Test {
         USER2:           Test.USER2,
         USER3:           Test.USER3,
         USER4:           Test.USER4,
-        ADMIN1:          Test.getConfigUser(ConfigKey.githubTestUsers, 9), // REAL USER - ATEST09 is in ADMIN AND STAFF TEAM
-        STAFF1:          Test.getConfigUser(ConfigKey.githubTestUsers, 8), // REAL USER - ATEST08 IS IN STAFF TEAM
+        ADMIN1:          Test.getConfigUser(ConfigKey.githubAdmin), // ATEST09 works
+        STAFF1:          Test.getConfigUser(ConfigKey.githubStaff), // Atest08 works
         TEAMNAME1:       't_d0_user1id_user2id',
         INVALIDREPONAME: 'InvalidRepoNameShouldNotExist'
     };
