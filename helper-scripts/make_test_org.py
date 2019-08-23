@@ -34,7 +34,7 @@ maintainer = os.getenv('ORG_ADMIN_USER')
 admin_team_members = ['atest-03', 'atest-09', 'classytest-admin', 'steca', 'autobot']
 staff_team_members = ['atest-08', 'atest-09', 'classytest-admstaff', 'classytest-staff']
 students_team_members = ['atest-01', 'atest-02', 'atest-03', 'atest-04', 'atest-05', 'atest-06', 'atest-07', 'atest-08',
-	'atest-09', 'atest-10']
+	'atest-09']
 
 def make_organization(org_name, maintainer):
 	endpoint_url = api_base_uri + '/admin/organizations';
