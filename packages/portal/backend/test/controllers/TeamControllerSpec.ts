@@ -157,7 +157,7 @@ describe("TeamController", () => {
 
         const p1 = await pc.getGitHubPerson(Test.GITHUB1.github);
         const p2 = await pc.getGitHubPerson(Test.GITHUB2.github);
-        const p4 = await pc.getGitHubPerson(Test.GITHUB4.github);
+        const p4 = await pc.getGitHubPerson(Test.GITHUB3.github);
 
         // invalid deliverable
         let team = null;
