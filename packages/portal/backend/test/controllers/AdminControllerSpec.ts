@@ -217,6 +217,36 @@ describe("AdminController", () => {
         expect(res.length).to.be.lessThan(20);
     });
 
+    it("Should be able to mark students as withdrawn.", async () => {
+        const studentsBefore = await ac.getStudents();
+        const dbc = DatabaseController.getInstance();
+        let people = await pc.getAllPeople();
+
+        let numWithrdrawnBefore = 0;
+        for (const person of people) {
+            if (person.kind === PersonKind.WITHDRAWN) {
+                numWithrdrawnBefore++;
+            }
+        }
+        expect(numWithrdrawnBefore).to.equal(0); // shouldn't have any withdrawn students before
+
+        const res = await ac.performStudentWithdraw();
+        Log.test("Result: " + JSON.stringify(res));
+        expect(res).to.be.an('string');
+
+        people = await pc.getAllPeople();
+        let numWithrdrawnAfter = 0;
+        for (const person of people) {
+            if (person.kind === PersonKind.WITHDRAWN) {
+                numWithrdrawnAfter++;
+            }
+        }
+        expect(numWithrdrawnAfter).to.be.greaterThan(numWithrdrawnBefore);
+
+        const studentsAfter = await ac.getStudents();
+        expect(studentsBefore.length).to.be.greaterThan(studentsAfter.length); // students should not include withdrawn students
+    }).timeout(Test.TIMEOUTLONG * 5);
+
     it("Should be able to get a list of dashboard results  without wildcards.", async () => {
         const res = await ac.getDashboard(Test.DELIVID0, Test.REPONAME1);
         expect(res).to.be.an('array');
@@ -621,42 +651,6 @@ describe("AdminController", () => {
 
             expect(allNewRepos.length).to.equal(3);
             expect(allNewTeams.length).to.equal(4); // 3x d0 & 1x project
-        }).timeout(Test.TIMEOUTLONG * 5);
-
-        it("Should be able to mark students as withdrawn.", async () => {
-            const studentsBefore = await ac.getStudents();
-            const dbc = DatabaseController.getInstance();
-
-            let people = await pc.getAllPeople();
-
-            let numWithrdrawnBefore = 0;
-            for (const person of people) {
-                if (person.kind === PersonKind.WITHDRAWN) {
-                    numWithrdrawnBefore++;
-                }
-            }
-            expect(numWithrdrawnBefore).to.equal(0); // shouldn't have any withdrawn students before
-
-            // HACK: When entire Testsuite is run, we have a different number of students from the 'students' team and
-            // people in our DB. We have to add a fake user to withdraw until we understand what is happening.
-            const p = await Test.createPerson(Test.REALUSER7.id, Test.REALUSER7.csId, Test.REALUSER7.github, PersonKind.STUDENT);
-            await dbc.writePerson(p);
-
-            const res = await ac.performStudentWithdraw();
-            Log.test("Result: " + JSON.stringify(res));
-            expect(res).to.be.an('string');
-
-            people = await pc.getAllPeople();
-            let numWithrdrawnAfter = 0;
-            for (const person of people) {
-                if (person.kind === PersonKind.WITHDRAWN) {
-                    numWithrdrawnAfter++;
-                }
-            }
-            expect(numWithrdrawnAfter).to.be.greaterThan(numWithrdrawnBefore);
-
-            const studentsAfter = await ac.getStudents();
-            expect(studentsBefore.length).to.be.greaterThan(studentsAfter.length); // students should not include withdrawn students
         }).timeout(Test.TIMEOUTLONG * 5);
     });
 });
