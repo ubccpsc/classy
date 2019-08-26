@@ -426,11 +426,10 @@ export class Test {
     public static readonly GITHUB1 =  Test.getConfigUser(ConfigKey.githubTestUsers, 4);
     public static readonly GITHUB2 = Test.getConfigUser(ConfigKey.githubTestUsers, 5);
     public static readonly GITHUB3 = Test.getConfigUser(ConfigKey.githubTestUsers, 6);
-    public static readonly GITHUB4 = Test.getConfigUser(ConfigKey.githubTestUsers, 7);
 
     public static readonly REALBOTNAME1 = Test.getConfigUser(ConfigKey.githubBot01); // was 'cpscbot';
     public static readonly REALBOTNAME2 = Test.getConfigUser(ConfigKey.githubBot02); // was 'ubcbot';
-    public static readonly REALUSERNAME = Test.getConfigUser(ConfigKey.githubTestUsers, 9); // was 'rthse2';
+    public static readonly REALUSERNAME = Test.getConfigUser(ConfigKey.githubTestUsers, 1); // was 'rthse2';
 
     public static readonly DELIVIDPROJ = 'project';
     public static readonly DELIVID0 = 'd0';
