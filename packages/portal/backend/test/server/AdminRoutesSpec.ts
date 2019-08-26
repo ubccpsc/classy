@@ -25,6 +25,7 @@ import {GitHubActions} from "../../src/controllers/GitHubActions";
 import {PersonController} from "../../src/controllers/PersonController";
 import {TeamController} from "../../src/controllers/TeamController";
 
+import {PersonKind} from "../../../backend/src/Types";
 import BackendServer from "../../src/server/BackendServer";
 
 import {Test} from "../../../../common/TestHarness";
@@ -36,6 +37,7 @@ describe('Admin Routes', function() {
     let server: BackendServer = null;
 
     const userName = Test.ADMIN1.id;
+
     let userToken: string;
 
     const TIMEOUT = 1000;
@@ -869,11 +871,6 @@ describe('Admin Routes', function() {
             let body: Payload;
             const url = '/portal/admin/withdraw';
             try {
-                // NOTE: We need a Github user on the 'students' team who is not registered in the classlist to make
-                // this test pass.
-                const realGithubUser = await pc.getPerson(Test.REALUSER6.id);
-                await dc.deletePerson(realGithubUser);
-
                 response = await request(app).post(url).send({}).set({user: userName, token: userToken});
                 body = response.body;
             } catch (err) {
