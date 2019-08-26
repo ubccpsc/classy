@@ -3,6 +3,7 @@ import "mocha";
 
 import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
+import {Test} from "../../../../common/TestHarness";
 import {AutoTestGradeTransport, GradeTransport, StudentTransport, TeamTransport} from "../../../../common/types/PortalTypes";
 
 import {AdminController} from "../../src/controllers/AdminController";
@@ -17,8 +18,6 @@ import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
 import {Factory} from "../../src/Factory";
 import {Person, PersonKind, Repository, Team} from "../../src/Types";
-
-import {Test} from "../../../../common/TestHarness";
 
 import '../GlobalSpec'; // load first
 import './GradeControllerSpec'; // load first
