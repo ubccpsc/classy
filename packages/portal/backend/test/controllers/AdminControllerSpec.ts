@@ -640,7 +640,7 @@ describe("AdminController", () => {
 
             // HACK: When entire Testsuite is run, we have a different number of students from the 'students' team and
             // people in our DB. We have to add a fake user to withdraw until we understand what is happening.
-            const p = await Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, PersonKind.STUDENT);
+            const p = await Test.createPerson(Test.REALUSER7.id, Test.REALUSER7.csId, Test.REALUSER7.github, PersonKind.STUDENT);
             await dbc.writePerson(p);
 
             const res = await ac.performStudentWithdraw();
