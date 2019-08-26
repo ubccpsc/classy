@@ -139,15 +139,6 @@ export class Test {
         p = Test.createPerson(Test.REALUSER3.id, Test.REALUSER3.csId, Test.REALUSER3.github, PersonKind.STUDENT);
         await dc.writePerson(p);
 
-        p = Test.createPerson(Test.REALUSER4.id, Test.REALUSER4.csId, Test.REALUSER4.github, PersonKind.STUDENT);
-        await dc.writePerson(p);
-
-        p = Test.createPerson(Test.REALUSER5.id, Test.REALUSER5.csId, Test.REALUSER5.github, PersonKind.STUDENT);
-        await dc.writePerson(p);
-
-        p = Test.createPerson(Test.REALUSER6.id, Test.REALUSER6.csId, Test.REALUSER6.github, PersonKind.STUDENT);
-        await dc.writePerson(p);
-
         // admin person (this username should be on the admin but not the staff team in the github org)
         p = Test.createPerson(Test.ADMINSTAFF1.id, Test.ADMINSTAFF1.csId, Test.ADMINSTAFF1.github, PersonKind.ADMINSTAFF);
         await dc.writePerson(p);
@@ -431,15 +422,7 @@ export class Test {
     public static readonly REALUSER1 =  Test.getConfigUser(ConfigKey.githubTestUsers, 1);
     public static readonly REALUSER2 =  Test.getConfigUser(ConfigKey.githubTestUsers, 2);
     public static readonly REALUSER3 =  Test.getConfigUser(ConfigKey.githubTestUsers, 3);
-    public static readonly REALUSER4 =  Test.getConfigUser(ConfigKey.githubTestUsers, 4);
 
-    public static readonly REALUSER5 =  Test.getConfigUser(ConfigKey.githubTestUsers, 5);
-
-    public static readonly REALUSER6 =  Test.getConfigUser(ConfigKey.githubTestUsers, 6);
-
-    public static readonly REALUSER7 =  Test.getConfigUser(ConfigKey.githubTestUsers, 7);
-    public static readonly REALUSER8 =  Test.getConfigUser(ConfigKey.githubTestUsers, 8);
-    public static readonly REALUSER9 =  Test.getConfigUser(ConfigKey.githubTestUsers, 9);
     public static readonly GITHUB1 =  Test.getConfigUser(ConfigKey.githubTestUsers, 4);
     public static readonly GITHUB2 = Test.getConfigUser(ConfigKey.githubTestUsers, 5);
     public static readonly GITHUB3 = Test.getConfigUser(ConfigKey.githubTestUsers, 6);
