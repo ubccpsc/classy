@@ -50,7 +50,7 @@ def handle_response(res, endpoint_url):
 		exit(1)
 
 def make_organization(org_name, maintainer):
-	endpoint_url = api_base_uri + '/admin/organizations';
+	endpoint_url = api_base_uri + '/admin/organizations'
 	data = dict(
 		login=org_name,
 		admin=maintainer,
