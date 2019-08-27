@@ -5,7 +5,7 @@
 ## 2. Run script AFTER entering GH_HOST and GH_API in .env file and follow prompts:
 ##      - run command from ./Classy dir: `python3 ./helper-scripts/make_test_org.py`
 
-## If script errors half-way and you want to FORCE re-running the script all the way through without exiting on an error,
+## If script errors part-way and you want to FORCE re-running the script all the way through without exiting on an error,
 ## comment out FAIL Exit() method in handle_response().
 
 import requests
