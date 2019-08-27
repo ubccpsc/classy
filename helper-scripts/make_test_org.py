@@ -141,7 +141,7 @@ cloneTestBaseRepo.delete_remote('origin')
 cloneTestBaseRepo.create_remote('origin', github_url + '/' + org_name + '/TESTING_SAMPLE_REPO.git')
 cloneTestBaseRepo.git.push('origin', 'master')
 
-## POST-SCRIPT RUN: clean-up repo cloning on filesystem
+## POST-SCRIPT RUN
 shutil.rmtree('./helper-scripts/PostTestDoNotDelete')
 shutil.rmtree('./helper-scripts/TESTING_SAMPLE_REPO')
 
