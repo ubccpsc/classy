@@ -28,7 +28,7 @@ github_url = os.getenv('GH_HOST')
 headers = ''
 maintainer = ''
 admin_team_members = ['classytest-admstaff', 'classytest-admin', 'classytest-bot01', 'classytest-bot02']
-staff_team_members = ['classytest-admstaff', 'classytest-staff', 'classytest-bot01']
+staff_team_members = ['classytest-admstaff', 'classytest-staff']
 students_team_members = ['atest-04', 'atest-05', 'atest-06', 'atest-07', 'atest-08', 'atest-09', 'atest-10']
 
 def get_y_or_n(question):
