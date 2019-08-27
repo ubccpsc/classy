@@ -138,7 +138,7 @@ export class AuthController {
     }
 
     private isLocalRequest(token: string): boolean {
-        return Config.getInstance().getProp(ConfigKey.localTrafficPassword) === token;
+        return Config.getInstance().getProp(ConfigKey.autotestSecret) === token;
     }
 
     private async verifyToken(personId: string, token: string): Promise<boolean> {

@@ -90,7 +90,6 @@ export default class AdminRoutes implements IREST {
         try {
             let user = req.headers.user;
             let token = req.headers.token;
-            const password = req.headers.password;
 
             // fallback to getting token from cookies
             // this is useful for providing links in for attachments, but also might become the default in the future
@@ -117,10 +116,6 @@ export default class AdminRoutes implements IREST {
             // only return a valid object if both user and token exist (aka no partial credentials)
             if (typeof user !== 'undefined' && typeof token !== 'undefined') {
                 return {user, token};
-            }
-
-            if (typeof user === 'undefined' && typeof token === 'undefined' && typeof password !== 'undefined') {
-                return {user: "", token: password};
             }
         } catch (err) {
             Log.error('AdminRoutes::processAuth(..) - ERROR: ' + err.message);
