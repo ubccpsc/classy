@@ -157,7 +157,7 @@ describe("TeamController", () => {
 
         const p1 = await pc.getGitHubPerson(Test.GITHUB1.github);
         const p2 = await pc.getGitHubPerson(Test.GITHUB2.github);
-        const p4 = await pc.getGitHubPerson(Test.GITHUB3.github);
+        const p3 = await pc.getGitHubPerson(Test.GITHUB3.github);
 
         // invalid deliverable
         let team = null;
@@ -226,7 +226,7 @@ describe("TeamController", () => {
         team = null;
         ex = null;
         try {
-            team = await tc.formTeam('testTeamName_' + Date.now(), proj, [p1, p4], false);
+            team = await tc.formTeam('testTeamName_' + Date.now(), proj, [p1, p3], false);
         } catch (err) {
             Log.test(err);
             ex = err;
