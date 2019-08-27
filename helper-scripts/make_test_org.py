@@ -1,5 +1,5 @@
-## ISSUES:
-## Can not re-run script. Org must be deleted and re-made to re-run if it only makes it part-way.
+## If script errors half-way and you want to FORCE re-running the script all the way through without exiting on an error,
+## comment out FAIL Exit() method in handle_response().
 
 ## INSTRUCTIONS: Run script AFTER entering GH_HOST and GH_API in .env file
 
@@ -87,7 +87,7 @@ def add_org_members(org_members, role):
 		handle_response(response, endpoint_url)
 
 
-## PRE SETUP - Setup vars, warnings
+## PRE-SCRiPT RUN
 print('''This script will setup a `classytest` organization for CI testing. 
 	IMPORTANT: Github.com public requires that you manually create a `classytest` organization and enter an API key with owner permissions.
 	Github Enterprise will create the `classytest` organization automatically. This requires that you enter an API key with Github Admin permissions''')
@@ -137,7 +137,7 @@ cloneTestBaseRepo.delete_remote('origin')
 cloneTestBaseRepo.create_remote('origin', github_url + '/' + org_name + '/TESTING_SAMPLE_REPO.git')
 cloneTestBaseRepo.git.push('origin', 'master')
 
-## POST: clean-up repo cloning on filesystem
+## POST-SCRIPT RUN: clean-up repo cloning on filesystem
 shutil.rmtree('./helper-scripts/PostTestDoNotDelete')
 shutil.rmtree('./helper-scripts/TESTING_SAMPLE_REPO')
 
