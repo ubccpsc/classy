@@ -1,6 +1,6 @@
 ## Creates a `classytest` organization on Github Enterprise and Github.com for CI test setup.
 
-## INSTRUCTIONS: 
+## INSTRUCTIONS:
 ## 1. Install pip packages: `pip3 install GitPython python-dotenv install requests`
 ## 2. Run script AFTER entering GH_HOST and GH_API in .env file and follow prompts:
 ##      - run command from ./Classy dir: `python3 ./helper-scripts/make_test_org.py`
@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 
 load_dotenv('./.env')
 
-org_name = 'classytest2'
+org_name = 'classytest'
 api_token = ''
 api_base_uri = os.getenv('GH_API')
 github_enterprise = False
@@ -91,7 +91,7 @@ def add_org_members(org_members, role):
 
 
 ## PRE-SCRiPT RUN
-print('''This script will setup a `classytest` organization for CI testing. 
+print('''This script will setup a `classytest` organization for CI testing.
 	IMPORTANT: Github.com public requires that you manually create a `classytest` organization and enter an API key with owner permissions.
 	Github Enterprise will create the `classytest` organization automatically. This requires that you enter an API key with Github Admin permissions''')
 print('To proceed, enter your organization owner API key Github Admin permissions: ')
@@ -102,7 +102,7 @@ headers = {'Content-Type': 'application/json',
 
 ## 1. Make Organization
 if github_enterprise:
-	while maintainer == '': 
+	while maintainer == '':
 		maintainer = input('Enter your organization maintainer username: ').lower().strip()
 	make_organization(org_name, maintainer)
 
@@ -118,9 +118,9 @@ add_org_members(staff_team_members, 'member')
 add_org_members(students_team_members, 'member')
 
 ## 3. Add users to teams
-if github_enterprise == False: 
+if github_enterprise == False:
 	proceed = get_y_or_n('Github users have been invited to your organization. Before you can proceed to add users to a team, they MUST accept your invitiation. ' +
-			'Do you want to proceed with adding users to the admin, staff, and students teams? (y/n): ') 
+			'Do you want to proceed with adding users to the admin, staff, and students teams? (y/n): ')
 	if proceed == False:
 		exit()
 
