@@ -1,10 +1,11 @@
-## CREATES `classytest` organization on Github Enterprise and Github.com for CI test setup; 
+## Creates a `classytest` organization on Github Enterprise and Github.com for CI test setup.
 
-## INSTRUCTIONS: Run script AFTER entering GH_HOST and GH_API in .env file and follow prompts.
+## INSTRUCTIONS: 
+## 1. Install pip packages: `pip3 install GitPython python-dotenv install requests`
+## 2. Run script AFTER entering GH_HOST and GH_API in .env file and follow prompts.
 
 ## If script errors half-way and you want to FORCE re-running the script all the way through without exiting on an error,
 ## comment out FAIL Exit() method in handle_response().
-
 
 import requests
 import time
