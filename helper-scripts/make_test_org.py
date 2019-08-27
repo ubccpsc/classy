@@ -42,7 +42,6 @@ def get_y_or_n(question):
 
 def handle_response(res, endpoint_url):
 	if res.status_code >= 200 and res.status_code < 300:
-		print(res.status_code)
 		print('SUCCESS: ' + str(res.status_code) + ' on ' + endpoint_url)
 	else:
 		print('FAILURE: ' + str(res.status_code) + ' on ' + endpoint_url)
