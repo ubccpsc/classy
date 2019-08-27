@@ -2,7 +2,7 @@ import {expect} from "chai";
 import * as fs from "fs";
 import "mocha";
 
-import Config from "../../common/Config";
+import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
 import {CommitTarget} from "../../common/types/ContainerTypes";
 import {DeliverablesController} from "../../portal/backend/src/controllers/DeliverablesController";
@@ -180,10 +180,10 @@ describe("GitHub Event Parser", () => {
     });
 
     it("Should be able to parse a comment on a master commit with one deliverable and a mention.", async function() {
-        const content = readFile("comment_master_bot_one-deliv.json");
-        // CI To do: abstract the logic to contain the config bot name, as this test should ;; '@autobot #d4';
-        // always look for the request logic.
-        const actual = await GitHubUtil.processComment(JSON.parse(content));
+        const content = JSON.parse(readFile("comment_master_bot_one-deliv.json"));
+        const botname = Config.getInstance().getProp(ConfigKey.botName);
+        content.comment.body = content.comment.body.replace('autobot', botname);
+        const actual = await GitHubUtil.processComment(content);
         Log.test(JSON.stringify(actual));
 
         const expected: CommitTarget = {
@@ -206,8 +206,10 @@ describe("GitHub Event Parser", () => {
     }).timeout(TIMEOUT * 10);
 
     it("Should be able to parse a comment on a master commit with multiple deliverables and a mention.", async () => {
-        const content = readFile("comment_master_bot_two-deliv.json"); // CI TO DO: Replace JSON autobot reference with Config BOT reference
-        const actual = await GitHubUtil.processComment(JSON.parse(content));
+        const content = JSON.parse(readFile("comment_master_bot_two-deliv.json"));
+        const botname = Config.getInstance().getProp(ConfigKey.botName);
+        content.comment.body = content.comment.body.replace('autobot', botname);
+        const actual = await GitHubUtil.processComment(content);
         Log.test(JSON.stringify(actual));
 
         const expected: CommitTarget = {
@@ -254,9 +256,10 @@ describe("GitHub Event Parser", () => {
     }).timeout(TIMEOUT * 10);
 
     it("Should be able to parse a comment on another branch with one deliverable and a mention.", async () => {
-        // CI to do: ensure that autobot/ubcbot or whatever bot name is switched out in this test from config file
-        const content = readFile("comment_other-branch_bot_one-deliv.json");
-        const actual = await GitHubUtil.processComment(JSON.parse(content));
+        const content = JSON.parse(readFile("comment_other-branch_bot_one-deliv.json"));
+        const botname = Config.getInstance().getProp(ConfigKey.botName);
+        content.comment.body = content.comment.body.replace('autobot', botname);
+        const actual = await GitHubUtil.processComment(content);
         Log.test(JSON.stringify(actual));
 
         const expected: CommitTarget = {
