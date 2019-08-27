@@ -40,6 +40,15 @@ def get_y_or_n(question):
 	if answer == 'n':
 		return False
 
+def handle_response(res, endpoint_url):
+	if res.status_code >= 200 and res.status_code < 300:
+		print(res.status_code)
+		print('SUCCESS: ' + str(res.status_code) + ' on ' + endpoint_url)
+	else:
+		print('FAILURE: ' + str(res.status_code) + ' on ' + endpoint_url)
+		print(res.json())
+		exit(1)
+
 def make_organization(org_name, maintainer):
 	endpoint_url = api_base_uri + '/admin/organizations';
 	data = dict(
@@ -49,7 +58,6 @@ def make_organization(org_name, maintainer):
 		)
 	res = requests.post(endpoint_url, json=data, headers=headers)
 	handle_response(res, endpoint_url)
-
 
 def create_repo(name, description):
 	endpoint_url = api_base_uri + '/orgs/' + org_name + '/repos'
@@ -71,15 +79,6 @@ def create_team(team_name, team_members):
 		)
 	res = requests.post(endpoint_url, json=data, headers=headers)
 	handle_response(res, endpoint_url)
-
-def handle_response(res, endpoint_url):
-	if res.status_code >= 200 and res.status_code < 300:
-		print(res.status_code)
-		print('SUCCESS: ' + str(res.status_code) + ' on ' + endpoint_url)
-	else:
-		print('FAILURE: ' + str(res.status_code) + ' on ' + endpoint_url)
-		print(res.json())
-		exit(1)
 
 def add_org_members(org_members, role):
 	endpoint_url = api_base_uri + '/orgs/' + org_name + '/memberships/'
