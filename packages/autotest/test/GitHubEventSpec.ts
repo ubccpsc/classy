@@ -182,7 +182,7 @@ describe("GitHub Event Parser", () => {
     it("Should be able to parse a comment on a master commit with one deliverable and a mention.", async function() {
         const content = JSON.parse(readFile("comment_master_bot_one-deliv.json"));
         const botname = Config.getInstance().getProp(ConfigKey.botName);
-        content.comment.body = content.comment.body.replace('autobot', botname);
+        content.comment.body = content.comment.body.replace('ubcbot', botname);
         const actual = await GitHubUtil.processComment(content);
         Log.test(JSON.stringify(actual));
 
@@ -208,7 +208,7 @@ describe("GitHub Event Parser", () => {
     it("Should be able to parse a comment on a master commit with multiple deliverables and a mention.", async () => {
         const content = JSON.parse(readFile("comment_master_bot_two-deliv.json"));
         const botname = Config.getInstance().getProp(ConfigKey.botName);
-        content.comment.body = content.comment.body.replace('autobot', botname);
+        content.comment.body = content.comment.body.replace('ubcbot', botname);
         const actual = await GitHubUtil.processComment(content);
         Log.test(JSON.stringify(actual));
 
@@ -258,7 +258,7 @@ describe("GitHub Event Parser", () => {
     it("Should be able to parse a comment on another branch with one deliverable and a mention.", async () => {
         const content = JSON.parse(readFile("comment_other-branch_bot_one-deliv.json"));
         const botname = Config.getInstance().getProp(ConfigKey.botName);
-        content.comment.body = content.comment.body.replace('autobot', botname);
+        content.comment.body = content.comment.body.replace('ubcbot', botname);
         const actual = await GitHubUtil.processComment(content);
         Log.test(JSON.stringify(actual));
 
