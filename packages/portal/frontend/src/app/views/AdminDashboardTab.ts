@@ -23,6 +23,28 @@ export interface DetailRow {
             colour: string;
         }
 
+class DashboardTable extends SortableTable {
+    public generate() {
+        super.generate();
+
+        function toggle(event: MouseEvent) {
+            const elem = event.currentTarget as Element;
+            const normal = elem.querySelector("span.normalhistogram");
+            const clustered = elem.querySelector("span.clusteredhistogram");
+            if (clustered !== null) {
+                normal.classList.toggle("hidden");
+                clustered.classList.toggle("hidden");  
+            }          
+        }
+
+        const tableDivs = document.querySelectorAll("div.histogramcontainer");
+        const tableDivArray = Array.prototype.slice.call(tableDivs, 0);
+        for (const div of tableDivArray) {
+            div.onclick=toggle
+        }
+    }
+}
+
 export class AdminDashboardTab extends AdminPage {
 
     // private readonly remote: string; // url to backend
@@ -169,7 +191,7 @@ export class AdminDashboardTab extends AdminPage {
             }
         ];
 
-        const st = new SortableTable(headers, '#dashboardListTable');
+        const st = new DashboardTable(headers, '#dashboardListTable');
 
         // this loop couldn't possibly be less efficient
         for (const result of results) {
@@ -258,20 +280,20 @@ export class AdminDashboardTab extends AdminPage {
             }
             annotated.push({name: name, state: state, colour: colour});
         }
-        let str: string;
+
+        let str: string = '<div class="histogramcontainer">';
+        str += this.generateTable(annotated);
         if (ClusterTable.shouldCluster(row.delivId)) {
-            str = ClusterTable.generateTable(annotated, row.delivId);
-        } else {
-            str = this.generateTable(annotated, all.length);
+            str += ClusterTable.generateTable(annotated, row.delivId);
         }
-        Log.trace(str);
+        str += "</div>"
         return str;
     }
 
-    private generateTable(annotated: DetailRow[], num: number): string {
-        let str = '<span><table style="height: 20px;">';
+    private generateTable(annotated: DetailRow[]): string {
+        let str = '<span class="normalhistogram"><table style="height: 20px;">';
         str += '<tr>';
-        str += '<td style="width: 2em; text-align: center;">' + num + '</td>';
+        str += '<td style="width: 2em; text-align: center;">' + annotated.length + '</td>';
         for (const a of annotated) {
             str += '<td class="dashResultCell" style="width: 5px; height: 20px; background: ' + a.colour + '" title="' + a.name + '"></td>';
         }

@@ -1,10 +1,11 @@
 import {DetailRow} from "../views/AdminDashboardTab"
-import Config, {ConfigKey} from "../../../../../common/Config"
+// import Config, {ConfigKey} from "../../../../../common/Config"
+const CLUSTER = true; // Failed at putting this in config
 
 export class ClusterTable {
 
     private static clusters: {[key:string]:{[key2:string]: string[]}} = {
-        "sample": {
+        "project": {
             "ADD": ["A", "B", "C"],
             "REM": ["B", "C", "D"],
             "LIS": ["D", "E"],
@@ -21,7 +22,7 @@ export class ClusterTable {
     }
 
     public static shouldCluster(delivId: string) {
-        return Config.getInstance().getProp(ConfigKey.cluster) && Object.keys(ClusterTable.clusters).includes(delivId);
+        return CLUSTER && Object.keys(ClusterTable.clusters).includes(delivId);
     }
 
     public static generateTable(annotated: DetailRow[], delivId: string): string {
@@ -29,8 +30,8 @@ export class ClusterTable {
         for (const cell of annotated) {
             cellMap[cell.name] = '<td class="dashResultCell" style="width: 5px; height: 20px; background: ' + cell.colour + '" title="' + cell.name + '"></td>'
         }
-        const clstrs: {[key:string]: string[]} = ClusterTable.clusters["sample"];
-        let str = '<span><table style="height: 20px;">';
+        const clstrs: {[key:string]: string[]} = ClusterTable.clusters[delivId];
+        let str = '<span class="clusteredhistogram hidden""><table style="height: 20px;">';
         for (const cluster of Object.keys(clstrs)) {
             str += '<tr>';
             str += '<td style="width: 2em; text-align: center;">' + cluster + '</td>';
