@@ -19,13 +19,12 @@ from dotenv import load_dotenv
 
 load_dotenv('./.env')
 
-org_name = 'classytest'
+org_name = 'classytest2'
 api_token = ''
 api_base_uri = os.getenv('GH_API')
 github_enterprise = False
 github_url = os.getenv('GH_HOST')
-headers = {'Content-Type': 'application/json',
-			'Authorization': f'token {api_token}'}
+headers = ''
 maintainer = ''
 admin_team_members = ['classytest-admstaff', 'classytest-admin', 'classytest-bot01', 'classytest-bot02']
 staff_team_members = ['classytest-admstaff', 'classytest-staff']
@@ -97,28 +96,30 @@ print('''This script will setup a `classytest` organization for CI testing.
 print('To proceed, enter your organization owner API key Github Admin permissions: ')
 api_token = getpass.getpass()
 github_enterprise = get_y_or_n('Are you using a Github Enterprise instance? (y/n): ')
+headers = {'Content-Type': 'application/json',
+			'Authorization': f'token {api_token}'}
 
 ## 1. Make Organization
-if github_enterprise: 
-	while maintainer == '': 
-		maintainer = input('Enter your organization maintainer username: ').lower().strip()
-	make_organization(org_name, maintainer)
+# if github_enterprise:
+# 	while maintainer == '': 
+# 		maintainer = input('Enter your organization maintainer username: ').lower().strip()
+# 	make_organization(org_name, maintainer)
 
 ## 2. Add users to organization
 if github_enterprise == False:
-	proceed = get_y_or_n('''Github.com public REQUIRES that team members accept an organization invite before being added to the team. Do you want to proceed with
-		inviting admin, staff, and students testing accounts to ''' + org_name + ' on ' + github_url + '? (y/n): ')
+	proceed = get_y_or_n('Github.com public REQUIRES that team members accept an organization invite before being added to the team. Do you want to proceed with ' +
+		f'inviting admin, staff, and students testing accounts to {org_name} on {github_url}? (y/n): ')
 	if proceed == False:
 		exit()
 
-add_org_members(admin_team_members, 'admin')
-add_org_members(staff_team_members, 'member')
-add_org_members(students_team_members, 'member')
+# add_org_members(admin_team_members, 'admin')
+# add_org_members(staff_team_members, 'member')
+# add_org_members(students_team_members, 'member')
 
 ## 3. Add users to teams
 if github_enterprise == False: 
-	proceed = get_y_or_no('Github users have been invited to your organization. Before you can proceed to add users to a team, they MUST accept your invitiation. ' +
-			'Do you want to proceed with adding users to the admin, staff, and students teams? (y/n):') 
+	proceed = get_y_or_n('Github users have been invited to your organization. Before you can proceed to add users to a team, they MUST accept your invitiation. ' +
+			'Do you want to proceed with adding users to the admin, staff, and students teams? (y/n): ') 
 	if proceed == False:
 		exit()
 
