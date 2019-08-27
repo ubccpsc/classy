@@ -2,7 +2,8 @@
 
 ## INSTRUCTIONS: 
 ## 1. Install pip packages: `pip3 install GitPython python-dotenv install requests`
-## 2. Run script AFTER entering GH_HOST and GH_API in .env file and follow prompts.
+## 2. Run script AFTER entering GH_HOST and GH_API in .env file and follow prompts:
+##      - run command from ./Classy dir: `python3 ./helper-scripts/make_test_org.py`
 
 ## If script errors half-way and you want to FORCE re-running the script all the way through without exiting on an error,
 ## comment out FAIL Exit() method in handle_response().
@@ -100,10 +101,10 @@ headers = {'Content-Type': 'application/json',
 			'Authorization': f'token {api_token}'}
 
 ## 1. Make Organization
-# if github_enterprise:
-# 	while maintainer == '': 
-# 		maintainer = input('Enter your organization maintainer username: ').lower().strip()
-# 	make_organization(org_name, maintainer)
+if github_enterprise:
+	while maintainer == '': 
+		maintainer = input('Enter your organization maintainer username: ').lower().strip()
+	make_organization(org_name, maintainer)
 
 ## 2. Add users to organization
 if github_enterprise == False:
@@ -112,9 +113,9 @@ if github_enterprise == False:
 	if proceed == False:
 		exit()
 
-# add_org_members(admin_team_members, 'admin')
-# add_org_members(staff_team_members, 'member')
-# add_org_members(students_team_members, 'member')
+add_org_members(admin_team_members, 'admin')
+add_org_members(staff_team_members, 'member')
+add_org_members(students_team_members, 'member')
 
 ## 3. Add users to teams
 if github_enterprise == False: 
