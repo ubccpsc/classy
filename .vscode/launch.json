@@ -14,9 +14,6 @@
             "outFiles": [
                 "${workspaceFolder}/packages/portal/backend/src/*.js"
             ],
-            "args": [
-                "--exit"
-            ]
         },
         // BACK-END: Runs All Back-end Tests with Working Debug Breakpoints
         {
@@ -30,8 +27,7 @@
                 "999999",
                 "--colors",
                 "${workspaceFolder}/packages/portal/backend/test/**/*Spec.js",
-                "--recursive",
-                "--exit"
+                "--recursive"
             ],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen"
@@ -41,33 +37,13 @@
             "type": "node",
             "request": "launch",
             "cwd": "${workspaceFolder}/packages/portal/backend",
-            "name": "Classy Back-end: Mocha Specified FILE",
+            "name": " Classy Back-end: Mocha Specified File",
             "program": "${workspaceFolder}/packages/portal/backend/node_modules/mocha/bin/_mocha",
             "args": [
                 "--timeout",
                 "999999",
                 "--colors",
-                "${workspaceFolder}/packages/portal/backend/test/controllers/AdminControllerSpec.js",
-                "--exit"
-            ],
-            "console": "integratedTerminal",
-            "internalConsoleOptions": "neverOpen"
-        },
-        // BACK-END: Runs ONLY single test matching regular expression
-        {
-            "type": "node",
-            "request": "launch",
-            "cwd": "${workspaceFolder}/packages/portal/backend",
-            "name": "Classy Back-end: Mocha Specified TEST NAME",
-            "program": "${workspaceFolder}/packages/portal/backend/node_modules/mocha/bin/_mocha",
-            "args": [
-                "--timeout",
-                "999999",
-                "--colors",
-                "${workspaceFolder}/packages/portal/backend/test/controllers/AdminControllerSpec.js",
-                "--grep",
-                "Should be able to mark students as withdrawn.", // TEST NAME HERE
-                "--exit"
+                "${workspaceFolder}/packages/portal/backend/test/ClasslistAgentSpec.js"
             ],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen"
@@ -100,7 +76,7 @@
             "name": "AutoTest",
             "program": "${workspaceFolder}/packages/autotest/src/AutoTestDaemon.ts",
             "args": [
-                "--exit"
+
             ],
             "outFiles": [
                 "${workspaceFolder}/packages/autotest/src/AutoTestDaemon.js"
@@ -119,8 +95,7 @@
                 "--timeout",
                 "999999",
                 "--colors",
-                "${workspaceFolder}/packages/autotest/test/**/*Spec.js",
-                "--exit"
+                "${workspaceFolder}/packages/autotest/test/**/*Spec.js"
             ],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen"
@@ -136,8 +111,7 @@
                 "--timeout",
                 "999999",
                 "--colors",
-                "${workspaceFolder}/packages/autotest/test/MongoStoreSpec.js",
-                "--exit"
+                "${workspaceFolder}/packages/autotest/test/MongoStoreSpec.js"
             ],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen"
