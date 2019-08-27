@@ -1,7 +1,7 @@
 ## Creates a `classytest` organization on Github Enterprise and Github.com for CI test setup.
 
 ## INSTRUCTIONS:
-## 1. Install pip packages: `pip3 install GitPython python-dotenv install requests`
+## 1. Install pip packages: `pip3 install GitPython python-dotenv requests`
 ## 2. Run script AFTER entering GH_HOST and GH_API in .env file and follow prompts:
 ##      - run command from ./Classy dir: `python3 ./helper-scripts/make_test_org.py`
 
