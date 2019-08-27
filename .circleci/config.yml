@@ -81,7 +81,7 @@ jobs:
 
       - run:
             command: cd packages/portal/frontend && ../../../node_modules/typescript/bin/tsc && yarn webpack
-            name: Compile front-end TypeScript and compile Webpack
+            name: Building frontend and bundle with Webpack
             when: always
 
       # statically validate the frontend (this is the best we can do as there are no automated UI tests yet)
