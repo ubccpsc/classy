@@ -100,7 +100,8 @@ github_enterprise = get_y_or_n('Are you using a Github Enterprise instance? (y/n
 
 ## 1. Make Organization
 if github_enterprise: 
-	maintainer = input('Enter your organization maintainer username: ').lower().strip()
+	while maintainer == '': 
+		maintainer = input('Enter your organization maintainer username: ').lower().strip()
 	make_organization(org_name, maintainer)
 
 ## 2. Add users to organization
