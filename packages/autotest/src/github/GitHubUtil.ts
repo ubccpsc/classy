@@ -69,30 +69,12 @@ export class GitHubUtil {
         return parsedDelivId;
     }
 
-    public static parseCheckFromComment(message: any): boolean {
-        if (message.indexOf('#check') >= 0) {
-            Log.trace("GitHubUtil::parseCheckFromComment() - input: " + message + "; check: true");
+    public static parseCommandFromComment(message: any, cmd: string): boolean {
+        if (message.indexOf(`#${cmd}`) >= 0) {
+            Log.trace(`GitHubUtil::parseCommandFromComment() - input: ${message}; ${cmd}: true`);
             return true;
         }
-        Log.trace("GitHubUtil::parseCheckFromComment() - input: " + message + "; silent: false");
-        return false;
-    }
-
-    public static parseSilentFromComment(message: any): boolean {
-        if (message.indexOf('#silent') >= 0) {
-            Log.trace("GitHubUtil::parseSilentFromComment() - input: " + message + "; silent: true");
-            return true;
-        }
-        Log.trace("GitHubUtil::parseSilentFromComment() - input: " + message + "; silent: false");
-        return false;
-    }
-
-    public static parseForceFromComment(message: any): boolean {
-        if (message.indexOf('#force') >= 0) {
-            Log.trace("GitHubUtil::parseForceFromComment() - input: " + message + "; force: true");
-            return true;
-        }
-        Log.trace("GitHubUtil::parseForceFromComment() - input: " + message + "; force: false");
+        Log.trace(`GitHubUtil::parseCommandFromComment() - input: ${message}; ${cmd}: false`);
         return false;
     }
 
@@ -121,14 +103,10 @@ export class GitHubUtil {
             const delivId = GitHubUtil.parseDeliverableFromComment(message, config.deliverableIds);
 
             const flags: string[] = [];
-            if (GitHubUtil.parseForceFromComment(message) === true) {
-                flags.push("#force");
-            }
-            if (GitHubUtil.parseSilentFromComment(message) === true) {
-                flags.push("#silent");
-            }
-            if (GitHubUtil.parseCheckFromComment(message) === true) {
-                flags.push("#check");
+            for (const command in ['force', 'silent', 'check', 'queue', 'dequeue']) {
+                if (GitHubUtil.parseCommandFromComment(message, command)) {
+                    flags.push(`#${command}`);
+                }
             }
 
             const botName = "@" + Config.getInstance().getProp(ConfigKey.botName).toLowerCase();

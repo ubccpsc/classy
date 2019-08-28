@@ -40,6 +40,7 @@ export abstract class AutoTest implements IAutoTest {
     private regressionQueue = new Queue('regression', 1);
     private standardQueue = new Queue('standard', 2);
     private expressQueue = new Queue('express', 2);
+    private scheduleQueue = new Queue('schedule', 0);
 
     // noinspection TypeScriptAbstractClassConstructorCanBeMadeProtected
     constructor(dataStore: IDataStore, classPortal: IClassPortal, docker: Docker) {
@@ -59,12 +60,38 @@ export abstract class AutoTest implements IAutoTest {
         }
     }
 
+    public addToScheduleQueue(input: ContainerInput): void {
+        Log.info("AutoTest::addToScheduleQueue(..) - start; commit: " + input.target.commitSHA);
+        try {
+            this.scheduleQueue.push(input);
+            this.scheduleQueue.sort("timestamp");
+        } catch (err) {
+            Log.error("AutoTest::addToScheduleQueue(..) - ERROR: " + err);
+        }
+        return;
+    }
+
+    public removeFromScheduleQueue(keys: Array<{key: string, value: string}>): ContainerInput | null {
+        Log.info("AutoTest::removeFromScheduleQueue(..) - start");
+        try {
+            return this.scheduleQueue.removeGivenKeys(keys);
+        } catch (err) {
+            Log.error("AutoTest::removeFromScheduleQueue(..) - ERROR: " + err);
+        }
+        return null;
+    }
+
     public tick() {
         try {
             Log.info("AutoTest::tick(..) - start; " +
                 "standard - #wait: " + this.standardQueue.length() + ", #run: " + this.standardQueue.numRunning() + "; " +
                 "express - #wait: " + this.expressQueue.length() + ", #run: " + this.expressQueue.numRunning() + "; " +
                 "regression - #wait: " + this.regressionQueue.length() + ", #run: " + this.regressionQueue.numRunning() + ".");
+
+            // Move scheduled items that are not eligible to run into the standard queue
+            this.updateScheduleQueue();
+            Log.info("AutoTest::tick(..) - moved jobs from the schedule to the standard queue; " +
+                "standard - #wait: " + this.standardQueue.length() + ".");
 
             let updated = false;
             const that = this;
@@ -144,6 +171,15 @@ export abstract class AutoTest implements IAutoTest {
             });
         } catch (err) {
             Log.error("AutoTest::tick() - ERROR: " + err.message);
+        }
+    }
+
+    private updateScheduleQueue(): void {
+        let scheduleQueueInput = this.scheduleQueue.peek();
+        const compareTime = Date.now();
+        while (scheduleQueueInput !== null && scheduleQueueInput.target.timestamp < compareTime) {
+            this.addToStandardQueue(this.standardQueue.pop());
+            scheduleQueueInput = this.scheduleQueue.peek();
         }
     }
 

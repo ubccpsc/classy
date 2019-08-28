@@ -58,7 +58,7 @@ export enum ConfigKey {
     botName = "botName",
     postback = "postback",
 
-    patchId = "patchId",
+    patchId = "patchId", // Used by sdmm/classy
     patchToolUrl = "patchToolUrl",
 }
 
