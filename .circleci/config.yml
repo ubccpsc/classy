@@ -116,7 +116,7 @@ jobs:
             when: on_success
 
       - run:
-            command: ./node_modules/junit-viewer/bin/junit-viewer --results=packages/portal/backend/testOutput/backend/test/test-results.xml --save=packages/portal/backend/testOutput/backend/test/index.html
+            command: ./node_modules/xunit-viewer/bin/xunit-viewer --results=packages/portal/backend/testOutput/backend/test/test-results.xml --save=packages/portal/backend/testOutput/backend/test/index.html
             name: Converting backend test results to HTML
             when: on_success
 
