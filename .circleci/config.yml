@@ -7,7 +7,7 @@ jobs:
   build:
     docker:
       # specify the version you desire here
-      - image: circleci/node:8
+      - image: circleci/node:8.9.0
       - image: circleci/mongo:3.6
 
       # Specify service dependencies here if necessary
@@ -116,7 +116,7 @@ jobs:
             when: on_success
 
       - run:
-            command: cd packages/portal/backend && ./node_modules/junit-viewer/bin/junit-viewer --results=../../../testOutput/backend/test/test-results.xml --save=../../../testOutput/backend/test/index.html
+            command: ./node_modules/junit-viewer/bin/junit-viewer --results=packages/portal/backend/testOutput/backend/test/test-results.xml --save=packages/portal/backend/testOutput/backend/test/index.html
             name: Converting backend test results to HTML
             when: on_success
 
