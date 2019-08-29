@@ -5,7 +5,7 @@
     "main": "build/App.js",
     "scripts": {
         "test": "node --require dotenv/config ./node_modules/.bin/mocha --timeout 30000 --recursive --exit",
-        "testCI": "node ./node_modules/.bin/mocha --reporter mocha-junit-reporter --reporter-options mochaFile=../../testOutput/backend/test/test-results.xml --timeout 5000 --recursive --exit",
+        "testCI": "node ./node_modules/.bin/mocha --reporter mocha-junit-reporter --reporter-options mochaFile=../../../testOutput/backend/test/test-results.xml --timeout 5000 --recursive --exit",
         "cover": "nyc --reporter html ./node_modules/.bin/mocha --timeout 30000 --recursive --exit",
         "coverCI": "./node_modules/.bin/nyc --reporter html --report-dir ../../../testOutput/backend/coverage --reporter=text-lcov yarn run testCI",
         "coveralls": "./node_modules/.bin/nyc report --report-dir ../../../testOutput/backend/coverage --reporter=text-lcov | coveralls",
@@ -37,7 +37,7 @@
         "csv-parse": "^2.5.0",
         "dotenv": "^5.0.1",
         "fs-extra": "^5.0.0",
-        "xunit-viewer": "^5.0.0",
+        "junit-viewer": "^4.11.1",
         "markdown-table": "^1.1.2",
         "mocha": "^5.2.0",
         "mocha-junit-reporter": "^1.17.0",
