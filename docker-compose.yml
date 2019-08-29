@@ -83,6 +83,8 @@ services:
         depends_on:
             - portal
             - reference_ui
+            - codeshovelui
+            - labcycleui
         ports:
             - "80:8080"
             - "443:8443"
@@ -107,3 +109,56 @@ services:
             - ${UI_PORT}
         restart: always
         user: "${UID}"
+    codeshovelwebservice:
+        build:
+            context: https://${LC_GITHUB_TOKEN}@github.com/braxtonhall/codeshovel-webservice.git
+        container_name: codeshovelwebservice
+        ports:
+        - ${CODESHOVEL_BACKEND_PORT}:8080
+        restart: always
+        environment:
+        - GITHUB_TOKEN=${LC_GITHUB_TOKEN}
+        volumes:
+        - "${CODESHOVEL_LOG_PATH}:/requests.csv"
+    codeshovelui:
+        build:
+            args:
+            - "BACKEND_PORT=${CODESHOVEL_BACKEND_PORT}"
+            - "BACKEND_HOST=${CODESHOVEL_BACKEND_HOST}"
+            context: https://${LC_GITHUB_TOKEN}@github.com/braxtonhall/codeshovel-ui.git
+        container_name: codeshovelui
+        depends_on:
+        - codeshovelwebservice
+        environment:
+          - "PUBLIC_URL=${PUBLICHOSTNAME}/codeshovel" # TODO Test if this affects anything
+        expose:
+        - 5000
+        restart: always
+    labcyclewebservice:
+        build:
+            context: https://${LC_GITHUB_TOKEN}@github.com/braxtonhall/labcycle.git
+            dockerfile: ./backend.dockerfile
+        container_name: labcyclewebservice
+        depends_on:
+          - portal
+        env_file: .env
+        ports:
+        - "${LC_BACKEND_PORT}:4321"
+        restart: always
+        volumes:
+        - "${LC_HOST_MANIFEST_PATH}:${LC_MANIFEST_PATH}"
+    labcycleui:
+        build:
+            args:
+            - "BACKEND_PORT=${LC_BACKEND_PORT}"
+            - "BACKEND_HOST=${LC_BACKEND_HOST}"
+            context: https://${LC_GITHUB_TOKEN}@github.com/braxtonhall/labcycle.git
+            dockerfile: ./frontend.dockerfile
+        container_name: labcycleui
+        depends_on:
+          - labcyclewebservice
+        environment:
+        - "PUBLIC_URL=${PUBLICHOSTNAME}/labs"
+        expose:
+        - 5000
+        restart: always
