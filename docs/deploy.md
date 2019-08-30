@@ -95,7 +95,7 @@ The following software should be installed on the host before attempting to depl
         set -e
 
         # A good indication that classy is actually installed.
-        [[ -f /opt/classy/docker-compose.yml ]] || { echo "copy-certs.sh error: /opt/classy/docker-compose.yml doesn't exist!"; exit 1; }
+        [[ -f /opt/classy/docker-compose.yml ]] || { echo "stop-classy.sh error: /opt/classy/docker-compose.yml doesn't exist!"; exit 1; }
 
         {
           date
@@ -103,8 +103,8 @@ The following software should be installed on the host before attempting to depl
           # echo commands
           set -x
 
-          # This will halt if there is no container named proxy.
-          docker ps -a -f name=proxy | grep proxy 
+          # This will halt if there is no running container named proxy.
+          docker ps -f name=proxy | grep proxy 
 
           docker stop proxy
 
@@ -124,7 +124,7 @@ The following software should be installed on the host before attempting to depl
         set -e
 
         # A good indication that classy is actually installed.
-        [[ -f /opt/classy/docker-compose.yml ]] || { echo "copy-certs.sh error: /opt/classy/docker-compose.yml doesn't exist!"; exit 1; }
+        [[ -f /opt/classy/docker-compose.yml ]] || { echo "start-classy.sh error: /opt/classy/docker-compose.yml doesn't exist!"; exit 1; }
 
         {
           date
