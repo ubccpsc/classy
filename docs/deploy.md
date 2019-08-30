@@ -47,7 +47,8 @@ The following software should be installed on the host before attempting to depl
         # Stop on error
         set -e
 
-        [[ -d /opt/classy ]] || { echo "copy-certs.sh error: /opt/classy doesn't exist!"; exit 1; }
+        # A good indication that classy is actually installed.
+        [[ -f /opt/classy/docker-compose.yml ]] || { echo "copy-certs.sh error: /opt/classy/docker-compose.yml doesn't exist!"; exit 1; }
 
         {
           date
@@ -93,7 +94,8 @@ The following software should be installed on the host before attempting to depl
         # Stop on error
         set -e
 
-        [[ -d /opt/classy ]] || { echo "stop-classy.sh error: /opt/classy doesn't exist!"; exit 1; }
+        # A good indication that classy is actually installed.
+        [[ -f /opt/classy/docker-compose.yml ]] || { echo "stop-classy.sh error: /opt/classy/docker-compose.yml doesn't exist!"; exit 1; }
 
         {
           date
@@ -101,8 +103,14 @@ The following software should be installed on the host before attempting to depl
           # echo commands
           set -x
 
-          cd /opt/classy
-          /usr/local/bin/docker-compose stop
+          # This will halt if there is no running container named proxy.
+          docker ps -f name=proxy | grep proxy 
+
+          docker stop proxy
+
+          # The old way is overkill...
+          #cd /opt/classy
+          #/usr/local/bin/docker-compose stop
 
         } > /opt/classy/$(basename $BASH_SOURCE).log 2>&1
         ```
@@ -115,7 +123,8 @@ The following software should be installed on the host before attempting to depl
         # Stop on error
         set -e
 
-        [[ -d /opt/classy ]] || { echo "stop-classy.sh error: /opt/classy doesn't exist!"; exit 1; }
+        # A good indication that classy is actually installed.
+        [[ -f /opt/classy/docker-compose.yml ]] || { echo "start-classy.sh error: /opt/classy/docker-compose.yml doesn't exist!"; exit 1; }
 
         {
           date
@@ -123,8 +132,14 @@ The following software should be installed on the host before attempting to depl
           # echo commands
           set -x
 
-          cd /opt/classy
-          /usr/local/bin/docker-compose up --detach
+          # This will halt if there is no container named proxy.
+          docker ps -a -f name=proxy | grep proxy 
+
+          docker start proxy
+
+          # The old way is overkill...
+          #cd /opt/classy
+          #/usr/local/bin/docker-compose up --detach
 
         } > /opt/classy/$(basename $BASH_SOURCE).log 2>&1
         ```
