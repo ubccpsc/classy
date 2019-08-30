@@ -64,6 +64,7 @@ services:
         depends_on:
             - db
             - autotest
+            - patchtool
         env_file: .env
         expose:
             - ${BACKEND_PORT}
@@ -124,6 +125,7 @@ services:
         - GH_BOT_TOKEN
         - COURSE_GH_ORG_TOKEN
         - PATCH_SOURCE_REPO
+        restart: always
 
 networks:
     autotest:
