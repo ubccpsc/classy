@@ -32,6 +32,13 @@ http {
             proxy_pass         http://codeshovelui:5000;
         }
 
+        location /codeshovelserver {
+            port_in_redirect   off;
+            rewrite            /codeshovelserver(/.+) $1 break;
+            proxy_read_timeout 240;
+            proxy_pass         http://codeshovelwebservice:8080;
+        }
+
         location /labs {
             port_in_redirect   off;
             rewrite            /labs(/.+) $1 break;
@@ -39,9 +46,16 @@ http {
             proxy_pass         http://labcycleui:5000;
         }
 
+        location /labcycle {
+            port_in_redirect   off;
+            rewrite            /labcycle(/.+) $1 break;
+            proxy_read_timeout 240;
+            proxy_pass         http://labcyclewebservice:4321;
+        }
+
         # pass requests to the portal service (which is automatically defined in the hosts file by docker)
-        # location / {
-        #     proxy_pass         "https://portal:<%= ENV["BACKEND_PORT"] %>/";
-        # }
+        location / {
+            proxy_pass         "https://portal:<%= ENV["BACKEND_PORT"] %>/";
+        }
     }
 }
