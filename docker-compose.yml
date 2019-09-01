@@ -120,10 +120,12 @@ services:
         - GITHUB_TOKEN=${LC_GITHUB_TOKEN}
         volumes:
         - "${CODESHOVEL_LOG_PATH}:/requests.csv"
+        - "${CODESHOVEL_CACHE_PATH}:cache"
     codeshovelui:
         build:
             args:
             - "SERVER_ADDRESS=${PUBLICHOSTNAME}/codeshovelserver"
+            - "PUBLIC_ADDRESS=${PUBLICHOSTNAME}/codeshovel"
             context: https://${LC_GITHUB_TOKEN}@github.com/braxtonhall/codeshovel-ui.git
         container_name: codeshovelui
         depends_on:
