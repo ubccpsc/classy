@@ -110,7 +110,7 @@ export class TeamController {
         }
 
         // sort by delivIds
-        myTeams = myTeams.sort(function(a: Team, b: Team) {
+        myTeams = myTeams.sort(function (a: Team, b: Team) {
             return a.delivId.localeCompare(b.delivId);
         });
 
@@ -131,7 +131,7 @@ export class TeamController {
      * @returns {Promise<Team | null>}
      */
     public async formTeam(teamId: string, deliv: Deliverable, people: Person[], adminOverride: boolean): Promise<Team | null> {
-        Log.info("TeamController::formTeam( ... ) - start");
+        Log.info("TeamController::formTeam( " + teamId + ", ... ) - start");
 
         // sanity checking
         if (deliv === null) {
@@ -208,7 +208,7 @@ export class TeamController {
      * @returns {Promise<Team | null>}
      */
     public async createTeam(name: string, deliv: Deliverable, people: Person[], custom: any): Promise<Team | null> {
-        Log.info("TeamController::createTeam( " + name + ",.. ) - start");
+        Log.info("TeamController::createTeam( " + name + ", ... ) - start");
 
         try {
             if (deliv === null) {
