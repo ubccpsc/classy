@@ -62,7 +62,7 @@ describe("GitHub Event Parser", () => {
             gradesReleased: false,
 
             shouldProvision:  true,
-            importURL:        'https://github.com/classytest/PostTestDoNotDelete.git', // TODO: create ImportTestDoNotDelete
+            importURL:        Config.getInstance().getProp(ConfigKey.githubHost) + '/classytest/PostTestDoNotDelete.git',
             teamMinSize:      2,
             teamMaxSize:      2,
             teamSameLab:      true,
