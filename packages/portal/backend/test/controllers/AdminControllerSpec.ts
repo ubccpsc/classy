@@ -34,12 +34,12 @@ describe("AdminController", () => {
     let gha: IGitHubActions;
 
     before(async function() {
-        await Test.suiteBefore('CourseController');
+        await Test.suiteBefore('AdminController');
         await clearAndPrepareAll();
     });
 
     beforeEach(async function() {
-        Test.testBefore("CourseControllerSpec", this);
+        Test.testBefore("AdminControllerSpec", this);
 
         gha = GitHubActions.getInstance(true);
         const ghInstance = new GitHubController(gha);
@@ -55,12 +55,11 @@ describe("AdminController", () => {
     });
 
     afterEach(function() {
-        Test.testAfter("CourseControllerSpec", this);
-        // Log.test("CourseControllerSpec::beforeEach( " + this.currentTest.title + " )" + this.currentTest.fullTitle());
+        Test.testAfter("AdminControllerSpec", this);
     });
 
     after(async function() {
-        Test.suiteAfter('CourseController');
+        Test.suiteAfter('AdminController');
     });
 
     async function clearAndPrepareAll(): Promise<void> {
@@ -458,7 +457,7 @@ describe("AdminController", () => {
         expect(res.repoName).to.equal(rExpected);
     });
 
-    describe("Slow CourseController Tests", () => {
+    describe("Slow AdminController Tests", () => {
 
         // before(async function() {
         //     await clearAndPreparePartial();
@@ -467,9 +466,9 @@ describe("AdminController", () => {
         beforeEach(function() {
             const exec = Test.runSlowTest();
             if (exec) {
-                Log.test("CourseControllerSpec::slowTests - running: " + this.currentTest.title);
+                Log.test("AdminControllerSpec::slowTests - running: " + this.currentTest.title);
             } else {
-                Log.test("CourseControllerSpec::slowTests - skipping; will run on CI");
+                Log.test("AdminControllerSpec::slowTests - skipping; will run on CI");
                 this.skip();
             }
         });
