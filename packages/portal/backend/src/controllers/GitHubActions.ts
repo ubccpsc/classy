@@ -1821,7 +1821,7 @@ export class TestGitHubActions implements IGitHubActions {
 
     public async deleteRepo(repoName: string): Promise<boolean> {
         Log.info("TestGitHubActions::deleteRepo( " + repoName + " )");
-        // if (repoName === Test.DeprecatedUsers.INVALIDREPONAME) {
+        // if (repoName === Test.INVALIDREPONAME) {
         //     return false;
         // }
         // const repoExists = await this.repoExists(repoName);
