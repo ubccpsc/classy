@@ -37,7 +37,6 @@ describe('Admin Routes', function() {
     let server: BackendServer = null;
 
     const userName = Test.ADMIN1.id;
-
     let userToken: string;
 
     const TIMEOUT = 1000;
