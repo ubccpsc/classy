@@ -2,7 +2,6 @@ import {expect} from "chai";
 import "mocha";
 
 import {Test} from "../../../../common/TestHarness";
-
 import {AuthController} from "../../src/controllers/AuthController";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {PersonController} from "../../src/controllers/PersonController";
