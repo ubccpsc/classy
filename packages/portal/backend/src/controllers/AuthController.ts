@@ -1,6 +1,7 @@
 import Log from "../../../../common/Log";
 import {Person, PersonKind} from "../Types";
 
+import Config, {ConfigKey} from "../../../../common/Config";
 import {DatabaseController} from "./DatabaseController";
 import {GitHubActions} from "./GitHubActions";
 import {PersonController} from "./PersonController";
@@ -96,6 +97,8 @@ export class AuthController {
                 Log.trace("AuthController::isPrivileged( " + personId + ", ... ) - person.kind: " + person.kind);
                 return await this.personPriviliged(person);
             }
+        } else if (person === null && this.isLocalRequest(token)) {
+            return {isAdmin: false, isStaff: true};
         }
         return {isAdmin: false, isStaff: false};
     }
@@ -132,6 +135,10 @@ export class AuthController {
         }
         Log.error("AuthController::removeAuthentication() - no person provided");
         return false; // if it doesn't throw an exception it must have worked enough
+    }
+
+    private isLocalRequest(token: string): boolean {
+        return Config.getInstance().getProp(ConfigKey.autotestSecret) === token;
     }
 
     private async verifyToken(personId: string, token: string): Promise<boolean> {

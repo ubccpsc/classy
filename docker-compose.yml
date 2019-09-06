@@ -83,6 +83,8 @@ services:
         depends_on:
             - portal
             - reference_ui
+            - codeshovelui
+            - labcycleui
         ports:
             - "80:8080"
             - "443:8443"
@@ -107,6 +109,58 @@ services:
             - ${UI_PORT}
         restart: always
         user: "${UID}"
+    codeshovelwebservice:
+        build:
+            context: https://${LC_GITHUB_TOKEN}@github.com/braxtonhall/codeshovel-webservice.git
+        container_name: codeshovelwebservice
+        expose:
+        - 8080
+        restart: always
+        environment:
+        - GITHUB_TOKEN=${LC_GITHUB_TOKEN}
+        volumes:
+        - "${CODESHOVEL_LOG_PATH}:/requests.csv"
+        - "${CODESHOVEL_CACHE_PATH}:/cache"
+    codeshovelui:
+        build:
+            args:
+            - "SERVER_ADDRESS=${PUBLICHOSTNAME}/codeshovelserver"
+            - "PUBLIC_ADDRESS=${PUBLICHOSTNAME}/codeshovel"
+            context: https://${LC_GITHUB_TOKEN}@github.com/braxtonhall/codeshovel-ui.git
+        container_name: codeshovelui
+        depends_on:
+        - codeshovelwebservice
+        expose:
+        - 5000
+        restart: always
+    labcyclewebservice:
+        build:
+            context: https://${LC_GITHUB_TOKEN}@github.com/braxtonhall/labcycle.git
+            dockerfile: ./backend.dockerfile
+        container_name: labcyclewebservice
+        depends_on:
+          - portal
+        env_file: .env
+        environment:
+        - "LC_SERVER_ADDRESS=${PUBLICHOSTNAME}/labcycle"
+        expose:
+        - 4321
+        restart: always
+        volumes:
+        - "${LC_HOST_MANIFEST_PATH}:${LC_MANIFEST_PATH}"
+    labcycleui:
+        build:
+            args:
+            - "SERVER_ADDRESS=${PUBLICHOSTNAME}/labcycle"
+            - "PUBLIC_ADDRESS=${PUBLICHOSTNAME}/labs"
+            context: https://${LC_GITHUB_TOKEN}@github.com/braxtonhall/labcycle.git
+            dockerfile: ./frontend.dockerfile
+        container_name: labcycleui
+        depends_on:
+          - labcyclewebservice
+        expose:
+        - 5000
+        restart: always
     patchtool:
         image: "sinatra"
         build:
