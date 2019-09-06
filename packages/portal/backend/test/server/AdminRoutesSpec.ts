@@ -22,11 +22,13 @@ import Util from "../../../../common/Util";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {GitHubActions} from "../../src/controllers/GitHubActions";
+import {PersonController} from "../../src/controllers/PersonController";
 import {TeamController} from "../../src/controllers/TeamController";
 
+import {PersonKind} from "../../../backend/src/Types";
 import BackendServer from "../../src/server/BackendServer";
 
-import {Test} from "../TestHarness";
+import {Test} from "../../../../common/TestHarness";
 import './AuthRoutesSpec';
 
 describe('Admin Routes', function() {
@@ -859,8 +861,10 @@ describe('Admin Routes', function() {
         // }).timeout(TIMEOUT * 30);
 
         it('Should be able to perform a withdraw task', async function() {
-
             // This is tricky because the live github data will have a different team id than we're using locally
+
+            const pc = new PersonController();
+            const dc = DatabaseController.getInstance();
 
             let response = null;
             let body: Payload;

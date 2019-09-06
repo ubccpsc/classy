@@ -2,7 +2,7 @@ import {expect} from "chai";
 import * as fs from "fs";
 import "mocha";
 
-import Config from "../../common/Config";
+import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
 import {CommitTarget} from "../../common/types/ContainerTypes";
 import {DeliverablesController} from "../../portal/backend/src/controllers/DeliverablesController";
@@ -30,11 +30,12 @@ describe("GitHub Event Parser", () => {
         await backend.start();
 
         const pc = new PersonController();
-        const id = GITHUBID;
+        const id = PERSONID;
+        const githubId = GITHUBID;
         const p: Person = {
             id:            id,
             csId:          id,
-            githubId:      id,
+            githubId:      githubId,
             studentNumber: null,
 
             fName: 'f' + id,
@@ -61,7 +62,7 @@ describe("GitHub Event Parser", () => {
             gradesReleased: false,
 
             shouldProvision:  true,
-            importURL:        'https://github.com/classytest/PostTestDoNotDelete.git', // TODO: create ImportTestDoNotDelete
+            importURL:        Config.getInstance().getProp(ConfigKey.githubHost) + '/classytest/PostTestDoNotDelete.git',
             teamMinSize:      2,
             teamMaxSize:      2,
             teamSameLab:      true,
@@ -179,8 +180,10 @@ describe("GitHub Event Parser", () => {
     });
 
     it("Should be able to parse a comment on a master commit with one deliverable and a mention.", async function() {
-        const content = readFile("comment_master_bot_one-deliv.json");
-        const actual = await GitHubUtil.processComment(JSON.parse(content));
+        const content = JSON.parse(readFile("comment_master_bot_one-deliv.json"));
+        const botname = Config.getInstance().getProp(ConfigKey.botName);
+        content.comment.body = content.comment.body.replace('ubcbot', botname);
+        const actual = await GitHubUtil.processComment(content);
         Log.test(JSON.stringify(actual));
 
         const expected: CommitTarget = {
@@ -203,8 +206,10 @@ describe("GitHub Event Parser", () => {
     }).timeout(TIMEOUT * 10);
 
     it("Should be able to parse a comment on a master commit with multiple deliverables and a mention.", async () => {
-        const content = readFile("comment_master_bot_two-deliv.json");
-        const actual = await GitHubUtil.processComment(JSON.parse(content));
+        const content = JSON.parse(readFile("comment_master_bot_two-deliv.json"));
+        const botname = Config.getInstance().getProp(ConfigKey.botName);
+        content.comment.body = content.comment.body.replace('ubcbot', botname);
+        const actual = await GitHubUtil.processComment(content);
         Log.test(JSON.stringify(actual));
 
         const expected: CommitTarget = {
@@ -251,8 +256,10 @@ describe("GitHub Event Parser", () => {
     }).timeout(TIMEOUT * 10);
 
     it("Should be able to parse a comment on another branch with one deliverable and a mention.", async () => {
-        const content = readFile("comment_other-branch_bot_one-deliv.json");
-        const actual = await GitHubUtil.processComment(JSON.parse(content));
+        const content = JSON.parse(readFile("comment_other-branch_bot_one-deliv.json"));
+        const botname = Config.getInstance().getProp(ConfigKey.botName);
+        content.comment.body = content.comment.body.replace('ubcbot', botname);
+        const actual = await GitHubUtil.processComment(content);
         Log.test(JSON.stringify(actual));
 
         const expected: CommitTarget = {
