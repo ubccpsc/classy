@@ -541,9 +541,9 @@ describe("AdminController", () => {
             expect(teamNum).to.be.greaterThan(0); // should be provisioned
             expect(allNewTeams[0].URL).to.not.be.null; // should be provisioned
 
-        }).timeout(Test.TIMEOUTLONG);
+            }).timeout(Test.TIMEOUTLONG);
 
-            it("Should be able to mark students as withdrawn.", async () => {
+        it("Should be able to mark students as withdrawn.", async () => {
             const studentsBefore = await ac.getStudents();
             let people = await pc.getAllPeople();
 
