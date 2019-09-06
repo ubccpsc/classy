@@ -473,6 +473,7 @@ describe("AdminController", () => {
             }
         });
 
+        // This test must be run first -- before later tests modify the database to a state where students cannot be withdrawn.
         it("Should be able to mark students as withdrawn.", async () => {
             const studentsBefore = await ac.getStudents();
             let people = await pc.getAllPeople();
