@@ -1,18 +1,18 @@
-import Config, {ConfigKey} from "../../../common/Config";
-import Log from "../../../common/Log";
-import {ContainerInput, ContainerOutput, ContainerState} from "../../../common/types/ContainerTypes";
-import {GradePayload} from "../../../common/types/SDMMTypes";
-import Util from "../../../common/Util";
+import Config, {ConfigKey} from "./Config";
+import Log from "./Log";
+import {ContainerInput, ContainerOutput, ContainerState} from "./types/ContainerTypes";
+import {GradePayload} from "./types/SDMMTypes";
+import Util from "./Util";
 
-import {DatabaseController} from "../src/controllers/DatabaseController";
-import {DeliverablesController} from "../src/controllers/DeliverablesController";
-import {GitHubActions} from "../src/controllers/GitHubActions";
-import {GradesController} from "../src/controllers/GradesController";
-import {PersonController} from "../src/controllers/PersonController";
-import {RepositoryController} from "../src/controllers/RepositoryController";
-import {TeamController} from "../src/controllers/TeamController";
-import {Factory} from "../src/Factory";
-import {Auth, Course, Deliverable, Grade, Person, PersonKind, Repository, Result, Team} from "../src/Types";
+import {DatabaseController} from "../portal/backend/src/controllers/DatabaseController";
+import {DeliverablesController} from "../portal/backend/src/controllers/DeliverablesController";
+import {GitHubActions} from "../portal/backend/src/controllers/GitHubActions";
+import {GradesController} from "../portal/backend/src/controllers/GradesController";
+import {PersonController} from "../portal/backend/src/controllers/PersonController";
+import {RepositoryController} from "../portal/backend/src/controllers/RepositoryController";
+import {TeamController} from "../portal/backend/src/controllers/TeamController";
+import {Factory} from "../portal/backend/src/Factory";
+import {Auth, Course, Deliverable, Grade, Person, PersonKind, Repository, Result, Team} from "../portal/backend/src/Types";
 
 export class Test {
 
@@ -61,10 +61,11 @@ export class Test {
         await dbc.writePerson(person);
         person = await Test.createPerson(Test.GITHUB2.id, Test.GITHUB2.csId, Test.GITHUB2.github, PersonKind.STUDENT);
         await dbc.writePerson(person);
-        person = await Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.csId, Test.ADMIN1.github, PersonKind.ADMINSTAFF);
+        person = await Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.csId, Test.ADMIN1.github, PersonKind.ADMIN);
         await dbc.writePerson(person);
-
-        await Test.prepareAuth(); // adds admin token (and user1 which is not real)
+        person = await Test.createPerson(Test.ADMINSTAFF1.id, Test.ADMINSTAFF1.csId, Test.ADMINSTAFF1.github, PersonKind.ADMINSTAFF);
+        await dbc.writePerson(person);
+        await Test.prepareAuth();
         // create a team
         const team = await Test.createTeam(Test.TEAMNAMEREAL, Test.DELIVID0, [Test.GITHUB1.id, Test.GITHUB2.id]);
         await dbc.writeTeam(team);
@@ -100,13 +101,8 @@ export class Test {
         Log.test("Test::preparePeople() - start");
         const dc = DatabaseController.getInstance();
 
-        let p = Test.createPerson(Test.REALUSER1.id, Test.REALUSER1.csId, Test.REALUSER1.github, PersonKind.STUDENT);
-        await dc.writePerson(p);
-
-        p = Test.createPerson(Test.REALUSER2.id, Test.REALUSER2.csId, Test.REALUSER2.github, PersonKind.STUDENT);
-        await dc.writePerson(p);
-
-        p = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, PersonKind.STUDENT);
+        // FAKE USERS ON GITHUB, BUT STILL IN DB FOR INTERNAL CLASSY BUSINESS LOGIC:
+        let p = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, PersonKind.STUDENT);
         p.labId = 'l1a';
         await dc.writePerson(p);
 
@@ -130,16 +126,29 @@ export class Test {
         p.labId = 'l2d';
         await dc.writePerson(p);
 
-        // staff person (this username should be on the 'staff' team, but not the 'admin' team in the github org)
-        p = Test.createPerson(Test.STAFF1.id, Test.STAFF1.csId, Test.STAFF1.github, null);
+        p = Test.createPerson(Test.ADMINSTAFF1.id, Test.ADMINSTAFF1.csId, Test.ADMINSTAFF1.github, PersonKind.ADMINSTAFF);
         await dc.writePerson(p);
 
-        // adminstaff person (this username should be on the 'staff' team, and the 'admin' team in the github org)
-        p = Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.csId, Test.ADMIN1.github, null);
+        // REAL USERS CAPABLE FOR GITHUB EXTERNAL BUSINESS LOGIC TESTS. CAN ALWAYS ADD MORE REAL ATEST-xx USERS
+        p = Test.createPerson(Test.REALUSER1.id, Test.REALUSER1.csId, Test.REALUSER1.github, PersonKind.STUDENT);
+        await dc.writePerson(p);
+
+        p = Test.createPerson(Test.REALUSER2.id, Test.REALUSER2.csId, Test.REALUSER2.github, PersonKind.STUDENT);
+        await dc.writePerson(p);
+
+        p = Test.createPerson(Test.REALUSER3.id, Test.REALUSER3.csId, Test.REALUSER3.github, PersonKind.STUDENT);
         await dc.writePerson(p);
 
         // admin person (this username should be on the admin but not the staff team in the github org)
-        p = Test.createPerson(Test.REALUSER3.id, Test.REALUSER3.csId, Test.REALUSER3.github, null);
+        p = Test.createPerson(Test.ADMINSTAFF1.id, Test.ADMINSTAFF1.csId, Test.ADMINSTAFF1.github, PersonKind.ADMINSTAFF);
+        await dc.writePerson(p);
+
+        // staff person (this username should be on the 'staff' team, but not the 'admin' team in the github org)
+        p = Test.createPerson(Test.STAFF1.id, Test.STAFF1.csId, Test.STAFF1.github, PersonKind.STAFF);
+        await dc.writePerson(p);
+
+        // admin person (this username should be on the 'admin' team in the github org)
+        p = Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.csId, Test.ADMIN1.github, PersonKind.ADMIN);
         await dc.writePerson(p);
 
         Log.test("Test::preparePeople() - end");
@@ -279,6 +288,12 @@ export class Test {
             token:    Test.REALTOKEN
         };
         await dc.writeAuth(auth);
+
+        auth = {
+            personId: Test.ADMINSTAFF1.id,
+            token:    Test.REALTOKEN
+        };
+        await dc.writeAuth(auth);
     }
 
     public static createDeliverable(delivId: string): Deliverable {
@@ -291,7 +306,7 @@ export class Test {
             gradesReleased: false,
 
             shouldProvision:  true,
-            importURL:        'https://github.com/classytest/PostTestDoNotDelete.git', // TODO: create ImportTestDoNotDelete
+            importURL:        Config.getInstance().getProp(ConfigKey.githubHost) + '/classytest/PostTestDoNotDelete.git',
             teamMinSize:      2,
             teamMaxSize:      2,
             teamSameLab:      true,
@@ -374,38 +389,47 @@ export class Test {
     public static readonly TEAMNAME2 = 'TESTteam2';
     public static readonly TEAMNAME3 = 'TESTteam3';
     public static readonly TEAMNAME4 = 'TESTteam4';
-    public static readonly TEAMNAMEREAL = 't_d0_cpscbotCSID_rthse2CSID';
+    public static readonly TEAMNAMEREAL = 't_d0_atest-04CSID_atest-05CSID';
     public static readonly INVALIDTEAMNAME = "InvalidTeamNameShouldNotExist";
 
+    /**
+     * Creates user testing templates for real Github accounts configured in .env
+     * @param userKey ConfigKey property for user ie. ConfigKey.githubAdmin
+     * @param num account number (atest-06 would be the number 6)
+     */
+    public static getConfigUser(userKey: ConfigKey, num: number = null): any {
+        const username = num ? Config.getInstance().getProp(userKey).split(',')[num - 1].trim() : Config.getInstance().getProp(userKey);
+        return {
+            id: username + 'ID',
+            csId: username + 'CSID',
+            github: username
+        };
+    }
+
+    // FAKE USERS -- NOT USED TO INTERACT WITH GITHUB AND WORK
     public static readonly USER1 = {id: 'user1ID', csId: 'user1CSID', github: 'user1gh'};
     public static readonly USER2 = {id: 'user2ID', csId: 'user2CSID', github: 'user2gh'};
     public static readonly USER3 = {id: 'user3ID', csId: 'user3CSID', github: 'user3gh'};
     public static readonly USER4 = {id: 'user4ID', csId: 'user4CSID', github: 'user4gh'};
     public static readonly USER5 = {id: 'user5ID', csId: 'user5CSID', github: 'user5gh'};
     public static readonly USER6 = {id: 'user6ID', csId: 'user6CSID', github: 'user6gh'};
-
     public static readonly INVALIDUSER1 = {id: 'invalidUser1id', csId: 'invalidUser1CSID', github: 'invalidUser1gh'};
 
-    public static readonly ADMIN1 = {id: 'classyadminID', csId: 'classyadminCSID', github: 'classyadmin'};
-    // public static readonly ADMIN1 = {id: 'atest-01', csId: 'atest-01', github: 'atest-01'}; // github-dev.ugrad
-    public static readonly STAFF1 = {id: 'classystaffID', csId: 'classystaffCSID', github: 'classystaff'};
-    // public static readonly STAFF1 = {id: 'atest-02', csId: 'atest-02', github: 'atest-02'}; // github-dev.ugrad (not provisioned yet)
+    // REAL USERS -- CURRENTLY USED TO TEST ON GITHUB -- ENVSURE .ENV FILE CONTAINS REAL GITHUB USERS
+    public static readonly ADMIN1 = Test.getConfigUser(ConfigKey.githubAdmin);
+    public static readonly ADMINSTAFF1 = Test.getConfigUser(ConfigKey.githubAdminStaff);
+    public static readonly STAFF1 = Test.getConfigUser(ConfigKey.githubStaff);
+    public static readonly REALUSER1 =  Test.getConfigUser(ConfigKey.githubTestUsers, 1);
+    public static readonly REALUSER2 =  Test.getConfigUser(ConfigKey.githubTestUsers, 2);
+    public static readonly REALUSER3 =  Test.getConfigUser(ConfigKey.githubTestUsers, 3);
 
-    public static readonly REALUSER1 = {id: 'rthse2ID', csId: 'rthse2CSID', github: 'rthse2'}; // real account for testing users
-    public static readonly REALUSER2 = {id: "jopikaID", csId: "jopikaCSID", github: "jopika"}; // real account for testing users
-    public static readonly REALUSER3 = {id: "atest-01ID", csId: "atest-01CSID", github: "atest-01"}; // real account for testing users
+    public static readonly GITHUB1 =  Test.getConfigUser(ConfigKey.githubTestUsers, 4);
+    public static readonly GITHUB2 = Test.getConfigUser(ConfigKey.githubTestUsers, 5);
+    public static readonly GITHUB3 = Test.getConfigUser(ConfigKey.githubTestUsers, 6);
 
-    public static readonly GITHUB1 = {id: "cpscbotID", csId: "cpscbotCSID", github: "cpscbot"};
-    public static readonly GITHUB2 = {id: "rthse2ID", csId: "rthse2CSID", github: "rthse2"};
-    public static readonly GITHUB3 = {id: "ubcbotID", csId: "ubcbotCSID", github: "ubcbot"};
-    public static readonly GITHUB4 = {id: "classystaffID", csId: "classystaffCSID", github: "classystaff"};
-
-    // public static readonly USERNAMEGITHUB1 = "cpscbot";
-    // public static readonly USERNAMEGITHUB2 = "rthse2";
-    // public static readonly USERNAMEGITHUB3 = "ubcbot";
-    // public static readonly USERNAMEGITHUB4 = "classystaff";
-    // public static readonly USERNAMEGITHUB1 = "atest-01"; // "cpscbot"; // github-dev.ugrad
-    // public static readonly USERNAMEGITHUB2 = "atest-02"; // "rthse2"; // github-dev.ugrad
+    public static readonly REALBOTNAME1 = Test.getConfigUser(ConfigKey.githubBot01); // was 'cpscbot';
+    public static readonly REALBOTNAME2 = Test.getConfigUser(ConfigKey.githubBot02); // was 'ubcbot';
+    public static readonly REALUSERNAME = Test.getConfigUser(ConfigKey.githubTestUsers, 1); // was 'rthse2';
 
     public static readonly DELIVIDPROJ = 'project';
     public static readonly DELIVID0 = 'd0';
@@ -418,15 +442,15 @@ export class Test {
     public static readonly REPONAME1 = 'TESTrepo1';
     public static readonly REPONAME2 = 'TESTrepo2';
     public static readonly REPONAME3 = 'TESTrepo3';
-    public static readonly REPONAMEREAL = 'd0_cpscbotCSID_rthse2CSID';
+    public static readonly REPONAMEREAL = 'd0_atest-04CSID_atest-05CSID';
     public static readonly INVALIDREPONAME = "InvalidRepoNameShouldNotExist";
     public static readonly REPONAMEREAL2 = 'PostTestDoNotDelete';
 
     public static readonly REALTOKEN = 'realtoken';
     public static readonly FAKETOKEN = 'faketoken';
 
-    public static readonly ASSIGNTEAMNAME0 = Test.ASSIGNID0 + "__" + Test.REALUSER1.github; // TODO: id should be .githubId
-    public static readonly ASSIGNTEAMNAME1 = Test.ASSIGNID1 + "__" + Test.REALUSER1.github; // TODO: id should be .githubId
+    public static readonly ASSIGNTEAMNAME0 = Test.ASSIGNID0 + "__" + Test.REALUSER1.id;
+    public static readonly ASSIGNTEAMNAME1 = Test.ASSIGNID1 + "__" + Test.REALUSER1.id;
 
     public static getDeliverable(delivId: string): Deliverable {
         const deliv: Deliverable = {
@@ -438,7 +462,7 @@ export class Test {
             gradesReleased:    false,
             // delay:            -1,
             shouldProvision:   false,
-            importURL:         'https://github.com/classytest/PostTestDoNotDelete.git',
+            importURL:         Config.getInstance().getProp(ConfigKey.githubHost) +  '/classytest/PostTestDoNotDelete.git',
             teamMinSize:       1,
             teamMaxSize:       1,
             teamSameLab:       false,

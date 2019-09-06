@@ -1,5 +1,6 @@
 import {expect} from "chai";
 import "mocha";
+import {Test} from "../../../../common/TestHarness";
 import Util from "../../../../common/Util";
 
 import {CourseController} from "../../src/controllers/CourseController";
@@ -10,7 +11,6 @@ import {PersonController} from "../../src/controllers/PersonController";
 import {Grade} from "../../src/Types";
 
 import '../GlobalSpec';
-import {Test} from "../TestHarness";
 import './PersonControllerSpec';
 
 describe("CourseController", () => {

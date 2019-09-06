@@ -3,6 +3,7 @@ import "mocha";
 
 import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
+import {Test} from "../../../../common/TestHarness";
 import {AutoTestGradeTransport, GradeTransport, StudentTransport, TeamTransport} from "../../../../common/types/PortalTypes";
 
 import {AdminController} from "../../src/controllers/AdminController";
@@ -19,7 +20,6 @@ import {Factory} from "../../src/Factory";
 import {Person, PersonKind, Repository, Team} from "../../src/Types";
 
 import '../GlobalSpec'; // load first
-import {Test} from "../TestHarness";
 import './GradeControllerSpec'; // load first
 
 describe("AdminController", () => {
@@ -473,6 +473,36 @@ describe("AdminController", () => {
             }
         });
 
+        // This test must be run first -- before later tests modify the database to a state where students cannot be withdrawn.
+        it("Should be able to mark students as withdrawn.", async () => {
+            const studentsBefore = await ac.getStudents();
+            let people = await pc.getAllPeople();
+
+            let numWithrdrawnBefore = 0;
+            for (const person of people) {
+                if (person.kind === PersonKind.WITHDRAWN) {
+                    numWithrdrawnBefore++;
+                }
+            }
+            expect(numWithrdrawnBefore).to.equal(0); // shouldn't have any withdrawn students before
+
+            const res = await ac.performStudentWithdraw();
+            Log.test("Result: " + JSON.stringify(res));
+            expect(res).to.be.an('string');
+
+            people = await pc.getAllPeople();
+            let numWithrdrawnAfter = 0;
+            for (const person of people) {
+                if (person.kind === PersonKind.WITHDRAWN) {
+                    numWithrdrawnAfter++;
+                }
+            }
+            expect(numWithrdrawnAfter).to.be.greaterThan(numWithrdrawnBefore);
+
+            const studentsAfter = await ac.getStudents();
+            expect(studentsBefore.length).to.be.greaterThan(studentsAfter.length); // students should not include withdrawn students
+        }).timeout(Test.TIMEOUTLONG * 5);
+
         // // broken when we switched to plan/perform provisioning
         it("Should provision repos if there are some to do and singles are disabled.", async () => {
             await clearAndPreparePartial();
@@ -621,35 +651,6 @@ describe("AdminController", () => {
 
             expect(allNewRepos.length).to.equal(3);
             expect(allNewTeams.length).to.equal(4); // 3x d0 & 1x project
-        }).timeout(Test.TIMEOUTLONG * 5);
-
-        it("Should be able to mark students as withdrawn.", async () => {
-            const studentsBefore = await ac.getStudents();
-            let people = await pc.getAllPeople();
-
-            let numWithrdrawnBefore = 0;
-            for (const person of people) {
-                if (person.kind === PersonKind.WITHDRAWN) {
-                    numWithrdrawnBefore++;
-                }
-            }
-            expect(numWithrdrawnBefore).to.equal(0); // shouldn't have any withdrawn students before
-
-            const res = await ac.performStudentWithdraw();
-            Log.test("Result: " + JSON.stringify(res));
-            expect(res).to.be.an('string');
-
-            people = await pc.getAllPeople();
-            let numWithrdrawnAfter = 0;
-            for (const person of people) {
-                if (person.kind === PersonKind.WITHDRAWN) {
-                    numWithrdrawnAfter++;
-                }
-            }
-            expect(numWithrdrawnAfter).to.be.greaterThan(numWithrdrawnBefore);
-
-            const studentsAfter = await ac.getStudents();
-            expect(studentsBefore.length).to.be.greaterThan(studentsAfter.length); // students should not include withdrawn students
         }).timeout(Test.TIMEOUTLONG * 5);
     });
 });

@@ -35,6 +35,9 @@ packages/portal/frontend/**/*.map
 # Webstorm
 **/.idea
 
+# Visual Studio
+.vscode/
+
 # MacOS
 **/.DS_Store
 

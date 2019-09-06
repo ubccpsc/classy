@@ -1,4 +1,5 @@
 import Log from "../../../common/Log";
+import {Test} from "../../../common/TestHarness";
 import {AdminController} from "../src/controllers/AdminController";
 /* istanbul ignore file */
 import {DatabaseController} from "../src/controllers/DatabaseController";
@@ -7,7 +8,6 @@ import {GitHubController} from "../src/controllers/GitHubController";
 import {TeamController} from "../src/controllers/TeamController";
 import {Factory} from "../src/Factory";
 import {PersonKind} from "../src/Types";
-import {Test} from "../test/TestHarness";
 
 /**
  * This sample file shows how to create a bunch of fake data for course testing.
