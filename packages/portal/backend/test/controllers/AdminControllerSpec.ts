@@ -543,6 +543,76 @@ describe("AdminController", () => {
 
         }).timeout(Test.TIMEOUTLONG);
 
+            it("Should be able to mark students as withdrawn.", async () => {
+            const studentsBefore = await ac.getStudents();
+            let people = await pc.getAllPeople();
+
+            let numWithrdrawnBefore = 0;
+            for (const person of people) {
+                if (person.kind === PersonKind.WITHDRAWN) {
+                    numWithrdrawnBefore++;
+                }
+            }
+            expect(numWithrdrawnBefore).to.equal(0); // shouldn't have any withdrawn students before
+
+            const res = await ac.performStudentWithdraw();
+            Log.test("Result: " + JSON.stringify(res));
+            expect(res).to.be.an('string');
+
+            people = await pc.getAllPeople();
+            let numWithrdrawnAfter = 0;
+            for (const person of people) {
+                if (person.kind === PersonKind.WITHDRAWN) {
+                    numWithrdrawnAfter++;
+                }
+            }
+            expect(numWithrdrawnAfter).to.be.greaterThan(numWithrdrawnBefore);
+
+            const studentsAfter = await ac.getStudents();
+            expect(studentsBefore.length).to.be.greaterThan(studentsAfter.length); // students should not include withdrawn students
+        }).timeout(Test.TIMEOUTLONG * 5);
+
+        // // broken when we switched to plan/perform provisioning
+        it("Should provision repos if there are some to do and singles are disabled.", async () => {
+            await clearAndPreparePartial();
+
+            const allRepos = await rc.getAllRepos();
+            expect(allRepos.length).to.equal(0);
+
+            const allTeams = await tc.getAllTeams();
+            expect(allTeams.length).to.equal(1);
+            expect(allTeams[0].URL).to.be.null; // not provisioned yet
+
+            const deliv = await dc.getDeliverable(Test.DELIVIDPROJ);
+            const plan = await ac.planProvision(deliv, false);
+
+            const repos: Repository[] = [];
+            for (const repo of plan) {
+                repos.push(await rc.getRepository(repo.id));
+            }
+
+            const res = await ac.performProvision(repos, deliv.importURL);
+            // const res = await ac.provision(deliv, false);
+            Log.test("provisioned: " + JSON.stringify(res));
+            expect(res).to.be.an('array');
+            expect(res.length).to.equal(1);
+
+            const allNewRepos = await rc.getAllRepos();
+            expect(allNewRepos.length).to.equal(1);
+            expect(allNewRepos[0].URL).to.not.be.null;
+
+            const repoExists = await gha.repoExists(allNewRepos[0].id);
+            expect(repoExists).to.be.true; // should be provisioned
+
+            const allNewTeams = await tc.getAllTeams();
+            expect(allNewTeams.length).to.equal(1);
+
+            const teamNum = await tc.getTeamNumber(allNewTeams[0].id);
+            expect(teamNum).to.be.greaterThan(0); // should be provisioned
+            expect(allNewTeams[0].URL).to.not.be.null; // should be provisioned
+
+        }).timeout(Test.TIMEOUTLONG);
+
         it("Should release repos.", async () => {
             // await clearAndPreparePartial();
             const allRepos = await rc.getAllRepos();
