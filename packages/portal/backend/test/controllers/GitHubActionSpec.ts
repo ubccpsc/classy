@@ -267,7 +267,7 @@ describe("GitHubActions", () => {
         expect(val.githubTeamNumber > 0).to.be.true;
 
         const addMembers = await gh.addMembersToTeam(val.teamName, val.githubTeamNumber,
-            [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+            [Test.GITHUB1.github, Test.GITHUB2.github]);
         expect(addMembers.teamName).to.equal(TEAMNAME); // not a strong test
         Log.test("Members added");
 
@@ -576,7 +576,7 @@ describe("GitHubActions", () => {
 
         // Expects adding members to work
         const addMembers = await gh.addMembersToTeam(githubTeam.teamName, githubTeam.githubTeamNumber,
-            [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+            [Test.GITHUB1.github, Test.GITHUB2.github]);
         expect(addMembers).to.not.be.null;
         const teamAdd = await gh.addTeamToRepo(githubTeam.githubTeamNumber, REPONAME, 'push');
         expect(teamAdd).to.not.be.null;
@@ -772,7 +772,7 @@ describe("GitHubActions", () => {
         Log.test("listed members: " + JSON.stringify(val));
         expect(val).to.be.an('array');
         expect(val.length).to.equal(1);
-        expect(val[0]).to.equal(Test.USERNAMEGITHUB2);
+        expect(val[0]).to.equal(Test.GITHUB2.github);
     }).timeout(TIMEOUT);
 
     it("Clear stale repos and teams.", async function() {

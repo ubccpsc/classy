@@ -155,9 +155,9 @@ describe("TeamController", () => {
         let teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(3);
 
-        const p1 = await pc.getGitHubPerson(Test.USERNAMEGITHUB1);
-        const p2 = await pc.getGitHubPerson(Test.USERNAMEGITHUB2);
-        const p4 = await pc.getGitHubPerson(Test.USERNAMEGITHUB4);
+        const p1 = await pc.getGitHubPerson(Test.GITHUB1.github);
+        const p2 = await pc.getGitHubPerson(Test.GITHUB2.github);
+        const p4 = await pc.getGitHubPerson(Test.GITHUB4.github);
 
         // invalid deliverable
         let team = null;

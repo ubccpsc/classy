@@ -14,7 +14,7 @@ export class Factory {
      *
      * Set to true if you want to run these slow tests locally (they will always run on CI):
      */
-        // public static OVERRIDE = true; // NOTE: should be commented out when committing
+    // public static OVERRIDE = true; // NOTE: should be commented out when committing
     public static OVERRIDE = false; // NOTE: should NOT be commented out when committing
 
     /**
@@ -35,7 +35,7 @@ export class Factory {
             // import complains about this, but require does not.
             let plug: any;
             if (name === 'classytest') {
-                plug = await require('./server/common/NoCustomRoutes'); // default for testing
+                plug = await require('./custom/DefaultCourseRoutes'); // default for testing
             } else {
                 // If a course wants to specialize the AdminView it should be in the file below.
                 // This is not required. But if it is added, it should never be pushed back to 'classy/master'
@@ -87,7 +87,7 @@ export class Factory {
             // import complains about this, but require does not.
             let plug: any;
             if (name === 'classytest') {
-                plug = await require('./controllers/CourseController'); // default for testing
+                plug = await require('./custom/DefaultCourseController'); // default for testing
             } else {
                 // If a course wants to specialize the AdminView it should be in the file below.
                 // This is not required. But if it is added, it should never be pushed back to 'classy/master'

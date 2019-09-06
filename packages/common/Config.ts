@@ -27,6 +27,10 @@ export enum ConfigKey {
     testorg = "testorg",
     testname = "testname",
 
+    classlist_uri = "classlist_uri",
+    classlist_username = "classlist_username",
+    classlist_password = "classlist_password",
+
     publichostname = "publichostname",
 
     backendUrl = "backendUrl",
@@ -85,6 +89,10 @@ export default class Config {
                 testorg:  process.env.ORGTEST,
                 testname: process.env.NAMETEST,
 
+                classlist_uri:      process.env.CLASSLIST_URI,
+                classlist_username: process.env.CLASSLIST_USERNAME,
+                classlist_password: process.env.CLASSLIST_PASSWORD,
+
                 publichostname: process.env.PUBLICHOSTNAME,
 
                 hostDir:  process.env.HOST_DIR,
@@ -131,14 +139,6 @@ export default class Config {
                 Log.info("Config - Log::<init> - CI NOT detected");
             }
 
-            const hostname = this.config.publichostname;
-            if (hostname.indexOf("://localhost") < 0) {
-                Log.info("Config - Log::<init> - Prod detected; changing to INFO");
-                Log.Level = LogLevel.INFO;
-            } else {
-                Log.info("Config - Log::<init> - Prod NOT detected");
-            }
-
         } catch (err) {
             Log.error("Config::<init> - fatal error reading configuration file: " + err);
         }
@@ -166,5 +166,23 @@ export default class Config {
         // only test code should really be setting properties on the fly like this
         Log.warn("Config::setProp( " + ConfigKey[prop] + ", " + val + " )");
         this.config[prop] = val;
+    }
+
+    /**
+     * WARNING: Can only be used by back-end, as dotenv uses FS, which does not work on front-end.
+     * Removes sensitive information from string types
+     * @param input a string that you MAY want to remove sensitive information from
+     */
+    public static sanitize(input: string): string {
+        const sensitiveKeys: ConfigKey[] = [ConfigKey.githubBotToken]; // Can add any sensitive keys here
+        const config = Config.getInstance();
+        sensitiveKeys.forEach((sk) => {
+            // HACK: replace() - edge case regarding token prefix in the config.
+            const value: string = config.getProp(sk).replace('token ', '');
+
+            const hint = value.substring(0, 4);
+            input = input.replace(new RegExp(value, 'g'), hint + '-xxxxxx');
+        });
+        return input;
     }
 }

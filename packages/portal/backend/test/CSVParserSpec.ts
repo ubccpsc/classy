@@ -15,44 +15,6 @@ describe('CSVParser', function() {
         await Test.prepareAll();
     });
 
-    it('Should be able to process an empty classlist', async function() {
-        const path = __dirname + '/data/classlistEmpty.csv';
-        const csv = new CSVParser();
-        const rows = await csv.processClasslist(Test.ADMIN1.id, path);
-        Log.test('# rows processed: ' + rows.length);
-        expect(rows).to.have.lengthOf(0);
-    });
-
-    it('Should be able to process a vaild classlist', async function() {
-        const path = __dirname + '/data/classlistValid.csv';
-        const csv = new CSVParser();
-        const rows = await csv.processClasslist(Test.ADMIN1.id, path);
-        Log.test('# rows processed: ' + rows.length);
-        expect(rows).to.have.lengthOf(5);
-    });
-
-    it('Should be able to process an updated classlist', async function() {
-        const path = __dirname + '/data/classlistValidUpdate.csv';
-        const csv = new CSVParser();
-        const rows = await csv.processClasslist(Test.ADMIN1.id, path);
-        Log.test('# rows processed: ' + rows.length);
-        expect(rows).to.have.lengthOf(5);
-    });
-
-    it('Should not be able to process an invalid classlist', async function() {
-        let rows = null;
-        let ex = null;
-        try {
-            const path = __dirname + '/data/classlistInvalid.csv';
-            const csv = new CSVParser();
-            rows = await csv.processClasslist(Test.ADMIN1.id, path);
-        } catch (err) {
-            ex = err;
-        }
-        expect(rows).to.be.null;
-        expect(ex).to.not.be.null;
-    });
-
     it('Should be able to process an empty grade sheet', async function() {
         const path = __dirname + '/data/gradesEmpty.csv';
         const csv = new CSVParser();

@@ -121,6 +121,39 @@ describe('General Routes', function() {
         expect(body.success.githubId).to.equal(Test.USER1.github);
     });
 
+    it('Should NOT be able to update a classlist if NOT on a 143.103.*.* IP', async function() {
+        let response = null;
+        let body: Payload;
+        const url = '/portal/classlist';
+        try {
+            response = await request(app).put(url)
+                .set('x-forwarded-for', '152.99.5.99')
+                .set('Host', 'www.google.ca');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        expect(body).to.haveOwnProperty('failure');
+    });
+
+    it('Should be able to update a classlist on restricted IP', async function() {
+        let response = null;
+        let body: Payload;
+        const url = '/portal/classlist';
+        try {
+            response = await request(app).put(url)
+                .set('test-include-xfwd', '')
+                .set('x-forwarded-for', '142.103.5.99');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        expect(body).to.haveOwnProperty('success');
+        expect(body.success).to.haveOwnProperty('message');
+        expect(body.success.message).to.contain('Classlist upload successful');
+    });
+
     it('Should not be able to get a person without the right token.', async function() {
         const dc: DatabaseController = DatabaseController.getInstance();
 
@@ -532,7 +565,7 @@ describe('General Routes', function() {
         expect(response.status).to.equal(400);
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
-        expect(body.failure.message).to.equal('User is already on a team for this deliverable ( user1id is on t_d0_user1id_user2id ).');
+        expect(body.failure.message).to.equal('User is already on a team for this deliverable ( user1ID is on t_d0_user1CSID_user2CSID ).');
 
         try {
             Log.test('Making request');
@@ -650,9 +683,9 @@ describe('General Routes', function() {
 
         // create a team, but don't release it
         const deliv = await dc.getDeliverable(Test.DELIVIDPROJ);
-        const team = await dc.getTeam('t_project_user1gh_user2gh');
+        const team = await dc.getTeam('t_project_user1CSID_user2CSID');
         const rc = new RepositoryController();
-        const repo = await rc.createRepository('t_project_user1gh_user2gh', deliv, [team], {});
+        const repo = await rc.createRepository('t_project_user1CSID_user2CSID', deliv, [team], {});
 
         ex = null;
         try {

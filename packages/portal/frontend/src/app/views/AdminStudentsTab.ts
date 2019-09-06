@@ -36,12 +36,20 @@ export class AdminStudentsTab {
 
         const headers: TableHeader[] = [
             {
-                id:          'id',
+                id:          'githubId',
                 text:        'Github Id',
                 sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown:    false, // Whether the column should initially sort descending or ascending.
                 style:       'padding-left: 1em; padding-right: 1em;'
+            },
+            {
+                id:         'id',
+                text:       'Internal Id',
+                sortable:   true,
+                defaultSort: false,
+                sortDown:   true,
+                style:      'padding-left: 1em; padding-right: 1em;',
             },
             {
                 id:          'fName',
@@ -78,7 +86,8 @@ export class AdminStudentsTab {
                 labId = student.labId;
             }
             const row: TableCell[] = [
-                {value: student.githubId, html: '<a href="' + student.userUrl + '">' + student.id + '</a>'}, // SHOULD BE ID?
+                {value: student.githubId, html: '<a href="' + student.userUrl + '">' + student.githubId + '</a>'}, // Should be CWL
+                {value: student.id, html: student.id}, // Should be CSID
                 {value: student.firstName, html: student.firstName},
                 {value: student.lastName, html: student.lastName},
                 {value: labId, html: labId}
