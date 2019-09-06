@@ -3,6 +3,7 @@ import "mocha";
 
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
+import {Test} from "../../../../common/TestHarness";
 import Util from "../../../../common/Util";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 
@@ -13,7 +14,6 @@ import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
 
 import '../GlobalSpec';
-import {Test} from "../TestHarness";
 
 describe("GitHubActions", () => {
 
@@ -318,7 +318,7 @@ describe("GitHubActions", () => {
         const val = await gh.getTeamMembers(teamnum);
         Log.test('# Team members: ' + val.length);
         expect(val.length).to.be.greaterThan(0);
-        expect(val).to.contain(Test.ADMIN1.github);
+        expect(val).to.contain(Test.ADMINSTAFF1.github);
     }).timeout(TIMEOUT);
 
     it("Should be able to create many teams and get their numbers (tests team paging).", async function() {
@@ -397,7 +397,8 @@ describe("GitHubActions", () => {
         const start = Date.now();
         const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME;
-        const importUrl = 'https://github.com/SECapstone/bootstrap'; // this is hard coded, but at least it's public
+        // keep a random repo public here so that all Github instances can work with cloning this:
+        const importUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/classytest/TESTING_SAMPLE_REPO';
 
         const output = await gh.importRepoFS(importUrl, targetUrl);
         expect(output).to.be.true;
@@ -616,7 +617,7 @@ describe("GitHubActions", () => {
     //
     //     // Expects adding members to work
     //     const addMembers = await gh.addMembersToTeam(githubTeam.teamName, githubTeam.githubTeamNumber,
-    //         [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+    //         [Test.REALBOTNAME01, Test.REALUSERNAME]);
     //     expect(addMembers).to.not.be.null;
     //     const teamAdd = await gh.addTeamToRepo(githubTeam.githubTeamNumber, REPONAME, 'push');
     //     expect(teamAdd).to.not.be.null;
@@ -727,8 +728,9 @@ describe("GitHubActions", () => {
     }).timeout(TIMEOUT);
 
     it("Should be possible to make a comment.", async function() {
+        const githubAPI = Config.getInstance().getProp(ConfigKey.githubAPI);
         let msg = "message";
-        let url = "https://api.github.com/repos/classytest/" + Test.REPONAMEREAL2 + "/commits/INVALIDSHA/comments";
+        let url = githubAPI + '/repos/classytest/' + Test.REPONAMEREAL2 + '/commits/INVALIDSHA/comments';
         let worked = await gh.makeComment(url, msg);
         expect(worked).to.be.false; // false because SHA is invalid
 
@@ -737,7 +739,7 @@ describe("GitHubActions", () => {
         }
         msg = msg + '\n' + msg;
 
-        url = "https://api.github.com/repos/classytest/" + Test.REPONAMEREAL2 +
+        url = githubAPI + "/repos/classytest/" + Test.REPONAMEREAL2 +
             "/commits/c35a0e5968338a9757813b58368f36ddd64b063e/comments";
         worked = await gh.makeComment(url, msg);
         expect(worked).to.be.true; // should have worked
@@ -771,8 +773,9 @@ describe("GitHubActions", () => {
         const val = await gh.listTeamMembers(TEAMNAME);
         Log.test("listed members: " + JSON.stringify(val));
         expect(val).to.be.an('array');
-        expect(val.length).to.equal(1);
-        expect(val[0]).to.equal(Test.GITHUB2.github);
+        expect(val.length).to.equal(2);
+        expect(val[0]).to.equal(Test.GITHUB1.github);
+        expect(val[1]).to.equal(Test.GITHUB2.github);
     }).timeout(TIMEOUT);
 
     it("Clear stale repos and teams.", async function() {

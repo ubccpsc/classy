@@ -11,7 +11,7 @@ import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import BackendServer from "../../src/server/BackendServer";
 
-import {Test} from "../TestHarness";
+import {Test} from "../../../../common/TestHarness";
 
 describe('General Routes', function() {
 

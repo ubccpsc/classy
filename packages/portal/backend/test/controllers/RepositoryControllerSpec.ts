@@ -8,8 +8,8 @@ import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
 import {Repository} from "../../src/Types";
 
+import {Test} from "../../../../common/TestHarness";
 import '../GlobalSpec'; // load first
-import {Test} from "../TestHarness";
 import './TeamControllerSpec'; // load first
 
 describe("RepositoryController", () => {

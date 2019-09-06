@@ -7,7 +7,7 @@ jobs:
   build:
     docker:
       # specify the version you desire here
-      - image: circleci/node:7.10
+      - image: circleci/node:8.9.0
       - image: circleci/mongo:3.6
 
       # Specify service dependencies here if necessary
@@ -48,9 +48,14 @@ jobs:
 #            - packages/portal-backend/node_modules
           key: v1-dependencies-{{ checksum "package.json" }}
 
+      - run:
+          name: "Setup encrypted .env variable per Classy fork (chooses default env.enc when not set)"
+          command: |
+            echo 'export ENV_ENC_FILE="${ENCRYPT_ENV:-env}"' >> $BASH_ENV # Redirect ENCRYPT_ENV into $BASH_ENV
+
      # openssl aes-256-cbc -e -md sha512 -in ../.env -out .config -k $KEY
       - run:
-            command: cd .circleci && openssl aes-256-cbc -d -md sha512 -in env.enc -out ../.env -k $ENVKEY
+            command: cd .circleci && openssl aes-256-cbc -d -md sha512 -in "$ENV_ENC_FILE.enc" -out ../.env -k $ENVKEY
             name: Configuring .env
             when: always
 
@@ -72,6 +77,11 @@ jobs:
       - run:
             command: cd packages/portal/backend && ../../../node_modules/typescript/bin/tsc
             name: Building backend
+            when: always
+
+      - run:
+            command: cd packages/portal/frontend && ../../../node_modules/typescript/bin/tsc && yarn webpack
+            name: Building frontend and bundle with Webpack
             when: always
 
       # statically validate the frontend (this is the best we can do as there are no automated UI tests yet)
@@ -106,7 +116,7 @@ jobs:
             when: on_success
 
       - run:
-            command: cd packages/portal/backend && ./node_modules/junit-viewer/bin/junit-viewer --results=../../../testOutput/backend/test/test-results.xml --save=../../../testOutput/backend/test/index.html
+            command: ./node_modules/junit-viewer/bin/junit-viewer --results=packages/portal/backend/testOutput/backend/test/test-results.xml --save=packages/portal/backend/testOutput/backend/test/index.html
             name: Converting backend test results to HTML
             when: on_success
 

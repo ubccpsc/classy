@@ -2,10 +2,10 @@ import {expect} from "chai";
 import "mocha";
 
 import Log from "../../../common/Log";
+import {Test} from '../../../common/TestHarness';
 import {ClasslistAgent} from "../src/server/common/ClasslistAgent";
 
 import "./GlobalSpec";
-import {Test} from './TestHarness';
 
 describe('ClasslistAgent', function() {
 
