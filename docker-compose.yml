@@ -98,7 +98,7 @@ services:
         image: cpsc310geocoder
         container_name: geocoder
         expose:
-          - 4321
+          - 11316
         restart: always
         user: "${UID}"
     reference_ui:

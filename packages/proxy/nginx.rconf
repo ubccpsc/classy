@@ -29,7 +29,7 @@ http {
             port_in_redirect   off;
             rewrite            /geo(/.+) $1 break;
             proxy_read_timeout 240;
-            proxy_pass         http://geocoder:4321/;
+            proxy_pass         http://geocoder:11316;
         }
 
         location /codeshovel {
