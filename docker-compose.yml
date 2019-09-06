@@ -169,5 +169,5 @@ services:
         container_name: patchtool
         environment:
         - GH_BOT_TOKEN
-        - COURSE_GH_ORG_TOKEN
+        - "COURSE_GH_ORG_TOKEN=${GH_DOCKER_TOKEN}"
         - PATCH_SOURCE_REPO
