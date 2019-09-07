@@ -3,6 +3,7 @@ import "mocha";
 
 import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
+import {Test} from "../../../../common/TestHarness";
 import {AutoTestGradeTransport, GradeTransport, StudentTransport, TeamTransport} from "../../../../common/types/PortalTypes";
 
 import {AdminController} from "../../src/controllers/AdminController";
@@ -19,7 +20,6 @@ import {Factory} from "../../src/Factory";
 import {Person, PersonKind, Repository, Team} from "../../src/Types";
 
 import '../GlobalSpec'; // load first
-import {Test} from "../TestHarness";
 import './GradeControllerSpec'; // load first
 
 describe("AdminController", () => {
@@ -34,12 +34,12 @@ describe("AdminController", () => {
     let gha: IGitHubActions;
 
     before(async function() {
-        await Test.suiteBefore('CourseController');
+        await Test.suiteBefore('AdminController');
         await clearAndPrepareAll();
     });
 
     beforeEach(async function() {
-        Test.testBefore("CourseControllerSpec", this);
+        Test.testBefore("AdminControllerSpec", this);
 
         gha = GitHubActions.getInstance(true);
         const ghInstance = new GitHubController(gha);
@@ -55,12 +55,11 @@ describe("AdminController", () => {
     });
 
     afterEach(function() {
-        Test.testAfter("CourseControllerSpec", this);
-        // Log.test("CourseControllerSpec::beforeEach( " + this.currentTest.title + " )" + this.currentTest.fullTitle());
+        Test.testAfter("AdminControllerSpec", this);
     });
 
     after(async function() {
-        Test.suiteAfter('CourseController');
+        Test.suiteAfter('AdminController');
     });
 
     async function clearAndPrepareAll(): Promise<void> {
@@ -81,12 +80,12 @@ describe("AdminController", () => {
         // clear github teams and repositories we will end up provisioning
         await gha.deleteRepo(Test.REPONAMEREAL);
         // await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
-        await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB1);
-        await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB2);
-        await gha.deleteRepo('d0_' + Test.USERNAMEGITHUB3);
+        await gha.deleteRepo('d0_' + Test.GITHUB1.csId);
+        await gha.deleteRepo('d0_' + Test.GITHUB2.csId);
+        await gha.deleteRepo('d0_' + Test.GITHUB3.csId);
 
-        await gha.deleteRepo('project_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
-        await gha.deleteRepo('project_' + Test.USERNAMEGITHUB3);
+        await gha.deleteRepo('project_' + Test.GITHUB1.csId + '_' + Test.GITHUB2.csId);
+        await gha.deleteRepo('project_' + Test.GITHUB3.csId);
         await gha.deleteRepo(Test.REPONAME1);
         await gha.deleteRepo(Test.REPONAME2);
 
@@ -94,32 +93,32 @@ describe("AdminController", () => {
         // await gha.deleteTeam(teamNum);
 
         // NOTE: using GHA instead of TC because we really want to clear out GitHub
-        let teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB1);
+        let teamNum = await gha.getTeamNumber('t_d0_' + Test.GITHUB1.csId);
         await gha.deleteTeam(teamNum);
-        teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB2);
+        teamNum = await gha.getTeamNumber('t_d0_' + Test.GITHUB2.csId);
         await gha.deleteTeam(teamNum);
-        teamNum = await gha.getTeamNumber('t_d0_' + Test.USERNAMEGITHUB3);
+        teamNum = await gha.getTeamNumber('t_d0_' + Test.GITHUB3.csId);
         await gha.deleteTeam(teamNum);
-        teamNum = await gha.getTeamNumber('t_project_' + Test.USERNAMEGITHUB1 + '_' + Test.USERNAMEGITHUB2);
+        teamNum = await gha.getTeamNumber('t_project_' + Test.GITHUB1.csId + '_' + Test.GITHUB2.csId);
         await gha.deleteTeam(teamNum);
-        teamNum = await  gha.getTeamNumber('t_project_' + Test.USERNAMEGITHUB3);
+        teamNum = await  gha.getTeamNumber('t_project_' + Test.GITHUB3.csId);
         await gha.deleteTeam(teamNum);
         teamNum = await gha.getTeamNumber(Test.TEAMNAMEREAL);
         await gha.deleteTeam(teamNum);
 
         await Test.prepareDeliverables();
 
-        const p1: Person = Test.createPerson(Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, PersonKind.STUDENT);
+        const p1: Person = Test.createPerson(Test.GITHUB1.id, Test.GITHUB1.csId, Test.GITHUB1.github, PersonKind.STUDENT);
         await dbc.writePerson(p1);
-        const p2 = Test.createPerson(Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, PersonKind.STUDENT);
+        const p2 = Test.createPerson(Test.GITHUB2.id, Test.GITHUB2.csId, Test.GITHUB2.github, PersonKind.STUDENT);
         await dbc.writePerson(p2);
-        const p3 = Test.createPerson(Test.USERNAMEGITHUB3, Test.USERNAMEGITHUB3, Test.USERNAMEGITHUB3, PersonKind.STUDENT);
+        const p3 = Test.createPerson(Test.GITHUB3.id, Test.GITHUB3.csId, Test.GITHUB3.github, PersonKind.STUDENT);
         await dbc.writePerson(p3);
 
         const deliv = await dbc.getDeliverable(Test.DELIVIDPROJ);
         const names = await cc.computeNames(deliv, [p1, p2]);
 
-        const t = await Test.createTeam(names.teamName, Test.DELIVIDPROJ, [p1.githubId, p2.githubId]);
+        const t = await Test.createTeam(names.teamName, Test.DELIVIDPROJ, [p1.id, p2.id]);
         await dbc.writeTeam(t);
     }
 
@@ -429,8 +428,8 @@ describe("AdminController", () => {
     it("Should be able to compute a team and repo name.", async () => {
         const db = DatabaseController.getInstance();
 
-        const tExpected = 't_d0_' + Test.USER1.github + '_' + Test.USER2.github;
-        const rExpected = 'd0_' + Test.USER1.github + '_' + Test.USER2.github;
+        const tExpected = 't_d0_' + Test.USER1.csId + '_' + Test.USER2.csId;
+        const rExpected = 'd0_' + Test.USER1.csId + '_' + Test.USER2.csId;
 
         // prepare
         const dbc = DatabaseController.getInstance();
@@ -458,7 +457,7 @@ describe("AdminController", () => {
         expect(res.repoName).to.equal(rExpected);
     });
 
-    describe("Slow CourseController Tests", () => {
+    describe("Slow AdminController Tests", () => {
 
         // before(async function() {
         //     await clearAndPreparePartial();
@@ -467,12 +466,42 @@ describe("AdminController", () => {
         beforeEach(function() {
             const exec = Test.runSlowTest();
             if (exec) {
-                Log.test("CourseControllerSpec::slowTests - running: " + this.currentTest.title);
+                Log.test("AdminControllerSpec::slowTests - running: " + this.currentTest.title);
             } else {
-                Log.test("CourseControllerSpec::slowTests - skipping; will run on CI");
+                Log.test("AdminControllerSpec::slowTests - skipping; will run on CI");
                 this.skip();
             }
         });
+
+        // This test must be run first -- before later tests modify the database to a state where students cannot be withdrawn.
+        it("Should be able to mark students as withdrawn.", async () => {
+            const studentsBefore = await ac.getStudents();
+            let people = await pc.getAllPeople();
+
+            let numWithrdrawnBefore = 0;
+            for (const person of people) {
+                if (person.kind === PersonKind.WITHDRAWN) {
+                    numWithrdrawnBefore++;
+                }
+            }
+            expect(numWithrdrawnBefore).to.equal(0); // shouldn't have any withdrawn students before
+
+            const res = await ac.performStudentWithdraw();
+            Log.test("Result: " + JSON.stringify(res));
+            expect(res).to.be.an('string');
+
+            people = await pc.getAllPeople();
+            let numWithrdrawnAfter = 0;
+            for (const person of people) {
+                if (person.kind === PersonKind.WITHDRAWN) {
+                    numWithrdrawnAfter++;
+                }
+            }
+            expect(numWithrdrawnAfter).to.be.greaterThan(numWithrdrawnBefore);
+
+            const studentsAfter = await ac.getStudents();
+            expect(studentsBefore.length).to.be.greaterThan(studentsAfter.length); // students should not include withdrawn students
+        }).timeout(Test.TIMEOUTLONG * 5);
 
         // // broken when we switched to plan/perform provisioning
         it("Should provision repos if there are some to do and singles are disabled.", async () => {
@@ -622,35 +651,6 @@ describe("AdminController", () => {
 
             expect(allNewRepos.length).to.equal(3);
             expect(allNewTeams.length).to.equal(4); // 3x d0 & 1x project
-        }).timeout(Test.TIMEOUTLONG * 5);
-
-        it("Should be able to mark students as withdrawn.", async () => {
-            const studentsBefore = await ac.getStudents();
-            let people = await pc.getAllPeople();
-
-            let numWithrdrawnBefore = 0;
-            for (const person of people) {
-                if (person.kind === PersonKind.WITHDRAWN) {
-                    numWithrdrawnBefore++;
-                }
-            }
-            expect(numWithrdrawnBefore).to.equal(0); // shouldn't have any withdrawn students before
-
-            const res = await ac.performStudentWithdraw();
-            Log.test("Result: " + JSON.stringify(res));
-            expect(res).to.be.an('string');
-
-            people = await pc.getAllPeople();
-            let numWithrdrawnAfter = 0;
-            for (const person of people) {
-                if (person.kind === PersonKind.WITHDRAWN) {
-                    numWithrdrawnAfter++;
-                }
-            }
-            expect(numWithrdrawnAfter).to.be.greaterThan(numWithrdrawnBefore);
-
-            const studentsAfter = await ac.getStudents();
-            expect(studentsBefore.length).to.be.greaterThan(studentsAfter.length); // students should not include withdrawn students
         }).timeout(Test.TIMEOUTLONG * 5);
     });
 });

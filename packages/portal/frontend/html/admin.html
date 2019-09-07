@@ -86,7 +86,7 @@
                     No Results
                 </div>
                 <ons-list-header>Individuals</ons-list-header>
-                <div id="teamsIndividualListTable" style="widt:100%;">
+                <div id="teamsIndividualListTable" style="width:100%;">
                 </div>
                 <div id="teamsIndividualListTableNone" class="noResultsRow">
                     No Results
@@ -189,6 +189,23 @@
                         ACCT and SNUM are invariants and cannot change although ther fields can be updated (changing GitHub logins presents
                         its own issues that require manual effort on the part of course staff to handle).
                         Pre-existing Students, Teams, and Repositories <i>WILL NOT</i> be affected.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-user-edit"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Update classlist via Classlist API
+                        <ons-button id="adminUpdateClasslist" modifier="medium" style="margin-left: 1em">Update Classlist
+                        </ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        BETA: This will update your classlist with the latest Classlist data
+
+                        This will act as if you uploaded your own classlist. The goal is to set this on a timer and automatically update it 
+                        once we further understand the implications of this logic.
                     </div>
                 </ons-list-item>
 
@@ -922,8 +939,8 @@
                         </div>
                         <div class="expandable-content">
                             See <a href="https://docs.docker.com/engine/reference/commandline/build/#git-repositories">docker build</a>
-                            documentation for details about how to construct the URL. The URL should start with "https://". If the
-                            repository is private, set GH_DOCKER_TOKEN in the .env. Do not include the token in the URL.
+                            documentation for details about how to construct the URL. The URL should start with "https://" and end with 
+                            ".git" suffix. If the repository is private, set GH_DOCKER_TOKEN in the .env. Do not include the token in the URL.
                         </div>
                     </ons-list-item>
 
