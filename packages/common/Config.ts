@@ -60,8 +60,6 @@ export enum ConfigKey {
 
     patchId = "patchId",
     patchToolUrl = "patchToolUrl",
-
-    //cluster = "cluster"
 }
 
 export default class Config {
@@ -120,8 +118,6 @@ export default class Config {
 
                 patchId: process.env.PATCH_ID,
                 patchToolUrl: process.env.PATCH_TOOL_URL,
-
-                //cluster: Boolean(process.env.CLUSTER)
             };
 
             // this is not a great place for this

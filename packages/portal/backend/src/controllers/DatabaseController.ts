@@ -237,10 +237,10 @@ export class DatabaseController {
 
         const resultExists = await this.getResult(record.delivId, record.repoId, record.commitSHA);
         if (resultExists === null) {
-            Log.info("DatabaseController::writeResult(..) - new");
+            Log.trace("DatabaseController::writeResult(..) - new");
             return await this.writeRecord(this.RESULTCOLL, record);
         } else {
-            Log.info("DatabaseController::writeResult(..) - update");
+            Log.trace("DatabaseController::writeResult(..) - update");
             const query = {commitSHA: record.commitSHA, repoId: record.repoId, delivId: record.delivId};
             return await this.updateRecord(this.RESULTCOLL, query, record);
         }
@@ -379,7 +379,7 @@ export class DatabaseController {
     }
 
     public async writeRecord(colName: string, record: {}): Promise<boolean> {
-        Log.info("DatabaseController::writeRecord( " + colName + ", ...) - writing");
+        Log.trace("DatabaseController::writeRecord( " + colName + ", ...) - writing");
         // Log.trace("DatabaseController::writeRecord(..) - col: " + colName + "; record: " + JSON.stringify(record));
         try {
             const collection = await this.getCollection(colName);
