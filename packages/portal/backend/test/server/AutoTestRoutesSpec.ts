@@ -17,7 +17,7 @@ import {DatabaseController} from "../../src/controllers/DatabaseController";
 
 import BackendServer from "../../src/server/BackendServer";
 
-import {Test} from "../TestHarness";
+import {Test} from "../../../../common/TestHarness";
 
 // This seems silly, but just makes sure GlobalSpec runs first.
 // It should be at the top of every test file.
@@ -231,7 +231,7 @@ describe('AutoTest Routes', function() {
 
         let response = null;
         let body: AutoTestAuthPayload;
-        const url = '/portal/at/isStaff/' + Test.ADMIN1.github;
+        const url = '/portal/at/isStaff/' + Test.ADMINSTAFF1.github;
         try {
             response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
@@ -525,6 +525,7 @@ describe('AutoTest Routes', function() {
             let res: any;
 
             try {
+                // Possibly NOT working as REALUSER1 is actually a fake user but test is still passing
                 res = await request(app).post(url).set('user', Test.REALUSER1.github).send(body);
             } catch (err) {
                 res = err;

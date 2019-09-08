@@ -296,7 +296,15 @@ export class GitHubController implements IGitHubController {
                     }
 
                     Log.info("GitHubController::provisionRepository( " + repoName + " ) - add members to GitHub team: " + team.id);
-                    const addMembers = await this.gha.addMembersToTeam(teamValue.teamName, teamValue.githubTeamNumber, team.personIds);
+
+                    // convert personIds to githubIds
+                    const memberGithubIds: string[] = [];
+                    for (const personId of team.personIds) {
+                        const person = await this.dbc.getPerson(personId);
+                        memberGithubIds.push(person.githubId);
+                    }
+
+                    const addMembers = await this.gha.addMembersToTeam(teamValue.teamName, teamValue.githubTeamNumber, memberGithubIds);
                     Log.info("GitHubController::provisionRepository( " + repoName + " ) - addMembers: " + addMembers.teamName);
 
                     // if (shouldRelease === true) {

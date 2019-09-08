@@ -1,4 +1,5 @@
 import {ChildProcess, spawn, SpawnOptions} from "child_process";
+import Config from "./Config";
 import Log from "./Log";
 
 export type CommandResult = [number, any];
@@ -18,7 +19,7 @@ export class Command implements ICommand {
     }
 
     public async executeCommand(args: string[], options: SpawnOptions = {}): Promise<CommandResult> {
-        Log.trace(`Command::executeCommand(..) -> ${this.cmdName} ${args.join(" ")}`);
+        Log.trace(Config.sanitize(`Command::executeCommand(..) -> ${this.cmdName} ${args.join(" ")}`));
         return new Promise<CommandResult>((resolve, reject) => {
             let output: Buffer = Buffer.allocUnsafe(0);
             const cmd: ChildProcess = this.spawn(this.cmdName, args, options);
@@ -36,8 +37,8 @@ export class Command implements ICommand {
                 if (code === 0) {
                     resolve([code, out]);
                 } else {
-                    Log.warn(`Command::executeCommand(..) -> EXIT ${code}: ${this.cmdName} ${args.join(" ")}. ${out}`);
-                    reject([code, out]);
+                    Log.warn(Config.sanitize(`Command::executeCommand(..) -> EXIT ${code}: ${this.cmdName} ${args.join(" ")}. ${out}`));
+                    reject([code, Config.sanitize(out)]);
                 }
             });
         });

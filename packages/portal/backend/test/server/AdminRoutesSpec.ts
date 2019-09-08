@@ -22,11 +22,13 @@ import Util from "../../../../common/Util";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {GitHubActions} from "../../src/controllers/GitHubActions";
+import {PersonController} from "../../src/controllers/PersonController";
 import {TeamController} from "../../src/controllers/TeamController";
 
+import {PersonKind} from "../../../backend/src/Types";
 import BackendServer from "../../src/server/BackendServer";
 
-import {Test} from "../TestHarness";
+import {Test} from "../../../../common/TestHarness";
 import './AuthRoutesSpec';
 
 describe('Admin Routes', function() {
@@ -859,8 +861,10 @@ describe('Admin Routes', function() {
         // }).timeout(TIMEOUT * 30);
 
         it('Should be able to perform a withdraw task', async function() {
-
             // This is tricky because the live github data will have a different team id than we're using locally
+
+            const pc = new PersonController();
+            const dc = DatabaseController.getInstance();
 
             let response = null;
             let body: Payload;
@@ -1293,5 +1297,35 @@ describe('Admin Routes', function() {
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
         expect(ex).to.be.null;
+    });
+
+    it('Should be able to update a classlist if authorized as admin', async function() {
+        let response = null;
+        let body: Payload;
+        const url = '/portal/admin/classlist';
+        try {
+            response = await request(app).put(url).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        expect(body).to.haveOwnProperty('success');
+        expect(body.success).to.haveOwnProperty('message');
+        expect(body.success.message).to.contain('Classlist upload successful');
+    });
+
+    it('Should NOT be able to update a classlist if not authorized as admin', async function() {
+        let response = null;
+        let body: Payload;
+        const url = '/portal/admin/classlist';
+        try {
+            response = await request(app).put(url);
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        expect(body).to.haveOwnProperty('failure');
     });
 });

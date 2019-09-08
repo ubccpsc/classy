@@ -22,7 +22,7 @@ export class CSVParser {
      * @param {string} path
      * @returns {Promise<any[]>}
      */
-    private parsePath(path: string): Promise<any[]> {
+    public parsePath(path: string): Promise<any[]> {
         return new Promise(function(fulfill, reject) {
 
             const rs = fs.createReadStream(path);
@@ -45,53 +45,6 @@ export class CSVParser {
 
             rs.pipe(parser);
         });
-    }
-
-    public async processClasslist(personId: string, path: string): Promise<Person[]> {
-        try {
-            Log.info('CSVParser::processClasslist(..) - start');
-
-            const data = await this.parsePath(path);
-            const pc = new PersonController();
-
-            const peoplePromises: Array<Promise<Person>> = [];
-            for (const row of data) {
-                // Log.trace(JSON.stringify(row));
-                if (typeof row.ACCT !== 'undefined' && typeof row.CWL !== 'undefined' &&
-                    typeof row.SNUM !== 'undefined' && typeof row.FIRST !== 'undefined' &&
-                    typeof row.LAST !== 'undefined' && typeof row.LAB !== 'undefined') {
-                    const p: Person = {
-                        id:            row.ACCT.toLowerCase(), // id is CSID since this cannot be changed
-                        csId:          row.ACCT.toLowerCase(),
-                        // github.ugrad wants row.ACCT; github.ubc wants row.CWL
-                        githubId:      row.ACCT.toLowerCase(),  // TODO: will depend on instance (see above)
-                        studentNumber: row.SNUM,
-                        fName:         row.FIRST,
-                        lName:         row.LAST,
-
-                        kind:   PersonKind.STUDENT,
-                        URL:    null,
-                        labId:  row.LAB,
-                        custom: {}
-                    };
-                    peoplePromises.push(pc.createPerson(p));
-                } else {
-                    Log.info('CSVParser::processClasslist(..) - column missing from: ' + JSON.stringify(row));
-                    peoplePromises.push(Promise.reject('Required column missing (required: ACCT, CWL, SNUM, FIRST, LAST, LAB).'));
-                }
-            }
-
-            const people = await Promise.all(peoplePromises);
-
-            // audit
-            const dbc = DatabaseController.getInstance();
-            await dbc.writeAudit(AuditLabel.CLASSLIST_UPLOAD, personId, {}, {}, {numPoeple: people.length});
-
-            return people;
-        } catch (err) {
-            Log.error('CSVParser::processClasslist(..) - ERROR: ' + err.message);
-            throw new Error('Classlist upload error: ' + err.message);
-        }
     }
 
     public async processGrades(personId: string, delivId: string, path: string): Promise<boolean[]> {
@@ -153,5 +106,4 @@ export class CSVParser {
             throw new Error('Grade upload error: ' + err.message);
         }
     }
-
 }

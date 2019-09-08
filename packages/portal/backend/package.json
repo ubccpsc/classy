@@ -6,7 +6,7 @@
     "scripts": {
         "test": "node --require dotenv/config ./node_modules/.bin/mocha --timeout 30000 --recursive --exit",
         "testCI": "node ./node_modules/.bin/mocha --reporter mocha-junit-reporter --reporter-options mochaFile=../../../testOutput/backend/test/test-results.xml --timeout 5000 --recursive --exit",
-        "cover": "nyc --reporter html yarn run test",
+        "cover": "nyc --reporter html ./node_modules/.bin/mocha --timeout 30000 --recursive --exit",
         "coverCI": "./node_modules/.bin/nyc --reporter html --report-dir ../../../testOutput/backend/coverage --reporter=text-lcov yarn run testCI",
         "coveralls": "./node_modules/.bin/nyc report --report-dir ../../../testOutput/backend/coverage --reporter=text-lcov | coveralls",
         "codecov": "./node_modules/.bin/nyc report --report-dir ../../../testOutput/backend/coverage --reporter=json > ../../../testOutput/backend/coverage/coverage.json && codecov --token=$CODECOV_TOKEN",

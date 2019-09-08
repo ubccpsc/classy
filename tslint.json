@@ -1,19 +1,35 @@
 {
-  "extends": "tslint:recommended",
-  "rules": {
-    "max-line-length": [
-      true,
-      140
-    ],
-    "no-unused-expression": false,
-	"member-ordering": [false, {"order": "fields-first"}],
-    "object-literal-shorthand": false,
-    "quotemark": false,
-    "trailing-comma": "never",
-    "interface-name": [false, "never-prefix"],
-    "only-arrow-functions": false,
-    "object-literal-sort-keys": false,
-    "no-floating-promises": true,
-    "no-string-literal": false
-  }
+    "extends": "tslint:recommended",
+    "rules": {
+        "max-line-length": [
+            true,
+            140
+        ],
+        "no-unused-expression": false,
+        "member-ordering": [
+            false,
+            {
+                "order": "fields-first"
+            }
+        ],
+        "object-literal-shorthand": false,
+        "quotemark": false,
+        "trailing-comma": "never",
+        "interface-name": [
+            false,
+            "never-prefix"
+        ],
+        "only-arrow-functions": false,
+        "object-literal-sort-keys": false,
+        "no-floating-promises": true,
+        "no-string-literal": false,
+        "space-before-function-paren": [
+            "error",
+            {
+                "anonymous": "always",
+                "named": "never",
+                "asyncArrow": "always"
+            }
+        ]
+    }
 }
