@@ -7,6 +7,7 @@ import {AdminDeletePage} from "./AdminDeletePage";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminPage} from "./AdminPage";
 import {AdminProvisionPage} from "./AdminProvisionPage";
+import {AdminPullRequestsPage} from "./AdminPullRequestsPage";
 import {AdminView} from "./AdminView";
 
 export class AdminConfigTab extends AdminPage {
@@ -180,6 +181,24 @@ export class AdminConfigTab extends AdminPage {
                 });
             }).catch(function(err) {
                 Log.error("AdminConfigTab - adminProvision ERROR: " + err.message);
+            });
+        };
+
+        (document.querySelector('#adminManagePullRequestsButton') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminConfigTab::handleAdminConfig(..) - manage PRs page pressed');
+            evt.preventDefault();
+
+            that.pushPage('./adminPullRequests.html', {}).then(function() {
+                const pullRequestsPage = new AdminPullRequestsPage(that.remote);
+                pullRequestsPage.init({}).then(function() {
+                    // success
+                    Log.info('AdminConfigTab::handleAdminConfig(..) - PRs page init');
+                }).catch(function(err) {
+                    // error
+                    Log.error('AdminConfigTab::handleAdminConfig(..) - PRs page ERROR: ' + err);
+                });
+            }).catch(function(err) {
+                Log.error("AdminConfigTab - adminPullRequests ERROR: " + err.message);
             });
         };
 

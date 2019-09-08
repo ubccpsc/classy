@@ -47,8 +47,9 @@ describe("CourseController", () => {
         const deliv = await new DeliverablesController().getDeliverable(Test.DELIVID1);
         const names = await cc.computeNames(deliv, [p1, p2]);
 
-        expect(names.teamName).to.equal('t_d1_user1CSID_user2CSID');
-        expect(names.repoName).to.equal('d1_user1CSID_user2CSID');
+        expect(names).to.equal('t_d1_user1CSID_user2CSID');
+        // expect(names.teamName).to.equal('t_d1_user1CSID_user2CSID');
+        // expect(names.repoName).to.equal('d1_user1CSID_user2CSID');
     });
 
     it("Should not be able to compute names if there are no people or no deliverable.", async () => {

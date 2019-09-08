@@ -128,6 +128,7 @@ export interface Team {
     URL: string | null; // null when not yet created
     githubId: number | null; // null when not yet created
     personIds: string[]; // Person.id[] - foreign key
+    repoName: string | null;
 
     // githubStatus: string; // NONE | CREATED | LINKED
     custom: {

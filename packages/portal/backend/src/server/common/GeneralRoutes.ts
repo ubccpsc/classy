@@ -393,9 +393,9 @@ export default class GeneralRoutes implements IREST {
 
             const cc = await Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
             const deliv = await dc.getDeliverable(requestedTeam.delivId);
-            const names = await cc.computeNames(deliv, people);
+            const name = await cc.computeNames(deliv, people);
 
-            const team = await tc.formTeam(names.teamName, deliv, people, false);
+            const team = await tc.formTeam(name, deliv, people, false);
 
             const dbc = DatabaseController.getInstance();
             await dbc.writeAudit(AuditLabel.TEAM_STUDENT, user, {}, team, {});
