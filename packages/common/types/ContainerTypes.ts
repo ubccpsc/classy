@@ -104,6 +104,8 @@ export interface GradeReport {
     // Use attachments instead for large bits of data you wish
     // to persist.
     custom: {};
+    
+    cluster?: ClusteredResult;
 }
 
 /**
@@ -119,4 +121,16 @@ export interface Attachment {
     visibleToStudent: boolean;
     visibleToPublic: boolean; // almost always false
     content_type: string;
+}
+
+export interface SingleClusterResult {
+    allNames: string[],
+    passNames: string[],
+    failNames: string[],
+    skipNames: string[],
+    errorNames: string[]
+}
+
+export interface ClusteredResult {
+    [cluster: string]: SingleClusterResult
 }

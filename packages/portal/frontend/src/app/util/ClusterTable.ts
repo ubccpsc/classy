@@ -1,7 +1,9 @@
 import {DetailRow} from "../views/AdminDashboardTab"
-import {ClusteredResult} from "../../../../../common/types/PortalTypes"
+import {ClusteredResult} from "../../../../../common/types/ContainerTypes"
 // import Config, {ConfigKey} from "../../../../../common/Config"
 const CLUSTER = true; // Failed at putting this in config
+
+// TODO new input probably
 
 export class ClusterTable {
     public static generateTable(annotated: DetailRow[], delivId: string, clusteredResult: ClusteredResult): string {

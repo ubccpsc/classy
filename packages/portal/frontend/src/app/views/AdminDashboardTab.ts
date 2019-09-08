@@ -16,6 +16,7 @@ import {AdminPage} from "./AdminPage";
 import {AdminResultsTab} from "./AdminResultsTab";
 import {AdminView} from "./AdminView";
 import {ClusterTable} from "../util/ClusterTable";
+import { ClusteredResult } from "../../../../../common/types/ContainerTypes";
 
 export interface DetailRow {
             name: string;
@@ -284,8 +285,7 @@ export class AdminDashboardTab extends AdminPage {
         let str: string = '<div class="histogramcontainer">';
         str += this.generateTable(annotated);
         if (row.hasOwnProperty('cluster')) {
-            // TODO change how this is generated
-            str += ClusterTable.generateTable(annotated, row.delivId, row.cluster);
+            str += this.generateClusteredTable(annotated, row.delivId, row.cluster);
         }
         str += "</div>"
         return str;
@@ -299,6 +299,24 @@ export class AdminDashboardTab extends AdminPage {
             str += '<td class="dashResultCell" style="width: 5px; height: 20px; background: ' + a.colour + '" title="' + a.name + '"></td>';
         }
         str += '</tr>';
+        str += '</table></span>';
+        return str;
+    }
+
+    private generateClusteredTable(annotated: DetailRow[], delivId: string, clusteredResult: ClusteredResult): string {
+        const cellMap: {[key: string]: string} = {};
+        for (const cell of annotated) {
+            cellMap[cell.name] = '<td class="dashResultCell" style="width: 5px; height: 20px; background: ' + cell.colour + '" title="' + cell.name + '"></td>'
+        }
+        let str = '<span class="clusteredhistogram hidden""><table style="height: 20px;">';
+        for (const cluster in clusteredResult) {
+            str += '<tr>';
+            str += '<td style="width: 2em; text-align: center;">' + cluster + '</td>';
+            for (const test of clusteredResult[cluster].allNames) {
+                str += cellMap[test];
+            }
+            str += '</tr>';
+        }
         str += '</table></span>';
         return str;
     }

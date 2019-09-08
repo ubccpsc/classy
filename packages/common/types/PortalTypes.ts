@@ -6,6 +6,7 @@
  * All fields should be primitives.
  */
 import {AutoTestResult} from "./AutoTestTypes";
+import { ClusteredResult } from "./ContainerTypes";
 
 export interface FailurePayload {
     message: string;
@@ -300,16 +301,4 @@ export interface AutoTestDashboardTransport extends AutoTestResultSummaryTranspo
     testSkip: string[];
     testError: string[];
     cluster?: ClusteredResult;
-}
-
-export interface SingleClusterResult {
-    allNames: string[],
-    passNames: string[],
-    failNames: string[],
-    skipNames: string[],
-    errorNames: string[]
-}
-
-export interface ClusteredResult {
-    [cluster: string]: SingleClusterResult
 }
