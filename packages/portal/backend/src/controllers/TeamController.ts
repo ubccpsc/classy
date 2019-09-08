@@ -110,7 +110,7 @@ export class TeamController {
         }
 
         // sort by delivIds
-        myTeams = myTeams.sort(function(a: Team, b: Team) {
+        myTeams = myTeams.sort(function (a: Team, b: Team) {
             return a.delivId.localeCompare(b.delivId);
         });
 
@@ -131,7 +131,7 @@ export class TeamController {
      * @returns {Promise<Team | null>}
      */
     public async formTeam(teamId: string, deliv: Deliverable, people: Person[], adminOverride: boolean): Promise<Team | null> {
-        Log.info("TeamController::formTeam( ... ) - start");
+        Log.info("TeamController::formTeam( " + teamId + ", ... ) - start");
 
         // sanity checking
         if (deliv === null) {
@@ -208,29 +208,34 @@ export class TeamController {
      * @returns {Promise<Team | null>}
      */
     public async createTeam(name: string, deliv: Deliverable, people: Person[], custom: any): Promise<Team | null> {
-        Log.info("TeamController::createTeam( " + name + ",.. ) - start");
+        Log.info("TeamController::createTeam( " + name + ", ... ) - start");
 
-        if (deliv === null) {
-            throw new Error("TeamController::createTeam() - null deliverable provided.");
-        }
+        try {
+            if (deliv === null) {
+                throw new Error("TeamController::createTeam() - null deliverable provided.");
+            }
 
-        const existingTeam = await this.getTeam(name);
-        if (existingTeam === null) {
-            const peopleIds: string[] = people.map((person) => person.id);
-            const team: Team = {
-                id:        name,
-                delivId:   deliv.id,
-                githubId:  null,
-                URL:       null,
-                personIds: peopleIds,
-                custom:    custom
-            };
-            await this.db.writeTeam(team);
-            return await this.db.getTeam(name);
-        } else {
-            // Log.info("TeamController::createTeam( " + name + ",.. ) - team exists: " + JSON.stringify(existingTeam));
-            // return await this.db.getTeam(name);
-            throw new Error("Duplicate team name: " + name);
+            const existingTeam = await this.getTeam(name);
+            if (existingTeam === null) {
+                const peopleIds: string[] = people.map((person) => person.id);
+                const team: Team = {
+                    id:        name,
+                    delivId:   deliv.id,
+                    githubId:  null,
+                    URL:       null,
+                    personIds: peopleIds,
+                    custom:    custom
+                };
+                await this.db.writeTeam(team);
+                return await this.db.getTeam(name);
+            } else {
+                // Log.info("TeamController::createTeam( " + name + ",.. ) - team exists: " + JSON.stringify(existingTeam));
+                // return await this.db.getTeam(name);
+                throw new Error("Duplicate team name: " + name);
+            }
+        } catch (err) {
+            Log.error("TeamController::createTeam() - ERROR: " + err.message);
+            throw err;
         }
     }
 

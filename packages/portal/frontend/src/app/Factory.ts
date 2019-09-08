@@ -1,5 +1,4 @@
 import Log from "../../../../common/Log";
-
 import {AdminView} from "./views/AdminView";
 import {IView} from "./views/IView";
 
@@ -35,18 +34,34 @@ export class Factory {
         return Factory.instance;
     }
 
+    private customViewsExist(): boolean {
+        let customHtml = null;
+        try {
+            customHtml = require(this.name + '/landing.html');
+        } catch (err) {
+            Log.info('Factory::customViewsExist() - Custom html pages not found for course: ' + this.name);
+        }
+        return customHtml ? true : false;
+    }
+
     public async getView(backendUrl: string): Promise<IView> {
+        // Loads a custom view model if custom HTML code exists, default model for default html, etc.
+        const customViewsExist = this.customViewsExist();
+
         try {
             if (this.studentView === null) {
                 Log.info("Factory::getView() - instantiating new student view for: " + this.name);
 
                 // NOTE: using require instead of import because file might not be present in forks
                 // import complains about this, but require does not
+
                 let plug: any;
                 if (name === this.TESTNAME) {
-                    plug = await require('./views/classy/ClassyStudentView'); // default for testing
+                    plug = await require('./custom/DefaultStudentView'); // default for testing
+                } else if (customViewsExist) {
+                    plug = await require('./custom/CustomStudentView'); // course-specific file;
                 } else {
-                    plug = await require('./custom/CustomStudentView'); // course-specific file; must be present in all forks
+                    plug = await require('./custom/DefaultStudentView');
                 }
 
                 Log.trace("Factory::getView() - view loaded");
@@ -78,6 +93,7 @@ export class Factory {
             dashboard:    true,
             config:       true
         };
+        const customViewsExist = this.customViewsExist();
 
         try {
             if (this.adminView === null) {
@@ -87,11 +103,13 @@ export class Factory {
                 // import complains about this, but require does not.
                 let plug: any;
                 if (name === this.TESTNAME) {
-                    plug = await require('./views/classy/ClassyAdminView'); // default for testing
-                } else {
+                    plug = await require('./custom/DefaultAdminView'); // default for testing
+                } else if (customViewsExist) {
                     // If a course wants to specialize the AdminView it should be in the file below.
                     // This is not required. But if it is added, it should never be pushed back to 'classy/master'
-                    plug = await require('./custom/CustomAdminView');
+                    plug = await require('./custom/CustomAdminView'); // course-specific file;
+                } else {
+                    plug = await require('./custom/DefaultAdminView');
                 }
 
                 Log.trace("Factory::getAdminView() - view loaded");
@@ -131,7 +149,7 @@ export class Factory {
      * 'html/<courseName>' directory.
      *
      * Examples of what these files can look like can be found in the test
-     * implementations found in 'html/classy/'.
+     * implementations found in 'html/custom/' by looking at Default files.
      *
      * While you can have many files in this directory, several are required:
      *   - landing.html - This is the main course-specific landing page
@@ -140,14 +158,24 @@ export class Factory {
      *
      * @returns {string}
      */
-    public getHTMLPrefix() {
-        // FORK: You probably do not need to change this unless you want your course
-        // name to be different than the directory your html files are stored in.
+    public  getHTMLPrefix() {
+        // FORK: Gets the default html/default/landing.html page unless your course
+        // html pages are implemented in html/{name}/landing.html. ie. html/cs210/landing.html
+        let customPage = null;
+
+        try {
+            customPage = require(this.name + '/landing.html');
+        } catch (err) {
+            Log.info('Factory::getHTMLPrefix() - no custom HTML landing page detected');
+        }
+
         Log.trace("Factory::getHTMLPrefix() - getting prefix for: " + this.name);
         if (this.name === 'classytest') {
-            return 'classy';
-        } else {
+            return 'default';
+        } else if (customPage) {
             return this.name;
+        } else {
+            return 'default';
         }
     }
 }

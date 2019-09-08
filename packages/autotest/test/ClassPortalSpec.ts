@@ -10,7 +10,7 @@ import {DatabaseController} from "../../portal/backend/src/controllers/DatabaseC
 import BackendServer from "../../portal/backend/src/server/BackendServer";
 import {Course} from "../../portal/backend/src/Types";
 
-import {Test} from "../../portal/backend/test/TestHarness";
+import {Test} from "../../common/TestHarness";
 import {ClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
 
 import "./GlobalSpec";
@@ -43,9 +43,9 @@ describe("ClassPortal Service", () => {
     });
 
     // NOTE: if this fails it could be because the ClassPortal Backend has not been started yet
-    it("Should be able for a staff user to be staff.", async () => {
+    it("Should be able for a adminstaff user to be staff.", async () => {
         try {
-            const actual = await cp.isStaff("classyadmin");
+            const actual = await cp.isStaff(Test.ADMINSTAFF1.github);
             Log.test('Actual: ' + actual);
             expect(actual.isStaff).to.equal(true);
             expect(actual.isAdmin).to.equal(true);

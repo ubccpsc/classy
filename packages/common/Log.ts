@@ -1,4 +1,5 @@
 /* tslint:disable:no-console */
+import Config, {ConfigKey} from '../common/Config';
 
 export enum LogLevel {
     TRACE,

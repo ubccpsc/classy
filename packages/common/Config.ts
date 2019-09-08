@@ -27,6 +27,10 @@ export enum ConfigKey {
     testorg = "testorg",
     testname = "testname",
 
+    classlist_uri = "classlist_uri",
+    classlist_username = "classlist_username",
+    classlist_password = "classlist_password",
+
     publichostname = "publichostname",
 
     backendUrl = "backendUrl",
@@ -41,6 +45,13 @@ export enum ConfigKey {
     githubClientId = "githubClientId",
     githubClientSecret = "githubClientSecret",
     githubHost = "githubHost",
+
+    githubAdmin = "githubAdmin",
+    githubAdminStaff = "githubAdminStaff",
+    githubStaff = "githubStaff",
+    githubBot01 = "githubBot01",
+    githubBot02 = "githubBot02",
+    githubTestUsers = "githubTestUsers",
 
     autotestUrl = "autotestUrl",
     autotestPort = "autotestPort",
@@ -85,6 +96,10 @@ export default class Config {
                 testorg:  process.env.ORGTEST,
                 testname: process.env.NAMETEST,
 
+                classlist_uri:      process.env.CLASSLIST_URI,
+                classlist_username: process.env.CLASSLIST_USERNAME,
+                classlist_password: process.env.CLASSLIST_PASSWORD,
+
                 publichostname: process.env.PUBLICHOSTNAME,
 
                 hostDir:  process.env.HOST_DIR,
@@ -112,6 +127,13 @@ export default class Config {
                 githubClientSecret: process.env.GH_CLIENT_SECRET,
                 githubDockerToken:  process.env.GH_DOCKER_TOKEN,
 
+                githubAdmin:        process.env.GH_ADMIN,
+                githubAdminStaff:   process.env.GH_ADMIN_STAFF,
+                githubStaff:        process.env.GH_STAFF,
+                githubBot01:        process.env.GH_BOT_01,
+                githubBot02:        process.env.GH_BOT_02,
+                githubTestUsers:    process.env.GH_TEST_USERS,
+
                 autotestUrl:    process.env.AUTOTEST_URL,
                 autotestPort:   process.env.AUTOTEST_PORT,
                 autotestSecret: process.env.AUTOTEST_SECRET,
@@ -129,14 +151,6 @@ export default class Config {
                 Log.Level = LogLevel.INFO; // change to INFO from TRACE if on CI
             } else {
                 Log.info("Config - Log::<init> - CI NOT detected");
-            }
-
-            const hostname = this.config.publichostname;
-            if (hostname.indexOf("://localhost") < 0) {
-                Log.info("Config - Log::<init> - Prod detected; changing to INFO");
-                Log.Level = LogLevel.INFO;
-            } else {
-                Log.info("Config - Log::<init> - Prod NOT detected");
             }
 
         } catch (err) {
@@ -166,5 +180,23 @@ export default class Config {
         // only test code should really be setting properties on the fly like this
         Log.warn("Config::setProp( " + ConfigKey[prop] + ", " + val + " )");
         this.config[prop] = val;
+    }
+
+    /**
+     * WARNING: Can only be used by back-end, as dotenv uses FS, which does not work on front-end.
+     * Removes sensitive information from string types
+     * @param input a string that you MAY want to remove sensitive information from
+     */
+    public static sanitize(input: string): string {
+        const sensitiveKeys: ConfigKey[] = [ConfigKey.githubBotToken]; // Can add any sensitive keys here
+        const config = Config.getInstance();
+        sensitiveKeys.forEach((sk) => {
+            // HACK: replace() - edge case regarding token prefix in the config.
+            const value: string = config.getProp(sk).replace('token ', '');
+
+            const hint = value.substring(0, 4);
+            input = input.replace(new RegExp(value, 'g'), hint + '-xxxxxx');
+        });
+        return input;
     }
 }

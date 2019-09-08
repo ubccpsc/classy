@@ -302,3 +302,15 @@ export interface AutoTestDashboardTransport extends AutoTestResultSummaryTranspo
     testError: string[];
     cluster?: ClusteredResult;
 }
+
+export interface ClasslistTransport {
+    SNUM: string;
+    FIRST: string;
+    LAST: string;
+    PREF: string;
+    ACCT: string;
+    CRS: string;
+    CWL: string;
+    SEC: string;
+    LAB: string;
+}
