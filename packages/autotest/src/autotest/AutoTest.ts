@@ -49,6 +49,8 @@ export abstract class AutoTest implements IAutoTest {
         this.classPortal = classPortal;
         this.docker = docker;
         this.loadQueues();
+        // TODO this is a temporary solution
+        setInterval(this.tick.bind(this), 1000 * 60 * 5);
     }
 
     public addToStandardQueue(input: ContainerInput): void {
