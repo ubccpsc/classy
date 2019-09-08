@@ -195,6 +195,7 @@ export class DatabaseController {
 
     public async getUniqueTeamNumber(): Promise<number> {
         const ticker = await this.readAndUpdateSingleRecord(this.TICKERCOLL, {tickerId: "teamNumbers"}, { $inc: { ticker: 1 } });
+        Log.trace("DatabaseController::getUniqueTeamNumber() - Found:" + JSON.stringify(ticker));
         if (ticker !== null && ticker.ticker !== undefined) {
             Log.trace("DatabaseController::getUniqueTeamNumber() - " + ticker.ticker);
             return ticker.ticker;
