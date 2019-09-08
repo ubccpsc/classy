@@ -283,8 +283,9 @@ export class AdminDashboardTab extends AdminPage {
 
         let str: string = '<div class="histogramcontainer">';
         str += this.generateTable(annotated);
-        if (ClusterTable.shouldCluster(row.delivId)) {
-            str += ClusterTable.generateTable(annotated, row.delivId);
+        if (row.hasOwnProperty('cluster')) {
+            // TODO change how this is generated
+            str += ClusterTable.generateTable(annotated, row.delivId, row.cluster);
         }
         str += "</div>"
         return str;

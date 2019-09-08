@@ -1,41 +1,19 @@
 import {DetailRow} from "../views/AdminDashboardTab"
+import {ClusteredResult} from "../../../../../common/types/PortalTypes"
 // import Config, {ConfigKey} from "../../../../../common/Config"
 const CLUSTER = true; // Failed at putting this in config
 
 export class ClusterTable {
-
-    private static clusters: {[key:string]:{[key2:string]: string[]}} = {
-        "project": {
-            "ADD": ["A", "B", "C"],
-            "REM": ["B", "C", "D"],
-            "LIS": ["D", "E"],
-            "LT": ["F", "G", "H", "I"],
-            "GT": ["G", "H", "I", "J"],
-            "EQ": ["H", "I"],
-            "IS": ["H", "I", "J"],
-            "WC": ["I", "J"],
-            "AND": ["G", "I"],
-            "OR": ["H", "J"],
-            "NOT": ["J"],
-            "VAL": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
-        }
-    }
-
-    public static shouldCluster(delivId: string) {
-        return CLUSTER && Object.keys(ClusterTable.clusters).includes(delivId);
-    }
-
-    public static generateTable(annotated: DetailRow[], delivId: string): string {
+    public static generateTable(annotated: DetailRow[], delivId: string, clusteredResult: ClusteredResult): string {
         const cellMap: {[key: string]: string} = {};
         for (const cell of annotated) {
             cellMap[cell.name] = '<td class="dashResultCell" style="width: 5px; height: 20px; background: ' + cell.colour + '" title="' + cell.name + '"></td>'
         }
-        const clstrs: {[key:string]: string[]} = ClusterTable.clusters[delivId];
         let str = '<span class="clusteredhistogram hidden""><table style="height: 20px;">';
-        for (const cluster of Object.keys(clstrs)) {
+        for (const cluster in clusteredResult) {
             str += '<tr>';
             str += '<td style="width: 2em; text-align: center;">' + cluster + '</td>';
-            for (const test of clstrs[cluster]) {
+            for (const test of clusteredResult[cluster].allNames) {
                 str += cellMap[test];
             }
             str += '</tr>';

@@ -299,4 +299,17 @@ export interface AutoTestDashboardTransport extends AutoTestResultSummaryTranspo
     testFail: string[];
     testSkip: string[];
     testError: string[];
+    cluster?: ClusteredResult;
+}
+
+export interface SingleClusterResult {
+    allNames: string[],
+    passNames: string[],
+    failNames: string[],
+    skipNames: string[],
+    errorNames: string[]
+}
+
+export interface ClusteredResult {
+    [cluster: string]: SingleClusterResult
 }

@@ -25,6 +25,7 @@ import {PersonController} from "./PersonController";
 import {RepositoryController} from "./RepositoryController";
 import {ResultsController} from "./ResultsController";
 import {TeamController} from "./TeamController";
+import { ClusterFormatter } from "../ClustersFormatter";
 
 export class AdminController {
 
@@ -303,6 +304,11 @@ export class AdminController {
                     testError: testError,
                     testSkip:  testSkip
                 };
+
+                if (ClusterFormatter.isClusterable(result)) {
+                    resultTrans["cluster"] = ClusterFormatter.getClusteredResult(result);   
+                }
+
                 // just return the first result for a repo, unless they are specified
                 if (reqRepoId !== 'any' || repoIds.indexOf(repoId) < 0) {
                     results.push(resultTrans);
