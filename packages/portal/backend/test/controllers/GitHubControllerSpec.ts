@@ -324,14 +324,15 @@ describe("GitHubController", () => {
         let res = null;
         let ex = null;
         try {
-            // not implemented yet, should fail right away
+            // patchtool has not been integrated with tests yet,
+            // so should fail to contact patchtool and return false
             const repos = await new RepositoryController().getAllRepos();
             res = await gc.createPullRequest(repos[0], 'patch');
         } catch (err) {
             ex = err;
         }
-        expect(res).to.be.null;
-        expect(ex).to.not.be.null;
+        expect(res).to.be.false;
+        expect(ex).to.be.null;
     }).timeout(Test.TIMEOUT);
 
 });

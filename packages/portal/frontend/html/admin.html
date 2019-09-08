@@ -284,13 +284,22 @@
                 </ons-list-item>
 
                 <ons-list-header>Provision and Release Repositories</ons-list-header>
-
                 <ons-list-item>
                     <div class="left settingIcon">
                         <ons-icon icon="fa-cogs"></ons-icon>
                     </div>
                     <div class="center">
                         <ons-button id="adminManageRepositoriesButton" modifier="medium">Manage Repositories</ons-button>
+                    </div>
+                </ons-list-item>
+
+                <ons-list-header>Manage and Apply Pull Requests</ons-list-header>
+                <ons-list-item>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-band-aid"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <ons-button id="adminManagePullRequestsButton" modifier="medium">Manage Pull Requests</ons-button>
                     </div>
                 </ons-list-item>
 
@@ -1189,6 +1198,95 @@
                     </div>
                     <div class="expandable-content">
                         These are the repositories that have already been released.
+                    </div>
+                </ons-list-item>
+
+            </ons-list>
+
+        </ons-page>
+    </template>
+
+    <template id="adminPullRequests.html">
+        <ons-page id="adminPullRequests">
+            <ons-toolbar>
+                <div class="left">
+                    <ons-back-button></ons-back-button>
+                </div>
+                <div class="center">Select & Create Pull Requests</div>
+                <div id='indexLogin' class="right">
+                    <ons-toolbar-button onclick="myApp.logout();">
+                        <ons-icon icon="fa-sign-out"></ons-icon>
+                        <span style="vertical-align: top; font-size: 80%;">Logout</span>
+                    </ons-toolbar-button>
+                </div>
+            </ons-toolbar>
+
+            <ons-modal id="adminProgress">
+                <div style="display:flex; flex-direction:column; align-items: center;">
+                    <div id="modalText" style="padding-top: 1em; padding-bottom: 1em;">Data is being retrieved.</div>
+                    <ons-progress-circular indeterminate></ons-progress-circular>
+                </div>
+            </ons-modal>
+
+
+            <ons-list>
+                <ons-list-header>Overview</ons-list-header>
+                <ons-list-item>
+                    This page is used for creating GitHub Pull Requests for learners' repositories.
+                    <!--<ul style="margin-bottom: 0;">-->
+                        <!--<li><b>Provisioning</b> creates the GitHub repository as specified by the Deliverable being provisioned. This is a-->
+                            <!--slow operation and can take a up to a minute or more to create a repository.-->
+                        <!--</li>-->
+                        <!--<li><b>Releasing</b> enables learners to access their repository. This is a relatively quick operation.</li>-->
+                    <!--</ul>-->
+                </ons-list-item>
+                <ons-list-header>Select Patch</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-file-alt"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Select Patch:
+                        <select id="adminPatchSelect" style="margin-left: 1em;">
+                            <option value="''">-None-</option>
+                        </select>
+                        <ons-button id="adminViewPatch" style="margin-left: 1em;" modifier="medium">View Selected Patch</ons-button>
+                        <ons-button id="adminRefreshPatches" style="margin-left: 1em;" modifier="medium">Refresh Patch List</ons-button>
+                    </div>
+                    </div>
+                    <div class="expandable-content">
+                        This is a list of all patches that the pull request tool currently has available.
+                        Click Refresh to pull any new patches from cpsc310/project-patches down to the tool.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-header>Patch individual repositories</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-pen-square"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Repositories:
+                        <select multiple size="10"
+                                style="width: 20em; margin-left: 1em; margin-right: 1em;"
+                                id="repositoryPatchSelect"></select>
+                        <ons-button id="adminPatchSubsetOfReposButton" modifier="medium">Begin Patch</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Select the repositories you wish to patch.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-header>Patch all repositories</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-pen-square"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <ons-button id="adminPatchAllReposButton" modifier="medium">Begin Patch</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        This will create a pull request for every repository in the database.
                     </div>
                 </ons-list-item>
 

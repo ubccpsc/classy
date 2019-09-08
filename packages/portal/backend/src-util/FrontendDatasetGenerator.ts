@@ -116,9 +116,9 @@ export class FrontendDatasetGenerator {
 
                 if (p1Team === null && p2Team === null) {
 
-                    const names = await cc.computeNames(deliv, [p1, p2]);
+                    const name = await cc.computeNames(deliv, [p1, p2]);
                     // both members not on a team
-                    const team = Test.getTeam(names.teamName, deliv.id, [p1.id, p2.id]);
+                    const team = Test.getTeam(name, deliv.id, [p1.id, p2.id]);
                     Log.info("FrontendDatasetGenerator::createTeams() - creating team: " + team.id);
                     await this.dc.writeTeam(team);
                 }

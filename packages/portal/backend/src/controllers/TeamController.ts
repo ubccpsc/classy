@@ -218,13 +218,28 @@ export class TeamController {
             const existingTeam = await this.getTeam(name);
             if (existingTeam === null) {
                 const peopleIds: string[] = people.map((person) => person.id);
+                let repoName: string = '';
+                repoName += deliv.repoPrefix ? `${deliv.repoPrefix}_${deliv.id}_` : `${deliv.id}_`;
+
+                if (people.length === 1) {
+                    const kind = people[0].kind;
+                    if (kind === PersonKind.ADMIN || kind === PersonKind.STAFF || kind === PersonKind.ADMINSTAFF) {
+                        repoName += people[0].githubId;
+                    } else {
+                        repoName += `user${await this.db.getUniqueTeamNumber(deliv.id)}`;
+                    }
+                } else {
+                    repoName += `team${await this.db.getUniqueTeamNumber(deliv.id)}`;
+                }
+
                 const team: Team = {
                     id:        name,
                     delivId:   deliv.id,
                     githubId:  null,
                     URL:       null,
                     personIds: peopleIds,
-                    custom:    custom
+                    custom:    custom,
+                    repoName:  repoName
                 };
                 await this.db.writeTeam(team);
                 return await this.db.getTeam(name);

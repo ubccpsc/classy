@@ -55,7 +55,7 @@ export interface ICourseController {
      * @param {Person[]} people
      * @returns {{teamName: string | null; repoName: string | null}}
      */
-    computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}>;
+    computeNames(deliv: Deliverable, people: Person[]): Promise<string>;
 }
 
 /**
@@ -127,7 +127,7 @@ export class CourseController implements ICourseController {
         }
     }
 
-    public async computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}> {
+    public async computeNames(deliv: Deliverable, people: Person[]): Promise<string> {
         if (deliv === null) {
             throw new Error("CourseController::computeNames( ... ) - null Deliverable");
         }
@@ -155,23 +155,25 @@ export class CourseController implements ICourseController {
             tName = deliv.id + postfix;
         }
 
-        let rName = '';
-        if (deliv.repoPrefix.length > 0) {
-            rName = deliv.repoPrefix + '_' + deliv.id + postfix;
-        } else {
-            rName = deliv.id + postfix;
-        }
+        // let rName = '';
+        // if (deliv.repoPrefix.length > 0) {
+        //     rName = deliv.repoPrefix + '_' + deliv.id + postfix;
+        // } else {
+        //     rName = deliv.id + postfix;
+        // }
 
         const db = DatabaseController.getInstance();
         const team = await db.getTeam(tName);
-        const repo = await db.getRepository(rName);
+        // const repo = await db.getRepository(rName);
 
-        if (team === null && repo === null) {
-            Log.info('CourseController::computeNames( ... ) - done; t: ' + tName + ', r: ' + rName);
-            return {teamName: tName, repoName: rName};
+        if (team === null/* && repo === null*/) {
+            Log.info('CourseController::computeNames( ... ) - done; t: ' + tName); // + ', r: ' + rName);
+            // return {teamName: tName, repoName: rName};
+            return tName;
         } else {
             // TODO: should really verify that the existing teams contain the right people already
-            return {teamName: tName, repoName: rName};
+            // return {teamName: tName, repoName: rName};
+            return tName;
         }
     }
 
