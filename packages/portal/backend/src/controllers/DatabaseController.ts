@@ -193,21 +193,15 @@ export class DatabaseController {
         return grade;
     }
 
-    public async getUniqueTeamNumber(): Promise<number> {
-        const ticker = await this.readAndUpdateSingleRecord(this.TICKERCOLL, {tickerId: "teamNumbers"}, { $inc: { ticker: 1 } });
-        Log.trace("DatabaseController::getUniqueTeamNumber() - Found:" + JSON.stringify(ticker));
-        if (ticker !== null && ticker.ticker !== undefined) {
-            Log.trace("DatabaseController::getUniqueTeamNumber() - " + ticker.ticker);
+    public async getUniqueTeamNumber(delivId: string): Promise<number> {
+        const ticker = await this.readAndUpdateSingleRecord(this.TICKERCOLL, {tickerId: delivId}, { $inc: { ticker: 1 } });
+        if (ticker !== null) {
+            Log.trace("DatabaseController::getUniqueTeamNumber() - " + delivId + " ticker found: " + ticker.ticker);
             return ticker.ticker;
         } else {
-            throw new Error("Could not retrieve a team number from the database");
-        }
-    }
-
-    private async createTeamTicker(): Promise<void> {
-        const ticker = await this.readSingleRecord(this.TICKERCOLL, {tickerId: "teamNumbers"});
-        if (ticker === null) {
-            await this.writeRecord(this.TICKERCOLL, {tickerId: "teamNumbers", ticker: 0});
+            Log.trace("DatabaseController::getUniqueTeamNumber() - " + delivId + " ticker NOT found. Setting ticker");
+            await this.writeRecord(this.TICKERCOLL, {tickerId: delivId, ticker: 1});
+            return 0;
         }
     }
 
@@ -545,9 +539,9 @@ export class DatabaseController {
             const start = Date.now();
             const col = await this.getCollection(column);
 
-            const record: any = await (col as any).findOneAndUpdate(query, update);
+            const record: any = (await (col as any).findOneAndUpdate(query, update)).value;
 
-            if (record === null) {
+            if (record === null || record === undefined) {
                 return null;
             } else {
                 delete record._id;
@@ -663,7 +657,6 @@ export class DatabaseController {
             };
             await this.writeTeam(newTeam);
         }
-        await this.createTeamTicker();
     }
 
     public async writeAuth(record: Auth): Promise<boolean> {

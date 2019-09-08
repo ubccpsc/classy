@@ -219,7 +219,7 @@ export class TeamController {
             if (existingTeam === null) {
                 const peopleIds: string[] = people.map((person) => person.id);
                 let repoName: string = people.length === 1 ? `id` : `team`;
-                repoName += await this.db.getUniqueTeamNumber();
+                repoName += await this.db.getUniqueTeamNumber(deliv.id);
                 const team: Team = {
                     id:        name,
                     delivId:   deliv.id,
