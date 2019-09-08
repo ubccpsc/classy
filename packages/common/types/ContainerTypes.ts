@@ -104,7 +104,7 @@ export interface GradeReport {
     // Use attachments instead for large bits of data you wish
     // to persist.
     custom: {};
-    
+
     cluster?: ClusteredResult;
 }
 
@@ -124,13 +124,13 @@ export interface Attachment {
 }
 
 export interface SingleClusterResult {
-    allNames: string[],
-    passNames: string[],
-    failNames: string[],
-    skipNames: string[],
-    errorNames: string[]
+    allNames: string[];
+    passNames: string[];
+    failNames: string[];
+    skipNames: string[];
+    errorNames: string[];
 }
 
 export interface ClusteredResult {
-    [cluster: string]: SingleClusterResult
+    [cluster: string]: SingleClusterResult;
 }

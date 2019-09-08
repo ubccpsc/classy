@@ -8,42 +8,20 @@ import {
     DeliverableTransport,
     RepositoryTransport
 } from "../../../../../common/types/PortalTypes";
-import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
+import {DashboardTable} from "../util/DashboardTable";
+import {TableCell, TableHeader} from "../util/SortableTable";
 
+import { ClusteredResult } from "../../../../../common/types/ContainerTypes";
 import {UI} from "../util/UI";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminPage} from "./AdminPage";
 import {AdminResultsTab} from "./AdminResultsTab";
 import {AdminView} from "./AdminView";
-import {ClusterTable} from "../util/ClusterTable";
-import { ClusteredResult } from "../../../../../common/types/ContainerTypes";
 
 export interface DetailRow {
-            name: string;
-            state: string;
-            colour: string;
-        }
-
-class DashboardTable extends SortableTable {
-    public generate() {
-        super.generate();
-
-        function toggle(event: MouseEvent) {
-            const elem = event.currentTarget as Element;
-            const normal = elem.querySelector("span.normalhistogram");
-            const clustered = elem.querySelector("span.clusteredhistogram");
-            if (clustered !== null) {
-                normal.classList.toggle("hidden");
-                clustered.classList.toggle("hidden");  
-            }          
-        }
-
-        const tableDivs = document.querySelectorAll("div.histogramcontainer");
-        const tableDivArray = Array.prototype.slice.call(tableDivs, 0);
-        for (const div of tableDivArray) {
-            div.onclick=toggle
-        }
-    }
+    name: string;
+    state: string;
+    colour: string;
 }
 
 export class AdminDashboardTab extends AdminPage {
@@ -258,8 +236,6 @@ export class AdminDashboardTab extends AdminPage {
         all = all.concat(passNames, failNames, skipNames, errorNames);
         all = all.sort();
 
-        
-
         const annotated: DetailRow[] = [];
         for (const name of all) {
             let state = 'unknown';
@@ -287,7 +263,7 @@ export class AdminDashboardTab extends AdminPage {
         if (row.hasOwnProperty('cluster')) {
             str += this.generateClusteredTable(annotated, row.delivId, row.cluster);
         }
-        str += "</div>"
+        str += "</div>";
         return str;
     }
 
@@ -306,10 +282,12 @@ export class AdminDashboardTab extends AdminPage {
     private generateClusteredTable(annotated: DetailRow[], delivId: string, clusteredResult: ClusteredResult): string {
         const cellMap: {[key: string]: string} = {};
         for (const cell of annotated) {
-            cellMap[cell.name] = '<td class="dashResultCell" style="width: 5px; height: 20px; background: ' + cell.colour + '" title="' + cell.name + '"></td>'
+            const c = cell.colour;
+            const n = cell.name;
+            cellMap[cell.name] = `<td class="dashResultCell" style="width: 5px; height: 20px; background: ${c}" title="${n}"></td>`;
         }
         let str = '<span class="clusteredhistogram hidden""><table style="height: 20px;">';
-        for (const cluster in clusteredResult) {
+        for (const cluster of Object.keys(clusteredResult)) {
             str += '<tr>';
             str += '<td style="width: 2em; text-align: center;">' + cluster + '</td>';
             for (const test of clusteredResult[cluster].allNames) {
