@@ -34,6 +34,7 @@ export class DatabaseController {
     private readonly REPOCOLL = 'repositories';
     private readonly AUTHCOLL = 'auth';
     private readonly AUDITCOLL = 'audit';
+    private readonly TICKERCOLL = 'ids';
 
     /**
      * use getInstance() instead.
@@ -190,6 +191,15 @@ export class DatabaseController {
             Log.trace("DatabaseController::getGrade( " + personId + ", " + delivId + " ) - not found");
         }
         return grade;
+    }
+
+    public async getUniqueTeamNumber(): Promise<number> {
+        const ticker = await this.readAndUpdateSingleRecord(this.TICKERCOLL, {tickerId: "teamNumbers"}, { $inc: { ticker: 1 } });
+        if (ticker !== null) {
+            return ticker.ticker;
+        } else {
+            throw new Error("Could not retrieve a team number from the database");
+        }
     }
 
     public async writePerson(record: Person): Promise<boolean> {
@@ -521,6 +531,30 @@ export class DatabaseController {
         return [];
     }
 
+    private async readAndUpdateSingleRecord(column: string, query: {}, update: {}): Promise<any> {
+        try {
+            const start = Date.now();
+            const col = await this.getCollection(column);
+
+            const records: any[] = await (col as any).findAndModify({
+                query: query,
+                update: update,
+                upsert: true
+            });
+
+            if (records === null || records.length === 0) {
+                return null;
+            } else {
+                const record = records[0];
+                delete record._id;
+                return record;
+            }
+        } catch (err) {
+            Log.error("DatabaseController::readAndUpdateSingleRecord(..) - ERROR: " + err);
+            return null;
+        }
+    }
+
     /**
      * Internal use only, do not use this method; use getCollection(..) instead.
      *
@@ -592,6 +626,7 @@ export class DatabaseController {
                 githubId:  null, // to be filled in later
                 URL:       null, // to be filled in later
                 personIds: [], // empty for special teams
+                repoName:  null, // null for special teams
                 custom:    {}
             };
             await this.writeTeam(newTeam);
@@ -605,6 +640,7 @@ export class DatabaseController {
                 githubId:  null, // to be filled in later
                 URL:       null, // to be filled in later
                 personIds: [], // empty for special teams
+                repoName:  null, // null for special teams
                 custom:    {}
             };
             await this.writeTeam(newTeam);
@@ -618,6 +654,7 @@ export class DatabaseController {
                 githubId:  null, // to be filled in later
                 URL:       null, // to be filled in later
                 personIds: [], // empty for special teams
+                repoName:  null, // null for special teams
                 custom:    {}
             };
             await this.writeTeam(newTeam);

@@ -218,13 +218,16 @@ export class TeamController {
             const existingTeam = await this.getTeam(name);
             if (existingTeam === null) {
                 const peopleIds: string[] = people.map((person) => person.id);
+                let repoName: string = people.length === 1 ? `id` : `team`;
+                repoName += await this.db.getUniqueTeamNumber();
                 const team: Team = {
                     id:        name,
                     delivId:   deliv.id,
                     githubId:  null,
                     URL:       null,
                     personIds: peopleIds,
-                    custom:    custom
+                    custom:    custom,
+                    repoName:  repoName
                 };
                 await this.db.writeTeam(team);
                 return await this.db.getTeam(name);

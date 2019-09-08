@@ -993,8 +993,8 @@ export default class AdminRoutes implements IREST {
         }
 
         const cc = await Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
-        const names = await cc.computeNames(deliv, people);
-        const team = await tc.formTeam(names.teamName, deliv, people, true);
+        const name = await cc.computeNames(deliv, people);
+        const team = await tc.formTeam(name, deliv, people, true);
 
         const dbc = DatabaseController.getInstance();
         await dbc.writeAudit(AuditLabel.TEAM_ADMIN, personId, null, team, {});

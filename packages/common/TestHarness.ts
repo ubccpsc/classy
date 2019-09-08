@@ -529,6 +529,7 @@ export class Test {
             githubId:  null,
             // URL:       Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             //            Config.getInstance().getProp(ConfigKey.org) + '/teams/' + teamId,
+            repoName:  null,
             URL:       null,
             personIds: people,
             custom:    {}

@@ -663,9 +663,9 @@ export class AdminController {
         if (formSingleTeams === true) {
             // now create teams for individuals
             for (const individual of allPeople) {
-                const names = await cc.computeNames(deliv, [individual]);
+                const name = await cc.computeNames(deliv, [individual]);
 
-                const team = await this.tc.formTeam(names.teamName, deliv, [individual], false);
+                const team = await this.tc.formTeam(name, deliv, [individual], false);
                 delivTeams.push(team);
             }
         }
@@ -683,26 +683,26 @@ export class AdminController {
             for (const pId of delivTeam.personIds) {
                 people.push(await this.pc.getPerson(pId));
             }
-            const names = await cc.computeNames(deliv, people);
+            const name = await cc.computeNames(deliv, people);
 
             Log.trace('AdminController::planProvision( .. ) - delivTeam: ' + delivTeam.id +
-                '; computed team: ' + names.teamName + '; computed repo: ' + names.repoName);
+                '; computed team: ' + name); // + '; computed repo: ' + names.repoName);
 
-            const team = await this.tc.getTeam(names.teamName);
-            let repo = await this.rc.getRepository(names.repoName);
+            const team = await this.tc.getTeam(name); // s.teamName);
+            let repo = await this.rc.getRepository(team.repoName);
 
             if (team === null) {
                 // sanity checking team must not be null given what we have done above (should never happen)
-                throw new Error("AdminController::planProvision(..) - team unexpectedly null: " + names.teamName);
+                throw new Error("AdminController::planProvision(..) - team unexpectedly null: " + name); // s.teamName);
             }
 
             if (repo === null) {
-                repo = await this.rc.createRepository(names.repoName, deliv, [team], {});
+                repo = await this.rc.createRepository(team.repoName, deliv, [team], {});
             }
 
             if (repo === null) {
                 // sanity checking repo must not be null given what we have done above (should never happen)
-                throw new Error("AdminController::planProvision(..) - repo unexpectedly null: " + names.repoName);
+                throw new Error("AdminController::planProvision(..) - repo unexpectedly null: " + team.repoName); // names.repoName);
             }
 
             /* istanbul ignore if */
@@ -834,12 +834,12 @@ export class AdminController {
         for (const team of delivTeams) {
             try {
                 // get repo for team
-                const people: Person[] = [];
-                for (const pId of team.personIds) {
-                    people.push(await this.dbc.getPerson(pId));
-                }
-                const names = await cc.computeNames(deliv, people);
-                const repo = await this.dbc.getRepository(names.repoName);
+                // const people: Person[] = [];
+                // for (const pId of team.personIds) {
+                //     people.push(await this.dbc.getPerson(pId));
+                // }
+                // const names = await cc.computeNames(deliv, people);
+                const repo = await this.dbc.getRepository(team.repoName);
 
                 /* istanbul ignore else */
                 if (typeof team.custom.githubAttached === 'undefined' || team.custom.githubAttached === false) {
@@ -849,7 +849,8 @@ export class AdminController {
                         // aka only release provisioned repos
                         reposToRelease.push(repo);
                     } else {
-                        Log.info("AdminController::planRelease( " + deliv.id + " ) - repo not provisioned yet: " + JSON.stringify(names));
+                        Log.info("AdminController::planRelease( " + deliv.id + " ) - repo not provisioned yet: " +
+                            JSON.stringify(team.personIds));
                     }
                 } else {
                     Log.info("AdminController::planRelease( " + deliv.id + " ) - skipping team: " + team.id + "; already attached");
