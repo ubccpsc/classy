@@ -537,16 +537,11 @@ export class DatabaseController {
             const start = Date.now();
             const col = await this.getCollection(column);
 
-            const records: any[] = await (col as any).findAndModify({
-                query: query,
-                update: update,
-                upsert: true
-            });
+            const record: any = await (col as any).findOneAndUpdate(query, update);
 
-            if (records === null || records.length === 0) {
+            if (record === null) {
                 return null;
             } else {
-                const record = records[0];
                 delete record._id;
                 return record;
             }
