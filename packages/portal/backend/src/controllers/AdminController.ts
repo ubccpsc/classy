@@ -301,8 +301,11 @@ export class AdminController {
                     testPass:  testPass,
                     testFail:  testFail,
                     testError: testError,
-                    testSkip:  testSkip
+                    testSkip:  testSkip,
+
+                    cluster: result.output.report.cluster
                 };
+
                 // just return the first result for a repo, unless they are specified
                 if (reqRepoId !== 'any' || repoIds.indexOf(repoId) < 0) {
                     results.push(resultTrans);
