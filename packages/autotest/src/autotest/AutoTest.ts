@@ -50,7 +50,10 @@ export abstract class AutoTest implements IAutoTest {
         this.docker = docker;
         this.loadQueues();
         // TODO this is a temporary solution
-        setInterval(this.tick.bind(this), 1000 * 60 * 5);
+        setInterval(() => {
+            Log.trace("AutoTest$1() - Calling Tick");
+            this.tick();
+            }, 1000 * 60 * 5);
     }
 
     public addToStandardQueue(input: ContainerInput): void {
@@ -88,7 +91,8 @@ export abstract class AutoTest implements IAutoTest {
             Log.info("AutoTest::tick(..) - start; " +
                 "standard - #wait: " + this.standardQueue.length() + ", #run: " + this.standardQueue.numRunning() + "; " +
                 "express - #wait: " + this.expressQueue.length() + ", #run: " + this.expressQueue.numRunning() + "; " +
-                "regression - #wait: " + this.regressionQueue.length() + ", #run: " + this.regressionQueue.numRunning() + ".");
+                "regression - #wait: " + this.regressionQueue.length() + ", #run: " + this.regressionQueue.numRunning() + ";" +
+                "schedule - #wait: " + this.scheduleQueue.length() + ".");
 
             // Move scheduled items that are not eligible to run into the standard queue
             this.updateScheduleQueue();
@@ -177,9 +181,11 @@ export abstract class AutoTest implements IAutoTest {
     }
 
     private updateScheduleQueue(): void {
+        Log.trace("AutoTest::updateScheduleQueue() - updating the schedule queue");
         let scheduleQueueInput = this.scheduleQueue.peek();
         const compareTime = Date.now();
         while (scheduleQueueInput !== null && scheduleQueueInput.target.timestamp < compareTime) {
+            Log.trace("AutoTest::updateScheduleQueue() - Adding to the standard queue from scheduled");
             this.addToStandardQueue(this.standardQueue.pop());
             scheduleQueueInput = this.scheduleQueue.peek();
         }
