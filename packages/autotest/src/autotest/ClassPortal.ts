@@ -347,7 +347,7 @@ export class ClassPortal implements IClassPortal {
 
         if (res.output.report.publicTime) {
             feedback += "\n\n";
-            feedback += `Your implementation suite took ${Util.tookHuman(0, res.output.report.publicTime)}`;
+            feedback += `Your implementation took ${Util.tookHuman(0, res.output.report.publicTime)}`;
             feedback += ` to get through our public test suite in the grading container.`;
             feedback += await this.getMedianTime(res.delivId);
         }
