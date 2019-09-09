@@ -163,10 +163,12 @@ describe("AdminController", () => {
 
         Log.test('teams: ' + JSON.stringify(res));
         const t: TeamTransport = {
-            id:      Test.TEAMNAME1,
-            delivId: "d0",
-            people:  [Test.USER1.id, Test.USER2.id],
-            URL:     null
+            id:       Test.TEAMNAME1,
+            delivId:  "d0",
+            people:   [Test.USER1.id, Test.USER2.id],
+            URL:      null,
+            repoName: null,
+            repoUrl:  null,
         };
         expect(res).to.deep.include(t); // make sure at least one student with the right format is in there
     });

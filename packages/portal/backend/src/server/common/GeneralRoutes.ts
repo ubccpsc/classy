@@ -401,10 +401,12 @@ export default class GeneralRoutes implements IREST {
             await dbc.writeAudit(AuditLabel.TEAM_STUDENT, user, {}, team, {});
 
             const teamTrans: TeamTransport = {
-                id:      team.id,
-                delivId: team.delivId,
-                people:  team.personIds,
-                URL:     team.URL
+                id:       team.id,
+                delivId:  team.delivId,
+                people:   team.personIds,
+                URL:      team.URL,
+                repoName: team.repoName,
+                repoUrl:  team.repoUrl,
             };
 
             Log.info('GeneralRoutes::performPostTeam(..) - team created: ' + team.id);

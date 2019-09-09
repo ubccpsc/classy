@@ -1000,10 +1000,12 @@ export default class AdminRoutes implements IREST {
         await dbc.writeAudit(AuditLabel.TEAM_ADMIN, personId, null, team, {});
 
         const teamTrans: TeamTransport = {
-            id:      team.id,
-            delivId: team.delivId,
-            people:  team.personIds,
-            URL:     team.URL
+            id:       team.id,
+            delivId:  team.delivId,
+            people:   team.personIds,
+            URL:      team.URL,
+            repoName: team.repoName,
+            repoUrl:  team.repoUrl,
         };
 
         Log.info('AdminRoutes::performPostTeam(..) - team created: ' + team.id);

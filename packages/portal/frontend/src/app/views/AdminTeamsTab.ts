@@ -66,6 +66,14 @@ export class AdminTeamsTab extends AdminPage {
                 style:       'padding-left: 1em; padding-right: 1em;'
             },
             {
+                id:          'repo',
+                text:        'Repository',
+                sortable:    true,
+                defaultSort: false,
+                sortDown:    false,
+                style:       'padding-left: 1em; padding-right: 1em;'
+            },
+            {
                 id:          'p1',
                 text:        'First Member',
                 sortable:    true,
@@ -99,6 +107,8 @@ export class AdminTeamsTab extends AdminPage {
             let p1 = '';
             let p2 = '';
             let p3 = '';
+            let rn = '';
+            let ru = '';
             if (team.people.length === 0) {
                 // do nothing
             } else if (team.people.length === 1) {
@@ -111,8 +121,16 @@ export class AdminTeamsTab extends AdminPage {
                 p2 = team.people[1];
                 p3 = team.people[2];
             }
+            if (team.repoName) {
+                rn = team.repoName;
+            }
+            if (team.repoUrl || team.repoName) {
+                // TODO please change this. This is a temporary solution for 310-2019W1 having provisioned repos already
+                ru = team.repoUrl || `https://github.students.cs.ubc.ca/CPSC310-2019W-T1/${team.repoName}`;
+            }
             const row: TableCell[] = [
                 {value: team.id, html: '<a href="' + team.URL + '">' + team.id + '</a>'},
+                {value: rn, html: '<a href="' + ru + '">' + rn + '</a>'},
                 {value: p1, html: p1},
                 {value: p2, html: p2},
                 {value: p3, html: p3}

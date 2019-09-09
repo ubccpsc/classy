@@ -247,10 +247,11 @@ export class GitHubController implements IGitHubController {
             // return false;
         }
 
+        let repoVal;
         try {
             // create a repo
             Log.info("GitHubController::provisionRepository( " + repoName + " ) - creating GitHub repo");
-            const repoVal = await this.gha.createRepo(repoName);
+            repoVal = await this.gha.createRepo(repoName);
             Log.info("GitHubController::provisionRepository( " + repoName + " ) - GitHub repo created");
 
             // NOTE: this statement commented below isn't done here on purpose;
@@ -292,6 +293,7 @@ export class GitHubController implements IGitHubController {
                         team.URL = teamValue.URL;
                         team.githubId = teamValue.githubTeamNumber;
                         team.custom.githubAttached = false; // attaching happens in release
+                        team.repoUrl = repoVal;
                         await dbc.writeTeam(team);
                     }
 

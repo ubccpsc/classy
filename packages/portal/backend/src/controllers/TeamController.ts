@@ -239,7 +239,8 @@ export class TeamController {
                     URL:       null,
                     personIds: peopleIds,
                     custom:    custom,
-                    repoName:  repoName
+                    repoName:  repoName,
+                    repoUrl:   null,
                 };
                 await this.db.writeTeam(team);
                 return await this.db.getTeam(name);
@@ -256,10 +257,12 @@ export class TeamController {
 
     public teamToTransport(team: Team): TeamTransport {
         const t: TeamTransport = {
-            id:      team.id,
-            delivId: team.delivId,
-            people:  team.personIds,
-            URL:     team.URL
+            id:       team.id,
+            delivId:  team.delivId,
+            people:   team.personIds,
+            URL:      team.URL,
+            repoName: team.repoName,
+            repoUrl:  team.repoUrl,
         };
 
         return t;

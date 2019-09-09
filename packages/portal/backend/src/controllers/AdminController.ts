@@ -173,10 +173,12 @@ export class AdminController {
         const teams: TeamTransport[] = [];
         for (const team of allTeams) {
             const teamTransport: TeamTransport = {
-                id:      team.id,
-                delivId: team.delivId,
-                people:  team.personIds,
-                URL:     team.URL
+                id:       team.id,
+                delivId:  team.delivId,
+                people:   team.personIds,
+                URL:      team.URL,
+                repoName: team.repoName,
+                repoUrl:  team.repoUrl,
             };
             teams.push(teamTransport);
 

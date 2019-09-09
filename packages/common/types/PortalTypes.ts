@@ -121,6 +121,8 @@ export interface TeamTransport {
     delivId: string;
     people: string[];
     URL: string | null;
+    repoName: string | null;
+    repoUrl: string | null;
 }
 
 export interface TeamFormationTransport {

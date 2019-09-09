@@ -626,6 +626,7 @@ export class DatabaseController {
                 URL:       null, // to be filled in later
                 personIds: [], // empty for special teams
                 repoName:  null, // null for special teams
+                repoUrl:   null,
                 custom:    {}
             };
             await this.writeTeam(newTeam);
@@ -640,6 +641,7 @@ export class DatabaseController {
                 URL:       null, // to be filled in later
                 personIds: [], // empty for special teams
                 repoName:  null, // null for special teams
+                repoUrl:   null,
                 custom:    {}
             };
             await this.writeTeam(newTeam);
@@ -654,6 +656,7 @@ export class DatabaseController {
                 URL:       null, // to be filled in later
                 personIds: [], // empty for special teams
                 repoName:  null, // null for special teams
+                repoUrl:   null,
                 custom:    {}
             };
             await this.writeTeam(newTeam);
