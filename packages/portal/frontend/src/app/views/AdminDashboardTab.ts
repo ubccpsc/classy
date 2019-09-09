@@ -286,24 +286,17 @@ export class AdminDashboardTab extends AdminPage {
             const n = cell.name;
             cellMap[cell.name] = `<td class="dashResultCell" style="width: 5px; height: 20px; background: ${c}" title="${n}"></td>`;
         }
-        Log.error("cellmap: " + JSON.stringify(cellMap));
-        Log.error("clusteredRes: " + JSON.stringify(clusteredResult));
-        Log.error("annotated: " + JSON.stringify(annotated));
         let str = '<span class="clusteredhistogram hidden"><table style="height: 20px;">';
         for (const cluster of Object.keys(clusteredResult)) {
             str += '<tr>';
             str += '<td style="width: 2em; text-align: center;">' + cluster + '</td>';
             for (const test of clusteredResult[cluster].allNames) {
-                str += cellMap[AdminDashboardTab.trimDescription(test)];
+                str += cellMap[test];
             }
             str += '</tr>';
         }
         str += '</table></span>';
         return str;
-    }
-
-    private static trimDescription(test: string): string {
-        return test.split(":")[0];
     }
 
     public static async getDashboard(remote: string, delivId: string, repoId: string): Promise<AutoTestDashboardTransport[]> {
