@@ -103,7 +103,7 @@ export class GitHubUtil {
             const delivId = GitHubUtil.parseDeliverableFromComment(message, config.deliverableIds);
 
             const flags: string[] = [];
-            for (const command in ['force', 'silent', 'check', 'queue', 'dequeue']) {
+            for (const command of ['force', 'silent', 'check', 'queue', 'dequeue']) {
                 if (GitHubUtil.parseCommandFromComment(message, command)) {
                     flags.push(`#${command}`);
                 }
