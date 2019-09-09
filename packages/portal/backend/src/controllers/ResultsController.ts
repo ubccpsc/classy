@@ -55,9 +55,7 @@ export class ResultsController {
         const rc = new RepositoryController();
         const people = await rc.getPeopleForRepo(record.repoId);
 
-        (record as any).people = people; // don't know how to augment this record with people to keep the type system happy
-
-        const outcome = await DatabaseController.getInstance().writeResult(record as Result);
+        const outcome = await DatabaseController.getInstance().writeResult({...record, people});
         Log.trace("ResultsController::createResult(..) - result written");
         return outcome;
     }

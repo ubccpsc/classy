@@ -24,6 +24,7 @@ import {GradesController} from "../../controllers/GradesController";
 import {PersonController} from "../../controllers/PersonController";
 import {ResultsController} from "../../controllers/ResultsController";
 
+import {DatabaseController} from "../../controllers/DatabaseController";
 import IREST from "../IREST";
 
 /**
@@ -49,6 +50,8 @@ export class AutoTestRoutes implements IREST {
 
         server.get('/portal/at/docker/images', AutoTestRoutes.getDockerImages);
         server.post('/portal/at/docker/image', AutoTestRoutes.postDockerImage);
+
+        server.get('/portal/at/median/:delivId', AutoTestRoutes.atGetMedianExecutionTime);
     }
 
     public static handleError(code: number, msg: string, res: any, next: any) {
@@ -334,6 +337,40 @@ export class AutoTestRoutes implements IREST {
             }).catch(function(err) {
                 return AutoTestRoutes.handleError(400, 'Error retrieving result record: ' + err.message, res, next);
             });
+        }
+    }
+
+    public static async atGetMedianExecutionTime(req: any, res: any, next: any) {
+        Log.info('AutoTestRouteHandler::atGetMedianExecutionTime(..) - /at/median/:delivId - start GET');
+
+        const providedSecret = req.headers.token;
+        if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
+            return AutoTestRoutes.handleError(400, 'Invalid AutoTest Secret: ' + providedSecret, res, next);
+        } else {
+            const delivId = req.params.delivId;
+            const name = Config.getInstance().getProp(ConfigKey.name);
+
+            Log.info('AutoTestRouteHandler::atGetMedianExecutionTime(..) - name: ' + name + '; delivId: ' + delivId);
+
+            try {
+                const dbc = DatabaseController.getInstance();
+                let results: any[] = await dbc.getRecentPassingResultsForDeliv(delivId);
+                if (results.length > 0) {
+                    const n = results.length;
+                    results = results.map((x) => x.output.report.studentTime);
+                    results.sort((a, b) => a - b);
+                    const lowMiddle = Math.floor((n - 1) / 2);
+                    const highMiddle = Math.ceil((n - 1) / 2);
+                    let median = (results[lowMiddle] + results[highMiddle]) / 2;
+                    median = Math.round(median);
+                    res.send(200, {success: median});
+                    return next(true);
+                } else {
+                    return AutoTestRoutes.handleError(400, 'Error retrieving result median: There are no times', res, next);
+                }
+            } catch (e) {
+                return AutoTestRoutes.handleError(400, 'Error retrieving median: ' + e.message, res, next);
+            }
         }
     }
 
