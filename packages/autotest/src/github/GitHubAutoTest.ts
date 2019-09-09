@@ -325,7 +325,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             if (containerConfig !== null) {
                 const input: ContainerInput = {delivId: info.delivId, target: newTarget, containerConfig: containerConfig};
                 this.addToScheduleQueue(input);
-                msg = "Commit queued for grading.";
+                msg = "Commit scheduled for grading.";
                 if (removedPrevious) {
                     msg += ` This replaces the previously queued commit:${removedPrevious.target.commitSHA}`;
                 }
