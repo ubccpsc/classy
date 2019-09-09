@@ -286,7 +286,7 @@ export class AdminDashboardTab extends AdminPage {
             const n = cell.name;
             cellMap[cell.name] = `<td class="dashResultCell" style="width: 5px; height: 20px; background: ${c}" title="${n}"></td>`;
         }
-        let str = '<span class="clusteredhistogram hidden""><table style="height: 20px;">';
+        let str = '<span class="clusteredhistogram hidden"><table style="height: 20px;">';
         for (const cluster of Object.keys(clusteredResult)) {
             str += '<tr>';
             str += '<td style="width: 2em; text-align: center;">' + cluster + '</td>';
