@@ -317,11 +317,13 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         const nextTimeslot: number | null = await this.requestNextTimeslot(info.delivId, info.personId);
         if (nextTimeslot) {
+            Log.trace("GitHubAutoTest::processCommentQueueRequest(..) - Time requested: " +
+                new Date(info.timestamp).toLocaleTimeString() + "; Time eligible: " + new Date(nextTimeslot).toLocaleTimeString());
             const newTarget: CommitTarget = {...info, timestamp: nextTimeslot};
             const containerConfig = await this.getContainerConfig(info.delivId);
             let msg: string = '';
             if (containerConfig !== null) {
-                const input: ContainerInput = {delivId: info.delivId, target: info, containerConfig: containerConfig};
+                const input: ContainerInput = {delivId: info.delivId, target: newTarget, containerConfig: containerConfig};
                 this.addToScheduleQueue(input);
                 msg = "Commit queued for grading.";
                 if (removedPrevious) {

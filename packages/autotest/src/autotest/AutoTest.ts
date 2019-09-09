@@ -186,7 +186,7 @@ export abstract class AutoTest implements IAutoTest {
         const compareTime = Date.now();
         while (scheduleQueueInput !== null && scheduleQueueInput.target.timestamp < compareTime) {
             Log.trace("AutoTest::updateScheduleQueue() - Adding to the standard queue from scheduled");
-            this.addToStandardQueue(this.standardQueue.pop());
+            this.addToStandardQueue(this.scheduleQueue.pop());
             scheduleQueueInput = this.scheduleQueue.peek();
         }
     }
