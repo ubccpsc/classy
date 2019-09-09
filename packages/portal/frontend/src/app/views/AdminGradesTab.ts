@@ -99,7 +99,7 @@ export class AdminGradesTab extends AdminPage {
         // this loop couldn't possibly be less efficient
         for (const student of students) {
             const row: TableCell[] = [
-                {value: student.id, html: '<a href="' + student.userUrl + '">' + student.id + '</a>'},
+                {value: student.githubId, html: '<a href="' + student.userUrl + '">' + student.githubId + '</a>'},
                 {value: student.studentNum, html: student.studentNum + ''},
                 {value: student.firstName, html: student.firstName},
                 {value: student.lastName, html: student.lastName},
