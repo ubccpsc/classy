@@ -319,7 +319,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         if (nextTimeslot) {
             Log.trace("GitHubAutoTest::processCommentQueueRequest(..) - Time requested: " +
                 new Date(info.timestamp).toLocaleTimeString() + "; Time eligible: " + new Date(nextTimeslot).toLocaleTimeString());
-            const newTarget: CommitTarget = {...info, timestamp: nextTimeslot};
+            const newTarget: CommitTarget = {...info, timestamp: nextTimeslot + 1};
             const containerConfig = await this.getContainerConfig(info.delivId);
             let msg: string = '';
             if (containerConfig !== null) {
@@ -337,6 +337,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     " - No container info for delivId: " + info.delivId + "; queue ignored.");
                 msg = "There was an error in queuing this commit. Please contact staff for help.";
             }
+            await this.saveCommentInfo(newTarget);
             await this.postToGitHub(info, {url: info.postbackURL, message: msg});
         } else {
             Log.warn("GitHubActions::processCommentQueueRequest(..) - nextTimeslot was unexpectedly null." +
