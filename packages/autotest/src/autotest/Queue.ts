@@ -63,6 +63,13 @@ export class Queue {
         return null;
     }
 
+    public peek(): ContainerInput | null {
+        if (this.data.length > 0) {
+            return Object.assign({}, this.data[0]);
+        }
+        return null;
+    }
+
     /**
      * Removes an item from the queue;
      *
@@ -80,6 +87,35 @@ export class Queue {
             }
         }
         return null;
+    }
+
+    /**
+     * Removes an item from the queue given key values to match in info.target;
+     *
+     * @returns {ContainerInput | null}
+     * @param keys
+     */
+    public removeGivenKeys(keys: Array<{key: string, value: any}>): ContainerInput | null {
+        for (let i = this.data.length - 1; i >= 0; i--) {
+            const info: ContainerInput = this.data[i];
+            if (keys.every((kv) => (info.target as any)[kv.key] === kv.value)) {
+                this.data.splice(i, 1);
+                return info;
+            }
+        }
+        return null;
+    }
+
+    public sort(key: string) {
+        this.data.sort((a: ContainerInput, b: ContainerInput) => {
+           if ((a.target as any)[key] < (b.target as any)[key]) {
+               return -1;
+           } else if ((a.target as any)[key] > (b.target as any)[key]) {
+               return 1;
+           } else {
+               return 0;
+           }
+        });
     }
 
     public indexOf(commitURL: string): number {

@@ -94,6 +94,10 @@ Dashboard Page
     background-color: hsl(348, 100%, 61%);
 }
 
+.hidden {
+    display: none;
+}
+
 /**
 stdio viewer Page
  */

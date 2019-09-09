@@ -16,6 +16,7 @@ import Util from "../../../../common/Util";
 import {Factory} from "../Factory";
 import {AuditLabel, Course, Deliverable, Grade, Person, PersonKind, Repository, Result, Team} from "../Types";
 
+import {ClusteredResult} from "../../../../common/types/ContainerTypes";
 import {DatabaseController} from "./DatabaseController";
 import {DeliverablesController} from "./DeliverablesController";
 import {GitHubActions} from "./GitHubActions";
@@ -260,6 +261,8 @@ export class AdminController {
                 let testSkip: string[] = [];
                 let testError: string[] = [];
 
+                let cluster: ClusteredResult;
+
                 if (typeof result.output !== 'undefined' && typeof result.output.report !== 'undefined') {
                     const report = result.output.report;
                     if (typeof report.scoreOverall !== 'undefined') {
@@ -284,6 +287,9 @@ export class AdminController {
                     if (typeof report.errorNames !== 'undefined') {
                         testError = report.errorNames;
                     }
+                    if (typeof report.cluster !== 'undefined') {
+                        cluster = report.cluster;
+                    }
                 }
 
                 const resultTrans: AutoTestDashboardTransport = {
@@ -301,8 +307,11 @@ export class AdminController {
                     testPass:  testPass,
                     testFail:  testFail,
                     testError: testError,
-                    testSkip:  testSkip
+                    testSkip:  testSkip,
+
+                    cluster: cluster
                 };
+
                 // just return the first result for a repo, unless they are specified
                 if (reqRepoId !== 'any' || repoIds.indexOf(repoId) < 0) {
                     results.push(resultTrans);

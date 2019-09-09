@@ -152,8 +152,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             Log.info("GitHubAutoTest::checkCommentPreconditions(..) - admin request; ignoring openTimestamp and closeTimestamp");
         } else {
 
-            // reject #force requests by requetors who are not admins or staff
             if (typeof info.flags !== 'undefined') {
+                // reject #force requests by requetors who are not admins or staff
                 if (info.flags.indexOf("#force") >= 0) {
                     Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, student use of #force.");
                     const msg = "Only admins can use the #force flag.";
@@ -167,6 +167,14 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, student use of #silent.");
                     const msg = "Only admins can use the #silent flag.";
                     delete info.flags;
+                    await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+                    return false;
+                }
+
+                // reject requests that include queue AND dequeue (as this doesn't make sense as a request)
+                if (info.flags.indexOf("#queue") >= 0 && info.flags.indexOf("#dequeue") >= 0) {
+                    Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, undefined behaviour: both #queue AND #dequeue.");
+                    const msg = "Please choose either #queue or #dequeue. Both commands cannot be used in the same request.";
                     await this.postToGitHub(info, {url: info.postbackURL, message: msg});
                     return false;
                 }
@@ -297,6 +305,72 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         return;
     }
 
+    protected async processCommentQueueRequest(info: CommitTarget, res: AutoTestResultTransport): Promise<void> {
+        Log.info("GitHubAutoTest::processCommentQueueRequest(..) - handling queue request for user: " +
+            info.personId + " for commit: " + info.commitURL);
+
+        // Remove any preexisting queued commits
+        const removedPrevious: ContainerInput | null = await this.removeFromScheduleQueue([
+                {key: "delivId", value: info.delivId},
+                {key: "personId", value: info.personId}
+            ]);
+
+        const nextTimeslot: number | null = await this.requestNextTimeslot(info.delivId, info.personId);
+        if (nextTimeslot) {
+            Log.trace("GitHubAutoTest::processCommentQueueRequest(..) - Time requested: " +
+                new Date(info.timestamp).toLocaleTimeString() + "; Time eligible: " + new Date(nextTimeslot).toLocaleTimeString());
+            const newTarget: CommitTarget = {...info, timestamp: nextTimeslot + 1};
+            const containerConfig = await this.getContainerConfig(info.delivId);
+            let msg: string = '';
+            if (containerConfig !== null) {
+                const input: ContainerInput = {delivId: info.delivId, target: newTarget, containerConfig: containerConfig};
+                this.addToScheduleQueue(input);
+                msg = "Commit scheduled for grading.";
+                if (removedPrevious) {
+                    msg += `\n\nThis replaces the previously queued commit: \`${removedPrevious.target.commitSHA.slice(-6)}\`.\n\n`;
+                }
+                msg += " Commit will be appended to the grading queue in approximately " +
+                    Util.tookHuman(info.timestamp, nextTimeslot) + ".\n" +
+                    "To replace this commit, call autobot and use `#queue` again, and to remove it, use `#dequeue`.";
+            } else {
+                Log.warn("GitHubAutoTest::processCommentQueueRequest(..) - commit: " + info.commitSHA +
+                    " - No container info for delivId: " + info.delivId + "; queue ignored.");
+                msg = "There was an error in queuing this commit. Please contact staff for help.";
+            }
+            await this.saveCommentInfo(newTarget);
+            await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+        } else {
+            Log.warn("GitHubActions::processCommentQueueRequest(..) - nextTimeslot was unexpectedly null." +
+                " Queuing is now redundant.");
+            // This is almost certainly unnecessary, but left here to be safe.
+            await this.processComment(info, res);
+        }
+    }
+
+    protected async handleCommentDequeue(info: CommitTarget): Promise<void> {
+        Log.info("GitHubAutoTest::handleCommentDequeue(..) - handling student dequque request for: " +
+            info.personId + "; deliv: " + info.delivId + "; for commit: " + info.commitURL);
+        const res: ContainerInput | null = await this.removeFromScheduleQueue([{key: "commitURL", value: info.commitURL}]);
+        let msg;
+        if (res) {
+            Log.info("GitHubAutoTest::handleCommentDequeue(..) - dequeue successful for: " +
+                info.personId + "; deliv: " + info.delivId + "; for commit: " + info.commitURL);
+            msg = `This commit has successfully been removed from your grading queue.`;
+        } else {
+            const onQueue = this.isOnQueue(info.commitURL, info.delivId);
+            if (onQueue) {
+                Log.info("GitHubAutoTest::handleCommentDequeue(..) - dequeue NOT successful for: " +
+                    info.personId + "; deliv: " + info.delivId + "; for commit: " + info.commitURL + ". Reason: Grading in progess");
+                msg = `This commit is already being graded. Your results will be posted here as soon as they are ready.`;
+            } else {
+                Log.info("GitHubAutoTest::handleCommentDequeue(..) - dequeue NOT successful for: " +
+                    info.personId + "; deliv: " + info.delivId + "; for commit: " + info.commitURL + ". Reason: Not scheduled");
+                msg = "This commit is not scheduled to be graded; `#dequeue` is redundant.";
+            }
+        }
+        await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+    }
+
     protected async handleCommentStudent(info: CommitTarget, res: AutoTestResultTransport): Promise<void> {
         Log.info("GitHubAutoTest::handleCommentStudent(..) - handling student request for: " +
             info.personId + "; deliv: " + info.delivId + "; for commit: " + info.commitURL);
@@ -309,12 +383,17 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             info.personId + " for commit: " + info.commitURL + "; null previous: " + (previousRequest === null) +
             "; null delay: " + (feedbackDelay === null));
 
-        if (shouldCharge === true && previousRequest === null && feedbackDelay !== null) {
+        if (shouldCharge === true && previousRequest === null && feedbackDelay !== null && !info.flags.includes('#queue')) {
             Log.info("GitHubAutoTest::handleCommentStudent(..) - too early for: " + info.personId + "; must wait: " +
                 feedbackDelay + "; SHA: " + info.commitURL);
             // NOPE, not yet (this is the most common case; feedback requested without time constraints)
             const msg = "You must wait " + feedbackDelay + " before requesting feedback.";
             await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+        } else if (shouldCharge === true && previousRequest === null && feedbackDelay !== null && info.flags.includes('#queue')) {
+            Log.info("GitHubAutoTest::handleCommentStudent(..) - too early for: " + info.personId + "; Queuing for: " +
+                feedbackDelay + "; SHA: " + info.commitURL);
+            // Not yet, but student has requested that autotest be called at the first possible moment.
+            await this.processCommentQueueRequest(info, res);
         } else if (previousRequest !== null) {
             Log.info("GitHubAutoTest::handleCommentStudent(..) - feedback previously given for: " +
                 info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitURL);
@@ -323,7 +402,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             await this.processComment(info, res);
         } else {
             Log.info("GitHubAutoTest::handleCommentStudent(..) - not too early; for: " + info.personId + "; SHA: " + info.commitURL);
-            // no time limitations
+            // no time limitations. Because of this, queueing is the same as submitting now.
             // processComment will take of whether this is already in progress, etc.
             await this.processComment(info, res);
         }
@@ -409,7 +488,11 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         } else {
             Log.info("GitHubAutoTest::handleCommentEvent(..) - handleStudent; for: " +
                 info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA);
-            await this.handleCommentStudent(info, res);
+            if (typeof info.flags !== 'undefined' && info.flags.indexOf("#dequeue") >= 0) {
+                await this.handleCommentDequeue(info);
+            } else {
+                await this.handleCommentStudent(info, res);
+            }
         }
         Log.trace("GitHubAutoTest::handleCommentEvent(..) - done; took: " + Util.took(start));
     }
@@ -458,8 +541,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             const checkFeedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId, 'check');
             const containerConfig: any = await this.getContainerConfig(data.input.delivId);
             const feedbackMode: string = containerConfig.custom.feedbackMode;
+            const feedbackDelay: string | null = await this.requestFeedbackDelay(data.input.delivId,
+                data.input.target.personId, data.input.target.timestamp);
 
-            if (data.output.postbackOnComplete === true) {
+            if (data.output.postbackOnComplete === true && feedbackDelay === null) {
                 // do this first, doesn't count against quota
                 Log.info("GitHubAutoTest::processExecution(..) - postback: true; deliv: " +
                     data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA);
@@ -469,7 +554,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 // since we're not calling saveFeedback this is right
                 // but if we replay the commit comments, we would see it there, so be careful
 
-            } else if (checkFeedbackRequested !== null || standardFeedbackRequested !== null) {
+            } else if ((checkFeedbackRequested !== null || standardFeedbackRequested !== null) && feedbackDelay === null) {
                 // feedback has been previously requested
                 const giveFeedback = async function(target: CommitTarget, kind: string): Promise<void> {
                     Log.info("GitHubAutoTest::processExecution(..) - check feedback requested; deliv: " +
@@ -488,8 +573,14 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 }
             } else {
                 // do nothing
-                Log.info("GitHubAutoTest::processExecution(..) - commit not requested - no feedback given;  deliv: " +
-                    data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA);
+                if (feedbackDelay) {
+                    Log.info("GitHubAutoTest::processExecution(..) - commit no longer eligible for receiving feedback: " +
+                        data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA +
+                        ". This was probably caused by a race condition.");
+                } else {
+                    Log.info("GitHubAutoTest::processExecution(..) - commit not requested - no feedback given;  deliv: " +
+                        data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA);
+                }
             }
         } catch (err) {
             Log.error("GitHubAutoTest::processExecution(..) - ERROR: " + err);
@@ -512,27 +603,16 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             Log.info("GitHubAutoTest::requestFeedbackDelay( " + delivId + ", " + userName + ", " + reqTimestamp + " ) - start");
             // async operations up front
             const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(userName);
-            // can hard-code standard because #check requests will not reach here
-            const record: IFeedbackGiven = await this.dataStore.getLatestFeedbackGivenRecord(delivId, userName, 'standard');
-            const details: AutoTestConfigTransport = await this.classPortal.getContainerDetails(delivId); // should cache this
-            let testDelay = 0;
-            if (details !== null) {
-                testDelay = details.studentDelay;
-            }
-
-            Log.trace("GitHubAutoTest::requestFeedbackDelay(..) - testDelay: " + testDelay);
+            const nextTimeslot: number | null = await this.requestNextTimeslot(delivId, userName);
 
             if (isStaff !== null && (isStaff.isAdmin === true || isStaff.isStaff === true)) {
                 Log.info("GitHubAutoTest::requestFeedbackDelay(..) - staff; no delay");
                 return null; // staff can always request
             } else {
-                if (record === null) {
+                if (nextTimeslot === null) {
                     Log.info("GitHubAutoTest::requestFeedbackDelay(..) - for: " + userName + "; no prior request - no delay");
                     return null; // no prior requests
                 } else {
-                    const nextTimeslot = record.timestamp + (testDelay * 1000);
-                    Log.info("GitHubAutoTest::requestFeedbackDelay(..) - for: " + userName + "; delay: " + testDelay + "; last: " +
-                        new Date(record.timestamp).toLocaleTimeString() + "; next: " + new Date(nextTimeslot).toLocaleTimeString());
                     if (reqTimestamp > nextTimeslot) {
                         Log.info("GitHubAutoTest::requestFeedbackDelay(..) - for: " + userName + "; enough time passed; no delay");
                         return null; // enough time has passed
@@ -545,6 +625,25 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             }
         } catch (err) {
             Log.error("GitHubAutoTest::requestFeedbackDelay() - ERROR: " + err);
+        }
+    }
+
+    protected async requestNextTimeslot(delivId: string, userName: string): Promise<number | null> {
+        // can hard-code standard because #check requests will not reach here
+        const record: IFeedbackGiven = await this.dataStore.getLatestFeedbackGivenRecord(delivId, userName, 'standard');
+        const details: AutoTestConfigTransport = await this.classPortal.getContainerDetails(delivId); // should cache this
+        let testDelay = 0;
+        if (details !== null) {
+            testDelay = details.studentDelay;
+        }
+        Log.trace("GitHubAutoTest::requestNextTimeslot(..) - testDelay: " + testDelay);
+        if (record) {
+            const nextTimeslot: number = record.timestamp + (testDelay * 1000);
+            Log.info("GitHubAutoTest::requestNextTimeslot(..) - for: " + userName + "; delay: " + testDelay + "; last: " +
+                new Date(record.timestamp).toLocaleTimeString() + "; next: " + new Date(nextTimeslot).toLocaleTimeString());
+            return nextTimeslot;
+        } else {
+            return null;
         }
     }
 

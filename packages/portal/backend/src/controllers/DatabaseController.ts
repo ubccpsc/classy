@@ -193,16 +193,17 @@ export class DatabaseController {
         return grade;
     }
 
-    public async getUniqueTeamNumber(delivId: string): Promise<number> {
+    public async getUniqueTeamNumber(delivId: string): Promise<string> {
         const ticker = await this.readAndUpdateSingleRecord(this.TICKERCOLL, {tickerId: delivId}, { $inc: { ticker: 1 } });
+        let res: number = 0;
         if (ticker !== null) {
             Log.trace("DatabaseController::getUniqueTeamNumber() - " + delivId + " ticker found: " + ticker.ticker);
-            return ticker.ticker;
+            res = ticker.ticker;
         } else {
             Log.trace("DatabaseController::getUniqueTeamNumber() - " + delivId + " ticker NOT found. Setting ticker");
             await this.writeRecord(this.TICKERCOLL, {tickerId: delivId, ticker: 1});
-            return 0;
         }
+        return ("00" + res).slice (-3);
     }
 
     public async writePerson(record: Person): Promise<boolean> {
@@ -711,5 +712,14 @@ export class DatabaseController {
         const result = await this.readSingleRecord(this.RESULTCOLL, {people: personId, delivId: delivId}) as Result;
 
         return result;
+    }
+
+    public async getRecentPassingResultsForDeliv(delivId: string): Promise<Result[]> {
+        const minScore = 50;
+        const minDate = Date.now() - (24 * 60 * 60 * 1000); // The last 24 hours
+        const query = {delivId, "output.timestamp": { $gt: minDate }, "output.report.scoreOverall": { $gt: minScore }};
+        const results = await this.readRecords(this.RESULTCOLL, query);
+        Log.trace(`DatabaseController::getRecentPassingResultsForDeliv(..) - Found ${results.length} results.`);
+        return results;
     }
 }

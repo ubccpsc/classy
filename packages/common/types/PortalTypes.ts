@@ -6,6 +6,7 @@
  * All fields should be primitives.
  */
 import {AutoTestResult} from "./AutoTestTypes";
+import { ClusteredResult } from "./ContainerTypes";
 
 export interface FailurePayload {
     message: string;
@@ -299,6 +300,7 @@ export interface AutoTestDashboardTransport extends AutoTestResultSummaryTranspo
     testFail: string[];
     testSkip: string[];
     testError: string[];
+    cluster?: ClusteredResult;
 }
 
 export interface ClasslistTransport {
