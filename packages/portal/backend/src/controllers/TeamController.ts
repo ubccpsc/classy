@@ -219,7 +219,7 @@ export class TeamController {
             if (existingTeam === null) {
                 const peopleIds: string[] = people.map((person) => person.id);
                 let repoName: string = '';
-                repoName += deliv.repoPrefix ? `${deliv.repoPrefix}_${deliv.id}_` : `${deliv.id}_`;
+                repoName += deliv.repoPrefix ? `${deliv.repoPrefix}_` : `${deliv.id}_`;
 
                 if (people.length === 1) {
                     const kind = people[0].kind;
