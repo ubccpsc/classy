@@ -354,7 +354,8 @@ export class ClassPortal implements IClassPortal {
 
         if (res.input.containerConfig.maxExecTime) {
             feedback += "\n\n";
-            feedback += `You have an allotted time of ${Util.tookHuman(0, res.input.containerConfig.maxExecTime * 1000)} in the container.`;
+            feedback += `Executions longer than ${Util.tookHuman(0, res.input.containerConfig.maxExecTime * 1000)} ` +
+                `will be terminated and will not be graded.`;
         }
         return feedback;
     }
